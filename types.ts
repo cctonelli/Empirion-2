@@ -5,24 +5,90 @@ export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 
+export interface BalanceSheet {
+  current_assets: {
+    cash: number;
+    accounts_receivable: number;
+    inventory_raw_a: number;
+    inventory_raw_b: number;
+    inventory_finished: number;
+    prepaid_expenses: number;
+  };
+  non_current_assets: {
+    pp_e: {
+      machinery: number;
+      buildings: number;
+      land: number;
+    };
+    accumulated_depreciation: number;
+  };
+  total_assets: number;
+}
+
+export interface LiabilitiesEquity {
+  current_liabilities: {
+    accounts_payable: number;
+    short_term_loans: number;
+    taxes_payable: number;
+    dividends_payable: number;
+  };
+  non_current_liabilities: {
+    long_term_loans: number;
+  };
+  equity: {
+    capital_stock: number;
+    retained_earnings: number;
+  };
+  total_liabilities_equity: number;
+}
+
+export interface ProductDefinition {
+  name: string;
+  unit_cost_base: number;
+  suggested_price: number;
+  initial_stock: number;
+  max_capacity: number;
+}
+
+export interface ResourceUsage {
+  water_consumption_monthly: number;
+  energy_consumption_monthly: number;
+  co2_emissions_monthly: number;
+}
+
+export interface MarketIndicators {
+  inflation_rate: number;
+  interest_rate_tr: number;
+  supplier_interest: number;
+  demand_regions: number[];
+  raw_a_price: number;
+  raw_b_price: number;
+  distribution_cost: number;
+  marketing_cost_unit: number;
+  machine_alfa_price: number;
+  machine_beta_price: number;
+  machine_gama_price: number;
+  average_salary: number;
+}
+
 export interface EcosystemConfig {
-  inflationRate: number; // 0 to 1 (e.g., 0.05 for 5%)
-  demandMultiplier: number; // 0.5 to 2.0
-  interestRate: number; // 0 to 1
-  marketVolatility: number; // 0 to 1
+  inflationRate: number; 
+  demandMultiplier: number; 
+  interestRate: number; 
+  marketVolatility: number; 
 }
 
 export interface CommunityCriteria {
   id: string;
   label: string;
-  weight: number; // 0 to 1
+  weight: number; 
 }
 
 export interface ChampionshipConfig {
   regionsCount: number;
   initialStock: number;
   initialPrice: number;
-  communityWeight: number; // 0 to 1 (e.g. 0.3 for 30%)
+  communityWeight: number; 
   votingCriteria: CommunityCriteria[];
 }
 
@@ -101,28 +167,37 @@ export interface Championship {
   config: ChampionshipConfig;
   tutor_id: string;
   invite_code?: string;
+  initial_financials?: {
+    balance_sheet: BalanceSheet;
+    liabilities_equity: LiabilitiesEquity;
+  };
+  market_indicators?: MarketIndicators;
+  resources?: ResourceUsage;
 }
 
-export interface CommunityRating {
-  id: string;
-  championship_id: string;
-  team_id: string;
-  user_id?: string; // Null for anonymous
-  round: number;
-  scores: Record<string, number>; // criteria_id -> score (1-10)
-  comment?: string;
-}
-
-// Added ChampionshipTemplate interface to fix error in constants.tsx
 export interface ChampionshipTemplate {
   id: string;
   name: string;
   branch: Branch;
+  sector: string;
   description: string;
+  is_public: boolean;
   config: {
-    regionsCount: number;
-    initialStock: number;
-    initialPrice: number;
     currency: string;
+    round_frequency_days: number;
+    total_rounds: number;
+    sales_mode: SalesMode;
+    scenario_type: ScenarioType;
+    transparency_level: TransparencyLevel;
+    team_fee: number;
+    community_enabled: boolean;
+    regionsCount?: number;
   };
+  initial_financials: {
+    balance_sheet: BalanceSheet;
+    liabilities_equity: LiabilitiesEquity;
+  };
+  products: ProductDefinition[];
+  resources: ResourceUsage;
+  market_indicators: MarketIndicators;
 }

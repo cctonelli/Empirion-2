@@ -1,14 +1,9 @@
-import { DecisionData, Branch, EcosystemConfig } from '../types';
+
+import { DecisionData, Branch, EcosystemConfig, MarketIndicators } from '../types';
 
 /**
- * Empirion Advanced Economic Engine (v3.14)
- * Based on the competitive equilibrium archetype.
- * 
- * Features:
- * - Price Elasticity of Demand (relative to Market Expectation)
- * - Marketing GRP Efficiency (logarithmic returns)
- * - Production Learning Curve (experience-based unit cost reduction)
- * - Financial WACC and Tax Tiers
+ * Empirion Advanced Economic Engine (v4.0)
+ * Updated to handle explicit market indicators from templates.
  */
 
 const BRANCH_BASE_COSTS = {
@@ -19,95 +14,92 @@ const BRANCH_BASE_COSTS = {
 };
 
 const BRANCH_ELASTICITY = {
-  industrial: -1.8,    // High sensitivity
-  agribusiness: -1.2,  // Essential commodity
-  services: -1.5,      // Competitive
-  commercial: -2.0     // Very high sensitivity
+  industrial: -1.8,
+  agribusiness: -1.2,
+  services: -1.5,
+  commercial: -2.0
 };
 
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
-  ecoConfig: EcosystemConfig = { inflationRate: 0.04, demandMultiplier: 1.0, interestRate: 0.12, marketVolatility: 0 }
+  ecoConfig: EcosystemConfig = { inflationRate: 0.04, demandMultiplier: 1.0, interestRate: 0.12, marketVolatility: 0 },
+  indicators?: MarketIndicators
 ) => {
-  // 1. DYNAMIC COST STRUCTURE (Unit Cost)
-  const baseCost = BRANCH_BASE_COSTS[branch] || 100;
-  const inflatedBaseCost = baseCost * (1 + ecoConfig.inflationRate);
+  // Use indicators if provided, otherwise fallback to ecoConfig
+  const inflation = indicators?.inflation_rate ? (indicators.inflation_rate / 100) : ecoConfig.inflationRate;
+  const interest = indicators?.interest_rate_tr ? (indicators.interest_rate_tr / 100) : ecoConfig.interestRate;
+  const rawAPrice = indicators?.raw_a_price || 20.2;
+  const rawBPrice = indicators?.raw_b_price || 40.4;
 
-  // Production Scale & Learning Curve
-  // Volume produced this round
+  // 1. DYNAMIC COST STRUCTURE
+  const baseCost = BRANCH_BASE_COSTS[branch] || 100;
+  const inflatedBaseCost = baseCost * (1 + inflation);
+
   const productionVolume = (decisions.production.activityLevel / 100) * 10000 + decisions.production.extraProduction;
   
-  // Experience effect: costs drop as volume increases (log model)
-  // Formula: Cost(v) = Cost(1) * v^log2(learning_rate)
-  const learningRate = 0.92; // 92% learning curve
+  const learningRate = 0.92; 
   const experienceExponent = Math.log2(learningRate);
   const learningMultiplier = Math.pow((productionVolume + 1000) / 1000, experienceExponent);
   
   const unitVariableCost = inflatedBaseCost * learningMultiplier;
 
-  // 2. COGS (Direct Materials)
-  const mpaCost = decisions.production.purchaseMPA * 15 * (1 + ecoConfig.inflationRate);
-  const mpbCost = decisions.production.purchaseMPB * 22 * (1 + ecoConfig.inflationRate);
+  // 2. COGS
+  const mpaCost = decisions.production.purchaseMPA * rawAPrice * (1 + inflation);
+  const mpbCost = decisions.production.purchaseMPB * rawBPrice * (1 + inflation);
   const totalCogs = (productionVolume * unitVariableCost) + mpaCost + mpbCost;
 
-  // 3. DEMAND ENGINE (Market Equilibrium)
-  // Calculate average price across all selected regions
+  // 3. DEMAND ENGINE
   const activeRegions = Object.values(decisions.regions);
   const regionCount = activeRegions.length || 1;
   const avgPrice = activeRegions.reduce((acc, r) => acc + r.price, 0) / regionCount;
   
-  // Base Market Potential (Aggregated)
-  const marketPotential = 12000 * ecoConfig.demandMultiplier;
+  // Market Potential based on demand_regions indicator if available
+  const basePotential = indicators?.demand_regions 
+    ? indicators.demand_regions.reduce((a, b) => a + b, 0) / indicators.demand_regions.length 
+    : 12000;
+    
+  const marketPotential = basePotential * ecoConfig.demandMultiplier;
   
-  // Marketing Efficiency (Logarithmic - Spending more has diminishing returns)
   const totalMarketing = activeRegions.reduce((acc, r) => acc + r.marketing, 0);
   const marketingIndex = Math.log10(totalMarketing + 2) * 0.45 + 0.5;
 
-  // Price Elasticity Model
-  // Reference Price for the sector
-  const referencePrice = branch === 'industrial' ? 340 : branch === 'agribusiness' ? 450 : 200;
+  const referencePrice = branch === 'industrial' ? 340 : branch === 'agribusiness' ? 1200 : 200;
   const priceIndex = avgPrice / referencePrice;
   const elasticity = BRANCH_ELASTICITY[branch] || -1.5;
   
-  // Sales Volume (Market Clearing)
-  // Volume is constrained by Production and influenced by Price/Marketing
   const potentialVolume = marketPotential * Math.pow(priceIndex, elasticity) * marketingIndex;
   const salesVolume = Math.min(productionVolume, potentialVolume);
   
   const revenue = salesVolume * avgPrice;
 
-  // 4. OPEX (Fixed Costs & SG&A)
-  const fixedStructuralCost = 50000 * (1 + ecoConfig.inflationRate);
-  const salaryCost = (decisions.hr.hired * 1500) + (decisions.hr.salary * 100);
+  // 4. OPEX
+  const fixedStructuralCost = 50000 * (1 + inflation);
+  const avgSalary = indicators?.average_salary || 1300;
+  const salaryCost = (decisions.hr.hired * (avgSalary * 1.5)) + (decisions.hr.salary * 100);
   const trainingInvestment = (decisions.hr.trainingPercent / 100) * salaryCost;
   
-  // Capital Expenditure Depreciation (CapEx)
-  // Simulated fixed asset base: 2M
-  const machineInvestment = (decisions.finance.buyMachines.alfa * 50000) + (decisions.finance.buyMachines.beta * 80000);
-  const depreciation = (machineInvestment + 2000000) * 0.025; // 10% annual / 4 quarters
+  const machineInvestment = (decisions.finance.buyMachines.alfa * (indicators?.machine_alfa_price || 500000)) + 
+                            (decisions.finance.buyMachines.beta * (indicators?.machine_beta_price || 1500000));
+  const depreciation = (machineInvestment + 2000000) * 0.025; 
 
-  const totalOpex = fixedStructuralCost + (totalMarketing * 1200) + trainingInvestment + depreciation;
+  const totalOpex = fixedStructuralCost + (totalMarketing * (indicators?.marketing_cost_unit || 1200)) + trainingInvestment + depreciation;
 
-  // 5. FINANCIALS (EBIDTA to Net Profit)
+  // 5. FINANCIALS
   const grossProfit = revenue - totalCogs;
   const ebitda = grossProfit - (totalOpex - depreciation);
   const ebit = ebitda - depreciation;
   
-  // Interest: Debt vs Investment
-  // Positive application = income; Negative (loan) = expense
   const netDebt = (decisions.finance.loanRequest) - (decisions.finance.application);
-  const interestRate = netDebt > 0 ? (ecoConfig.interestRate / 4) : 0.012; // 1.2% quarterly yield
-  const financialResult = -netDebt * interestRate;
+  const finalInterestRate = netDebt > 0 ? (interest / 4) : 0.012; 
+  const financialResult = -netDebt * finalInterestRate;
 
   const preTaxProfit = ebit + financialResult;
   
-  // Effective Tax Rate (Progressive)
   const taxRate = preTaxProfit > 200000 ? 0.35 : (preTaxProfit > 0 ? 0.20 : 0);
   const taxes = preTaxProfit > 0 ? preTaxProfit * taxRate : 0;
   const netProfit = preTaxProfit - taxes;
 
-  // KPI Calculations
   const breakEvenUnits = totalOpex / (avgPrice - unitVariableCost || 1);
 
   return {

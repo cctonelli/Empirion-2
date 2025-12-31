@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -15,17 +16,21 @@ import {
   TrendingUp,
   Package,
   Lock,
-  Unlock
+  Unlock,
+  Info,
+  BarChart3
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS } from '../constants';
-import { Branch } from '../types';
+import { Branch, ChampionshipTemplate } from '../types';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import { supabase } from '../services/supabase';
 
 const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [financials, setFinancials] = useState<any>(null); // State for the structure editor
+  const [financials, setFinancials] = useState<any>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<ChampionshipTemplate | null>(null);
+  
   const [formData, setFormData] = useState({
     name: '',
     branch: 'industrial' as Branch,
@@ -47,15 +52,23 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     if (formData.templateId && formData.templateId !== 'scratch') {
       const template = CHAMPIONSHIP_TEMPLATES.find(t => t.id === formData.templateId);
       if (template) {
+        setSelectedTemplate(template);
         setFormData(prev => ({
           ...prev,
           branch: template.branch,
-          regionsCount: template.config.regionsCount,
-          initialStock: template.config.initialStock,
-          initialPrice: template.config.initialPrice,
-          currency: template.config.currency
+          regionsCount: template.config.regionsCount || 9,
+          initialStock: template.products[0]?.initial_stock || 0,
+          initialPrice: template.products[0]?.suggested_price || 340,
+          currency: template.config.currency,
+          salesMode: template.config.sales_mode,
+          scenarioType: template.config.scenario_type,
+          transparency: template.config.transparency_level
         }));
+        // Pre-fill financials from template
+        setFinancials(template.initial_financials);
       }
+    } else if (formData.templateId === 'scratch') {
+        setSelectedTemplate(null);
     }
   }, [formData.templateId]);
 
@@ -64,26 +77,30 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      const payload: any = {
+        name: formData.name,
+        branch: formData.branch,
+        sales_mode: formData.salesMode,
+        scenario_type: formData.scenarioType,
+        transparency_level: formData.transparency,
+        currency: formData.currency,
+        is_public: formData.isPublic,
+        status: 'active',
+        tutor_id: user?.id,
+        config: {
+          regionsCount: formData.regionsCount,
+          initialStock: formData.initialStock,
+          initialPrice: formData.initialPrice
+        },
+        initial_financials: financials || selectedTemplate?.initial_financials || {}, 
+        market_indicators: selectedTemplate?.market_indicators || {},
+        resources: selectedTemplate?.resources || {},
+        products: selectedTemplate?.products || []
+      };
+
       const { error } = await supabase
         .from('championships')
-        .insert([{
-          name: formData.name,
-          branch: formData.branch,
-          sales_mode: formData.salesMode,
-          scenario_type: formData.scenarioType,
-          transparency_level: formData.transparency,
-          currency: formData.currency,
-          is_public: formData.isPublic,
-          status: 'active',
-          tutor_id: user?.id,
-          config: {
-            regionsCount: formData.regionsCount,
-            initialStock: formData.initialStock,
-            initialPrice: formData.initialPrice
-          },
-          initial_financials: financials || {}, 
-          products: [] 
-        }]);
+        .insert([payload]);
 
       if (error) throw error;
       onComplete();
@@ -118,7 +135,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           <div className="space-y-8">
             <div className="text-center">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">Scenario Selection</h2>
-              <p className="text-slate-500 mt-2">Base your championship on a proven model or start fresh.</p>
+              <p className="text-slate-500 mt-2">Base your championship on a proven model (V4.0) or start fresh.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -152,8 +169,9 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                       {t.branch}
                     </span>
                   </div>
-                  <h3 className="font-bold text-slate-900 text-lg">{t.name}</h3>
-                  <p className="text-slate-500 text-sm mt-1 line-clamp-2">{t.description}</p>
+                  <h3 className="font-bold text-slate-900 text-lg leading-tight">{t.name}</h3>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1 text-blue-600">{t.sector}</p>
+                  <p className="text-slate-500 text-sm mt-2 line-clamp-2">{t.description}</p>
                 </button>
               ))}
             </div>
@@ -270,7 +288,19 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
               <p className="text-slate-500 mt-2">Map the opening balance and income structure for all competing firms.</p>
             </div>
             
-            <FinancialStructureEditor onChange={setFinancials} />
+            {selectedTemplate && (
+              <div className="p-6 bg-blue-50 rounded-3xl border border-blue-100 flex items-center gap-4 mb-6 animate-in zoom-in-95">
+                <Info className="text-blue-600 shrink-0" size={24} />
+                <p className="text-xs font-medium text-blue-900">
+                  You've selected the <strong>{selectedTemplate.name}</strong> template. The financial structure below is pre-populated with its V4.0 audited balance sheet. You can still tweak it.
+                </p>
+              </div>
+            )}
+            
+            <FinancialStructureEditor 
+                onChange={setFinancials} 
+                initialData={selectedTemplate?.initial_financials} 
+            />
           </div>
         )}
 
@@ -293,14 +323,22 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                  <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Regional Nodes:</span>
                  <span className="text-slate-900 font-bold">{formData.regionsCount} Regions</span>
                </div>
+               {selectedTemplate && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Engine Base:</span>
+                    <span className="text-blue-600 font-bold">{selectedTemplate.sector}</span>
+                  </div>
+               )}
                <div className="flex justify-between pt-6 border-t border-slate-200">
                  <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Initial Assets:</span>
-                 <span className="text-emerald-600 font-black text-lg">{formData.currency} 1,250,000</span>
+                 <span className="text-emerald-600 font-black text-lg">
+                    {formData.currency} {(financials?.balance_sheet?.total_assets || selectedTemplate?.initial_financials?.balance_sheet?.total_assets || 1250000).toLocaleString()}
+                 </span>
                </div>
             </div>
             <div className="flex items-center gap-3 justify-center text-slate-400 text-sm">
-              <FileText size={18} />
-              <span>Gemini AI will finalize the Economic Prospectus</span>
+              <BarChart3 size={18} />
+              <span>Engine generates Period 1 reports based on V4.0 JSON scope.</span>
             </div>
           </div>
         )}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, Trash2, ChevronDown, ListTree, DollarSign, Calculator, 
@@ -7,31 +8,41 @@ import {
 import { AccountNode } from '../types';
 
 interface FinancialStructureEditorProps {
-  onChange?: (nodes: AccountNode[]) => void;
+  onChange?: (data: any) => void;
+  initialData?: any;
 }
 
-const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onChange }) => {
-  const [activeTab, setActiveTab] = useState<'dre' | 'balance'>('dre');
+const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onChange, initialData }) => {
+  const [activeTab, setActiveTab] = useState<'dre' | 'balance'>('balance');
   
   const [nodes, setNodes] = useState<AccountNode[]>([
     {
-      id: 'root-revenue',
-      label: 'RECEITA BRUTA',
-      value: 1000000,
+      id: 'root-assets',
+      label: 'TOTAL ATIVO',
+      value: initialData?.balance_sheet?.total_assets || 9176940,
       type: 'credit',
       children: [
-        { id: 'rev-domestic', label: 'Vendas Mercado Interno', value: 800000, type: 'credit', isEditable: true },
-        { id: 'rev-export', label: 'Vendas Exportação', value: 200000, type: 'credit', isEditable: true },
-      ]
-    },
-    {
-      id: 'root-costs',
-      label: 'CUSTOS OPERACIONAIS',
-      value: 500000,
-      type: 'debit',
-      children: [
-        { id: 'cost-raw', label: 'Matéria Prima', value: 300000, type: 'debit', isEditable: true },
-        { id: 'cost-labor', label: 'Mão de Obra Direta', value: 200000, type: 'debit', isEditable: true },
+        { 
+            id: 'current-assets', 
+            label: 'Ativo Circulante', 
+            value: 0, 
+            type: 'credit', 
+            children: [
+                { id: 'cash', label: 'Caixa e Equivalentes', value: initialData?.balance_sheet?.current_assets?.cash || 0, type: 'credit', isEditable: true },
+                { id: 'receivables', label: 'Contas a Receber', value: initialData?.balance_sheet?.current_assets?.accounts_receivable || 1823735, type: 'credit', isEditable: true },
+                { id: 'inventory', label: 'Estoques', value: (initialData?.balance_sheet?.current_assets?.inventory_raw_a || 0) + (initialData?.balance_sheet?.current_assets?.inventory_raw_b || 0), type: 'credit', isEditable: true },
+            ] 
+        },
+        { 
+            id: 'non-current-assets', 
+            label: 'Ativo Não Circulante', 
+            value: 0, 
+            type: 'credit',
+            children: [
+                { id: 'ppe', label: 'Imobilizado (PP&E)', value: initialData?.balance_sheet?.non_current_assets?.pp_e?.machinery || 2360000, type: 'credit', isEditable: true },
+                { id: 'land', label: 'Terras', value: initialData?.balance_sheet?.non_current_assets?.pp_e?.land || 1200000, type: 'credit', isEditable: true },
+            ]
+        }
       ]
     }
   ]);
@@ -48,7 +59,26 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
   }, []);
 
   useEffect(() => {
-    if (onChange) onChange(nodes);
+    if (initialData) {
+        // Here we could rebuild the tree from initialData more robustly
+        // For now, keeping it simple as the default nodes already attempt to use initialData
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    if (onChange) {
+        // Simplify back to the V4 structure for the payload
+        const assetsNode = nodes.find(n => n.id === 'root-assets');
+        onChange({
+            balance_sheet: {
+                total_assets: assetsNode?.value || 0,
+                current_assets: {
+                    cash: assetsNode?.children?.find(c => c.id === 'current-assets')?.children?.find(sc => sc.id === 'cash')?.value || 0,
+                    // ... extract others
+                }
+            }
+        });
+    }
   }, [nodes, onChange]);
 
   const addNode = (parentId?: string) => {
@@ -56,7 +86,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
       id: Math.random().toString(36).substr(2, 9), 
       label: 'Nova Conta', 
       value: 0, 
-      type: activeTab === 'dre' ? 'credit' : 'debit', 
+      type: 'credit', 
       isEditable: true 
     };
     
@@ -114,23 +144,23 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
       <div className="flex items-center justify-between gap-4">
         <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl w-full sm:w-fit border border-slate-200">
           <button 
-            onClick={() => setActiveTab('dre')}
-            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'dre' ? 'bg-white text-slate-900 shadow-md border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            DRE Blueprint
-          </button>
-          <button 
             onClick={() => setActiveTab('balance')}
             className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'balance' ? 'bg-white text-slate-900 shadow-md border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
           >
             Balance Structure
+          </button>
+          <button 
+            onClick={() => setActiveTab('dre')}
+            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'dre' ? 'bg-white text-slate-900 shadow-md border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            DRE Config
           </button>
         </div>
         
         <div className="hidden sm:flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
           <Calculator size={18} className="text-blue-500" />
           <div className="flex flex-col">
-            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Asset Valuation</span>
+            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Total Initial Valuation</span>
             <span className="font-mono font-black text-slate-900 text-xs">$ {nodes.reduce((acc, curr) => acc + curr.value, 0).toLocaleString()}</span>
           </div>
         </div>
@@ -140,7 +170,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-3">
             <Layers size={18} className="text-slate-400" />
-            <span className="text-xs font-black uppercase tracking-widest text-slate-700">Account Hierarchy Editor</span>
+            <span className="text-xs font-black uppercase tracking-widest text-slate-700">V4.0 Account Hierarchy Editor</span>
           </div>
           <div className="flex items-center gap-4">
              <Info size={14} className="text-blue-500" />
@@ -167,7 +197,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
             className="w-full py-8 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
           >
             <Plus size={24} />
-            <span className="font-black text-[10px] uppercase tracking-widest">Initialize Root Account</span>
+            <span className="font-black text-[10px] uppercase tracking-widest">Initialize New Root Category</span>
           </button>
         </div>
       </div>
