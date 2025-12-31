@@ -1,13 +1,12 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Save, Info, TrendingUp, 
   ShoppingCart, Factory, Tag, Megaphone, 
   Truck, Users2, Building2, ChevronRight,
   ShieldCheck, AlertCircle, Settings, Loader2,
-  BarChart3, Target, Wallet, Globe
+  BarChart3, Target, Wallet, Globe, History, User
 } from 'lucide-react';
-import { supabase } from '../services/supabase';
+import { supabase, subscribeToDecisionAudit } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { DecisionData, RegionalDecision } from '../types';
 
@@ -26,14 +25,30 @@ const createInitialDecisions = (regionsCount: number): DecisionData => {
   };
 };
 
-const DecisionForm: React.FC<{ regionsCount?: number }> = ({ regionsCount = 9 }) => {
+const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string }> = ({ regionsCount = 9, teamId = 'team-alpha' }) => {
   const [activeSection, setActiveSection] = useState('marketing');
   const [decisions, setDecisions] = useState<DecisionData>(() => createInitialDecisions(regionsCount));
   const [isSaving, setIsSaving] = useState(false);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
   useEffect(() => {
     setDecisions(createInitialDecisions(regionsCount));
-  }, [regionsCount]);
+    
+    // Subscribe to Realtime Audit Logs
+    const subscription = subscribeToDecisionAudit(teamId, (payload) => {
+      const newLog = payload.new;
+      setAuditLogs(prev => [newLog, ...prev].slice(0, 5));
+      setLastSync(new Date());
+      
+      // Optionally toast notification
+      console.log(`Update from ${newLog.user_name}: ${newLog.action}`);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [regionsCount, teamId]);
 
   const projections = useMemo(() => {
     return calculateProjections(decisions, 'industrial');
@@ -58,13 +73,21 @@ const DecisionForm: React.FC<{ regionsCount?: number }> = ({ regionsCount = 9 })
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 pb-20">
-      {/* Dynamic Projections Sidebar */}
+      {/* Dynamic Projections & Audit Sidebar */}
       <aside className="w-full lg:w-80 flex flex-col gap-6 shrink-0 order-2 lg:order-1">
         <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
           <div className="relative z-10">
-             <div className="flex items-center gap-2 mb-6 opacity-60">
-                <Target size={16} className="text-blue-400" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Live Projections</span>
+             <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2 opacity-60">
+                   <Target size={16} className="text-blue-400" />
+                   <span className="text-[10px] font-black uppercase tracking-widest">Live Projections</span>
+                </div>
+                {lastSync && (
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                    <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                    <span className="text-[8px] font-black uppercase text-emerald-400">Synced</span>
+                  </div>
+                )}
              </div>
              <div className="space-y-6">
                 <div>
@@ -92,6 +115,33 @@ const DecisionForm: React.FC<{ regionsCount?: number }> = ({ regionsCount = 9 })
           </div>
         </div>
 
+        {/* Real-time Collaboration Feed */}
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+           <div className="flex items-center justify-between px-2">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Team Activity</h4>
+              <History size={14} className="text-slate-300" />
+           </div>
+           <div className="space-y-3">
+              {auditLogs.length === 0 ? (
+                <div className="py-8 text-center border-2 border-dashed border-slate-50 rounded-2xl">
+                   <p className="text-[10px] font-bold text-slate-300 uppercase">Awaiting input...</p>
+                </div>
+              ) : (
+                auditLogs.map((log, i) => (
+                  <div key={i} className="flex gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                      <User size={14} className="text-blue-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black text-slate-900 truncate uppercase">{log.user_name || 'Collaborator'}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{log.action || 'Updated decision'}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+           </div>
+        </div>
+
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Navigation</h4>
            {sections.map(s => (
@@ -110,16 +160,6 @@ const DecisionForm: React.FC<{ regionsCount?: number }> = ({ regionsCount = 9 })
              </button>
            ))}
         </div>
-
-        <div className="p-6 bg-amber-50 rounded-[2rem] border border-amber-100">
-           <div className="flex items-center gap-2 mb-2 text-amber-700">
-              <AlertCircle size={16} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Market Context</span>
-           </div>
-           <p className="text-xs text-amber-900/70 leading-relaxed font-medium">
-             Raw material A prices are projected to rise by 5.2% next round. Consider stockpiling now.
-           </p>
-        </div>
       </aside>
 
       {/* Main Form Area */}
@@ -128,11 +168,17 @@ const DecisionForm: React.FC<{ regionsCount?: number }> = ({ regionsCount = 9 })
           <div className="flex items-center justify-between mb-10 pb-6 border-b border-slate-50">
             <div>
               <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight">{activeSection} Control</h2>
-              <p className="text-slate-500 font-medium">Empirion Deployment Interface | Round 4</p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-slate-500 font-medium">Empirion Deployment Interface | Round 4</p>
+                {lastSync && (
+                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                    • Live
+                  </span>
+                )}
+              </div>
             </div>
             {activeSection === 'marketing' && (
               <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
-                 {/* Fixed: Globe icon now imported from lucide-react */}
                  <Globe size={16} />
                  <span className="text-[10px] font-black uppercase tracking-widest">{regionsCount} Dynamic Channels</span>
               </div>
@@ -152,7 +198,6 @@ const DecisionForm: React.FC<{ regionsCount?: number }> = ({ regionsCount = 9 })
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {/* Fix: Explicitly type the entries to resolve 'unknown' property access errors */}
                     {(Object.entries(decisions.regions) as [string, RegionalDecision][]).map(([id, data]) => (
                       <tr key={id} className="hover:bg-slate-50/30 transition-colors">
                         <td className="p-5 font-bold text-slate-900">Region 0{id}</td>

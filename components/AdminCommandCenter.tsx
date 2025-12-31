@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { 
   Activity, 
@@ -9,9 +8,77 @@ import {
   CreditCard,
   Cpu,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Lock,
+  Copy,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
+
+const RLS_SQL_SCRIPT = `-- Empirion Security Framework - Row Level Security (RLS)
+-- Version 3.0 Consolidated
+
+-- 1. ENABLE RLS GLOBALLY
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.championship_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.championships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.community_ratings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.current_decisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.public_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
+
+-- 2. POLICIES: users
+DROP POLICY IF EXISTS "Usuários veem próprio perfil" ON public.users;
+CREATE POLICY "Usuários veem próprio perfil" ON public.users AS PERMISSIVE FOR ALL USING ((auth.uid() = id));
+
+-- 3. POLICIES: championship_templates
+DROP POLICY IF EXISTS "Templates públicos visíveis" ON public.championship_templates;
+CREATE POLICY "Templates públicos visíveis" ON public.championship_templates AS PERMISSIVE FOR SELECT USING ((is_public OR (created_by = auth.uid()) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
+
+-- 4. POLICIES: championships
+DROP POLICY IF EXISTS "Tutor edita seu campeonato" ON public.championships;
+CREATE POLICY "Tutor edita seu campeonato" ON public.championships AS PERMISSIVE FOR UPDATE USING (((tutor_id = auth.uid()) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
+
+DROP POLICY IF EXISTS "Tutor vê seus campeonatos" ON public.championships;
+CREATE POLICY "Tutor vê seus campeonatos" ON public.championships AS PERMISSIVE FOR ALL USING (((tutor_id = auth.uid()) OR (EXISTS ( SELECT 1 FROM championship_tutors WHERE ((championship_tutors.championship_id = championships.id) AND (championship_tutors.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
+
+-- 5. POLICIES: community_ratings
+DROP POLICY IF EXISTS "Todos do campeonato veem ratings" ON public.community_ratings;
+CREATE POLICY "Todos do campeonato veem ratings" ON public.community_ratings AS PERMISSIVE FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Usuários autenticados podem votar" ON public.community_ratings;
+CREATE POLICY "Usuários autenticados podem votar" ON public.community_ratings AS PERMISSIVE FOR INSERT WITH CHECK ((auth.uid() IS NOT NULL));
+
+-- 6. POLICIES: companies
+DROP POLICY IF EXISTS "Equipe vê seus dados" ON public.companies;
+CREATE POLICY "Equipe vê seus dados" ON public.companies AS PERMISSIVE FOR ALL USING (((EXISTS ( SELECT 1 FROM (teams t JOIN team_members tm ON ((t.id = tm.team_id))) WHERE ((t.id = companies.team_id) AND (tm.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM championship_tutors ct WHERE ((ct.championship_id = companies.championship_id) AND (ct.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
+
+-- 7. POLICIES: current_decisions
+DROP POLICY IF EXISTS "Equipe edita decisões" ON public.current_decisions;
+CREATE POLICY "Equipe edita decisões" ON public.current_decisions AS PERMISSIVE FOR ALL USING ((EXISTS ( SELECT 1 FROM (teams t JOIN team_members tm ON ((t.id = tm.team_id))) WHERE ((t.id = current_decisions.team_id) AND (tm.user_id = auth.uid())))));
+
+-- 8. POLICIES: public_reports
+DROP POLICY IF EXISTS "Todos do campeonato veem relatórios públicos" ON public.public_reports;
+CREATE POLICY "Todos do campeonato veem relatórios públicos" ON public.public_reports AS PERMISSIVE FOR SELECT USING (((EXISTS ( SELECT 1 FROM teams t WHERE ((t.championship_id = public_reports.championship_id) AND (EXISTS ( SELECT 1 FROM team_members tm WHERE ((tm.team_id = t.id) AND (tm.user_id = auth.uid()))))))) OR (EXISTS ( SELECT 1 FROM championship_tutors ct WHERE ((ct.championship_id = public_reports.championship_id) AND (ct.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
+
+-- 9. POLICIES: team_members
+DROP POLICY IF EXISTS "Membros veem membros da equipe" ON public.team_members;
+CREATE POLICY "Membros veem membros da equipe" ON public.team_members AS PERMISSIVE FOR SELECT USING (((EXISTS ( SELECT 1 FROM team_members tm2 WHERE ((tm2.team_id = team_members.team_id) AND (tm2.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = ANY (ARRAY['tutor'::text, 'admin'::text])))))));
+
+-- 10. POLICIES: teams
+DROP POLICY IF EXISTS "Equipes veem apenas suas próprias" ON public.teams;
+CREATE POLICY "Equipes veem apenas suas próprias" ON public.teams AS PERMISSIVE FOR SELECT USING ((EXISTS ( SELECT 1 FROM team_members WHERE ((team_members.team_id = teams.id) AND (team_members.user_id = auth.uid())))));
+
+DROP POLICY IF EXISTS "Membros veem sua equipe" ON public.teams;
+CREATE POLICY "Membros veem sua equipe" ON public.teams AS PERMISSIVE FOR ALL USING (((EXISTS ( SELECT 1 FROM team_members WHERE ((team_members.team_id = teams.id) AND (team_members.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM (championship_tutors ct JOIN championships c ON ((ct.championship_id = c.id))) WHERE ((c.id = teams.championship_id) AND (ct.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
+
+-- NOTIFY RELOAD
+NOTIFY pgrst, 'reload schema';
+NOTIFY pgrst, 'reload config';
+`;
 
 const AdminCommandCenter: React.FC = () => {
   const [stats, setStats] = useState({
@@ -21,13 +88,12 @@ const AdminCommandCenter: React.FC = () => {
     latency: '0ms'
   });
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   const fetchGlobalStats = async () => {
     setLoading(true);
     const start = performance.now();
     try {
-      // Nota: No Supabase free tier, count(*) pode ser lento se as tabelas forem gigantes
-      // Usamos .select('*', { count: 'exact', head: true }) para eficiência
       const { count: userCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
       const { count: champCount } = await supabase.from('championships').select('*', { count: 'exact', head: true });
       const { count: teamCount } = await supabase.from('teams').select('*', { count: 'exact', head: true });
@@ -45,6 +111,12 @@ const AdminCommandCenter: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyRLS = () => {
+    navigator.clipboard.writeText(RLS_SQL_SCRIPT);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   useEffect(() => {
@@ -94,40 +166,94 @@ const AdminCommandCenter: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-           <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Activity size={20} className="text-blue-500" /> Live Championship Nodes
-              </h3>
-              <button className="text-xs font-bold text-blue-600 hover:underline">View All</button>
-           </div>
-           <div className="divide-y divide-slate-50">
-              {[
-                { name: 'Tech Frontier 2025', tutor: 'Dr. Santos', status: 'R4 Processing', load: 'Heavy' },
-                { name: 'AgroBoost Global', tutor: 'Clarissa S.', status: 'Waiting R1', load: 'Light' },
-                { name: 'Fashion Retail MVP', tutor: 'Admin', status: 'Draft', load: 'N/A' },
-                { name: 'Solar Energy Cup', tutor: 'Bruno M.', status: 'R8 Complete', load: 'Medium' },
-              ].map((c, i) => (
-                <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50 transition-colors">
-                   <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400 group-hover:bg-white transition-colors">{c.name[0]}</div>
-                      <div>
-                         <h4 className="font-bold text-slate-900">{c.name}</h4>
-                         <p className="text-xs text-slate-400">Lead Tutor: {c.tutor}</p>
-                      </div>
-                   </div>
-                   <div className="flex items-center gap-6">
-                      <div className="text-right">
-                         <p className="text-xs font-bold text-slate-700">{c.status}</p>
-                         <p className="text-[10px] text-slate-400 uppercase font-black">Status</p>
-                      </div>
-                      <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                        <ExternalLink size={18} />
-                      </button>
-                   </div>
-                </div>
-              ))}
-           </div>
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+             <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Activity size={20} className="text-blue-500" /> Live Championship Nodes
+                </h3>
+                <button className="text-xs font-bold text-blue-600 hover:underline">View All</button>
+             </div>
+             <div className="divide-y divide-slate-50">
+                {[
+                  { name: 'Tech Frontier 2025', tutor: 'Dr. Santos', status: 'R4 Processing', load: 'Heavy' },
+                  { name: 'AgroBoost Global', tutor: 'Clarissa S.', status: 'Waiting R1', load: 'Light' },
+                  { name: 'Fashion Retail MVP', tutor: 'Admin', status: 'Draft', load: 'N/A' },
+                  { name: 'Solar Energy Cup', tutor: 'Bruno M.', status: 'R8 Complete', load: 'Medium' },
+                ].map((c, i) => (
+                  <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50 transition-colors">
+                     <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400 group-hover:bg-white transition-colors">{c.name[0]}</div>
+                        <div>
+                           <h4 className="font-bold text-slate-900">{c.name}</h4>
+                           <p className="text-xs text-slate-400">Lead Tutor: {c.tutor}</p>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-6">
+                        <div className="text-right">
+                           <p className="text-xs font-bold text-slate-700">{c.status}</p>
+                           <p className="text-[10px] text-slate-400 uppercase font-black">Status</p>
+                        </div>
+                        <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
+                          <ExternalLink size={18} />
+                        </button>
+                     </div>
+                  </div>
+                ))}
+             </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+            <div className="flex items-center justify-between mb-8">
+               <div className="flex items-center gap-3">
+                  <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl">
+                     <Lock size={24} />
+                  </div>
+                  <div>
+                     <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Security & RLS Protocols</h3>
+                     <p className="text-slate-400 text-sm font-medium">Protect simulation integrity and multi-tenant data isolation.</p>
+                  </div>
+               </div>
+               <button 
+                onClick={copyRLS}
+                className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  copied ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white hover:bg-blue-600'
+                }`}
+               >
+                 {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                 {copied ? 'Copied SQL' : 'Copy RLS Script'}
+               </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                  <div className="flex items-center gap-2 mb-4">
+                     <AlertTriangle size={16} className="text-amber-500" />
+                     <span className="text-xs font-black uppercase text-slate-700">Audit Status</span>
+                  </div>
+                  <p className="text-sm text-slate-500 leading-relaxed mb-4">
+                    Row-level security ensures that teams cannot see or edit decisions from competitors.
+                  </p>
+                  <div className="flex items-center gap-2">
+                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                     <span className="text-[10px] font-bold text-slate-400 uppercase">Multi-tenant isolation active</span>
+                  </div>
+               </div>
+               <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                  <div className="flex items-center gap-2 mb-4">
+                     <ShieldAlert size={16} className="text-blue-500" />
+                     <span className="text-xs font-black uppercase text-slate-700">Tutor Oversight</span>
+                  </div>
+                  <p className="text-sm text-slate-500 leading-relaxed mb-4">
+                    Tutors have full read-access to teams within their assigned championships.
+                  </p>
+                  <div className="flex items-center gap-2">
+                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                     <span className="text-[10px] font-bold text-slate-400 uppercase">Hierarchical policies applied</span>
+                  </div>
+               </div>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-8">

@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
-import { ShieldCheck, Mail, Lock, LogIn, UserPlus } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, LogIn, UserPlus, ChevronLeft } from 'lucide-react';
 
-const Auth: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
+interface AuthProps {
+  onAuth: () => void;
+  onBack?: () => void;
+}
+
+const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,7 +55,16 @@ const Auth: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 font-sans">
+      {onBack && (
+        <button 
+          onClick={onBack}
+          className="mb-8 flex items-center gap-2 text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest transition-colors"
+        >
+          <ChevronLeft size={16} /> Back to Showcase
+        </button>
+      )}
+      
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center">
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-200">

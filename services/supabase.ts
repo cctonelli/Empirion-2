@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://gkmjlejqndfdvxxvuxa.supabase.co';
@@ -11,5 +10,18 @@ export const subscribeToDecisions = (teamId: string, callback: (payload: any) =>
   return supabase
     .channel(`decisions-${teamId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'current_decisions', filter: `team_id=eq.${teamId}` }, callback)
+    .subscribe();
+};
+
+// Real-time subscription for decision audit logs
+export const subscribeToDecisionAudit = (teamId: string, callback: (payload: any) => void) => {
+  return supabase
+    .channel(`audit-logs-${teamId}`)
+    .on('postgres_changes', { 
+      event: 'INSERT', 
+      schema: 'public', 
+      table: 'decision_audit_log', 
+      filter: `team_id=eq.${teamId}` 
+    }, callback)
     .subscribe();
 };
