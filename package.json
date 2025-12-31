@@ -9,10 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "lucide-react": "0.460.0",
-    "@google/genai": "0.21.0",
+    "@google/genai": "latest",
     "recharts": "2.13.3",
     "react-apexcharts": "1.4.1",
     "apexcharts": "3.45.0",
