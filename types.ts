@@ -4,6 +4,13 @@ export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 
+export interface EcosystemConfig {
+  inflationRate: number; // 0 to 1 (e.g., 0.05 for 5%)
+  demandMultiplier: number; // 0.5 to 2.0
+  interestRate: number; // 0 to 1
+  marketVolatility: number; // 0 to 1
+}
+
 export interface AccountNode {
   id: string;
   label: string;
@@ -110,4 +117,18 @@ export interface Company {
     motivation: 'Low' | 'Regular' | 'High';
     stockPrice: number;
   };
+}
+
+export interface Championship {
+  id: string;
+  name: string;
+  description: string;
+  branch: Branch;
+  status: ChampionshipStatus;
+  is_public: boolean;
+  currentRound: number;
+  totalRounds: number;
+  ecosystemConfig: EcosystemConfig;
+  tutor_id: string;
+  invite_code?: string;
 }

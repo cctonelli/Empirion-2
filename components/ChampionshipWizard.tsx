@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -14,7 +13,9 @@ import {
   Loader2,
   MapPin,
   TrendingUp,
-  Package
+  Package,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS } from '../constants';
 import { Branch } from '../types';
@@ -35,7 +36,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     regionsCount: 9,
     initialStock: 30000,
     initialPrice: 340,
-    currency: 'BRL'
+    currency: 'BRL',
+    isPublic: false
   });
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
@@ -71,6 +73,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           scenario_type: formData.scenarioType,
           transparency_level: formData.transparency,
           currency: formData.currency,
+          is_public: formData.isPublic,
           status: 'active',
           tutor_id: user?.id,
           config: {
@@ -174,6 +177,26 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                   className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-600 outline-none transition-all font-semibold"
                   placeholder="Ex: Industrial Masters 2025"
                 />
+              </div>
+
+              <div className="space-y-4">
+                <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
+                  <Unlock size={14} className="text-blue-500" /> Visibility
+                </label>
+                <div className="flex gap-4 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+                   <button 
+                     onClick={() => setFormData({...formData, isPublic: false})}
+                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${!formData.isPublic ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
+                   >
+                     <Lock size={14} /> Private
+                   </button>
+                   <button 
+                     onClick={() => setFormData({...formData, isPublic: true})}
+                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${formData.isPublic ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
+                   >
+                     <Unlock size={14} /> Public
+                   </button>
+                </div>
               </div>
 
               <div className="space-y-4">
