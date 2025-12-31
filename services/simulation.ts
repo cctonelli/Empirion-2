@@ -10,21 +10,24 @@ export const calculateProjections = (decisions: DecisionData, branch: Branch) =>
   // Cost units decrease as cumulative production increases
   const learningRate = -0.211; // Standard 85% curve
   const baseCost = branch === 'industrial' ? 45 : 30;
-  const productionVolume = decisions.production.line1 + decisions.production.line2;
+  
+  // FIXED: Replaced non-existent line1/line2 with activityLevel-based volume calculation
+  const productionVolume = (decisions.production.activityLevel / 100) * 1000 + (decisions.production.extraProduction / 100) * 200;
   const learningMultiplier = Math.pow((productionVolume + 1000) / 1000, learningRate);
   const unitCost = baseCost * learningMultiplier;
 
   // 2. Variable Costs
+  // FIXED: Accessing correct purchase volume properties on the production object
   const totalVariableCosts = productionVolume * unitCost + 
-    (decisions.purchases.materialA.volume * 12) + 
-    (decisions.purchases.materialB.volume * 18);
+    (decisions.production.purchaseMPA * 12) + 
+    (decisions.production.purchaseMPB * 18);
 
   // 3. Operational Expenses (Fixed + Decision based)
-  const opex = decisions.marketing.branding + 
-    decisions.marketing.digital + 
-    decisions.marketing.traditional + 
-    decisions.hr.trainingBudget + 
-    25000; // Fixed structural cost
+  // FIXED: Summing marketing from regions and estimating training expense from trainingPercent
+  const totalMarketing = Object.values(decisions.regions).reduce((acc, r) => acc + (r.marketing * 500), 0);
+  const trainingExp = (decisions.hr.trainingPercent / 100) * decisions.hr.salary * 10; 
+
+  const opex = totalMarketing + trainingExp + 25000; // Fixed structural cost
 
   // 4. Market Demand Estimation (Simplification of Shared Demand)
   // In a real simulation, this depends on ALL teams.
@@ -32,11 +35,16 @@ export const calculateProjections = (decisions: DecisionData, branch: Branch) =>
   const totalDemand = 5000; // Placeholder
   const salesVolume = Math.min(productionVolume, totalDemand * estimatedMarketShare);
   
-  const revenue = salesVolume * decisions.pricing.productA.price;
+  // FIXED: Replaced missing 'pricing' property with an average price derived from regions
+  const regionValues = Object.values(decisions.regions);
+  const avgPrice = regionValues.length > 0 ? regionValues.reduce((acc, r) => acc + r.price, 0) / regionValues.length : 340;
+  
+  const revenue = salesVolume * avgPrice;
   const grossMargin = revenue - totalVariableCosts;
   const ebitda = grossMargin - opex;
   const netProfit = ebitda * 0.85; // Simple 15% tax flat
 
+  // FIXED: Removed invalid dividends access and updated projectedCash logic
   return {
     revenue,
     unitCost,
@@ -45,6 +53,6 @@ export const calculateProjections = (decisions: DecisionData, branch: Branch) =>
     ebitda,
     netProfit,
     salesVolume,
-    projectedCash: 1250000 + netProfit - decisions.finance.dividends // Starting cash + profit
+    projectedCash: 1250000 + netProfit // Starting cash + profit
   };
 };

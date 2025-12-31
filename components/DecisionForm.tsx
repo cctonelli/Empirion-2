@@ -1,348 +1,309 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Save, Info, Users, RotateCcw, TrendingUp, 
+  Save, Info, TrendingUp, 
   ShoppingCart, Factory, Tag, Megaphone, 
-  Truck, Users2, Building2, Wallet, ChevronRight,
-  ShieldCheck, AlertCircle, Settings, Loader2
+  Truck, Users2, Building2, ChevronRight,
+  ShieldCheck, AlertCircle, Settings, Loader2,
+  BarChart3, Target, Wallet
 } from 'lucide-react';
-import { supabase, subscribeToDecisions } from '../services/supabase';
+import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
-import { DecisionData } from '../types';
+import { DecisionData, RegionalDecision } from '../types';
 
-const INITIAL_DECISIONS: DecisionData = {
-  purchases: {
-    materialA: { volume: 500, supplier: 'local', contract: 'spot' },
-    materialB: { volume: 300, supplier: 'local', contract: 'spot' },
-  },
-  production: {
-    line1: 1000,
-    line2: 0,
-    modernizationLevel: 0.1,
-  },
-  marketing: {
-    branding: 5000,
-    digital: 10000,
-    traditional: 2000,
-  },
-  pricing: {
-    productA: { price: 150, localAllocation: 0.8 },
-    productB: { price: 200, localAllocation: 1.0 },
-  },
-  logistics: {
-    shippingMode: 'land',
-  },
-  hr: {
-    hiring: 5,
-    trainingBudget: 2500,
-    salaryMultiplier: 1.0,
-  },
-  finance: {
-    dividends: 0,
-    loansRequest: 0,
-    sharesBuyback: 0,
-  },
+const INITIAL_REGIONAL: RegionalDecision = { price: 340, term: 1, marketing: 3 };
+
+const createInitialDecisions = (regionsCount: number): DecisionData => {
+  const regions: Record<number, RegionalDecision> = {};
+  for (let i = 1; i <= regionsCount; i++) {
+    regions[i] = { ...INITIAL_REGIONAL };
+  }
+  return {
+    regions,
+    hr: { hired: 0, fired: 0, salary: 1300, trainingPercent: 5, participationPercent: 0, others: 0 },
+    production: { purchaseMPA: 30000, purchaseMPB: 20000, paymentType: 1, activityLevel: 100, extraProduction: 0 },
+    finance: { loanRequest: 0, loanType: 0, application: 0, termSalesInterest: 1.5, buyMachines: { alfa: 0, beta: 0, gama: 0 }, sellMachines: { alfa: 0, beta: 0, gama: 0 } },
+  };
 };
 
-const DecisionForm: React.FC = () => {
-  const [activeSection, setActiveSection] = useState('purchases');
-  const [decisions, setDecisions] = useState<DecisionData>(INITIAL_DECISIONS);
-  const [projections, setProjections] = useState<any>(null);
+const DecisionForm: React.FC<{ regionsCount?: number }> = ({ regionsCount = 9 }) => {
+  const [activeSection, setActiveSection] = useState('marketing');
+  const [decisions, setDecisions] = useState<DecisionData>(() => createInitialDecisions(regionsCount));
   const [isSaving, setIsSaving] = useState(false);
-  const [teamId] = useState('mock-team-123'); // Placeholder para o ID real do time
 
-  // Sincronização Realtime
   useEffect(() => {
-    const channel = subscribeToDecisions(teamId, (payload) => {
-      if (payload.new && payload.new.data) {
-        setDecisions(payload.new.data as DecisionData);
-      }
-    });
+    setDecisions(createInitialDecisions(regionsCount));
+  }, [regionsCount]);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [teamId]);
-
-  // Projeções Locais (Matemática Bonopoly)
-  useEffect(() => {
-    const proj = calculateProjections(decisions, 'industrial');
-    setProjections(proj);
+  const projections = useMemo(() => {
+    return calculateProjections(decisions, 'industrial');
   }, [decisions]);
 
-  // Persistência das Decisões (Auto-save ou Manual)
-  const saveDecisions = useCallback(async (data: DecisionData) => {
-    setIsSaving(true);
-    try {
-      const { error } = await supabase
-        .from('current_decisions')
-        .upsert({
-          team_id: teamId,
-          championship_id: 'mock-champ-456', // Placeholder
-          round: 4,
-          data: data,
-          updated_at: new Date().toISOString()
-        });
-      
-      if (error) throw error;
-    } catch (err) {
-      console.error("Failed to save decisions:", err);
-    } finally {
-      setTimeout(() => setIsSaving(false), 1000); // Feedback visual
-    }
-  }, [teamId]);
-
-  const updateNested = (path: string, value: any) => {
-    const keys = path.split('.');
-    setDecisions(prev => {
-      const next = JSON.parse(JSON.stringify(prev));
-      let current = next;
-      for (let i = 0; i < keys.length - 1; i++) {
-        current = current[keys[i]];
+  const updateRegional = (regionId: number, field: keyof RegionalDecision, value: number) => {
+    setDecisions(prev => ({
+      ...prev,
+      regions: {
+        ...prev.regions,
+        [regionId]: { ...prev.regions[regionId], [field]: value }
       }
-      current[keys[keys.length - 1]] = value;
-      // Opcional: Trigger auto-save aqui com debounce
-      return next;
-    });
+    }));
   };
 
   const sections = [
-    { id: 'purchases', label: 'Procurement', icon: ShoppingCart },
-    { id: 'production', label: 'Production', icon: Factory },
-    { id: 'pricing', label: 'Pricing & Mix', icon: Tag },
-    { id: 'marketing', label: 'Marketing', icon: Megaphone },
-    { id: 'logistics', label: 'Logistics', icon: Truck },
+    { id: 'marketing', label: 'Regional Market', icon: Megaphone },
+    { id: 'production', label: 'Production & MP', icon: Factory },
     { id: 'hr', label: 'Human Resources', icon: Users2 },
-    { id: 'finance', label: 'Finance & CapEx', icon: Building2 },
+    { id: 'finance', label: 'Financial Strategy', icon: Building2 },
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-700 pb-20">
-      {/* Navigation Sidebar */}
-      <aside className="w-full lg:w-72 space-y-2 shrink-0">
-        <h3 className="px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Strategic Areas</h3>
-        {sections.map(s => (
-          <button
-            key={s.id}
-            onClick={() => setActiveSection(s.id)}
-            className={`w-full flex items-center justify-between p-5 rounded-[1.5rem] transition-all group ${
-              activeSection === s.id 
-                ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
-                : 'bg-white text-slate-500 hover:bg-slate-50'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <s.icon size={20} className={activeSection === s.id ? 'text-blue-400' : 'text-slate-300'} />
-              <span className="font-black text-xs uppercase tracking-widest">{s.label}</span>
-            </div>
-            <ChevronRight size={16} className={activeSection === s.id ? 'opacity-100' : 'opacity-0'} />
-          </button>
-        ))}
+    <div className="flex flex-col lg:flex-row gap-8 pb-20">
+      {/* Dynamic Projections Sidebar */}
+      <aside className="w-full lg:w-80 flex flex-col gap-6 shrink-0 order-2 lg:order-1">
+        <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
+          <div className="relative z-10">
+             <div className="flex items-center gap-2 mb-6 opacity-60">
+                <Target size={16} className="text-blue-400" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Live Projections</span>
+             </div>
+             <div className="space-y-6">
+                <div>
+                   <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Estimated Revenue</span>
+                   <span className="text-3xl font-black text-white font-mono">$ {projections.revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="pt-4 border-t border-white/10 flex justify-between items-end">
+                   <div>
+                      <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Net Profit</span>
+                      <span className={`text-xl font-black font-mono ${projections.netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {projections.netProfit >= 0 ? '+' : ''}{projections.netProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </span>
+                   </div>
+                   <div className="text-right">
+                      <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Margin</span>
+                      <span className="text-xs font-black text-blue-400">
+                        {((projections.ebitda / (projections.revenue || 1)) * 100).toFixed(1)}%
+                      </span>
+                   </div>
+                </div>
+             </div>
+          </div>
+          <div className="absolute -bottom-6 -right-6 text-white/5 pointer-events-none">
+             <BarChart3 size={120} />
+          </div>
+        </div>
 
-        <div className="mt-12 p-8 bg-blue-600 rounded-[2.5rem] text-white shadow-2xl shadow-blue-200 relative overflow-hidden group">
-          <TrendingUp className="absolute -bottom-4 -right-4 opacity-10 group-hover:scale-110 transition-transform" size={100} />
-          <h4 className="text-xs font-black uppercase tracking-widest mb-4 opacity-80">Projected Cash</h4>
-          <span className="text-3xl font-black">R$ {projections?.projectedCash.toLocaleString() || '0'}</span>
-          <p className="text-[10px] mt-4 font-bold text-blue-100 flex items-center gap-2 italic">
-             <AlertCircle size={12} /> Simulations are estimates
-          </p>
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+           <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Navigation</h4>
+           {sections.map(s => (
+             <button
+               key={s.id}
+               onClick={() => setActiveSection(s.id)}
+               className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
+                 activeSection === s.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'
+               }`}
+             >
+               <div className="flex items-center gap-3">
+                 <s.icon size={18} />
+                 <span className="font-bold text-xs uppercase tracking-widest">{s.label}</span>
+               </div>
+               <ChevronRight size={14} className={activeSection === s.id ? 'opacity-100' : 'opacity-0'} />
+             </button>
+           ))}
+        </div>
+
+        <div className="p-6 bg-amber-50 rounded-[2rem] border border-amber-100">
+           <div className="flex items-center gap-2 mb-2 text-amber-700">
+              <AlertCircle size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Market Context</span>
+           </div>
+           <p className="text-xs text-amber-900/70 leading-relaxed font-medium">
+             Raw material A prices are projected to rise by 5.2% next round. Consider stockpiling now.
+           </p>
         </div>
       </aside>
 
       {/* Main Form Area */}
-      <div className="flex-1 space-y-8">
-        <div className="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-100 border border-slate-100">
-          <div className="flex items-center justify-between mb-10 pb-8 border-b border-slate-50">
+      <div className="flex-1 space-y-8 order-1 lg:order-2">
+        <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100">
+          <div className="flex items-center justify-between mb-10 pb-6 border-b border-slate-50">
             <div>
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight capitalize">{activeSection} Control</h2>
-              <p className="text-slate-500 font-medium">Decisions for Round 4 | Collaborating in real-time</p>
+              <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight">{activeSection} Control</h2>
+              <p className="text-slate-500 font-medium">Empirion Deployment Interface | Round 4</p>
             </div>
-            <div className="flex items-center gap-4">
-               <div className="flex -space-x-3">
-                  <div className="w-10 h-10 rounded-full border-4 border-white bg-blue-500 text-white flex items-center justify-center text-xs font-black">AM</div>
-                  <div className="w-10 h-10 rounded-full border-4 border-white bg-emerald-500 text-white flex items-center justify-center text-xs font-black">CS</div>
-                  <div className="w-10 h-10 rounded-full border-4 border-white bg-slate-200 text-slate-400 flex items-center justify-center text-xs font-black">+2</div>
-               </div>
-            </div>
+            {activeSection === 'marketing' && (
+              <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
+                 <Globe size={16} />
+                 <span className="text-[10px] font-black uppercase tracking-widest">{regionsCount} Dynamic Channels</span>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            {activeSection === 'purchases' && (
-              <>
-                <div className="space-y-6">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Material A (Primary)</h4>
-                  <div className="space-y-4">
-                    <label className="block text-xs font-bold text-slate-700">Purchase Volume (Units)</label>
-                    <input 
-                      type="number"
-                      value={decisions.purchases.materialA.volume}
-                      onChange={(e) => updateNested('purchases.materialA.volume', parseInt(e.target.value) || 0)}
-                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition-all font-mono"
-                    />
-                  </div>
-                  <div className="space-y-4">
-                    <label className="block text-xs font-bold text-slate-700">Contract Type</label>
-                    <div className="flex gap-2">
-                       {['spot', 'long'].map(t => (
-                         <button 
-                           key={t}
-                           onClick={() => updateNested('purchases.materialA.contract', t)}
-                           className={`flex-1 p-3 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-all ${
-                             decisions.purchases.materialA.contract === t ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100' : 'bg-slate-50 border-slate-100 text-slate-400'
-                           }`}
-                         >
-                           {t}
-                         </button>
-                       ))}
-                    </div>
-                  </div>
+          <div className="min-h-[400px]">
+            {activeSection === 'marketing' && (
+              <div className="overflow-x-auto rounded-2xl border border-slate-50">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="text-[10px] font-black uppercase text-slate-400 bg-slate-50/50">
+                      <th className="p-5 text-left">Regional Node</th>
+                      <th className="p-5 text-center">Price Optimization</th>
+                      <th className="p-5 text-center">Payment Term</th>
+                      <th className="p-5 text-center">Marketing GRP</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {Object.entries(decisions.regions).map(([id, data]) => (
+                      <tr key={id} className="hover:bg-slate-50/30 transition-colors">
+                        <td className="p-5 font-bold text-slate-900">Region 0{id}</td>
+                        <td className="p-5">
+                          <div className="flex items-center justify-center gap-2">
+                             <span className="text-xs font-bold text-slate-400">$</span>
+                             <input 
+                               type="number" 
+                               value={data.price} 
+                               onChange={e => updateRegional(Number(id), 'price', Number(e.target.value))}
+                               className="w-24 p-3 border border-slate-200 rounded-xl text-center font-mono font-bold focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none"
+                             />
+                          </div>
+                        </td>
+                        <td className="p-5">
+                          <div className="flex justify-center">
+                            <select 
+                              value={data.term}
+                              onChange={e => updateRegional(Number(id), 'term', Number(e.target.value) as any)}
+                              className="p-3 border border-slate-200 rounded-xl text-center font-bold text-xs focus:ring-4 focus:ring-blue-100 outline-none"
+                            >
+                              <option value={0}>Cash (0d)</option>
+                              <option value={1}>30 Days</option>
+                              <option value={2}>60 Days</option>
+                            </select>
+                          </div>
+                        </td>
+                        <td className="p-5">
+                          <div className="flex items-center justify-center gap-4">
+                             <input 
+                               type="range" min="0" max="9"
+                               value={data.marketing}
+                               onChange={e => updateRegional(Number(id), 'marketing', Number(e.target.value))}
+                               className="w-32 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                             />
+                             <span className="w-8 font-black text-blue-600 text-sm">{data.marketing}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeSection === 'hr' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="space-y-8">
+                   <div className="space-y-4">
+                      <label className="flex items-center gap-2 text-xs font-black uppercase text-slate-400 tracking-widest">
+                         <Wallet size={14} className="text-blue-500" /> Compensation Strategy
+                      </label>
+                      <div className="relative">
+                         <input 
+                           type="number" value={decisions.hr.salary} 
+                           onChange={e => setDecisions({...decisions, hr: {...decisions.hr, salary: Number(e.target.value)}})}
+                           className="w-full p-6 bg-slate-50 border border-slate-200 rounded-3xl font-black text-4xl text-slate-900 focus:ring-8 focus:ring-blue-50 outline-none transition-all"
+                         />
+                         <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 font-black">BRL</span>
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Avg Market Salary: $1,300</p>
+                   </div>
+                   <div className="grid grid-cols-2 gap-6">
+                      <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-3">
+                         <span className="block text-[10px] font-black text-slate-400 uppercase">New Hires</span>
+                         <input type="number" value={decisions.hr.hired} onChange={e => setDecisions({...decisions, hr: {...decisions.hr, hired: Number(e.target.value)}})} className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-center" />
+                      </div>
+                      <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-3">
+                         <span className="block text-[10px] font-black text-slate-400 uppercase">Terminations</span>
+                         <input type="number" value={decisions.hr.fired} onChange={e => setDecisions({...decisions, hr: {...decisions.hr, fired: Number(e.target.value)}})} className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-center" />
+                      </div>
+                   </div>
                 </div>
-                <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Market Context</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    "Material A prices are volatile this round. Spot prices are R$ 12/unit while Long-term contracts lock at R$ 14 but guarantee supply during shortages."
-                  </p>
+                <div className="space-y-8">
+                   <div className="p-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[3rem] text-white shadow-xl shadow-blue-200 space-y-6">
+                      <h4 className="text-lg font-black tracking-tight">Productivity Analysis</h4>
+                      <div className="space-y-4">
+                         <div className="flex justify-between items-end">
+                            <span className="text-xs font-bold text-blue-200">Current Yield</span>
+                            <span className="text-2xl font-black">97.4%</span>
+                         </div>
+                         <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden">
+                            <div className="bg-emerald-400 h-full w-[97.4%]"></div>
+                         </div>
+                      </div>
+                      <p className="text-xs text-blue-100 leading-relaxed italic">
+                        "Your current training investment of {decisions.hr.trainingPercent}% is yielding a stable performance. Competitive firms are at 12%."
+                      </p>
+                   </div>
                 </div>
-              </>
+              </div>
             )}
 
             {activeSection === 'production' && (
-              <>
-                <div className="space-y-8">
-                  <div className="space-y-4">
-                    <label className="flex items-center justify-between text-xs font-bold text-slate-700">
-                       Main Line Output
-                       <span className="text-blue-600">{decisions.production.line1} u</span>
-                    </label>
-                    <input 
-                      type="range" min="0" max="2500" step="50"
-                      value={decisions.production.line1}
-                      onChange={(e) => updateNested('production.line1', parseInt(e.target.value))}
-                      className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                    <div className="flex justify-between text-[10px] font-black text-slate-300 uppercase tracking-tighter">
-                       <span>Efficiency: 88%</span>
-                       <span>Max: 2500 u</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-6">
-                  <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-4">
-                     <div className="p-3 bg-white rounded-xl shadow-sm">
-                       <TrendingUp className="text-emerald-500" size={20} />
-                     </div>
-                     <div>
-                       <span className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest">Est. Unit Cost</span>
-                       <span className="text-xl font-black text-slate-900">R$ {projections?.unitCost.toFixed(2) || '0.00'}</span>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-10">
+                     <div className="space-y-4">
+                        <h4 className="text-xs font-black uppercase text-slate-400 tracking-widest">Global Logistics</h4>
+                        <div className="grid grid-cols-1 gap-4">
+                           <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                              <span className="text-sm font-bold">MPA Supply Node</span>
+                              <input type="number" value={decisions.production.purchaseMPA} onChange={e => setDecisions({...decisions, production: {...decisions.production, purchaseMPA: Number(e.target.value)}})} className="w-32 p-3 bg-white border border-slate-200 rounded-xl text-right font-mono font-bold" />
+                           </div>
+                           <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                              <span className="text-sm font-bold">MPB Supply Node</span>
+                              <input type="number" value={decisions.production.purchaseMPB} onChange={e => setDecisions({...decisions, production: {...decisions.production, purchaseMPB: Number(e.target.value)}})} className="w-32 p-3 bg-white border border-slate-200 rounded-xl text-right font-mono font-bold" />
+                           </div>
+                        </div>
                      </div>
                   </div>
-                </div>
-              </>
+                  <div className="space-y-10">
+                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                        <h4 className="text-xs font-black uppercase text-slate-400 tracking-widest">Assembly Intensity</h4>
+                        <div className="space-y-4">
+                           <input type="range" min="0" max="100" value={decisions.production.activityLevel} onChange={e => setDecisions({...decisions, production: {...decisions.production, activityLevel: Number(e.target.value)}})} className="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                           <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black text-slate-300">Minimum Node</span>
+                              <span className="text-3xl font-black text-slate-900">{decisions.production.activityLevel}%</span>
+                              <span className="text-[10px] font-black text-slate-300">Max Capacity</span>
+                           </div>
+                        </div>
+                        <div className="pt-6 border-t border-slate-50">
+                           <div className="flex justify-between items-center text-xs">
+                              <span className="font-bold text-slate-500">Unit Cost Projection</span>
+                              <span className="font-black text-emerald-600 font-mono">${projections.unitCost.toFixed(2)}</span>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
             )}
 
-            {activeSection === 'pricing' && (
-              <div className="col-span-2 space-y-12">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                   <div className="space-y-6">
-                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product A Strategy</h4>
-                      <div className="space-y-4">
-                        <label className="block text-xs font-bold text-slate-700">Market Price (BRL)</label>
-                        <input 
-                          type="number"
-                          value={decisions.pricing.productA.price}
-                          onChange={(e) => updateNested('pricing.productA.price', parseInt(e.target.value) || 0)}
-                          className="w-full p-5 bg-slate-50 border border-slate-200 rounded-[1.5rem] focus:ring-4 focus:ring-blue-100 outline-none text-xl font-black"
-                        />
-                      </div>
-                   </div>
-                   <div className="bg-slate-900 p-8 rounded-[2rem] text-white">
-                      <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-6">Real-time Margin Analysis</h4>
-                      <div className="space-y-4">
-                        <div className="flex justify-between text-sm">
-                           <span className="text-slate-400">Unit Price:</span>
-                           <span className="font-bold">R$ {decisions.pricing.productA.price}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                           <span className="text-slate-400">Unit Cost (Est):</span>
-                           <span className="font-bold text-red-400">R$ {projections?.unitCost.toFixed(2)}</span>
-                        </div>
-                        <div className="pt-4 border-t border-white/10 flex justify-between">
-                           <span className="text-blue-400 font-black uppercase text-xs">Gross Margin:</span>
-                           <span className="text-xl font-black text-emerald-400">
-                             {(((decisions.pricing.productA.price - (projections?.unitCost || 0)) / decisions.pricing.productA.price) * 100).toFixed(1)}%
-                           </span>
-                        </div>
-                      </div>
-                   </div>
-                 </div>
-              </div>
-            )}
-            
-            {/* Catch-all for other sections placeholder */}
-            {!['purchases', 'production', 'pricing'].includes(activeSection) && (
-              <div className="col-span-2 flex flex-col items-center justify-center py-20 text-slate-300">
-                 <Settings size={48} className="animate-spin-slow mb-4 opacity-10" />
-                 <p className="font-black text-xs uppercase tracking-widest">Under Simulation Calibration</p>
+            {activeSection === 'finance' && (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+                 <ShieldCheck size={64} className="mb-6 opacity-10" />
+                 <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">Financial Vault</h3>
+                 <p className="max-w-xs text-center text-sm font-medium text-slate-400">CapEx and Treasury modules are currently calibrating based on initial balance structure.</p>
               </div>
             )}
           </div>
 
-          <div className="mt-16 pt-10 border-t border-slate-50 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-               <Info size={18} className="text-blue-500" />
-               <p className="text-xs font-medium text-slate-500">
-                 Changes are shared with <span className="text-slate-900 font-bold">3 other members</span>. Click Finalize to lock.
-               </p>
-            </div>
-            <div className="flex gap-4 w-full md:w-auto">
-               <button 
-                onClick={() => setDecisions(INITIAL_DECISIONS)}
-                className="flex-1 md:flex-none px-8 py-4 bg-white border border-slate-200 text-slate-400 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-               >
-                 <RotateCcw size={16} /> Reset Section
-               </button>
-               <button 
-                onClick={() => saveDecisions(decisions)}
-                disabled={isSaving}
-                className="flex-1 md:flex-none px-12 py-4 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-blue-600 shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-2 min-w-[200px]"
-               >
-                 {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Submit Round 4</>}
-               </button>
-            </div>
+          <div className="mt-16 pt-10 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6">
+             <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <Settings size={18} className="text-blue-500" />
+                <span className="text-xs font-medium text-slate-500">Decisions are synchronized via Supabase Realtime</span>
+             </div>
+             <button 
+               onClick={() => setIsSaving(true)}
+               className="w-full sm:w-auto px-12 py-5 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-[2rem] hover:bg-blue-600 hover:scale-105 shadow-2xl shadow-slate-200 transition-all flex items-center justify-center gap-3"
+             >
+                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Lock Round Decisions</>}
+             </button>
           </div>
-        </div>
-
-        {/* Real-time Presence / Activity Feed */}
-        <div className="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-100 border border-slate-100">
-           <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-black text-slate-900 flex items-center gap-3">
-                <ShieldCheck className="text-emerald-500" /> Collaboration Feed
-              </h3>
-              <div className="flex items-center gap-2">
-                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                 <span className="text-[10px] font-black uppercase text-slate-400">Live Connection</span>
-              </div>
-           </div>
-           <div className="space-y-6">
-              {[
-                { user: 'Clarissa S.', action: 'Increased Digital Marketing by R$ 2,000', time: 'Just now', color: 'bg-emerald-500' },
-                { user: 'Bruno M.', action: 'Modified Logistics to Shipping (Sea)', time: '5 mins ago', color: 'bg-blue-500' },
-                { user: 'Admin', action: 'Round 4 initialized from previous data', time: '2 hours ago', color: 'bg-slate-900' },
-              ].map((log, i) => (
-                <div key={i} className="flex items-start justify-between group">
-                   <div className="flex gap-4">
-                      <div className={`w-10 h-10 rounded-xl ${log.color} text-white flex items-center justify-center font-black text-xs shadow-lg shadow-current/20 shrink-0`}>
-                        {log.user[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800 tracking-tight">{log.action}</p>
-                        <p className="text-[10px] text-slate-400 uppercase font-black mt-1">{log.user}</p>
-                      </div>
-                   </div>
-                   <span className="text-[10px] font-bold text-slate-300 italic group-hover:text-slate-400 transition-colors">{log.time}</span>
-                </div>
-              ))}
-           </div>
         </div>
       </div>
     </div>

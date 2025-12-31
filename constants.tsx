@@ -24,21 +24,21 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     name: 'Café Premium Híbrido',
     branch: 'agribusiness',
     description: 'High-quality coffee production with both local and international sales.',
-    config: {}
+    config: { regionsCount: 9, initialStock: 50000, initialPrice: 450, currency: 'BRL' }
   },
   {
     id: 't2',
     name: 'Varejo de Moda Urbana',
     branch: 'commercial',
     description: 'Fast-paced fashion retail in major Brazilian urban centers.',
-    config: {}
+    config: { regionsCount: 5, initialStock: 20000, initialPrice: 120, currency: 'BRL' }
   },
   {
     id: 't3',
     name: 'Tech Hardware Startup',
     branch: 'industrial',
     description: 'Electronics manufacturing scaling from local to global.',
-    config: {}
+    config: { regionsCount: 9, initialStock: 30000, initialPrice: 340, currency: 'BRL' }
   }
 ];
 
@@ -56,7 +56,8 @@ export const MOCK_CHAMPIONSHIPS = [
     status: 'active',
     startDate: '2025-01-01',
     teamFee: 250,
-    transparencyLevel: 'medium'
+    transparencyLevel: 'medium',
+    regionsCount: 9
   },
   {
     id: 'c2',
@@ -71,6 +72,7 @@ export const MOCK_CHAMPIONSHIPS = [
     status: 'draft',
     startDate: '2025-02-15',
     teamFee: 500,
-    transparencyLevel: 'low'
+    transparencyLevel: 'low',
+    regionsCount: 4
   }
 ];

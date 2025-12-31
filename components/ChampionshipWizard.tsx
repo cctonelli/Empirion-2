@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   ArrowRight, 
@@ -11,7 +11,10 @@ import {
   Zap,
   Leaf,
   FileText,
-  Loader2
+  Loader2,
+  MapPin,
+  TrendingUp,
+  Package
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS } from '../constants';
 import { Branch } from '../types';
@@ -21,22 +24,43 @@ import { supabase } from '../services/supabase';
 const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [financials, setFinancials] = useState<any>(null); // State for the structure editor
   const [formData, setFormData] = useState({
     name: '',
     branch: 'industrial' as Branch,
     templateId: '',
     salesMode: 'internal',
     scenarioType: 'simulated',
-    transparency: 'medium'
+    transparency: 'medium',
+    regionsCount: 9,
+    initialStock: 30000,
+    initialPrice: 340,
+    currency: 'BRL'
   });
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
+  useEffect(() => {
+    if (formData.templateId && formData.templateId !== 'scratch') {
+      const template = CHAMPIONSHIP_TEMPLATES.find(t => t.id === formData.templateId);
+      if (template) {
+        setFormData(prev => ({
+          ...prev,
+          branch: template.branch,
+          regionsCount: template.config.regionsCount,
+          initialStock: template.config.initialStock,
+          initialPrice: template.config.initialPrice,
+          currency: template.config.currency
+        }));
+      }
+    }
+  }, [formData.templateId]);
+
   const handleLaunch = async () => {
     setIsSubmitting(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       
       const { error } = await supabase
         .from('championships')
@@ -46,11 +70,16 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           sales_mode: formData.salesMode,
           scenario_type: formData.scenarioType,
           transparency_level: formData.transparency,
+          currency: formData.currency,
           status: 'active',
-          tutor_id: userData.user?.id,
-          config: {}, // Configurações adicionais via Wizard
-          initial_financials: {}, // Dados do FinancialStructureEditor
-          products: [] // Produtos configurados
+          tutor_id: user?.id,
+          config: {
+            regionsCount: formData.regionsCount,
+            initialStock: formData.initialStock,
+            initialPrice: formData.initialPrice
+          },
+          initial_financials: financials || {}, 
+          products: [] 
         }]);
 
       if (error) throw error;
@@ -65,7 +94,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
 
   return (
     <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-8 duration-500 pb-20">
-      {/* Stepper */}
       <div className="flex items-center justify-between mb-12 relative px-4">
         <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 -translate-y-1/2 z-0"></div>
         {[1, 2, 3, 4].map((s) => (
@@ -86,8 +114,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         {step === 1 && (
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Choose your scenario</h2>
-              <p className="text-slate-500 mt-2">Select a predefined template or start from scratch.</p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Scenario Selection</h2>
+              <p className="text-slate-500 mt-2">Base your championship on a proven model or start fresh.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -100,14 +128,14 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                 <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center mb-4">
                    <Plus size={24} />
                 </div>
-                <h3 className="font-bold text-slate-900 text-lg">Custom Scenario</h3>
-                <p className="text-slate-500 text-sm mt-1">Configure every detail manually for total control over accounts and products.</p>
+                <h3 className="font-bold text-slate-900 text-lg">Custom Build</h3>
+                <p className="text-slate-500 text-sm mt-1">Full control over every economic variable and account mapping.</p>
               </button>
 
               {CHAMPIONSHIP_TEMPLATES.map(t => (
                 <button 
                   key={t.id}
-                  onClick={() => setFormData({...formData, templateId: t.id, branch: t.branch})}
+                  onClick={() => setFormData({...formData, templateId: t.id})}
                   className={`p-8 rounded-[2rem] border-2 text-left transition-all relative overflow-hidden group ${
                     formData.templateId === t.id ? 'border-blue-600 bg-blue-50/50' : 'border-slate-100 hover:border-slate-200 bg-slate-50/30'
                   }`}
@@ -130,26 +158,70 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         )}
 
         {step === 2 && (
-          <div className="space-y-8">
+          <div className="space-y-12">
             <div className="text-center">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">General Parameters</h2>
-              <p className="text-slate-500 mt-2">Fine-tune the championship rules and basic identity.</p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Market Foundations</h2>
+              <p className="text-slate-500 mt-2">Define regional reach and starting equilibrium.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Championship Name</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+              <div className="space-y-4 col-span-2">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Simulation Name</label>
                 <input 
                   type="text" 
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
                   className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-600 outline-none transition-all font-semibold"
-                  placeholder="Ex: Brazilian Agro Cup 2026"
+                  placeholder="Ex: Industrial Masters 2025"
                 />
               </div>
 
               <div className="space-y-4">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Business Branch</label>
+                <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
+                  <MapPin size={14} className="text-blue-500" /> Active Regions (N)
+                </label>
+                <div className="flex items-center gap-6 p-2 bg-slate-50 rounded-2xl border border-slate-200">
+                   <input 
+                     type="range" min="1" max="15" step="1"
+                     value={formData.regionsCount}
+                     onChange={e => setFormData({...formData, regionsCount: parseInt(e.target.value)})}
+                     className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                   />
+                   <span className="w-12 h-12 bg-white rounded-xl border border-slate-200 flex items-center justify-center font-black text-blue-600 shadow-sm">
+                     {formData.regionsCount}
+                   </span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
+                  <Package size={14} className="text-emerald-500" /> Initial Inventory Units
+                </label>
+                <input 
+                  type="number"
+                  value={formData.initialStock}
+                  onChange={e => setFormData({...formData, initialStock: parseInt(e.target.value) || 0})}
+                  className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 font-mono font-bold"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
+                  <TrendingUp size={14} className="text-amber-500" /> Starting Market Price
+                </label>
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:ring-4 focus-within:ring-blue-100 transition-all">
+                  <span className="p-5 font-black text-slate-400 bg-slate-100/50 border-r border-slate-200">{formData.currency}</span>
+                  <input 
+                    type="number"
+                    value={formData.initialPrice}
+                    onChange={e => setFormData({...formData, initialPrice: parseFloat(e.target.value) || 0})}
+                    className="flex-1 p-5 bg-transparent outline-none font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Industry Segment</label>
                 <div className="grid grid-cols-2 gap-3">
                   {(Object.keys(BRANCH_CONFIGS) as Branch[]).map(b => (
                     <button
@@ -164,42 +236,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                   ))}
                 </div>
               </div>
-
-              <div className="space-y-4">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Scenario Engine</label>
-                <div className="flex gap-4">
-                  <button 
-                    onClick={() => setFormData({...formData, scenarioType: 'simulated'})}
-                    className={`flex-1 p-5 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${
-                      formData.scenarioType === 'simulated' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-slate-100 text-slate-500'
-                    }`}
-                  >
-                    <Layers size={24} /> <span className="font-bold">Simulated</span>
-                  </button>
-                  <button 
-                    onClick={() => setFormData({...formData, scenarioType: 'real'})}
-                    className={`flex-1 p-5 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${
-                      formData.scenarioType === 'real' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-slate-100 text-slate-500'
-                    }`}
-                  >
-                    <Globe size={24} /> <span className="font-bold">Real Live</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Transparency</label>
-                <select 
-                  className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-semibold cursor-pointer focus:ring-4 focus:ring-blue-100"
-                  value={formData.transparency}
-                  onChange={e => setFormData({...formData, transparency: e.target.value as any})}
-                >
-                  <option value="low">Low (Total Anonymity)</option>
-                  <option value="medium">Medium (Standard)</option>
-                  <option value="high">High (Visible Competitor KPIs)</option>
-                  <option value="full">Full (Open Financial Data)</option>
-                </select>
-              </div>
             </div>
           </div>
         )}
@@ -207,11 +243,11 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         {step === 3 && (
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Financial Blueprint</h2>
-              <p className="text-slate-500 mt-2">Customize the Plano de Contas and sub-accounts for this simulation.</p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Economic Blueprint</h2>
+              <p className="text-slate-500 mt-2">Map the opening balance and income structure for all competing firms.</p>
             </div>
             
-            <FinancialStructureEditor />
+            <FinancialStructureEditor onChange={setFinancials} />
           </div>
         )}
 
@@ -223,27 +259,25 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
               </div>
               <div className="absolute -inset-4 bg-blue-500/20 blur-2xl rounded-full z-0 animate-pulse"></div>
             </div>
-            <h2 className="text-4xl font-black text-slate-900 tracking-tight">Ignite the Empire!</h2>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight">Deploy to Market</h2>
             
             <div className="max-w-md mx-auto p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 text-left space-y-4 shadow-inner">
                <div className="flex justify-between">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Campaign:</span>
+                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Scenario:</span>
                  <span className="text-slate-900 font-bold">{formData.name || 'Untitled'}</span>
                </div>
                <div className="flex justify-between">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Market Branch:</span>
-                 <span className="text-slate-900 font-bold flex items-center gap-2">
-                   {BRANCH_CONFIGS[formData.branch].icon} {BRANCH_CONFIGS[formData.branch].label}
-                 </span>
+                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Regional Nodes:</span>
+                 <span className="text-slate-900 font-bold">{formData.regionsCount} Regions</span>
                </div>
                <div className="flex justify-between pt-6 border-t border-slate-200">
                  <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Initial Assets:</span>
-                 <span className="text-emerald-600 font-black text-lg">R$ 1,250,000</span>
+                 <span className="text-emerald-600 font-black text-lg">{formData.currency} 1,250,000</span>
                </div>
             </div>
             <div className="flex items-center gap-3 justify-center text-slate-400 text-sm">
               <FileText size={18} />
-              <span>Initial Executive Report will be generated by Gemini AI</span>
+              <span>Gemini AI will finalize the Economic Prospectus</span>
             </div>
           </div>
         )}
@@ -254,7 +288,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
             disabled={isSubmitting}
             className="px-8 py-4 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all disabled:opacity-50"
           >
-            {step === 1 ? 'Discard' : 'Go Back'}
+            {step === 1 ? 'Abort' : 'Previous Step'}
           </button>
           <button 
             onClick={step === 4 ? handleLaunch : nextStep}
@@ -263,7 +297,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
               (step === 2 && !formData.name) || isSubmitting ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-blue-600 hover:scale-105 shadow-xl shadow-slate-200'
             }`}
           >
-            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : (step === 4 ? 'Launch Simulation' : 'Next Stage')} 
+            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : (step === 4 ? 'Launch Simulation' : 'Continue')} 
             {!isSubmitting && <ArrowRight size={18} />}
           </button>
         </div>

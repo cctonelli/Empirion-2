@@ -10,7 +10,7 @@ interface AccountNode {
   isEditable?: boolean;
 }
 
-const FinancialStructureEditor: React.FC = () => {
+const FinancialStructureEditor: React.FC<{ onChange?: (nodes: AccountNode[]) => void }> = ({ onChange }) => {
   const [activeTab, setActiveTab] = useState<'dre' | 'balance'>('dre');
   const [nodes, setNodes] = useState<AccountNode[]>([
     {
@@ -32,6 +32,10 @@ const FinancialStructureEditor: React.FC = () => {
       ]
     }
   ]);
+
+  useEffect(() => {
+    if (onChange) onChange(nodes);
+  }, [nodes]);
 
   // Recalculate totals whenever nodes change
   const calculateTotals = (list: AccountNode[]): AccountNode[] => {

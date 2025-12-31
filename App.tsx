@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [isCreatingChampionship, setIsCreatingChampionship] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeChamp, setActiveChamp] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,6 +46,11 @@ const App: React.FC = () => {
     role: 'admin' // In a real app, fetch this from profile table
   };
 
+  const handleEnterChampionship = (champ: any) => {
+    setActiveChamp(champ);
+    setActiveView('decisions');
+  };
+
   const renderContent = () => {
     if (isCreatingChampionship) {
       return <ChampionshipWizard onComplete={() => setIsCreatingChampionship(false)} />;
@@ -55,11 +61,11 @@ const App: React.FC = () => {
         return <Dashboard />;
       case 'championships':
         return <ChampionshipView 
-                 onEnterChampionship={() => setActiveView('decisions')} 
+                 onEnterChampionship={handleEnterChampionship} 
                  onCreateNew={() => setIsCreatingChampionship(true)} 
                />;
       case 'decisions':
-        return <DecisionForm />;
+        return <DecisionForm regionsCount={activeChamp?.regionsCount || 9} />;
       case 'reports':
         return <Reports />;
       case 'market':
@@ -93,7 +99,7 @@ const App: React.FC = () => {
   );
 };
 
-const ChampionshipView: React.FC<{ onEnterChampionship: () => void; onCreateNew: () => void }> = ({ onEnterChampionship, onCreateNew }) => {
+const ChampionshipView: React.FC<{ onEnterChampionship: (champ: any) => void; onCreateNew: () => void }> = ({ onEnterChampionship, onCreateNew }) => {
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -146,7 +152,7 @@ const ChampionshipView: React.FC<{ onEnterChampionship: () => void; onCreateNew:
               </div>
 
               <button 
-                onClick={onEnterChampionship}
+                onClick={() => onEnterChampionship(champ)}
                 className="w-full py-5 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-[2rem] hover:bg-blue-600 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-slate-200"
               >
                 {champ.status === 'active' ? 'Deployment Ready' : 'Lobby Access'}

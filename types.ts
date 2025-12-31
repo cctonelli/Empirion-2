@@ -5,103 +5,101 @@ export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'tutor' | 'player' | 'observer';
-}
-
-export interface DecisionData {
-  purchases: {
-    materialA: { volume: number; supplier: 'local' | 'intl'; contract: 'spot' | 'long' };
-    materialB: { volume: number; supplier: 'local' | 'intl'; contract: 'spot' | 'long' };
-  };
-  production: {
-    line1: number;
-    line2: number;
-    modernizationLevel: number; // 0 to 1
-  };
-  marketing: {
-    branding: number;
-    digital: number;
-    traditional: number;
-  };
-  pricing: {
-    productA: { price: number; localAllocation: number }; // allocation 0-1
-    productB: { price: number; localAllocation: number };
-  };
-  logistics: {
-    shippingMode: 'sea' | 'air' | 'land';
-  };
-  hr: {
-    hiring: number;
-    trainingBudget: number;
-    salaryMultiplier: number; // 1.0 to 1.5
-  };
-  finance: {
-    dividends: number;
-    loansRequest: number;
-    sharesBuyback: number;
-  };
-}
-
-export interface Championship {
-  id: string;
-  name: string;
-  description: string;
-  branch: Branch;
-  salesMode: SalesMode;
-  scenarioType: ScenarioType;
-  currency: string;
-  currentRound: number;
-  totalRounds: number;
-  status: ChampionshipStatus;
-  startDate: string;
-  teamFee: number;
-  transparencyLevel: TransparencyLevel;
-}
-
-export interface FinancialStatement {
-  round: number;
-  dre: {
-    revenue: number;
-    variableCosts: number;
-    grossMargin: number;
-    fixedCosts: number;
-    ebitda: number;
-    taxes: number;
-    netProfit: number;
-  };
-  balance: {
-    assets: number;
-    cash: number;
-    inventory: number;
-    liabilities: number;
-    equity: number;
-  };
-}
-
-export interface Company {
-  id: string;
-  championshipId: string;
-  name: string;
-  round: number;
-  statements: FinancialStatement[];
-  kpis: {
-    marketShare: number;
-    roi: number;
-    customerSatisfaction: number;
-    esgScore: number;
-    tsr: number; // Total Shareholder Return
-  };
-}
-
-// Added ChampionshipTemplate interface to fix import error in constants.tsx
 export interface ChampionshipTemplate {
   id: string;
   name: string;
   branch: Branch;
   description: string;
-  config: any;
+  config: {
+    regionsCount: number;
+    initialStock: number;
+    initialPrice: number;
+    currency: string;
+  };
+}
+
+export interface RegionalDecision {
+  price: number;
+  term: 0 | 1 | 2; // 0: Vista, 1: 30d, 2: 60d
+  marketing: number; // 0-9 intensity
+}
+
+export interface DecisionData {
+  regions: Record<number, RegionalDecision>; // Regions 1-N
+  hr: {
+    hired: number;
+    fired: number;
+    salary: number;
+    trainingPercent: number;
+    participationPercent: number;
+    others: number;
+  };
+  production: {
+    purchaseMPA: number;
+    purchaseMPB: number;
+    paymentType: 0 | 1 | 2;
+    activityLevel: number; // %
+    extraProduction: number; // %
+  };
+  finance: {
+    loanRequest: number;
+    loanType: 0 | 1 | 2;
+    application: number;
+    termSalesInterest: number;
+    buyMachines: { alfa: number; beta: number; gama: number };
+    sellMachines: { alfa: number; beta: number; gama: number };
+  };
+}
+
+export interface FinancialStatement {
+  round: number;
+  dre: {
+    salesRevenue: number;
+    cpv: number;
+    grossProfit: number;
+    operatingExpenses: {
+      sales: number;
+      admin: number;
+      financial: number;
+    };
+    operatingProfit: number;
+    netProfitBeforeTax: number;
+    taxProvision: number;
+    netProfit: number;
+  };
+  balance: {
+    assets: {
+      cash: number;
+      clients: number;
+      inventoryMPA: number;
+      inventoryMPB: number;
+      inventoryFinished: number;
+      machines: number;
+      accumulatedDepreciation: number;
+      land: number;
+      buildings: number;
+    };
+    liabilities: {
+      suppliers: number;
+      taxesPayable: number;
+      dividendsPayable: number;
+      shortTermLoans: number;
+      longTermLoans: number;
+      equity: number;
+      accumulatedProfit: number;
+    };
+  };
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  round: number;
+  statements: FinancialStatement;
+  kpis: {
+    marketShare: number;
+    productivity: number;
+    motivation: 'Low' | 'Regular' | 'High';
+    stockPrice: number;
+  };
 }
