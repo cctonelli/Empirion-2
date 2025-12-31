@@ -13,7 +13,7 @@ import TutorArenaControl from './components/TutorArenaControl';
 import { TutorGuide, TeamGuide } from './components/InstructionGuides';
 import { supabase, getPublicChampionships } from './services/supabase';
 import { MOCK_CHAMPIONSHIPS } from './constants';
-import { Trophy, Play, Settings as SettingsIcon, Plus, AlertCircle, ShieldCheck, Zap, Globe, Users, BarChart3, ArrowRight, ChevronRight, Star } from 'lucide-react';
+import { Trophy, Play, Settings as SettingsIcon, Plus, AlertCircle, ShieldCheck, Zap, Globe, Users, BarChart3, ArrowRight, ChevronRight, Star, Cpu } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState('dashboard');
@@ -130,16 +130,25 @@ const App: React.FC = () => {
         case 'decisions':
           return (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4 py-6 bg-white border border-slate-200 rounded-[2.5rem] shadow-sm">
-                  <div className="flex items-center gap-5">
-                     <ChampionshipTimer deadline={activeChamp?.deadline} />
+               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-8 py-6 bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+                     <Cpu size={120} className="text-blue-400" />
                   </div>
-                  <div className="flex flex-col md:items-end">
-                     <span className="px-3 py-1 bg-brand-50 text-brand-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-brand-100 mb-2">Active Strategic Operation</span>
-                     <p className="text-xl font-extrabold text-slate-900 tracking-tight">{activeChamp?.name || 'Standard Cluster'}</p>
+                  <div className="flex items-center gap-5 relative z-10">
+                     <ChampionshipTimer deadline={activeChamp?.deadline} />
+                     <div className="hidden lg:flex flex-col">
+                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Operation Mode</span>
+                        <span className="text-xs font-black text-white uppercase flex items-center gap-2">
+                           <Zap size={12} className="text-amber-400 fill-current" /> Live War Room
+                        </span>
+                     </div>
+                  </div>
+                  <div className="flex flex-col md:items-end relative z-10">
+                     <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/20 mb-2">Active Strategic Deployment</span>
+                     <p className="text-xl font-extrabold text-white tracking-tight uppercase">{activeChamp?.name || 'Standard Cluster'}</p>
                   </div>
                </div>
-               <DecisionForm regionsCount={activeChamp?.config?.regionsCount || 9} />
+               <DecisionForm regionsCount={activeChamp?.config?.regionsCount || 9} teamId={activeChamp?.id} champId={activeChamp?.id} />
             </div>
           );
         case 'admin':

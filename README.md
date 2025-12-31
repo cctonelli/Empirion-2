@@ -1,44 +1,44 @@
-# 🚀 Empirion – Business Intelligence Arena (v3.10)
+# 🚀 Empirion – Business Intelligence Arena (v3.12)
 
 **Forge Your Empire with AI-Driven Strategic Insight.**
 
-Empirion é uma plataforma de simulação empresarial de alta fidelidade onde equipes competem em mercados dinâmicos, orquestrados por inteligência artificial e sincronização em tempo real.
+Empirion é a plataforma definitiva de simulação empresarial, integrando Inteligência Artificial Generativa (Gemini), Colaboração em Tempo Real (Supabase) e Visualização de Dados de Alta Performance (ApexCharts). 
 
-## 📈 Status do Projeto: MVP (40-50%)
-Atualizado em: 31/12/2025
+## 📈 Status do Projeto: MVP Consolidado (70%)
+*Última Atualização: 31/12/2025*
 
-### ✅ Implementado (Ready for Ops)
-- **Engine de Inteligência Gemini AI**:
-  - **Strategos Chatbot**: Consultoria estratégica de alto nível (Gemini 3 Pro).
-  - **Grounded Search**: Análise de mercado com verificação de fatos via Google Search.
-- **Real-time War Room**: 
-  - Sincronização de decisões via Supabase.
-  - Audit Log instantâneo (quem mudou o quê e quando).
-- **Tutor Command Center**:
-  - Manipulação macroeconômica (Inflação, Juros, Demanda).
-  - Gestão de privacidade e Community Score.
-- **Visualização Analítica**:
-  - Gráficos avançados com ApexCharts (Fix ESM resolvido).
-  - UI/UX fluida com Framer Motion.
-- **Arquitetura Contábil**:
-  - Editor de estrutura financeira (DRE/Balanço) customizável.
+### 🛠 Core Architecture
+- **Real-time Engine**: Sincronização instantânea de decisões entre membros da mesma equipe através do Supabase Realtime.
+- **AI Strategic Layer**: 
+  - **Strategos Chatbot**: Consultoria executiva 24/7 via Gemini 3 Pro.
+  - **Grounded Intelligence**: Pesquisa de mercado com fatos verificados pelo Google Search.
+  - **Automated Forecasts**: Sumários de rodada gerados por IA baseados no contexto do campeonato.
+- **War Room Collaboration**: Log de auditoria vivo que rastreia cada alteração estratégica (Preço, Marketing, RH).
+- **Advanced Analytics**: Dashboards interativos com projeções de DRE, Balanço e KPIs de mercado.
 
-### ⏳ Em Desenvolvimento (Roadmap)
-- **Processamento de Rodada (Backend)**: Integração do motor de cálculo de equilíbrio de mercado.
-- **Modo Real-World**: Consumo de APIs de commodities e clima para o setor Agro.
-- **Eventos Aleatórios**: Sistema de "Black Swan" events (Greves, Inovações Disruptivas).
-- **Gamificação Avançada**: Sistema de troféus e histórico de "Stock Price".
+### ✅ Funcionalidades Implementadas
+- [x] **Gestão de Campeonatos**: Wizard para Tutors criarem arenas customizadas (Industrial, Agro, Comércio).
+- [x] **Editor de Estrutura Contábil**: Customização total de contas de Ativo, Passivo e DRE.
+- [x] **Timer Dinâmico**: Countdown sincronizado por campeonato para encerramento de rodadas.
+- [x] **Community Arena**: Sistema de votação pública para observadores influenciarem o ranking final.
+- [x] **Simulação Multirregional**: Gestão de até 15 regiões com precificação e marketing independentes.
+- [x] **Manual do Usuário Dinâmico**: Instruções específicas para Tutors e Competidores integradas na UI.
 
-## 🛠 Tech Stack
+### 🚀 Roadmap & Próximos Passos
+1. **Engine de Processamento Batch**: Backend para consolidar decisões e gerar a próxima rodada.
+2. **Setor Agro Real-Time**: Integração com APIs de clima e preço de commodities globais.
+3. **Black Swan Engine**: Eventos aleatórios (crises, inovações) gerados por IA para desafiar as equipes.
+4. **Mobile War Room**: App companion para notificações de deadline e monitoramento de KPIs.
+
+## 💻 Tech Stack
 - **Frontend**: React 19, Tailwind CSS, Framer Motion.
-- **Backend/DB**: Supabase (PostgreSQL, Auth, Realtime).
-- **AI**: Google Gemini API (@google/genai).
-- **Analytics**: ApexCharts, Lucide React.
+- **Backend/Realtime**: Supabase (PostgreSQL, Auth, RLS).
+- **Intelligence**: Google GenAI SDK (@google/genai - Gemini 3 Pro/Flash).
+- **Visualization**: ApexCharts & Lucide Icons.
 
-## ⚙️ Configuração
-O projeto utiliza variáveis de ambiente para chaves de API:
-- `API_KEY`: Google Gemini API Key.
-- `SUPABASE_URL` & `SUPABASE_ANON_KEY`: Credenciais do projeto Supabase.
+## ⚙️ Configuração do Ambiente
+- `API_KEY`: Chave do Google Gemini (obrigatória para IA).
+- `SUPABASE_URL` / `SUPABASE_ANON_KEY`: Credenciais do Supabase.
 
 ---
-*Empirion – Construindo impérios empresariais do futuro.*
+*Empirion – Desenvolvido para transformar gestores em estrategistas de elite.*

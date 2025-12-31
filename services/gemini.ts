@@ -2,6 +2,7 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 /**
  * Generates market analysis using gemini-3-flash-preview for general insights.
+ * Upgraded to focus on competitive dynamics and financial logic.
  */
 export const generateMarketAnalysis = async (championshipName: string, round: number, branch: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -9,23 +10,27 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Provide a high-level executive strategic summary for Round ${round} of the "${championshipName}" ${branch} simulation. 
-      Analyze potential volatility and provide one key strategic pillar for teams to focus on. Keep it under 100 words.`,
+      contents: `You are the Empirion Market AI. Provide a quantitative strategic brief for Round ${round} of the "${championshipName}" ${branch} championship. 
+      Focus on:
+      1. Economic volatility impacts on unit margin.
+      2. Competitive survival price points.
+      3. A specific 'Black Swan' warning.
+      Keep it strictly under 100 words, executive tone.`,
       config: {
-        temperature: 0.7,
+        temperature: 0.6,
+        thinkingConfig: { thinkingBudget: 0 }
       }
     });
 
-    return response.text || "Market stable. Proceed with standard operations.";
+    return response.text || "Market stable. Unit costs projected to hold within +/- 2% margin.";
   } catch (error) {
     console.error("Gemini Insight Error:", error);
-    return "Intelligence feed interrupted. Maintain defensive posture.";
+    return "Intelligence feed interrupted. Maintain defensive posture and monitor cash flow reserves.";
   }
 };
 
 /**
  * Performs a search-grounded query using Google Search.
- * Extracts URLs from groundingChunks as required.
  */
 export const performGroundedSearch = async (query: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -33,7 +38,8 @@ export const performGroundedSearch = async (query: string) => {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: query,
+      contents: `Search for real-world business trends, commodity pricing, or economic reports relevant to: ${query}. 
+      Synthesize the data into a strategic insight for a business simulation player.`,
       config: {
         tools: [{ googleSearch: {} }],
       },
@@ -42,7 +48,6 @@ export const performGroundedSearch = async (query: string) => {
     const text = response.text || "No grounded intelligence found.";
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     
-    // Extract unique sources
     const sources = chunks
       .filter((chunk: any) => chunk.web?.uri)
       .map((chunk: any) => ({
@@ -53,7 +58,7 @@ export const performGroundedSearch = async (query: string) => {
     return { text, sources };
   } catch (error) {
     console.error("Search Grounding Error:", error);
-    return { text: "Search grounding module failure.", sources: [] };
+    return { text: "Search grounding module failure. External data context unavailable.", sources: [] };
   }
 };
 
@@ -65,11 +70,14 @@ export const createChatSession = () => {
   return ai.chats.create({
     model: 'gemini-3-pro-preview',
     config: {
-      systemInstruction: `You are "Empirion Strategos", the supreme AI consultant of the Empirion Business Intelligence Platform.
-      Your goal is to provide elite-level business advice based on simulation data. 
-      You explain complex concepts like EBITDA, ROI, NPV, and DRE (Demonstração do Resultado do Exercício).
-      You are professional, analytical, and prioritize shareholder value.
-      Language: Respond in the language the user addresses you in (primarily Portuguese or English).`,
+      systemInstruction: `You are "Empirion Strategos", a hyper-advanced corporate advisor.
+      You specialize in competitive equilibrium, mathematical business modeling (Bonopoly systems), and accounting strategy.
+      When asked about decisions:
+      - Analyze the trade-offs between Marketing GRP and Unit Price.
+      - Explain the 'Learning Curve' impact on production costs.
+      - Advise on debt-to-equity ratios and CapEx timing.
+      Always maintain a cold, analytical, yet encouraging executive tone.`,
+      thinkingConfig: { thinkingBudget: 32768 }
     },
   });
 };
