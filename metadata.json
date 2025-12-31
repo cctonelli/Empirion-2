@@ -1,0 +1,8 @@
+{
+  "name": "Empirion - Business Simulation Platform",
+  "description": "A high-fidelity multiplayer business simulation platform where teams compete in real-time championships, featuring collaborative decisions, financial reporting, and AI-driven market analysis.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
