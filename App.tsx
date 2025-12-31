@@ -86,7 +86,9 @@ const App: React.FC = () => {
         setActiveView(view);
       }}
     >
-      {renderContent()}
+      <div className="max-w-[1400px] mx-auto">
+        {renderContent()}
+      </div>
     </Layout>
   );
 };

@@ -12,12 +12,38 @@ export interface User {
   role: 'admin' | 'tutor' | 'player' | 'observer';
 }
 
-export interface ChampionshipTemplate {
-  id: string;
-  name: string;
-  branch: Branch;
-  description: string;
-  config: any;
+export interface DecisionData {
+  purchases: {
+    materialA: { volume: number; supplier: 'local' | 'intl'; contract: 'spot' | 'long' };
+    materialB: { volume: number; supplier: 'local' | 'intl'; contract: 'spot' | 'long' };
+  };
+  production: {
+    line1: number;
+    line2: number;
+    modernizationLevel: number; // 0 to 1
+  };
+  marketing: {
+    branding: number;
+    digital: number;
+    traditional: number;
+  };
+  pricing: {
+    productA: { price: number; localAllocation: number }; // allocation 0-1
+    productB: { price: number; localAllocation: number };
+  };
+  logistics: {
+    shippingMode: 'sea' | 'air' | 'land';
+  };
+  hr: {
+    hiring: number;
+    trainingBudget: number;
+    salaryMultiplier: number; // 1.0 to 1.5
+  };
+  finance: {
+    dividends: number;
+    loansRequest: number;
+    sharesBuyback: number;
+  };
 }
 
 export interface Championship {
@@ -69,4 +95,13 @@ export interface Company {
     esgScore: number;
     tsr: number; // Total Shareholder Return
   };
+}
+
+// Added ChampionshipTemplate interface to fix import error in constants.tsx
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  branch: Branch;
+  description: string;
+  config: any;
 }
