@@ -1,9 +1,17 @@
-
 export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness';
 export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
+
+export interface AccountNode {
+  id: string;
+  label: string;
+  value: number;
+  type: 'debit' | 'credit';
+  children?: AccountNode[];
+  isEditable?: boolean;
+}
 
 export interface ChampionshipTemplate {
   id: string;
