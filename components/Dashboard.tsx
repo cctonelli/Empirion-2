@@ -1,30 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import ApexCharts from 'apexcharts';
 import { 
   TrendingUp, 
-  Users, 
   Activity, 
   DollarSign, 
-  Clock,
-  ChevronRight,
-  Target,
-  Zap,
-  Briefcase,
-  Globe,
-  BarChart3,
-  ArrowUpRight,
-  ArrowDownRight
+  Target, 
+  Zap, 
+  Briefcase, 
+  Globe, 
+  BarChart3, 
+  ArrowUpRight, 
+  ArrowDownRight,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
+import ChampionshipTimer from './ChampionshipTimer';
+import { generateMarketAnalysis } from '../services/gemini';
 
-// Ensure ApexCharts is available globally for the react wrapper in ESM
+// Ensure ApexCharts is available globally
 if (typeof window !== 'undefined') {
   (window as any).ApexCharts = ApexCharts;
 }
 
 const Dashboard: React.FC = () => {
+  const [aiInsight, setAiInsight] = useState<string>('');
+  const [isInsightLoading, setIsInsightLoading] = useState(true);
+
   // Defensive component check for react-apexcharts in ESM
   const ApexChart = (Chart as any).default || Chart;
+
+  useEffect(() => {
+    const fetchInsight = async () => {
+      try {
+        const result = await generateMarketAnalysis('Alpha Group Hub', 4, 'industrial');
+        setAiInsight(result);
+      } catch (err) {
+        setAiInsight("Unable to load strategic forecast.");
+      } finally {
+        setIsInsightLoading(false);
+      }
+    };
+    fetchInsight();
+  }, []);
 
   const lineChartOptions: any = {
     chart: { 
@@ -38,59 +56,22 @@ const Dashboard: React.FC = () => {
     stroke: { curve: 'smooth', width: 4, colors: ['#2563eb', '#10b981'] },
     fill: { 
       type: 'gradient', 
-      gradient: { 
-        shadeIntensity: 1, 
-        opacityFrom: 0.2, 
-        opacityTo: 0, 
-        stops: [0, 90, 100] 
-      } 
+      gradient: { shadeIntensity: 1, opacityFrom: 0.2, opacityTo: 0, stops: [0, 90, 100] } 
     },
     xaxis: { 
-      categories: ['Round 0', 'Round 1', 'Round 2', 'Round 3', 'Round 4'], 
-      axisBorder: { show: false }, 
-      axisTicks: { show: false },
-      labels: { 
-        style: { colors: '#64748b', fontWeight: 500, fontSize: '11px' },
-        offsetY: 5
-      }
+      categories: ['R0', 'R1', 'R2', 'R3', 'R4'], 
+      labels: { style: { colors: '#64748b', fontWeight: 500, fontSize: '11px' } }
     },
     yaxis: {
-      labels: { 
-        style: { colors: '#64748b', fontWeight: 500, fontSize: '11px' },
-        formatter: (val: number) => `$${val}k`
-      }
-    },
-    grid: { show: true, borderColor: '#f1f5f9', strokeDashArray: 4, padding: { left: 10, right: 10 } },
-    colors: ['#2563eb', '#10b981'],
-    legend: { show: false },
-    tooltip: { 
-      theme: 'light',
-      style: { fontSize: '12px' },
-      x: { show: false }
-    }
-  };
-
-  const lineChartSeries = [
-    { name: 'Revenue', data: [100, 120, 110, 150, 190] },
-    { name: 'Net Profit', data: [10, 15, 8, 25, 32] }
-  ];
-
-  const barChartOptions: any = {
-    chart: { type: 'bar', toolbar: { show: false }, stacked: true },
-    plotOptions: { bar: { borderRadius: 6, columnWidth: '35%' } },
-    dataLabels: { enabled: false },
-    colors: ['#2563eb', '#cbd5e1'],
-    xaxis: { 
-      categories: ['R1', 'R2', 'R3', 'R4'],
-      labels: { style: { colors: '#64748b', fontSize: '10px', fontWeight: 600 } }
+      labels: { style: { colors: '#64748b', fontWeight: 500, fontSize: '11px' }, formatter: (v: number) => `$${v}k` }
     },
     grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+    colors: ['#2563eb', '#10b981'],
     legend: { show: false }
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Top Bar: Mission Status */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
@@ -112,22 +93,13 @@ const Dashboard: React.FC = () => {
         
         <div className="flex items-center gap-4">
            <div className="hidden lg:flex flex-col items-end px-6 border-r border-slate-200">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Shareholder Return</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Current Shareholder Return</span>
               <span className="text-lg font-black text-emerald-600">+14.2%</span>
            </div>
-           <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Next Deadline</span>
-                <span className="text-lg font-mono font-black text-slate-900">04:22:15</span>
-              </div>
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center animate-pulse">
-                 <Clock size={20} />
-              </div>
-           </div>
+           <ChampionshipTimer />
         </div>
       </div>
 
-      {/* KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: 'Operating Income', value: '$ 48,250', trend: '+18.5%', positive: true, icon: DollarSign },
@@ -135,7 +107,7 @@ const Dashboard: React.FC = () => {
           { label: 'Resource Efficiency', value: '92.4%', trend: '-1.2%', positive: false, icon: Activity },
           { label: 'Brand Equity', value: '742 pts', trend: '+12.0%', positive: true, icon: Zap },
         ].map((card, idx) => (
-          <div key={idx} className="premium-card p-6 rounded-3xl flex flex-col justify-between">
+          <div key={idx} className="premium-card p-6 rounded-3xl flex flex-col justify-between group">
             <div className="flex justify-between items-start">
               <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                 <card.icon size={22} />
@@ -153,27 +125,55 @@ const Dashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-               <h3 className="text-lg font-extrabold text-slate-900 uppercase tracking-tight">Growth Trajectory</h3>
-               <p className="text-xs font-semibold text-slate-400 mt-0.5">Performance tracking across current simulation cycles</p>
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-lg font-extrabold text-slate-900 uppercase tracking-tight">Growth Trajectory</h3>
+              <div className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Revenue</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Net Profit</span>
+                  </div>
+              </div>
             </div>
-            <div className="flex gap-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Revenue</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Net Profit</span>
-                </div>
+            <div className="h-[380px] w-full">
+              {ApexChart && <ApexChart options={lineChartOptions} series={[{ name: 'Revenue', data: [100, 120, 110, 150, 190] }, { name: 'Net Profit', data: [10, 15, 8, 25, 32] }]} type="area" height="100%" />}
             </div>
           </div>
-          <div className="h-[380px] w-full">
-            {ApexChart && <ApexChart options={lineChartOptions} series={lineChartSeries} type="area" height="100%" />}
+
+          {/* AI STRATEGIC FORECAST WIDGET */}
+          <div className="bg-brand-950 p-10 rounded-[2.5rem] text-white relative overflow-hidden group shadow-2xl">
+             <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start">
+                <div className="shrink-0">
+                   <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                      <Sparkles size={32} />
+                   </div>
+                </div>
+                <div className="space-y-4">
+                   <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">Gemini Strategic Forecast</span>
+                      <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
+                   </div>
+                   {isInsightLoading ? (
+                     <div className="space-y-2">
+                        <div className="h-4 bg-white/10 rounded-full w-3/4 animate-pulse"></div>
+                        <div className="h-4 bg-white/10 rounded-full w-full animate-pulse"></div>
+                     </div>
+                   ) : (
+                     <p className="text-xl font-bold leading-relaxed text-slate-100">
+                       "{aiInsight}"
+                     </p>
+                   )}
+                </div>
+             </div>
+             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:rotate-12 transition-transform duration-1000">
+                <Activity size={200} />
+             </div>
           </div>
         </div>
 
@@ -194,9 +194,7 @@ const Dashboard: React.FC = () => {
                         colors: ['#2563eb'],
                         stroke: { lineCap: 'round' }
                       }} 
-                      series={[24]} 
-                      type="radialBar" 
-                      height={200} 
+                      series={[24]} type="radialBar" height={200} 
                     />}
                   </div>
                </div>
@@ -217,22 +215,6 @@ const Dashboard: React.FC = () => {
                   ))}
                </div>
              </div>
-           </div>
-
-           <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
-              <div className="relative z-10">
-                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-2">Internal Benchmark</h4>
-                 <h3 className="text-xl font-extrabold mb-6 uppercase">Production vs Demand</h3>
-                 <div className="h-[120px] w-full">
-                   {ApexChart && <ApexChart options={barChartOptions} series={[{name: 'Actual', data: [44, 55, 57, 56]}, {name: 'Target', data: [76, 85, 101, 98]}]} type="bar" height="100%" />}
-                 </div>
-                 <button className="w-full mt-6 py-4 bg-white/10 hover:bg-white/20 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-                   View Full Audit <ChevronRight size={14} />
-                 </button>
-              </div>
-              <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                 <TrendingUp size={180} />
-              </div>
            </div>
         </div>
       </div>
