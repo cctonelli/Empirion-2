@@ -15,7 +15,7 @@
     "@google/genai": "0.21.0",
     "recharts": "2.13.3",
     "react-apexcharts": "1.4.1",
-    "apexcharts": "4.0.0",
+    "apexcharts": "3.45.0",
     "@supabase/supabase-js": "2.46.1"
   },
   "devDependencies": {
