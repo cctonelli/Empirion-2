@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, Trash2, ChevronDown, ListTree, DollarSign, Calculator, 
-  Layers, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, GRP,
+  Layers, ArrowUp, ArrowDown, ChevronLeft, ChevronRight,
   Target, Info
 } from 'lucide-react';
 import { AccountNode } from '../types';
