@@ -1,5 +1,5 @@
 
-export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness';
+export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
 export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
@@ -13,6 +13,7 @@ export interface BalanceSheet {
     inventory_raw_b: number;
     inventory_finished: number;
     prepaid_expenses: number;
+    portfolio_investments?: number; // Specific for finance
   };
   non_current_assets: {
     pp_e: {
@@ -21,6 +22,7 @@ export interface BalanceSheet {
       land: number;
     };
     accumulated_depreciation: number;
+    long_term_credits?: number; // Specific for finance/construction
   };
   total_assets: number;
 }
@@ -31,6 +33,7 @@ export interface LiabilitiesEquity {
     short_term_loans: number;
     taxes_payable: number;
     dividends_payable: number;
+    customer_deposits?: number; // Specific for finance
   };
   non_current_liabilities: {
     long_term_loans: number;
@@ -69,6 +72,8 @@ export interface MarketIndicators {
   machine_beta_price: number;
   machine_gama_price: number;
   average_salary: number;
+  exchange_rate?: number; // For international templates
+  risk_premium?: number; // For finance
 }
 
 export interface EcosystemConfig {

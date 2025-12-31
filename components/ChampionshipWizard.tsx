@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -18,7 +17,11 @@ import {
   Lock,
   Unlock,
   Info,
-  BarChart3
+  BarChart3,
+  Search,
+  Filter,
+  Building2,
+  Landmark
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS } from '../constants';
 import { Branch, ChampionshipTemplate } from '../types';
@@ -30,6 +33,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [financials, setFinancials] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<ChampionshipTemplate | null>(null);
+  const [filterBranch, setFilterBranch] = useState<Branch | 'all'>('all');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -64,13 +68,16 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           scenarioType: template.config.scenario_type,
           transparency: template.config.transparency_level
         }));
-        // Pre-fill financials from template
         setFinancials(template.initial_financials);
       }
     } else if (formData.templateId === 'scratch') {
         setSelectedTemplate(null);
     }
   }, [formData.templateId]);
+
+  const filteredTemplates = CHAMPIONSHIP_TEMPLATES.filter(t => 
+    filterBranch === 'all' || t.branch === filterBranch
+  );
 
   const handleLaunch = async () => {
     setIsSubmitting(true);
@@ -113,7 +120,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   };
 
   return (
-    <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-8 duration-500 pb-20">
+    <div className="max-w-6xl mx-auto animate-in slide-in-from-bottom-8 duration-500 pb-20">
       <div className="flex items-center justify-between mb-12 relative px-4">
         <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 -translate-y-1/2 z-0"></div>
         {[1, 2, 3, 4].map((s) => (
@@ -134,44 +141,72 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         {step === 1 && (
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Scenario Selection</h2>
-              <p className="text-slate-500 mt-2">Base your championship on a proven model (V4.0) or start fresh.</p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Scenario Selection (v4.2)</h2>
+              <p className="text-slate-500 mt-2">12 curated templates across 6 strategic branches including Finance and Construction.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-wrap gap-2 justify-center pb-4">
+               <button 
+                 onClick={() => setFilterBranch('all')}
+                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterBranch === 'all' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+               >
+                 All Branches
+               </button>
+               {(Object.keys(BRANCH_CONFIGS) as Branch[]).map(b => (
+                 <button
+                   key={b}
+                   onClick={() => setFilterBranch(b)}
+                   className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${filterBranch === b ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                 >
+                   <span>{BRANCH_CONFIGS[b].icon}</span> {BRANCH_CONFIGS[b].label}
+                 </button>
+               ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <button 
                 onClick={() => setFormData({...formData, templateId: 'scratch'})}
-                className={`p-8 rounded-[2rem] border-2 text-left transition-all ${
+                className={`p-6 rounded-[2.5rem] border-2 text-left transition-all flex flex-col justify-between min-h-[220px] ${
                   formData.templateId === 'scratch' ? 'border-blue-600 bg-blue-50/50' : 'border-slate-100 hover:border-slate-200 bg-slate-50/30'
                 }`}
               >
-                <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center mb-4">
-                   <Plus size={24} />
+                <div>
+                  <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center mb-4">
+                     <Plus size={24} />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-lg">Custom Build</h3>
+                  <p className="text-slate-500 text-xs mt-2 leading-relaxed">Defina cada variável econômica e mapeamento de contas do zero para um cenário 100% autoral.</p>
                 </div>
-                <h3 className="font-bold text-slate-900 text-lg">Custom Build</h3>
-                <p className="text-slate-500 text-sm mt-1">Full control over every economic variable and account mapping.</p>
               </button>
 
-              {CHAMPIONSHIP_TEMPLATES.map(t => (
+              {filteredTemplates.map(t => (
                 <button 
                   key={t.id}
                   onClick={() => setFormData({...formData, templateId: t.id})}
-                  className={`p-8 rounded-[2rem] border-2 text-left transition-all relative overflow-hidden group ${
-                    formData.templateId === t.id ? 'border-blue-600 bg-blue-50/50' : 'border-slate-100 hover:border-slate-200 bg-slate-50/30'
+                  className={`p-6 rounded-[2.5rem] border-2 text-left transition-all relative overflow-hidden group flex flex-col justify-between min-h-[220px] ${
+                    formData.templateId === t.id ? 'border-blue-600 bg-blue-50/50 shadow-inner' : 'border-slate-100 hover:border-slate-200 bg-slate-50/30 shadow-sm'
                   }`}
                 >
-                  <div className="absolute -top-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <span className="text-8xl">{BRANCH_CONFIGS[t.branch].icon}</span>
+                  <div className="absolute -top-6 -right-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <span className="text-9xl">{BRANCH_CONFIGS[t.branch].icon}</span>
                   </div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-3xl">{BRANCH_CONFIGS[t.branch].icon}</span>
-                    <span className="px-3 py-1 bg-white text-[10px] font-black text-slate-500 rounded-full uppercase tracking-tighter border border-slate-100">
-                      {t.branch}
-                    </span>
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-xl">
+                        {BRANCH_CONFIGS[t.branch].icon}
+                      </div>
+                      <span className="px-2.5 py-1 bg-white text-[9px] font-black text-blue-600 rounded-full uppercase tracking-tighter border border-blue-50">
+                        {t.branch}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-slate-900 text-base leading-tight group-hover:text-blue-600 transition-colors">{t.name}</h3>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1.5">{t.sector}</p>
+                    <p className="text-slate-500 text-xs mt-3 line-clamp-3 leading-relaxed font-medium">{t.description}</p>
                   </div>
-                  <h3 className="font-bold text-slate-900 text-lg leading-tight">{t.name}</h3>
-                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1 text-blue-600">{t.sector}</p>
-                  <p className="text-slate-500 text-sm mt-2 line-clamp-2">{t.description}</p>
+                  <div className="mt-4 pt-4 border-t border-slate-100/50 flex justify-between items-center opacity-60">
+                     <span className="text-[10px] font-bold text-slate-400">{t.config.total_rounds} Cycles</span>
+                     <span className="text-[10px] font-black text-slate-900 uppercase">{t.config.currency}</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -182,7 +217,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           <div className="space-y-12">
             <div className="text-center">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">Market Foundations</h2>
-              <p className="text-slate-500 mt-2">Define regional reach and starting equilibrium.</p>
+              <p className="text-slate-500 mt-2">Personalize o alcance regional e o equilíbrio de mercado.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
@@ -192,89 +227,44 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                   type="text" 
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-600 outline-none transition-all font-semibold"
-                  placeholder="Ex: Industrial Masters 2025"
+                  className="w-full p-6 bg-slate-50 border border-slate-200 rounded-[2rem] focus:ring-8 focus:ring-blue-50 focus:border-blue-600 outline-none transition-all font-bold text-lg"
+                  placeholder="Ex: Empirion Masters 2025"
                 />
               </div>
 
               <div className="space-y-4">
                 <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
-                  <Unlock size={14} className="text-blue-500" /> Visibility
+                   Operational Branch
                 </label>
-                <div className="flex gap-4 p-1 bg-slate-100 rounded-2xl border border-slate-200">
-                   <button 
-                     onClick={() => setFormData({...formData, isPublic: false})}
-                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${!formData.isPublic ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
-                   >
-                     <Lock size={14} /> Private
-                   </button>
-                   <button 
-                     onClick={() => setFormData({...formData, isPublic: true})}
-                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${formData.isPublic ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
-                   >
-                     <Unlock size={14} /> Public
-                   </button>
+                <div className="grid grid-cols-2 gap-3">
+                  {(Object.keys(BRANCH_CONFIGS) as Branch[]).map(b => (
+                    <button
+                      key={b}
+                      onClick={() => setFormData({...formData, branch: b})}
+                      className={`p-4 rounded-2xl border-2 text-[10px] font-black transition-all flex items-center gap-3 ${
+                        formData.branch === b ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-md' : 'border-slate-100 text-slate-500 bg-slate-50/50'
+                      }`}
+                    >
+                      <span className="text-lg">{BRANCH_CONFIGS[b].icon}</span> {BRANCH_CONFIGS[b].label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               <div className="space-y-4">
                 <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
-                  <MapPin size={14} className="text-blue-500" /> Active Regions (N)
+                  <MapPin size={14} className="text-blue-500" /> Market Channels (Regions)
                 </label>
-                <div className="flex items-center gap-6 p-2 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-200">
                    <input 
                      type="range" min="1" max="15" step="1"
                      value={formData.regionsCount}
                      onChange={e => setFormData({...formData, regionsCount: parseInt(e.target.value)})}
                      className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                    />
-                   <span className="w-12 h-12 bg-white rounded-xl border border-slate-200 flex items-center justify-center font-black text-blue-600 shadow-sm">
+                   <span className="w-14 h-14 bg-white rounded-2xl border border-slate-200 flex items-center justify-center font-black text-blue-600 shadow-lg text-lg">
                      {formData.regionsCount}
                    </span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
-                  <Package size={14} className="text-emerald-500" /> Initial Inventory Units
-                </label>
-                <input 
-                  type="number"
-                  value={formData.initialStock}
-                  onChange={e => setFormData({...formData, initialStock: parseInt(e.target.value) || 0})}
-                  className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 font-mono font-bold"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
-                  <TrendingUp size={14} className="text-amber-500" /> Starting Market Price
-                </label>
-                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:ring-4 focus-within:ring-blue-100 transition-all">
-                  <span className="p-5 font-black text-slate-400 bg-slate-100/50 border-r border-slate-200">{formData.currency}</span>
-                  <input 
-                    type="number"
-                    value={formData.initialPrice}
-                    onChange={e => setFormData({...formData, initialPrice: parseFloat(e.target.value) || 0})}
-                    className="flex-1 p-5 bg-transparent outline-none font-mono font-bold"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Industry Segment</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {(Object.keys(BRANCH_CONFIGS) as Branch[]).map(b => (
-                    <button
-                      key={b}
-                      onClick={() => setFormData({...formData, branch: b})}
-                      className={`p-4 rounded-2xl border-2 text-xs font-black transition-all flex items-center gap-2 ${
-                        formData.branch === b ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-sm' : 'border-slate-100 text-slate-500 bg-slate-50/50'
-                      }`}
-                    >
-                      <span>{BRANCH_CONFIGS[b].icon}</span> {BRANCH_CONFIGS[b].label}
-                    </button>
-                  ))}
                 </div>
               </div>
             </div>
@@ -285,15 +275,18 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           <div className="space-y-8">
             <div className="text-center">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">Economic Blueprint</h2>
-              <p className="text-slate-500 mt-2">Map the opening balance and income structure for all competing firms.</p>
+              <p className="text-slate-500 mt-2">Mapeie a estrutura de contas inicial para as empresas competidoras.</p>
             </div>
             
             {selectedTemplate && (
-              <div className="p-6 bg-blue-50 rounded-3xl border border-blue-100 flex items-center gap-4 mb-6 animate-in zoom-in-95">
-                <Info className="text-blue-600 shrink-0" size={24} />
-                <p className="text-xs font-medium text-blue-900">
-                  You've selected the <strong>{selectedTemplate.name}</strong> template. The financial structure below is pre-populated with its V4.0 audited balance sheet. You can still tweak it.
-                </p>
+              <div className="p-8 bg-blue-50 rounded-[2.5rem] border border-blue-100 flex items-center gap-6 mb-8 animate-in zoom-in-95">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+                  <Landmark className="text-blue-600" size={28} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-blue-900">Blueprint: {selectedTemplate.name}</p>
+                  <p className="text-xs font-medium text-blue-700/80 mt-1">Dados auditados (v4.2) pré-carregados para o setor {selectedTemplate.sector}.</p>
+                </div>
               </div>
             )}
             
@@ -305,61 +298,61 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         )}
 
         {step === 4 && (
-          <div className="text-center space-y-8 py-10">
+          <div className="text-center space-y-10 py-12">
             <div className="relative inline-block">
-              <div className="w-24 h-24 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-300 relative z-10">
-                <Zap size={48} className="fill-current" />
+              <div className="w-32 h-32 bg-slate-900 text-white rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl relative z-10">
+                <Zap size={64} className="fill-current text-blue-500" />
               </div>
-              <div className="absolute -inset-4 bg-blue-500/20 blur-2xl rounded-full z-0 animate-pulse"></div>
+              <div className="absolute -inset-8 bg-blue-500/10 blur-[60px] rounded-full z-0 animate-pulse"></div>
             </div>
-            <h2 className="text-4xl font-black text-slate-900 tracking-tight">Deploy to Market</h2>
             
-            <div className="max-w-md mx-auto p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 text-left space-y-4 shadow-inner">
-               <div className="flex justify-between">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Scenario:</span>
-                 <span className="text-slate-900 font-bold">{formData.name || 'Untitled'}</span>
+            <div className="space-y-2">
+              <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase">Initialize Arena</h2>
+              <p className="text-slate-500 font-medium text-lg">Seu império comercial está pronto para o deployment.</p>
+            </div>
+            
+            <div className="max-w-md mx-auto p-10 bg-white rounded-[3.5rem] border border-slate-100 text-left space-y-5 shadow-2xl">
+               <div className="flex justify-between items-center">
+                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Scenario ID</span>
+                 <span className="text-slate-900 font-bold">{formData.name || 'Empirion Alpha'}</span>
                </div>
-               <div className="flex justify-between">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Regional Nodes:</span>
-                 <span className="text-slate-900 font-bold">{formData.regionsCount} Regions</span>
+               <div className="flex justify-between items-center">
+                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Macro Branch</span>
+                 <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-blue-100">
+                    {formData.branch}
+                 </span>
                </div>
-               {selectedTemplate && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Engine Base:</span>
-                    <span className="text-blue-600 font-bold">{selectedTemplate.sector}</span>
-                  </div>
-               )}
-               <div className="flex justify-between pt-6 border-t border-slate-200">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Initial Assets:</span>
-                 <span className="text-emerald-600 font-black text-lg">
-                    {formData.currency} {(financials?.balance_sheet?.total_assets || selectedTemplate?.initial_financials?.balance_sheet?.total_assets || 1250000).toLocaleString()}
+               <div className="flex justify-between items-center pt-6 border-t border-slate-100">
+                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Valuation</span>
+                 <span className="text-emerald-600 font-black text-2xl font-mono">
+                    {formData.currency} {(financials?.balance_sheet?.total_assets || selectedTemplate?.initial_financials?.balance_sheet?.total_assets || 0).toLocaleString()}
                  </span>
                </div>
             </div>
-            <div className="flex items-center gap-3 justify-center text-slate-400 text-sm">
-              <BarChart3 size={18} />
-              <span>Engine generates Period 1 reports based on V4.0 JSON scope.</span>
+            
+            <div className="flex items-center gap-3 justify-center text-slate-400 text-xs font-bold uppercase tracking-widest">
+               <Globe size={16} /> Global Market Sync Active
             </div>
           </div>
         )}
 
-        <div className="mt-12 flex justify-between pt-10 border-t border-slate-100">
+        <div className="mt-16 flex justify-between pt-10 border-t border-slate-100">
           <button 
             onClick={step === 1 ? onComplete : prevStep}
             disabled={isSubmitting}
-            className="px-8 py-4 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all disabled:opacity-50"
+            className="px-10 py-5 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all disabled:opacity-50"
           >
-            {step === 1 ? 'Abort' : 'Previous Step'}
+            {step === 1 ? 'Abort Operation' : 'Reverse Phase'}
           </button>
           <button 
             onClick={step === 4 ? handleLaunch : nextStep}
             disabled={(step === 2 && !formData.name) || isSubmitting}
-            className={`px-12 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 transition-all ${
-              (step === 2 && !formData.name) || isSubmitting ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-blue-600 hover:scale-105 shadow-xl shadow-slate-200'
+            className={`px-14 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-4 transition-all ${
+              (step === 2 && !formData.name) || isSubmitting ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-blue-600 hover:scale-105 shadow-2xl shadow-blue-200'
             }`}
           >
-            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : (step === 4 ? 'Launch Simulation' : 'Continue')} 
-            {!isSubmitting && <ArrowRight size={18} />}
+            {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : (step === 4 ? 'Deploy Simulation' : 'Next Phase')} 
+            {!isSubmitting && <ArrowRight size={20} />}
           </button>
         </div>
       </div>
