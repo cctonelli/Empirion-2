@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, Trash2, ChevronDown, ListTree, DollarSign, Calculator, 
   Layers, ArrowUp, ArrowDown, ChevronLeft, ChevronRight,
-  Target, Info
+  Target, Info, GripVertical
 } from 'lucide-react';
 import { AccountNode } from '../types';
 
@@ -56,7 +56,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
       id: Math.random().toString(36).substr(2, 9), 
       label: 'Nova Conta', 
       value: 0, 
-      type: 'credit', 
+      type: activeTab === 'dre' ? 'credit' : 'debit', 
       isEditable: true 
     };
     
@@ -109,119 +109,66 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
     setNodes(update(nodes));
   };
 
-  const indentNode = (id: string, direction: 'in' | 'out') => {
-    const findAndManipulate = (list: AccountNode[], parent?: AccountNode): AccountNode[] => {
-      const index = list.findIndex(n => n.id === id);
-      
-      if (index !== -1) {
-        const node = list[index];
-        if (direction === 'in' && index > 0) {
-          // Move as child of previous sibling
-          const prevSibling = list[index - 1];
-          const newList = list.filter(n => n.id !== id);
-          const updatedPrevSibling = {
-            ...prevSibling,
-            children: [...(prevSibling.children || []), node]
-          };
-          newList[index - 1] = updatedPrevSibling;
-          return newList;
-        } else if (direction === 'out' && parent) {
-          // This manipulation happens in the parent's mapping
-          return list; // Marker for parent to handle
-        }
-      }
-
-      return list.map(n => {
-        if (n.children) {
-          const indexInChild = n.children.findIndex(c => c.id === id);
-          if (direction === 'out' && indexInChild !== -1) {
-            // Found it inside this node's children, move it out to same level as n
-            // Handled by parent of n (the recursive caller)
-          }
-          // Out logic is complex recursively, simplified for MVP:
-          return { ...n, children: findAndManipulate(n.children, n) };
-        }
-        return n;
-      });
-    };
-
-    // Note: Recursive "outdent" across arbitrary depths is non-trivial in immutable state without flat maps.
-    // For MVP, we provide robust Add/Delete/Move/Totalize.
-    setNodes(calculateTotals(findAndManipulate(nodes)));
-  };
-
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-full sm:w-fit">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl w-full sm:w-fit border border-slate-200">
           <button 
             onClick={() => setActiveTab('dre')}
-            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${activeTab === 'dre' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'dre' ? 'bg-white text-slate-900 shadow-md border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            DRE Structure
+            DRE Blueprint
           </button>
           <button 
             onClick={() => setActiveTab('balance')}
-            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${activeTab === 'balance' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'balance' ? 'bg-white text-slate-900 shadow-md border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            Balance Sheet
+            Balance Structure
           </button>
         </div>
         
-        <div className="flex items-center gap-3 bg-white p-2 pr-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white">
-            <Calculator size={18} />
-          </div>
+        <div className="hidden sm:flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
+          <Calculator size={18} className="text-blue-500" />
           <div className="flex flex-col">
-            <span className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em]">Consolidated Valuation</span>
-            <span className="font-mono font-black text-slate-900 text-sm">$ {nodes.reduce((acc, curr) => acc + curr.value, 0).toLocaleString()}</span>
+            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Asset Valuation</span>
+            <span className="font-mono font-black text-slate-900 text-xs">$ {nodes.reduce((acc, curr) => acc + curr.value, 0).toLocaleString()}</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white p-1 rounded-[3rem] border border-slate-100 premium-shadow overflow-hidden">
-        <div className="p-8 pb-4 flex items-center justify-between">
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-              <Layers size={20} />
-            </div>
-            <div>
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">Blueprint Architect</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Hierarchical Account Mapping</p>
-            </div>
+            <Layers size={18} className="text-slate-400" />
+            <span className="text-xs font-black uppercase tracking-widest text-slate-700">Account Hierarchy Editor</span>
           </div>
-          <div className="hidden lg:flex items-center gap-4 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="flex items-center gap-4">
              <Info size={14} className="text-blue-500" />
-             <span className="text-[10px] font-bold text-slate-500 uppercase">Parent accounts sum children automatically</span>
+             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Values auto-sum to parents</span>
           </div>
         </div>
 
-        <div className="p-4 sm:p-8 space-y-4">
-          <div className="space-y-3">
-            {nodes.map((node, index) => (
-              <TreeNode 
-                key={node.id} 
-                node={node} 
-                isFirst={index === 0}
-                isLast={index === nodes.length - 1}
-                onAdd={addNode} 
-                onDelete={deleteNode} 
-                onUpdate={updateNode} 
-                onMove={moveNode}
-                onIndent={indentNode}
-              />
-            ))}
-            
-            <button 
-              onClick={() => addNode()}
-              className="group w-full py-6 border-2 border-dashed border-slate-200 rounded-3xl flex items-center justify-center gap-3 text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all font-black text-[10px] uppercase tracking-widest"
-            >
-              <div className="p-1.5 bg-slate-100 rounded-lg group-hover:bg-blue-100 transition-colors">
-                <Plus size={16} />
-              </div>
-              Define New Root Group
-            </button>
-          </div>
+        <div className="p-6 sm:p-10 space-y-3">
+          {nodes.map((node, index) => (
+            <TreeNode 
+              key={node.id} 
+              node={node} 
+              isFirst={index === 0}
+              isLast={index === nodes.length - 1}
+              onAdd={addNode} 
+              onDelete={deleteNode} 
+              onUpdate={updateNode} 
+              onMove={moveNode}
+            />
+          ))}
+          
+          <button 
+            onClick={() => addNode()}
+            className="w-full py-8 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+          >
+            <Plus size={24} />
+            <span className="font-black text-[10px] uppercase tracking-widest">Initialize Root Account</span>
+          </button>
         </div>
       </div>
     </div>
@@ -236,68 +183,61 @@ const TreeNode: React.FC<{
   onDelete: (id: string) => void;
   onUpdate: (id: string, updates: Partial<AccountNode>) => void;
   onMove: (id: string, direction: 'up' | 'down') => void;
-  onIndent: (id: string, direction: 'in' | 'out') => void;
   level?: number;
-}> = ({ node, onAdd, onDelete, onUpdate, onMove, onIndent, isFirst, isLast, level = 0 }) => {
+}> = ({ node, onAdd, onDelete, onUpdate, onMove, isFirst, isLast, level = 0 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const isParent = node.children && node.children.length > 0;
 
   return (
     <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-      <div className={`group flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-3xl transition-all border ${
+      <div className={`group flex items-center gap-4 p-4 rounded-2xl transition-all border ${
         isParent 
-          ? 'bg-slate-50/80 border-slate-200 shadow-sm' 
-          : 'bg-white border-slate-100 hover:border-blue-200'
+          ? 'bg-slate-50 border-slate-200' 
+          : 'bg-white border-slate-100 hover:border-blue-100 hover:shadow-sm'
       }`} style={{ marginLeft: level * 24 }}>
         
-        <div className="flex items-center gap-3 flex-1 w-full min-w-0">
-          <button 
-            onClick={() => setIsOpen(!isOpen)} 
-            className={`p-1.5 text-slate-400 hover:text-slate-900 transition-all ${isOpen ? 'rotate-0' : '-rotate-90'} ${!isParent && 'opacity-0 cursor-default'}`}
-          >
-            <ChevronDown size={18} />
-          </button>
-          
-          <div className={`p-2 rounded-xl shrink-0 ${isParent ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
-            <ListTree size={16} />
-          </div>
-          
+        <GripVertical size={16} className="text-slate-200 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity" />
+
+        <button 
+          onClick={() => setIsOpen(!isOpen)} 
+          className={`p-1 text-slate-400 hover:text-slate-900 transition-all ${isOpen ? 'rotate-0' : '-rotate-90'} ${!isParent && 'opacity-0 cursor-default'}`}
+        >
+          <ChevronDown size={18} />
+        </button>
+        
+        <div className="flex-1 flex items-center gap-4 min-w-0">
           <input 
             value={node.label} 
             onChange={(e) => onUpdate(node.id, { label: e.target.value })}
-            className={`bg-transparent outline-none flex-1 font-extrabold truncate tracking-tight text-sm ${isParent ? 'text-slate-900' : 'text-slate-600'}`}
-            placeholder="Account Label"
+            className={`bg-transparent outline-none font-bold text-sm flex-1 truncate ${isParent ? 'text-slate-900' : 'text-slate-600'}`}
+            placeholder="Account Label..."
           />
-        </div>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="flex items-center gap-3 px-4 py-2.5 bg-white border border-slate-200/80 rounded-2xl flex-1 sm:min-w-[140px] shadow-sm focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-            <DollarSign size={14} className="text-slate-300" />
+          
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+            <DollarSign size={12} className="text-slate-300" />
             {isParent ? (
-              <span className="font-black text-slate-900 font-mono text-xs">{node.value.toLocaleString()}</span>
+              <span className="font-mono font-black text-slate-900 text-xs">{node.value.toLocaleString()}</span>
             ) : (
               <input 
                 type="number"
                 value={node.value}
                 onChange={(e) => onUpdate(node.id, { value: parseFloat(e.target.value) || 0 })}
-                className="w-full bg-transparent outline-none font-bold text-blue-600 font-mono text-xs"
+                className="w-24 bg-transparent outline-none font-mono font-bold text-blue-600 text-xs"
               />
             )}
           </div>
+        </div>
 
-          <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all bg-white sm:bg-transparent p-1 rounded-xl sm:p-0 border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
-            <button onClick={() => onMove(node.id, 'up')} disabled={isFirst} className="p-2 text-slate-400 hover:text-slate-900 disabled:opacity-20"><ArrowUp size={16} /></button>
-            <button onClick={() => onMove(node.id, 'down')} disabled={isLast} className="p-2 text-slate-400 hover:text-slate-900 disabled:opacity-20"><ArrowDown size={16} /></button>
-            <button onClick={() => onIndent(node.id, 'in')} className="p-2 text-slate-400 hover:text-blue-600"><ChevronRight size={16} /></button>
-            <button onClick={() => onAdd(node.id)} className="p-2 text-slate-400 hover:text-emerald-600" title="Add Child"><Plus size={16} /></button>
-            <button onClick={() => onDelete(node.id)} className="p-2 text-slate-400 hover:text-red-600" title="Delete"><Trash2 size={16} /></button>
-          </div>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={() => onMove(node.id, 'up')} disabled={isFirst} className="p-2 text-slate-400 hover:text-slate-900 disabled:opacity-20"><ArrowUp size={16} /></button>
+          <button onClick={() => onMove(node.id, 'down')} disabled={isLast} className="p-2 text-slate-400 hover:text-slate-900 disabled:opacity-20"><ArrowDown size={16} /></button>
+          <button onClick={() => onAdd(node.id)} className="p-2 text-slate-400 hover:text-emerald-600"><Plus size={16} /></button>
+          <button onClick={() => onDelete(node.id)} className="p-2 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
         </div>
       </div>
       
       {isOpen && isParent && (
-        <div className="space-y-3 mt-3 relative">
-          <div className="absolute left-[26px] top-0 bottom-6 w-0.5 bg-slate-100 rounded-full" style={{ marginLeft: level * 24 }}></div>
+        <div className="space-y-2 mt-2">
           {node.children!.map((child, index) => (
             <TreeNode 
               key={child.id} 
@@ -308,7 +248,6 @@ const TreeNode: React.FC<{
               onDelete={onDelete} 
               onUpdate={onUpdate} 
               onMove={onMove}
-              onIndent={onIndent}
               level={level + 1}
             />
           ))}

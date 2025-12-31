@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Save, Info, TrendingUp, 
@@ -151,7 +152,8 @@ const DecisionForm: React.FC<{ regionsCount?: number }> = ({ regionsCount = 9 })
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {Object.entries(decisions.regions).map(([id, data]) => (
+                    {/* Fix: Explicitly type the entries to resolve 'unknown' property access errors */}
+                    {(Object.entries(decisions.regions) as [string, RegionalDecision][]).map(([id, data]) => (
                       <tr key={id} className="hover:bg-slate-50/30 transition-colors">
                         <td className="p-5 font-bold text-slate-900">Region 0{id}</td>
                         <td className="p-5">

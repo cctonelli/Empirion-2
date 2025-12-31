@@ -9,23 +9,23 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Generate a concise 1-paragraph market analysis for Round ${round} of the "${championshipName}" ${branch} business simulation. 
-      Focus on current economic trends, potential risks, and strategic advice for competing teams. Keep it professional and immersive.`,
+      contents: `Provide a high-level executive strategic summary for Round ${round} of the "${championshipName}" ${branch} simulation. 
+      Analyze potential volatility and provide one key strategic pillar for teams to focus on. Keep it under 100 words.`,
       config: {
         temperature: 0.7,
       }
     });
 
-    return response.text || "Unable to generate analysis at this time.";
+    return response.text || "Market stable. Proceed with standard operations.";
   } catch (error) {
-    console.error("Gemini Error:", error);
-    return "The market is currently unstable. Strategic analysis failed.";
+    console.error("Gemini Insight Error:", error);
+    return "Intelligence feed interrupted. Maintain defensive posture.";
   }
 };
 
 /**
  * Performs a search-grounded query using Google Search.
- * Extracts URLs as required by the guidelines.
+ * Extracts URLs from groundingChunks as required.
  */
 export const performGroundedSearch = async (query: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -39,25 +39,37 @@ export const performGroundedSearch = async (query: string) => {
       },
     });
 
-    const text = response.text || "No information found.";
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    const text = response.text || "No grounded intelligence found.";
+    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     
+    // Extract unique sources
+    const sources = chunks
+      .filter((chunk: any) => chunk.web?.uri)
+      .map((chunk: any) => ({
+        uri: chunk.web.uri,
+        title: chunk.web.title || "External Intelligence Source"
+      }));
+
     return { text, sources };
   } catch (error) {
     console.error("Search Grounding Error:", error);
-    return { text: "Error fetching real-time data.", sources: [] };
+    return { text: "Search grounding module failure.", sources: [] };
   }
 };
 
 /**
- * Creates a chat session for the global assistant using gemini-3-pro-preview.
+ * Creates a high-reasoning chat session using gemini-3-pro-preview.
  */
 export const createChatSession = () => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   return ai.chats.create({
     model: 'gemini-3-pro-preview',
     config: {
-      systemInstruction: 'You are "Empirion AI", a world-class business consultant assistant for an elite business simulation platform. You provide data-driven advice, explain complex financial concepts (DRE, Balance Sheets, Cash Flow), and help users strategize their moves. You have deep knowledge of industrial, commercial, service, and agribusiness sectors. Be professional, concise, and highly insightful.',
+      systemInstruction: `You are "Empirion Strategos", the supreme AI consultant of the Empirion Business Intelligence Platform.
+      Your goal is to provide elite-level business advice based on simulation data. 
+      You explain complex concepts like EBITDA, ROI, NPV, and DRE (Demonstração do Resultado do Exercício).
+      You are professional, analytical, and prioritize shareholder value.
+      Language: Respond in the language the user addresses you in (primarily Portuguese or English).`,
     },
   });
 };
