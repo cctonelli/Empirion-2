@@ -5,7 +5,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Helper for Realtime channel for collaborative decisions
+// Real-time subscriptions
 export const subscribeToDecisions = (teamId: string, callback: (payload: any) => void) => {
   return supabase
     .channel(`decisions-${teamId}`)
@@ -13,7 +13,6 @@ export const subscribeToDecisions = (teamId: string, callback: (payload: any) =>
     .subscribe();
 };
 
-// Real-time subscription for decision audit logs
 export const subscribeToDecisionAudit = (teamId: string, callback: (payload: any) => void) => {
   return supabase
     .channel(`audit-logs-${teamId}`)
@@ -24,4 +23,30 @@ export const subscribeToDecisionAudit = (teamId: string, callback: (payload: any
       filter: `team_id=eq.${teamId}` 
     }, callback)
     .subscribe();
+};
+
+// Community Scoring & Public Access
+export const getPublicChampionships = async () => {
+  const { data, error } = await supabase
+    .from('championships')
+    .select('*')
+    .eq('is_public', true)
+    .eq('status', 'active');
+  return { data, error };
+};
+
+export const getPublicReports = async (championshipId: string, round: number) => {
+  const { data, error } = await supabase
+    .from('public_reports')
+    .select('*')
+    .eq('championship_id', championshipId)
+    .eq('round', round);
+  return { data, error };
+};
+
+export const submitCommunityVote = async (vote: any) => {
+  const { data, error } = await supabase
+    .from('community_ratings')
+    .insert([vote]);
+  return { data, error };
 };

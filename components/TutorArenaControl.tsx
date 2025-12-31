@@ -17,9 +17,12 @@ import {
   CheckCircle2,
   SlidersHorizontal,
   ChevronRight,
-  Database
+  Database,
+  Star,
+  Plus,
+  Trash2
 } from 'lucide-react';
-import { EcosystemConfig, Championship } from '../types';
+import { EcosystemConfig, Championship, CommunityCriteria } from '../types';
 
 interface TutorArenaControlProps {
   championship: Championship;
@@ -35,21 +38,39 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
   });
   
   const [isPublic, setIsPublic] = useState(championship.is_public);
+  const [communityWeight, setCommunityWeight] = useState(championship.config?.communityWeight || 0.3);
+  const [criteria, setCriteria] = useState<CommunityCriteria[]>(championship.config?.votingCriteria || [
+    { id: 'innovation', label: 'Innovation', weight: 0.25 },
+    { id: 'sustainability', label: 'Sustainability', weight: 0.25 }
+  ]);
+  
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API delay
     await new Promise(r => setTimeout(r, 800));
-    onUpdate({ ecosystemConfig: config, is_public: isPublic });
+    onUpdate({ 
+      ecosystemConfig: config, 
+      is_public: isPublic,
+      config: {
+        ...championship.config,
+        communityWeight,
+        votingCriteria: criteria
+      }
+    });
     setIsSaving(false);
     setMessage({ type: 'success', text: 'Ecosystem parameters synchronized successfully.' });
     setTimeout(() => setMessage(null), 3000);
   };
 
-  const updateParam = (key: keyof EcosystemConfig, val: number) => {
-    setConfig(prev => ({ ...prev, [key]: val }));
+  const addCriteria = () => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setCriteria(prev => [...prev, { id, label: 'New Metric', weight: 0.1 }]);
+  };
+
+  const removeCriteria = (id: string) => {
+    setCriteria(prev => prev.filter(c => c.id !== id));
   };
 
   return (
@@ -83,16 +104,16 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Visibility & Security */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-8">
-           <div className="flex items-center gap-3 mb-2">
-              <div className="p-3 bg-slate-900 text-white rounded-2xl">
-                 <Shield size={20} />
+        <div className="space-y-8">
+           {/* Access & Visibility */}
+           <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-8">
+              <div className="flex items-center gap-3">
+                 <div className="p-3 bg-slate-900 text-white rounded-2xl">
+                    <Shield size={20} />
+                 </div>
+                 <h3 className="text-lg font-black uppercase tracking-tight">Access Protocol</h3>
               </div>
-              <h3 className="text-lg font-black uppercase tracking-tight">Access Protocol</h3>
-           </div>
 
-           <div className="space-y-6">
               <div 
                 onClick={() => setIsPublic(!isPublic)}
                 className={`p-6 rounded-3xl border-2 cursor-pointer transition-all flex items-center justify-between group ${
@@ -103,28 +124,57 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
                     {isPublic ? <Unlock className="text-blue-600" /> : <Lock className="text-slate-400" />}
                     <div>
                        <span className="block font-black text-xs uppercase tracking-widest text-slate-900">Public Arena</span>
-                       <span className="text-[10px] text-slate-500 font-bold">Open Registration + Community Voting</span>
+                       <span className="text-[10px] text-slate-500 font-bold">Open for Community Voting</span>
                     </div>
                  </div>
                  <div className={`w-12 h-6 rounded-full relative transition-colors ${isPublic ? 'bg-blue-600' : 'bg-slate-200'}`}>
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isPublic ? 'right-1' : 'left-1'}`}></div>
                  </div>
               </div>
+           </div>
 
-              {!isPublic && (
-                <div className="p-6 bg-slate-900 rounded-3xl text-white space-y-3 relative overflow-hidden">
-                   <div className="relative z-10">
-                      <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Invite Code</span>
-                      <div className="flex items-center justify-between mt-2">
-                         <span className="text-2xl font-mono font-black tracking-widest">{championship.invite_code || 'EMP-742-X'}</span>
-                         <button className="p-2 bg-white/10 rounded-lg hover:bg-white/20"><RefreshCw size={14} /></button>
-                      </div>
-                   </div>
-                   <div className="absolute top-0 right-0 p-4 opacity-10">
-                      <Database size={64} />
-                   </div>
-                </div>
-              )}
+           {/* Community Score Configuration */}
+           <div className={`bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 space-y-8 transition-opacity ${!isPublic && 'opacity-50 pointer-events-none'}`}>
+              <div className="flex items-center gap-3">
+                 <div className="p-3 bg-amber-500 text-white rounded-2xl">
+                    <Star size={20} />
+                 </div>
+                 <h3 className="text-lg font-black uppercase tracking-tight">Community Impact</h3>
+              </div>
+
+              <div className="space-y-6">
+                 <div>
+                    <div className="flex justify-between items-center mb-4">
+                       <span className="text-[10px] font-black uppercase text-slate-400">Score Weight</span>
+                       <span className="text-sm font-black text-slate-900">{Math.round(communityWeight * 100)}%</span>
+                    </div>
+                    <input 
+                      type="range" min="0" max="0.5" step="0.05"
+                      value={communityWeight}
+                      onChange={e => setCommunityWeight(parseFloat(e.target.value))}
+                      className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                    />
+                 </div>
+
+                 <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                       <span className="text-[10px] font-black uppercase text-slate-400">Evaluation Metrics</span>
+                       <button onClick={addCriteria} className="p-1.5 bg-slate-100 rounded-lg text-slate-900 hover:bg-blue-600 hover:text-white transition-all"><Plus size={14}/></button>
+                    </div>
+                    <div className="space-y-3">
+                       {criteria.map(c => (
+                         <div key={c.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <input 
+                              type="text" value={c.label} 
+                              onChange={e => setCriteria(criteria.map(x => x.id === c.id ? {...x, label: e.target.value} : x))}
+                              className="bg-transparent font-bold text-xs flex-1 outline-none"
+                            />
+                            <button onClick={() => removeCriteria(c.id)} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
            </div>
         </div>
 
@@ -137,13 +187,9 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
                  </div>
                  <h3 className="text-lg font-black uppercase tracking-tight">Economic Ecosystem</h3>
               </div>
-              <div className="px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
-                 Round 04 Active
-              </div>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-              {/* Inflation */}
               <div className="space-y-6">
                  <div className="flex justify-between items-center">
                     <label className="flex items-center gap-2 text-xs font-black uppercase text-slate-400 tracking-widest">
@@ -154,13 +200,11 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
                  <input 
                    type="range" min="0" max="0.30" step="0.001"
                    value={config.inflationRate}
-                   onChange={e => updateParam('inflationRate', parseFloat(e.target.value))}
+                   onChange={e => setConfig({...config, inflationRate: parseFloat(e.target.value)})}
                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-rose-500"
                  />
-                 <p className="text-[10px] text-slate-400 font-medium">Increases operational costs and raw material pricing for all teams.</p>
               </div>
 
-              {/* Demand Multiplier */}
               <div className="space-y-6">
                  <div className="flex justify-between items-center">
                     <label className="flex items-center gap-2 text-xs font-black uppercase text-slate-400 tracking-widest">
@@ -171,13 +215,11 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
                  <input 
                    type="range" min="0.5" max="2.0" step="0.05"
                    value={config.demandMultiplier}
-                   onChange={e => updateParam('demandMultiplier', parseFloat(e.target.value))}
+                   onChange={e => setConfig({...config, demandMultiplier: parseFloat(e.target.value)})}
                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                  />
-                 <p className="text-[10px] text-slate-400 font-medium">Scales the total addressable market (TAM) across all regions.</p>
               </div>
 
-              {/* Interest Rate */}
               <div className="space-y-6">
                  <div className="flex justify-between items-center">
                     <label className="flex items-center gap-2 text-xs font-black uppercase text-slate-400 tracking-widest">
@@ -188,13 +230,11 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
                  <input 
                    type="range" min="0" max="0.50" step="0.005"
                    value={config.interestRate}
-                   onChange={e => updateParam('interestRate', parseFloat(e.target.value))}
+                   onChange={e => setConfig({...config, interestRate: parseFloat(e.target.value)})}
                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-amber-500"
                  />
-                 <p className="text-[10px] text-slate-400 font-medium">Adjusts the cost of financing and yields on cash reserves.</p>
               </div>
 
-              {/* Volatility */}
               <div className="space-y-6">
                  <div className="flex justify-between items-center">
                     <label className="flex items-center gap-2 text-xs font-black uppercase text-slate-400 tracking-widest">
@@ -205,18 +245,15 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
                  <input 
                    type="range" min="0" max="1.0" step="0.1"
                    value={config.marketVolatility}
-                   onChange={e => updateParam('marketVolatility', parseFloat(e.target.value))}
+                   onChange={e => setConfig({...config, marketVolatility: parseFloat(e.target.value)})}
                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                  />
-                 <p className="text-[10px] text-slate-400 font-medium">Higher values trigger random ecosystem events (strikes, tech breakthroughs).</p>
               </div>
            </div>
 
            <div className="mt-12 pt-10 border-t border-slate-50 flex items-center gap-4 text-amber-600 bg-amber-50 p-6 rounded-3xl border border-amber-100">
               <AlertCircle size={20} className="shrink-0" />
-              <p className="text-xs font-bold leading-relaxed">
-                Atenção: Mudanças no ecossistema afetam instantaneamente as projeções de todas as equipes. Recomendamos notificar as equipes antes de grandes ajustes.
-              </p>
+              <p className="text-xs font-bold leading-relaxed">Changes to the ecosystem affect the projections for all teams instantly.</p>
            </div>
         </div>
       </div>

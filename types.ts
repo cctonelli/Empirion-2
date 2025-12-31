@@ -1,3 +1,4 @@
+
 export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness';
 export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
@@ -11,6 +12,20 @@ export interface EcosystemConfig {
   marketVolatility: number; // 0 to 1
 }
 
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number; // 0 to 1
+}
+
+export interface ChampionshipConfig {
+  regionsCount: number;
+  initialStock: number;
+  initialPrice: number;
+  communityWeight: number; // 0 to 1 (e.g. 0.3 for 30%)
+  votingCriteria: CommunityCriteria[];
+}
+
 export interface AccountNode {
   id: string;
   label: string;
@@ -20,27 +35,14 @@ export interface AccountNode {
   isEditable?: boolean;
 }
 
-export interface ChampionshipTemplate {
-  id: string;
-  name: string;
-  branch: Branch;
-  description: string;
-  config: {
-    regionsCount: number;
-    initialStock: number;
-    initialPrice: number;
-    currency: string;
-  };
-}
-
 export interface RegionalDecision {
   price: number;
-  term: 0 | 1 | 2; // 0: Vista, 1: 30d, 2: 60d
-  marketing: number; // 0-9 intensity
+  term: 0 | 1 | 2;
+  marketing: number;
 }
 
 export interface DecisionData {
-  regions: Record<number, RegionalDecision>; // Regions 1-N
+  regions: Record<number, RegionalDecision>;
   hr: {
     hired: number;
     fired: number;
@@ -53,8 +55,8 @@ export interface DecisionData {
     purchaseMPA: number;
     purchaseMPB: number;
     paymentType: 0 | 1 | 2;
-    activityLevel: number; // %
-    extraProduction: number; // %
+    activityLevel: number;
+    extraProduction: number;
   };
   finance: {
     loanRequest: number;
@@ -68,42 +70,8 @@ export interface DecisionData {
 
 export interface FinancialStatement {
   round: number;
-  dre: {
-    salesRevenue: number;
-    cpv: number;
-    grossProfit: number;
-    operatingExpenses: {
-      sales: number;
-      admin: number;
-      financial: number;
-    };
-    operatingProfit: number;
-    netProfitBeforeTax: number;
-    taxProvision: number;
-    netProfit: number;
-  };
-  balance: {
-    assets: {
-      cash: number;
-      clients: number;
-      inventoryMPA: number;
-      inventoryMPB: number;
-      inventoryFinished: number;
-      machines: number;
-      accumulatedDepreciation: number;
-      land: number;
-      buildings: number;
-    };
-    liabilities: {
-      suppliers: number;
-      taxesPayable: number;
-      dividendsPayable: number;
-      shortTermLoans: number;
-      longTermLoans: number;
-      equity: number;
-      accumulatedProfit: number;
-    };
-  };
+  dre: any;
+  balance: any;
 }
 
 export interface Company {
@@ -116,6 +84,7 @@ export interface Company {
     productivity: number;
     motivation: 'Low' | 'Regular' | 'High';
     stockPrice: number;
+    communityScore?: number;
   };
 }
 
@@ -129,6 +98,31 @@ export interface Championship {
   currentRound: number;
   totalRounds: number;
   ecosystemConfig: EcosystemConfig;
+  config: ChampionshipConfig;
   tutor_id: string;
   invite_code?: string;
+}
+
+export interface CommunityRating {
+  id: string;
+  championship_id: string;
+  team_id: string;
+  user_id?: string; // Null for anonymous
+  round: number;
+  scores: Record<string, number>; // criteria_id -> score (1-10)
+  comment?: string;
+}
+
+// Added ChampionshipTemplate interface to fix error in constants.tsx
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  branch: Branch;
+  description: string;
+  config: {
+    regionsCount: number;
+    initialStock: number;
+    initialPrice: number;
+    currency: string;
+  };
 }

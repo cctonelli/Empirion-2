@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -8,9 +9,11 @@ import ChampionshipWizard from './components/ChampionshipWizard';
 import AdminCommandCenter from './components/AdminCommandCenter';
 import Auth from './components/Auth';
 import ChampionshipTimer from './components/ChampionshipTimer';
-import { supabase } from './services/supabase';
+import CommunityView from './components/CommunityView';
+import TutorArenaControl from './components/TutorArenaControl';
+import { supabase, getPublicChampionships } from './services/supabase';
 import { MOCK_CHAMPIONSHIPS } from './constants';
-import { Trophy, Play, Settings as SettingsIcon, Plus, AlertCircle, ShieldCheck, Zap, Globe, Users, BarChart3, ArrowRight, ChevronRight } from 'lucide-react';
+import { Trophy, Play, Settings as SettingsIcon, Plus, AlertCircle, ShieldCheck, Zap, Globe, Users, BarChart3, ArrowRight, ChevronRight, Star } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState('dashboard');
@@ -19,6 +22,8 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
   const [activeChamp, setActiveChamp] = useState<any>(null);
+  const [publicChampionships, setPublicChampionships] = useState<any[]>([]);
+  const [isCommunityMode, setIsCommunityMode] = useState(false);
 
   useEffect(() => {
     const initSession = async () => {
@@ -32,6 +37,12 @@ const App: React.FC = () => {
       }
     };
     initSession();
+
+    const fetchPublic = async () => {
+      const { data } = await getPublicChampionships();
+      setPublicChampionships(data || []);
+    };
+    fetchPublic();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(currentSession);
@@ -63,6 +74,11 @@ const App: React.FC = () => {
     setActiveView('decisions');
   };
 
+  const enterAsObserver = (champ: any) => {
+    setActiveChamp(champ);
+    setIsCommunityMode(true);
+  };
+
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
       <div className="relative">
@@ -72,18 +88,24 @@ const App: React.FC = () => {
            <span className="text-xs font-black text-brand-900 font-sans">EMP</span>
         </div>
       </div>
-      <div className="mt-8 text-center">
-         <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400 block mb-2 font-sans">Synchronizing Systems</span>
-      </div>
     </div>
   );
+
+  // Community Observer Mode
+  if (isCommunityMode && activeChamp) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-8">
+        <CommunityView championship={activeChamp} onBack={() => setIsCommunityMode(false)} />
+      </div>
+    );
+  }
 
   // PUBLIC LANDING PAGE FOR NEW VISITORS
   if (!session) {
     if (showAuth) {
       return <Auth onAuth={() => setShowAuth(false)} onBack={() => setShowAuth(false)} />;
     }
-    return <LandingPage onLoginClick={() => setShowAuth(true)} />;
+    return <LandingPage onLoginClick={() => setShowAuth(true)} publicArenas={publicChampionships} onEnterObserver={enterAsObserver} />;
   }
 
   const user = {
@@ -117,33 +139,28 @@ const App: React.FC = () => {
                      <p className="text-xl font-extrabold text-slate-900 tracking-tight">{activeChamp?.name || 'Standard Cluster'}</p>
                   </div>
                </div>
-               <DecisionForm regionsCount={activeChamp?.regionsCount || 9} />
+               <DecisionForm regionsCount={activeChamp?.config?.regionsCount || 9} />
             </div>
           );
+        case 'admin':
+          return user.role === 'admin' || user.role === 'tutor' ? (
+            activeChamp ? (
+              <TutorArenaControl 
+                championship={activeChamp} 
+                onUpdate={(upd) => setActiveChamp({...activeChamp, ...upd})} 
+              />
+            ) : <AdminCommandCenter />
+          ) : <Dashboard />;
         case 'reports':
           return <Reports />;
         case 'market':
           return <MarketAnalysis />;
-        case 'admin':
-          return <AdminCommandCenter />;
         default:
-          return (
-            <div className="flex flex-col items-center justify-center h-[70vh] text-slate-300">
-              <SettingsIcon size={80} className="mb-6 opacity-10 animate-spin-slow" />
-              <p className="text-lg font-extrabold uppercase tracking-[0.3em]">Module Synchronizing</p>
-            </div>
-          );
+          return <Dashboard />;
       }
     } catch (error) {
       console.error("View Rendering Error:", error);
-      return (
-        <div className="p-16 bg-white border border-red-100 rounded-[3rem] text-center shadow-2xl max-w-2xl mx-auto mt-20">
-           <AlertCircle size={40} className="text-red-500 mx-auto mb-8" />
-           <h2 className="text-3xl font-black text-slate-900 mb-4 uppercase">Simulation Interface Error</h2>
-           <p className="text-slate-500 mb-8 font-medium italic">A component failed to synchronize with the simulation core. This may be due to a data mismatch or an update conflict.</p>
-           <button onClick={() => window.location.reload()} className="px-12 py-5 bg-slate-900 text-white font-black text-[10px] uppercase rounded-2xl transition-all hover:bg-red-600">Reset Interface</button>
-        </div>
-      );
+      return <div className="p-16 text-center">Rendering Error</div>;
     }
   };
 
@@ -156,7 +173,7 @@ const App: React.FC = () => {
   );
 };
 
-const LandingPage: React.FC<{ onLoginClick: () => void }> = ({ onLoginClick }) => {
+const LandingPage: React.FC<{ onLoginClick: () => void; publicArenas: any[]; onEnterObserver: (c: any) => void }> = ({ onLoginClick, publicArenas, onEnterObserver }) => {
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-blue-100 overflow-x-hidden">
       {/* Public Header */}
@@ -168,10 +185,6 @@ const LandingPage: React.FC<{ onLoginClick: () => void }> = ({ onLoginClick }) =
           <span className="text-2xl font-black text-slate-900 tracking-tighter">EMPIRION</span>
         </div>
         <div className="flex items-center gap-8">
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors">Features</a>
-            <a href="#solutions" className="text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors">Solutions</a>
-          </nav>
           <button 
             onClick={onLoginClick}
             className="px-8 py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:scale-105 shadow-xl shadow-slate-200 transition-all flex items-center gap-2"
@@ -192,111 +205,69 @@ const LandingPage: React.FC<{ onLoginClick: () => void }> = ({ onLoginClick }) =
             Forge Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Empire</span>
           </h1>
           <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-lg">
-            Empirion is the world's most advanced business intelligence simulator. Designed for elite teams, orchestrated by AI, and validated by real economic models.
+            Empirion is the world's most advanced business intelligence simulator. Designed for elite teams, orchestrated by AI.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-             <button 
-              onClick={onLoginClick}
-              className="px-12 py-6 bg-slate-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-600 shadow-2xl shadow-slate-300 transition-all"
-             >
-               Start New Arena
-             </button>
-             <button className="px-12 py-6 bg-white border border-slate-200 text-slate-900 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
-               Watch Demo <Play size={16} className="fill-current" />
-             </button>
+             <button onClick={onLoginClick} className="px-12 py-6 bg-slate-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-600 transition-all">Start New Arena</button>
+             <a href="#arenas" className="px-12 py-6 bg-white border border-slate-200 text-slate-900 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-50 transition-all flex items-center justify-center gap-2">Explore Public Arenas</a>
           </div>
         </div>
         
         <div className="relative">
            <div className="absolute -inset-10 bg-blue-500/10 blur-[120px] rounded-full"></div>
-           <div className="relative bg-slate-900 rounded-[4rem] p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border border-white/10 group overflow-hidden">
-              <div className="flex justify-between items-center mb-10">
-                 <div className="flex gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                 </div>
-                 <div className="px-4 py-1.5 bg-white/5 rounded-full text-[10px] font-black uppercase text-blue-400 border border-white/5">Real-time Hub</div>
+           <div className="relative bg-slate-900 rounded-[4rem] p-10 shadow-2xl border border-white/10 group overflow-hidden h-[400px] flex items-center justify-center">
+              <BarChart3 size={200} className="text-blue-500 opacity-20" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                 <p className="text-4xl font-black text-white tracking-tighter text-center uppercase">Strategic <br/>Intelligence</p>
               </div>
-              <div className="space-y-6">
-                 <div className="h-4 bg-white/10 rounded-full w-3/4"></div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="h-32 bg-white/5 rounded-3xl border border-white/5 flex flex-col items-center justify-center p-6 text-center">
-                       <BarChart3 size={24} className="text-blue-500 mb-2" />
-                       <span className="text-[10px] font-black text-white uppercase tracking-widest">EBITDA +24%</span>
-                    </div>
-                    <div className="h-32 bg-white/5 rounded-3xl border border-white/5 flex flex-col items-center justify-center p-6 text-center">
-                       <Globe size={24} className="text-indigo-500 mb-2" />
-                       <span className="text-[10px] font-black text-white uppercase tracking-widest">Global Reach</span>
-                    </div>
-                 </div>
-                 <div className="p-6 bg-blue-600 rounded-3xl text-white">
-                    <div className="flex justify-between items-center mb-4">
-                       <span className="text-[10px] font-black uppercase tracking-widest">Gemini Insight</span>
-                       <ShieldCheck size={16} />
-                    </div>
-                    <p className="text-xs font-bold leading-relaxed">"Strategic reallocation of CapEx to the Tech-Alpha node suggested for Period 4 optimization."</p>
-                 </div>
-              </div>
-              <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-500/20 blur-3xl rounded-full"></div>
            </div>
         </div>
       </section>
 
-      {/* Stats / Proof */}
-      <section className="bg-slate-50 py-24 border-y border-slate-100" id="features">
+      {/* Public Arenas Section */}
+      <section id="arenas" className="bg-slate-50 py-32 border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
-            {[
-              { icon: ShieldCheck, title: "Multi-tenant Security", desc: "Enterprise-grade RLS ensures complete team data isolation and competitive integrity." },
-              { icon: Zap, title: "Gemini AI Engine", desc: "Integrated reasoning provides real-time market forecasts and deep-dive financial analysis." },
-              { icon: Users, title: "Collaborative Play", desc: "Teams of up to 5 members sync decisions in real-time with zero-latency PostgreSQL updates." }
-            ].map((f, i) => (
-              <div key={i} className="space-y-6 group">
-                <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-xl shadow-slate-200 border border-slate-100 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                  <f.icon size={32} />
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{f.title}</h3>
-                <p className="text-slate-500 font-medium leading-relaxed">{f.desc}</p>
+          <div className="flex items-center justify-between mb-16">
+            <div>
+              <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">Public Arenas</h2>
+              <p className="text-slate-500 font-medium mt-2">Enter as an Active Observer and influence the community score.</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {/* Fixed the variable name here: publicArenas instead of publicChampionships */}
+            {publicArenas.length === 0 ? (
+              <div className="lg:col-span-3 py-20 text-center border-2 border-dashed border-slate-200 rounded-[3rem]">
+                 <span className="text-[10px] font-black uppercase text-slate-400">No public arenas available right now.</span>
               </div>
-            ))}
+            ) : (
+              /* Fixed the variable name here: publicArenas instead of publicChampionships */
+              publicArenas.map((champ) => (
+                <div key={champ.id} className="premium-card p-10 rounded-[3rem] space-y-8 flex flex-col">
+                  <div className="flex justify-between items-start">
+                    <span className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">Round {champ.currentRound}</span>
+                    <Globe size={24} className="text-slate-200" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{champ.name}</h3>
+                    <p className="text-slate-500 text-sm font-medium mt-2 line-clamp-2">{champ.description}</p>
+                  </div>
+                  <button 
+                    onClick={() => onEnterObserver(champ)}
+                    className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
+                  >
+                    Enter as Observer <Users size={16} />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
 
       {/* CTA Footer */}
-      <footer className="py-32 px-6">
-        <div className="max-w-5xl mx-auto bg-slate-900 rounded-[4rem] p-12 md:p-24 text-center relative overflow-hidden">
-           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600/20 to-transparent pointer-events-none"></div>
-           <div className="relative z-10 space-y-10">
-              <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none">
-                Ready to lead the <br /> <span className="text-blue-400">new economy?</span>
-              </h2>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                 <button 
-                  onClick={onLoginClick}
-                  className="px-12 py-6 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-white hover:text-slate-900 shadow-2xl shadow-blue-900/40 transition-all"
-                 >
-                   Admin/Tutor Entrance
-                 </button>
-                 <button 
-                  onClick={onLoginClick}
-                  className="px-12 py-6 bg-white/10 text-white border border-white/20 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all"
-                 >
-                   Team Access Portal
-                 </button>
-              </div>
-           </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-6 mt-20 flex flex-col md:flex-row justify-between items-center gap-10">
-           <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold">E</span>
-              </div>
-              <span className="font-black text-slate-900 text-sm tracking-tighter">EMPIRION BI PLATFORM</span>
-           </div>
-           <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">© 2025 EMPIRION SYSTEMS INC. ALL RIGHTS RESERVED.</p>
-        </div>
+      <footer className="py-24 px-6 text-center">
+         <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">© 2025 EMPIRION SYSTEMS INC.</p>
       </footer>
     </div>
   );
