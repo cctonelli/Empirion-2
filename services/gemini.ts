@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 /**
@@ -51,14 +50,14 @@ export const performGroundedSearch = async (query: string) => {
 };
 
 /**
- * Creates a chat session for the global assistant.
+ * Creates a chat session for the global assistant using gemini-3-pro-preview.
  */
 export const createChatSession = () => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   return ai.chats.create({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-3-pro-preview',
     config: {
-      systemInstruction: 'You are "Empirion AI", a world-class business consultant assistant for an elite business simulation platform. You provide data-driven advice, explain financial concepts (DRE, Balanço, Fluxo de Caixa), and help users strategize their moves. Be professional, concise, and insightful.',
+      systemInstruction: 'You are "Empirion AI", a world-class business consultant assistant for an elite business simulation platform. You provide data-driven advice, explain complex financial concepts (DRE, Balance Sheets, Cash Flow), and help users strategize their moves. You have deep knowledge of industrial, commercial, service, and agribusiness sectors. Be professional, concise, and highly insightful.',
     },
   });
 };
