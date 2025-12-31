@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -20,10 +19,11 @@ interface LayoutProps {
   userRole: string;
   userName: string;
   onNavigate: (view: string) => void;
+  onLogout: () => void;
   activeView: string;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigate, activeView }) => {
+const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigate, onLogout, activeView }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const navItems = [
@@ -36,28 +36,28 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden text-slate-950 font-sans">
       {/* Sidebar */}
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 transition-all duration-300 ease-in-out flex flex-col z-50`}>
         <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
             <span className="text-white font-bold">E</span>
           </div>
           {isSidebarOpen && <span className="text-white font-bold text-xl tracking-tight">EMPIRION</span>}
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           {navItems.filter(item => !item.roles || item.roles.includes(userRole)).map((item) => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center gap-4 p-3 rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-4 p-3 rounded-lg transition-colors whitespace-nowrap ${
                 activeView === item.id 
-                  ? 'bg-blue-600 text-white' 
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
                   : 'text-slate-400 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <item.icon size={20} />
+              <item.icon size={20} className="shrink-0" />
               {isSidebarOpen && <span className="font-medium">{item.label}</span>}
             </button>
           ))}
@@ -75,8 +75,11 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
               </div>
             )}
           </div>
-          <button className="w-full flex items-center gap-4 p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-            <LogOut size={20} />
+          <button 
+            onClick={onLogout}
+            className="w-full flex items-center gap-4 p-3 text-slate-400 hover:text-red-400 hover:bg-red-900/10 rounded-lg transition-colors"
+          >
+            <LogOut size={20} className="shrink-0" />
             {isSidebarOpen && <span className="font-medium">Logout</span>}
           </button>
         </div>
