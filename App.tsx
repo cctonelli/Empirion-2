@@ -11,38 +11,48 @@ import ChampionshipTimer from './components/ChampionshipTimer';
 import CommunityView from './components/CommunityView';
 import TutorArenaControl from './components/TutorArenaControl';
 import { TutorGuide, TeamGuide } from './components/InstructionGuides';
-import { supabase, getPublicChampionships, subscribeToChampionship } from './services/supabase';
+import { supabase, getPublicChampionships, subscribeToChampionship, checkSupabaseConnection } from './services/supabase';
 import { MOCK_CHAMPIONSHIPS } from './constants';
-import { Trophy, Play, Settings as SettingsIcon, Plus, AlertCircle, ShieldCheck, Zap, Globe, Users, BarChart3, ArrowRight, ChevronRight, Star, Cpu } from 'lucide-react';
+import { Trophy, Play, Settings as SettingsIcon, Plus, AlertCircle, Shield, Zap, Globe, Users, BarChart3, ArrowRight, ChevronRight, Star, Cpu, WifiOff, RefreshCw, User, Mail, ShieldCheck } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [isCreatingChampionship, setIsCreatingChampionship] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [activeChamp, setActiveChamp] = useState<any>(null);
   const [publicChampionships, setPublicChampionships] = useState<any[]>([]);
   const [isCommunityMode, setIsCommunityMode] = useState(false);
 
-  useEffect(() => {
-    const initSession = async () => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        setSession(currentSession);
-      } catch (err) {
-        console.error("Session check failed:", err);
-      } finally {
+  const initializeApp = async () => {
+    setLoading(true);
+    setConnectionError(null);
+    try {
+      const health = await checkSupabaseConnection();
+      if (!health.online) {
+        setConnectionError(health);
         setLoading(false);
+        return;
       }
-    };
-    initSession();
 
-    const fetchPublic = async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      setSession(currentSession);
+
       const { data } = await getPublicChampionships();
       setPublicChampionships(data || []);
-    };
-    fetchPublic();
+
+    } catch (err: any) {
+      console.error("Initialization Error:", err);
+      setConnectionError({ online: false, error: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    initializeApp();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(currentSession);
@@ -58,7 +68,6 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Real-time active championship listener
   useEffect(() => {
     if (activeChamp?.id) {
       const subscription = subscribeToChampionship(activeChamp.id, (payload) => {
@@ -98,13 +107,44 @@ const App: React.FC = () => {
         <div className="w-24 h-24 border-4 border-slate-200 rounded-full"></div>
         <div className="w-24 h-24 border-4 border-brand-600 border-t-transparent rounded-full animate-spin absolute inset-0"></div>
         <div className="absolute inset-0 flex items-center justify-center">
-           <span className="text-xs font-black text-brand-900 font-sans">EMP</span>
+           <span className="text-xs font-black text-brand-900 font-sans tracking-widest">EMP</span>
         </div>
+      </div>
+      <p className="mt-8 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] animate-pulse">Initializing Neural Link...</p>
+    </div>
+  );
+
+  if (connectionError) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
+      <div className="max-w-md w-full bg-white p-12 rounded-[3rem] shadow-2xl border border-red-100 text-center space-y-8 animate-in zoom-in-95 duration-500">
+        <div className="w-20 h-20 bg-red-50 text-red-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-xl shadow-red-100">
+           <WifiOff size={40} />
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Servidor Inacessível</h2>
+          <p className="text-slate-500 text-sm font-medium leading-relaxed">
+            {connectionError.isDnsError 
+              ? "Não foi possível resolver o endereço do servidor. Se o projeto estiver pausado no painel do Supabase, clique em 'Restore Project' para reativá-lo."
+              : `Erro de Conexão: ${connectionError.error}`}
+          </p>
+        </div>
+        <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-left">
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Host de Destino</p>
+           <code className="text-[10px] font-mono font-bold text-red-600 break-all">gkmjlejeqndfdvxxvuxa.supabase.co</code>
+        </div>
+        <button 
+          onClick={initializeApp}
+          className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200"
+        >
+          <RefreshCw size={18} /> Tentar Reconectar
+        </button>
+        <p className="text-[10px] text-slate-400 font-bold uppercase underline">
+          <a href="https://supabase.com/dashboard" target="_blank" rel="noopener">Verificar Painel Supabase</a>
+        </p>
       </div>
     </div>
   );
 
-  // Community Observer Mode
   if (isCommunityMode && activeChamp) {
     return (
       <div className="min-h-screen bg-slate-50 p-8">
@@ -113,7 +153,6 @@ const App: React.FC = () => {
     );
   }
 
-  // PUBLIC LANDING PAGE FOR NEW VISITORS
   if (!session) {
     if (showAuth) {
       return <Auth onAuth={() => setShowAuth(false)} onBack={() => setShowAuth(false)} />;
@@ -123,7 +162,8 @@ const App: React.FC = () => {
 
   const user = {
     name: session.user.email?.split('@')[0] || 'Empirion User',
-    role: session.user.app_metadata?.role || 'admin'
+    role: session.user.app_metadata?.role || 'admin',
+    email: session.user.email
   };
 
   const renderContent = () => {
@@ -184,6 +224,8 @@ const App: React.FC = () => {
           return <MarketAnalysis />;
         case 'guides':
           return user.role === 'admin' || user.role === 'tutor' ? <TutorGuide /> : <TeamGuide />;
+        case 'settings':
+          return <SettingsView user={user} />;
         default:
           return <Dashboard />;
       }
@@ -202,29 +244,109 @@ const App: React.FC = () => {
   );
 };
 
+const SettingsView: React.FC<{ user: any }> = ({ user }) => (
+  <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-700">
+    <div className="border-b border-slate-200 pb-6">
+      <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Terminal Settings</h1>
+      <p className="text-slate-500 font-medium">Configure your profile and system preferences.</p>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+       <div className="md:col-span-2 space-y-8">
+          <section className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
+                   <User size={24} />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Profile Identity</h3>
+             </div>
+             
+             <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Display Name</label>
+                   <input type="text" defaultValue={user.name} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-blue-100 transition-all" />
+                </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">System Email</label>
+                   <div className="flex items-center gap-3 p-4 bg-slate-100 border border-slate-200 rounded-2xl text-slate-500">
+                      <Mail size={18} />
+                      <span className="font-bold">{user.email}</span>
+                   </div>
+                </div>
+             </div>
+             
+             <button className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200">Update Profile</button>
+          </section>
+
+          <section className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+                   <SettingsIcon size={24} />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Security Access</h3>
+             </div>
+             <p className="text-sm text-slate-500 font-medium">Manage your cryptographic keys and session tokens.</p>
+             <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <Shield className="text-emerald-600" size={20} />
+                   <span className="text-sm font-bold">Two-Factor Authentication</span>
+                </div>
+                <div className="w-12 h-6 bg-slate-200 rounded-full relative cursor-pointer p-1">
+                   <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                </div>
+             </div>
+          </section>
+       </div>
+
+       <div className="space-y-8">
+          <div className="bg-brand-950 p-8 rounded-[2.5rem] text-white space-y-6">
+             <Shield className="text-blue-400" size={40} />
+             <h4 className="text-lg font-black uppercase tracking-tight leading-tight">System Authority</h4>
+             <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs">
+                   <span className="text-slate-400 font-bold">Role</span>
+                   <span className="font-black text-blue-400 uppercase">{user.role}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                   <span className="text-slate-400 font-bold">Level</span>
+                   <span className="font-black text-amber-400">Master Strategist</span>
+                </div>
+             </div>
+          </div>
+       </div>
+    </div>
+  </div>
+);
+
 const LandingPage: React.FC<{ onLoginClick: () => void; publicArenas: any[]; onEnterObserver: (c: any) => void }> = ({ onLoginClick, publicArenas, onEnterObserver }) => {
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-blue-100 overflow-x-hidden">
-      {/* Public Header */}
-      <header className="max-w-7xl mx-auto px-6 py-8 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center shadow-xl shadow-slate-200">
-            <span className="text-white font-black text-xl">E</span>
+      <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-[100] border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center shadow-xl shadow-slate-200">
+              <span className="text-white font-black text-xl">E</span>
+            </div>
+            <span className="text-2xl font-black text-slate-900 tracking-tighter uppercase">EMPIRION</span>
           </div>
-          <span className="text-2xl font-black text-slate-900 tracking-tighter">EMPIRION</span>
-        </div>
-        <div className="flex items-center gap-8">
-          <button 
-            onClick={onLoginClick}
-            className="px-8 py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:scale-105 shadow-xl shadow-slate-200 transition-all flex items-center gap-2"
-          >
-            Access Terminal <ArrowRight size={14} />
-          </button>
+          
+          <div className="flex items-center gap-8">
+            <nav className="hidden md:flex items-center gap-8 mr-8">
+               <a href="#features" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Features</a>
+               <a href="#arenas" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Arenas</a>
+               <a href="#about" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Vision</a>
+            </nav>
+            <button 
+              onClick={onLoginClick}
+              className="px-8 py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:scale-105 shadow-xl shadow-slate-200 transition-all flex items-center gap-2"
+            >
+              Access Terminal <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-20 pb-32 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+      <section className="max-w-7xl mx-auto px-6 pt-48 pb-32 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
         <div className="space-y-10">
           <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
              <Zap size={14} className="fill-current" />
@@ -253,7 +375,6 @@ const LandingPage: React.FC<{ onLoginClick: () => void; publicArenas: any[]; onE
         </div>
       </section>
 
-      {/* Public Arenas Section */}
       <section id="arenas" className="bg-slate-50 py-32 border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between mb-16">
@@ -264,11 +385,13 @@ const LandingPage: React.FC<{ onLoginClick: () => void; publicArenas: any[]; onE
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {/* Fixed: Use publicArenas prop instead of non-existent publicChampionships */}
             {publicArenas.length === 0 ? (
               <div className="lg:col-span-3 py-20 text-center border-2 border-dashed border-slate-200 rounded-[3rem]">
                  <span className="text-[10px] font-black uppercase text-slate-400">No public arenas available right now.</span>
               </div>
             ) : (
+              /* Fixed: Use publicArenas prop instead of non-existent publicChampionships */
               publicArenas.map((champ) => (
                 <div key={champ.id} className="premium-card p-10 rounded-[3rem] space-y-8 flex flex-col">
                   <div className="flex justify-between items-start">
@@ -292,9 +415,16 @@ const LandingPage: React.FC<{ onLoginClick: () => void; publicArenas: any[]; onE
         </div>
       </section>
 
-      {/* CTA Footer */}
-      <footer className="py-24 px-6 text-center">
-         <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">© 2025 EMPIRION SYSTEMS INC.</p>
+      <footer className="py-24 px-6 text-center border-t border-slate-100 mt-20">
+         <div className="flex flex-col items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center">
+                <span className="text-white font-black text-sm">E</span>
+              </div>
+              <span className="text-xl font-black text-slate-900 tracking-tighter uppercase">EMPIRION</span>
+            </div>
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">© 2025 EMPIRION SYSTEMS INC.</p>
+         </div>
       </footer>
     </div>
   );

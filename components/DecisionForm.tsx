@@ -3,9 +3,8 @@ import {
   Save, Info, TrendingUp, 
   ShoppingCart, Factory, Tag, Megaphone, 
   Truck, Users2, Building2, ChevronRight,
-  ShieldCheck, AlertCircle, Settings, Loader2,
-  BarChart3, Target, Wallet, Globe, History, User,
-  CloudCheck
+  Shield, AlertCircle, Settings, Loader2,
+  BarChart3, Target, Wallet, Globe, History, User
 } from 'lucide-react';
 import { supabase, subscribeToDecisionAudit, saveDecisions } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -40,7 +39,6 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
   const [userName, setUserName] = useState('Strategist');
 
   useEffect(() => {
-    // Get user session to identify who is making changes
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setUserName(user.email?.split('@')[0] || 'Strategist');
@@ -49,7 +47,6 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
 
     setDecisions(createInitialDecisions(regionsCount));
     
-    // Subscribe to Realtime Audit Logs for the "War Room" experience
     const subscription = subscribeToDecisionAudit(teamId, (payload) => {
       const newLog = payload.new;
       setAuditLogs(prev => [newLog, ...prev].slice(0, 5));
@@ -80,7 +77,6 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
     try {
       await saveDecisions(teamId, champId, round, decisions, userName);
       setLastSync(new Date());
-      // Local addition to audit log for instant feedback
       const localLog = { user_name: userName, action: `Locked decisions for Round ${round}`, created_at: new Date().toISOString() };
       setAuditLogs(prev => [localLog, ...prev].slice(0, 5));
     } catch (error) {
@@ -100,7 +96,6 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 pb-20">
-      {/* Dynamic Projections & Audit Sidebar */}
       <aside className="w-full lg:w-80 flex flex-col gap-6 shrink-0 order-2 lg:order-1">
         <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
           <div className="relative z-10">
@@ -142,7 +137,6 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
           </div>
         </div>
 
-        {/* Real-time Collaboration Feed - The Elite War Room Feature */}
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
            <div className="flex items-center justify-between px-2">
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">War Room Log</h4>
@@ -189,7 +183,6 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
         </div>
       </aside>
 
-      {/* Main Form Area */}
       <div className="flex-1 space-y-8 order-1 lg:order-2">
         <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100">
           <div className="flex items-center justify-between mb-10 pb-6 border-b border-slate-50">
@@ -199,7 +192,7 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
                 <p className="text-slate-500 font-medium">Empirion Deployment Interface | Round {round}</p>
                 {lastSync && (
                   <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
-                    <CloudCheck size={12} /> Cloud Synced
+                    <Shield size={12} /> Cloud Synced
                   </span>
                 )}
               </div>
@@ -359,7 +352,7 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
 
             {activeSection === 'finance' && (
               <div className="flex flex-col items-center justify-center py-20 text-slate-300">
-                 <ShieldCheck size={64} className="mb-6 opacity-10" />
+                 <Shield size={64} className="mb-6 opacity-10" />
                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">Financial Vault</h3>
                  <p className="max-w-xs text-center text-sm font-medium text-slate-400">CapEx and Treasury modules are currently calibrating based on initial balance structure.</p>
               </div>

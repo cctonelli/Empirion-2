@@ -9,10 +9,13 @@ import {
   Search,
   Menu,
   X,
-  ShieldCheck,
+  Shield, 
   TrendingUp,
   FileText,
-  BookOpen
+  BookOpen,
+  ChevronRight,
+  Wifi,
+  Zap
 } from 'lucide-react';
 import GlobalChat from './GlobalChat';
 
@@ -33,20 +36,22 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
     { id: 'championships', label: 'Championships', icon: Trophy },
     { id: 'reports', label: 'Financial Reports', icon: FileText },
     { id: 'market', label: 'Market Analysis', icon: TrendingUp },
-    { id: 'admin', label: 'Command Center', icon: ShieldCheck, roles: ['admin', 'tutor'] },
+    { id: 'admin', label: 'Command Center', icon: Shield, roles: ['admin', 'tutor'] },
     { id: 'guides', label: 'Instruction Guides', icon: BookOpen },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  const currentItem = navItems.find(item => item.id === activeView) || navItems[0];
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden text-slate-950 font-sans">
       {/* Sidebar */}
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 transition-all duration-300 ease-in-out flex flex-col z-50`}>
         <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
             <span className="text-white font-bold">E</span>
           </div>
-          {isSidebarOpen && <span className="text-white font-bold text-xl tracking-tight">EMPIRION</span>}
+          {isSidebarOpen && <span className="text-white font-black text-xl tracking-tight uppercase">EMPIRION</span>}
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -54,69 +59,73 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center gap-4 p-3 rounded-lg transition-colors whitespace-nowrap ${
+              className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all whitespace-nowrap group relative ${
                 activeView === item.id 
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
               }`}
             >
-              <item.icon size={20} className="shrink-0" />
-              {isSidebarOpen && <span className="font-medium">{item.label}</span>}
+              <item.icon size={20} className={`shrink-0 transition-transform ${activeView === item.id ? 'scale-110' : 'group-hover:scale-110'}`} />
+              {isSidebarOpen && <span className="font-bold text-xs uppercase tracking-widest">{item.label}</span>}
+              {!isSidebarOpen && activeView === item.id && (
+                <div className="absolute left-full ml-4 px-3 py-1 bg-slate-800 text-white text-[10px] font-black uppercase rounded shadow-xl pointer-events-none">
+                  {item.label}
+                </div>
+              )}
             </button>
           ))}
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-2 py-4 overflow-hidden">
-            <div className="shrink-0 w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white">
-              <User size={20} />
-            </div>
-            {isSidebarOpen && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-white text-sm font-semibold truncate">{userName}</span>
-                <span className="text-slate-500 text-xs capitalize">{userRole}</span>
-              </div>
-            )}
-          </div>
           <button 
             onClick={onLogout}
-            className="w-full flex items-center gap-4 p-3 text-slate-400 hover:text-red-400 hover:bg-red-900/10 rounded-lg transition-colors"
+            className="w-full flex items-center gap-4 p-3 text-slate-500 hover:text-red-400 hover:bg-red-900/10 rounded-xl transition-all group"
           >
-            <LogOut size={20} className="shrink-0" />
-            {isSidebarOpen && <span className="font-medium">Logout</span>}
+            <LogOut size={20} className="shrink-0 group-hover:-translate-x-1 transition-transform" />
+            {isSidebarOpen && <span className="font-bold text-xs uppercase tracking-widest">Logout</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Header */}
-        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 z-40 shrink-0">
-          <button 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
-          >
-            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-
+        {/* Header - Improved with breadcrumbs and status */}
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 h-20 flex items-center justify-between px-8 z-40 shrink-0 sticky top-0">
           <div className="flex items-center gap-6">
-            <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search resources..." 
-                className="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full w-64 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              />
-            </div>
-            <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors"
+            >
+              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
+            
+            <div className="hidden sm:flex items-center gap-2 text-slate-400">
+               <span className="text-[10px] font-black uppercase tracking-widest hover:text-blue-600 cursor-pointer" onClick={() => onNavigate('dashboard')}>Empirion</span>
+               <ChevronRight size={14} />
+               <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{currentItem.label}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-full">
+               <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+               <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Cloud Link Active</span>
+            </div>
+
+            <div className="flex items-center gap-4 border-l border-slate-200 pl-8">
+              <div className="flex flex-col items-end hidden md:flex">
+                <span className="text-xs font-black text-slate-900 truncate max-w-[120px]">{userName}</span>
+                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{userRole}</span>
+              </div>
+              <button className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-200 hover:scale-105 transition-all">
+                <User size={18} />
+              </button>
+            </div>
           </div>
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
+        <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50">
           {children}
         </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Sparkles, Loader2, Minimize2, Maximize2, Bot, User as UserIcon, ShieldCheck } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, Loader2, Minimize2, Maximize2, Bot, User as UserIcon, Shield } from 'lucide-react';
 import { createChatSession } from '../services/gemini';
 import { GenerateContentResponse } from '@google/genai';
 
@@ -83,7 +83,7 @@ const GlobalChat: React.FC = () => {
       <div className="p-6 bg-slate-900 text-white flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <ShieldCheck size={24} />
+            <Shield size={24} />
           </div>
           <div>
             <h3 className="text-sm font-black uppercase tracking-widest">Empirion Strategos</h3>

@@ -1,10 +1,42 @@
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship } from '../types';
 
-const SUPABASE_URL = 'https://gkmjlejqndfdvxxvuxa.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrbWpsZWplcW5kZmR2eHh2dXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODk3MzgsImV4cCI6MjA4Mjc2NTczOH0.QD3HK_ggQJb8sQHBJSIA2ARhh9Vz8v-qTkh2tQyKLis';
+// Updated credentials from user prompt
+const SUPABASE_URL = 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_9D6W-B35TZc5KfZqpqliXA_sWpk_klw';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/**
+ * Health Check: Verifica se a instância do Supabase está respondendo.
+ * Melhora a extração de mensagens de erro para evitar strings genéricas.
+ */
+export const checkSupabaseConnection = async () => {
+  try {
+    const { data, error } = await supabase.from('championships').select('id').limit(1);
+    if (error) throw error;
+    return { online: true };
+  } catch (err: any) {
+    console.error("Supabase Connection Health Check Failed:", err);
+    
+    // Extrai a mensagem de erro da forma mais legível possível
+    let errorMessage = "Unknown Error";
+    if (typeof err === 'string') errorMessage = err;
+    else if (err.message) errorMessage = err.message;
+    else if (err.error_description) errorMessage = err.error_description;
+    else if (err.details) errorMessage = err.details;
+    else try { errorMessage = JSON.stringify(err); } catch(e) { errorMessage = "Complex Error Object"; }
+
+    return { 
+      online: false, 
+      error: errorMessage,
+      isDnsError: errorMessage.includes('Failed to fetch') || 
+                  errorMessage.includes('address not found') || 
+                  errorMessage.includes('NetworkError') ||
+                  !window.navigator.onLine
+    };
+  }
+};
 
 // Real-time subscriptions
 export const subscribeToDecisions = (teamId: string, callback: (payload: any) => void) => {
@@ -40,7 +72,6 @@ export const subscribeToChampionship = (championshipId: string, callback: (paylo
 
 // Data Actions
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, userName: string) => {
-  // 1. Update current decisions
   const { error: decError } = await supabase
     .from('current_decisions')
     .upsert({ 
@@ -53,7 +84,6 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
 
   if (decError) throw decError;
 
-  // 2. Insert audit log for "War Room" visibility
   const { error: logError } = await supabase
     .from('decision_audit_log')
     .insert({
@@ -75,7 +105,6 @@ export const updateEcosystem = async (championshipId: string, updates: Partial<C
   if (error) throw error;
 };
 
-// Community Scoring & Public Access
 export const getPublicChampionships = async () => {
   const { data, error } = await supabase
     .from('championships')
