@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Chart from 'react-apexcharts';
+import ApexCharts from 'apexcharts';
 import { 
   TrendingUp, 
   Users, 
@@ -13,7 +14,15 @@ import {
   Briefcase
 } from 'lucide-react';
 
+// Ensure ApexCharts is available globally as react-apexcharts often expects it
+if (typeof window !== 'undefined') {
+  (window as any).ApexCharts = ApexCharts;
+}
+
 const Dashboard: React.FC = () => {
+  // Resilient component reference for ESM
+  const ApexChart = (Chart as any).default || Chart;
+
   const lineChartOptions: any = {
     chart: { type: 'area', toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: false } },
     dataLabels: { enabled: false },
@@ -103,7 +112,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="h-[350px]">
-            <Chart options={lineChartOptions} series={lineChartSeries} type="area" height="100%" />
+            <ApexChart options={lineChartOptions} series={lineChartSeries} type="area" height="100%" />
           </div>
         </div>
 
@@ -111,7 +120,7 @@ const Dashboard: React.FC = () => {
           <h3 className="text-xl font-black text-slate-900 tracking-tight mb-8">Competitive Edge</h3>
           <div className="flex-1 space-y-8">
             <div className="flex flex-col items-center">
-               <Chart options={radialOptions} series={[72]} type="radialBar" height={250} />
+               <ApexChart options={radialOptions} series={[72]} type="radialBar" height={250} />
                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-[-20px]">Market Dominance</p>
             </div>
             <div className="space-y-6">

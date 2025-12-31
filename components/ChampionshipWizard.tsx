@@ -10,14 +10,17 @@ import {
   Cpu, 
   Zap,
   Leaf,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS } from '../constants';
 import { Branch } from '../types';
 import FinancialStructureEditor from './FinancialStructureEditor';
+import { supabase } from '../services/supabase';
 
 const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     branch: 'industrial' as Branch,
@@ -29,6 +32,36 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+
+  const handleLaunch = async () => {
+    setIsSubmitting(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('championships')
+        .insert([{
+          name: formData.name,
+          branch: formData.branch,
+          sales_mode: formData.salesMode,
+          scenario_type: formData.scenarioType,
+          transparency_level: formData.transparency,
+          status: 'active',
+          tutor_id: userData.user?.id,
+          config: {}, // Configurações adicionais via Wizard
+          initial_financials: {}, // Dados do FinancialStructureEditor
+          products: [] // Produtos configurados
+        }]);
+
+      if (error) throw error;
+      onComplete();
+    } catch (error) {
+      console.error("Error launching championship:", error);
+      alert("Failed to launch championship. Check console for details.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-8 duration-500 pb-20">
@@ -218,18 +251,20 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         <div className="mt-12 flex justify-between pt-10 border-t border-slate-100">
           <button 
             onClick={step === 1 ? onComplete : prevStep}
-            className="px-8 py-4 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all"
+            disabled={isSubmitting}
+            className="px-8 py-4 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all disabled:opacity-50"
           >
             {step === 1 ? 'Discard' : 'Go Back'}
           </button>
           <button 
-            onClick={step === 4 ? onComplete : nextStep}
-            disabled={step === 2 && !formData.name}
+            onClick={step === 4 ? handleLaunch : nextStep}
+            disabled={(step === 2 && !formData.name) || isSubmitting}
             className={`px-12 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 transition-all ${
-              step === 2 && !formData.name ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-blue-600 hover:scale-105 shadow-xl shadow-slate-200'
+              (step === 2 && !formData.name) || isSubmitting ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-blue-600 hover:scale-105 shadow-xl shadow-slate-200'
             }`}
           >
-            {step === 4 ? 'Launch Simulation' : 'Next Stage'} <ArrowRight size={18} />
+            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : (step === 4 ? 'Launch Simulation' : 'Next Stage')} 
+            {!isSubmitting && <ArrowRight size={18} />}
           </button>
         </div>
       </div>

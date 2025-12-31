@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Activity, 
   ShieldAlert, 
@@ -11,8 +11,46 @@ import {
   RefreshCw,
   ExternalLink
 } from 'lucide-react';
+import { supabase } from '../services/supabase';
 
 const AdminCommandCenter: React.FC = () => {
+  const [stats, setStats] = useState({
+    users: 0,
+    championships: 0,
+    activeTeams: 0,
+    latency: '0ms'
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchGlobalStats = async () => {
+    setLoading(true);
+    const start = performance.now();
+    try {
+      // Nota: No Supabase free tier, count(*) pode ser lento se as tabelas forem gigantes
+      // Usamos .select('*', { count: 'exact', head: true }) para eficiência
+      const { count: userCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
+      const { count: champCount } = await supabase.from('championships').select('*', { count: 'exact', head: true });
+      const { count: teamCount } = await supabase.from('teams').select('*', { count: 'exact', head: true });
+      
+      const end = performance.now();
+      
+      setStats({
+        users: userCount || 0,
+        championships: champCount || 0,
+        activeTeams: teamCount || 0,
+        latency: `${Math.round(end - start)}ms`
+      });
+    } catch (err) {
+      console.error("Error fetching admin stats:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGlobalStats();
+  }, []);
+
   return (
     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
       <div className="flex items-center justify-between">
@@ -23,8 +61,12 @@ const AdminCommandCenter: React.FC = () => {
           <p className="text-slate-500 mt-1">Global platform orchestration and system health monitoring.</p>
         </div>
         <div className="flex gap-3">
-           <button className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl flex items-center gap-2 hover:bg-slate-50 transition-colors">
-             <RefreshCw size={18} /> Refresh Logs
+           <button 
+            onClick={fetchGlobalStats}
+            disabled={loading}
+            className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl flex items-center gap-2 hover:bg-slate-50 transition-colors"
+           >
+             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> Refresh Logs
            </button>
            <button className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl flex items-center gap-2 hover:bg-slate-800 transition-colors">
              <Server size={18} /> System Status
@@ -34,10 +76,10 @@ const AdminCommandCenter: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Active Sessions', value: '1,284', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'DB Latency', value: '42ms', icon: Database, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'CPU Usage', value: '14.8%', icon: Cpu, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Monthly Revenue', value: 'R$ 48.2k', icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { label: 'Active Users', value: stats.users, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'DB Latency', value: stats.latency, icon: Database, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Active Teams', value: stats.activeTeams, icon: Cpu, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Total Tournaments', value: stats.championships, icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50' },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
              <div className="flex items-center justify-between mb-2">
@@ -46,7 +88,7 @@ const AdminCommandCenter: React.FC = () => {
                    <stat.icon size={18} />
                 </div>
              </div>
-             <h3 className="text-3xl font-black text-slate-900 tracking-tight">{stat.value}</h3>
+             <h3 className="text-3xl font-black text-slate-900 tracking-tight">{loading ? '...' : stat.value}</h3>
           </div>
         ))}
       </div>
@@ -55,7 +97,7 @@ const AdminCommandCenter: React.FC = () => {
         <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Activity size={20} className="text-blue-500" /> Active Championships
+                <Activity size={20} className="text-blue-500" /> Live Championship Nodes
               </h3>
               <button className="text-xs font-bold text-blue-600 hover:underline">View All</button>
            </div>

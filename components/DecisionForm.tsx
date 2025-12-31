@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Save, Info, Users, RotateCcw, TrendingUp, 
   ShoppingCart, Factory, Tag, Megaphone, 
   Truck, Users2, Building2, Wallet, ChevronRight,
-  ShieldCheck, AlertCircle, Settings
+  ShieldCheck, AlertCircle, Settings, Loader2
 } from 'lucide-react';
-import { supabase } from '../services/supabase';
+import { supabase, subscribeToDecisions } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { DecisionData } from '../types';
 
@@ -49,11 +49,48 @@ const DecisionForm: React.FC = () => {
   const [decisions, setDecisions] = useState<DecisionData>(INITIAL_DECISIONS);
   const [projections, setProjections] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [teamId] = useState('mock-team-123'); // Placeholder para o ID real do time
 
+  // Sincronização Realtime
+  useEffect(() => {
+    const channel = subscribeToDecisions(teamId, (payload) => {
+      if (payload.new && payload.new.data) {
+        setDecisions(payload.new.data as DecisionData);
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [teamId]);
+
+  // Projeções Locais (Matemática Bonopoly)
   useEffect(() => {
     const proj = calculateProjections(decisions, 'industrial');
     setProjections(proj);
   }, [decisions]);
+
+  // Persistência das Decisões (Auto-save ou Manual)
+  const saveDecisions = useCallback(async (data: DecisionData) => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('current_decisions')
+        .upsert({
+          team_id: teamId,
+          championship_id: 'mock-champ-456', // Placeholder
+          round: 4,
+          data: data,
+          updated_at: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+    } catch (err) {
+      console.error("Failed to save decisions:", err);
+    } finally {
+      setTimeout(() => setIsSaving(false), 1000); // Feedback visual
+    }
+  }, [teamId]);
 
   const updateNested = (path: string, value: any) => {
     const keys = path.split('.');
@@ -64,6 +101,7 @@ const DecisionForm: React.FC = () => {
         current = current[keys[i]];
       }
       current[keys[keys.length - 1]] = value;
+      // Opcional: Trigger auto-save aqui com debounce
       return next;
     });
   };
@@ -243,7 +281,6 @@ const DecisionForm: React.FC = () => {
             {/* Catch-all for other sections placeholder */}
             {!['purchases', 'production', 'pricing'].includes(activeSection) && (
               <div className="col-span-2 flex flex-col items-center justify-center py-20 text-slate-300">
-                 {/* Fixed ReferenceError by adding Settings to imports */}
                  <Settings size={48} className="animate-spin-slow mb-4 opacity-10" />
                  <p className="font-black text-xs uppercase tracking-widest">Under Simulation Calibration</p>
               </div>
@@ -258,14 +295,18 @@ const DecisionForm: React.FC = () => {
                </p>
             </div>
             <div className="flex gap-4 w-full md:w-auto">
-               <button className="flex-1 md:flex-none px-8 py-4 bg-white border border-slate-200 text-slate-400 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+               <button 
+                onClick={() => setDecisions(INITIAL_DECISIONS)}
+                className="flex-1 md:flex-none px-8 py-4 bg-white border border-slate-200 text-slate-400 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+               >
                  <RotateCcw size={16} /> Reset Section
                </button>
                <button 
-                onClick={() => setIsSaving(true)}
-                className="flex-1 md:flex-none px-12 py-4 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-blue-600 shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-2"
+                onClick={() => saveDecisions(decisions)}
+                disabled={isSaving}
+                className="flex-1 md:flex-none px-12 py-4 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-blue-600 shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-2 min-w-[200px]"
                >
-                 {isSaving ? "Syncing..." : <><Save size={16} /> Submit Round 4</>}
+                 {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Submit Round 4</>}
                </button>
             </div>
           </div>
