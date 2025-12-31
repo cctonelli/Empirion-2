@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -13,6 +14,7 @@ import {
   TrendingUp,
   FileText
 } from 'lucide-react';
+import GlobalChat from './GlobalChat';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -86,7 +88,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden relative">
         {/* Header */}
         <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 z-40 shrink-0">
           <button 
@@ -116,6 +118,9 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
         <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
           {children}
         </div>
+
+        {/* Global AI Chatbot */}
+        <GlobalChat />
       </main>
     </div>
   );

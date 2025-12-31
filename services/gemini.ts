@@ -1,9 +1,8 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 /**
  * Generates market analysis using gemini-3-flash-preview for general insights.
- * Follows guidelines for direct process.env.API_KEY usage.
  */
 export const generateMarketAnalysis = async (championshipName: string, round: number, branch: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -15,7 +14,6 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
       Focus on current economic trends, potential risks, and strategic advice for competing teams. Keep it professional and immersive.`,
       config: {
         temperature: 0.7,
-        // Removed maxOutputTokens as it's not strictly required and can block output.
       }
     });
 
@@ -27,43 +25,40 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
 };
 
 /**
- * Generates an initial scenario report using gemini-3-flash-preview.
+ * Performs a search-grounded query using Google Search.
+ * Extracts URLs as required by the guidelines.
  */
-export const generateInitialReport = async (branch: string, scenarioName: string) => {
+export const performGroundedSearch = async (query: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Generate an "Initial Executive Report" for a new business simulation scenario called "${scenarioName}" in the ${branch} sector. 
-      Include:
-      1. Context of the market entry.
-      2. 3 Main challenges specific to ${branch}.
-      3. A summary of the starting financial health (stable but competitive).
-      Keep it formatted in clean markdown.`,
+      contents: query,
+      config: {
+        tools: [{ googleSearch: {} }],
+      },
     });
-    return response.text || "Report generation failed.";
+
+    const text = response.text || "No information found.";
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    
+    return { text, sources };
   } catch (error) {
-    console.error("Gemini Error:", error);
-    return "Report generation failed.";
+    console.error("Search Grounding Error:", error);
+    return { text: "Error fetching real-time data.", sources: [] };
   }
 };
 
 /**
- * Analyzes complex company financials using gemini-3-pro-preview for advanced reasoning.
+ * Creates a chat session for the global assistant.
  */
-export const generateExecutiveSummary = async (companyData: any) => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
-    try {
-        const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview",
-            contents: `As a senior business consultant, analyze these financial results for a ${companyData.branch} company: ${JSON.stringify(companyData.financials)}. 
-            Provide 3 key bullet points for improvement and 1 strategic highlight.`,
-        });
-        return response.text || "Analysis unavailable.";
-    } catch (error) {
-        console.error("Gemini Error:", error);
-        return "Analysis unavailable.";
-    }
+export const createChatSession = () => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return ai.chats.create({
+    model: 'gemini-3-flash-preview',
+    config: {
+      systemInstruction: 'You are "Empirion AI", a world-class business consultant assistant for an elite business simulation platform. You provide data-driven advice, explain financial concepts (DRE, Balanço, Fluxo de Caixa), and help users strategize their moves. Be professional, concise, and insightful.',
+    },
+  });
 };
