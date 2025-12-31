@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Save, Info, TrendingUp, 
   ShoppingCart, Factory, Tag, Megaphone, 
   Truck, Users2, Building2, ChevronRight,
   ShieldCheck, AlertCircle, Settings, Loader2,
-  BarChart3, Target, Wallet
+  BarChart3, Target, Wallet, Globe
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -132,6 +131,7 @@ const DecisionForm: React.FC<{ regionsCount?: number }> = ({ regionsCount = 9 })
             </div>
             {activeSection === 'marketing' && (
               <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
+                 {/* Fixed: Globe icon now imported from lucide-react */}
                  <Globe size={16} />
                  <span className="text-[10px] font-black uppercase tracking-widest">{regionsCount} Dynamic Channels</span>
               </div>
