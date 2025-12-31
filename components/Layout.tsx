@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -12,7 +11,8 @@ import {
   X,
   ShieldCheck,
   TrendingUp,
-  FileText
+  FileText,
+  BookOpen
 } from 'lucide-react';
 import GlobalChat from './GlobalChat';
 
@@ -34,6 +34,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
     { id: 'reports', label: 'Financial Reports', icon: FileText },
     { id: 'market', label: 'Market Analysis', icon: TrendingUp },
     { id: 'admin', label: 'Command Center', icon: ShieldCheck, roles: ['admin', 'tutor'] },
+    { id: 'guides', label: 'Instruction Guides', icon: BookOpen },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

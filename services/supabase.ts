@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { DecisionData, Championship } from '../types';
 
 const SUPABASE_URL = 'https://gkmjlejqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrbWpsZWplcW5kZmR2eHh2dXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODk3MzgsImV4cCI6MjA4Mjc2NTczOH0.QD3HK_ggQJb8sQHBJSIA2ARhh9Vz8v-qTkh2tQyKLis';
@@ -25,6 +26,43 @@ export const subscribeToDecisionAudit = (teamId: string, callback: (payload: any
     .subscribe();
 };
 
+// Data Actions
+export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, userName: string) => {
+  // 1. Update current decisions
+  const { error: decError } = await supabase
+    .from('current_decisions')
+    .upsert({ 
+      team_id: teamId, 
+      championship_id: champId, 
+      round: round, 
+      data: decisions,
+      updated_at: new Date().toISOString()
+    });
+
+  if (decError) throw decError;
+
+  // 2. Insert audit log for "War Room" visibility
+  const { error: logError } = await supabase
+    .from('decision_audit_log')
+    .insert({
+      team_id: teamId,
+      user_name: userName,
+      action: `Locked decisions for Round ${round}`,
+      metadata: { timestamp: new Date().toISOString() }
+    });
+
+  if (logError) throw logError;
+};
+
+export const updateEcosystem = async (championshipId: string, updates: Partial<Championship>) => {
+  const { error } = await supabase
+    .from('championships')
+    .update(updates)
+    .eq('id', championshipId);
+  
+  if (error) throw error;
+};
+
 // Community Scoring & Public Access
 export const getPublicChampionships = async () => {
   const { data, error } = await supabase
@@ -49,4 +87,4 @@ export const submitCommunityVote = async (vote: any) => {
     .from('community_ratings')
     .insert([vote]);
   return { data, error };
-};
+}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -11,6 +10,7 @@ import Auth from './components/Auth';
 import ChampionshipTimer from './components/ChampionshipTimer';
 import CommunityView from './components/CommunityView';
 import TutorArenaControl from './components/TutorArenaControl';
+import { TutorGuide, TeamGuide } from './components/InstructionGuides';
 import { supabase, getPublicChampionships } from './services/supabase';
 import { MOCK_CHAMPIONSHIPS } from './constants';
 import { Trophy, Play, Settings as SettingsIcon, Plus, AlertCircle, ShieldCheck, Zap, Globe, Users, BarChart3, ArrowRight, ChevronRight, Star } from 'lucide-react';
@@ -155,6 +155,8 @@ const App: React.FC = () => {
           return <Reports />;
         case 'market':
           return <MarketAnalysis />;
+        case 'guides':
+          return user.role === 'admin' || user.role === 'tutor' ? <TutorGuide /> : <TeamGuide />;
         default:
           return <Dashboard />;
       }
@@ -235,13 +237,11 @@ const LandingPage: React.FC<{ onLoginClick: () => void; publicArenas: any[]; onE
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {/* Fixed the variable name here: publicArenas instead of publicChampionships */}
             {publicArenas.length === 0 ? (
               <div className="lg:col-span-3 py-20 text-center border-2 border-dashed border-slate-200 rounded-[3rem]">
                  <span className="text-[10px] font-black uppercase text-slate-400">No public arenas available right now.</span>
               </div>
             ) : (
-              /* Fixed the variable name here: publicArenas instead of publicChampionships */
               publicArenas.map((champ) => (
                 <div key={champ.id} className="premium-card p-10 rounded-[3rem] space-y-8 flex flex-col">
                   <div className="flex justify-between items-start">

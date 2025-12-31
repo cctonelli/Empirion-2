@@ -4,9 +4,10 @@ import {
   ShoppingCart, Factory, Tag, Megaphone, 
   Truck, Users2, Building2, ChevronRight,
   ShieldCheck, AlertCircle, Settings, Loader2,
-  BarChart3, Target, Wallet, Globe, History, User
+  BarChart3, Target, Wallet, Globe, History, User,
+  CloudCheck
 } from 'lucide-react';
-import { supabase, subscribeToDecisionAudit } from '../services/supabase';
+import { supabase, subscribeToDecisionAudit, saveDecisions } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { DecisionData, RegionalDecision } from '../types';
 
@@ -25,24 +26,34 @@ const createInitialDecisions = (regionsCount: number): DecisionData => {
   };
 };
 
-const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string }> = ({ regionsCount = 9, teamId = 'team-alpha' }) => {
+const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?: string; round?: number }> = ({ 
+  regionsCount = 9, 
+  teamId = 'team-alpha',
+  champId = 'c1',
+  round = 4
+}) => {
   const [activeSection, setActiveSection] = useState('marketing');
   const [decisions, setDecisions] = useState<DecisionData>(() => createInitialDecisions(regionsCount));
   const [isSaving, setIsSaving] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [userName, setUserName] = useState('Strategist');
 
   useEffect(() => {
+    // Get user session to identify who is making changes
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setUserName(user.email?.split('@')[0] || 'Strategist');
+    };
+    getUser();
+
     setDecisions(createInitialDecisions(regionsCount));
     
-    // Subscribe to Realtime Audit Logs
+    // Subscribe to Realtime Audit Logs for the "War Room" experience
     const subscription = subscribeToDecisionAudit(teamId, (payload) => {
       const newLog = payload.new;
       setAuditLogs(prev => [newLog, ...prev].slice(0, 5));
       setLastSync(new Date());
-      
-      // Optionally toast notification
-      console.log(`Update from ${newLog.user_name}: ${newLog.action}`);
     });
 
     return () => {
@@ -62,6 +73,22 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string }> = ({ re
         [regionId]: { ...prev.regions[regionId], [field]: value }
       }
     }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await saveDecisions(teamId, champId, round, decisions, userName);
+      setLastSync(new Date());
+      // Local addition to audit log for instant feedback
+      const localLog = { user_name: userName, action: `Locked decisions for Round ${round}`, created_at: new Date().toISOString() };
+      setAuditLogs(prev => [localLog, ...prev].slice(0, 5));
+    } catch (error) {
+      console.error("Save Error:", error);
+      alert("Error synchronizing decisions. Please check your connectivity.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const sections = [
@@ -115,16 +142,16 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string }> = ({ re
           </div>
         </div>
 
-        {/* Real-time Collaboration Feed */}
+        {/* Real-time Collaboration Feed - The Elite War Room Feature */}
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
            <div className="flex items-center justify-between px-2">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Team Activity</h4>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">War Room Log</h4>
               <History size={14} className="text-slate-300" />
            </div>
            <div className="space-y-3">
               {auditLogs.length === 0 ? (
                 <div className="py-8 text-center border-2 border-dashed border-slate-50 rounded-2xl">
-                   <p className="text-[10px] font-bold text-slate-300 uppercase">Awaiting input...</p>
+                   <p className="text-[10px] font-bold text-slate-300 uppercase">Awaiting team input...</p>
                 </div>
               ) : (
                 auditLogs.map((log, i) => (
@@ -134,7 +161,7 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string }> = ({ re
                     </div>
                     <div className="min-w-0">
                       <p className="text-[10px] font-black text-slate-900 truncate uppercase">{log.user_name || 'Collaborator'}</p>
-                      <p className="text-[10px] text-slate-500 truncate">{log.action || 'Updated decision'}</p>
+                      <p className="text-[10px] text-slate-500 truncate leading-tight">{log.action || 'Synchronized'}</p>
                     </div>
                   </div>
                 ))
@@ -169,10 +196,10 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string }> = ({ re
             <div>
               <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight">{activeSection} Control</h2>
               <div className="flex items-center gap-2 mt-1">
-                <p className="text-slate-500 font-medium">Empirion Deployment Interface | Round 4</p>
+                <p className="text-slate-500 font-medium">Empirion Deployment Interface | Round {round}</p>
                 {lastSync && (
-                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">
-                    • Live
+                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
+                    <CloudCheck size={12} /> Cloud Synced
                   </span>
                 )}
               </div>
@@ -180,7 +207,7 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string }> = ({ re
             {activeSection === 'marketing' && (
               <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
                  <Globe size={16} />
-                 <span className="text-[10px] font-black uppercase tracking-widest">{regionsCount} Dynamic Channels</span>
+                 <span className="text-[10px] font-black uppercase tracking-widest">{regionsCount} Regional Channels</span>
               </div>
             )}
           </div>
@@ -345,7 +372,8 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string }> = ({ re
                 <span className="text-xs font-medium text-slate-500">Decisions are synchronized via Supabase Realtime</span>
              </div>
              <button 
-               onClick={() => setIsSaving(true)}
+               onClick={handleSave}
+               disabled={isSaving}
                className="w-full sm:w-auto px-12 py-5 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-[2rem] hover:bg-blue-600 hover:scale-105 shadow-2xl shadow-slate-200 transition-all flex items-center justify-center gap-3"
              >
                 {isSaving ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Lock Round Decisions</>}

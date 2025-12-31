@@ -13,7 +13,9 @@ import {
   ArrowUpRight, 
   ArrowDownRight,
   Sparkles,
-  Loader2
+  Loader2,
+  Star,
+  Users
 } from 'lucide-react';
 import ChampionshipTimer from './ChampionshipTimer';
 import { generateMarketAnalysis } from '../services/gemini';
@@ -104,7 +106,7 @@ const Dashboard: React.FC = () => {
         {[
           { label: 'Operating Income', value: '$ 48,250', trend: '+18.5%', positive: true, icon: DollarSign },
           { label: 'Market Dominance', value: '24.8%', trend: '+4.2%', positive: true, icon: Target },
-          { label: 'Resource Efficiency', value: '92.4%', trend: '-1.2%', positive: false, icon: Activity },
+          { label: 'Community Rating', value: '8.4/10', trend: 'Public', positive: true, icon: Star },
           { label: 'Brand Equity', value: '742 pts', trend: '+12.0%', positive: true, icon: Zap },
         ].map((card, idx) => (
           <div key={idx} className="premium-card p-6 rounded-3xl flex flex-col justify-between group">
@@ -113,7 +115,7 @@ const Dashboard: React.FC = () => {
                 <card.icon size={22} />
               </div>
               <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${card.positive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                {card.positive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                {card.icon === Star ? <Users size={12} /> : card.positive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                 {card.trend}
               </div>
             </div>
@@ -215,6 +217,28 @@ const Dashboard: React.FC = () => {
                   ))}
                </div>
              </div>
+           </div>
+
+           {/* Community Score Detail Card */}
+           <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-8 rounded-[2.5rem] border border-amber-100 shadow-sm space-y-6">
+              <div className="flex items-center gap-3">
+                 <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-200">
+                    <Star size={20} fill="currentColor" />
+                 </div>
+                 <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Market Perception</h3>
+              </div>
+              <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                 The community values your <span className="font-bold">Sustainability</span> efforts but suggests more focus on <span className="font-bold">Innovation</span>.
+              </p>
+              <div className="space-y-3">
+                 <div className="flex justify-between text-[10px] font-black uppercase text-amber-600">
+                    <span>Public Approval</span>
+                    <span>84%</span>
+                 </div>
+                 <div className="w-full h-2 bg-amber-200/50 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500 w-[84%]"></div>
+                 </div>
+              </div>
            </div>
         </div>
       </div>

@@ -23,6 +23,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { EcosystemConfig, Championship, CommunityCriteria } from '../types';
+import { updateEcosystem } from '../services/supabase';
 
 interface TutorArenaControlProps {
   championship: Championship;
@@ -49,19 +50,27 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
 
   const handleSave = async () => {
     setIsSaving(true);
-    await new Promise(r => setTimeout(r, 800));
-    onUpdate({ 
-      ecosystemConfig: config, 
-      is_public: isPublic,
-      config: {
-        ...championship.config,
-        communityWeight,
-        votingCriteria: criteria
-      }
-    });
-    setIsSaving(false);
-    setMessage({ type: 'success', text: 'Ecosystem parameters synchronized successfully.' });
-    setTimeout(() => setMessage(null), 3000);
+    try {
+      const updates = { 
+        ecosystemConfig: config, 
+        is_public: isPublic,
+        config: {
+          ...championship.config,
+          communityWeight,
+          votingCriteria: criteria
+        }
+      };
+      
+      await updateEcosystem(championship.id, updates);
+      onUpdate(updates);
+      setMessage({ type: 'success', text: 'Ecosystem parameters synchronized successfully.' });
+    } catch (error) {
+      console.error("Deploy Error:", error);
+      setMessage({ type: 'error', text: 'Failed to deploy ecosystem changes.' });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
   };
 
   const addCriteria = () => {
