@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   ShieldCheck,
-  TrendingUp
+  TrendingUp,
+  FileText
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -28,6 +29,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'championships', label: 'Championships', icon: Trophy },
+    { id: 'reports', label: 'Financial Reports', icon: FileText },
     { id: 'market', label: 'Market Analysis', icon: TrendingUp },
     { id: 'admin', label: 'Command Center', icon: ShieldCheck, roles: ['admin', 'tutor'] },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -41,7 +43,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold">E</span>
           </div>
-          {isSidebarOpen && <span className="text-white font-bold text-xl">EMPIRION</span>}
+          {isSidebarOpen && <span className="text-white font-bold text-xl tracking-tight">EMPIRION</span>}
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2">
@@ -62,13 +64,13 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-2 py-4">
-            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white">
+          <div className="flex items-center gap-3 px-2 py-4 overflow-hidden">
+            <div className="shrink-0 w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white">
               <User size={20} />
             </div>
             {isSidebarOpen && (
-              <div className="flex flex-col">
-                <span className="text-white text-sm font-semibold">{userName}</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-white text-sm font-semibold truncate">{userName}</span>
                 <span className="text-slate-500 text-xs capitalize">{userRole}</span>
               </div>
             )}
@@ -83,10 +85,10 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 z-40">
+        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 z-40 shrink-0">
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
+            className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
           >
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -97,18 +99,18 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
               <input 
                 type="text" 
                 placeholder="Search resources..." 
-                className="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full w-64 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full w-64 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               />
             </div>
-            <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+            <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
               <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
           </div>
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
           {children}
         </div>
       </main>

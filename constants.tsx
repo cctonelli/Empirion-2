@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Branch, ChampionshipTemplate } from './types';
 
 export const COLORS = {
   primary: '#0f172a',
@@ -10,19 +11,43 @@ export const COLORS = {
   warning: '#f59e0b'
 };
 
-export const BRANCH_LABELS: Record<string, string> = {
-  industrial: 'Industrial',
-  commercial: 'Commercial',
-  services: 'Services',
-  agribusiness: 'Agribusiness'
+export const BRANCH_CONFIGS: Record<Branch, { label: string; icon: string; description: string }> = {
+  industrial: { label: 'Industrial', icon: '🏭', description: 'Focus on production, CapEx, and supply chain.' },
+  commercial: { label: 'Commercial', icon: '🏪', description: 'Retail management, inventory turnover, and pricing.' },
+  services: { label: 'Services', icon: '🤝', description: 'Human capital, project delivery, and customer LTV.' },
+  agribusiness: { label: 'Agribusiness', icon: '🌱', description: 'Climate impact, biological assets, and global commodities.' }
 };
+
+export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
+  {
+    id: 't1',
+    name: 'Café Premium Híbrido',
+    branch: 'agribusiness',
+    description: 'High-quality coffee production with both local and international sales.',
+    config: {}
+  },
+  {
+    id: 't2',
+    name: 'Varejo de Moda Urbana',
+    branch: 'commercial',
+    description: 'Fast-paced fashion retail in major Brazilian urban centers.',
+    config: {}
+  },
+  {
+    id: 't3',
+    name: 'Tech Hardware Startup',
+    branch: 'industrial',
+    description: 'Electronics manufacturing scaling from local to global.',
+    config: {}
+  }
+];
 
 export const MOCK_CHAMPIONSHIPS = [
   {
     id: 'c1',
     name: 'Tech Frontier 2025',
     description: 'A high-stakes industrial simulation for electronics manufacturing.',
-    branch: 'industrial',
+    branch: 'industrial' as Branch,
     salesMode: 'hybrid',
     scenarioType: 'simulated',
     currency: 'BRL',
@@ -30,13 +55,14 @@ export const MOCK_CHAMPIONSHIPS = [
     totalRounds: 12,
     status: 'active',
     startDate: '2025-01-01',
-    teamFee: 250
+    teamFee: 250,
+    transparencyLevel: 'medium'
   },
   {
     id: 'c2',
     name: 'AgroBoost Global',
     description: 'Sustainable agribusiness management in the Brazilian interior.',
-    branch: 'agribusiness',
+    branch: 'agribusiness' as Branch,
     salesMode: 'external',
     scenarioType: 'real',
     currency: 'USD',
@@ -44,6 +70,7 @@ export const MOCK_CHAMPIONSHIPS = [
     totalRounds: 8,
     status: 'draft',
     startDate: '2025-02-15',
-    teamFee: 500
+    teamFee: 500,
+    transparencyLevel: 'low'
   }
 ];

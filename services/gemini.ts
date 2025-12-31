@@ -1,21 +1,21 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY || "";
-
+/**
+ * Generates market analysis using gemini-3-flash-preview for general insights.
+ * Follows guidelines for direct process.env.API_KEY usage.
+ */
 export const generateMarketAnalysis = async (championshipName: string, round: number, branch: string) => {
-  if (!apiKey) return "API Key not configured. Market analysis unavailable.";
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Generate a concise 1-paragraph market analysis for Round ${round} of the "${championshipName}" ${branch} simulation. 
-      Focus on current economic trends, potential risks, and strategic advice for teams. Keep it professional and immersive.`,
+      contents: `Generate a concise 1-paragraph market analysis for Round ${round} of the "${championshipName}" ${branch} business simulation. 
+      Focus on current economic trends, potential risks, and strategic advice for competing teams. Keep it professional and immersive.`,
       config: {
         temperature: 0.7,
-        maxOutputTokens: 250,
+        // Removed maxOutputTokens as it's not strictly required and can block output.
       }
     });
 
@@ -26,18 +26,44 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
   }
 };
 
+/**
+ * Generates an initial scenario report using gemini-3-flash-preview.
+ */
+export const generateInitialReport = async (branch: string, scenarioName: string) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Generate an "Initial Executive Report" for a new business simulation scenario called "${scenarioName}" in the ${branch} sector. 
+      Include:
+      1. Context of the market entry.
+      2. 3 Main challenges specific to ${branch}.
+      3. A summary of the starting financial health (stable but competitive).
+      Keep it formatted in clean markdown.`,
+    });
+    return response.text || "Report generation failed.";
+  } catch (error) {
+    console.error("Gemini Error:", error);
+    return "Report generation failed.";
+  }
+};
+
+/**
+ * Analyzes complex company financials using gemini-3-pro-preview for advanced reasoning.
+ */
 export const generateExecutiveSummary = async (companyData: any) => {
-    if (!apiKey) return "API Key not configured.";
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     try {
         const response = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
-            contents: `As a senior business consultant, analyze these financial results: ${JSON.stringify(companyData)}. 
-            Provide 3 key bullet points for improvement and 1 highlight.`,
+            model: "gemini-3-pro-preview",
+            contents: `As a senior business consultant, analyze these financial results for a ${companyData.branch} company: ${JSON.stringify(companyData.financials)}. 
+            Provide 3 key bullet points for improvement and 1 strategic highlight.`,
         });
-        return response.text;
+        return response.text || "Analysis unavailable.";
     } catch (error) {
+        console.error("Gemini Error:", error);
         return "Analysis unavailable.";
     }
 };

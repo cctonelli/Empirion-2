@@ -3,12 +3,21 @@ export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness';
 export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
+export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: 'admin' | 'tutor' | 'player' | 'observer';
+}
+
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  branch: Branch;
+  description: string;
+  config: any;
 }
 
 export interface Championship {
@@ -24,18 +33,27 @@ export interface Championship {
   status: ChampionshipStatus;
   startDate: string;
   teamFee: number;
+  transparencyLevel: TransparencyLevel;
 }
 
-export interface FinancialData {
-  revenue: number;
-  costs: number;
-  grossProfit: number;
-  operatingExpenses: number;
-  ebitda: number;
-  netProfit: number;
-  assets: number;
-  liabilities: number;
-  equity: number;
+export interface FinancialStatement {
+  round: number;
+  dre: {
+    revenue: number;
+    variableCosts: number;
+    grossMargin: number;
+    fixedCosts: number;
+    ebitda: number;
+    taxes: number;
+    netProfit: number;
+  };
+  balance: {
+    assets: number;
+    cash: number;
+    inventory: number;
+    liabilities: number;
+    equity: number;
+  };
 }
 
 export interface Company {
@@ -43,26 +61,12 @@ export interface Company {
   championshipId: string;
   name: string;
   round: number;
-  financials: FinancialData;
+  statements: FinancialStatement[];
   kpis: {
     marketShare: number;
     roi: number;
     customerSatisfaction: number;
     esgScore: number;
+    tsr: number; // Total Shareholder Return
   };
-}
-
-export interface Decision {
-  id: string;
-  teamId: string;
-  round: number;
-  data: {
-    price: number;
-    marketingBudget: number;
-    productionQuantity: number;
-    rdInvestment: number;
-    hrTraining: number;
-  };
-  lastUpdated: string;
-  updatedBy: string;
 }
