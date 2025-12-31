@@ -17,11 +17,19 @@ import {
 import { supabase } from '../services/supabase';
 
 const RLS_SQL_SCRIPT = `-- Empirion Security Framework - Row Level Security (RLS)
--- Version 3.0 Consolidated
+-- Version 3.1 Consolidated (Fixes missing is_public)
+
+-- 0. SCHEMA REPAIR
+-- Add is_public column if it doesn't exist
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championships' AND column_name='is_public') THEN
+    ALTER TABLE public.championships ADD COLUMN is_public BOOLEAN DEFAULT FALSE;
+  END IF;
+END $$;
 
 -- 1. ENABLE RLS GLOBALLY
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.championship_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.championships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.community_ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
@@ -34,50 +42,26 @@ ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Usuários veem próprio perfil" ON public.users;
 CREATE POLICY "Usuários veem próprio perfil" ON public.users AS PERMISSIVE FOR ALL USING ((auth.uid() = id));
 
--- 3. POLICIES: championship_templates
-DROP POLICY IF EXISTS "Templates públicos visíveis" ON public.championship_templates;
-CREATE POLICY "Templates públicos visíveis" ON public.championship_templates AS PERMISSIVE FOR SELECT USING ((is_public OR (created_by = auth.uid()) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
-
--- 4. POLICIES: championships
+-- 3. POLICIES: championships
 DROP POLICY IF EXISTS "Tutor edita seu campeonato" ON public.championships;
 CREATE POLICY "Tutor edita seu campeonato" ON public.championships AS PERMISSIVE FOR UPDATE USING (((tutor_id = auth.uid()) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
 
-DROP POLICY IF EXISTS "Tutor vê seus campeonatos" ON public.championships;
-CREATE POLICY "Tutor vê seus campeonatos" ON public.championships AS PERMISSIVE FOR ALL USING (((tutor_id = auth.uid()) OR (EXISTS ( SELECT 1 FROM championship_tutors WHERE ((championship_tutors.championship_id = championships.id) AND (championship_tutors.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
+DROP POLICY IF EXISTS "Visibilidade de campeonatos" ON public.championships;
+CREATE POLICY "Visibilidade de campeonatos" ON public.championships AS PERMISSIVE FOR SELECT USING ((is_public OR (tutor_id = auth.uid()) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
 
--- 5. POLICIES: community_ratings
+-- 4. POLICIES: community_ratings
 DROP POLICY IF EXISTS "Todos do campeonato veem ratings" ON public.community_ratings;
 CREATE POLICY "Todos do campeonato veem ratings" ON public.community_ratings AS PERMISSIVE FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Usuários autenticados podem votar" ON public.community_ratings;
 CREATE POLICY "Usuários autenticados podem votar" ON public.community_ratings AS PERMISSIVE FOR INSERT WITH CHECK ((auth.uid() IS NOT NULL));
 
--- 6. POLICIES: companies
-DROP POLICY IF EXISTS "Equipe vê seus dados" ON public.companies;
-CREATE POLICY "Equipe vê seus dados" ON public.companies AS PERMISSIVE FOR ALL USING (((EXISTS ( SELECT 1 FROM (teams t JOIN team_members tm ON ((t.id = tm.team_id))) WHERE ((t.id = companies.team_id) AND (tm.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM championship_tutors ct WHERE ((ct.championship_id = companies.championship_id) AND (ct.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
-
--- 7. POLICIES: current_decisions
+-- 5. POLICIES: current_decisions
 DROP POLICY IF EXISTS "Equipe edita decisões" ON public.current_decisions;
 CREATE POLICY "Equipe edita decisões" ON public.current_decisions AS PERMISSIVE FOR ALL USING ((EXISTS ( SELECT 1 FROM (teams t JOIN team_members tm ON ((t.id = tm.team_id))) WHERE ((t.id = current_decisions.team_id) AND (tm.user_id = auth.uid())))));
 
--- 8. POLICIES: public_reports
-DROP POLICY IF EXISTS "Todos do campeonato veem relatórios públicos" ON public.public_reports;
-CREATE POLICY "Todos do campeonato veem relatórios públicos" ON public.public_reports AS PERMISSIVE FOR SELECT USING (((EXISTS ( SELECT 1 FROM teams t WHERE ((t.championship_id = public_reports.championship_id) AND (EXISTS ( SELECT 1 FROM team_members tm WHERE ((tm.team_id = t.id) AND (tm.user_id = auth.uid()))))))) OR (EXISTS ( SELECT 1 FROM championship_tutors ct WHERE ((ct.championship_id = public_reports.championship_id) AND (ct.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
-
--- 9. POLICIES: team_members
-DROP POLICY IF EXISTS "Membros veem membros da equipe" ON public.team_members;
-CREATE POLICY "Membros veem membros da equipe" ON public.team_members AS PERMISSIVE FOR SELECT USING (((EXISTS ( SELECT 1 FROM team_members tm2 WHERE ((tm2.team_id = team_members.team_id) AND (tm2.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = ANY (ARRAY['tutor'::text, 'admin'::text])))))));
-
--- 10. POLICIES: teams
-DROP POLICY IF EXISTS "Equipes veem apenas suas próprias" ON public.teams;
-CREATE POLICY "Equipes veem apenas suas próprias" ON public.teams AS PERMISSIVE FOR SELECT USING ((EXISTS ( SELECT 1 FROM team_members WHERE ((team_members.team_id = teams.id) AND (team_members.user_id = auth.uid())))));
-
-DROP POLICY IF EXISTS "Membros veem sua equipe" ON public.teams;
-CREATE POLICY "Membros veem sua equipe" ON public.teams AS PERMISSIVE FOR ALL USING (((EXISTS ( SELECT 1 FROM team_members WHERE ((team_members.team_id = teams.id) AND (team_members.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM (championship_tutors ct JOIN championships c ON ((ct.championship_id = c.id))) WHERE ((c.id = teams.championship_id) AND (ct.user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
-
--- NOTIFY RELOAD
+-- 6. NOTIFY RELOAD
 NOTIFY pgrst, 'reload schema';
-NOTIFY pgrst, 'reload config';
 `;
 
 const AdminCommandCenter: React.FC = () => {

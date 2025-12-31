@@ -9,8 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script>
-        // Shim process.env for browser environment to avoid ReferenceErrors
-        window.process = { env: { API_KEY: "" } };
+        // Use a safer shim for process.env that won't overwrite injected keys
+        window.process = window.process || { env: {} };
+        window.process.env = window.process.env || {};
         
         tailwind.config = {
             theme: {
@@ -21,47 +22,22 @@
                     },
                     colors: {
                         brand: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                            950: '#0f172a',
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa',
+                            500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a', 950: '#0f172a',
                         },
                     },
-                    animation: {
-                        'spin-slow': 'spin 8s linear infinite',
-                    }
                 }
             }
         }
     </script>
     <style>
-        body {
-            background-color: #f8fafc;
-            color: #0f172a;
-            -webkit-font-smoothing: antialiased;
-        }
+        body { background-color: #f8fafc; color: #0f172a; -webkit-font-smoothing: antialiased; }
         .premium-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white; border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+            transition: all 0.3s ease;
         }
-        .premium-card:hover {
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
-            transform: translateY(-2px);
-        }
-        .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
+        .premium-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
     </style>
 <script type="importmap">
 {
@@ -83,7 +59,7 @@
 }
 </script>
 </head>
-<body class="font-sans">
+<body>
     <div id="root"></div>
 </body>
 </html>

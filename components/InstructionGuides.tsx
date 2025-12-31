@@ -13,7 +13,9 @@ import {
   BarChart3,
   Globe,
   Cpu,
-  Trophy
+  Trophy,
+  Check,
+  Bot
 } from 'lucide-react';
 
 export const TutorGuide: React.FC = () => (
@@ -185,5 +187,3 @@ const ListItem = ({ title, desc }: { title: string, desc: string }) => (
     </div>
   </li>
 );
-
-import { Bot, Check } from 'lucide-react';

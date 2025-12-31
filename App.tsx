@@ -148,7 +148,12 @@ const App: React.FC = () => {
                      <p className="text-xl font-extrabold text-white tracking-tight uppercase">{activeChamp?.name || 'Standard Cluster'}</p>
                   </div>
                </div>
-               <DecisionForm regionsCount={activeChamp?.config?.regionsCount || 9} teamId={activeChamp?.id} champId={activeChamp?.id} />
+               <DecisionForm 
+                  regionsCount={activeChamp?.config?.regionsCount || 9} 
+                  teamId={activeChamp?.id} 
+                  champId={activeChamp?.id}
+                  round={activeChamp?.currentRound || 1}
+               />
             </div>
           );
         case 'admin':
@@ -171,7 +176,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("View Rendering Error:", error);
-      return <div className="p-16 text-center">Rendering Error</div>;
+      return <div className="p-16 text-center text-slate-400 font-bold uppercase tracking-widest">Initialization Error</div>;
     }
   };
 

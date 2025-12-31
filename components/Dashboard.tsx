@@ -20,19 +20,20 @@ import {
 import ChampionshipTimer from './ChampionshipTimer';
 import { generateMarketAnalysis } from '../services/gemini';
 
-// Ensure ApexCharts is available globally
-if (typeof window !== 'undefined') {
-  (window as any).ApexCharts = ApexCharts;
-}
-
 const Dashboard: React.FC = () => {
   const [aiInsight, setAiInsight] = useState<string>('');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
+  const [chartReady, setChartReady] = useState(false);
 
-  // Defensive component check for react-apexcharts in ESM
+  // Safe reference for ESM
   const ApexChart = (Chart as any).default || Chart;
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).ApexCharts = ApexCharts;
+      setChartReady(true);
+    }
+
     const fetchInsight = async () => {
       try {
         const result = await generateMarketAnalysis('Alpha Group Hub', 4, 'industrial');
@@ -144,7 +145,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="h-[380px] w-full">
-              {ApexChart && <ApexChart options={lineChartOptions} series={[{ name: 'Revenue', data: [100, 120, 110, 150, 190] }, { name: 'Net Profit', data: [10, 15, 8, 25, 32] }]} type="area" height="100%" />}
+              {chartReady && ApexChart && <ApexChart options={lineChartOptions} series={[{ name: 'Revenue', data: [100, 120, 110, 150, 190] }, { name: 'Net Profit', data: [10, 15, 8, 25, 32] }]} type="area" height="100%" />}
             </div>
           </div>
 
@@ -189,7 +190,7 @@ const Dashboard: React.FC = () => {
                        <span className="text-3xl font-black text-slate-900">24%</span>
                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Share</span>
                     </div>
-                    {ApexChart && <ApexChart 
+                    {chartReady && ApexChart && <ApexChart 
                       options={{
                         chart: { type: 'radialBar' },
                         plotOptions: { radialBar: { hollow: { size: '65%' }, dataLabels: { show: false } } },
