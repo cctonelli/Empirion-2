@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { 
   Zap, Globe, Shield, TrendingUp, Percent, Users, Lock, Unlock, 
   Save, RefreshCw, AlertCircle, CheckCircle2, SlidersHorizontal, 
-  Star, Plus, Trash2, LayoutGrid, Activity, Calculator
+  Star, Plus, Trash2, LayoutGrid, Activity, Calculator,
+  Eye, EyeOff
 } from 'lucide-react';
 import { EcosystemConfig, Championship, CommunityCriteria } from '../types';
 import { updateEcosystem } from '../services/supabase';
@@ -32,7 +33,6 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  // Missing functions found during audit
   const addCriteria = () => {
     const newId = `crit-${Math.random().toString(36).substr(2, 5)}`;
     setCriteria(prev => [...prev, { id: newId, label: 'Nova Métrica', weight: 0.1 }]);
@@ -42,8 +42,6 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
     setCriteria(prev => prev.filter(c => c.id !== id));
   };
 
-  // PREVIEW SIMULATION FOR TUTOR (Market Equilibrium Check)
-  // Calculates how a standard mid-market team would perform under these macro settings
   const simulationPreview = useMemo(() => {
     const mockDecisions: any = {
       regions: { 
@@ -120,10 +118,23 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
       {activeTab === 'macro' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 space-y-8 lg:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-               <Globe className="text-blue-600" size={24} />
-               <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">Drivers Econômicos</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Globe className="text-blue-600" size={24} />
+                <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">Drivers Econômicos</h3>
+              </div>
+              
+              {/* IS_PUBLIC TOGGLE */}
+              <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-2xl border border-slate-100">
+                <button 
+                  onClick={() => setIsPublic(!isPublic)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPublic ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-200'}`}
+                >
+                  {isPublic ? <><Eye size={14} /> Public Arena</> : <><EyeOff size={14} /> Private Arena</>}
+                </button>
+              </div>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               <MacroSlider label="Taxa de Inflação" value={config.inflationRate} step={0.01} max={0.2} 
                 onChange={v => setConfig({...config, inflationRate: v})} 
@@ -148,7 +159,7 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
                <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
                  <Shield className="text-blue-400" /> Policy Lock
                </h3>
-               <p className="text-slate-400 text-sm leading-relaxed font-medium">Mudanças nestas variáveis reescrevem as projeções de todas as empresas instantaneamente. Use o Lab para testar antes.</p>
+               <p className="text-slate-400 text-sm leading-relaxed font-medium">Mudanças nestas variáveis reescrevem as projeções de todas as empresas instantaneamente. O status de visibilidade "{isPublic ? 'PÚBLICO' : 'PRIVADO'}" entrará em vigor após salvar.</p>
              </div>
              <button 
                onClick={handleSave}

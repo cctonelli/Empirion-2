@@ -11,7 +11,7 @@ import ChampionshipTimer from './components/ChampionshipTimer';
 import CommunityView from './components/CommunityView';
 import TutorArenaControl from './components/TutorArenaControl';
 import { TutorGuide, TeamGuide } from './components/InstructionGuides';
-import { supabase, getPublicChampionships } from './services/supabase';
+import { supabase, getPublicChampionships, subscribeToChampionship } from './services/supabase';
 import { MOCK_CHAMPIONSHIPS } from './constants';
 import { Trophy, Play, Settings as SettingsIcon, Plus, AlertCircle, ShieldCheck, Zap, Globe, Users, BarChart3, ArrowRight, ChevronRight, Star, Cpu } from 'lucide-react';
 
@@ -57,6 +57,19 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Real-time active championship listener
+  useEffect(() => {
+    if (activeChamp?.id) {
+      const subscription = subscribeToChampionship(activeChamp.id, (payload) => {
+        const updated = payload.new;
+        setActiveChamp(prev => ({ ...prev, ...updated }));
+      });
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [activeChamp?.id]);
 
   const handleLogout = async () => {
     setLoading(true);

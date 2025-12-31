@@ -26,6 +26,18 @@ export const subscribeToDecisionAudit = (teamId: string, callback: (payload: any
     .subscribe();
 };
 
+export const subscribeToChampionship = (championshipId: string, callback: (payload: any) => void) => {
+  return supabase
+    .channel(`champ-${championshipId}`)
+    .on('postgres_changes', { 
+      event: 'UPDATE', 
+      schema: 'public', 
+      table: 'championships', 
+      filter: `id=eq.${championshipId}` 
+    }, callback)
+    .subscribe();
+};
+
 // Data Actions
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, userName: string) => {
   // 1. Update current decisions
