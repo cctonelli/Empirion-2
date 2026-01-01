@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, UserProfile, UserRole } from '../types';
 
@@ -8,8 +7,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_9D6W-B35TZc5KfZqpqliXA_sWpk_klw';
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
- * Dynamic Content Fetching (v5.0)
- * Allows the portal to be 100% data-driven.
+ * Dynamic Content Fetching (v5.1)
+ * Adicionado fallback resiliente para evitar tela preta em caso de erro 406 ou RLS.
  */
 export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
   try {
@@ -18,12 +17,20 @@ export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
       .select('content')
       .eq('page_slug', slug)
       .eq('locale', locale)
-      .single();
+      .limit(1)
+      .maybeSingle();
     
-    if (error) throw error;
-    return data.content;
+    if (error) {
+      if (error.code === 'PGRST106' || error.status === 406) {
+        console.warn(`Supabase status 406 for ${slug}. Possible schema mismatch or RLS block.`);
+      } else {
+        console.error(`Supabase error fetching content for ${slug}:`, error);
+      }
+      return null;
+    }
+    return data?.content || null;
   } catch (err) {
-    console.warn(`Content for ${slug} not found in DB, using fallback.`);
+    console.warn(`Critical failure fetching ${slug}, using fallback.`);
     return null;
   }
 };
@@ -40,14 +47,18 @@ export const checkSupabaseConnection = async () => {
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('supabase_user_id', userId)
-    .single();
-  
-  if (error) return null;
-  return data;
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('supabase_user_id', userId)
+      .maybeSingle();
+    
+    if (error) return null;
+    return data;
+  } catch (e) {
+    return null;
+  }
 };
 
 export const updateUserRole = async (userId: string, newRole: UserRole) => {

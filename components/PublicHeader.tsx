@@ -34,7 +34,8 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       animate={{ y: 0, opacity: 1 }}
       className="fixed top-0 left-0 right-0 h-20 bg-[#020617]/80 backdrop-blur-3xl border-b border-white/5 z-[1000] flex items-center"
     >
-      <div className="w-full grid grid-cols-[240px_1fr_340px] items-center px-6 md:px-12 h-full">
+      {/* Grid isolado em 3 áreas para evitar layout shifts e tremores */}
+      <div className="w-full grid grid-cols-[260px_1fr_360px] items-center px-6 md:px-12 h-full">
         
         {/* BRANDING */}
         <div className="flex-shrink-0">
@@ -49,7 +50,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           </Link>
         </div>
 
-        {/* NAVEGAÇÃO CENTRAL RECURSIVA */}
+        {/* NAVEGAÇÃO CENTRAL */}
         <nav className="hidden lg:flex justify-center items-center h-full">
           <div className="flex items-center bg-white/[0.03] border border-white/5 rounded-full p-1 relative shadow-inner">
             {MENU_STRUCTURE.map((item) => {
@@ -66,18 +67,18 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   <Link 
                     to={item.path}
                     className={`relative z-10 px-5 py-2.5 fluid-menu-item font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 rounded-full ${
-                      isActive ? 'text-white' : isHovered ? 'text-blue-400' : 'text-slate-400'
+                      isActive ? 'text-white' : isHovered ? 'text-blue-400' : 'text-slate-400 hover:text-slate-300'
                     }`}
                   >
                     {t(item.label)}
                     {item.sub && <ChevronDown size={11} className={`transition-transform duration-300 ${isHovered ? 'rotate-180 text-blue-500' : ''}`} />}
                     
-                    {/* ACTIVE PILL FOLLOWER */}
+                    {/* EFEITO PILL FOLLOWER COM LAYOUT ID */}
                     {isHovered && (
                       <motion.div 
-                        layoutId="navGlow"
+                        layoutId="navGlowPill"
                         className="absolute inset-0 bg-blue-600/10 border border-blue-500/20 rounded-full -z-0"
-                        transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                       />
                     )}
                   </Link>
@@ -89,7 +90,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                         initial={{ opacity: 0, y: 15, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                        className="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-[#0f172a] border border-white/10 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] p-3 mt-4 backdrop-blur-3xl"
+                        className="absolute top-full left-1/2 -translate-x-1/2 w-72 bg-[#0f172a] border border-white/10 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.6)] p-3 mt-4 backdrop-blur-3xl"
                       >
                         <div className="space-y-1">
                           {item.sub.map((sub: any, idx: number) => (
@@ -105,7 +106,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           </div>
         </nav>
 
-        {/* AÇÕES */}
+        {/* AÇÕES (LOGIN & IDIOMA) */}
         <div className="flex items-center justify-end gap-6 h-full">
           <div className="hidden sm:block">
             <LanguageSwitcher light />
@@ -127,31 +128,31 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </div>
       </div>
 
-      {/* MOBILE MENU */}
+      {/* MOBILE OVERLAY */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, x: '100%' }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
-            className="lg:hidden fixed inset-0 top-20 bg-[#020617] p-10 z-[900] flex flex-col gap-10"
+            className="lg:hidden fixed inset-0 top-20 bg-[#020617] p-10 z-[900] flex flex-col gap-10 overflow-y-auto no-scrollbar"
           >
-            <nav className="flex flex-col gap-6">
+            <nav className="flex flex-col gap-8">
               {MENU_STRUCTURE.map((item) => (
                 <div key={item.label}>
                    <Link 
                      to={item.path} 
-                     className="text-4xl font-black uppercase tracking-tighter text-white italic flex items-center justify-between" 
+                     className="text-4xl font-black uppercase tracking-tighter text-white italic flex items-center justify-between group" 
                      onClick={() => setIsMobileMenuOpen(false)}
                    >
                      {t(item.label)}
-                     <ChevronRight size={24} className="text-blue-600" />
+                     <ChevronRight size={24} className="text-blue-600 group-hover:translate-x-2 transition-transform" />
                    </Link>
                 </div>
               ))}
             </nav>
             <div className="mt-auto space-y-6">
-              <button onClick={onLogin} className="w-full py-8 bg-blue-600 text-white rounded-[3rem] font-black text-sm uppercase tracking-widest">Acessar Arena Suprema</button>
+              <button onClick={onLogin} className="w-full py-8 bg-blue-600 text-white rounded-[3rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-500/20">Acessar Arena Suprema</button>
               <div className="flex justify-center"><LanguageSwitcher light /></div>
             </div>
           </motion.div>
@@ -161,7 +162,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   );
 };
 
-/* SUBMENU ITEM RECURSIVO */
+/* COMPONENTE DE SUBMENU RECURSIVO */
 const SubmenuItem: React.FC<{ item: any; index: number }> = ({ item, index }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -178,11 +179,11 @@ const SubmenuItem: React.FC<{ item: any; index: number }> = ({ item, index }) =>
         <div className="p-3 bg-white/5 rounded-xl text-blue-500 group-hover/sub:bg-blue-600 group-hover/sub:text-white group-hover/sub:scale-110 transition-all shadow-sm">
            {getIcon(item.icon)}
         </div>
-        <span className="whitespace-nowrap">{item.label}</span>
+        <span className="flex-1">{item.label}</span>
         {item.sub && <ChevronRight size={12} className={`ml-auto transition-transform ${isOpen ? 'translate-x-1' : ''}`} />}
       </Link>
 
-      {/* RENDERIZAÇÃO RECURSIVA PARA NÍVEIS 2+ */}
+      {/* RENDERIZAÇÃO RECURSIVA PARA NÍVEIS INFINITOS */}
       <AnimatePresence>
         {item.sub && isOpen && (
           <motion.div
