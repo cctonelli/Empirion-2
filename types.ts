@@ -7,6 +7,36 @@ export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 export type ServiceLevel = 'low' | 'mid' | 'high';
 
+// Business Plan Interfaces
+export interface BusinessPlanSection {
+  id: string;
+  title: string;
+  fields: {
+    id: string;
+    label: string;
+    type: 'text' | 'textarea' | 'number' | 'table';
+    placeholder: string;
+    value: any;
+    aiPrompt?: string;
+  }[];
+}
+
+export interface BusinessPlan {
+  id: string;
+  userId: string;
+  name: string;
+  branch: Branch;
+  createdAt: string;
+  updatedAt: string;
+  sections: BusinessPlanSection[];
+  financials: {
+    investments: number;
+    fixedCosts: number;
+    variableCosts: number;
+    revenueProjection: number[];
+  };
+}
+
 export interface UserProfile {
   id: string;
   supabase_user_id: string;
@@ -46,6 +76,7 @@ export interface FinancialStatement {
     outflow_marketing: number;
     outflow_distribution: number;
     outflow_taxes: number;
+    outflow_taxes_val?: number;
     outflow_machines: number;
     net_cash: number;
   };
@@ -56,14 +87,14 @@ export interface FinancialStatement {
     strike: boolean;
     strike_intensity?: number;
     sales_staff_count?: number;
-    staff_by_level?: Record<ServiceLevel, number>; // SISERV: Specific headcount per formation
+    staff_by_level?: Record<ServiceLevel, number>;
   };
   machines: MachineStats;
   regional_demand: Record<number, { potential: number; sold: number }>;
   quality_index?: number;
   consumer_satisfaction?: number;
   ecommerce_share?: number;
-  company_image_index?: number; // SISERV: Accumulated brand perception
+  company_image_index?: number;
 }
 
 export interface BalanceSheet {
@@ -126,7 +157,7 @@ export interface BlackSwanEvent {
     productivity: number;
     climate_impact?: number;
     ecommerce_surge?: number;
-    service_quality_penalty?: number; // Specific for Services
+    service_quality_penalty?: number;
   };
 }
 
@@ -184,7 +215,7 @@ export interface ProductDefinition {
   perishability_rate?: number;
   is_durable?: boolean;
   obsolescence_rate?: number;
-  formation_level?: ServiceLevel; // SISERV: Low, Mid, High
+  formation_level?: ServiceLevel;
 }
 
 export interface ResourceUsage {
@@ -212,7 +243,7 @@ export interface MarketIndicators {
   seasonality_index?: number;
   climate_status?: 'optimal' | 'dry' | 'flood' | 'storm';
   ecommerce_adoption_rate?: number;
-  service_complexity_index?: number; // SISERV: Macro complexity
+  service_complexity_index?: number;
 }
 
 export interface DecisionData {
@@ -222,7 +253,7 @@ export interface DecisionData {
     marketing: number;
     ecommerce_price?: number;
     ecommerce_marketing?: number;
-    service_quality_focus?: number; // SISERV: Extra QA focus
+    service_quality_focus?: number;
   }>;
   hr: {
     hired: number;
@@ -234,7 +265,7 @@ export interface DecisionData {
     overtimeHours?: number;
     sales_staff_count?: number;
     commission_percent?: number;
-    staff_by_level?: Record<ServiceLevel, number>; // SISERV
+    staff_by_level?: Record<ServiceLevel, number>;
   };
   production: {
     purchaseMPA: number;
@@ -245,8 +276,8 @@ export interface DecisionData {
     rd_investment?: number;
     agro_tech_investment?: number;
     digital_exp_investment?: number;
-    service_level_allocation?: Record<ServiceLevel, number>; // SISERV: % Mix
-    contract_mode?: 'previous' | 'immediate'; // SISERV: Planning mode
+    service_level_allocation?: Record<ServiceLevel, number>;
+    contract_mode?: 'previous' | 'immediate';
   };
   finance: {
     loanRequest: number;

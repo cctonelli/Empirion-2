@@ -24,16 +24,15 @@ const EmpireParticles: React.FC = () => {
 
     let animationFrameId: number;
     let particles: Particle[] = [];
-    const particleCount = 80;
-    const connectionDistance = 150;
-    const mouseRadius = 200;
+    const particleCount = 100;
+    const connectionDistance = 180;
+    const mouseRadius = 250;
 
     const colors = [
-      COLORS.accent,    // Industrial Blue
-      COLORS.success,   // Agro Green
-      '#8b5cf6',        // Services Indigo
-      COLORS.warning,   // Finance Amber
-      '#f97316'         // Construction Orange
+      '#3b82f6', // blue
+      '#1e293b', // slate
+      '#6366f1', // indigo
+      '#fbbf24', // gold (accent)
     ];
 
     const resize = () => {
@@ -48,9 +47,9 @@ const EmpireParticles: React.FC = () => {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          radius: Math.random() * 2 + 1,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          radius: Math.random() * 1.5 + 0.5,
           color: colors[Math.floor(Math.random() * colors.length)]
         });
       }
@@ -59,34 +58,43 @@ const EmpireParticles: React.FC = () => {
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Update and draw particles
+      // Draw subtle grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.lineWidth = 1;
+      const gridSize = 100;
+      for (let x = 0; x < canvas.width; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
       particles.forEach((p, i) => {
-        // Move
         p.x += p.vx;
         p.y += p.vy;
 
-        // Interaction with mouse
+        // Interaction
         const dx = mouseRef.current.x - p.x;
         const dy = mouseRef.current.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
         if (dist < mouseRadius) {
           const force = (mouseRadius - dist) / mouseRadius;
-          p.x -= dx * force * 0.02;
-          p.y -= dy * force * 0.02;
+          p.x -= dx * force * 0.03;
+          p.y -= dy * force * 0.03;
         }
 
-        // Bounce boundaries
         if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
         if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
 
-        // Draw particle
+        // Draw node
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
+        ctx.globalAlpha = 0.5;
         ctx.fill();
 
-        // Draw connections
+        // Connections
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const distNodes = Math.sqrt(Math.pow(p.x - p2.x, 2) + Math.pow(p.y - p2.y, 2));
@@ -94,14 +102,14 @@ const EmpireParticles: React.FC = () => {
           if (distNodes < connectionDistance) {
             ctx.beginPath();
             ctx.strokeStyle = p.color;
-            ctx.globalAlpha = (1 - distNodes / connectionDistance) * 0.2;
-            ctx.lineWidth = 0.5;
+            ctx.globalAlpha = (1 - distNodes / connectionDistance) * 0.15;
+            ctx.lineWidth = 0.8;
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
             ctx.stroke();
-            ctx.globalAlpha = 1;
           }
         }
+        ctx.globalAlpha = 1;
       });
 
       animationFrameId = requestAnimationFrame(draw);
@@ -127,7 +135,7 @@ const EmpireParticles: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[-1] opacity-40 bg-slate-50"
+      className="fixed inset-0 pointer-events-none z-[-1] bg-[#020617]"
     />
   );
 };

@@ -1,148 +1,198 @@
 
-import { ChampionshipTemplate, Branch } from './types';
+import { ChampionshipTemplate, Branch, BusinessPlanSection } from './types';
 
 export const COLORS = {
-  primary: '#0f172a',
-  secondary: '#334155',
+  primary: '#020617', // Deeper Slate
+  secondary: '#1e293b',
   accent: '#3b82f6',
-  success: '#22c55e',
+  gold: '#fbbf24',    // Gold highlight
+  success: '#10b981',
   danger: '#ef4444',
   warning: '#f59e0b'
 };
 
+export const BUSINESS_PLAN_STRUCTURE: BusinessPlanSection[] = [
+  {
+    id: 'executive_summary',
+    title: 'Sumário Executivo',
+    fields: [
+      { id: 'resumo', label: 'Resumo do Negócio', type: 'textarea', placeholder: 'Descreva o conceito principal do seu império...', value: '', aiPrompt: 'Resuma os pontos principais do plano de negócios em um tom profissional e atraente.' },
+      { id: 'missao', label: 'Missão e Valores', type: 'textarea', placeholder: 'Qual a razão de existir da sua empresa?', value: '', aiPrompt: 'Sugerir missão, visão e valores para uma empresa do setor informado.' },
+      { id: 'setor', label: 'Setor de Atividade', type: 'text', placeholder: 'Ex: Industrial / Tecnologia', value: '' }
+    ]
+  },
+  {
+    id: 'market_analysis',
+    title: 'Análise de Mercado',
+    fields: [
+      { id: 'clientes', label: 'Perfil dos Clientes', type: 'textarea', placeholder: 'Quem são seus compradores?', value: '', aiPrompt: 'Descrever o público-alvo ideal para uma empresa deste setor.' },
+      { id: 'concorrentes', label: 'Análise de Concorrentes', type: 'textarea', placeholder: 'Como as outras empresas se comportam na arena?', value: '', aiPrompt: 'Analisar forças e fraquezas típicas de concorrentes neste ramo.' },
+      { id: 'fornecedores', label: 'Fornecedores', type: 'textarea', placeholder: 'Quem provê seus insumos?', value: '' }
+    ]
+  },
+  {
+    id: 'marketing_plan',
+    title: 'Plano de Marketing',
+    fields: [
+      { id: 'produtos', label: 'Descrição de Produtos/Serviços', type: 'textarea', placeholder: 'O que você vende?', value: '' },
+      { id: 'preco', label: 'Estratégia de Preço', type: 'textarea', placeholder: 'Como você define seu markup?', value: '', aiPrompt: 'Sugerir uma estratégia de precificação baseada em valor percebido.' },
+      { id: 'promocao', label: 'Estratégia Promocional', type: 'textarea', placeholder: 'Como você será visto no mercado?', value: '' }
+    ]
+  },
+  {
+    id: 'operational_plan',
+    title: 'Plano Operacional',
+    fields: [
+      { id: 'layout', label: 'Arranjo Físico', type: 'textarea', placeholder: 'Como é a sua planta ou escritório?', value: '' },
+      { id: 'capacidade', label: 'Capacidade Produtiva/Serviço', type: 'text', placeholder: 'Ex: 10.000 unidades/mês', value: '' },
+      { id: 'pessoal', label: 'Corpo Técnico e RH', type: 'textarea', placeholder: 'Níveis de formação e headcount...', value: '' }
+    ]
+  },
+  {
+    id: 'financial_plan',
+    title: 'Plano Financeiro',
+    fields: [
+      { id: 'investimentos', label: 'Investimento Inicial ($)', type: 'number', placeholder: '0.00', value: 0 },
+      { id: 'faturamento', label: 'Faturamento Mensal Estimado ($)', type: 'number', placeholder: '0.00', value: 0 },
+      { id: 'lucratividade', label: 'Lucratividade (%)', type: 'number', placeholder: '0%', value: 0, aiPrompt: 'Calcular a lucratividade média esperada com base nos dados fornecidos.' }
+    ]
+  }
+];
+
 export const LANDING_PAGE_DATA = {
   hero: {
-    title: "Empirion – Business Intelligence Arena v5.5 GOLD",
-    subtitle: "Forge Your Empire with AI-Driven Strategic Insight",
-    cta: "Start Your Empire",
-    secondaryCta: "Explore Features"
+    title: "Empirion – The Strategic Command v5.5 GOLD",
+    subtitle: "A Arena Definitiva onde a Inteligência Artificial Gemini e a Estratégia Humana colidem em Simulações de Alta Performance.",
+    cta: "Entrar na Arena",
+    secondaryCta: "Conhecer Setores"
   },
   menuItems: [
-    { id: "home", label: "Início", icon: "Home" },
-    { id: "features", label: "Funcionalidades", icon: "Zap" },
+    { id: "home", label: "Protocolo", icon: "Home" },
+    { id: "features", label: "Engine", icon: "Zap" },
     { id: "branches", label: "Setores", icon: "Building" },
-    { id: "ia", label: "Inteligência Artificial", icon: "Brain" },
-    { id: "community", label: "Comunidade", icon: "Users" },
-    { id: "roadmap", label: "Roadmap", icon: "Map" }
+    { id: "ia", label: "Strategos AI", icon: "Brain" },
+    { id: "community", label: "Network", icon: "Users" },
+    { id: "roadmap", label: "Evolução", icon: "Map" }
   ],
   features: [
-    { id: "feat-1", title: "Simulação Realtime", description: "Decisões colaborativas com Supabase Channels e sincronia instantânea entre membros do time.", icon: "Clock" },
-    { id: "feat-2", title: "Gazeta Industrial IA", description: "Notícias e análises de mercado geradas dinamicamente por Gemini 3 Pro baseadas no seu desempenho.", icon: "Newspaper" },
-    { id: "feat-3", title: "Dashboards ApexCharts", description: "KPIs avançados, Market Share e indicadores macroeconômicos visualizados em tempo real.", icon: "BarChart3" },
-    { id: "feat-4", title: "Command Center Admin", description: "Controle total para tutores: ajuste de inflação, demanda e eventos de 'Cisne Negro'.", icon: "Shield" }
+    { id: "feat-1", title: "Real-time Concurrency", description: "Infraestrutura Supabase para decisões coletivas instantâneas com latência zero.", icon: "Clock" },
+    { id: "feat-2", title: "Gemini 3 Oracle", description: "O cérebro por trás da Gazeta e do Advisor. Raciocínio profundo aplicado ao seu Balanço.", icon: "Newspaper" },
+    { id: "feat-3", title: "Deep Analytics", description: "Dashboards ApexCharts projetados para clareza máxima em cenários complexos.", icon: "BarChart3" },
+    { id: "feat-4", title: "Master Command", description: "Controle granular para tutores: manipule a economia e desafie seus estrategistas.", icon: "Shield" },
+    { id: "feat-5", title: "AI Business Builder", description: "Construa planos de negócios nível SEBRAE em minutos com automação total via IA.", icon: "FileText" }
   ],
   branchesOverview: [
-    { id: "industrial", slug: "industrial", name: "Industrial", icon: "Factory", color: "text-blue-600", bg: "bg-blue-50", description: "Gestão completa de produção, suprimentos, máquinas Alfa/Beta/Gama e supply chain complexo.", cta: "Ver Detalhes" },
-    { id: "commercial", slug: "commercial", name: "Comercial", icon: "ShoppingCart", color: "text-emerald-600", bg: "bg-emerald-50", description: "Varejo híbrido, e-commerce, comissões de venda e satisfação do consumidor (SIMCO).", cta: "Ver Detalhes" },
-    { id: "services", slug: "services", name: "Serviços", icon: "Briefcase", color: "text-indigo-600", bg: "bg-indigo-50", description: "Níveis de formação, qualidade de imagem corporativa e gestão de contratos técnicos (SISERV).", cta: "Ver Detalhes" },
-    { id: "agribusiness", slug: "agribusiness", name: "Agronegócio", icon: "Tractor", color: "text-amber-600", bg: "bg-amber-50", description: "Ativos biológicos, perecibilidade, sazonalidade de safra e Yield biotecnológico (SIAGRO).", cta: "Ver Detalhes" },
-    { id: "finance", slug: "finance", name: "Financeiro", icon: "DollarSign", color: "text-rose-600", bg: "bg-rose-50", description: "Gestão de bancos, investimentos, hedge cambial, fundos e volatilidade de mercado real.", cta: "Ver Detalhes" },
-    { id: "construction", slug: "construction", name: "Construção", icon: "Hammer", color: "text-orange-600", bg: "bg-orange-50", description: "Obras, licitações, gestão de materiais, prazos de projeto e riscos climáticos em tempo real.", cta: "Ver Detalhes" }
+    { id: "industrial", slug: "industrial", name: "Industrial", icon: "Factory", color: "text-blue-400", bg: "bg-blue-500/10", description: "CapEx massivo, obsolescência e cadeias de suprimento globais.", cta: "Explorar Módulo" },
+    { id: "commercial", slug: "commercial", name: "Comercial", icon: "ShoppingCart", color: "text-emerald-400", bg: "bg-emerald-500/10", description: "Varejo híbrido e algoritmos de satisfação do consumidor SIMCO.", cta: "Explorar Módulo" },
+    { id: "services", slug: "services", name: "Serviços", icon: "Briefcase", color: "text-indigo-400", bg: "bg-indigo-500/10", description: "Capital intelectual, formação técnica e prestígio de marca SISERV.", cta: "Explorar Módulo" },
+    { id: "agribusiness", slug: "agribusiness", name: "Agronegócio", icon: "Tractor", color: "text-amber-400", bg: "bg-amber-500/10", description: "Ativos biológicos, clima real e sazonalidade SIAGRO.", cta: "Explorar Módulo" },
+    { id: "finance", slug: "finance", name: "Financeiro", icon: "DollarSign", color: "text-rose-400", bg: "bg-rose-500/10", description: "Gestão bancária, hedge e volatilidade de mercado SINVEST.", cta: "Explorar Módulo" },
+    { id: "construction", slug: "construction", name: "Construção", icon: "Hammer", color: "text-orange-400", bg: "bg-orange-500/10", description: "Obras pesadas, licitações e gestão de riscos estruturais.", cta: "Explorar Módulo" }
   ],
   branchesDetailData: {
     industrial: {
-      title: "Simulação Industrial",
-      subtitle: "Gestão completa de produção, suprimentos e CapEx em mercado compartilhado.",
-      description: "Foco total na eficiência produtiva e gestão de ativos fixos. O simulador industrial exige coordenação fina entre a compra de matérias-primas e a manutenção da capacidade das máquinas.",
+      title: "Célula Industrial",
+      subtitle: "Dominância de Manufatura e Escala.",
+      description: "O motor industrial clássico. Gerencie máquinas Alfa, Beta e Gama, cuide da depreciação e antecipe-se às quebras de estoque em até 15 regiões.",
       features: [
-        "Decisões em máquinas (Alfa/Beta/Gama) e compras spot/long-term.",
-        "Obsolescência, depreciação, greves e eventos Black Swan.",
-        "Relatórios regionais (até 15 regiões) e tomada de ativos.",
-        "Integração IA: Gazeta Industrial com análises profundas Gemini."
+        "Gestão de Maquinário (Vida Útil & Manutenção).",
+        "Compras de Longo Prazo vs Spot.",
+        "Relatórios de Eficiência Produtiva OEE.",
+        "Análises Gemini sobre custo marginal."
       ],
-      kpis: ["Market Share", "Margem Líquida", "TSR", "Produtividade Máquinas"],
-      templateExample: "Template clássico com 3 produtos duráveis e bolsa fictícia dinâmica."
+      kpis: ["OEE Index", "Unit Margin", "Inventory Turnover", "TSR"],
+      templateExample: "Indústria de bens duráveis com alto CapEx inicial."
     },
     commercial: {
-      title: "Simulação Comercial",
-      subtitle: "Varejo híbrido, gestão de canais e satisfação do cliente final.",
-      description: "Inspirado no modelo SIMCO, este ramo foca na distribuição e no equilíbrio entre lojas físicas e o canal digital (E-commerce).",
+      title: "Hub Comercial",
+      subtitle: "Varejo Híbrido e Customer Experience.",
+      description: "Equilibre a operação de lojas físicas com o crescimento explosivo do e-commerce. Gerencie comissões e mantenha o CSAT (Satisfação) no topo.",
       features: [
-        "Canais híbridos: tradicional + e-commerce (% alocação).",
-        "Produtos perecíveis/duráveis com perda de estoque e sazonalidade.",
-        "Antecipação de recebíveis e comissões para força de vendas.",
-        "Gráficos de satisfação do consumidor e indicadores de conversão online."
+        "Mix de Canais (Físico vs Digital).",
+        "Logística de Última Milha.",
+        "Gestão de Força de Vendas e CRM.",
+        "Feedback dinâmico do consumidor final."
       ],
-      kpis: ["Channel Yield", "Consumer Satisfaction Index", "Stock Turnover", "Digital ROI"],
-      templateExample: "Lojas de departamento com mix variado de eletrônicos e bens de consumo."
+      kpis: ["CSAT Score", "E-com Conversion", "CAC/LTV", "Stock Loss Rate"],
+      templateExample: "Varejista nacional em transição digital completa."
     },
     services: {
-      title: "Simulação de Serviços",
-      subtitle: "Capital humano, qualidade de entrega e prestígio de marca.",
-      description: "O modelo SISERV foca no ativo mais valioso de uma empresa de serviços: o conhecimento. Gerencie equipes de diferentes níveis de formação.",
+      title: "Matriz de Serviços",
+      subtitle: "Economia do Conhecimento e Imagem.",
+      description: "Seu maior ativo volta para casa todas as noites. Treine seu corpo técnico e gerencie contratos de alta complexidade com foco em QA.",
       features: [
-        "3 níveis de formação: baixa/média/alta (limpeza, técnicos, consultores).",
-        "Contratos prévios (multas por atraso) vs. contratos imediatos (spot).",
-        "Qualidade e imagem da empresa acumulada rodada a rodada.",
-        "Motivação de RH e produtividade sensível a salários e treinamento."
+        "Níveis de Formação Profissional.",
+        "Qualidade Intrínseca vs Percebida.",
+        "Retenção de Talentos & Turnover.",
+        "Estratégias de Branding Corporativo."
       ],
-      kpis: ["Brand Prestige", "Labor Efficiency", "Quality Assurance Score", "Contract Renewal Rate"],
-      templateExample: "Empresa de Consultoria Tech com foco em projetos de alta complexidade."
+      kpis: ["Brand Value", "Billable Hours", "Staff Retention", "NPS"],
+      templateExample: "Consultoria de TI focada em Transformação Digital."
     },
     agribusiness: {
-      title: "Simulação de Agronegócio",
-      subtitle: "Commodities, clima real e perecibilidade biológica.",
-      description: "O motor SIAGRO simula o ciclo de vida do campo. Decisões de plantio, colheita e logística cooperativa em um ambiente de alto risco climático.",
+      title: "Cooperativa Agro",
+      subtitle: "Sazonalidade e Ativos Biológicos.",
+      description: "Plante, colha e processe. O risco climático é seu maior adversário. Use IA para prever quebras de safra e garantir o financiamento rural.",
       features: [
-        "Perecibilidade de estoque biológico e sazonalidade de safra real.",
-        "Cadeia cooperativa e produtores rurais como fornecedores críticos.",
-        "Financiamentos rurais específicos e horas-extras de colheita.",
-        "Alertas IA para equilíbrio entre produção e venda no mercado futuro."
+        "Monitoramento de Ciclo Biológico.",
+        "Hedge de Commodities Chicago/B3.",
+        "Logística de Armazenagem Perecível.",
+        "Gestão de Crédito Rural Safra."
       ],
-      kpis: ["Yield Safra", "Perishability Loss Rate", "Commodity Price Hedge", "Climate Resilience"],
-      templateExample: "Cooperativa de Grãos com processamento industrial e exportação."
+      kpis: ["Yield/Hectare", "Bio Loss Rate", "Hedge Efficiency", "Climate Index"],
+      templateExample: "Cooperativa de Grãos com foco em exportação de valor agregado."
     },
     finance: {
-      title: "Simulação Financeira",
-      subtitle: "Bancos, investimentos e gestão de hedge em volatilidade real.",
-      description: "Foco no mercado de capitais e gestão de spread. Simule a operação de um banco comercial ou um fundo de investimentos (SINVEST).",
+      title: "Banco de Investimentos",
+      subtitle: "Spread, Risco e Liquidez.",
+      description: "Opere no mercado financeiro. Gerencie carteiras de crédito, fundos de investimento e proteja o capital contra a inflação e câmbio.",
       features: [
-        "Gestão de carteira de crédito e fundos de investimentos.",
-        "Empréstimos, hedge cambial e juros, aplicações de recursos.",
-        "Indicadores de bolsa fictícia + modo Real (APIs CVM/BCB).",
-        "Ranking por retorno de portfólio e risco ajustado (Sharpe Ratio)."
+        "Análise de Risco de Crédito.",
+        "Gestão de Portfólio SINVEST.",
+        "Captação via CDB/LCA/LCI.",
+        "Algoritmos de Arbitragem Real-time."
       ],
-      kpis: ["Spread Bancário", "Return on Portfolio", "Capital Adequacy Ratio", "Risk Premium"],
-      templateExample: "Banco de Investimentos operando em cenário de alta volatilidade inflacionária."
+      kpis: ["Net Interest Margin", "Sharpe Ratio", "Default Rate", "Capital Adequacy"],
+      templateExample: "Boutique de investimentos em cenário de alta volatilidade."
     },
     construction: {
-      title: "Simulação de Construção",
-      subtitle: "Obras pesadas, licitações e gestão de projetos complexos.",
-      description: "Gerencie grandes canteiros de obras. O sucesso depende da gestão de prazos e do controle rigoroso dos custos de materiais e mão-de-obra.",
+      title: "Construtora de Elite",
+      subtitle: "Infraestrutura e Projetos de Longo Prazo.",
+      description: "Participe de licitações bilionárias. Gerencie prazos críticos, custos de materiais e riscos climáticos em grandes canteiros de obras.",
       features: [
-        "Participação em licitações públicas/privadas com propostas de valor.",
-        "Prazos de obra reais, riscos de atraso e multas contratuais.",
-        "CapEx em terrenos e instalações pesadas (maquinário de obra).",
-        "Eventos de clima e greves impactando o cronograma físico-financeiro."
+        "Cálculo de Proposta para Licitação.",
+        "Gestão de Cronograma Físico-Financeiro.",
+        "CapEx em Equipamentos Pesados.",
+        "Previsão de Fluxo de Caixa de Obra."
       ],
-      kpis: ["Project Margin", "Schedule Adherence (SPI)", "Quality Compliance", "Safety Index"],
-      templateExample: "Construtora de infraestrutura urbana em expansão regional."
+      kpis: ["Project Margin", "Delay Risk Index", "SPI/CPI", "HSE Compliance"],
+      templateExample: "Construtora focada em Parcerias Público-Privadas."
     }
   },
   iaFeatures: {
-    title: "Strategos AI Oracle",
-    description: "Nosso núcleo cognitivo oferece raciocínio profundo para decisões estratégicas de alto nível.",
+    title: "Strategos Oracle AI",
+    description: "Um núcleo cognitivo projetado para transformar dados frios em inteligência competitiva pura.",
     items: [
-      { title: "Análise Grounded", desc: "Pesquisa real de mercado via Google Search integrado." },
-      { title: "Projeções Contábeis", desc: "Cálculos automáticos de ROI, EBITDA e Ponto de Equilíbrio." },
-      { title: "Strategic Advisor", desc: "Recomendações táticas personalizadas para sua empresa." },
-      { title: "Black Swan Protocol", desc: "Simulação de eventos globais de impacto imprevisível." }
+      { title: "Strategic Reasoning", desc: "Raciocínio lógico profundo para decisões complexas." },
+      { title: "Market Grounding", desc: "Dados reais da economia global via Google Search." },
+      { title: "Dynamic Reporting", desc: "Análise narrativa do seu Balanço e DRE P1/P12." },
+      { title: "Predictive Alpha", desc: "Projeções baseadas em comportamento de bots e players." }
     ]
   },
   community: {
-    title: "Junte-se à Arena Global",
-    description: "Participe de campeonatos públicos, acompanhe o Community Score e receba avaliações de observadores ativos no mercado.",
+    title: "Global Competitive Network",
+    description: "Milhares de estrategistas competindo em arenas públicas monitoradas pela comunidade global.",
     stats: [
-      { label: "Usuários Ativos", val: "15k+" },
-      { label: "Arenas Criadas", val: "1.2k" },
-      { label: "Decisões Processadas", val: "1M+" }
+      { label: "Brain Cycles", val: "2.4M" },
+      { label: "Active Arenas", val: "840" },
+      { label: "AI Entities", val: "12k" }
     ]
   },
   roadmap: [
-    { version: "v5.6", item: "Engine de Processamento Batch Automatizado" },
-    { version: "v5.8", item: "ESG Score System & Sustentabilidade" },
-    { version: "v6.0", item: "App Mobile War Room (iOS/Android)" },
-    { version: "v6.2", item: "Modo Real com Integração de APIs Bancárias" }
+    { version: "v5.6", item: "Batch Automation: Rodadas em tempo real sem interrupção." },
+    { version: "v5.8", item: "ESG Engine: Penalidades ambientais e créditos de carbono." },
+    { version: "v6.0", item: "War Room Mobile: Controle total no seu smartphone." },
+    { version: "v6.5", item: "Metals Arena: Simulação de mineração e siderurgia profunda." }
   ]
 };
 
@@ -218,160 +268,6 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       machine_beta_price: 1515000, 
       machine_gama_price: 3030000, 
       average_salary: 1300 
-    }
-  },
-  {
-    id: 'serv-prof',
-    name: "Serviços Qualificados - SISERV Legacy",
-    branch: "services",
-    sector: "Consultoria & Tecnologia",
-    description: "Inspirado no SISERV. Foco em capital humano com 3 níveis de formação (Baixa, Média, Alta). Gestão de Imagem da Empresa e Qualidade de Entrega.",
-    is_public: true,
-    config: { 
-      currency: "BRL", 
-      round_frequency_days: 30, 
-      total_rounds: 12, 
-      sales_mode: "internal", 
-      scenario_type: "simulated", 
-      transparency_level: "medium", 
-      team_fee: 0, 
-      community_enabled: true, 
-      regionsCount: 5 
-    },
-    initial_financials: {
-      balance_sheet: { 
-        current_assets: { cash: 300000, accounts_receivable: 500000, inventory_raw_a: 0, inventory_raw_b: 0, inventory_finished: 0, prepaid_expenses: 50000 }, 
-        non_current_assets: { pp_e: { machinery: 500000, buildings: 2000000, land: 0 }, accumulated_depreciation: -400000 }, 
-        total_assets: 2450000 
-      },
-      liabilities_equity: { 
-        current_liabilities: { accounts_payable: 150000, short_term_loans: 300000, taxes_payable: 45000, dividends_payable: 0 }, 
-        non_current_liabilities: { long_term_loans: 500000 }, 
-        equity: { capital_stock: 1000000, retained_earnings: 455000 }, 
-        total_liabilities_equity: 2450000 
-      }
-    },
-    products: [
-      { name: "Consultoria Técnica", unit_cost_base: 150, suggested_price: 450, initial_stock: 0, max_capacity: 5000, formation_level: 'mid' }
-    ],
-    resources: { water_consumption_monthly: 50000, energy_consumption_monthly: 80000, co2_emissions_monthly: 20 },
-    market_indicators: { 
-      inflation_rate: 0.7, 
-      interest_rate_tr: 1.8, 
-      supplier_interest: 1.5, 
-      demand_regions: [10000, 10000, 10000, 10000, 15000], 
-      raw_a_price: 0, 
-      raw_b_price: 0, 
-      distribution_cost: 0, 
-      marketing_cost_unit: 12000, 
-      machine_alfa_price: 200000, 
-      machine_beta_price: 500000, 
-      machine_gama_price: 1000000, 
-      average_salary: 3500 
-    }
-  },
-  {
-    id: 'comm-retail',
-    name: "Lojas de Departamento - SIMCO Legacy",
-    branch: "commercial",
-    sector: "Varejo Híbrido",
-    description: "Inspirado no SIMCO. Mercado dividido entre Lojas Físicas e E-commerce. Gestão de comissão de vendedores, satisfação do cliente e canais digitais.",
-    is_public: true,
-    config: { 
-      currency: "BRL", 
-      round_frequency_days: 15, 
-      total_rounds: 12, 
-      sales_mode: "hybrid", 
-      scenario_type: "simulated", 
-      transparency_level: "medium", 
-      team_fee: 0, 
-      community_enabled: true, 
-      regionsCount: 8 
-    },
-    initial_financials: {
-      balance_sheet: { 
-        current_assets: { cash: 250000, accounts_receivable: 850000, inventory_raw_a: 0, inventory_raw_b: 0, inventory_finished: 500000, prepaid_expenses: 0 }, 
-        non_current_assets: { pp_e: { machinery: 1000000, buildings: 4000000, land: 2000000 }, accumulated_depreciation: -1200000 }, 
-        total_assets: 7400000 
-      },
-      liabilities_equity: { 
-        current_liabilities: { accounts_payable: 400000, short_term_loans: 1200000, taxes_payable: 20000, dividends_payable: 0 }, 
-        non_current_liabilities: { long_term_loans: 2000000 }, 
-        equity: { capital_stock: 3000000, retained_earnings: 780000 }, 
-        total_liabilities_equity: 7400000 
-      }
-    },
-    products: [
-      { name: "Bens de Consumo", unit_cost_base: 65, suggested_price: 240, initial_stock: 8000, max_capacity: 100000, is_durable: true, obsolescence_rate: 0.05 }
-    ],
-    resources: { water_consumption_monthly: 200000, energy_consumption_monthly: 100000, co2_emissions_monthly: 150 },
-    market_indicators: { 
-      inflation_rate: 0.9, 
-      interest_rate_tr: 2.1, 
-      supplier_interest: 1.8, 
-      demand_regions: [12000, 12000, 12000, 12000, 12000, 12000, 12000, 20000], 
-      raw_a_price: 70, 
-      raw_b_price: 10, 
-      distribution_cost: 25, 
-      marketing_cost_unit: 9500, 
-      machine_alfa_price: 400000, 
-      machine_beta_price: 1200000, 
-      machine_gama_price: 2500000, 
-      average_salary: 1550,
-      ecommerce_adoption_rate: 0.22,
-      climate_status: 'optimal'
-    }
-  },
-  {
-    id: 'agro-coop',
-    name: "Agro Cooperativa - SIAGRO Legacy",
-    branch: "agribusiness",
-    sector: "Processamento de Grãos",
-    description: "Inspirado no SIAGRO. Gestão de perecibilidade, sazonalidade de safra e Yield tecnológico. Foco em exportação e mercado interno.",
-    is_public: true,
-    config: { 
-      currency: "BRL", 
-      round_frequency_days: 30, 
-      total_rounds: 12, 
-      sales_mode: "hybrid", 
-      scenario_type: "simulated", 
-      transparency_level: "high", 
-      team_fee: 0, 
-      community_enabled: true, 
-      regionsCount: 6 
-    },
-    initial_financials: {
-      balance_sheet: { 
-        current_assets: { cash: 500000, accounts_receivable: 1200000, inventory_raw_a: 400000, inventory_raw_b: 0, inventory_finished: 0, prepaid_expenses: 0 }, 
-        non_current_assets: { pp_e: { machinery: 5000000, buildings: 2000000, land: 10000000 }, accumulated_depreciation: -1000000 }, 
-        total_assets: 18100000 
-      },
-      liabilities_equity: { 
-        current_liabilities: { accounts_payable: 300000, short_term_loans: 1000000, taxes_payable: 50000, dividends_payable: 0 }, 
-        non_current_liabilities: { long_term_loans: 5000000 }, 
-        equity: { capital_stock: 10000000, retained_earnings: 1750000 }, 
-        total_liabilities_equity: 18100000 
-      }
-    },
-    products: [
-      { name: "Grão Beneficiado", unit_cost_base: 80, suggested_price: 220, initial_stock: 5000, max_capacity: 50000, is_perishable: true, perishability_rate: 0.15 }
-    ],
-    resources: { water_consumption_monthly: 5000000, energy_consumption_monthly: 200000, co2_emissions_monthly: 800 },
-    market_indicators: { 
-      inflation_rate: 0.8, 
-      interest_rate_tr: 1.5, 
-      supplier_interest: 1.2, 
-      demand_regions: [15000, 15000, 15000, 15000, 15000, 25000], 
-      raw_a_price: 65, 
-      raw_b_price: 15, 
-      distribution_cost: 35, 
-      marketing_cost_unit: 8000, 
-      machine_alfa_price: 800000, 
-      machine_beta_price: 2000000, 
-      machine_gama_price: 4500000, 
-      average_salary: 1450,
-      seasonality_index: 1.2, // Harvest season
-      climate_status: 'optimal'
     }
   }
 ];

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -15,7 +16,8 @@ import {
   BookOpen,
   ChevronRight,
   Wifi,
-  Zap
+  Zap,
+  PenTool
 } from 'lucide-react';
 import GlobalChat from './GlobalChat';
 
@@ -34,6 +36,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'championships', label: 'Championships', icon: Trophy },
+    { id: 'business-planner', label: 'Business Planner', icon: PenTool },
     { id: 'reports', label: 'Financial Reports', icon: FileText },
     { id: 'market', label: 'Market Analysis', icon: TrendingUp },
     { id: 'admin', label: 'Command Center', icon: Shield, roles: ['admin', 'tutor'] },
@@ -86,7 +89,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
           </button>
           {isSidebarOpen && (
             <div className="px-3 py-2 text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] text-center">
-              Deploy Build v4.8.0-BETA
+              Deploy Build v5.5.0-GOLD
             </div>
           )}
         </div>

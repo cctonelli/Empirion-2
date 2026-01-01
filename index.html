@@ -46,13 +46,13 @@
     "react-dom": "https://esm.sh/react-dom@19.0.0",
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
     "react/jsx-runtime": "https://esm.sh/react@19.0.0/jsx-runtime",
-    "lucide-react": "https://esm.sh/lucide-react@0.460.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
     "@google/genai": "https://esm.sh/@google/genai",
-    "recharts": "https://esm.sh/recharts@2.13.3",
-    "react-apexcharts": "https://esm.sh/react-apexcharts@1.4.1",
+    "recharts": "https://esm.sh/recharts@2.13.3?external=react,react-dom",
+    "react-apexcharts": "https://esm.sh/react-apexcharts@1.4.1?external=react,react-dom,apexcharts",
     "apexcharts": "https://esm.sh/apexcharts@3.45.0",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.46.1",
-    "framer-motion": "https://esm.sh/framer-motion@11.11.11",
+    "framer-motion": "https://esm.sh/framer-motion@11.11.11?external=react,react-dom",
     "react/": "https://esm.sh/react@19.0.0/",
     "react-dom/": "https://esm.sh/react-dom@19.0.0/"
   }
@@ -61,5 +61,6 @@
 </head>
 <body>
     <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>

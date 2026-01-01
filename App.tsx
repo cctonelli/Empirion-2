@@ -11,6 +11,7 @@ import Auth from './components/Auth';
 import ChampionshipWizard from './components/ChampionshipWizard';
 import DecisionForm from './components/DecisionForm';
 import LandingPage from './components/LandingPage';
+import BusinessPlanWizard from './components/BusinessPlanWizard';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -94,6 +95,7 @@ const App: React.FC = () => {
       case 'decisions': return <DecisionForm round={1} branch={currentBranch} />; 
       case 'guides': return profile?.role === 'player' ? <TeamGuide /> : <TutorGuide />;
       case 'championships': return <ChampionshipWizard onComplete={() => setActiveView('dashboard')} />;
+      case 'business-planner': return <BusinessPlanWizard />;
       default: return <Dashboard branch={currentBranch} />;
     }
   };

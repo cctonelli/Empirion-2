@@ -3,6 +3,38 @@ import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ScenarioType } from "../types";
 
 /**
+ * Generates content for a specific section of a Business Plan.
+ */
+export const generateBusinessPlanField = async (
+  sectionTitle: string, 
+  fieldLabel: string, 
+  userContext: string, 
+  prompt: string, 
+  branch: string
+) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Você é o Strategos Business Architect. 
+      Estou elaborando um Plano de Negócios (modelo SEBRAE) para uma empresa do setor ${branch}.
+      Seção Atual: ${sectionTitle}.
+      Campo a preencher: ${fieldLabel}.
+      Contexto já fornecido pelo usuário: "${userContext}".
+      Sua Tarefa: ${prompt}
+      Forneça um texto profissional, detalhado e adequado ao mercado brasileiro. Max 200 palavras.`,
+      config: { temperature: 0.7 }
+    });
+
+    return response.text || "Sinto muito, não consegui gerar este insight no momento.";
+  } catch (error) {
+    console.error("Gemini BP Error:", error);
+    return "Erro na arquitetura cognitiva. Tente novamente.";
+  }
+};
+
+/**
  * Generates market analysis with conditional grounding based on ScenarioType.
  */
 export const generateMarketAnalysis = async (championshipName: string, round: number, branch: string, scenarioType: ScenarioType = 'simulated') => {
