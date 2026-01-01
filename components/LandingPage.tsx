@@ -7,6 +7,7 @@ import {
   Briefcase, Tractor, DollarSign, Hammer, Target, Trophy, Info
 } from 'lucide-react';
 import { LANDING_PAGE_DATA } from '../constants';
+import EmpireParticles from './EmpireParticles';
 
 const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const { 
@@ -31,9 +32,11 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen bg-transparent font-sans text-slate-900 relative">
+      <EmpireParticles />
+      
       {/* Premium Header */}
-      <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 z-[100] flex items-center justify-between px-8 md:px-12">
+      <header className="fixed top-0 left-0 right-0 h-20 bg-white/60 backdrop-blur-xl border-b border-white/20 z-[100] flex items-center justify-between px-8 md:px-12">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
             <span className="text-white font-bold">E</span>
@@ -62,21 +65,18 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       </header>
 
       {/* Hero Section */}
-      <section id="home" className="pt-40 pb-24 px-8 md:px-24 flex flex-col items-center text-center relative overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-400/10 blur-[100px] rounded-full"></div>
-        <div className="absolute top-1/2 -right-20 w-96 h-96 bg-emerald-400/10 blur-[100px] rounded-full"></div>
-        
+      <section id="home" className="pt-40 pb-24 px-8 md:px-24 flex flex-col items-center text-center relative">
         <div className="relative z-10 space-y-8 max-w-4xl">
-           <div className="inline-flex items-center gap-3 px-6 py-2 bg-blue-50 border border-blue-100 rounded-full animate-in slide-in-from-bottom-4 duration-700">
+           <div className="inline-flex items-center gap-3 px-6 py-2 bg-blue-50/50 backdrop-blur-md border border-blue-100 rounded-full animate-in slide-in-from-bottom-4 duration-700">
               <Sparkles size={16} className="text-blue-600" />
               <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Kernel v5.5 GOLD Released</span>
            </div>
            
-           <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[0.9] tracking-tighter uppercase animate-in slide-in-from-bottom-8 duration-700 delay-100">
+           <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[0.9] tracking-tighter uppercase animate-in slide-in-from-bottom-8 duration-700 delay-100 drop-shadow-sm">
               {hero.title}
            </h1>
            
-           <p className="text-xl md:text-2xl text-slate-500 font-medium max-w-2xl mx-auto animate-in slide-in-from-bottom-8 duration-700 delay-200">
+           <p className="text-xl md:text-2xl text-slate-600 font-medium max-w-2xl mx-auto animate-in slide-in-from-bottom-8 duration-700 delay-200">
               {hero.subtitle}
            </p>
 
@@ -89,7 +89,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               </button>
               <button 
                 onClick={() => scrollToSection('branches')}
-                className="w-full sm:w-auto px-10 py-6 bg-white border border-slate-200 text-slate-900 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-4"
+                className="w-full sm:w-auto px-10 py-6 bg-white/50 backdrop-blur-md border border-slate-200 text-slate-900 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-4"
               >
                 Setores Suportados
               </button>
@@ -98,7 +98,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 px-8 md:px-24 bg-white">
+      <section id="features" className="py-24 px-8 md:px-24 bg-white/40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto space-y-16">
           <div className="text-center space-y-4">
              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">Core Engine</h2>
@@ -107,12 +107,12 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((f, i) => (
-              <div key={f.id} className="p-10 rounded-[3rem] bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all group hover:-translate-y-2">
+              <div key={f.id} className="p-10 rounded-[3rem] bg-white/60 backdrop-blur-md border border-white/20 hover:border-blue-200 transition-all group hover:-translate-y-2 shadow-sm">
                  <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-lg mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all">
                     {getIcon(f.icon)}
                  </div>
                  <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-4">{f.title}</h4>
-                 <p className="text-slate-500 text-sm font-medium leading-relaxed">{f.description}</p>
+                 <p className="text-slate-600 text-sm font-medium leading-relaxed">{f.description}</p>
               </div>
             ))}
           </div>
@@ -120,14 +120,14 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       </section>
 
       {/* Branches Grid Section */}
-      <section id="branches" className="py-24 px-8 md:px-24 bg-slate-50">
+      <section id="branches" className="py-24 px-8 md:px-24">
         <div className="max-w-7xl mx-auto space-y-16">
            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 text-center md:text-left">
               <div className="space-y-4">
                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">Versatility</h2>
                  <h3 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">Setores Suportados</h3>
               </div>
-              <p className="text-slate-500 font-medium max-w-md mx-auto md:mx-0">Clique em um setor para explorar os detalhes técnicos de cada módulo de simulação.</p>
+              <p className="text-slate-600 font-medium max-w-md mx-auto md:mx-0">Clique em um setor para explorar os detalhes técnicos de cada módulo de simulação.</p>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -135,13 +135,13 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 <div 
                   key={b.id} 
                   onClick={() => scrollToSection(`detail-${b.slug}`)}
-                  className="group bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all cursor-pointer overflow-hidden relative"
+                  className="group bg-white/60 backdrop-blur-md p-10 rounded-[3.5rem] border border-white/20 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all cursor-pointer overflow-hidden relative"
                 >
                    <div className={`w-16 h-16 ${b.bg} ${b.color} rounded-3xl flex items-center justify-center mb-8 shadow-sm group-hover:scale-110 transition-transform`}>
                       {getBranchIcon(b.icon)}
                    </div>
                    <h4 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-3">{b.name}</h4>
-                   <p className="text-slate-400 text-sm font-medium leading-relaxed mb-8">{b.description}</p>
+                   <p className="text-slate-600 text-sm font-medium leading-relaxed mb-8">{b.description}</p>
                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-600">
                       {b.cta} <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
                    </div>
@@ -154,7 +154,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       {/* Detailed Explanatory Sections */}
       <div className="space-y-12 pb-24">
         {Object.entries(branchesDetailData).map(([slug, data]) => (
-          <section key={slug} id={`detail-${slug}`} className="py-24 px-8 md:px-24 odd:bg-white even:bg-slate-50 relative scroll-mt-20">
+          <section key={slug} id={`detail-${slug}`} className="py-24 px-8 md:px-24 odd:bg-white/40 even:bg-transparent backdrop-blur-sm relative scroll-mt-20">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
               <div className="space-y-12">
                 <div className="space-y-4">
@@ -164,12 +164,12 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   <h3 className="text-5xl font-black text-slate-900 uppercase tracking-tighter leading-none">
                     {data.title}
                   </h3>
-                  <p className="text-xl text-slate-500 font-medium italic">
+                  <p className="text-xl text-slate-600 font-medium italic">
                     {data.subtitle}
                   </p>
                 </div>
 
-                <p className="text-lg text-slate-600 leading-relaxed font-medium">
+                <p className="text-lg text-slate-700 leading-relaxed font-medium">
                   {data.description}
                 </p>
 
@@ -193,14 +193,14 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                       </h5>
                       <div className="flex flex-wrap gap-2">
                         {data.kpis.map((k, idx) => (
-                          <span key={idx} className="px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-tight text-slate-600">
+                          <span key={idx} className="px-3 py-1.5 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-tight text-slate-600 shadow-sm">
                             {k}
                           </span>
                         ))}
                       </div>
-                      <div className="pt-6 border-t border-slate-100">
+                      <div className="pt-6 border-t border-slate-200/50">
                          <h5 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Exemplo de Template</h5>
-                         <p className="text-xs font-medium text-slate-500">{data.templateExample}</p>
+                         <p className="text-xs font-medium text-slate-600">{data.templateExample}</p>
                       </div>
                    </div>
                 </div>
@@ -208,14 +208,14 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
               <div className="relative group">
                  <div className="absolute -inset-4 bg-slate-200 rounded-[4rem] group-hover:rotate-3 transition-transform duration-500 opacity-20"></div>
-                 <div className="bg-white p-12 rounded-[4rem] shadow-2xl border border-slate-100 relative z-10 overflow-hidden min-h-[400px] flex items-center justify-center">
+                 <div className="bg-white/80 backdrop-blur-xl p-12 rounded-[4rem] shadow-2xl border border-white/40 relative z-10 overflow-hidden min-h-[400px] flex items-center justify-center">
                     <div className="text-center space-y-6">
                        <div className={`p-8 rounded-[3rem] ${getBranchColor(slug)} bg-opacity-5 mx-auto w-fit`}>
                           {getBranchIconLarge(slug)}
                        </div>
                        <button 
                          onClick={onLogin}
-                         className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-3 mx-auto"
+                         className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-3 mx-auto shadow-xl"
                        >
                          Lançar Arena {slug.toUpperCase()} <Trophy size={16} />
                        </button>
@@ -231,7 +231,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       </div>
 
       {/* IA Section */}
-      <section id="ia" className="py-24 px-8 md:px-24 bg-slate-900 text-white relative overflow-hidden rounded-[4rem] mx-4 md:mx-12 my-12">
+      <section id="ia" className="py-24 px-8 md:px-24 bg-slate-900 text-white relative overflow-hidden rounded-[4rem] mx-4 md:mx-12 my-12 shadow-[0_40px_100px_-10px_rgba(15,23,42,0.3)]">
         <Brain className="absolute top-0 right-0 p-20 text-blue-500/10 pointer-events-none" size={600} />
         
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
@@ -255,7 +255,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               </div>
            </div>
 
-           <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-12 rounded-[4rem] space-y-8">
+           <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-12 rounded-[4rem] space-y-8 shadow-2xl">
               <div className="flex items-center gap-4">
                  <div className="p-3 bg-blue-500 rounded-2xl shadow-lg shadow-blue-500/20">
                     <Zap size={24} />
@@ -283,12 +283,12 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
            <div className="text-center space-y-4">
               <h2 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">Network</h2>
               <h3 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">{community.title}</h3>
-              <p className="text-slate-500 font-medium max-w-xl mx-auto">{community.description}</p>
+              <p className="text-slate-600 font-medium max-w-xl mx-auto">{community.description}</p>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {community.stats.map((s, i) => (
-                <div key={i} className="text-center p-12 bg-white rounded-[3rem] border border-slate-100 shadow-sm">
+                <div key={i} className="text-center p-12 bg-white/60 backdrop-blur-md rounded-[3rem] border border-white/20 shadow-sm">
                    <span className="text-5xl font-black text-slate-900 tracking-tighter mb-2 block">{s.val}</span>
                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.label}</span>
                 </div>
@@ -298,7 +298,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       </section>
 
       {/* Roadmap Section */}
-      <section id="roadmap" className="py-24 px-8 md:px-24 bg-slate-900 text-white rounded-t-[5rem]">
+      <section id="roadmap" className="py-24 px-8 md:px-24 bg-slate-900 text-white rounded-t-[5rem] shadow-[0_-20px_100px_rgba(15,23,42,0.4)]">
         <div className="max-w-7xl mx-auto space-y-16">
            <div className="flex items-center gap-6">
               <Map size={32} className="text-blue-400" />
