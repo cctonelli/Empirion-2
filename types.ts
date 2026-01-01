@@ -21,6 +21,7 @@ export interface InventoryStats {
   consumption: number;
   sales: number;
   final: number;
+  perishability_loss?: number; // Loss due to product expiration (SIAGRO)
 }
 
 export interface MachineStats {
@@ -51,11 +52,11 @@ export interface FinancialStatement {
     productivity: number;
     motivation: string;
     strike: boolean;
-    strike_intensity?: number; // 0 to 1
+    strike_intensity?: number;
   };
   machines: MachineStats;
   regional_demand: Record<number, { potential: number; sold: number }>;
-  quality_index?: number; // P&D result
+  quality_index?: number;
 }
 
 export interface BalanceSheet {
@@ -115,6 +116,7 @@ export interface BlackSwanEvent {
     demand: number;
     interest: number;
     productivity: number;
+    climate_impact?: number; // Specific for Agribusiness
   };
 }
 
@@ -132,7 +134,7 @@ export interface EcosystemConfig {
   demandMultiplier: number;
   interestRate: number;
   marketVolatility: number;
-  esgPriority?: number; // 0 to 1
+  esgPriority?: number;
   activeEvent?: BlackSwanEvent | null;
   aiOpponents?: {
     enabled: boolean;
@@ -147,6 +149,7 @@ export interface EcosystemConfig {
     inflation: number;
     demand: number;
     currency: number;
+    climate?: number;
   };
   stockMarketActive?: boolean;
   messageBoard?: MessageBoardItem[];
@@ -164,6 +167,8 @@ export interface ProductDefinition {
   suggested_price: number;
   initial_stock: number;
   max_capacity: number;
+  is_perishable?: boolean;      // SIAGRO: Perishability flag
+  perishability_rate?: number; // SIAGRO: % loss per round if not sold
 }
 
 export interface ResourceUsage {
@@ -188,6 +193,8 @@ export interface MarketIndicators {
   exchange_rate?: number;
   risk_premium?: number;
   stock_prices?: Record<string, number>;
+  seasonality_index?: number; // SIAGRO: Crop seasonality (0.5 to 1.5)
+  climate_status?: 'optimal' | 'dry' | 'flood' | 'storm';
 }
 
 export interface DecisionData {
@@ -199,6 +206,7 @@ export interface DecisionData {
     trainingPercent: number;
     participationPercent: number;
     others: number;
+    overtimeHours?: number; // SIAGRO: Impact on productivity
   };
   production: {
     purchaseMPA: number;
@@ -206,7 +214,8 @@ export interface DecisionData {
     paymentType: 0 | 1 | 2;
     activityLevel: number;
     extraProduction: number;
-    rd_investment?: number; // P&D / Qualidade
+    rd_investment?: number;
+    agro_tech_investment?: number; // SIAGRO: Yield boost
   };
   finance: {
     loanRequest: number;
@@ -215,6 +224,7 @@ export interface DecisionData {
     termSalesInterest: number;
     buyMachines: { alfa: number; beta: number; gama: number };
     sellMachines: { alfa: number; beta: number; gama: number };
+    receivables_anticipation?: number; // SIAGRO: Cash flow tool
   };
   inBankruptcy?: boolean;
 }

@@ -83,6 +83,58 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       machine_gama_price: 3030000, 
       average_salary: 1300 
     }
+  },
+  {
+    id: 'agro-coop',
+    name: "Agro Cooperativa - SIAGRO Legacy",
+    branch: "agribusiness",
+    sector: "Processamento de Grãos",
+    description: "Inspirado no SIAGRO. Gestão de perecibilidade, sazonalidade de safra e Yield tecnológico. Foco em exportação e mercado interno.",
+    is_public: true,
+    config: { 
+      currency: "BRL", 
+      round_frequency_days: 30, 
+      total_rounds: 12, 
+      sales_mode: "hybrid", 
+      scenario_type: "simulated", 
+      transparency_level: "high", 
+      team_fee: 0, 
+      community_enabled: true, 
+      regionsCount: 6 
+    },
+    initial_financials: {
+      balance_sheet: { 
+        current_assets: { cash: 500000, accounts_receivable: 1200000, inventory_raw_a: 400000, inventory_raw_b: 0, inventory_finished: 0, prepaid_expenses: 0 }, 
+        non_current_assets: { pp_e: { machinery: 5000000, buildings: 2000000, land: 10000000 }, accumulated_depreciation: -1000000 }, 
+        total_assets: 18100000 
+      },
+      liabilities_equity: { 
+        current_liabilities: { accounts_payable: 300000, short_term_loans: 1000000, taxes_payable: 50000, dividends_payable: 0 }, 
+        non_current_liabilities: { long_term_loans: 5000000 }, 
+        equity: { capital_stock: 10000000, retained_earnings: 1750000 }, 
+        total_liabilities_equity: 18100000 
+      }
+    },
+    products: [
+      { name: "Grão Beneficiado", unit_cost_base: 80, suggested_price: 220, initial_stock: 5000, max_capacity: 50000, is_perishable: true, perishability_rate: 0.15 }
+    ],
+    resources: { water_consumption_monthly: 5000000, energy_consumption_monthly: 200000, co2_emissions_monthly: 800 },
+    market_indicators: { 
+      inflation_rate: 0.8, 
+      interest_rate_tr: 1.5, 
+      supplier_interest: 1.2, 
+      demand_regions: [15000, 15000, 15000, 15000, 15000, 25000], 
+      raw_a_price: 65, 
+      raw_b_price: 15, 
+      distribution_cost: 35, 
+      marketing_cost_unit: 8000, 
+      machine_alfa_price: 800000, 
+      machine_beta_price: 2000000, 
+      machine_gama_price: 4500000, 
+      average_salary: 1450,
+      seasonality_index: 1.2, // Harvest season
+      climate_status: 'optimal'
+    }
   }
 ];
 

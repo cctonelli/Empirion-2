@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { 
   FileText, Activity, Package, DollarSign, Zap, Users, Globe, 
   ChevronDown, Download, BarChart3, TrendingUp, Landmark, ArrowRight, Table as TableIcon,
-  ShieldCheck, User, Newspaper, Building2, Gavel, Info, Award, Star, Leaf
+  ShieldCheck, User, Newspaper, Building2, Gavel, Info, Award, Star, Leaf, AlertTriangle
 } from 'lucide-react';
+import { Branch } from '../types';
 
-const Reports: React.FC = () => {
+const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' as Branch }) => {
   const [reportMode, setReportMode] = useState<'individual' | 'collective' | 'market'>('individual');
   const [collectiveSubTab, setCollectiveSubTab] = useState<'bp' | 'dre' | 'vendas' | 'benchmark'>('vendas');
 
@@ -21,13 +22,13 @@ const Reports: React.FC = () => {
              Audit Terminal
           </h1>
           <p className="text-slate-500 font-medium mt-1 uppercase tracking-widest text-[10px]">
-            Relatórios Consolidados - Bernard Fidelity Build v5.1 GOLD
+            Relatórios Consolidados - {branch === 'agribusiness' ? 'SIAGRO' : 'Bernard'} Build v5.3 GOLD
           </p>
         </div>
         
         <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 rounded-[1.5rem] border border-slate-200 shadow-inner">
            {[
-             { id: 'individual', label: 'Indiv. (Emp 8)', icon: User },
+             { id: 'individual', label: `Indiv. (Emp 8)`, icon: User },
              { id: 'collective', label: 'Coletivos', icon: Globe },
              { id: 'market', label: 'Bolsa & CVM', icon: Landmark }
            ].map(t => (
@@ -45,7 +46,8 @@ const Reports: React.FC = () => {
         </div>
       </div>
 
-      {reportMode === 'individual' && <IndividualReport />}
+      {/* Fix: Cast branch as Branch explicitly to avoid string assignability errors */}
+      {reportMode === 'individual' && <IndividualReport branch={branch as Branch} />}
       {reportMode === 'collective' && (
         <div className="space-y-8">
            <div className="flex flex-wrap gap-4 p-1 bg-white rounded-2xl border border-slate-100 w-fit mx-auto shadow-sm">
@@ -60,25 +62,26 @@ const Reports: React.FC = () => {
            {collectiveSubTab === 'benchmark' && <EliteBenchmarkReport />}
         </div>
       )}
-      {reportMode === 'market' && <MarketIndicatorsPanel />}
+      {/* Fix: Cast branch as Branch explicitly to avoid string assignability errors */}
+      {reportMode === 'market' && <MarketIndicatorsPanel branch={branch as Branch} />}
       
       <div className="pt-20 flex justify-center">
          <div className="px-8 py-3 bg-slate-900 text-white rounded-full flex items-center gap-4 border border-slate-800 shadow-2xl">
-            <span className="text-[10px] font-black uppercase tracking-[0.5em]">Empirion v5.1.0-GOLD-Fidelity-ESG</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.5em]">Empirion v5.3.0-GOLD-Agro-Fidelity</span>
          </div>
       </div>
     </div>
   );
 };
 
-const IndividualReport = () => (
+const IndividualReport = ({ branch }: { branch: Branch }) => (
   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-     <div className="bg-slate-900 p-10 md:p-14 rounded-[3.5rem] text-white flex flex-col md:flex-row justify-between items-center gap-10 shadow-2xl relative overflow-hidden border border-white/5">
+     <div className={`p-10 md:p-14 rounded-[3.5rem] text-white flex flex-col md:flex-row justify-between items-center gap-10 shadow-2xl relative overflow-hidden border border-white/5 ${branch === 'agribusiness' ? 'bg-emerald-950' : 'bg-slate-900'}`}>
         <div className="absolute top-0 left-0 p-20 opacity-5 pointer-events-none">
            <Zap size={400} />
         </div>
         <div className="flex items-center gap-10 relative z-10">
-           <div className="w-28 h-28 bg-blue-600 rounded-[2.5rem] flex items-center justify-center font-black text-5xl shadow-2xl transform hover:rotate-6 transition-transform">8</div>
+           <div className={`w-28 h-28 rounded-[2.5rem] flex items-center justify-center font-black text-5xl shadow-2xl transform hover:rotate-6 transition-transform ${branch === 'agribusiness' ? 'bg-emerald-600' : 'bg-blue-600'}`}>8</div>
            <div>
               <h2 className="text-4xl font-black uppercase tracking-tight">Empresa 08 S/A</h2>
               <div className="flex items-center gap-3 mt-2">
@@ -120,17 +123,31 @@ const IndividualReport = () => (
                        <th className="p-5">Patrimonial</th>
                        <th className="p-5 text-right">Inicial</th>
                        <th className="p-5 text-right">Compras</th>
+                       {branch === 'agribusiness' && <th className="p-5 text-right text-rose-500">Perdas</th>}
                        <th className="p-5 text-right">Consumo</th>
                        <th className="p-5 text-right">Final</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
-                    <tr className="hover:bg-slate-50/50"><td className="p-5">Matéria-Prima A</td><td className="p-5 text-right font-mono">30.900</td><td className="p-5 text-right font-mono">30.900</td><td className="p-5 text-right font-mono">30.900</td><td className="p-5 text-right font-black text-blue-600 font-mono">30.900</td></tr>
-                    <tr className="hover:bg-slate-50/50"><td className="p-5">Matéria-Prima B</td><td className="p-5 text-right font-mono">20.600</td><td className="p-5 text-right font-mono">20.600</td><td className="p-5 text-right font-mono">20.600</td><td className="p-5 text-right font-black text-blue-600 font-mono">20.600</td></tr>
-                    <tr className="hover:bg-slate-50/50 bg-slate-50/20"><td className="p-5 italic text-slate-500">Prod. Acabados</td><td className="p-5 text-right font-mono">0</td><td className="p-5 text-right font-mono">9.700</td><td className="p-5 text-right font-mono">9.700</td><td className="p-5 text-right font-black text-blue-600 font-mono">0</td></tr>
+                    <tr className="hover:bg-slate-50/50"><td className="p-5">Matéria-Prima A</td><td className="p-5 text-right font-mono">30.900</td><td className="p-5 text-right font-mono">30.900</td>{branch === 'agribusiness' && <td className="p-5 text-right text-rose-400 font-mono">0</td>}<td className="p-5 text-right font-mono">30.900</td><td className="p-5 text-right font-black text-blue-600 font-mono">30.900</td></tr>
+                    <tr className="hover:bg-slate-50/50"><td className="p-5">Matéria-Prima B</td><td className="p-5 text-right font-mono">20.600</td><td className="p-5 text-right font-mono">20.600</td>{branch === 'agribusiness' && <td className="p-5 text-right text-rose-400 font-mono">0</td>}<td className="p-5 text-right font-mono">20.600</td><td className="p-5 text-right font-black text-blue-600 font-mono">20.600</td></tr>
+                    <tr className="hover:bg-slate-50/50 bg-slate-50/20">
+                      <td className="p-5 italic text-slate-500">{branch === 'agribusiness' ? 'Grãos Beneficiados' : 'Prod. Acabados'}</td>
+                      <td className="p-5 text-right font-mono">0</td>
+                      <td className="p-5 text-right font-mono">9.700</td>
+                      {branch === 'agribusiness' && <td className="p-5 text-right text-rose-600 font-mono font-black">1.455</td>}
+                      <td className="p-5 text-right font-mono">8.245</td>
+                      <td className="p-5 text-right font-black text-blue-600 font-mono">0</td>
+                    </tr>
                  </tbody>
               </table>
            </div>
+           {branch === 'agribusiness' && (
+             <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
+                <AlertTriangle className="text-rose-500" size={16} />
+                <p className="text-[10px] font-bold text-rose-700 uppercase">SIAGRO: Perda de 15% por perecibilidade aplicada ao estoque não vendido.</p>
+             </div>
+           )}
         </div>
 
         <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10 group hover:shadow-xl transition-all">
@@ -143,13 +160,14 @@ const IndividualReport = () => (
            <div className="space-y-4">
               <ReportLine label="SALDO INICIAL DISPONÍVEL" value="170.000" />
               <ReportLine label="VENDAS À VISTA" value="1.649.000" isPositive />
+              {branch === 'agribusiness' && <ReportLine label="ANTECIPAÇÃO RECEBÍVEIS" value="250.000" isPositive />}
               <ReportLine label="PAGAMENTO FORNECEDORES" value="(581.400)" isNegative />
               <ReportLine label="FOLHA DE PAGAMENTO" value="(767.000)" isNegative />
-              <ReportLine label="VERBA MARKETING (GRP)" value="(102.000)" isNegative />
+              <ReportLine label="VERBA MARKETING / PROMO" value="(102.000)" isNegative />
               <ReportLine label="LOGÍSTICA / DISTRIBUIÇÃO" value="(278.200)" isNegative />
-              <ReportLine label="JUROS E TAXAS BANCÁRIAS" value="(16.474)" isNegative />
+              <ReportLine label="JUROS E TAXAS SIAGRO" value="(28.474)" isNegative />
               <div className="pt-4 mt-4 border-t-2 border-slate-900">
-                 <ReportLine label="SALDO FINAL DISPONÍVEL" value="0" isBold />
+                 <ReportLine label="SALDO FINAL DISPONÍVEL" value="261.452" isBold />
               </div>
            </div>
         </div>
@@ -235,8 +253,8 @@ const EliteBenchmarkReport = () => (
                  <Star size={32} className="fill-current text-white" />
               </div>
               <div>
-                 <h3 className="text-3xl font-black uppercase tracking-tight">Elite Benchmark (v5.1 GOLD)</h3>
-                 <p className="text-amber-100 font-medium">Performance vs Bernard Legacy & Global Top 100.</p>
+                 <h3 className="text-3xl font-black uppercase tracking-tight">Elite Benchmark (v5.3 GOLD)</h3>
+                 <p className="text-amber-100 font-medium">Performance vs SIAGRO/Bernard Legacy & Global Top 100.</p>
               </div>
            </div>
 
@@ -244,7 +262,7 @@ const EliteBenchmarkReport = () => (
               <BenchmarkCard label="Sua Margem" value="2.2%" target="15.0%" status="LOW" color="rose" />
               <BenchmarkCard label="Productivity" value="94.2%" target="96.0%" status="GOOD" color="emerald" />
               <BenchmarkCard label="ESG Score" value="82.4" target="85.0" status="HIGH" color="blue" icon={<Leaf size={14}/>} />
-              <BenchmarkCard label="ROE" value="1.5%" target="12.0%" status="LOW" color="rose" />
+              <BenchmarkCard label="Yield Index" value="1.12" target="1.20" status="MED" color="blue" icon={<TrendingUp size={14}/>} />
            </div>
         </div>
      </div>
@@ -252,7 +270,7 @@ const EliteBenchmarkReport = () => (
      <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-8">
         <div className="flex items-center justify-between">
            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Análise Comparativa de Eficiência</h4>
-           <div className="px-4 py-2 bg-slate-100 rounded-full text-[9px] font-black uppercase text-slate-500 tracking-widest border border-slate-200">Setor Industrial Benchmark</div>
+           <div className="px-4 py-2 bg-slate-100 rounded-full text-[9px] font-black uppercase text-slate-500 tracking-widest border border-slate-200">Setor Agro-Industrial Benchmark</div>
         </div>
         <div className="overflow-x-auto">
            <table className="w-full text-left text-xs">
@@ -267,9 +285,9 @@ const EliteBenchmarkReport = () => (
               </thead>
               <tbody className="divide-y divide-slate-100 font-bold text-slate-600">
                  <tr className="hover:bg-slate-50"><td className="p-6">Giro de Ativo</td><td className="p-6">0.36x</td><td className="p-6 font-black text-slate-900">0.85x</td><td className="p-6">0.42x</td><td className="p-6 text-rose-500">-136%</td></tr>
-                 <tr className="hover:bg-slate-50"><td className="p-6">Markup Médio</td><td className="p-6">38%</td><td className="p-6 font-black text-slate-900">55%</td><td className="p-6">42%</td><td className="p-6 text-rose-500">-44%</td></tr>
+                 <tr className="hover:bg-slate-50"><td className="p-6">Yield Biotecnológico</td><td className="p-6">1.12x</td><td className="p-6 font-black text-slate-900">1.25x</td><td className="p-6">1.08x</td><td className="p-6 text-rose-500">-12%</td></tr>
                  <tr className="hover:bg-slate-50"><td className="p-6">Custo Logístico/Venda</td><td className="p-6">8.4%</td><td className="p-6 font-black text-slate-900">4.2%</td><td className="p-6">6.8%</td><td className="p-6 text-rose-500">+100%</td></tr>
-                 <tr className="hover:bg-slate-50"><td className="p-6">Investimento Treinamento</td><td className="p-6">5.0%</td><td className="p-6 font-black text-slate-900">8.0%</td><td className="p-6">4.2%</td><td className="p-6 text-emerald-500">+19%</td></tr>
+                 <tr className="hover:bg-slate-50"><td className="p-6">Aproveitamento Safra</td><td className="p-6">85%</td><td className="p-6 font-black text-slate-900">98%</td><td className="p-6">91%</td><td className="p-6 text-rose-500">-13%</td></tr>
               </tbody>
            </table>
         </div>
@@ -302,7 +320,7 @@ const BenchmarkCard = ({ label, value, target, status, color, icon }: any) => {
   );
 };
 
-const MarketIndicatorsPanel = () => (
+const MarketIndicatorsPanel = ({ branch }: { branch: Branch }) => (
   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-10 group">
@@ -310,13 +328,13 @@ const MarketIndicatorsPanel = () => (
               <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl group-hover:bg-amber-600 group-hover:text-white transition-all">
                  <TrendingUp size={24} />
               </div>
-              Bolsa de Valores (Cotação Ações)
+              {branch === 'agribusiness' ? 'Bolsa de Commodities (Chicago/B3)' : 'Bolsa de Valores (Cotação Ações)'}
            </h3>
            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
                 <div key={i} className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col items-center transition-all hover:bg-white hover:border-blue-200 hover:shadow-lg hover:-translate-y-1">
-                   <span className="text-[10px] font-black text-slate-400 uppercase mb-3">EMPR 0{i}</span>
-                   <span className="text-2xl font-black text-slate-900 font-mono">1,04</span>
+                   <span className="text-[10px] font-black text-slate-400 uppercase mb-3">{branch === 'agribusiness' ? 'CBOT ' : 'EMPR '}0{i}</span>
+                   <span className="text-2xl font-black text-slate-900 font-mono">{branch === 'agribusiness' ? (150 + i * 5).toFixed(2) : '1,04'}</span>
                    <span className="text-[10px] font-black text-emerald-600 mt-2 bg-emerald-50 px-2 py-1 rounded-lg">+4,2%</span>
                 </div>
               ))}
@@ -329,6 +347,7 @@ const MarketIndicatorsPanel = () => (
               <MarketBox label="Inflação Período" value="1,00%" color="text-amber-400" />
               <MarketBox label="TR Mensal" value="2,00%" color="text-blue-400" />
               <MarketBox label="Salário Médio" value="1.300,00" color="text-slate-100" />
+              {branch === 'agribusiness' && <MarketBox label="Índice Safra" value="1,12x" color="text-emerald-400" />}
               <div className="pt-6 border-t border-white/10 flex items-center gap-3">
                  <Gavel className="text-rose-500" size={20} />
                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Conselho de Regulação Ativo</span>
