@@ -11,7 +11,6 @@ export const COLORS = {
   warning: '#f59e0b'
 };
 
-// Default structures for Admin JSON Override
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
     hero: {
@@ -53,58 +52,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { id: 'fin', label: 'Financeiro', slug: 'finance', desc: 'Liquidez e Hedge SINVEST.', icon: 'DollarSign' },
       { id: 'con', label: 'Construção', slug: 'construction', desc: 'BIM e Gestão de Obras.', icon: 'Hammer' }
     ]
-  },
-  'solutions-training': {
-    title: "Empirion Academy",
-    subtitle: "Formação de Estrategistas de Alta Performance",
-    tracks: [
-      { id: 'online', label: 'Training On-line', body: 'Acesso individual aos módulos fundamentais.' },
-      { id: 'corp', label: 'Training Corporativo', body: 'Desenvolvimento de lideranças in-company.' }
-    ]
-  },
-  'features': {
-    title: "Superioridade Operacional",
-    subtitle: "O core engine por trás da simulação",
-    items: [
-      { id: 1, title: 'Real-time Sync', body: 'Latência zero via Supabase Nodes.' },
-      { id: 2, title: 'Gemini 3 Oracle', body: 'Raciocínio profundo e grounding real.' },
-      { id: 3, title: 'Elastic Economy', body: 'Cenários que reagem às decisões das equipes.' }
-    ]
-  },
-  'blog': {
-    title: "Empire Gazette",
-    subtitle: "Insights, Casos e Economia Real",
-    items: [
-      { id: 1, date: '01 Jan 2026', title: 'O Futuro das Simulações com IA', author: 'Strategos Core' },
-      { id: 2, date: '28 Dez 2025', title: 'Dominando o SISERV: Guia de Qualidade', author: 'Team Alpha' }
-    ]
-  },
-  'rewards': {
-    title: "Empire Rewards",
-    subtitle: "Reconhecimento de elite para estrategistas.",
-    tiers: [
-      { name: 'Bronze', pts: 0, color: 'text-orange-400' },
-      { name: 'Silver', pts: 500, color: 'text-slate-400' },
-      { name: 'Gold', pts: 2000, color: 'text-gold' },
-      { name: 'Elite', pts: 5000, color: 'text-blue-400' },
-    ],
-    accumulation: [
-      { action: 'Vitória Arena', val: '500 PTS' },
-      { action: 'Round Submetido', val: '50 PTS' },
-      { action: 'Audit Log Perfeito', val: '100 PTS' },
-      { action: 'Community Hero', val: '200 PTS' },
-    ]
-  },
-  'solution-university': { title: 'University', icon: 'Users', body: 'Formação acadêmica de elite para as maiores instituições do país.' },
-  'solution-corporate': { title: 'Corporate', icon: 'Shield', body: 'Desenvolvimento de liderança e alinhamento estratégico in-company.' },
-  'solution-individual': { title: 'Individual IA', icon: 'Brain', body: 'Treine seu raciocínio contra o Oráculo Gemini 3 em partidas solo.' },
-  'solution-create': { title: 'Custom Arena', icon: 'PlusCircle', body: 'Configure cada variável e lance seu próprio ecossistema competitivo.' },
-  'branch-industrial': { name: 'Industrial', body: 'Produção massiva, CAPEX e Supply Chain global.', features: ['Manufatura 4.0', 'Supply Chain IA'], kpis: ['OEE', 'Markup', 'Lead Time'] },
-  'branch-commercial': { name: 'Comercial', body: 'Varejo híbrido e satisfação SIMCO.', features: ['Omnichannel', 'Mix'], kpis: ['Share', 'CAC', 'CSAT'] },
-  'branch-services': { name: 'Serviços', body: 'Capital intelectual e prestígio SISERV.', features: ['Corpo Técnico', 'Qualidade'], kpis: ['NPS', 'Utilização', 'Prestígio'] },
-  'branch-agribusiness': { name: 'Agronegócio', body: 'Sazonalidade e Ativos Biológicos SIAGRO.', features: ['Safra', 'Hedge'], kpis: ['Yield', 'EBITDA', 'Bio-Risk'] },
-  'branch-finance': { name: 'Financeiro', body: 'Liquidez e Hedge SINVEST.', features: ['Giro', 'Risco'], kpis: ['ROE', 'Liquidez', 'Spread'] },
-  'branch-construction': { name: 'Construção', body: 'BIM e Gestão de Obras Pesadas.', features: ['BIM', 'Insumos'], kpis: ['Evolução', 'Margem', 'Safety'] }
+  }
 };
 
 export const MENU_STRUCTURE = [
@@ -113,12 +61,27 @@ export const MENU_STRUCTURE = [
     label: 'branches', 
     path: '/branches',
     sub: [
-      { id: 'industrial', label: 'Industrial', path: '/branches/industrial', icon: 'Factory' },
-      { id: 'commercial', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart' },
-      { id: 'services', label: 'Serviços', path: '/branches/services', icon: 'Briefcase' },
-      { id: 'agribusiness', label: 'Agronegócio', path: '/branches/agribusiness', icon: 'Tractor' },
-      { id: 'finance', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign' },
-      { id: 'construction', label: 'Construção', path: '/branches/construction', icon: 'Hammer' },
+      { 
+        id: 'ind_group', 
+        label: 'Setor Industrial', 
+        path: '/branches/industrial', 
+        icon: 'Factory',
+        sub: [
+          { id: 'ind_master', label: 'Módulo SIND', path: '/branches/industrial' },
+          { id: 'ind_agro', label: 'Módulo SIAGRO', path: '/branches/agribusiness' }
+        ]
+      },
+      { 
+        id: 'com_group', 
+        label: 'Setor Comercial', 
+        path: '/branches/commercial', 
+        icon: 'ShoppingCart',
+        sub: [
+          { id: 'com_retail', label: 'Varejo SIMCO', path: '/branches/commercial' },
+          { id: 'com_fin', label: 'Financeiro SINVEST', path: '/branches/finance' }
+        ]
+      },
+      { id: 'services', label: 'Serviços SISERV', path: '/branches/services', icon: 'Briefcase' },
     ]
   },
   { 
@@ -126,31 +89,36 @@ export const MENU_STRUCTURE = [
     path: '/solutions',
     sub: [
       { 
-        id: 'simulators', 
-        label: 'Simuladores', 
+        id: 'arenas', 
+        label: 'Arenas Virtuais', 
         path: '/solutions/simulators',
         sub: [
-          { id: 'uni', label: 'Universidade', path: '/solutions/university' },
-          { id: 'corp', label: 'Corporativo', path: '/solutions/corporate' },
-          { id: 'open', label: 'Torneios Abertos', path: '/solutions/open-tournaments' },
-          { id: 'indiv', label: 'Individual (IA)', path: '/solutions/individual' },
-          { id: 'create', label: 'Crie Seu Torneio', path: '/solutions/create-tournament' },
+          { 
+            id: 'education', 
+            label: 'Educação', 
+            path: '/solutions/university',
+            sub: [
+              { id: 'uni_pub', label: 'Universidade Pública', path: '/solutions/university' },
+              { id: 'uni_priv', label: 'Escolas de Negócios', path: '/solutions/university' }
+            ]
+          },
+          { id: 'corporate', label: 'Corporativo', path: '/solutions/corporate' },
+          { id: 'individual', label: 'Individual (Solo)', path: '/solutions/individual' }
         ]
       },
-      { id: 'bp_ia', label: 'Business Plan IA', path: '/solutions/business-plan' },
+      { id: 'bp_ia', label: 'Strategos Wizard (BP)', path: '/solutions/business-plan', icon: 'PenTool' },
       { 
         id: 'training', 
-        label: 'Treinamentos', 
-        path: '/solutions/training',
+        label: 'Academy', 
+        path: '/solutions/training-online',
         sub: [
-          { id: 'online', label: 'On-line', path: '/solutions/training-online' },
-          { id: 'corp_train', label: 'Corporativo', path: '/solutions/training-corporate' },
+          { id: 'online', label: 'Training Online', path: '/solutions/training-online' },
+          { id: 'corp_train', label: 'Treinamento In-Company', path: '/solutions/training-corporate' }
         ]
       },
     ]
   },
   { label: 'features', path: '/features' },
-  { label: 'rewards', path: '/rewards' },
   { label: 'blog', path: '/blog' },
   { label: 'contact', path: '/contact' }
 ];
@@ -159,20 +127,6 @@ export const MOCK_ONGOING_CHAMPIONSHIPS = [
   { id: 'c1', name: "Industrial Mastery 2026", branch: "Industrial", round: "5/12", teams: 14, leader: "Team Alpha (TSR 32.4%)", status: "live" },
   { id: 'c2', name: "Agro Global Challenge", branch: "Agronegócio", round: "3/10", teams: 8, leader: "BioCore (TSR 28.1%)", status: "live" }
 ];
-
-export const EMPIRE_REWARDS_DATA = {
-  title: "Empire Rewards",
-  subtitle: "Reconhecimento de elite para estrategistas.",
-  tiers: [
-    { name: 'Bronze', pts: 0, color: 'text-orange-400' },
-    { name: 'Silver', pts: 500, color: 'text-slate-400' },
-    { name: 'Gold', pts: 2000, color: 'text-gold' },
-  ],
-  accumulation: [
-    { action: 'Vitória Arena', val: '500 PTS' },
-    { action: 'Round Submetido', val: '50 PTS' },
-  ]
-};
 
 export const LANDING_PAGE_DATA = {
   hero: {
@@ -199,15 +153,6 @@ export const LANDING_PAGE_DATA = {
   }
 };
 
-export const BRANCH_CONFIGS: Record<Branch, { label: string; icon: string }> = {
-  industrial: { label: 'Industrial', icon: '🏭' },
-  commercial: { label: 'Comercial', icon: '🛒' },
-  services: { label: 'Serviços', icon: '💼' },
-  agribusiness: { label: 'Agronegócio', icon: '🚜' },
-  finance: { label: 'Financeiro', icon: '💰' },
-  construction: { label: 'Construção', icon: '🔨' },
-};
-
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   {
     id: 'ind-master',
@@ -221,41 +166,15 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       scenario_type: 'simulated', transparency_level: 'medium', team_fee: 500, community_enabled: true, regionsCount: 9
     },
     initial_financials: {
-        // Fix: Added missing required properties to balance_sheet to satisfy types.ts interfaces
         balance_sheet: { 
-            current_assets: { 
-                cash: 1000000,
-                accounts_receivable: 1823735,
-                inventory_raw_a: 0,
-                inventory_raw_b: 0,
-                inventory_finished: 0,
-                prepaid_expenses: 0
-            }, 
-            non_current_assets: { 
-                pp_e: { 
-                    machinery: 2360000,
-                    buildings: 2793205,
-                    land: 1200000
-                },
-                accumulated_depreciation: 0 
-            }, 
+            current_assets: { cash: 1000000, accounts_receivable: 1823735, inventory_raw_a: 0, inventory_raw_b: 0, inventory_finished: 0, prepaid_expenses: 0 }, 
+            non_current_assets: { pp_e: { machinery: 2360000, buildings: 2793205, land: 1200000 }, accumulated_depreciation: 0 }, 
             total_assets: 9176940 
         },
-        // Fix: Added missing required properties to liabilities_equity to satisfy types.ts interfaces
         liabilities_equity: { 
-            current_liabilities: { 
-                accounts_payable: 300000,
-                short_term_loans: 0,
-                taxes_payable: 0,
-                dividends_payable: 0
-            }, 
-            non_current_liabilities: {
-                long_term_loans: 1000000
-            },
-            equity: { 
-                capital_stock: 7876940,
-                retained_earnings: 0
-            }, 
+            current_liabilities: { accounts_payable: 300000, short_term_loans: 0, taxes_payable: 0, dividends_payable: 0 }, 
+            non_current_liabilities: { long_term_loans: 1000000 },
+            equity: { capital_stock: 7876940, retained_earnings: 0 }, 
             total_liabilities_equity: 9176940 
         }
     },
@@ -267,6 +186,15 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     }
   }
 ];
+
+export const BRANCH_CONFIGS: Record<Branch, { label: string; icon: string }> = {
+  industrial: { label: 'Industrial', icon: '🏭' },
+  commercial: { label: 'Comercial', icon: '🛒' },
+  services: { label: 'Serviços', icon: '💼' },
+  agribusiness: { label: 'Agronegócio', icon: '🚜' },
+  finance: { label: 'Financeiro', icon: '💰' },
+  construction: { label: 'Construção', icon: '🔨' },
+};
 
 export const BUSINESS_PLAN_STRUCTURE: BusinessPlanSection[] = [
   {

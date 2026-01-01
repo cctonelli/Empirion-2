@@ -36,6 +36,8 @@
     </script>
     <style>
         body { background-color: #020617; color: #f8fafc; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+        
+        /* WOW Fluid Styles */
         .fluid-title { font-size: clamp(2.5rem, 6vw + 1rem, 7.5rem); }
         .fluid-menu-item { font-size: clamp(9px, 0.75vw, 11px); white-space: nowrap; }
         
@@ -58,17 +60,24 @@
           z-index: -1;
         }
         .cyber-button:hover::before { width: 400px; height: 400px; }
-        .cyber-button:hover { box-shadow: 0 0 30px rgba(59, 130, 246, 0.25); transform: scale(1.02); }
+        .cyber-button:hover { 
+          box-shadow: 0 0 30px rgba(59, 130, 246, 0.25); 
+          transform: scale(1.02); 
+        }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
+        /* Glass Elevation */
         .premium-card { 
           background: rgba(15, 23, 42, 0.5); 
           border: 1px solid rgba(255,255,255,0.05); 
           backdrop-filter: blur(20px); 
           transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
         }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Particle Sync */
+        .particle-canvas { mix-blend-mode: screen; opacity: 0.8; }
     </style>
 <script type="importmap">
 {

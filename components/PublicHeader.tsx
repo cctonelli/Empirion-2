@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
   ChevronDown, ChevronRight, LogIn, Factory, ShoppingCart, Briefcase, 
-  Tractor, DollarSign, Hammer, Menu, X, Box, Cpu
+  Tractor, DollarSign, Hammer, Menu, X, Box, Cpu, Sparkles
 } from 'lucide-react';
 import { MENU_STRUCTURE } from '../constants';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -34,10 +34,9 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       animate={{ y: 0, opacity: 1 }}
       className="fixed top-0 left-0 right-0 h-20 bg-[#020617]/80 backdrop-blur-3xl border-b border-white/5 z-[1000] flex items-center"
     >
-      {/* Grade de 3 Colunas: Esquerda (Fixa) | Centro (Flex-1) | Direita (Fixa) */}
       <div className="w-full grid grid-cols-[240px_1fr_340px] items-center px-6 md:px-12 h-full">
         
-        {/* ZONA 1: BRANDING */}
+        {/* BRANDING */}
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center gap-4 group">
             <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all duration-500 border border-white/10">
@@ -50,7 +49,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           </Link>
         </div>
 
-        {/* ZONA 2: NAVEGAÇÃO CENTRAL (SEM TREMOR) */}
+        {/* NAVEGAÇÃO CENTRAL RECURSIVA */}
         <nav className="hidden lg:flex justify-center items-center h-full">
           <div className="flex items-center bg-white/[0.03] border border-white/5 rounded-full p-1 relative shadow-inner">
             {MENU_STRUCTURE.map((item) => {
@@ -66,17 +65,17 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 >
                   <Link 
                     to={item.path}
-                    className={`relative z-10 px-5 py-2.5 fluid-menu-item font-black uppercase tracking-[0.15em] transition-colors flex items-center gap-2 rounded-full ${
+                    className={`relative z-10 px-5 py-2.5 fluid-menu-item font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 rounded-full ${
                       isActive ? 'text-white' : isHovered ? 'text-blue-400' : 'text-slate-400'
                     }`}
                   >
                     {t(item.label)}
-                    {item.sub && <ChevronDown size={11} className={`transition-transform duration-300 ${isHovered ? 'rotate-180' : ''}`} />}
+                    {item.sub && <ChevronDown size={11} className={`transition-transform duration-300 ${isHovered ? 'rotate-180 text-blue-500' : ''}`} />}
                     
-                    {/* PILL FOLLOWER: O elemento que se move entre os botões */}
+                    {/* ACTIVE PILL FOLLOWER */}
                     {isHovered && (
                       <motion.div 
-                        layoutId="activePill"
+                        layoutId="navGlow"
                         className="absolute inset-0 bg-blue-600/10 border border-blue-500/20 rounded-full -z-0"
                         transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
                       />
@@ -94,7 +93,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                       >
                         <div className="space-y-1">
                           {item.sub.map((sub: any, idx: number) => (
-                            <SubmenuItem key={sub.id} item={sub} index={idx} />
+                            <SubmenuItem key={sub.id || idx} item={sub} index={idx} />
                           ))}
                         </div>
                       </motion.div>
@@ -106,7 +105,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           </div>
         </nav>
 
-        {/* ZONA 3: AÇÕES (FIXA) */}
+        {/* AÇÕES */}
         <div className="flex items-center justify-end gap-6 h-full">
           <div className="hidden sm:block">
             <LanguageSwitcher light />
@@ -139,7 +138,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           >
             <nav className="flex flex-col gap-6">
               {MENU_STRUCTURE.map((item) => (
-                <div key={item.label} className="space-y-4">
+                <div key={item.label}>
                    <Link 
                      to={item.path} 
                      className="text-4xl font-black uppercase tracking-tighter text-white italic flex items-center justify-between" 
@@ -152,7 +151,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               ))}
             </nav>
             <div className="mt-auto space-y-6">
-              <button onClick={onLogin} className="w-full py-8 bg-blue-600 text-white rounded-[3rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-500/20">Acessar Arena Suprema</button>
+              <button onClick={onLogin} className="w-full py-8 bg-blue-600 text-white rounded-[3rem] font-black text-sm uppercase tracking-widest">Acessar Arena Suprema</button>
               <div className="flex justify-center"><LanguageSwitcher light /></div>
             </div>
           </motion.div>
@@ -162,7 +161,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   );
 };
 
-/* COMPONENTE DE SUBMENU RECURSIVO */
+/* SUBMENU ITEM RECURSIVO */
 const SubmenuItem: React.FC<{ item: any; index: number }> = ({ item, index }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -176,25 +175,25 @@ const SubmenuItem: React.FC<{ item: any; index: number }> = ({ item, index }) =>
         to={item.path}
         className="flex items-center gap-4 px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-blue-600/20 rounded-2xl transition-all group/sub"
       >
-        <div className="p-3 bg-white/5 rounded-xl text-blue-500 group-hover/sub:bg-blue-600 group-hover/sub:text-white transition-all shadow-sm">
+        <div className="p-3 bg-white/5 rounded-xl text-blue-500 group-hover/sub:bg-blue-600 group-hover/sub:text-white group-hover/sub:scale-110 transition-all shadow-sm">
            {getIcon(item.icon)}
         </div>
-        {item.label}
+        <span className="whitespace-nowrap">{item.label}</span>
         {item.sub && <ChevronRight size={12} className={`ml-auto transition-transform ${isOpen ? 'translate-x-1' : ''}`} />}
       </Link>
 
-      {/* Nível 2+ (Recursivo) */}
+      {/* RENDERIZAÇÃO RECURSIVA PARA NÍVEIS 2+ */}
       <AnimatePresence>
         {item.sub && isOpen && (
           <motion.div
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
-            className="absolute left-[105%] top-0 w-64 bg-[#0f172a] border border-white/10 rounded-[2.5rem] shadow-2xl p-3 backdrop-blur-3xl"
+            className="absolute left-[102%] top-0 w-64 bg-[#0f172a] border border-white/10 rounded-[2.5rem] shadow-2xl p-3 backdrop-blur-3xl z-[1100]"
           >
             <div className="space-y-1">
-              {item.sub.map((sub: any, idx: number) => (
-                <SubmenuItem key={sub.id} item={sub} index={idx} />
+              {item.sub.map((subChild: any, subIdx: number) => (
+                <SubmenuItem key={subChild.id || subIdx} item={subChild} index={subIdx} />
               ))}
             </div>
           </motion.div>

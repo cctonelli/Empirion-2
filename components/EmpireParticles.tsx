@@ -23,10 +23,10 @@ const EmpireParticles: React.FC = () => {
 
     let animationFrameId: number;
     let particles: Particle[] = [];
-    const particleCount = window.innerWidth < 768 ? 40 : 130;
-    const connectionDistance = 200;
-    const gravityForce = 0.25;
-    const mouseRadius = 350;
+    const particleCount = window.innerWidth < 768 ? 35 : 120;
+    const connectionDistance = 210;
+    const gravityForce = 0.3;
+    const mouseRadius = 360;
 
     const colors = ['#3b82f6', '#f97316', '#6366f1', '#0ea5e9'];
 
@@ -42,8 +42,8 @@ const EmpireParticles: React.FC = () => {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.4,
-          vy: (Math.random() - 0.5) * 0.4,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
           radius: Math.random() * 1.5 + 0.5,
           color: colors[Math.floor(Math.random() * colors.length)],
           pulse: Math.random() * Math.PI * 2,
@@ -53,13 +53,14 @@ const EmpireParticles: React.FC = () => {
     };
 
     const draw = () => {
+      // Background base sólido para evitar flickering
       ctx.fillStyle = '#020617';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Grid sutil de fundo
+      // Grid decorativa sutil
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.03)';
       ctx.lineWidth = 0.5;
-      const step = 100;
+      const step = 140;
       for (let x = 0; x < canvas.width; x += step) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
       }
@@ -79,19 +80,23 @@ const EmpireParticles: React.FC = () => {
           p.vy += Math.sin(angle) * force * gravityForce * p.mass;
         }
 
-        p.vx *= 0.97;
-        p.vy *= 0.97;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
         p.x += p.vx;
         p.y += p.vy;
-        p.pulse += 0.03;
+        p.pulse += 0.035;
 
+        // Warp effect
         if (p.x < 0) p.x = canvas.width;
         if (p.x > canvas.width) p.x = 0;
         if (p.y < 0) p.y = canvas.height;
         if (p.y > canvas.height) p.y = 0;
 
-        // FIX: Garantir que o raio nunca seja negativo usando Math.max
-        const size = Math.max(0.1, p.radius + Math.sin(p.pulse) * 0.5);
+        // CRITICAL FIX: Math.max + Verificação de NaN para impedir o erro arc negative radius
+        let rawSize = p.radius + Math.sin(p.pulse) * 0.6;
+        if (isNaN(rawSize)) rawSize = 1;
+        const size = Math.max(0.1, rawSize);
+        
         const opacity = 0.2 + Math.sin(p.pulse) * 0.1;
 
         ctx.beginPath();
@@ -99,25 +104,27 @@ const EmpireParticles: React.FC = () => {
         ctx.fillStyle = p.color;
         
         if (dist < mouseRadius) {
-          ctx.globalAlpha = opacity + 0.3;
-          ctx.shadowBlur = 15;
+          ctx.globalAlpha = Math.min(1, opacity + 0.4);
+          ctx.shadowBlur = 12;
           ctx.shadowColor = p.color;
         } else {
-          ctx.globalAlpha = opacity;
+          ctx.globalAlpha = Math.max(0, opacity);
           ctx.shadowBlur = 0;
         }
         
         ctx.fill();
         ctx.shadowBlur = 0;
 
+        // Neural connections
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const dNodes = Math.sqrt((p.x - p2.x)**2 + (p.y - p2.y)**2);
           if (dNodes < connectionDistance) {
             ctx.beginPath();
             ctx.strokeStyle = p.color;
-            ctx.globalAlpha = (1 - dNodes / connectionDistance) * 0.12;
-            ctx.lineWidth = 0.5;
+            const proximity = dist < mouseRadius ? 0.2 : 0;
+            ctx.globalAlpha = Math.max(0, ((1 - dNodes / connectionDistance) * 0.12) + proximity);
+            ctx.lineWidth = dist < mouseRadius ? 0.8 : 0.4;
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
             ctx.stroke();
@@ -145,7 +152,7 @@ const EmpireParticles: React.FC = () => {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[-1]" />;
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[-1] particle-canvas" />;
 };
 
 export default EmpireParticles;
