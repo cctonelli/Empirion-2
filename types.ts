@@ -21,7 +21,8 @@ export interface InventoryStats {
   consumption: number;
   sales: number;
   final: number;
-  perishability_loss?: number; // Loss due to product expiration (SIAGRO)
+  perishability_loss?: number;
+  obsolescence_loss?: number; // SIMCO: Loss for durable goods
 }
 
 export interface MachineStats {
@@ -53,10 +54,13 @@ export interface FinancialStatement {
     motivation: string;
     strike: boolean;
     strike_intensity?: number;
+    sales_staff_count?: number; // SIMCO: Retail specific
   };
   machines: MachineStats;
   regional_demand: Record<number, { potential: number; sold: number }>;
   quality_index?: number;
+  consumer_satisfaction?: number; // SIMCO: Retail KPI (0 to 100)
+  ecommerce_share?: number;       // SIMCO: Market split
 }
 
 export interface BalanceSheet {
@@ -76,6 +80,7 @@ export interface BalanceSheet {
       land: number;
     };
     accumulated_depreciation: number;
+    asset_seizure_loss?: number; // SIMCO: Seizure for debt
   };
   total_assets: number;
 }
@@ -116,7 +121,8 @@ export interface BlackSwanEvent {
     demand: number;
     interest: number;
     productivity: number;
-    climate_impact?: number; // Specific for Agribusiness
+    climate_impact?: number;
+    ecommerce_surge?: number; // Specific for Commercial
   };
 }
 
@@ -150,9 +156,11 @@ export interface EcosystemConfig {
     demand: number;
     currency: number;
     climate?: number;
+    ecommerce?: number;
   };
   stockMarketActive?: boolean;
   messageBoard?: MessageBoardItem[];
+  ecommerceEnabled?: boolean; // SIMCO Feature
 }
 
 export interface CommunityCriteria {
@@ -167,8 +175,10 @@ export interface ProductDefinition {
   suggested_price: number;
   initial_stock: number;
   max_capacity: number;
-  is_perishable?: boolean;      // SIAGRO: Perishability flag
-  perishability_rate?: number; // SIAGRO: % loss per round if not sold
+  is_perishable?: boolean;
+  perishability_rate?: number;
+  is_durable?: boolean;        // SIMCO: Durable goods
+  obsolescence_rate?: number; // SIMCO: Monthly value drop
 }
 
 export interface ResourceUsage {
@@ -193,12 +203,19 @@ export interface MarketIndicators {
   exchange_rate?: number;
   risk_premium?: number;
   stock_prices?: Record<string, number>;
-  seasonality_index?: number; // SIAGRO: Crop seasonality (0.5 to 1.5)
+  seasonality_index?: number;
   climate_status?: 'optimal' | 'dry' | 'flood' | 'storm';
+  ecommerce_adoption_rate?: number; // SIMCO: Macro EC %
 }
 
 export interface DecisionData {
-  regions: Record<number, { price: number; term: number; marketing: number }>;
+  regions: Record<number, { 
+    price: number; 
+    term: number; 
+    marketing: number;
+    ecommerce_price?: number;     // SIMCO: Online specific price
+    ecommerce_marketing?: number; // SIMCO: Digital ads
+  }>;
   hr: {
     hired: number;
     fired: number;
@@ -206,7 +223,9 @@ export interface DecisionData {
     trainingPercent: number;
     participationPercent: number;
     others: number;
-    overtimeHours?: number; // SIAGRO: Impact on productivity
+    overtimeHours?: number;
+    sales_staff_count?: number; // SIMCO: Retail salesmen
+    commission_percent?: number; // SIMCO: Motivation boost
   };
   production: {
     purchaseMPA: number;
@@ -215,7 +234,8 @@ export interface DecisionData {
     activityLevel: number;
     extraProduction: number;
     rd_investment?: number;
-    agro_tech_investment?: number; // SIAGRO: Yield boost
+    agro_tech_investment?: number;
+    digital_exp_investment?: number; // SIMCO: UI/UX satisfaction
   };
   finance: {
     loanRequest: number;
@@ -224,7 +244,8 @@ export interface DecisionData {
     termSalesInterest: number;
     buyMachines: { alfa: number; beta: number; gama: number };
     sellMachines: { alfa: number; beta: number; gama: number };
-    receivables_anticipation?: number; // SIAGRO: Cash flow tool
+    receivables_anticipation?: number;
+    emergency_loan?: number; // SIMCO: High interest
   };
   inBankruptcy?: boolean;
 }

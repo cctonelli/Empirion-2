@@ -85,6 +85,58 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     }
   },
   {
+    id: 'comm-retail',
+    name: "Lojas de Departamento - SIMCO Legacy",
+    branch: "commercial",
+    sector: "Varejo Híbrido",
+    description: "Inspirado no SIMCO. Mercado dividido entre Lojas Físicas e E-commerce. Gestão de comissão de vendedores, satisfação do cliente e canais digitais.",
+    is_public: true,
+    config: { 
+      currency: "BRL", 
+      round_frequency_days: 15, 
+      total_rounds: 12, 
+      sales_mode: "hybrid", 
+      scenario_type: "simulated", 
+      transparency_level: "medium", 
+      team_fee: 0, 
+      community_enabled: true, 
+      regionsCount: 8 
+    },
+    initial_financials: {
+      balance_sheet: { 
+        current_assets: { cash: 250000, accounts_receivable: 850000, inventory_raw_a: 0, inventory_raw_b: 0, inventory_finished: 500000, prepaid_expenses: 0 }, 
+        non_current_assets: { pp_e: { machinery: 1000000, buildings: 4000000, land: 2000000 }, accumulated_depreciation: -1200000 }, 
+        total_assets: 7400000 
+      },
+      liabilities_equity: { 
+        current_liabilities: { accounts_payable: 400000, short_term_loans: 1200000, taxes_payable: 20000, dividends_payable: 0 }, 
+        non_current_liabilities: { long_term_loans: 2000000 }, 
+        equity: { capital_stock: 3000000, retained_earnings: 780000 }, 
+        total_liabilities_equity: 7400000 
+      }
+    },
+    products: [
+      { name: "Bens de Consumo", unit_cost_base: 65, suggested_price: 240, initial_stock: 8000, max_capacity: 100000, is_durable: true, obsolescence_rate: 0.05 }
+    ],
+    resources: { water_consumption_monthly: 200000, energy_consumption_monthly: 100000, co2_emissions_monthly: 150 },
+    market_indicators: { 
+      inflation_rate: 0.9, 
+      interest_rate_tr: 2.1, 
+      supplier_interest: 1.8, 
+      demand_regions: [12000, 12000, 12000, 12000, 12000, 12000, 12000, 20000], 
+      raw_a_price: 70, 
+      raw_b_price: 10, 
+      distribution_cost: 25, 
+      marketing_cost_unit: 9500, 
+      machine_alfa_price: 400000, 
+      machine_beta_price: 1200000, 
+      machine_gama_price: 2500000, 
+      average_salary: 1550,
+      ecommerce_adoption_rate: 0.22,
+      climate_status: 'optimal'
+    }
+  },
+  {
     id: 'agro-coop',
     name: "Agro Cooperativa - SIAGRO Legacy",
     branch: "agribusiness",
