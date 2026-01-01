@@ -117,6 +117,7 @@ export interface BlackSwanEvent {
 }
 
 export interface EcosystemConfig {
+  scenarioType: ScenarioType;
   inflationRate: number;
   demandMultiplier: number;
   interestRate: number;
@@ -131,6 +132,11 @@ export interface EcosystemConfig {
   gazetaConfig?: {
     focus: string[];
     style: 'sensationalist' | 'analytical' | 'neutral';
+  };
+  realDataWeights?: {
+    inflation: number;
+    demand: number;
+    currency: number;
   };
 }
 

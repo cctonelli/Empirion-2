@@ -1,16 +1,22 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
+import { ScenarioType } from "../types";
 
 /**
- * Generates market analysis using gemini-3-flash-preview.
+ * Generates market analysis with conditional grounding based on ScenarioType.
  */
-export const generateMarketAnalysis = async (championshipName: string, round: number, branch: string) => {
+export const generateMarketAnalysis = async (championshipName: string, round: number, branch: string, scenarioType: ScenarioType = 'simulated') => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
+  const groundingPrompt = scenarioType === 'real' 
+    ? "Utilize dados reais de mercado e notícias atuais (Google Search) para fundamentar as projeções." 
+    : "Baseie-se exclusivamente nos parâmetros simulados fornecidos pelo tutor da arena.";
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Você é o Empirion Strategos AI. Forneça um briefing estratégico quantitativo para a Rodada ${round} do campeonato "${championshipName}" (${branch}). 
+      ${groundingPrompt}
       Analise:
       1. Impactos da volatilidade econômica (TR e Inflação) na margem unitária.
       2. Pontos de sobrevivência competitiva (Preço vs. Custo).
@@ -18,7 +24,7 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
       Mantenha o tom executivo e técnico. Máximo 100 palavras. Idioma: Português (Brasil).`,
       config: {
         temperature: 0.6,
-        thinkingConfig: { thinkingBudget: 0 }
+        tools: scenarioType === 'real' ? [{ googleSearch: {} }] : []
       }
     });
 
@@ -30,20 +36,26 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
 };
 
 /**
- * Generates narrative headlines for Gazeta Industrial with custom tutor parameters.
+ * Generates narrative headlines for Gazeta Industrial with ScenarioType awareness.
  */
 export const generateGazetaNews = async (context: { 
   period: number, 
   leader?: string, 
   inflation?: string,
   focus?: string[],
-  style?: 'sensationalist' | 'analytical' | 'neutral'
+  style?: 'sensationalist' | 'analytical' | 'neutral',
+  scenarioType?: ScenarioType
 }) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const focusAreas = context.focus?.join(", ") || "análise da CVM, reajuste de insumos, liderança do setor";
   const newsStyle = context.style || "analytical";
+  const isReal = context.scenarioType === 'real';
   
+  const groundingContext = isReal 
+    ? "CORPO DE NOTÍCIA REAL: Pesquise notícias reais da última semana sobre economia e o setor industrial para mesclar com os resultados da simulação."
+    : "MODO SIMULADO: Crie notícias puramente fictícias baseadas no comportamento das equipes e nos parâmetros do tutor.";
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -51,13 +63,17 @@ export const generateGazetaNews = async (context: {
       Contexto: Fim do Período ${context.period}. Líder atual: ${context.leader || 'Empresa 8'}. Inflação: ${context.inflation || '1.0%'}.
       Áreas de Foco definidas pelo Tutor: ${focusAreas}.
       Estilo de Escrita: ${newsStyle}. 
+      ${groundingContext}
       
       Instruções:
       1. Crie notícias que reflitam diretamente as áreas de foco.
       2. Mantenha o tom de acordo com o estilo solicitado (${newsStyle}). 
       3. Relacione os eventos à liderança do setor e à estabilidade econômica.
       Idioma: Português (Brasil).`,
-      config: { temperature: 0.8 }
+      config: { 
+        temperature: 0.8,
+        tools: isReal ? [{ googleSearch: {} }] : []
+      }
     });
 
     return response.text || "Mercado Industrial: Setor aguarda novas diretrizes da CVM para o próximo período.";
@@ -67,7 +83,7 @@ export const generateGazetaNews = async (context: {
 };
 
 /**
- * Generates a "Black Swan" event for the simulation with specific economic impact.
+ * Generates a "Black Swan" event for the simulation.
  */
 export const generateBlackSwanEvent = async (branch: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
