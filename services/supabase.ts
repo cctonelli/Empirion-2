@@ -2,23 +2,41 @@ import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, UserProfile, UserRole } from '../types';
 
 /**
- * Supabase Engine v6.3 (Vercel + Vite Safe)
- * Following the consolidated project scope: Uses VITE_ prefix exclusively
- * for client-side variables to ensure correct propagation in Vercel.
+ * Supabase Engine v6.4 (Environment-Safe Initialization)
+ * Safely resolves variables across Vite (import.meta.env) and 
+ * Node/Vercel (process.env) contexts to avoid "undefined" property access errors.
  */
-const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+const getSafeEnv = (key: string): string => {
+  const viteKey = `VITE_${key}`;
+  const nextKey = `NEXT_PUBLIC_${key}`;
+  
+  // Safely access import.meta.env if available
+  const metaEnv = (import.meta as any).env || {};
+  
+  // Safely access process.env if available
+  const procEnv = (window as any).process?.env || {};
+  
+  return (
+    metaEnv[viteKey] || 
+    metaEnv[nextKey] || 
+    metaEnv[key] || 
+    procEnv[viteKey] || 
+    procEnv[nextKey] || 
+    procEnv[key] || 
+    ''
+  );
+};
 
-// Validation for runtime safety
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn('Supabase Environment Variables Missing! Check Vercel Settings for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+// Use specific project URL as hard fallback for initialization
+const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
+const SUPABASE_ANON_KEY = getSafeEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+
+// Validation for runtime safety - Warning only to avoid breaking the UI
+if (!getSafeEnv('SUPABASE_URL') || !getSafeEnv('SUPABASE_ANON_KEY')) {
+  console.warn('Supabase: Missing specific VITE_ environment variables. Using placeholder/project defaults.');
 }
 
-// Fallback only to prevent initialization crash, real requests will fail if keys are missing
-export const supabase = createClient(
-  SUPABASE_URL || 'https://gkmjlejeqndfdvxxvuxa.supabase.co', 
-  SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
-);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
  * Centralized utility for handling PostgrestError (Supabase v2+)
@@ -26,7 +44,7 @@ export const supabase = createClient(
 export const handleSupabaseError = (error: any, context: string) => {
   console.error(`Supabase Error [${context}]:`, {
     message: error?.message,
-    code: error?.code, // v2+ uses error.code instead of error.status
+    code: error?.code,
     details: error?.details,
     hint: error?.hint
   });
