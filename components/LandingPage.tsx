@@ -12,16 +12,16 @@ import { DEFAULT_PAGE_CONTENT, LANDING_PAGE_DATA } from '../constants';
 import { fetchPageContent } from '../services/supabase';
 import EmpireParticles from './EmpireParticles';
 
-// Custom Arrows Components - Refined for high visibility and tactical feedback
+// Custom Arrows Components - Further reduced size and moved to extreme sides
 const NextArrow = (props: any) => {
   const { onClick } = props;
   return (
     <button
       onClick={onClick}
-      className="absolute right-8 top-1/2 -translate-y-1/2 z-[100] p-6 bg-slate-900/60 backdrop-blur-xl hover:bg-blue-600/90 border border-white/20 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] active:scale-90"
+      className="absolute right-2 top-1/2 -translate-y-1/2 z-[100] p-2.5 bg-slate-900/40 backdrop-blur-xl hover:bg-blue-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.3)] active:scale-90 hover:border-white/30"
       aria-label="Next slide"
     >
-      <ChevronRight size={36} className="group-hover:translate-x-1 transition-transform" />
+      <ChevronRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
     </button>
   );
 };
@@ -31,10 +31,10 @@ const PrevArrow = (props: any) => {
   return (
     <button
       onClick={onClick}
-      className="absolute left-8 top-1/2 -translate-y-1/2 z-[100] p-6 bg-slate-900/60 backdrop-blur-xl hover:bg-blue-600/90 border border-white/20 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] active:scale-90"
+      className="absolute left-2 top-1/2 -translate-y-1/2 z-[100] p-2.5 bg-slate-900/40 backdrop-blur-xl hover:bg-blue-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.3)] active:scale-90 hover:border-white/30"
       aria-label="Previous slide"
     >
-      <ChevronLeft size={36} className="group-hover:-translate-x-1 transition-transform" />
+      <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
     </button>
   );
 };
