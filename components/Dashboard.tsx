@@ -3,24 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, Activity, DollarSign, Target, Zap, Briefcase, Globe, BarChart3, 
   ArrowUpRight, ArrowDownRight, Sparkles, Loader2, Star, Users, Newspaper,
-  AlertTriangle, ChevronRight, Gavel, Landmark, Info, Flame, Newspaper as NewspaperIcon
+  AlertTriangle, ChevronRight, Gavel, Landmark, Info, Flame, Newspaper as NewspaperIcon,
+  ShieldCheck, Leaf
 } from 'lucide-react';
 import ChampionshipTimer from './ChampionshipTimer';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
-import { BlackSwanEvent } from '../types';
+import { BlackSwanEvent, ScenarioType } from '../types';
 
 const Dashboard: React.FC = () => {
   const [aiInsight, setAiInsight] = useState<string>('');
   const [gazetaNews, setGazetaNews] = useState<string>('Sincronizando agências de notícias...');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
   const [activeEvent, setActiveEvent] = useState<BlackSwanEvent | null>(null);
+  const [scenarioType, setScenarioType] = useState<ScenarioType>('simulated');
 
   useEffect(() => {
     const fetchMarketIntelligence = async () => {
       try {
         const [analysis, news] = await Promise.all([
-          generateMarketAnalysis('Arena Industrial Alpha', 1, 'industrial'),
-          generateGazetaNews({ period: 1, leader: 'Empresa 8', inflation: '1.0%' })
+          generateMarketAnalysis('Arena Industrial Alpha', 1, 'industrial', scenarioType),
+          generateGazetaNews({ period: 1, leader: 'Empresa 8', inflation: '1.0%', scenarioType })
         ]);
         setAiInsight(analysis);
         setGazetaNews(news);
@@ -32,7 +34,7 @@ const Dashboard: React.FC = () => {
       }
     };
     fetchMarketIntelligence();
-  }, []);
+  }, [scenarioType]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20 px-4 md:px-0">
@@ -54,16 +56,21 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
+        <div className="space-y-1">
           <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase flex items-center gap-4">
              <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-xl">
                 <BarChart3 size={24} />
              </div>
              Empirion War Room
           </h1>
-          <p className="text-slate-500 font-medium mt-1 uppercase tracking-widest text-[10px]">
-            Status Estratégico: Rodada 01 - Engine v5.0 GOLD (Fidelity Build)
-          </p>
+          <div className="flex items-center gap-3">
+             <p className="text-slate-500 font-medium uppercase tracking-widest text-[10px]">
+               Status Estratégico: Rodada 01 - Engine v5.1 GOLD
+             </p>
+             <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${scenarioType === 'real' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                {scenarioType === 'real' ? 'Grounded AI Scenario' : 'Simulated Protocol'}
+             </span>
+          </div>
         </div>
         <ChampionshipTimer />
       </div>
@@ -92,7 +99,7 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-           {/* Newspaper-style Gazeta Industrial (Bernard Systems style) */}
+           {/* Newspaper-style Gazeta Industrial */}
            <div className="bg-white rounded-[3.5rem] border-[3px] border-slate-900 shadow-2xl overflow-hidden flex flex-col group min-h-[500px]">
               <div className="p-8 border-b-[3px] border-slate-900 bg-slate-50 flex items-center justify-between">
                  <div className="flex items-center gap-4">
@@ -101,7 +108,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div>
                        <h3 className="text-3xl font-black text-slate-900 uppercase leading-none tracking-tighter italic">Gazeta Industrial</h3>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Órgão Oficial de Informação do Setor • v5.0 GOLD</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Órgão Oficial de Informação do Setor • v5.1 GOLD</p>
                     </div>
                  </div>
                  <div className="text-right">
@@ -167,7 +174,7 @@ const Dashboard: React.FC = () => {
               </div>
            </div>
 
-           {/* Strategos AI Oracle (v5.0 Gold) */}
+           {/* Strategos AI Oracle (v5.1 Gold) */}
            <div className="bg-slate-900 p-12 rounded-[3.5rem] text-white relative overflow-hidden group shadow-2xl border border-white/5">
               <div className="relative z-10 space-y-8">
                  <div className="flex items-center justify-between">
@@ -177,7 +184,7 @@ const Dashboard: React.FC = () => {
                        </div>
                        <div className="flex flex-col">
                           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">Strategos AI Predictive Core</span>
-                          <span className="text-xs font-bold text-slate-400">Deep Reasoning Engine • v5.0 GOLD</span>
+                          <span className="text-xs font-bold text-slate-400">Deep Reasoning Engine • v5.1 GOLD</span>
                        </div>
                     </div>
                  </div>
@@ -209,31 +216,31 @@ const Dashboard: React.FC = () => {
               <div className="space-y-8">
                  <KpiRow label="Lucro Líquido" value="$ 73.926" trend="+100%" positive icon={<DollarSign size={16}/>} />
                  <KpiRow label="Market Share" value="12.5%" trend="+2.4%" positive icon={<Target size={16}/>} />
-                 <KpiRow label="Efficiency" value="94.2%" trend="+5.1%" positive icon={<Zap size={16}/>} />
+                 <KpiRow label="Reputação Score" value="82.4" trend="+4.1" positive icon={<Star size={16}/>} />
               </div>
            </div>
 
            <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group border border-white/5">
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-                 <Gavel size={80} />
+                 <ShieldCheck size={80} />
               </div>
               <h3 className="text-xl font-black uppercase tracking-tight mb-8 flex items-center gap-3">
-                 <AlertTriangle className="text-amber-400" size={24}/>
-                 Audit Monitor
+                 <Leaf className="text-emerald-400" size={24}/>
+                 ESG Monitor (v5.1)
               </h3>
               <div className="space-y-6 relative z-10">
                  <div className="p-5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm flex gap-4 transition-colors hover:bg-white/10">
                     <Activity className="text-emerald-400 shrink-0" size={20} />
                     <div className="space-y-1">
-                       <span className="block text-[10px] font-black uppercase text-blue-300 tracking-widest">RH Status</span>
-                       <span className="text-sm font-black text-slate-100">Turnover: 2.1% (Ideal)</span>
+                       <span className="block text-[10px] font-black uppercase text-blue-300 tracking-widest">Social Score</span>
+                       <span className="text-sm font-black text-slate-100">88.5 - Excelência em RH</span>
                     </div>
                  </div>
                  <div className="p-5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm flex gap-4 transition-colors hover:bg-white/10">
-                    <AlertTriangle className="text-rose-400 shrink-0" size={20} />
+                    <Globe className="text-blue-400 shrink-0" size={20} />
                     <div className="space-y-1">
-                       <span className="block text-[10px] font-black uppercase text-blue-300 tracking-widest">Insumos Alerta</span>
-                       <span className="text-sm font-black text-slate-100">MP A: Reposição Necessária</span>
+                       <span className="block text-[10px] font-black uppercase text-blue-300 tracking-widest">Governança</span>
+                       <span className="text-sm font-black text-slate-100">Status: Regular CVM</span>
                     </div>
                  </div>
               </div>
@@ -257,7 +264,7 @@ const Dashboard: React.FC = () => {
       
       <div className="flex justify-center pt-8">
          <div className="px-6 py-2 bg-slate-100 rounded-full flex items-center gap-3 border border-slate-200">
-            <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.5em]">Empirion Gold Engine v5.0.0</span>
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.5em]">Empirion Gold Engine v5.1.0</span>
             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
          </div>
       </div>

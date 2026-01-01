@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { 
   FileText, Activity, Package, DollarSign, Zap, Users, Globe, 
   ChevronDown, Download, BarChart3, TrendingUp, Landmark, ArrowRight, Table as TableIcon,
-  ShieldCheck, User, Newspaper, Building2, Gavel, Info, Award, Star
+  ShieldCheck, User, Newspaper, Building2, Gavel, Info, Award, Star, Leaf
 } from 'lucide-react';
 
 const Reports: React.FC = () => {
@@ -21,7 +21,7 @@ const Reports: React.FC = () => {
              Audit Terminal
           </h1>
           <p className="text-slate-500 font-medium mt-1 uppercase tracking-widest text-[10px]">
-            Relatórios Consolidados - Bernard Fidelity Build v5.0 GOLD
+            Relatórios Consolidados - Bernard Fidelity Build v5.1 GOLD
           </p>
         </div>
         
@@ -64,7 +64,7 @@ const Reports: React.FC = () => {
       
       <div className="pt-20 flex justify-center">
          <div className="px-8 py-3 bg-slate-900 text-white rounded-full flex items-center gap-4 border border-slate-800 shadow-2xl">
-            <span className="text-[10px] font-black uppercase tracking-[0.5em]">Empirion v5.0.0-GOLD-Bernard-Fidelity</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.5em]">Empirion v5.1.0-GOLD-Fidelity-ESG</span>
          </div>
       </div>
     </div>
@@ -235,22 +235,25 @@ const EliteBenchmarkReport = () => (
                  <Star size={32} className="fill-current text-white" />
               </div>
               <div>
-                 <h3 className="text-3xl font-black uppercase tracking-tight">Elite Benchmark (v5.0 GOLD)</h3>
-                 <p className="text-amber-100 font-medium">Sua performance comparada aos padrões Bernard Legacy & Top 100 Globais.</p>
+                 <h3 className="text-3xl font-black uppercase tracking-tight">Elite Benchmark (v5.1 GOLD)</h3>
+                 <p className="text-amber-100 font-medium">Performance vs Bernard Legacy & Global Top 100.</p>
               </div>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <BenchmarkCard label="Sua Margem" value="2.2%" target="15.0%" status="LOW" color="rose" />
               <BenchmarkCard label="Productivity" value="94.2%" target="96.0%" status="GOOD" color="emerald" />
+              <BenchmarkCard label="ESG Score" value="82.4" target="85.0" status="HIGH" color="blue" icon={<Leaf size={14}/>} />
               <BenchmarkCard label="ROE" value="1.5%" target="12.0%" status="LOW" color="rose" />
-              <BenchmarkCard label="ESG Score" value="82.0" target="85.0" status="HIGH" color="blue" />
            </div>
         </div>
      </div>
 
      <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-8">
-        <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Análise Comparativa de Eficiência</h4>
+        <div className="flex items-center justify-between">
+           <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Análise Comparativa de Eficiência</h4>
+           <div className="px-4 py-2 bg-slate-100 rounded-full text-[9px] font-black uppercase text-slate-500 tracking-widest border border-slate-200">Setor Industrial Benchmark</div>
+        </div>
         <div className="overflow-x-auto">
            <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-400 font-black uppercase">
@@ -258,13 +261,15 @@ const EliteBenchmarkReport = () => (
                     <th className="p-6">Métrica de Elite</th>
                     <th className="p-6">Empresa 08 (Você)</th>
                     <th className="p-6">Best in Class</th>
+                    <th className="p-6">Mercado (Média)</th>
                     <th className="p-6">GAP (%)</th>
                  </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-bold text-slate-600">
-                 <tr className="hover:bg-slate-50"><td className="p-6">Giro de Ativo</td><td className="p-6">0.36x</td><td className="p-6 font-black text-slate-900">0.85x</td><td className="p-6 text-rose-500">-136%</td></tr>
-                 <tr className="hover:bg-slate-50"><td className="p-6">Markup Médio</td><td className="p-6">38%</td><td className="p-6 font-black text-slate-900">55%</td><td className="p-6 text-rose-500">-44%</td></tr>
-                 <tr className="hover:bg-slate-50"><td className="p-6">Custo Logístico/Venda</td><td className="p-6">8.4%</td><td className="p-6 font-black text-slate-900">4.2%</td><td className="p-6 text-rose-500">+100%</td></tr>
+                 <tr className="hover:bg-slate-50"><td className="p-6">Giro de Ativo</td><td className="p-6">0.36x</td><td className="p-6 font-black text-slate-900">0.85x</td><td className="p-6">0.42x</td><td className="p-6 text-rose-500">-136%</td></tr>
+                 <tr className="hover:bg-slate-50"><td className="p-6">Markup Médio</td><td className="p-6">38%</td><td className="p-6 font-black text-slate-900">55%</td><td className="p-6">42%</td><td className="p-6 text-rose-500">-44%</td></tr>
+                 <tr className="hover:bg-slate-50"><td className="p-6">Custo Logístico/Venda</td><td className="p-6">8.4%</td><td className="p-6 font-black text-slate-900">4.2%</td><td className="p-6">6.8%</td><td className="p-6 text-rose-500">+100%</td></tr>
+                 <tr className="hover:bg-slate-50"><td className="p-6">Investimento Treinamento</td><td className="p-6">5.0%</td><td className="p-6 font-black text-slate-900">8.0%</td><td className="p-6">4.2%</td><td className="p-6 text-emerald-500">+19%</td></tr>
               </tbody>
            </table>
         </div>
@@ -272,7 +277,7 @@ const EliteBenchmarkReport = () => (
   </div>
 );
 
-const BenchmarkCard = ({ label, value, target, status, color }: any) => {
+const BenchmarkCard = ({ label, value, target, status, color, icon }: any) => {
   const colorMap: any = {
     rose: 'bg-rose-500/20 text-rose-200 border-rose-500/30',
     emerald: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/30',
@@ -281,7 +286,10 @@ const BenchmarkCard = ({ label, value, target, status, color }: any) => {
 
   return (
     <div className={`p-8 rounded-[2.5rem] border backdrop-blur-xl ${colorMap[color]} space-y-4`}>
-       <span className="block text-[10px] font-black uppercase tracking-widest text-white/60">{label}</span>
+       <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black uppercase tracking-widest text-white/60">{label}</span>
+          {icon}
+       </div>
        <div className="flex items-end justify-between">
           <span className="text-3xl font-black text-white">{value}</span>
           <span className="text-[10px] font-black uppercase text-white/40">Target: {target}</span>
