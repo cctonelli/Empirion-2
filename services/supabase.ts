@@ -1,8 +1,21 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, UserProfile, UserRole } from '../types';
 
-const SUPABASE_URL = 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_9D6W-B35TZc5KfZqpqliXA_sWpk_klw';
+// Robust environment variable resolution for Vite/Vercel/Next.js compatibility
+// Fix: Use any cast to access env on import.meta to avoid TS error in mixed environments where ImportMeta is not fully typed
+const SUPABASE_URL = 
+  ((import.meta as any).env?.VITE_SUPABASE_URL) || 
+  (process.env?.NEXT_PUBLIC_SUPABASE_URL) || 
+  (process.env?.SUPABASE_URL) ||
+  'https://gkmjlejeqndfdvxxvuxa.supabase.co';
+
+// Fix: Use any cast to access env on import.meta to avoid TS error in mixed environments where ImportMeta is not fully typed
+const SUPABASE_ANON_KEY = 
+  ((import.meta as any).env?.VITE_SUPABASE_ANON_KEY) || 
+  (process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || 
+  (process.env?.SUPABASE_ANON_KEY) ||
+  ''; // Fallback to empty to prevent startup crash, though auth will fail if missing
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
