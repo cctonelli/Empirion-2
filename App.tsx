@@ -435,7 +435,7 @@ const LandingPage: React.FC<{ onLoginClick: () => void; publicArenas: any[]; onE
               </div>
               <span className="text-xl font-black text-slate-900 tracking-tighter uppercase">EMPIRION</span>
             </div>
-            <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">© 2025 EMPIRION SYSTEMS INC.</p>
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">© 2025 EMPIRION SYSTEMS INC. | v4.8.0-BETA</p>
          </div>
       </footer>
     </div>

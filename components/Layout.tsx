@@ -76,7 +76,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-slate-800 space-y-2">
           <button 
             onClick={onLogout}
             className="w-full flex items-center gap-4 p-3 text-slate-500 hover:text-red-400 hover:bg-red-900/10 rounded-xl transition-all group"
@@ -84,12 +84,17 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
             <LogOut size={20} className="shrink-0 group-hover:-translate-x-1 transition-transform" />
             {isSidebarOpen && <span className="font-bold text-xs uppercase tracking-widest">Logout</span>}
           </button>
+          {isSidebarOpen && (
+            <div className="px-3 py-2 text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] text-center">
+              Deploy Build v4.8.0-BETA
+            </div>
+          )}
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Header - Improved with breadcrumbs and status */}
+        {/* Header */}
         <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 h-20 flex items-center justify-between px-8 z-40 shrink-0 sticky top-0">
           <div className="flex items-center gap-6">
             <button 
