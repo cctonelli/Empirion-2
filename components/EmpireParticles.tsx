@@ -1,22 +1,38 @@
-import React, { useEffect, useRef } from 'react';
 
+// Add React import to the list of imports from 'react'
+import React, { useLayoutEffect, useRef } from 'react';
+
+/**
+ * Empire Cosmos Particles v7.0 (Production Safe)
+ * Features:
+ * - Sync render with useLayoutEffect
+ * - Retina/High-DPI sharp scaling
+ * - Gravitational mouse attraction
+ * - Optimized trail visibility
+ */
 const EmpireParticles: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: false });
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    // Retina Sharp Scaling Logic
+    const resizeCanvas = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.scale(dpr, dpr);
     };
-    resize();
-    window.addEventListener('resize', resize);
 
-    const mouse = { x: -2000, y: -2000 };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const handleMouseMove = (e: MouseEvent) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
@@ -38,90 +54,82 @@ const EmpireParticles: React.FC = () => {
 
     for (let i = 0; i < count; i++) {
       particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
         vx: (Math.random() - 0.5) * 1.5,
         vy: (Math.random() - 0.5) * 1.5,
-        radius: Math.random() * 2 + 1.5,
+        radius: Math.random() * 2 + 2,
         color: colors[Math.floor(Math.random() * colors.length)],
         pulse: Math.random() * Math.PI * 2
       });
     }
 
+    let animationId: number;
     const animate = () => {
-      // Trail effect for high-fidelity aesthetics
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.15)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Trail Effect: rgba(2, 6, 23, 0.08) for optimal deep blue visibility
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.08)';
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
       particles.forEach(p => {
-        // Gravitational attraction logic
+        // Gravitational Attraction
         const dx = mouse.x - p.x;
         const dy = mouse.y - p.y;
         const dist = Math.hypot(dx, dy);
-        
+
         if (dist < 250 && dist > 0) {
           const force = (250 - dist) / 250;
           p.vx += (dx / dist) * force * 0.08;
           p.vy += (dy / dist) * force * 0.08;
         }
 
-        // Slight physics friction
+        // Physics
         p.vx *= 0.98;
         p.vy *= 0.98;
-
         p.x += p.vx;
         p.y += p.vy;
-        p.pulse += 0.035;
+        p.pulse += 0.03;
 
-        // Screen wrapping
-        p.x = (p.x + canvas.width) % canvas.width;
-        p.y = (p.y + canvas.height) % canvas.height;
+        // Wrapping
+        p.x = (p.x + window.innerWidth) % window.innerWidth;
+        p.y = (p.y + window.innerHeight) % window.innerHeight;
 
-        /**
-         * RADIUS SANITIZATION v6.0
-         * Ensures ctx.arc radius is never negative, NaN, or non-finite.
-         */
+        // Size & Pulse
         const dynamicPulse = Math.sin(p.pulse) * 0.8;
         let rawSize = p.radius + dynamicPulse;
-        if (!isFinite(rawSize) || isNaN(rawSize) || rawSize <= 0) {
-          rawSize = p.radius || 2.0;
-        }
-        const size = Math.max(0.5, Math.abs(rawSize));
+        if (!isFinite(rawSize) || rawSize <= 0) rawSize = p.radius;
+        const size = Math.max(1, Math.abs(rawSize));
 
+        // Drawing
         ctx.beginPath();
         ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         
-        // Dynamic glow on hover
-        if (dist < 180) {
-          ctx.globalAlpha = 0.9;
-          ctx.shadowBlur = 15;
-          ctx.shadowColor = p.color;
-        } else {
-          ctx.globalAlpha = 0.4;
-          ctx.shadowBlur = 0;
-        }
+        // High visibility alpha values
+        ctx.globalAlpha = dist < 180 ? 0.9 : 0.6;
+        ctx.shadowBlur = dist < 180 ? 20 : 8;
+        ctx.shadowColor = p.color;
         
         ctx.fill();
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
       });
 
-      requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     };
 
     animate();
 
     return () => {
-      window.removeEventListener('resize', resize);
+      window.removeEventListener('resize', resizeCanvas);
       window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animationId);
     };
   }, []);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      className="fixed inset-0 pointer-events-none z-[-1] particle-canvas" 
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none z-[-1] bg-[#020617]"
       aria-hidden="true"
     />
   );
