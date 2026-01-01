@@ -17,6 +17,12 @@ import PublicHeader from './components/PublicHeader';
 import PublicRewards from './pages/PublicRewards';
 import BranchDetail from './pages/BranchDetail';
 import OpenTournaments from './pages/OpenTournaments';
+import SimulatorsPage from './pages/SimulatorsPage';
+import TrainingPage from './pages/TrainingPage';
+import GenericSolutionPage from './pages/GenericSolutionPage';
+import FeaturesPage from './pages/FeaturesPage';
+import BlogPage from './pages/BlogPage';
+import ContactPage from './pages/ContactPage';
 
 const AppContent: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -79,8 +85,17 @@ const AppContent: React.FC = () => {
         <Route path="/branches/:slug" element={<BranchDetail />} />
         <Route path="/solutions/business-plan" element={<BusinessPlanWizard />} />
         <Route path="/solutions/open-tournaments" element={<OpenTournaments />} />
-        <Route path="/features" element={<div className="pt-40 text-center uppercase font-black text-2xl text-white">Features Explorer (WIP)</div>} />
-        <Route path="/solutions" element={<Navigate to="/solutions/open-tournaments" />} />
+        <Route path="/solutions/simulators" element={<SimulatorsPage />} />
+        <Route path="/solutions/university" element={<GenericSolutionPage type="university" />} />
+        <Route path="/solutions/corporate" element={<GenericSolutionPage type="corporate" />} />
+        <Route path="/solutions/individual" element={<GenericSolutionPage type="individual" />} />
+        <Route path="/solutions/create-tournament" element={<GenericSolutionPage type="create" />} />
+        <Route path="/solutions/training-online" element={<TrainingPage mode="online" />} />
+        <Route path="/solutions/training-corporate" element={<TrainingPage mode="corporate" />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/solutions" element={<Navigate to="/solutions/simulators" />} />
         
         {/* Protected App Routes */}
         <Route path="/app/*" element={

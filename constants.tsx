@@ -42,6 +42,43 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { id: 4, label: 'Plano Financeiro', body: 'Investimentos, DRE e fluxo de caixa.' },
       { id: 5, label: 'Cenários', body: 'Análise de riscos e cisnes negros.' }
     ]
+  },
+  'solutions-simulators': {
+    title: "Intelligence Arenas",
+    subtitle: "Escolha seu domínio estratégico",
+    items: [
+      { id: 'ind', label: 'Industrial', slug: 'industrial', desc: 'Produção massiva e CAPEX.', icon: 'Factory' },
+      { id: 'com', label: 'Comercial', slug: 'commercial', desc: 'Varejo e satisfação SIMCO.', icon: 'ShoppingCart' },
+      { id: 'ser', label: 'Serviços', slug: 'services', desc: 'Capital intelectual SISERV.', icon: 'Briefcase' },
+      { id: 'agr', label: 'Agro', slug: 'agribusiness', desc: 'Ativos biológicos SIAGRO.', icon: 'Tractor' },
+      { id: 'fin', label: 'Financeiro', slug: 'finance', desc: 'Liquidez e Hedge SINVEST.', icon: 'DollarSign' },
+      { id: 'con', label: 'Construção', slug: 'construction', desc: 'BIM e Gestão de Obras.', icon: 'Hammer' }
+    ]
+  },
+  'solutions-training': {
+    title: "Empirion Academy",
+    subtitle: "Formação de Estrategistas de Alta Performance",
+    tracks: [
+      { id: 'online', label: 'Training On-line', body: 'Acesso individual aos módulos fundamentais.' },
+      { id: 'corp', label: 'Training Corporativo', body: 'Desenvolvimento de lideranças in-company.' }
+    ]
+  },
+  'features': {
+    title: "Superioridade Operacional",
+    subtitle: "O core engine por trás da simulação",
+    items: [
+      { id: 1, title: 'Real-time Sync', body: 'Latência zero via Supabase Nodes.' },
+      { id: 2, title: 'Gemini 3 Oracle', body: 'Raciocínio profundo e grounding real.' },
+      { id: 3, title: 'Elastic Economy', body: 'Cenários que reagem às decisões das equipes.' }
+    ]
+  },
+  'blog': {
+    title: "Empire Gazette",
+    subtitle: "Insights, Casos e Economia Real",
+    items: [
+      { id: 1, date: '01 Jan 2026', title: 'O Futuro das Simulações com IA', author: 'Strategos Core' },
+      { id: 2, date: '28 Dez 2025', title: 'Dominando o SISERV: Guia de Qualidade', author: 'Team Alpha' }
+    ]
   }
 };
 
@@ -87,6 +124,7 @@ export const MENU_STRUCTURE = [
       },
     ]
   },
+  { label: 'features', path: '/features' },
   { label: 'rewards', path: '/rewards' },
   { label: 'blog', path: '/blog' },
   { label: 'contact', path: '/contact' }
@@ -158,7 +196,6 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       scenario_type: 'simulated', transparency_level: 'medium', team_fee: 500, community_enabled: true, regionsCount: 9
     },
     initial_financials: {
-        // Fix: Added missing required properties to balance_sheet to satisfy types.ts interfaces
         balance_sheet: { 
             current_assets: { 
                 cash: 1000000,
@@ -178,7 +215,6 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
             }, 
             total_assets: 9176940 
         },
-        // Fix: Added missing required properties to liabilities_equity to satisfy types.ts interfaces
         liabilities_equity: { 
             current_liabilities: { 
                 accounts_payable: 300000,
