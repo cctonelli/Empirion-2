@@ -1,3 +1,4 @@
+
 import { ChampionshipTemplate } from './types';
 
 export const COLORS = {
@@ -19,22 +20,69 @@ export const BRANCH_CONFIGS: Record<string, { label: string; icon: string; descr
 };
 
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
-  // --- INDUSTRIAL ---
+  // --- INDUSTRIAL (Fiel aos Modelos Bernard Antigos - Image ID 2) ---
   {
     id: 'ind-basico',
     name: "Industrial Básico - Máquinas Alfa/Beta/Gama",
     branch: "industrial",
     sector: "Indústria Bens Duráveis",
-    description: "Simulação clássica 9 regiões, MP A/B, máquinas depreciadas. Fiel aos PDFs antigos.",
+    description: "Simulação clássica 9 regiões, MP A/B, máquinas depreciadas. Fiel aos relatórios clássicos Bernard Sistemas (P01).",
     is_public: true,
-    config: { currency: "BRL", round_frequency_days: 15, total_rounds: 12, sales_mode: "internal", scenario_type: "simulated", transparency_level: "medium", team_fee: 0, community_enabled: true, regionsCount: 9 },
+    config: { 
+      currency: "BRL", 
+      round_frequency_days: 15, 
+      total_rounds: 12, 
+      sales_mode: "internal", 
+      scenario_type: "simulated", 
+      transparency_level: "medium", 
+      team_fee: 0, 
+      community_enabled: true, 
+      regionsCount: 9 
+    },
     initial_financials: {
-      balance_sheet: { current_assets: { cash: 0, accounts_receivable: 1823735, inventory_raw_a: 628545, inventory_raw_b: 838060, inventory_finished: 0, prepaid_expenses: 0 }, non_current_assets: { pp_e: { machinery: 2360000, buildings: 5440000, land: 1200000 }, accumulated_depreciation: -3111900 }, total_assets: 9176940 },
-      liabilities_equity: { current_liabilities: { accounts_payable: 717605, short_term_loans: 1872362, taxes_payable: 13045, dividends_payable: 18481 }, non_current_liabilities: { long_term_loans: 1500000 }, equity: { capital_stock: 5000000, retained_earnings: 55444 }, total_liabilities_equity: 9176940 }
+      balance_sheet: { 
+        current_assets: { 
+          cash: 0, 
+          accounts_receivable: 1823735, 
+          inventory_raw_a: 628545, 
+          inventory_raw_b: 838060, 
+          inventory_finished: 0, 
+          prepaid_expenses: 0 
+        }, 
+        non_current_assets: { 
+          pp_e: { machinery: 2360000, buildings: 5440000, land: 1200000 }, 
+          accumulated_depreciation: -3111900 
+        }, 
+        total_assets: 9176940 
+      },
+      liabilities_equity: { 
+        current_liabilities: { 
+          accounts_payable: 717605, 
+          short_term_loans: 1872362, 
+          taxes_payable: 13045, 
+          dividends_payable: 18481 
+        }, 
+        non_current_liabilities: { long_term_loans: 1500000 }, 
+        equity: { capital_stock: 5000000, retained_earnings: 55444 }, 
+        total_liabilities_equity: 9176940 
+      }
     },
     products: [{ name: "Produto Padrão", unit_cost_base: 40.4, suggested_price: 340, initial_stock: 0, max_capacity: 9700 }],
     resources: { water_consumption_monthly: 1800000, energy_consumption_monthly: 450000, co2_emissions_monthly: 1200 },
-    market_indicators: { inflation_rate: 1.0, interest_rate_tr: 2.0, supplier_interest: 1.5, demand_regions: [8392, 8392, 8392, 8392, 8392, 8392, 8392, 8392, 12592], raw_a_price: 20.2, raw_b_price: 40.4, distribution_cost: 50.5, marketing_cost_unit: 10200, machine_alfa_price: 505000, machine_beta_price: 1515000, machine_gama_price: 3030000, average_salary: 1300 }
+    market_indicators: { 
+      inflation_rate: 1.0, 
+      interest_rate_tr: 2.0, 
+      supplier_interest: 1.5, 
+      demand_regions: [8392, 8392, 8392, 8392, 8392, 8392, 8392, 8392, 12592], 
+      raw_a_price: 20.2, 
+      raw_b_price: 40.4, 
+      distribution_cost: 50.5, 
+      marketing_cost_unit: 10200, 
+      machine_alfa_price: 505000, 
+      machine_beta_price: 1515000, 
+      machine_gama_price: 3030000, 
+      average_salary: 1300 
+    }
   },
   {
     id: 'ind-high-tech',
