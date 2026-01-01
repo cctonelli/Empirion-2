@@ -23,14 +23,15 @@ import {
 import { supabase, listAllUsers, updateUserRole } from '../services/supabase';
 import { UserProfile, UserRole } from '../types';
 
-const TRIGGER_SQL = `-- Empirion User Sync Trigger (v4.3)
--- Executar no SQL Editor do Supabase para sincronizar Auth com public.users
+const TRIGGER_SQL = `-- Empirion User Sync Trigger (v4.7)
+-- Alinhado com a coluna supabase_user_id
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.users (id, email, name, role)
+  INSERT INTO public.users (id, supabase_user_id, email, name, role)
   VALUES (
+    uuid_generate_v4(),
     new.id,
     new.email,
     COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
@@ -84,7 +85,7 @@ const AdminCommandCenter: React.FC = () => {
     
     try {
       await updateUserRole(userId, nextRole);
-      setUsersList(prev => prev.map(u => u.id === userId ? { ...u, role: nextRole } : u));
+      setUsersList(prev => prev.map(u => u.supabase_user_id === userId ? { ...u, role: nextRole } : u));
     } catch (e) {
       alert("Erro ao atualizar permissão.");
     }
@@ -274,7 +275,7 @@ const AdminCommandCenter: React.FC = () => {
                             <td className="p-6 text-right">
                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                   <button 
-                                    onClick={() => handleRoleUpdate(u.id, u.role)}
+                                    onClick={() => handleRoleUpdate(u.supabase_user_id, u.role)}
                                     className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-400 transition-all shadow-sm"
                                     title="Promote User"
                                   >

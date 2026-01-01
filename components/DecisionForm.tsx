@@ -4,7 +4,7 @@ import {
   Save, Factory, Users2, Building2, ChevronRight,
   Shield, Loader2, Megaphone, Zap,
   TrendingUp, Wallet, ArrowUpCircle, ArrowDownCircle,
-  Construction, Briefcase
+  Construction, Briefcase, Gavel, AlertTriangle
 } from 'lucide-react';
 import { supabase, saveDecisions } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -36,6 +36,7 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
   const [activeSection, setActiveSection] = useState('marketing');
   const [decisions, setDecisions] = useState<DecisionData>(() => createInitialDecisions(regionsCount));
   const [isSaving, setIsSaving] = useState(false);
+  const [inBankruptcy, setInBankruptcy] = useState(false);
   const [userName, setUserName] = useState('Strategist');
 
   useEffect(() => {
@@ -51,7 +52,7 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await saveDecisions(teamId!, champId!, round!, decisions, userName);
+      await saveDecisions(teamId!, champId!, round!, { ...decisions, inBankruptcy } as any, userName);
       alert("Operação Sincronizada: Suas decisões foram transmitidas para o servidor de processamento.");
     } catch (e) {
       alert("Falha Crítica no Link: Verifique sua conexão e tente novamente.");
@@ -113,6 +114,16 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
                    <div className="h-full bg-blue-600" style={{ width: `${Math.min(100, projections.margin * 300)}%` }}></div>
                 </div>
               </div>
+           </div>
+        </div>
+
+        <div className="p-6 bg-rose-50 border border-rose-100 rounded-[1.5rem] mt-4 flex items-center gap-4 group cursor-pointer" onClick={() => setInBankruptcy(!inBankruptcy)}>
+           <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${inBankruptcy ? 'bg-rose-600 text-white shadow-lg' : 'bg-white text-rose-300'}`}>
+              <Gavel size={20} />
+           </div>
+           <div className="flex flex-col">
+              <span className="text-[9px] font-black text-rose-900 uppercase">Concordata</span>
+              <span className="text-[10px] font-bold text-rose-400 uppercase tracking-tighter">{inBankruptcy ? 'Active' : 'Inactive'}</span>
            </div>
         </div>
       </aside>
@@ -350,6 +361,7 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
         {/* Global Save Trigger */}
         <div className="mt-16 pt-10 border-t border-slate-50 flex flex-col md:flex-row items-center justify-between gap-6">
            <div className="flex items-center gap-3 text-slate-400">
+              {inBankruptcy && <div className="px-4 py-2 bg-rose-500 text-white rounded-full text-[10px] font-black uppercase flex items-center gap-2 animate-pulse"><AlertTriangle size={14}/> Concordata Ativa</div>}
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
               <span className="text-[10px] font-black uppercase tracking-widest">Ready for strategic deployment</span>
            </div>

@@ -8,6 +8,7 @@ export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 
 export interface UserProfile {
   id: string;
+  supabase_user_id: string;
   name: string;
   email: string;
   role: UserRole;

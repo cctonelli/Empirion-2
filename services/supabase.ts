@@ -22,13 +22,14 @@ export const checkSupabaseConnection = async () => {
 };
 
 /**
- * Perfil do Usuário e Role Management (v4.3)
+ * Perfil do Usuário e Role Management (v4.7)
+ * Ajustado para buscar por supabase_user_id
  */
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const { data, error } = await supabase
     .from('users')
     .select('*')
-    .eq('id', userId)
+    .eq('supabase_user_id', userId)
     .single();
   
   if (error) {
@@ -42,7 +43,7 @@ export const updateUserRole = async (userId: string, newRole: UserRole) => {
   const { error } = await supabase
     .from('users')
     .update({ role: newRole })
-    .eq('id', userId);
+    .eq('supabase_user_id', userId);
   
   if (error) throw error;
 };
