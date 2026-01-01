@@ -101,6 +101,7 @@ const EmpireParticles: React.FC = () => {
         const opacity = 0.15 + Math.sin(p.pulse) * 0.1;
 
         ctx.beginPath();
+        // O método arc lança erro se o terceiro argumento for negativo.
         ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         

@@ -128,7 +128,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       <section className="py-60 px-6 md:px-24 text-center relative z-20">
         <motion.div 
           initial={{ opacity: 0, y: 60 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
           className="max-w-6xl mx-auto space-y-16"
         >
            <h1 className="fluid-title font-black text-white leading-[0.8] tracking-tighter uppercase italic">
