@@ -21,7 +21,8 @@ export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
       .maybeSingle();
     
     if (error) {
-      if (error.code === 'PGRST106' || error.status === 406) {
+      // Fix for TS2339: Property 'status' does not exist on type 'PostgrestError'
+      if (error.code === 'PGRST106' || (error as any).status === 406) {
         console.warn(`Supabase status 406 for ${slug}. Possible schema mismatch or RLS block.`);
       } else {
         console.error(`Supabase error fetching content for ${slug}:`, error);

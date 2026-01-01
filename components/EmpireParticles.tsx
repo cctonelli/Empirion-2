@@ -29,14 +29,14 @@ const EmpireParticles: React.FC = () => {
     }> = [];
 
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f97316'];
-    const count = Math.min(120, Math.floor(window.innerWidth / 10));
+    const count = Math.min(150, Math.floor(window.innerWidth / 8));
 
     for (let i = 0; i < count; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: (Math.random() - 0.5) * 0.8,
+        vx: (Math.random() - 0.5) * 1.0,
+        vy: (Math.random() - 0.5) * 1.0,
         radius: Math.random() * 2 + 1.5,
         color: colors[Math.floor(Math.random() * colors.length)],
         pulse: Math.random() * Math.PI * 2
@@ -49,11 +49,11 @@ const EmpireParticles: React.FC = () => {
     window.addEventListener('mousemove', handleMouseMove);
 
     const animate = () => {
-      // Background Sólido para Performance
+      // Solid background for max performance
       ctx.fillStyle = '#020617';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Grid sutil overlay
+      // Subtle grid overlay
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.03)';
       ctx.lineWidth = 0.5;
       const step = 150;
@@ -71,18 +71,18 @@ const EmpireParticles: React.FC = () => {
       }
 
       particles.forEach((p) => {
-        // Atração gravitacional do mouse
+        // Gravitational attraction logic
         const dx = mouseRef.current.x - p.x;
         const dy = mouseRef.current.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
         if (dist < 250 && dist > 0) {
           const force = (250 - dist) / 250;
-          p.vx += (dx / dist) * force * 0.08;
-          p.vy += (dy / dist) * force * 0.08;
+          p.vx += (dx / dist) * force * 0.06;
+          p.vy += (dy / dist) * force * 0.06;
         }
 
-        // Fricção leve
+        // Slight friction
         p.vx *= 0.98;
         p.vy *= 0.98;
 
@@ -90,44 +90,41 @@ const EmpireParticles: React.FC = () => {
         p.y += p.vy;
         p.pulse += 0.035;
 
-        // Warp bordas (suave com modulo)
+        // Smooth wrapping with modulo
         p.x = (p.x + canvas.width) % canvas.width;
         p.y = (p.y + canvas.height) % canvas.height;
 
         /**
          * SANITIZAÇÃO BULLETPROOF v6.0
-         * Evita o erro fatal IndexSizeError se o raio for negativo ou NaN.
-         * Força valores finitos e absolutos positivos.
+         * Prevents IndexSizeError by ensuring radius is finite, non-NaN and strictly positive.
          */
         const dynamicPulse = Math.sin(p.pulse) * 0.8;
-        let rawSize = (p.radius || 2) + dynamicPulse;
+        let rawSize = p.radius + dynamicPulse;
         
-        if (!isFinite(rawSize) || isNaN(rawSize)) {
-          rawSize = p.radius || 2;
+        if (!isFinite(rawSize) || isNaN(rawSize) || rawSize <= 0) {
+          rawSize = p.radius || 2.5;
         }
         
-        const size = Math.max(0.1, Math.abs(rawSize));
-        
+        const size = Math.max(0.8, Math.abs(rawSize));
         const opacity = 0.15 + Math.sin(p.pulse) * 0.1;
 
         try {
           ctx.beginPath();
-          // O método arc lança erro fatal se o terceiro argumento for negativo ou NaN.
           ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
           ctx.fillStyle = p.color;
           
-          if (dist < 250) {
-            ctx.globalAlpha = Math.min(0.8, opacity + 0.4);
+          if (dist < 200) {
+            ctx.globalAlpha = Math.min(0.8, opacity + 0.5);
             ctx.shadowBlur = 15;
             ctx.shadowColor = p.color;
           } else {
-            ctx.globalAlpha = Math.max(0, opacity);
+            ctx.globalAlpha = Math.max(0.1, opacity);
             ctx.shadowBlur = 0;
           }
           
           ctx.fill();
-        } catch (e) {
-          // Skip frame error to prevent application crash
+        } catch (err) {
+          // Safety net for canvas rendering edge cases
         }
         
         ctx.shadowBlur = 0;
@@ -146,7 +143,13 @@ const EmpireParticles: React.FC = () => {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[-1] particle-canvas" />;
+  return (
+    <canvas 
+      ref={canvasRef} 
+      className="fixed inset-0 pointer-events-none z-[-1] particle-canvas" 
+      aria-hidden="true"
+    />
+  );
 };
 
 export default EmpireParticles;
