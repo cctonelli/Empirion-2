@@ -51,24 +51,7 @@ export const subscribeToModalities = (callback: () => void) => {
     .subscribe();
 };
 
-// --- Core App Functions ---
-export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
-  try {
-    const { data, error } = await supabase
-      .from('site_content')
-      .select('content')
-      .eq('page_slug', slug)
-      .eq('locale', locale)
-      .limit(1)
-      .maybeSingle();
-    
-    if (error) return null;
-    return data?.content || null;
-  } catch (err) {
-    return null;
-  }
-};
-
+// --- User & SaaS Functions ---
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
     const { data, error } = await supabase
@@ -83,15 +66,41 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   }
 };
 
+export const listAllUsers = async () => {
+  return await supabase.from('users').select('*').order('created_at', { ascending: false });
+};
+
+export const updateUserPremiumStatus = async (userId: string, isPremium: boolean) => {
+  const { error } = await supabase
+    .from('users')
+    .update({ is_opal_premium: isPremium })
+    .eq('supabase_user_id', userId);
+  if (error) throw error;
+};
+
 export const updateUserRole = async (userId: string, newRole: UserRole) => {
   const { error } = await supabase.from('users').update({ role: newRole }).eq('supabase_user_id', userId);
   if (error) throw error;
 };
 
-export const listAllUsers = async () => {
-  return await supabase.from('users').select('*').order('created_at', { ascending: false });
+// --- Platform Config ---
+export const getPlatformConfig = async () => {
+  const { data, error } = await supabase
+    .from('platform_settings')
+    .select('*')
+    .single();
+  if (error) return { opal_url: 'https://opal.google/shared-mini-app-placeholder' };
+  return data;
 };
 
+export const updatePlatformConfig = async (config: { opal_url: string }) => {
+  const { error } = await supabase
+    .from('platform_settings')
+    .upsert({ id: 1, ...config, updated_at: new Date().toISOString() });
+  if (error) throw error;
+};
+
+// --- Simulation & Decisions ---
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, userName: string) => {
   const { error: decError } = await supabase
     .from('current_decisions')
@@ -118,8 +127,6 @@ export const updateEcosystem = async (championshipId: string, updates: Partial<C
   if (error) throw error;
 };
 
-// --- Community Functions ---
-// Fix: Added missing export getPublicReports used in CommunityView component
 export const getPublicReports = async (championshipId: string, round: number) => {
   return await supabase
     .from('public_reports')
@@ -128,9 +135,25 @@ export const getPublicReports = async (championshipId: string, round: number) =>
     .eq('round', round);
 };
 
-// Fix: Added missing export submitCommunityVote used in CommunityView component
 export const submitCommunityVote = async (vote: any) => {
   return await supabase
     .from('community_votes')
     .insert([vote]);
+};
+
+export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
+  try {
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('page_slug', slug)
+      .eq('locale', locale)
+      .limit(1)
+      .maybeSingle();
+    
+    if (error) return null;
+    return data?.content || null;
+  } catch (err) {
+    return null;
+  }
 };
