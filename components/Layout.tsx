@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Trophy, Settings, User, LogOut, 
   X, Menu, Shield, TrendingUp, FileText, BookOpen, 
-  ChevronRight, PenTool
+  ChevronRight, PenTool, Globe, Server
 } from 'lucide-react';
 import GlobalChat from './GlobalChat';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -21,7 +21,6 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout, activeView }) => {
   const { t } = useTranslation('common');
-  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const navItems = [
@@ -47,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
           {isSidebarOpen && <span className="text-white font-black text-xl tracking-tighter uppercase italic">EMPIRION</span>}
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
           {navItems.filter(item => !item.roles || item.roles.includes(userRole)).map((item) => (
             <Link
               key={item.id}
@@ -64,7 +63,18 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/5 space-y-2">
+        <div className="p-4 border-t border-white/5 space-y-4">
+          {isSidebarOpen && (
+            <div className="px-4 py-3 bg-slate-900/50 rounded-xl border border-white/5 space-y-2">
+               <div className="flex items-center gap-2 text-emerald-500">
+                  <Server size={10} />
+                  <span className="text-[8px] font-black uppercase tracking-widest">Node: prj_jZXZ6mdb</span>
+               </div>
+               <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 w-[98%]"></div>
+               </div>
+            </div>
+          )}
           <button 
             onClick={onLogout}
             className="w-full flex items-center gap-4 p-4 text-slate-500 hover:text-red-400 hover:bg-red-900/10 rounded-2xl transition-all"
@@ -94,7 +104,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
           <div className="flex items-center gap-10">
             <div className="hidden md:flex items-center gap-3 px-6 py-2.5 bg-slate-900 rounded-full border border-white/5">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Node Sync: 4ms</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Vercel Edge: 4ms</span>
             </div>
             <LanguageSwitcher light />
             <div className="flex items-center gap-5 border-l border-white/10 pl-10">
@@ -109,7 +119,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-10 bg-[#020617]">
+        <div className="flex-1 overflow-y-auto p-10 bg-[#020617] custom-scrollbar">
           {children}
         </div>
         <GlobalChat />

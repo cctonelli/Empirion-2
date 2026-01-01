@@ -8,6 +8,7 @@ import {
   ShoppingBag, Monitor, UserCheck, Award, Heart, GraduationCap
 } from 'lucide-react';
 import ChampionshipTimer from './ChampionshipTimer';
+import LiveBriefing from './LiveBriefing';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch } from '../types';
 
@@ -87,7 +88,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
              </span>
           </div>
         </div>
-        <ChampionshipTimer />
+        <div className="flex items-center gap-4">
+          <LiveBriefing />
+          <ChampionshipTimer />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

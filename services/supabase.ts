@@ -84,7 +84,11 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       team_id: teamId,
       user_name: userName,
       action: `Locked decisions for Round ${round}`,
-      metadata: { timestamp: new Date().toISOString() }
+      metadata: { 
+        timestamp: new Date().toISOString(),
+        agent: navigator.userAgent,
+        platform: 'Empirion-Vercel-Node'
+      }
     });
 };
 
