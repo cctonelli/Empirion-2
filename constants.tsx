@@ -1,4 +1,5 @@
-import { Branch, BusinessPlanSection, ChampionshipTemplate } from './types';
+
+import { Branch, BusinessPlanSection, ChampionshipTemplate, ModalityType } from './types';
 
 export const COLORS = {
   primary: '#020617',
@@ -9,6 +10,12 @@ export const COLORS = {
   success: '#10b981',
   danger: '#ef4444',
   warning: '#f59e0b'
+};
+
+export const MODALITY_INFO: Record<ModalityType, { label: string; desc: string; icon: string }> = {
+  standard: { label: 'Arena Padrão', desc: 'Simulação clássica multisetorial.', icon: 'Layers' },
+  business_round: { label: 'Rodada de Negócios', desc: 'Disputa comercial intensa por preço e mercado.', icon: 'Gavel' },
+  factory_efficiency: { label: 'Eficiência de Fábrica', desc: 'Foco em Engenharia de Produção e OEE.', icon: 'Cpu' }
 };
 
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
@@ -163,7 +170,8 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     is_public: true,
     config: {
       currency: 'BRL', round_frequency_days: 7, total_rounds: 12, sales_mode: 'hybrid',
-      scenario_type: 'simulated', transparency_level: 'medium', team_fee: 500, community_enabled: true, regionsCount: 9
+      scenario_type: 'simulated', transparency_level: 'medium', team_fee: 500, community_enabled: true, regionsCount: 9,
+      modalityType: 'factory_efficiency'
     },
     initial_financials: {
         balance_sheet: { 

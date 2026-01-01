@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -8,19 +9,15 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Slider from 'react-slick';
-import { DEFAULT_PAGE_CONTENT, LANDING_PAGE_DATA } from '../constants';
-import { fetchPageContent } from '../services/supabase';
+import { DEFAULT_PAGE_CONTENT } from '../constants';
+import { fetchPageContent, getModalities, subscribeToModalities } from '../services/supabase';
+import { Modality } from '../types';
 import EmpireParticles from './EmpireParticles';
 
-// Custom Arrows Components - Further reduced size and moved to extreme sides
 const NextArrow = (props: any) => {
   const { onClick } = props;
   return (
-    <button
-      onClick={onClick}
-      className="absolute right-2 top-1/2 -translate-y-1/2 z-[100] p-2.5 bg-slate-900/40 backdrop-blur-xl hover:bg-blue-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.3)] active:scale-90 hover:border-white/30"
-      aria-label="Next slide"
-    >
+    <button onClick={onClick} className="absolute right-2 top-1/2 -translate-y-1/2 z-[100] p-2.5 bg-slate-900/40 backdrop-blur-xl hover:bg-blue-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.3)] active:scale-90 hover:border-white/30" aria-label="Next slide">
       <ChevronRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
     </button>
   );
@@ -29,11 +26,7 @@ const NextArrow = (props: any) => {
 const PrevArrow = (props: any) => {
   const { onClick } = props;
   return (
-    <button
-      onClick={onClick}
-      className="absolute left-2 top-1/2 -translate-y-1/2 z-[100] p-2.5 bg-slate-900/40 backdrop-blur-xl hover:bg-blue-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.3)] active:scale-90 hover:border-white/30"
-      aria-label="Previous slide"
-    >
+    <button onClick={onClick} className="absolute left-2 top-1/2 -translate-y-1/2 z-[100] p-2.5 bg-slate-900/40 backdrop-blur-xl hover:bg-blue-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.3)] active:scale-90 hover:border-white/30" aria-label="Previous slide">
       <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
     </button>
   );
@@ -42,13 +35,18 @@ const PrevArrow = (props: any) => {
 const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const { i18n, t } = useTranslation(['landing', 'common', 'branches']);
   const [content, setContent] = useState<any>(DEFAULT_PAGE_CONTENT['landing']);
+  const [dynamicModalities, setDynamicModalities] = useState<Modality[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       const dbContent = await fetchPageContent('landing', i18n.language);
       if (dbContent) setContent(dbContent);
+      const mods = await getModalities();
+      setDynamicModalities(mods);
     };
     loadData();
+    const channel = subscribeToModalities(loadData);
+    return () => { channel.unsubscribe(); };
   }, [i18n.language]);
 
   const carouselSettings = {
@@ -67,14 +65,26 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     dotsClass: "slick-dots custom-dots"
   };
 
+  // Merge dynamic slides
+  const allCarouselSlides = [
+    ...content.carousel,
+    ...dynamicModalities.map(m => ({
+      id: m.id,
+      title: m.name,
+      subtitle: m.description,
+      image: m.image_url || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000',
+      badge: 'Nova Modalidade',
+      link: `/solutions/${m.slug}`
+    }))
+  ];
+
   return (
     <div className="min-h-screen bg-[#020617] font-sans text-slate-100 relative selection:bg-blue-500 selection:text-white overflow-x-hidden">
       <EmpireParticles />
       
-      {/* Hero Carousel */}
       <section className="h-[95vh] min-h-[700px] relative overflow-hidden">
         <Slider {...carouselSettings}>
-          {content.carousel.map((slide: any) => (
+          {allCarouselSlides.map((slide: any) => (
             <div key={slide.id} className="relative h-[95vh] min-h-[700px]">
               <div className="absolute inset-0 z-0">
                 <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/40 to-transparent z-10" />
@@ -83,35 +93,18 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               </div>
               <div className="container mx-auto px-6 md:px-16 h-full flex items-center relative z-20">
                 <div className="max-w-5xl space-y-12">
-                  <motion.div 
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="inline-flex items-center gap-3 px-8 py-3 bg-blue-600/20 backdrop-blur-xl text-blue-400 rounded-full text-[11px] font-black uppercase tracking-[0.4em] border border-blue-500/20 shadow-[0_0_40px_rgba(59,130,246,0.3)]"
-                  >
+                  <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="inline-flex items-center gap-3 px-8 py-3 bg-blue-600/20 backdrop-blur-xl text-blue-400 rounded-full text-[11px] font-black uppercase tracking-[0.4em] border border-blue-500/20 shadow-[0_0_40px_rgba(59,130,246,0.3)]">
                     <Sparkles size={16} /> {slide.badge}
                   </motion.div>
                   <div className="space-y-8">
-                    <motion.h2 
-                      initial={{ opacity: 0, y: 40 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="fluid-title font-black text-white leading-[0.85] uppercase tracking-tighter italic drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
-                    >
+                    <motion.h2 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="fluid-title font-black text-white leading-[0.85] uppercase tracking-tighter italic drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
                       {slide.title}
                     </motion.h2>
-                    <motion.p 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                      className="text-xl md:text-3xl text-slate-300 font-medium leading-relaxed max-w-4xl italic opacity-90"
-                    >
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-xl md:text-3xl text-slate-300 font-medium leading-relaxed max-w-4xl italic opacity-90">
                       {slide.subtitle}
                     </motion.p>
                   </div>
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.5 }}
-                  >
+                  <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}>
                     <Link to={slide.link} className="cyber-button inline-flex items-center gap-5 px-16 py-6 bg-white text-slate-950 rounded-full font-black text-xs uppercase tracking-[0.25em] transition-all shadow-[0_25px_60px_rgba(0,0,0,0.4)] group overflow-hidden relative active:scale-95">
                       <span className="relative z-10">Explorar Nodo</span>
                       <ChevronRight className="group-hover:translate-x-3 transition-transform relative z-10 text-orange-600" />
@@ -124,13 +117,8 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </Slider>
       </section>
 
-      {/* Main Brand Hero */}
       <section className="py-60 px-6 md:px-24 text-center relative z-20">
-        <motion.div 
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-6xl mx-auto space-y-16"
-        >
+        <motion.div initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto space-y-16">
            <h1 className="fluid-title font-black text-white leading-[0.8] tracking-tighter uppercase italic">
               {content.hero.title} <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-400 to-orange-500 animate-gradient-x">{content.hero.empire}</span>
@@ -139,16 +127,10 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               {content.hero.subtitle}
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-10 pt-16">
-              <button 
-                onClick={onLogin}
-                className="cyber-button w-full sm:w-auto px-20 py-8 bg-blue-600 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] transition-all shadow-[0_30px_70px_rgba(37,99,235,0.4)] active:scale-95"
-              >
+              <button onClick={onLogin} className="cyber-button w-full sm:w-auto px-20 py-8 bg-blue-600 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] transition-all shadow-[0_30px_70px_rgba(37,99,235,0.4)] active:scale-95">
                 {content.hero.cta}
               </button>
-              <Link 
-                to="/solutions/simulators"
-                className="cyber-button w-full sm:w-auto px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-5 backdrop-blur-xl active:scale-95"
-              >
+              <Link to="/solutions/simulators" className="cyber-button w-full sm:w-auto px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-5 backdrop-blur-xl active:scale-95">
                 Conhecer Setores <ArrowRight size={22} className="text-blue-500" />
               </Link>
            </div>
@@ -161,8 +143,6 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         .custom-dots { bottom: 40px !important; }
         .custom-dots li button:before { color: white !important; opacity: 0.15 !important; font-size: 10px !important; }
         .custom-dots li.slick-active button:before { color: #3b82f6 !important; opacity: 1 !important; text-shadow: 0 0 15px #3b82f6; }
-        
-        /* Slick Arrow Overrides */
         .slick-prev:before, .slick-next:before { display: none; }
       `}</style>
     </div>

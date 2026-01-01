@@ -6,6 +6,25 @@ export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 export type ServiceLevel = 'low' | 'mid' | 'high';
+export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
+export type ProductionStrategy = 'push_mrp' | 'pull_kanban' | 'opt' | 'heijunka';
+
+export interface Modality {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  image_url: string;
+  page_content: {
+    hero: { title: string; subtitle: string };
+    features: string[];
+    kpis: string[];
+    accent_color: string;
+  };
+  config_template: any;
+  is_public: boolean;
+  created_at: string;
+}
 
 // Business Plan Interfaces
 export interface BusinessPlanSection {
@@ -171,6 +190,7 @@ export interface MessageBoardItem {
 
 export interface EcosystemConfig {
   scenarioType: ScenarioType;
+  modalityType?: ModalityType;
   inflationRate: number;
   demandMultiplier: number;
   interestRate: number;
@@ -278,6 +298,10 @@ export interface DecisionData {
     digital_exp_investment?: number;
     service_level_allocation?: Record<ServiceLevel, number>;
     contract_mode?: 'previous' | 'immediate';
+    // Novas variáveis avançadas
+    strategy?: ProductionStrategy;
+    automation_level?: number;
+    batch_size?: number;
   };
   finance: {
     loanRequest: number;
@@ -323,6 +347,7 @@ export interface ChampionshipTemplate {
     team_fee: number;
     community_enabled: boolean;
     regionsCount?: number;
+    modalityType?: ModalityType;
   };
   initial_financials: {
     balance_sheet: BalanceSheet;

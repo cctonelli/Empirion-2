@@ -16,6 +16,7 @@ import BusinessPlanWizard from './components/BusinessPlanWizard';
 import PublicHeader from './components/PublicHeader';
 import PublicRewards from './pages/PublicRewards';
 import BranchDetail from './pages/BranchDetail';
+import ModalityDetail from './pages/ModalityDetail';
 import OpenTournaments from './pages/OpenTournaments';
 import SimulatorsPage from './pages/SimulatorsPage';
 import TrainingPage from './pages/TrainingPage';
@@ -92,6 +93,9 @@ const AppContent: React.FC = () => {
         <Route path="/solutions/create-tournament" element={<GenericSolutionPage type="create" />} />
         <Route path="/solutions/training-online" element={<TrainingPage mode="online" />} />
         <Route path="/solutions/training-corporate" element={<TrainingPage mode="corporate" />} />
+        {/* Dynamic Modality Route */}
+        <Route path="/solutions/:slug" element={<ModalityDetail />} />
+        
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/contact" element={<ContactPage />} />

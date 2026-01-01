@@ -1,167 +1,107 @@
 
-import { DecisionData, Branch, EcosystemConfig, MarketIndicators, ProductDefinition, ServiceLevel } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MarketIndicators, ProductDefinition, ServiceLevel, ProductionStrategy } from '../types';
 
 /**
- * Empirion Advanced Economic Engine (v5.5 GOLD)
- * SISERV Services Update: Formation Matching, Quality Index & Contract Modes
+ * Empirion Advanced Economic Engine (v5.8 - Heavy Industry & Commercial Tactics)
+ * Literatura Base: 
+ * - MRP/MRP II: Orlicky's Material Requirements Planning
+ * - JIT: Taiichi Ohno (Toyota Production System)
+ * - OPT: Eliyahu Goldratt (Theory of Constraints)
+ * - Business Round: Cournot Competition & Price Elasticity Models
  */
-
-const BRANCH_BASE_COSTS = {
-  industrial: 180,
-  agribusiness: 120,
-  services: 110, // Cost is largely human capital
-  commercial: 60
-};
-
-const BRANCH_ELASTICITY = {
-  industrial: -1.8,
-  agribusiness: -1.4,
-  services: -1.6, // Services depend heavily on image/quality
-  commercial: -2.2
-};
 
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
-  ecoConfig: EcosystemConfig = { 
-    scenarioType: 'simulated',
-    inflationRate: 0.04, 
-    demandMultiplier: 1.0, 
-    interestRate: 0.12, 
-    marketVolatility: 0, 
-    esgPriority: 0.5 
-  },
-  indicators?: MarketIndicators,
-  products: ProductDefinition[] = []
+  ecoConfig: EcosystemConfig,
+  indicators?: MarketIndicators
 ) => {
-  // 0. SCENARIO & CONTEXT
-  const isReal = ecoConfig.scenarioType === 'real';
-  const weights = ecoConfig.realDataWeights || { inflation: 1, demand: 1, currency: 1, climate: 1, ecommerce: 1, service_demand: 1 };
+  const modality = ecoConfig.modalityType || 'standard';
+  const round = 1; // Simplificado para exemplo, idealmente vem do estado do campeonato
   
-  // 1. SERVICE QUALITY & IMAGE (SISERV Core)
-  const trainingScore = Math.min(100, (decisions.hr.trainingPercent || 0) * 10);
-  const participationBonus = (decisions.hr.participationPercent || 0) * 0.5;
-  
-  // Accumulated quality index (Training + QA Investment)
-  const qualityIndex = Math.min(100, 
-    (trainingScore * 0.4) + 
-    (participationBonus * 0.2) + 
-    ((decisions.production.rd_investment || 0) / 2000) + 40
-  );
+  // --- 1. LÓGICA DE RODADA DE NEGÓCIOS (COMMERCIAL) ---
+  let inflationFactor = 1.0;
+  let priceElasticity = -1.8; // Padrão
 
-  // Company Image (Marketing + Quality History)
-  const totalMarketing = Object.values(decisions.regions).reduce((acc, r) => acc + r.marketing, 0);
-  const companyImage = Math.min(100, (totalMarketing * 5) + (qualityIndex * 0.6));
-
-  // 2. STAFFING QUALIFICATION MATCHING (SISERV)
-  // If branch is services, check if staff level matches the service mix
-  let qualificationFactor = 1.0;
-  if (branch === 'services') {
-    const staff = decisions.hr.staff_by_level || { low: 50, mid: 20, high: 10 };
-    const mix = decisions.production.service_level_allocation || { low: 60, mid: 30, high: 10 };
-    
-    // Simple penalty for mismatch
-    const lowMatch = Math.min(1, staff.low / (mix.low || 1));
-    const midMatch = Math.min(1, staff.mid / (mix.mid || 1));
-    const highMatch = Math.min(1, staff.high / (mix.high || 1));
-    
-    qualificationFactor = (lowMatch * 0.3) + (midMatch * 0.4) + (highMatch * 0.3);
+  if (modality === 'business_round') {
+    // Inflação Composta: Preço dos insumos sobe exponencialmente
+    inflationFactor = Math.pow(1 + (ecoConfig.inflationRate || 0.04), round);
+    // Elasticidade na Rodada de Negócios é muito maior (Guerra de Preços)
+    priceElasticity = -2.8; 
   }
 
-  // 3. MOTIVATION & STRIKE
-  const salaryBenchmark = indicators?.average_salary || 1300;
-  const salaryGap = decisions.hr.salary / salaryBenchmark;
+  // --- 2. LÓGICA DE EFICIÊNCIA DE FÁBRICA (INDUSTRIAL) ---
+  const strategy = decisions.production.strategy || 'push_mrp';
+  const automation = decisions.production.automation_level || 0;
   
-  let strikeIntensity = 0;
-  if (salaryGap < 0.9) strikeIntensity += (0.9 - salaryGap) * 2;
-  
-  const motivationScore = Math.max(0, Math.min(100, 
-    (salaryGap * 60) + (trainingScore * 0.2) - (strikeIntensity * 50)
-  ));
-  
-  const strikeOccurs = strikeIntensity > 0.4 && Math.random() < strikeIntensity;
+  // Parâmetros de Literatura
+  let inventoryHoldingCostRate = 0.15; // 15% ao mês (WACC + Armazenagem)
+  let leadTimeFactor = 1.0;
+  let setupTimePenalty = 0.2; // 20% da capacidade perdida em trocas de lote
+  let scaleBonus = 1.0;
 
-  // 4. ECONOMIC VARIABLES
-  const event = ecoConfig.activeEvent;
-  const eventInfl = event?.modifiers.inflation || 0;
-  const eventDem = event?.modifiers.demand || 0;
+  if (modality === 'factory_efficiency') {
+    switch(strategy) {
+      case 'pull_kanban': // JUST-IN-TIME (Pull)
+        inventoryHoldingCostRate = 0.04; // Estoque mínimo, custo baixo
+        leadTimeFactor = 0.6; // Muito mais ágil (60% do tempo normal)
+        setupTimePenalty = 0.05; // Foco em SMED (Troca Rápida de Ferramenta)
+        scaleBonus = 0.9; // Perde eficiência em escala bruta
+        break;
+      
+      case 'push_mrp': // MRP II (Push)
+        inventoryHoldingCostRate = 0.25; // Altos estoques, custo financeiro pesado
+        leadTimeFactor = 1.2; // Lead time longo devido a filas
+        setupTimePenalty = 0.3; // Grandes lotes, trocas demoradas
+        scaleBonus = 1.35; // Bônus massivo de escala (Economia de Escala)
+        break;
 
-  let inflation = ecoConfig.inflationRate;
-  if (indicators?.inflation_rate) {
-    const rawInfl = indicators.inflation_rate / 100;
-    inflation = isReal 
-      ? (rawInfl * weights.inflation + ecoConfig.inflationRate * (1 - weights.inflation))
-      : ecoConfig.inflationRate;
+      case 'opt': // THEORY OF CONSTRAINTS (Bottleneck)
+        // O foco aqui é proteger o gargalo. Se a automação for no gargalo, ganho é 2x
+        scaleBonus = 1.1 + (automation * 0.5); 
+        inventoryHoldingCostRate = 0.12;
+        break;
+    }
   }
-  inflation += eventInfl;
 
-  const baseCost = BRANCH_BASE_COSTS[branch] || 100;
-  const inflatedBaseCost = baseCost * (1 + inflation);
+  // --- 3. CÁLCULO DE PRODUTIVIDADE E OEE ---
+  const trainingEffect = (decisions.hr.trainingPercent / 100) * 0.4;
+  const automationEffect = automation * 0.6;
+  const staffEfficiency = 0.5 + trainingEffect + (decisions.hr.salary / 2000) * 0.2;
+  
+  // OEE = Disponibilidade * Performance * Qualidade
+  const oee = Math.min(100, (staffEfficiency * 70) + (automation * 30));
 
-  // Productivity
-  const efficiencyDrop = strikeOccurs ? 0.6 : 1.0;
-  const productivity = (motivationScore / 100) * qualificationFactor * efficiencyDrop;
+  // --- 4. DEMANDA E MERCADO ---
+  const avgPrice = Object.values(decisions.regions).reduce((acc, r) => acc + r.price, 0) / 9;
+  const imageScore = Math.min(100, (Object.values(decisions.regions).reduce((acc, r) => acc + r.marketing, 0) * 2) + (oee * 0.4));
   
-  // Available Service Capacity (Man-hours / Projects)
-  const capacity = ((decisions.production.activityLevel / 100) * 10000 + decisions.production.extraProduction) * productivity;
+  // Fórmula de Demanda Exponencial
+  const marketPotential = (indicators?.demand_regions[0] || 12000) * (ecoConfig.demandMultiplier || 1);
+  const demand = marketPotential * Math.pow(avgPrice / 300, priceElasticity) * (1 + (imageScore - 50) / 100);
 
-  // 5. DEMAND ENGINE (Image & Quality Driven)
-  const activeRegions = Object.values(decisions.regions);
-  const avgPrice = activeRegions.reduce((acc, r) => acc + r.price, 0) / (activeRegions.length || 1);
+  // --- 5. RESULTADO FINANCEIRO ---
+  const baseCost = 180 * inflationFactor; // Custo base inflacionado
+  const variableCost = baseCost * (1 - (automation * 0.2)); // Automação reduz custo variável
+  const capacity = 10000 * (decisions.production.activityLevel / 100) * scaleBonus * (oee / 100);
   
-  const basePotential = indicators?.demand_regions 
-    ? indicators.demand_regions.reduce((a, b) => a + b, 0) / indicators.demand_regions.length 
-    : 12000;
-    
-  const demandMult = isReal 
-    ? (ecoConfig.demandMultiplier * (1 - weights.demand) + (indicators?.risk_premium ? 1 - indicators.risk_premium : 1) * weights.demand)
-    : ecoConfig.demandMultiplier;
-
-  // SISERV: Services are highly dependent on Image (Company Reputation)
-  const imageMultiplier = 1.0 + (companyImage - 50) / 100 * 0.3;
-  const qualityMultiplier = 1.0 + (qualityIndex - 50) / 100 * 0.2;
+  const salesVolume = Math.min(demand, capacity);
+  const revenue = salesVolume * avgPrice;
   
-  const marketPotential = basePotential * (demandMult + eventDem) * imageMultiplier * qualityMultiplier;
+  const holdingCost = (decisions.production.purchaseMPA * inventoryHoldingCostRate);
+  const fixedCost = 45000 + (automation * 30000); // Automação aumenta custo fixo (manutenção/amortização)
   
-  const marketingIndex = Math.log10(totalMarketing + 2) * 0.45 + 0.55;
-  const potentialVolume = marketPotential * Math.pow(avgPrice / 300, BRANCH_ELASTICITY.services) * marketingIndex;
-  
-  const salesVolume = Math.min(capacity, potentialVolume);
-  
-  // SISERV: Contract Multiplier (Previous vs Immediate)
-  // Immediate contracts have 10% lower revenue due to spot pricing
-  const contractFactor = decisions.production.contract_mode === 'immediate' ? 0.9 : 1.0;
-  const revenue = salesVolume * avgPrice * contractFactor;
-
-  // 6. OPEX & FINANCIALS
-  const fixedStructuralCost = 45000 * (1 + inflation);
-  const currentSalary = decisions.hr.salary || salaryBenchmark;
-  
-  // Different levels have different salary weights in Services
-  const staff = decisions.hr.staff_by_level || { low: 50, mid: 20, high: 10 };
-  const basePayroll = (staff.low * currentSalary) + (staff.mid * currentSalary * 1.5) + (staff.high * currentSalary * 2.5);
-  const totalPayroll = basePayroll * 1.6; // Taxes/Social
-  
-  const trainingInvestment = (decisions.hr.trainingPercent / 100) * totalPayroll;
-  const marketingCost = totalMarketing * (indicators?.marketing_cost_unit || 10200);
-  
-  const totalOpex = fixedStructuralCost + marketingCost + totalPayroll + trainingInvestment;
-
-  const ebitda = revenue - totalOpex;
-  const netProfit = (ebitda - (2000000 * 0.02)) * 0.8; // Simplified depreciation/tax
+  const ebitda = revenue - (salesVolume * variableCost) - fixedCost - holdingCost;
+  const netProfit = ebitda * 0.85; // Simplificado
 
   return {
     revenue,
-    unitCost: totalOpex / (salesVolume || 1),
-    opex: totalOpex,
-    ebitda,
     netProfit,
     salesVolume,
-    qualityIndex,
-    companyImage,
-    motivationScore,
-    strikeOccurs,
-    staffEfficiency: qualificationFactor * 100,
-    contractMode: decisions.production.contract_mode || 'immediate'
+    oee,
+    companyImage: imageScore,
+    unitCost: (fixedCost + (salesVolume * variableCost)) / (salesVolume || 1),
+    inventoryRisk: strategy === 'pull_kanban' && demand > capacity ? 'ALTO (Ruptura de Estoque)' : 'NORMAL',
+    marketShare: (salesVolume / (marketPotential * 8)) * 100
   };
 };

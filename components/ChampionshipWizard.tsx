@@ -27,10 +27,11 @@ import {
   Newspaper,
   ShieldCheck,
   Target,
-  Sparkles
+  Sparkles,
+  Gavel
 } from 'lucide-react';
-import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS } from '../constants';
-import { Branch, ChampionshipTemplate, ScenarioType } from '../types';
+import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS, MODALITY_INFO } from '../constants';
+import { Branch, ChampionshipTemplate, ScenarioType, ModalityType } from '../types';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import { supabase } from '../services/supabase';
 
@@ -47,6 +48,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     templateId: '',
     salesMode: 'internal',
     scenarioType: 'simulated' as ScenarioType,
+    modalityType: 'standard' as ModalityType,
     transparency: 'medium',
     regionsCount: 9,
     initialStock: 30000,
@@ -86,6 +88,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           currency: template.config.currency,
           salesMode: template.config.sales_mode,
           scenarioType: template.config.scenario_type,
+          modalityType: template.config.modalityType || 'standard',
           transparency: template.config.transparency_level
         }));
         setFinancials(template.initial_financials);
@@ -119,10 +122,12 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           initialStock: formData.initialStock,
           initialPrice: formData.initialPrice,
           aiOpponents: formData.aiOpponents,
-          gazetaConfig: formData.gazetaConfig
+          gazetaConfig: formData.gazetaConfig,
+          modalityType: formData.modalityType
         },
         ecosystem_config: {
           scenarioType: formData.scenarioType,
+          modalityType: formData.modalityType,
           inflationRate: 0.04,
           demandMultiplier: 1.0,
           interestRate: 0.12,
@@ -246,8 +251,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         {step === 2 && (
           <div className="space-y-12">
             <div className="text-center">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Intelligence & Scale Config</h2>
-              <p className="text-slate-500 mt-2">Configure o alcance regional e a integração com dados reais de mercado.</p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Intelligence & Modality Config</h2>
+              <p className="text-slate-500 mt-2">Escolha a modalidade competitiva e integre dados de mercado.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -262,40 +267,30 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                 />
               </div>
 
-              {/* Scenario Type Selection (NEW) */}
-              <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <button 
-                  onClick={() => setFormData({...formData, scenarioType: 'simulated'})}
-                  className={`p-8 rounded-[3rem] border-2 text-left transition-all relative ${
-                    formData.scenarioType === 'simulated' ? 'border-blue-600 bg-blue-50/50 shadow-lg' : 'border-slate-100 bg-slate-50 text-slate-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className={`p-3 rounded-2xl ${formData.scenarioType === 'simulated' ? 'bg-blue-600 text-white' : 'bg-slate-200'}`}>
-                      <Layers size={24} />
-                    </div>
-                    <h3 className={`text-xl font-black uppercase tracking-tighter ${formData.scenarioType === 'simulated' ? 'text-slate-900' : ''}`}>Scenario Simulado</h3>
-                  </div>
-                  <p className="text-xs font-medium leading-relaxed">Controle total do tutor. Defina inflação, demanda e juros manualmente através de schedules e oscilações programadas.</p>
-                </button>
-
-                <button 
-                  onClick={() => setFormData({...formData, scenarioType: 'real'})}
-                  className={`p-8 rounded-[3rem] border-2 text-left transition-all relative overflow-hidden group ${
-                    formData.scenarioType === 'real' ? 'border-emerald-600 bg-emerald-50/50 shadow-lg' : 'border-slate-100 bg-slate-50 text-slate-400'
-                  }`}
-                >
-                  <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
-                    <Sparkles size={120} />
-                  </div>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className={`p-3 rounded-2xl ${formData.scenarioType === 'real' ? 'bg-emerald-600 text-white' : 'bg-slate-200'}`}>
-                      <Globe size={24} />
-                    </div>
-                    <h3 className={`text-xl font-black uppercase tracking-tighter ${formData.scenarioType === 'real' ? 'text-slate-900' : ''}`}>Real-Time AI Grounding</h3>
-                  </div>
-                  <p className="text-xs font-medium leading-relaxed">Fidelidade máxima. A IA busca dados reais de mercado (IPCA, Dólar, Commodities) e os utiliza para influenciar a economia da arena.</p>
-                </button>
+              {/* Modality Selection */}
+              <div className="lg:col-span-12 space-y-4">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Modalidade Estratégica</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {(Object.keys(MODALITY_INFO) as ModalityType[]).map(m => {
+                    const info = MODALITY_INFO[m];
+                    const Icon = m === 'business_round' ? Gavel : m === 'factory_efficiency' ? Cpu : Layers;
+                    return (
+                      <button 
+                        key={m}
+                        onClick={() => setFormData({...formData, modalityType: m})}
+                        className={`p-6 rounded-[2.5rem] border-2 text-left transition-all ${
+                          formData.modalityType === m ? 'border-blue-600 bg-blue-50/50 shadow-lg' : 'border-slate-100 bg-slate-50'
+                        }`}
+                      >
+                        <div className={`p-3 w-fit rounded-2xl mb-4 ${formData.modalityType === m ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                          <Icon size={24} />
+                        </div>
+                        <h4 className="font-black text-slate-900 uppercase tracking-tighter">{info.label}</h4>
+                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2">{info.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="lg:col-span-6 space-y-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
@@ -347,33 +342,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                    </div>
                 </div>
               </div>
-
-              {formData.scenarioType === 'real' && (
-                <div className="lg:col-span-12 bg-emerald-900 p-10 rounded-[3rem] text-emerald-50 space-y-8 animate-in slide-in-from-top-4 duration-500">
-                   <div className="flex items-center gap-3">
-                      <TrendingUp size={24} />
-                      <h3 className="text-xl font-black uppercase tracking-tighter">AI Integration Weighting</h3>
-                   </div>
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                      <div className="space-y-4">
-                         <div className="flex justify-between text-[10px] font-black uppercase opacity-60"><span>Impacto Inflação</span><span>{(formData.realDataWeights.inflation * 100).toFixed(0)}%</span></div>
-                         <input type="range" min="0" max="1" step="0.1" value={formData.realDataWeights.inflation} onChange={e => setFormData({...formData, realDataWeights: {...formData.realDataWeights, inflation: parseFloat(e.target.value)}})} className="w-full accent-emerald-400" />
-                      </div>
-                      <div className="space-y-4">
-                         <div className="flex justify-between text-[10px] font-black uppercase opacity-60"><span>Impacto Demanda</span><span>{(formData.realDataWeights.demand * 100).toFixed(0)}%</span></div>
-                         <input type="range" min="0" max="1" step="0.1" value={formData.realDataWeights.demand} onChange={e => setFormData({...formData, realDataWeights: {...formData.realDataWeights, demand: parseFloat(e.target.value)}})} className="w-full accent-emerald-400" />
-                      </div>
-                      <div className="space-y-4">
-                         <div className="flex justify-between text-[10px] font-black uppercase opacity-60"><span>Peso Câmbio/USD</span><span>{(formData.realDataWeights.currency * 100).toFixed(0)}%</span></div>
-                         <input type="range" min="0" max="1" step="0.1" value={formData.realDataWeights.currency} onChange={e => setFormData({...formData, realDataWeights: {...formData.realDataWeights, currency: parseFloat(e.target.value)}})} className="w-full accent-emerald-400" />
-                      </div>
-                   </div>
-                   <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center gap-3">
-                      <Info size={16} className="text-emerald-400" />
-                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Pesos definem a influência dos dados externos vs. engine interno.</p>
-                   </div>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -408,8 +376,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
             
             <div className="max-w-md mx-auto p-10 bg-slate-50 rounded-[4rem] border border-slate-200 text-left space-y-6 shadow-inner">
                <div className="flex justify-between items-center">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Scenario Mode</span>
-                 <span className={`font-black uppercase text-xs ${formData.scenarioType === 'real' ? 'text-emerald-600' : 'text-blue-600'}`}>{formData.scenarioType} AI</span>
+                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Modality</span>
+                 <span className="font-black uppercase text-xs text-blue-600">{formData.modalityType.replace('_', ' ')}</span>
                </div>
                <div className="flex justify-between items-center">
                  <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Sectors Active</span>
