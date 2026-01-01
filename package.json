@@ -1,8 +1,12 @@
-
 {
   "name": "empirion-2",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -28,7 +32,11 @@
     "@vitejs/plugin-react": "^4.0.0"
   },
   "overrides": {
-    "react": "$react",
-    "react-dom": "$react-dom"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-apexcharts": {
+      "react": "^19.0.0",
+      "react-dom": "^19.0.0"
+    }
   }
 }
