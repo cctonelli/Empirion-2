@@ -44,6 +44,13 @@
         ::-webkit-scrollbar-track { background: #020617; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
         .apexcharts-canvas { filter: drop-shadow(0 0 5px rgba(0,0,0,0.2)); }
+        
+        /* New Supreme Classes */
+        .cyber-button { position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .cyber-button::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); opacity: 0; transition: opacity 0.3s ease; }
+        .cyber-button:hover::after { opacity: 1; }
+        
+        .fluid-menu-item { font-size: clamp(8px, 1vw, 11px); }
     </style>
 <script type="importmap">
 {
