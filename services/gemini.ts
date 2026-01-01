@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 
 /**
  * Generates market analysis using gemini-3-flash-preview.
@@ -53,6 +53,50 @@ export const generateGazetaNews = async (marketStatus: any) => {
 };
 
 /**
+ * Generates a "Black Swan" event for the simulation.
+ */
+export const generateBlackSwanEvent = async (branch: string) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Generate a 'Black Swan' business event for a ${branch} simulation. 
+      The event must be unexpected and have significant economic consequences.
+      Provide a title, description, and numeric modifiers for: inflation (0.0 to 0.1), demand (-0.3 to 0.3), interest (0.0 to 0.1), and productivity (-0.2 to 0.2).`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            description: { type: Type.STRING },
+            impact: { type: Type.STRING },
+            modifiers: {
+              type: Type.OBJECT,
+              properties: {
+                inflation: { type: Type.NUMBER },
+                demand: { type: Type.NUMBER },
+                interest: { type: Type.NUMBER },
+                productivity: { type: Type.NUMBER }
+              },
+              required: ["inflation", "demand", "interest", "productivity"]
+            }
+          },
+          required: ["title", "description", "impact", "modifiers"]
+        }
+      }
+    });
+
+    const jsonStr = response.text.trim();
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error("Black Swan Generation Error:", error);
+    return null;
+  }
+};
+
+/**
  * Performs a search-grounded query.
  */
 export const performGroundedSearch = async (query: string) => {
@@ -83,11 +127,17 @@ export const performGroundedSearch = async (query: string) => {
  */
 export const createChatSession = () => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  return ai.chats.create({
-    model: 'gemini-3-pro-preview',
-    config: {
-      systemInstruction: `You are "Empirion Strategos". You specialize in mathematical business modeling and accounting strategy. Adhere to Bernard Sistemas principles.`,
-      thinkingConfig: { thinkingBudget: 32768 }
-    },
+  return ai.models.generateContent({
+      model: "gemini-3-pro-preview",
+      contents: "Initialize Strategos.",
+      config: { thinkingConfig: { thinkingBudget: 32768 } }
+  }).then(() => {
+      return ai.chats.create({
+        model: 'gemini-3-pro-preview',
+        config: {
+          systemInstruction: `You are "Empirion Strategos". You specialize in mathematical business modeling and accounting strategy. Adhere to Bernard Sistemas principles.`,
+          thinkingConfig: { thinkingBudget: 32768 }
+        },
+      });
   });
 };

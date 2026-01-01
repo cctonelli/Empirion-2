@@ -64,7 +64,6 @@ export interface BalanceSheet {
     inventory_raw_b: number;
     inventory_finished: number;
     prepaid_expenses: number;
-    // FIX: Added portfolio_investments property to match constants.tsx usage
     portfolio_investments?: number;
   };
   non_current_assets: {
@@ -84,7 +83,6 @@ export interface LiabilitiesEquity {
     short_term_loans: number;
     taxes_payable: number;
     dividends_payable: number;
-    // FIX: Added customer_deposits property to match constants.tsx usage
     customer_deposits?: number;
   };
   non_current_liabilities: {
@@ -97,7 +95,6 @@ export interface LiabilitiesEquity {
   total_liabilities_equity: number;
 }
 
-// FIX: Added missing exported types used by various components
 export interface AccountNode {
   id: string;
   label: string;
@@ -107,11 +104,25 @@ export interface AccountNode {
   isEditable?: boolean;
 }
 
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
+  };
+}
+
 export interface EcosystemConfig {
   inflationRate: number;
   demandMultiplier: number;
   interestRate: number;
   marketVolatility: number;
+  esgPriority?: number; // 0 to 1
+  activeEvent?: BlackSwanEvent | null;
 }
 
 export interface CommunityCriteria {
@@ -147,7 +158,6 @@ export interface MarketIndicators {
   machine_beta_price: number;
   machine_gama_price: number;
   average_salary: number;
-  // FIX: Added missing optional properties to match constants.tsx usage
   exchange_rate?: number;
   risk_premium?: number;
 }
@@ -177,6 +187,7 @@ export interface DecisionData {
     buyMachines: { alfa: number; beta: number; gama: number };
     sellMachines: { alfa: number; beta: number; gama: number };
   };
+  inBankruptcy?: boolean;
 }
 
 export interface Championship {
@@ -190,7 +201,6 @@ export interface Championship {
   totalRounds: number;
   config: any;
   initial_financials?: any;
-  // FIX: Added ecosystemConfig property to match TutorArenaControl usage
   ecosystemConfig?: EcosystemConfig;
 }
 

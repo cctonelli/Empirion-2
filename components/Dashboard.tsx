@@ -1,16 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, Activity, DollarSign, Target, Zap, Briefcase, Globe, BarChart3, 
   ArrowUpRight, ArrowDownRight, Sparkles, Loader2, Star, Users, Newspaper,
-  AlertTriangle, ChevronRight, Gavel, Landmark, Info
+  AlertTriangle, ChevronRight, Gavel, Landmark, Info, Flame
 } from 'lucide-react';
 import ChampionshipTimer from './ChampionshipTimer';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
+import { BlackSwanEvent } from '../types';
 
 const Dashboard: React.FC = () => {
   const [aiInsight, setAiInsight] = useState<string>('');
   const [gazetaNews, setGazetaNews] = useState<string>('Sincronizando agências de notícias...');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
+  const [activeEvent, setActiveEvent] = useState<BlackSwanEvent | null>(null);
 
   useEffect(() => {
     const fetchMarketIntelligence = async () => {
@@ -21,6 +24,9 @@ const Dashboard: React.FC = () => {
         ]);
         setAiInsight(analysis);
         setGazetaNews(news);
+        
+        // Simulating a state fetch for active event
+        // In a real app, this comes from Supabase championship record
       } catch (err) {
         setAiInsight("Link tático comprometido. Verifique suas reservas.");
         setGazetaNews("Erro na transmissão da Gazeta. Aguardando novo período.");
@@ -42,11 +48,33 @@ const Dashboard: React.FC = () => {
              Empirion War Room
           </h1>
           <p className="text-slate-500 font-medium mt-1 uppercase tracking-widest text-[10px]">
-            Status Estratégico: Rodada 01 - Engine v5.0 Gold
+            Status Estratégico: Rodada 01 - Engine v5.0 GOLD
           </p>
         </div>
         <ChampionshipTimer />
       </div>
+
+      {activeEvent && (
+        <div className="p-8 bg-rose-600 rounded-[2.5rem] text-white shadow-2xl animate-in slide-in-from-top-10 duration-700 border-4 border-white/20 relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none rotate-12">
+              <Flame size={200} />
+           </div>
+           <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
+              <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center shrink-0 backdrop-blur-md">
+                 <AlertTriangle size={40} className="text-white animate-pulse" />
+              </div>
+              <div className="flex-1 space-y-2 text-center md:text-left">
+                 <h2 className="text-3xl font-black uppercase tracking-tight">{activeEvent.title}</h2>
+                 <p className="text-rose-100 font-medium text-lg leading-relaxed">{activeEvent.description}</p>
+                 <div className="pt-4 flex flex-wrap gap-4 justify-center md:justify-start">
+                    <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">Demanda: {(activeEvent.modifiers.demand * 100).toFixed(0)}%</span>
+                    <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">Inflação: +{(activeEvent.modifiers.inflation * 100).toFixed(0)}%</span>
+                    <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">Produtividade: {(activeEvent.modifiers.productivity * 100).toFixed(0)}%</span>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
