@@ -9,6 +9,27 @@ export type ServiceLevel = 'low' | 'mid' | 'high';
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
 export type ProductionStrategy = 'push_mrp' | 'pull_kanban' | 'opt' | 'heijunka';
 
+/**
+ * Interface for Business Plan fields used in the Strategos BP Wizard.
+ */
+export interface BusinessPlanField {
+  id: string;
+  label: string;
+  type: 'textarea' | 'text' | 'number' | 'select';
+  placeholder?: string;
+  value: string;
+  aiPrompt?: string;
+}
+
+/**
+ * Interface for Business Plan sections containing multiple fields.
+ */
+export interface BusinessPlanSection {
+  id: string;
+  title: string;
+  fields: BusinessPlanField[];
+}
+
 export interface Modality {
   id: string;
   slug: string;
@@ -26,45 +47,21 @@ export interface Modality {
   created_at: string;
 }
 
-// Business Plan Interfaces
-export interface BusinessPlanSection {
-  id: string;
-  title: string;
-  fields: {
-    id: string;
-    label: string;
-    type: 'text' | 'textarea' | 'number' | 'table';
-    placeholder: string;
-    value: any;
-    aiPrompt?: string;
-  }[];
-}
-
-export interface BusinessPlan {
-  id: string;
-  userId: string;
-  name: string;
-  branch: Branch;
-  createdAt: string;
-  updatedAt: string;
-  sections: BusinessPlanSection[];
-  financials: {
-    investments: number;
-    fixedCosts: number;
-    variableCosts: number;
-    revenueProjection: number[];
-  };
-}
-
 export interface UserProfile {
   id: string;
   supabase_user_id: string;
   name: string;
   email: string;
   role: UserRole;
+  is_opal_premium: boolean; // Controle de acesso ao Opal
   created_at: string;
+  opal_config?: {
+    is_premium_required: boolean;
+    opal_url: string;
+  };
 }
 
+// ... Rest of the interfaces stay the same
 export interface InventoryStats {
   initial: number;
   purchases: number;
@@ -217,6 +214,10 @@ export interface EcosystemConfig {
   stockMarketActive?: boolean;
   messageBoard?: MessageBoardItem[];
   ecommerceEnabled?: boolean;
+  opal_config?: {
+    is_premium_required: boolean;
+    opal_url: string;
+  };
 }
 
 export interface CommunityCriteria {
@@ -298,7 +299,6 @@ export interface DecisionData {
     digital_exp_investment?: number;
     service_level_allocation?: Record<ServiceLevel, number>;
     contract_mode?: 'previous' | 'immediate';
-    // Novas variáveis avançadas
     strategy?: ProductionStrategy;
     automation_level?: number;
     batch_size?: number;

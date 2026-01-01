@@ -1,174 +1,99 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
-import { supabase, getUserProfile } from './services/supabase';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Reports from './components/Reports';
 import MarketAnalysis from './components/MarketAnalysis';
+import OpalIntelligenceHub from './components/OpalIntelligenceHub';
 import AdminCommandCenter from './components/AdminCommandCenter';
-import { TutorGuide, TeamGuide } from './components/InstructionGuides';
-import Auth from './components/Auth';
-import ChampionshipWizard from './components/ChampionshipWizard';
-import DecisionForm from './components/DecisionForm';
 import LandingPage from './components/LandingPage';
-import BusinessPlanWizard from './components/BusinessPlanWizard';
-import PublicHeader from './components/PublicHeader';
-import PublicRewards from './pages/PublicRewards';
-import BranchDetail from './pages/BranchDetail';
-import ModalityDetail from './pages/ModalityDetail';
-import OpenTournaments from './pages/OpenTournaments';
-import SimulatorsPage from './pages/SimulatorsPage';
-import TrainingPage from './pages/TrainingPage';
-import GenericSolutionPage from './pages/GenericSolutionPage';
-import FeaturesPage from './pages/FeaturesPage';
-import BlogPage from './pages/BlogPage';
-import ContactPage from './pages/ContactPage';
+import Auth from './components/Auth';
+import { supabase, getUserProfile } from './services/supabase';
+import { UserProfile } from './types';
 
+/**
+ * AppContent handles the session and profile state management within the router context.
+ */
 const AppContent: React.FC = () => {
   const [session, setSession] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const location = useLocation();
-  const isAppRoute = location.pathname.startsWith('/app');
 
   useEffect(() => {
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    // Check for initial auth session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) await fetchProfile(session.user.id);
-      setLoading(false);
-    };
-    initAuth();
+      if (session) fetchProfile(session.user.id);
+      else setLoading(false);
+    });
 
+    // Handle authentication state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) fetchProfile(session.user.id);
-      else setProfile(null);
+      else {
+        setProfile(null);
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (uid: string) => {
     try {
-      const prof = await getUserProfile(userId);
+      const prof = await getUserProfile(uid);
       setProfile(prof);
-    } catch (error) {
-      console.error("Profile Fetch Error:", error);
+    } catch (err) {
+      console.error("Failed to load user profile:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
-        <div className="flex flex-col items-center gap-6">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-          <span className="text-white text-[10px] font-black uppercase tracking-[0.4em] italic opacity-50">Empirion Protocol Initializing...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (showAuthModal && !session) {
-    return <Auth onAuth={() => setShowAuthModal(false)} onBack={() => setShowAuthModal(false)} />;
-  }
+  if (loading) return null;
 
   return (
-    <div className="min-h-screen bg-[#020617]">
-      {!isAppRoute && <PublicHeader onLogin={() => setShowAuthModal(true)} />}
-      
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage onLogin={() => setShowAuthModal(true)} />} />
-        <Route path="/rewards" element={<PublicRewards />} />
-        <Route path="/branches/:slug" element={<BranchDetail />} />
-        <Route path="/solutions/business-plan" element={<BusinessPlanWizard />} />
-        <Route path="/solutions/open-tournaments" element={<OpenTournaments />} />
-        <Route path="/solutions/simulators" element={<SimulatorsPage />} />
-        <Route path="/solutions/university" element={<GenericSolutionPage type="university" />} />
-        <Route path="/solutions/corporate" element={<GenericSolutionPage type="corporate" />} />
-        <Route path="/solutions/individual" element={<GenericSolutionPage type="individual" />} />
-        <Route path="/solutions/create-tournament" element={<GenericSolutionPage type="create" />} />
-        <Route path="/solutions/training-online" element={<TrainingPage mode="online" />} />
-        <Route path="/solutions/training-corporate" element={<TrainingPage mode="corporate" />} />
-        {/* Dynamic Modality Route */}
-        <Route path="/solutions/:slug" element={<ModalityDetail />} />
-        
-        <Route path="/features" element={<FeaturesPage />} />
-        <Route path="/blog" element={<BlogPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/solutions" element={<Navigate to="/solutions/simulators" />} />
-        
-        {/* Protected App Routes */}
-        <Route path="/app/*" element={
-          session ? (
-            <Layout
-              userName={profile?.name || session.user.email}
-              userRole={profile?.role || 'player'}
-              onLogout={async () => { await supabase.auth.signOut(); }}
-              activeView={location.pathname.replace('/app/', '') || 'dashboard'}
-              onNavigate={(view) => { window.location.href = `/app/${view}`; }}
-            >
-              <Routes>
-                <Route path="/" element={<Navigate to="dashboard" />} />
-                <Route path="dashboard" element={<Dashboard branch="industrial" />} />
-                <Route path="reports" element={<Reports branch="industrial" />} />
-                <Route path="market" element={<MarketAnalysis />} />
-                <Route path="admin" element={<AdminCommandCenter />} />
-                <Route path="decisions" element={<DecisionForm round={1} branch="industrial" />} />
-                <Route path="guides" element={profile?.role === 'player' ? <TeamGuide /> : <TutorGuide />} />
-                <Route path="championships" element={<ChampionshipWizard onComplete={() => {}} />} />
-                <Route path="business-planner" element={<BusinessPlanWizard />} />
-              </Routes>
-            </Layout>
-          ) : (
-            <Navigate to="/" />
-          )
-        } />
-      </Routes>
-
-      {!isAppRoute && (
-        <footer className="bg-slate-950 pt-32 pb-16 px-8 border-t border-white/5 relative z-10">
-           <div className="container mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-24 mb-32">
-                 <div className="col-span-2 space-y-8">
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center">
-                          <span className="text-white font-black text-xl italic">E</span>
-                       </div>
-                       <span className="text-2xl font-black tracking-tighter uppercase text-white italic">EMPIRION</span>
-                    </div>
-                    <p className="text-slate-500 text-lg max-w-sm font-medium leading-relaxed">A arquitetura definitiva de simulação empresarial. Onde o prestígio acadêmico encontra a inovação neural.</p>
-                 </div>
-                 <div className="space-y-6">
-                    <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Navigation</h5>
-                    <div className="flex flex-col gap-4">
-                       <Link to="/" className="text-xs font-black uppercase text-slate-500 hover:text-white">Home</Link>
-                       <Link to="/solutions/open-tournaments" className="text-xs font-black uppercase text-slate-500 hover:text-white">Arenas</Link>
-                       <Link to="/rewards" className="text-xs font-black uppercase text-slate-500 hover:text-white">Empire Rewards</Link>
-                    </div>
-                 </div>
-                 <div className="space-y-6">
-                    <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Powered By</h5>
-                    <div className="flex flex-col gap-4 text-xs font-black uppercase text-slate-500">
-                       <span>Gemini 3 Oracle</span>
-                       <span>Bernard Fidelity</span>
-                       <span>Supabase Realtime</span>
-                    </div>
-                 </div>
-              </div>
-              <div className="text-center pt-16 border-t border-white/5">
-                 <p className="text-[10px] font-black uppercase text-slate-700 tracking-[0.8em] italic">© 2026 EMPIRION BI ARENA | SIAGRO-SISERV-SIMCO FIDELITY</p>
-              </div>
-           </div>
-        </footer>
-      )}
-    </div>
+    <Routes>
+      <Route path="/" element={<LandingPage onLogin={() => window.location.href = '/auth'} />} />
+      <Route path="/auth" element={<Auth onAuth={() => window.location.href = '/app'} />} />
+      <Route path="/app/*" element={
+        session ? (
+          <Layout
+            userName={profile?.name || session.user.email}
+            userRole={profile?.role || 'player'}
+            onLogout={async () => { await supabase.auth.signOut(); }}
+            activeView={location.pathname.replace('/app/', '') || 'dashboard'}
+            onNavigate={(view) => { window.location.href = `/app/${view}`; }}
+          >
+            <Routes>
+              <Route path="/" element={<Navigate to="dashboard" />} />
+              <Route path="dashboard" element={<Dashboard branch="industrial" />} />
+              <Route path="reports" element={<Reports branch="industrial" />} />
+              <Route path="market" element={<MarketAnalysis />} />
+              <Route path="intelligence" element={
+                <OpalIntelligenceHub 
+                  isPremium={profile?.is_opal_premium || false} 
+                  onUpgrade={() => alert("Redirecionando para o Gateway Stripe...")}
+                  config={profile?.opal_config}
+                />
+              } />
+              <Route path="admin" element={<AdminCommandCenter />} />
+            </Routes>
+          </Layout>
+        ) : (
+          <Navigate to="/" />
+        )
+      } />
+    </Routes>
   );
 };
 
+/**
+ * Main App component wrapped in BrowserRouter for navigation support.
+ */
 const App: React.FC = () => (
   <BrowserRouter>
     <AppContent />
