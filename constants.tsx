@@ -1,5 +1,5 @@
 
-import { ChampionshipTemplate } from './types';
+import { ChampionshipTemplate, Branch } from './types';
 
 export const COLORS = {
   primary: '#0f172a',
@@ -8,6 +8,142 @@ export const COLORS = {
   success: '#22c55e',
   danger: '#ef4444',
   warning: '#f59e0b'
+};
+
+export const LANDING_PAGE_DATA = {
+  hero: {
+    title: "Empirion – Business Intelligence Arena v5.5 GOLD",
+    subtitle: "Forge Your Empire with AI-Driven Strategic Insight",
+    cta: "Start Your Empire",
+    secondaryCta: "Explore Features"
+  },
+  menuItems: [
+    { id: "home", label: "Início", icon: "Home" },
+    { id: "features", label: "Funcionalidades", icon: "Zap" },
+    { id: "branches", label: "Setores", icon: "Building" },
+    { id: "ia", label: "Inteligência Artificial", icon: "Brain" },
+    { id: "community", label: "Comunidade", icon: "Users" },
+    { id: "roadmap", label: "Roadmap", icon: "Map" }
+  ],
+  features: [
+    { id: "feat-1", title: "Simulação Realtime", description: "Decisões colaborativas com Supabase Channels e sincronia instantânea entre membros do time.", icon: "Clock" },
+    { id: "feat-2", title: "Gazeta Industrial IA", description: "Notícias e análises de mercado geradas dinamicamente por Gemini 3 Pro baseadas no seu desempenho.", icon: "Newspaper" },
+    { id: "feat-3", title: "Dashboards ApexCharts", description: "KPIs avançados, Market Share e indicadores macroeconômicos visualizados em tempo real.", icon: "BarChart3" },
+    { id: "feat-4", title: "Command Center Admin", description: "Controle total para tutores: ajuste de inflação, demanda e eventos de 'Cisne Negro'.", icon: "Shield" }
+  ],
+  branchesOverview: [
+    { id: "industrial", slug: "industrial", name: "Industrial", icon: "Factory", color: "text-blue-600", bg: "bg-blue-50", description: "Gestão completa de produção, suprimentos, máquinas Alfa/Beta/Gama e supply chain complexo.", cta: "Ver Detalhes" },
+    { id: "commercial", slug: "commercial", name: "Comercial", icon: "ShoppingCart", color: "text-emerald-600", bg: "bg-emerald-50", description: "Varejo híbrido, e-commerce, comissões de venda e satisfação do consumidor (SIMCO).", cta: "Ver Detalhes" },
+    { id: "services", slug: "services", name: "Serviços", icon: "Briefcase", color: "text-indigo-600", bg: "bg-indigo-50", description: "Níveis de formação, qualidade de imagem corporativa e gestão de contratos técnicos (SISERV).", cta: "Ver Detalhes" },
+    { id: "agribusiness", slug: "agribusiness", name: "Agronegócio", icon: "Tractor", color: "text-amber-600", bg: "bg-amber-50", description: "Ativos biológicos, perecibilidade, sazonalidade de safra e Yield biotecnológico (SIAGRO).", cta: "Ver Detalhes" },
+    { id: "finance", slug: "finance", name: "Financeiro", icon: "DollarSign", color: "text-rose-600", bg: "bg-rose-50", description: "Gestão de bancos, investimentos, hedge cambial, fundos e volatilidade de mercado real.", cta: "Ver Detalhes" },
+    { id: "construction", slug: "construction", name: "Construção", icon: "Hammer", color: "text-orange-600", bg: "bg-orange-50", description: "Obras, licitações, gestão de materiais, prazos de projeto e riscos climáticos em tempo real.", cta: "Ver Detalhes" }
+  ],
+  branchesDetailData: {
+    industrial: {
+      title: "Simulação Industrial",
+      subtitle: "Gestão completa de produção, suprimentos e CapEx em mercado compartilhado.",
+      description: "Foco total na eficiência produtiva e gestão de ativos fixos. O simulador industrial exige coordenação fina entre a compra de matérias-primas e a manutenção da capacidade das máquinas.",
+      features: [
+        "Decisões em máquinas (Alfa/Beta/Gama) e compras spot/long-term.",
+        "Obsolescência, depreciação, greves e eventos Black Swan.",
+        "Relatórios regionais (até 15 regiões) e tomada de ativos.",
+        "Integração IA: Gazeta Industrial com análises profundas Gemini."
+      ],
+      kpis: ["Market Share", "Margem Líquida", "TSR", "Produtividade Máquinas"],
+      templateExample: "Template clássico com 3 produtos duráveis e bolsa fictícia dinâmica."
+    },
+    commercial: {
+      title: "Simulação Comercial",
+      subtitle: "Varejo híbrido, gestão de canais e satisfação do cliente final.",
+      description: "Inspirado no modelo SIMCO, este ramo foca na distribuição e no equilíbrio entre lojas físicas e o canal digital (E-commerce).",
+      features: [
+        "Canais híbridos: tradicional + e-commerce (% alocação).",
+        "Produtos perecíveis/duráveis com perda de estoque e sazonalidade.",
+        "Antecipação de recebíveis e comissões para força de vendas.",
+        "Gráficos de satisfação do consumidor e indicadores de conversão online."
+      ],
+      kpis: ["Channel Yield", "Consumer Satisfaction Index", "Stock Turnover", "Digital ROI"],
+      templateExample: "Lojas de departamento com mix variado de eletrônicos e bens de consumo."
+    },
+    services: {
+      title: "Simulação de Serviços",
+      subtitle: "Capital humano, qualidade de entrega e prestígio de marca.",
+      description: "O modelo SISERV foca no ativo mais valioso de uma empresa de serviços: o conhecimento. Gerencie equipes de diferentes níveis de formação.",
+      features: [
+        "3 níveis de formação: baixa/média/alta (limpeza, técnicos, consultores).",
+        "Contratos prévios (multas por atraso) vs. contratos imediatos (spot).",
+        "Qualidade e imagem da empresa acumulada rodada a rodada.",
+        "Motivação de RH e produtividade sensível a salários e treinamento."
+      ],
+      kpis: ["Brand Prestige", "Labor Efficiency", "Quality Assurance Score", "Contract Renewal Rate"],
+      templateExample: "Empresa de Consultoria Tech com foco em projetos de alta complexidade."
+    },
+    agribusiness: {
+      title: "Simulação de Agronegócio",
+      subtitle: "Commodities, clima real e perecibilidade biológica.",
+      description: "O motor SIAGRO simula o ciclo de vida do campo. Decisões de plantio, colheita e logística cooperativa em um ambiente de alto risco climático.",
+      features: [
+        "Perecibilidade de estoque biológico e sazonalidade de safra real.",
+        "Cadeia cooperativa e produtores rurais como fornecedores críticos.",
+        "Financiamentos rurais específicos e horas-extras de colheita.",
+        "Alertas IA para equilíbrio entre produção e venda no mercado futuro."
+      ],
+      kpis: ["Yield Safra", "Perishability Loss Rate", "Commodity Price Hedge", "Climate Resilience"],
+      templateExample: "Cooperativa de Grãos com processamento industrial e exportação."
+    },
+    finance: {
+      title: "Simulação Financeira",
+      subtitle: "Bancos, investimentos e gestão de hedge em volatilidade real.",
+      description: "Foco no mercado de capitais e gestão de spread. Simule a operação de um banco comercial ou um fundo de investimentos (SINVEST).",
+      features: [
+        "Gestão de carteira de crédito e fundos de investimentos.",
+        "Empréstimos, hedge cambial e juros, aplicações de recursos.",
+        "Indicadores de bolsa fictícia + modo Real (APIs CVM/BCB).",
+        "Ranking por retorno de portfólio e risco ajustado (Sharpe Ratio)."
+      ],
+      kpis: ["Spread Bancário", "Return on Portfolio", "Capital Adequacy Ratio", "Risk Premium"],
+      templateExample: "Banco de Investimentos operando em cenário de alta volatilidade inflacionária."
+    },
+    construction: {
+      title: "Simulação de Construção",
+      subtitle: "Obras pesadas, licitações e gestão de projetos complexos.",
+      description: "Gerencie grandes canteiros de obras. O sucesso depende da gestão de prazos e do controle rigoroso dos custos de materiais e mão-de-obra.",
+      features: [
+        "Participação em licitações públicas/privadas com propostas de valor.",
+        "Prazos de obra reais, riscos de atraso e multas contratuais.",
+        "CapEx em terrenos e instalações pesadas (maquinário de obra).",
+        "Eventos de clima e greves impactando o cronograma físico-financeiro."
+      ],
+      kpis: ["Project Margin", "Schedule Adherence (SPI)", "Quality Compliance", "Safety Index"],
+      templateExample: "Construtora de infraestrutura urbana em expansão regional."
+    }
+  },
+  iaFeatures: {
+    title: "Strategos AI Oracle",
+    description: "Nosso núcleo cognitivo oferece raciocínio profundo para decisões estratégicas de alto nível.",
+    items: [
+      { title: "Análise Grounded", desc: "Pesquisa real de mercado via Google Search integrado." },
+      { title: "Projeções Contábeis", desc: "Cálculos automáticos de ROI, EBITDA e Ponto de Equilíbrio." },
+      { title: "Strategic Advisor", desc: "Recomendações táticas personalizadas para sua empresa." },
+      { title: "Black Swan Protocol", desc: "Simulação de eventos globais de impacto imprevisível." }
+    ]
+  },
+  community: {
+    title: "Junte-se à Arena Global",
+    description: "Participe de campeonatos públicos, acompanhe o Community Score e receba avaliações de observadores ativos no mercado.",
+    stats: [
+      { label: "Usuários Ativos", val: "15k+" },
+      { label: "Arenas Criadas", val: "1.2k" },
+      { label: "Decisões Processadas", val: "1M+" }
+    ]
+  },
+  roadmap: [
+    { version: "v5.6", item: "Engine de Processamento Batch Automatizado" },
+    { version: "v5.8", item: "ESG Score System & Sustentabilidade" },
+    { version: "v6.0", item: "App Mobile War Room (iOS/Android)" },
+    { version: "v6.2", item: "Modo Real com Integração de APIs Bancárias" }
+  ]
 };
 
 export const BRANCH_CONFIGS: Record<string, { label: string; icon: string; description: string }> = {

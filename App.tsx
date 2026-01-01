@@ -10,11 +10,13 @@ import { TutorGuide, TeamGuide } from './components/InstructionGuides';
 import Auth from './components/Auth';
 import ChampionshipWizard from './components/ChampionshipWizard';
 import DecisionForm from './components/DecisionForm';
+import LandingPage from './components/LandingPage';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [activeView, setActiveView] = useState('dashboard');
+  const [viewMode, setViewMode] = useState<'landing' | 'auth' | 'app'>('landing');
   const [loading, setLoading] = useState(true);
   const [currentBranch, setCurrentBranch] = useState<any>('industrial');
 
@@ -24,8 +26,10 @@ const App: React.FC = () => {
       setSession(session);
       if (session) {
         await fetchProfile(session.user.id);
+        setViewMode('app');
       } else {
         setLoading(false);
+        setViewMode('landing');
       }
     };
 
@@ -35,9 +39,11 @@ const App: React.FC = () => {
       setSession(session);
       if (session) {
         fetchProfile(session.user.id);
+        setViewMode('app');
       } else {
         setProfile(null);
         setLoading(false);
+        if (viewMode === 'app') setViewMode('landing');
       }
     });
 
@@ -57,6 +63,7 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setViewMode('landing');
   };
 
   if (loading) {
@@ -64,14 +71,18 @@ const App: React.FC = () => {
       <div className="h-screen w-screen flex items-center justify-center bg-slate-900">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <span className="text-white text-[10px] font-black uppercase tracking-[0.3em]">Empirion Kernel v5.3 Initializing...</span>
+          <span className="text-white text-[10px] font-black uppercase tracking-[0.3em]">Empirion Kernel v5.5 Initializing...</span>
         </div>
       </div>
     );
   }
 
+  // Public views logic
   if (!session) {
-    return <Auth onAuth={() => {}} />;
+    if (viewMode === 'landing') {
+      return <LandingPage onLogin={() => setViewMode('auth')} />;
+    }
+    return <Auth onAuth={() => setViewMode('app')} onBack={() => setViewMode('landing')} />;
   }
 
   const renderContent = () => {
@@ -109,7 +120,7 @@ const App: React.FC = () => {
                 <span className="text-xl font-black text-slate-900 tracking-tighter uppercase">EMPIRION</span>
               </div>
               <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
-                © 2025 EMPIRION SYSTEMS INC. | v5.3.0-GOLD (SIAGRO/SIND FIDELITY)
+                © 2025 EMPIRION SYSTEMS INC. | v5.5.0-GOLD (SIAGRO/SIND FIDELITY)
               </p>
               <div className="flex gap-4 text-[8px] font-black uppercase text-slate-300 tracking-widest">
                 <span>Agribusiness Yield Engine</span>
