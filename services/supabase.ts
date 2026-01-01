@@ -1,27 +1,58 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, UserProfile, UserRole } from '../types';
 
-// Robust environment variable resolution for Vite/Vercel/Next.js compatibility
-// Fix: Use any cast to access env on import.meta to avoid TS error in mixed environments where ImportMeta is not fully typed
-const SUPABASE_URL = 
-  ((import.meta as any).env?.VITE_SUPABASE_URL) || 
-  (process.env?.NEXT_PUBLIC_SUPABASE_URL) || 
-  (process.env?.SUPABASE_URL) ||
-  'https://gkmjlejeqndfdvxxvuxa.supabase.co';
+/**
+ * Supabase Engine v6.2 (Safe-Initialization Mode)
+ * Resolves variables across multiple possible environments (Vite, Next, Process).
+ * Includes hardcoded defaults to ensure the UI remains functional even before
+ * environment variables are fully configured in the deployment dashboard.
+ */
+const getEnv = (key: string): string => {
+  const viteKey = `VITE_${key}`;
+  const nextKey = `NEXT_PUBLIC_${key}`;
+  
+  // Check all common variable locations
+  const val = (
+    (import.meta as any).env?.[viteKey] ||
+    (import.meta as any).env?.[nextKey] ||
+    (import.meta as any).env?.[key] ||
+    (window as any).process?.env?.[viteKey] ||
+    (window as any).process?.env?.[nextKey] ||
+    (window as any).process?.env?.[key] ||
+    ''
+  );
+  return val;
+};
 
-// Fix: Use any cast to access env on import.meta to avoid TS error in mixed environments where ImportMeta is not fully typed
-const SUPABASE_ANON_KEY = 
-  ((import.meta as any).env?.VITE_SUPABASE_ANON_KEY) || 
-  (process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || 
-  (process.env?.SUPABASE_ANON_KEY) ||
-  ''; // Fallback to empty to prevent startup crash, though auth will fail if missing
+// Use the specific project URL from the Empirion specification as the default
+const SUPABASE_URL = getEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
+
+// Use an empty string or placeholder for the key. 
+// If it's truly missing, requests will fail but the app won't crash on boot.
+const SUPABASE_ANON_KEY = getEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+
+// Log a warning instead of a CRITICAL error to provide feedback without alarming users
+if (!getEnv('SUPABASE_URL') || !getEnv('SUPABASE_ANON_KEY')) {
+  console.warn('Supabase: Running with fallback configuration. For production, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.');
+}
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
- * Dynamic Content Fetching (v5.1)
- * Adicionado fallback resiliente para evitar tela preta em caso de erro 406 ou RLS.
+ * Utilitário centralizado para tratamento de erros PostgrestError
+ */
+export const handleSupabaseError = (error: any, context: string) => {
+  console.error(`Supabase Error [${context}]:`, {
+    message: error?.message,
+    code: error?.code,
+    details: error?.details,
+    hint: error?.hint
+  });
+  return null;
+};
+
+/**
+ * Dynamic Content Fetching (v5.5 - Gold)
  */
 export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
   try {
@@ -34,17 +65,14 @@ export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
       .maybeSingle();
     
     if (error) {
-      // Fix for TS2339: Property 'status' does not exist on type 'PostgrestError'
-      if (error.code === 'PGRST106' || (error as any).status === 406) {
-        console.warn(`Supabase status 406 for ${slug}. Possible schema mismatch or RLS block.`);
-      } else {
-        console.error(`Supabase error fetching content for ${slug}:`, error);
+      if (error.code !== 'PGRST116') {
+        handleSupabaseError(error, `fetchPageContent:${slug}`);
       }
       return null;
     }
     return data?.content || null;
   } catch (err) {
-    console.warn(`Critical failure fetching ${slug}, using fallback.`);
+    console.warn(`Content fetch failed for ${slug}, utilizing local constants.`);
     return null;
   }
 };
@@ -55,8 +83,8 @@ export const checkSupabaseConnection = async () => {
     if (error) throw error;
     return { online: true };
   } catch (err: any) {
-    console.error("Supabase Connection Health Check Failed:", err);
-    return { online: false, error: err.message || "Unknown Error" };
+    handleSupabaseError(err, 'HealthCheck');
+    return { online: false, error: err.message || "Connection Refused" };
   }
 };
 
@@ -68,7 +96,10 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       .eq('supabase_user_id', userId)
       .maybeSingle();
     
-    if (error) return null;
+    if (error) {
+      if (error.code !== 'PGRST116') handleSupabaseError(error, 'getUserProfile');
+      return null;
+    }
     return data;
   } catch (e) {
     return null;
@@ -80,7 +111,10 @@ export const updateUserRole = async (userId: string, newRole: UserRole) => {
     .from('users')
     .update({ role: newRole })
     .eq('supabase_user_id', userId);
-  if (error) throw error;
+  if (error) {
+    handleSupabaseError(error, 'updateUserRole');
+    throw error;
+  }
 };
 
 export const listAllUsers = async () => {
@@ -101,7 +135,10 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       updated_at: new Date().toISOString()
     });
 
-  if (decError) throw decError;
+  if (decError) {
+    handleSupabaseError(decError, 'saveDecisions');
+    throw decError;
+  }
 
   await supabase
     .from('decision_audit_log')
@@ -112,14 +149,17 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       metadata: { 
         timestamp: new Date().toISOString(),
         agent: navigator.userAgent,
-        platform: 'Empirion-Vercel-Node'
+        platform: 'Empirion-Vite-Node'
       }
     });
 };
 
 export const updateEcosystem = async (championshipId: string, updates: Partial<Championship>) => {
   const { error } = await supabase.from('championships').update(updates).eq('id', championshipId);
-  if (error) throw error;
+  if (error) {
+    handleSupabaseError(error, 'updateEcosystem');
+    throw error;
+  }
 };
 
 export const getPublicChampionships = async () => {
