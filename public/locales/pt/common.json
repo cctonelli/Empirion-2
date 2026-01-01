@@ -1,0 +1,17 @@
+
+{
+  "welcome": "Bem-vindo à Arena Empirion",
+  "login": "Entrar",
+  "signup": "Cadastrar",
+  "logout": "Sair",
+  "language": "Idioma",
+  "branches": "Ramos Suportados",
+  "dashboard": "Dashboard",
+  "championships": "Campeonatos",
+  "businessPlanner": "Plano de Negócios",
+  "reports": "Relatórios Financeiros",
+  "market": "Análise de Mercado",
+  "admin": "Centro de Comando",
+  "guides": "Guias de Instrução",
+  "settings": "Configurações"
+}

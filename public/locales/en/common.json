@@ -1,0 +1,17 @@
+
+{
+  "welcome": "Welcome to Empirion Arena",
+  "login": "Login",
+  "signup": "Sign Up",
+  "logout": "Logout",
+  "language": "Language",
+  "branches": "Supported Branches",
+  "dashboard": "Dashboard",
+  "championships": "Championships",
+  "businessPlanner": "Business Planner",
+  "reports": "Financial Reports",
+  "market": "Market Analysis",
+  "admin": "Command Center",
+  "guides": "Instruction Guides",
+  "settings": "Settings"
+}

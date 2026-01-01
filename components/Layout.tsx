@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   LayoutDashboard, 
   Trophy, 
@@ -20,6 +21,7 @@ import {
   PenTool
 } from 'lucide-react';
 import GlobalChat from './GlobalChat';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -31,17 +33,18 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigate, onLogout, activeView }) => {
+  const { t } = useTranslation('common');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'championships', label: 'Championships', icon: Trophy },
-    { id: 'business-planner', label: 'Business Planner', icon: PenTool },
-    { id: 'reports', label: 'Financial Reports', icon: FileText },
-    { id: 'market', label: 'Market Analysis', icon: TrendingUp },
-    { id: 'admin', label: 'Command Center', icon: Shield, roles: ['admin', 'tutor'] },
-    { id: 'guides', label: 'Instruction Guides', icon: BookOpen },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
+    { id: 'championships', label: t('championships'), icon: Trophy },
+    { id: 'business-planner', label: t('businessPlanner'), icon: PenTool },
+    { id: 'reports', label: t('reports'), icon: FileText },
+    { id: 'market', label: t('market'), icon: TrendingUp },
+    { id: 'admin', label: t('admin'), icon: Shield, roles: ['admin', 'tutor'] },
+    { id: 'guides', label: t('guides'), icon: BookOpen },
+    { id: 'settings', label: t('settings'), icon: Settings },
   ];
 
   const currentItem = navItems.find(item => item.id === activeView) || navItems[0];
@@ -85,13 +88,8 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
             className="w-full flex items-center gap-4 p-3 text-slate-500 hover:text-red-400 hover:bg-red-900/10 rounded-xl transition-all group"
           >
             <LogOut size={20} className="shrink-0 group-hover:-translate-x-1 transition-transform" />
-            {isSidebarOpen && <span className="font-bold text-xs uppercase tracking-widest">Logout</span>}
+            {isSidebarOpen && <span className="font-bold text-xs uppercase tracking-widest">{t('logout')}</span>}
           </button>
-          {isSidebarOpen && (
-            <div className="px-3 py-2 text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] text-center">
-              Deploy Build v5.5.0-GOLD
-            </div>
-          )}
         </div>
       </aside>
 
@@ -115,11 +113,8 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onNavigat
           </div>
 
           <div className="flex items-center gap-8">
-            <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-full">
-               <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-               <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Cloud Link Active</span>
-            </div>
-
+            <LanguageSwitcher />
+            
             <div className="flex items-center gap-4 border-l border-slate-200 pl-8">
               <div className="flex flex-col items-end hidden md:flex">
                 <span className="text-xs font-black text-slate-900 truncate max-w-[120px]">{userName}</span>
