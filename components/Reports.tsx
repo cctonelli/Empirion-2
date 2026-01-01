@@ -2,31 +2,33 @@
 import React, { useState } from 'react';
 import { 
   FileText, Activity, Package, DollarSign, Zap, Users, Globe, 
-  ChevronDown, Download, BarChart3, TrendingUp, Landmark, ArrowRight, Table as TableIcon,
-  ShieldCheck, User, Newspaper, Building2, Gavel, Info, Award, Star, Leaf, AlertTriangle, Heart, Award as QualityIcon
+  Download, BarChart3, Landmark, ArrowRight, ShieldCheck, 
+  Info, Award, Star, AlertTriangle, Heart, User, TrendingUp
 } from 'lucide-react';
 import { Branch } from '../types';
 
-const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' as Branch }) => {
+const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [reportMode, setReportMode] = useState<'individual' | 'collective' | 'market'>('individual');
   const [collectiveSubTab, setCollectiveSubTab] = useState<'bp' | 'dre' | 'vendas' | 'benchmark'>('vendas');
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20 px-4 md:px-0">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-8 animate-in fade-in duration-1000 pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase flex items-center gap-4">
-             <div className="p-3 bg-slate-900 text-white rounded-2xl shadow-xl">
-                <FileText size={24} />
-             </div>
-             Audit Terminal
-          </h1>
-          <p className="text-slate-500 font-medium mt-1 uppercase tracking-widest text-[10px]">
-            Relatórios Consolidados - {branch === 'agribusiness' ? 'SIAGRO' : branch === 'commercial' ? 'SIMCO' : branch === 'services' ? 'SISERV' : 'Bernard'} Build v5.5 GOLD
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <FileText className="text-white" size={20} />
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">
+              Audit <span className="text-blue-500">Terminal</span>
+            </h1>
+          </div>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2 italic">
+            Engine v5.5 GOLD • Consolidado Fiscal P01
           </p>
         </div>
         
-        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 rounded-[1.5rem] border border-slate-200 shadow-inner">
+        <div className="flex gap-2 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
            {[
              { id: 'individual', label: `Indiv. (Emp 8)`, icon: User },
              { id: 'collective', label: 'Coletivos', icon: Globe },
@@ -35,8 +37,8 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' as Branc
              <button 
                key={t.id}
                onClick={() => setReportMode(t.id as any)}
-               className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
-                 reportMode === t.id ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-600'
+               className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                 reportMode === t.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
                }`}
              >
                <t.icon size={14} />
@@ -46,14 +48,24 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' as Branc
         </div>
       </div>
 
+      <div className="h-[1px] bg-gradient-to-r from-white/10 to-transparent w-full"></div>
+
+      {/* Fix: Cast branch as Branch to resolve string comparison/assignment error */}
       {reportMode === 'individual' && <IndividualReport branch={branch as Branch} />}
       {reportMode === 'collective' && (
         <div className="space-y-8">
-           <div className="flex flex-wrap gap-4 p-1 bg-white rounded-2xl border border-slate-100 w-fit mx-auto shadow-sm">
-              <button onClick={() => setCollectiveSubTab('vendas')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${collectiveSubTab === 'vendas' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`}>Market Share</button>
-              <button onClick={() => setCollectiveSubTab('bp')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${collectiveSubTab === 'bp' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`}>Balanço Coletivo</button>
-              <button onClick={() => setCollectiveSubTab('dre')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${collectiveSubTab === 'dre' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`}>DRE Coletivo</button>
-              <button onClick={() => setCollectiveSubTab('benchmark')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${collectiveSubTab === 'benchmark' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-400'}`}>Elite Benchmark</button>
+           <div className="flex flex-wrap gap-4 p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-fit mx-auto">
+              {['vendas', 'bp', 'dre', 'benchmark'].map(tab => (
+                <button 
+                  key={tab} 
+                  onClick={() => setCollectiveSubTab(tab as any)} 
+                  className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                    collectiveSubTab === tab ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {tab === 'vendas' ? 'Market Share' : tab === 'bp' ? 'Balanço Coletivo' : tab === 'dre' ? 'DRE Coletivo' : 'Elite Benchmark'}
+                </button>
+              ))}
            </div>
            {collectiveSubTab === 'vendas' && <CollectiveSalesReport />}
            {collectiveSubTab === 'bp' && <CollectiveFinancialReport type="BP" />}
@@ -61,119 +73,74 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' as Branc
            {collectiveSubTab === 'benchmark' && <EliteBenchmarkReport />}
         </div>
       )}
+      {/* Fix: Cast branch as Branch to resolve string comparison/assignment error */}
       {reportMode === 'market' && <MarketIndicatorsPanel branch={branch as Branch} />}
-      
-      <div className="pt-20 flex justify-center">
-         <div className="px-8 py-3 bg-slate-900 text-white rounded-full flex items-center gap-4 border border-slate-800 shadow-2xl">
-            <span className="text-[10px] font-black uppercase tracking-[0.5em]">Empirion v5.5.0-GOLD-Fidelity</span>
-         </div>
-      </div>
     </div>
   );
 };
 
 const IndividualReport = ({ branch }: { branch: Branch }) => (
-  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-     <div className={`p-10 md:p-14 rounded-[3.5rem] text-white flex flex-col md:flex-row justify-between items-center gap-10 shadow-2xl relative overflow-hidden border border-white/5 ${branch === 'services' ? 'bg-indigo-950' : branch === 'agribusiness' ? 'bg-emerald-950' : 'bg-slate-900'}`}>
-        <div className="absolute top-0 left-0 p-20 opacity-5 pointer-events-none">
-           <Zap size={400} />
+  <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-1000">
+     <div className="premium-card p-12 rounded-[3.5rem] flex flex-col lg:flex-row justify-between items-center gap-10 relative overflow-hidden group">
+        <div className="absolute top-0 left-0 p-20 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
+           <ShieldCheck size={400} />
         </div>
-        <div className="flex items-center gap-10 relative z-10">
-           <div className={`w-28 h-28 rounded-[2.5rem] flex items-center justify-center font-black text-5xl shadow-2xl transform hover:rotate-6 transition-transform ${branch === 'services' ? 'bg-indigo-600' : 'bg-blue-600'}`}>8</div>
-           <div>
-              <h2 className="text-4xl font-black uppercase tracking-tight">Empresa 08 S/A</h2>
-              <div className="flex items-center gap-3 mt-2">
-                 <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-blue-500/20 flex items-center gap-2">
-                    <ShieldCheck size={12} /> Auditoria P01 Concluída
+        <div className="flex items-center gap-8 relative z-10">
+           <div className="w-32 h-32 bg-blue-600 rounded-[2.5rem] flex items-center justify-center font-black text-6xl italic text-white shadow-2xl transform rotate-3">8</div>
+           <div className="space-y-2">
+              <h2 className="text-5xl font-black uppercase tracking-tighter text-white italic">Empresa 08 S/A</h2>
+              <div className="flex items-center gap-3">
+                 <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 flex items-center gap-2">
+                    <ShieldCheck size={12} /> Auditoria P01 Validada
                  </span>
-                 <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
-                    Status: Ativa
-                 </span>
+                 <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest">SISERV Engine v5.5</span>
               </div>
            </div>
         </div>
         <div className="flex items-center gap-10 relative z-10">
-           <div className="text-right">
-              <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Lucro Líquido Rodada</span>
-              <span className="text-4xl font-black text-emerald-400 font-mono">$ 73.926</span>
+           <div className="text-right space-y-1">
+              <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Lucro Líquido Acumulado</span>
+              <span className="text-5xl font-black text-emerald-400 font-mono italic">$ 73.926</span>
            </div>
-           <button className="p-6 bg-white/5 border border-white/10 rounded-3xl hover:bg-blue-600 transition-all shadow-xl group">
-              <Download size={28} className="group-hover:translate-y-1 transition-transform" />
+           <button className="p-8 bg-white text-slate-950 rounded-[2.5rem] hover:bg-blue-600 hover:text-white transition-all shadow-2xl group active:scale-95">
+              <Download size={32} className="group-hover:translate-y-1 transition-transform" />
            </button>
         </div>
      </div>
 
-     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10 group hover:shadow-xl transition-all">
+     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="premium-card p-10 rounded-[3.5rem] space-y-8">
            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                 <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
-                    {branch === 'services' ? <QualityIcon size={24} /> : <Package size={24} />}
-                 </div>
-                 <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">{branch === 'services' ? '1. Qualidade & Capacidade' : '1. Evolução de Estoques (Unid.)'}</h3>
+                 <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/20"><Package size={24} /></div>
+                 <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white italic">Estrutura de Ativos</h3>
               </div>
-              <Info size={18} className="text-slate-200" />
-           </div>
-           {branch === 'services' ? (
-             <div className="space-y-6">
-                <ReportLine label="Índice de Imagem Corporativa" value="82.5" isPositive />
-                <ReportLine label="Qualidade Média de Entrega" value="88.2" isPositive />
-                <ReportLine label="Eficiência do Corpo Técnico" value="94.2" isPositive />
-                <div className="pt-4 border-t border-slate-100">
-                   <div className="flex justify-between items-center bg-slate-50 p-6 rounded-[2rem]">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contratos Ativos</span>
-                      <span className="text-lg font-black text-indigo-600">Imediato (Spot)</span>
-                   </div>
-                </div>
-             </div>
-           ) : (
-             <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
-                <table className="w-full text-left text-xs">
-                   <thead className="bg-slate-50 text-slate-400 font-black uppercase">
-                      <tr>
-                         <th className="p-5">Patrimonial</th>
-                         <th className="p-5 text-right">Inicial</th>
-                         <th className="p-5 text-right">Compras</th>
-                         {branch === 'agribusiness' && <th className="p-5 text-right text-rose-500">Perdas</th>}
-                         <th className="p-5 text-right">Consumo</th>
-                         <th className="p-5 text-right">Final</th>
-                      </tr>
-                   </thead>
-                   <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
-                      <tr className="hover:bg-slate-50/50"><td className="p-5">Insumo A / MP</td><td className="p-5 text-right font-mono">30.900</td><td className="p-5 text-right font-mono">30.900</td>{branch === 'agribusiness' && <td className="p-5 text-right text-rose-400 font-mono">0</td>}<td className="p-5 text-right font-mono">30.900</td><td className="p-5 text-right font-black text-blue-600 font-mono">30.900</td></tr>
-                      <tr className="hover:bg-slate-50/50"><td className="p-5">Insumo B / MP</td><td className="p-5 text-right font-mono">20.600</td><td className="p-5 text-right font-mono">20.600</td>{branch === 'agribusiness' && <td className="p-5 text-right text-rose-400 font-mono">0</td>}<td className="p-5 text-right font-mono">20.600</td><td className="p-5 text-right font-black text-blue-600 font-mono">20.600</td></tr>
-                      <tr className="hover:bg-slate-50/50 bg-slate-50/20">
-                        <td className="p-5 italic text-slate-500">{branch === 'agribusiness' ? 'Grãos Beneficiados' : 'Prod. Acabados'}</td>
-                        <td className="p-5 text-right font-mono">0</td>
-                        <td className="p-5 text-right font-mono">9.700</td>
-                        {branch === 'agribusiness' && <td className="p-5 text-right text-rose-600 font-mono font-black">1.455</td>}
-                        <td className="p-5 text-right font-mono">8.245</td>
-                        <td className="p-5 text-right font-black text-blue-600 font-mono">0</td>
-                      </tr>
-                   </tbody>
-                </table>
-             </div>
-           )}
-        </div>
-
-        <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10 group hover:shadow-xl transition-all">
-           <div className="flex items-center gap-4">
-              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                 <DollarSign size={24} />
-              </div>
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">2. Fluxo de Caixa Operacional ($)</h3>
+              <Info size={18} className="text-slate-600" />
            </div>
            <div className="space-y-4">
-              <ReportLine label="SALDO INICIAL DISPONÍVEL" value="170.000" />
-              <ReportLine label="FATURAMENTO SERVIÇOS" value="1.649.000" isPositive />
-              {branch === 'agribusiness' && <ReportLine label="ANTECIPAÇÃO RECEBÍVEIS" value="250.000" isPositive />}
-              <ReportLine label="PAGAMENTO FORNECEDORES" value="(581.400)" isNegative />
-              <ReportLine label="FOLHA DE PAGAMENTO TÉCNICA" value="(767.000)" isNegative />
-              <ReportLine label="VERBA MARKETING / IMAGEM" value="(102.000)" isNegative />
-              <ReportLine label="OPERACIONAL / LOGÍSTICA" value="(278.200)" isNegative />
-              <ReportLine label="JUROS E TAXAS BANCÁRIAS" value="(28.474)" isNegative />
-              <div className="pt-4 mt-4 border-t-2 border-slate-900">
-                 <ReportLine label="SALDO FINAL DISPONÍVEL" value="261.452" isBold />
+              <ReportLine label="CAIXA E EQUIVALENTES" value="1.000.000" isPositive />
+              <ReportLine label="CONTAS A RECEBER" value="1.823.735" isPositive />
+              <ReportLine label="ESTOQUES (RAW/FIN)" value="0" />
+              <ReportLine label="IMOBILIZADO LÍQUIDO" value="5.153.205" isBold />
+              <div className="pt-4 border-t border-white/5">
+                 <ReportLine label="TOTAL DO ATIVO" value="9.176.940" isBold />
+              </div>
+           </div>
+        </div>
+
+        <div className="premium-card p-10 rounded-[3.5rem] space-y-8">
+           <div className="flex items-center gap-4">
+              <div className="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg shadow-emerald-500/20"><DollarSign size={24} /></div>
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white italic">DRE Resumida</h3>
+           </div>
+           <div className="space-y-4">
+              <ReportLine label="RECEITA OPERACIONAL BRUTA" value="3.298.000" isPositive />
+              <ReportLine label="CPV / CUSTO SERVIÇOS" value="(2.390.400)" isNegative />
+              <ReportLine label="LUCRO BRUTO" value="907.600" isPositive />
+              <ReportLine label="DESPESAS OPERACIONAIS" value="(1.147.200)" isNegative />
+              <ReportLine label="DESPESAS FINANCEIRAS" value="(28.474)" isNegative />
+              <div className="pt-4 border-t border-white/5">
+                 <ReportLine label="LUCRO LÍQUIDO" value="73.926" isBold isPositive />
               </div>
            </div>
         </div>
@@ -182,24 +149,24 @@ const IndividualReport = ({ branch }: { branch: Branch }) => (
 );
 
 const CollectiveSalesReport = () => (
-  <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
-     <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12 overflow-hidden relative">
-        <div className="flex justify-between items-center relative z-10">
-           <div>
-              <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900">Vendas Relativas por Empresa (%)</h3>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Market Share Consolidado - P01</p>
-           </div>
-           <BarChart3 className="text-slate-100 absolute top-0 right-0 p-10 pointer-events-none" size={180} />
+  <div className="animate-in slide-in-from-right-4 duration-1000">
+     <div className="premium-card p-12 rounded-[4rem] space-y-12 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
+           <BarChart3 size={200} />
         </div>
-        <div className="h-[350px] flex items-end justify-between gap-8 px-10 relative z-10">
+        <div className="relative z-10">
+           <h3 className="text-3xl font-black uppercase tracking-tighter text-white italic">Market Dynamics</h3>
+           <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Market Share Consolidado • Ciclo P01</p>
+        </div>
+        <div className="h-[400px] flex items-end justify-between gap-10 px-8 relative z-10">
            {[15.2, 12.8, 10.4, 14.1, 18.5, 12.0, 8.5, 8.5].map((h, i) => (
              <div key={i} className="flex-1 flex flex-col items-center gap-6 group">
-                <div className="w-full bg-slate-900 rounded-t-3xl transition-all hover:bg-blue-600 shadow-2xl relative" style={{ height: `${h * 18}px` }}>
-                   <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-black opacity-0 group-hover:opacity-100 transition-all">
+                <div className="w-full bg-slate-800 rounded-t-3xl transition-all hover:bg-blue-600 shadow-2xl relative" style={{ height: `${h * 15}px` }}>
+                   <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-slate-950 px-3 py-1.5 rounded-xl text-[10px] font-black opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-xl">
                       {h}%
                    </div>
                 </div>
-                <span className="text-[10px] font-black text-slate-400 group-hover:text-slate-900 uppercase">EMP {i+1}</span>
+                <span className="text-[10px] font-black text-slate-500 group-hover:text-white uppercase italic">EMP {i+1}</span>
              </div>
            ))}
         </div>
@@ -208,38 +175,38 @@ const CollectiveSalesReport = () => (
 );
 
 const CollectiveFinancialReport = ({ type }: { type: 'BP' | 'DRE' }) => (
-  <div className="animate-in fade-in slide-in-from-left-4 space-y-10">
-     <div className="bg-white p-14 rounded-[4rem] border border-slate-100 shadow-sm overflow-hidden group">
-        <div className="flex items-center justify-between mb-12">
-           <h3 className="text-3xl font-black uppercase tracking-tight text-slate-900">
-             {type === 'BP' ? 'Balanço Patrimonial Coletivo' : 'DRE Coletivo de Mercado'}
+  <div className="animate-in fade-in duration-700">
+     <div className="premium-card rounded-[4rem] overflow-hidden">
+        <div className="p-10 border-b border-white/5 bg-slate-900/40 flex items-center justify-between">
+           <h3 className="text-2xl font-black uppercase tracking-tighter text-white italic">
+             {type === 'BP' ? 'Balanço Patrimonial Coletivo' : 'DRE Coletivo do Mercado'}
            </h3>
-           <Download size={24} className="text-slate-300 group-hover:text-blue-600 transition-colors cursor-pointer" />
+           <div className="flex gap-4">
+              <button className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Download size={20} /></button>
+              <button className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><BarChart3 size={20} /></button>
+           </div>
         </div>
-        <div className="overflow-x-auto rounded-[2.5rem] border border-slate-100 shadow-inner">
+        <div className="overflow-x-auto">
            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900 text-white font-black uppercase">
+              <thead className="bg-slate-950 text-slate-500 font-black uppercase border-b border-white/5">
                  <tr>
-                    <th className="p-6 min-w-[250px]">{type === 'BP' ? 'RUBRICAS PATRIMONIAIS' : 'RUBRICAS CONTÁBEIS'}</th>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                      <th key={i} className="p-6 text-right whitespace-nowrap">EMP {i}</th>
-                    ))}
-                    <th className="p-6 text-right bg-blue-600">MÉDIA</th>
+                    <th className="p-6 min-w-[280px]">RUBRICAS (Bernard Padrão)</th>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <th key={i} className="p-6 text-right">EMP {i}</th>)}
+                    <th className="p-6 text-right bg-blue-600 text-white">MÉDIA</th>
                  </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-bold text-slate-600">
+              <tbody className="divide-y divide-white/5 font-bold text-slate-400">
                  {type === 'BP' ? (
                    <>
-                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold">Disponível / Caixa</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">0</td>)}<td className="p-6 text-right font-mono bg-slate-50">40.150</td></tr>
-                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold">Contas a Receber</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">{(1500000 + i * 20000).toLocaleString()}</td>)}<td className="p-6 text-right font-mono bg-slate-50">1.729.156</td></tr>
-                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold italic text-slate-400">Imobilizado Liquido</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">3.814.600</td>)}<td className="p-6 text-right font-mono bg-slate-50">3.814.600</td></tr>
-                    <tr className="bg-slate-200 text-slate-900 font-black"><td className="p-6 uppercase tracking-widest">TOTAL ATIVO</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">9.176.940</td>)}<td className="p-6 text-right font-mono bg-slate-300 italic">9.176.940</td></tr>
+                    <tr className="hover:bg-white/5 transition-colors"><td className="p-6 font-bold text-slate-100">Disponível</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">1.000.000</td>)}<td className="p-6 text-right font-mono bg-white/5">1.000.000</td></tr>
+                    <tr className="hover:bg-white/5 transition-colors"><td className="p-6 font-bold text-slate-100">Ativo Realizável</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">1.823.735</td>)}<td className="p-6 text-right font-mono bg-white/5">1.823.735</td></tr>
+                    <tr className="bg-slate-900/60 text-white font-black"><td className="p-6 uppercase italic">TOTAL ATIVO</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">9.176.940</td>)}<td className="p-6 text-right font-mono bg-blue-900/40">9.176.940</td></tr>
                    </>
                  ) : (
                    <>
-                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold">Receita Operacional</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">3.298.000</td>)}<td className="p-6 text-right font-mono bg-slate-50">3.298.000</td></tr>
-                    <tr className="bg-emerald-50 text-emerald-900 font-black"><td className="p-6 uppercase tracking-widest">LUCRO BRUTO</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">907.600</td>)}<td className="p-6 text-right font-mono bg-white/50">907.600</td></tr>
-                    <tr className="bg-blue-600 text-white font-black"><td className="p-6 uppercase tracking-widest">LUCRO LÍQUIDO</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">73.926</td>)}<td className="p-6 text-right font-mono bg-white/10 italic">73.926</td></tr>
+                    <tr className="hover:bg-white/5 transition-colors"><td className="p-6 font-bold text-slate-100">Receita Líquida</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">3.298.000</td>)}<td className="p-6 text-right font-mono bg-white/5">3.298.000</td></tr>
+                    <tr className="bg-emerald-900/20 text-emerald-400 font-black"><td className="p-6 uppercase italic">LUCRO BRUTO</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">907.600</td>)}<td className="p-6 text-right font-mono bg-emerald-900/40">907.600</td></tr>
+                    <tr className="bg-blue-600 text-white font-black"><td className="p-6 uppercase italic">LUCRO LÍQUIDO</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">73.926</td>)}<td className="p-6 text-right font-mono bg-white/10 italic">73.926</td></tr>
                    </>
                  )}
               </tbody>
@@ -250,113 +217,88 @@ const CollectiveFinancialReport = ({ type }: { type: 'BP' | 'DRE' }) => (
 );
 
 const EliteBenchmarkReport = () => (
-  <div className="animate-in fade-in slide-in-from-bottom-6 space-y-10">
-     <div className="bg-gradient-to-br from-amber-600 to-amber-700 p-12 rounded-[4rem] text-white shadow-2xl relative overflow-hidden group">
-        <Award className="absolute -bottom-10 -right-10 text-white/5 pointer-events-none" size={300} />
-        <div className="relative z-10">
-           <div className="flex items-center gap-4 mb-8">
-              <div className="p-3 bg-white/20 backdrop-blur-xl rounded-2xl">
-                 <Star size={32} className="fill-current text-white" />
+  <div className="space-y-8 animate-in slide-in-from-bottom-6">
+     <div className="bg-gradient-to-br from-blue-700 to-indigo-900 p-16 rounded-[4rem] text-white shadow-2xl relative overflow-hidden group border border-white/10">
+        <Award className="absolute -bottom-20 -right-20 text-white/5 pointer-events-none group-hover:rotate-12 transition-transform duration-1000" size={400} />
+        <div className="relative z-10 space-y-12">
+           <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <div className="p-5 bg-white/10 backdrop-blur-3xl rounded-3xl shadow-xl">
+                 <Star size={40} className="fill-white text-white animate-pulse" />
               </div>
               <div>
-                 <h3 className="text-3xl font-black uppercase tracking-tight">Elite Benchmark (v5.5 GOLD)</h3>
-                 <p className="text-amber-100 font-medium">Performance vs SISERV/Bernard Legacy & Global Top 100.</p>
+                 <h3 className="text-4xl font-black uppercase tracking-tighter italic">Elite Benchmark Node</h3>
+                 <p className="text-blue-200 font-medium">Performance Metrics vs Market Best in Class (v5.5 GOLD)</p>
               </div>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <BenchmarkCard label="Sua Margem" value="2.2%" target="15.0%" status="LOW" color="rose" />
-              <BenchmarkCard label="Qualidade" value="88.2" target="95.0" status="GOOD" color="emerald" icon={<QualityIcon size={14}/>} />
-              <BenchmarkCard label="Fator Imagem" value="82.5" target="85.0" status="HIGH" color="blue" icon={<Heart size={14}/>} />
-              <BenchmarkCard label="Eficiência" value="94.2%" target="98.0%" status="GOOD" color="emerald" />
+              <BenchmarkCard label="ROE Supremo" value="2.2%" target="15.0%" status="LOW" color="rose" />
+              <BenchmarkCard label="Fidelidade Qualidade" value="88.2" target="95.0" status="GOOD" color="emerald" />
+              <BenchmarkCard label="Brand Equity" value="82.5" target="85.0" status="HIGH" color="blue" />
+              <BenchmarkCard label="OEE / Produtividade" value="94.2%" target="98.0%" status="EXCEL." color="emerald" />
            </div>
-        </div>
-     </div>
-
-     <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-8">
-        <div className="flex items-center justify-between">
-           <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Análise Comparativa de Eficiência</h4>
-           <div className="px-4 py-2 bg-slate-100 rounded-full text-[9px] font-black uppercase text-slate-500 tracking-widest border border-slate-200">Setor de Serviços Qualificados</div>
-        </div>
-        <div className="overflow-x-auto">
-           <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-400 font-black uppercase">
-                 <tr>
-                    <th className="p-6">Métrica de Elite</th>
-                    <th className="p-6">Empresa 08 (Você)</th>
-                    <th className="p-6">Best in Class</th>
-                    <th className="p-6">Mercado (Média)</th>
-                    <th className="p-6">GAP (%)</th>
-                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-bold text-slate-600">
-                 <tr className="hover:bg-slate-50"><td className="p-6">Markup Médio</td><td className="p-6">38%</td><td className="p-6 font-black text-slate-900">55%</td><td className="p-6">42%</td><td className="p-6 text-rose-500">-136%</td></tr>
-                 <tr className="hover:bg-slate-50"><td className="p-6">Índice Qualidade</td><td className="p-6">88.2</td><td className="p-6 font-black text-slate-900">96.0</td><td className="p-6">85.0</td><td className="p-6 text-rose-500">-8.8%</td></tr>
-                 <tr className="hover:bg-slate-50"><td className="p-6">Aproveitamento Técnico</td><td className="p-6">94.2%</td><td className="p-6 font-black text-slate-900">99.0%</td><td className="p-6">92.0%</td><td className="p-6 text-emerald-500">+2.3%</td></tr>
-                 <tr className="hover:bg-slate-50"><td className="p-6">Custo Logístico/Venda</td><td className="p-6">4.2%</td><td className="p-6 font-black text-slate-900">2.1%</td><td className="p-6">4.8%</td><td className="p-6 text-emerald-500">-14%</td></tr>
-              </tbody>
-           </table>
         </div>
      </div>
   </div>
 );
 
-const BenchmarkCard = ({ label, value, target, status, color, icon }: any) => {
+const BenchmarkCard = ({ label, value, target, status, color }: any) => {
   const colorMap: any = {
-    rose: 'bg-rose-500/20 text-rose-200 border-rose-500/30',
-    emerald: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/30',
-    blue: 'bg-blue-500/20 text-blue-200 border-blue-500/30'
+    rose: 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-rose-500/5',
+    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5',
+    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-blue-500/5'
   };
 
   return (
-    <div className={`p-8 rounded-[2.5rem] border backdrop-blur-xl ${colorMap[color]} space-y-4`}>
-       <div className="flex items-center justify-between">
-          <span className="text-[10px] font-black uppercase tracking-widest text-white/60">{label}</span>
-          {icon}
-       </div>
+    <div className={`p-8 rounded-[3rem] border backdrop-blur-3xl transition-all hover:scale-105 ${colorMap[color]} space-y-4 shadow-2xl`}>
+       <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{label}</span>
        <div className="flex items-end justify-between">
-          <span className="text-3xl font-black text-white">{value}</span>
-          <span className="text-[10px] font-black uppercase text-white/40">Target: {target}</span>
+          <span className="text-4xl font-black italic">{value}</span>
+          <span className="text-[8px] font-black uppercase opacity-40">Target: {target}</span>
+       </div>
+       <div className="h-[2px] bg-white/10 w-full rounded-full overflow-hidden">
+          <div className="h-full bg-current" style={{ width: '45%' }}></div>
        </div>
        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full animate-pulse bg-white`}></div>
-          <span className="text-[10px] font-black uppercase tracking-tighter text-white">Status: {status}</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+          <span className="text-[9px] font-black uppercase tracking-widest">{status} PERFORMANCE</span>
        </div>
     </div>
   );
 };
 
 const MarketIndicatorsPanel = ({ branch }: { branch: Branch }) => (
-  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-10 group">
-           <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900 flex items-center gap-4">
-              <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl group-hover:bg-amber-600 group-hover:text-white transition-all">
-                 <TrendingUp size={24} />
-              </div>
-              {branch === 'services' ? 'Bolsa de Valores (Cotação Serviços)' : 'Bolsa de Valores (Cotação Ações)'}
+  <div className="space-y-8 animate-in slide-in-from-bottom-4">
+     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 premium-card p-12 rounded-[4rem] space-y-10 group">
+           <h3 className="text-2xl font-black uppercase tracking-tighter text-white flex items-center gap-4 italic">
+              <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-xl group-hover:rotate-12 transition-transform"><TrendingUp size={24} /></div>
+              Market Exchange Node (Bolsa Empirion)
            </h3>
            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                <div key={i} className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col items-center transition-all hover:bg-white hover:border-blue-200 hover:shadow-lg hover:-translate-y-1">
-                   <span className="text-[10px] font-black text-slate-400 uppercase mb-3">EMPR 0{i}</span>
-                   <span className="text-2xl font-black text-slate-900 font-mono">1,04</span>
-                   <span className="text-[10px] font-black text-emerald-600 mt-2 bg-emerald-50 px-2 py-1 rounded-lg">+4,2%</span>
+                <div key={i} className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 flex flex-col items-center group/item hover:bg-white hover:border-transparent transition-all hover:-translate-y-2 hover:shadow-2xl">
+                   <span className="text-[9px] font-black text-slate-500 uppercase mb-3 group-hover/item:text-slate-400">EMPR 0{i}</span>
+                   <span className="text-3xl font-black text-white font-mono group-hover/item:text-slate-950 italic">1,04</span>
+                   <span className="text-[10px] font-black text-emerald-500 mt-2 bg-emerald-500/10 px-3 py-1 rounded-full">+4,2%</span>
                 </div>
               ))}
            </div>
         </div>
-        <div className="bg-slate-900 p-12 rounded-[4rem] text-white shadow-2xl space-y-10 border border-white/5 relative overflow-hidden">
-           <Landmark className="absolute -bottom-10 -right-10 text-white/5 pointer-events-none" size={200} />
-           <h3 className="text-2xl font-black uppercase tracking-tight relative z-10">CVM Indicators (P01)</h3>
-           <div className="space-y-8 relative z-10">
-              <MarketBox label="Inflação Período" value="1,00%" color="text-amber-400" />
-              <MarketBox label="TR Mensal" value="2,00%" color="text-blue-400" />
-              <MarketBox label="Piso Salarial Técnico" value="3.500,00" color="text-slate-100" />
-              {branch === 'services' && <MarketBox label="Índice Demanda Setorial" value="1,08x" color="text-emerald-400" />}
-              <div className="pt-6 border-t border-white/10 flex items-center gap-3">
-                 <Gavel className="text-rose-500" size={20} />
-                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Regulação CVM Ativa</span>
+        <div className="premium-card p-12 rounded-[4rem] flex flex-col justify-between border-2 border-slate-800">
+           <div className="space-y-8">
+              <h3 className="text-2xl font-black uppercase tracking-tighter text-white italic">Economic DNA</h3>
+              <div className="space-y-6">
+                 <MarketBox label="IPCA (Inflação)" value="1,00%" color="text-rose-400" />
+                 <MarketBox label="TR Mensal" value="2,00%" color="text-blue-400" />
+                 <MarketBox label="Piso Salarial Técnico" value="$ 3.500" color="text-white" />
+                 <MarketBox label="Demanda Setorial" value="1,08x" color="text-emerald-400" />
+              </div>
+           </div>
+           <div className="pt-8 border-t border-white/5">
+              <div className="flex items-center gap-3 text-slate-500">
+                 <ShieldCheck size={20} className="text-emerald-500" />
+                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">CVM Audit active</span>
               </div>
            </div>
         </div>
@@ -365,18 +307,18 @@ const MarketIndicatorsPanel = ({ branch }: { branch: Branch }) => (
 );
 
 const ReportLine = ({ label, value, isPositive, isNegative, isBold }: any) => (
-  <div className="flex justify-between items-center py-3.5 border-b border-slate-50 px-4 transition-colors hover:bg-slate-50 group">
-    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">{label}</span>
-    <span className={`font-mono font-black text-sm ${isPositive ? 'text-emerald-600' : isNegative ? 'text-rose-600' : isBold ? 'text-slate-900 text-lg' : 'text-slate-700'}`}>
+  <div className="flex justify-between items-center py-4 border-b border-white/5 px-4 hover:bg-white/5 transition-colors group">
+    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-slate-300 transition-colors">{label}</span>
+    <span className={`font-mono font-black text-sm tracking-tighter ${isPositive ? 'text-emerald-400' : isNegative ? 'text-rose-400' : isBold ? 'text-white text-lg italic' : 'text-slate-300'}`}>
       {isNegative ? value : `$ ${value}`}
     </span>
   </div>
 );
 
 const MarketBox = ({ label, value, color }: any) => (
-  <div className="flex justify-between items-center pb-6 border-b border-white/10 transition-colors hover:bg-white/5 px-2 rounded-xl">
-     <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</span>
-     <span className={`text-2xl font-black font-mono ${color}`}>{value}</span>
+  <div className="flex justify-between items-center pb-6 border-b border-white/5 group">
+     <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest group-hover:text-slate-300">{label}</span>
+     <span className={`text-2xl font-black font-mono italic ${color}`}>{value}</span>
   </div>
 );
 

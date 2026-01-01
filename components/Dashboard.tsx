@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
+import Chart from 'react-apexcharts';
 import { 
-  TrendingUp, Activity, DollarSign, Target, Zap, Briefcase, Globe, BarChart3, 
-  ArrowUpRight, ArrowDownRight, Sparkles, Loader2, Star, Users, Newspaper,
-  AlertTriangle, ChevronRight, Gavel, Landmark, Info, Flame, Newspaper as NewspaperIcon,
-  ShieldCheck, Leaf, MessageSquare, Megaphone, Send, Sun, CloudRain, Wind, Thermometer,
-  ShoppingBag, Monitor, UserCheck, Award, Heart, GraduationCap
+  TrendingUp, Activity, DollarSign, Target, Zap, BarChart3, 
+  ArrowUpRight, ArrowDownRight, Sparkles, Loader2, Star, Users,
+  ShieldCheck, MessageSquare, Megaphone, Send, Globe, Map as MapIcon,
+  Cpu, Newspaper, Landmark, AlertTriangle, ChevronRight, LayoutGrid
 } from 'lucide-react';
 import ChampionshipTimer from './ChampionshipTimer';
 import LiveBriefing from './LiveBriefing';
@@ -14,14 +13,13 @@ import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch } from '../types
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
-  const [gazetaNews, setGazetaNews] = useState<string>('Sincronizando agências de notícias...');
+  const [gazetaNews, setGazetaNews] = useState<string>('Transmissão de dados criptografados...');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
-  const [activeEvent, setActiveEvent] = useState<BlackSwanEvent | null>(null);
   const [scenarioType, setScenarioType] = useState<ScenarioType>('simulated');
   
   const [messages, setMessages] = useState<MessageBoardItem[]>([
-    { id: '1', sender: 'Coordenador', text: 'Sejam bem-vindos à Arena P1. O mercado está volátil!', timestamp: '08:00', isImportant: true },
-    { id: '2', sender: 'Strategos AI', text: `Alerta ${branch}: Preços globais em reajuste.`, timestamp: '10:15' },
+    { id: '1', sender: 'Coordenação Central', text: 'Início da Rodada 01. Analisem os relatórios de TSR.', timestamp: '08:00', isImportant: true },
+    { id: '2', sender: 'Strategos AI', text: `Setor ${branch.toUpperCase()}: Detectada anomalia de custos na Região 04.`, timestamp: '10:15' },
   ]);
   const [newMessage, setNewMessage] = useState('');
 
@@ -29,14 +27,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     const fetchIntelligence = async () => {
       try {
         const [analysis, news] = await Promise.all([
-          generateMarketAnalysis('Arena Alpha', 1, branch, scenarioType),
+          generateMarketAnalysis('Arena Empirion Supremo', 1, branch, scenarioType),
           generateGazetaNews({ period: 1, leader: 'Empresa 8', inflation: '1.0%', scenarioType, focus: [branch] })
         ]);
         setAiInsight(analysis);
         setGazetaNews(news);
       } catch (err) {
-        setAiInsight("Link tático comprometido.");
-        setGazetaNews("Erro na transmissão da Gazeta.");
+        setAiInsight("Falha no link neural.");
+        setGazetaNews("Gazeta Offline.");
       } finally {
         setIsInsightLoading(false);
       }
@@ -44,220 +42,263 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     fetchIntelligence();
   }, [scenarioType, branch]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-    const msg: MessageBoardItem = {
-      id: Math.random().toString(),
-      sender: 'Sua Equipe',
-      text: newMessage,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    setMessages([msg, ...messages]);
-    setNewMessage('');
+  const marketShareOptions: any = {
+    chart: { type: 'donut', background: 'transparent' },
+    stroke: { show: false },
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#14b8a6', '#f97316'],
+    labels: ['Alpha', 'Beta', 'Gama', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta (Sua)'],
+    legend: { show: false },
+    dataLabels: { enabled: false },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '80%',
+          labels: {
+            show: true,
+            name: { show: true, color: '#94a3b8', fontSize: '10px', fontWeight: 800 },
+            value: { show: true, color: '#fff', fontSize: '20px', fontWeight: 900 },
+            total: { show: true, label: 'MKT SHARE', color: '#94a3b8' }
+          }
+        }
+      }
+    }
+  };
+
+  const tsrTrendOptions: any = {
+    chart: { toolbar: { show: false }, sparkline: { enabled: true } },
+    stroke: { curve: 'smooth', width: 3 },
+    colors: ['#3b82f6'],
+    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0 } },
+    tooltip: { enabled: false }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-20 px-4 md:px-0">
-      <div className="bg-slate-900 overflow-hidden h-10 flex items-center border-b border-white/10 -mx-8 -mt-8 mb-8">
-        <div className="flex animate-[ticker_30s_linear_infinite] whitespace-nowrap gap-12 text-[10px] font-black uppercase tracking-widest text-blue-400">
-          <TickerItem label="Bolsa (IBOV)" value="128.450" change="+1.2%" />
-          <TickerItem label="Ação EMP-08" value="1.04" change="+4.2%" color="text-emerald-400" />
-          <TickerItem label="Inflação P1" value="1.0%" change="0.0%" color="text-slate-400" />
-          {branch === 'services' && <TickerItem label="Img. Corporativa" value="82.5" change="+3.2" color="text-blue-400" />}
-          {branch === 'commercial' && <TickerItem label="E-com Share" value="22.4%" change="+1.5%" color="text-blue-400" />}
-          {branch === 'agribusiness' && <TickerItem label="Soja/Chicago" value="14.20" change="+2.2%" color="text-emerald-400" />}
-          <TickerItem label="Bolsa (IBOV)" value="128.450" change="+1.2%" />
+    <div className="space-y-8 animate-in fade-in duration-1000 pb-20">
+      {/* Ticker Supremo */}
+      <div className="bg-slate-950 border-b border-white/5 h-12 flex items-center -mx-10 -mt-10 mb-10 overflow-hidden">
+        <div className="flex animate-[ticker_40s_linear_infinite] whitespace-nowrap gap-16 text-[10px] font-black uppercase tracking-[0.2em]">
+          <TickerItem label="Bolsa Empirion" value="1.04" change="+4.2%" up />
+          <TickerItem label="Commodity Insumo A" value="15.20" change="-0.8%" />
+          <TickerItem label="Taxa Referencial (TR)" value="12.0%" change="0.0%" neutral />
+          <TickerItem label="Market Cap Global" value="$ 82.4B" change="+1.2%" up />
+          <TickerItem label="Bolsa Empirion" value="1.04" change="+4.2%" up />
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase flex items-center gap-4">
-             <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-xl">
-                <BarChart3 size={24} />
-             </div>
-             Empirion War Room
-          </h1>
+      {/* Header Supremo */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <div className="space-y-2">
           <div className="flex items-center gap-3">
-             <p className="text-slate-500 font-medium uppercase tracking-widest text-[10px]">
-               Rodada 01 - Engine v5.5 GOLD
-             </p>
-             <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${scenarioType === 'real' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                {scenarioType === 'real' ? 'Grounded AI Scenario' : 'Simulated Protocol'}
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <BarChart3 className="text-white" size={20} />
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">
+              Strategic <span className="text-blue-500">Command</span>
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
+             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full border border-white/5">
+                Build v5.5 GOLD • SISERV Fidelity
+             </span>
+             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border ${
+               scenarioType === 'real' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+             }`}>
+                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${scenarioType === 'real' ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                {scenarioType === 'real' ? 'Grounded AI Active' : 'Simulated Logic'}
              </span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <LiveBriefing />
           <ChampionshipTimer />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-           {branch === 'services' && (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-slate-900 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
-                   <div className="relative z-10 space-y-6">
-                      <div className="flex items-center gap-3">
-                         <div className="p-2 bg-blue-600 rounded-xl"><Heart size={24} /></div>
-                         <h3 className="text-xl font-black uppercase tracking-tight">Imagem & Prestígio (SISERV)</h3>
-                      </div>
-                      <div className="space-y-4 text-center py-6">
-                         <span className="text-6xl font-black text-white tracking-tighter">82.5</span>
-                         <div className="flex items-center justify-center gap-2 mt-2">
-                            <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Brand Image Index</span>
-                            <ArrowUpRight size={14} className="text-emerald-400" />
-                         </div>
-                      </div>
-                      <div className="pt-4 border-t border-white/10 text-[10px] font-medium opacity-60 italic">
-                         "A alta qualificação técnica do corpo de analistas elevou o prestígio da marca."
-                      </div>
-                   </div>
-                   <ShieldCheck className="absolute -bottom-10 -right-10 opacity-10 rotate-12" size={150} />
-                </div>
+      {/* Grid Supremo */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        {/* Coluna Central: Mapa e Gazeta */}
+        <div className="lg:col-span-3 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Market Share Real */}
+            <div className="premium-card p-8 rounded-[3rem] flex flex-col items-center justify-center min-h-[300px]">
+              <Chart options={marketShareOptions} series={[15, 12, 10, 14, 18, 12, 8, 11]} type="donut" width="100%" />
+            </div>
 
-                <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm space-y-6">
+            {/* AI Advisor Terminal */}
+            <div className="md:col-span-2 premium-card p-8 rounded-[3rem] flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+                <Cpu size={120} />
+              </div>
+              <div className="relative z-10 space-y-6">
+                 <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-600 rounded-lg text-white"><Sparkles size={20} /></div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-white italic">Strategos Advisor</h3>
+                 </div>
+                 {isInsightLoading ? (
+                   <div className="space-y-3">
+                      <div className="h-4 bg-white/5 rounded-full w-3/4 animate-pulse"></div>
+                      <div className="h-4 bg-white/5 rounded-full w-full animate-pulse"></div>
+                      <div className="h-4 bg-white/5 rounded-full w-5/6 animate-pulse"></div>
+                   </div>
+                 ) : (
+                   <p className="text-sm font-medium text-slate-300 leading-relaxed font-mono">
+                     <span className="text-blue-500 font-black">SYSTEM_MSG:</span> {aiInsight}
+                   </p>
+                 )}
+              </div>
+              <div className="pt-6 border-t border-white/5 flex items-center gap-4">
+                 <button className="text-[10px] font-black uppercase text-blue-500 hover:text-white transition-colors">Solicitar Re-análise neural</button>
+                 <div className="flex-1 h-[1px] bg-white/5"></div>
+                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Gazeta Suprema */}
+          <div className="premium-card rounded-[3.5rem] border-2 border-slate-800 overflow-hidden flex flex-col">
+            <div className="p-8 border-b border-white/5 bg-slate-900/40 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-white text-slate-950 rounded-2xl flex items-center justify-center shadow-xl">
+                    <Newspaper size={28} />
+                 </div>
+                 <div>
+                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Gazeta {branch}</h3>
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mt-1 italic">Órgão Oficial v5.5 GOLD • Registro CVM: 2026-X</p>
+                 </div>
+              </div>
+              <div className="text-right px-6 border-l border-white/5">
+                 <span className="block text-[10px] font-black text-slate-400 uppercase">Período Fiscal</span>
+                 <span className="text-2xl font-black text-white italic">P01</span>
+              </div>
+            </div>
+            <div className="p-12 grid grid-cols-1 md:grid-cols-3 gap-12">
+               <div className="md:col-span-2 space-y-6">
+                  <h2 className="text-4xl font-black text-white leading-[1.1] tracking-tight hover:text-blue-400 transition-colors cursor-default">
+                    {gazetaNews}
+                  </h2>
+                  <div className="h-[2px] bg-gradient-to-r from-blue-600 to-transparent w-full"></div>
+                  <div className="flex items-center gap-3 text-sm font-bold text-slate-400">
+                     <Activity size={18} className="text-orange-500" /> 
+                     Relatório de Mercado: Investidores monitoram a taxa de TSR da Empresa 8 como benchmark de resiliência.
+                  </div>
+               </div>
+               <div className="glass-panel p-6 rounded-[2rem] space-y-6">
+                  <h4 className="text-[10px] font-black uppercase text-blue-400 tracking-widest flex items-center gap-2">
+                    <Landmark size={14} /> Mercado de Capitais
+                  </h4>
+                  <div className="space-y-4">
+                     <StockRow symbol="EMPR-08" price="1.04" up />
+                     <StockRow symbol="EMPR-01" price="0.98" />
+                     <StockRow symbol="EMPR-05" price="1.12" up />
+                     <StockRow symbol="EMPR-02" price="1.00" neutral />
+                  </div>
+                  <button className="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase hover:bg-white hover:text-slate-950 transition-all">Ver Painel Completo</button>
+               </div>
+            </div>
+          </div>
+
+          {/* Mapa de Regiões Supremo */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div className="premium-card p-8 rounded-[3rem] space-y-6">
+                <div className="flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><Award size={20} /></div>
-                      <h3 className="text-lg font-black uppercase text-slate-900 tracking-tight">Qualidade de Entrega</h3>
+                      <MapIcon className="text-blue-500" />
+                      <h3 className="text-lg font-black uppercase text-white tracking-tight italic">Market Coverage</h3>
                    </div>
-                   <div className="space-y-6">
-                      <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                         <span>QA Efficiency</span>
-                         <span className="text-emerald-600">88.2%</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                         <div className="h-full bg-emerald-500 w-[88%]"></div>
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                         <span>Service Alignment</span>
-                         <span className="text-blue-600">92.0%</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                         <div className="h-full bg-blue-500 w-[92%]"></div>
-                      </div>
-                   </div>
+                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">9 Regiões Ativas</span>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                   {[1,2,3,4,5,6,7,8,9].map(i => (
+                     <div key={i} className={`h-16 rounded-2xl flex flex-col items-center justify-center border transition-all hover:scale-105 cursor-pointer ${
+                       i === 8 ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 opacity-40'
+                     }`}>
+                        <span className="text-[10px] font-black text-white">RE 0{i}</span>
+                        {i === 8 && <div className="w-1 h-1 bg-white rounded-full animate-ping mt-1" />}
+                     </div>
+                   ))}
                 </div>
              </div>
-           )}
 
-           <div className="bg-white rounded-[3.5rem] border-[3px] border-slate-900 shadow-2xl overflow-hidden flex flex-col min-h-[400px]">
-              <div className="p-8 border-b-[3px] border-slate-900 bg-slate-50 flex items-center justify-between">
-                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-slate-900 text-white rounded-xl"><NewspaperIcon size={24} /></div>
-                    <div>
-                       <h3 className="text-3xl font-black text-slate-900 uppercase italic">Gazeta {branch === 'services' ? 'de Serviços' : 'Industrial'}</h3>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Órgão Oficial v5.5 GOLD • SISERV Fidelity</p>
-                    </div>
-                 </div>
-                 <div className="text-right"><span className="block text-[10px] font-black text-slate-900 uppercase">P01 • 2026</span></div>
+             <div className="premium-card p-8 rounded-[3rem] flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                   <h3 className="text-lg font-black uppercase text-white tracking-tight italic">TSR Momentum</h3>
+                   <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-black">+4.2%</div>
+                </div>
+                <div className="h-32">
+                   <Chart options={tsrTrendOptions} series={[{ data: [1.00, 1.02, 1.01, 1.05, 1.04] }]} type="area" height="100%" />
+                </div>
+                <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                   <span>Período P00</span>
+                   <span>Status: Outperform</span>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        {/* Coluna Lateral: KPIs e Mural */}
+        <div className="space-y-8">
+           <div className="premium-card p-10 rounded-[3rem] space-y-10">
+              <h3 className="text-xl font-black uppercase text-white flex items-center gap-4 italic leading-none">
+                 <div className="p-2 bg-blue-600 rounded-xl"><Target size={20}/></div> Core KPIs
+              </h3>
+              <div className="space-y-10">
+                 <KpiRow label="Resultado Líquido" value="$ 73.926" trend="+100%" positive icon={<DollarSign size={16}/>} />
+                 <KpiRow label="Reputação Score" value="82.4" trend="+4.1" positive icon={<Star size={16}/>} />
+                 <KpiRow label="Eficiência Staff" value="94.2%" trend="+2.4%" positive icon={<Users size={16}/>} />
               </div>
-              <div className="flex-1 p-10 grid grid-cols-1 md:grid-cols-3 gap-10">
-                 <div className="md:col-span-2 space-y-6">
-                    <div className="text-4xl font-serif font-black text-slate-900 leading-[1.1]">{gazetaNews}</div>
-                    <div className="h-[1px] bg-slate-100 w-full"></div>
-                    <div className="flex items-center gap-3 italic text-xs font-bold text-slate-600 leading-tight">
-                       <TrendingUp size={18} className="text-amber-600" /> Relatório SISERV: Mão de obra qualificada é o principal gargalo para crescimento do setor.
-                    </div>
-                 </div>
-                 <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-200 space-y-6 h-fit self-start">
-                    <h4 className="text-[11px] font-black uppercase text-slate-900 border-b border-slate-200 pb-3 flex items-center gap-2"><Landmark size={14} className="text-blue-500" /> Bolsa</h4>
-                    <div className="space-y-4">
-                       <StockRow symbol="EMPR 08" price="1.04" up />
-                       <StockRow symbol="EMPR 01" price="0.98" />
-                       <StockRow symbol="EMPR 05" price="1.12" up />
-                    </div>
-                 </div>
-              </div>
+              <button className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all shadow-xl shadow-blue-500/20">Análise de Balanço</button>
            </div>
 
-           <div className="bg-white rounded-[3.5rem] border border-slate-200 shadow-xl flex flex-col h-[500px]">
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+           <div className="bg-slate-900 border border-white/5 p-10 rounded-[3rem] flex flex-col h-[520px]">
+              <div className="flex items-center justify-between mb-8">
                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-600 text-white rounded-xl"><Megaphone size={20} /></div>
-                    <h3 className="text-xl font-black text-slate-900 uppercase">Mural do Coordenador</h3>
+                    <div className="p-2 bg-white text-slate-950 rounded-lg"><MessageSquare size={18} /></div>
+                    <h3 className="text-lg font-black text-white uppercase italic">War Feed</h3>
                  </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-8 space-y-6">
+              <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
                  {messages.map(m => (
-                   <div key={m.id} className={`p-5 rounded-3xl ${m.isImportant ? 'bg-amber-50 border border-amber-100' : 'bg-slate-50'}`}>
-                      <div className="flex justify-between items-center mb-2">
-                         <span className="text-[9px] font-black uppercase text-blue-600">{m.sender}</span>
-                         <span className="text-[8px] font-bold text-slate-400">{m.timestamp}</span>
+                   <div key={m.id} className={`p-5 rounded-3xl ${m.isImportant ? 'bg-blue-600/10 border border-blue-500/20' : 'bg-white/5 border border-white/5'}`}>
+                      <div className="flex justify-between items-center mb-3">
+                         <span className="text-[9px] font-black uppercase text-blue-400">{m.sender}</span>
+                         <span className="text-[8px] font-bold text-slate-500">{m.timestamp}</span>
                       </div>
-                      <p className="text-xs font-medium text-slate-700 leading-relaxed">{m.text}</p>
+                      <p className="text-xs font-medium text-slate-300 leading-relaxed">{m.text}</p>
                    </div>
                  ))}
               </div>
-              <form onSubmit={handleSendMessage} className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-[3.5rem] flex gap-3">
-                 <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Enviar recado..." className="flex-1 bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold outline-none" />
-                 <button type="submit" className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-blue-600 transition-colors"><Send size={18} /></button>
+              <form onSubmit={e => { e.preventDefault(); if(!newMessage.trim()) return; setMessages([{ id: Date.now().toString(), sender: 'Sua Equipe', text: newMessage, timestamp: 'Agora' }, ...messages]); setNewMessage(''); }} className="mt-6 flex gap-3">
+                 <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Transmitir..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-blue-500" />
+                 <button type="submit" className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-white hover:text-slate-950 transition-all"><Send size={18} /></button>
               </form>
-           </div>
-        </div>
-
-        <div className="space-y-8">
-           <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-10">
-              <h3 className="text-xl font-black uppercase text-slate-900 flex items-center gap-4">
-                 <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><Target size={20}/></div> Strategic Hub
-              </h3>
-              <div className="space-y-8">
-                 <KpiRow label="Lucro Líquido" value="$ 73.926" trend="+100%" positive icon={<DollarSign size={16}/>} />
-                 {branch === 'services' ? (
-                   <KpiRow label="Fator Formação" value="94.2%" trend="+2.4%" positive icon={<GraduationCap size={16}/>} />
-                 ) : branch === 'commercial' ? (
-                   <KpiRow label="Channel Yield" value="1.18" trend="+0.08" positive icon={<ShoppingBag size={16}/>} />
-                 ) : (
-                   <KpiRow label="Yield Safra" value="1.12" trend="+0.05" positive icon={<Wind size={16}/>} />
-                 )}
-                 <KpiRow label="Reputação Score" value="82.4" trend="+4.1" positive icon={<Star size={16}/>} />
-              </div>
-           </div>
-
-           <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden border border-white/5">
-              <div className="absolute top-0 right-0 p-8 opacity-10"><ShieldCheck size={80} /></div>
-              <h3 className="text-xl font-black uppercase mb-8 flex items-center gap-3"><Leaf className="text-emerald-400" size={24}/> Fidelity Monitor</h3>
-              <div className="space-y-6 relative z-10">
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm flex gap-4 transition-colors hover:bg-white/10">
-                    <Activity className="text-emerald-400 shrink-0" size={20} />
-                    <div className="space-y-1">
-                       <span className="block text-[10px] font-black uppercase text-blue-300">Efficiency Index</span>
-                       <span className="text-sm font-black text-slate-100">92% - Optimized</span>
-                    </div>
-                 </div>
-                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm flex gap-4 transition-colors hover:bg-white/10">
-                    <Users className="text-blue-400 shrink-0" size={20} />
-                    <div className="space-y-1">
-                       <span className="block text-[10px] font-black uppercase text-blue-300">Labor Status</span>
-                       <span className="text-sm font-black text-slate-100">100% - Fully Staffed</span>
-                    </div>
-                 </div>
-              </div>
            </div>
         </div>
       </div>
       
-      <style>{` @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } } `}</style>
+      <style>{`
+        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+      `}</style>
     </div>
   );
 };
 
-const TickerItem = ({ label, value, change, color = "text-white" }: any) => (
-  <div className="flex items-center gap-3">
+const TickerItem = ({ label, value, change, up, neutral }: any) => (
+  <div className="flex items-center gap-4">
     <span className="text-slate-500">{label}</span>
-    <span className={`font-mono font-black ${color}`}>{value}</span>
-    <span className={`font-mono text-[8px] ${change.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>{change}</span>
+    <span className="font-mono font-black text-white">{value}</span>
+    <span className={`font-mono text-[9px] ${up ? 'text-emerald-500' : neutral ? 'text-slate-500' : 'text-rose-500'}`}>
+      {change}
+    </span>
   </div>
 );
 
-const StockRow = ({ symbol, price, up }: { symbol: string, price: string, up?: boolean }) => (
-  <div className="flex items-center justify-between">
-    <span className="text-[10px] font-black text-slate-400">{symbol}</span>
+const StockRow = ({ symbol, price, up, neutral }: any) => (
+  <div className="flex items-center justify-between group">
+    <span className="text-[10px] font-black text-slate-500 group-hover:text-slate-200 transition-colors">{symbol}</span>
     <div className="flex items-center gap-2">
-       <span className="text-sm font-black text-slate-900 font-mono">{price}</span>
-       {up ? <ArrowUpRight size={14} className="text-emerald-500" /> : <ArrowDownRight size={14} className="text-rose-500" />}
+       <span className="text-sm font-black text-white font-mono">{price}</span>
+       {up ? <ArrowUpRight size={14} className="text-emerald-500" /> : neutral ? <Activity size={12} className="text-slate-500" /> : <ArrowDownRight size={14} className="text-rose-500" />}
     </div>
   </div>
 );
@@ -265,13 +306,17 @@ const StockRow = ({ symbol, price, up }: { symbol: string, price: string, up?: b
 const KpiRow = ({ label, value, trend, positive, icon }: any) => (
   <div className="flex items-center justify-between group cursor-default">
      <div className="flex items-center gap-4">
-        <div className="p-3 bg-slate-50 text-slate-400 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all">{icon}</div>
+        <div className="p-3 bg-white/5 text-slate-500 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+          {icon}
+        </div>
         <div>
-           <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</span>
-           <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">{value}</span>
+           <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+           <span className="text-2xl font-black text-white font-mono tracking-tighter italic">{value}</span>
         </div>
      </div>
-     <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black shadow-sm ${positive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{trend}</div>
+     <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black shadow-sm ${positive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+       {trend}
+     </div>
   </div>
 );
 

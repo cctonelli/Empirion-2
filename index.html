@@ -4,30 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Empirion | Strategic Command Node</title>
-    
-    <!-- Primary Meta Tags -->
     <meta name="title" content="Empirion | Business Intelligence Arena">
     <meta name="description" content="A arena definitiva onde IA e Estratégia Humana colidem. Simulação empresarial de alta performance.">
     
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://empirion-2.vercel.app/">
-    <meta property="og:title" content="Empirion | Strategic Command Node">
-    <meta property="og:description" content="Forje seu império com insights de IA em tempo real e simulação econômica profunda.">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2000">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- Slick Carousel Styles -->
     <link rel="stylesheet" type="text/css" charset="UTF-8" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" />
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" />
 
     <script>
-        window.process = window.process || { env: {} };
-        window.process.env = window.process.env || {};
+        window.process = { env: {} };
         tailwind.config = {
             theme: {
                 extend: {
@@ -47,14 +36,14 @@
     </script>
     <style>
         body { background-color: #020617; color: #f8fafc; -webkit-font-smoothing: antialiased; }
-        .premium-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(12px); transition: all 0.3s ease; }
-        .premium-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-2px); }
-        ::-webkit-scrollbar { width: 8px; }
+        .premium-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(16px); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .premium-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-4px); box-shadow: 0 20px 40px -20px rgba(0,0,0,0.5); }
+        .neon-glow { text-shadow: 0 0 10px rgba(59,130,246,0.5); }
+        .glass-panel { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%); border: 1px solid rgba(255,255,255,0.1); }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #020617; }
-        ::-webkit-scrollbar-thumb { background: #1e292b; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
-        .slick-dots li button:before { color: white !important; }
-        .slick-dots li.slick-active button:before { color: #f97316 !important; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .apexcharts-canvas { filter: drop-shadow(0 0 5px rgba(0,0,0,0.2)); }
     </style>
 <script type="importmap">
 {
