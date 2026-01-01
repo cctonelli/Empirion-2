@@ -79,7 +79,33 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { id: 1, date: '01 Jan 2026', title: 'O Futuro das Simulações com IA', author: 'Strategos Core' },
       { id: 2, date: '28 Dez 2025', title: 'Dominando o SISERV: Guia de Qualidade', author: 'Team Alpha' }
     ]
-  }
+  },
+  'rewards': {
+    title: "Empire Rewards",
+    subtitle: "Reconhecimento de elite para estrategistas.",
+    tiers: [
+      { name: 'Bronze', pts: 0, color: 'text-orange-400' },
+      { name: 'Silver', pts: 500, color: 'text-slate-400' },
+      { name: 'Gold', pts: 2000, color: 'text-gold' },
+      { name: 'Elite', pts: 5000, color: 'text-blue-400' },
+    ],
+    accumulation: [
+      { action: 'Vitória Arena', val: '500 PTS' },
+      { action: 'Round Submetido', val: '50 PTS' },
+      { action: 'Audit Log Perfeito', val: '100 PTS' },
+      { action: 'Community Hero', val: '200 PTS' },
+    ]
+  },
+  'solution-university': { title: 'University', icon: 'Users', body: 'Formação acadêmica de elite para as maiores instituições do país.' },
+  'solution-corporate': { title: 'Corporate', icon: 'Shield', body: 'Desenvolvimento de liderança e alinhamento estratégico in-company.' },
+  'solution-individual': { title: 'Individual IA', icon: 'Brain', body: 'Treine seu raciocínio contra o Oráculo Gemini 3 em partidas solo.' },
+  'solution-create': { title: 'Custom Arena', icon: 'PlusCircle', body: 'Configure cada variável e lance seu próprio ecossistema competitivo.' },
+  'branch-industrial': { name: 'Industrial', body: 'Produção massiva, CAPEX e Supply Chain global.', features: ['Manufatura 4.0', 'Supply Chain IA'], kpis: ['OEE', 'Markup', 'Lead Time'] },
+  'branch-commercial': { name: 'Comercial', body: 'Varejo híbrido e satisfação SIMCO.', features: ['Omnichannel', 'Mix'], kpis: ['Share', 'CAC', 'CSAT'] },
+  'branch-services': { name: 'Serviços', body: 'Capital intelectual e prestígio SISERV.', features: ['Corpo Técnico', 'Qualidade'], kpis: ['NPS', 'Utilização', 'Prestígio'] },
+  'branch-agribusiness': { name: 'Agronegócio', body: 'Sazonalidade e Ativos Biológicos SIAGRO.', features: ['Safra', 'Hedge'], kpis: ['Yield', 'EBITDA', 'Bio-Risk'] },
+  'branch-finance': { name: 'Financeiro', body: 'Liquidez e Hedge SINVEST.', features: ['Giro', 'Risco'], kpis: ['ROE', 'Liquidez', 'Spread'] },
+  'branch-construction': { name: 'Construção', body: 'BIM e Gestão de Obras Pesadas.', features: ['BIM', 'Insumos'], kpis: ['Evolução', 'Margem', 'Safety'] }
 };
 
 export const MENU_STRUCTURE = [
@@ -196,6 +222,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       scenario_type: 'simulated', transparency_level: 'medium', team_fee: 500, community_enabled: true, regionsCount: 9
     },
     initial_financials: {
+        // Fix: Added missing required properties to balance_sheet to satisfy types.ts interfaces
         balance_sheet: { 
             current_assets: { 
                 cash: 1000000,
@@ -215,6 +242,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
             }, 
             total_assets: 9176940 
         },
+        // Fix: Added missing required properties to liabilities_equity to satisfy types.ts interfaces
         liabilities_equity: { 
             current_liabilities: { 
                 accounts_payable: 300000,

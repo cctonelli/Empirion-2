@@ -1,21 +1,30 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
   Factory, ShoppingCart, Briefcase, Tractor, DollarSign, 
-  Hammer, ChevronRight, Zap, Target, BarChart3, Users
+  Hammer, ChevronRight, Zap, Target, BarChart3, Users, Box
 } from 'lucide-react';
-import { LANDING_PAGE_DATA } from '../constants';
+import { DEFAULT_PAGE_CONTENT } from '../constants';
+import { fetchPageContent } from '../services/supabase';
 import EmpireParticles from '../components/EmpireParticles';
 
 const BranchDetail: React.FC = () => {
   const { slug } = useParams();
-  const { t } = useTranslation('branches');
-  const detail = LANDING_PAGE_DATA.branchesDetailData[slug as keyof typeof LANDING_PAGE_DATA.branchesDetailData];
+  const { i18n, t } = useTranslation('branches');
+  const [content, setContent] = useState<any>(null);
 
-  if (!detail) return <div className="pt-40 text-center text-white uppercase font-black">Branch not found</div>;
+  useEffect(() => {
+    const load = async () => {
+      const db = await fetchPageContent(`branch-${slug}`, i18n.language);
+      setContent(db || DEFAULT_PAGE_CONTENT[`branch-${slug}`]);
+    };
+    load();
+  }, [slug, i18n.language]);
+
+  if (!content) return <div className="pt-40 text-center text-white uppercase font-black">Node Initializing...</div>;
 
   const getIcon = () => {
     switch(slug) {
@@ -25,7 +34,7 @@ const BranchDetail: React.FC = () => {
       case 'agribusiness': return <Tractor size={64} />;
       case 'finance': return <DollarSign size={64} />;
       case 'construction': return <Hammer size={64} />;
-      default: return <Factory size={64} />;
+      default: return <Box size={64} />;
     }
   };
 
@@ -45,11 +54,11 @@ const BranchDetail: React.FC = () => {
               </div>
               <div className="space-y-6">
                  <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter italic leading-none">
-                    {t(`${slug}.name`)} <br/>
+                    {content.name} <br/>
                     <span className="text-orange-500">Arena</span>
                  </h1>
                  <p className="text-xl md:text-2xl text-slate-400 font-medium leading-relaxed italic">
-                    "{t(`${slug}.body`)}"
+                    "{content.body}"
                  </p>
               </div>
               <div className="flex gap-4">
@@ -63,7 +72,7 @@ const BranchDetail: React.FC = () => {
            </motion.div>
 
            <div className="grid grid-cols-2 gap-8">
-              {detail.features.map((f, i) => (
+              {content.features.map((f: string, i: number) => (
                 <div key={i} className="p-8 bg-white/5 border border-white/10 rounded-[3rem] space-y-4">
                    <div className="p-3 bg-white/10 rounded-xl w-fit text-orange-500"><Zap size={20} /></div>
                    <h4 className="text-lg font-black text-white uppercase tracking-tight">{f}</h4>
@@ -80,14 +89,14 @@ const BranchDetail: React.FC = () => {
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              {detail.kpis.map((kpi, i) => (
+              {content.kpis.map((kpi: string, i: number) => (
                 <div key={i} className="text-center space-y-6">
                    <div className="w-16 h-16 mx-auto bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 border border-white/10">
                       {i === 0 ? <BarChart3 /> : i === 1 ? <Target /> : <Users />}
                    </div>
                    <div>
                       <h4 className="text-2xl font-black text-white uppercase tracking-tight">{kpi}</h4>
-                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-2">Métrica Primária {slug}</p>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-2">Métrica Primária {content.name}</p>
                    </div>
                 </div>
               ))}

@@ -1,35 +1,48 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Award, Star, Zap, Users, Gift, TrendingUp, ShieldCheck, Trophy } from 'lucide-react';
-import { EMPIRE_REWARDS_DATA } from '../constants';
+import { Award, Star, Zap, Gift, TrendingUp, Trophy } from 'lucide-react';
+import { DEFAULT_PAGE_CONTENT } from '../constants';
+import { fetchPageContent } from '../services/supabase';
+import EmpireParticles from '../components/EmpireParticles';
 
 const PublicRewards: React.FC = () => {
-  const { t } = useTranslation('landing');
-  const { title, subtitle, tiers, accumulation } = EMPIRE_REWARDS_DATA;
+  const { i18n } = useTranslation();
+  const [content, setContent] = useState<any>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const db = await fetchPageContent('rewards', i18n.language);
+      setContent(db || DEFAULT_PAGE_CONTENT['rewards']);
+    };
+    load();
+  }, [i18n.language]);
+
+  if (!content) return <div className="pt-40 text-center text-white uppercase font-black">Node Initializing...</div>;
 
   return (
-    <div className="pt-40 pb-32 px-8 md:px-24">
-      <div className="max-w-7xl mx-auto space-y-32">
+    <div className="pt-40 pb-32 px-8 md:px-24 min-h-screen relative overflow-hidden bg-transparent">
+      <EmpireParticles />
+      <div className="max-w-7xl mx-auto space-y-32 relative z-10">
         {/* Hero */}
         <section className="text-center space-y-8">
            <motion.div 
              initial={{ opacity: 0, scale: 0.8 }}
              animate={{ opacity: 1, scale: 1 }}
-             className="w-24 h-24 bg-gold/10 rounded-[2rem] flex items-center justify-center mx-auto text-gold border border-gold/20 shadow-[0_0_50px_rgba(251,191,36,0.1)]"
+             className="w-24 h-24 bg-amber-500/10 rounded-[2rem] flex items-center justify-center mx-auto text-amber-500 border border-amber-500/20 shadow-[0_0_50px_rgba(251,191,36,0.1)]"
            >
               <Trophy size={48} />
            </motion.div>
            <div className="space-y-4">
-              <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter italic">{title}</h1>
-              <p className="text-xl md:text-2xl text-slate-400 font-medium max-w-2xl mx-auto">{subtitle}</p>
+              <h1 className="text-6xl md:text-8xl font-black text-white uppercase tracking-tighter italic">{content.title}</h1>
+              <p className="text-xl md:text-2xl text-slate-400 font-medium max-w-2xl mx-auto">{content.subtitle}</p>
            </div>
         </section>
 
         {/* Tiers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-           {tiers.map((tier, i) => (
+           {content.tiers.map((tier: any, i: number) => (
              <motion.div 
                key={tier.name}
                initial={{ opacity: 0, y: 20 }}
@@ -56,7 +69,7 @@ const PublicRewards: React.FC = () => {
                  <h3 className="text-5xl font-black text-white uppercase tracking-tighter">Como Acumular?</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                 {accumulation.map((acc, i) => (
+                 {content.accumulation.map((acc: any, i: number) => (
                    <div key={i} className="flex items-center gap-6 p-6 bg-slate-900 rounded-[2rem] border border-white/5 group">
                       <div className="p-3 bg-blue-600 rounded-xl group-hover:scale-110 transition-transform">
                          <Zap size={18} className="text-white" />
