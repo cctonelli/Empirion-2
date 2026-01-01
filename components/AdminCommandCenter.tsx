@@ -3,14 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, Workflow, CreditCard, Activity, Users, Settings, 
   Terminal, Database, Globe, Lock, Unlock, Server, UserCog,
-  CheckCircle2, AlertTriangle, Save, Loader2, RefreshCw, Star
+  CheckCircle2, AlertTriangle, Save, Loader2, RefreshCw, Star,
+  Search, ShieldCheck, Eye, Trash2
 } from 'lucide-react';
-import { listAllUsers, updateUserRole, updateUserPremiumStatus, getPlatformConfig, updatePlatformConfig } from '../services/supabase';
+import { listAllUsers, updateUserRole, updateUserPremiumStatus, getPlatformConfig, updatePlatformConfig, supabase } from '../services/supabase';
 import { UserProfile } from '../types';
 
 const AdminCommandCenter: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'system' | 'users' | 'modalities' | 'opal'>('system');
+  const [activeTab, setActiveTab] = useState<'system' | 'users' | 'opal' | 'audit'>('system');
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [opalUrl, setOpalUrl] = useState('');
   const [isSavingOpal, setIsSavingOpal] = useState(false);
@@ -22,6 +24,15 @@ const AdminCommandCenter: React.FC = () => {
     setLoadingUsers(false);
   };
 
+  const fetchAuditLogs = async () => {
+    const { data } = await supabase
+      .from('decision_audit_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (data) setAuditLogs(data);
+  };
+
   const fetchConfig = async () => {
     const config = await getPlatformConfig();
     if (config) setOpalUrl(config.opal_url);
@@ -31,9 +42,9 @@ const AdminCommandCenter: React.FC = () => {
     setIsSavingOpal(true);
     try {
       await updatePlatformConfig({ opal_url: opalUrl });
-      alert("Configuração Opal Global Sincronizada!");
+      alert("Configuração Global Sincronizada.");
     } catch (e) {
-      alert("Erro ao salvar configuração.");
+      alert("Erro ao salvar.");
     } finally {
       setIsSavingOpal(false);
     }
@@ -51,144 +62,145 @@ const AdminCommandCenter: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'users') fetchUsers();
     if (activeTab === 'opal') fetchConfig();
+    if (activeTab === 'audit') fetchAuditLogs();
+    
+    // Realtime Audit Sub
+    if (activeTab === 'audit') {
+      const sub = supabase.channel('audit-realtime')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'decision_audit_log' }, (payload) => {
+          setAuditLogs(prev => [payload.new, ...prev].slice(0, 50));
+        }).subscribe();
+      return () => { sub.unsubscribe(); };
+    }
   }, [activeTab]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
         <div>
           <h1 className="text-4xl font-black text-slate-900 flex items-center gap-3 uppercase tracking-tighter">
             <ShieldAlert className="text-red-500" size={32} /> Command Center
           </h1>
-          <p className="text-slate-500 mt-1 font-medium">Platform orchestration and user validation node.</p>
+          <p className="text-slate-500 mt-1 font-medium">Orquestração da Arena e Gestão de Protocolos.</p>
         </div>
         <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner overflow-x-auto no-scrollbar">
            <TabBtn active={activeTab === 'system'} onClick={() => setActiveTab('system')} label="Health" />
            <TabBtn active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Users" />
-           <TabBtn active={activeTab === 'modalities'} onClick={() => setActiveTab('modalities')} label="Modalities" />
+           <TabBtn active={activeTab === 'audit'} onClick={() => setActiveTab('audit')} label="Audit Log" />
            <TabBtn active={activeTab === 'opal'} onClick={() => setActiveTab('opal')} label="Opal AI" />
         </div>
       </div>
 
-      {activeTab === 'opal' && (
-        <div className="px-4 animate-in slide-in-from-right-4 duration-500">
-           <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12">
+      <div className="px-4">
+        {activeTab === 'opal' && (
+          <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12 animate-in slide-in-from-right-4">
               <div className="flex items-center gap-4">
                  <div className="p-4 bg-indigo-600 text-white rounded-[2rem] shadow-xl"><Workflow size={32} /></div>
                  <div>
                     <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Opal Global Integration</h3>
-                    <p className="text-slate-400 font-medium">Configure os links dos mini-apps Opal e regras de paywall.</p>
+                    <p className="text-slate-400 font-medium">Master link para os mini-apps Opal (Premium).</p>
                  </div>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                  <div className="space-y-6">
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Google Opal Share URL</label>
-                       <input 
-                         value={opalUrl}
-                         onChange={e => setOpalUrl(e.target.value)}
-                         className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-bold" 
-                         placeholder="https://opal.google/shared/..." 
-                       />
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Google Opal API Endpoint / Share URL</label>
+                       <input value={opalUrl} onChange={e => setOpalUrl(e.target.value)} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="https://opal.google/shared/..." />
                     </div>
-                    <button 
-                      onClick={handleSaveOpal}
-                      disabled={isSavingOpal}
-                      className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all flex items-center justify-center gap-3 shadow-xl"
-                    >
-                      {isSavingOpal ? <Loader2 className="animate-spin" /> : <><Save size={18} /> Salvar Configuração Global</>}
+                    <button onClick={handleSaveOpal} disabled={isSavingOpal} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all flex items-center justify-center gap-3">
+                      {isSavingOpal ? <Loader2 className="animate-spin" /> : <><Save size={18} /> Salvar Link Mestre</>}
                     </button>
-                    <div className="flex items-center gap-4 p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
-                       <CreditCard className="text-indigo-600" />
-                       <div className="flex-1">
-                          <span className="block text-[10px] font-black uppercase text-indigo-900">Subscription Price (BRL)</span>
-                          <span className="text-lg font-black text-indigo-600">R$ 29,90 / mês</span>
-                       </div>
-                    </div>
                  </div>
-                 <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-200 space-y-6">
-                    <h4 className="text-xs font-black uppercase text-slate-900">Preview de Assistência</h4>
-                    <p className="text-sm text-slate-500 leading-relaxed font-medium">Os usuários premium verão o iframe do Opal embutido no Intelligence Hub. Usuários free verão o banner de upgrade Empire Elite.</p>
-                    <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100">
-                       <input type="checkbox" readOnly checked className="w-5 h-5 accent-indigo-600" />
-                       <span className="text-[10px] font-black uppercase text-slate-400">Paywall Ativo Globalmente</span>
-                    </div>
+                 <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-200">
+                    <h4 className="text-xs font-black uppercase text-slate-900 mb-4">Regras de Monetização</h4>
+                    <p className="text-sm text-slate-500 leading-relaxed font-medium">O acesso aos workflows avançados é restrito a perfis is_opal_premium=true. O billing deve ser gerenciado via Stripe/PIX externo por enquanto.</p>
                  </div>
               </div>
-           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === 'users' && (
-        <div className="px-4 space-y-6 animate-in slide-in-from-right-4">
-           <div className="flex items-center justify-between">
-              <h3 className="text-xl font-black text-slate-900 uppercase">Player Directory</h3>
-              <button onClick={fetchUsers} className="p-3 hover:bg-slate-100 rounded-xl transition-all"><RefreshCw size={18} className={loadingUsers ? 'animate-spin' : ''}/></button>
-           </div>
-           
-           <div className="bg-white rounded-[3rem] border border-slate-100 overflow-hidden shadow-sm">
-              <table className="w-full text-left text-xs">
-                 <thead className="bg-slate-50 text-slate-400 font-black uppercase border-b border-slate-100">
-                    <tr>
-                       <th className="p-6">User Identity</th>
-                       <th className="p-6">Role</th>
-                       <th className="p-6">Opal Premium</th>
-                       <th className="p-6 text-right">Actions</th>
-                    </tr>
-                 </thead>
-                 <tbody className="divide-y divide-slate-50">
-                    {users.map(user => (
-                       <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="p-6">
-                             <div className="flex flex-col">
-                                <span className="font-bold text-slate-900">{user.name}</span>
-                                <span className="text-slate-400 font-medium">{user.email}</span>
-                             </div>
-                          </td>
-                          <td className="p-6">
-                             <span className={`px-3 py-1 rounded-full font-black uppercase text-[9px] ${user.role === 'admin' ? 'bg-red-50 text-red-600' : user.role === 'tutor' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>
-                                {user.role}
-                             </span>
-                          </td>
-                          <td className="p-6">
-                             <button 
-                                onClick={() => togglePremium(user.supabase_user_id, user.is_opal_premium)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black uppercase text-[9px] transition-all ${user.is_opal_premium ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-400 hover:text-indigo-600'}`}
-                             >
-                                {user.is_opal_premium ? <Star size={12} fill="white"/> : <Unlock size={12}/>}
-                                {user.is_opal_premium ? 'Premium Elite' : 'Standard'}
-                             </button>
-                          </td>
-                          <td className="p-6 text-right">
-                             <button className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 transition-all text-slate-400 hover:text-slate-900">
-                                <UserCog size={16} />
-                             </button>
-                          </td>
-                       </tr>
-                    ))}
-                 </tbody>
-              </table>
-           </div>
-        </div>
-      )}
+        {activeTab === 'users' && (
+          <div className="space-y-6 animate-in slide-in-from-right-4">
+             <div className="bg-white rounded-[3rem] border border-slate-100 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs">
+                   <thead className="bg-slate-50 text-slate-400 font-black uppercase border-b border-slate-100">
+                      <tr>
+                         <th className="p-6">Estrategista</th>
+                         <th className="p-6">Status Elite (IA)</th>
+                         <th className="p-6">Nível de Acesso</th>
+                         <th className="p-6 text-right">Ações</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-50">
+                      {users.map(user => (
+                         <tr key={user.id} className="hover:bg-slate-50 transition-colors group">
+                            <td className="p-6">
+                               <div className="flex flex-col">
+                                  <span className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{user.name}</span>
+                                  <span className="text-[10px] text-slate-400 font-medium">{user.email}</span>
+                               </div>
+                            </td>
+                            <td className="p-6">
+                               <button 
+                                  onClick={() => togglePremium(user.supabase_user_id, user.is_opal_premium)}
+                                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black uppercase text-[9px] transition-all ${user.is_opal_premium ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-400'}`}
+                               >
+                                  {user.is_opal_premium ? <Star size={12} fill="white"/> : <Unlock size={12}/>}
+                                  {user.is_opal_premium ? 'Premium Elite' : 'Standard'}
+                               </button>
+                            </td>
+                            <td className="p-6">
+                               <span className={`px-3 py-1 rounded-full font-black uppercase text-[9px] ${user.role === 'admin' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>{user.role}</span>
+                            </td>
+                            <td className="p-6 text-right">
+                               <div className="flex justify-end gap-2">
+                                  <button className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-200 transition-all"><UserCog size={16} /></button>
+                               </div>
+                            </td>
+                         </tr>
+                      ))}
+                   </tbody>
+                </table>
+             </div>
+          </div>
+        )}
 
-      {activeTab === 'system' && (
-        <div className="px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
-           <HealthCard label="Neural Engine" status="Online" color="emerald" icon={<Activity />} />
-           <HealthCard label="Market Oracle" status="Synchronized" color="blue" icon={<Database />} />
-           <HealthCard label="CVM Controller" status="Active" color="amber" icon={<Server />} />
-        </div>
-      )}
+        {activeTab === 'audit' && (
+          <div className="space-y-6 animate-in slide-in-from-right-4">
+             <div className="bg-slate-900 p-10 rounded-[3rem] shadow-2xl border border-white/5 space-y-8 h-[700px] flex flex-col">
+                <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                   <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-blue-400"><Activity size={20} /></div>
+                      <h3 className="text-xl font-black text-white uppercase italic">Real-time Decision Audit</h3>
+                   </div>
+                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Sincronizando via Supabase Realtime</span>
+                </div>
+                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                   {auditLogs.map((log, i) => (
+                     <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between hover:bg-white/10 transition-all">
+                        <div className="flex items-center gap-4">
+                           <div className="w-1 h-10 bg-indigo-500 rounded-full"></div>
+                           <div>
+                              <span className="block text-[10px] font-black text-indigo-400 uppercase">{log.user_name || 'System Operator'}</span>
+                              <p className="text-sm font-bold text-slate-200">{log.action}</p>
+                           </div>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-500 font-mono">{new Date(log.created_at).toLocaleTimeString()}</span>
+                     </div>
+                   ))}
+                </div>
+             </div>
+          </div>
+        )}
 
-      {activeTab === 'modalities' && (
-        <div className="px-4 p-10 bg-white rounded-[3rem] border border-slate-100">
-           <div className="flex items-center gap-3 mb-8 text-slate-400 uppercase font-black text-[10px] tracking-widest">
-              <Settings size={16} /> Arena Ruleset Config
-           </div>
-           <p className="text-slate-500 italic">Modality configuration node is in maintenance mode. Use "Deploy" in landing editor.</p>
-        </div>
-      )}
+        {activeTab === 'system' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in fade-in">
+             <HealthCard label="Neural Engine" status="Online" color="emerald" icon={<Activity />} />
+             <HealthCard label="Market Oracle" status="Synchronized" color="blue" icon={<Database />} />
+             <HealthCard label="CVM Controller" status="Active" color="amber" icon={<Server />} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
