@@ -1,12 +1,12 @@
+
 import React, { useLayoutEffect, useRef } from 'react';
 
 /**
- * Empire Cosmos Particles v7.1 (Production & TS Safe)
+ * Empire Cosmos Particles v7.2 (Glow Optimized)
  * Features:
- * - Sync render with useLayoutEffect
+ * - High-visibility glow effect
+ * - Optimized trail visibility for dark slate-950
  * - Retina/High-DPI sharp scaling
- * - Gravitational mouse attraction
- * - Optimized trail visibility
  */
 const EmpireParticles: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,7 +17,6 @@ const EmpireParticles: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Retina Sharp Scaling Logic
     const resizeCanvas = () => {
       const dpr = window.devicePixelRatio || 1;
       canvas.width = window.innerWidth * dpr;
@@ -48,15 +47,15 @@ const EmpireParticles: React.FC = () => {
     }> = [];
 
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f97316'];
-    const count = Math.min(120, Math.floor(window.innerWidth / 10));
+    const count = Math.min(100, Math.floor(window.innerWidth / 15));
 
     for (let i = 0; i < count; i++) {
       particles.push({
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight,
-        vx: (Math.random() - 0.5) * 1.5,
-        vy: (Math.random() - 0.5) * 1.5,
-        radius: Math.random() * 2 + 2,
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: (Math.random() - 0.5) * 1.2,
+        radius: Math.random() * 2 + 1.5,
         color: colors[Math.floor(Math.random() * colors.length)],
         pulse: Math.random() * Math.PI * 2
       });
@@ -64,47 +63,40 @@ const EmpireParticles: React.FC = () => {
 
     let animationId: number;
     const animate = () => {
-      // Trail Effect: rgba(2, 6, 23, 0.08) for optimal deep blue visibility
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.08)';
+      // Trail Effect: Ligeiramente mais opaco para visibilidade (0.12)
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.12)';
       ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
       particles.forEach(p => {
-        // Gravitational Attraction
         const dx = mouse.x - p.x;
         const dy = mouse.y - p.y;
         const dist = Math.hypot(dx, dy);
 
-        if (dist < 250 && dist > 0) {
-          const force = (250 - dist) / 250;
-          p.vx += (dx / dist) * force * 0.08;
-          p.vy += (dy / dist) * force * 0.08;
+        if (dist < 300 && dist > 0) {
+          const force = (300 - dist) / 300;
+          p.vx += (dx / dist) * force * 0.06;
+          p.vy += (dy / dist) * force * 0.06;
         }
 
-        // Physics
-        p.vx *= 0.98;
-        p.vy *= 0.98;
+        p.vx *= 0.97;
+        p.vy *= 0.97;
         p.x += p.vx;
         p.y += p.vy;
-        p.pulse += 0.03;
+        p.pulse += 0.02;
 
-        // Wrapping
         p.x = (p.x + window.innerWidth) % window.innerWidth;
         p.y = (p.y + window.innerHeight) % window.innerHeight;
 
-        // Size & Pulse
-        const dynamicPulse = Math.sin(p.pulse) * 0.8;
-        let rawSize = p.radius + dynamicPulse;
-        if (!isFinite(rawSize) || rawSize <= 0) rawSize = p.radius;
-        const size = Math.max(1, Math.abs(rawSize));
+        const dynamicPulse = Math.sin(p.pulse) * 1.2;
+        const size = Math.max(1.5, p.radius + dynamicPulse);
 
-        // Drawing
         ctx.beginPath();
         ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         
-        // High visibility alpha values
-        ctx.globalAlpha = dist < 180 ? 0.9 : 0.6;
-        ctx.shadowBlur = dist < 180 ? 20 : 8;
+        // Aumento significativo do brilho (ShadowBlur)
+        ctx.globalAlpha = dist < 200 ? 0.9 : 0.5;
+        ctx.shadowBlur = dist < 200 ? 35 : 15;
         ctx.shadowColor = p.color;
         
         ctx.fill();

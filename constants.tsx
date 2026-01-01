@@ -23,17 +23,28 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     hero: {
       title: "Empirion",
       empire: "BI Arena",
-      subtitle: "A Arena Definitiva onde a Inteligência Artificial Gemini e a Estratégia Humana colidem.",
+      subtitle: "A Arena Definitiva onde a Inteligência Artificial Gemini e a Estratégia Humana colidem em Simulações de Alta Performance.",
       cta: "Entrar na Arena",
       secondaryCta: "Ver Setores"
     },
     carousel: [
       { id: 1, title: "Industrial Mastery 2026", subtitle: "Inscrições abertas para a maior arena fabril do país.", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2000", badge: "Live Arena", link: "/solutions/open-tournaments" },
-      { id: 2, title: "Strategos BP: Quiz IA", subtitle: "Crie seu plano de negócios com auditoria cognitiva Gemini.", image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2000", badge: "New Feature", link: "/solutions/business-plan" }
+      { id: 2, title: "Strategos BP: Quiz IA", subtitle: "Crie seu plano de negócios com auditoria cognitiva Gemini.", image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2000", badge: "New Feature", link: "/solutions/business-plan" },
+      { id: 3, title: "Global Agro Challenge", subtitle: "Domine ativos biológicos e hedge em tempo real.", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000", badge: "Market Node", link: "/solutions/open-tournaments" }
+    ],
+    features: [
+      { id: 'f1', title: "Concorrência Real-time", desc: "Infraestrutura Supabase para decisões coletivas instantâneas.", icon: "Zap" },
+      { id: 'f2', title: "Oráculo Gemini 3", desc: "Raciocínio profundo aplicado ao seu Balanço e DRE.", icon: "Brain" },
+      { id: 'f3', title: "Master Command", desc: "Controle granular para tutores: manipule a economia.", icon: "Shield" }
     ],
     badges: [
-      { id: 'm1', name: "Mestre Industrial", pts: 500, desc: "Alcance o topo do ranking TSR 5 vezes.", icon: "Factory" },
-      { id: 'e1', name: "Herói ESG", pts: 300, desc: "Mantenha impacto ambiental zero por 10 rodadas.", icon: "Leaf" }
+      { id: 'm1', name: "Mestre Industrial", pts: 500, desc: "Alcance o topo do ranking TSR 5 vezes.", icon: "Factory", color: "text-blue-400" },
+      { id: 'e1', name: "Herói ESG", pts: 300, desc: "Mantenha impacto ambiental zero.", icon: "Leaf", color: "text-emerald-400" },
+      { id: 'o1', name: "Oracle Strategist", pts: 1000, desc: "Sincronização Elite com o Strategos AI.", icon: "Zap", color: "text-amber-400" }
+    ],
+    leaderboard: [
+      { id: 'c1', name: "Industrial Mastery", status: "Rodada 5/12", teams: 14, lead: "Alpha Group" },
+      { id: 'c2', name: "Agro Global", status: "Rodada 2/10", teams: 8, lead: "BioCore SA" }
     ]
   },
   'solutions-bp': {
