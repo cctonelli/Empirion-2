@@ -5,7 +5,7 @@ import {
   Shield, Loader2, Megaphone, Zap,
   TrendingUp, Wallet, ArrowUpCircle, ArrowDownCircle,
   Construction, Briefcase, Gavel, AlertTriangle, LayoutGrid, Cpu,
-  UserPlus, UserMinus, PlusCircle, MinusCircle, CreditCard, PieChart
+  UserPlus, UserMinus, PlusCircle, MinusCircle, CreditCard, PieChart, Sparkles
 } from 'lucide-react';
 import { supabase, saveDecisions } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -19,7 +19,7 @@ const createInitialDecisions = (regionsCount: number): DecisionData => {
   return {
     regions,
     hr: { hired: 0, fired: 0, salary: 1300, trainingPercent: 5, participationPercent: 0, others: 0 },
-    production: { purchaseMPA: 30900, purchaseMPB: 20600, paymentType: 1, activityLevel: 100, extraProduction: 0 },
+    production: { purchaseMPA: 30900, purchaseMPB: 20600, paymentType: 1, activityLevel: 100, extraProduction: 0, rd_investment: 10000 },
     finance: { 
       loanRequest: 0, loanType: 1, application: 0, termSalesInterest: 1.5, 
       buyMachines: { alfa: 0, beta: 0, gama: 0 }, 
@@ -118,8 +118,8 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
               </div>
               <div className="pt-4 border-t border-slate-100">
                 <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase">
-                   <span>Margem Líquida</span>
-                   <span>{(projections.margin * 100).toFixed(1)}%</span>
+                   <span>Fator Qualidade</span>
+                   <span className="text-blue-600 font-black">{projections.qualityIndex?.toFixed(2)}</span>
                 </div>
               </div>
            </div>
@@ -140,13 +140,13 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
         <div className="flex items-center justify-between mb-12 pb-8 border-b border-slate-100">
            <div>
               <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight">{activeSection} Panel</h2>
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Folha de Decisões v5.0 GOLD - Período {round}</p>
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Folha de Decisões v5.2 GOLD - Período {round}</p>
            </div>
            <div className="flex items-center gap-3 px-6 py-3 bg-slate-50 rounded-2xl border border-slate-200">
               <Cpu size={18} className="text-blue-600" />
               <div className="flex flex-col">
                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Processing Node</span>
-                <span className="text-[10px] font-black text-blue-900 font-mono">HASH: {round}X-GOLD</span>
+                <span className="text-[10px] font-black text-blue-900 font-mono">SIND: {round}X-BERNARD</span>
               </div>
            </div>
         </div>
@@ -192,15 +192,23 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
           {activeSection === 'production' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in slide-in-from-right-4 duration-500">
                <div className="space-y-6">
-                  <div className="flex items-center gap-3"><Construction className="text-blue-600" size={20} /><h4 className="text-[11px] font-black uppercase text-slate-900">Suprimentos MP</h4></div>
+                  <div className="flex items-center gap-3"><Construction className="text-blue-600" size={20} /><h4 className="text-[11px] font-black uppercase text-slate-900">Suprimentos & Qualidade</h4></div>
                   <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 space-y-6">
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compra MP A (Unid)</label>
-                        <input type="number" value={decisions.production.purchaseMPA} onChange={e => updateDecision('production.purchaseMPA', Number(e.target.value))} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black font-mono shadow-sm" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                           <Sparkles size={12} className="text-amber-500" /> Investimento P&D (Qualidade)
+                        </label>
+                        <input type="number" value={decisions.production.rd_investment || 0} onChange={e => updateDecision('production.rd_investment', Number(e.target.value))} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black font-mono shadow-sm text-blue-600" />
                      </div>
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compra MP B (Unid)</label>
-                        <input type="number" value={decisions.production.purchaseMPB} onChange={e => updateDecision('production.purchaseMPB', Number(e.target.value))} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black font-mono shadow-sm" />
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compra MP A</label>
+                           <input type="number" value={decisions.production.purchaseMPA} onChange={e => updateDecision('production.purchaseMPA', Number(e.target.value))} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black font-mono shadow-sm" />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compra MP B</label>
+                           <input type="number" value={decisions.production.purchaseMPB} onChange={e => updateDecision('production.purchaseMPB', Number(e.target.value))} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black font-mono shadow-sm" />
+                        </div>
                      </div>
                   </div>
                </div>
@@ -325,7 +333,7 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
         <div className="mt-16 pt-10 border-t border-slate-50 flex flex-col md:flex-row items-center justify-between gap-6">
            <div className="flex items-center gap-3 text-slate-400">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-[10px] font-black uppercase tracking-widest">Ready for strategic deployment</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">Sincronizado com SIND Master v5.2</span>
            </div>
            <button 
              onClick={handleSave}

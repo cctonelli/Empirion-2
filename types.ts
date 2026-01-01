@@ -51,9 +51,11 @@ export interface FinancialStatement {
     productivity: number;
     motivation: string;
     strike: boolean;
+    strike_intensity?: number; // 0 to 1
   };
   machines: MachineStats;
   regional_demand: Record<number, { potential: number; sold: number }>;
+  quality_index?: number; // P&D result
 }
 
 export interface BalanceSheet {
@@ -116,6 +118,14 @@ export interface BlackSwanEvent {
   };
 }
 
+export interface MessageBoardItem {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+  isImportant?: boolean;
+}
+
 export interface EcosystemConfig {
   scenarioType: ScenarioType;
   inflationRate: number;
@@ -138,6 +148,8 @@ export interface EcosystemConfig {
     demand: number;
     currency: number;
   };
+  stockMarketActive?: boolean;
+  messageBoard?: MessageBoardItem[];
 }
 
 export interface CommunityCriteria {
@@ -175,6 +187,7 @@ export interface MarketIndicators {
   average_salary: number;
   exchange_rate?: number;
   risk_premium?: number;
+  stock_prices?: Record<string, number>;
 }
 
 export interface DecisionData {
@@ -193,6 +206,7 @@ export interface DecisionData {
     paymentType: 0 | 1 | 2;
     activityLevel: number;
     extraProduction: number;
+    rd_investment?: number; // P&D / Qualidade
   };
   finance: {
     loanRequest: number;
