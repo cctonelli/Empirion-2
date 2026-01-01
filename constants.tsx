@@ -20,13 +20,12 @@ export const BRANCH_CONFIGS: Record<string, { label: string; icon: string; descr
 };
 
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
-  // --- INDUSTRIAL (Fiel aos Modelos Bernard Antigos - Image ID 0, 1, 5) ---
   {
     id: 'ind-basico',
-    name: "Industrial Básico - Modelo Bernard P1",
+    name: "Industrial Básico - Bernard P1 Legacy",
     branch: "industrial",
     sector: "Indústria Bens Duráveis",
-    description: "Simulação clássica 9 regiões, MP A/B, máquinas alfa/beta/gama. Ativo Total: 9.176.940. Fiel ao relatório de rodada 1 do sistema original.",
+    description: "Fidelidade total ao modelo Bernard Sistemas. 9 regiões, Matéria-Prima A/B, máquinas depreciadas. Ativo Inicial: 9.176.940.",
     is_public: true,
     config: { 
       currency: "BRL", 
@@ -84,22 +83,6 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       machine_gama_price: 3030000, 
       average_salary: 1300 
     }
-  },
-  {
-    id: 'ind-high-tech',
-    name: "Industrial - Alta Tecnologia",
-    branch: "industrial",
-    sector: "Semicondutores",
-    description: "Foco em R&D, depreciação rápida de equipamentos e alta sensibilidade ESG.",
-    is_public: true,
-    config: { currency: "USD", round_frequency_days: 30, total_rounds: 12, sales_mode: "hybrid", scenario_type: "simulated", transparency_level: "high", team_fee: 100, community_enabled: true, regionsCount: 4 },
-    initial_financials: {
-      balance_sheet: { current_assets: { cash: 500000, accounts_receivable: 1200000, inventory_raw_a: 400000, inventory_raw_b: 0, inventory_finished: 200000, prepaid_expenses: 50000 }, non_current_assets: { pp_e: { machinery: 8000000, buildings: 4000000, land: 1000000 }, accumulated_depreciation: -2000000 }, total_assets: 13350000 },
-      liabilities_equity: { current_liabilities: { accounts_payable: 800000, short_term_loans: 2000000, taxes_payable: 150000, dividends_payable: 0 }, non_current_liabilities: { long_term_loans: 4000000 }, equity: { capital_stock: 6000000, retained_earnings: 400000 }, total_liabilities_equity: 13350000 }
-    },
-    products: [{ name: "Processador Quântico", unit_cost_base: 450, suggested_price: 1800, initial_stock: 100, max_capacity: 500 }],
-    resources: { water_consumption_monthly: 500000, energy_consumption_monthly: 2000000, co2_emissions_monthly: 150 },
-    market_indicators: { inflation_rate: 0.5, interest_rate_tr: 1.0, supplier_interest: 0.8, demand_regions: [500, 600, 500, 800], raw_a_price: 120, raw_b_price: 0, distribution_cost: 200, marketing_cost_unit: 50000, machine_alfa_price: 2000000, machine_beta_price: 5000000, machine_gama_price: 10000000, average_salary: 4500 }
   }
 ];
 
