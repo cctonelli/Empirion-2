@@ -1,0 +1,45 @@
+
+{
+  "industrial": {
+    "name": "Industrial",
+    "description": "CapEx massivo, obsolescência e cadeias de suprimento globais.",
+    "title": "Célula Industrial",
+    "subtitle": "Dominância de Manufatura e Escala.",
+    "body": "O motor industrial clássico. Gerencie máquinas Alfa, Beta e Gama, cuide da depreciação e antecipe-se às quebras de estoque em até 15 regiões."
+  },
+  "commercial": {
+    "name": "Comercial",
+    "description": "Varejo híbrido e algoritmos de satisfação do consumidor SIMCO.",
+    "title": "Hub Comercial",
+    "subtitle": "Varejo Híbrido e Customer Experience.",
+    "body": "Equilibre a operação de lojas físicas com o crescimento explosivo do e-commerce. Gerencie comissões e mantenha o CSAT (Satisfação) no topo."
+  },
+  "services": {
+    "name": "Serviços",
+    "description": "Capital intelectual, formação técnica e prestígio de marca SISERV.",
+    "title": "Matriz de Serviços",
+    "subtitle": "Economia do Conhecimento e Imagem.",
+    "body": "Seu maior ativo volta para casa todas as noites. Treine seu corpo técnico e gerencie contratos de alta complexidade com foco em QA."
+  },
+  "agribusiness": {
+    "name": "Agronegócio",
+    "description": "Ativos biológicos, clima real e sazonalidade SIAGRO.",
+    "title": "Cooperativa Agro",
+    "subtitle": "Sazonalidade e Ativos Biológicos.",
+    "body": "Plante, colha e processe. O risco climático é seu maior adversário. Use IA para prever quebras de safra e garantir o financiamento rural."
+  },
+  "finance": {
+    "name": "Financeiro",
+    "description": "Gestão bancária, hedge e volatilidade de mercado SINVEST.",
+    "title": "Banco de Investimentos",
+    "subtitle": "Spread, Risco e Liquidez.",
+    "body": "Opere no mercado financeiro. Gerencie carteiras de crédito, fundos de investimento e proteja o capital contra a inflação e câmbio."
+  },
+  "construction": {
+    "name": "Construção",
+    "description": "Obras pesadas, licitações e gestão de riscos estruturais.",
+    "title": "Construtora de Elite",
+    "subtitle": "Infraestrutura e Projetos de Longo Prazo.",
+    "body": "Participe de licitações bilionárias. Gerencie prazos críticos, custos de materiais e riscos climáticos em grandes canteiros de obras."
+  }
+}

@@ -1,0 +1,45 @@
+
+{
+  "industrial": {
+    "name": "Industrial",
+    "description": "CapEx masivo, obsolescencia y cadenas de suministro globales.",
+    "title": "Célula Industrial",
+    "subtitle": "Dominancia de Manufactura y Escala.",
+    "body": "El motor industrial clásico. Gestione máquinas Alfa, Beta y Gamma, cuide la depreciación y anticípese a las roturas de stock en hasta 15 regiones."
+  },
+  "commercial": {
+    "name": "Comercial",
+    "description": "Venta híbrida y algoritmos de satisfacción del consumidor SIMCO.",
+    "title": "Hub Comercial",
+    "subtitle": "Venta Híbrida y Experiencia del Cliente.",
+    "body": "Equilibre la operación de tiendas físicas con el crecimiento explosivo del e-commerce. Gestione comisiones y mantenga el CSAT (Satisfacción) en la cima."
+  },
+  "services": {
+    "name": "Servicios",
+    "description": "Capital intelectual, formación técnica y prestigio de marca SISERV.",
+    "title": "Matriz de Servicios",
+    "subtitle": "Economía del Conocimiento e Imagen.",
+    "body": "Su mayor activo vuelve a casa todas las noches. Entrene a su cuerpo técnico y gestione contratos de alta complejidad con enfoque en QA."
+  },
+  "agribusiness": {
+    "name": "Agronegocio",
+    "description": "Activos biológicos, clima real y estacionalidad SIAGRO.",
+    "title": "Cooperativa Agro",
+    "subtitle": "Estacionalidad y Activos Biológicos.",
+    "body": "Siembre, coseche y procese. El riesgo climático es su mayor adversario. Use IA para prever pérdidas de cosecha y asegurar financiamiento rural."
+  },
+  "finance": {
+    "name": "Finanzas",
+    "description": "Gestión bancaria, cobertura y volatilidad de mercado SINVEST.",
+    "title": "Banco de Inversiones",
+    "subtitle": "Spread, Riesgo y Liquidez.",
+    "body": "Opere en el mercado financiero. Gestione carteras de crédito, fondos de inversión y proteja el capital contra la inflación y el cambio."
+  },
+  "construction": {
+    "name": "Construcción",
+    "description": "Obras pesadas, licitaciones y gestión de riesgos estructurales.",
+    "title": "Constructora de Élite",
+    "subtitle": "Infraestructura y Proyectos de Largo Plazo.",
+    "body": "Participe en licitaciones multimillonarias. Gestione plazos críticos, costos de materiales y riesgos climáticos en grandes obras."
+  }
+}

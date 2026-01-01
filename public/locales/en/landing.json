@@ -1,7 +1,60 @@
 
 {
-  "heroTitle": "Forge Your Empire",
-  "heroSubtitle": "The Ultimate Arena where Gemini AI and Human Strategy collide in High-Performance Simulations.",
-  "cta": "Enter the Arena",
-  "secondaryCta": "Explore Sectors"
+  "hero": {
+    "protocol": "Empire Protocol v5.5 GOLD Live",
+    "title": "Forge Your",
+    "empire": "Empire",
+    "subtitle": "The Ultimate Arena where Gemini AI and Human Strategy collide in High-Performance Simulations.",
+    "cta": "Enter the Arena",
+    "secondaryCta": "Explore Sectors",
+    "nodeLabel": "Live Simulation Node 08: Global Industrial Arena"
+  },
+  "features": {
+    "badge": "Core Engine Architecture",
+    "title": "Operational Superiority",
+    "items": {
+      "feat-1": { "title": "Real-time Concurrency", "description": "Supabase infrastructure for instant collective decisions with zero latency." },
+      "feat-2": { "title": "Gemini 3 Oracle", "description": "The brain behind the Gazette and Advisor. Deep reasoning applied to your Balance Sheet." },
+      "feat-3": { "title": "Deep Analytics", "description": "ApexCharts dashboards designed for maximum clarity in complex scenarios." },
+      "feat-4": { "title": "Master Command", "description": "Granular control for tutors: manipulate the economy and challenge your strategists." },
+      "feat-5": { "title": "AI Business Builder", "description": "Build SEBRAE-level business plans in minutes with full AI automation." }
+    }
+  },
+  "branches": {
+    "badge": "Versatility Protocols",
+    "title": "Supported Sectors",
+    "tagline": "\"From rural commodities to complex hedge funds, Empirion models any market with mathematical precision.\"",
+    "explore": "Explore Module"
+  },
+  "ia": {
+    "badge": "Project Strategos",
+    "title": "Neural Core Intelligence",
+    "description": "A cognitive core designed to transform cold data into pure competitive intelligence.",
+    "active": "Deep Reasoning Active",
+    "items": {
+      "reasoning": { "title": "Strategic Reasoning", "desc": "Deep logical reasoning for complex decisions." },
+      "grounding": { "title": "Market Grounding", "desc": "Real global economy data via Google Search." },
+      "reporting": { "title": "Dynamic Reporting", "desc": "Narrative analysis of your P1/P12 Balance Sheet and P&L." },
+      "predictive": { "title": "Predictive Alpha", "desc": "Projections based on bot and player behavior." }
+    }
+  },
+  "community": {
+    "badge": "Network Pulse",
+    "title": "Global Competitive Network",
+    "description": "Thousands of strategists competing in public arenas monitored by the global community.",
+    "stats": {
+      "brain": "Brain Cycles",
+      "arenas": "Active Arenas",
+      "entities": "AI Entities"
+    }
+  },
+  "roadmap": {
+    "title": "Protocol Evolution"
+  },
+  "footer": {
+    "description": "The most advanced business simulation architecture. Where real economy meets neural processing.",
+    "nav": "Navigation",
+    "legal": "Legal",
+    "copyright": "© 2026 EMPIRION BI ARENA | SIAGRO-SISERV-SIMCO FIDELITY"
+  }
 }

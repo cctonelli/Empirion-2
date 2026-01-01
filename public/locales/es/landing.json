@@ -1,7 +1,60 @@
 
 {
-  "heroTitle": "Forja Tu Imperio",
-  "heroSubtitle": "La Arena Definitiva donde la Inteligencia Artificial Gemini y la Estrategia Humana chocan en Simulaciones de Alto Rendimiento.",
-  "cta": "Entrar en la Arena",
-  "secondaryCta": "Conocer Sectores"
+  "hero": {
+    "protocol": "Protocolo Empire v5.5 GOLD Live",
+    "title": "Forja Tu",
+    "empire": "Imperio",
+    "subtitle": "La Arena Definitiva donde la Inteligencia Artificial Gemini y la Estrategia Humana chocan en Simulaciones de Alto Rendimiento.",
+    "cta": "Entrar en la Arena",
+    "secondaryCta": "Conocer Sectores",
+    "nodeLabel": "Simulación Live Nodo 08: Arena Industrial Global"
+  },
+  "features": {
+    "badge": "Arquitectura Core Engine",
+    "title": "Superioridad Operativa",
+    "items": {
+      "feat-1": { "title": "Concurrencia Real-time", "description": "Infraestructura Supabase para decisiones colectivas instantáneas con latencia cero." },
+      "feat-2": { "title": "Oráculo Gemini 3", "description": "El cerebro detrás de la Gaceta y el Advisor. Razonamiento profundo aplicado a su Balance." },
+      "feat-3": { "title": "Deep Analytics", "description": "Dashboards ApexCharts diseñados para máxima claridad en escenarios complejos." },
+      "feat-4": { "title": "Master Command", "description": "Control granular para tutores: manipule la economía y desafíe a sus estrategas." },
+      "feat-5": { "title": "AI Business Builder", "description": "Construya planes de negocios nivel SEBRAE en minutos con automatización total vía IA." }
+    }
+  },
+  "branches": {
+    "badge": "Protocolos de Versatilidad",
+    "title": "Sectores Soportados",
+    "tagline": "\"Desde commodities rurales hasta fondos de cobertura complejos, Empirion modela cualquier mercado con precisión matemática.\"",
+    "explore": "Explorar Módulo"
+  },
+  "ia": {
+    "badge": "Proyecto Strategos",
+    "title": "Inteligencia de Núcleo Neural",
+    "description": "Un núcleo cognitivo diseñado para transformar datos fríos en pura inteligencia competitiva.",
+    "active": "Razonamiento Profundo Activo",
+    "items": {
+      "reasoning": { "title": "Razonamiento Estratégico", "desc": "Razonamiento lógico profundo para decisiones complejas." },
+      "grounding": { "title": "Market Grounding", "desc": "Datos reales de la economía global vía Google Search." },
+      "reporting": { "title": "Informes Dinámicos", "desc": "Análisis narrativo de su Balance y DRE P1/P12." },
+      "predictive": { "title": "Alfa Predictivo", "desc": "Proyecciones basadas en comportamiento de bots y jugadores." }
+    }
+  },
+  "community": {
+    "badge": "Pulso de la Red",
+    "title": "Global Competitive Network",
+    "description": "Miles de estrategistas compitiendo en arenas públicas monitoreadas por la comunidad global.",
+    "stats": {
+      "brain": "Ciclos Cerebrales",
+      "arenas": "Arenas Activas",
+      "entities": "Entidades IA"
+    }
+  },
+  "roadmap": {
+    "title": "Evolución del Protocolo"
+  },
+  "footer": {
+    "description": "La arquitectura de simulación empresarial más avanzada. Donde la economía real encuentra el procesamiento neural.",
+    "nav": "Navegación",
+    "legal": "Legal",
+    "copyright": "© 2026 EMPIRION BI ARENA | FIDELIDAD SIAGRO-SISERV-SIMCO"
+  }
 }

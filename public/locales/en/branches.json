@@ -1,0 +1,45 @@
+
+{
+  "industrial": {
+    "name": "Industrial",
+    "description": "Massive CapEx, obsolescence, and global supply chains.",
+    "title": "Industrial Cell",
+    "subtitle": "Manufacturing Dominance and Scale.",
+    "body": "The classic industrial engine. Manage Alpha, Beta, and Gamma machines, take care of depreciation, and anticipate stockouts in up to 15 regions."
+  },
+  "commercial": {
+    "name": "Commercial",
+    "description": "Hybrid retail and SIMCO consumer satisfaction algorithms.",
+    "title": "Commercial Hub",
+    "subtitle": "Hybrid Retail and Customer Experience.",
+    "body": "Balance the operation of physical stores with the explosive growth of e-commerce. Manage commissions and keep CSAT (Satisfaction) at the top."
+  },
+  "services": {
+    "name": "Services",
+    "description": "Intellectual capital, technical training, and SISERV brand prestige.",
+    "title": "Services Matrix",
+    "subtitle": "Knowledge Economy and Image.",
+    "body": "Your greatest asset goes home every night. Train your technical staff and manage high-complexity contracts with a focus on QA."
+  },
+  "agribusiness": {
+    "name": "Agribusiness",
+    "description": "Biological assets, real climate, and SIAGRO seasonality.",
+    "title": "Agro Cooperative",
+    "subtitle": "Seasonality and Biological Assets.",
+    "body": "Plant, harvest, and process. Climate risk is your biggest adversary. Use AI to predict crop failures and secure rural financing."
+  },
+  "finance": {
+    "name": "Finance",
+    "description": "Banking management, hedge, and SINVEST market volatility.",
+    "title": "Investment Bank",
+    "subtitle": "Spread, Risk, and Liquidity.",
+    "body": "Operate in the financial market. Manage credit portfolios, investment funds, and protect capital against inflation and currency exchange."
+  },
+  "construction": {
+    "name": "Construction",
+    "description": "Heavy works, bidding, and structural risk management.",
+    "title": "Elite Construction",
+    "subtitle": "Infrastructure and Long-Term Projects.",
+    "body": "Participate in billion-dollar tenders. Manage critical deadlines, material costs, and climate risks in large construction sites."
+  }
+}
