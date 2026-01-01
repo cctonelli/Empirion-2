@@ -1,9 +1,7 @@
-
-// Add React import to the list of imports from 'react'
 import React, { useLayoutEffect, useRef } from 'react';
 
 /**
- * Empire Cosmos Particles v7.0 (Production Safe)
+ * Empire Cosmos Particles v7.1 (Production & TS Safe)
  * Features:
  * - Sync render with useLayoutEffect
  * - Retina/High-DPI sharp scaling
