@@ -85,6 +85,56 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     }
   },
   {
+    id: 'serv-prof',
+    name: "Serviços Qualificados - SISERV Legacy",
+    branch: "services",
+    sector: "Consultoria & Tecnologia",
+    description: "Inspirado no SISERV. Foco em capital humano com 3 níveis de formação (Baixa, Média, Alta). Gestão de Imagem da Empresa e Qualidade de Entrega.",
+    is_public: true,
+    config: { 
+      currency: "BRL", 
+      round_frequency_days: 30, 
+      total_rounds: 12, 
+      sales_mode: "internal", 
+      scenario_type: "simulated", 
+      transparency_level: "medium", 
+      team_fee: 0, 
+      community_enabled: true, 
+      regionsCount: 5 
+    },
+    initial_financials: {
+      balance_sheet: { 
+        current_assets: { cash: 300000, accounts_receivable: 500000, inventory_raw_a: 0, inventory_raw_b: 0, inventory_finished: 0, prepaid_expenses: 50000 }, 
+        non_current_assets: { pp_e: { machinery: 500000, buildings: 2000000, land: 0 }, accumulated_depreciation: -400000 }, 
+        total_assets: 2450000 
+      },
+      liabilities_equity: { 
+        current_liabilities: { accounts_payable: 150000, short_term_loans: 300000, taxes_payable: 45000, dividends_payable: 0 }, 
+        non_current_liabilities: { long_term_loans: 500000 }, 
+        equity: { capital_stock: 1000000, retained_earnings: 455000 }, 
+        total_liabilities_equity: 2450000 
+      }
+    },
+    products: [
+      { name: "Consultoria Técnica", unit_cost_base: 150, suggested_price: 450, initial_stock: 0, max_capacity: 5000, formation_level: 'mid' }
+    ],
+    resources: { water_consumption_monthly: 50000, energy_consumption_monthly: 80000, co2_emissions_monthly: 20 },
+    market_indicators: { 
+      inflation_rate: 0.7, 
+      interest_rate_tr: 1.8, 
+      supplier_interest: 1.5, 
+      demand_regions: [10000, 10000, 10000, 10000, 15000], 
+      raw_a_price: 0, 
+      raw_b_price: 0, 
+      distribution_cost: 0, 
+      marketing_cost_unit: 12000, 
+      machine_alfa_price: 200000, 
+      machine_beta_price: 500000, 
+      machine_gama_price: 1000000, 
+      average_salary: 3500 
+    }
+  },
+  {
     id: 'comm-retail',
     name: "Lojas de Departamento - SIMCO Legacy",
     branch: "commercial",

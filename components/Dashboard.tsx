@@ -5,10 +5,9 @@ import {
   ArrowUpRight, ArrowDownRight, Sparkles, Loader2, Star, Users, Newspaper,
   AlertTriangle, ChevronRight, Gavel, Landmark, Info, Flame, Newspaper as NewspaperIcon,
   ShieldCheck, Leaf, MessageSquare, Megaphone, Send, Sun, CloudRain, Wind, Thermometer,
-  ShoppingBag, Monitor, UserCheck
+  ShoppingBag, Monitor, UserCheck, Award, Heart, GraduationCap
 } from 'lucide-react';
 import ChampionshipTimer from './ChampionshipTimer';
-// Fixed the import name from generateMarketIntelligence to generateMarketAnalysis
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch } from '../types';
 
@@ -29,7 +28,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     const fetchIntelligence = async () => {
       try {
         const [analysis, news] = await Promise.all([
-          // Fixed the function call from generateMarketIntelligence to generateMarketAnalysis
           generateMarketAnalysis('Arena Alpha', 1, branch, scenarioType),
           generateGazetaNews({ period: 1, leader: 'Empresa 8', inflation: '1.0%', scenarioType, focus: [branch] })
         ]);
@@ -65,10 +63,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           <TickerItem label="Bolsa (IBOV)" value="128.450" change="+1.2%" />
           <TickerItem label="Ação EMP-08" value="1.04" change="+4.2%" color="text-emerald-400" />
           <TickerItem label="Inflação P1" value="1.0%" change="0.0%" color="text-slate-400" />
+          {branch === 'services' && <TickerItem label="Img. Corporativa" value="82.5" change="+3.2" color="text-blue-400" />}
           {branch === 'commercial' && <TickerItem label="E-com Share" value="22.4%" change="+1.5%" color="text-blue-400" />}
           {branch === 'agribusiness' && <TickerItem label="Soja/Chicago" value="14.20" change="+2.2%" color="text-emerald-400" />}
           <TickerItem label="Bolsa (IBOV)" value="128.450" change="+1.2%" />
-          <TickerItem label="Ação EMP-08" value="1.04" change="+4.2%" color="text-emerald-400" />
         </div>
       </div>
 
@@ -82,7 +80,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           </h1>
           <div className="flex items-center gap-3">
              <p className="text-slate-500 font-medium uppercase tracking-widest text-[10px]">
-               Rodada 01 - Engine v5.4 GOLD
+               Rodada 01 - Engine v5.5 GOLD
              </p>
              <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${scenarioType === 'real' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
                 {scenarioType === 'real' ? 'Grounded AI Scenario' : 'Simulated Protocol'}
@@ -94,84 +92,47 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-           {branch === 'commercial' && (
+           {branch === 'services' && (
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-slate-900 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
                    <div className="relative z-10 space-y-6">
                       <div className="flex items-center gap-3">
-                         <div className="p-2 bg-blue-600 rounded-xl"><Monitor size={24} /></div>
-                         <h3 className="text-xl font-black uppercase tracking-tight">Channel Pulse (SIMCO)</h3>
+                         <div className="p-2 bg-blue-600 rounded-xl"><Heart size={24} /></div>
+                         <h3 className="text-xl font-black uppercase tracking-tight">Imagem & Prestígio (SISERV)</h3>
                       </div>
-                      <div className="space-y-4">
-                         <div className="flex justify-between items-center text-[10px] font-black uppercase text-blue-400">
-                            <span>Traditional Store</span>
-                            <span>78%</span>
+                      <div className="space-y-4 text-center py-6">
+                         <span className="text-6xl font-black text-white tracking-tighter">82.5</span>
+                         <div className="flex items-center justify-center gap-2 mt-2">
+                            <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Brand Image Index</span>
+                            <ArrowUpRight size={14} className="text-emerald-400" />
                          </div>
-                         <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                            <div className="h-full bg-white w-[78%]"></div>
-                         </div>
-                         <div className="flex justify-between items-center text-[10px] font-black uppercase text-emerald-400">
-                            <span>E-commerce</span>
-                            <span>22%</span>
-                         </div>
-                         <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-400 w-[22%]"></div>
-                         </div>
+                      </div>
+                      <div className="pt-4 border-t border-white/10 text-[10px] font-medium opacity-60 italic">
+                         "A alta qualificação técnica do corpo de analistas elevou o prestígio da marca."
                       </div>
                    </div>
-                   <ShoppingBag className="absolute -bottom-10 -right-10 opacity-10 rotate-12" size={150} />
+                   <ShieldCheck className="absolute -bottom-10 -right-10 opacity-10 rotate-12" size={150} />
                 </div>
 
                 <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm space-y-6">
                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><UserCheck size={20} /></div>
-                      <h3 className="text-lg font-black uppercase text-slate-900 tracking-tight">Consumo & Satisfação</h3>
+                      <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><Award size={20} /></div>
+                      <h3 className="text-lg font-black uppercase text-slate-900 tracking-tight">Qualidade de Entrega</h3>
                    </div>
-                   <div className="space-y-4 text-center py-4">
-                      <span className="text-5xl font-black text-slate-900">84.2</span>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Consumer Happiness Index</p>
-                      <div className="flex justify-center gap-1">
-                         {[1, 2, 3, 4].map(i => <Star key={i} size={14} className="fill-current text-amber-400" />)}
-                         <Star size={14} className="text-slate-200" />
-                      </div>
-                   </div>
-                </div>
-             </div>
-           )}
-
-           {branch === 'agribusiness' && (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-emerald-900 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
-                   <div className="relative z-10 space-y-6">
-                      <div className="flex items-center gap-3">
-                         <div className="p-2 bg-white/10 rounded-xl"><Sun size={24} className="text-amber-400" /></div>
-                         <h3 className="text-xl font-black uppercase tracking-tight">Monitor de Safra (SIAGRO)</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                         <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase text-emerald-400">Status Clima</span>
-                            <div className="flex items-center gap-2 font-bold"><CloudRain size={16} /> Favorável</div>
-                         </div>
-                         <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase text-emerald-400">Sazonalidade</span>
-                            <div className="flex items-center gap-2 font-bold"><TrendingUp size={16} /> Safra Cheia</div>
-                         </div>
-                      </div>
-                   </div>
-                   <Leaf className="absolute -bottom-10 -right-10 opacity-10 rotate-12" size={150} />
-                </div>
-                <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm space-y-6">
-                   <div className="flex items-center gap-3">
-                      <div className="p-2 bg-rose-50 text-rose-600 rounded-xl"><Thermometer size={20} /></div>
-                      <h3 className="text-lg font-black uppercase text-slate-900 tracking-tight">Risco de Perecibilidade</h3>
-                   </div>
-                   <div className="space-y-4">
-                      <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
-                         <span>Taxa de Perda Estimada</span>
-                         <span className="text-rose-500">15.0% / período</span>
+                   <div className="space-y-6">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                         <span>QA Efficiency</span>
+                         <span className="text-emerald-600">88.2%</span>
                       </div>
                       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                         <div className="h-full bg-rose-500 w-[15%]"></div>
+                         <div className="h-full bg-emerald-500 w-[88%]"></div>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                         <span>Service Alignment</span>
+                         <span className="text-blue-600">92.0%</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                         <div className="h-full bg-blue-500 w-[92%]"></div>
                       </div>
                    </div>
                 </div>
@@ -183,8 +144,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                  <div className="flex items-center gap-4">
                     <div className="p-3 bg-slate-900 text-white rounded-xl"><NewspaperIcon size={24} /></div>
                     <div>
-                       <h3 className="text-3xl font-black text-slate-900 uppercase italic">Gazeta Industrial</h3>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Órgão Oficial v5.4 GOLD • Fidelity</p>
+                       <h3 className="text-3xl font-black text-slate-900 uppercase italic">Gazeta {branch === 'services' ? 'de Serviços' : 'Industrial'}</h3>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Órgão Oficial v5.5 GOLD • SISERV Fidelity</p>
                     </div>
                  </div>
                  <div className="text-right"><span className="block text-[10px] font-black text-slate-900 uppercase">P01 • 2026</span></div>
@@ -194,7 +155,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     <div className="text-4xl font-serif font-black text-slate-900 leading-[1.1]">{gazetaNews}</div>
                     <div className="h-[1px] bg-slate-100 w-full"></div>
                     <div className="flex items-center gap-3 italic text-xs font-bold text-slate-600 leading-tight">
-                       <TrendingUp size={18} className="text-amber-600" /> Relatório SIMCO: Crescimento do e-commerce supera lojas físicas no trimestre.
+                       <TrendingUp size={18} className="text-amber-600" /> Relatório SISERV: Mão de obra qualificada é o principal gargalo para crescimento do setor.
                     </div>
                  </div>
                  <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-200 space-y-6 h-fit self-start">
@@ -240,7 +201,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </h3>
               <div className="space-y-8">
                  <KpiRow label="Lucro Líquido" value="$ 73.926" trend="+100%" positive icon={<DollarSign size={16}/>} />
-                 {branch === 'commercial' ? (
+                 {branch === 'services' ? (
+                   <KpiRow label="Fator Formação" value="94.2%" trend="+2.4%" positive icon={<GraduationCap size={16}/>} />
+                 ) : branch === 'commercial' ? (
                    <KpiRow label="Channel Yield" value="1.18" trend="+0.08" positive icon={<ShoppingBag size={16}/>} />
                  ) : (
                    <KpiRow label="Yield Safra" value="1.12" trend="+0.05" positive icon={<Wind size={16}/>} />

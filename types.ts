@@ -5,6 +5,7 @@ export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
+export type ServiceLevel = 'low' | 'mid' | 'high';
 
 export interface UserProfile {
   id: string;
@@ -22,7 +23,7 @@ export interface InventoryStats {
   sales: number;
   final: number;
   perishability_loss?: number;
-  obsolescence_loss?: number; // SIMCO: Loss for durable goods
+  obsolescence_loss?: number;
 }
 
 export interface MachineStats {
@@ -54,13 +55,15 @@ export interface FinancialStatement {
     motivation: string;
     strike: boolean;
     strike_intensity?: number;
-    sales_staff_count?: number; // SIMCO: Retail specific
+    sales_staff_count?: number;
+    staff_by_level?: Record<ServiceLevel, number>; // SISERV: Specific headcount per formation
   };
   machines: MachineStats;
   regional_demand: Record<number, { potential: number; sold: number }>;
   quality_index?: number;
-  consumer_satisfaction?: number; // SIMCO: Retail KPI (0 to 100)
-  ecommerce_share?: number;       // SIMCO: Market split
+  consumer_satisfaction?: number;
+  ecommerce_share?: number;
+  company_image_index?: number; // SISERV: Accumulated brand perception
 }
 
 export interface BalanceSheet {
@@ -80,7 +83,7 @@ export interface BalanceSheet {
       land: number;
     };
     accumulated_depreciation: number;
-    asset_seizure_loss?: number; // SIMCO: Seizure for debt
+    asset_seizure_loss?: number;
   };
   total_assets: number;
 }
@@ -122,7 +125,8 @@ export interface BlackSwanEvent {
     interest: number;
     productivity: number;
     climate_impact?: number;
-    ecommerce_surge?: number; // Specific for Commercial
+    ecommerce_surge?: number;
+    service_quality_penalty?: number; // Specific for Services
   };
 }
 
@@ -157,10 +161,11 @@ export interface EcosystemConfig {
     currency: number;
     climate?: number;
     ecommerce?: number;
+    service_demand?: number;
   };
   stockMarketActive?: boolean;
   messageBoard?: MessageBoardItem[];
-  ecommerceEnabled?: boolean; // SIMCO Feature
+  ecommerceEnabled?: boolean;
 }
 
 export interface CommunityCriteria {
@@ -177,8 +182,9 @@ export interface ProductDefinition {
   max_capacity: number;
   is_perishable?: boolean;
   perishability_rate?: number;
-  is_durable?: boolean;        // SIMCO: Durable goods
-  obsolescence_rate?: number; // SIMCO: Monthly value drop
+  is_durable?: boolean;
+  obsolescence_rate?: number;
+  formation_level?: ServiceLevel; // SISERV: Low, Mid, High
 }
 
 export interface ResourceUsage {
@@ -205,7 +211,8 @@ export interface MarketIndicators {
   stock_prices?: Record<string, number>;
   seasonality_index?: number;
   climate_status?: 'optimal' | 'dry' | 'flood' | 'storm';
-  ecommerce_adoption_rate?: number; // SIMCO: Macro EC %
+  ecommerce_adoption_rate?: number;
+  service_complexity_index?: number; // SISERV: Macro complexity
 }
 
 export interface DecisionData {
@@ -213,8 +220,9 @@ export interface DecisionData {
     price: number; 
     term: number; 
     marketing: number;
-    ecommerce_price?: number;     // SIMCO: Online specific price
-    ecommerce_marketing?: number; // SIMCO: Digital ads
+    ecommerce_price?: number;
+    ecommerce_marketing?: number;
+    service_quality_focus?: number; // SISERV: Extra QA focus
   }>;
   hr: {
     hired: number;
@@ -224,8 +232,9 @@ export interface DecisionData {
     participationPercent: number;
     others: number;
     overtimeHours?: number;
-    sales_staff_count?: number; // SIMCO: Retail salesmen
-    commission_percent?: number; // SIMCO: Motivation boost
+    sales_staff_count?: number;
+    commission_percent?: number;
+    staff_by_level?: Record<ServiceLevel, number>; // SISERV
   };
   production: {
     purchaseMPA: number;
@@ -235,7 +244,9 @@ export interface DecisionData {
     extraProduction: number;
     rd_investment?: number;
     agro_tech_investment?: number;
-    digital_exp_investment?: number; // SIMCO: UI/UX satisfaction
+    digital_exp_investment?: number;
+    service_level_allocation?: Record<ServiceLevel, number>; // SISERV: % Mix
+    contract_mode?: 'previous' | 'immediate'; // SISERV: Planning mode
   };
   finance: {
     loanRequest: number;
@@ -245,7 +256,7 @@ export interface DecisionData {
     buyMachines: { alfa: number; beta: number; gama: number };
     sellMachines: { alfa: number; beta: number; gama: number };
     receivables_anticipation?: number;
-    emergency_loan?: number; // SIMCO: High interest
+    emergency_loan?: number;
   };
   inBankruptcy?: boolean;
 }
