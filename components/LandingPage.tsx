@@ -6,22 +6,22 @@ import {
   Factory, ShoppingCart, Briefcase, Tractor, DollarSign, 
   Hammer, Box, Zap, Leaf
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Slider from 'react-slick';
 import { DEFAULT_PAGE_CONTENT, LANDING_PAGE_DATA } from '../constants';
 import { fetchPageContent } from '../services/supabase';
 import EmpireParticles from './EmpireParticles';
 
-// Custom Arrows Components
+// Custom Arrows Components - Refined for high visibility
 const NextArrow = (props: any) => {
   const { onClick } = props;
   return (
     <button
       onClick={onClick}
-      className="absolute right-8 top-1/2 -translate-y-1/2 z-30 p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white transition-all group hidden md:block"
+      className="absolute right-8 top-1/2 -translate-y-1/2 z-[100] p-6 bg-slate-900/40 backdrop-blur-md hover:bg-blue-600/80 border border-white/20 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-2xl shadow-black/50 active:scale-90"
       aria-label="Next slide"
     >
-      <ChevronRight size={32} className="group-hover:translate-x-1 transition-transform" />
+      <ChevronRight size={36} className="group-hover:translate-x-1 transition-transform" />
     </button>
   );
 };
@@ -31,10 +31,10 @@ const PrevArrow = (props: any) => {
   return (
     <button
       onClick={onClick}
-      className="absolute left-8 top-1/2 -translate-y-1/2 z-30 p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white transition-all group hidden md:block"
+      className="absolute left-8 top-1/2 -translate-y-1/2 z-[100] p-6 bg-slate-900/40 backdrop-blur-md hover:bg-blue-600/80 border border-white/20 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-2xl shadow-black/50 active:scale-90"
       aria-label="Previous slide"
     >
-      <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
+      <ChevronLeft size={36} className="group-hover:-translate-x-1 transition-transform" />
     </button>
   );
 };
@@ -54,9 +54,9 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const carouselSettings = {
     dots: true,
     infinite: true,
-    speed: 1200,
+    speed: 1000,
     autoplay: true,
-    autoplaySpeed: 8000,
+    autoplaySpeed: 7000,
     slidesToShow: 1,
     slidesToScroll: 1,
     fade: true,
@@ -77,7 +77,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           {content.carousel.map((slide: any) => (
             <div key={slide.id} className="relative h-[95vh] min-h-[700px]">
               <div className="absolute inset-0 z-0">
-                <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent z-10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/20 to-transparent z-10" />
                 <div className="absolute inset-0 bg-blue-900/10 mix-blend-overlay z-10" />
                 <img src={slide.image} alt={slide.title} className="w-full h-full object-cover scale-105" />
               </div>
@@ -112,7 +112,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    <Link to={slide.link} className="cyber-button inline-flex items-center gap-5 px-16 py-6 bg-white text-slate-950 rounded-full font-black text-xs uppercase tracking-[0.25em] transition-all shadow-[0_25px_60px_rgba(0,0,0,0.4)] group overflow-hidden relative">
+                    <Link to={slide.link} className="cyber-button inline-flex items-center gap-5 px-16 py-6 bg-white text-slate-950 rounded-full font-black text-xs uppercase tracking-[0.25em] transition-all shadow-[0_25px_60px_rgba(0,0,0,0.4)] group overflow-hidden relative active:scale-95">
                       <span className="relative z-10">Explorar Nodo</span>
                       <ChevronRight className="group-hover:translate-x-3 transition-transform relative z-10 text-orange-600" />
                     </Link>
@@ -141,13 +141,13 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
            <div className="flex flex-col sm:flex-row items-center justify-center gap-10 pt-16">
               <button 
                 onClick={onLogin}
-                className="cyber-button w-full sm:w-auto px-20 py-8 bg-blue-600 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] transition-all shadow-[0_30px_70px_rgba(37,99,235,0.4)]"
+                className="cyber-button w-full sm:w-auto px-20 py-8 bg-blue-600 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] transition-all shadow-[0_30px_70px_rgba(37,99,235,0.4)] active:scale-95"
               >
                 {content.hero.cta}
               </button>
               <Link 
                 to="/solutions/simulators"
-                className="cyber-button w-full sm:w-auto px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-5 backdrop-blur-xl"
+                className="cyber-button w-full sm:w-auto px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-5 backdrop-blur-xl active:scale-95"
               >
                 Conhecer Setores <ArrowRight size={22} className="text-blue-500" />
               </Link>
