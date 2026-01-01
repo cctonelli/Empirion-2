@@ -1,16 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship } from '../types';
 
-// Updated credentials from user prompt
+import { createClient } from '@supabase/supabase-js';
+import { DecisionData, Championship, UserProfile, UserRole } from '../types';
+
 const SUPABASE_URL = 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_9D6W-B35TZc5KfZqpqliXA_sWpk_klw';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/**
- * Health Check: Verifica se a instância do Supabase está respondendo.
- * Melhora a extração de mensagens de erro para evitar strings genéricas.
- */
 export const checkSupabaseConnection = async () => {
   try {
     const { data, error } = await supabase.from('championships').select('id').limit(1);
@@ -18,24 +14,46 @@ export const checkSupabaseConnection = async () => {
     return { online: true };
   } catch (err: any) {
     console.error("Supabase Connection Health Check Failed:", err);
-    
-    // Extrai a mensagem de erro da forma mais legível possível
     let errorMessage = "Unknown Error";
     if (typeof err === 'string') errorMessage = err;
     else if (err.message) errorMessage = err.message;
-    else if (err.error_description) errorMessage = err.error_description;
-    else if (err.details) errorMessage = err.details;
-    else try { errorMessage = JSON.stringify(err); } catch(e) { errorMessage = "Complex Error Object"; }
-
-    return { 
-      online: false, 
-      error: errorMessage,
-      isDnsError: errorMessage.includes('Failed to fetch') || 
-                  errorMessage.includes('address not found') || 
-                  errorMessage.includes('NetworkError') ||
-                  !window.navigator.onLine
-    };
+    return { online: false, error: errorMessage };
   }
+};
+
+/**
+ * Perfil do Usuário e Role Management (v4.3)
+ */
+export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+  
+  if (error) {
+    console.error("Error fetching user profile:", error);
+    return null;
+  }
+  return data;
+};
+
+export const updateUserRole = async (userId: string, newRole: UserRole) => {
+  const { error } = await supabase
+    .from('users')
+    .update({ role: newRole })
+    .eq('id', userId);
+  
+  if (error) throw error;
+};
+
+export const listAllUsers = async () => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  return { data, error };
 };
 
 // Real-time subscriptions

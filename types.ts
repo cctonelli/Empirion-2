@@ -1,9 +1,59 @@
 
+export type UserRole = 'admin' | 'tutor' | 'player';
 export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
 export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+}
+
+export interface InventoryStats {
+  initial: number;
+  purchases: number;
+  consumption: number;
+  sales: number;
+  final: number;
+}
+
+export interface MachineStats {
+  alfa: { qty: number; age: number };
+  beta: { qty: number; age: number };
+  gama: { qty: number; age: number };
+}
+
+export interface FinancialStatement {
+  round: number;
+  inventory: {
+    mpa: InventoryStats;
+    mpb: InventoryStats;
+    finished: InventoryStats;
+  };
+  cash_flow: {
+    inflow_sales: number;
+    outflow_purchases: number;
+    outflow_payroll: number;
+    outflow_marketing: number;
+    outflow_distribution: number;
+    outflow_taxes: number;
+    outflow_machines: number;
+    net_cash: number;
+  };
+  hr: {
+    total: number;
+    productivity: number;
+    motivation: string;
+    strike: boolean;
+  };
+  machines: MachineStats;
+  regional_demand: Record<number, { potential: number; sold: number }>;
+}
 
 export interface BalanceSheet {
   current_assets: {
@@ -13,7 +63,8 @@ export interface BalanceSheet {
     inventory_raw_b: number;
     inventory_finished: number;
     prepaid_expenses: number;
-    portfolio_investments?: number; // Specific for finance
+    // FIX: Added portfolio_investments property to match constants.tsx usage
+    portfolio_investments?: number;
   };
   non_current_assets: {
     pp_e: {
@@ -22,7 +73,6 @@ export interface BalanceSheet {
       land: number;
     };
     accumulated_depreciation: number;
-    long_term_credits?: number; // Specific for finance/construction
   };
   total_assets: number;
 }
@@ -33,7 +83,8 @@ export interface LiabilitiesEquity {
     short_term_loans: number;
     taxes_payable: number;
     dividends_payable: number;
-    customer_deposits?: number; // Specific for finance
+    // FIX: Added customer_deposits property to match constants.tsx usage
+    customer_deposits?: number;
   };
   non_current_liabilities: {
     long_term_loans: number;
@@ -43,6 +94,29 @@ export interface LiabilitiesEquity {
     retained_earnings: number;
   };
   total_liabilities_equity: number;
+}
+
+// FIX: Added missing exported types used by various components
+export interface AccountNode {
+  id: string;
+  label: string;
+  value: number;
+  type: 'credit' | 'debit';
+  children?: AccountNode[];
+  isEditable?: boolean;
+}
+
+export interface EcosystemConfig {
+  inflationRate: number;
+  demandMultiplier: number;
+  interestRate: number;
+  marketVolatility: number;
+}
+
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
 }
 
 export interface ProductDefinition {
@@ -72,48 +146,13 @@ export interface MarketIndicators {
   machine_beta_price: number;
   machine_gama_price: number;
   average_salary: number;
-  exchange_rate?: number; // For international templates
-  risk_premium?: number; // For finance
-}
-
-export interface EcosystemConfig {
-  inflationRate: number; 
-  demandMultiplier: number; 
-  interestRate: number; 
-  marketVolatility: number; 
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number; 
-}
-
-export interface ChampionshipConfig {
-  regionsCount: number;
-  initialStock: number;
-  initialPrice: number;
-  communityWeight: number; 
-  votingCriteria: CommunityCriteria[];
-}
-
-export interface AccountNode {
-  id: string;
-  label: string;
-  value: number;
-  type: 'debit' | 'credit';
-  children?: AccountNode[];
-  isEditable?: boolean;
-}
-
-export interface RegionalDecision {
-  price: number;
-  term: 0 | 1 | 2;
-  marketing: number;
+  // FIX: Added missing optional properties to match constants.tsx usage
+  exchange_rate?: number;
+  risk_premium?: number;
 }
 
 export interface DecisionData {
-  regions: Record<number, RegionalDecision>;
+  regions: Record<number, { price: number; term: number; marketing: number }>;
   hr: {
     hired: number;
     fired: number;
@@ -139,26 +178,6 @@ export interface DecisionData {
   };
 }
 
-export interface FinancialStatement {
-  round: number;
-  dre: any;
-  balance: any;
-}
-
-export interface Company {
-  id: string;
-  name: string;
-  round: number;
-  statements: FinancialStatement;
-  kpis: {
-    marketShare: number;
-    productivity: number;
-    motivation: 'Low' | 'Regular' | 'High';
-    stockPrice: number;
-    communityScore?: number;
-  };
-}
-
 export interface Championship {
   id: string;
   name: string;
@@ -168,16 +187,10 @@ export interface Championship {
   is_public: boolean;
   currentRound: number;
   totalRounds: number;
-  ecosystemConfig: EcosystemConfig;
-  config: ChampionshipConfig;
-  tutor_id: string;
-  invite_code?: string;
-  initial_financials?: {
-    balance_sheet: BalanceSheet;
-    liabilities_equity: LiabilitiesEquity;
-  };
-  market_indicators?: MarketIndicators;
-  resources?: ResourceUsage;
+  config: any;
+  initial_financials?: any;
+  // FIX: Added ecosystemConfig property to match TutorArenaControl usage
+  ecosystemConfig?: EcosystemConfig;
 }
 
 export interface ChampionshipTemplate {

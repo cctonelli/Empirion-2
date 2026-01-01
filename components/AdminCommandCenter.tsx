@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { 
   Activity, 
@@ -12,65 +13,43 @@ import {
   Lock,
   Copy,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  UserPlus,
+  ShieldCheck,
+  UserCog,
+  Trash2,
+  Search
 } from 'lucide-react';
-import { supabase } from '../services/supabase';
+import { supabase, listAllUsers, updateUserRole } from '../services/supabase';
+import { UserProfile, UserRole } from '../types';
 
-const RLS_SQL_SCRIPT = `-- Empirion Security Framework - Row Level Security (RLS)
--- Version 3.1 Consolidated (Fixes missing is_public)
+const TRIGGER_SQL = `-- Empirion User Sync Trigger (v4.3)
+-- Executar no SQL Editor do Supabase para sincronizar Auth com public.users
 
--- 0. SCHEMA REPAIR
--- Add is_public column if it doesn't exist
-DO $$ 
-BEGIN 
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championships' AND column_name='is_public') THEN
-    ALTER TABLE public.championships ADD COLUMN is_public BOOLEAN DEFAULT FALSE;
-  END IF;
-END $$;
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.users (id, email, name, role)
+  VALUES (
+    new.id,
+    new.email,
+    COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    'player'
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 1. ENABLE RLS GLOBALLY
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.championships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.community_ratings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.current_decisions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.public_reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
-
--- 2. POLICIES: users
-DROP POLICY IF EXISTS "Usuários veem próprio perfil" ON public.users;
-CREATE POLICY "Usuários veem próprio perfil" ON public.users AS PERMISSIVE FOR ALL USING ((auth.uid() = id));
-
--- 3. POLICIES: championships
-DROP POLICY IF EXISTS "Tutor edita seu campeonato" ON public.championships;
-CREATE POLICY "Tutor edita seu campeonato" ON public.championships AS PERMISSIVE FOR UPDATE USING (((tutor_id = auth.uid()) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
-
-DROP POLICY IF EXISTS "Visibilidade de campeonatos" ON public.championships;
-CREATE POLICY "Visibilidade de campeonatos" ON public.championships AS PERMISSIVE FOR SELECT USING ((is_public OR (tutor_id = auth.uid()) OR (EXISTS ( SELECT 1 FROM users WHERE ((users.id = auth.uid()) AND (users.role = 'admin'::text))))));
-
--- 4. POLICIES: community_ratings
-DROP POLICY IF EXISTS "Todos do campeonato veem ratings" ON public.community_ratings;
-CREATE POLICY "Todos do campeonato veem ratings" ON public.community_ratings AS PERMISSIVE FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Usuários autenticados podem votar" ON public.community_ratings;
-CREATE POLICY "Usuários autenticados podem votar" ON public.community_ratings AS PERMISSIVE FOR INSERT WITH CHECK ((auth.uid() IS NOT NULL));
-
--- 5. POLICIES: current_decisions
-DROP POLICY IF EXISTS "Equipe edita decisões" ON public.current_decisions;
-CREATE POLICY "Equipe edita decisões" ON public.current_decisions AS PERMISSIVE FOR ALL USING ((EXISTS ( SELECT 1 FROM (teams t JOIN team_members tm ON ((t.id = tm.team_id))) WHERE ((t.id = current_decisions.team_id) AND (tm.user_id = auth.uid())))));
-
--- 6. NOTIFY RELOAD
-NOTIFY pgrst, 'reload schema';
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 `;
 
 const AdminCommandCenter: React.FC = () => {
-  const [stats, setStats] = useState({
-    users: 0,
-    championships: 0,
-    activeTeams: 0,
-    latency: '0ms'
-  });
+  const [activeTab, setActiveTab] = useState<'system' | 'users'>('system');
+  const [stats, setStats] = useState({ users: 0, championships: 0, activeTeams: 0, latency: '0ms' });
+  const [usersList, setUsersList] = useState<UserProfile[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -82,8 +61,10 @@ const AdminCommandCenter: React.FC = () => {
       const { count: champCount } = await supabase.from('championships').select('*', { count: 'exact', head: true });
       const { count: teamCount } = await supabase.from('teams').select('*', { count: 'exact', head: true });
       
-      const end = performance.now();
+      const { data: users } = await listAllUsers();
+      setUsersList(users || []);
       
+      const end = performance.now();
       setStats({
         users: userCount || 0,
         championships: champCount || 0,
@@ -97,8 +78,20 @@ const AdminCommandCenter: React.FC = () => {
     }
   };
 
-  const copyRLS = () => {
-    navigator.clipboard.writeText(RLS_SQL_SCRIPT);
+  const handleRoleUpdate = async (userId: string, currentRole: UserRole) => {
+    const nextRole: UserRole = currentRole === 'player' ? 'tutor' : currentRole === 'tutor' ? 'admin' : 'player';
+    if (!confirm(`Confirmar alteração de role para ${nextRole.toUpperCase()}?`)) return;
+    
+    try {
+      await updateUserRole(userId, nextRole);
+      setUsersList(prev => prev.map(u => u.id === userId ? { ...u, role: nextRole } : u));
+    } catch (e) {
+      alert("Erro ao atualizar permissão.");
+    }
+  };
+
+  const copyTrigger = () => {
+    navigator.clipboard.writeText(TRIGGER_SQL);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -107,185 +100,199 @@ const AdminCommandCenter: React.FC = () => {
     fetchGlobalStats();
   }, []);
 
+  const filteredUsers = usersList.filter(u => 
+    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-            <ShieldAlert className="text-red-500" /> Command Center
+          <h1 className="text-4xl font-black text-slate-900 flex items-center gap-3 uppercase tracking-tighter">
+            <ShieldAlert className="text-red-500" size={32} /> Command Center
           </h1>
-          <p className="text-slate-500 mt-1">Global platform orchestration and system health monitoring.</p>
+          <p className="text-slate-500 mt-1 font-medium">Platform orchestration and user validation node.</p>
         </div>
-        <div className="flex gap-3">
-           <button 
-            onClick={fetchGlobalStats}
-            disabled={loading}
-            className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl flex items-center gap-2 hover:bg-slate-50 transition-colors"
-           >
-             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> Refresh Logs
-           </button>
-           <button className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl flex items-center gap-2 hover:bg-slate-800 transition-colors">
-             <Server size={18} /> System Status
-           </button>
+        <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+           <button onClick={() => setActiveTab('system')} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'system' ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-400'}`}>System Health</button>
+           <button onClick={() => setActiveTab('users')} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-400'}`}>User Directory</button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
         {[
-          { label: 'Active Users', value: stats.users, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'DB Latency', value: stats.latency, icon: Database, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Total Users', value: stats.users, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Latency Node', value: stats.latency, icon: Database, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Active Teams', value: stats.activeTeams, icon: Cpu, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Total Tournaments', value: stats.championships, icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { label: 'Championships', value: stats.championships, icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50' },
         ].map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-             <div className="flex items-center justify-between mb-2">
-                <span className="text-slate-400 text-xs font-black uppercase tracking-widest">{stat.label}</span>
-                <div className={`p-2 rounded-lg ${stat.bg} ${stat.color}`}>
-                   <stat.icon size={18} />
+          <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+             <div className="flex items-center justify-between mb-4">
+                <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">{stat.label}</span>
+                <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
+                   <stat.icon size={20} />
                 </div>
              </div>
-             <h3 className="text-3xl font-black text-slate-900 tracking-tight">{loading ? '...' : stat.value}</h3>
+             <h3 className="text-4xl font-black text-slate-900 tracking-tight">{loading ? '...' : stat.value}</h3>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-             <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Activity size={20} className="text-blue-500" /> Live Championship Nodes
-                </h3>
-                <button className="text-xs font-bold text-blue-600 hover:underline">View All</button>
-             </div>
-             <div className="divide-y divide-slate-50">
-                {[
-                  { name: 'Tech Frontier 2025', tutor: 'Dr. Santos', status: 'R4 Processing', load: 'Heavy' },
-                  { name: 'AgroBoost Global', tutor: 'Clarissa S.', status: 'Waiting R1', load: 'Light' },
-                  { name: 'Fashion Retail MVP', tutor: 'Admin', status: 'Draft', load: 'N/A' },
-                  { name: 'Solar Energy Cup', tutor: 'Bruno M.', status: 'R8 Complete', load: 'Medium' },
-                ].map((c, i) => (
-                  <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50 transition-colors">
-                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400 group-hover:bg-white transition-colors">{c.name[0]}</div>
-                        <div>
-                           <h4 className="font-bold text-slate-900">{c.name}</h4>
-                           <p className="text-xs text-slate-400">Lead Tutor: {c.tutor}</p>
-                        </div>
+      {activeTab === 'system' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm p-10 space-y-8">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                     <div className="p-4 bg-blue-50 text-blue-600 rounded-3xl">
+                        <Lock size={28} />
                      </div>
-                     <div className="flex items-center gap-6">
-                        <div className="text-right">
-                           <p className="text-xs font-bold text-slate-700">{c.status}</p>
-                           <p className="text-[10px] text-slate-400 uppercase font-black">Status</p>
-                        </div>
-                        <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                          <ExternalLink size={18} />
-                        </button>
+                     <div>
+                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Security Trigger</h3>
+                        <p className="text-slate-400 font-medium">Automatic sync between Supabase Auth and User Profile table.</p>
                      </div>
                   </div>
-                ))}
-             </div>
+                  <button onClick={copyTrigger} className={`px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 ${copied ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white hover:bg-blue-600 shadow-xl shadow-slate-100'}`}>
+                    {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+                    {copied ? 'Copied' : 'Copy Sync Trigger'}
+                  </button>
+               </div>
+               <div className="bg-slate-900 rounded-[2rem] p-6 overflow-hidden relative">
+                  <pre className="text-[10px] text-blue-300 font-mono leading-relaxed opacity-60">
+                    {TRIGGER_SQL.substring(0, 400)}...
+                  </pre>
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
+               </div>
+            </div>
+
+            <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+               <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                    <Activity size={20} className="text-blue-500" /> Active Arena Nodes
+                  </h3>
+               </div>
+               <div className="divide-y divide-slate-50">
+                  {['Industrial Alpha', 'Tech Frontier', 'Agro Global'].map((name, i) => (
+                    <div key={i} className="p-8 flex items-center justify-between hover:bg-slate-50 transition-all group">
+                       <div className="flex items-center gap-5">
+                          <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-400 group-hover:bg-white shadow-inner transition-all">{name[0]}</div>
+                          <div>
+                             <h4 className="font-black text-slate-900 uppercase tracking-tight">{name}</h4>
+                             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Status: Operational</p>
+                          </div>
+                       </div>
+                       <button className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-white transition-all shadow-sm">
+                          <ExternalLink size={18} />
+                       </button>
+                    </div>
+                  ))}
+               </div>
+            </div>
           </div>
 
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-            <div className="flex items-center justify-between mb-8">
-               <div className="flex items-center gap-3">
-                  <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl">
-                     <Lock size={24} />
-                  </div>
-                  <div>
-                     <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Security & RLS Protocols</h3>
-                     <p className="text-slate-400 text-sm font-medium">Protect simulation integrity and multi-tenant data isolation.</p>
-                  </div>
-               </div>
-               <button 
-                onClick={copyRLS}
-                className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${
-                  copied ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white hover:bg-blue-600'
-                }`}
-               >
-                 {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                 {copied ? 'Copied SQL' : 'Copy RLS Script'}
-               </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
-                  <div className="flex items-center gap-2 mb-4">
-                     <AlertTriangle size={16} className="text-amber-500" />
-                     <span className="text-xs font-black uppercase text-slate-700">Audit Status</span>
-                  </div>
-                  <p className="text-sm text-slate-500 leading-relaxed mb-4">
-                    Row-level security ensures that teams cannot see or edit decisions from competitors.
-                  </p>
-                  <div className="flex items-center gap-2">
-                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                     <span className="text-[10px] font-bold text-slate-400 uppercase">Multi-tenant isolation active</span>
-                  </div>
-               </div>
-               <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
-                  <div className="flex items-center gap-2 mb-4">
-                     <ShieldAlert size={16} className="text-blue-500" />
-                     <span className="text-xs font-black uppercase text-slate-700">Tutor Oversight</span>
-                  </div>
-                  <p className="text-sm text-slate-500 leading-relaxed mb-4">
-                    Tutors have full read-access to teams within their assigned championships.
-                  </p>
-                  <div className="flex items-center gap-2">
-                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                     <span className="text-[10px] font-bold text-slate-400 uppercase">Hierarchical policies applied</span>
-                  </div>
-               </div>
-            </div>
+          <div className="space-y-8">
+             <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none">
+                   <ShieldCheck size={180} />
+                </div>
+                <div className="relative z-10 space-y-8">
+                   <h3 className="text-2xl font-black uppercase tracking-tight">Cloud Security</h3>
+                   <div className="space-y-5">
+                      {['Auth Service: 100%', 'Real-time: 4ms', 'Storage: 99.8%'].map((txt, i) => (
+                        <div key={i} className="flex items-center gap-4">
+                           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{txt}</span>
+                        </div>
+                      ))}
+                   </div>
+                   <button onClick={fetchGlobalStats} className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-3">
+                      <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Synchronize Logs
+                   </button>
+                </div>
+             </div>
           </div>
         </div>
+      )}
 
-        <div className="space-y-8">
-           <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-10 opacity-10">
-                 <ShieldAlert size={120} />
-              </div>
-              <div className="relative z-10">
-                 <h3 className="text-xl font-bold mb-2">Supabase Health</h3>
-                 <p className="text-slate-400 text-sm mb-6">Real-time sync service is operating at peak performance.</p>
-                 <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                       <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                       <span className="text-xs font-medium text-slate-300 tracking-wide uppercase">Auth Service: Operational</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                       <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                       <span className="text-xs font-medium text-slate-300 tracking-wide uppercase">Storage Bucket: Healthy</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                       <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                       <span className="text-xs font-medium text-slate-300 tracking-wide uppercase">Edge Functions: Stable</span>
-                    </div>
+      {activeTab === 'users' && (
+        <div className="px-4 space-y-8 animate-in slide-in-from-right-4 duration-500">
+           <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-10">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                 <div>
+                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Validated Users</h3>
+                    <p className="text-slate-400 font-medium">Verify credentials and promote user roles manually.</p>
+                 </div>
+                 <div className="relative group w-full md:w-80">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-all" size={18} />
+                    <input 
+                      type="text" 
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      placeholder="Find strategist..."
+                      className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-8 focus:ring-blue-50 focus:border-blue-600 outline-none transition-all font-bold text-sm"
+                    />
                  </div>
               </div>
-           </div>
 
-           <div className="bg-white rounded-3xl border border-slate-100 p-8">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Recent Alerts</h3>
-              <div className="space-y-4">
-                 {[
-                   { msg: 'Payment failed for Team Alpha', type: 'error' },
-                   { msg: 'New template "Energy" created', type: 'info' },
-                   { msg: 'Database backup completed', type: 'success' },
-                 ].map((alert, i) => (
-                   <div key={i} className={`p-4 rounded-2xl flex items-center gap-3 border ${
-                     alert.type === 'error' ? 'bg-red-50 border-red-100 text-red-700' :
-                     alert.type === 'info' ? 'bg-blue-50 border-blue-100 text-blue-700' :
-                     'bg-emerald-50 border-emerald-100 text-emerald-700'
-                   }`}>
-                      <div className="w-1.5 h-1.5 rounded-full bg-current"></div>
-                      <span className="text-sm font-semibold">{alert.msg}</span>
-                   </div>
-                 ))}
+              <div className="overflow-x-auto rounded-[2rem] border border-slate-50">
+                 <table className="w-full text-left">
+                    <thead>
+                       <tr className="bg-slate-50/80 text-[10px] font-black uppercase text-slate-400">
+                          <th className="p-6">Strategist Identity</th>
+                          <th className="p-6">Current Role</th>
+                          <th className="p-6">Joined Date</th>
+                          <th className="p-6 text-right">Node Permissions</th>
+                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                       {filteredUsers.map((u) => (
+                         <tr key={u.id} className="hover:bg-slate-50/50 transition-all group">
+                            <td className="p-6">
+                               <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 bg-white rounded-2xl border border-slate-100 flex items-center justify-center font-black text-slate-400 group-hover:border-blue-200 transition-all">
+                                     {u.name?.[0] || 'U'}
+                                  </div>
+                                  <div>
+                                     <p className="font-black text-slate-900 uppercase text-sm tracking-tight">{u.name || 'Anonymous Strategist'}</p>
+                                     <p className="text-xs text-slate-400 font-medium">{u.email}</p>
+                                  </div>
+                               </div>
+                            </td>
+                            <td className="p-6">
+                               <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                 u.role === 'admin' ? 'bg-red-50 text-red-600 border-red-100' :
+                                 u.role === 'tutor' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                               }`}>
+                                  {u.role}
+                               </span>
+                            </td>
+                            <td className="p-6 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                               {new Date(u.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="p-6 text-right">
+                               <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                  <button 
+                                    onClick={() => handleRoleUpdate(u.id, u.role)}
+                                    className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-400 transition-all shadow-sm"
+                                    title="Promote User"
+                                  >
+                                     <UserCog size={18} />
+                                  </button>
+                                  <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-red-600 hover:border-red-400 transition-all shadow-sm">
+                                     <Trash2 size={18} />
+                                  </button>
+                               </div>
+                            </td>
+                         </tr>
+                       ))}
+                    </tbody>
+                 </table>
               </div>
            </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

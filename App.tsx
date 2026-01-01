@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -11,7 +12,7 @@ import ChampionshipTimer from './components/ChampionshipTimer';
 import CommunityView from './components/CommunityView';
 import TutorArenaControl from './components/TutorArenaControl';
 import { TutorGuide, TeamGuide } from './components/InstructionGuides';
-import { supabase, getPublicChampionships, subscribeToChampionship, checkSupabaseConnection } from './services/supabase';
+import { supabase, getPublicChampionships, subscribeToChampionship, checkSupabaseConnection, getUserProfile } from './services/supabase';
 import { MOCK_CHAMPIONSHIPS } from './constants';
 import { Trophy, Play, Settings as SettingsIcon, Plus, AlertCircle, Shield, Zap, Globe, Users, BarChart3, ArrowRight, ChevronRight, Star, Cpu, WifiOff, RefreshCw, User, Mail, ShieldCheck } from 'lucide-react';
 
@@ -19,12 +20,18 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [isCreatingChampionship, setIsCreatingChampionship] = useState(false);
   const [session, setSession] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [activeChamp, setActiveChamp] = useState<any>(null);
   const [publicChampionships, setPublicChampionships] = useState<any[]>([]);
   const [isCommunityMode, setIsCommunityMode] = useState(false);
+
+  const fetchProfile = async (userId: string) => {
+    const profile = await getUserProfile(userId);
+    setUserProfile(profile);
+  };
 
   const initializeApp = async () => {
     setLoading(true);
@@ -39,6 +46,10 @@ const App: React.FC = () => {
 
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
+      
+      if (currentSession) {
+        await fetchProfile(currentSession.user.id);
+      }
 
       const { data } = await getPublicChampionships();
       setPublicChampionships(data || []);
@@ -54,14 +65,16 @@ const App: React.FC = () => {
   useEffect(() => {
     initializeApp();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
       setSession(currentSession);
       if (currentSession) {
         setShowAuth(false);
+        await fetchProfile(currentSession.user.id);
       } else {
         setActiveView('dashboard');
         setActiveChamp(null);
         setIsCreatingChampionship(false);
+        setUserProfile(null);
       }
     });
 
@@ -160,9 +173,10 @@ const App: React.FC = () => {
     return <LandingPage onLoginClick={() => setShowAuth(true)} publicArenas={publicChampionships} onEnterObserver={enterAsObserver} />;
   }
 
+  // Fallback para quando o perfil ainda está carregando ou não existe
   const user = {
-    name: session.user.email?.split('@')[0] || 'Empirion User',
-    role: session.user.app_metadata?.role || 'admin',
+    name: userProfile?.name || session.user.email?.split('@')[0] || 'Empirion User',
+    role: userProfile?.role || 'player',
     email: session.user.email
   };
 
@@ -385,13 +399,11 @@ const LandingPage: React.FC<{ onLoginClick: () => void; publicArenas: any[]; onE
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {/* Fixed: Use publicArenas prop instead of non-existent publicChampionships */}
             {publicArenas.length === 0 ? (
               <div className="lg:col-span-3 py-20 text-center border-2 border-dashed border-slate-200 rounded-[3rem]">
                  <span className="text-[10px] font-black uppercase text-slate-400">No public arenas available right now.</span>
               </div>
             ) : (
-              /* Fixed: Use publicArenas prop instead of non-existent publicChampionships */
               publicArenas.map((champ) => (
                 <div key={champ.id} className="premium-card p-10 rounded-[3rem] space-y-8 flex flex-col">
                   <div className="flex justify-between items-start">
