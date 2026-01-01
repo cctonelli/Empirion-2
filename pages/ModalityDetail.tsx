@@ -4,35 +4,24 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Zap, Target, BarChart3, Users, Box, ChevronRight, 
-  Sparkles, ShieldCheck, Globe, Loader2
+  Sparkles, ShieldCheck, Globe, Loader2, Play
 } from 'lucide-react';
-import { getModalities, subscribeToModalities } from '../services/supabase';
+import { useModalities } from '../hooks/useModalities';
 import { Modality } from '../types';
 import EmpireParticles from '../components/EmpireParticles';
 
 const ModalityDetail: React.FC = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { modalities, loading } = useModalities();
   const [modality, setModality] = useState<Modality | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMod = async () => {
-      setLoading(true);
-      const mods = await getModalities();
-      const found = mods.find(m => m.slug === slug);
-      if (found) {
-        setModality(found);
-      } else {
-        // Redireciona se não existir
-        // navigate('/solutions/simulators');
-      }
-      setLoading(false);
-    };
-    fetchMod();
-    const sub = subscribeToModalities(fetchMod);
-    return () => { sub.unsubscribe(); };
-  }, [slug]);
+    const found = modalities.find(m => m.slug === slug);
+    if (found) {
+      setModality(found);
+    }
+  }, [slug, modalities]);
 
   if (loading) {
     return (
@@ -42,11 +31,20 @@ const ModalityDetail: React.FC = () => {
     );
   }
 
-  if (!modality) return null;
+  if (!modality) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-8">
+        <Box size={64} className="text-slate-700 mb-6" />
+        <h2 className="text-3xl font-black uppercase italic mb-4">Arena Não Encontrada</h2>
+        <Link to="/" className="text-blue-500 font-bold uppercase tracking-widest hover:underline">Voltar ao Terminal</Link>
+      </div>
+    );
+  }
 
   const { hero, features, kpis, accent_color = 'orange' } = modality.page_content;
   const accentHex = accent_color === 'blue' ? 'text-blue-500' : accent_color === 'emerald' ? 'text-emerald-500' : 'text-orange-500';
   const bgAccent = accent_color === 'blue' ? 'bg-blue-600' : accent_color === 'emerald' ? 'bg-emerald-600' : 'bg-orange-600';
+  const borderAccent = accent_color === 'blue' ? 'border-blue-500/20' : accent_color === 'emerald' ? 'border-emerald-500/20' : 'border-orange-500/20';
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-transparent pt-40 pb-32">
@@ -68,16 +66,22 @@ const ModalityDetail: React.FC = () => {
                  </p>
               </div>
               <div className="flex gap-4">
-                 <button className={`px-12 py-5 ${bgAccent} text-white rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-xl`}>
-                   Iniciar Simulação Beta
+                 <button 
+                   onClick={() => navigate('/app/championships', { state: { preSelectedModality: modality.slug } })}
+                   className={`px-12 py-5 ${bgAccent} text-white rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-xl flex items-center gap-3`}
+                 >
+                   <Play size={18} /> Iniciar Arena Agora
+                 </button>
+                 <button className="px-10 py-5 bg-white/5 border border-white/10 text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">
+                   Manual Técnico
                  </button>
               </div>
            </motion.div>
 
            <div className="grid grid-cols-2 gap-8">
               {features.map((f: string, i: number) => (
-                <div key={i} className="p-8 bg-white/5 border border-white/10 rounded-[3rem] space-y-4 hover:bg-white/10 transition-all">
-                   <div className={`p-3 bg-white/10 rounded-xl w-fit ${accentHex}`}><Zap size={20} /></div>
+                <div key={i} className={`p-8 bg-white/5 border ${borderAccent} rounded-[3rem] space-y-4 hover:bg-white/10 transition-all group`}>
+                   <div className={`p-3 bg-white/10 rounded-xl w-fit ${accentHex} group-hover:scale-110 transition-transform`}><Zap size={20} /></div>
                    <h4 className="text-lg font-black text-white uppercase tracking-tight">{f}</h4>
                 </div>
               ))}
@@ -102,6 +106,20 @@ const ModalityDetail: React.FC = () => {
                    </div>
                 </div>
               ))}
+           </div>
+        </section>
+
+        <section className="text-center space-y-10">
+           <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Pronto para liderar este setor?</h2>
+           <div className="flex justify-center gap-6">
+              <div className="flex items-center gap-3 text-slate-500">
+                 <ShieldCheck size={24} className="text-emerald-500" />
+                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Protocolo Auditado pelo Command Center</span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-500">
+                 <Globe size={24} className="text-blue-500" />
+                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Disponível em 128 Nodos Globais</span>
+              </div>
            </div>
         </section>
       </div>

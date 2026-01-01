@@ -4,7 +4,7 @@ import {
   Activity, ShieldAlert, Database, Server, Users, CreditCard,
   Cpu, RefreshCw, ExternalLink, Lock, Copy, CheckCircle2,
   AlertTriangle, UserPlus, ShieldCheck, UserCog, Trash2, Search,
-  Plus, Box, LayoutGrid, Sparkles, Globe, Save, Loader2
+  Plus, Box, LayoutGrid, Sparkles, Globe, Save, Loader2, X
 } from 'lucide-react';
 import { supabase, listAllUsers, updateUserRole, createModality } from '../services/supabase';
 import { UserProfile, UserRole, Modality } from '../types';
@@ -22,8 +22,13 @@ const AdminCommandCenter: React.FC = () => {
     description: '',
     accent_color: 'orange',
     hero_title: '',
-    hero_subtitle: ''
+    hero_subtitle: '',
+    features: ['Real-time Sync', 'Oracle Advisor'],
+    kpis: ['ROE', 'OEE']
   });
+
+  const [featureInput, setFeatureInput] = useState('');
+  const [kpiInput, setKpiInput] = useState('');
 
   const fetchGlobalStats = async () => {
     setLoading(true);
@@ -59,15 +64,18 @@ const AdminCommandCenter: React.FC = () => {
         is_public: true,
         page_content: {
           hero: { title: newModality.hero_title, subtitle: newModality.hero_subtitle },
-          features: ["Real-time Sync", "Oracle Advisor", "Market Grounding"],
-          kpis: ["ROE", "OEE", "Market Share"],
+          features: newModality.features,
+          kpis: newModality.kpis,
           accent_color: newModality.accent_color
         },
         config_template: { modality: newModality.slug }
       };
       await createModality(payload);
       alert("Nova Arena implantada com sucesso no Oracle Node!");
-      setNewModality({ slug: '', name: '', description: '', accent_color: 'orange', hero_title: '', hero_subtitle: '' });
+      setNewModality({ 
+        slug: '', name: '', description: '', accent_color: 'orange', 
+        hero_title: '', hero_subtitle: '', features: [], kpis: [] 
+      });
     } catch (e) {
       alert("Erro no deploy da modalidade.");
     } finally {
@@ -106,32 +114,67 @@ const AdminCommandCenter: React.FC = () => {
 
               <form onSubmit={handleDeployModality} className="grid grid-cols-1 md:grid-cols-2 gap-10">
                  <div className="space-y-6">
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Identificador (Slug)</label>
-                       <input value={newModality.slug} onChange={e => setNewModality({...newModality, slug: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="ex: fintech-wars" />
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Identificador (Slug)</label>
+                          <input value={newModality.slug} onChange={e => setNewModality({...newModality, slug: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="ex: fintech-wars" />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nome da Arena</label>
+                          <input value={newModality.name} onChange={e => setNewModality({...newModality, name: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Fintech Global Wars" />
+                       </div>
                     </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nome da Modalidade</label>
-                       <input value={newModality.name} onChange={e => setNewModality({...newModality, name: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Fintech Global Wars" />
-                    </div>
+
                     <div className="space-y-2">
                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cor de Acento</label>
-                       <select value={newModality.accent_color} onChange={e => setNewModality({...newModality, accent_color: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-bold">
+                       <select value={newModality.accent_color} onChange={e => setNewModality({...newModality, accent_color: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold">
                           <option value="orange">Laranja (Padrão)</option>
                           <option value="blue">Azul (Corporate)</option>
                           <option value="emerald">Verde (Agro/ESG)</option>
                        </select>
                     </div>
+
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Features da Arena</label>
+                       <div className="flex gap-2 mb-4">
+                          <input value={featureInput} onChange={e => setFeatureInput(e.target.value)} className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Adicionar Feature..." />
+                          <button type="button" onClick={() => { if(featureInput) { setNewModality({...newModality, features: [...newModality.features, featureInput]}); setFeatureInput(''); }}} className="p-4 bg-slate-900 text-white rounded-2xl"><Plus size={20}/></button>
+                       </div>
+                       <div className="flex flex-wrap gap-2">
+                          {newModality.features.map((f, idx) => (
+                            <span key={idx} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase flex items-center gap-2">
+                               {f} <X size={12} className="cursor-pointer" onClick={() => setNewModality({...newModality, features: newModality.features.filter((_, i) => i !== idx)})}/>
+                            </span>
+                          ))}
+                       </div>
+                    </div>
                  </div>
+
                  <div className="space-y-6">
                     <div className="space-y-2">
                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Título da Página (Hero)</label>
-                       <input value={newModality.hero_title} onChange={e => setNewModality({...newModality, hero_title: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="A Próxima Fronteira" />
+                       <input value={newModality.hero_title} onChange={e => setNewModality({...newModality, hero_title: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="A Próxima Fronteira" />
                     </div>
                     <div className="space-y-2">
                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Subtítulo (Impacto)</label>
-                       <textarea value={newModality.hero_subtitle} onChange={e => setNewModality({...newModality, hero_subtitle: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-bold h-32" placeholder="Compita na arena mais volátil do mercado..." />
+                       <textarea value={newModality.hero_subtitle} onChange={e => setNewModality({...newModality, hero_subtitle: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold h-24" placeholder="Compita na arena mais volátil do mercado..." />
                     </div>
+                    
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Core KPIs</label>
+                       <div className="flex gap-2 mb-4">
+                          <input value={kpiInput} onChange={e => setKpiInput(e.target.value)} className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold" placeholder="Adicionar KPI..." />
+                          <button type="button" onClick={() => { if(kpiInput) { setNewModality({...newModality, kpis: [...newModality.kpis, kpiInput]}); setKpiInput(''); }}} className="p-4 bg-slate-900 text-white rounded-2xl"><Plus size={20}/></button>
+                       </div>
+                       <div className="flex flex-wrap gap-2">
+                          {newModality.kpis.map((k, idx) => (
+                            <span key={idx} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase flex items-center gap-2">
+                               {k} <X size={12} className="cursor-pointer" onClick={() => setNewModality({...newModality, kpis: newModality.kpis.filter((_, i) => i !== idx)})}/>
+                            </span>
+                          ))}
+                       </div>
+                    </div>
+
                     <button type="submit" disabled={isDeploying} className="w-full py-6 bg-slate-950 text-white rounded-full font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl flex items-center justify-center gap-4">
                        {isDeploying ? <Loader2 className="animate-spin" /> : <><Sparkles size={20} /> Deploy no Oracle Node</>}
                     </button>
@@ -141,7 +184,6 @@ const AdminCommandCenter: React.FC = () => {
         </div>
       ) : activeTab === 'users' ? (
         <div className="px-4 space-y-8 animate-in slide-in-from-right-4 duration-500">
-           {/* Tabela de usuários já existente... */}
            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
              <h3 className="text-xl font-black text-slate-900 uppercase mb-8">Validated Strategists</h3>
              <table className="w-full text-left">

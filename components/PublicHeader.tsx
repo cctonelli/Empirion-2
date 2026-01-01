@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -8,8 +8,7 @@ import {
   Tractor, DollarSign, Hammer, Menu, X, Box, Cpu, Sparkles, Globe
 } from 'lucide-react';
 import { MENU_STRUCTURE } from '../constants';
-import { getModalities, subscribeToModalities } from '../services/supabase';
-import { Modality } from '../types';
+import { useModalities } from '../hooks/useModalities';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const getIcon = (iconName?: string) => {
@@ -31,33 +30,23 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const location = useLocation();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [dynamicModalities, setDynamicModalities] = useState<Modality[]>([]);
-
-  useEffect(() => {
-    const loadModalities = async () => {
-      const data = await getModalities();
-      setDynamicModalities(data);
-    };
-    loadModalities();
-    const channel = subscribeToModalities(loadModalities);
-    return () => { channel.unsubscribe(); };
-  }, []);
+  const { modalities } = useModalities();
 
   // Merge dynamic modalities into MENU_STRUCTURE
   const menuWithDynamics = MENU_STRUCTURE.map(item => {
     if (item.label === 'solutions') {
       const solutionsItem = { ...item };
       const arenasGroup = solutionsItem.sub?.find(s => s.id === 'arenas');
-      if (arenasGroup && dynamicModalities.length > 0) {
-        // Inject dynamic modalities into Arenas group
-        const dynamicItems = dynamicModalities.map(m => ({
+      if (arenasGroup) {
+        // Filter out dynamic ones to avoid duplication on refresh
+        const staticSub = (arenasGroup.sub || []).filter(s => !s.id.startsWith('mod-'));
+        const dynamicItems = modalities.map(m => ({
           id: `mod-${m.slug}`,
           label: m.name,
           path: `/solutions/${m.slug}`,
           icon: 'Sparkles'
         }));
-        // Avoid duplicates if already there
-        arenasGroup.sub = [...(arenasGroup.sub || []), ...dynamicItems];
+        arenasGroup.sub = [...staticSub, ...dynamicItems];
       }
       return solutionsItem;
     }

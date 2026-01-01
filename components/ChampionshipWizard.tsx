@@ -1,39 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Plus, 
-  ArrowRight, 
-  Check, 
-  Settings, 
-  Globe, 
-  Layers, 
-  Cpu, 
-  Zap,
-  Leaf,
-  FileText,
-  Loader2,
-  MapPin,
-  TrendingUp,
-  Package,
-  Lock,
-  Unlock,
-  Info,
-  BarChart3,
-  Search,
-  Filter,
-  Building2,
-  Landmark,
-  Bot,
-  Newspaper,
-  ShieldCheck,
-  Target,
-  Sparkles,
-  Gavel
+  Plus, ArrowRight, Check, Settings, Globe, Layers, Cpu, Zap, Leaf, FileText, Loader2,
+  MapPin, TrendingUp, Package, Lock, Unlock, Info, BarChart3, Search, Filter, Building2,
+  Landmark, Bot, Newspaper, ShieldCheck, Target, Sparkles, Gavel
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS, MODALITY_INFO } from '../constants';
 import { Branch, ChampionshipTemplate, ScenarioType, ModalityType } from '../types';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import { supabase } from '../services/supabase';
+import { useModalities } from '../hooks/useModalities';
 
 const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
@@ -41,6 +17,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   const [financials, setFinancials] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<ChampionshipTemplate | null>(null);
   const [filterBranch, setFilterBranch] = useState<Branch | 'all'>('all');
+  const { modalities } = useModalities();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -101,6 +78,22 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   const filteredTemplates = CHAMPIONSHIP_TEMPLATES.filter(t => 
     filterBranch === 'all' || t.branch === filterBranch
   );
+
+  // Combine static and dynamic modality info
+  const allModalities = [
+    ...Object.keys(MODALITY_INFO).map(m => ({
+      id: m,
+      label: MODALITY_INFO[m as ModalityType].label,
+      desc: MODALITY_INFO[m as ModalityType].desc,
+      icon: m === 'business_round' ? Gavel : m === 'factory_efficiency' ? Cpu : Layers
+    })),
+    ...modalities.map(m => ({
+      id: m.slug,
+      label: m.name,
+      desc: m.description,
+      icon: Sparkles
+    }))
+  ];
 
   const handleLaunch = async () => {
     setIsSubmitting(true);
@@ -271,22 +264,21 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
               <div className="lg:col-span-12 space-y-4">
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Modalidade Estratégica</label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {(Object.keys(MODALITY_INFO) as ModalityType[]).map(m => {
-                    const info = MODALITY_INFO[m];
-                    const Icon = m === 'business_round' ? Gavel : m === 'factory_efficiency' ? Cpu : Layers;
+                  {allModalities.map(m => {
+                    const Icon = m.icon;
                     return (
                       <button 
-                        key={m}
-                        onClick={() => setFormData({...formData, modalityType: m})}
+                        key={m.id}
+                        onClick={() => setFormData({...formData, modalityType: m.id})}
                         className={`p-6 rounded-[2.5rem] border-2 text-left transition-all ${
-                          formData.modalityType === m ? 'border-blue-600 bg-blue-50/50 shadow-lg' : 'border-slate-100 bg-slate-50'
+                          formData.modalityType === m.id ? 'border-blue-600 bg-blue-50/50 shadow-lg' : 'border-slate-100 bg-slate-50'
                         }`}
                       >
-                        <div className={`p-3 w-fit rounded-2xl mb-4 ${formData.modalityType === m ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                        <div className={`p-3 w-fit rounded-2xl mb-4 ${formData.modalityType === m.id ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
                           <Icon size={24} />
                         </div>
-                        <h4 className="font-black text-slate-900 uppercase tracking-tighter">{info.label}</h4>
-                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2">{info.desc}</p>
+                        <h4 className="font-black text-slate-900 uppercase tracking-tighter">{m.label}</h4>
+                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2">{m.desc}</p>
                       </button>
                     );
                   })}
