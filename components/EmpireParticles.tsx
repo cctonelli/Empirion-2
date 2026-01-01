@@ -2,8 +2,6 @@ import React, { useEffect, useRef } from 'react';
 
 const EmpireParticles: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: -2000, y: -2000 });
-  const animationId = useRef<number>();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -18,6 +16,13 @@ const EmpireParticles: React.FC = () => {
     resize();
     window.addEventListener('resize', resize);
 
+    const mouse = { x: -2000, y: -2000 };
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
     const particles: Array<{
       x: number;
       y: number;
@@ -29,60 +34,38 @@ const EmpireParticles: React.FC = () => {
     }> = [];
 
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f97316'];
-    const count = Math.min(150, Math.floor(window.innerWidth / 8));
+    const count = Math.min(120, Math.floor(window.innerWidth / 10));
 
     for (let i = 0; i < count; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 1.0,
-        vy: (Math.random() - 0.5) * 1.0,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 1.5,
         radius: Math.random() * 2 + 1.5,
         color: colors[Math.floor(Math.random() * colors.length)],
         pulse: Math.random() * Math.PI * 2
       });
     }
 
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY };
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-
     const animate = () => {
-      // Solid background for max performance
-      ctx.fillStyle = '#020617';
+      // Trail effect for high-fidelity aesthetics
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.15)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Subtle grid overlay
-      ctx.strokeStyle = 'rgba(59, 130, 246, 0.03)';
-      ctx.lineWidth = 0.5;
-      const step = 150;
-      for (let x = 0; x < canvas.width; x += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-      }
-      for (let y = 0; y < canvas.height; y += step) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
-
-      particles.forEach((p) => {
+      particles.forEach(p => {
         // Gravitational attraction logic
-        const dx = mouseRef.current.x - p.x;
-        const dy = mouseRef.current.y - p.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const dist = Math.hypot(dx, dy);
         
         if (dist < 250 && dist > 0) {
           const force = (250 - dist) / 250;
-          p.vx += (dx / dist) * force * 0.06;
-          p.vy += (dy / dist) * force * 0.06;
+          p.vx += (dx / dist) * force * 0.08;
+          p.vy += (dy / dist) * force * 0.08;
         }
 
-        // Slight friction
+        // Slight physics friction
         p.vx *= 0.98;
         p.vy *= 0.98;
 
@@ -90,56 +73,48 @@ const EmpireParticles: React.FC = () => {
         p.y += p.vy;
         p.pulse += 0.035;
 
-        // Smooth wrapping with modulo
+        // Screen wrapping
         p.x = (p.x + canvas.width) % canvas.width;
         p.y = (p.y + canvas.height) % canvas.height;
 
         /**
-         * SANITIZAÇÃO BULLETPROOF v6.0
-         * Prevents IndexSizeError by ensuring radius is finite, non-NaN and strictly positive.
+         * RADIUS SANITIZATION v6.0
+         * Ensures ctx.arc radius is never negative, NaN, or non-finite.
          */
         const dynamicPulse = Math.sin(p.pulse) * 0.8;
         let rawSize = p.radius + dynamicPulse;
-        
         if (!isFinite(rawSize) || isNaN(rawSize) || rawSize <= 0) {
-          rawSize = p.radius || 2.5;
+          rawSize = p.radius || 2.0;
         }
-        
-        const size = Math.max(0.8, Math.abs(rawSize));
-        const opacity = 0.15 + Math.sin(p.pulse) * 0.1;
+        const size = Math.max(0.5, Math.abs(rawSize));
 
-        try {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
-          ctx.fillStyle = p.color;
-          
-          if (dist < 200) {
-            ctx.globalAlpha = Math.min(0.8, opacity + 0.5);
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = p.color;
-          } else {
-            ctx.globalAlpha = Math.max(0.1, opacity);
-            ctx.shadowBlur = 0;
-          }
-          
-          ctx.fill();
-        } catch (err) {
-          // Safety net for canvas rendering edge cases
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        
+        // Dynamic glow on hover
+        if (dist < 180) {
+          ctx.globalAlpha = 0.9;
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = p.color;
+        } else {
+          ctx.globalAlpha = 0.4;
+          ctx.shadowBlur = 0;
         }
         
+        ctx.fill();
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
       });
 
-      animationId.current = requestAnimationFrame(animate);
+      requestAnimationFrame(animate);
     };
 
     animate();
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', resize);
-      if (animationId.current) cancelAnimationFrame(animationId.current);
+      window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
 

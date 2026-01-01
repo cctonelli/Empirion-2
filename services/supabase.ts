@@ -2,49 +2,31 @@ import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, UserProfile, UserRole } from '../types';
 
 /**
- * Supabase Engine v6.2 (Safe-Initialization Mode)
- * Resolves variables across multiple possible environments (Vite, Next, Process).
- * Includes hardcoded defaults to ensure the UI remains functional even before
- * environment variables are fully configured in the deployment dashboard.
+ * Supabase Engine v6.3 (Vercel + Vite Safe)
+ * Following the consolidated project scope: Uses VITE_ prefix exclusively
+ * for client-side variables to ensure correct propagation in Vercel.
  */
-const getEnv = (key: string): string => {
-  const viteKey = `VITE_${key}`;
-  const nextKey = `NEXT_PUBLIC_${key}`;
-  
-  // Check all common variable locations
-  const val = (
-    (import.meta as any).env?.[viteKey] ||
-    (import.meta as any).env?.[nextKey] ||
-    (import.meta as any).env?.[key] ||
-    (window as any).process?.env?.[viteKey] ||
-    (window as any).process?.env?.[nextKey] ||
-    (window as any).process?.env?.[key] ||
-    ''
-  );
-  return val;
-};
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
-// Use the specific project URL from the Empirion specification as the default
-const SUPABASE_URL = getEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
-
-// Use an empty string or placeholder for the key. 
-// If it's truly missing, requests will fail but the app won't crash on boot.
-const SUPABASE_ANON_KEY = getEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
-
-// Log a warning instead of a CRITICAL error to provide feedback without alarming users
-if (!getEnv('SUPABASE_URL') || !getEnv('SUPABASE_ANON_KEY')) {
-  console.warn('Supabase: Running with fallback configuration. For production, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.');
+// Validation for runtime safety
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.warn('Supabase Environment Variables Missing! Check Vercel Settings for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Fallback only to prevent initialization crash, real requests will fail if keys are missing
+export const supabase = createClient(
+  SUPABASE_URL || 'https://gkmjlejeqndfdvxxvuxa.supabase.co', 
+  SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
+);
 
 /**
- * Utilitário centralizado para tratamento de erros PostgrestError
+ * Centralized utility for handling PostgrestError (Supabase v2+)
  */
 export const handleSupabaseError = (error: any, context: string) => {
   console.error(`Supabase Error [${context}]:`, {
     message: error?.message,
-    code: error?.code,
+    code: error?.code, // v2+ uses error.code instead of error.status
     details: error?.details,
     hint: error?.hint
   });
