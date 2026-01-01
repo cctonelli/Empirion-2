@@ -8,8 +8,8 @@ import AdminCommandCenter from './components/AdminCommandCenter';
 import { TutorGuide, TeamGuide } from './components/InstructionGuides';
 import Auth from './components/Auth';
 import ChampionshipWizard from './components/ChampionshipWizard';
+import DecisionForm from './components/DecisionForm';
 
-// Main App component with navigation logic and session management
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -17,7 +17,6 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initial authentication session check
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -30,7 +29,6 @@ const App: React.FC = () => {
 
     initAuth();
 
-    // Real-time authentication state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
@@ -44,7 +42,6 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch role-based profile from the 'users' table
   const fetchProfile = async (userId: string) => {
     try {
       const prof = await getUserProfile(userId);
@@ -60,30 +57,28 @@ const App: React.FC = () => {
     await supabase.auth.signOut();
   };
 
-  // Loading screen for application initialization
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-slate-900">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <span className="text-white text-[10px] font-black uppercase tracking-[0.3em]">Empirion Kernel Initializing...</span>
+          <span className="text-white text-[10px] font-black uppercase tracking-[0.3em]">Empirion Kernel v5.0 Initializing...</span>
         </div>
       </div>
     );
   }
 
-  // Redirect to Auth screen if no session is active
   if (!session) {
     return <Auth onAuth={() => {}} />;
   }
 
-  // Component router based on activeView state
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard': return <Dashboard />;
       case 'reports': return <Reports />;
       case 'market': return <MarketAnalysis />;
       case 'admin': return <AdminCommandCenter />;
+      case 'decisions': return <DecisionForm round={1} />; // Default to round 1 for MVP
       case 'guides': return profile?.role === 'player' ? <TeamGuide /> : <TutorGuide />;
       case 'championships': return <ChampionshipWizard onComplete={() => setActiveView('dashboard')} />;
       default: return <Dashboard />;
@@ -103,7 +98,6 @@ const App: React.FC = () => {
           {renderContent()}
         </div>
         
-        {/* Global Application Footer with build versioning */}
         <footer className="py-24 px-6 text-center border-t border-slate-100 mt-20">
            <div className="flex flex-col items-center gap-6">
               <div className="flex items-center gap-3">
@@ -112,7 +106,16 @@ const App: React.FC = () => {
                 </div>
                 <span className="text-xl font-black text-slate-900 tracking-tighter uppercase">EMPIRION</span>
               </div>
-              <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">© 2025 EMPIRION SYSTEMS INC. | v4.9.0-GOLD-BETA</p>
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
+                © 2025 EMPIRION SYSTEMS INC. | v5.0.0-GOLD (MVP CONSOLIDADO)
+              </p>
+              <div className="flex gap-4 text-[8px] font-black uppercase text-slate-300 tracking-widest">
+                <span>Bernard Systems Fidelity</span>
+                <span>•</span>
+                <span>AI Grounded Analysis</span>
+                <span>•</span>
+                <span>Real-Time Collaboration</span>
+              </div>
            </div>
         </footer>
       </div>
