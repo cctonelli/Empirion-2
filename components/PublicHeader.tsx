@@ -4,8 +4,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
-  ChevronDown, LogIn, Factory, ShoppingCart, Briefcase, 
-  Tractor, DollarSign, Hammer, Menu, X, Shield 
+  ChevronDown, ChevronRight, LogIn, Factory, ShoppingCart, Briefcase, 
+  Tractor, DollarSign, Hammer, Menu, X, Shield, Settings, Info, Box
 } from 'lucide-react';
 import { MENU_STRUCTURE } from '../constants';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -18,7 +18,7 @@ const getIcon = (iconName?: string) => {
     case 'Tractor': return <Tractor size={16} />;
     case 'DollarSign': return <DollarSign size={16} />;
     case 'Hammer': return <Hammer size={16} />;
-    default: return null;
+    default: return <Box size={16} />;
   }
 };
 
@@ -26,6 +26,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const { t } = useTranslation('common');
   const location = useLocation();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [activeSubDropdown, setActiveSubDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -50,7 +51,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               key={item.label} 
               className="relative py-4"
               onMouseEnter={() => item.sub && setActiveDropdown(item.label)}
-              onMouseLeave={() => setActiveDropdown(null)}
+              onMouseLeave={() => { setActiveDropdown(null); setActiveSubDropdown(null); }}
             >
               <Link 
                 to={item.path}
@@ -62,25 +63,56 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 {item.sub && <ChevronDown size={12} className={`transition-transform ${activeDropdown === item.label ? 'rotate-180' : ''}`} />}
               </Link>
 
-              {/* Dropdown */}
+              {/* L1 Dropdown */}
               <AnimatePresence>
                 {item.sub && activeDropdown === item.label && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full left-0 w-64 bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl p-3 overflow-hidden"
+                    className="absolute top-full left-0 w-72 bg-[#0f172a] border border-white/10 rounded-3xl shadow-2xl p-4 overflow-visible"
                   >
                     <div className="space-y-1">
-                      {item.sub.map((sub) => (
-                        <Link
-                          key={sub.id}
-                          to={sub.path}
-                          className="flex items-center gap-3 px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                      {item.sub.map((sub: any) => (
+                        <div 
+                          key={sub.id} 
+                          className="relative"
+                          onMouseEnter={() => sub.sub && setActiveSubDropdown(sub.id)}
+                          onMouseLeave={() => setActiveSubDropdown(null)}
                         >
-                          <span className="text-blue-500">{getIcon(sub.icon)}</span>
-                          {sub.label}
-                        </Link>
+                          <Link
+                            to={sub.path}
+                            className="flex items-center justify-between px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all"
+                          >
+                            <div className="flex items-center gap-4">
+                              <span className="text-blue-500">{getIcon(sub.icon)}</span>
+                              {sub.label}
+                            </div>
+                            {sub.sub && <ChevronRight size={12} />}
+                          </Link>
+
+                          {/* L2 Dropdown (Nesting) */}
+                          <AnimatePresence>
+                            {sub.sub && activeSubDropdown === sub.id && (
+                              <motion.div
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                className="absolute top-0 left-full ml-4 w-64 bg-[#1e293b] border border-white/10 rounded-3xl shadow-2xl p-4"
+                              >
+                                {sub.sub.map((deep: any) => (
+                                  <Link
+                                    key={deep.id}
+                                    to={deep.path}
+                                    className="block px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all"
+                                  >
+                                    {deep.label}
+                                  </Link>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       ))}
                     </div>
                   </motion.div>
@@ -95,7 +127,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <div className="hidden sm:block"><LanguageSwitcher light /></div>
           <button 
             onClick={onLogin}
-            className="hidden md:flex items-center gap-3 px-8 py-3.5 bg-white text-slate-950 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all shadow-2xl active:scale-95"
+            className="hidden md:flex items-center gap-3 px-8 py-3.5 bg-white text-slate-950 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-[#f97316] hover:text-white transition-all shadow-2xl active:scale-95 border-b-4 border-slate-200 hover:border-orange-700"
           >
             <LogIn size={16} /> {t('login')}
           </button>
@@ -116,22 +148,31 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden absolute top-full left-0 right-0 bg-[#020617] border-b border-white/5 p-6 overflow-hidden"
+            className="lg:hidden absolute top-full left-0 right-0 bg-[#020617] border-b border-white/5 p-6 overflow-hidden max-h-[80vh] overflow-y-auto"
           >
             <nav className="flex flex-col gap-6">
               {MENU_STRUCTURE.map((item) => (
-                <div key={item.label} className="space-y-3">
+                <div key={item.label} className="space-y-4">
                    <Link to={item.path} className="text-sm font-black uppercase tracking-widest text-white" onClick={() => setIsMobileMenuOpen(false)}>{t(item.label)}</Link>
                    {item.sub && (
-                     <div className="pl-4 flex flex-col gap-3">
-                        {item.sub.map(s => (
-                          <Link key={s.id} to={s.path} className="text-[10px] font-bold uppercase tracking-widest text-slate-500" onClick={() => setIsMobileMenuOpen(false)}>{s.label}</Link>
+                     <div className="pl-4 flex flex-col gap-4">
+                        {item.sub.map((s: any) => (
+                          <div key={s.id} className="space-y-3">
+                             <Link to={s.path} className="text-[10px] font-bold uppercase tracking-widest text-slate-400" onClick={() => setIsMobileMenuOpen(false)}>{s.label}</Link>
+                             {s.sub && (
+                               <div className="pl-4 flex flex-col gap-2 opacity-60">
+                                 {s.sub.map((deep: any) => (
+                                   <Link key={deep.id} to={deep.path} className="text-[9px] font-bold uppercase tracking-widest text-slate-500" onClick={() => setIsMobileMenuOpen(false)}>{deep.label}</Link>
+                                 ))}
+                               </div>
+                             )}
+                          </div>
                         ))}
                      </div>
                    )}
                 </div>
               ))}
-              <button onClick={onLogin} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest">Acessar Arena</button>
+              <button onClick={onLogin} className="w-full py-4 bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-widest">Acessar Arena</button>
             </nav>
           </motion.div>
         )}

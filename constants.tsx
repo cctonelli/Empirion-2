@@ -6,6 +6,7 @@ export const COLORS = {
   secondary: '#1e293b',
   accent: '#3b82f6',
   gold: '#fbbf24',
+  sebrae_orange: '#f97316',
   success: '#10b981',
   danger: '#ef4444',
   warning: '#f59e0b'
@@ -25,14 +26,32 @@ export const MENU_STRUCTURE = [
       { id: 'construction', label: 'Construção', path: '/branches/construction', icon: 'Hammer' },
     ]
   },
-  { label: 'features', path: '/features' },
   { 
     label: 'solutions', 
     path: '/solutions',
     sub: [
-      { id: 'uni', label: 'Universidades', path: '/solutions/universities' },
-      { id: 'corp', label: 'Corporativo', path: '/solutions/corporate' },
-      { id: 'tourney', label: 'Torneios Abertos', path: '/solutions/tournaments' },
+      { 
+        id: 'simulators', 
+        label: 'Simuladores', 
+        path: '/solutions/simulators',
+        sub: [
+          { id: 'uni', label: 'Universidade', path: '/solutions/university' },
+          { id: 'corp', label: 'Corporativo', path: '/solutions/corporate' },
+          { id: 'open', label: 'Torneios Abertos', path: '/solutions/open-tournaments' },
+          { id: 'indiv', label: 'Individual (IA Concorrente)', path: '/solutions/individual' },
+          { id: 'create', label: 'Crie Seu Torneio', path: '/solutions/create-tournament' },
+        ]
+      },
+      { id: 'bp_ia', label: 'Business Plan IA (Quiz)', path: '/solutions/business-plan' },
+      { 
+        id: 'training', 
+        label: 'Treinamentos', 
+        path: '/solutions/training',
+        sub: [
+          { id: 'online', label: 'On-line', path: '/solutions/training-online' },
+          { id: 'corp_train', label: 'Corporativo', path: '/solutions/training-corporate' },
+        ]
+      },
     ]
   },
   { label: 'rewards', path: '/rewards' },
@@ -40,24 +59,46 @@ export const MENU_STRUCTURE = [
   { label: 'contact', path: '/contact' }
 ];
 
-export const EMPIRE_REWARDS_DATA = {
-  title: "Empire Rewards Protocol",
-  subtitle: "Onde o prestígio estratégico se transforma em ativos reais.",
-  tiers: [
-    { name: "Iniciante", pts: "0", color: "text-slate-400" },
-    { name: "Mestre Regional", pts: "5.000", color: "text-blue-400" },
-    { name: "Cezar da Indústria", pts: "25.000", color: "text-gold" },
-    { name: "Oráculo Supremo", pts: "100.000", color: "text-indigo-400" }
-  ],
-  accumulation: [
-    { action: "Criar Arena", val: "+500 pts" },
-    { action: "Rodada Finalizada", val: "+100 pts" },
-    { action: "Indicação Validada", val: "+1.000 pts" },
-    { action: "Vitória (TSR Top 1)", val: "+5.000 pts" }
-  ]
-};
+export const CAROUSEL_ITEMS = [
+  {
+    id: 1,
+    title: "Campeonato Industrial Global 2026",
+    subtitle: "Arena aberta para novas inscrições. Lidere o ranking TSR e conquiste o selo Oráculo.",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=2000",
+    link: "/solutions/open-tournaments",
+    badge: "Live Arena"
+  },
+  {
+    id: 2,
+    title: "Strategos BP: O Novo Plano de Negócios",
+    subtitle: "Use o novo quiz dinâmico para estruturar seu império em 15 minutos com suporte Gemini.",
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2000",
+    link: "/solutions/business-plan",
+    badge: "Novo Recurso"
+  },
+  {
+    id: 3,
+    title: "Masterclass: Gestão SISERV",
+    subtitle: "Aprenda a otimizar o CSAT e a retenção de talentos em simulações de serviços complexos.",
+    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=2000",
+    link: "/blog/siserv-mastery",
+    badge: "Treinamento"
+  }
+];
 
-// Expanded LANDING_PAGE_DATA with all properties required by LandingPage component
+export const MOCK_ONGOING_CHAMPIONSHIPS = [
+  { id: 'c1', name: "Industrial Mastery 2026", branch: "Industrial", round: "5/12", teams: 14, leader: "Team Alpha (TSR 32.4%)", status: "live" },
+  { id: 'c2', name: "Agro Global Challenge", branch: "Agronegócio", round: "3/10", teams: 8, leader: "BioCore (TSR 28.1%)", status: "live" },
+  { id: 'c3', name: "Elite Commercial Hub", branch: "Comercial", round: "7/15", teams: 12, leader: "RetailX (TSR 25.7%)", status: "live" },
+  { id: 'c4', name: "SISERV Tech Solutions", branch: "Serviços", round: "1/8", teams: 6, leader: "DevOps S/A (TSR 12.2%)", status: "live" }
+];
+
+export const EMPIRE_BADGES_MOCK = [
+  { id: 'master', name: "Mestre Industrial", icon: "Factory", points: 500, desc: "Conquistado após 5 vitórias no setor Industrial." },
+  { id: 'esg', name: "Herói ESG", icon: "Leaf", points: 300, desc: "Mantido o Score Sustentável acima de 90% por 12 rodadas." },
+  { id: 'oracle', name: "Oráculo Supremo", icon: "Zap", points: 1000, desc: "Uso exemplar das recomendações da IA Strategos." }
+];
+
 export const LANDING_PAGE_DATA = {
   hero: {
     title: "Empirion – The Strategic Command v5.5 GOLD",
@@ -105,7 +146,6 @@ export const LANDING_PAGE_DATA = {
   ]
 };
 
-// Exported BRANCH_CONFIGS for ChampionshipWizard
 export const BRANCH_CONFIGS: Record<Branch, { label: string; icon: string }> = {
   industrial: { label: 'Industrial', icon: '🏭' },
   commercial: { label: 'Comercial', icon: '🛒' },
@@ -115,7 +155,6 @@ export const BRANCH_CONFIGS: Record<Branch, { label: string; icon: string }> = {
   construction: { label: 'Construção', icon: '🔨' },
 };
 
-// Exported CHAMPIONSHIP_TEMPLATES for ChampionshipWizard
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   {
     id: 'ind-master',
@@ -177,3 +216,21 @@ export const BUSINESS_PLAN_STRUCTURE: BusinessPlanSection[] = [
     ]
   }
 ];
+
+// Added missing EMPIRE_REWARDS_DATA used in PublicRewards.tsx
+export const EMPIRE_REWARDS_DATA = {
+  title: "Empire Rewards",
+  subtitle: "Reconhecimento de elite para os maiores estrategistas da rede Empirion.",
+  tiers: [
+    { name: 'Bronze Node', pts: 0, color: 'text-orange-400' },
+    { name: 'Silver Node', pts: 500, color: 'text-slate-400' },
+    { name: 'Gold Node', pts: 2000, color: 'text-gold' },
+    { name: 'Oracle Node', pts: 5000, color: 'text-blue-400' },
+  ],
+  accumulation: [
+    { action: 'Vitória em Arena', val: '500 PTS' },
+    { action: 'Participação Rodada', val: '50 PTS' },
+    { action: 'Badge Oráculo', val: '1000 PTS' },
+    { action: 'ESG Hero Status', val: '300 PTS' },
+  ]
+};
