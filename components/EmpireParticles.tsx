@@ -44,7 +44,7 @@ const EmpireParticles: React.FC = () => {
           y: Math.random() * canvas.height,
           vx: (Math.random() - 0.5) * 0.4,
           vy: (Math.random() - 0.5) * 0.4,
-          radius: Math.random() * 1.5 + 0.5,
+          radius: Math.random() * 1.5 + 2, // Base sólida inicial
           color: colors[Math.floor(Math.random() * colors.length)],
           pulse: Math.random() * Math.PI * 2,
           mass: Math.random() * 0.9 + 0.3
@@ -93,21 +93,22 @@ const EmpireParticles: React.FC = () => {
 
         /**
          * SANITIZAÇÃO CRÍTICA (v5.5-Bulletproof)
-         * Evita o erro fatal IndexSizeError se o raio for negativo ou NaN
+         * Evita o erro fatal IndexSizeError se o raio for negativo ou NaN.
+         * Baseado na documentação de correção do deploy Vercel.
          */
         const dynamicPulse = Math.sin(p.pulse) * 0.8;
-        let rawSize = (p.radius || 1.5) + dynamicPulse;
+        let rawSize = (p.radius || 3) + dynamicPulse; // Fallback radius 3
         
-        // Validação de número finito e absoluto
-        let safeSize = Math.abs(Number(rawSize));
-        if (!isFinite(safeSize) || isNaN(safeSize)) safeSize = 1.5;
-        safeSize = Math.max(0.1, safeSize);
+        // Validação de número finito, absoluto e mínimo seguro
+        if (!isFinite(rawSize) || isNaN(rawSize)) rawSize = 3;
+        const size = Math.max(0.5, Math.abs(rawSize)); 
         
         const opacity = 0.15 + Math.sin(p.pulse) * 0.1;
 
         try {
           ctx.beginPath();
-          ctx.arc(p.x, p.y, safeSize, 0, Math.PI * 2);
+          // O método arc lança erro fatal se o terceiro argumento for negativo ou NaN.
+          ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
           ctx.fillStyle = p.color;
           
           if (dist < mouseRadius) {
@@ -120,8 +121,8 @@ const EmpireParticles: React.FC = () => {
           }
           
           ctx.fill();
-        } catch (e) {
-          // Fallback silencioso para evitar crash da aplicação se o canvas falhar
+        } catch (err) {
+          console.warn('Empirion Engine: Arc draw error skipped', err);
         }
         
         ctx.shadowBlur = 0;
