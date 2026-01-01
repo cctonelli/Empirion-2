@@ -53,9 +53,11 @@ const EmpireParticles: React.FC = () => {
     };
 
     const draw = () => {
+      // Background Sólido para Performance
       ctx.fillStyle = '#020617';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Grid de Fundo
       ctx.strokeStyle = 'rgba(59, 130, 246, 0.03)';
       ctx.lineWidth = 0.5;
       const step = 150;
@@ -89,28 +91,39 @@ const EmpireParticles: React.FC = () => {
         if (p.y < 0) p.y = canvas.height;
         if (p.y > canvas.height) p.y = 0;
 
-        // SANITIZAÇÃO CRÍTICA: Impedir IndexSizeError (Raio Negativo)
+        /**
+         * SANITIZAÇÃO CRÍTICA (v5.5-Bulletproof)
+         * Evita o erro fatal IndexSizeError se o raio for negativo ou NaN
+         */
         const dynamicPulse = Math.sin(p.pulse) * 0.8;
-        const rawSize = p.radius + dynamicPulse;
-        const size = Math.max(0.1, Math.abs(Number(rawSize) || 1));
+        let rawSize = (p.radius || 1.5) + dynamicPulse;
+        
+        // Validação de número finito e absoluto
+        let safeSize = Math.abs(Number(rawSize));
+        if (!isFinite(safeSize) || isNaN(safeSize)) safeSize = 1.5;
+        safeSize = Math.max(0.1, safeSize);
         
         const opacity = 0.15 + Math.sin(p.pulse) * 0.1;
 
-        ctx.beginPath();
-        // O método arc lança erro fatal se o terceiro argumento for negativo ou NaN.
-        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        
-        if (dist < mouseRadius) {
-          ctx.globalAlpha = Math.min(0.8, opacity + 0.4);
-          ctx.shadowBlur = 15;
-          ctx.shadowColor = p.color;
-        } else {
-          ctx.globalAlpha = Math.max(0, opacity);
-          ctx.shadowBlur = 0;
+        try {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, safeSize, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          
+          if (dist < mouseRadius) {
+            ctx.globalAlpha = Math.min(0.8, opacity + 0.4);
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = p.color;
+          } else {
+            ctx.globalAlpha = Math.max(0, opacity);
+            ctx.shadowBlur = 0;
+          }
+          
+          ctx.fill();
+        } catch (e) {
+          // Fallback silencioso para evitar crash da aplicação se o canvas falhar
         }
         
-        ctx.fill();
         ctx.shadowBlur = 0;
 
         for (let j = i + 1; j < particles.length; j++) {

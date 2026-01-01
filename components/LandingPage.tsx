@@ -12,13 +12,13 @@ import { DEFAULT_PAGE_CONTENT, LANDING_PAGE_DATA } from '../constants';
 import { fetchPageContent } from '../services/supabase';
 import EmpireParticles from './EmpireParticles';
 
-// Custom Arrows Components - Refined for high visibility
+// Custom Arrows Components - Refined for high visibility and tactical feedback
 const NextArrow = (props: any) => {
   const { onClick } = props;
   return (
     <button
       onClick={onClick}
-      className="absolute right-8 top-1/2 -translate-y-1/2 z-[100] p-6 bg-slate-900/40 backdrop-blur-md hover:bg-blue-600/80 border border-white/20 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-2xl shadow-black/50 active:scale-90"
+      className="absolute right-8 top-1/2 -translate-y-1/2 z-[100] p-6 bg-slate-900/60 backdrop-blur-xl hover:bg-blue-600/90 border border-white/20 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] active:scale-90"
       aria-label="Next slide"
     >
       <ChevronRight size={36} className="group-hover:translate-x-1 transition-transform" />
@@ -31,7 +31,7 @@ const PrevArrow = (props: any) => {
   return (
     <button
       onClick={onClick}
-      className="absolute left-8 top-1/2 -translate-y-1/2 z-[100] p-6 bg-slate-900/40 backdrop-blur-md hover:bg-blue-600/80 border border-white/20 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-2xl shadow-black/50 active:scale-90"
+      className="absolute left-8 top-1/2 -translate-y-1/2 z-[100] p-6 bg-slate-900/60 backdrop-blur-xl hover:bg-blue-600/90 border border-white/20 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] active:scale-90"
       aria-label="Previous slide"
     >
       <ChevronLeft size={36} className="group-hover:-translate-x-1 transition-transform" />
@@ -77,7 +77,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           {content.carousel.map((slide: any) => (
             <div key={slide.id} className="relative h-[95vh] min-h-[700px]">
               <div className="absolute inset-0 z-0">
-                <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/20 to-transparent z-10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/40 to-transparent z-10" />
                 <div className="absolute inset-0 bg-blue-900/10 mix-blend-overlay z-10" />
                 <img src={slide.image} alt={slide.title} className="w-full h-full object-cover scale-105" />
               </div>
@@ -162,6 +162,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         .custom-dots li button:before { color: white !important; opacity: 0.15 !important; font-size: 10px !important; }
         .custom-dots li.slick-active button:before { color: #3b82f6 !important; opacity: 1 !important; text-shadow: 0 0 15px #3b82f6; }
         
+        /* Slick Arrow Overrides */
         .slick-prev:before, .slick-next:before { display: none; }
       `}</style>
     </div>
