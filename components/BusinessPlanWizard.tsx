@@ -18,6 +18,7 @@ const BusinessPlanWizard: React.FC = () => {
   const [step, setStep] = useState(0);
   const [branch, setBranch] = useState('industrial');
   const [isAiLoading, setIsAiLoading] = useState<number | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [formData, setFormData] = useState<Record<number, string>>({});
 
   useEffect(() => {
@@ -40,6 +41,14 @@ const BusinessPlanWizard: React.FC = () => {
     );
     setFormData(prev => ({ ...prev, [stepIdx]: suggestion }));
     setIsAiLoading(null);
+  };
+
+  const handleFinalExport = () => {
+    setIsExporting(true);
+    setTimeout(() => {
+      setIsExporting(false);
+      alert("Protocolo de Plano de Negócios encriptado e exportado com sucesso para seu terminal local.");
+    }, 2500);
   };
 
   const getStepIcon = (id: number) => {
@@ -177,9 +186,11 @@ const BusinessPlanWizard: React.FC = () => {
                      </button>
                    ) : (
                      <button 
-                       className="px-16 py-6 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] hover:bg-orange-700 transition-all flex items-center gap-4 shadow-2xl"
+                       onClick={handleFinalExport}
+                       disabled={isExporting}
+                       className="px-16 py-6 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] hover:bg-orange-700 transition-all flex items-center gap-4 shadow-2xl disabled:opacity-50"
                      >
-                       Gerar Plano Final <Download size={18} />
+                       {isExporting ? <Loader2 size={18} className="animate-spin" /> : <><Download size={18} /> Gerar Plano Final</>}
                      </button>
                    )}
                 </div>

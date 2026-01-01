@@ -1,11 +1,16 @@
 
 {
+  "home": "Inicio",
   "welcome": "Bienvenido a la Arena Empirion",
   "login": "Ingresar",
   "signup": "Registrarse",
   "logout": "Cerrar Sesión",
   "language": "Idioma",
-  "branches": "Ramas Soportadas",
+  "branches": "Ramas",
+  "solutions": "Soluciones",
+  "features": "Funcionalidades",
+  "blog": "Contenidos",
+  "contact": "Contacto",
   "dashboard": "Panel",
   "championships": "Campeonatos",
   "businessPlanner": "Plano de Negocios",

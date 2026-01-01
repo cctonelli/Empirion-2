@@ -1,11 +1,16 @@
 
 {
+  "home": "Home",
   "welcome": "Welcome to Empirion Arena",
   "login": "Login",
   "signup": "Sign Up",
   "logout": "Logout",
   "language": "Language",
-  "branches": "Supported Branches",
+  "branches": "Branches",
+  "solutions": "Solutions",
+  "features": "Features",
+  "blog": "Blog",
+  "contact": "Contact",
   "dashboard": "Dashboard",
   "championships": "Championships",
   "businessPlanner": "Business Planner",
