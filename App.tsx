@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-// Added Link to react-router-dom imports
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { supabase, getUserProfile } from './services/supabase';
 import Layout from './components/Layout';
@@ -16,6 +15,8 @@ import LandingPage from './components/LandingPage';
 import BusinessPlanWizard from './components/BusinessPlanWizard';
 import PublicHeader from './components/PublicHeader';
 import PublicRewards from './pages/PublicRewards';
+import BranchDetail from './pages/BranchDetail';
+import OpenTournaments from './pages/OpenTournaments';
 
 const AppContent: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -56,29 +57,30 @@ const AppContent: React.FC = () => {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-6">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
           <span className="text-white text-[10px] font-black uppercase tracking-[0.4em] italic opacity-50">Empirion Protocol Initializing...</span>
         </div>
       </div>
     );
   }
 
-  // Handle Authentication Overlay for Modal Style Login from Landing
   if (showAuthModal && !session) {
     return <Auth onAuth={() => setShowAuthModal(false)} onBack={() => setShowAuthModal(false)} />;
   }
 
   return (
-    <>
-      {/* Public Pages Viewport */}
+    <div className="min-h-screen bg-[#020617]">
       {!isAppRoute && <PublicHeader onLogin={() => setShowAuthModal(true)} />}
       
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage onLogin={() => setShowAuthModal(true)} />} />
         <Route path="/rewards" element={<PublicRewards />} />
-        <Route path="/branches" element={<div className="pt-40 text-center uppercase font-black text-2xl">Branches Explorer (WIP)</div>} />
-        <Route path="/solutions" element={<div className="pt-40 text-center uppercase font-black text-2xl">Solutions Portal (WIP)</div>} />
+        <Route path="/branches/:slug" element={<BranchDetail />} />
+        <Route path="/solutions/business-plan" element={<BusinessPlanWizard />} />
+        <Route path="/solutions/open-tournaments" element={<OpenTournaments />} />
+        <Route path="/features" element={<div className="pt-40 text-center uppercase font-black text-2xl text-white">Features Explorer (WIP)</div>} />
+        <Route path="/solutions" element={<Navigate to="/solutions/open-tournaments" />} />
         
         {/* Protected App Routes */}
         <Route path="/app/*" element={
@@ -108,14 +110,13 @@ const AppContent: React.FC = () => {
         } />
       </Routes>
 
-      {/* Global Footer (Public Only) */}
       {!isAppRoute && (
-        <footer className="bg-slate-950 pt-32 pb-16 px-8 border-t border-white/5">
+        <footer className="bg-slate-950 pt-32 pb-16 px-8 border-t border-white/5 relative z-10">
            <div className="container mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-24 mb-32">
                  <div className="col-span-2 space-y-8">
                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                       <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center">
                           <span className="text-white font-black text-xl italic">E</span>
                        </div>
                        <span className="text-2xl font-black tracking-tighter uppercase text-white italic">EMPIRION</span>
@@ -126,7 +127,7 @@ const AppContent: React.FC = () => {
                     <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Navigation</h5>
                     <div className="flex flex-col gap-4">
                        <Link to="/" className="text-xs font-black uppercase text-slate-500 hover:text-white">Home</Link>
-                       <Link to="/branches" className="text-xs font-black uppercase text-slate-500 hover:text-white">Branches</Link>
+                       <Link to="/solutions/open-tournaments" className="text-xs font-black uppercase text-slate-500 hover:text-white">Arenas</Link>
                        <Link to="/rewards" className="text-xs font-black uppercase text-slate-500 hover:text-white">Empire Rewards</Link>
                     </div>
                  </div>
@@ -145,7 +146,7 @@ const AppContent: React.FC = () => {
            </div>
         </footer>
       )}
-    </>
+    </div>
   );
 };
 
