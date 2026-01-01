@@ -1,4 +1,3 @@
-
 import { Branch, BusinessPlanSection, ChampionshipTemplate } from './types';
 
 export const COLORS = {
