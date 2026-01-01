@@ -4,7 +4,7 @@ import {
   Zap, Globe, Shield, TrendingUp, Percent, Users, Lock, Unlock, 
   Save, RefreshCw, AlertCircle, CheckCircle2, SlidersHorizontal, 
   Star, Plus, Trash2, LayoutGrid, Activity, Calculator,
-  Eye, EyeOff, Flame, Leaf, Loader2
+  Eye, EyeOff, Flame, Leaf, Loader2, Bot, Newspaper
 } from 'lucide-react';
 import { EcosystemConfig, Championship, CommunityCriteria, BlackSwanEvent } from '../types';
 import { updateEcosystem } from '../services/supabase';
@@ -17,14 +17,16 @@ interface TutorArenaControlProps {
 }
 
 const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState<'macro' | 'community' | 'events'>('macro');
+  const [activeTab, setActiveTab] = useState<'macro' | 'community' | 'events' | 'ai'>('macro');
   const [config, setConfig] = useState<EcosystemConfig>(championship.ecosystemConfig || {
     inflationRate: 0.04,
     demandMultiplier: 1.0,
     interestRate: 0.12,
     marketVolatility: 0.2,
     esgPriority: 0.5,
-    activeEvent: null
+    activeEvent: null,
+    aiOpponents: { enabled: true, count: 7, strategy: 'balanced' },
+    gazetaConfig: { focus: ['Macro', 'Competição'], style: 'analytical' }
   });
   
   const [isPublic, setIsPublic] = useState(championship.is_public);
@@ -64,7 +66,9 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
         config: {
           ...championship.config,
           communityWeight,
-          votingCriteria: criteria
+          votingCriteria: criteria,
+          aiOpponents: config.aiOpponents,
+          gazetaConfig: config.gazetaConfig
         }
       };
       
@@ -91,6 +95,7 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
         <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
            {[
              { id: 'macro', label: 'Macro & ESG' },
+             { id: 'ai', label: 'AI & Gazeta' },
              { id: 'community', label: 'Comunidade' },
              { id: 'events', label: 'Eventos IA' }
            ].map((t) => (
@@ -157,6 +162,97 @@ const TutorArenaControl: React.FC<TutorArenaControlProps> = ({ championship, onU
                {isSaving ? <RefreshCw className="animate-spin" size={18} /> : <Save size={18} />}
                Salvar Parâmetros v5.0
              </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'ai' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4 animate-in fade-in duration-500">
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
+            <div className="flex items-center gap-3">
+              <Bot className="text-blue-600" size={24} />
+              <h3 className="text-xl font-black uppercase text-slate-900">AI Opponents Control</h3>
+            </div>
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black uppercase text-slate-400">Enabled</span>
+                <button 
+                  onClick={() => setConfig({...config, aiOpponents: { ...config.aiOpponents!, enabled: !config.aiOpponents?.enabled }})}
+                  className={`w-12 h-6 rounded-full transition-all relative ${config.aiOpponents?.enabled ? 'bg-blue-600' : 'bg-slate-300'}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${config.aiOpponents?.enabled ? 'left-7' : 'left-1'}`}></div>
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                   <span className="text-xs font-black uppercase text-slate-400">Bot Count</span>
+                   <span className="text-lg font-black text-blue-600">{config.aiOpponents?.count}</span>
+                </div>
+                <input 
+                  type="range" min="0" max="15" step="1"
+                  value={config.aiOpponents?.count}
+                  onChange={e => setConfig({...config, aiOpponents: { ...config.aiOpponents!, count: parseInt(e.target.value) }})}
+                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+              </div>
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase text-slate-400">Bot Strategy</span>
+                <select 
+                  value={config.aiOpponents?.strategy}
+                  onChange={e => setConfig({...config, aiOpponents: { ...config.aiOpponents!, strategy: e.target.value as any }})}
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold uppercase outline-none"
+                >
+                  <option value="balanced">Balanced</option>
+                  <option value="aggressive">Aggressive</option>
+                  <option value="conservative">Conservative</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
+            <div className="flex items-center gap-3">
+              <Newspaper className="text-emerald-600" size={24} />
+              <h3 className="text-xl font-black uppercase text-slate-900">Gazeta IA Customization</h3>
+            </div>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <span className="text-[10px] font-black uppercase text-slate-400">Editorial Focus</span>
+                <div className="flex flex-wrap gap-2">
+                  {['Macro', 'Competição', 'ESG', 'CVM', 'Insumos', 'Logística', 'RH'].map(f => {
+                    const isSelected = config.gazetaConfig?.focus.includes(f);
+                    return (
+                      <button
+                        key={f}
+                        onClick={() => {
+                          const newFocus = isSelected 
+                            ? config.gazetaConfig?.focus.filter(x => x !== f) || []
+                            : [...(config.gazetaConfig?.focus || []), f];
+                          setConfig({...config, gazetaConfig: { ...config.gazetaConfig!, focus: newFocus }});
+                        }}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-50 text-slate-400'}`}
+                      >
+                        {f}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase text-slate-400">News Style</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {['analytical', 'sensationalist', 'neutral'].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setConfig({...config, gazetaConfig: { ...config.gazetaConfig!, style: s as any }})}
+                      className={`py-3 rounded-xl text-[9px] font-black uppercase transition-all ${config.gazetaConfig?.style === s ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400'}`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

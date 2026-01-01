@@ -1,15 +1,14 @@
+
 import React, { useState } from 'react';
 import { 
   FileText, Activity, Package, DollarSign, Zap, Users, Globe, 
   ChevronDown, Download, BarChart3, TrendingUp, Landmark, ArrowRight, Table as TableIcon,
-  ShieldCheck, User, Newspaper, Building2, Gavel, Info
+  ShieldCheck, User, Newspaper, Building2, Gavel, Info, Award, Star
 } from 'lucide-react';
-
-// FIX: Added missing Info to the lucide-react imports above to resolve "Cannot find name 'Info'" error on line 111.
 
 const Reports: React.FC = () => {
   const [reportMode, setReportMode] = useState<'individual' | 'collective' | 'market'>('individual');
-  const [collectiveSubTab, setCollectiveSubTab] = useState<'bp' | 'dre' | 'vendas'>('vendas');
+  const [collectiveSubTab, setCollectiveSubTab] = useState<'bp' | 'dre' | 'vendas' | 'benchmark'>('vendas');
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 px-4 md:px-0">
@@ -22,7 +21,7 @@ const Reports: React.FC = () => {
              Audit Terminal
           </h1>
           <p className="text-slate-500 font-medium mt-1 uppercase tracking-widest text-[10px]">
-            Relatórios Consolidados - Bernard Fidelity Build v5.0
+            Relatórios Consolidados - Bernard Fidelity Build v5.0 GOLD
           </p>
         </div>
         
@@ -39,6 +38,7 @@ const Reports: React.FC = () => {
                  reportMode === t.id ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-600'
                }`}
              >
+               <t.icon size={14} />
                {t.label}
              </button>
            ))}
@@ -48,14 +48,16 @@ const Reports: React.FC = () => {
       {reportMode === 'individual' && <IndividualReport />}
       {reportMode === 'collective' && (
         <div className="space-y-8">
-           <div className="flex gap-4 p-1 bg-white rounded-2xl border border-slate-100 w-fit mx-auto shadow-sm">
+           <div className="flex flex-wrap gap-4 p-1 bg-white rounded-2xl border border-slate-100 w-fit mx-auto shadow-sm">
               <button onClick={() => setCollectiveSubTab('vendas')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${collectiveSubTab === 'vendas' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`}>Market Share</button>
               <button onClick={() => setCollectiveSubTab('bp')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${collectiveSubTab === 'bp' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`}>Balanço Coletivo</button>
               <button onClick={() => setCollectiveSubTab('dre')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${collectiveSubTab === 'dre' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`}>DRE Coletivo</button>
+              <button onClick={() => setCollectiveSubTab('benchmark')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${collectiveSubTab === 'benchmark' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-400'}`}>Elite Benchmark</button>
            </div>
            {collectiveSubTab === 'vendas' && <CollectiveSalesReport />}
            {collectiveSubTab === 'bp' && <CollectiveFinancialReport type="BP" />}
            {collectiveSubTab === 'dre' && <CollectiveFinancialReport type="DRE" />}
+           {collectiveSubTab === 'benchmark' && <EliteBenchmarkReport />}
         </div>
       )}
       {reportMode === 'market' && <MarketIndicatorsPanel />}
@@ -101,7 +103,6 @@ const IndividualReport = () => (
      </div>
 
      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Estoques Bernard-Style */}
         <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10 group hover:shadow-xl transition-all">
            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -132,7 +133,6 @@ const IndividualReport = () => (
            </div>
         </div>
 
-        {/* Caixa Bernard-Style */}
         <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10 group hover:shadow-xl transition-all">
            <div className="flex items-center gap-4">
               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
@@ -194,28 +194,28 @@ const CollectiveFinancialReport = ({ type }: { type: 'BP' | 'DRE' }) => (
         </div>
         <div className="overflow-x-auto rounded-[2.5rem] border border-slate-100 shadow-inner">
            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 font-black uppercase">
+              <thead className="bg-slate-900 text-white font-black uppercase">
                  <tr>
                     <th className="p-6 min-w-[250px]">{type === 'BP' ? 'RUBRICAS PATRIMONIAIS' : 'RUBRICAS CONTÁBEIS'}</th>
-                    <th className="p-6 text-right">EMP 01</th>
-                    <th className="p-6 text-right">EMP 03</th>
-                    <th className="p-6 text-right">EMP 08</th>
-                    <th className="p-6 text-right bg-slate-100">MÉDIA</th>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                      <th key={i} className="p-6 text-right whitespace-nowrap">EMP {i}</th>
+                    ))}
+                    <th className="p-6 text-right bg-blue-600">MÉDIA</th>
                  </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-bold text-slate-600">
                  {type === 'BP' ? (
                    <>
-                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold">Disponível / Caixa</td><td className="p-6 text-right font-mono">0</td><td className="p-6 text-right font-mono">120.450</td><td className="p-6 text-right font-mono">0</td><td className="p-6 text-right font-mono bg-slate-50">40.150</td></tr>
-                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold">Contas a Receber</td><td className="p-6 text-right font-mono">1.540.000</td><td className="p-6 text-right font-mono">1.823.735</td><td className="p-6 text-right font-mono">1.823.735</td><td className="p-6 text-right font-mono bg-slate-50">1.729.156</td></tr>
-                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold italic text-slate-400">Terrenos / Prédios</td><td className="p-6 text-right font-mono">3.814.600</td><td className="p-6 text-right font-mono">3.814.600</td><td className="p-6 text-right font-mono">3.814.600</td><td className="p-6 text-right font-mono bg-slate-50">3.814.600</td></tr>
-                    <tr className="bg-slate-900 text-white font-black"><td className="p-6 uppercase tracking-widest">TOTAL ATIVO</td><td className="p-6 text-right font-mono">9.176.940</td><td className="p-6 text-right font-mono">9.176.940</td><td className="p-6 text-right font-mono">9.176.940</td><td className="p-6 text-right font-mono bg-white/10 italic">9.176.940</td></tr>
+                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold">Disponível / Caixa</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">0</td>)}<td className="p-6 text-right font-mono bg-slate-50">40.150</td></tr>
+                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold">Contas a Receber</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">{(1500000 + i * 20000).toLocaleString()}</td>)}<td className="p-6 text-right font-mono bg-slate-50">1.729.156</td></tr>
+                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold italic text-slate-400">Imobilizado Liquido</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">3.814.600</td>)}<td className="p-6 text-right font-mono bg-slate-50">3.814.600</td></tr>
+                    <tr className="bg-slate-200 text-slate-900 font-black"><td className="p-6 uppercase tracking-widest">TOTAL ATIVO</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">9.176.940</td>)}<td className="p-6 text-right font-mono bg-slate-300 italic">9.176.940</td></tr>
                    </>
                  ) : (
                    <>
-                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold">Receita Operacional</td><td className="p-6 text-right font-mono">3.298.000</td><td className="p-6 text-right font-mono">3.298.000</td><td className="p-6 text-right font-mono">3.298.000</td><td className="p-6 text-right font-mono bg-slate-50">3.298.000</td></tr>
-                    <tr className="bg-emerald-50 text-emerald-900 font-black"><td className="p-6 uppercase tracking-widest">LUCRO BRUTO</td><td className="p-6 text-right font-mono">907.600</td><td className="p-6 text-right font-mono">907.600</td><td className="p-6 text-right font-mono">907.600</td><td className="p-6 text-right font-mono bg-white/50">907.600</td></tr>
-                    <tr className="bg-blue-600 text-white font-black"><td className="p-6 uppercase tracking-widest">LUCRO LÍQUIDO</td><td className="p-6 text-right font-mono">73.926</td><td className="p-6 text-right font-mono">73.926</td><td className="p-6 text-right font-mono">73.926</td><td className="p-6 text-right font-mono bg-white/10 italic">73.926</td></tr>
+                    <tr className="hover:bg-slate-50"><td className="p-6 font-bold">Receita Operacional</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">3.298.000</td>)}<td className="p-6 text-right font-mono bg-slate-50">3.298.000</td></tr>
+                    <tr className="bg-emerald-50 text-emerald-900 font-black"><td className="p-6 uppercase tracking-widest">LUCRO BRUTO</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">907.600</td>)}<td className="p-6 text-right font-mono bg-white/50">907.600</td></tr>
+                    <tr className="bg-blue-600 text-white font-black"><td className="p-6 uppercase tracking-widest">LUCRO LÍQUIDO</td>{new Array(8).fill(0).map((_, i) => <td key={i} className="p-6 text-right font-mono">73.926</td>)}<td className="p-6 text-right font-mono bg-white/10 italic">73.926</td></tr>
                    </>
                  )}
               </tbody>
@@ -224,6 +224,75 @@ const CollectiveFinancialReport = ({ type }: { type: 'BP' | 'DRE' }) => (
      </div>
   </div>
 );
+
+const EliteBenchmarkReport = () => (
+  <div className="animate-in fade-in slide-in-from-bottom-6 space-y-10">
+     <div className="bg-gradient-to-br from-amber-600 to-amber-700 p-12 rounded-[4rem] text-white shadow-2xl relative overflow-hidden group">
+        <Award className="absolute -bottom-10 -right-10 text-white/5 pointer-events-none" size={300} />
+        <div className="relative z-10">
+           <div className="flex items-center gap-4 mb-8">
+              <div className="p-3 bg-white/20 backdrop-blur-xl rounded-2xl">
+                 <Star size={32} className="fill-current text-white" />
+              </div>
+              <div>
+                 <h3 className="text-3xl font-black uppercase tracking-tight">Elite Benchmark (v5.0 GOLD)</h3>
+                 <p className="text-amber-100 font-medium">Sua performance comparada aos padrões Bernard Legacy & Top 100 Globais.</p>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <BenchmarkCard label="Sua Margem" value="2.2%" target="15.0%" status="LOW" color="rose" />
+              <BenchmarkCard label="Productivity" value="94.2%" target="96.0%" status="GOOD" color="emerald" />
+              <BenchmarkCard label="ROE" value="1.5%" target="12.0%" status="LOW" color="rose" />
+              <BenchmarkCard label="ESG Score" value="82.0" target="85.0" status="HIGH" color="blue" />
+           </div>
+        </div>
+     </div>
+
+     <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-8">
+        <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Análise Comparativa de Eficiência</h4>
+        <div className="overflow-x-auto">
+           <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-400 font-black uppercase">
+                 <tr>
+                    <th className="p-6">Métrica de Elite</th>
+                    <th className="p-6">Empresa 08 (Você)</th>
+                    <th className="p-6">Best in Class</th>
+                    <th className="p-6">GAP (%)</th>
+                 </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-bold text-slate-600">
+                 <tr className="hover:bg-slate-50"><td className="p-6">Giro de Ativo</td><td className="p-6">0.36x</td><td className="p-6 font-black text-slate-900">0.85x</td><td className="p-6 text-rose-500">-136%</td></tr>
+                 <tr className="hover:bg-slate-50"><td className="p-6">Markup Médio</td><td className="p-6">38%</td><td className="p-6 font-black text-slate-900">55%</td><td className="p-6 text-rose-500">-44%</td></tr>
+                 <tr className="hover:bg-slate-50"><td className="p-6">Custo Logístico/Venda</td><td className="p-6">8.4%</td><td className="p-6 font-black text-slate-900">4.2%</td><td className="p-6 text-rose-500">+100%</td></tr>
+              </tbody>
+           </table>
+        </div>
+     </div>
+  </div>
+);
+
+const BenchmarkCard = ({ label, value, target, status, color }: any) => {
+  const colorMap: any = {
+    rose: 'bg-rose-500/20 text-rose-200 border-rose-500/30',
+    emerald: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/30',
+    blue: 'bg-blue-500/20 text-blue-200 border-blue-500/30'
+  };
+
+  return (
+    <div className={`p-8 rounded-[2.5rem] border backdrop-blur-xl ${colorMap[color]} space-y-4`}>
+       <span className="block text-[10px] font-black uppercase tracking-widest text-white/60">{label}</span>
+       <div className="flex items-end justify-between">
+          <span className="text-3xl font-black text-white">{value}</span>
+          <span className="text-[10px] font-black uppercase text-white/40">Target: {target}</span>
+       </div>
+       <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full animate-pulse bg-white`}></div>
+          <span className="text-[10px] font-black uppercase tracking-tighter text-white">Status: {status}</span>
+       </div>
+    </div>
+  );
+};
 
 const MarketIndicatorsPanel = () => (
   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">

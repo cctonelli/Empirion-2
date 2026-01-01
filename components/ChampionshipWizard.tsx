@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -21,7 +22,9 @@ import {
   Search,
   Filter,
   Building2,
-  Landmark
+  Landmark,
+  Bot,
+  Newspaper
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS } from '../constants';
 import { Branch, ChampionshipTemplate } from '../types';
@@ -46,7 +49,16 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     initialStock: 30000,
     initialPrice: 340,
     currency: 'BRL',
-    isPublic: false
+    isPublic: false,
+    aiOpponents: {
+      enabled: true,
+      count: 7,
+      strategy: 'balanced' as 'aggressive' | 'conservative' | 'balanced'
+    },
+    gazetaConfig: {
+      focus: ['análise da CVM', 'reajuste de insumos', 'liderança do setor'],
+      style: 'analytical' as 'sensationalist' | 'analytical' | 'neutral'
+    }
   });
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
@@ -97,7 +109,19 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         config: {
           regionsCount: formData.regionsCount,
           initialStock: formData.initialStock,
-          initialPrice: formData.initialPrice
+          initialPrice: formData.initialPrice,
+          aiOpponents: formData.aiOpponents,
+          gazetaConfig: formData.gazetaConfig
+        },
+        ecosystem_config: {
+          inflationRate: 0.04,
+          demandMultiplier: 1.0,
+          interestRate: 0.12,
+          marketVolatility: 0.2,
+          esgPriority: 0.5,
+          activeEvent: null,
+          aiOpponents: formData.aiOpponents,
+          gazetaConfig: formData.gazetaConfig
         },
         initial_financials: financials || selectedTemplate?.initial_financials || {}, 
         market_indicators: selectedTemplate?.market_indicators || {},
@@ -141,8 +165,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         {step === 1 && (
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Scenario Selection (v4.2)</h2>
-              <p className="text-slate-500 mt-2">12 curated templates across 6 strategic branches including Finance and Construction.</p>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Scenario Selection (v5.0)</h2>
+              <p className="text-slate-500 mt-2">12 curated templates across 6 strategic branches with AI Opponents support.</p>
             </div>
 
             <div className="flex flex-wrap gap-2 justify-center pb-4">
@@ -217,7 +241,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           <div className="space-y-12">
             <div className="text-center">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">Market Foundations</h2>
-              <p className="text-slate-500 mt-2">Personalize o alcance regional e o equilíbrio de mercado.</p>
+              <p className="text-slate-500 mt-2">Personalize o alcance regional, bots IA e a Gazeta Industrial.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
@@ -232,22 +256,86 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                 />
               </div>
 
-              <div className="space-y-4">
-                <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
-                   Operational Branch
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {(Object.keys(BRANCH_CONFIGS) as Branch[]).map(b => (
-                    <button
-                      key={b}
-                      onClick={() => setFormData({...formData, branch: b})}
-                      className={`p-4 rounded-2xl border-2 text-[10px] font-black transition-all flex items-center gap-3 ${
-                        formData.branch === b ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-md' : 'border-slate-100 text-slate-500 bg-slate-50/50'
-                      }`}
+              {/* AI Opponents Toggle */}
+              <div className="space-y-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Bot className="text-blue-600" size={24} />
+                    <label className="text-xs font-black text-slate-900 uppercase tracking-widest">AI Opponents</label>
+                  </div>
+                  <button 
+                    onClick={() => setFormData({...formData, aiOpponents: { ...formData.aiOpponents, enabled: !formData.aiOpponents.enabled }})}
+                    className={`w-12 h-6 rounded-full transition-all relative ${formData.aiOpponents.enabled ? 'bg-blue-600' : 'bg-slate-300'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.aiOpponents.enabled ? 'left-7' : 'left-1'}`}></div>
+                  </button>
+                </div>
+                {formData.aiOpponents.enabled && (
+                  <div className="space-y-4 animate-in fade-in duration-300">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-slate-400 uppercase">Bot Count (Fill gap to 8)</span>
+                      <span className="text-sm font-black text-blue-600">{formData.aiOpponents.count}</span>
+                    </div>
+                    <input 
+                      type="range" min="0" max="11" step="1"
+                      value={formData.aiOpponents.count}
+                      onChange={e => setFormData({...formData, aiOpponents: { ...formData.aiOpponents, count: parseInt(e.target.value) }})}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                    <select 
+                      value={formData.aiOpponents.strategy}
+                      onChange={e => setFormData({...formData, aiOpponents: { ...formData.aiOpponents, strategy: e.target.value as any }})}
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase outline-none"
                     >
-                      <span className="text-lg">{BRANCH_CONFIGS[b].icon}</span> {BRANCH_CONFIGS[b].label}
-                    </button>
-                  ))}
+                      <option value="balanced">Balanced Strategy</option>
+                      <option value="aggressive">Aggressive (Price War)</option>
+                      <option value="conservative">Conservative (Safety First)</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Gazeta IA Config */}
+              <div className="space-y-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
+                <div className="flex items-center gap-3">
+                  <Newspaper className="text-emerald-600" size={24} />
+                  <label className="text-xs font-black text-slate-900 uppercase tracking-widest">Gazeta IA Settings</label>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase">Focus Areas</span>
+                    <div className="flex flex-wrap gap-2">
+                      {['Macro', 'Competição', 'ESG', 'CVM', 'Insumos', 'Logística'].map(focus => {
+                        const isSelected = formData.gazetaConfig.focus.includes(focus);
+                        return (
+                          <button
+                            key={focus}
+                            onClick={() => {
+                              const newFocus = isSelected 
+                                ? formData.gazetaConfig.focus.filter(f => f !== focus)
+                                : [...formData.gazetaConfig.focus, focus];
+                              setFormData({...formData, gazetaConfig: { ...formData.gazetaConfig, focus: newFocus }});
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${isSelected ? 'bg-emerald-600 text-white' : 'bg-white text-slate-400 border border-slate-100'}`}
+                          >
+                            {focus}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase">Editorial Style</span>
+                    <select 
+                      value={formData.gazetaConfig.style}
+                      onChange={e => setFormData({...formData, gazetaConfig: { ...formData.gazetaConfig, style: e.target.value as any }})}
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase outline-none"
+                    >
+                      <option value="analytical">Analytical (Expert)</option>
+                      <option value="sensationalist">Sensationalist (Hype)</option>
+                      <option value="neutral">Neutral (Bureaucratic)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -285,7 +373,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                 </div>
                 <div>
                   <p className="text-sm font-bold text-blue-900">Blueprint: {selectedTemplate.name}</p>
-                  <p className="text-xs font-medium text-blue-700/80 mt-1">Dados auditados (v4.2) pré-carregados para o setor {selectedTemplate.sector}.</p>
+                  <p className="text-xs font-medium text-blue-700/80 mt-1">Dados auditados (v5.0) pré-carregados para o setor {selectedTemplate.sector}.</p>
                 </div>
               </div>
             )}
@@ -317,10 +405,12 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                  <span className="text-slate-900 font-bold">{formData.name || 'Empirion Alpha'}</span>
                </div>
                <div className="flex justify-between items-center">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Macro Branch</span>
-                 <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-blue-100">
-                    {formData.branch}
-                 </span>
+                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">AI Opponents</span>
+                 <span className="text-blue-600 font-bold">{formData.aiOpponents.enabled ? `Active (${formData.aiOpponents.count} Bots)` : 'Disabled'}</span>
+               </div>
+               <div className="flex justify-between items-center">
+                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Gazeta IA</span>
+                 <span className="text-emerald-600 font-bold uppercase text-[10px]">{formData.gazetaConfig.style}</span>
                </div>
                <div className="flex justify-between items-center pt-6 border-t border-slate-100">
                  <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Valuation</span>

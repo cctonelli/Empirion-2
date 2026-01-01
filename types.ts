@@ -123,6 +123,15 @@ export interface EcosystemConfig {
   marketVolatility: number;
   esgPriority?: number; // 0 to 1
   activeEvent?: BlackSwanEvent | null;
+  aiOpponents?: {
+    enabled: boolean;
+    count: number;
+    strategy: 'aggressive' | 'conservative' | 'balanced';
+  };
+  gazetaConfig?: {
+    focus: string[];
+    style: 'sensationalist' | 'analytical' | 'neutral';
+  };
 }
 
 export interface CommunityCriteria {

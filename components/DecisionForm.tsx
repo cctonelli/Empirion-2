@@ -4,7 +4,8 @@ import {
   Save, Factory, Users2, Building2, ChevronRight,
   Shield, Loader2, Megaphone, Zap,
   TrendingUp, Wallet, ArrowUpCircle, ArrowDownCircle,
-  Construction, Briefcase, Gavel, AlertTriangle, LayoutGrid, Cpu
+  Construction, Briefcase, Gavel, AlertTriangle, LayoutGrid, Cpu,
+  UserPlus, UserMinus, PlusCircle, MinusCircle, CreditCard, PieChart
 } from 'lucide-react';
 import { supabase, saveDecisions } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -61,8 +62,19 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
     }
   };
 
+  const updateDecision = (path: string, value: any) => {
+    const newDecisions = { ...decisions };
+    const keys = path.split('.');
+    let current: any = newDecisions;
+    for (let i = 0; i < keys.length - 1; i++) {
+      current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+    setDecisions(newDecisions);
+  };
+
   return (
-    <div className="flex flex-col lg:flex-row gap-8 pb-20 px-4 md:px-0">
+    <div className="flex flex-col lg:flex-row gap-8 pb-20 px-4 md:px-0 animate-in fade-in duration-700">
       <aside className="w-full lg:w-80 flex flex-col gap-3 shrink-0">
         {[
           { id: 'marketing', label: 'Canais (1-9)', icon: Megaphone, color: 'text-blue-500' },
@@ -113,7 +125,7 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
            </div>
         </div>
 
-        <div className="p-6 bg-rose-50 border border-rose-100 rounded-[1.5rem] mt-4 flex items-center gap-4 group cursor-pointer" onClick={() => setInBankruptcy(!inBankruptcy)}>
+        <div className="p-6 bg-rose-50 border border-rose-100 rounded-[1.5rem] mt-4 flex items-center gap-4 group cursor-pointer hover:bg-rose-100 transition-colors" onClick={() => setInBankruptcy(!inBankruptcy)}>
            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${inBankruptcy ? 'bg-rose-600 text-white shadow-lg' : 'bg-white text-rose-300'}`}>
               <Gavel size={20} />
            </div>
@@ -128,13 +140,13 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
         <div className="flex items-center justify-between mb-12 pb-8 border-b border-slate-100">
            <div>
               <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight">{activeSection} Panel</h2>
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Folha de Decisões v4.9 - Período {round}</p>
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Folha de Decisões v5.0 GOLD - Período {round}</p>
            </div>
            <div className="flex items-center gap-3 px-6 py-3 bg-slate-50 rounded-2xl border border-slate-200">
               <Cpu size={18} className="text-blue-600" />
               <div className="flex flex-col">
                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Processing Node</span>
-                <span className="text-[10px] font-black text-blue-900 font-mono">HASH: {round}X-99</span>
+                <span className="text-[10px] font-black text-blue-900 font-mono">HASH: {round}X-GOLD</span>
               </div>
            </div>
         </div>
@@ -157,17 +169,17 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
                         <td className="p-6 font-black text-slate-900 text-xs">RE 0{id}</td>
                         <td className="p-6">
                            <input type="number" value={decisions.regions[Number(id)].price} 
-                             onChange={e => setDecisions({...decisions, regions: {...decisions.regions, [Number(id)]: {...decisions.regions[Number(id)], price: Number(e.target.value)}}})}
+                             onChange={e => updateDecision(`regions.${id}.price`, Number(e.target.value))}
                              className="w-24 p-3 bg-white border border-slate-200 rounded-xl text-center font-mono font-black text-sm focus:ring-4 focus:ring-blue-100" />
                         </td>
                         <td className="p-6 text-center">
                            <input type="number" min="0" max="2" value={decisions.regions[Number(id)].term}
-                             onChange={e => setDecisions({...decisions, regions: {...decisions.regions, [Number(id)]: {...decisions.regions[Number(id)], term: Number(e.target.value)}}})}
+                             onChange={e => updateDecision(`regions.${id}.term`, Number(e.target.value))}
                              className="w-16 p-3 bg-white border border-slate-200 rounded-xl text-center font-mono font-black text-sm" />
                         </td>
                         <td className="p-6 text-center">
                            <input type="number" min="0" max="9" value={decisions.regions[Number(id)].marketing}
-                             onChange={e => setDecisions({...decisions, regions: {...decisions.regions, [Number(id)]: {...decisions.regions[Number(id)], marketing: Number(e.target.value)}}})}
+                             onChange={e => updateDecision(`regions.${id}.marketing`, Number(e.target.value))}
                              className="w-16 p-3 bg-white border border-slate-200 rounded-xl text-center font-mono font-black text-sm" />
                         </td>
                      </tr>
@@ -183,12 +195,12 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
                   <div className="flex items-center gap-3"><Construction className="text-blue-600" size={20} /><h4 className="text-[11px] font-black uppercase text-slate-900">Suprimentos MP</h4></div>
                   <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 space-y-6">
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase">Compra MP A (Unid)</label>
-                        <input type="number" value={decisions.production.purchaseMPA} onChange={e => setDecisions({...decisions, production: {...decisions.production, purchaseMPA: Number(e.target.value)}})} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black font-mono" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compra MP A (Unid)</label>
+                        <input type="number" value={decisions.production.purchaseMPA} onChange={e => updateDecision('production.purchaseMPA', Number(e.target.value))} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black font-mono shadow-sm" />
                      </div>
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase">Compra MP B (Unid)</label>
-                        <input type="number" value={decisions.production.purchaseMPB} onChange={e => setDecisions({...decisions, production: {...decisions.production, purchaseMPB: Number(e.target.value)}})} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black font-mono" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compra MP B (Unid)</label>
+                        <input type="number" value={decisions.production.purchaseMPB} onChange={e => updateDecision('production.purchaseMPB', Number(e.target.value))} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black font-mono shadow-sm" />
                      </div>
                   </div>
                </div>
@@ -200,17 +212,114 @@ const DecisionForm: React.FC<{ regionsCount?: number; teamId?: string; champId?:
                            <label className="text-[10px] font-black text-emerald-900 uppercase">Nível de Atividade</label>
                            <span className="text-lg font-black text-emerald-700">{decisions.production.activityLevel}%</span>
                         </div>
-                        <input type="range" min="0" max="100" value={decisions.production.activityLevel} onChange={e => setDecisions({...decisions, production: {...decisions.production, activityLevel: Number(e.target.value)}})} className="w-full h-2 bg-emerald-200 rounded-lg appearance-none cursor-pointer accent-emerald-600" />
+                        <input type="range" min="0" max="100" value={decisions.production.activityLevel} onChange={e => updateDecision('production.activityLevel', Number(e.target.value))} className="w-full h-2 bg-emerald-200 rounded-lg appearance-none cursor-pointer accent-emerald-600" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-emerald-900 uppercase tracking-widest">Produção Extra (Unid)</label>
+                        <input type="number" value={decisions.production.extraProduction} onChange={e => updateDecision('production.extraProduction', Number(e.target.value))} className="w-full p-4 bg-white border border-emerald-100 rounded-2xl font-black font-mono shadow-sm" />
                      </div>
                   </div>
                </div>
             </div>
           )}
-          
-          {/* Outras seções RH/Machines/Finance simplificadas seguindo o mesmo padrão UI v4.9 */}
-          {activeSection === 'hr' && <div className="p-10 bg-slate-50 rounded-[3rem] text-slate-400 font-black uppercase tracking-widest text-center animate-in fade-in">Human Capital Node Active</div>}
-          {activeSection === 'machines' && <div className="p-10 bg-slate-50 rounded-[3rem] text-slate-400 font-black uppercase tracking-widest text-center animate-in fade-in">Industrial Park Node Active</div>}
-          {activeSection === 'finance' && <div className="p-10 bg-slate-50 rounded-[3rem] text-slate-400 font-black uppercase tracking-widest text-center animate-in fade-in">Capital Markets Node Active</div>}
+
+          {activeSection === 'hr' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3"><UserPlus className="text-amber-600" size={20} /><h4 className="text-[11px] font-black uppercase text-slate-900">Contratação & Desligamento</h4></div>
+                <div className="p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Admitir</label>
+                    <input type="number" value={decisions.hr.hired} onChange={e => updateDecision('hr.hired', Number(e.target.value))} className="w-full p-4 bg-white border border-amber-200 rounded-2xl font-black font-mono shadow-sm" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Demitir</label>
+                    <input type="number" value={decisions.hr.fired} onChange={e => updateDecision('hr.fired', Number(e.target.value))} className="w-full p-4 bg-white border border-amber-200 rounded-2xl font-black font-mono shadow-sm" />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div className="flex items-center gap-3"><Briefcase className="text-amber-700" size={20} /><h4 className="text-[11px] font-black uppercase text-slate-900">Remuneração & Treinamento</h4></div>
+                <div className="p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Salário Base ($)</label>
+                    <input type="number" value={decisions.hr.salary} onChange={e => updateDecision('hr.salary', Number(e.target.value))} className="w-full p-4 bg-white border border-amber-200 rounded-2xl font-black font-mono shadow-sm" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Treinamento (%)</label>
+                      <input type="number" value={decisions.hr.trainingPercent} onChange={e => updateDecision('hr.trainingPercent', Number(e.target.value))} className="w-full p-4 bg-white border border-amber-200 rounded-2xl font-black font-mono shadow-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Participação (%)</label>
+                      <input type="number" value={decisions.hr.participationPercent} onChange={e => updateDecision('hr.participationPercent', Number(e.target.value))} className="w-full p-4 bg-white border border-amber-200 rounded-2xl font-black font-mono shadow-sm" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'machines' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in slide-in-from-right-4 duration-500">
+               <div className="space-y-6">
+                  <div className="flex items-center gap-3"><ArrowUpCircle className="text-indigo-600" size={20} /><h4 className="text-[11px] font-black uppercase text-slate-900">Compra de Maquinário</h4></div>
+                  <div className="p-8 bg-indigo-50 rounded-[2.5rem] border border-indigo-100 space-y-4">
+                     {['alfa', 'beta', 'gama'].map(type => (
+                       <div key={type} className="flex justify-between items-center bg-white p-4 rounded-2xl border border-indigo-200">
+                          <label className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Tipo {type.toUpperCase()}</label>
+                          <input type="number" value={(decisions.finance.buyMachines as any)[type]} onChange={e => updateDecision(`finance.buyMachines.${type}`, Number(e.target.value))} className="w-20 text-center font-black font-mono outline-none" />
+                       </div>
+                     ))}
+                  </div>
+               </div>
+               <div className="space-y-6">
+                  <div className="flex items-center gap-3"><ArrowDownCircle className="text-indigo-700" size={20} /><h4 className="text-[11px] font-black uppercase text-slate-900">Venda de Maquinário</h4></div>
+                  <div className="p-8 bg-indigo-50 rounded-[2.5rem] border border-indigo-100 space-y-4">
+                     {['alfa', 'beta', 'gama'].map(type => (
+                       <div key={type} className="flex justify-between items-center bg-white p-4 rounded-2xl border border-indigo-200 opacity-60">
+                          <label className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Tipo {type.toUpperCase()}</label>
+                          <input type="number" value={(decisions.finance.sellMachines as any)[type]} onChange={e => updateDecision(`finance.sellMachines.${type}`, Number(e.target.value))} className="w-20 text-center font-black font-mono outline-none" />
+                       </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {activeSection === 'finance' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in slide-in-from-right-4 duration-500">
+               <div className="space-y-6">
+                  <div className="flex items-center gap-3"><Wallet className="text-rose-600" size={20} /><h4 className="text-[11px] font-black uppercase text-slate-900">Captação de Recursos</h4></div>
+                  <div className="p-8 bg-rose-50 rounded-[2.5rem] border border-rose-100 space-y-6">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-rose-900 uppercase tracking-widest">Empréstimo Solicitado ($)</label>
+                        <input type="number" value={decisions.finance.loanRequest} onChange={e => updateDecision('finance.loanRequest', Number(e.target.value))} className="w-full p-4 bg-white border border-rose-200 rounded-2xl font-black font-mono shadow-sm" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-rose-900 uppercase tracking-widest">Tipo de Crédito</label>
+                        <select value={decisions.finance.loanType} onChange={e => updateDecision('finance.loanType', Number(e.target.value))} className="w-full p-4 bg-white border border-rose-200 rounded-2xl font-black text-xs outline-none">
+                           <option value={1}>Curto Prazo (TR + 4.5%)</option>
+                           <option value={2}>Longo Prazo (TR + 2.8%)</option>
+                        </select>
+                     </div>
+                  </div>
+               </div>
+               <div className="space-y-6">
+                  <div className="flex items-center gap-3"><PieChart className="text-rose-700" size={20} /><h4 className="text-[11px] font-black uppercase text-slate-900">Aplicações & Juros</h4></div>
+                  <div className="p-8 bg-rose-50 rounded-[2.5rem] border border-rose-100 space-y-6">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-rose-900 uppercase tracking-widest">Aplicações Financeiras ($)</label>
+                        <input type="number" value={decisions.finance.application} onChange={e => updateDecision('finance.application', Number(e.target.value))} className="w-full p-4 bg-white border border-rose-200 rounded-2xl font-black font-mono shadow-sm" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-rose-900 uppercase tracking-widest">Juros Venda Prazo (%)</label>
+                        <input type="number" step="0.1" value={decisions.finance.termSalesInterest} onChange={e => updateDecision('finance.termSalesInterest', Number(e.target.value))} className="w-full p-4 bg-white border border-rose-200 rounded-2xl font-black font-mono shadow-sm" />
+                     </div>
+                  </div>
+               </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-16 pt-10 border-t border-slate-50 flex flex-col md:flex-row items-center justify-between gap-6">
