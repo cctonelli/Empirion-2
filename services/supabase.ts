@@ -27,18 +27,56 @@ const secureAction = async (action: () => Promise<any>) => {
 };
 
 /**
- * ALPHA TERMINAL: Provisionamento Automático
+ * ALPHA TERMINAL: Protocolo de Autenticação Silenciosa
+ */
+export const silentTestAuth = async (user: typeof ALPHA_TEST_USERS[0]) => {
+  const testPassword = 'empirion_alpha_2026';
+  
+  // 1. Tentar Login
+  const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: testPassword
+  });
+
+  // 2. Se falhar por não existir, cria o usuário silenciosamente
+  if (loginError && loginError.message.includes('Invalid login credentials')) {
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: user.email,
+      password: testPassword,
+      options: { 
+        data: { 
+          full_name: user.name, 
+          role: user.role,
+          is_test_user: true 
+        } 
+      }
+    });
+    if (signUpError) throw signUpError;
+    
+    // Tenta login novamente após registro
+    const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: testPassword
+    });
+    if (retryError) throw retryError;
+    return retryData;
+  }
+
+  if (loginError) throw loginError;
+  return loginData;
+};
+
+/**
+ * ALPHA TERMINAL: Provisionamento Automático de Dados
  */
 export const provisionDemoEnvironment = async () => {
   try {
-    // 1. Verificar se o campeonato demo existe
     const { data: champ } = await supabase.from('championships').select('id').eq('id', DEMO_CHAMPIONSHIP_DATA.id).maybeSingle();
     
     if (!champ) {
-      console.log("ALPHA_CORE: Provisionando campeonato de teste...");
+      console.log("ALPHA_CORE: Provisionando ambiente de teste...");
       await supabase.from('championships').insert([DEMO_CHAMPIONSHIP_DATA]);
       
-      // Criar as 4 equipes iniciais
       const teams = ALPHA_TEST_USERS.filter(u => u.team).map(u => ({
         name: u.team,
         championship_id: DEMO_CHAMPIONSHIP_DATA.id,
@@ -59,7 +97,6 @@ export const provisionDemoEnvironment = async () => {
  */
 export const resetAlphaData = async () => {
   return secureAction(async () => {
-    // Deleta decisões do campeonato alpha
     const { error } = await supabase
       .from('current_decisions')
       .delete()
@@ -67,7 +104,6 @@ export const resetAlphaData = async () => {
     
     if (error) throw error;
 
-    // Log de auditoria do reset
     await supabase.from('decision_audit_log').insert({
       action: 'ALPHA_TERMINAL_RESET: Full Wipe Executed',
       user_name: 'Alpha Debug Controller',
@@ -93,7 +129,6 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, userName: string) => {
   return secureAction(async () => {
     const sanitizedData = JSON.parse(JSON.stringify(decisions));
-    
     const { error: decError } = await supabase
       .from('current_decisions')
       .upsert({ 
@@ -110,10 +145,7 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       team_id: teamId,
       user_name: userName,
       action: `PROTOCOL_SECURE_SAVE: R${round}`,
-      metadata: { 
-        ip_hash: "PROTECTED", 
-        timestamp: new Date().toISOString() 
-      }
+      metadata: { timestamp: new Date().toISOString() }
     });
   });
 };
