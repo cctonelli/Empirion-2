@@ -16,6 +16,7 @@ export interface AccountNode {
   isReadOnly?: boolean;
   children?: AccountNode[];
   isEditable?: boolean;
+  isTemplateAccount?: boolean; // Flag para impedir exclusão de contas do template original
 }
 
 export interface RegionConfig {
@@ -41,7 +42,7 @@ export interface MacroIndicators {
   machineryValues: { alfa: number; beta: number; gama: number; };
   sectorAvgSalary: number;
   stockMarketPrice: number;
-  initialExchangeRateUSD: number; // Cotação inicial do dólar
+  initialExchangeRateUSD: number;
   demand_regions?: number[];
 }
 
@@ -66,7 +67,7 @@ export interface Championship {
   description: string;
   branch: Branch;
   status: ChampionshipStatus;
-  is_public: boolean; // Aberto ou Privado
+  is_public: boolean;
   currentRound: number;
   totalRounds: number;
   config: {
@@ -125,8 +126,6 @@ export interface DecisionData {
   production: { purchaseMPA: number; purchaseMPB: number; paymentType: number; activityLevel: number; extraProduction: number; rd_investment: number; strategy: 'push_mrp' | 'pull_kanban'; automation_level: number; batch_size: number; };
   finance: { loanRequest: number; loanType: number; application: number; termSalesInterest: number; buyMachines: { alfa: number; beta: number; gama: number }; sellMachines: { alfa: number; beta: number; gama: number }; };
 }
-
-// Missing types defined below
 
 export interface ChampionshipTemplate {
   id: string;

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Plus, Trash2, ChevronDown, DollarSign, Calculator, 
-  Layers, ArrowUp, ArrowDown, Info, GripVertical, CheckCircle2, AlertTriangle, ChevronRight, X
+  Layers, ArrowUp, ArrowDown, Info, GripVertical, CheckCircle2, AlertTriangle, ChevronRight, X, Delete
 } from 'lucide-react';
 import { AccountNode } from '../types';
 
@@ -14,7 +14,9 @@ interface FinancialStructureEditorProps {
 
 // MÁSCARA PARA INTEIROS (Bernard Fidelity Standard)
 const formatInt = (val: number): string => {
-  return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(val);
+  const abs = Math.abs(val);
+  const formatted = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(abs);
+  return val < 0 ? `-${formatted}` : formatted;
 };
 
 const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onChange, initialBalance, initialDRE }) => {
@@ -22,28 +24,28 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
   const [balanceNodes, setBalanceNodes] = useState<AccountNode[]>(initialBalance || []);
   const [dreNodes, setDRENodes] = useState<AccountNode[]>(initialDRE || []);
 
-  const calculateTotals = useCallback((list: AccountNode[]): AccountNode[] => {
+  const calculateTotalsRecursive = useCallback((list: AccountNode[], tabType: 'balance' | 'dre'): AccountNode[] => {
     return list.map(node => {
       if (node.children && node.children.length > 0) {
-        const updatedChildren = calculateTotals(node.children);
+        const updatedChildren = calculateTotalsRecursive(node.children, tabType);
         const total = updatedChildren.reduce((sum, child) => {
-          // No DRE, despesas subtraem, receitas somam
-          if (activeTab === 'dre') {
+          // No DRE, despesas (expense) sempre subtraem algebricamente
+          if (tabType === 'dre') {
             return child.type === 'expense' ? sum - Math.abs(child.value) : sum + child.value;
           }
-          // No Balanço, negativos somam algebricamente (ex: -depreciação)
+          // No Balanço, soma algébrica pura (permite negativos tipo depreciação)
           return sum + child.value;
         }, 0);
         return { ...node, children: updatedChildren, value: total };
       }
       return node;
     });
-  }, [activeTab]);
+  }, []);
 
   useEffect(() => {
-    if (activeTab === 'balance') setBalanceNodes(prev => calculateTotals(prev));
-    else setDRENodes(prev => calculateTotals(prev));
-  }, [activeTab, calculateTotals]);
+    if (activeTab === 'balance') setBalanceNodes(prev => calculateTotalsRecursive(prev, 'balance'));
+    else setDRENodes(prev => calculateTotalsRecursive(prev, 'dre'));
+  }, [activeTab, calculateTotalsRecursive]);
 
   const updateNode = (id: string, updates: Partial<AccountNode>) => {
     const edit = (list: AccountNode[]): AccountNode[] => {
@@ -55,11 +57,13 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
     };
 
     if (activeTab === 'balance') {
-      const updated = calculateTotals(edit(balanceNodes));
+      const edited = edit(balanceNodes);
+      const updated = calculateTotalsRecursive(edited, 'balance');
       setBalanceNodes(updated);
       onChange?.({ balance_sheet: updated, dre: dreNodes });
     } else {
-      const updated = calculateTotals(edit(dreNodes));
+      const edited = edit(dreNodes);
+      const updated = calculateTotalsRecursive(edited, 'dre');
       setDRENodes(updated);
       onChange?.({ balance_sheet: balanceNodes, dre: updated });
     }
@@ -72,10 +76,11 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
           const newId = `${n.id}.${(n.children?.length || 0) + 1}`;
           const newNode: AccountNode = {
             id: newId,
-            label: 'Nova Conta',
+            label: 'Nova Conta Custom',
             value: 0,
             type: activeTab === 'balance' ? n.type : (parentId.includes('exp') ? 'expense' : 'revenue'),
-            isEditable: true
+            isEditable: true,
+            isTemplateAccount: false // Contas novas podem ser excluídas
           };
           return { ...n, children: [...(n.children || []), newNode] };
         }
@@ -83,8 +88,8 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
         return n;
       });
     };
-    if (activeTab === 'balance') setBalanceNodes(calculateTotals(add(balanceNodes)));
-    else setDRENodes(calculateTotals(add(dreNodes)));
+    if (activeTab === 'balance') setBalanceNodes(calculateTotalsRecursive(add(balanceNodes), 'balance'));
+    else setDRENodes(calculateTotalsRecursive(add(dreNodes), 'dre'));
   };
 
   const removeNode = (id: string) => {
@@ -94,14 +99,14 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
         children: n.children ? remove(n.children) : undefined
       }));
     };
-    if (activeTab === 'balance') setBalanceNodes(calculateTotals(remove(balanceNodes)));
-    else setDRENodes(calculateTotals(remove(dreNodes)));
+    if (activeTab === 'balance') setBalanceNodes(calculateTotalsRecursive(remove(balanceNodes), 'balance'));
+    else setDRENodes(calculateTotalsRecursive(remove(dreNodes), 'dre'));
   };
 
   const nodes = activeTab === 'balance' ? balanceNodes : dreNodes;
   const assets = balanceNodes.find(n => n.label.includes('ATIVO'))?.value || 0;
   const liabPL = balanceNodes.find(n => n.label.includes('PASSIVO'))?.value || 0;
-  const isBalanced = Math.abs(assets - liabPL) < 0.01;
+  const isBalanced = Math.abs(assets - liabPL) < 1; // Tolerância para arredondamento de float
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -162,7 +167,7 @@ const TreeNode: React.FC<{
   const [showCalc, setShowCalc] = useState(false);
   const isParent = node.children && node.children.length > 0;
   const canAdd = !node.isReadOnly && (node.type === 'totalizer');
-  const canDelete = node.isEditable;
+  const canDelete = node.isEditable && !node.isTemplateAccount; // PROTEÇÃO: Não exclui contas do template original
   const isNegative = node.value < 0;
 
   return (
@@ -182,16 +187,20 @@ const TreeNode: React.FC<{
               <div className={`flex items-center gap-2 bg-slate-950 px-4 py-2 rounded-xl border border-white/10 shadow-inner ${isNegative ? 'ring-1 ring-rose-500/40' : ''}`}>
                 <span className={`text-[10px] font-black ${isNegative ? 'text-rose-500' : 'text-slate-600'}`}>{isNegative ? '(-)' : '$'}</span>
                 {isParent ? (
-                  <span className={`font-mono font-black text-xs ${isNegative ? 'text-rose-400' : 'text-white'}`}>{formatInt(Math.abs(node.value))}</span>
+                  <span className={`font-mono font-black text-xs ${isNegative ? 'text-rose-400' : 'text-white'}`}>{formatInt(node.value)}</span>
                 ) : (
                   <div className="flex items-center gap-2">
                     <input 
                       type="text" 
                       className={`w-32 bg-transparent outline-none font-mono font-bold text-xs ${isNegative ? 'text-rose-400' : 'text-white'}`} 
-                      value={node.value === 0 ? '' : node.value} 
-                      placeholder="0"
+                      value={formatInt(node.value)} 
                       onChange={e => {
-                        const raw = e.target.value.replace(/[^\d-]/g, '');
+                        // Permite apenas dígitos e sinal de menos
+                        const raw = e.target.value.replace(/[^-0-9]/g, '');
+                        if (raw === '-' || raw === '') {
+                           onUpdate(node.id, { value: 0 });
+                           return;
+                        }
                         onUpdate(node.id, { value: parseInt(raw) || 0 });
                       }} 
                     />
@@ -215,7 +224,7 @@ const TreeNode: React.FC<{
                 </div>
               )}
 
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity min-w-[60px]">
                  {canAdd && <button onClick={() => onAdd(node.id)} className="p-2 text-blue-400 hover:bg-white/5 rounded-lg"><Plus size={14}/></button>}
                  {canDelete && <button onClick={() => onRemove(node.id)} className="p-2 text-rose-500 hover:bg-white/5 rounded-lg"><Trash2 size={14}/></button>}
               </div>
@@ -233,39 +242,77 @@ const TreeNode: React.FC<{
   );
 };
 
+// CALCULADORA AVANÇADA COM BACKSPACE E SUPORTE A TECLADO
 const MiniCalc: React.FC<{ initialValue: number, onApply: (v: number) => void, onClose: () => void }> = ({ initialValue, onApply, onClose }) => {
-  const [expr, setExpr] = useState(initialValue.toString());
+  const [expr, setExpr] = useState('');
+  const [result, setResult] = useState<number | null>(null);
   
+  const evaluate = useCallback(() => {
+    try {
+      // Sanitização básica da expressão
+      const sanitized = expr.replace(/[^-+*/.0-9]/g, '');
+      if (!sanitized) return;
+      const res = eval(sanitized);
+      if (typeof res === 'number' && isFinite(res)) {
+        setResult(res);
+      }
+    } catch (e) {
+      setResult(null);
+    }
+  }, [expr]);
+
+  useEffect(() => {
+    evaluate();
+  }, [expr, evaluate]);
+
   const handleKey = (key: string) => {
     if (key === '=') {
-      try {
-        // Simple evaluator (security handled by manual input restriction)
-        const result = eval(expr.replace(/[^-+*/\d]/g, ''));
-        setExpr(result.toString());
-      } catch (e) { setExpr('Error'); }
+      evaluate();
     } else if (key === 'C') {
       setExpr('');
+      setResult(null);
+    } else if (key === 'back') {
+      setExpr(prev => prev.slice(0, -1));
     } else {
       setExpr(prev => prev + key);
     }
   };
 
+  // Suporte a teclado
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+       if (e.key >= '0' && e.key <= '9') handleKey(e.key);
+       if (['+', '-', '*', '/'].includes(e.key)) handleKey(e.key);
+       if (e.key === 'Backspace') handleKey('back');
+       if (e.key === 'Enter') handleKey('=');
+       if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   return (
-    <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 shadow-2xl w-48 space-y-3">
+    <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 shadow-2xl w-56 space-y-4">
        <div className="flex items-center justify-between">
-          <span className="text-[8px] font-black text-orange-500 uppercase tracking-widest">Calculadora</span>
+          <span className="text-[8px] font-black text-orange-500 uppercase tracking-widest">Calculadora Expert</span>
           <button onClick={onClose} className="text-slate-500 hover:text-white"><X size={12}/></button>
        </div>
-       <div className="bg-slate-950 p-2 rounded-lg text-right font-mono text-white text-sm overflow-hidden truncate h-8 border border-white/5">
-          {expr || '0'}
+       <div className="space-y-1">
+          <div className="bg-slate-950 p-2 rounded-lg text-right font-mono text-white text-xs overflow-hidden truncate h-8 border border-white/5 opacity-60">
+             {expr || '0'}
+          </div>
+          <div className="bg-slate-950 p-2 rounded-lg text-right font-mono text-orange-500 text-lg font-black overflow-hidden truncate h-10 border border-white/10 shadow-inner">
+             {result !== null ? formatInt(result) : formatInt(initialValue)}
+          </div>
        </div>
        <div className="grid grid-cols-4 gap-1.5">
           {['7','8','9','/','4','5','6','*','1','2','3','-','C','0','=','+'].map(k => (
             <button 
               key={k} 
               onClick={() => handleKey(k)}
-              className={`p-2 rounded-lg text-[10px] font-black transition-all ${
-                k === '=' ? 'bg-orange-600 text-white col-span-1' : 
+              className={`p-3 rounded-lg text-[11px] font-black transition-all ${
+                k === '=' ? 'bg-orange-600 text-white shadow-lg' : 
+                k === 'C' ? 'bg-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white' :
                 ['+','-','*','/'].includes(k) ? 'bg-white/10 text-orange-500' : 
                 'bg-white/5 text-slate-400 hover:bg-white/10'
               }`}
@@ -273,12 +320,18 @@ const MiniCalc: React.FC<{ initialValue: number, onApply: (v: number) => void, o
               {k}
             </button>
           ))}
+          <button 
+            onClick={() => handleKey('back')}
+            className="col-span-4 py-2 bg-white/5 text-slate-500 rounded-lg flex items-center justify-center hover:text-white transition-all"
+          >
+            <Delete size={14} />
+          </button>
        </div>
        <button 
-         onClick={() => onApply(parseInt(expr) || 0)}
-         className="w-full py-2 bg-blue-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-blue-500"
+         onClick={() => onApply(result !== null ? result : initialValue)}
+         className="w-full py-3 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500 shadow-lg shadow-blue-600/20"
        >
-         Aplicar Valor
+         Aplicar Soma Final
        </button>
     </div>
   );

@@ -10,6 +10,15 @@ import { Branch, ScenarioType, ModalityType, RegionConfig, MacroIndicators, Acco
 import FinancialStructureEditor from './FinancialStructureEditor';
 import { supabase } from '../services/supabase';
 
+// Helper para proteção de estrutura de template
+const markTemplateNodes = (nodes: AccountNode[]): AccountNode[] => {
+  return nodes.map(n => ({
+    ...n,
+    isTemplateAccount: true, // Bloqueia exclusão no editor
+    children: n.children ? markTemplateNodes(n.children) : undefined
+  }));
+};
+
 const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,11 +46,17 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(null);
 
   useEffect(() => {
-    if (formData.templateId) {
+    if (formData.templateId && formData.templateId !== 'custom') {
       const template = CHAMPIONSHIP_TEMPLATES.find(t => t.id === formData.templateId);
       if (template) {
+        // PROTEÇÃO: Deep Clone para não alterar o template original no código
+        const clonedFinancials = JSON.parse(JSON.stringify(template.initial_financials));
+        
         setMacro({ ...template.market_indicators, initialExchangeRateUSD: macro.initialExchangeRateUSD });
-        setFinancials(template.initial_financials);
+        setFinancials({
+          balance_sheet: markTemplateNodes(clonedFinancials.balance_sheet),
+          dre: markTemplateNodes(clonedFinancials.dre)
+        });
         setFormData(prev => ({ ...prev, ...template.config, branch: template.branch }));
       }
     }
