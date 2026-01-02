@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase, provisionDemoEnvironment, silentTestAuth } from '../services/supabase';
 import { 
   Shield, Mail, Lock, LogIn, UserPlus, ChevronLeft, 
@@ -15,6 +16,7 @@ interface AuthProps {
 }
 
 const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +26,6 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
   const [error, setError] = useState<{ message: string; type: 'standard' | 'critical' } | null>(null);
 
   useEffect(() => {
-    // Provisiona o campeonato de teste silenciosamente no carregamento
     provisionDemoEnvironment();
   }, []);
 
@@ -56,8 +57,8 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
   };
 
   /**
-   * PROTOCOLO BYPASS ALPHA
-   * Clicou, Logou. Sem perguntas.
+   * PROTOCOLO BYPASS ALPHA 1-CLIQUE
+   * Autentica e redireciona para a visão correta (Admin ou Player)
    */
   const handleAlphaQuickAccess = async (user: typeof ALPHA_TEST_USERS[0]) => {
     setAlphaLoading(user.id);
@@ -65,7 +66,13 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
     try {
       const data = await silentTestAuth(user);
       if (data?.session) {
-        onAuth();
+        // Redirecionamento Inteligente baseado na Role
+        if (user.role === 'tutor') {
+           navigate('/app/admin');
+        } else {
+           navigate('/app/dashboard');
+        }
+        onAuth(); // Trigger app state sync
       }
     } catch (err: any) {
       console.error("Alpha Bypass Failed:", err);
@@ -160,7 +167,7 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
 
               <div className="space-y-4">
                  <p className="text-slate-400 text-xs font-medium leading-relaxed italic mb-6">
-                    "Selecione uma identidade abaixo para entrar na arena imediatamente sem necessidade de registro manual."
+                    "Selecione uma identidade para entrada imediata. O Tutor será levado ao Centro de Comando e as Equipes ao Dashboard de Decisões."
                  </p>
 
                  <div className="grid grid-cols-1 gap-3">
@@ -188,12 +195,12 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
                          <div className="relative z-10 flex items-center gap-2">
                             {alphaLoading === user.id ? (
                                <div className="flex items-center gap-2">
-                                  <span className="text-[8px] font-black text-white uppercase animate-pulse">Injetando Sessão...</span>
+                                  <span className="text-[8px] font-black text-white uppercase animate-pulse">Autenticando Nodo...</span>
                                   <Loader2 size={16} className="animate-spin text-white" />
                                </div>
                             ) : (
                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                  <span className="text-[8px] font-black text-white uppercase italic">Acesso 1-Clique</span>
+                                  <span className="text-[8px] font-black text-white uppercase italic">Ir para {user.role === 'tutor' ? 'Admin' : 'Arena'}</span>
                                   <Play size={14} className="fill-current text-white" />
                                </div>
                             )}
@@ -210,7 +217,7 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
            <div className="pt-8 border-t border-white/5 flex items-center gap-4">
               <Bot className="text-orange-500 shrink-0" size={20} />
               <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
-                 Strategos Alpha provisionou o campeonato <span className="text-white italic">"Indústria Brasileira"</span>. Ativo Inicial: R$ 19M. Protocolo de Bypass via Supabase Secure Token.
+                 Strategos Alpha: Identidades compatíveis com validador de domínio <span className="text-white italic">"empirion-hq.com"</span>. Acesso direto via Secure Auth Token.
               </p>
            </div>
         </div>

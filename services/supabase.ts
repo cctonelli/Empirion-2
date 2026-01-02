@@ -27,19 +27,21 @@ const secureAction = async (action: () => Promise<any>) => {
 };
 
 /**
- * ALPHA TERMINAL: Protocolo de Autenticação Silenciosa
+ * ALPHA TERMINAL: Protocolo de Autenticação Silenciosa (Refatorado)
  */
 export const silentTestAuth = async (user: typeof ALPHA_TEST_USERS[0]) => {
   const testPassword = 'empirion_alpha_2026';
   
-  // 1. Tentar Login
+  // 1. Tenta Login Direto
   const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
     email: user.email,
     password: testPassword
   });
 
-  // 2. Se falhar por não existir, cria o usuário silenciosamente
-  if (loginError && loginError.message.includes('Invalid login credentials')) {
+  // 2. Se falhar, tenta criar (Provisionamento de Identidade On-demand)
+  if (loginError) {
+    console.log(`ALPHA_AUTH: Perfil não encontrado ou erro. Tentando auto-provisionamento para ${user.email}`);
+    
     const { error: signUpError } = await supabase.auth.signUp({
       email: user.email,
       password: testPassword,
@@ -51,18 +53,22 @@ export const silentTestAuth = async (user: typeof ALPHA_TEST_USERS[0]) => {
         } 
       }
     });
-    if (signUpError) throw signUpError;
+
+    if (signUpError) {
+      // Se já existir mas a senha for diferente (improvável no ambiente alpha), ou erro de e-mail
+      throw signUpError;
+    }
     
-    // Tenta login novamente após registro
+    // Tenta login final após registro
     const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
       email: user.email,
       password: testPassword
     });
+    
     if (retryError) throw retryError;
     return retryData;
   }
 
-  if (loginError) throw loginError;
   return loginData;
 };
 

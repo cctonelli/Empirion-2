@@ -13,11 +13,11 @@ export const COLORS = {
 };
 
 export const ALPHA_TEST_USERS = [
-  { id: 'tutor', name: 'Tutor Teste', email: 'tutor@empirion.test', role: 'tutor', icon: 'Shield' },
-  { id: 'alpha', name: 'Capitão Alpha', email: 'player.alpha@empirion.test', role: 'player', team: 'Equipe Alpha', icon: 'Zap' },
-  { id: 'beta', name: 'Capitão Beta', email: 'player.beta@empirion.test', role: 'player', team: 'Equipe Beta', icon: 'Zap' },
-  { id: 'gamma', name: 'Capitão Gamma', email: 'player.gamma@empirion.test', role: 'player', team: 'Equipe Gamma', icon: 'Zap' },
-  { id: 'delta', name: 'Capitão Delta', email: 'player.delta@empirion.test', role: 'player', team: 'Equipe Delta', icon: 'Zap' },
+  { id: 'tutor', name: 'Tutor Teste', email: 'tutor.alpha@empirion-hq.com', role: 'tutor', icon: 'Shield' },
+  { id: 'alpha', name: 'Capitão Alpha', email: 'player.alpha@empirion-hq.com', role: 'player', team: 'Equipe Alpha', icon: 'Zap' },
+  { id: 'beta', name: 'Capitão Beta', email: 'player.beta@empirion-hq.com', role: 'player', team: 'Equipe Beta', icon: 'Zap' },
+  { id: 'gamma', name: 'Capitão Gamma', email: 'player.gamma@empirion-hq.com', role: 'player', team: 'Equipe Gamma', icon: 'Zap' },
+  { id: 'delta', name: 'Capitão Delta', email: 'player.delta@empirion-hq.com', role: 'player', team: 'Equipe Delta', icon: 'Zap' },
 ];
 
 export const DEMO_CHAMPIONSHIP_DATA = {
