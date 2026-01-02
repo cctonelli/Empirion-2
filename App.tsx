@@ -9,7 +9,7 @@ import MarketAnalysis from './components/MarketAnalysis';
 import OpalIntelligenceHub from './components/OpalIntelligenceHub';
 import AdminCommandCenter from './components/AdminCommandCenter';
 import LandingPage from './components/LandingPage';
-import BranchDetail from './pages/BranchDetail';
+import ActivityDetail from './pages/ActivityDetail';
 import OpenTournaments from './pages/OpenTournaments';
 import SimulatorsPage from './pages/SimulatorsPage';
 import TrainingPage from './pages/TrainingPage';
@@ -76,10 +76,9 @@ const AppContent: React.FC = () => {
 
   return (
     <Routes>
-      {/* Rotas Públicas com Header */}
       <Route path="/" element={<PublicLayout onLogin={goToLogin}><LandingPage onLogin={goToLogin} /></PublicLayout>} />
       <Route path="/auth" element={<Auth onAuth={() => window.location.href = '/app'} />} />
-      <Route path="/branches/:slug" element={<PublicLayout onLogin={goToLogin}><BranchDetail /></PublicLayout>} />
+      <Route path="/activities/:slug" element={<PublicLayout onLogin={goToLogin}><ActivityDetail /></PublicLayout>} />
       <Route path="/solutions/open-tournaments" element={<PublicLayout onLogin={goToLogin}><OpenTournaments /></PublicLayout>} />
       <Route path="/solutions/simulators" element={<PublicLayout onLogin={goToLogin}><SimulatorsPage /></PublicLayout>} />
       <Route path="/solutions/business-plan" element={<PublicLayout onLogin={goToLogin}><BusinessPlanWizard /></PublicLayout>} />
@@ -89,7 +88,6 @@ const AppContent: React.FC = () => {
       <Route path="/blog" element={<PublicLayout onLogin={goToLogin}><BlogPage /></PublicLayout>} />
       <Route path="/contact" element={<PublicLayout onLogin={goToLogin}><ContactPage /></PublicLayout>} />
 
-      {/* Rotas Internas com Sidebar */}
       <Route path="/app/*" element={
         session ? (
           <Layout
