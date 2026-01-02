@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -12,6 +13,11 @@ import ActivityDetail from './pages/ActivityDetail';
 import OpenTournaments from './pages/OpenTournaments';
 import SimulatorsPage from './pages/SimulatorsPage';
 import BusinessPlanWizard from './components/BusinessPlanWizard';
+import GenericSolutionPage from './pages/GenericSolutionPage';
+import FeaturesPage from './pages/FeaturesPage';
+import BlogPage from './pages/BlogPage';
+import ContactPage from './pages/ContactPage';
+import PublicRewards from './pages/PublicRewards';
 import Auth from './components/Auth';
 import { supabase, getUserProfile } from './services/supabase';
 import { UserProfile } from './types';
@@ -81,15 +87,30 @@ const AppContent: React.FC = () => {
     </div>
   );
 
+  const authProps = { onLogin: () => navigate('/auth') };
+
   return (
     <Routes>
-      <Route path="/" element={<PublicLayout onLogin={() => navigate('/auth')}><LandingPage onLogin={() => navigate('/auth')} /></PublicLayout>} />
+      {/* Public Marketing & Educational Routes */}
+      <Route path="/" element={<PublicLayout {...authProps}><LandingPage onLogin={() => navigate('/auth')} /></PublicLayout>} />
       <Route path="/auth" element={<Auth onAuth={() => navigate('/app/dashboard')} onBack={() => navigate('/')} />} />
-      <Route path="/activities/:slug" element={<PublicLayout onLogin={() => navigate('/auth')}><ActivityDetail /></PublicLayout>} />
-      <Route path="/solutions/open-tournaments" element={<PublicLayout onLogin={() => navigate('/auth')}><OpenTournaments /></PublicLayout>} />
-      <Route path="/solutions/simulators" element={<PublicLayout onLogin={() => navigate('/auth')}><SimulatorsPage /></PublicLayout>} />
-      <Route path="/solutions/business-plan" element={<PublicLayout onLogin={() => navigate('/auth')}><BusinessPlanWizard /></PublicLayout>} />
+      <Route path="/features" element={<PublicLayout {...authProps}><FeaturesPage /></PublicLayout>} />
+      <Route path="/blog" element={<PublicLayout {...authProps}><BlogPage /></PublicLayout>} />
+      <Route path="/contact" element={<PublicLayout {...authProps}><ContactPage /></PublicLayout>} />
+      <Route path="/rewards" element={<PublicLayout {...authProps}><PublicRewards /></PublicLayout>} />
+      
+      {/* Dynamic Activity/Modality Routes */}
+      <Route path="/activities/:slug" element={<PublicLayout {...authProps}><ActivityDetail /></PublicLayout>} />
+      
+      {/* Solution Sub-routes */}
+      <Route path="/solutions/open-tournaments" element={<PublicLayout {...authProps}><OpenTournaments /></PublicLayout>} />
+      <Route path="/solutions/simulators" element={<PublicLayout {...authProps}><SimulatorsPage /></PublicLayout>} />
+      <Route path="/solutions/university" element={<PublicLayout {...authProps}><GenericSolutionPage type="university" /></PublicLayout>} />
+      <Route path="/solutions/corporate" element={<PublicLayout {...authProps}><GenericSolutionPage type="corporate" /></PublicLayout>} />
+      <Route path="/solutions/individual" element={<PublicLayout {...authProps}><GenericSolutionPage type="individual" /></PublicLayout>} />
+      <Route path="/solutions/business-plan" element={<PublicLayout {...authProps}><BusinessPlanWizard /></PublicLayout>} />
 
+      {/* Private Application Routes */}
       <Route path="/app/*" element={
         session ? (
           <Layout

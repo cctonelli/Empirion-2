@@ -1,3 +1,4 @@
+
 import { Branch, BusinessPlanSection, ChampionshipTemplate, ModalityType } from './types';
 
 export const COLORS = {
@@ -44,6 +45,54 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     leaderboard: [
       { id: 'c1', name: "Industrial Mastery", status: "Rodada 5/12", teams: 14, lead: "Alpha Group" },
       { id: 'c2', name: "Rodada Suprema", status: "Rodada 2/10", teams: 8, lead: "BioCore SA" }
+    ]
+  },
+  'features': {
+    title: "Superioridade Estratégica",
+    subtitle: "A arquitetura do Empirion foi projetada para desafiar os melhores estrategistas do mundo.",
+    items: [
+      { id: 1, title: "Motor Econômico v6.0", body: "Simulação precisa de elasticidade-preço, efeitos de escala e inflação setorial dinâmica.", icon: "Zap" },
+      { id: 2, title: "Strategos Intelligence", body: "Núcleo neural Gemini 3 Pro processando cada decisão para gerar insights em tempo real.", icon: "Cpu" },
+      { id: 3, title: "Infraestrutura Elite", body: "Transmissões criptografadas e sincronização de arena via Supabase Real-time.", icon: "Database" }
+    ]
+  },
+  'blog': {
+    title: "Intelligence Feed",
+    subtitle: "Artigos, atualizações e briefings técnicos sobre simulação e estratégia.",
+    items: [
+      { id: 1, title: "O Impacto da IA na Simulação Empresarial", date: "24 Dez 2025", author: "Strategos Core" },
+      { id: 2, title: "Dominando o OEE em Cenários Industriais", date: "15 Dez 2025", author: "Industrial Node" }
+    ]
+  },
+  'solution-university': {
+    title: "Academic Hub",
+    body: "Transforme a teoria em prática com arenas competitivas para instituições de ensino superior.",
+    icon: "Users"
+  },
+  'solution-corporate': {
+    title: "Enterprise Elite",
+    body: "Capacitação executiva de alto nível através de simulações de stress tático corporativo.",
+    icon: "Shield"
+  },
+  'solution-individual': {
+    title: "Solo Strategist",
+    body: "Treine suas habilidades individualmente contra a IA mais avançada do mercado.",
+    icon: "Brain"
+  },
+  'rewards': {
+    title: "Empire Rewards",
+    subtitle: "Acumule Empire Points e troque por badges de prestígio e acesso a arenas de elite.",
+    tiers: [
+      { name: "Bronze Strategist", pts: 0, color: "text-orange-300" },
+      { name: "Silver Manager", pts: 1000, color: "text-slate-300" },
+      { name: "Gold Oracle", pts: 5000, color: "text-amber-400" },
+      { name: "Empire Sovereign", pts: 25000, color: "text-blue-400" }
+    ],
+    accumulation: [
+      { action: "Participar de Arena", val: "+50 pts" },
+      { action: "Vitória em Turnê", val: "+500 pts" },
+      { action: "Sincronização Strategos", val: "+20 pts" },
+      { action: "Indicar Operador", val: "+100 pts" }
     ]
   },
   'activity-industrial': {
@@ -138,7 +187,7 @@ export const MENU_STRUCTURE = [
   },
   { 
     label: 'solutions', 
-    path: '/solutions',
+    path: '/solutions/simulators',
     sub: [
       { 
         id: 'arenas', 
@@ -154,6 +203,7 @@ export const MENU_STRUCTURE = [
     ]
   },
   { label: 'features', path: '/features' },
+  { label: 'blog', path: '/blog' },
   { label: 'contact', path: '/contact' }
 ];
 
