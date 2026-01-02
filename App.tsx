@@ -18,6 +18,7 @@ import FeaturesPage from './pages/FeaturesPage';
 import BlogPage from './pages/BlogPage';
 import ContactPage from './pages/ContactPage';
 import PublicRewards from './pages/PublicRewards';
+import TestTerminal from './pages/TestTerminal';
 import Auth from './components/Auth';
 import { supabase, getUserProfile } from './services/supabase';
 import { UserProfile } from './types';
@@ -60,6 +61,7 @@ const AppContent: React.FC = () => {
       } else {
         setProfile(null);
         setLoading(false);
+        // Só redireciona se estiver tentando acessar o app e não houver sessão
         if (location.pathname.startsWith('/app')) navigate('/auth');
       }
     });
@@ -98,6 +100,9 @@ const AppContent: React.FC = () => {
       <Route path="/blog" element={<PublicLayout {...authProps}><BlogPage /></PublicLayout>} />
       <Route path="/contact" element={<PublicLayout {...authProps}><ContactPage /></PublicLayout>} />
       <Route path="/rewards" element={<PublicLayout {...authProps}><PublicRewards /></PublicLayout>} />
+      
+      {/* Módulo de Testes MVP (Público no MVP para avaliação) */}
+      <Route path="/test/industrial" element={<PublicLayout {...authProps}><TestTerminal /></PublicLayout>} />
       
       {/* Dynamic Activity/Modality Routes */}
       <Route path="/activities/:slug" element={<PublicLayout {...authProps}><ActivityDetail /></PublicLayout>} />
