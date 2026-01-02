@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ScenarioType } from "../types";
 
@@ -85,7 +84,7 @@ export const generateGazetaNews = async (context: {
   const isReal = context.scenarioType === 'real';
   
   const groundingContext = isReal 
-    ? "CORPO DE NOTÍCIA REAL: Pesquise notícias reais da última semana sobre economia e o setor de atuação para mesclar com os resultados da simulação."
+    ? "CORPO DE NOTÍCIA REAL: Pesquise notícias reais da última semana sobre economia e o setor de atuaçao para mesclar com os resultados da simulação."
     : "MODO SIMULADO: Crie notícias puramente fictícias baseadas no comportamento das equipes e nos parâmetros do tutor Empirion.";
 
   try {

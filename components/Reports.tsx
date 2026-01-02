@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   FileText, Activity, Package, DollarSign, Zap, Users, Globe, 
@@ -95,15 +94,6 @@ const IndividualReport = ({ branch }: { branch: Branch }) => (
               </div>
            </div>
         </div>
-        <div className="flex items-center gap-10 relative z-10">
-           <div className="text-right space-y-1">
-              <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Lucro Líquido Acumulado</span>
-              <span className="text-5xl font-black text-emerald-400 font-mono italic">$ 73.926</span>
-           </div>
-           <button className="p-8 bg-white text-slate-950 rounded-[2.5rem] hover:bg-blue-600 hover:text-white transition-all shadow-2xl group active:scale-95">
-              <Download size={32} className="group-hover:translate-y-1 transition-transform" />
-           </button>
-        </div>
      </div>
 
      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -113,7 +103,6 @@ const IndividualReport = ({ branch }: { branch: Branch }) => (
                  <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/20"><Package size={24} /></div>
                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white italic">Estrutura de Ativos</h3>
               </div>
-              <Info size={18} className="text-slate-600" />
            </div>
            <div className="space-y-4">
               <ReportLine label="CAIXA E EQUIVALENTES" value="1.000.000" isPositive />
@@ -136,7 +125,6 @@ const IndividualReport = ({ branch }: { branch: Branch }) => (
               <ReportLine label="CUSTO DA PRODUÇÃO" value="(2.390.400)" isNegative />
               <ReportLine label="LUCRO BRUTO" value="907.600" isPositive />
               <ReportLine label="DESPESAS OPERACIONAIS" value="(1.147.200)" isNegative />
-              <ReportLine label="DESPESAS FINANCEIRAS" value="(28.474)" isNegative />
               <div className="pt-4 border-t border-white/5">
                  <ReportLine label="LUCRO LÍQUIDO" value="73.926" isBold isPositive />
               </div>
@@ -149,9 +137,6 @@ const IndividualReport = ({ branch }: { branch: Branch }) => (
 const CollectiveSalesReport = () => (
   <div className="animate-in slide-in-from-right-4 duration-1000">
      <div className="premium-card p-12 rounded-[4rem] space-y-12 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
-           <BarChart3 size={200} />
-        </div>
         <div className="relative z-10">
            <h3 className="text-3xl font-black uppercase tracking-tighter text-white italic">Market Dynamics</h3>
            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Market Share Consolidado • Ciclo P01</p>
@@ -213,7 +198,6 @@ const CollectiveFinancialReport = ({ type }: { type: 'BP' | 'DRE' }) => (
 const EliteBenchmarkReport = () => (
   <div className="space-y-8 animate-in slide-in-from-bottom-6">
      <div className="bg-gradient-to-br from-blue-700 to-indigo-900 p-16 rounded-[4rem] text-white shadow-2xl relative overflow-hidden group border border-white/10">
-        <Award className="absolute -bottom-20 -right-20 text-white/5 pointer-events-none group-hover:rotate-12 transition-transform duration-1000" size={400} />
         <div className="relative z-10 space-y-12">
            <div className="flex flex-col md:flex-row md:items-center gap-6">
               <div className="p-5 bg-white/10 backdrop-blur-3xl rounded-3xl shadow-xl">

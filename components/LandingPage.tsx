@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -72,7 +71,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       id: m.id,
       title: m.name,
       subtitle: m.description,
-      image: m.image_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000',
+      image: m.image_url || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000',
       badge: 'Arena Real-time',
       link: `/activities/${m.slug}`
     }))
@@ -82,19 +81,19 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     <div className="min-h-screen bg-transparent font-sans text-slate-100 relative selection:bg-orange-500 selection:text-white overflow-x-hidden">
       <EmpireParticles />
       
-      {/* 1. CARROSSEL NEBULOSA (CORREÇÃO DE TRANSLUCIDEZ) */}
+      {/* 1. CARROSSEL NEBULOSA (50% TRANSLUCIDEZ + COSMOS VISÍVEL) */}
       <section className="h-[85vh] min-h-[600px] relative overflow-hidden bg-transparent">
         <Slider {...carouselSettings}>
           {allCarouselSlides.map((slide: any) => (
             <div key={slide.id} className="relative h-[85vh] min-h-[600px] bg-transparent outline-none">
               <div className="absolute inset-0 z-0 bg-transparent">
-                {/* Imagem com opacidade e blend mode para deixar o cosmos visível */}
-                <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-transparent to-slate-950/80 z-10 pointer-events-none" />
+                {/* Overlay dinâmico: mix-blend e opacity baixa para ver o Cosmos */}
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-950/30 via-transparent to-slate-950/90 z-10 pointer-events-none" />
                 <div className="absolute inset-0 backdrop-blur-[4px] z-[5] pointer-events-none" />
                 <img 
                    src={slide.image} 
                    alt={slide.title} 
-                   className="w-full h-full object-cover scale-105 opacity-[0.45] brightness-[0.4] contrast-125 transition-transform duration-[15s] ease-linear mix-blend-screen" 
+                   className="w-full h-full object-cover scale-105 opacity-45 brightness-[0.35] contrast-125 transition-transform duration-[15s] ease-linear mix-blend-screen" 
                 />
               </div>
               <div className="container mx-auto px-6 md:px-24 h-full flex items-center relative z-20">
@@ -122,7 +121,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </Slider>
       </section>
 
-      {/* 2. HERO PRINCIPAL "UAU" (TOTALMENTE ORIGINAL) */}
+      {/* 2. HERO PRINCIPAL (TRANSLÚCIDO) */}
       <section className="py-40 px-6 md:px-24 text-center relative z-20">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-[-1] opacity-40">
            <div className="w-[1000px] h-[1000px] bg-blue-600/10 blur-[180px] rounded-full absolute top-0 left-0 animate-pulse"></div>
@@ -135,7 +134,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-white to-orange-400 animate-gradient-x">Com Insight Estratégico IA</span>
            </h1>
            <p className="text-xl md:text-3xl text-slate-400 font-medium max-w-4xl mx-auto leading-relaxed italic opacity-90">
-              A Arena Definitiva onde a Inteligência Artificial Gemini e a Estratégia Humana colidem em simulações de alta fidelidade exclusivas da plataforma Empirion.
+              A Arena Definitiva onde a Inteligência Artificial Gemini e a Estratégia Humana colidem em simulações exclusivas da plataforma Empirion.
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-10 pt-12">
               <button onClick={onLogin} className="cyber-button w-full sm:w-auto px-20 py-8 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] transition-all shadow-[0_30px_70px_rgba(249,115,22,0.4)] active:scale-95">
@@ -148,7 +147,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </motion.div>
       </section>
 
-      {/* 3. PLACAR CAMPEONATOS (ORIGINAL) */}
+      {/* 3. PLACAR CAMPEONATOS (GLASSMORPHISM) */}
       <section className="py-20 px-6 md:px-24 relative z-20">
          <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-16 border-b border-white/5 pb-8">
@@ -179,7 +178,32 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* RAMOS CARDS */}
+      {/* 4. EMPIRE BADGES (VIDRO) */}
+      <section className="py-20 px-6 md:px-24 relative z-20">
+         <div className="max-w-7xl mx-auto space-y-16">
+            <div className="text-center space-y-4">
+               <div className="inline-flex p-3 bg-white/5 text-amber-500 rounded-2xl mb-4 border border-white/10"><Award size={32} /></div>
+               <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Empire Rewards</h2>
+               <p className="text-slate-400 font-medium max-w-2xl mx-auto italic">Gamificação auditada pelo Strategos IA.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+               {content.badges.map((badge: any) => (
+                 <div key={badge.id} className="bg-white/[0.02] backdrop-blur-3xl p-10 rounded-[3.5rem] border border-white/5 text-center space-y-6 hover:bg-white/[0.05] hover:border-white/20 transition-all shadow-xl">
+                    <div className={`w-20 h-20 mx-auto bg-white/5 rounded-3xl flex items-center justify-center text-3xl shadow-inner ${badge.color}`}>
+                       {badge.icon === 'Factory' ? <Factory /> : badge.icon === 'Leaf' ? <Leaf /> : <Zap />}
+                    </div>
+                    <div>
+                       <h4 className="text-xl font-black uppercase tracking-tight text-white">{badge.name}</h4>
+                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">{badge.desc}</p>
+                    </div>
+                    <div className="text-2xl font-black text-orange-400">{badge.pts} <span className="text-[10px] opacity-40 text-slate-300">EP</span></div>
+                 </div>
+               ))}
+            </div>
+         </div>
+      </section>
+
+      {/* 5. RAMOS CARDS (OBLIGATORY + ICON GLASS) */}
       <section className="py-40 px-6 md:px-24 relative z-20">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
@@ -191,7 +215,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 md:gap-6">
                {LANDING_PAGE_DATA.branchesOverview.map(branch => (
                  <Link key={branch.id} to={`/activities/${branch.slug}`} className="group relative">
-                    <div className={`aspect-square rounded-[2.5rem] bg-white/[0.03] backdrop-blur-xl border border-white/5 flex flex-col items-center justify-center gap-6 transition-all group-hover:scale-105 group-hover:bg-orange-600 group-hover:shadow-2xl overflow-hidden`}>
+                    <div className={`aspect-square rounded-[2.5rem] bg-white/[0.03] backdrop-blur-3xl border border-white/5 flex flex-col items-center justify-center gap-6 transition-all group-hover:scale-105 group-hover:bg-orange-600 group-hover:shadow-2xl overflow-hidden`}>
                        <div className={`${branch.color} group-hover:text-white transition-colors transform group-hover:scale-125 transition-transform duration-500`}>
                           {getBranchIcon(branch.icon)}
                        </div>
@@ -203,8 +227,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* FOOTER (LIMPO) */}
-      <footer className="py-32 border-t border-white/5 text-center relative z-20 bg-slate-950/20 backdrop-blur-3xl">
+      <footer className="py-32 border-t border-white/5 text-center relative z-20 bg-slate-950/40 backdrop-blur-3xl">
          <div className="container mx-auto px-6 space-y-12">
             <div className="flex flex-col md:flex-row justify-center items-center gap-10">
                <Link to="/" className="flex items-center gap-4 opacity-80">
@@ -212,7 +235,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   <span className="text-xl font-black tracking-tighter text-white uppercase italic">Empirion</span>
                </Link>
                <nav className="flex gap-10">
-                  {['Privacidade', 'Termos de Uso', 'SaaS Hub', 'Apoio'].map(link => (
+                  {['Privacidade', 'Termos de Uso', 'SaaS Hub', 'Suporte'].map(link => (
                     <a key={link} href="#" className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-orange-500 transition-colors">{link}</a>
                   ))}
                </nav>

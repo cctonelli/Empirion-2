@@ -1,4 +1,3 @@
-
 import { Branch, BusinessPlanSection, ChampionshipTemplate, ModalityType } from './types';
 
 export const COLORS = {
@@ -6,7 +5,7 @@ export const COLORS = {
   secondary: '#1e293b',
   accent: '#3b82f6',
   gold: '#fbbf24',
-  sebrae_orange: '#f97316',
+  empire_orange: '#f97316',
   success: '#10b981',
   danger: '#ef4444',
   warning: '#f59e0b'
@@ -28,8 +27,8 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       secondaryCta: "Ver Atividades"
     },
     carousel: [
-      { id: 1, title: "Mastery Industrial", subtitle: "Aumente a eficiência do seu parque fabril no novo ciclo global.", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000", badge: "Live Arena", link: "/solutions/open-tournaments" },
-      { id: 2, title: "Rodada de Negócios", subtitle: "Domine a guerra de preços e o caixa em cenários de alta inflação.", image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000", badge: "Alta Intensidade", link: "/activities/rodada-negocios" },
+      { id: 1, title: "Mastery Industrial", subtitle: "Aumente a eficiência do seu parque fabril no novo ciclo global.", image: "https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000", badge: "Live Arena", link: "/solutions/open-tournaments" },
+      { id: 2, title: "Rodada de Negócios", subtitle: "Domine a guerra de preços e o caixa em cenários de alta inflação.", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000", badge: "Alta Intensidade", link: "/activities/rodada-negocios" },
       { id: 3, title: "Chão-de-Fábrica", subtitle: "Otimize cada segundo da produção com MRP e Lean Manufacturing.", image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000", badge: "Estratégia Lean", link: "/activities/chao-de-fabrica" }
     ],
     features: [
@@ -51,7 +50,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     name: "Industrial",
     heroImage: "https://images.unsplash.com/photo-1565034946487-077786996e27?q=80&w=2000",
     body: "Domine a produção de larga escala, gerencie ativos complexos e enfrente a obsolescência tecnológica em um mercado global.",
-    description: "A Atividade Industrial é o motor principal do Empirion. Aqui, as equipes gerenciam parques fabris com máquinas de diferentes gerações, cada uma com taxas de produtividade e manutenção distintas. O desafio envolve o equilíbrio entre o CapEx para modernização e o OpEx para manutenção da fluidez logística.",
+    description: "A Atividade Industrial é o motor principal do Empirion. Aqui, as equipes gerenciam parques fabris com máquinas de diferentes gerações, cada uma com taxas de produtividade e manutenção distintas.",
     features: ["Gestão de Maquinário Crítico", "Depreciação Estratégica", "Cadeia de Suprimentos Global", "Manutenção Preditiva IA"],
     kpis: ["OEE (Eficiência Geral)", "Custo Unitário de Produção", "TSR (Retorno ao Acionista)"],
     accent: "orange"
@@ -60,7 +59,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     name: "Comercial",
     heroImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2000",
     body: "Conquiste o varejo híbrido, domine canais de e-commerce e utilize precificação dinâmica para vencer a concorrência.",
-    description: "No Hub Comercial, o foco está na mente do consumidor. Equipes devem equilibrar a expansão de unidades físicas com o investimento agressivo em canais digitais. A elasticidade-preço é o principal motor, onde centavos decidem o market share regional.",
+    description: "No Hub Comercial, o foco está na mente do consumidor. Equipes devem equilibrar a expansão de unidades físicas com o investimento agressivo em canais digitais.",
     features: ["Canais Digitais vs. Físicos", "Elasticidade de Demanda", "Logística de Última Milha", "Algoritmos de Satisfação"],
     kpis: ["Market Share Consolidado", "Customer Satisfaction Index", "Margem de Contribuição"],
     accent: "blue"
@@ -69,7 +68,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     name: "Serviços",
     heroImage: "https://images.unsplash.com/photo-1454165833767-131f72a1030c?q=80&w=2000",
     body: "Gerencie o capital intelectual, otimize a formação técnica e construa um prestígio de marca inabalável na economia do conhecimento.",
-    description: "Na Matriz de Serviços, seu maior ativo são as pessoas. O desafio é gerenciar a alocação de especialistas em projetos de alta complexidade, garantindo que a rotatividade não destrua o conhecimento acumulado. O prestígio da marca dita o prêmio cobrado sobre o custo da hora.",
+    description: "Na Matriz de Serviços, seu maior ativo são as pessoas. O desafio é gerenciar a alocação de especialistas em projetos de alta complexidade.",
     features: ["Treinamento e Retenção", "Gestão de Qualidade Técnica", "Contratos de Longo Prazo", "Escalabilidade de Conhecimento"],
     kpis: ["Receita por Especialista", "Taxa de Turnover de Talentos", "Brand Equity Index"],
     accent: "emerald"
@@ -78,7 +77,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     name: "Agronegócio",
     heroImage: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000",
     body: "Opere na fronteira entre a tecnologia e a natureza. Gerencie ativos biológicos, climas voláteis e a sazonalidade extrema das safras.",
-    description: "O Hub Agro traz o risco climático real para dentro da arena. Use modelos preditivos para decidir entre plantio extensivo ou intensivo. O hedge de commodities e o financiamento rural são as ferramentas de sobrevivência em anos de quebra de safra.",
+    description: "O Hub Agro traz o risco climático real para dentro da arena. Use modelos preditivos para decidir entre plantio extensivo ou intensivo.",
     features: ["Simulação Climática Dinâmica", "Ciclo de Ativos Biológicos", "Hedge de Commodities", "Sazonalidade Financeira"],
     kpis: ["Produtividade por Hectare", "Exposição de Risco (Câmbio)", "ROI por Ciclo de Safra"],
     accent: "amber"
@@ -87,7 +86,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     name: "Financeiro",
     heroImage: "https://images.unsplash.com/photo-1611974717483-3600991e56aa?q=80&w=2000",
     body: "Navegue pelo mercado de capitais, gerencie spread bancário e proteja o capital contra a inflação e a volatilidade.",
-    description: "A arena financeira simula operações bancárias e fundos de investimento. O core é o gerenciamento de risco e liquidez. Equipes devem alocar capital em carteiras de crédito, fundos de hedge e operar no mercado secundário enquanto monitoram taxas globais.",
+    description: "A arena financeira simula operações bancárias e fundos de investimento. O core é o gerenciamento de risco e liquidez.",
     features: ["Gestão de Carteira Bancária", "Análise de Risco de Crédito", "Arbitragem e Liquidez", "Compliance e Regulação Global"],
     kpis: ["ROE (Return on Equity)", "Índice de Solvência", "Alpha de Investimento"],
     accent: "rose"
@@ -96,7 +95,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     name: "Construção",
     heroImage: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2000",
     body: "Erga infraestruturas complexas, vença licitações e domine a gestão de prazos e orçamentos em obras de larga escala.",
-    description: "A Construtora de Elite foca em gestão de projetos e licitações. O desafio é o fluxo de caixa: como manter a operação viva durante anos de obra sem receita imediata. Riscos ambientais e multas contratuais são as variáveis críticas nesta atividade.",
+    description: "A Construtora de Elite foca em gestão de projetos e licitações. O desafio é o fluxo de caixa.",
     features: ["Licitações Estratégicas", "Gestão de Prazos Críticos", "Insumos e Matérias-Primas", "Impacto Ambiental Otimizado"],
     kpis: ["Evolução de Obra (Budget vs Actual)", "Margem Líquida por Contrato", "Índice de Segurança"],
     accent: "indigo"
@@ -105,7 +104,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     name: "Rodada de Negócios",
     heroImage: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000",
     body: "Enfrente a volatilidade máxima em uma disputa comercial onde o preço e a gestão de caixa decidem o vencedor.",
-    description: "A modalidade 'Rodada de Negócios' é o treinamento intensivo para gestão de caixa. Aqui a inflação é composta e os clientes são extremamente sensíveis a preço. É uma guerra de trincheiras comerciais onde o fluxo de caixa é vital para evitar a insolvência.",
+    description: "A modalidade 'Rodada de Negócios' é o treinamento intensivo para gestão de caixa. Aqui a inflação é composta.",
     features: ["Inflação Composta Programada", "Hedge de Contratos Futuros", "Elasticidade de Demanda Extrema", "Guerra de Market Share"],
     kpis: ["Margem de Contribuição", "Cash Runway", "Resiliência Inflacionária"],
     accent: "orange"
@@ -114,7 +113,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     name: "Chão-de-Fábrica",
     heroImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000",
     body: "Otimize sua planta industrial utilizando metodologias de manufatura enxuta para alcançar produtividade de classe mundial.",
-    description: "A modalidade 'Chão-de-Fábrica' é um mergulho profundo na Engenharia de Produção. As equipes devem decidir entre estratégias de produção puxada ou empurrada. Cada segundo perdido em um gargalo ou em um setup de máquina mal planejado impacta diretamente o custo unitário.",
+    description: "A modalidade 'Chão-de-Fábrica' é um mergulho profundo na Engenharia de Produção.",
     features: ["Gestão de Gargalos Operacionais", "Níveis de Automação Industrial", "Setup de Máquinas (SMED)", "Lotes Dinâmicos e Kanban"],
     kpis: ["OEE (Eficiência Geral)", "Manufacturing Lead Time", "WIP (Work in Progress)"],
     accent: "blue"
@@ -184,7 +183,7 @@ export const BRANCH_CONFIGS: Record<string, { label: string; icon: string }> = {
   agribusiness: { label: 'Agronegócio', icon: '🚜' },
   finance: { label: 'Financeiro', icon: '💰' },
   construction: { label: 'Construção', icon: '🔨' },
-  'rodada-negocios': { label: 'Rodada de Negócios', icon: '🔨' },
+  'rodada-negocios': { label: 'Rodada de Negócios', icon: '🤝' },
   'chao-de-fabrica': { label: 'Chão-de-Fábrica', icon: '⚙️' }
 };
 

@@ -1,12 +1,8 @@
-
 import React, { useLayoutEffect, useRef } from 'react';
 
 /**
- * Empire Cosmos Particles v8.0 (Maximum Depth Optimized)
- * Features:
- * - Ultra-high visibility shadowBlur (Glow)
- * - Optimized trail for translucent overlays
- * - Enhanced mouse gravitational pull
+ * Empire Cosmos Particles v9.0 (Bulletproof rendering)
+ * Fixed: IndexSizeError on ctx.arc with NaN/Negative values
  */
 const EmpireParticles: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,7 +43,7 @@ const EmpireParticles: React.FC = () => {
     }> = [];
 
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f97316'];
-    const count = Math.min(120, Math.floor(window.innerWidth / 12)); // Increased count slightly
+    const count = Math.min(130, Math.floor(window.innerWidth / 10));
 
     for (let i = 0; i < count; i++) {
       particles.push({
@@ -55,7 +51,7 @@ const EmpireParticles: React.FC = () => {
         y: Math.random() * window.innerHeight,
         vx: (Math.random() - 0.5) * 1.5,
         vy: (Math.random() - 0.5) * 1.5,
-        radius: Math.random() * 2.5 + 2, // Larger base particles
+        radius: Math.random() * 2.5 + 2, 
         color: colors[Math.floor(Math.random() * colors.length)],
         pulse: Math.random() * Math.PI * 2
       });
@@ -63,8 +59,7 @@ const EmpireParticles: React.FC = () => {
 
     let animationId: number;
     const animate = () => {
-      // Trail Effect: Ligeiramente mais translúcido para o rastro "durar" mais por baixo das janelas
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.08)';
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.1)';
       ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
       particles.forEach(p => {
@@ -72,34 +67,45 @@ const EmpireParticles: React.FC = () => {
         const dy = mouse.y - p.y;
         const dist = Math.hypot(dx, dy);
 
-        if (dist < 400 && dist > 0) { // Larger attraction radius
+        if (dist < 400 && dist > 0) {
           const force = (400 - dist) / 400;
-          p.vx += (dx / dist) * force * 0.1; // Stronger attraction
-          p.vy += (dy / dist) * force * 0.1;
+          p.vx += (dx / dist) * force * 0.12;
+          p.vy += (dy / dist) * force * 0.12;
         }
 
-        p.vx *= 0.96;
-        p.vy *= 0.96;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
         p.x += p.vx;
         p.y += p.vy;
-        p.pulse += 0.03;
+        p.pulse += 0.035;
 
         p.x = (p.x + window.innerWidth) % window.innerWidth;
         p.y = (p.y + window.innerHeight) % window.innerHeight;
 
+        // SANITIZAÇÃO V9.0 (Previne IndexSizeError)
         const dynamicPulse = Math.sin(p.pulse) * 1.5;
-        const size = Math.max(1.5, p.radius + dynamicPulse);
+        let calculatedSize = p.radius + dynamicPulse;
+        
+        // Garante valor numérico válido e positivo
+        if (!isFinite(calculatedSize) || calculatedSize <= 0) {
+            calculatedSize = 1.0;
+        }
+        const size = Math.abs(calculatedSize);
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
+        try {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            
+            ctx.globalAlpha = dist < 250 ? 1.0 : 0.6;
+            ctx.shadowBlur = dist < 250 ? 35 : 15;
+            ctx.shadowColor = p.color;
+            
+            ctx.fill();
+        } catch (err) {
+            // Skip failing frames to avoid crash
+        }
         
-        // Brilho potente (Neon Effect) que atravessa as camadas de vidro
-        ctx.globalAlpha = dist < 250 ? 1.0 : 0.6;
-        ctx.shadowBlur = dist < 250 ? 45 : 25; // Massive glow
-        ctx.shadowColor = p.color;
-        
-        ctx.fill();
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
       });

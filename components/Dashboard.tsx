@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -22,7 +21,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     { id: '1', sender: 'Coordenação Central', text: 'Início da Rodada 01. Analisem os relatórios de TSR.', timestamp: '08:00', isImportant: true },
     { id: '2', sender: 'Strategos AI', text: `Setor ${branch.toUpperCase()}: Detectada anomalia de custos na Região 04.`, timestamp: '10:15' },
   ]);
-  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
     const fetchIntelligence = async () => {
@@ -65,17 +63,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     }
   };
 
-  const tsrTrendOptions: any = {
-    chart: { toolbar: { show: false }, sparkline: { enabled: true } },
-    stroke: { curve: 'smooth', width: 3 },
-    colors: ['#3b82f6'],
-    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0 } },
-    tooltip: { enabled: false }
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-20">
-      {/* Ticker Supremo */}
       <div className="bg-slate-950 border-b border-white/5 h-12 flex items-center -mx-10 -mt-10 mb-10 overflow-hidden">
         <div className="flex animate-[ticker_40s_linear_infinite] whitespace-nowrap gap-16 text-[10px] font-black uppercase tracking-[0.2em]">
           <TickerItem label="Índice Empirion" value="1.04" change="+4.2%" up />
@@ -99,12 +88,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           <div className="flex items-center gap-4">
              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full border border-white/5">
                 Build v6.0 GOLD • Engine Fidelity
-             </span>
-             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border ${
-               scenarioType === 'real' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-             }`}>
-                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${scenarioType === 'real' ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-                {scenarioType === 'real' ? 'Grounded AI Active' : 'Simulated Logic'}
              </span>
           </div>
         </div>
@@ -141,11 +124,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                    </p>
                  )}
               </div>
-              <div className="pt-6 border-t border-white/5 flex items-center gap-4">
-                 <button className="text-[10px] font-black uppercase text-blue-500 hover:text-white transition-colors">Solicitar Re-análise neural</button>
-                 <div className="flex-1 h-[1px] bg-white/5"></div>
-                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              </div>
             </div>
           </div>
 
@@ -160,21 +138,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mt-1 italic">Órgão Oficial v6.0 GOLD • Registro Oracle Node: 2026-X</p>
                  </div>
               </div>
-              <div className="text-right px-6 border-l border-white/5">
-                 <span className="block text-[10px] font-black text-slate-400 uppercase">Período Fiscal</span>
-                 <span className="text-2xl font-black text-white italic">P01</span>
-              </div>
             </div>
             <div className="p-12 grid grid-cols-1 md:grid-cols-3 gap-12">
                <div className="md:col-span-2 space-y-6">
                   <h2 className="text-4xl font-black text-white leading-[1.1] tracking-tight hover:text-blue-400 transition-colors cursor-default">
                     {gazetaNews}
                   </h2>
-                  <div className="h-[2px] bg-gradient-to-r from-blue-600 to-transparent w-full"></div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-slate-400">
-                     <Activity size={18} className="text-orange-500" /> 
-                     Relatório de Mercado: Investidores monitoram a taxa de TSR da Empresa 8 como benchmark de resiliência global.
-                  </div>
                </div>
                <div className="glass-panel p-6 rounded-[2rem] space-y-6">
                   <h4 className="text-[10px] font-black uppercase text-blue-400 tracking-widest flex items-center gap-2">
@@ -201,7 +170,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                  <KpiRow label="Score Estratégico" value="82.4" trend="+4.1" positive icon={<Star size={16}/>} />
                  <KpiRow label="Eficiência de Staff" value="94.2%" trend="+2.4%" positive icon={<Users size={16}/>} />
               </div>
-              <button className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all shadow-xl shadow-blue-500/20">Auditoria de Balanço</button>
            </div>
 
            <div className="bg-slate-900 border border-white/5 p-10 rounded-[3rem] flex flex-col h-[520px]">
@@ -225,10 +193,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
            </div>
         </div>
       </div>
-      
-      <style>{`
-        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-      `}</style>
     </div>
   );
 };
