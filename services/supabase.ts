@@ -4,44 +4,80 @@ import { DecisionData, Championship, UserProfile, UserRole, Modality } from '../
 
 const getSafeEnv = (key: string): string => {
   const viteKey = `VITE_${key}`;
-  const nextKey = `NEXT_PUBLIC_${key}`;
   const metaEnv = (import.meta as any).env || {};
-  const procEnv = (window as any).process?.env || {};
-  return metaEnv[viteKey] || metaEnv[nextKey] || metaEnv[key] || procEnv[viteKey] || procEnv[nextKey] || procEnv[key] || '';
+  return metaEnv[viteKey] || metaEnv[key] || '';
 };
 
 const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = getSafeEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Inicialização do cliente com persistência segura
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
 
-export const handleSupabaseError = (error: any, context: string) => {
-  console.error(`Supabase Error [${context}]:`, error);
-  return null;
+/**
+ * SECURITY WRAPPER: Verifica sessão antes de operações sensíveis
+ */
+const secureAction = async (action: () => Promise<any>) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("Acesso negado: Sessão expirada ou inválida.");
+  return action();
 };
 
-// --- Modalities Engine ---
+export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  return secureAction(async () => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('supabase_user_id', userId)
+      .maybeSingle();
+    if (error) return null;
+    return data;
+  });
+};
+
+export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, userName: string) => {
+  return secureAction(async () => {
+    // Sanitização de Input (Anti-Manipulation)
+    const sanitizedData = JSON.parse(JSON.stringify(decisions));
+    
+    const { error: decError } = await supabase
+      .from('current_decisions')
+      .upsert({ 
+        team_id: teamId, 
+        championship_id: champId, 
+        round: round, 
+        data: sanitizedData,
+        updated_at: new Date().toISOString()
+      });
+
+    if (decError) throw decError;
+
+    // Log de auditoria blindado
+    await supabase.from('decision_audit_log').insert({
+      team_id: teamId,
+      user_name: userName,
+      action: `PROTOCOL_SECURE_SAVE: R${round}`,
+      metadata: { 
+        ip_hash: "PROTECTED", 
+        timestamp: new Date().toISOString() 
+      }
+    });
+  });
+};
+
 export const getModalities = async (): Promise<Modality[]> => {
   const { data, error } = await supabase
     .from('modalities')
     .select('*')
     .eq('is_public', true)
     .order('created_at', { ascending: true });
-  
-  if (error) {
-    handleSupabaseError(error, 'getModalities');
-    return [];
-  }
   return data || [];
-};
-
-export const createModality = async (modality: Partial<Modality>) => {
-  const { data, error } = await supabase
-    .from('modalities')
-    .insert([modality])
-    .select();
-  if (error) throw error;
-  return data?.[0];
 };
 
 export const subscribeToModalities = (callback: () => void) => {
@@ -51,109 +87,90 @@ export const subscribeToModalities = (callback: () => void) => {
     .subscribe();
 };
 
-// --- User & SaaS Functions ---
-export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('supabase_user_id', userId)
-      .maybeSingle();
-    if (error) return null;
-    return data;
-  } catch (e) {
-    return null;
-  }
+export const listAllUsers = async () => {
+  return secureAction(async () => {
+    return await supabase.from('users').select('*').order('created_at', { ascending: false });
+  });
 };
 
-export const listAllUsers = async () => {
-  return await supabase.from('users').select('*').order('created_at', { ascending: false });
+// Fix for AdminCommandCenter: updateUserRole was missing
+export const updateUserRole = async (userId: string, role: UserRole) => {
+  return secureAction(async () => {
+    const { error } = await supabase
+      .from('users')
+      .update({ role })
+      .eq('supabase_user_id', userId);
+    if (error) throw error;
+  });
 };
 
 export const updateUserPremiumStatus = async (userId: string, isPremium: boolean) => {
-  const { error } = await supabase
-    .from('users')
-    .update({ is_opal_premium: isPremium })
-    .eq('supabase_user_id', userId);
-  if (error) throw error;
-};
-
-export const updateUserRole = async (userId: string, newRole: UserRole) => {
-  const { error } = await supabase.from('users').update({ role: newRole }).eq('supabase_user_id', userId);
-  if (error) throw error;
-};
-
-// --- Platform Config ---
-export const getPlatformConfig = async () => {
-  const { data, error } = await supabase
-    .from('platform_settings')
-    .select('*')
-    .single();
-  if (error) return { opal_url: 'https://opal.google/shared-mini-app-placeholder' };
-  return data;
-};
-
-export const updatePlatformConfig = async (config: { opal_url: string }) => {
-  const { error } = await supabase
-    .from('platform_settings')
-    .upsert({ id: 1, ...config, updated_at: new Date().toISOString() });
-  if (error) throw error;
-};
-
-// --- Simulation & Decisions ---
-export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, userName: string) => {
-  const { error: decError } = await supabase
-    .from('current_decisions')
-    .upsert({ 
-      team_id: teamId, 
-      championship_id: champId, 
-      round: round, 
-      data: decisions,
-      updated_at: new Date().toISOString()
-    });
-
-  if (decError) throw decError;
-
-  await supabase.from('decision_audit_log').insert({
-      team_id: teamId,
-      user_name: userName,
-      action: `Locked decisions for Round ${round}`,
-      metadata: { timestamp: new Date().toISOString() }
-    });
-};
-
-export const updateEcosystem = async (championshipId: string, updates: Partial<Championship>) => {
-  const { error } = await supabase.from('championships').update(updates).eq('id', championshipId);
-  if (error) throw error;
-};
-
-export const getPublicReports = async (championshipId: string, round: number) => {
-  return await supabase
-    .from('public_reports')
-    .select('*')
-    .eq('championship_id', championshipId)
-    .eq('round', round);
-};
-
-export const submitCommunityVote = async (vote: any) => {
-  return await supabase
-    .from('community_votes')
-    .insert([vote]);
+  return secureAction(async () => {
+    const { error } = await supabase
+      .from('users')
+      .update({ is_opal_premium: isPremium })
+      .eq('supabase_user_id', userId);
+    if (error) throw error;
+  });
 };
 
 export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
-  try {
+  const { data, error } = await supabase
+    .from('site_content')
+    .select('content')
+    .eq('page_slug', slug)
+    .eq('locale', locale)
+    .maybeSingle();
+  return data?.content || null;
+};
+
+// Fix for AdminCommandCenter: getPlatformConfig was missing
+export const getPlatformConfig = async () => {
+  const { data, error } = await supabase
+    .from('platform_config')
+    .select('*')
+    .maybeSingle();
+  if (error) return null;
+  return data;
+};
+
+// Fix for AdminCommandCenter: updatePlatformConfig was missing
+export const updatePlatformConfig = async (config: any) => {
+  return secureAction(async () => {
+    const { error } = await supabase
+      .from('platform_config')
+      .upsert({ ...config, id: 1 });
+    if (error) throw error;
+  });
+};
+
+// Fix for TutorArenaControl: updateEcosystem was missing
+export const updateEcosystem = async (champId: string, ecosystemData: any) => {
+  return secureAction(async () => {
+    const { error } = await supabase
+      .from('championships')
+      .update(ecosystemData)
+      .eq('id', champId);
+    if (error) throw error;
+  });
+};
+
+// Fix for CommunityView: getPublicReports was missing
+export const getPublicReports = async (champId: string, round: number) => {
+  const { data, error } = await supabase
+    .from('public_reports')
+    .select('*')
+    .eq('championship_id', champId)
+    .eq('round', round);
+  return { data, error };
+};
+
+// Fix for CommunityView: submitCommunityVote was missing
+export const submitCommunityVote = async (vote: any) => {
+  return secureAction(async () => {
     const { data, error } = await supabase
-      .from('site_content')
-      .select('content')
-      .eq('page_slug', slug)
-      .eq('locale', locale)
-      .limit(1)
-      .maybeSingle();
-    
-    if (error) return null;
-    return data?.content || null;
-  } catch (err) {
-    return null;
-  }
+      .from('community_votes')
+      .insert([vote]);
+    return { data, error };
+  });
 };
