@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import PublicHeader from './components/PublicHeader';
 import Dashboard from './components/Dashboard';
@@ -35,8 +34,10 @@ const AppContent: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) fetchProfile(session.user.id);
@@ -45,8 +46,9 @@ const AppContent: React.FC = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id);
-      else {
+      if (session) {
+        fetchProfile(session.user.id);
+      } else {
         setProfile(null);
         setLoading(false);
       }
@@ -66,18 +68,21 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const goToLogin = () => window.location.href = '/auth';
+  const goToLogin = () => navigate('/auth');
 
   if (loading) return (
     <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
-      <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex flex-col items-center gap-6">
+        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-white font-black uppercase text-[10px] tracking-[0.4em] animate-pulse">Sincronizando Protocolo...</span>
+      </div>
     </div>
   );
 
   return (
     <Routes>
       <Route path="/" element={<PublicLayout onLogin={goToLogin}><LandingPage onLogin={goToLogin} /></PublicLayout>} />
-      <Route path="/auth" element={<Auth onAuth={() => window.location.href = '/app'} />} />
+      <Route path="/auth" element={<Auth onAuth={() => navigate('/app')} onBack={() => navigate('/')} />} />
       <Route path="/activities/:slug" element={<PublicLayout onLogin={goToLogin}><ActivityDetail /></PublicLayout>} />
       <Route path="/solutions/open-tournaments" element={<PublicLayout onLogin={goToLogin}><OpenTournaments /></PublicLayout>} />
       <Route path="/solutions/simulators" element={<PublicLayout onLogin={goToLogin}><SimulatorsPage /></PublicLayout>} />
@@ -93,9 +98,12 @@ const AppContent: React.FC = () => {
           <Layout
             userName={profile?.name || session.user.email}
             userRole={profile?.role || 'player'}
-            onLogout={async () => { await supabase.auth.signOut(); }}
+            onLogout={async () => { 
+              await supabase.auth.signOut();
+              navigate('/');
+            }}
             activeView={location.pathname.replace('/app/', '') || 'dashboard'}
-            onNavigate={(view) => { window.location.href = `/app/${view}`; }}
+            onNavigate={(view) => navigate(`/app/${view}`)}
           >
             <Routes>
               <Route path="/" element={<Navigate to="dashboard" />} />
@@ -113,7 +121,7 @@ const AppContent: React.FC = () => {
             </Routes>
           </Layout>
         ) : (
-          <Navigate to="/" />
+          <Navigate to="/auth" replace />
         )
       } />
     </Routes>
