@@ -24,20 +24,20 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
             </h1>
           </div>
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2 italic">
-            Engine v5.5 GOLD • Consolidado Fiscal P01
+            Engine v6.0 GOLD • Consolidado Fiscal P01
           </p>
         </div>
         
-        <div className="flex gap-2 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
+        <div className="flex gap-2 p-1.5 bg-slate-900 rounded-2xl border border-white/5 overflow-x-auto no-scrollbar">
            {[
-             { id: 'individual', label: `Indiv. (Emp 8)`, icon: User },
+             { id: 'individual', label: `Individual`, icon: User },
              { id: 'collective', label: 'Coletivos', icon: Globe },
-             { id: 'market', label: 'Bolsa & CVM', icon: Landmark }
+             { id: 'market', label: 'Indicadores Global', icon: Landmark }
            ].map(t => (
              <button 
                key={t.id}
                onClick={() => setReportMode(t.id as any)}
-               className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+               className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${
                  reportMode === t.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
                }`}
              >
@@ -50,7 +50,6 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
 
       <div className="h-[1px] bg-gradient-to-r from-white/10 to-transparent w-full"></div>
 
-      {/* Fix: Cast branch as Branch to resolve string comparison/assignment error */}
       {reportMode === 'individual' && <IndividualReport branch={branch as Branch} />}
       {reportMode === 'collective' && (
         <div className="space-y-8">
@@ -63,7 +62,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                     collectiveSubTab === tab ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
                   }`}
                 >
-                  {tab === 'vendas' ? 'Market Share' : tab === 'bp' ? 'Balanço Coletivo' : tab === 'dre' ? 'DRE Coletivo' : 'Elite Benchmark'}
+                  {tab === 'vendas' ? 'Market Share' : tab === 'bp' ? 'Balanço Global' : tab === 'dre' ? 'DRE Consolidado' : 'Elite Benchmark'}
                 </button>
               ))}
            </div>
@@ -73,7 +72,6 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
            {collectiveSubTab === 'benchmark' && <EliteBenchmarkReport />}
         </div>
       )}
-      {/* Fix: Cast branch as Branch to resolve string comparison/assignment error */}
       {reportMode === 'market' && <MarketIndicatorsPanel branch={branch as Branch} />}
     </div>
   );
@@ -93,7 +91,7 @@ const IndividualReport = ({ branch }: { branch: Branch }) => (
                  <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 flex items-center gap-2">
                     <ShieldCheck size={12} /> Auditoria P01 Validada
                  </span>
-                 <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest">SISERV Engine v5.5</span>
+                 <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest">Oracle Engine v6.0</span>
               </div>
            </div>
         </div>
@@ -120,7 +118,7 @@ const IndividualReport = ({ branch }: { branch: Branch }) => (
            <div className="space-y-4">
               <ReportLine label="CAIXA E EQUIVALENTES" value="1.000.000" isPositive />
               <ReportLine label="CONTAS A RECEBER" value="1.823.735" isPositive />
-              <ReportLine label="ESTOQUES (RAW/FIN)" value="0" />
+              <ReportLine label="ESTOQUES TOTAIS" value="0" />
               <ReportLine label="IMOBILIZADO LÍQUIDO" value="5.153.205" isBold />
               <div className="pt-4 border-t border-white/5">
                  <ReportLine label="TOTAL DO ATIVO" value="9.176.940" isBold />
@@ -131,11 +129,11 @@ const IndividualReport = ({ branch }: { branch: Branch }) => (
         <div className="premium-card p-10 rounded-[3.5rem] space-y-8">
            <div className="flex items-center gap-4">
               <div className="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg shadow-emerald-500/20"><DollarSign size={24} /></div>
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white italic">DRE Resumida</h3>
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white italic">Demonstrativo de Resultados</h3>
            </div>
            <div className="space-y-4">
               <ReportLine label="RECEITA OPERACIONAL BRUTA" value="3.298.000" isPositive />
-              <ReportLine label="CPV / CUSTO SERVIÇOS" value="(2.390.400)" isNegative />
+              <ReportLine label="CUSTO DA PRODUÇÃO" value="(2.390.400)" isNegative />
               <ReportLine label="LUCRO BRUTO" value="907.600" isPositive />
               <ReportLine label="DESPESAS OPERACIONAIS" value="(1.147.200)" isNegative />
               <ReportLine label="DESPESAS FINANCEIRAS" value="(28.474)" isNegative />
@@ -179,18 +177,14 @@ const CollectiveFinancialReport = ({ type }: { type: 'BP' | 'DRE' }) => (
      <div className="premium-card rounded-[4rem] overflow-hidden">
         <div className="p-10 border-b border-white/5 bg-slate-900/40 flex items-center justify-between">
            <h3 className="text-2xl font-black uppercase tracking-tighter text-white italic">
-             {type === 'BP' ? 'Balanço Patrimonial Coletivo' : 'DRE Coletivo do Mercado'}
+             {type === 'BP' ? 'Balanço Global' : 'DRE Coletivo de Arena'}
            </h3>
-           <div className="flex gap-4">
-              <button className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Download size={20} /></button>
-              <button className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><BarChart3 size={20} /></button>
-           </div>
         </div>
         <div className="overflow-x-auto">
            <table className="w-full text-left text-xs">
               <thead className="bg-slate-950 text-slate-500 font-black uppercase border-b border-white/5">
                  <tr>
-                    <th className="p-6 min-w-[280px]">RUBRICAS (Bernard Padrão)</th>
+                    <th className="p-6 min-w-[280px]">RUBRICAS (Protocolo Empirion)</th>
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <th key={i} className="p-6 text-right">EMP {i}</th>)}
                     <th className="p-6 text-right bg-blue-600 text-white">MÉDIA</th>
                  </tr>
@@ -227,7 +221,7 @@ const EliteBenchmarkReport = () => (
               </div>
               <div>
                  <h3 className="text-4xl font-black uppercase tracking-tighter italic">Elite Benchmark Node</h3>
-                 <p className="text-blue-200 font-medium">Performance Metrics vs Market Best in Class (v5.5 GOLD)</p>
+                 <p className="text-blue-200 font-medium">Performance Metrics vs Market Best in Class (v6.0 GOLD)</p>
               </div>
            </div>
 
@@ -273,7 +267,7 @@ const MarketIndicatorsPanel = ({ branch }: { branch: Branch }) => (
         <div className="lg:col-span-2 premium-card p-12 rounded-[4rem] space-y-10 group">
            <h3 className="text-2xl font-black uppercase tracking-tighter text-white flex items-center gap-4 italic">
               <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-xl group-hover:rotate-12 transition-transform"><TrendingUp size={24} /></div>
-              Market Exchange Node (Bolsa Empirion)
+              Market Exchange Node (Arena Pulse)
            </h3>
            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
@@ -289,16 +283,16 @@ const MarketIndicatorsPanel = ({ branch }: { branch: Branch }) => (
            <div className="space-y-8">
               <h3 className="text-2xl font-black uppercase tracking-tighter text-white italic">Economic DNA</h3>
               <div className="space-y-6">
-                 <MarketBox label="IPCA (Inflação)" value="1,00%" color="text-rose-400" />
+                 <MarketBox label="Inflação Setorial" value="1,00%" color="text-rose-400" />
                  <MarketBox label="TR Mensal" value="2,00%" color="text-blue-400" />
-                 <MarketBox label="Piso Salarial Técnico" value="$ 3.500" color="text-white" />
-                 <MarketBox label="Demanda Setorial" value="1,08x" color="text-emerald-400" />
+                 <MarketBox label="Custo Unitário Base" value="$ 180" color="text-white" />
+                 <MarketBox label="Demanda Global" value="1,08x" color="text-emerald-400" />
               </div>
            </div>
            <div className="pt-8 border-t border-white/5">
               <div className="flex items-center gap-3 text-slate-500">
                  <ShieldCheck size={20} className="text-emerald-500" />
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">CVM Audit active</span>
+                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Oracle Audit Active</span>
               </div>
            </div>
         </div>

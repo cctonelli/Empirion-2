@@ -17,13 +17,13 @@ export const generateBusinessPlanField = async (
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Você é o Strategos Business Architect. 
-      Estou elaborando um Plano de Negócios (modelo SEBRAE) para uma empresa do setor ${branch}.
+      contents: `Você é o Strategos Business Architect do Empirion. 
+      Estou elaborando um Plano de Negócios estruturado para uma empresa do setor ${branch}.
       Seção Atual: ${sectionTitle}.
       Campo a preencher: ${fieldLabel}.
       Contexto já fornecido pelo usuário: "${userContext}".
       Sua Tarefa: ${prompt}
-      Forneça um texto profissional, detalhado e adequado ao mercado brasileiro. Max 200 palavras.`,
+      Forneça um texto profissional, detalhado e adequado ao mercado empresarial. Max 200 palavras.`,
       config: { temperature: 0.7 }
     });
 
@@ -42,7 +42,7 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
   
   const groundingPrompt = scenarioType === 'real' 
     ? "Utilize dados reais de mercado e notícias atuais (Google Search) para fundamentar as projeções." 
-    : "Baseie-se exclusivamente nos parâmetros simulados fornecidos pelo tutor da arena.";
+    : "Baseie-se exclusivamente nos parâmetros simulados fornecidos pelo tutor da arena Empirion.";
 
   try {
     const response = await ai.models.generateContent({
@@ -50,7 +50,7 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
       contents: `Você é o Empirion Strategos AI. Forneça um briefing estratégico quantitativo para a Rodada ${round} do campeonato "${championshipName}" (${branch}). 
       ${groundingPrompt}
       Analise:
-      1. Impactos da volatilidade econômica (TR e Inflação) na margem unitária.
+      1. Impactos da volatilidade econômica na margem unitária.
       2. Pontos de sobrevivência competitiva (Preço vs. Custo).
       3. Um aviso específico de 'Cisne Negro' (Black Swan).
       Mantenha o tom executivo e técnico. Máximo 100 palavras. Idioma: Português (Brasil).`,
@@ -68,7 +68,7 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
 };
 
 /**
- * Generates narrative headlines for Gazeta Industrial with ScenarioType awareness.
+ * Generates narrative headlines for Gazeta with ScenarioType awareness.
  */
 export const generateGazetaNews = async (context: { 
   period: number, 
@@ -80,19 +80,19 @@ export const generateGazetaNews = async (context: {
 }) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  const focusAreas = context.focus?.join(", ") || "análise da CVM, reajuste de insumos, liderança do setor";
+  const focusAreas = context.focus?.join(", ") || "reajuste de insumos, liderança do setor, novos mercados";
   const newsStyle = context.style || "analytical";
   const isReal = context.scenarioType === 'real';
   
   const groundingContext = isReal 
-    ? "CORPO DE NOTÍCIA REAL: Pesquise notícias reais da última semana sobre economia e o setor industrial para mesclar com os resultados da simulação."
-    : "MODO SIMULADO: Crie notícias puramente fictícias baseadas no comportamento das equipes e nos parâmetros do tutor.";
+    ? "CORPO DE NOTÍCIA REAL: Pesquise notícias reais da última semana sobre economia e o setor de atuação para mesclar com os resultados da simulação."
+    : "MODO SIMULADO: Crie notícias puramente fictícias baseadas no comportamento das equipes e nos parâmetros do tutor Empirion.";
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Gere 3 manchetes de impacto para o jornal financeiro "Gazeta Industrial". 
-      Contexto: Fim do Período ${context.period}. Líder atual: ${context.leader || 'Empresa 8'}. Inflação: ${context.inflation || '1.0%'}.
+      contents: `Gere 3 manchetes de impacto para o jornal "Gazeta Empirion". 
+      Contexto: Fim do Período ${context.period}. Líder atual: ${context.leader || 'Equipe Alpha'}. Inflação: ${context.inflation || '1.0%'}.
       Áreas de Foco definidas pelo Tutor: ${focusAreas}.
       Estilo de Escrita: ${newsStyle}. 
       ${groundingContext}
@@ -108,7 +108,7 @@ export const generateGazetaNews = async (context: {
       }
     });
 
-    return response.text || "Mercado Industrial: Setor aguarda novas diretrizes da CVM para o próximo período.";
+    return response.text || "Mercado: Setor aguarda novas diretrizes para o próximo período.";
   } catch (error) {
     return "Gazeta em manutenção: Aguardando boletim oficial do Conselho de Regulação.";
   }
@@ -168,7 +168,7 @@ export const performGroundedSearch = async (query: string) => {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Pesquise tendências reais de mercado relevantes para: ${query}. Sintetize para um estrategista empresarial. Cite fontes.`,
+      contents: `Pesquise tendências reais de mercado relevantes para: ${query}. Sintetize para um estrategista empresarial Empirion. Cite fontes.`,
       config: { tools: [{ googleSearch: {} }] },
     });
 
@@ -194,7 +194,7 @@ export const createChatSession = () => {
     model: 'gemini-3-pro-preview',
     config: {
       systemInstruction: `Você é o "Empirion Strategos", o assistente de IA mais avançado do mundo em simulações empresariais. 
-      Sua especialidade é modelagem matemática, contabilidade gerencial (padrão Bernard Sistemas) e estratégia competitiva.
+      Sua especialidade é modelagem matemática, contabilidade gerencial e estratégia competitiva.
       Use o raciocínio profundo para ajudar os usuários a interpretar Balanços, DREs e tomar decisões de Marketing, RH e Produção.
       Sempre cite conceitos como elasticidade-preço, margem de contribuição e ponto de equilíbrio.`,
       thinkingConfig: { thinkingBudget: 32768 }
