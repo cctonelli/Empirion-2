@@ -13,13 +13,12 @@ import { DEFAULT_PAGE_CONTENT, LANDING_PAGE_DATA } from '../constants';
 import { fetchPageContent, getModalities, subscribeToModalities } from '../services/supabase';
 import { Modality } from '../types';
 import EmpireParticles from './EmpireParticles';
-// Add missing import for LanguageSwitcher
 import LanguageSwitcher from './LanguageSwitcher';
 
 const NextArrow = (props: any) => {
   const { onClick } = props;
   return (
-    <button onClick={onClick} className="absolute right-6 top-1/2 -translate-y-1/2 z-[100] p-4 bg-slate-900/40 backdrop-blur-xl hover:bg-blue-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-2xl active:scale-90" aria-label="Next slide">
+    <button onClick={onClick} className="absolute right-6 top-1/2 -translate-y-1/2 z-[100] p-4 bg-slate-900/40 backdrop-blur-xl hover:bg-orange-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-2xl active:scale-90" aria-label="Next slide">
       <ChevronRight size={24} className="group-hover:translate-x-0.5 transition-transform" />
     </button>
   );
@@ -28,7 +27,7 @@ const NextArrow = (props: any) => {
 const PrevArrow = (props: any) => {
   const { onClick } = props;
   return (
-    <button onClick={onClick} className="absolute left-6 top-1/2 -translate-y-1/2 z-[100] p-4 bg-slate-900/40 backdrop-blur-xl hover:bg-blue-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-2xl active:scale-90" aria-label="Previous slide">
+    <button onClick={onClick} className="absolute left-6 top-1/2 -translate-y-1/2 z-[100] p-4 bg-slate-900/40 backdrop-blur-xl hover:bg-orange-600/90 border border-white/10 rounded-full text-white transition-all group hidden md:flex items-center justify-center shadow-2xl active:scale-90" aria-label="Previous slide">
       <ChevronLeft size={24} className="group-hover:-translate-x-0.5 transition-transform" />
     </button>
   );
@@ -75,35 +74,39 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       subtitle: m.description,
       image: m.image_url || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000',
       badge: 'Arena Real-time',
-      link: `/solutions/${m.slug}`
+      link: `/activities/${m.slug}`
     }))
   ];
 
   return (
-    <div className="min-h-screen bg-[#020617] font-sans text-slate-100 relative selection:bg-orange-500 selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-transparent font-sans text-slate-100 relative selection:bg-orange-500 selection:text-white overflow-x-hidden">
       <EmpireParticles />
       
-      {/* 1. CARROSSEL DINÂMICO (ABAIXO DO HEADER) */}
-      <section className="h-[75vh] min-h-[600px] relative overflow-hidden">
+      {/* 1. CARROSSEL TRANSLÚCIDO (SENSACIONAL) */}
+      <section className="h-[80vh] min-h-[600px] relative overflow-hidden border-b border-white/5">
         <Slider {...carouselSettings}>
           {allCarouselSlides.map((slide: any) => (
-            <div key={slide.id} className="relative h-[75vh] min-h-[600px]">
+            <div key={slide.id} className="relative h-[80vh] min-h-[600px]">
               <div className="absolute inset-0 z-0">
-                {/* Orange Gradient Clouds Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-orange-950/20 to-transparent z-10" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(249,115,22,0.1),transparent_70%)] z-[11]" />
-                <img src={slide.image} alt={slide.title} className="w-full h-full object-cover scale-105" />
+                {/* Overlay dinâmico para deixar as partículas visíveis por baixo da imagem */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/20 via-transparent to-[#020617] z-10" />
+                <div className="absolute inset-0 backdrop-blur-[2px] z-0" />
+                <img 
+                   src={slide.image} 
+                   alt={slide.title} 
+                   className="w-full h-full object-cover scale-105 opacity-40 brightness-75 contrast-125 transition-transform duration-[10s] ease-linear group-hover:scale-110" 
+                />
               </div>
               <div className="container mx-auto px-6 md:px-24 h-full flex items-center relative z-20">
                 <div className="max-w-4xl space-y-10">
-                  <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="inline-flex items-center gap-3 px-8 py-3 bg-orange-600/20 backdrop-blur-xl text-orange-400 rounded-full text-[11px] font-black uppercase tracking-[0.4em] border border-orange-500/20 shadow-[0_0_40px_rgba(249,115,22,0.2)]">
-                    <Sparkles size={16} /> {slide.badge}
+                  <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="inline-flex items-center gap-3 px-8 py-3 bg-orange-600/10 backdrop-blur-2xl text-orange-400 rounded-full text-[11px] font-black uppercase tracking-[0.4em] border border-orange-500/20 shadow-[0_0_40px_rgba(249,115,22,0.1)]">
+                    <Sparkles size={16} className="animate-pulse" /> {slide.badge}
                   </motion.div>
                   <div className="space-y-6">
-                    <motion.h2 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="text-6xl md:text-8xl font-black text-white leading-[0.85] uppercase tracking-tighter italic drop-shadow-2xl">
+                    <motion.h2 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="text-6xl md:text-9xl font-black text-white leading-[0.8] uppercase tracking-tighter italic drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
                       {slide.title}
                     </motion.h2>
-                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-xl md:text-2xl text-slate-300 font-medium leading-relaxed max-w-3xl italic opacity-90">
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-xl md:text-2xl text-slate-300 font-medium leading-relaxed max-w-3xl italic opacity-80">
                       {slide.subtitle}
                     </motion.p>
                   </div>
@@ -119,12 +122,11 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </Slider>
       </section>
 
-      {/* 2. HERO PRINCIPAL "UAU" (SEBRAE INSPIRED) */}
+      {/* 2. HERO PRINCIPAL "UAU" (SEBRAE INSPIRED + TRANSLUCIDEZ) */}
       <section className="py-40 px-6 md:px-24 text-center relative z-20">
-        {/* Animated Orange Clouds (CSS based) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-[-1] opacity-40">
-           <div className="w-[800px] h-[800px] bg-orange-600/10 blur-[160px] rounded-full absolute top-0 left-0 animate-pulse"></div>
-           <div className="w-[600px] h-[600px] bg-blue-600/10 blur-[140px] rounded-full absolute bottom-0 right-0 animate-pulse [animation-delay:2s]"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-[-1] opacity-60">
+           <div className="w-[1000px] h-[1000px] bg-orange-600/5 blur-[180px] rounded-full absolute top-0 left-0 animate-pulse"></div>
+           <div className="w-[800px] h-[800px] bg-blue-600/5 blur-[160px] rounded-full absolute bottom-0 right-0 animate-pulse [animation-delay:2s]"></div>
         </div>
 
         <motion.div initial={{ opacity: 0, y: 60 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-6xl mx-auto space-y-16">
@@ -139,14 +141,14 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               <button onClick={onLogin} className="cyber-button w-full sm:w-auto px-20 py-8 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] transition-all shadow-[0_30px_70px_rgba(249,115,22,0.4)] active:scale-95">
                 Entre na Arena
               </button>
-              <Link to="/branches/industrial" className="cyber-button w-full sm:w-auto px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-5 backdrop-blur-xl active:scale-95">
-                Explorar Ramos <ArrowRight size={22} className="text-orange-500" />
+              <Link to="/solutions/simulators" className="cyber-button w-full sm:w-auto px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-5 backdrop-blur-xl active:scale-95">
+                Explorar Atividades <ArrowRight size={22} className="text-orange-500" />
               </Link>
            </div>
         </motion.div>
       </section>
 
-      {/* 3. PLACAR CAMPEONATOS (MANDATÓRIO) */}
+      {/* 3. PLACAR CAMPEONATOS (MANDATÓRIO + VIDRO) */}
       <section className="py-20 px-6 md:px-24 relative z-20">
          <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-16 border-b border-white/5 pb-8">
@@ -158,7 +160,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                {content.leaderboard.map((champ: any) => (
-                 <div key={champ.id} className="bg-slate-900/40 backdrop-blur-3xl border border-white/5 p-10 rounded-[3rem] flex items-center justify-between group hover:border-orange-500/30 transition-all shadow-2xl">
+                 <div key={champ.id} className="bg-white/[0.03] backdrop-blur-xl border border-white/10 p-10 rounded-[3rem] flex items-center justify-between group hover:border-orange-500/40 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
                     <div className="space-y-4">
                        <div className="px-4 py-1.5 bg-emerald-500 text-slate-950 rounded-full text-[9px] font-black uppercase tracking-widest w-fit shadow-lg shadow-emerald-500/20">Live Arena</div>
                        <h4 className="text-3xl font-black uppercase tracking-tight italic leading-none text-white">{champ.name}</h4>
@@ -177,8 +179,8 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* 4. EMPIRE BADGES SHOWCASE */}
-      <section className="py-20 px-6 md:px-24 relative z-20 bg-orange-600/5">
+      {/* 4. EMPIRE BADGES SHOWCASE (VIDRO TRANSPARENTE) */}
+      <section className="py-20 px-6 md:px-24 relative z-20">
          <div className="max-w-7xl mx-auto space-y-16">
             <div className="text-center space-y-4">
                <div className="inline-flex p-3 bg-amber-500/10 text-amber-500 rounded-2xl mb-4"><Award size={32} /></div>
@@ -187,7 +189,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                {content.badges.map((badge: any) => (
-                 <div key={badge.id} className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/5 text-center space-y-6 hover:bg-slate-900 transition-all shadow-xl">
+                 <div key={badge.id} className="bg-white/[0.02] backdrop-blur-2xl p-10 rounded-[3.5rem] border border-white/5 text-center space-y-6 hover:bg-white/[0.05] hover:border-white/20 transition-all shadow-xl">
                     <div className={`w-20 h-20 mx-auto bg-white/5 rounded-3xl flex items-center justify-center text-3xl shadow-inner ${badge.color}`}>
                        {badge.icon === 'Factory' ? <Factory /> : badge.icon === 'Leaf' ? <Leaf /> : <Zap />}
                     </div>
@@ -202,7 +204,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* 5. RAMOS CARDS (OBLIGATORY) */}
+      {/* 5. RAMOS CARDS (OBLIGATORY + ICON GLASS) */}
       <section className="py-40 px-6 md:px-24 relative z-20">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
@@ -211,14 +213,14 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   Modelamos a complexidade de múltiplos ramos com fidelidade absoluta. Escolha seu campo de batalha industrial, comercial ou agro.
                </p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 md:gap-6">
                {LANDING_PAGE_DATA.branchesOverview.map(branch => (
-                 <Link key={branch.id} to={`/branches/${branch.slug}`} className="group relative">
-                    <div className={`aspect-square rounded-[3rem] ${branch.bg} border border-white/5 flex flex-col items-center justify-center gap-6 transition-all group-hover:scale-105 group-hover:bg-orange-600 group-hover:shadow-3xl overflow-hidden`}>
+                 <Link key={branch.id} to={`/activities/${branch.slug}`} className="group relative">
+                    <div className={`aspect-square rounded-[2.5rem] bg-white/[0.03] backdrop-blur-xl border border-white/5 flex flex-col items-center justify-center gap-6 transition-all group-hover:scale-105 group-hover:bg-orange-600 group-hover:shadow-[0_20px_60px_rgba(249,115,22,0.3)] overflow-hidden`}>
                        <div className={`${branch.color} group-hover:text-white transition-colors transform group-hover:scale-125 transition-transform duration-500`}>
                           {getBranchIcon(branch.icon)}
                        </div>
-                       <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 group-hover:text-white transition-colors">{branch.slug}</span>
+                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-white transition-colors">{branch.slug}</span>
                     </div>
                  </Link>
                ))}
@@ -226,12 +228,12 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* FOOTER SUPREMO */}
-      <footer className="py-32 border-t border-white/5 text-center relative z-20 bg-slate-950/50 backdrop-blur-xl">
+      {/* FOOTER SUPREMO (TOTAL GLASS) */}
+      <footer className="py-32 border-t border-white/5 text-center relative z-20 bg-white/[0.01] backdrop-blur-3xl">
          <div className="container mx-auto px-6 space-y-12">
             <div className="flex flex-col md:flex-row justify-center items-center gap-10">
                <Link to="/" className="flex items-center gap-4 opacity-80">
-                  <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black italic">E</div>
+                  <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black italic shadow-lg">E</div>
                   <span className="text-xl font-black tracking-tighter text-white uppercase italic">Empirion</span>
                </Link>
                <nav className="flex gap-10">
@@ -263,7 +265,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 };
 
 const getBranchIcon = (name: string) => {
-  const size = 48;
+  const size = 42; // Compact for better fit
   switch(name) {
     case 'Factory': return <Factory size={size} />;
     case 'ShoppingCart': return <ShoppingCart size={size} />;

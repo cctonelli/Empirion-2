@@ -2,11 +2,11 @@
 import React, { useLayoutEffect, useRef } from 'react';
 
 /**
- * Empire Cosmos Particles v7.2 (Glow Optimized)
+ * Empire Cosmos Particles v8.0 (Maximum Depth Optimized)
  * Features:
- * - High-visibility glow effect
- * - Optimized trail visibility for dark slate-950
- * - Retina/High-DPI sharp scaling
+ * - Ultra-high visibility shadowBlur (Glow)
+ * - Optimized trail for translucent overlays
+ * - Enhanced mouse gravitational pull
  */
 const EmpireParticles: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,15 +47,15 @@ const EmpireParticles: React.FC = () => {
     }> = [];
 
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f97316'];
-    const count = Math.min(100, Math.floor(window.innerWidth / 15));
+    const count = Math.min(120, Math.floor(window.innerWidth / 12)); // Increased count slightly
 
     for (let i = 0; i < count; i++) {
       particles.push({
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight,
-        vx: (Math.random() - 0.5) * 1.2,
-        vy: (Math.random() - 0.5) * 1.2,
-        radius: Math.random() * 2 + 1.5,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 1.5,
+        radius: Math.random() * 2.5 + 2, // Larger base particles
         color: colors[Math.floor(Math.random() * colors.length)],
         pulse: Math.random() * Math.PI * 2
       });
@@ -63,8 +63,8 @@ const EmpireParticles: React.FC = () => {
 
     let animationId: number;
     const animate = () => {
-      // Trail Effect: Ligeiramente mais opaco para visibilidade (0.12)
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.12)';
+      // Trail Effect: Ligeiramente mais translúcido para o rastro "durar" mais por baixo das janelas
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.08)';
       ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
       particles.forEach(p => {
@@ -72,31 +72,31 @@ const EmpireParticles: React.FC = () => {
         const dy = mouse.y - p.y;
         const dist = Math.hypot(dx, dy);
 
-        if (dist < 300 && dist > 0) {
-          const force = (300 - dist) / 300;
-          p.vx += (dx / dist) * force * 0.06;
-          p.vy += (dy / dist) * force * 0.06;
+        if (dist < 400 && dist > 0) { // Larger attraction radius
+          const force = (400 - dist) / 400;
+          p.vx += (dx / dist) * force * 0.1; // Stronger attraction
+          p.vy += (dy / dist) * force * 0.1;
         }
 
-        p.vx *= 0.97;
-        p.vy *= 0.97;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
         p.x += p.vx;
         p.y += p.vy;
-        p.pulse += 0.02;
+        p.pulse += 0.03;
 
         p.x = (p.x + window.innerWidth) % window.innerWidth;
         p.y = (p.y + window.innerHeight) % window.innerHeight;
 
-        const dynamicPulse = Math.sin(p.pulse) * 1.2;
+        const dynamicPulse = Math.sin(p.pulse) * 1.5;
         const size = Math.max(1.5, p.radius + dynamicPulse);
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         
-        // Aumento significativo do brilho (ShadowBlur)
-        ctx.globalAlpha = dist < 200 ? 0.9 : 0.5;
-        ctx.shadowBlur = dist < 200 ? 35 : 15;
+        // Brilho potente (Neon Effect) que atravessa as camadas de vidro
+        ctx.globalAlpha = dist < 250 ? 1.0 : 0.6;
+        ctx.shadowBlur = dist < 250 ? 45 : 25; // Massive glow
         ctx.shadowColor = p.color;
         
         ctx.fill();
