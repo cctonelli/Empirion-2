@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Check, Settings, Globe, Layers, Cpu, Zap, Loader2,
-  TrendingUp, Boxes, Bot, ShieldCheck, ArrowLeft, Trash2, Activity, Users
+  TrendingUp, Boxes, Bot, ShieldCheck, ArrowLeft, Trash2, Activity, Users,
+  Lock, Unlock, DollarSign as DollarIcon
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS, DEFAULT_MACRO } from '../constants';
-import { Branch, ScenarioType, ModalityType, RegionConfig, MacroIndicators, AccountNode } from '../types';
+import { Branch, ScenarioType, ModalityType, RegionConfig, MacroIndicators, AccountNode, CurrencyType } from '../types';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import { supabase } from '../services/supabase';
 
@@ -16,10 +17,15 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   const [formData, setFormData] = useState({
     name: '', branch: 'industrial' as Branch, templateId: '', salesMode: 'hybrid',
     scenarioType: 'simulated' as ScenarioType, modalityType: 'standard' as ModalityType,
-    transparency: 'medium', totalRounds: 12, teamsLimit: 8, botsCount: 4, currency: 'BRL'
+    transparency: 'medium', totalRounds: 12, teamsLimit: 8, botsCount: 4, 
+    currency: 'BRL' as CurrencyType, isPublic: false
   });
 
-  const [macro, setMacro] = useState<MacroIndicators>(DEFAULT_MACRO);
+  const [macro, setMacro] = useState<MacroIndicators>({
+    ...DEFAULT_MACRO,
+    initialExchangeRateUSD: 5.50
+  });
+
   const [regions, setRegions] = useState<RegionConfig[]>([
     { id: 'reg1', name: 'Sudeste', demandTotal: 500000, initialMarketShare: 20, initialPrice: 1200 },
     { id: 'reg2', name: 'Sul', demandTotal: 300000, initialMarketShare: 20, initialPrice: 1200 },
@@ -34,7 +40,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     if (formData.templateId) {
       const template = CHAMPIONSHIP_TEMPLATES.find(t => t.id === formData.templateId);
       if (template) {
-        setMacro(template.market_indicators);
+        setMacro({ ...template.market_indicators, initialExchangeRateUSD: macro.initialExchangeRateUSD });
         setFinancials(template.initial_financials);
         setFormData(prev => ({ ...prev, ...template.config, branch: template.branch }));
       }
@@ -51,9 +57,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         name: formData.name,
         branch: formData.branch,
         status: 'active',
+        is_public: formData.isPublic,
         current_round: 0,
         total_rounds: formData.totalRounds,
-        config: { ...formData, transparency: formData.transparency },
+        config: { ...formData },
         initial_financials: financials,
         initial_market_data: { regions },
         market_indicators: macro
@@ -87,17 +94,56 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
             <div className="space-y-12 animate-in fade-in duration-500 text-center">
                <div className="space-y-4">
                   <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">1. Identidade do Ecossistema</h2>
-                  <p className="text-slate-400 font-medium">Nomeie sua arena e defina o horizonte temporal.</p>
+                  <p className="text-slate-400 font-medium">Configure as bases fundamentais da sua arena global.</p>
                </div>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-left">
                   <InputGroup label="Nome da Arena" value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder="Ex: Master Cup Industrial 2026" />
+                  
                   <div className="space-y-3">
                      <label className="text-[10px] font-black uppercase tracking-widest text-orange-500">Ramo Operacional</label>
                      <select className="w-full p-6 bg-white/5 border border-white/10 rounded-[1.5rem] font-bold text-white outline-none focus:border-orange-500 transition-all" value={formData.branch} onChange={e => setFormData({...formData, branch: e.target.value as any})}>
                         {Object.entries(BRANCH_CONFIGS).map(([k, v]) => <option key={k} value={k} className="bg-slate-900">{v.label}</option>)}
                      </select>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-orange-500">Moeda Local</label>
+                       <select className="w-full p-6 bg-white/5 border border-white/10 rounded-[1.5rem] font-bold text-white outline-none focus:border-orange-500" value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value as any})}>
+                          <option value="BRL" className="bg-slate-900">BRL (R$)</option>
+                          <option value="USD" className="bg-slate-900">USD ($)</option>
+                          <option value="EUR" className="bg-slate-900">EUR (€)</option>
+                       </select>
+                    </div>
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-orange-500">Cotação Inicial Dólar</label>
+                       <div className="relative">
+                          <DollarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                          <input type="number" step="0.01" className="w-full pl-12 pr-4 py-6 bg-white/5 border border-white/10 rounded-[1.5rem] font-bold text-white outline-none focus:border-orange-500" value={macro.initialExchangeRateUSD} onChange={e => setMacro({...macro, initialExchangeRateUSD: parseFloat(e.target.value) || 0})} />
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-orange-500">Visibilidade da Arena</label>
+                     <div className="flex gap-4">
+                        <button 
+                          onClick={() => setFormData({...formData, isPublic: true})}
+                          className={`flex-1 p-6 rounded-[1.5rem] border-2 flex items-center justify-center gap-3 transition-all ${formData.isPublic ? 'bg-orange-600/10 border-orange-600 text-white shadow-lg' : 'bg-white/5 border-white/10 text-slate-500 hover:border-white/20'}`}
+                        >
+                           <Unlock size={18} /> <span className="font-black text-[10px] uppercase">Aberta (Pública)</span>
+                        </button>
+                        <button 
+                          onClick={() => setFormData({...formData, isPublic: false})}
+                          className={`flex-1 p-6 rounded-[1.5rem] border-2 flex items-center justify-center gap-3 transition-all ${!formData.isPublic ? 'bg-blue-600/10 border-blue-600 text-white shadow-lg' : 'bg-white/5 border-white/10 text-slate-500 hover:border-white/20'}`}
+                        >
+                           <Lock size={18} /> <span className="font-black text-[10px] uppercase">Privada (Auditada)</span>
+                        </button>
+                     </div>
+                  </div>
+
                   <InputGroup label="Ciclos (Rodadas)" value={formData.totalRounds} onChange={v => setFormData({...formData, totalRounds: Number(v)})} type="number" />
+                  
                   <div className="space-y-3">
                      <label className="text-[10px] font-black uppercase tracking-widest text-orange-500">Transparência Oracle</label>
                      <select className="w-full p-6 bg-white/5 border border-white/10 rounded-[1.5rem] font-bold text-white outline-none focus:border-orange-500 transition-all" value={formData.transparency} onChange={e => setFormData({...formData, transparency: e.target.value as any})}>
@@ -151,7 +197,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                                <input className="bg-transparent border-b border-transparent focus:border-orange-500 outline-none w-full text-white" value={reg.name} onChange={e => { const nr = [...regions]; nr[idx].name = e.target.value; setRegions(nr); }} />
                              </td>
                              <td className="p-6">
-                               <input type="number" className="bg-white/5 border border-white/10 text-white p-2 rounded-lg w-24 outline-none focus:border-orange-500" value={reg.demandTotal} onChange={e => { const nr = [...regions]; nr[idx].demandTotal = Number(e.target.value); setRegions(nr); }} />
+                               <input type="number" className="bg-white/5 border border-white/10 text-white p-2 rounded-lg w-32 outline-none focus:border-orange-500" value={reg.demandTotal} onChange={e => { const nr = [...regions]; nr[idx].demandTotal = Number(e.target.value); setRegions(nr); }} />
                              </td>
                              <td className="p-6 font-mono text-blue-400 font-black">{reg.initialMarketShare}%</td>
                              <td className="p-6">
@@ -232,8 +278,9 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                </div>
                <div className="max-w-lg mx-auto bg-slate-900 p-10 rounded-[4rem] text-left space-y-6 shadow-2xl border border-white/5">
                   <SummaryLine label="Arena" val={formData.name} />
-                  <SummaryLine label="Bots" val={`${formData.botsCount} ativos`} />
-                  <SummaryLine label="Regiões" val={regions.length.toString()} />
+                  <SummaryLine label="Moeda" val={formData.currency} />
+                  <SummaryLine label="Status" val={formData.isPublic ? 'PÚBLICO' : 'PRIVADO'} />
+                  <SummaryLine label="Câmbio USD" val={`$ ${macro.initialExchangeRateUSD.toFixed(2)}`} />
                </div>
             </div>
           )}

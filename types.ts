@@ -6,6 +6,7 @@ export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
+export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 
 export interface AccountNode {
   id: string;
@@ -20,33 +21,27 @@ export interface AccountNode {
 export interface RegionConfig {
   id: string;
   name: string;
-  demandTotal: number; // Unidades
-  initialMarketShare: number; // %
-  initialPrice: number; // $
+  demandTotal: number;
+  initialMarketShare: number;
+  initialPrice: number;
 }
 
 export interface MacroIndicators {
-  growthRate: number; // %
-  inflationRate: number; // %
-  interestRateTR: number; // %
-  providerInterest: number; // %
-  salesAvgInterest: number; // %
-  avgProdPerMan: number; // unidades
-  importedProducts: number; // unidades
+  growthRate: number;
+  inflationRate: number;
+  interestRateTR: number;
+  providerInterest: number;
+  salesAvgInterest: number;
+  avgProdPerMan: number;
+  importedProducts: number;
   laborAvailability: 'low' | 'medium' | 'high';
-  providerPrices: {
-    mpA: number;
-    mpB: number;
-  };
+  providerPrices: { mpA: number; mpB: number; };
   distributionCostUnit: number;
   marketingExpenseBase: number;
-  machineryValues: {
-    alfa: number;
-    beta: number;
-    gama: number;
-  };
+  machineryValues: { alfa: number; beta: number; gama: number; };
   sectorAvgSalary: number;
   stockMarketPrice: number;
+  initialExchangeRateUSD: number; // Cotação inicial do dólar
   demand_regions?: number[];
 }
 
@@ -71,11 +66,11 @@ export interface Championship {
   description: string;
   branch: Branch;
   status: ChampionshipStatus;
-  is_public: boolean;
+  is_public: boolean; // Aberto ou Privado
   currentRound: number;
   totalRounds: number;
   config: {
-    currency: string;
+    currency: CurrencyType;
     roundFrequencyDays: number;
     salesMode: SalesMode;
     scenarioType: ScenarioType;
@@ -131,20 +126,7 @@ export interface DecisionData {
   finance: { loanRequest: number; loanType: number; application: number; termSalesInterest: number; buyMachines: { alfa: number; beta: number; gama: number }; sellMachines: { alfa: number; beta: number; gama: number }; };
 }
 
-export interface Modality {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url?: string;
-  is_public: boolean;
-  page_content: {
-    hero: { title: string; subtitle: string };
-    features: string[];
-    kpis: string[];
-    accent_color?: 'blue' | 'emerald' | 'orange';
-  };
-}
+// Missing types defined below
 
 export interface ChampionshipTemplate {
   id: string;
@@ -163,6 +145,24 @@ export interface ChampionshipTemplate {
   initial_financials: {
     balance_sheet: AccountNode[];
     dre: AccountNode[];
+  };
+}
+
+export interface Modality {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  is_public: boolean;
+  page_content: {
+    hero: {
+      title: string;
+      subtitle: string;
+    };
+    features: string[];
+    kpis: string[];
+    accent_color?: 'blue' | 'emerald' | 'orange';
   };
 }
 

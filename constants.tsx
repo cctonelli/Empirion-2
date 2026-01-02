@@ -1,4 +1,5 @@
 
+// Use ChampionshipTemplate instead of ChampionshipStatus for type safety in CHAMPIONSHIP_TEMPLATES
 import { Branch, ChampionshipTemplate, ModalityType, ScenarioType, ChampionshipStatus, MacroIndicators, Championship } from './types';
 
 export const COLORS = {
@@ -40,7 +41,9 @@ export const DEFAULT_MACRO: MacroIndicators = {
   marketingExpenseBase: 500000,
   machineryValues: { alfa: 2000000, beta: 3500000, gama: 5000000 },
   sectorAvgSalary: 5000.00,
-  stockMarketPrice: 15.00
+  stockMarketPrice: 15.00,
+  // Fix: Added missing required initialExchangeRateUSD property
+  initialExchangeRateUSD: 5.25
 };
 
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
