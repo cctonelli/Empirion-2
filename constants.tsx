@@ -29,11 +29,89 @@ export const BRANCH_CONFIGS: Record<string, { label: string; icon: string }> = {
   construction: { label: 'Construção', icon: '🔨' }
 };
 
+// Added missing MODALITY_INFO for championship configuration
 export const MODALITY_INFO: Record<string, { label: string; desc: string }> = {
-  standard: { label: 'Arena Padrão', desc: 'Simulação clássica com foco em equilíbrio operacional.' },
-  business_round: { label: 'Rodada de Negócios', desc: 'Guerra de preços intensa e inflação composta.' },
-  factory_efficiency: { label: 'Eficiência de Fábrica', desc: 'Foco em OEE, JIT e Manufatura Enxuta.' }
+  standard: { label: 'Arena Padrão', desc: 'Equilíbrio entre produção e comercial sem variáveis extremas.' },
+  business_round: { label: 'Rodada de Negócios', desc: 'Foco em Guerra de Preços, Elasticidade-Demanda Alta e Inflação Composta.' },
+  factory_efficiency: { label: 'Eficiência de Fábrica', desc: 'Foco em OEE, Lead Time, JIT/MRP e Níveis de Automação Industrial.' }
 };
+
+export const MENU_STRUCTURE = [
+  { label: 'home', path: '/', translationKey: 'home' },
+  { 
+    label: 'ramos', 
+    path: '/solutions/simulators',
+    sub: [
+      { id: 'ind', label: 'Industrial', path: '/activities/industrial', icon: 'Factory' },
+      { id: 'com', label: 'Comercial', path: '/activities/commercial', icon: 'ShoppingCart' },
+      { id: 'ser', label: 'Serviços', path: '/activities/services', icon: 'Briefcase' },
+      { id: 'agr', label: 'Agro', path: '/activities/agribusiness', icon: 'Tractor' },
+      { id: 'fin', label: 'Financeiro', path: '/activities/finance', icon: 'DollarSign' },
+      { id: 'con', label: 'Construção', path: '/activities/construction', icon: 'Hammer' },
+    ]
+  },
+  { 
+    label: 'solucoes', 
+    path: '#',
+    sub: [
+      { 
+        id: 'arenas', 
+        label: 'Arenas Virtuais', 
+        path: '/solutions/open-tournaments',
+        icon: 'Trophy',
+        sub: [
+          { id: 'edu', label: 'Educação', path: '/solutions/university' },
+          { id: 'corp', label: 'Corporativo', path: '/solutions/corporate' },
+          { id: 'solo', label: 'Solo (Individual)', path: '/solutions/individual' }
+        ]
+      },
+      { id: 'bp_ia', label: 'Strategos Wizard (BP)', path: '/solutions/business-plan', icon: 'PenTool' },
+    ]
+  },
+  { label: 'funcionalidades', path: '/features' },
+  { label: 'conteudos', path: '/blog' },
+  { label: 'contato', path: '/contact' },
+  { label: 'teste', path: '/test/industrial', icon: 'Terminal' }
+];
+
+export const DEMO_CHAMPIONSHIP_DATA = {
+  id: 'alpha-arena-1',
+  name: 'Arena Industrial Alpha (Demo)',
+  branch: 'industrial' as Branch,
+  status: 'active' as ChampionshipStatus,
+  is_public: true,
+  currentRound: 1,
+  totalRounds: 12,
+  config: {
+    regionsCount: 9,
+    initialStock: 30000,
+    initialPrice: 340,
+    modalityType: 'standard' as ModalityType
+  },
+  initial_financials: {
+    balance_sheet: {
+      total_assets: 9176940,
+      current_assets: { cash: 1000000, accounts_receivable: 1823735, inventory: 0 },
+      non_current_assets: { machinery: 5153205, land: 1200000 },
+      liabilities_equity: { total: 9176940, current: 2000000, non_current: 3000000, equity: 4176940 }
+    }
+  },
+  ecosystemConfig: {
+    scenarioType: 'simulated' as ScenarioType,
+    modalityType: 'standard' as ModalityType,
+    inflationRate: 0.04,
+    demandMultiplier: 1.0,
+    interestRate: 0.12,
+    marketVolatility: 0.2
+  }
+};
+
+// Added missing MOCK_ONGOING_CHAMPIONSHIPS for tournament display
+export const MOCK_ONGOING_CHAMPIONSHIPS = [
+  { id: 'c1', name: 'Elite Industrial Alpha', branch: 'Industrial', round: '04/12', teams: 14, leader: 'Equipe Alpha' },
+  { id: 'c2', name: 'Master Varejo Global', branch: 'Comercial', round: '02/10', teams: 22, leader: 'Varejo Pro' },
+  { id: 'c3', name: 'Agro Delta Challenge', branch: 'Agro', round: '07/12', teams: 8, leader: 'Fazenda Futuro' },
+];
 
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   {
@@ -76,73 +154,6 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   }
 ];
 
-export const MENU_STRUCTURE = [
-  { label: 'home', path: '/' },
-  { 
-    label: 'solutions', 
-    path: '#',
-    sub: [
-      { id: 'arenas', label: 'Arenas Multiplayer', path: '/solutions/open-tournaments', icon: 'Trophy' },
-      { id: 'simulators', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu' },
-      { id: 'bp', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool' },
-    ]
-  },
-  { label: 'Teste', path: '/test/industrial' },
-  { label: 'admin', path: '/app/admin', roles: ['tutor', 'admin'] }
-];
-
-// Added missing DEMO_CHAMPIONSHIP_DATA for alpha testing environment
-export const DEMO_CHAMPIONSHIP_DATA = {
-  id: 'alpha-arena-1',
-  name: 'Arena Industrial Alpha (Demo)',
-  branch: 'industrial' as Branch,
-  status: 'active' as ChampionshipStatus,
-  is_public: true,
-  currentRound: 1,
-  totalRounds: 12,
-  config: {
-    regionsCount: 9,
-    initialStock: 30000,
-    initialPrice: 340,
-    modalityType: 'standard' as ModalityType
-  },
-  initial_financials: {
-    balance_sheet: {
-      total_assets: 9176940,
-      current_assets: { cash: 1000000, accounts_receivable: 1823735, inventory: 0 },
-      non_current_assets: { machinery: 5153205, land: 1200000 },
-      liabilities_equity: { total: 9176940, current: 2000000, non_current: 3000000, equity: 4176940 }
-    }
-  },
-  ecosystemConfig: {
-    scenarioType: 'simulated' as ScenarioType,
-    modalityType: 'standard' as ModalityType,
-    inflationRate: 0.04,
-    demandMultiplier: 1.0,
-    interestRate: 0.12,
-    marketVolatility: 0.2
-  }
-};
-
-// Added missing LANDING_PAGE_DATA for the main site layout
-export const LANDING_PAGE_DATA = {
-  sectors: [
-    { id: 's1', name: 'Indústria', slug: 'industrial', icon: 'Factory', description: 'Otimize linhas de montagem e gerencie Capex complexo.' },
-    { id: 's2', name: 'Comércio', slug: 'commercial', icon: 'ShoppingCart', description: 'Guerra de preços e gestão de canais de distribuição omni.' },
-    { id: 's3', name: 'Serviços', slug: 'services', icon: 'Briefcase', description: 'Gestão de capital humano e níveis de SLA críticos.' },
-    { id: 's4', name: 'Agro', slug: 'agribusiness', icon: 'Tractor', description: 'Ciclos de colheita e volatilidade de commodities globais.' },
-    { id: 's5', name: 'Finanças', slug: 'finance', icon: 'DollarSign', description: 'Alavancagem, derivativos e gestão de risco sistêmico.' },
-    { id: 's6', name: 'Construção', slug: 'construction', icon: 'Hammer', description: 'Gerenciamento de projetos e fluxos de caixa de longo prazo.' }
-  ]
-};
-
-// Added missing MOCK_ONGOING_CHAMPIONSHIPS for the global leaderboard
-export const MOCK_ONGOING_CHAMPIONSHIPS = [
-  { id: 'm1', name: 'Elite Industrial 2026', branch: 'industrial', round: '5/12', teams: 14, leader: 'Alpha Group' },
-  { id: 'm2', name: 'Agro Mastery', branch: 'agribusiness', round: '2/8', teams: 8, leader: 'Fazenda Futuro' },
-  { id: 'm3', name: 'Tech Retail Arena', branch: 'commercial', round: '10/12', teams: 20, leader: 'Retail Giants' }
-];
-
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
     hero: {
@@ -153,26 +164,19 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       secondaryCta: "Ver Atividades"
     },
     carousel: [
-      { id: 1, title: "Mastery Industrial", subtitle: "Otimize seu OEE.", image: "https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000", badge: "Live Arena", link: "/activities/industrial" }
+      { id: 1, title: "Mastery Industrial", subtitle: "Otimize seu OEE.", image: "https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000", badge: "Live Arena", link: "/activities/industrial" },
+      { id: 2, title: "Rodada de Negócios", subtitle: "Domine a guerra de preços.", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000", badge: "Live Arena", link: "/activities/rodada-negocios" }
     ],
     leaderboard: [
       { id: 'c1', name: "Industrial Mastery", status: "Rodada 5/12", teams: 14, lead: "Alpha Group" }
     ],
-    sectors: LANDING_PAGE_DATA.sectors
-  },
-  'rewards': {
-    subtitle: "Sua excelência estratégica convertida em prestígio e ativos reais na plataforma.",
-    tiers: [
-      { name: 'Bronze', pts: 0, color: 'text-orange-400' },
-      { name: 'Silver', pts: 5000, color: 'text-slate-400' },
-      { name: 'Gold', pts: 15000, color: 'text-amber-500' },
-      { name: 'Diamond', pts: 50000, color: 'text-blue-400' }
-    ],
-    accumulation: [
-      { action: 'Vitória em Arena', val: '1000 pts' },
-      { action: 'Indicação Tutor', val: '250 pts' },
-      { action: 'Feedback Strategos', val: '50 pts' },
-      { action: 'Consistência (10 rounds)', val: '500 pts' }
+    sectors: [
+      { id: 's1', name: 'Indústria', slug: 'industrial', icon: 'Factory', description: 'Otimize linhas de montagem e gerencie Capex complexo.' },
+      { id: 's2', name: 'Comércio', slug: 'commercial', icon: 'ShoppingCart', description: 'Guerra de preços e gestão de canais de distribuição omni.' },
+      { id: 's3', name: 'Serviços', slug: 'services', icon: 'Briefcase', description: 'Gestão de capital humano e níveis de SLA críticos.' },
+      { id: 's4', name: 'Agro', slug: 'agribusiness', icon: 'Tractor', description: 'Ciclos de colheita e volatilidade de commodities globais.' },
+      { id: 's5', name: 'Finanças', slug: 'finance', icon: 'DollarSign', description: 'Alavancagem, derivativos e gestão de risco sistêmico.' },
+      { id: 's6', name: 'Construção', slug: 'construction', icon: 'Hammer', description: 'Gerenciamento de projetos e fluxos de caixa de longo prazo.' }
     ]
   }
 };

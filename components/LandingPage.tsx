@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Slider from 'react-slick';
-import { DEFAULT_PAGE_CONTENT, LANDING_PAGE_DATA } from '../constants';
+import { DEFAULT_PAGE_CONTENT } from '../constants';
 import { fetchPageContent, getModalities, subscribeToModalities } from '../services/supabase';
 import { Modality } from '../types';
 import EmpireParticles from './EmpireParticles';
