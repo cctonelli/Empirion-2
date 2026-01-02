@@ -27,23 +27,23 @@ const secureAction = async (action: () => Promise<any>) => {
 };
 
 /**
- * ALPHA TERMINAL: Protocolo de Autenticação Silenciosa (Refatorado)
+ * ALPHA TERMINAL: Protocolo de Autenticação Silenciosa (Refatorado para domínios .com.br)
  */
 export const silentTestAuth = async (user: typeof ALPHA_TEST_USERS[0]) => {
   const testPassword = 'empirion_alpha_2026';
   
   // 1. Tenta Login Direto
   const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-    email: user.email,
+    email: user.email.trim(),
     password: testPassword
   });
 
   // 2. Se falhar, tenta criar (Provisionamento de Identidade On-demand)
   if (loginError) {
-    console.log(`ALPHA_AUTH: Perfil não encontrado ou erro. Tentando auto-provisionamento para ${user.email}`);
+    console.warn(`ALPHA_AUTH_RETRY: Tentando provisionamento para ${user.email}`);
     
     const { error: signUpError } = await supabase.auth.signUp({
-      email: user.email,
+      email: user.email.trim(),
       password: testPassword,
       options: { 
         data: { 
@@ -55,13 +55,14 @@ export const silentTestAuth = async (user: typeof ALPHA_TEST_USERS[0]) => {
     });
 
     if (signUpError) {
-      // Se já existir mas a senha for diferente (improvável no ambiente alpha), ou erro de e-mail
+      // Se já existir ou for erro de validador de domínio (raro agora com .com.br)
+      console.error("ALPHA_SIGNUP_FATAL:", signUpError.message);
       throw signUpError;
     }
     
     // Tenta login final após registro
     const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-      email: user.email,
+      email: user.email.trim(),
       password: testPassword
     });
     
