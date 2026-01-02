@@ -9,150 +9,6 @@ export type ServiceLevel = 'low' | 'mid' | 'high';
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
 export type ProductionStrategy = 'push_mrp' | 'pull_kanban' | 'opt' | 'heijunka';
 
-/**
- * Interface for Business Plan fields used in the Strategos BP Wizard.
- */
-export interface BusinessPlanField {
-  id: string;
-  label: string;
-  type: 'textarea' | 'text' | 'number' | 'select';
-  placeholder?: string;
-  value: string;
-  aiPrompt?: string;
-}
-
-/**
- * Interface for Business Plan sections containing multiple fields.
- */
-export interface BusinessPlanSection {
-  id: string;
-  title: string;
-  fields: BusinessPlanField[];
-}
-
-export interface Modality {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  image_url: string;
-  page_content: {
-    hero: { title: string; subtitle: string };
-    features: string[];
-    kpis: string[];
-    accent_color: string;
-  };
-  config_template: any;
-  is_public: boolean;
-  created_at: string;
-}
-
-export interface UserProfile {
-  id: string;
-  supabase_user_id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  is_opal_premium: boolean; // Controle de acesso ao Opal
-  created_at: string;
-  opal_config?: {
-    is_premium_required: boolean;
-    opal_url: string;
-  };
-}
-
-// ... Rest of the interfaces stay the same
-export interface InventoryStats {
-  initial: number;
-  purchases: number;
-  consumption: number;
-  sales: number;
-  final: number;
-  perishability_loss?: number;
-  obsolescence_loss?: number;
-}
-
-export interface MachineStats {
-  alfa: { qty: number; age: number };
-  beta: { qty: number; age: number };
-  gama: { qty: number; age: number };
-}
-
-export interface FinancialStatement {
-  round: number;
-  inventory: {
-    mpa: InventoryStats;
-    mpb: InventoryStats;
-    finished: InventoryStats;
-  };
-  cash_flow: {
-    inflow_sales: number;
-    outflow_purchases: number;
-    outflow_payroll: number;
-    outflow_marketing: number;
-    outflow_distribution: number;
-    outflow_taxes: number;
-    outflow_taxes_val?: number;
-    outflow_machines: number;
-    net_cash: number;
-  };
-  hr: {
-    total: number;
-    productivity: number;
-    motivation: string;
-    strike: boolean;
-    strike_intensity?: number;
-    sales_staff_count?: number;
-    staff_by_level?: Record<ServiceLevel, number>;
-  };
-  machines: MachineStats;
-  regional_demand: Record<number, { potential: number; sold: number }>;
-  quality_index?: number;
-  consumer_satisfaction?: number;
-  ecommerce_share?: number;
-  company_image_index?: number;
-}
-
-export interface BalanceSheet {
-  current_assets: {
-    cash: number;
-    accounts_receivable: number;
-    inventory_raw_a: number;
-    inventory_raw_b: number;
-    inventory_finished: number;
-    prepaid_expenses: number;
-    portfolio_investments?: number;
-  };
-  non_current_assets: {
-    pp_e: {
-      machinery: number;
-      buildings: number;
-      land: number;
-    };
-    accumulated_depreciation: number;
-    asset_seizure_loss?: number;
-  };
-  total_assets: number;
-}
-
-export interface LiabilitiesEquity {
-  current_liabilities: {
-    accounts_payable: number;
-    short_term_loans: number;
-    taxes_payable: number;
-    dividends_payable: number;
-    customer_deposits?: number;
-  };
-  non_current_liabilities: {
-    long_term_loans: number;
-  };
-  equity: {
-    capital_stock: number;
-    retained_earnings: number;
-  };
-  total_liabilities_equity: number;
-}
-
 export interface AccountNode {
   id: string;
   label: string;
@@ -162,6 +18,33 @@ export interface AccountNode {
   isEditable?: boolean;
 }
 
+export interface MarketConfig {
+  regionsCount: number;
+  demand_per_region: Record<number, number>;
+  initial_market_share_per_region: Record<number, number>;
+  initial_prices_per_region: Record<number, number>;
+  share_price_initial: number;
+  shares_outstanding: number;
+}
+
+export interface MacroIndicators {
+  inflation_rate: number;
+  interest_rate_tr: number;
+  exchange_rate_usd_brl: number;
+  commodity_index: number;
+  average_salary: number;
+}
+
+// Added missing MarketIndicators type used in simulation services
+export interface MarketIndicators {
+  inflation_rate: number;
+  interest_rate_tr: number;
+  exchange_rate: number;
+  demand_potential: number;
+  demand_regions: number[];
+}
+
+// Added missing BlackSwanEvent type for dynamic simulation events
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -171,23 +54,27 @@ export interface BlackSwanEvent {
     demand: number;
     interest: number;
     productivity: number;
-    climate_impact?: number;
-    ecommerce_surge?: number;
-    service_quality_penalty?: number;
   };
 }
 
-export interface MessageBoardItem {
+export interface Championship {
   id: string;
-  sender: string;
-  text: string;
-  timestamp: string;
-  isImportant?: boolean;
+  name: string;
+  description: string;
+  branch: Branch;
+  status: ChampionshipStatus;
+  is_public: boolean;
+  currentRound: number;
+  totalRounds: number;
+  config: any;
+  initial_financials?: any;
+  ecosystemConfig?: EcosystemConfig;
 }
 
+// Added missing EcosystemConfig for simulation environment parameters
 export interface EcosystemConfig {
   scenarioType: ScenarioType;
-  modalityType?: ModalityType;
+  modalityType: ModalityType;
   inflationRate: number;
   demandMultiplier: number;
   interestRate: number;
@@ -207,127 +94,7 @@ export interface EcosystemConfig {
     inflation: number;
     demand: number;
     currency: number;
-    climate?: number;
-    ecommerce?: number;
-    service_demand?: number;
   };
-  stockMarketActive?: boolean;
-  messageBoard?: MessageBoardItem[];
-  ecommerceEnabled?: boolean;
-  opal_config?: {
-    is_premium_required: boolean;
-    opal_url: string;
-  };
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
-export interface ProductDefinition {
-  name: string;
-  unit_cost_base: number;
-  suggested_price: number;
-  initial_stock: number;
-  max_capacity: number;
-  is_perishable?: boolean;
-  perishability_rate?: number;
-  is_durable?: boolean;
-  obsolescence_rate?: number;
-  formation_level?: ServiceLevel;
-}
-
-export interface ResourceUsage {
-  water_consumption_monthly: number;
-  energy_consumption_monthly: number;
-  co2_emissions_monthly: number;
-}
-
-export interface MarketIndicators {
-  inflation_rate: number;
-  interest_rate_tr: number;
-  supplier_interest: number;
-  demand_regions: number[];
-  raw_a_price: number;
-  raw_b_price: number;
-  distribution_cost: number;
-  marketing_cost_unit: number;
-  machine_alfa_price: number;
-  machine_beta_price: number;
-  machine_gama_price: number;
-  average_salary: number;
-  exchange_rate?: number;
-  risk_premium?: number;
-  stock_prices?: Record<string, number>;
-  seasonality_index?: number;
-  climate_status?: 'optimal' | 'dry' | 'flood' | 'storm';
-  ecommerce_adoption_rate?: number;
-  service_complexity_index?: number;
-}
-
-export interface DecisionData {
-  regions: Record<number, { 
-    price: number; 
-    term: number; 
-    marketing: number;
-    ecommerce_price?: number;
-    ecommerce_marketing?: number;
-    service_quality_focus?: number;
-  }>;
-  hr: {
-    hired: number;
-    fired: number;
-    salary: number;
-    trainingPercent: number;
-    participationPercent: number;
-    others: number;
-    overtimeHours?: number;
-    sales_staff_count?: number;
-    commission_percent?: number;
-    staff_by_level?: Record<ServiceLevel, number>;
-  };
-  production: {
-    purchaseMPA: number;
-    purchaseMPB: number;
-    paymentType: 0 | 1 | 2;
-    activityLevel: number;
-    extraProduction: number;
-    rd_investment?: number;
-    agro_tech_investment?: number;
-    digital_exp_investment?: number;
-    service_level_allocation?: Record<ServiceLevel, number>;
-    contract_mode?: 'previous' | 'immediate';
-    strategy?: ProductionStrategy;
-    automation_level?: number;
-    batch_size?: number;
-  };
-  finance: {
-    loanRequest: number;
-    loanType: 0 | 1 | 2;
-    application: number;
-    termSalesInterest: number;
-    buyMachines: { alfa: number; beta: number; gama: number };
-    sellMachines: { alfa: number; beta: number; gama: number };
-    receivables_anticipation?: number;
-    emergency_loan?: number;
-  };
-  inBankruptcy?: boolean;
-}
-
-export interface Championship {
-  id: string;
-  name: string;
-  description: string;
-  branch: Branch;
-  status: ChampionshipStatus;
-  is_public: boolean;
-  currentRound: number;
-  totalRounds: number;
-  config: any;
-  initial_financials?: any;
-  ecosystemConfig?: EcosystemConfig;
 }
 
 export interface ChampionshipTemplate {
@@ -346,14 +113,57 @@ export interface ChampionshipTemplate {
     transparency_level: TransparencyLevel;
     team_fee: number;
     community_enabled: boolean;
-    regionsCount?: number;
-    modalityType?: ModalityType;
+    regionsCount: number;
+    modalityType: ModalityType;
   };
-  initial_financials: {
-    balance_sheet: BalanceSheet;
-    liabilities_equity: LiabilitiesEquity;
-  };
-  products: ProductDefinition[];
-  resources: ResourceUsage;
-  market_indicators: MarketIndicators;
+  initial_financials: any;
+  products: any[];
+  resources: any;
+  market_indicators: any;
+}
+
+export interface UserProfile {
+  id: string;
+  supabase_user_id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  is_opal_premium: boolean;
+  created_at: string;
+  opal_config?: any;
+}
+
+export interface Modality {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  image_url: string;
+  page_content: any;
+  config_template: any;
+  is_public: boolean;
+  created_at: string;
+}
+
+export interface DecisionData {
+  regions: Record<number, any>;
+  hr: any;
+  production: any;
+  finance: any;
+}
+
+// Added missing MessageBoardItem for dashboard news feed
+export interface MessageBoardItem {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+  isImportant?: boolean;
+}
+
+// Added missing CommunityCriteria for voting mechanics
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
 }
