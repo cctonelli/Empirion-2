@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronDown, ChevronRight, LogIn, Factory, ShoppingCart, Briefcase, 
@@ -33,6 +33,7 @@ const getIcon = (iconName?: string) => {
 
 const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { modalities } = useModalities();
@@ -113,12 +114,22 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         {/* ACTIONS */}
         <div className="flex items-center gap-5">
           <div className="hidden xl:block scale-90"><LanguageSwitcher light /></div>
+          
+          {/* CTA TESTE - ALPHA TERMINAL */}
+          <Link 
+            to="/test/industrial"
+            className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 text-slate-400 rounded-full font-black text-[9px] uppercase tracking-[0.2em] hover:bg-white/10 hover:text-white transition-all active:scale-95"
+          >
+            <Terminal size={12} className="text-orange-500" /> Ambiente de Teste
+          </Link>
+
           <button 
             onClick={onLogin} 
             className="cyber-button hidden md:flex items-center gap-3 px-8 py-3 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 whitespace-nowrap hover:bg-orange-500"
           >
             <LogIn size={14} /> Entrar
           </button>
+          
           <button className="lg:hidden p-2 text-white hover:bg-white/5 rounded-xl" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>
@@ -158,6 +169,15 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     )}
                 </div>
               ))}
+              
+              {/* MOBILE TEST LINK */}
+              <Link 
+                to="/test/industrial" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="mt-4 flex items-center gap-3 text-orange-500 font-black uppercase text-sm tracking-widest bg-white/5 p-5 rounded-2xl border border-white/5"
+              >
+                <Terminal size={18} /> Acessar Ambiente de Teste
+              </Link>
             </div>
           </motion.div>
         )}
