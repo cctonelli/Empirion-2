@@ -1,5 +1,5 @@
 
-import { DecisionData, Branch, EcosystemConfig, MarketIndicators } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators } from '../types';
 
 /**
  * EMPIRION MATHEMATICAL SANITIZER
@@ -40,7 +40,7 @@ export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
   ecoConfig: EcosystemConfig,
-  indicators?: MarketIndicators
+  indicators?: MacroIndicators
 ) => {
   const modality = ecoConfig.modalityType || 'standard';
   const metrics = calculateIndustrialResults(decisions, ecoConfig);
@@ -49,12 +49,14 @@ export const calculateProjections = (
   let activeInflation = 1.0 + (ecoConfig.inflationRate || 0.04);
 
   // Cálculo de Demanda (Sanitizado)
+  // Use proper types for reduce and access properties safely
   const regions = Object.values(decisions.regions);
-  const avgPrice = regions.reduce((acc, r) => acc + sanitize(r.price, 340), 0) / (regions.length || 1);
-  const totalMarketing = regions.reduce((acc, r) => acc + sanitize(r.marketing, 0), 0);
+  const avgPrice = regions.reduce((acc: number, r: any) => acc + sanitize(r.price, 340), 0) / (regions.length || 1);
+  const totalMarketing = regions.reduce((acc: number, r: any) => acc + sanitize(r.marketing, 0), 0);
   
   const imageScore = Math.min(100, (totalMarketing * 2) + (metrics.oee * 0.4));
-  const marketPotential = (indicators?.demand_regions[0] || 12000) * (ecoConfig.demandMultiplier || 1);
+  // indicators might be MacroIndicators, checking for demand_regions property
+  const marketPotential = (indicators?.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1);
   const demand = marketPotential * Math.pow(avgPrice / 320, activeElasticity) * (1 + (imageScore - 50) / 100);
 
   // Produção (Sanitizado)

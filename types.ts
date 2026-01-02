@@ -11,56 +11,64 @@ export interface AccountNode {
   id: string;
   label: string;
   value: number;
-  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense' | 'totalizer';
+  isReadOnly?: boolean;
   children?: AccountNode[];
   isEditable?: boolean;
 }
 
 export interface RegionConfig {
-  id: number;
+  id: string;
   name: string;
-  demand: number;
-  initialShare: number;
-  suggestedPrice: number;
+  demandTotal: number; // Unidades
+  initialMarketShare: number; // %
+  initialPrice: number; // $
 }
 
 export interface MacroIndicators {
-  inflation_rate: number;
-  interest_rate_tr: number;
-  exchange_rate_usd_brl: number;
-  commodity_index: number;
-  average_salary: number;
-}
-
-// Added BlackSwanEvent to support simulation events and Dashboard integration
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
+  growthRate: number; // %
+  inflationRate: number; // %
+  interestRateTR: number; // %
+  providerInterest: number; // %
+  salesAvgInterest: number; // %
+  avgProdPerMan: number; // unidades
+  importedProducts: number; // unidades
+  laborAvailability: 'low' | 'medium' | 'high';
+  providerPrices: {
+    mpA: number;
+    mpB: number;
   };
+  distributionCostUnit: number;
+  marketingExpenseBase: number;
+  machineryValues: {
+    alfa: number;
+    beta: number;
+    gama: number;
+  };
+  sectorAvgSalary: number;
+  stockMarketPrice: number;
+  demand_regions?: number[];
 }
 
-// Added CommunityCriteria to support gamification and voting features
+/**
+ * Added missing EcosystemConfig type
+ */
+export interface EcosystemConfig {
+  scenarioType: ScenarioType;
+  modalityType: ModalityType;
+  inflationRate: number;
+  demandMultiplier: number;
+  interestRate: number;
+  marketVolatility: number;
+}
+
+/**
+ * Added missing CommunityCriteria type
+ */
 export interface CommunityCriteria {
   id: string;
   label: string;
   weight: number;
-}
-
-// Added MarketIndicators to unify market data across the simulation engine
-export interface MarketIndicators {
-  macro?: MacroIndicators;
-  regions?: RegionConfig[];
-  demand_regions?: number[];
-  inflation_rate?: number;
-  interest_rate_tr?: number;
-  exchange_rate?: number;
-  demand_potential?: number;
 }
 
 export interface Championship {
@@ -72,10 +80,32 @@ export interface Championship {
   is_public: boolean;
   currentRound: number;
   totalRounds: number;
-  config: any;
-  initial_financials?: any;
-  market_indicators?: MarketIndicators;
-  ecosystemConfig?: any;
+  config: {
+    currency: string;
+    roundFrequencyDays: number;
+    salesMode: SalesMode;
+    scenarioType: ScenarioType;
+    transparencyLevel: TransparencyLevel;
+    modalityType: ModalityType;
+    teamsLimit: number;
+    botsCount: number;
+    /**
+     * Added missing votingCriteria property
+     */
+    votingCriteria?: CommunityCriteria[];
+  };
+  initial_financials?: {
+    balance_sheet: AccountNode[];
+    dre: AccountNode[];
+  };
+  initial_market_data?: {
+    regions: RegionConfig[];
+  };
+  market_indicators?: MacroIndicators;
+  /**
+   * Added missing ecosystemConfig property
+   */
+  ecosystemConfig?: EcosystemConfig;
 }
 
 export interface ChampionshipTemplate {
@@ -84,23 +114,9 @@ export interface ChampionshipTemplate {
   branch: Branch;
   sector: string;
   description: string;
-  is_public: boolean;
-  config: {
-    currency: string;
-    round_frequency_days: number;
-    total_rounds: number;
-    sales_mode: SalesMode;
-    scenario_type: ScenarioType;
-    transparency_level: TransparencyLevel;
-    modalityType: ModalityType;
-    // Added missing configuration properties found in constants and wizard
-    team_fee?: number;
-    community_enabled?: boolean;
-    regionsCount?: number;
-  };
-  initial_financials: any;
-  market_indicators: MarketIndicators;
-  products: any[];
+  config: Partial<Championship['config']>;
+  initial_financials: Championship['initial_financials'];
+  market_indicators: MacroIndicators;
 }
 
 export interface UserProfile {
@@ -111,26 +127,12 @@ export interface UserProfile {
   role: UserRole;
   is_opal_premium: boolean;
   created_at: string;
-  opal_config?: any;
-}
-
-export interface Modality {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  image_url: string;
-  page_content: any;
-  config_template: any;
-  is_public: boolean;
-  created_at: string;
-}
-
-export interface DecisionData {
-  regions: Record<number, any>;
-  hr: any;
-  production: any;
-  finance: any;
+  /**
+   * Added missing opal_config property
+   */
+  opal_config?: {
+    opal_url: string;
+  };
 }
 
 export interface MessageBoardItem {
@@ -141,24 +143,74 @@ export interface MessageBoardItem {
   isImportant?: boolean;
 }
 
-export interface EcosystemConfig {
-  scenarioType: ScenarioType;
-  modalityType: ModalityType;
-  inflationRate: number;
-  demandMultiplier: number;
-  interestRate: number;
-  marketVolatility: number;
-  esgPriority?: number;
-  activeEvent?: BlackSwanEvent | null;
-  aiOpponents?: {
-    enabled: boolean;
-    count: number;
-    strategy: 'aggressive' | 'conservative' | 'balanced';
+/**
+ * Added missing DecisionData type
+ */
+export interface DecisionData {
+  regions: Record<number, {
+    price: number;
+    term: number;
+    marketing: number;
+  }>;
+  hr: {
+    hired: number;
+    fired: number;
+    salary: number;
+    trainingPercent: number;
+    participationPercent: number;
+    others: number;
+    sales_staff_count: number;
   };
-  gazetaConfig?: {
-    focus: string[];
-    style: 'sensationalist' | 'analytical' | 'neutral';
+  production: {
+    purchaseMPA: number;
+    purchaseMPB: number;
+    paymentType: number;
+    activityLevel: number;
+    extraProduction: number;
+    rd_investment: number;
+    strategy: 'push_mrp' | 'pull_kanban';
+    automation_level: number;
+    batch_size: number;
   };
-  // Added votingCriteria to support CommunityView logic
-  votingCriteria?: CommunityCriteria[];
+  finance: {
+    loanRequest: number;
+    loanType: number;
+    application: number;
+    termSalesInterest: number;
+    buyMachines: { alfa: number; beta: number; gama: number };
+    sellMachines: { alfa: number; beta: number; gama: number };
+  };
+}
+
+/**
+ * Added missing Modality type
+ */
+export interface Modality {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  is_public: boolean;
+  page_content: {
+    hero: { title: string; subtitle: string };
+    features: string[];
+    kpis: string[];
+    accent_color?: 'orange' | 'blue' | 'emerald';
+  };
+}
+
+/**
+ * Added missing BlackSwanEvent type
+ */
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
+  };
 }

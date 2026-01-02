@@ -1,5 +1,5 @@
 
-import { Branch, ChampionshipTemplate, ModalityType, ScenarioType, ChampionshipStatus } from './types';
+import { Branch, ChampionshipTemplate, ModalityType, ScenarioType, ChampionshipStatus, MacroIndicators, Championship } from './types';
 
 export const COLORS = {
   primary: '#020617',
@@ -13,11 +13,8 @@ export const COLORS = {
 };
 
 export const ALPHA_TEST_USERS = [
-  { id: 'tutor', name: 'Tutor Teste', email: 'tutor@example.com', role: 'tutor', icon: 'Shield' },
-  { id: 'alpha', name: 'Capitão Alpha', email: 'alpha@example.com', role: 'player', team: 'Equipe Alpha', icon: 'Zap' },
-  { id: 'beta', name: 'Capitão Beta', email: 'beta@example.com', role: 'player', team: 'Equipe Beta', icon: 'Zap' },
-  { id: 'gamma', name: 'Capitão Gamma', email: 'gamma@example.com', role: 'player', team: 'Equipe Gamma', icon: 'Zap' },
-  { id: 'delta', name: 'Capitão Delta', email: 'delta@example.com', role: 'player', team: 'Equipe Delta', icon: 'Zap' },
+  { id: 'tutor', name: 'Tutor Master', email: 'tutor@empirion.ia', role: 'tutor', icon: 'Shield' },
+  { id: 'alpha', name: 'Capitão Alpha', email: 'alpha@empirion.ia', role: 'player', team: 'Equipe Alpha', icon: 'Zap' },
 ];
 
 export const BRANCH_CONFIGS: Record<string, { label: string; icon: string }> = {
@@ -29,12 +26,120 @@ export const BRANCH_CONFIGS: Record<string, { label: string; icon: string }> = {
   construction: { label: 'Construção', icon: '🔨' }
 };
 
-// Added missing MODALITY_INFO for championship configuration
-export const MODALITY_INFO: Record<string, { label: string; desc: string }> = {
-  standard: { label: 'Arena Padrão', desc: 'Equilíbrio entre produção e comercial sem variáveis extremas.' },
-  business_round: { label: 'Rodada de Negócios', desc: 'Foco em Guerra de Preços, Elasticidade-Demanda Alta e Inflação Composta.' },
-  factory_efficiency: { label: 'Eficiência de Fábrica', desc: 'Foco em OEE, Lead Time, JIT/MRP e Níveis de Automação Industrial.' }
+export const DEFAULT_MACRO: MacroIndicators = {
+  growthRate: 2.5,
+  inflationRate: 4.5,
+  interestRateTR: 12.75,
+  providerInterest: 1.5,
+  salesAvgInterest: 2.0,
+  avgProdPerMan: 500,
+  importedProducts: 10000,
+  laborAvailability: 'medium',
+  providerPrices: { mpA: 150.00, mpB: 220.00 },
+  distributionCostUnit: 25.00,
+  marketingExpenseBase: 500000,
+  machineryValues: { alfa: 2000000, beta: 3500000, gama: 5000000 },
+  sectorAvgSalary: 5000.00,
+  stockMarketPrice: 15.00
 };
+
+export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
+  {
+    id: 'brazilian-industrial-master',
+    name: 'Industrial Brasileiro Básico (PMC/SPED)',
+    branch: 'industrial',
+    sector: 'Manufatura de Bens de Consumo',
+    description: 'Template ideal para universidades. Estrutura contábil brasileira com 5 regiões e ativos de $9M.',
+    config: {
+      roundFrequencyDays: 7,
+      salesMode: 'hybrid',
+      scenarioType: 'simulated',
+      transparencyLevel: 'medium',
+      modalityType: 'standard'
+    },
+    market_indicators: DEFAULT_MACRO,
+    initial_financials: {
+      balance_sheet: [
+        { id: 'bs-1', label: '1. ATIVO TOTAL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
+          { id: 'bs-1.1', label: '1.1 ATIVO CIRCULANTE', value: 2823735, type: 'totalizer', children: [
+            { id: 'cash', label: 'Caixa e Equivalentes', value: 1000000, type: 'asset', isEditable: true },
+            { id: 'receivables', label: 'Contas a Receber', value: 1823735, type: 'asset', isEditable: true },
+            { id: 'inventory', label: 'Estoques', value: 0, type: 'asset', isEditable: true },
+          ]},
+          { id: 'bs-1.2', label: '1.2 ATIVO NÃO CIRCULANTE', value: 6353205, type: 'totalizer', children: [
+            { id: 'machinery', label: 'Máquinas e Equipamentos', value: 5153205, type: 'asset', isEditable: true },
+            { id: 'land', label: 'Terras e Edificações', value: 1200000, type: 'asset', isEditable: true },
+          ]}
+        ]},
+        { id: 'bs-2', label: '2. PASSIVO E PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
+          { id: 'bs-2.1', label: '2.1 PASSIVO CIRCULANTE', value: 2000000, type: 'totalizer', children: [
+            { id: 'payables', label: 'Fornecedores', value: 1000000, type: 'liability', isEditable: true },
+            { id: 'st-debt', label: 'Empréstimos C.P.', value: 1000000, type: 'liability', isEditable: true },
+          ]},
+          { id: 'bs-2.3', label: '2.3 PATRIMÔNIO LÍQUIDO', value: 7176940, type: 'totalizer', children: [
+            { id: 'capital', label: 'Capital Social', value: 6500000, type: 'equity', isEditable: true },
+            { id: 'retained', label: 'Lucros/Prejuízos Acumulados', value: 676940, type: 'equity', isEditable: true },
+          ]}
+        ]}
+      ],
+      dre: [
+        { id: 'dre-1', label: 'RECEITA LÍQUIDA', value: 0, type: 'totalizer', isReadOnly: true, children: [
+          { id: 'gross-rev', label: 'Receita Bruta', value: 0, type: 'revenue', isEditable: true },
+          { id: 'deductions', label: 'Deduções e Impostos S/ Vendas', value: 0, type: 'expense', isEditable: true },
+        ]},
+        { id: 'dre-2', label: 'CUSTOS OPERACIONAIS', value: 0, type: 'totalizer', children: [
+          { id: 'cpv', label: 'Custo dos Produtos Vendidos', value: 0, type: 'expense', isEditable: true },
+        ]},
+        { id: 'dre-3', label: 'DESPESAS OPERACIONAIS', value: 0, type: 'totalizer', children: [
+          { id: 'adm-exp', label: 'Despesas Administrativas', value: 0, type: 'expense', isEditable: true },
+          { id: 'mkt-exp', label: 'Despesas de Marketing', value: 0, type: 'expense', isEditable: true },
+        ]}
+      ]
+    }
+  }
+];
+
+/**
+ * Added missing DEMO_CHAMPIONSHIP_DATA constant
+ */
+export const DEMO_CHAMPIONSHIP_DATA: Championship = {
+  id: 'brazilian-industrial-master',
+  name: 'Industrial Brasileiro Básico (PMC/SPED)',
+  description: 'Template ideal para universidades.',
+  branch: 'industrial',
+  status: 'active',
+  is_public: true,
+  currentRound: 0,
+  totalRounds: 12,
+  config: {
+    currency: 'BRL',
+    roundFrequencyDays: 7,
+    salesMode: 'hybrid',
+    scenarioType: 'simulated',
+    transparencyLevel: 'medium',
+    modalityType: 'standard',
+    teamsLimit: 8,
+    botsCount: 4
+  },
+  initial_financials: CHAMPIONSHIP_TEMPLATES[0].initial_financials,
+  market_indicators: DEFAULT_MACRO,
+  ecosystemConfig: {
+    scenarioType: 'simulated',
+    modalityType: 'standard',
+    inflationRate: 0.04,
+    demandMultiplier: 1.0,
+    interestRate: 0.12,
+    marketVolatility: 0.2
+  }
+};
+
+/**
+ * Added missing MOCK_ONGOING_CHAMPIONSHIPS constant
+ */
+export const MOCK_ONGOING_CHAMPIONSHIPS = [
+  { id: 'c1', name: 'Industrial Mastery', branch: 'Industrial', teams: 14, round: '5/12', leader: 'Alpha Group' },
+  { id: 'c2', name: 'Comercial Pro S1', branch: 'Comercial', teams: 8, round: '2/8', leader: 'Varejo Force' },
+];
 
 export const MENU_STRUCTURE = [
   { label: 'home', path: '/', translationKey: 'home' },
@@ -54,104 +159,13 @@ export const MENU_STRUCTURE = [
     label: 'solucoes', 
     path: '#',
     sub: [
-      { 
-        id: 'arenas', 
-        label: 'Arenas Virtuais', 
-        path: '/solutions/open-tournaments',
-        icon: 'Trophy',
-        sub: [
-          { id: 'edu', label: 'Educação', path: '/solutions/university' },
-          { id: 'corp', label: 'Corporativo', path: '/solutions/corporate' },
-          { id: 'solo', label: 'Solo (Individual)', path: '/solutions/individual' }
-        ]
-      },
+      { id: 'arenas', label: 'Arenas Virtuais', path: '/solutions/open-tournaments', icon: 'Trophy' },
       { id: 'bp_ia', label: 'Strategos Wizard (BP)', path: '/solutions/business-plan', icon: 'PenTool' },
     ]
   },
   { label: 'funcionalidades', path: '/features' },
   { label: 'conteudos', path: '/blog' },
-  { label: 'contato', path: '/contact' },
-  { label: 'teste', path: '/test/industrial', icon: 'Terminal' }
-];
-
-export const DEMO_CHAMPIONSHIP_DATA = {
-  id: 'alpha-arena-1',
-  name: 'Arena Industrial Alpha (Demo)',
-  branch: 'industrial' as Branch,
-  status: 'active' as ChampionshipStatus,
-  is_public: true,
-  currentRound: 1,
-  totalRounds: 12,
-  config: {
-    regionsCount: 9,
-    initialStock: 30000,
-    initialPrice: 340,
-    modalityType: 'standard' as ModalityType
-  },
-  initial_financials: {
-    balance_sheet: {
-      total_assets: 9176940,
-      current_assets: { cash: 1000000, accounts_receivable: 1823735, inventory: 0 },
-      non_current_assets: { machinery: 5153205, land: 1200000 },
-      liabilities_equity: { total: 9176940, current: 2000000, non_current: 3000000, equity: 4176940 }
-    }
-  },
-  ecosystemConfig: {
-    scenarioType: 'simulated' as ScenarioType,
-    modalityType: 'standard' as ModalityType,
-    inflationRate: 0.04,
-    demandMultiplier: 1.0,
-    interestRate: 0.12,
-    marketVolatility: 0.2
-  }
-};
-
-// Added missing MOCK_ONGOING_CHAMPIONSHIPS for tournament display
-export const MOCK_ONGOING_CHAMPIONSHIPS = [
-  { id: 'c1', name: 'Elite Industrial Alpha', branch: 'Industrial', round: '04/12', teams: 14, leader: 'Equipe Alpha' },
-  { id: 'c2', name: 'Master Varejo Global', branch: 'Comercial', round: '02/10', teams: 22, leader: 'Varejo Pro' },
-  { id: 'c3', name: 'Agro Delta Challenge', branch: 'Agro', round: '07/12', teams: 8, leader: 'Fazenda Futuro' },
-];
-
-export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
-  {
-    id: 'industrial-elite-gold',
-    name: 'Industrial Elite Mastery (Bernard Fidelity)',
-    branch: 'industrial',
-    sector: 'Manufatura de Bens de Capital',
-    description: 'O template mais completo para simulação industrial brasileira. Inclui 9 regiões geográficas e balanço inicial de $9.1M.',
-    is_public: true,
-    config: {
-      currency: 'BRL',
-      round_frequency_days: 7,
-      total_rounds: 12,
-      sales_mode: 'hybrid',
-      scenario_type: 'simulated',
-      transparency_level: 'medium',
-      team_fee: 150,
-      community_enabled: true,
-      regionsCount: 9,
-      modalityType: 'standard'
-    },
-    initial_financials: {
-      balance_sheet: {
-        total_assets: 9176940,
-        current_assets: { cash: 1000000, accounts_receivable: 1823735, inventory: 0 },
-        non_current_assets: { machinery: 5153205, land: 1200000 },
-        liabilities_equity: { total: 9176940, current: 2000000, non_current: 3000000, equity: 4176940 }
-      },
-      share_price_initial: 100.00,
-      shares_outstanding: 80000
-    },
-    products: [{ name: 'Alpha Insumo', suggested_price: 340, initial_stock: 30000 }],
-    resources: { water: 5000, energy: 12000 },
-    market_indicators: { 
-      inflation_rate: 0.04, 
-      interest_rate_tr: 0.12, 
-      exchange_rate: 5.50,
-      demand_potential: 120000
-    }
-  }
+  { label: 'contato', path: '/contact' }
 ];
 
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
@@ -164,19 +178,13 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       secondaryCta: "Ver Atividades"
     },
     carousel: [
-      { id: 1, title: "Mastery Industrial", subtitle: "Otimize seu OEE.", image: "https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000", badge: "Live Arena", link: "/activities/industrial" },
-      { id: 2, title: "Rodada de Negócios", subtitle: "Domine a guerra de preços.", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000", badge: "Live Arena", link: "/activities/rodada-negocios" }
+      { id: 1, title: "Mastery Industrial", subtitle: "Otimize seu OEE.", image: "https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000", badge: "Live Arena", link: "/activities/industrial" }
     ],
     leaderboard: [
       { id: 'c1', name: "Industrial Mastery", status: "Rodada 5/12", teams: 14, lead: "Alpha Group" }
     ],
     sectors: [
-      { id: 's1', name: 'Indústria', slug: 'industrial', icon: 'Factory', description: 'Otimize linhas de montagem e gerencie Capex complexo.' },
-      { id: 's2', name: 'Comércio', slug: 'commercial', icon: 'ShoppingCart', description: 'Guerra de preços e gestão de canais de distribuição omni.' },
-      { id: 's3', name: 'Serviços', slug: 'services', icon: 'Briefcase', description: 'Gestão de capital humano e níveis de SLA críticos.' },
-      { id: 's4', name: 'Agro', slug: 'agribusiness', icon: 'Tractor', description: 'Ciclos de colheita e volatilidade de commodities globais.' },
-      { id: 's5', name: 'Finanças', slug: 'finance', icon: 'DollarSign', description: 'Alavancagem, derivativos e gestão de risco sistêmico.' },
-      { id: 's6', name: 'Construção', slug: 'construction', icon: 'Hammer', description: 'Gerenciamento de projetos e fluxos de caixa de longo prazo.' }
+      { id: 's1', name: 'Indústria', slug: 'industrial', icon: 'Factory', description: 'Otimize linhas de montagem e gerencie Capex complexo.' }
     ]
   }
 };
