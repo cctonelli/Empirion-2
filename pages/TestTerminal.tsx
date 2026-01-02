@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Terminal, ShieldCheck, Rocket, Play, Loader2, Bot, 
-  ChevronRight, Zap, Info, Factory, Cpu
+  ChevronRight, Zap, Info, Factory, Cpu, Star
 } from 'lucide-react';
 import { ALPHA_TEST_USERS } from '../constants';
 import { silentTestAuth, provisionDemoEnvironment } from '../services/supabase';
@@ -24,7 +25,6 @@ const TestTerminal: React.FC = () => {
     setError(null);
     try {
       const result = await silentTestAuth(user);
-      // Fixed: accessing the inner data object for session
       if (result?.data?.session) {
         // Redirecionamento Direto baseado na Role
         if (user.role === 'tutor') {
@@ -53,13 +53,13 @@ const TestTerminal: React.FC = () => {
              animate={{ scale: 1, opacity: 1 }}
              className="inline-flex p-6 bg-orange-600 text-white rounded-[2.5rem] shadow-[0_0_50px_rgba(249,115,22,0.3)] mb-4"
            >
-              <Terminal size={40} />
+              <Rocket size={40} className="animate-pulse" />
            </motion.div>
            <h1 className="text-6xl md:text-7xl font-black text-white uppercase tracking-tighter italic leading-none">
-              Módulo de <span className="text-orange-500">Testes</span>
+              Inicie seu <span className="text-orange-500">Teste Grátis</span>
            </h1>
            <p className="text-xl md:text-2xl text-slate-400 font-medium italic">
-             "Ambiente Alpha: Acesse instantaneamente como Tutor ou Equipe sem formulários."
+             "Acesse instâncias reais da arena Empirion e valide sua estratégia em segundos."
            </p>
         </header>
 
@@ -68,14 +68,14 @@ const TestTerminal: React.FC = () => {
            <div className="bg-slate-900/50 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative overflow-hidden">
               <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-8">
                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white/5 rounded-2xl text-blue-400"><Factory size={24} /></div>
+                    <div className="p-3 bg-white/5 rounded-2xl text-orange-500"><Star size={24} fill="currentColor" /></div>
                     <div>
-                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Arena Industrial Alpha</h3>
-                       <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]">Snapshot v6.0 GOLD • Engine Ativa</p>
+                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Seleção de Perfil Grátis</h3>
+                       <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]">Experiência Premium • Período de Avaliação</p>
                     </div>
                  </div>
                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Acesso 1-Clique Disponível</span>
+                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Acesso Instantâneo</span>
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                  </div>
               </div>
@@ -103,9 +103,9 @@ const TestTerminal: React.FC = () => {
                             {user.role === 'tutor' ? <ShieldCheck size={24} /> : <Zap size={24} />}
                          </div>
                          <div className="text-right">
-                            <span className="block text-[8px] font-black text-slate-500 group-hover:text-white/60 uppercase">Protocolo Access</span>
+                            <span className="block text-[8px] font-black text-slate-500 group-hover:text-white/60 uppercase">Perfil Disponível</span>
                             <span className={`text-[10px] font-black uppercase tracking-widest ${user.role === 'tutor' ? 'text-blue-400' : 'text-orange-500'} group-hover:text-white`}>
-                              {user.role === 'tutor' ? 'Admin Node' : 'Arena Unit'}
+                              {user.role === 'tutor' ? 'Modo Tutor' : 'Modo Equipe'}
                             </span>
                          </div>
                       </div>
@@ -113,12 +113,12 @@ const TestTerminal: React.FC = () => {
                       <div>
                          <h4 className="text-2xl font-black text-white uppercase italic tracking-tight">{user.name}</h4>
                          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest group-hover:text-white/80 transition-colors">
-                           {user.team || 'Coordenação Central'}
+                           {user.team || 'Criação e Gestão de Arenas'}
                          </p>
                       </div>
 
                       <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Ambiente: {user.role === 'tutor' ? 'Master' : 'Alpha'}</span>
+                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Ambiente: {user.role === 'tutor' ? 'Control Master' : 'Simulação Ativa'}</span>
                          {loadingId === user.id ? (
                             <Loader2 size={20} className="animate-spin text-white" />
                          ) : (
@@ -132,6 +132,18 @@ const TestTerminal: React.FC = () => {
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                    </button>
                  ))}
+                 
+                 {/* BLOCO EXTRA: CREATE NEW FREE */}
+                 <div className="p-8 rounded-[3rem] border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-6 group hover:border-orange-500/40 transition-all">
+                    <div className="p-5 bg-white/5 rounded-full text-slate-600 group-hover:text-orange-500 transition-colors">
+                       <Star size={32} />
+                    </div>
+                    <div>
+                       <p className="font-black text-white uppercase text-xs tracking-widest">Sua Própria Arena</p>
+                       <p className="text-slate-500 text-[10px] font-medium mt-2">Crie sua conta freemium para gerenciar times personalizados.</p>
+                    </div>
+                    <button className="text-orange-500 font-black text-[9px] uppercase tracking-[0.2em] border border-orange-500/20 px-4 py-2 rounded-full hover:bg-orange-500 hover:text-white transition-all">Em breve</button>
+                 </div>
               </div>
            </div>
 
@@ -139,13 +151,13 @@ const TestTerminal: React.FC = () => {
               <div className="flex items-center gap-4 text-slate-500">
                  <Bot size={32} />
                  <p className="text-[10px] font-black uppercase tracking-widest max-w-sm leading-relaxed">
-                   "O modo de testes permite simular fluxos de decisão em tempo real entre o tutor e as equipes para validar a integridade do motor Empirion."
+                   "O teste grátis permite que você explore todas as funcionalidades do Empirion, desde a parametrização do balanço até o processamento de rodadas com IA."
                  </p>
               </div>
               <div className="flex items-center gap-3">
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Engine Version 6.0 GOLD Build</span>
+                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Trial v6.0 GOLD Build</span>
                  <div className="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-[9px] font-black text-blue-400 uppercase">
-                   Protocol Node: 08
+                   Global Node: 08
                  </div>
               </div>
            </div>

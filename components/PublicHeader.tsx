@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronDown, ChevronRight, LogIn, Factory, ShoppingCart, Briefcase, 
   Tractor, DollarSign, Hammer, Menu, X, Box, Cpu, Sparkles, 
-  Zap, Gavel, PenTool, Trophy, Terminal
+  Zap, Gavel, PenTool, Trophy, Terminal, Rocket
 } from 'lucide-react';
 import { MENU_STRUCTURE } from '../constants';
 import { useModalities } from '../hooks/useModalities';
@@ -27,6 +27,7 @@ const getIcon = (iconName?: string) => {
     case 'PenTool': return <PenTool size={size} />;
     case 'Trophy': return <Trophy size={size} />;
     case 'Terminal': return <Terminal size={size} />;
+    case 'Rocket': return <Rocket size={size} />;
     default: return <Box size={size} />;
   }
 };
@@ -115,17 +116,17 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         <div className="flex items-center gap-5">
           <div className="hidden xl:block scale-90"><LanguageSwitcher light /></div>
           
-          {/* CTA TESTE - ALPHA TERMINAL */}
+          {/* CTA TESTE GRÁTIS */}
           <Link 
             to="/test/industrial"
-            className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 text-slate-400 rounded-full font-black text-[9px] uppercase tracking-[0.2em] hover:bg-white/10 hover:text-white transition-all active:scale-95"
+            className="hidden md:flex items-center gap-3 px-6 py-2.5 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-full font-black text-[9px] uppercase tracking-[0.2em] hover:bg-orange-600 hover:text-white transition-all active:scale-95 shadow-lg"
           >
-            <Terminal size={12} className="text-orange-500" /> Ambiente de Teste
+            <Rocket size={12} className="animate-pulse" /> Teste Grátis
           </Link>
 
           <button 
             onClick={onLogin} 
-            className="cyber-button hidden md:flex items-center gap-3 px-8 py-3 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 whitespace-nowrap hover:bg-orange-500"
+            className="cyber-button hidden md:flex items-center gap-3 px-8 py-3 bg-white/5 text-white border border-white/10 rounded-full font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 whitespace-nowrap hover:bg-white hover:text-slate-950"
           >
             <LogIn size={14} /> Entrar
           </button>
@@ -170,13 +171,13 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 </div>
               ))}
               
-              {/* MOBILE TEST LINK */}
+              {/* MOBILE FREE TRIAL LINK */}
               <Link 
                 to="/test/industrial" 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="mt-4 flex items-center gap-3 text-orange-500 font-black uppercase text-sm tracking-widest bg-white/5 p-5 rounded-2xl border border-white/5"
+                className="mt-4 flex items-center gap-3 text-orange-500 font-black uppercase text-sm tracking-widest bg-orange-600/10 p-6 rounded-2xl border border-orange-500/20 shadow-xl"
               >
-                <Terminal size={18} /> Acessar Ambiente de Teste
+                <Rocket size={20} className="animate-bounce" /> Iniciar Teste Grátis
               </Link>
             </div>
           </motion.div>

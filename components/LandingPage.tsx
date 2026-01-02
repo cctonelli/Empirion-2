@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { 
   ArrowRight, ChevronLeft, ChevronRight, Sparkles, Trophy, 
   Factory, ShoppingCart, Briefcase, Tractor, DollarSign, 
-  Hammer, Box, Zap
+  Hammer, Box, Zap, Rocket
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Slider from 'react-slick';
@@ -81,6 +81,34 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     <div className="min-h-screen bg-transparent font-sans text-slate-100 relative selection:bg-orange-500 selection:text-white overflow-x-hidden">
       <EmpireParticles />
       
+      {/* FLOATING CTA: TESTE GRÁTIS */}
+      <div className="fixed bottom-10 right-10 z-[5000] flex flex-col items-end gap-4 pointer-events-none">
+         <motion.div 
+           initial={{ opacity: 0, x: 50 }} 
+           animate={{ opacity: 1, x: 0 }}
+           className="hidden md:block bg-[#0f172a]/90 backdrop-blur-2xl border border-white/10 p-5 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.5)] mb-2"
+         >
+            <p className="text-[9px] font-black uppercase text-orange-500 tracking-[0.2em] mb-1">Oferta Alpha</p>
+            <p className="text-white font-bold text-xs uppercase tracking-tighter leading-tight">Experimente a Arena <br/> sem compromisso</p>
+         </motion.div>
+         <Link 
+           to="/test/industrial"
+           className="pointer-events-auto group relative flex items-center gap-4 bg-orange-600 p-5 rounded-full shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white transition-all active:scale-95 active:shadow-inner"
+         >
+            <div className="absolute inset-0 bg-orange-500 rounded-full animate-ping opacity-20 group-hover:hidden" />
+            <motion.div 
+              initial={{ width: 60 }} 
+              whileHover={{ width: 220 }}
+              className="overflow-hidden flex items-center justify-end whitespace-nowrap"
+            >
+               <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-950 mr-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Teste Grátis Agora
+               </span>
+               <Rocket size={24} className="text-white group-hover:text-orange-600 transition-colors shrink-0" />
+            </motion.div>
+         </Link>
+      </div>
+
       {/* CARROSSEL NEBULOSA */}
       <section className="h-[85vh] min-h-[600px] relative overflow-hidden bg-transparent">
         <Slider {...carouselSettings}>
@@ -131,9 +159,9 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               A maior arena de simulações empresariais multiplayer assistida por Gemini IA. Onde a orquestração tática encontra a execução perfeita.
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-10 pt-12">
-              <button onClick={onLogin} className="cyber-button w-full sm:w-auto px-20 py-8 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] shadow-[0_30px_70px_rgba(249,115,22,0.4)] active:scale-95">
-                Entre na Arena
-              </button>
+              <Link to="/test/industrial" className="cyber-button w-full sm:w-auto px-20 py-8 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] shadow-[0_30px_70px_rgba(249,115,22,0.4)] active:scale-95 flex items-center justify-center gap-4">
+                Teste Grátis Agora <Rocket size={20} className="animate-pulse" />
+              </Link>
               <Link to="/solutions/simulators" className="cyber-button w-full sm:w-auto px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-5 backdrop-blur-xl">
                 Explorar Ramos <ArrowRight size={22} className="text-orange-500" />
               </Link>
