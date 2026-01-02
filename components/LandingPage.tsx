@@ -71,7 +71,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       id: m.id,
       title: m.name,
       subtitle: m.description,
-      image: m.image_url || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000',
+      image: m.image_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000',
       badge: 'Arena Real-time',
       link: `/activities/${m.slug}`
     }))
@@ -81,13 +81,13 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     <div className="min-h-screen bg-transparent font-sans text-slate-100 relative selection:bg-orange-500 selection:text-white overflow-x-hidden">
       <EmpireParticles />
       
-      {/* 1. CARROSSEL NEBULOSA (CORREÇÃO DE TRANSLUCIDEZ - 50% OPACITY) */}
+      {/* 1. CARROSSEL NEBULOSA (50% TRANSLUCIDEZ - COSMOS VISÍVEL ABAIXO) */}
       <section className="h-[85vh] min-h-[600px] relative overflow-hidden bg-transparent">
         <Slider {...carouselSettings}>
           {allCarouselSlides.map((slide: any) => (
             <div key={slide.id} className="relative h-[85vh] min-h-[600px] bg-transparent outline-none">
               <div className="absolute inset-0 z-0 bg-transparent">
-                {/* Imagem com 50% de opacidade e blend mode para deixar o cosmos visível */}
+                {/* Overlay translúcido: mix-blend e opacity baixa para ver as partículas */}
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/90 z-10 pointer-events-none" />
                 <div className="absolute inset-0 backdrop-blur-[4px] z-[5] pointer-events-none" />
                 <img 
@@ -121,7 +121,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </Slider>
       </section>
 
-      {/* 2. HERO PRINCIPAL (TRANSLÚCIDO E IDENTIDADE PURA) */}
+      {/* 2. HERO PRINCIPAL "UAU" (IDENTIDADE PURA EMPIRION) */}
       <section className="py-40 px-6 md:px-24 text-center relative z-20">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-[-1] opacity-40">
            <div className="w-[1000px] h-[1000px] bg-blue-600/10 blur-[180px] rounded-full absolute top-0 left-0 animate-pulse"></div>
@@ -173,6 +173,30 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                        <span className="text-xl font-black text-white italic">{champ.lead}</span>
                     </div>
                  </div>
+               ))}
+            </div>
+         </div>
+      </section>
+
+      {/* 4. RAMOS CARDS */}
+      <section className="py-40 px-6 md:px-24 relative z-20">
+         <div className="max-w-7xl mx-auto space-y-24">
+            <div className="text-center space-y-6">
+               <h2 className="text-5xl font-black uppercase italic tracking-tighter text-white">Setores de Operação</h2>
+               <p className="text-slate-400 font-medium max-w-3xl mx-auto italic leading-relaxed">
+                  Modelamos a complexidade de múltiplos ramos com fidelidade sistêmica original do motor Empirion.
+               </p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 md:gap-6">
+               {LANDING_PAGE_DATA.branchesOverview.map(branch => (
+                 <Link key={branch.id} to={`/activities/${branch.slug}`} className="group relative">
+                    <div className={`aspect-square rounded-[2.5rem] bg-white/[0.03] backdrop-blur-xl border border-white/5 flex flex-col items-center justify-center gap-6 transition-all group-hover:scale-105 group-hover:bg-orange-600 group-hover:shadow-2xl overflow-hidden`}>
+                       <div className={`${branch.color} group-hover:text-white transition-colors transform group-hover:scale-125 transition-transform duration-500`}>
+                          {getBranchIcon(branch.icon)}
+                       </div>
+                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-white transition-colors">{branch.slug}</span>
+                    </div>
+                 </Link>
                ))}
             </div>
          </div>

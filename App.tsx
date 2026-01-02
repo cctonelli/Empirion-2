@@ -11,10 +11,6 @@ import LandingPage from './components/LandingPage';
 import ActivityDetail from './pages/ActivityDetail';
 import OpenTournaments from './pages/OpenTournaments';
 import SimulatorsPage from './pages/SimulatorsPage';
-import TrainingPage from './pages/TrainingPage';
-import FeaturesPage from './pages/FeaturesPage';
-import BlogPage from './pages/BlogPage';
-import ContactPage from './pages/ContactPage';
 import BusinessPlanWizard from './components/BusinessPlanWizard';
 import Auth from './components/Auth';
 import { supabase, getUserProfile } from './services/supabase';
@@ -37,20 +33,28 @@ const AppContent: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchProfile(session.user.id);
-      else setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 1. Initial Session Check
+    const checkInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       if (session) {
-        fetchProfile(session.user.id);
+        await fetchProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkInitialSession();
+
+    // 2. Realtime Auth Observer
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      if (session) {
+        await fetchProfile(session.user.id);
       } else {
         setProfile(null);
         setLoading(false);
+        if (location.pathname.startsWith('/app')) navigate('/auth');
       }
     });
 
@@ -62,13 +66,11 @@ const AppContent: React.FC = () => {
       const prof = await getUserProfile(uid);
       setProfile(prof);
     } catch (err) {
-      console.error("Failed to load user profile:", err);
+      console.error("Critical Profile Sync Failure:", err);
     } finally {
       setLoading(false);
     }
   };
-
-  const goToLogin = () => navigate('/auth');
 
   if (loading) return (
     <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
@@ -81,17 +83,12 @@ const AppContent: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<PublicLayout onLogin={goToLogin}><LandingPage onLogin={goToLogin} /></PublicLayout>} />
-      <Route path="/auth" element={<Auth onAuth={() => navigate('/app')} onBack={() => navigate('/')} />} />
-      <Route path="/activities/:slug" element={<PublicLayout onLogin={goToLogin}><ActivityDetail /></PublicLayout>} />
-      <Route path="/solutions/open-tournaments" element={<PublicLayout onLogin={goToLogin}><OpenTournaments /></PublicLayout>} />
-      <Route path="/solutions/simulators" element={<PublicLayout onLogin={goToLogin}><SimulatorsPage /></PublicLayout>} />
-      <Route path="/solutions/business-plan" element={<PublicLayout onLogin={goToLogin}><BusinessPlanWizard /></PublicLayout>} />
-      <Route path="/solutions/training-online" element={<PublicLayout onLogin={goToLogin}><TrainingPage mode="online" /></PublicLayout>} />
-      <Route path="/solutions/training-corporate" element={<PublicLayout onLogin={goToLogin}><TrainingPage mode="corporate" /></PublicLayout>} />
-      <Route path="/features" element={<PublicLayout onLogin={goToLogin}><FeaturesPage /></PublicLayout>} />
-      <Route path="/blog" element={<PublicLayout onLogin={goToLogin}><BlogPage /></PublicLayout>} />
-      <Route path="/contact" element={<PublicLayout onLogin={goToLogin}><ContactPage /></PublicLayout>} />
+      <Route path="/" element={<PublicLayout onLogin={() => navigate('/auth')}><LandingPage onLogin={() => navigate('/auth')} /></PublicLayout>} />
+      <Route path="/auth" element={<Auth onAuth={() => navigate('/app/dashboard')} onBack={() => navigate('/')} />} />
+      <Route path="/activities/:slug" element={<PublicLayout onLogin={() => navigate('/auth')}><ActivityDetail /></PublicLayout>} />
+      <Route path="/solutions/open-tournaments" element={<PublicLayout onLogin={() => navigate('/auth')}><OpenTournaments /></PublicLayout>} />
+      <Route path="/solutions/simulators" element={<PublicLayout onLogin={() => navigate('/auth')}><SimulatorsPage /></PublicLayout>} />
+      <Route path="/solutions/business-plan" element={<PublicLayout onLogin={() => navigate('/auth')}><BusinessPlanWizard /></PublicLayout>} />
 
       <Route path="/app/*" element={
         session ? (
