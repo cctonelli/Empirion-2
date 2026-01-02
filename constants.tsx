@@ -32,6 +32,14 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { id: 2, title: "Rodada de Negócios", subtitle: "Domine a guerra de preços e o caixa em cenários de alta inflação.", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000", badge: "Alta Intensidade", link: "/activities/rodada-negocios" },
       { id: 3, title: "Chão-de-Fábrica", subtitle: "Otimize cada segundo da produção com MRP e Lean Manufacturing.", image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000", badge: "Estratégia Lean", link: "/activities/chao-de-fabrica" }
     ],
+    sectors: [
+      { id: 'ind', name: "Industrial Node", slug: "industrial", description: "Simulação de parques fabris, otimização de OEE e gestão de cadeias de suprimentos globais.", icon: "Factory" },
+      { id: 'com', name: "Commercial Hub", slug: "commercial", description: "Domínio de varejo híbrido, precificação dinâmica e elasticidade de demanda em arenas competitivas.", icon: "ShoppingCart" },
+      { id: 'ser', name: "Services Matrix", slug: "services", description: "Gestão de capital intelectual, alocação de especialistas e prestígio de marca na economia do conhecimento.", icon: "Briefcase" },
+      { id: 'agr', name: "Agro Cooperative", slug: "agribusiness", description: "Navegação em ciclos de ativos biológicos, hedge de commodities e impactos climáticos real-time.", icon: "Tractor" },
+      { id: 'fin', name: "Financial Command", slug: "finance", description: "Operações em mercado de capitais, análise de risco de crédito e índices de solvência simulados.", icon: "DollarSign" },
+      { id: 'con', name: "Construction Elite", slug: "construction", description: "Vencimento de licitações bilionárias, gestão de caminhos críticos e logística de insumos pesados.", icon: "Hammer" }
+    ],
     features: [
       { id: 'f1', title: "Concorrência Real-time", desc: "Infraestrutura escalável para decisões coletivas instantâneas.", icon: "Zap" },
       { id: 'f2', title: "Oráculo Gemini 3", desc: "Raciocínio profundo aplicado ao seu Balanço e Gestão Estratégica.", icon: "Brain" },
@@ -52,7 +60,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     subtitle: "A arquitetura do Empirion foi projetada para desafiar os melhores estrategistas do mundo.",
     items: [
       { id: 1, title: "Motor Econômico v6.0", body: "Simulação precisa de elasticidade-preço, efeitos de escala e inflação setorial dinâmica.", icon: "Zap" },
-      { id: 2, title: "Strategos Intelligence", body: "Núcleo neural Gemini 3 Pro processando cada decisão para gerar insights em tempo real.", icon: "Cpu" },
+      { id: 2, title: "Strategos Intelligence", body: "Núcleo neural Gemini 3 Pro processando cada decision para gerar insights em tempo real.", icon: "Cpu" },
       { id: 3, title: "Infraestrutura Elite", body: "Transmissões criptografadas e sincronização de arena via Supabase Real-time.", icon: "Database" }
     ]
   },

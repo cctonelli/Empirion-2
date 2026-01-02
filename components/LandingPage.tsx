@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -81,13 +82,12 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     <div className="min-h-screen bg-transparent font-sans text-slate-100 relative selection:bg-orange-500 selection:text-white overflow-x-hidden">
       <EmpireParticles />
       
-      {/* 1. CARROSSEL NEBULOSA (50% TRANSLUCIDEZ - COSMOS VISÍVEL ABAIXO) */}
+      {/* 1. CARROSSEL NEBULOSA */}
       <section className="h-[85vh] min-h-[600px] relative overflow-hidden bg-transparent">
         <Slider {...carouselSettings}>
           {allCarouselSlides.map((slide: any) => (
             <div key={slide.id} className="relative h-[85vh] min-h-[600px] bg-transparent outline-none">
               <div className="absolute inset-0 z-0 bg-transparent">
-                {/* Overlay translúcido: mix-blend e opacity baixa para ver as partículas */}
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/90 z-10 pointer-events-none" />
                 <div className="absolute inset-0 backdrop-blur-[4px] z-[5] pointer-events-none" />
                 <img 
@@ -121,7 +121,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </Slider>
       </section>
 
-      {/* 2. HERO PRINCIPAL "UAU" (IDENTIDADE PURA EMPIRION) */}
+      {/* 2. HERO PRINCIPAL "UAU" */}
       <section className="py-40 px-6 md:px-24 text-center relative z-20">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-[-1] opacity-40">
            <div className="w-[1000px] h-[1000px] bg-blue-600/10 blur-[180px] rounded-full absolute top-0 left-0 animate-pulse"></div>
@@ -147,7 +147,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </motion.div>
       </section>
 
-      {/* 3. PLACAR CAMPEONATOS (GLASSMORPHISM) */}
+      {/* 3. PLACAR CAMPEONATOS */}
       <section className="py-20 px-6 md:px-24 relative z-20">
          <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-16 border-b border-white/5 pb-8">
@@ -178,7 +178,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* 4. RAMOS CARDS */}
+      {/* 4. SETORES DE OPERAÇÃO - REFATORADO COM NOVOS MOCK OBJECTS */}
       <section className="py-40 px-6 md:px-24 relative z-20">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
@@ -187,14 +187,26 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   Modelamos a complexidade de múltiplos ramos com fidelidade sistêmica original do motor Empirion.
                </p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 md:gap-6">
-               {LANDING_PAGE_DATA.branchesOverview.map(branch => (
-                 <Link key={branch.id} to={`/activities/${branch.slug}`} className="group relative">
-                    <div className={`aspect-square rounded-[2.5rem] bg-white/[0.03] backdrop-blur-xl border border-white/5 flex flex-col items-center justify-center gap-6 transition-all group-hover:scale-105 group-hover:bg-orange-600 group-hover:shadow-2xl overflow-hidden`}>
-                       <div className={`${branch.color} group-hover:text-white transition-colors transform group-hover:scale-125 transition-transform duration-500`}>
-                          {getBranchIcon(branch.icon)}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+               {content.sectors?.map((sector: any) => (
+                 <Link key={sector.id} to={`/activities/${sector.slug}`} className="group relative">
+                    <div className="p-10 rounded-[3.5rem] bg-white/[0.02] backdrop-blur-3xl border border-white/5 h-full flex flex-col gap-6 transition-all group-hover:scale-[1.02] group-hover:bg-orange-600 group-hover:shadow-[0_40px_100px_rgba(249,115,22,0.2)] overflow-hidden">
+                       <div className="flex items-center justify-between">
+                          <div className="p-4 bg-white/5 rounded-2xl text-orange-500 group-hover:bg-white group-hover:text-orange-600 transition-all shadow-xl">
+                            {getBranchIcon(sector.icon)}
+                          </div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 group-hover:text-white/60 transition-colors">Strategic Node</span>
                        </div>
-                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-white transition-colors">{branch.slug}</span>
+                       <div className="space-y-3">
+                          <h3 className="text-3xl font-black text-white uppercase italic tracking-tight group-hover:text-white transition-colors">{sector.name}</h3>
+                          <p className="text-sm text-slate-500 font-medium leading-relaxed italic group-hover:text-white/80 transition-colors line-clamp-3">
+                             {sector.description}
+                          </p>
+                       </div>
+                       <div className="pt-6 border-t border-white/5 flex items-center gap-3 text-orange-500 group-hover:text-white transition-colors">
+                          <span className="text-[9px] font-black uppercase tracking-[0.4em]">Explorar Matriz</span>
+                          <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
+                       </div>
                     </div>
                  </Link>
                ))}
@@ -239,7 +251,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 };
 
 const getBranchIcon = (name: string) => {
-  const size = 42;
+  const size = 32;
   switch(name) {
     case 'Factory': return <Factory size={size} />;
     case 'ShoppingCart': return <ShoppingCart size={size} />;
