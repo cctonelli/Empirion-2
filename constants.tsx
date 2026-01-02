@@ -47,43 +47,77 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { id: 'c2', name: "Rodada Suprema", status: "Rodada 2/10", teams: 8, lead: "BioCore SA" }
     ]
   },
-  'solutions-bp': {
-    title: "Strategos BP Wizard",
-    subtitle: "Estruturação Profissional SEBRAE assistida por IA",
-    steps: [
-      { id: 0, label: 'Sumário Executivo', body: 'Visão geral do negócio e proposta de valor.' },
-      { id: 1, label: 'Análise de Mercado', body: 'Estudo de concorrentes e segmentação.' },
-      { id: 2, label: 'Plano de Marketing', body: 'Estratégia de canais e posicionamento.' },
-      { id: 3, label: 'Plano Operacional', body: 'Layout, capacidade e processos.' },
-      { id: 4, label: 'Plano Financeiro', body: 'Investimentos, DRE e fluxo de caixa.' },
-      { id: 5, label: 'Cenários', body: 'Análise de riscos e cisnes negros.' }
-    ]
+  'activity-industrial': {
+    name: "Industrial",
+    heroImage: "https://images.unsplash.com/photo-1565034946487-077786996e27?q=80&w=2000",
+    body: "Domine a produção de larga escala, gerencie ativos complexos e enfrente a obsolescência tecnológica em um mercado global hipercompetitivo.",
+    description: "A Atividade Industrial é o coração do Empirion. Aqui, as equipes gerenciam parques fabris com máquinas de diferentes gerações (Alfa, Beta e Gama), cada uma com taxas de produtividade e manutenção distintas. O desafio envolve o equilíbrio entre o CapEx para modernização e o OpEx para manutenção da fluidez logística em 9 regiões.",
+    features: ["Gestão de Maquinário Crítico", "Depreciação Acelerada", "Cadeia de Suprimentos Global", "Manutenção Preditiva IA"],
+    kpis: ["OEE (Eficiência Geral)", "Custo Unitário de Produção", "TSR (Shareholder Return)"],
+    accent: "orange"
   },
-  'solutions-simulators': {
-    title: "Intelligence Arenas",
-    subtitle: "Escolha seu domínio estratégico",
-    items: [
-      { id: 'ind', label: 'Industrial', slug: 'industrial', desc: 'Produção massiva e CapEx.', icon: 'Factory' },
-      { id: 'com', label: 'Comercial', slug: 'commercial', desc: 'Varejo e satisfação do cliente.', icon: 'ShoppingCart' },
-      { id: 'ser', label: 'Serviços', slug: 'services', desc: 'Capital intelectual e qualidade.', icon: 'Briefcase' },
-      { id: 'agr', label: 'Agro', slug: 'agribusiness', desc: 'Ativos biológicos e safras.', icon: 'Tractor' },
-      { id: 'fin', label: 'Financeiro', slug: 'finance', desc: 'Liquidez, hedge e investimentos.', icon: 'DollarSign' },
-      { id: 'con', label: 'Construção', slug: 'construction', desc: 'BIM e Gestão de Obras.', icon: 'Hammer' },
-      { id: 'rn', label: 'Rodada de Negócios', slug: 'rodada-negocios', desc: 'Guerra de preços e caixa crítico.', icon: 'Gavel' },
-      { id: 'cf', label: 'Chão-de-Fábrica', slug: 'chao-de-fabrica', desc: 'Eficiência lean e automação.', icon: 'Cpu' }
-    ]
+  'activity-commercial': {
+    name: "Comercial",
+    heroImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2000",
+    body: "Conquiste o varejo híbrido, domine canais de e-commerce e utilize precificação dinâmica para aniquilar a concorrência.",
+    description: "No Hub Comercial, o foco sai da fábrica e entra na mente do consumidor. Equipes devem equilibrar a expansão de lojas físicas com o investimento agressivo em canais digitais. A elasticidade-preço é o principal motor, onde centavos decidem o market share de regiões inteiras.",
+    features: ["Canais Digitais vs. Físicos", "Elasticidade de Demanda", "Logística de Última Milha", "Algoritmos de Satisfação"],
+    kpis: ["Market Share Consolidado", "Customer Satisfaction (CSAT)", "Margem de Contribuição"],
+    accent: "blue"
+  },
+  'activity-services': {
+    name: "Serviços",
+    heroImage: "https://images.unsplash.com/photo-1454165833767-131f72a1030c?q=80&w=2000",
+    body: "Gerencie o capital intelectual, otimize a formação técnica e construa um prestígio de marca inabalável na economia do conhecimento.",
+    description: "Na Matriz de Serviços, seu maior ativo são as pessoas. O desafio é gerenciar a alocação de consultores e técnicos em projetos de alta complexidade, garantindo que o turnover não destrua o conhecimento acumulado. O prestígio da marca dita o prêmio que você pode cobrar sobre o custo da hora-homem.",
+    features: ["Treinamento e Retenção", "Gestão de Qualidade (QA)", "Contratos de Longo Prazo", "Escalabilidade de Conhecimento"],
+    kpis: ["Receita por Consultor", "Churn Rate de Talentos", "Brand Equity Index"],
+    accent: "emerald"
+  },
+  'activity-agribusiness': {
+    name: "Agronegócio",
+    heroImage: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000",
+    body: "Opere na fronteira entre a tecnologia e a natureza. Gerencie ativos biológicos, climas voláteis e a sazonalidade extrema das safras.",
+    description: "A Cooperativa Agro traz o risco climático real para dentro da arena. Use modelos preditivos para decidir entre plantio extensivo ou intensivo. O hedge de commodities e o financiamento rural são as ferramentas de sobrevivência em anos de quebra de safra.",
+    features: ["Simulação Climática Real", "Ciclo de Ativos Biológicos", "Hedge de Commodities", "Sazonalidade Financeira"],
+    kpis: ["Produtividade por Hectare", "Net Exposure (Câmbio/Preço)", "ROI Safra"],
+    accent: "amber"
+  },
+  'activity-finance': {
+    name: "Financeiro",
+    heroImage: "https://images.unsplash.com/photo-1611974717483-3600991e56aa?q=80&w=2000",
+    body: "Navegue pelo mercado de capitais, gerencie spread bancário e proteja o capital contra a inflação e a volatilidade cambial.",
+    description: "A arena financeira é o simulador de bancos e fundos de investimento. O core é o gerenciamento de risco e liquidez. Equipes devem alocar capital em carteiras de crédito, fundos de hedge e operar no mercado secundário enquanto monitoram a taxa TR e inflação real.",
+    features: ["Gestão de Carteira Bancária", "Análise de Risco de Crédito", "Arbitragem e Liquidez", "Compliance e Regulação"],
+    kpis: ["ROE (Return on Equity)", "Índice de Basiléia", "Alpha de Investimento"],
+    accent: "rose"
+  },
+  'activity-construction': {
+    name: "Construção",
+    heroImage: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2000",
+    body: "Erga infraestruturas bilionárias, vença licitações complexas e domine a gestão de prazos e orçamentos em obras de larga escala.",
+    description: "A Construtora de Elite foca em gestão de projetos (BIM) e licitações. O desafio é o fluxo de caixa: como manter a operação viva durante anos de obra sem receita imediata. Riscos ambientais e multas contratuais por atraso são as variáveis que derrubam impérios nesta atividade.",
+    features: ["Licitações por Menor Preço", "Gestão de Prazos Críticos", "Insumos e Matérias-Primas", "Impacto Ambiental e ESG"],
+    kpis: ["Evolução de Obra (Budget vs Actual)", "Margem Líquida por Contrato", "Taxa de Acidentes/Segurança"],
+    accent: "indigo"
   },
   'activity-rodada-negocios': {
     name: "Rodada de Negócios",
-    body: "Enfrente a volatilidade máxima do mercado em uma disputa comercial onde o preço e a gestão de caixa decidem o vencedor.",
-    features: ["Inflação Programada", "Hedge de Contratos", "Elasticidade Extrema", "Guerra de Share"],
-    kpis: ["Margem de Contribuição", "Cash Runway", "Market Share"]
+    heroImage: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=2000",
+    body: "Enfrente a volatilidade máxima do mercado em uma disputa comercial onde o preço e a gestão de caixa decidem o vencedor em cenários de alta inflação.",
+    description: "A modalidade 'Rodada de Negócios' é o treinamento intensivo para gestão de crise. Diferente das arenas padrão, aqui a inflação é composta e agressiva, e os clientes são extremamente sensíveis a preço. É uma guerra de trincheiras comerciais onde o fluxo de caixa é o único oxigênio disponível.",
+    features: ["Inflação Composta Programada", "Hedge de Contratos Futuros", "Elasticidade de Demanda Extrema", "Guerra de Market Share"],
+    kpis: ["Margem de Contribuição", "Cash Runway", "Resiliência Inflacionária"],
+    accent: "orange"
   },
   'activity-chao-de-fabrica': {
     name: "Chão-de-Fábrica",
-    body: "Otimize sua planta industrial utilizando metodologias MRP II e Just-in-Time para alcançar o OEE de classe mundial.",
-    features: ["Gestão de Gargalos", "Níveis de Automação", "Setup SMED", "Lotes Dinâmicos"],
-    kpis: ["OEE (Eficiência Geral)", "Lead Time", "Custo Unitário"]
+    heroImage: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=2000",
+    body: "Otimize sua planta industrial utilizando metodologias MRP II e Just-in-Time para alcançar o OEE de classe mundial e a manufatura enxuta.",
+    description: "A modalidade 'Chão-de-Fábrica' é um mergulho profundo na Engenharia de Produção. As equipes devem decidir entre estratégias PUSH (MRP) ou PULL (Kanban/JIT). Cada segundo perdido em um gargalo (Theory of Constraints) ou em um setup de máquina mal planejado (SMED) impacta diretamente o custo unitário e a competitividade.",
+    features: ["Gestão de Gargalos (OPT)", "Níveis de Automação 4.0", "Setup de Máquinas (SMED)", "Lotes Dinâmicos e Kanban"],
+    kpis: ["OEE (Eficiência Geral)", "Manufacturing Lead Time", "WIP (Work in Progress)"],
+    accent: "blue"
   }
 };
 
@@ -154,7 +188,6 @@ export const BRANCH_CONFIGS: Record<string, { label: string; icon: string }> = {
   'chao-de-fabrica': { label: 'Chão-de-Fábrica', icon: '⚙️' }
 };
 
-// Fix: Add CHAMPIONSHIP_TEMPLATES and MOCK_ONGOING_CHAMPIONSHIPS to constants.tsx to resolve import errors
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   {
     id: 'industrial-elite',
