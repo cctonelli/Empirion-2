@@ -13,11 +13,11 @@ export const COLORS = {
 };
 
 export const ALPHA_TEST_USERS = [
-  { id: 'tutor', name: 'Tutor Teste', email: 'tutor@empirion.com.br', role: 'tutor', icon: 'Shield' },
-  { id: 'alpha', name: 'Capitão Alpha', email: 'alpha@empirion.com.br', role: 'player', team: 'Equipe Alpha', icon: 'Zap' },
-  { id: 'beta', name: 'Capitão Beta', email: 'beta@empirion.com.br', role: 'player', team: 'Equipe Beta', icon: 'Zap' },
-  { id: 'gamma', name: 'Capitão Gamma', email: 'gamma@empirion.com.br', role: 'player', team: 'Equipe Gamma', icon: 'Zap' },
-  { id: 'delta', name: 'Capitão Delta', email: 'delta@empirion.com.br', role: 'player', team: 'Equipe Delta', icon: 'Zap' },
+  { id: 'tutor', name: 'Tutor Teste', email: 'tutor@example.com', role: 'tutor', icon: 'Shield' },
+  { id: 'alpha', name: 'Capitão Alpha', email: 'alpha@example.com', role: 'player', team: 'Equipe Alpha', icon: 'Zap' },
+  { id: 'beta', name: 'Capitão Beta', email: 'beta@example.com', role: 'player', team: 'Equipe Beta', icon: 'Zap' },
+  { id: 'gamma', name: 'Capitão Gamma', email: 'gamma@example.com', role: 'player', team: 'Equipe Gamma', icon: 'Zap' },
+  { id: 'delta', name: 'Capitão Delta', email: 'delta@example.com', role: 'player', team: 'Equipe Delta', icon: 'Zap' },
 ];
 
 export const DEMO_CHAMPIONSHIP_DATA = {

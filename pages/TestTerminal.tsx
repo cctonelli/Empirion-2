@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -24,8 +23,9 @@ const TestTerminal: React.FC = () => {
     setLoadingId(user.id);
     setError(null);
     try {
-      const data = await silentTestAuth(user);
-      if (data?.session) {
+      const result = await silentTestAuth(user);
+      // Fixed: accessing the inner data object for session
+      if (result?.data?.session) {
         // Redirecionamento Direto baseado na Role
         if (user.role === 'tutor') {
           navigate('/app/admin');

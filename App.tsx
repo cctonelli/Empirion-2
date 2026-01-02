@@ -20,7 +20,7 @@ import ContactPage from './pages/ContactPage';
 import PublicRewards from './pages/PublicRewards';
 import TestTerminal from './pages/TestTerminal';
 import Auth from './components/Auth';
-import { supabase, getUserProfile } from './services/supabase';
+import { supabase, getUserProfile, isTestMode } from './services/supabase';
 import { UserProfile } from './types';
 
 const PublicLayout: React.FC<{ children: React.ReactNode; onLogin: () => void }> = ({ children, onLogin }) => (
@@ -40,12 +40,20 @@ const AppContent: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 1. Initial Session Check
     const checkInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session) {
-        await fetchProfile(session.user.id);
+      // Prioridade para sessão demo se estivermos em modo teste
+      const demoSession = localStorage.getItem('empirion_demo_session');
+      if (isTestMode && demoSession) {
+        const parsed = JSON.parse(demoSession);
+        setSession(parsed);
+        await fetchProfile(parsed.user.id);
+        return;
+      }
+
+      const { data: { session: realSession } } = await supabase.auth.getSession();
+      setSession(realSession);
+      if (realSession) {
+        await fetchProfile(realSession.user.id);
       } else {
         setLoading(false);
       }
@@ -53,15 +61,14 @@ const AppContent: React.FC = () => {
 
     checkInitialSession();
 
-    // 2. Realtime Auth Observer
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (isTestMode && localStorage.getItem('empirion_demo_session')) return;
       setSession(session);
       if (session) {
         await fetchProfile(session.user.id);
       } else {
         setProfile(null);
         setLoading(false);
-        // Só redireciona se estiver tentando acessar o app e não houver sessão
         if (location.pathname.startsWith('/app')) navigate('/auth');
       }
     });
@@ -74,17 +81,25 @@ const AppContent: React.FC = () => {
       const prof = await getUserProfile(uid);
       setProfile(prof);
     } catch (err) {
-      console.error("Critical Profile Sync Failure:", err);
+      console.error("Profile Sync Failure:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = async () => {
+    localStorage.removeItem('empirion_demo_session');
+    await supabase.auth.signOut();
+    setSession(null);
+    setProfile(null);
+    navigate('/');
   };
 
   if (loading) return (
     <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
       <div className="flex flex-col items-center gap-6">
         <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <span className="text-white font-black uppercase text-[10px] tracking-[0.4em] animate-pulse">Sincronizando Protocolo...</span>
+        <span className="text-white font-black uppercase text-[10px] tracking-[0.4em] animate-pulse">Sincronizando Nodo...</span>
       </div>
     </div>
   );
@@ -93,21 +108,14 @@ const AppContent: React.FC = () => {
 
   return (
     <Routes>
-      {/* Public Marketing & Educational Routes */}
       <Route path="/" element={<PublicLayout {...authProps}><LandingPage onLogin={() => navigate('/auth')} /></PublicLayout>} />
       <Route path="/auth" element={<Auth onAuth={() => navigate('/app/dashboard')} onBack={() => navigate('/')} />} />
       <Route path="/features" element={<PublicLayout {...authProps}><FeaturesPage /></PublicLayout>} />
       <Route path="/blog" element={<PublicLayout {...authProps}><BlogPage /></PublicLayout>} />
       <Route path="/contact" element={<PublicLayout {...authProps}><ContactPage /></PublicLayout>} />
       <Route path="/rewards" element={<PublicLayout {...authProps}><PublicRewards /></PublicLayout>} />
-      
-      {/* Módulo de Testes MVP (Público no MVP para avaliação) */}
       <Route path="/test/industrial" element={<PublicLayout {...authProps}><TestTerminal /></PublicLayout>} />
-      
-      {/* Dynamic Activity/Modality Routes */}
       <Route path="/activities/:slug" element={<PublicLayout {...authProps}><ActivityDetail /></PublicLayout>} />
-      
-      {/* Solution Sub-routes */}
       <Route path="/solutions/open-tournaments" element={<PublicLayout {...authProps}><OpenTournaments /></PublicLayout>} />
       <Route path="/solutions/simulators" element={<PublicLayout {...authProps}><SimulatorsPage /></PublicLayout>} />
       <Route path="/solutions/university" element={<PublicLayout {...authProps}><GenericSolutionPage type="university" /></PublicLayout>} />
@@ -115,16 +123,12 @@ const AppContent: React.FC = () => {
       <Route path="/solutions/individual" element={<PublicLayout {...authProps}><GenericSolutionPage type="individual" /></PublicLayout>} />
       <Route path="/solutions/business-plan" element={<PublicLayout {...authProps}><BusinessPlanWizard /></PublicLayout>} />
 
-      {/* Private Application Routes */}
       <Route path="/app/*" element={
-        session ? (
+        (session || isTestMode) ? (
           <Layout
-            userName={profile?.name || session.user.email}
+            userName={profile?.name || "Estrategista Alpha"}
             userRole={profile?.role || 'player'}
-            onLogout={async () => { 
-              await supabase.auth.signOut();
-              navigate('/');
-            }}
+            onLogout={handleLogout}
             activeView={location.pathname.replace('/app/', '') || 'dashboard'}
             onNavigate={(view) => navigate(`/app/${view}`)}
           >
@@ -135,8 +139,8 @@ const AppContent: React.FC = () => {
               <Route path="market" element={<MarketAnalysis />} />
               <Route path="intelligence" element={
                 <OpalIntelligenceHub 
-                  isPremium={profile?.is_opal_premium || false} 
-                  onUpgrade={() => alert("Redirecionando para o Gateway Stripe...")}
+                  isPremium={true} 
+                  onUpgrade={() => {}}
                   config={profile?.opal_config}
                 />
               } />

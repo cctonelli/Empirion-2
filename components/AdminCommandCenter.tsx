@@ -1,4 +1,3 @@
-
 // Fix: Added missing 'Zap' to lucide-react imports to resolve reference error in the Opal tab.
 import React, { useState, useEffect } from 'react';
 import { 
@@ -8,7 +7,8 @@ import {
   Search, ShieldCheck, Eye, Trash2, Mail, ExternalLink, ShieldCheck as ShieldIcon,
   Zap
 } from 'lucide-react';
-import { listAllUsers, updateUserRole, updateUserPremiumStatus, getPlatformConfig, updatePlatformConfig, supabase } from '../services/supabase';
+// Removed non-existent updateUserRole from imports
+import { listAllUsers, updateUserPremiumStatus, getPlatformConfig, updatePlatformConfig, supabase } from '../services/supabase';
 import { UserProfile } from '../types';
 
 const AdminCommandCenter: React.FC = () => {
