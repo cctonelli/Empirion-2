@@ -5,26 +5,23 @@ export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
-export type ServiceLevel = 'low' | 'mid' | 'high';
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
-export type ProductionStrategy = 'push_mrp' | 'pull_kanban' | 'opt' | 'heijunka';
 
 export interface AccountNode {
   id: string;
   label: string;
   value: number;
-  type: 'credit' | 'debit';
+  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
   children?: AccountNode[];
   isEditable?: boolean;
 }
 
-export interface MarketConfig {
-  regionsCount: number;
-  demand_per_region: Record<number, number>;
-  initial_market_share_per_region: Record<number, number>;
-  initial_prices_per_region: Record<number, number>;
-  share_price_initial: number;
-  shares_outstanding: number;
+export interface RegionConfig {
+  id: number;
+  name: string;
+  demand: number;
+  initialShare: number;
+  suggestedPrice: number;
 }
 
 export interface MacroIndicators {
@@ -35,16 +32,7 @@ export interface MacroIndicators {
   average_salary: number;
 }
 
-// Added missing MarketIndicators type used in simulation services
-export interface MarketIndicators {
-  inflation_rate: number;
-  interest_rate_tr: number;
-  exchange_rate: number;
-  demand_potential: number;
-  demand_regions: number[];
-}
-
-// Added missing BlackSwanEvent type for dynamic simulation events
+// Added BlackSwanEvent to support simulation events and Dashboard integration
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -55,6 +43,24 @@ export interface BlackSwanEvent {
     interest: number;
     productivity: number;
   };
+}
+
+// Added CommunityCriteria to support gamification and voting features
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
+// Added MarketIndicators to unify market data across the simulation engine
+export interface MarketIndicators {
+  macro?: MacroIndicators;
+  regions?: RegionConfig[];
+  demand_regions?: number[];
+  inflation_rate?: number;
+  interest_rate_tr?: number;
+  exchange_rate?: number;
+  demand_potential?: number;
 }
 
 export interface Championship {
@@ -68,33 +74,8 @@ export interface Championship {
   totalRounds: number;
   config: any;
   initial_financials?: any;
-  ecosystemConfig?: EcosystemConfig;
-}
-
-// Added missing EcosystemConfig for simulation environment parameters
-export interface EcosystemConfig {
-  scenarioType: ScenarioType;
-  modalityType: ModalityType;
-  inflationRate: number;
-  demandMultiplier: number;
-  interestRate: number;
-  marketVolatility: number;
-  esgPriority?: number;
-  activeEvent?: BlackSwanEvent | null;
-  aiOpponents?: {
-    enabled: boolean;
-    count: number;
-    strategy: 'aggressive' | 'conservative' | 'balanced';
-  };
-  gazetaConfig?: {
-    focus: string[];
-    style: 'sensationalist' | 'analytical' | 'neutral';
-  };
-  realDataWeights?: {
-    inflation: number;
-    demand: number;
-    currency: number;
-  };
+  market_indicators?: MarketIndicators;
+  ecosystemConfig?: any;
 }
 
 export interface ChampionshipTemplate {
@@ -111,15 +92,15 @@ export interface ChampionshipTemplate {
     sales_mode: SalesMode;
     scenario_type: ScenarioType;
     transparency_level: TransparencyLevel;
-    team_fee: number;
-    community_enabled: boolean;
-    regionsCount: number;
     modalityType: ModalityType;
+    // Added missing configuration properties found in constants and wizard
+    team_fee?: number;
+    community_enabled?: boolean;
+    regionsCount?: number;
   };
   initial_financials: any;
+  market_indicators: MarketIndicators;
   products: any[];
-  resources: any;
-  market_indicators: any;
 }
 
 export interface UserProfile {
@@ -152,7 +133,6 @@ export interface DecisionData {
   finance: any;
 }
 
-// Added missing MessageBoardItem for dashboard news feed
 export interface MessageBoardItem {
   id: string;
   sender: string;
@@ -161,9 +141,24 @@ export interface MessageBoardItem {
   isImportant?: boolean;
 }
 
-// Added missing CommunityCriteria for voting mechanics
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
+export interface EcosystemConfig {
+  scenarioType: ScenarioType;
+  modalityType: ModalityType;
+  inflationRate: number;
+  demandMultiplier: number;
+  interestRate: number;
+  marketVolatility: number;
+  esgPriority?: number;
+  activeEvent?: BlackSwanEvent | null;
+  aiOpponents?: {
+    enabled: boolean;
+    count: number;
+    strategy: 'aggressive' | 'conservative' | 'balanced';
+  };
+  gazetaConfig?: {
+    focus: string[];
+    style: 'sensationalist' | 'analytical' | 'neutral';
+  };
+  // Added votingCriteria to support CommunityView logic
+  votingCriteria?: CommunityCriteria[];
 }

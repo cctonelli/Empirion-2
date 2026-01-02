@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -41,7 +40,6 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     const checkInitialSession = async () => {
-      // Prioridade para sessão demo se estivermos em modo teste
       const demoSession = localStorage.getItem('empirion_demo_session');
       if (isTestMode && demoSession) {
         const parsed = JSON.parse(demoSession);
@@ -145,6 +143,7 @@ const AppContent: React.FC = () => {
                 />
               } />
               <Route path="admin" element={<AdminCommandCenter />} />
+              <Route path="settings" element={<AdminCommandCenter preTab="tournaments" />} />
             </Routes>
           </Layout>
         ) : (

@@ -1,24 +1,38 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Check, Settings, Globe, Layers, Cpu, Zap, Leaf, FileText, Loader2,
   MapPin, TrendingUp, Package, Lock, Unlock, Info, BarChart3, Search, Filter, Building2,
-  Landmark, Bot, Newspaper, ShieldCheck, Target, Sparkles, Gavel
+  Landmark, Bot, Newspaper, ShieldCheck, Target, Sparkles, Gavel, ArrowLeft, Trash2, 
+  DollarSign, Calculator, Activity
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS, MODALITY_INFO } from '../constants';
-import { Branch, ChampionshipTemplate, ScenarioType, ModalityType } from '../types';
+import { Branch, ChampionshipTemplate, ScenarioType, ModalityType, RegionConfig, MacroIndicators } from '../types';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import { supabase } from '../services/supabase';
-import { useModalities } from '../hooks/useModalities';
 
 const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [financials, setFinancials] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<ChampionshipTemplate | null>(null);
-  const [filterBranch, setFilterBranch] = useState<Branch | 'all'>('all');
-  const { modalities } = useModalities();
   
+  // State para Mercado Regional (Passo 4)
+  const [regions, setRegions] = useState<RegionConfig[]>([
+    { id: 1, name: 'Sudeste', demand: 5000000, initialShare: 25, suggestedPrice: 600 },
+    { id: 2, name: 'Sul', demand: 3000000, initialShare: 25, suggestedPrice: 620 },
+    { id: 3, name: 'Nordeste', demand: 2000000, initialShare: 25, suggestedPrice: 580 },
+    { id: 4, name: 'Centro-Oeste', demand: 1500000, initialShare: 25, suggestedPrice: 590 }
+  ]);
+
+  // State para Indicadores Macro (Passo 4)
+  const [macro, setMacro] = useState<MacroIndicators>({
+    inflation_rate: 0.05,
+    interest_rate_tr: 0.11,
+    exchange_rate_usd_brl: 5.50,
+    commodity_index: 100,
+    average_salary: 5000
+  });
+
   const [formData, setFormData] = useState({
     name: '',
     branch: 'industrial' as Branch,
@@ -27,28 +41,14 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     scenarioType: 'simulated' as ScenarioType,
     modalityType: 'standard' as ModalityType,
     transparency: 'medium',
-    regionsCount: 9,
-    initialStock: 30000,
-    initialPrice: 340,
+    regionsCount: 4,
     currency: 'BRL',
-    isPublic: false,
-    aiOpponents: {
-      enabled: true,
-      count: 7,
-      strategy: 'balanced' as 'aggressive' | 'conservative' | 'balanced'
-    },
-    gazetaConfig: {
-      focus: ['análise da CVM', 'reajuste de insumos', 'liderança do setor'],
-      style: 'analytical' as 'sensationalist' | 'analytical' | 'neutral'
-    },
-    realDataWeights: {
-      inflation: 0.8,
-      demand: 0.5,
-      currency: 1.0
-    }
+    totalRounds: 12,
+    roundFrequencyDays: 7,
+    isPublic: false
   });
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
+  const nextStep = () => setStep(prev => Math.min(prev + 1, 5));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
   useEffect(() => {
@@ -59,356 +59,274 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         setFormData(prev => ({
           ...prev,
           branch: template.branch,
-          regionsCount: template.config.regionsCount || 9,
-          initialStock: template.products[0]?.initial_stock || 0,
-          initialPrice: template.products[0]?.suggested_price || 340,
+          regionsCount: template.config.regionsCount || 4,
           currency: template.config.currency,
           salesMode: template.config.sales_mode,
           scenarioType: template.config.scenario_type,
-          modalityType: template.config.modalityType || 'standard',
-          transparency: template.config.transparency_level
+          modalityType: template.config.modalityType || 'standard'
         }));
         setFinancials(template.initial_financials);
       }
-    } else if (formData.templateId === 'scratch') {
-        setSelectedTemplate(null);
     }
   }, [formData.templateId]);
-
-  const filteredTemplates = CHAMPIONSHIP_TEMPLATES.filter(t => 
-    filterBranch === 'all' || t.branch === filterBranch
-  );
-
-  // Combine static and dynamic modality info
-  const allModalities = [
-    ...Object.keys(MODALITY_INFO).map(m => ({
-      id: m,
-      label: MODALITY_INFO[m as ModalityType].label,
-      desc: MODALITY_INFO[m as ModalityType].desc,
-      icon: m === 'business_round' ? Gavel : m === 'factory_efficiency' ? Cpu : Layers
-    })),
-    ...modalities.map(m => ({
-      id: m.slug,
-      label: m.name,
-      desc: m.description,
-      icon: Sparkles
-    }))
-  ];
 
   const handleLaunch = async () => {
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      const payload: any = {
+      const payload = {
         name: formData.name,
         branch: formData.branch,
         sales_mode: formData.salesMode,
         scenario_type: formData.scenarioType,
-        transparency_level: formData.transparency,
-        currency: formData.currency,
-        is_public: formData.isPublic,
         status: 'active',
         tutor_id: user?.id,
+        current_round: 0,
+        total_rounds: formData.totalRounds,
         config: {
-          regionsCount: formData.regionsCount,
-          initialStock: formData.initialStock,
-          initialPrice: formData.initialPrice,
-          aiOpponents: formData.aiOpponents,
-          gazetaConfig: formData.gazetaConfig,
-          modalityType: formData.modalityType
-        },
-        ecosystem_config: {
-          scenarioType: formData.scenarioType,
+          regions: regions,
+          macro: macro,
+          transparency: formData.transparency,
           modalityType: formData.modalityType,
-          inflationRate: 0.04,
-          demandMultiplier: 1.0,
-          interestRate: 0.12,
-          marketVolatility: 0.2,
-          esgPriority: 0.5,
-          activeEvent: null,
-          aiOpponents: formData.aiOpponents,
-          gazetaConfig: formData.gazetaConfig,
-          realDataWeights: formData.realDataWeights
+          roundFrequencyDays: formData.roundFrequencyDays
         },
-        initial_financials: financials || selectedTemplate?.initial_financials || {}, 
-        market_indicators: selectedTemplate?.market_indicators || {},
-        resources: selectedTemplate?.resources || {},
-        products: selectedTemplate?.products || []
+        initial_financials: financials,
+        market_indicators: { macro, regions }
       };
 
-      const { error } = await supabase
-        .from('championships')
-        .insert([payload]);
-
+      const { error } = await supabase.from('championships').insert([payload]);
       if (error) throw error;
       onComplete();
     } catch (error) {
-      console.error("Error launching championship:", error);
-      alert("Failed to launch championship. Check console for details.");
+      console.error("Launch Error:", error);
+      alert("Falha ao inicializar arena. Verifique os logs da console.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto animate-in slide-in-from-bottom-8 duration-500 pb-20">
-      <div className="flex items-center justify-between mb-12 relative px-4">
+    <div className="max-w-7xl mx-auto animate-in slide-in-from-bottom-8 duration-500 pb-20">
+      {/* STEPPER HEADER */}
+      <div className="flex items-center justify-between mb-16 relative px-4">
         <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 -translate-y-1/2 z-0"></div>
-        {[1, 2, 3, 4].map((s) => (
+        {[1, 2, 3, 4, 5].map((s) => (
           <div key={s} className="relative z-10 flex flex-col items-center">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-              step >= s ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-50' : 'bg-white border-2 border-slate-200 text-slate-400'
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black transition-all duration-500 shadow-lg ${
+              step >= s ? 'bg-orange-600 text-white ring-8 ring-orange-50' : 'bg-white border-2 border-slate-200 text-slate-400'
             }`}>
-              {step > s ? <Check size={18} /> : s}
+              {step > s ? <Check size={20} /> : s}
             </div>
-            <span className={`text-[10px] font-bold uppercase mt-2 tracking-widest ${step >= s ? 'text-blue-600' : 'text-slate-400'}`}>
-              {s === 1 ? 'Scenario Template' : s === 2 ? 'Ecosystem Hub' : s === 3 ? 'Account Structure' : 'Final Deploy'}
+            <span className={`text-[9px] font-black uppercase mt-3 tracking-widest ${step >= s ? 'text-orange-600' : 'text-slate-400'}`}>
+              {s === 1 ? 'Identidade' : s === 2 ? 'Template' : s === 3 ? 'Balanço' : s === 4 ? 'Mercado' : 'Deploy'}
             </span>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-10">
-        {step === 1 && (
-          <div className="space-y-8">
-            <div className="text-center">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Arena Selection (v5.0 GOLD)</h2>
-              <p className="text-slate-500 mt-2">Escolha uma estrutura inicial pré-auditada ou crie um cenário autoral.</p>
-            </div>
-
-            <div className="flex flex-wrap gap-2 justify-center pb-4">
-               <button 
-                 onClick={() => setFilterBranch('all')}
-                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterBranch === 'all' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-               >
-                 All Sectors
-               </button>
-               {(Object.keys(BRANCH_CONFIGS) as Branch[]).map(b => (
-                 <button
-                   key={b}
-                   onClick={() => setFilterBranch(b)}
-                   className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${filterBranch === b ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                 >
-                   <span>{BRANCH_CONFIGS[b].icon}</span> {BRANCH_CONFIGS[b].label}
-                 </button>
-               ))}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <button 
-                onClick={() => setFormData({...formData, templateId: 'scratch'})}
-                className={`p-6 rounded-[2.5rem] border-2 text-left transition-all flex flex-col justify-between min-h-[220px] ${
-                  formData.templateId === 'scratch' ? 'border-blue-600 bg-blue-50/50' : 'border-slate-100 hover:border-slate-200 bg-slate-50/30'
-                }`}
-              >
-                <div>
-                  <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center mb-4">
-                     <Plus size={24} />
-                  </div>
-                  <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tighter leading-none">Custom Build</h3>
-                  <p className="text-slate-500 text-xs mt-3 leading-relaxed">Crie cada rubrica contábil e variável de mercado do zero para uma simulação 100% personalizada.</p>
-                </div>
-              </button>
-
-              {filteredTemplates.map(t => (
-                <button 
-                  key={t.id}
-                  onClick={() => setFormData({...formData, templateId: t.id})}
-                  className={`p-6 rounded-[2.5rem] border-2 text-left transition-all relative overflow-hidden group flex flex-col justify-between min-h-[220px] ${
-                    formData.templateId === t.id ? 'border-blue-600 bg-blue-50/50 shadow-inner' : 'border-slate-100 hover:border-slate-200 bg-slate-50/30 shadow-sm'
-                  }`}
-                >
-                  <div className="absolute -top-6 -right-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <span className="text-9xl">{BRANCH_CONFIGS[t.branch].icon}</span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-xl">
-                        {BRANCH_CONFIGS[t.branch].icon}
-                      </div>
-                      <span className="px-2.5 py-1 bg-white text-[9px] font-black text-blue-600 rounded-full uppercase tracking-tighter border border-blue-50">
-                        {t.branch}
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-slate-900 text-base leading-tight group-hover:text-blue-600 transition-colors uppercase tracking-tighter">{t.name}</h3>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1.5">{t.sector}</p>
-                    <p className="text-slate-500 text-xs mt-3 line-clamp-3 leading-relaxed font-medium">{t.description}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-12">
-            <div className="text-center">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Intelligence & Modality Config</h2>
-              <p className="text-slate-500 mt-2">Escolha a modalidade competitiva e integre dados de mercado.</p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              <div className="lg:col-span-12 space-y-4">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Arena Identifier (Name)</label>
-                <input 
-                  type="text" 
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full p-6 bg-slate-50 border border-slate-200 rounded-[2rem] focus:ring-8 focus:ring-blue-50 focus:border-blue-600 outline-none transition-all font-bold text-lg"
-                  placeholder="Ex: Campeonato Industrial Brasileiro 2026"
-                />
-              </div>
-
-              {/* Modality Selection */}
-              <div className="lg:col-span-12 space-y-4">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Modalidade Estratégica</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {allModalities.map(m => {
-                    const Icon = m.icon;
-                    return (
-                      <button 
-                        key={m.id}
-                        onClick={() => setFormData({...formData, modalityType: m.id})}
-                        className={`p-6 rounded-[2.5rem] border-2 text-left transition-all ${
-                          formData.modalityType === m.id ? 'border-blue-600 bg-blue-50/50 shadow-lg' : 'border-slate-100 bg-slate-50'
-                        }`}
-                      >
-                        <div className={`p-3 w-fit rounded-2xl mb-4 ${formData.modalityType === m.id ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
-                          <Icon size={24} />
-                        </div>
-                        <h4 className="font-black text-slate-900 uppercase tracking-tighter">{m.label}</h4>
-                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2">{m.desc}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="lg:col-span-6 space-y-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Bot className="text-blue-600" size={24} />
-                    <label className="text-xs font-black text-slate-900 uppercase tracking-widest">Market Occupancy (Bots)</label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox"
-                      checked={formData.aiOpponents.enabled}
-                      onChange={e => setFormData({...formData, aiOpponents: { ...formData.aiOpponents, enabled: e.target.checked }})}
-                      className="w-5 h-5 accent-blue-600"
-                    />
-                    <span className="text-[10px] font-black uppercase text-slate-400">Active</span>
-                  </div>
-                </div>
-                {formData.aiOpponents.enabled && (
-                  <div className="space-y-4 animate-in fade-in">
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
-                      <span>Total AI Entities</span>
-                      <span className="text-blue-600 font-bold">{formData.aiOpponents.count}</span>
-                    </div>
-                    <input 
-                      type="range" min="0" max="11" step="1"
-                      value={formData.aiOpponents.count}
-                      onChange={e => setFormData({...formData, aiOpponents: { ...formData.aiOpponents, count: parseInt(e.target.value) }})}
-                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="lg:col-span-6 space-y-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
-                <div className="flex items-center gap-3">
-                  <MapPin className="text-blue-500" size={24} />
-                  <label className="text-xs font-black text-slate-900 uppercase tracking-widest">Regional Scale</label>
-                </div>
-                <div className="flex items-center gap-6">
-                   <input 
-                     type="range" min="1" max="15" step="1"
-                     value={formData.regionsCount}
-                     onChange={e => setFormData({...formData, regionsCount: parseInt(e.target.value)})}
-                     className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                   />
-                   <div className="w-16 h-16 bg-white rounded-2xl border border-slate-200 flex items-center justify-center font-black text-blue-600 shadow-xl text-xl">
-                     {formData.regionsCount}
-                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-8">
-            <div className="text-center">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Economic Master Template</h2>
-              <p className="text-slate-500 mt-2">Mapeie as rubricas contábeis iniciais que serão clonadas para todas as equipes.</p>
-            </div>
-            
-            <FinancialStructureEditor 
-                onChange={setFinancials} 
-                initialData={selectedTemplate?.initial_financials} 
-            />
-          </div>
-        )}
-
-        {step === 4 && (
-          <div className="text-center space-y-12 py-10">
-            <div className="relative inline-block">
-               <div className="w-32 h-32 bg-slate-900 text-white rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl relative z-10">
-                  <ShieldCheck size={64} className="text-emerald-400" />
+      <div className="bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden min-h-[700px] flex flex-col">
+        <div className="flex-1 p-12 md:p-16">
+          {step === 1 && (
+            <div className="space-y-12 animate-in fade-in duration-500">
+               <div className="text-center space-y-4">
+                  <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Identidade da Arena</h2>
+                  <p className="text-slate-500 font-medium">Defina as bases regulatórias e o nome do seu campeonato.</p>
                </div>
-               <div className="absolute -inset-8 bg-blue-500/10 blur-[60px] rounded-full animate-pulse"></div>
-            </div>
-            
-            <div className="space-y-3">
-               <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase">Initialize Arena</h2>
-               <p className="text-slate-500 font-medium text-lg">Protocolo Empirion v5.0 GOLD pronto para deployment imediato.</p>
-            </div>
-            
-            <div className="max-w-md mx-auto p-10 bg-slate-50 rounded-[4rem] border border-slate-200 text-left space-y-6 shadow-inner">
-               <div className="flex justify-between items-center">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Modality</span>
-                 <span className="font-black uppercase text-xs text-blue-600">{formData.modalityType.replace('_', ' ')}</span>
-               </div>
-               <div className="flex justify-between items-center">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Sectors Active</span>
-                 <span className="text-slate-900 font-bold uppercase text-xs">{formData.branch}</span>
-               </div>
-               <div className="flex justify-between items-center">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Market Occupancy</span>
-                 <span className="text-slate-900 font-bold uppercase text-xs">{formData.aiOpponents.enabled ? `${formData.aiOpponents.count} Bots` : 'Manual Players'}</span>
-               </div>
-               <div className="pt-6 border-t border-slate-200 flex justify-between items-end">
-                 <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest">Initial Assets</span>
-                 <span className="text-slate-900 font-black text-3xl font-mono">${(financials?.balance_sheet?.total_assets || selectedTemplate?.initial_financials?.balance_sheet?.total_assets || 0).toLocaleString()}</span>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-3">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nome da Arena</label>
+                     <input 
+                        value={formData.name} 
+                        onChange={e => setFormData({...formData, name: e.target.value})}
+                        className="w-full p-6 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-bold text-slate-900 focus:ring-8 focus:ring-orange-50 outline-none transition-all" 
+                        placeholder="Ex: Torneio Industrial Bernard" 
+                     />
+                  </div>
+                  <div className="space-y-3">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ramo de Atuação</label>
+                     <select 
+                        value={formData.branch} 
+                        onChange={e => setFormData({...formData, branch: e.target.value as any})}
+                        className="w-full p-6 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-bold text-slate-900 focus:ring-8 focus:ring-orange-50 outline-none transition-all"
+                     >
+                        {Object.keys(BRANCH_CONFIGS).map(b => (
+                          <option key={b} value={b}>{BRANCH_CONFIGS[b].label}</option>
+                        ))}
+                     </select>
+                  </div>
+                  <div className="space-y-3">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rodadas Totais</label>
+                     <input type="number" value={formData.totalRounds} onChange={e => setFormData({...formData, totalRounds: parseInt(e.target.value)})} className="w-full p-6 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-bold" />
+                  </div>
+                  <div className="space-y-3">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Transparência (Oracle)</label>
+                     <select value={formData.transparency} onChange={e => setFormData({...formData, transparency: e.target.value as any})} className="w-full p-6 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-bold">
+                        <option value="low">Baixa (Apenas TSR)</option>
+                        <option value="medium">Média (TSR + Receita)</option>
+                        <option value="high">Alta (DRE Público)</option>
+                        <option value="full">Total (Balanço Aberto)</option>
+                     </select>
+                  </div>
                </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="mt-16 flex justify-between pt-10 border-t border-slate-100">
-          <button 
-            onClick={step === 1 ? onComplete : prevStep}
-            disabled={isSubmitting}
-            className="px-10 py-5 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all disabled:opacity-50"
-          >
-            {step === 1 ? 'Abort Operation' : 'Reverse Phase'}
-          </button>
-          <button 
-            onClick={step === 4 ? handleLaunch : nextStep}
-            disabled={(step === 2 && !formData.name) || isSubmitting}
-            className={`px-14 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-4 transition-all ${
-              (step === 2 && !formData.name) || isSubmitting ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-blue-600 hover:scale-105 shadow-2xl shadow-blue-200'
-            }`}
-          >
-            {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : (step === 4 ? 'Deploy Simulation' : 'Next Phase')} 
-            {!isSubmitting && <ArrowRight size={20} />}
-          </button>
+          {step === 2 && (
+            <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="text-center space-y-2">
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Seleção de Engine</h2>
+                  <p className="text-slate-500 font-medium">Use um template pré-auditado ou crie um cenário Customizado.</p>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <button 
+                    onClick={() => setFormData({...formData, templateId: 'scratch'})}
+                    className={`p-10 border-2 rounded-[3.5rem] text-left transition-all group ${formData.templateId === 'scratch' ? 'border-orange-600 bg-orange-50/50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}
+                  >
+                     <div className="p-4 bg-slate-900 text-white rounded-2xl w-fit mb-6 shadow-xl"><Plus size={24}/></div>
+                     <h4 className="text-xl font-black text-slate-900 uppercase italic">Custom Scenary</h4>
+                     <p className="text-[10px] text-slate-400 font-bold uppercase mt-3 leading-relaxed">Defina cada rubrica do balanço manualmente.</p>
+                  </button>
+
+                  {CHAMPIONSHIP_TEMPLATES.map(t => (
+                    <button 
+                      key={t.id}
+                      onClick={() => setFormData({...formData, templateId: t.id})}
+                      className={`p-10 border-2 rounded-[3.5rem] text-left transition-all relative overflow-hidden group ${formData.templateId === t.id ? 'border-orange-600 bg-orange-50/50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}
+                    >
+                       <div className="p-4 bg-white rounded-2xl w-fit mb-6 shadow-sm text-2xl">{BRANCH_CONFIGS[t.branch].icon}</div>
+                       <h4 className="text-xl font-black text-slate-900 uppercase italic leading-tight">{t.name}</h4>
+                       <p className="text-[10px] text-slate-500 font-medium mt-4 line-clamp-2">{t.description}</p>
+                    </button>
+                  ))}
+               </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-10 animate-in fade-in duration-500">
+               <div className="text-center space-y-2">
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Financial Baseline</h2>
+                  <p className="text-slate-500 font-medium">Os saldos iniciais que todas as equipes receberão na Rodada 0.</p>
+               </div>
+               <FinancialStructureEditor 
+                 initialData={financials} 
+                 onChange={setFinancials} 
+               />
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-12 animate-in fade-in duration-500">
+               <div className="text-center space-y-2">
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Mercado & Macroeconomia</h2>
+                  <p className="text-slate-500 font-medium">Distribua a demanda regional e ajuste os multiplicadores globais.</p>
+               </div>
+
+               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                  {/* Macro Sliders */}
+                  <div className="lg:col-span-4 space-y-8 bg-slate-900 p-10 rounded-[3rem] text-white">
+                     <h3 className="text-[10px] font-black uppercase text-orange-500 tracking-widest flex items-center gap-2"><Globe size={14}/> Indicadores Globais</h3>
+                     
+                     <MacroControl label="Inflação Setorial" val={`${(macro.inflation_rate * 100).toFixed(1)}%`} min={0} max={0.2} step={0.01} value={macro.inflation_rate} onChange={v => setMacro({...macro, inflation_rate: v})} />
+                     <MacroControl label="Taxa TR Mensal" val={`${(macro.interest_rate_tr * 100).toFixed(1)}%`} min={0} max={0.3} step={0.01} value={macro.interest_rate_tr} onChange={v => setMacro({...macro, interest_rate_tr: v})} />
+                     <MacroControl label="Câmbio (USD/BRL)" val={macro.exchange_rate_usd_brl.toFixed(2)} min={1} max={10} step={0.1} value={macro.exchange_rate_usd_brl} onChange={v => setMacro({...macro, exchange_rate_usd_brl: v})} />
+                  </div>
+
+                  {/* Regions Table */}
+                  <div className="lg:col-span-8 space-y-6">
+                     <div className="flex justify-between items-center">
+                        <h3 className="text-xs font-black uppercase text-slate-900 tracking-widest flex items-center gap-2"><MapPin size={16} className="text-orange-600"/> Demanda Regional (Round 0)</h3>
+                        <button onClick={() => setRegions([...regions, { id: Date.now(), name: 'Nova Região', demand: 1000000, initialShare: 0, suggestedPrice: 500 }])} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"><Plus size={16}/></button>
+                     </div>
+                     <div className="overflow-x-auto bg-slate-50 rounded-3xl border border-slate-100 shadow-inner">
+                        <table className="w-full text-[10px]">
+                           <thead className="bg-slate-100 text-slate-500 font-black uppercase border-b border-slate-200">
+                              <tr>
+                                 <th className="p-4 text-left">Região</th>
+                                 <th className="p-4 text-right">Potencial Demanda</th>
+                                 <th className="p-4 text-right">M. Share (%)</th>
+                                 <th className="p-4 text-right">Preço Sug.</th>
+                                 <th className="p-4 text-center">Ações</th>
+                              </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-200 font-bold">
+                              {regions.map((reg, idx) => (
+                                <tr key={reg.id} className="hover:bg-white transition-colors">
+                                   <td className="p-4"><input className="bg-transparent border-b border-transparent focus:border-blue-400 outline-none w-24" value={reg.name} onChange={e => { const nr = [...regions]; nr[idx].name = e.target.value; setRegions(nr); }} /></td>
+                                   <td className="p-4 text-right"><input type="number" className="bg-transparent text-right outline-none w-20" value={reg.demand} onChange={e => { const nr = [...regions]; nr[idx].demand = parseInt(e.target.value); setRegions(nr); }} /></td>
+                                   <td className="p-4 text-right font-mono text-blue-600">{reg.initialShare}%</td>
+                                   <td className="p-4 text-right"><input type="number" className="bg-transparent text-right outline-none w-16" value={reg.suggestedPrice} onChange={e => { const nr = [...regions]; nr[idx].suggestedPrice = parseFloat(e.target.value); setRegions(nr); }} /></td>
+                                   <td className="p-4 text-center"><button onClick={() => setRegions(regions.filter(r => r.id !== reg.id))} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button></td>
+                                </tr>
+                              ))}
+                           </tbody>
+                        </table>
+                     </div>
+                     <div className="flex justify-end pt-4">
+                        <button onClick={() => setRegions(regions.map(r => ({ ...r, initialShare: 100 / regions.length })))} className="px-6 py-2 bg-slate-900 text-white rounded-xl font-black text-[8px] uppercase tracking-widest shadow-lg">Padronizar Market Share</button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="text-center space-y-12 animate-in zoom-in-95 duration-700 py-10">
+               <div className="relative inline-block">
+                  <div className="w-32 h-32 bg-slate-900 text-white rounded-[3rem] flex items-center justify-center mx-auto shadow-[0_30px_70px_rgba(0,0,0,0.3)] border border-white/10 relative z-10">
+                     <ShieldCheck size={64} className="text-emerald-400 animate-pulse" />
+                  </div>
+                  <div className="absolute inset-0 bg-orange-600/20 blur-[60px] rounded-full"></div>
+               </div>
+               <div className="space-y-4">
+                  <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase italic">Arena v6.0 Ready</h2>
+                  <p className="text-slate-500 font-medium text-lg">Os protocolos foram validados. Inicie o seeding da arena global.</p>
+               </div>
+               <div className="max-w-md mx-auto p-10 bg-slate-50 rounded-[4rem] border border-slate-200 text-left space-y-6 shadow-inner">
+                  <SummaryLine label="Modalidade" val={formData.modalityType.toUpperCase()} />
+                  <SummaryLine label="Setor Principal" val={formData.branch.toUpperCase()} />
+                  <SummaryLine label="Ativo Inicial" val={`$ ${(financials?.balance_sheet?.total_assets || 0).toLocaleString()}`} />
+                  <SummaryLine label="Regiões Ativas" val={regions.length.toString()} />
+               </div>
+            </div>
+          )}
+        </div>
+
+        {/* FOOTER ACTIONS */}
+        <div className="bg-slate-50 p-10 flex justify-between items-center border-t border-slate-100">
+           <button onClick={step === 1 ? onComplete : prevStep} className="px-10 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-slate-950 transition-all flex items-center gap-3">
+              <ArrowLeft size={16}/> {step === 1 ? 'Abortar' : 'Fase Anterior'}
+           </button>
+           <button 
+             onClick={step === 5 ? handleLaunch : nextStep} 
+             disabled={isSubmitting || (step === 1 && !formData.name)}
+             className={`px-14 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl flex items-center gap-5 transition-all ${isSubmitting || (step === 1 && !formData.name) ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-orange-600 hover:scale-105 active:scale-95'}`}
+           >
+              {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : step === 5 ? 'Lançar Arena Master' : 'Seguinte'}
+              {!isSubmitting && <ArrowRight size={18} />}
+           </button>
         </div>
       </div>
     </div>
   );
 };
+
+const MacroControl = ({ label, val, min, max, step, value, onChange }: any) => (
+  <div className="space-y-4">
+     <div className="flex justify-between items-center text-[10px] font-black uppercase">
+        <span className="text-slate-500">{label}</span>
+        <span className="text-orange-400 font-mono">{val}</span>
+     </div>
+     <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(parseFloat(e.target.value))} className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-orange-500" />
+  </div>
+);
+
+const SummaryLine = ({ label, val }: any) => (
+  <div className="flex justify-between items-center border-b border-slate-200 pb-4 last:border-0 last:pb-0">
+     <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</span>
+     <span className="font-black text-slate-900 uppercase italic text-sm">{val}</span>
+  </div>
+);
 
 export default ChampionshipWizard;
