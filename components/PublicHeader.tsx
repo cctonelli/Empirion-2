@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +12,7 @@ import { useModalities } from '../hooks/useModalities';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const getIcon = (iconName?: string) => {
-  const size = 14; // Reduced from 16
+  const size = 14;
   switch(iconName) {
     case 'Factory': return <Factory size={size} />;
     case 'ShoppingCart': return <ShoppingCart size={size} />;
@@ -36,23 +35,25 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { modalities } = useModalities();
 
+  // Orquestração inteligente de menus recursivos
   const menuWithDynamics = MENU_STRUCTURE.map(item => {
-    if (item.label === 'activities') {
-        // As atividades agora são consolidadas no constants.tsx, mas se houver 
-        // modalidades dinâmicas no banco, elas aparecem aqui também.
-        return item;
-    }
     if (item.label === 'solutions') {
-      const solutionsItem = { ...item };
-      const arenasGroup = solutionsItem.sub?.find(s => s.id === 'arenas');
+      const solutionsItem = JSON.parse(JSON.stringify(item)); // Deep copy para segurança
+      const arenasGroup = solutionsItem.sub?.find((s: any) => s.id === 'arenas');
+      
       if (arenasGroup) {
-        const staticSub = (arenasGroup.sub || []).filter(s => !s.id.startsWith('mod-'));
+        // Preserva o que já existe (Educação, Corporativo, etc.)
+        const staticSub = (arenasGroup.sub || []).filter((s: any) => !s.id?.startsWith('mod-'));
+        
+        // Injeta as modalidades do banco de dados Gemini/Supabase
         const dynamicItems = modalities.map(m => ({
           id: `mod-${m.slug}`,
           label: m.name,
           path: `/activities/${m.slug}`,
-          icon: 'Sparkles'
+          icon: 'Sparkles',
+          desc: 'Arena Real-time'
         }));
+        
         arenasGroup.sub = [...staticSub, ...dynamicItems];
       }
       return solutionsItem;
@@ -76,12 +77,12 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tighter uppercase text-white italic leading-none group-hover:text-blue-400 transition-colors">EMPIRION</span>
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] leading-none mt-1">Command Node 08</span>
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] leading-none mt-1">Strategic Hub 08</span>
             </div>
           </Link>
         </div>
 
-        {/* DESKTOP MENU */}
+        {/* DESKTOP MENU - CORE REFACTORED */}
         <nav className="hidden lg:flex justify-center items-center gap-1">
           {menuWithDynamics.map((item) => {
             const isActive = location.pathname === item.path;
@@ -101,7 +102,8 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                       initial={{ opacity: 0, y: 10, scale: 0.98 }} 
                       animate={{ opacity: 1, y: 0, scale: 1 }} 
                       exit={{ opacity: 0, y: 10, scale: 0.98 }} 
-                      className="absolute top-full left-1/2 -translate-x-1/2 w-[300px] bg-[#0f172a]/95 border border-white/10 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.7)] p-2 mt-2 backdrop-blur-3xl max-h-[calc(100vh-120px)] overflow-y-auto no-scrollbar"
+                      // REMOVIDO overflow-y-auto PARA PERMITIR CASCATA LATERAL
+                      className="absolute top-full left-1/2 -translate-x-1/2 w-[280px] bg-[#0f172a]/98 border border-white/10 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-2 mt-2 backdrop-blur-3xl z-[1050]"
                     >
                       <div className="grid grid-cols-1 gap-0.5">
                         {item.sub.map((sub: any, idx: number) => <SubmenuItem key={sub.id || idx} item={sub} index={idx} />)}
@@ -139,28 +141,34 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               <span className="text-lg font-black uppercase text-white italic tracking-tighter">Command Menu</span>
               <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-white"><X size={28} /></button>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
               {menuWithDynamics.map(item => (
-                <div key={item.label} className="space-y-3">
+                <div key={item.label} className="space-y-4">
                     <Link to={item.path} onClick={() => !item.sub && setIsMobileMenuOpen(false)} className="block text-3xl font-black text-white uppercase tracking-tighter hover:text-blue-500 transition-colors">
                     {t(item.label)}
                     </Link>
                     {item.sub && (
-                        <div className="grid grid-cols-1 gap-2 pl-4 border-l border-white/5">
+                        <div className="grid grid-cols-1 gap-4 pl-4 border-l border-white/5">
                             {item.sub.map((sub: any) => (
-                                <Link key={sub.id} to={sub.path} onClick={() => setIsMobileMenuOpen(false)} className="text-slate-500 font-bold uppercase text-xs tracking-widest hover:text-white transition-colors py-1 flex items-center gap-2">
-                                   <ChevronRight size={10} className="text-blue-500" /> {sub.label}
-                                </Link>
+                                <div key={sub.id} className="space-y-2">
+                                  <Link to={sub.path} onClick={() => !sub.sub && setIsMobileMenuOpen(false)} className="text-slate-300 font-black uppercase text-xs tracking-widest hover:text-white transition-colors flex items-center gap-2">
+                                     <ChevronRight size={10} className="text-blue-500" /> {sub.label}
+                                  </Link>
+                                  {sub.sub && (
+                                    <div className="pl-6 flex flex-col gap-2 border-l border-white/5">
+                                      {sub.sub.map((deep: any) => (
+                                        <Link key={deep.id} to={deep.path} onClick={() => setIsMobileMenuOpen(false)} className="text-slate-500 text-[10px] font-bold uppercase tracking-tighter hover:text-blue-400">
+                                          {deep.label}
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                             ))}
                         </div>
                     )}
                 </div>
               ))}
-            </div>
-            <div className="mt-auto pt-8 border-t border-white/5">
-                <button onClick={() => { setIsMobileMenuOpen(false); onLogin(); }} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm">
-                {t('login')}
-                </button>
             </div>
           </motion.div>
         )}
@@ -173,7 +181,7 @@ const SubmenuItem: React.FC<{ item: any; index: number }> = ({ item, index }) =>
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="relative" onMouseEnter={() => item.sub && setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
-      <Link to={item.path || '#'} className="flex items-center gap-3 px-4 py-2.5 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-blue-600/10 rounded-xl transition-all group/sub">
+      <Link to={item.path || '#'} className="flex items-center gap-3 px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-blue-600/10 rounded-xl transition-all group/sub">
         <div className="p-2 bg-white/5 rounded-lg text-blue-500 group-hover/sub:bg-blue-600 group-hover/sub:text-white group-hover/sub:scale-105 transition-all shadow-sm shrink-0">
            {getIcon(item.icon)}
         </div>
@@ -183,9 +191,20 @@ const SubmenuItem: React.FC<{ item: any; index: number }> = ({ item, index }) =>
         </div>
         {item.sub && <ChevronRight size={10} className={`ml-auto transition-transform ${isOpen ? 'translate-x-0.5' : ''}`} />}
       </Link>
+      
+      {/* CASCATA LATERAL (SUB-SUBMENU) */}
       <AnimatePresence>
         {item.sub && isOpen && (
-          <motion.div initial={{ opacity: 0, x: 5 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 5 }} className="absolute left-[100%] top-0 w-64 bg-[#1e293b]/95 border border-white/10 rounded-[1.5rem] shadow-2xl p-2 backdrop-blur-3xl z-[1100] ml-1">
+          <motion.div 
+            initial={{ opacity: 0, x: 10 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            exit={{ opacity: 0, x: 10 }} 
+            // Ponte visual para evitar que o menu feche ao mover o mouse
+            className="absolute left-[100%] top-0 min-w-[240px] bg-[#1e293b]/98 border border-white/10 rounded-[1.5rem] shadow-2xl p-2 backdrop-blur-3xl z-[1100] ml-1"
+          >
+            {/* Bridge Invisível */}
+            <div className="absolute top-0 -left-2 w-2 h-full bg-transparent" />
+            
             <div className="space-y-0.5">
               {item.sub.map((subChild: any, subIdx: number) => <SubmenuItem key={subChild.id || subIdx} item={subChild} index={subIdx} />)}
             </div>
