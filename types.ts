@@ -131,7 +131,6 @@ export interface DecisionData {
   finance: { loanRequest: number; loanType: number; application: number; termSalesInterest: number; buyMachines: { alfa: number; beta: number; gama: number }; sellMachines: { alfa: number; beta: number; gama: number }; };
 }
 
-// Fixed: Added missing Modality interface
 export interface Modality {
   id: string;
   name: string;
@@ -147,7 +146,6 @@ export interface Modality {
   };
 }
 
-// Fixed: Added missing ChampionshipTemplate interface
 export interface ChampionshipTemplate {
   id: string;
   name: string;
@@ -168,7 +166,6 @@ export interface ChampionshipTemplate {
   };
 }
 
-// Fixed: Added missing BlackSwanEvent interface
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -181,7 +178,6 @@ export interface BlackSwanEvent {
   };
 }
 
-// Fixed: Added missing MessageBoardItem interface
 export interface MessageBoardItem {
   id: string;
   sender: string;

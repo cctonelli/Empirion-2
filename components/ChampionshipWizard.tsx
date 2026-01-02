@@ -1,13 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Plus, ArrowRight, Check, Settings, Globe, Layers, Cpu, Zap, Leaf, FileText, Loader2,
-  MapPin, TrendingUp, Package, Lock, Unlock, Info, BarChart3, Search, Filter, Building2,
-  Landmark, Bot, Newspaper, ShieldCheck, Target, Sparkles, Gavel, ArrowLeft, Trash2, 
-  DollarSign, Calculator, Activity, Users, Boxes, Rocket, ShieldAlert, Sliders
+  Plus, ArrowRight, Check, Settings, Globe, Layers, Cpu, Zap, Loader2,
+  TrendingUp, Boxes, Bot, ShieldCheck, ArrowLeft, Trash2, Activity, Users
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS, DEFAULT_MACRO } from '../constants';
-import { Branch, ChampionshipTemplate, ScenarioType, ModalityType, RegionConfig, MacroIndicators, AccountNode } from '../types';
+import { Branch, ScenarioType, ModalityType, RegionConfig, MacroIndicators, AccountNode } from '../types';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import { supabase } from '../services/supabase';
 
@@ -69,7 +67,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
 
   return (
     <div className="max-w-7xl mx-auto animate-in slide-in-from-bottom-8 duration-500 pb-20">
-      {/* Progres Tracker 8 Passos */}
+      {/* 8-Step Tracker */}
       <div className="flex items-center justify-between mb-12 px-10">
         {[1,2,3,4,5,6,7,8].map(s => (
           <div key={s} className="flex flex-col items-center gap-3">
@@ -77,7 +75,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                 {s}
              </div>
              <span className={`text-[8px] font-black uppercase tracking-widest ${step >= s ? 'text-orange-600' : 'text-slate-400'}`}>
-                {s === 1 ? 'Identidade' : s === 2 ? 'Template' : s === 3 ? 'Mercado' : s === 4 ? 'Macro' : s === 5 ? 'Contas' : s === 6 ? 'Regras' : s === 7 ? 'Equipes' : 'Deploy'}
+                {s === 1 ? 'Identidade' : s === 2 ? 'Motor' : s === 3 ? 'Mercado' : s === 4 ? 'Macro' : s === 5 ? 'Contas' : s === 6 ? 'Regras' : s === 7 ? 'Grid' : 'Deploy'}
              </span>
           </div>
         ))}
@@ -178,20 +176,12 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                   <InputGroup label="Salário Médio Setor ($)" value={macro.sectorAvgSalary} onChange={v => setMacro({...macro, sectorAvgSalary: Number(v)})} type="number" />
                   <InputGroup label="Cotação Bolsa Inicial ($)" value={macro.stockMarketPrice} onChange={v => setMacro({...macro, stockMarketPrice: Number(v)})} type="number" />
                </div>
-               <div className="p-8 bg-slate-900 rounded-[3rem] text-white space-y-6">
-                  <h4 className="text-xs font-black uppercase text-orange-400 tracking-widest flex items-center gap-2"><Boxes size={18}/> Valor de Aquisição de Ativos</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                     <InputGroup label="Máquina Alfa ($)" value={macro.machineryValues.alfa} onChange={v => setMacro({...macro, machineryValues: {...macro.machineryValues, alfa: Number(v)}})} dark />
-                     <InputGroup label="Máquina Beta ($)" value={macro.machineryValues.beta} onChange={v => setMacro({...macro, machineryValues: {...macro.machineryValues, beta: Number(v)}})} dark />
-                     <InputGroup label="Máquina Gama ($)" value={macro.machineryValues.gama} onChange={v => setMacro({...macro, machineryValues: {...macro.machineryValues, gama: Number(v)}})} dark />
-                  </div>
-               </div>
             </div>
           )}
 
           {step === 5 && (
             <div className="space-y-10 animate-in fade-in duration-500">
-               <h2 className="text-3xl font-black text-slate-900 text-center uppercase italic">5. Estrutura de Hierarquia Contábil</h2>
+               <h2 className="text-3xl font-black text-slate-900 text-center uppercase italic">5. Hierarquia Contábil</h2>
                <FinancialStructureEditor 
                   initialBalance={financials?.balance_sheet} 
                   initialDRE={financials?.dre} 
@@ -204,7 +194,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
             <div className="space-y-12 animate-in fade-in duration-500 text-center">
                <div className="space-y-4">
                   <h2 className="text-4xl font-black text-slate-900 uppercase italic">7. Grid de Competidores</h2>
-                  <p className="text-slate-500 font-medium">Quantas empresas lutarão nesta arena?</p>
+                  <p className="text-slate-500 font-medium">Quantas empresas e bots lutarão nesta arena?</p>
                </div>
                <div className="max-w-md mx-auto space-y-10">
                   <div className="p-10 bg-slate-50 border border-slate-200 rounded-[4rem] space-y-8">
@@ -215,7 +205,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                            <span className="text-xl font-black text-orange-600">{formData.botsCount}</span>
                         </div>
                         <input type="range" min={0} max={formData.teamsLimit} value={formData.botsCount} onChange={e => setFormData({...formData, botsCount: Number(e.target.value)})} className="w-full h-2 bg-slate-200 rounded-lg appearance-none accent-orange-600" />
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Bots assumem decisões automaticamente se as equipes estiverem ausentes.</p>
                      </div>
                   </div>
                </div>
@@ -231,13 +220,12 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
                   <div className="absolute inset-0 bg-orange-600/20 blur-[60px] rounded-full"></div>
                </div>
                <div className="space-y-4">
-                  <h2 className="text-5xl font-black text-slate-900 uppercase italic">Ready for Seed</h2>
-                  <p className="text-slate-500 font-medium text-lg">Ecossistema validado. Pronto para inicializar Round 0.</p>
+                  <h2 className="text-5xl font-black text-slate-900 uppercase italic">Deploy Ready</h2>
+                  <p className="text-slate-500 font-medium text-lg">Ecossistema validado pelo Oracle Audit Node.</p>
                </div>
                <div className="max-w-lg mx-auto bg-slate-950 p-10 rounded-[4rem] text-left space-y-6 shadow-2xl border border-white/10">
                   <SummaryLine label="Arena" val={formData.name} />
-                  <SummaryLine label="Bots Ativos" val={`${formData.botsCount} de ${formData.teamsLimit}`} />
-                  <SummaryLine label="Patrimônio Base" val={`$ ${(financials?.balance_sheet?.[0]?.value || 0).toLocaleString()}`} />
+                  <SummaryLine label="Bots" val={`${formData.botsCount} ativos`} />
                   <SummaryLine label="Regiões" val={regions.length.toString()} />
                </div>
             </div>
@@ -253,7 +241,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
              disabled={isSubmitting || (step === 1 && !formData.name)}
              className={`px-16 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl flex items-center gap-5 transition-all ${isSubmitting ? 'bg-slate-200' : 'bg-slate-900 text-white hover:bg-orange-600 hover:scale-105 active:scale-95'}`}
            >
-              {isSubmitting ? <Loader2 className="animate-spin" /> : step === 8 ? 'Inicializar Round 0' : 'Próxima Fase'}
+              {isSubmitting ? <Loader2 className="animate-spin" /> : step === 8 ? 'Lançar Arena' : 'Próxima Fase'}
               {!isSubmitting && <ArrowRight size={18} />}
            </button>
         </div>
@@ -262,15 +250,15 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   );
 };
 
-const InputGroup = ({ label, value, onChange, type = 'text', placeholder, dark }: any) => (
+const InputGroup = ({ label, value, onChange, type = 'text', placeholder }: any) => (
   <div className="space-y-3">
-     <label className={`text-[10px] font-black uppercase tracking-widest ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{label}</label>
+     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</label>
      <input 
         type={type} 
         value={value} 
         onChange={e => onChange(e.target.value)} 
         placeholder={placeholder}
-        className={`w-full p-6 rounded-[1.5rem] font-bold outline-none border transition-all ${dark ? 'bg-white/5 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900 focus:ring-8 focus:ring-orange-50'}`} 
+        className="w-full p-6 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-bold text-slate-900 focus:ring-8 focus:ring-orange-50 outline-none transition-all" 
      />
   </div>
 );

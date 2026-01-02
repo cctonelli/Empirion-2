@@ -1,25 +1,24 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-  FileText, Activity, Package, DollarSign, Zap, Users, Globe, 
-  Download, BarChart3, Landmark, ArrowRight, ShieldCheck, 
-  Info, Award, Star, AlertTriangle, Heart, User, TrendingUp,
-  ChevronLeft, ChevronRight, History, Search, Filter, Bot
+  FileText, Package, DollarSign, Users, Globe, 
+  Download, Landmark, ShieldCheck, 
+  Info, Star, User, History, Search, Filter, Bot, TrendingUp
 } from 'lucide-react';
-import { Branch, AccountNode, TeamHistoricalData, TransparencyLevel } from '../types';
+import { Branch, TeamHistoricalData } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [reportMode, setReportMode] = useState<'individual' | 'collective' | 'market'>('individual');
   const [collectiveSubTab, setCollectiveSubTab] = useState<'matrix' | 'vendas' | 'benchmark'>('matrix');
   const [selectedRound, setSelectedRound] = useState(1);
-  const totalRoundsAvailable = 5; // Simulado para o histórico
+  const totalRoundsAvailable = 5;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-20">
-      {/* Header com Navegação de Período */}
+      {/* Archive Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-        <div>
+        <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
               <FileText className="text-white" size={20} />
@@ -28,7 +27,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
               Audit <span className="text-blue-500">Terminal</span>
             </h1>
           </div>
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-4">
              <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 rounded-xl border border-white/10">
                 <History size={14} className="text-orange-500" />
                 <span className="text-[10px] font-black text-white uppercase tracking-widest">Arquivo Histórico:</span>
@@ -44,7 +43,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                 </select>
              </div>
              <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] italic">
-               Engine v6.0 GOLD • Consolidado Fiscal P0{selectedRound}
+               Oracle Fidelity v6.0 • Consolidado P0{selectedRound}
              </p>
           </div>
         </div>
@@ -79,7 +78,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3 }}
         >
-          {reportMode === 'individual' && <IndividualReport round={selectedRound} branch={branch as Branch} />}
+          {reportMode === 'individual' && <IndividualReportView round={selectedRound} branch={branch} />}
           
           {reportMode === 'collective' && (
             <div className="space-y-8">
@@ -101,21 +100,19 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                   ))}
                </div>
                {collectiveSubTab === 'matrix' && <HistoricalMatrixView round={selectedRound} />}
-               {collectiveSubTab === 'vendas' && <CollectiveSalesReport round={selectedRound} />}
-               {collectiveSubTab === 'benchmark' && <EliteBenchmarkReport round={selectedRound} />}
+               {collectiveSubTab === 'vendas' && <CollectiveSalesReportView round={selectedRound} />}
+               {collectiveSubTab === 'benchmark' && <EliteBenchmarkReportView round={selectedRound} />}
             </div>
           )}
 
-          {reportMode === 'market' && <MarketIndicatorsPanel round={selectedRound} branch={branch as Branch} />}
+          {reportMode === 'market' && <MarketIndicatorsPanel round={selectedRound} branch={branch} />}
         </motion.div>
       </AnimatePresence>
     </div>
   );
 };
 
-// --- COMPONENTES AUXILIARES ---
-
-const IndividualReport = ({ round, branch }: { round: number, branch: Branch }) => (
+const IndividualReportView = ({ round, branch }: any) => (
   <div className="space-y-8">
      <div className="premium-card p-12 rounded-[3.5rem] flex flex-col lg:flex-row justify-between items-center gap-10 relative overflow-hidden group">
         <div className="absolute top-0 left-0 p-20 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
@@ -129,7 +126,7 @@ const IndividualReport = ({ round, branch }: { round: number, branch: Branch }) 
                  <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 flex items-center gap-2">
                     <ShieldCheck size={12} /> Auditoria P0{round} Validada
                  </span>
-                 <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest">Oracle Engine v6.0</span>
+                 <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest">Build v6.0 GOLD</span>
               </div>
            </div>
         </div>
@@ -166,7 +163,6 @@ const FinancialSection = ({ title, icon, color }: any) => (
   </div>
 );
 
-// --- MATRIZ HISTÓRICA DE CONCORRENTES ---
 const HistoricalMatrixView = ({ round }: { round: number }) => {
   const [activeMatrixTab, setActiveMatrixTab] = useState<'balance' | 'dre'>('balance');
   
@@ -175,7 +171,6 @@ const HistoricalMatrixView = ({ round }: { round: number }) => {
     { teamId: 't1', teamName: 'Equipe Alpha', isUserTeam: false, isBot: false, financials: { balance_sheet: [], dre: [] } },
     { teamId: 't2', teamName: 'Bot Conservador', isUserTeam: false, isBot: true, financials: { balance_sheet: [], dre: [] } },
     { teamId: 't3', teamName: 'Equipe Gamma', isUserTeam: false, isBot: false, financials: { balance_sheet: [], dre: [] } },
-    { teamId: 't4', teamName: 'Bot Agressivo', isUserTeam: false, isBot: true, financials: { balance_sheet: [], dre: [] } },
   ];
 
   const rows = activeMatrixTab === 'balance' ? [
@@ -259,112 +254,69 @@ const HistoricalMatrixView = ({ round }: { round: number }) => {
   );
 };
 
-const CollectiveSalesReport = ({ round }: { round: number }) => (
-  <div className="animate-in slide-in-from-right-4 duration-1000">
-     <div className="premium-card p-12 rounded-[4rem] space-y-12 relative overflow-hidden group">
-        <div className="relative z-10">
-           <h3 className="text-3xl font-black uppercase tracking-tighter text-white italic">Market Dynamics P0{round}</h3>
-           <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Market Share Consolidado • Ciclo {round}</p>
-        </div>
-        <div className="h-[400px] flex items-end justify-between gap-10 px-8 relative z-10">
-           {[15.2, 12.8, 10.4, 14.1, 18.5, 12.0, 8.5, 8.5].map((h, i) => (
-             <div key={i} className="flex-1 flex flex-col items-center gap-6 group">
-                <div className="w-full bg-slate-800 rounded-t-3xl transition-all hover:bg-blue-600 shadow-2xl relative" style={{ height: `${h * 15}px` }}>
-                   <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-slate-950 px-3 py-1.5 rounded-xl text-[10px] font-black opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-xl">
-                      {h}%
-                   </div>
-                </div>
-                <span className="text-[10px] font-black text-slate-500 group-hover:text-white uppercase italic">EMP {i+1}</span>
+const CollectiveSalesReportView = ({ round }: any) => (
+  <div className="premium-card p-12 rounded-[4rem] text-center space-y-10">
+     <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Market Share P0{round}</h3>
+     <div className="h-[400px] flex items-end justify-between gap-6 px-10">
+        {[15, 12, 18, 10, 14, 12, 10, 9].map((h, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-4">
+             <div className="w-full bg-blue-600 rounded-t-2xl shadow-2xl relative group" style={{ height: `${h * 15}px` }}>
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-white text-slate-950 px-2 py-1 rounded-lg text-[10px] font-black transition-opacity">{h}%</div>
+             </div>
+             <span className="text-[9px] font-black text-slate-500 uppercase">EMP 0{i+1}</span>
+          </div>
+        ))}
+     </div>
+  </div>
+);
+
+const EliteBenchmarkReportView = ({ round }: any) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+     <BenchmarkCard label="ROE Supremo" value="15.2%" status="GOOD" />
+     <BenchmarkCard label="Margem Ebitda" value="22.8%" status="ELITE" />
+     <BenchmarkCard label="Brand Equity" value="88.4" status="HIGH" />
+     <BenchmarkCard label="OEE / Prod." value="94.2%" status="OPTIM." />
+  </div>
+);
+
+const BenchmarkCard = ({ label, value, status }: any) => (
+  <div className="p-8 bg-white/5 border border-white/10 rounded-[3rem] space-y-4">
+     <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">{label}</span>
+     <div className="text-4xl font-black text-white italic">{value}</div>
+     <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[8px] font-black uppercase tracking-widest w-fit border border-emerald-500/20">{status}</div>
+  </div>
+);
+
+const MarketIndicatorsPanel = ({ round, branch }: any) => (
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+     <div className="lg:col-span-2 premium-card p-12 rounded-[4rem] space-y-10">
+        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-4">
+           <TrendingUp className="text-blue-500" /> Market Dynamics P0{round}
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+           {[1,2,3,4,5,6,7,8].map(i => (
+             <div key={i} className="p-6 bg-white/5 rounded-3xl border border-white/5 text-center space-y-2">
+                <span className="text-[9px] font-black text-slate-500 uppercase">EMP 0{i}</span>
+                <span className="block text-2xl font-black text-white font-mono italic">1,04</span>
+                <span className="text-[9px] text-emerald-500 font-bold">+4,2%</span>
              </div>
            ))}
         </div>
      </div>
-  </div>
-);
-
-const EliteBenchmarkReport = ({ round }: { round: number }) => (
-  <div className="space-y-8 animate-in slide-in-from-bottom-6">
-     <div className="bg-gradient-to-br from-blue-700 to-indigo-900 p-16 rounded-[4rem] text-white shadow-2xl relative overflow-hidden group border border-white/10">
-        <div className="relative z-10 space-y-12">
-           <div className="flex flex-col md:flex-row md:items-center gap-6">
-              <div className="p-5 bg-white/10 backdrop-blur-3xl rounded-3xl shadow-xl">
-                 <Star size={40} className="fill-white text-white animate-pulse" />
-              </div>
-              <div>
-                 <h3 className="text-4xl font-black uppercase tracking-tighter italic">Elite Benchmark P0{round}</h3>
-                 <p className="text-blue-200 font-medium">Performance Metrics vs Market Best in Class (v6.0 GOLD)</p>
-              </div>
+     <div className="premium-card p-12 rounded-[4rem] space-y-8">
+        <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Macro DNA</h3>
+        <div className="space-y-6">
+           <div className="flex justify-between items-center pb-4 border-b border-white/5">
+              <span className="text-[10px] font-black uppercase text-slate-500">Inflação P0{round}</span>
+              <span className="font-mono font-black text-rose-400">1,00%</span>
            </div>
-
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <BenchmarkCard label="ROE Supremo" value="2.2%" target="15.0%" status="LOW" color="rose" />
-              <BenchmarkCard label="Fidelidade Qualidade" value="88.2" target="95.0" status="GOOD" color="emerald" />
-              <BenchmarkCard label="Brand Equity" value="82.5" target="85.0" status="HIGH" color="blue" />
-              <BenchmarkCard label="OEE / Produtividade" value="94.2%" target="98.0%" status="EXCEL." color="emerald" />
+           <div className="flex justify-between items-center pb-4 border-b border-white/5">
+              <span className="text-[10px] font-black uppercase text-slate-500">TR Mensal</span>
+              <span className="font-mono font-black text-blue-400">2,00%</span>
            </div>
-        </div>
-     </div>
-  </div>
-);
-
-const BenchmarkCard = ({ label, value, target, status, color }: any) => {
-  const colorMap: any = {
-    rose: 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-rose-500/5',
-    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5',
-    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-blue-500/5'
-  };
-
-  return (
-    <div className={`p-8 rounded-[3rem] border backdrop-blur-3xl transition-all hover:scale-105 ${colorMap[color]} space-y-4 shadow-2xl`}>
-       <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{label}</span>
-       <div className="flex items-end justify-between">
-          <span className="text-4xl font-black italic">{value}</span>
-          <span className="text-[8px] font-black uppercase opacity-40">Target: {target}</span>
-       </div>
-       <div className="h-[2px] bg-white/10 w-full rounded-full overflow-hidden">
-          <div className="h-full bg-current" style={{ width: '45%' }}></div>
-       </div>
-       <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-          <span className="text-[9px] font-black uppercase tracking-widest">{status} PERFORMANCE</span>
-       </div>
-    </div>
-  );
-};
-
-const MarketIndicatorsPanel = ({ round, branch }: { round: number, branch: Branch }) => (
-  <div className="space-y-8 animate-in slide-in-from-bottom-4">
-     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 premium-card p-12 rounded-[4rem] space-y-10 group">
-           <h3 className="text-2xl font-black uppercase tracking-tighter text-white flex items-center gap-4 italic">
-              <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-xl group-hover:rotate-12 transition-transform"><TrendingUp size={24} /></div>
-              Market Exchange Node P0{round}
-           </h3>
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                <div key={i} className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 flex flex-col items-center group/item hover:bg-white hover:border-transparent transition-all hover:-translate-y-2 hover:shadow-2xl">
-                   <span className="text-[9px] font-black text-slate-500 uppercase mb-3 group-hover/item:text-slate-400">EMPR 0{i}</span>
-                   <span className="text-3xl font-black text-white font-mono group-hover/item:text-slate-950 italic">1,04</span>
-                   <span className="text-[10px] font-black text-emerald-500 mt-2 bg-emerald-500/10 px-3 py-1 rounded-full">+4,2%</span>
-                </div>
-              ))}
-           </div>
-        </div>
-        <div className="premium-card p-12 rounded-[4rem] flex flex-col justify-between border-2 border-slate-800">
-           <div className="space-y-8">
-              <h3 className="text-2xl font-black uppercase tracking-tighter text-white italic">Macro DNA P0{round}</h3>
-              <div className="space-y-6">
-                 <MarketBox label="Inflação Setorial" value="1,00%" color="text-rose-400" />
-                 <MarketBox label="TR Mensal" value="2,00%" color="text-blue-400" />
-                 <MarketBox label="Custo Unitário Base" value="$ 180" color="text-white" />
-                 <MarketBox label="Demanda Global" value="1,08x" color="text-emerald-400" />
-              </div>
-           </div>
-           <div className="pt-8 border-t border-white/5">
-              <div className="flex items-center gap-3 text-slate-500">
-                 <ShieldCheck size={20} className="text-emerald-500" />
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Oracle Audit Active</span>
-              </div>
+           <div className="flex justify-between items-center pb-4 border-b border-white/5">
+              <span className="text-[10px] font-black uppercase text-slate-500">Demanda Global</span>
+              <span className="font-mono font-black text-emerald-400">1,12x</span>
            </div>
         </div>
      </div>
@@ -375,15 +327,8 @@ const ReportLine = ({ label, value, isPositive, isNegative, isBold }: any) => (
   <div className="flex justify-between items-center py-4 border-b border-white/5 px-4 hover:bg-white/5 transition-colors group">
     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-slate-300 transition-colors">{label}</span>
     <span className={`font-mono font-black text-sm tracking-tighter ${isPositive ? 'text-emerald-400' : isNegative ? 'text-rose-400' : isBold ? 'text-white text-lg italic' : 'text-slate-300'}`}>
-      {isNegative ? value : `$ ${value}`}
+      $ {value}
     </span>
-  </div>
-);
-
-const MarketBox = ({ label, value, color }: any) => (
-  <div className="flex justify-between items-center pb-6 border-b border-white/5 group">
-     <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest group-hover:text-slate-300">{label}</span>
-     <span className={`text-2xl font-black font-mono italic ${color}`}>{value}</span>
   </div>
 );
 

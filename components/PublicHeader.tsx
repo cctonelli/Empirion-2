@@ -2,12 +2,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import { 
   ChevronDown, ChevronRight, LogIn, Factory, ShoppingCart, Briefcase, 
-  Tractor, DollarSign, Hammer, Menu, X, Box, Cpu, Sparkles, Globe,
-  LayoutGrid, Rocket, Info, MessageSquare, Newspaper, Zap, Gavel,
-  PenTool, Trophy, Terminal
+  Tractor, DollarSign, Hammer, Menu, X, Box, Cpu, Sparkles, 
+  Zap, Gavel, PenTool, Trophy, Terminal
 } from 'lucide-react';
 import { MENU_STRUCTURE } from '../constants';
 import { useModalities } from '../hooks/useModalities';
@@ -34,7 +32,6 @@ const getIcon = (iconName?: string) => {
 };
 
 const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
-  const { t } = useTranslation('common');
   const location = useLocation();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -48,10 +45,10 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     >
       <div className="w-full flex items-center justify-between px-6 md:px-12 h-full">
         
-        {/* LOGO - SEBRAE INSPIRED */}
+        {/* LOGO SEBRAE-STYLE */}
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center gap-4 group">
-            <div className="w-11 h-11 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all duration-500 border border-white/10 group-hover:bg-orange-500">
+            <div className="w-11 h-11 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all duration-500 border border-white/10">
               <span className="text-white font-black text-xl italic select-none">E</span>
             </div>
             <div className="flex flex-col">
@@ -61,7 +58,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           </Link>
         </div>
 
-        {/* DESKTOP MENU - FULL RECOMPOSITION */}
+        {/* FULL DESKTOP MENU */}
         <nav className="hidden lg:flex justify-center items-center gap-1">
           {MENU_STRUCTURE.map((item) => {
             const isActive = location.pathname === item.path;
@@ -118,11 +115,11 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <div className="hidden xl:block scale-90"><LanguageSwitcher light /></div>
           <button 
             onClick={onLogin} 
-            className="cyber-button hidden md:flex items-center gap-3 px-8 py-3 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 border border-transparent whitespace-nowrap hover:bg-orange-500"
+            className="cyber-button hidden md:flex items-center gap-3 px-8 py-3 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 whitespace-nowrap hover:bg-orange-500"
           >
             <LogIn size={14} /> Entrar
           </button>
-          <button className="lg:hidden p-2 text-white hover:bg-white/5 rounded-xl transition-colors" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          <button className="lg:hidden p-2 text-white hover:bg-white/5 rounded-xl" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>
         </div>
@@ -147,35 +144,20 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             <div className="flex flex-col gap-8">
               {MENU_STRUCTURE.map(item => (
                 <div key={item.label} className="space-y-6">
-                    <Link to={item.path} onClick={() => !item.sub && setIsMobileMenuOpen(false)} className="block text-4xl font-black text-white uppercase tracking-tighter hover:text-orange-500 transition-colors">
+                    <Link to={item.path} onClick={() => !item.sub && setIsMobileMenuOpen(false)} className="block text-4xl font-black text-white uppercase tracking-tighter hover:text-orange-500">
                       {item.label}
                     </Link>
                     {item.sub && (
                         <div className="grid grid-cols-1 gap-6 pl-4 border-l-2 border-orange-600/30">
                             {item.sub.map((sub: any) => (
-                                <div key={sub.id} className="space-y-3">
-                                  <Link to={sub.path} onClick={() => !sub.sub && setIsMobileMenuOpen(false)} className="text-slate-300 font-black uppercase text-sm tracking-widest hover:text-orange-500 transition-colors flex items-center gap-2">
-                                     <ChevronRight size={12} className="text-orange-500" /> {sub.label}
-                                  </Link>
-                                  {sub.sub && (
-                                    <div className="pl-6 flex flex-col gap-3 border-l border-white/10">
-                                      {sub.sub.map((deep: any) => (
-                                        <Link key={deep.id} to={deep.path} onClick={() => setIsMobileMenuOpen(false)} className="text-slate-500 text-[11px] font-black uppercase tracking-widest hover:text-white transition-colors">
-                                          {deep.label}
-                                        </Link>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
+                                <Link key={sub.id} to={sub.path} onClick={() => setIsMobileMenuOpen(false)} className="text-slate-300 font-black uppercase text-sm tracking-widest hover:text-orange-500 flex items-center gap-2">
+                                   <ChevronRight size={12} className="text-orange-500" /> {sub.label}
+                                </Link>
                             ))}
                         </div>
                     )}
                 </div>
               ))}
-            </div>
-            <div className="mt-auto pt-10 border-t border-white/5 flex flex-col gap-6">
-               <LanguageSwitcher light />
-               <button onClick={onLogin} className="w-full py-6 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl">Acessar Arena</button>
             </div>
           </motion.div>
         )}
@@ -202,7 +184,7 @@ const SubmenuItem: React.FC<{ item: any }> = ({ item }) => {
         {item.sub && <ChevronRight size={12} className={`ml-auto transition-transform ${isOpen ? 'translate-x-1 text-orange-500' : ''}`} />}
       </Link>
       
-      {/* CASCATA LATERAL (MULTI-LEVEL) */}
+      {/* CASCADE SIDE MENU */}
       <AnimatePresence>
         {item.sub && isOpen && (
           <motion.div 
@@ -211,7 +193,6 @@ const SubmenuItem: React.FC<{ item: any }> = ({ item }) => {
             exit={{ opacity: 0, x: 15 }} 
             className="absolute left-[102%] top-0 min-w-[260px] bg-[#1e293b]/98 border border-white/10 rounded-[2rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] p-2 backdrop-blur-3xl z-[1100]"
           >
-            <div className="absolute top-0 -left-3 w-4 h-full bg-transparent" />
             <div className="space-y-0.5">
               {item.sub.map((subChild: any, subIdx: number) => (
                 <SubmenuItem key={subChild.id || subIdx} item={subChild} />
