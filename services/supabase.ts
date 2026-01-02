@@ -1,6 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, UserProfile, UserRole, Modality } from '../types';
+import { ALPHA_TEST_USERS, DEMO_CHAMPIONSHIP_DATA } from '../constants';
 
 const getSafeEnv = (key: string): string => {
   const viteKey = `VITE_${key}`;
@@ -11,7 +12,6 @@ const getSafeEnv = (key: string): string => {
 const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = getSafeEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
-// Inicialização do cliente com persistência segura
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
@@ -20,13 +20,62 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 });
 
-/**
- * SECURITY WRAPPER: Verifica sessão antes de operações sensíveis
- */
 const secureAction = async (action: () => Promise<any>) => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error("Acesso negado: Sessão expirada ou inválida.");
   return action();
+};
+
+/**
+ * ALPHA TERMINAL: Provisionamento Automático
+ */
+export const provisionDemoEnvironment = async () => {
+  try {
+    // 1. Verificar se o campeonato demo existe
+    const { data: champ } = await supabase.from('championships').select('id').eq('id', DEMO_CHAMPIONSHIP_DATA.id).maybeSingle();
+    
+    if (!champ) {
+      console.log("ALPHA_CORE: Provisionando campeonato de teste...");
+      await supabase.from('championships').insert([DEMO_CHAMPIONSHIP_DATA]);
+      
+      // Criar as 4 equipes iniciais
+      const teams = ALPHA_TEST_USERS.filter(u => u.team).map(u => ({
+        name: u.team,
+        championship_id: DEMO_CHAMPIONSHIP_DATA.id,
+        invite_code: `${u.id}2026`,
+        initial_financials: DEMO_CHAMPIONSHIP_DATA.initial_financials
+      }));
+      await supabase.from('teams').insert(teams);
+    }
+    return true;
+  } catch (err) {
+    console.error("ALPHA_PROVISION_ERROR:", err);
+    return false;
+  }
+};
+
+/**
+ * ALPHA DEBUG: Reset de dados de teste
+ */
+export const resetAlphaData = async () => {
+  return secureAction(async () => {
+    // Deleta decisões do campeonato alpha
+    const { error } = await supabase
+      .from('current_decisions')
+      .delete()
+      .eq('championship_id', DEMO_CHAMPIONSHIP_DATA.id);
+    
+    if (error) throw error;
+
+    // Log de auditoria do reset
+    await supabase.from('decision_audit_log').insert({
+      action: 'ALPHA_TERMINAL_RESET: Full Wipe Executed',
+      user_name: 'Alpha Debug Controller',
+      metadata: { timestamp: new Date().toISOString() }
+    });
+
+    return true;
+  });
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -43,7 +92,6 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, userName: string) => {
   return secureAction(async () => {
-    // Sanitização de Input (Anti-Manipulation)
     const sanitizedData = JSON.parse(JSON.stringify(decisions));
     
     const { error: decError } = await supabase
@@ -58,7 +106,6 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
 
     if (decError) throw decError;
 
-    // Log de auditoria blindado
     await supabase.from('decision_audit_log').insert({
       team_id: teamId,
       user_name: userName,
@@ -93,7 +140,6 @@ export const listAllUsers = async () => {
   });
 };
 
-// Fix for AdminCommandCenter: updateUserRole was missing
 export const updateUserRole = async (userId: string, role: UserRole) => {
   return secureAction(async () => {
     const { error } = await supabase
@@ -124,7 +170,6 @@ export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
   return data?.content || null;
 };
 
-// Fix for AdminCommandCenter: getPlatformConfig was missing
 export const getPlatformConfig = async () => {
   const { data, error } = await supabase
     .from('platform_config')
@@ -134,7 +179,6 @@ export const getPlatformConfig = async () => {
   return data;
 };
 
-// Fix for AdminCommandCenter: updatePlatformConfig was missing
 export const updatePlatformConfig = async (config: any) => {
   return secureAction(async () => {
     const { error } = await supabase
@@ -144,7 +188,6 @@ export const updatePlatformConfig = async (config: any) => {
   });
 };
 
-// Fix for TutorArenaControl: updateEcosystem was missing
 export const updateEcosystem = async (champId: string, ecosystemData: any) => {
   return secureAction(async () => {
     const { error } = await supabase
@@ -155,7 +198,6 @@ export const updateEcosystem = async (champId: string, ecosystemData: any) => {
   });
 };
 
-// Fix for CommunityView: getPublicReports was missing
 export const getPublicReports = async (champId: string, round: number) => {
   const { data, error } = await supabase
     .from('public_reports')
@@ -165,7 +207,6 @@ export const getPublicReports = async (champId: string, round: number) => {
   return { data, error };
 };
 
-// Fix for CommunityView: submitCommunityVote was missing
 export const submitCommunityVote = async (vote: any) => {
   return secureAction(async () => {
     const { data, error } = await supabase

@@ -1,14 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   TrendingUp, Activity, DollarSign, Target, Zap, BarChart3, 
   ArrowUpRight, ArrowDownRight, Sparkles, Loader2, Star, Users,
   ShieldCheck, MessageSquare, Megaphone, Send, Globe, Map as MapIcon,
-  Cpu, Newspaper, Landmark, AlertTriangle, ChevronRight, LayoutGrid
+  Cpu, Newspaper, Landmark, AlertTriangle, ChevronRight, LayoutGrid,
+  RefreshCw, RotateCcw, Shield
 } from 'lucide-react';
 import ChampionshipTimer from './ChampionshipTimer';
 import LiveBriefing from './LiveBriefing';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
+import { supabase, resetAlphaData } from '../services/supabase';
 import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch } from '../types';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
@@ -16,6 +19,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [gazetaNews, setGazetaNews] = useState<string>('Transmissão de dados criptografados...');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
   const [scenarioType, setScenarioType] = useState<ScenarioType>('simulated');
+  const [isAlphaUser, setIsAlphaUser] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   
   const [messages, setMessages] = useState<MessageBoardItem[]>([
     { id: '1', sender: 'Coordenação Central', text: 'Início da Rodada 01. Analisem os relatórios de TSR.', timestamp: '08:00', isImportant: true },
@@ -38,8 +43,31 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         setIsInsightLoading(false);
       }
     };
+    
+    const checkAlphaStatus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email?.endsWith('@empirion.test')) {
+        setIsAlphaUser(true);
+      }
+    };
+
     fetchIntelligence();
+    checkAlphaStatus();
   }, [scenarioType, branch]);
+
+  const handleResetAlpha = async () => {
+    if (!confirm("Confirmar RESET TOTAL das decisões do Campeonato Alpha?")) return;
+    setIsResetting(true);
+    try {
+      await resetAlphaData();
+      alert("ENGINE RESET: Todos os dados de rodada limpos.");
+      window.location.reload();
+    } catch (err) {
+      alert("Falha no Reset.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const marketShareOptions: any = {
     chart: { type: 'donut', background: 'transparent' },
@@ -65,7 +93,35 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-20">
-      <div className="bg-slate-950 border-b border-white/5 h-12 flex items-center -mx-10 -mt-10 mb-10 overflow-hidden">
+      {/* ALPHA DEBUG BANNER */}
+      {isAlphaUser && (
+        <div className="bg-orange-600 px-6 py-3 -mx-10 -mt-10 flex items-center justify-between shadow-2xl z-50">
+           <div className="flex items-center gap-4">
+              <div className="p-2 bg-white/20 rounded-lg"><Shield size={16} className="text-white" /></div>
+              <div>
+                 <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Terminal de Depuração Alpha</span>
+                 <p className="text-[8px] font-bold text-orange-200 uppercase tracking-[0.2em] mt-0.5">Identidade de Teste Detectada • Acesso Master Engine</p>
+              </div>
+           </div>
+           <div className="flex items-center gap-3">
+              <button 
+                onClick={handleResetAlpha}
+                disabled={isResetting}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-950 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all active:scale-95 disabled:opacity-50"
+              >
+                 {isResetting ? <Loader2 className="animate-spin" size={12}/> : <RotateCcw size={12} />} Resetar Decisões Alpha
+              </button>
+              <button 
+                onClick={() => alert("Simulando processamento matemático da rodada...")}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-950 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+              >
+                 <Cpu size={12} /> Forçar Cálculo Engine
+              </button>
+           </div>
+        </div>
+      )}
+
+      <div className="bg-slate-950 border-b border-white/5 h-12 flex items-center -mx-10 mt-0 mb-10 overflow-hidden">
         <div className="flex animate-[ticker_40s_linear_infinite] whitespace-nowrap gap-16 text-[10px] font-black uppercase tracking-[0.2em]">
           <TickerItem label="Índice Empirion" value="1.04" change="+4.2%" up />
           <TickerItem label="Commodity Core" value="15.20" change="-0.8%" />

@@ -12,6 +12,44 @@ export const COLORS = {
   warning: '#f59e0b'
 };
 
+export const ALPHA_TEST_USERS = [
+  { id: 'tutor', name: 'Tutor Teste', email: 'tutor@empirion.test', role: 'tutor', icon: 'Shield' },
+  { id: 'alpha', name: 'Capitão Alpha', email: 'player.alpha@empirion.test', role: 'player', team: 'Equipe Alpha', icon: 'Zap' },
+  { id: 'beta', name: 'Capitão Beta', email: 'player.beta@empirion.test', role: 'player', team: 'Equipe Beta', icon: 'Zap' },
+  { id: 'gamma', name: 'Capitão Gamma', email: 'player.gamma@empirion.test', role: 'player', team: 'Equipe Gamma', icon: 'Zap' },
+  { id: 'delta', name: 'Capitão Delta', email: 'player.delta@empirion.test', role: 'player', team: 'Equipe Delta', icon: 'Zap' },
+];
+
+export const DEMO_CHAMPIONSHIP_DATA = {
+  id: 'alpha-test-2026',
+  name: 'Teste Alpha Empirion - Indústria Brasileira',
+  branch: 'industrial' as Branch,
+  status: 'active',
+  current_round: 1,
+  total_rounds: 8,
+  config: {
+    modalityType: 'standard',
+    rules: {
+      random_events: true,
+      obsolescence: true,
+      inflation_schedule: { rate: 0.05 }
+    }
+  },
+  initial_financials: {
+    balance_sheet: {
+      current_assets: { cash: 5000000, accounts_receivable: 2000000, inventory_raw_a: 1500000, inventory_raw_b: 1500000, total: 10000000 },
+      non_current_assets: { pp_e: { machinery: 10000000, land: 0 }, accumulated_depreciation: -1000000, total: 9000000 },
+      total_assets: 19000000
+    },
+    liabilities_equity: {
+      current_liabilities: { accounts_payable: 1500000, short_term_loans: 1000000 },
+      non_current_liabilities: { long_term_loans: 4000000 },
+      equity: { capital_stock: 8000000, retained_earnings: 4500000 },
+      total_liabilities_equity: 19000000
+    }
+  }
+};
+
 export const MODALITY_INFO: Record<ModalityType, { label: string; desc: string; icon: string }> = {
   standard: { label: 'Arena Padrão', desc: 'Simulação clássica multisetorial com foco em equilíbrio operacional.', icon: 'Layers' },
   business_round: { label: 'Rodada de Negócios', desc: 'Disputa comercial intensa por preço e mercado em alta volatilidade.', icon: 'Gavel' },
