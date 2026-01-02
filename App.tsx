@@ -2,19 +2,34 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
+import PublicHeader from './components/PublicHeader';
 import Dashboard from './components/Dashboard';
 import Reports from './components/Reports';
 import MarketAnalysis from './components/MarketAnalysis';
 import OpalIntelligenceHub from './components/OpalIntelligenceHub';
 import AdminCommandCenter from './components/AdminCommandCenter';
 import LandingPage from './components/LandingPage';
+import BranchDetail from './pages/BranchDetail';
+import OpenTournaments from './pages/OpenTournaments';
+import SimulatorsPage from './pages/SimulatorsPage';
+import TrainingPage from './pages/TrainingPage';
+import FeaturesPage from './pages/FeaturesPage';
+import BlogPage from './pages/BlogPage';
+import ContactPage from './pages/ContactPage';
+import BusinessPlanWizard from './components/BusinessPlanWizard';
 import Auth from './components/Auth';
 import { supabase, getUserProfile } from './services/supabase';
 import { UserProfile } from './types';
 
-/**
- * AppContent handles the session and profile state management within the router context.
- */
+const PublicLayout: React.FC<{ children: React.ReactNode; onLogin: () => void }> = ({ children, onLogin }) => (
+  <>
+    <PublicHeader onLogin={onLogin} />
+    <div className="pt-20">
+      {children}
+    </div>
+  </>
+);
+
 const AppContent: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -22,14 +37,12 @@ const AppContent: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Check for initial auth session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) fetchProfile(session.user.id);
       else setLoading(false);
     });
 
-    // Handle authentication state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) fetchProfile(session.user.id);
@@ -53,12 +66,30 @@ const AppContent: React.FC = () => {
     }
   };
 
-  if (loading) return null;
+  const goToLogin = () => window.location.href = '/auth';
+
+  if (loading) return (
+    <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
+      <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage onLogin={() => window.location.href = '/auth'} />} />
+      {/* Rotas Públicas com Header */}
+      <Route path="/" element={<PublicLayout onLogin={goToLogin}><LandingPage onLogin={goToLogin} /></PublicLayout>} />
       <Route path="/auth" element={<Auth onAuth={() => window.location.href = '/app'} />} />
+      <Route path="/branches/:slug" element={<PublicLayout onLogin={goToLogin}><BranchDetail /></PublicLayout>} />
+      <Route path="/solutions/open-tournaments" element={<PublicLayout onLogin={goToLogin}><OpenTournaments /></PublicLayout>} />
+      <Route path="/solutions/simulators" element={<PublicLayout onLogin={goToLogin}><SimulatorsPage /></PublicLayout>} />
+      <Route path="/solutions/business-plan" element={<PublicLayout onLogin={goToLogin}><BusinessPlanWizard /></PublicLayout>} />
+      <Route path="/solutions/training-online" element={<PublicLayout onLogin={goToLogin}><TrainingPage mode="online" /></PublicLayout>} />
+      <Route path="/solutions/training-corporate" element={<PublicLayout onLogin={goToLogin}><TrainingPage mode="corporate" /></PublicLayout>} />
+      <Route path="/features" element={<PublicLayout onLogin={goToLogin}><FeaturesPage /></PublicLayout>} />
+      <Route path="/blog" element={<PublicLayout onLogin={goToLogin}><BlogPage /></PublicLayout>} />
+      <Route path="/contact" element={<PublicLayout onLogin={goToLogin}><ContactPage /></PublicLayout>} />
+
+      {/* Rotas Internas com Sidebar */}
       <Route path="/app/*" element={
         session ? (
           <Layout
@@ -91,9 +122,6 @@ const AppContent: React.FC = () => {
   );
 };
 
-/**
- * Main App component wrapped in BrowserRouter for navigation support.
- */
 const App: React.FC = () => (
   <BrowserRouter>
     <AppContent />
