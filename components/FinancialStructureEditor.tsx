@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Plus, Trash2, ChevronDown, DollarSign, Calculator, 
-  Layers, ArrowUp, ArrowDown, Info, GripVertical, CheckCircle2, AlertTriangle, ChevronRight, X, Delete
+  Layers, ArrowUp, ArrowDown, Info, GripVertical, CheckCircle2, AlertTriangle, ChevronRight, X, Delete, Boxes
 } from 'lucide-react';
 import { AccountNode } from '../types';
 
@@ -76,11 +76,11 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
           const newId = `${n.id}.${(n.children?.length || 0) + 1}`;
           const newNode: AccountNode = {
             id: newId,
-            label: 'Nova Conta Custom',
+            label: 'Nova Subconta',
             value: 0,
             type: activeTab === 'balance' ? n.type : (parentId.includes('exp') ? 'expense' : 'revenue'),
             isEditable: true,
-            isTemplateAccount: false // Contas novas podem ser excluídas
+            isTemplateAccount: false 
           };
           return { ...n, children: [...(n.children || []), newNode] };
         }
@@ -106,7 +106,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
   const nodes = activeTab === 'balance' ? balanceNodes : dreNodes;
   const assets = balanceNodes.find(n => n.label.includes('ATIVO'))?.value || 0;
   const liabPL = balanceNodes.find(n => n.label.includes('PASSIVO'))?.value || 0;
-  const isBalanced = Math.abs(assets - liabPL) < 1; // Tolerância para arredondamento de float
+  const isBalanced = Math.abs(assets - liabPL) < 1; 
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -139,6 +139,19 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
         </div>
       </div>
 
+      {/* TOOLTIP INFORMATIVO PARA INDUSTRIA */}
+      <div className="bg-blue-600/10 border border-blue-500/20 p-6 rounded-[2.5rem] flex items-center gap-6 mx-4">
+         <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+            <Boxes size={24} />
+         </div>
+         <div>
+            <h4 className="text-sm font-black text-white uppercase tracking-widest italic">Parametrização Industrial Expert</h4>
+            <p className="text-xs text-blue-200 opacity-70 leading-relaxed mt-1">
+              As contas de <span className="text-blue-400 font-bold">Estoque</span> estão discriminadas por categoria. Edite os valores das matérias-primas e o totalizador será atualizado automaticamente para o Round 0.
+            </p>
+         </div>
+      </div>
+
       <div className="bg-slate-950 rounded-[4rem] border border-white/5 shadow-2xl overflow-hidden min-h-[500px]">
         <div className="p-10 space-y-3">
           {nodes.map((node) => (
@@ -167,7 +180,7 @@ const TreeNode: React.FC<{
   const [showCalc, setShowCalc] = useState(false);
   const isParent = node.children && node.children.length > 0;
   const canAdd = !node.isReadOnly && (node.type === 'totalizer');
-  const canDelete = node.isEditable && !node.isTemplateAccount; // PROTEÇÃO: Não exclui contas do template original
+  const canDelete = node.isEditable && !node.isTemplateAccount; 
   const isNegative = node.value < 0;
 
   return (
@@ -195,7 +208,6 @@ const TreeNode: React.FC<{
                       className={`w-32 bg-transparent outline-none font-mono font-bold text-xs ${isNegative ? 'text-rose-400' : 'text-white'}`} 
                       value={formatInt(node.value)} 
                       onChange={e => {
-                        // Permite apenas dígitos e sinal de menos
                         const raw = e.target.value.replace(/[^-0-9]/g, '');
                         if (raw === '-' || raw === '') {
                            onUpdate(node.id, { value: 0 });
@@ -249,7 +261,6 @@ const MiniCalc: React.FC<{ initialValue: number, onApply: (v: number) => void, o
   
   const evaluate = useCallback(() => {
     try {
-      // Sanitização básica da expressão
       const sanitized = expr.replace(/[^-+*/.0-9]/g, '');
       if (!sanitized) return;
       const res = eval(sanitized);
@@ -278,18 +289,20 @@ const MiniCalc: React.FC<{ initialValue: number, onApply: (v: number) => void, o
     }
   };
 
-  // Suporte a teclado
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
        if (e.key >= '0' && e.key <= '9') handleKey(e.key);
        if (['+', '-', '*', '/'].includes(e.key)) handleKey(e.key);
        if (e.key === 'Backspace') handleKey('back');
-       if (e.key === 'Enter') handleKey('=');
+       if (e.key === 'Enter') {
+          e.preventDefault();
+          evaluate();
+       }
        if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [evaluate]);
 
   return (
     <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 shadow-2xl w-56 space-y-4">

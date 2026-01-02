@@ -42,7 +42,6 @@ export const DEFAULT_MACRO: MacroIndicators = {
   machineryValues: { alfa: 2000000, beta: 3500000, gama: 5000000 },
   sectorAvgSalary: 5000.00,
   stockMarketPrice: 15.00,
-  // Fix: Added missing required initialExchangeRateUSD property
   initialExchangeRateUSD: 5.25
 };
 
@@ -52,7 +51,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     name: 'Industrial Brasileiro Básico (PMC/SPED)',
     branch: 'industrial',
     sector: 'Manufatura de Bens de Consumo',
-    description: 'Template ideal para universidades. Estrutura contábil brasileira com 5 regiões e ativos de $9M.',
+    description: 'Template ideal para universidades. Estrutura contábil brasileira com estoques discriminados e ativos de $9M.',
     config: {
       roundFrequencyDays: 7,
       salesMode: 'hybrid',
@@ -67,10 +66,18 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
           { id: 'bs-1.1', label: '1.1 ATIVO CIRCULANTE', value: 2823735, type: 'totalizer', children: [
             { id: 'cash', label: 'Caixa e Equivalentes', value: 1000000, type: 'asset', isEditable: true },
             { id: 'receivables', label: 'Contas a Receber', value: 1823735, type: 'asset', isEditable: true },
-            { id: 'inventory', label: 'Estoques', value: 0, type: 'asset', isEditable: true },
+            { id: 'inventory-total', label: 'Estoques Totais', value: 0, type: 'totalizer', isReadOnly: true, children: [
+               { id: 'mp-total', label: 'Matérias-Primas', value: 0, type: 'totalizer', children: [
+                  { id: 'mp-a', label: 'Almoxarifado MP-A', value: 0, type: 'asset', isEditable: true },
+                  { id: 'mp-b', label: 'Almoxarifado MP-B', value: 0, type: 'asset', isEditable: true }
+               ]},
+               { id: 'wip', label: 'Produtos em Elaboração', value: 0, type: 'asset', isEditable: true },
+               { id: 'finished-goods', label: 'Produtos Acabados', value: 0, type: 'asset', isEditable: true }
+            ]},
           ]},
           { id: 'bs-1.2', label: '1.2 ATIVO NÃO CIRCULANTE', value: 6353205, type: 'totalizer', children: [
             { id: 'machinery', label: 'Máquinas e Equipamentos', value: 5153205, type: 'asset', isEditable: true },
+            { id: 'depreciation', label: '(-) Depreciação Acumulada', value: 0, type: 'asset', isEditable: true },
             { id: 'land', label: 'Terras e Edificações', value: 1200000, type: 'asset', isEditable: true },
           ]}
         ]},
@@ -102,9 +109,6 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   }
 ];
 
-/**
- * Added missing DEMO_CHAMPIONSHIP_DATA constant
- */
 export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   id: 'brazilian-industrial-master',
   name: 'Industrial Brasileiro Básico (PMC/SPED)',
@@ -136,9 +140,6 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   }
 };
 
-/**
- * Added missing MOCK_ONGOING_CHAMPIONSHIPS constant
- */
 export const MOCK_ONGOING_CHAMPIONSHIPS = [
   { id: 'c1', name: 'Industrial Mastery', branch: 'Industrial', teams: 14, round: '5/12', leader: 'Alpha Group' },
   { id: 'c2', name: 'Comercial Pro S1', branch: 'Comercial', teams: 8, round: '2/8', leader: 'Varejo Force' },
