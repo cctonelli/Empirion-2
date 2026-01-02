@@ -22,7 +22,6 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
       if (node.children && node.children.length > 0) {
         const updatedChildren = calculateTotals(node.children);
         const total = updatedChildren.reduce((sum, child) => {
-          // No DRE, se for despesa subtraímos, se for receita somamos
           if (activeTab === 'dre') {
             return child.type === 'expense' ? sum - child.value : sum + child.value;
           }
@@ -99,24 +98,24 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900/50 p-6 rounded-[2.5rem] border border-white/5 shadow-inner">
-        <div className="flex gap-2 p-1 bg-slate-950 rounded-2xl w-fit border border-white/10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900/80 p-8 rounded-[3rem] border border-white/10 shadow-2xl">
+        <div className="flex gap-2 p-1 bg-slate-950 rounded-2xl w-fit border border-white/5">
           <button 
             onClick={() => setActiveTab('balance')} 
-            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'balance' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'balance' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
           >
             Balance Structure
           </button>
           <button 
             onClick={() => setActiveTab('dre')} 
-            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dre' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dre' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
           >
             DRE Config
           </button>
         </div>
         
         <div className="flex gap-4">
-           <StatusBox label="Valuation Inicial" val={assets} color="blue" />
+           <StatusBox label="Valuation Inicial" val={assets} color="orange" />
            {activeTab === 'balance' && (
              <div className={`p-4 rounded-2xl border flex items-center gap-3 ${isBalanced ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
                 {isBalanced ? <CheckCircle2 size={16}/> : <AlertTriangle size={16}/>}
@@ -128,7 +127,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
         </div>
       </div>
 
-      <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-2xl overflow-hidden min-h-[500px]">
+      <div className="bg-slate-950 rounded-[4rem] border border-white/5 shadow-2xl overflow-hidden min-h-[500px]">
         <div className="p-10 space-y-3">
           {nodes.map((node) => (
             <TreeNode 
@@ -159,34 +158,34 @@ const TreeNode: React.FC<{
 
   return (
     <div className="space-y-2">
-      <div className={`group flex items-center gap-4 p-4 rounded-2xl transition-all border ${isParent ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100 hover:border-orange-100 shadow-sm'}`} style={{ marginLeft: level * 32 }}>
-        <button onClick={() => setIsOpen(!isOpen)} className={`p-1 text-slate-400 ${!isParent && 'opacity-0'} transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`}><ChevronDown size={18}/></button>
+      <div className={`group flex items-center gap-4 p-4 rounded-2xl transition-all border ${isParent ? 'bg-slate-900 border-white/10 shadow-lg' : 'bg-white/5 border-white/5 hover:border-orange-500/30'}`} style={{ marginLeft: level * 32 }}>
+        <button onClick={() => setIsOpen(!isOpen)} className={`p-1 text-slate-600 ${!isParent && 'opacity-0'} transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`}><ChevronDown size={18}/></button>
         <div className="flex-1 flex items-center justify-between gap-4">
            <div className="flex items-center gap-3 flex-1">
               <input 
                 readOnly={node.isReadOnly || !node.isEditable}
-                className={`bg-transparent outline-none font-black text-sm flex-1 ${isParent ? 'text-slate-900 uppercase italic' : 'text-slate-600'}`} 
+                className={`bg-transparent outline-none font-black text-sm flex-1 ${isParent ? 'text-orange-500 uppercase italic' : 'text-slate-300'}`} 
                 value={node.label} 
                 onChange={e => onUpdate(node.id, { label: e.target.value })} 
               />
            </div>
            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-inner">
-                <span className="text-slate-300 text-[10px]">$</span>
+              <div className="flex items-center gap-2 bg-slate-950 px-4 py-2 rounded-xl border border-white/10 shadow-inner">
+                <span className="text-slate-600 text-[10px]">$</span>
                 {isParent ? (
-                  <span className="font-mono font-black text-slate-950 text-xs">{(node.value || 0).toLocaleString()}</span>
+                  <span className="font-mono font-black text-white text-xs">{(node.value || 0).toLocaleString()}</span>
                 ) : (
                   <input 
                     type="number" 
-                    className="w-24 bg-transparent outline-none font-mono font-bold text-orange-600 text-xs" 
+                    className="w-24 bg-transparent outline-none font-mono font-bold text-white text-xs" 
                     value={node.value} 
                     onChange={e => onUpdate(node.id, { value: parseFloat(e.target.value) || 0 })} 
                   />
                 )}
               </div>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                 {canAdd && <button onClick={() => onAdd(node.id)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Plus size={14}/></button>}
-                 {canDelete && <button onClick={() => onRemove(node.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><Trash2 size={14}/></button>}
+                 {canAdd && <button onClick={() => onAdd(node.id)} className="p-2 text-blue-400 hover:bg-white/5 rounded-lg"><Plus size={14}/></button>}
+                 {canDelete && <button onClick={() => onRemove(node.id)} className="p-2 text-rose-500 hover:bg-white/5 rounded-lg"><Trash2 size={14}/></button>}
               </div>
            </div>
         </div>
@@ -203,9 +202,9 @@ const TreeNode: React.FC<{
 };
 
 const StatusBox = ({ label, val, color }: any) => (
-  <div className={`p-4 rounded-2xl border shadow-sm min-w-[160px] ${color === 'blue' ? 'bg-blue-600 text-white' : 'bg-emerald-600 text-white'}`}>
-     <span className="block text-[8px] font-black uppercase opacity-60 tracking-widest mb-1">{label}</span>
-     <span className="text-xl font-black italic">$ {val.toLocaleString()}</span>
+  <div className={`p-4 rounded-2xl border shadow-xl min-w-[160px] ${color === 'orange' ? 'bg-orange-600 text-white border-orange-500' : 'bg-blue-600 text-white border-blue-500'}`}>
+     <span className="block text-[8px] font-black uppercase opacity-70 tracking-widest mb-1">{label}</span>
+     <span className="text-xl font-black italic font-mono">$ {val.toLocaleString()}</span>
   </div>
 );
 

@@ -72,8 +72,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const marketShareOptions: any = {
     chart: { type: 'donut', background: 'transparent' },
     stroke: { show: false },
-    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#14b8a6', '#f97316'],
-    labels: ['Alpha', 'Beta', 'Gama', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Sua Equipe'],
+    colors: ['#f97316', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#14b8a6'],
+    labels: ['Sua Equipe', 'Alpha', 'Beta', 'Gama', 'Delta', 'Epsilon', 'Zeta', 'Eta'],
     legend: { show: false },
     dataLabels: { enabled: false },
     plotOptions: {
@@ -82,9 +82,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           size: '80%',
           labels: {
             show: true,
-            name: { show: true, color: '#94a3b8', fontSize: '10px', fontWeight: 800 },
+            name: { show: true, color: '#f97316', fontSize: '10px', fontWeight: 800 },
             value: { show: true, color: '#fff', fontSize: '20px', fontWeight: 900 },
-            total: { show: true, label: 'MARKET SHARE', color: '#94a3b8' }
+            total: { show: true, label: 'MARKET SHARE', color: '#f97316' }
           }
         }
       }
@@ -111,12 +111,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               >
                  {isResetting ? <Loader2 className="animate-spin" size={12}/> : <RotateCcw size={12} />} Resetar Decisões Alpha
               </button>
-              <button 
-                onClick={() => alert("Simulando processamento matemático da rodada...")}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-950 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
-              >
-                 <Cpu size={12} /> Forçar Cálculo Engine
-              </button>
            </div>
         </div>
       )}
@@ -134,11 +128,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 px-4 md:px-0">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
               <BarChart3 className="text-white" size={20} />
             </div>
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">
-              Strategic <span className="text-blue-500">Command</span>
+              Strategic <span className="text-orange-500">Command</span>
             </h1>
           </div>
           <div className="flex items-center gap-4">
@@ -156,18 +150,18 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 px-4 md:px-0">
         <div className="lg:col-span-3 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="premium-card p-8 rounded-[3rem] flex flex-col items-center justify-center min-h-[300px]">
-              <Chart options={marketShareOptions} series={[15, 12, 10, 14, 18, 12, 8, 11]} type="donut" width="100%" />
+            <div className="premium-card p-8 rounded-[3rem] bg-slate-900 border-white/5 flex flex-col items-center justify-center min-h-[300px] shadow-2xl">
+              <Chart options={marketShareOptions} series={[11, 15, 12, 10, 14, 18, 12, 8]} type="donut" width="100%" />
             </div>
 
-            <div className="md:col-span-2 premium-card p-8 rounded-[3rem] flex flex-col justify-between relative overflow-hidden group">
+            <div className="md:col-span-2 premium-card p-8 rounded-[3rem] bg-slate-900 border-white/5 flex flex-col justify-between relative overflow-hidden group shadow-2xl">
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
-                <Cpu size={120} />
+                <Cpu size={120} className="text-orange-500" />
               </div>
               <div className="relative z-10 space-y-6">
                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-600 rounded-lg text-white"><Sparkles size={20} /></div>
-                    <h3 className="text-lg font-black uppercase tracking-tight text-white italic">Strategos Advisor</h3>
+                    <div className="p-2 bg-orange-600 rounded-lg text-white shadow-lg"><Sparkles size={20} /></div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-orange-500 italic">Strategos Advisor</h3>
                  </div>
                  {isInsightLoading ? (
                    <div className="space-y-3">
@@ -176,14 +170,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                    </div>
                  ) : (
                    <p className="text-sm font-medium text-slate-300 leading-relaxed font-mono">
-                     <span className="text-blue-500 font-black">SYSTEM_MSG:</span> {aiInsight}
+                     <span className="text-orange-500 font-black italic">COMMAND_MSG:</span> {aiInsight}
                    </p>
                  )}
               </div>
             </div>
           </div>
 
-          <div className="premium-card rounded-[3.5rem] border-2 border-slate-800 overflow-hidden flex flex-col">
+          <div className="premium-card rounded-[3.5rem] border-2 border-slate-800 bg-slate-950 overflow-hidden flex flex-col shadow-2xl">
             <div className="p-8 border-b border-white/5 bg-slate-900/40 flex items-center justify-between">
               <div className="flex items-center gap-4">
                  <div className="w-12 h-12 bg-white text-slate-950 rounded-2xl flex items-center justify-center shadow-xl">
@@ -191,18 +185,18 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                  </div>
                  <div>
                     <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Gazeta {branch}</h3>
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mt-1 italic">Órgão Oficial v6.0 GOLD • Registro Oracle Node: 2026-X</p>
+                    <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.3em] mt-1 italic">Oracle Node: 2026-X • Official Release</p>
                  </div>
               </div>
             </div>
             <div className="p-12 grid grid-cols-1 md:grid-cols-3 gap-12">
                <div className="md:col-span-2 space-y-6">
-                  <h2 className="text-4xl font-black text-white leading-[1.1] tracking-tight hover:text-blue-400 transition-colors cursor-default">
+                  <h2 className="text-4xl font-black text-white leading-[1.1] tracking-tight hover:text-orange-500 transition-colors cursor-default">
                     {gazetaNews}
                   </h2>
                </div>
-               <div className="glass-panel p-6 rounded-[2rem] space-y-6">
-                  <h4 className="text-[10px] font-black uppercase text-blue-400 tracking-widest flex items-center gap-2">
+               <div className="bg-white/5 p-6 rounded-[2rem] space-y-6 border border-white/5 shadow-inner">
+                  <h4 className="text-[10px] font-black uppercase text-orange-500 tracking-widest flex items-center gap-2 italic">
                     <Landmark size={14} /> Mercado de Capitais
                   </h4>
                   <div className="space-y-4">
@@ -217,9 +211,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         </div>
 
         <div className="space-y-8">
-           <div className="premium-card p-10 rounded-[3rem] space-y-10">
-              <h3 className="text-xl font-black uppercase text-white flex items-center gap-4 italic leading-none">
-                 <div className="p-2 bg-blue-600 rounded-xl"><Target size={20}/></div> Core KPIs
+           <div className="premium-card p-10 rounded-[3rem] bg-slate-900 border-white/5 space-y-10 shadow-2xl">
+              <h3 className="text-xl font-black uppercase text-orange-500 flex items-center gap-4 italic leading-none">
+                 <div className="p-2 bg-orange-600 rounded-xl shadow-lg"><Target size={20} className="text-white"/></div> Core KPIs
               </h3>
               <div className="space-y-10">
                  <KpiRow label="Resultado Líquido" value="$ 73.926" trend="+100%" positive icon={<DollarSign size={16}/>} />
@@ -228,21 +222,21 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </div>
            </div>
 
-           <div className="bg-slate-900 border border-white/5 p-10 rounded-[3rem] flex flex-col h-[520px]">
+           <div className="bg-slate-950 border border-white/5 p-10 rounded-[3rem] flex flex-col h-[520px] shadow-2xl">
               <div className="flex items-center justify-between mb-8">
                  <div className="flex items-center gap-3">
                     <div className="p-2 bg-white text-slate-950 rounded-lg"><MessageSquare size={18} /></div>
-                    <h3 className="text-lg font-black text-white uppercase italic">War Feed</h3>
+                    <h3 className="text-lg font-black text-orange-500 uppercase italic">War Feed</h3>
                  </div>
               </div>
               <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
                  {messages.map(m => (
-                   <div key={m.id} className={`p-5 rounded-3xl ${m.isImportant ? 'bg-blue-600/10 border border-blue-500/20' : 'bg-white/5 border border-white/5'}`}>
+                   <div key={m.id} className={`p-5 rounded-3xl ${m.isImportant ? 'bg-orange-600/10 border border-orange-500/20' : 'bg-white/5 border border-white/5'}`}>
                       <div className="flex justify-between items-center mb-3">
-                         <span className="text-[9px] font-black uppercase text-blue-400">{m.sender}</span>
+                         <span className="text-[9px] font-black uppercase text-orange-500">{m.sender}</span>
                          <span className="text-[8px] font-bold text-slate-500">{m.timestamp}</span>
                       </div>
-                      <p className="text-xs font-medium text-slate-300 leading-relaxed">{m.text}</p>
+                      <p className="text-xs font-medium text-slate-200 leading-relaxed italic">{m.text}</p>
                    </div>
                  ))}
               </div>
@@ -255,7 +249,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
 const TickerItem = ({ label, value, change, up, neutral }: any) => (
   <div className="flex items-center gap-4">
-    <span className="text-slate-500">{label}</span>
+    <span className="text-orange-500 font-black">{label}</span>
     <span className="font-mono font-black text-white">{value}</span>
     <span className={`font-mono text-[9px] ${up ? 'text-emerald-500' : neutral ? 'text-slate-500' : 'text-rose-500'}`}>
       {change}
@@ -265,7 +259,7 @@ const TickerItem = ({ label, value, change, up, neutral }: any) => (
 
 const StockRow = ({ symbol, price, up, neutral }: any) => (
   <div className="flex items-center justify-between group">
-    <span className="text-[10px] font-black text-slate-500 group-hover:text-slate-200 transition-colors">{symbol}</span>
+    <span className="text-[10px] font-black text-orange-500 group-hover:text-white transition-colors uppercase italic">{symbol}</span>
     <div className="flex items-center gap-2">
        <span className="text-sm font-black text-white font-mono">{price}</span>
        {up ? <ArrowUpRight size={14} className="text-emerald-500" /> : neutral ? <Activity size={12} className="text-slate-500" /> : <ArrowDownRight size={14} className="text-rose-500" />}
@@ -276,15 +270,15 @@ const StockRow = ({ symbol, price, up, neutral }: any) => (
 const KpiRow = ({ label, value, trend, positive, icon }: any) => (
   <div className="flex items-center justify-between group cursor-default">
      <div className="flex items-center gap-4">
-        <div className="p-3 bg-white/5 text-slate-500 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+        <div className="p-3 bg-white/5 text-orange-500 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition-all duration-300 border border-white/5 shadow-inner">
           {icon}
         </div>
         <div>
-           <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+           <span className="block text-[9px] font-black text-orange-500 uppercase tracking-widest mb-1">{label}</span>
            <span className="text-2xl font-black text-white font-mono tracking-tighter italic">{value}</span>
         </div>
      </div>
-     <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black shadow-sm ${positive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+     <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black shadow-sm ${positive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
        {trend}
      </div>
   </div>
