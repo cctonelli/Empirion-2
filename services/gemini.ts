@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ScenarioType } from "../types";
 
@@ -22,7 +23,7 @@ export const generateBusinessPlanField = async (
       Campo a preencher: ${fieldLabel}.
       Contexto já fornecido pelo usuário: "${userContext}".
       Sua Tarefa: ${prompt}
-      Forneça um texto profissional, detalhado e adequado ao mercado empresarial. Max 200 palavras.`,
+      Forneça um texto profissional, detalhado e adequado ao mercado empresarial de elite. Max 200 words.`,
       config: { temperature: 0.7 }
     });
 
@@ -41,7 +42,7 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
   
   const groundingPrompt = scenarioType === 'real' 
     ? "Utilize dados reais de mercado e notícias atuais (Google Search) para fundamentar as projeções." 
-    : "Baseie-se exclusivamente nos parâmetros simulados fornecidos pelo tutor da arena Empirion.";
+    : "Baseie-se exclusivamente nos parâmetros simulados fornecidos pelo motor de inteligência Empirion.";
 
   try {
     const response = await ai.models.generateContent({
@@ -85,7 +86,7 @@ export const generateGazetaNews = async (context: {
   
   const groundingContext = isReal 
     ? "CORPO DE NOTÍCIA REAL: Pesquise notícias reais da última semana sobre economia e o setor de atuaçao para mesclar com os resultados da simulação."
-    : "MODO SIMULADO: Crie notícias puramente fictícias baseadas no comportamento das equipes e nos parâmetros do tutor Empirion.";
+    : "MODO SIMULADO: Crie notícias puramente fictícias baseadas no comportamento das equipes e nos parâmetros do motor Empirion.";
 
   try {
     const response = await ai.models.generateContent({

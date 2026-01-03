@@ -143,11 +143,11 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </Slider>
       </section>
 
-      {/* HERO PRINCIPAL SEBRAE-INSPIRED ORANGE CLOUDS */}
+      {/* HERO PRINCIPAL COM NUVENS LARANJA */}
       <section className="py-40 px-6 md:px-24 text-center relative z-20">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-[-1] opacity-40">
            <div className="w-[1000px] h-[1000px] bg-orange-600/10 blur-[180px] rounded-full absolute top-0 left-0 animate-pulse"></div>
-           <div className="w-[800px] h-[800px] bg-orange-500/5 blur-[160px] rounded-full absolute bottom-0 right-0 animate-pulse [animation-delay:2s]"></div>
+           <div className="w-[800px] h-[800px] bg-orange-50/5 blur-[160px] rounded-full absolute bottom-0 right-0 animate-pulse [animation-delay:2s]"></div>
         </div>
 
         <motion.div initial={{ opacity: 0, y: 60 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-6xl mx-auto space-y-16">
@@ -205,40 +205,6 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* RAMOS CARDS */}
-      <section className="py-40 px-6 md:px-24 relative z-20">
-         <div className="max-w-7xl mx-auto space-y-24">
-            <div className="text-center space-y-6">
-               <h2 className="text-5xl font-black uppercase italic tracking-tighter text-white">Setores de Operação</h2>
-               <p className="text-slate-400 font-medium max-w-3xl mx-auto italic leading-relaxed">
-                  Modelamos a complexidade de múltiplos ramos com fidelidade sistêmica original do motor Empirion.
-               </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-               {content.sectors?.map((sector: any) => (
-                 <Link key={sector.id} to={`/activities/${sector.slug}`} className="group">
-                    <div className="p-10 rounded-[3.5rem] bg-white/[0.02] backdrop-blur-3xl border border-white/5 h-full flex flex-col gap-6 transition-all group-hover:scale-[1.02] group-hover:bg-orange-600 group-hover:shadow-[0_40px_100px_rgba(249,115,22,0.2)] overflow-hidden">
-                       <div className="flex items-center justify-between">
-                          <div className="p-4 bg-white/5 rounded-2xl text-orange-500 group-hover:bg-white group-hover:text-orange-600 transition-all shadow-xl">
-                            {getBranchIcon(sector.icon)}
-                          </div>
-                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 group-hover:text-white/60">Strategic Node</span>
-                       </div>
-                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tight group-hover:text-white transition-colors">{sector.name}</h3>
-                       <p className="text-sm text-slate-500 font-medium leading-relaxed italic group-hover:text-white/80 transition-colors line-clamp-3">
-                          {sector.description}
-                       </p>
-                       <div className="pt-6 border-t border-white/5 flex items-center gap-3 text-orange-500 group-hover:text-white transition-colors">
-                          <span className="text-[9px] font-black uppercase tracking-[0.4em]">Explorar Matriz</span>
-                          <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
-                       </div>
-                    </div>
-                 </Link>
-               ))}
-            </div>
-         </div>
-      </section>
-
       <footer className="py-32 border-t border-white/5 text-center relative z-20 bg-slate-950/40 backdrop-blur-3xl">
          <div className="container mx-auto px-6 space-y-12">
             <Link to="/" className="flex items-center justify-center gap-4 opacity-80">
@@ -251,7 +217,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                </p>
                <p className="text-[9px] font-bold uppercase tracking-[0.4em] max-w-2xl mx-auto leading-relaxed text-slate-600 italic">
                   Construindo impérios empresariais do futuro através da orquestração neural. <br/> 
-                  Protocol Command Node 08 • Bernard Legacy Integration
+                  Protocol Command Node 08 • Oracle Engine Integration
                </p>
             </div>
             <div className="flex justify-center gap-4 pt-10">

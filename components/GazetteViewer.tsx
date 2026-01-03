@@ -115,7 +115,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, news, round, onClo
             </div>
          </div>
 
-         {/* SEÇÃO 2: TABELA DE FORNECEDORES (Bernard Fidelity) */}
+         {/* SEÇÃO 2: TABELA DE FORNECEDORES (Empirion Fidelity) */}
          <div className="pt-16 border-t border-white/10 space-y-10">
             <div className="flex items-center justify-between">
                <div className="space-y-1">
@@ -125,7 +125,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, news, round, onClo
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Preços válidos para o Ciclo Atual (P0{round})</p>
                </div>
                <div className="px-6 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-500 text-[9px] font-black uppercase">
-                  Sincronizado via Bernard Sistemas
+                  Sincronizado via Empirion Engine
                </div>
             </div>
 

@@ -52,10 +52,10 @@ export const DEFAULT_MACRO: MacroIndicators = {
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   {
     id: 'industrial-master-street',
-    name: 'Industrial Empirion Street (Fidelidade PDF)',
+    name: 'Industrial Empirion Street (Standard)',
     branch: 'industrial',
     sector: 'Bens de Consumo Duráveis',
-    description: 'Template oficial sincronizado com o legado: Ativo de R$ 9.176.940, 9 regiões geográficas e 8 equipes idênticas.',
+    description: 'Template oficial Empirion: Ativo de R$ 9.176.940, 9 regiões geográficas e 8 equipes idênticas.',
     config: {
       roundFrequencyDays: 7,
       salesMode: 'hybrid',
@@ -137,7 +137,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
 export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   id: 'brazilian-industrial-master',
   name: 'Empirion Street - Industrial Mastery',
-  description: 'Arena oficial sincronizada com o legado contábil e operacional v5.0.',
+  description: 'Arena oficial baseada na arquitetura operacional Empirion Systems.',
   branch: 'industrial',
   status: 'active',
   is_public: true,
