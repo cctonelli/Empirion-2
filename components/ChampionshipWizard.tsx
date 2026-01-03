@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Check, Settings, Globe, Layers, Cpu, Zap, Loader2,
   TrendingUp, Boxes, Bot, ShieldCheck, ArrowLeft, Trash2, Activity, Users,
-  Lock, Unlock, DollarSign as DollarIcon, MapPin, RefreshCw
+  Lock, Unlock, DollarSign as DollarIcon, MapPin, RefreshCw, Leaf, Gavel,
+  ShieldAlert, Sparkles, BarChart3, Construction, Landmark
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS, DEFAULT_MACRO } from '../constants';
 import { Branch, ScenarioType, ModalityType, RegionConfig, MacroIndicators, AccountNode, CurrencyType } from '../types';
@@ -27,7 +28,21 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     name: '', branch: 'industrial' as Branch, templateId: '', salesMode: 'hybrid',
     scenarioType: 'simulated' as ScenarioType, modalityType: 'standard' as ModalityType,
     transparency: 'medium', totalRounds: 12, teamsLimit: 8, botsCount: 0, 
-    currency: 'BRL' as CurrencyType, isPublic: false
+    currency: 'BRL' as CurrencyType, isPublic: false,
+    rules: {
+      esg_enabled: false,
+      black_swan_events: true,
+      labor_strikes: false,
+      share_issue: false,
+      obsolescence_factor: true,
+      community_score: true,
+      transfer_pricing: false,
+      currency_hedge: false,
+      rd_disruption: true,
+      inflation_schedule: true,
+      event_intensity: 0.1,
+      tax_paradise: false
+    }
   });
 
   const [macro, setMacro] = useState<MacroIndicators>({
@@ -90,6 +105,13 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   const redistributeMarketShare = () => {
     const share = Number((100 / formData.teamsLimit).toFixed(2));
     setRegions(regions.map(r => ({ ...r, initialMarketShare: share })));
+  };
+
+  const toggleRule = (key: keyof typeof formData.rules) => {
+    setFormData({
+      ...formData,
+      rules: { ...formData.rules, [key]: !formData.rules[key] }
+    });
   };
 
   return (
@@ -250,6 +272,97 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
             </div>
           )}
 
+          {step === 6 && (
+            <div className="space-y-12 animate-in fade-in duration-500 pb-10">
+               <div className="text-center space-y-4">
+                  <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">6. Protocolos e Regras do Jogo</h2>
+                  <p className="text-slate-400 font-medium italic">Ative as variáveis que definem a agressividade e complexidade da arena.</p>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <RuleCard 
+                    icon={<Leaf className="text-emerald-500" />} 
+                    title="ESG & Sustentabilidade" 
+                    desc="Ativa o tracking de emissões e multas ambientais no DRE."
+                    active={formData.rules.esg_enabled}
+                    onToggle={() => toggleRule('esg_enabled')}
+                  />
+                  <RuleCard 
+                    icon={<Bot className="text-indigo-500" />} 
+                    title="Cisnes Negros (IA)" 
+                    desc="Permite que a IA Gemini gere eventos mundiais aleatórios."
+                    active={formData.rules.black_swan_events}
+                    onToggle={() => toggleRule('black_swan_events')}
+                  />
+                  <RuleCard 
+                    icon={<Users className="text-rose-500" />} 
+                    title="Greves e Sindicatos" 
+                    desc="RH com baixa motivação pode paralisar a produção."
+                    active={formData.rules.labor_strikes}
+                    onToggle={() => toggleRule('labor_strikes')}
+                  />
+                  <RuleCard 
+                    icon={<Landmark className="text-blue-500" />} 
+                    title="Mercado de Capitais" 
+                    desc="Habilita emissão de novas ações para financiar CapEx."
+                    active={formData.rules.share_issue}
+                    onToggle={() => toggleRule('share_issue')}
+                  />
+                  <RuleCard 
+                    icon={<Activity className="text-orange-500" />} 
+                    title="Obsolescência" 
+                    desc="Máquinas Alfa e Beta perdem eficiência mais rápido."
+                    active={formData.rules.obsolescence_factor}
+                    onToggle={() => toggleRule('obsolescence_factor')}
+                  />
+                  <RuleCard 
+                    icon={<Sparkles className="text-amber-500" />} 
+                    title="Community Score" 
+                    desc="Permite que Observadores votem no ranking de prestígio."
+                    active={formData.rules.community_score}
+                    onToggle={() => toggleRule('community_score')}
+                  />
+                  <RuleCard 
+                    icon={<DollarIcon className="text-emerald-400" />} 
+                    title="Hedge Cambial" 
+                    desc="Habilita derivativos para proteção contra o dólar."
+                    active={formData.rules.currency_hedge}
+                    onToggle={() => toggleRule('currency_hedge')}
+                  />
+                  <RuleCard 
+                    icon={<Zap className="text-yellow-400" />} 
+                    title="P&D Disruptivo" 
+                    desc="Investimento alto em P&D pode dobrar o OEE."
+                    active={formData.rules.rd_disruption}
+                    onToggle={() => toggleRule('rd_disruption')}
+                  />
+                  <RuleCard 
+                    icon={<Gavel className="text-slate-400" />} 
+                    title="Transfer Pricing" 
+                    desc="Regras complexas de impostos entre filiais regionais."
+                    active={formData.rules.transfer_pricing}
+                    onToggle={() => toggleRule('transfer_pricing')}
+                  />
+               </div>
+
+               <div className="p-10 bg-white/5 border border-white/10 rounded-[3rem] space-y-6">
+                  <div className="flex justify-between items-center">
+                     <div>
+                        <h4 className="text-lg font-black text-white uppercase italic">Intensidade do Caos</h4>
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Frequência de eventos disruptivos gerados pela IA.</p>
+                     </div>
+                     <span className="text-3xl font-black text-orange-500 font-mono">{(formData.rules.event_intensity * 100).toFixed(0)}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="0.5" step="0.05" 
+                    value={formData.rules.event_intensity} 
+                    onChange={e => setFormData({...formData, rules: {...formData.rules, event_intensity: parseFloat(e.target.value)}})}
+                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-600" 
+                  />
+               </div>
+            </div>
+          )}
+
           {step === 7 && (
             <div className="space-y-12 animate-in fade-in duration-500 text-center">
                <div className="space-y-4">
@@ -297,6 +410,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
 
         </div>
 
+        {/* Footer Navigation */}
         <div className="p-10 bg-slate-900 flex justify-between items-center border-t border-white/5">
            <button onClick={prevStep} disabled={step === 1} className="px-10 py-5 text-slate-500 font-black text-[10px] uppercase tracking-widest hover:text-white transition-all flex items-center gap-3 disabled:opacity-0"><ArrowLeft size={16}/> Anterior</button>
            <button 
@@ -312,6 +426,22 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     </div>
   );
 };
+
+const RuleCard = ({ icon, title, desc, active, onToggle }: any) => (
+  <button 
+    onClick={onToggle}
+    className={`p-8 bg-white/5 border rounded-[2.5rem] text-left transition-all group relative overflow-hidden ${active ? 'border-orange-500 bg-orange-600/10 shadow-lg' : 'border-white/5 opacity-60 hover:opacity-100 hover:border-white/20'}`}
+  >
+     <div className={`p-4 rounded-2xl w-fit mb-6 transition-all ${active ? 'bg-orange-600 text-white shadow-xl' : 'bg-white/5 text-slate-400'}`}>
+        {icon}
+     </div>
+     <h4 className="text-lg font-black text-white uppercase italic tracking-tight">{title}</h4>
+     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2 leading-relaxed">{desc}</p>
+     <div className="absolute top-6 right-6">
+        <div className={`w-4 h-4 rounded-full border-2 transition-all ${active ? 'bg-orange-500 border-white shadow-[0_0_10px_#f97316]' : 'border-slate-700'}`} />
+     </div>
+  </button>
+);
 
 const InputGroup = ({ label, value, onChange, type = 'text', placeholder }: any) => (
   <div className="space-y-3">
