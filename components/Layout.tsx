@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import GlobalChat from './GlobalChat';
 import LanguageSwitcher from './LanguageSwitcher';
+import { APP_VERSION, PROTOCOL_NODE } from '../constants';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,7 +20,6 @@ interface LayoutProps {
   onNavigate: (v: string) => void;
 }
 
-// Fixed: Added default export and completed the component definition to satisfy App.tsx import.
 const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout, activeView, onNavigate }) => {
   const { t } = useTranslation('common');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -87,7 +87,17 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
               </div>
             )}
           </div>
-          {isSidebarOpen && <LanguageSwitcher light />}
+          
+          {isSidebarOpen && (
+            <div className="px-2 pt-2 pb-1 border-t border-white/5">
+               <LanguageSwitcher light />
+               <div className="mt-4 opacity-30 text-center">
+                  <p className="text-[8px] font-mono font-black text-slate-400 uppercase tracking-tighter">{APP_VERSION}</p>
+                  <p className="text-[6px] font-mono text-slate-500 uppercase tracking-widest mt-1">{PROTOCOL_NODE}</p>
+               </div>
+            </div>
+          )}
+
           <button 
             onClick={onLogout}
             className="w-full flex items-center gap-4 px-4 py-3 text-slate-400 hover:text-rose-500 hover:bg-rose-500/5 rounded-2xl transition-all group"

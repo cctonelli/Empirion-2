@@ -7,7 +7,7 @@ import {
   Tractor, DollarSign, Hammer, Menu, X, Box, Cpu, Sparkles, 
   Zap, Gavel, PenTool, Trophy, Terminal, Rocket
 } from 'lucide-react';
-import { MENU_STRUCTURE } from '../constants';
+import { MENU_STRUCTURE, APP_VERSION } from '../constants';
 import { useModalities } from '../hooks/useModalities';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -34,7 +34,6 @@ const getIcon = (iconName?: string) => {
 
 const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { modalities } = useModalities();
@@ -54,7 +53,10 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               <span className="text-white font-black text-xl italic select-none">E</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-black tracking-tighter uppercase text-white italic leading-none group-hover:text-orange-500 transition-colors">EMPIRION</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-black tracking-tighter uppercase text-white italic leading-none group-hover:text-orange-500 transition-colors">EMPIRION</span>
+                <span className="px-1.5 py-0.5 bg-white/5 rounded border border-white/10 text-[6px] font-mono text-orange-500/80 font-black uppercase tracking-tighter hidden sm:block">{APP_VERSION}</span>
+              </div>
               <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] leading-none mt-1">Strategic Node 08</span>
             </div>
           </Link>
@@ -62,6 +64,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
         {/* FULL DESKTOP MENU */}
         <nav className="hidden lg:flex justify-center items-center gap-1">
+          {/* ... resto do menu inalterado ... */}
           {MENU_STRUCTURE.map((item) => {
             const isActive = location.pathname === item.path;
             const isHovered = activeMenu === item.label;
@@ -171,14 +174,9 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 </div>
               ))}
               
-              {/* MOBILE FREE TRIAL LINK */}
-              <Link 
-                to="/test/industrial" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="mt-4 flex items-center gap-3 text-orange-500 font-black uppercase text-sm tracking-widest bg-orange-600/10 p-6 rounded-2xl border border-orange-500/20 shadow-xl"
-              >
-                <Rocket size={20} className="animate-bounce" /> Iniciar Teste Grátis
-              </Link>
+              <div className="mt-auto pt-10 text-center opacity-20">
+                 <p className="text-[10px] font-mono font-black text-white uppercase">{APP_VERSION}</p>
+              </div>
             </div>
           </motion.div>
         )}

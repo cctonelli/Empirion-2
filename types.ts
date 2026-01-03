@@ -10,6 +10,62 @@ export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 
+// Prazos Discretos: 0 (Vista), 1 (Pula 1), 2 (50/50)
+export type DiscreteTerm = 0 | 1 | 2;
+
+/**
+ * User profile interface for authentication and role management.
+ */
+export interface UserProfile {
+  id: string;
+  supabase_user_id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  is_opal_premium: boolean;
+  created_at: string;
+}
+
+/**
+ * Team interface representing a participant in a championship.
+ */
+export interface Team {
+  id: string;
+  name: string;
+  championship_id: string;
+  status?: string;
+  invite_code?: string;
+}
+
+/**
+ * Modality interface for dynamic simulation modes.
+ */
+export interface Modality {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  page_content: any;
+}
+
+/**
+ * AccountNode interface for hierarchical financial structures.
+ */
+export interface AccountNode {
+  id: string;
+  label: string;
+  value: number;
+  type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'expense' | 'revenue';
+  isReadOnly?: boolean;
+  isEditable?: boolean;
+  isTemplateAccount?: boolean;
+  children?: AccountNode[];
+}
+
+/**
+ * Macro indicators for the economic environment.
+ */
 export interface MacroIndicators {
   growthRate: number;
   inflationRate: number;
@@ -29,6 +85,9 @@ export interface MacroIndicators {
   demand_regions?: number[];
 }
 
+/**
+ * Ecosystem configuration for simulation parameters.
+ */
 export interface EcosystemConfig {
   scenarioType: ScenarioType;
   modalityType: ModalityType;
@@ -38,105 +97,102 @@ export interface EcosystemConfig {
   marketVolatility: number;
 }
 
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
+/**
+ * Championship interface representing a simulation arena.
+ */
 export interface Championship {
   id: string;
   name: string;
   description?: string;
   branch: Branch;
   status: ChampionshipStatus;
-  is_public: boolean;
   current_round: number; 
   total_rounds: number;   
-  tutor_id?: string;
-  sector?: string;
-  sales_mode: SalesMode;
-  scenario_type: ScenarioType;
-  currency: CurrencyType;
-  round_frequency_days: number;
   deadline_value: number;
   deadline_unit: DeadlineUnit;
-  transparency_level: TransparencyLevel;
-  config: {
-    currency: CurrencyType;
-    roundFrequencyDays: number;
-    deadlineValue: number;
-    deadlineUnit: DeadlineUnit;
-    salesMode: SalesMode;
-    scenarioType: ScenarioType;
-    transparencyLevel: TransparencyLevel;
-    modalityType: ModalityType;
-    teamsLimit: number;
-    botsCount: number;
-    votingCriteria?: CommunityCriteria[];
-  };
+  config: any;
+  market_indicators: MacroIndicators;
   initial_financials?: any;
-  initial_market_data?: any; 
-  market_indicators?: any;   
-  teams?: Team[];
-  is_local?: boolean; 
-  is_trial?: boolean; 
-  created_at?: string;
   round_started_at?: string;
+  is_trial?: boolean;
+  teams?: Team[];
+  created_at?: string;
+  is_public?: boolean;
+  sales_mode?: SalesMode;
+  scenario_type?: ScenarioType;
+  currency?: CurrencyType;
+  round_frequency_days?: number;
+  transparency_level?: TransparencyLevel;
+  initial_market_data?: any;
   ecosystemConfig?: EcosystemConfig;
 }
 
-export interface Team {
-  id: string;
-  name: string;
-  championship_id: string;
-  status?: string; 
-  invite_code?: string; 
-  created_at?: string;
-}
-
-export interface UserProfile {
-  id: string;
-  supabase_user_id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  is_opal_premium: boolean;
-  created_at: string;
-}
-
-export interface DecisionData {
-  regions: any;
-  hr: any;
-  production: any;
-  finance: any;
-  legal?: {
-    recovery_mode: RecoveryMode;
-  };
-}
-
-export interface AccountNode {
-  id: string;
-  label: string;
-  value: number;
-  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense' | 'totalizer';
-  children?: AccountNode[];
-  isReadOnly?: boolean;
-  isEditable?: boolean;
-  isTemplateAccount?: boolean;
-}
-
+/**
+ * Template for creating new championships.
+ */
 export interface ChampionshipTemplate {
   id: string;
   name: string;
   branch: Branch;
   sector: string;
   description: string;
-  config: Partial<Championship['config']>;
+  config: {
+    roundFrequencyDays?: number;
+    salesMode?: SalesMode;
+    scenarioType?: ScenarioType;
+    transparencyLevel?: TransparencyLevel;
+    modalityType?: ModalityType;
+    deadlineValue?: number;
+    deadlineUnit?: DeadlineUnit;
+  };
   market_indicators: MacroIndicators;
-  initial_financials: any;
+  initial_financials: {
+    balance_sheet: AccountNode[];
+    dre: AccountNode[];
+  };
 }
 
+/**
+ * Decision data submitted by teams per round.
+ */
+export interface DecisionData {
+  regions: Record<number, { price: number; term: DiscreteTerm; marketing: number }>;
+  hr: { hired: number; fired: number; salary: number; trainingPercent: number; participationPercent: number; sales_staff_count: number };
+  production: { purchaseMPA: number; purchaseMPB: number; paymentType: DiscreteTerm; activityLevel: number; rd_investment: number };
+  finance: { loanRequest: number; application: number; buyMachines: { alfa: number; beta: number; gama: number } };
+  legal: { recovery_mode: RecoveryMode };
+}
+
+/**
+ * Snapshot of financial status for a round.
+ */
+export interface FinancialSnapshot {
+  round: number;
+  balance_sheet: any;
+  dre: any;
+  cash_flow: any;
+  kpis: {
+    ebitda: number;
+    netProfit: number;
+    marketShare: number;
+    oee: number;
+    tsr: number;
+    solvency: number;
+  };
+}
+
+/**
+ * Team history containing snapshots across rounds.
+ */
+export interface TeamHistory {
+  team_id: string;
+  team_name: string;
+  snapshots: FinancialSnapshot[];
+}
+
+/**
+ * Black Swan event definition for AI-generated crises.
+ */
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -149,6 +205,9 @@ export interface BlackSwanEvent {
   };
 }
 
+/**
+ * Item for the message board / war feed.
+ */
 export interface MessageBoardItem {
   id: string;
   sender: string;
@@ -157,16 +216,11 @@ export interface MessageBoardItem {
   isImportant?: boolean;
 }
 
-export interface Modality {
+/**
+ * Criteria for community voting.
+ */
+export interface CommunityCriteria {
   id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url?: string;
-  page_content: {
-    hero: { title: string; subtitle: string };
-    features: string[];
-    kpis: string[];
-    accent_color?: string;
-  };
+  label: string;
+  weight: number;
 }

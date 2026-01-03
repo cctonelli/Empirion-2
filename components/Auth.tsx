@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { 
   Shield, Mail, Lock, ChevronLeft, 
-  User, AlertTriangle, Loader2
+  User, AlertTriangle, Loader2, Terminal
 } from 'lucide-react';
+import { APP_VERSION } from '../constants';
 
 interface AuthProps {
   onAuth: () => void;
@@ -111,6 +112,12 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
             <button onClick={() => setIsLogin(!isLogin)} className="text-slate-500 text-xs font-black uppercase tracking-widest hover:text-white transition-colors">
               {isLogin ? "Requisitar Novo Acesso" : "Autenticar Existente"}
             </button>
+          </div>
+
+          <div className="mt-10 pt-6 border-t border-white/5 text-center opacity-20">
+             <div className="flex items-center justify-center gap-2 text-white font-mono text-[8px] font-black uppercase tracking-widest">
+                <Terminal size={10} /> BUILD ENGINE {APP_VERSION}
+             </div>
           </div>
         </div>
 

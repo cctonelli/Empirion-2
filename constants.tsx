@@ -1,6 +1,11 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, Championship } from './types';
 
+// VERSIONAMENTO OFICIAL EMPIRION
+export const APP_VERSION = "v6.0.242-GOLD";
+export const BUILD_DATE = "03/01/2026";
+export const PROTOCOL_NODE = "Node 08-ALPHA";
+
 export const COLORS = {
   primary: '#020617',
   secondary: '#1e293b',
@@ -129,7 +134,6 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   }
 ];
 
-// Fix: Added missing deadline properties to match the Championship interface
 export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   id: 'brazilian-industrial-master',
   name: 'Empirion Street - Industrial Mastery',
@@ -161,7 +165,6 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   },
   initial_financials: CHAMPIONSHIP_TEMPLATES[0].initial_financials,
   market_indicators: DEFAULT_MACRO,
-  // Fixed: using ecosystemConfig instead of ecosystemConfig (property naming)
   ecosystemConfig: {
     scenarioType: 'simulated',
     modalityType: 'standard',

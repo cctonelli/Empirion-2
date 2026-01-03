@@ -5,11 +5,11 @@ import { Link } from 'react-router-dom';
 import { 
   ArrowRight, ChevronLeft, ChevronRight, Sparkles, Trophy, 
   Factory, ShoppingCart, Briefcase, Tractor, DollarSign, 
-  Hammer, Box, Zap, Rocket
+  Hammer, Box, Zap, Rocket, Terminal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Slider from 'react-slick';
-import { DEFAULT_PAGE_CONTENT } from '../constants';
+import { DEFAULT_PAGE_CONTENT, APP_VERSION, BUILD_DATE } from '../constants';
 import { fetchPageContent, getModalities, subscribeToModalities } from '../services/supabase';
 import { Modality } from '../types';
 import EmpireParticles from './EmpireParticles';
@@ -151,6 +151,11 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </div>
 
         <motion.div initial={{ opacity: 0, y: 60 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-6xl mx-auto space-y-16">
+           <div className="flex flex-col items-center gap-4 mb-4">
+              <div className="px-4 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-mono font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">
+                 <Terminal size={10} /> {APP_VERSION} • BUILD {BUILD_DATE}
+              </div>
+           </div>
            <h1 className="fluid-title font-black text-white leading-[0.8] tracking-tighter uppercase italic drop-shadow-[0_20px_50px_rgba(0,0,0,0.7)]">
               Forje Seu Império <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-white to-orange-400 animate-gradient-x">Insight Estratégico IA</span>
@@ -240,10 +245,15 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black italic shadow-lg">E</div>
               <span className="text-xl font-black tracking-tighter text-white uppercase italic">Empirion</span>
             </Link>
-            <p className="text-[9px] font-bold uppercase tracking-[0.6em] max-w-2xl mx-auto leading-relaxed text-slate-600 italic">
-               Construindo impérios empresariais do futuro através da orquestração neural. <br/> 
-               Build v6.0 GOLD • Protocol Command Node 08
-            </p>
+            <div className="flex flex-col gap-2">
+               <p className="text-[11px] font-black uppercase tracking-[0.6em] text-orange-500 italic">
+                  BUILD {APP_VERSION} GOLD • {BUILD_DATE}
+               </p>
+               <p className="text-[9px] font-bold uppercase tracking-[0.4em] max-w-2xl mx-auto leading-relaxed text-slate-600 italic">
+                  Construindo impérios empresariais do futuro através da orquestração neural. <br/> 
+                  Protocol Command Node 08 • Bernard Legacy Integration
+               </p>
+            </div>
             <div className="flex justify-center gap-4 pt-10">
                <LanguageSwitcher light />
             </div>
