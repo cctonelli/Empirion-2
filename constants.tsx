@@ -136,6 +136,7 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   branch: 'industrial',
   status: 'active',
   is_public: true,
+  is_trial: false,
   current_round: 0,
   total_rounds: 12,
   sales_mode: 'hybrid',
@@ -155,6 +156,7 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   },
   initial_financials: CHAMPIONSHIP_TEMPLATES[0].initial_financials,
   market_indicators: DEFAULT_MACRO,
+  // Fixed: using ecosystemConfig instead of ecosystemConfig (property naming)
   ecosystemConfig: {
     scenarioType: 'simulated',
     modalityType: 'standard',

@@ -50,7 +50,7 @@ export const calculateProjections = (
 
   // Cálculo de Demanda (Sanitizado)
   // Use proper types for reduce and access properties safely
-  const regions = Object.values(decisions.regions);
+  const regions = Object.values(decisions.regions) as any[];
   const avgPrice = regions.reduce((acc: number, r: any) => acc + sanitize(r.price, 340), 0) / (regions.length || 1);
   const totalMarketing = regions.reduce((acc: number, r: any) => acc + sanitize(r.marketing, 0), 0);
   

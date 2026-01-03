@@ -1,7 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, UserProfile, UserRole, Modality, AccountNode, Team } from '../types';
-import { ALPHA_TEST_USERS, DEMO_CHAMPIONSHIP_DATA } from '../constants';
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig } from '../types';
 
 const getSafeEnv = (key: string): string => {
   const viteKey = `VITE_${key}`;
@@ -12,189 +11,152 @@ const getSafeEnv = (key: string): string => {
 const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = getSafeEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
-export const isTestMode = true; 
-
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const secureAction = async (action: () => Promise<any>) => {
-  if (isTestMode) return action(); 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Acesso negado: Sessão Requerida.");
-  return action();
-};
+export const isTestMode = true;
 
 /**
- * Persistência Híbrida: Tenta Supabase, mas garante cache local em caso de erro RLS.
+ * Persistência Inteligente: 
+ * Diferencia entre tabelas de produção (championships) e sandbox (trial_championships).
  */
-export const createChampionshipWithTeams = async (champData: any, teams: { name: string }[]) => {
-  return secureAction(async () => {
-    let createdChamp: Championship | null = null;
-    let createdTeams: Team[] = [];
+export const createChampionshipWithTeams = async (champData: Partial<Championship>, teams: { name: string }[], isTrial: boolean = false) => {
+  const table = isTrial ? 'trial_championships' : 'championships';
+  const teamsTable = isTrial ? 'trial_teams' : 'teams';
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  try {
+    const payload = {
+      name: champData.name,
+      branch: champData.branch,
+      status: 'active',
+      current_round: 0,
+      total_rounds: champData.total_rounds || 12,
+      config: champData.config || {},
+      initial_financials: champData.initial_financials,
+      initial_market_data: champData.initial_market_data,
+      market_indicators: champData.market_indicators
+    } as any;
 
-    try {
-      const { data: champ, error: cErr } = await supabase
-        .from('championships')
-        .insert([{ ...champData, status: 'active' }])
-        .select()
-        .single();
-
-      if (cErr) throw cErr;
-      createdChamp = champ as Championship;
-
-      const teamsToInsert = teams.map(t => ({
-        name: t.name,
-        championship_id: createdChamp!.id,
-        status: 'active',
-        invite_code: Math.random().toString(36).substring(2, 8).toUpperCase()
-      }));
-
-      const { data: teamsData, error: tErr } = await supabase
-        .from('teams')
-        .insert(teamsToInsert)
-        .select();
-
-      if (tErr) throw tErr;
-      createdTeams = teamsData as Team[];
-    } catch (err) {
-      console.warn("RLS Block Detected or DB Error. Redirecting to Shadow Storage (Local).", err);
-      // Fallback Local (Shadow Storage)
-      const localId = `local-${Date.now()}`;
-      createdChamp = { 
-        ...champData, 
-        id: localId, 
-        status: 'active', 
-        is_local: true, 
-        created_at: new Date().toISOString() 
-      };
-      createdTeams = teams.map((t, i) => ({
-        id: `team-${localId}-${i}`,
-        name: t.name,
-        championship_id: localId,
-        status: 'active',
-        invite_code: `LCL-${i}`
-      }));
-      
-      const localArenas = JSON.parse(localStorage.getItem('empirion_local_arenas') || '[]');
-      localArenas.push({ ...createdChamp, teams: createdTeams });
-      localStorage.setItem('empirion_local_arenas', JSON.stringify(localArenas));
+    if (!isTrial) {
+      payload.is_public = champData.is_public || false;
+      payload.sales_mode = champData.sales_mode;
+      payload.scenario_type = champData.scenario_type;
+      payload.currency = champData.currency;
+      payload.round_frequency_days = champData.round_frequency_days;
+      payload.transparency_level = champData.transparency_level;
+      payload.tutor_id = session?.user?.id;
     }
 
-    return { champ: createdChamp, teams: createdTeams };
-  });
+    const { data: champ, error: cErr } = await supabase
+      .from(table)
+      .insert([payload])
+      .select()
+      .single();
+
+    if (cErr) throw cErr;
+
+    const teamsToInsert = teams.map(t => ({
+      name: t.name,
+      championship_id: champ.id,
+      ...(isTrial ? {} : { status: 'active', invite_code: `CODE-${Math.random().toString(36).substring(7).toUpperCase()}` })
+    }));
+
+    const { data: teamsData, error: tErr } = await supabase
+      .from(teamsTable)
+      .insert(teamsToInsert)
+      .select();
+
+    if (tErr) throw tErr;
+
+    return { champ: { ...champ, is_trial: isTrial } as Championship, teams: teamsData as Team[] };
+  } catch (err) {
+    console.error("Supabase Persistence Error:", err);
+    throw err;
+  }
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {
-  let dbArenas: Championship[] = [];
-  try {
-    let query = supabase.from('championships').select(`
-      *,
-      teams (*)
-    `).order('created_at', { ascending: false });
-    
-    if (onlyPublic) query = query.eq('is_public', true).eq('status', 'active');
-    
-    const { data } = await query;
-    if (data) dbArenas = data as Championship[];
-  } catch (e) {
-    console.error("Fetch DB Error:", e);
+  // Busca em ambas as fontes para o Dashboard de Arenas
+  const { data: realData } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
+  const { data: trialData } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
+
+  const combined = [
+    ...(realData || []).map(c => ({ ...c, is_trial: false })),
+    ...(trialData || []).map(c => ({ ...c, is_trial: true }))
+  ];
+
+  if (onlyPublic) {
+    return { data: combined.filter(c => c.is_public || c.is_trial) as Championship[], error: null };
   }
 
-  // Merge com Shadow Storage
-  const localArenas = JSON.parse(localStorage.getItem('empirion_local_arenas') || '[]');
-  const merged = [...localArenas, ...dbArenas];
-
-  return { data: merged, error: null };
+  return { data: combined as Championship[], error: null };
 };
 
-export const silentTestAuth = async (user: typeof ALPHA_TEST_USERS[0]) => {
-  const mockSession = {
-    user: { id: user.id, email: user.email, user_metadata: { full_name: user.name, role: user.role } },
-    access_token: 'alpha-bypass',
-    expires_in: 3600
-  };
-  localStorage.setItem('empirion_demo_session', JSON.stringify(mockSession));
-  return { data: { session: mockSession }, error: null };
-};
-
-export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, operatorName?: string) => {
-  return secureAction(async () => {
-    const { error } = await supabase.from('current_decisions').upsert({ 
-      team_id: teamId, championship_id: champId, round, data: decisions, operator_name: operatorName 
-    });
-    if (error) {
-      console.warn("DB Decision Save blocked. Saving to local session cache.");
-      localStorage.setItem(`decisions_${teamId}_r${round}`, JSON.stringify(decisions));
-    }
+export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, isTrial: boolean = false) => {
+  const table = isTrial ? 'trial_decisions' : 'current_decisions';
+  const { error } = await supabase.from(table).upsert({ 
+    team_id: teamId, 
+    championship_id: champId, 
+    round, 
+    data: decisions 
   });
-};
-
-export const provisionDemoEnvironment = async () => {
-  try {
-    const { data: existing } = await supabase.from('championships').select('id').eq('name', 'ARENA 2026 T2').maybeSingle();
-    if (!existing) {
-      const arenaT2 = {
-        ...DEMO_CHAMPIONSHIP_DATA,
-        name: 'ARENA 2026 T2',
-        is_public: true,
-        status: 'active'
-      };
-      const teams = [
-        { name: 'Time Alpha' }, { name: 'Time Beta' }, { name: 'Time Gama' }, 
-        { name: 'Time Delta' }, { name: 'Time Marte' }, { name: 'Time Vênus' },
-        { name: 'Time Júpiter' }, { name: 'Time Saturno' }
-      ];
-      await createChampionshipWithTeams(arenaT2, teams);
-    }
-  } catch (err) { console.error("Provisioning Error:", err); }
+  return { error };
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  if (isTestMode) {
-    const user = ALPHA_TEST_USERS.find(u => u.id === userId) || ALPHA_TEST_USERS[0];
-    return {
-      id: user.id, supabase_user_id: user.id, name: user.name,
-      email: user.email, role: user.role as any, is_opal_premium: true,
-      created_at: new Date().toISOString()
-    };
-  }
   const { data } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
   return data;
 };
 
+export const silentTestAuth = async (user: any) => {
+  const mockSession = {
+    user: { id: user.id, email: user.email, user_metadata: { full_name: user.name, role: user.role } },
+    access_token: 'trial-token',
+    expires_in: 3600
+  };
+  localStorage.setItem('empirion_demo_session', JSON.stringify(mockSession));
+  localStorage.setItem('is_trial_session', 'true');
+  return { data: { session: mockSession }, error: null };
+};
+
+export const provisionDemoEnvironment = async () => {};
+
+export const resetAlphaData = async () => {
+  const { error } = await supabase.from('current_decisions').delete().neq('id', '');
+  return { error };
+};
+
 export const listAllUsers = async () => {
-  return supabase.from('users').select('*').order('created_at', { ascending: false });
-};
-
-export const fetchPageContent = async (page: string, lang: string) => {
-  const { data } = await supabase.from('page_contents').select('content').eq('page', page).eq('lang', lang).maybeSingle();
-  return data?.content;
-};
-
-export const getModalities = async () => {
-  const { data } = await supabase.from('modalities').select('*').eq('is_public', true);
-  return (data || []) as Modality[];
-};
-
-export const subscribeToModalities = (callback: () => void) => {
-  return supabase.channel('modalities_changes').on('postgres_changes', { event: '*', table: 'modalities' }, callback).subscribe();
+  return await supabase.from('users').select('*');
 };
 
 export const updateUserPremiumStatus = async (userId: string, status: boolean) => {
-  return supabase.from('users').update({ is_opal_premium: status }).eq('supabase_user_id', userId);
+  return await supabase.from('users').update({ is_opal_premium: status }).eq('supabase_user_id', userId);
 };
 
-export const updateEcosystem = async (champId: string, config: any) => {
-  return supabase.from('championships').update(config).eq('id', champId);
+export const fetchPageContent = async (slug: string, lang: string) => {
+  const { data } = await supabase.from('page_content').select('*').eq('slug', slug).eq('lang', lang).maybeSingle();
+  return data?.content || null;
+};
+
+export const getModalities = async () => {
+  const { data } = await supabase.from('modalities').select('*');
+  return data || [];
+};
+
+export const subscribeToModalities = (callback: () => void) => {
+  return supabase.channel('modalities_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'modalities' }, callback).subscribe();
+};
+
+export const updateEcosystem = async (champId: string, updates: { ecosystemConfig: EcosystemConfig }) => {
+  return await supabase.from('championships').update(updates).eq('id', champId);
 };
 
 export const getPublicReports = async (champId: string, round: number) => {
-  return supabase.from('public_reports').select('*').eq('championship_id', champId).eq('round', round);
+  return await supabase.from('public_reports').select('*').eq('championship_id', champId).eq('round', round);
 };
 
 export const submitCommunityVote = async (vote: any) => {
-  return supabase.from('community_votes').insert([vote]);
-};
-
-export const resetAlphaData = async () => {
-  await supabase.from('current_decisions').delete().eq('championship_id', 'arena-2026-t2');
+  return await supabase.from('community_votes').insert([vote]);
 };

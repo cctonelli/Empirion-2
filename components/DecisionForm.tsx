@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Save, Factory, Users2, ChevronRight,
   Loader2, Megaphone, Zap, Cpu, Boxes, Info, Sparkles, DollarSign,
@@ -35,6 +35,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
   const [activeSection, setActiveSection] = useState('marketing');
   const [decisions, setDecisions] = useState<DecisionData>(() => createInitialDecisions(9));
   const [isSaving, setIsSaving] = useState(false);
+  const [isTrial, setIsTrial] = useState(false);
+
+  useEffect(() => {
+    // Detecta se estamos em uma sessão trial pelo ID da arena ou flag no localStorage
+    const trialFlag = localStorage.getItem('is_trial_session') === 'true';
+    setIsTrial(trialFlag);
+  }, []);
 
   const projections = useMemo(() => 
     calculateProjections(decisions, branch as Branch, { modalityType: modality } as any), 
@@ -108,7 +115,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
         <header className="flex justify-between items-center mb-12 pb-8 border-b border-white/5 relative z-10">
            <div>
               <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">Painel {activeSection.toUpperCase()}</h2>
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1 italic">Sincronização em Tempo Real v5.0</p>
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1 italic">Sincronização em Tempo Real v5.0 {isTrial && '(SANDBOX)'}</p>
            </div>
            <div className="px-6 py-3 bg-white/5 rounded-2xl border border-white/10 flex items-center gap-3">
               <Info className="text-orange-500" size={18} />
@@ -120,7 +127,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
           {activeSection === 'marketing' && (
             <div className="space-y-10 animate-in fade-in duration-500">
                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {Object.entries(decisions.regions).map(([id, data]) => (
+                  {Object.entries(decisions.regions).map(([id, data]: [string, any]) => (
                     <div key={id} className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-6 hover:bg-white/[0.08] transition-all group">
                        <div className="flex justify-between items-center border-b border-white/5 pb-4">
                           <h4 className="text-lg font-black text-white uppercase italic">Região {id}</h4>
@@ -201,7 +208,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
              onClick={async () => {
                setIsSaving(true);
                try {
-                 await saveDecisions(teamId, champId, round, decisions, userName);
+                 await saveDecisions(teamId, champId, round, decisions, isTrial);
                  alert("COMANDO SELADO: Decisões transmitidas para o Oracle Node.");
                } catch (e: any) {
                  alert(`FALHA NA TRANSMISSÃO: ${e.message}`);
