@@ -83,8 +83,8 @@ export interface Team {
   id: string;
   name: string;
   championship_id: string;
-  status: string;
-  invite_code: string;
+  status?: string; // Optional for Trial teams
+  invite_code?: string; // Optional for Trial teams
   created_at?: string;
 }
 

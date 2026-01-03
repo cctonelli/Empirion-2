@@ -5,7 +5,7 @@ import { Trophy, ChevronRight, Play, Loader2, Target, Globe } from 'lucide-react
 import { getChampionships } from '../services/supabase';
 import { Championship, Team } from '../types';
 
-const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: string) => void }> = ({ onSelectTeam }) => {
+const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: string, isTrial: boolean) => void }> = ({ onSelectTeam }) => {
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
@@ -84,7 +84,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                    {selectedArena.teams?.map((team: Team) => (
                      <button 
                        key={team.id}
-                       onClick={() => onSelectTeam(selectedArena.id, team.id)}
+                       onClick={() => onSelectTeam(selectedArena.id, team.id, !!selectedArena.is_trial)}
                        className="p-8 bg-white/5 border border-white/10 rounded-[3rem] text-center space-y-6 hover:bg-orange-600 hover:border-white group transition-all"
                      >
                         <div className="w-16 h-16 bg-slate-950 rounded-[1.5rem] flex items-center justify-center mx-auto text-orange-500 group-hover:bg-white shadow-xl">

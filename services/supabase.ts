@@ -26,7 +26,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
-    const payload = {
+    const payload: any = {
       name: champData.name,
       branch: champData.branch,
       status: 'active',
@@ -36,7 +36,10 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       initial_financials: champData.initial_financials,
       initial_market_data: champData.initial_market_data,
       market_indicators: champData.market_indicators
-    } as any;
+    };
+
+    // NEVER send is_trial to the physical database columns as it doesn't exist there.
+    // It's a virtual differentiator managed by table names.
 
     if (!isTrial) {
       payload.is_public = champData.is_public || false;
@@ -77,7 +80,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {
-  // Busca em ambas as fontes para o Dashboard de Arenas
+  // Query both sources and label them for the frontend
   const { data: realData } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
   const { data: trialData } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
 
@@ -95,12 +98,17 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, isTrial: boolean = false) => {
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
+  
+  // PostgREST upsert requires a unique constraint. trial_decisions lacks one on (team_id, champ_id, round).
+  // For sandbox, we might want to check existence or just insert if we don't care about duplicates, 
+  // but better to attempt a standard PostgREST upsert if constraints are set.
   const { error } = await supabase.from(table).upsert({ 
     team_id: teamId, 
     championship_id: champId, 
     round, 
     data: decisions 
-  });
+  }, { onConflict: 'team_id,championship_id,round' }); 
+
   return { error };
 };
 
@@ -116,14 +124,15 @@ export const silentTestAuth = async (user: any) => {
     expires_in: 3600
   };
   localStorage.setItem('empirion_demo_session', JSON.stringify(mockSession));
-  localStorage.setItem('is_trial_session', 'true');
+  // Store trial session explicitly to help components route logic
+  localStorage.setItem('is_trial_session', user.role === 'player' ? 'true' : 'false');
   return { data: { session: mockSession }, error: null };
 };
 
 export const provisionDemoEnvironment = async () => {};
 
 export const resetAlphaData = async () => {
-  const { error } = await supabase.from('current_decisions').delete().neq('id', '');
+  const { error } = await supabase.from('current_decisions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   return { error };
 };
 
@@ -136,7 +145,7 @@ export const updateUserPremiumStatus = async (userId: string, status: boolean) =
 };
 
 export const fetchPageContent = async (slug: string, lang: string) => {
-  const { data } = await supabase.from('page_content').select('*').eq('slug', slug).eq('lang', lang).maybeSingle();
+  const { data } = await supabase.from('site_content').select('*').eq('page_slug', slug).eq('locale', lang).maybeSingle();
   return data?.content || null;
 };
 
@@ -158,5 +167,5 @@ export const getPublicReports = async (champId: string, round: number) => {
 };
 
 export const submitCommunityVote = async (vote: any) => {
-  return await supabase.from('community_votes').insert([vote]);
+  return await supabase.from('community_ratings').insert([vote]);
 };

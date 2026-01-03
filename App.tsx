@@ -22,7 +22,7 @@ import PublicRewards from './pages/PublicRewards';
 import TestTerminal from './pages/TestTerminal';
 import Auth from './components/Auth';
 import { supabase, getUserProfile, isTestMode } from './services/supabase';
-import { UserProfile } from './types';
+import { UserProfile, Championship } from './types';
 
 const AppContent: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -56,10 +56,10 @@ const AppContent: React.FC = () => {
     finally { setLoading(false); }
   };
 
-  const handleSelectTeam = (champId: string, teamId: string) => {
-    // No modo Xadrez, salvamos a peça escolhida e vamos pro Dashboard
+  const handleSelectTeam = (champId: string, teamId: string, isTrial: boolean = false) => {
     localStorage.setItem('active_team_id', teamId);
     localStorage.setItem('active_champ_id', champId);
+    localStorage.setItem('is_trial_session', isTrial ? 'true' : 'false');
     navigate('/app/dashboard');
   };
 
