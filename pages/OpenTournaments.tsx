@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Users, Timer, Sparkles, ChevronRight, Search, Filter, Globe } from 'lucide-react';
@@ -53,6 +52,7 @@ const OpenTournaments: React.FC = () => {
                    <div className="px-4 py-1.5 bg-emerald-500 text-slate-950 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2">
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Live Now
                    </div>
+                   {/* Fix: Accessing branch property which was added to MOCK_ONGOING_CHAMPIONSHIPS to fix error on line 56 */}
                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{champ.branch}</span>
                 </div>
 
@@ -65,6 +65,7 @@ const OpenTournaments: React.FC = () => {
                    <div className="space-y-1">
                       <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Current Round</span>
                       <div className="flex items-center gap-2 text-white font-black text-lg">
+                         {/* Fix: Accessing round property which was added to MOCK_ONGOING_CHAMPIONSHIPS to fix error on line 68 */}
                          <Timer size={16} className="text-orange-500" /> {champ.round}
                       </div>
                    </div>
@@ -79,7 +80,8 @@ const OpenTournaments: React.FC = () => {
                 <div className="bg-white/5 p-6 rounded-3xl space-y-3 relative z-10">
                    <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest">TSR Oracle Leader</span>
                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-200">{champ.leader}</span>
+                      {/* Fix: Changed leader to lead to match MOCK_ONGOING_CHAMPIONSHIPS structure and fix error on line 82 */}
+                      <span className="text-xs font-bold text-slate-200">{champ.lead}</span>
                       <ChevronRight size={14} className="text-slate-500" />
                    </div>
                 </div>

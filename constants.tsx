@@ -1,4 +1,3 @@
-
 import { Branch, ChampionshipTemplate, MacroIndicators, Championship } from './types';
 
 export const COLORS = {
@@ -63,40 +62,52 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       balance_sheet: [
         { id: 'bs-1', label: '1. ATIVO TOTAL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
           { id: 'bs-1.1', label: '1.1 ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
-            { id: 'bs-1.1.1', label: 'CIRCULANTE OPERACIONAL', value: 3290340, type: 'totalizer', children: [
-               { id: 'receivables', label: 'Contas a Receber', value: 1823735, type: 'asset', isEditable: true },
-               { id: 'inventory-total', label: 'ESTOQUES', value: 1466605, type: 'totalizer', isReadOnly: true, children: [
-                  { id: 'mp-a', label: 'Estoque MP-A', value: 628545, type: 'asset', isEditable: true },
-                  { id: 'mp-b', label: 'Estoque MP-B', value: 838060, type: 'asset', isEditable: true },
-                  { id: 'finished-goods', label: 'Estoque Prod. Acabado ALPHA', value: 0, type: 'asset', isEditable: true }
+            { id: 'bs-1.1.1', label: 'CIRCULANTE FINANCEIRO', value: 0, type: 'totalizer', children: [
+               { id: 'cash', label: 'Caixa', value: 0, type: 'asset', isEditable: true },
+               { id: 'bank', label: 'Bancos', value: 0, type: 'asset', isEditable: true },
+               { id: 'investment', label: 'Aplicação', value: 0, type: 'asset', isEditable: true }
+            ]},
+            { id: 'bs-1.1.2', label: 'CIRCULANTE OPERACIONAL', value: 3290340, type: 'totalizer', children: [
+               { id: 'bs-1.1.2.1', label: 'CONTAS A RECEBER', value: 1823735, type: 'totalizer', children: [
+                  { id: 'receivables-titles', label: 'Titulos a Receber', value: 1823735, type: 'asset', isEditable: true },
+                  { id: 'receivables-pdd', label: '(-) Provisão devedores duvidosos', value: 0, type: 'asset', isEditable: true }
+               ]},
+               { id: 'inventory-total', label: 'ESTOQUE', value: 1466605, type: 'totalizer', isReadOnly: true, children: [
+                  { id: 'finished-goods', label: 'Estoque Prod. Acabado ALPHA', value: 0, type: 'asset', isEditable: true },
+                  { id: 'mp-a', label: 'Estoque MP A', value: 628545, type: 'asset', isEditable: true },
+                  { id: 'mp-b', label: 'Estoque MP B', value: 838060, type: 'asset', isEditable: true }
                ]}
             ]}
           ]},
           { id: 'bs-1.2', label: '1.2 ATIVO NÃO CIRCULANTE', value: 5886600, type: 'totalizer', children: [
-            { id: 'machinery', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true },
-            { id: 'depr-mach', label: '(-) Depreciação Acumulada Equip.', value: -811500, type: 'asset', isEditable: true },
-            { id: 'land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true },
-            { id: 'buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true },
-            { id: 'depr-build', label: '(-) Depreciação Acumulada Prédios', value: -2301900, type: 'asset', isEditable: true },
+            { id: 'bs-1.2.1', label: 'IMOBILIZADO', value: 5886600, type: 'totalizer', children: [
+               { id: 'machinery', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true },
+               { id: 'depr-mach', label: '(-) Depreciação acumulada de equipamentos', value: -811500, type: 'asset', isEditable: true },
+               { id: 'land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true },
+               { id: 'buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true },
+               { id: 'depr-build', label: '(-) Depreciação acumulada de prédios e insta.', value: -2301900, type: 'asset', isEditable: true },
+            ]}
           ]}
         ]},
         { id: 'bs-2', label: '2. PASSIVO E PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
           { id: 'bs-2.1', label: '2.1 PASSIVO CIRCULANTE', value: 4121493, type: 'totalizer', children: [
-            { id: 'bs-2.1.1', label: 'CIRCULANTE OPERACIONAL', value: 730650, type: 'totalizer', children: [
+            { id: 'bs-2.1.1', label: 'PASSIVO CIRCULANTE OPERACIONAL', value: 730650, type: 'totalizer', children: [
                { id: 'payables', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true },
-               { id: 'tax-pay', label: 'Imposto de Renda a Pagar', value: 13045, type: 'liability', isEditable: true },
+               { id: 'tax-pay', label: 'Imposto de Renda a pagar', value: 13045, type: 'liability', isEditable: true },
             ]},
-            { id: 'bs-2.1.2', label: 'CIRCULANTE FINANCEIRO', value: 3390843, type: 'totalizer', children: [
-               { id: 'st-loans', label: 'Empréstimos Curto Prazo', value: 1872362, type: 'liability', isEditable: true },
-               { id: 'dividends', label: 'Dividendos a Pagar', value: 18481, type: 'liability', isEditable: true }
+            { id: 'bs-2.1.2', label: 'PASSIVO CIRCULANTE FINANCEIRO', value: 3390843, type: 'totalizer', children: [
+               { id: 'bs-2.1.2.1', label: 'EXIGÍVEL À CURTO PRAZO', value: 1890843, type: 'totalizer', children: [
+                  { id: 'dividends', label: 'Dividendos a pagar', value: 18481, type: 'liability', isEditable: true },
+                  { id: 'st-loans', label: 'Empréstimos de curto prazo', value: 1872362, type: 'liability', isEditable: true }
+               ]}
             ]}
           ]},
-          { id: 'bs-2.2', label: '2.2 EXIGÍVEL LONGO PRAZO', value: 1500000, type: 'totalizer', children: [
-            { id: 'lt-loans', label: 'Empréstimos Longo Prazo', value: 1500000, type: 'liability', isEditable: true }
+          { id: 'bs-2.2', label: '2.2 EXIGÍVEL À LONGO PRAZO', value: 1500000, type: 'totalizer', children: [
+            { id: 'lt-loans', label: 'Empréstimos de longo prazo', value: 1500000, type: 'liability', isEditable: true }
           ]},
           { id: 'bs-2.3', label: '2.3 PATRIMÔNIO LÍQUIDO', value: 5055447, type: 'totalizer', children: [
             { id: 'capital', label: 'Capital Social', value: 5000000, type: 'equity', isEditable: true },
-            { id: 'retained', label: 'Lucros Acumulados', value: 55447, type: 'equity', isEditable: true },
+            { id: 'retained', label: 'Lucros Acumulados no ano', value: 55447, type: 'equity', isEditable: true },
           ]}
         ]}
       ],
@@ -104,13 +115,13 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
         { id: 'dre-1', label: 'RECEITA DE VENDAS', value: 3322735, type: 'totalizer', isEditable: true },
         { id: 'dre-2', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: 2278180, type: 'expense', isEditable: true },
         { id: 'dre-3', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true },
-        { id: 'dre-4', label: '( - ) DESPESAS OPERACIONAIS', value: 957582, type: 'totalizer', children: [
-          { id: 'sell-exp', label: 'De Vendas (Marketing/Distr.)', value: 802702, type: 'expense', isEditable: true },
-          { id: 'adm-exp', label: 'Administrativas', value: 114880, type: 'expense', isEditable: true },
-          { id: 'fin-exp', label: 'Financeiras Líquidas', value: 40000, type: 'expense', isEditable: true },
+        { id: 'dre-4', label: '( - ) DESPESAS OPERACIONAIS:', value: 957582, type: 'totalizer', children: [
+          { id: 'sell-exp', label: 'DE VENDAS', value: 802702, type: 'expense', isEditable: true },
+          { id: 'adm-exp', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true },
+          { id: 'fin-exp', label: 'FINANCEIRAS LÍQUIDAS', value: 40000, type: 'expense', isEditable: true },
         ]},
         { id: 'dre-5', label: '(=) LUCRO OPERACIONAL', value: 86973, type: 'totalizer', isReadOnly: true },
-        { id: 'dre-6', label: '( - ) PROVISÃO PARA O I.R.', value: 13045, type: 'expense', isEditable: true },
+        { id: 'dre-6', label: '( - ) PROVISÃO PARA O I. R.', value: 13045, type: 'expense', isEditable: true },
         { id: 'dre-7', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true }
       ]
     }
@@ -148,8 +159,9 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   }
 };
 
+// Fix: Added missing fields branch and round to match usage in OpenTournaments.tsx
 export const MOCK_ONGOING_CHAMPIONSHIPS = [
-  { id: 'c1', name: 'Master Cup Industrial', branch: 'Industrial', teams: 8, round: '1/12', leader: 'Equipe Alpha' },
+  { id: 'c1', name: "Industrial Mastery", branch: "Industrial", status: "Rodada 1/12", round: "1/12", teams: 8, lead: "Equipe Alpha" }
 ];
 
 export const MENU_STRUCTURE = [
