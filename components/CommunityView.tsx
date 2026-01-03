@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Users, 
@@ -32,7 +33,6 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true);
-      // Fix: changed currentRound to current_round
       const { data } = await getPublicReports(championship.id, championship.current_round);
       setReports(data || []);
       setLoading(false);
@@ -44,7 +44,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
     setSubmitting(true);
     const vote = {
       championship_id: championship.id,
-      // Fix: changed currentRound to current_round
+      team_id: teamId,
       round: championship.current_round,
       scores: ratings,
       comment: comment

@@ -92,19 +92,29 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   const handleLaunch = async () => {
     setIsSubmitting(true);
     try {
+      // Mapeamento explícito para satisfazer a interface Championship e as colunas do DB
       const champPayload = {
         name: formData.name,
         branch: formData.branch,
-        status: 'active',
+        status: 'active' as const,
         is_public: formData.isPublic,
         current_round: 0,
         total_rounds: formData.totalRounds,
         sales_mode: formData.salesMode,
         scenario_type: formData.scenarioType,
         currency: formData.currency,
-        round_frequency_days: formData.roundFrequencyDays || 7,
+        round_frequency_days: formData.roundFrequencyDays,
         transparency_level: formData.transparency,
-        config: { ...formData },
+        config: {
+           currency: formData.currency,
+           roundFrequencyDays: formData.roundFrequencyDays,
+           salesMode: formData.salesMode,
+           scenarioType: formData.scenarioType,
+           transparencyLevel: formData.transparency,
+           modalityType: formData.modalityType,
+           teamsLimit: formData.teamsLimit,
+           botsCount: formData.botsCount
+        },
         initial_financials: financials,
         initial_market_data: { regions },
         market_indicators: macro
