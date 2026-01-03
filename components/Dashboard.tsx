@@ -7,7 +7,6 @@ import {
   ShieldCheck, MessageSquare, Megaphone, Send, Globe, Map as MapIcon,
   Cpu, Newspaper, Landmark, AlertTriangle, ChevronRight, LayoutGrid,
   RefreshCw, RotateCcw, Shield, Box, FileEdit, ClipboardList,
-  // Added ArrowRight to fix the missing component error
   ArrowRight
 } from 'lucide-react';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -156,26 +155,26 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3 space-y-8">
           
-          {/* CTA: FOLHA DE DECISÃO (Fidelity PDF) */}
+          {/* CTA: ACESSO À FOLHA DE DECISÃO */}
           <button 
             onClick={() => setShowDecisionForm(true)}
-            className="w-full bg-indigo-600 hover:bg-white p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex items-center justify-between group transition-all duration-500 overflow-hidden relative"
+            className="w-full bg-blue-600 hover:bg-white p-12 rounded-[4rem] border border-white/10 shadow-2xl flex items-center justify-between group transition-all duration-500 overflow-hidden relative"
           >
-             <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-             <div className="flex items-center gap-8 relative z-10">
-                <div className="w-20 h-20 bg-white text-indigo-600 rounded-3xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xl">
-                   <FileEdit size={40} />
+             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+             <div className="flex items-center gap-10 relative z-10">
+                <div className="w-24 h-24 bg-white text-blue-600 rounded-3xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-xl">
+                   <FileEdit size={48} />
                 </div>
                 <div className="text-left">
-                   <h3 className="text-3xl font-black text-white group-hover:text-indigo-950 uppercase italic tracking-tighter">Folha de Decisão</h3>
-                   <p className="text-indigo-200 group-hover:text-indigo-600 font-bold uppercase text-[10px] tracking-[0.3em] mt-1">
-                      Período de Transmissão: {(activeArena?.current_round || 0) + 1}
+                   <h3 className="text-4xl font-black text-white group-hover:text-slate-950 uppercase italic tracking-tighter leading-none">Central de Decisões</h3>
+                   <p className="text-blue-100 group-hover:text-blue-600 font-bold uppercase text-[11px] tracking-[0.3em] mt-3">
+                      Protocolo de Transmissão: Ciclo 0{(activeArena?.current_round || 0) + 1}
                    </p>
                 </div>
              </div>
-             <div className="flex items-center gap-4 relative z-10">
-                <span className="text-white group-hover:text-indigo-950 font-black text-[10px] uppercase tracking-[0.2em]">Abrir Terminal</span>
-                <div className="p-3 bg-white/10 rounded-full group-hover:bg-indigo-600 group-hover:text-white"><ArrowRight size={24} /></div>
+             <div className="flex items-center gap-6 relative z-10">
+                <span className="text-white group-hover:text-slate-950 font-black text-[11px] uppercase tracking-[0.2em]">Abrir Terminal</span>
+                <div className="p-4 bg-white/10 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-all"><ArrowRight size={28} /></div>
              </div>
           </button>
 
@@ -208,7 +207,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                  <div className="w-12 h-12 bg-white text-slate-950 rounded-2xl flex items-center justify-center shadow-xl"><Newspaper size={28} /></div>
                  <div>
                     <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Gazeta Empirion</h3>
-                    <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.3em] mt-1 italic">Sincronização Ativa v5.0</p>
+                    <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.3em] mt-1 italic">Sincronização Ativa v6.0</p>
                  </div>
               </div>
             </div>

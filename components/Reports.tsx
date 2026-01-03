@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { 
   FileText, Package, DollarSign, Users, Globe, 
   Landmark, User, History, TrendingUp,
-  Activity, CheckCircle2, ShieldCheck
+  Activity, CheckCircle2, ShieldCheck,
+  ChevronRight
 } from 'lucide-react';
 import { Branch } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -33,12 +34,12 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                   onChange={(e) => setSelectedRound(Number(e.target.value))}
                   className="bg-transparent text-blue-400 font-black text-xs outline-none cursor-pointer"
                 >
-                  <option value={0} className="bg-slate-900">Round 0 (Balanço Inicial)</option>
-                  <option value={1} className="bg-slate-900" disabled>Round 1 (Em processamento...)</option>
+                  <option value={0} className="bg-slate-900">Ciclo 0 (Balanço Inicial)</option>
+                  <option value={1} className="bg-slate-900" disabled>Ciclo 1 (Em processamento...)</option>
                 </select>
              </div>
              <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] italic">
-               Empirion Street Fidelity v5.0 • Sincronizado
+               Empirion Street Fidelity v6.0 • Auditado
              </p>
           </div>
         </div>
@@ -81,19 +82,19 @@ const IndividualReportView = ({ round }: any) => (
   <div className="space-y-12">
      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-10">
-           <FinancialSection title="Balanço Patrimonial Inicial (R0)" icon={<Package size={24}/>} color="blue" lines={[
+           <FinancialSection title="Balanço Patrimonial Inicial (P0)" icon={<Package size={24}/>} color="blue" lines={[
               { l: "ATIVO TOTAL", v: "9.176.940", b: true, p: true },
               { l: "1.1 ATIVO CIRCULANTE", v: "3.290.340", b: true },
-              { l: "Contas a Receber", v: "1.823.735" },
+              { l: "Títulos a Receber", v: "1.823.735" },
               { l: "ESTOQUE TOTAL", v: "1.466.605", b: true },
-              { l: "Estoque MP-A", v: "628.545", indent: true },
-              { l: "Estoque MP-B", v: "838.060", indent: true },
+              { l: "Matéria-Prima A", v: "628.545", indent: true },
+              { l: "Matéria-Prima B", v: "838.060", indent: true },
               { l: "1.2 ATIVO NÃO CIRCULANTE", v: "5.886.600", b: true },
               { l: "Imobilizado Líquido", v: "5.886.600" },
               { l: "(-) Depreciação Acumulada", v: "-3.113.400", neg: true }
            ]} />
            
-           <FinancialSection title="DRE - Resultado Inicial (R0)" icon={<DollarSign size={24}/>} color="emerald" lines={[
+           <FinancialSection title="DRE - Resultado Inicial (P0)" icon={<DollarSign size={24}/>} color="emerald" lines={[
               { l: "RECEITA DE VENDAS", v: "3.322.735", b: true, p: true },
               { l: "(-) CPV", v: "2.278.180", neg: true },
               { l: "(=) LUCRO BRUTO", v: "1.044.555", b: true },
@@ -110,7 +111,7 @@ const IndividualReportView = ({ round }: any) => (
               <div className="space-y-4">
                  <div className="flex justify-between items-center text-xs font-bold"><span className="text-slate-500 uppercase">Status</span><span className="text-emerald-400 font-black">OPERACIONAL</span></div>
                  <div className="flex justify-between items-center text-xs font-bold"><span className="text-slate-500 uppercase">Empregados</span><span className="text-white">500 Unid.</span></div>
-                 <div className="flex justify-between items-center text-xs font-bold"><span className="text-slate-500 uppercase">Turnover</span><span className="text-blue-400">0.0%</span></div>
+                 <div className="flex justify-between items-center text-xs font-bold"><span className="text-slate-500 uppercase">Máquinas</span><span className="text-blue-400">10 (Alfa)</span></div>
               </div>
               <div className="pt-6 border-t border-white/5 flex items-center gap-2 text-[8px] font-black text-slate-500 uppercase tracking-widest italic">
                  <ShieldCheck size={14} className="text-emerald-500" /> Dados Auditados Oracle Node
@@ -124,21 +125,21 @@ const IndividualReportView = ({ round }: any) => (
 const HistoricalMatrixView = () => (
   <div className="animate-in slide-in-from-bottom-6 duration-700 space-y-8">
      <div className="premium-card rounded-[3.5rem] overflow-x-auto border-2 border-slate-800 shadow-2xl bg-slate-950">
-        <table className="w-full text-left text-xs min-w-[1200px]">
+        <table className="w-full text-left text-xs min-w-[1400px]">
            <thead className="bg-slate-900 text-slate-500 font-black uppercase border-b border-white/10">
               <tr>
-                 <th className="p-8 sticky left-0 bg-slate-900 z-10">Indicador Estratégico (R0)</th>
-                 {[1,2,3,4,5,6,7,8].map(i => <th key={i} className="p-8 text-center border-l border-white/5">Unidade {i === 1 ? 'ALPHA (Você)' : i < 10 ? `0${i}` : i}</th>)}
+                 <th className="p-8 sticky left-0 bg-slate-900 z-10">Indicador Estratégico (P0)</th>
+                 {[1,2,3,4,5,6,7,8].map(i => <th key={i} className="p-8 text-center border-l border-white/5 whitespace-nowrap">Unidade 0{i} {i === 1 && '(Você)'}</th>)}
               </tr>
            </thead>
            <tbody className="divide-y divide-white/5 font-bold text-slate-400">
               {[
-                { l: 'Ativo Total', v: '9.176.940' },
-                { l: 'Patrimônio Líquido', v: '5.055.447' },
-                { l: 'Lucro Líquido', v: '73.928' },
-                { l: 'Market Share', v: '12.5%' },
-                { l: 'Empregados', v: '500' },
-                { l: 'OEE Projetado', v: '82.4%' }
+                { l: 'Ativo Total ($)', v: '9.176.940' },
+                { l: 'Patrimônio Líquido ($)', v: '5.055.447' },
+                { l: 'Lucro Líquido ($)', v: '73.928' },
+                { l: 'Market Share (%)', v: '12.5%' },
+                { l: 'Equipe de Vendas', v: '50' },
+                { l: 'OEE Projetado (%)', v: '82.4%' }
               ].map((row, idx) => (
                 <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
                    <td className="p-6 font-black uppercase italic text-slate-300 sticky left-0 bg-slate-950/80 backdrop-blur-md">{row.l}</td>
@@ -152,9 +153,12 @@ const HistoricalMatrixView = () => (
            </tbody>
         </table>
      </div>
-     <div className="p-8 bg-blue-600/10 border border-blue-500/20 rounded-[2.5rem] flex items-center gap-6">
-        <div className="p-4 bg-blue-600 text-white rounded-2xl"><Globe size={24} /></div>
-        <p className="text-xs text-blue-200 font-medium italic">"No Ciclo 0, todas as equipes iniciam com estruturas idênticas. A divergência estratégica começa a partir da transmissão das decisões do Período 2."</p>
+     <div className="p-10 bg-blue-600/10 border border-blue-500/20 rounded-[3.5rem] flex items-center gap-8">
+        <div className="p-5 bg-blue-600 text-white rounded-3xl shadow-xl shadow-blue-500/20"><Globe size={28} /></div>
+        <div className="space-y-1">
+           <h4 className="text-sm font-black text-white uppercase tracking-widest italic">Análise de Benchmarking Coletivo</h4>
+           <p className="text-xs text-blue-200 font-medium italic opacity-70">"No Período 0, todas as unidades iniciam com estruturas idênticas. A divergência tática ocorrerá a partir da orquestração do Ciclo 1."</p>
+        </div>
      </div>
   </div>
 );
@@ -167,11 +171,11 @@ const MarketIndicatorsPanel = () => (
            <IndicatorBox label="Crescimento Econômico" value="3.0%" icon={<TrendingUp />} />
            <IndicatorBox label="Inflação Período" value="1.0%" icon={<Activity />} neg />
            <IndicatorBox label="Taxa TR Mensal" value="3.0%" icon={<Landmark />} />
-           <IndicatorBox label="Salário Médio" value="R$ 1.313" icon={<Users />} />
+           <IndicatorBox label="Salário Médio Industrial" value="R$ 1.313" icon={<Users />} />
         </div>
      </div>
      <div className="premium-card p-10 rounded-[3.5rem] space-y-8 bg-slate-900 border-white/10 shadow-2xl">
-        <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Preços Fornecedores</h3>
+        <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Tabela de Fornecedores</h3>
         <div className="space-y-6">
            <ReportLine label="Matéria-Prima A" value="20,20" />
            <ReportLine label="Matéria-Prima B" value="40,40" />

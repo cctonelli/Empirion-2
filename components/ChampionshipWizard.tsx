@@ -6,7 +6,6 @@ import {
   Trophy, Factory, ShoppingCart, Briefcase, Tractor,
   Gavel, Sparkles, Sliders, CheckCircle2, LayoutGrid,
   FileText, ShieldAlert, Zap, Flame, Leaf, Eye, EyeOff,
-  // Added Users to fix the missing component error
   Users
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES } from '../constants';
@@ -71,16 +70,16 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     setIsSubmitting(true);
     try {
       const champPayload: Partial<Championship> = {
-        name: formData.name || (isTrial ? 'ARENA TESTE' : 'NOVA SIMULAÇÃO'),
+        name: formData.name || (isTrial ? 'ARENA TESTE' : 'Simulação Oracle'),
         branch: formData.branch,
         status: 'active',
         is_public: true,
         current_round: 0,
         total_rounds: formData.totalRounds,
         sales_mode: formData.salesMode,
-        scenario_type: formData.scenario_type,
+        scenario_type: formData.scenarioType,
         currency: formData.currency as any,
-        round_frequency_days: formData.round_frequency_days,
+        round_frequency_days: formData.roundFrequencyDays,
         transparency_level: formData.transparency,
         config: {
            ...formData,
@@ -106,9 +105,9 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
               <Sliders size={32} />
            </div>
            <div>
-              <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Wizard v5.0 Gold</h2>
+              <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Strategos Wizard Gold</h2>
               <p className="text-[10px] font-black uppercase text-orange-500 tracking-[0.4em] mt-1 italic">
-                 {isTrial ? 'Sandbox Mode • Free Access' : 'Oracle Production Node'}
+                 {isTrial ? 'Sandbox Mode • Parametrização Completa' : 'Oracle Production Node'}
               </p>
            </div>
         </div>
@@ -123,7 +122,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
-               <h3 className="text-xl font-black text-white uppercase italic">1. Selecionar Matriz Estratégica</h3>
+               <h3 className="text-xl font-black text-white uppercase italic">1. Matriz de Atividade</h3>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {CHAMPIONSHIP_TEMPLATES.map((tpl) => (
                     <button key={tpl.id} onClick={() => setSelectedTemplate(tpl)} className={`p-8 rounded-[3rem] border transition-all text-left ${selectedTemplate?.id === tpl.id ? 'bg-orange-600 border-white shadow-2xl scale-[1.02]' : 'bg-white/5 border-white/10 hover:border-orange-500/50'}`}>
@@ -137,15 +136,19 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 2 && (
             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
-               <h3 className="text-xl font-black text-white uppercase italic">2. Parametrizar Mercado</h3>
-               <div className="grid grid-cols-2 gap-6">
+               <h3 className="text-xl font-black text-white uppercase italic">2. Configuração de Arena</h3>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase">Nome da Arena</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase">Nome Identificador</label>
                     <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase">Frequência (Dias)</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase">Ciclo de Rodada (Dias)</label>
                     <input type="number" value={formData.roundFrequencyDays} onChange={e => setFormData({...formData, roundFrequencyDays: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase">Limite de Equipes</label>
+                    <input type="number" value={formData.teamsLimit} onChange={e => setFormData({...formData, teamsLimit: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white" />
                   </div>
                </div>
             </motion.div>
@@ -153,7 +156,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 3 && financials && (
             <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-               <h3 className="text-xl font-black text-white uppercase italic">3. Estrutura Contábil (Balanço Inicial)</h3>
+               <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-black text-white uppercase italic">3. Estrutura Financeira (Fidelidade Bernard)</h3>
+                  <div className="px-4 py-1.5 bg-blue-600/20 text-blue-400 rounded-full text-[8px] font-black uppercase tracking-widest border border-blue-500/20">Modo Editor Ativo</div>
+               </div>
                <FinancialStructureEditor 
                  initialBalance={financials.balance_sheet} 
                  initialDRE={financials.dre} 
@@ -164,28 +170,28 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 4 && (
             <motion.div key="step4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
-               <h3 className="text-xl font-black text-white uppercase italic">4. Regras e Protocolos do Tutor</h3>
+               <h3 className="text-xl font-black text-white uppercase italic">4. Protocolos de Simulação</h3>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <RuleToggle 
-                    label="Protocolo ESG" desc="Impacto de sustentabilidade no Market Share." 
+                    label="ESG & Sustentabilidade" desc="Sua imagem afeta diretamente a demanda regional." 
                     active={formData.rules.esg_enabled} 
                     onClick={() => setFormData({...formData, rules: {...formData.rules, esg_enabled: !formData.rules.esg_enabled}})} 
                     icon={<Leaf />} 
                   />
                   <RuleToggle 
-                    label="Eventos Cisne Negro" desc="Crises aleatórias geradas por IA Gemini." 
+                    label="Cisne Negro (Gemini AI)" desc="Crises e eventos de mercado gerados via IA." 
                     active={formData.rules.black_swan_events} 
                     onClick={() => setFormData({...formData, rules: {...formData.rules, black_swan_events: !formData.rules.black_swan_events}})} 
                     icon={<Flame />} 
                   />
                   <RuleToggle 
-                    label="Voto da Comunidade" desc="Observadores externos influenciam TSR." 
+                    label="Voto da Comunidade" desc="Observadores influenciam o ranking TSR." 
                     active={formData.rules.community_voting} 
                     onClick={() => setFormData({...formData, rules: {...formData.rules, community_voting: !formData.rules.community_voting}})} 
                     icon={<Users />} 
                   />
                   <RuleToggle 
-                    label="Inflação Composta" desc="Ajuste automático de preços de fornecedores." 
+                    label="Inflação Composta" desc="Ajuste automático de preços MP A e B." 
                     active={formData.rules.inflation_active} 
                     onClick={() => setFormData({...formData, rules: {...formData.rules, inflation_active: !formData.rules.inflation_active}})} 
                     icon={<Zap />} 
@@ -196,11 +202,11 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 5 && (
             <motion.div key="step5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-               <h3 className="text-xl font-black text-white uppercase italic">5. Nomeação das Unidades</h3>
+               <h3 className="text-xl font-black text-white uppercase italic">5. Matriz de Competidores</h3>
                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                   {teams.map((t, i) => (
                     <div key={i} className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
-                       <span className="text-[8px] font-black text-slate-500 uppercase">Unit 0{i+1}</span>
+                       <span className="text-[8px] font-black text-slate-500 uppercase">Unidade 0{i+1}</span>
                        <input value={t.name} onChange={e => { const nt = [...teams]; nt[i].name = e.target.value; setTeams(nt); }} className="w-full bg-transparent border-none outline-none text-white font-black text-xs uppercase" />
                     </div>
                   ))}
@@ -213,7 +219,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       <footer className="p-10 border-t border-white/5 bg-slate-950/50 flex justify-between">
          <button onClick={() => setStep(s => Math.max(1, s - 1))} disabled={step === 1} className="px-8 py-4 text-slate-500 font-black uppercase text-[10px] tracking-widest hover:text-white">Voltar</button>
          <button onClick={step === 5 ? handleLaunch : () => setStep(s => s + 1)} className="px-14 py-5 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-4">
-            {isSubmitting ? <Loader2 className="animate-spin" /> : step === 5 ? 'Deploy Oracle' : 'Continuar'} <ArrowRight size={18} />
+            {isSubmitting ? <Loader2 className="animate-spin" /> : step === 5 ? 'Ativar Arena' : 'Próximo Protocolo'} <ArrowRight size={18} />
          </button>
       </footer>
     </div>
@@ -227,8 +233,8 @@ const RuleToggle = ({ label, desc, active, onClick, icon }: any) => (
         <h4 className={`text-lg font-black uppercase italic ${active ? 'text-white' : 'text-slate-400'}`}>{label}</h4>
         <p className="text-xs text-slate-500 font-medium">{desc}</p>
         <div className="flex items-center gap-2 mt-2">
-           {active ? <Eye size={12} className="text-orange-500" /> : <EyeOff size={12} />}
-           <span className="text-[8px] font-black uppercase tracking-widest">{active ? 'Ativo' : 'Inativo'}</span>
+           {active ? <CheckCircle2 size={12} className="text-orange-500" /> : <ShieldAlert size={12} />}
+           <span className="text-[8px] font-black uppercase tracking-widest">{active ? 'Ativo' : 'Desativado'}</span>
         </div>
      </div>
   </button>
