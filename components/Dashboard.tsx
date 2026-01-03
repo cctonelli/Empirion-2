@@ -7,13 +7,14 @@ import {
   ShieldCheck, MessageSquare, Megaphone, Send, Globe, Map as MapIcon,
   Cpu, Newspaper, Landmark, AlertTriangle, ChevronRight, LayoutGrid,
   RefreshCw, RotateCcw, Shield, Box, FileEdit, ClipboardList,
-  ArrowRight, X
+  ArrowRight, X, PenTool, FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
 import LiveBriefing from './LiveBriefing';
 import DecisionForm from './DecisionForm';
 import GazetteViewer from './GazetteViewer';
+import BusinessPlanWizard from './BusinessPlanWizard';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { supabase, resetAlphaData, getChampionships } from '../services/supabase';
 import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship } from '../types';
@@ -26,6 +27,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [isAlphaUser, setIsAlphaUser] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [showDecisionForm, setShowDecisionForm] = useState(false);
+  const [showBusinessPlan, setShowBusinessPlan] = useState(false);
   const [showGazette, setShowGazette] = useState(false);
   
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
@@ -105,6 +107,22 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     plotOptions: { donut: { size: '75%', labels: { show: true, total: { show: true, label: 'SHARE', color: '#f97316' } } } }
   };
 
+  if (showBusinessPlan) {
+    return (
+       <div className="animate-in fade-in duration-500">
+          <button onClick={() => setShowBusinessPlan(false)} className="fixed top-10 left-10 z-[110] p-4 bg-slate-900 border border-white/10 text-white rounded-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all">
+             <ChevronRight size={14} className="rotate-180" /> Dashboard
+          </button>
+          <BusinessPlanWizard 
+            championshipId={activeArena?.id}
+            teamId={activeTeamId || undefined}
+            currentRound={activeArena?.current_round || 1}
+            onClose={() => setShowBusinessPlan(false)}
+          />
+       </div>
+    );
+  }
+
   if (showDecisionForm) {
     return (
       <div className="animate-in fade-in duration-500">
@@ -124,7 +142,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-20 relative">
       
-      {/* MODAL JORNAL EMPIRION STREET */}
       <AnimatePresence>
          {showGazette && activeArena && (
            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 md:p-20">
@@ -145,7 +162,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          )}
       </AnimatePresence>
 
-      {/* ALPHA DEBUG BANNER */}
       {isAlphaUser && (
         <div className="bg-orange-600 px-6 py-3 -mx-10 -mt-10 flex items-center justify-between shadow-2xl z-50">
            <div className="flex items-center gap-4">
@@ -192,45 +208,50 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3 space-y-8">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             {/* CTA: ACESSO À FOLHA DE DECISÃO */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <button 
                 onClick={() => setShowDecisionForm(true)}
-                className="bg-blue-600 hover:bg-white p-12 rounded-[4rem] border border-white/10 shadow-2xl flex items-center justify-between group transition-all duration-500 overflow-hidden relative"
+                className="bg-blue-600 hover:bg-white p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px]"
              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="flex items-center gap-10 relative z-10">
-                   <div className="w-20 h-20 bg-white text-blue-600 rounded-3xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-xl">
-                      <FileEdit size={32} />
-                   </div>
-                   <div className="text-left">
-                      <h3 className="text-2xl font-black text-white group-hover:text-slate-950 uppercase italic tracking-tighter leading-none">Terminal de Decisões</h3>
-                      <p className="text-blue-100 group-hover:text-blue-600 font-bold uppercase text-[9px] tracking-[0.3em] mt-3 italic">
-                         Protocolo Ciclo 0{(activeArena?.current_round || 0) + 1}
-                      </p>
-                   </div>
+                <div className="w-16 h-16 bg-white text-blue-600 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-xl">
+                   <FileEdit size={28} />
                 </div>
-                <div className="p-3 bg-white/10 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-all relative z-10"><ArrowRight size={20} /></div>
+                <div className="text-left">
+                   <h3 className="text-xl font-black text-white group-hover:text-slate-950 uppercase italic tracking-tighter leading-none">Folha de Decisão</h3>
+                   <p className="text-blue-100 group-hover:text-blue-600 font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic">
+                      Protocolo Ciclo 0{(activeArena?.current_round || 0) + 1}
+                   </p>
+                </div>
              </button>
 
-             {/* CTA: BREAKING NEWS JORNAL */}
+             <button 
+                onClick={() => setShowBusinessPlan(true)}
+                className="bg-indigo-600 hover:bg-white p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px]"
+             >
+                <div className="w-16 h-16 bg-white text-indigo-600 rounded-2xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xl">
+                   <PenTool size={28} />
+                </div>
+                <div className="text-left">
+                   <h3 className="text-xl font-black text-white group-hover:text-slate-950 uppercase italic tracking-tighter leading-none">Plano de Negócios</h3>
+                   <p className="text-indigo-100 group-hover:text-indigo-600 font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic">
+                      Evolução Progressiva Simulation-Ready
+                   </p>
+                </div>
+             </button>
+
              <button 
                 onClick={() => setShowGazette(true)}
-                className="bg-slate-900 hover:bg-orange-600 p-12 rounded-[4rem] border border-white/10 shadow-2xl flex items-center justify-between group transition-all duration-500 overflow-hidden relative"
+                className="bg-slate-900 hover:bg-orange-600 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px]"
              >
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="flex items-center gap-10 relative z-10">
-                   <div className="w-20 h-20 bg-orange-600 text-white rounded-3xl flex items-center justify-center group-hover:bg-white group-hover:text-orange-600 transition-all shadow-xl">
-                      <Newspaper size={32} className="group-hover:animate-pulse" />
-                   </div>
-                   <div className="text-left">
-                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Breaking News</h3>
-                      <p className="text-slate-400 group-hover:text-white font-bold uppercase text-[9px] tracking-[0.3em] mt-3 italic">
-                         Empirion Street: Edição P0{(activeArena?.current_round || 0) + 1}
-                      </p>
-                   </div>
+                <div className="w-16 h-16 bg-orange-600 text-white rounded-2xl flex items-center justify-center group-hover:bg-white group-hover:text-orange-600 transition-all shadow-xl">
+                   <Newspaper size={28} />
                 </div>
-                <div className="p-3 bg-white/5 rounded-full group-hover:bg-white group-hover:text-orange-600 transition-all relative z-10"><ArrowUpRight size={20} /></div>
+                <div className="text-left">
+                   <h3 className="text-xl font-black text-white uppercase italic tracking-tighter leading-none">Gazeta Empirion</h3>
+                   <p className="text-slate-400 group-hover:text-white font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic">
+                      Tendências P0{(activeArena?.current_round || 0) + 1}
+                   </p>
+                </div>
              </button>
           </div>
 

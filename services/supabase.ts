@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig } from '../types';
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan } from '../types';
 
 const getSafeEnv = (key: string): string => {
   const viteKey = `VITE_${key}`;
@@ -15,16 +15,76 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const isTestMode = true;
 
+// Fix: Adicionando exportação ausente necessária para o TestTerminal.tsx
 /**
- * Persistência Inteligente v8.0: 
- * Inclui agora suporte total à configuração de prazos (Deadlines).
+ * Provisiona o ambiente de demonstração (Alpha/Trial).
+ * No MVP, garante que o modo de teste esteja operacional.
+ */
+export const provisionDemoEnvironment = () => {
+  if (isTestMode) {
+    console.log("EMPIRE ENGINE: Provisioning Alpha Environment...");
+    // No MVP, apenas garante que flags de trial existam no storage
+    localStorage.setItem('is_trial_session', 'true');
+    localStorage.setItem('active_branch', 'industrial');
+  }
+};
+
+/**
+ * Gestão Progressiva de Business Plans
+ */
+export const getActiveBusinessPlan = async (teamId: string, round: number) => {
+  const { data, error } = await supabase
+    .from('business_plans')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('version', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return { data: data as BusinessPlan | null, error };
+};
+
+export const saveBusinessPlan = async (plan: Partial<BusinessPlan>) => {
+  const { data, error } = await supabase
+    .from('business_plans')
+    .upsert({
+      ...plan,
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single();
+  return { data: data as BusinessPlan, error };
+};
+
+export const subscribeToBusinessPlan = (teamId: string, callback: (payload: any) => void) => {
+  return supabase
+    .channel(`bp-${teamId}`)
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'business_plans',
+      filter: `team_id=eq.${teamId}` 
+    }, callback)
+    .subscribe();
+};
+
+export const getTeamSimulationHistory = async (teamId: string) => {
+  // Simulação de busca de histórico para o MVP
+  const { data: decisions } = await supabase
+    .from('current_decisions')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('round', { ascending: true });
+    
+  return decisions || [];
+};
+
+/**
+ * Persistência Inteligente v8.1
  */
 export const createChampionshipWithTeams = async (champData: Partial<Championship>, teams: { name: string }[], isTrialParam: boolean = false) => {
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
-  
   const table = isTrial ? 'trial_championships' : 'championships';
   const teamsTable = isTrial ? 'trial_teams' : 'teams';
-  
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
@@ -52,7 +112,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       payload.round_frequency_days = champData.round_frequency_days;
       payload.transparency_level = champData.transparency_level;
       payload.tutor_id = session?.user?.id;
-      delete payload.initial_market_data;
     }
 
     const { data: champ, error: cErr } = await supabase
@@ -61,12 +120,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       .select()
       .single();
 
-    if (cErr) {
-      console.error(`Supabase Insert Violation [${table}]:`, cErr);
-      throw new Error(`Erro no motor Oracle: ${cErr.message}`);
-    }
-
-    if (!champ) throw new Error("A criação da arena falhou.");
+    if (cErr) throw new Error(`Erro no motor Oracle: ${cErr.message}`);
 
     const teamsToInsert = teams.map(t => ({
       name: t.name,
@@ -80,7 +134,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       .select();
 
     if (tErr) throw tErr;
-
     return { champ: { ...champ, is_trial: isTrial } as Championship, teams: teamsData as Team[] };
   } catch (err: any) {
     console.error("ORCHESTRATION ENGINE CRASH:", err);
@@ -91,27 +144,16 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 export const getChampionships = async (onlyPublic: boolean = false) => {
   let realData: any[] = [];
   let trialData: any[] = [];
-
   try {
     const { data } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
     if (data) realData = data;
   } catch (e) { console.warn("Produção inacessível."); }
-
   try {
     const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
     if (data) trialData = data;
   } catch (e) { console.warn("Sandbox inacessível."); }
-
-  const combined = [
-    ...realData.map(c => ({ ...c, is_trial: false })),
-    ...trialData.map(c => ({ ...c, is_trial: true }))
-  ];
-
-  if (onlyPublic) {
-    return { data: combined.filter(c => c.is_public || c.is_trial) as Championship[], error: null };
-  }
-
-  return { data: combined as Championship[], error: null };
+  const combined = [...realData.map(c => ({ ...c, is_trial: false })), ...trialData.map(c => ({ ...c, is_trial: true }))];
+  return { data: onlyPublic ? combined.filter(c => c.is_public || c.is_trial) : combined as Championship[], error: null };
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -141,29 +183,17 @@ export const silentTestAuth = async (user: any) => {
   return { data: { session: mockSession }, error: null };
 };
 
-export const provisionDemoEnvironment = async () => {};
-
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, isTrialParam: boolean = false) => {
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
-  const { error } = await supabase.from(table).upsert({ 
-    team_id: teamId, 
-    championship_id: champId, 
-    round, 
-    data: decisions 
-  }); 
-  return { error };
+  return await supabase.from(table).upsert({ team_id: teamId, championship_id: champId, round, data: decisions }); 
 };
 
 export const resetAlphaData = async () => {
-  const { error } = await supabase.from('trial_decisions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  return { error };
+  return await supabase.from('trial_decisions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 };
 
-export const listAllUsers = async () => {
-  return await supabase.from('users').select('*');
-};
-
+export const listAllUsers = async () => { return await supabase.from('users').select('*'); };
 export const updateUserPremiumStatus = async (userId: string, status: boolean) => {
   return await supabase.from('users').update({ is_opal_premium: status }).eq('supabase_user_id', userId);
 };

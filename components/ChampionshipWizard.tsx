@@ -6,7 +6,7 @@ import {
   Trophy, Factory, ShoppingCart, Briefcase, Tractor,
   Gavel, Sparkles, Sliders, CheckCircle2, LayoutGrid,
   FileText, ShieldAlert, Zap, Flame, Leaf, Eye, EyeOff,
-  Users, Clock, Calendar, Hourglass
+  Users, Clock, Calendar, Hourglass, PenTool, Layout
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES } from '../constants';
 import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit } from '../types';
@@ -31,7 +31,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     currency: 'BRL',
     deadlineValue: 7,
     deadlineUnit: 'days' as DeadlineUnit,
-    roundFrequencyDays: 7, // Mantido para compatibilidade legado
+    roundFrequencyDays: 7, 
+    bp_enabled: true,
+    bp_frequency: 3,
+    bp_mandatory: false,
     rules: {
       esg_enabled: false,
       inflation_active: true,
@@ -144,15 +147,14 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
                <div className="flex items-center gap-4 border-b border-white/5 pb-6">
                   <div className="p-3 bg-orange-600 rounded-xl text-white shadow-lg"><Settings size={20}/></div>
-                  <h3 className="text-xl font-black text-white uppercase italic">2. Configuração da Arena e Protocolos Temporais</h3>
+                  <h3 className="text-xl font-black text-white uppercase italic">2. Arena & Protocolos Temporais</h3>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  {/* Identidade */}
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Trophy size={12}/> Nome Identificador da Arena</label>
-                      <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all font-bold" placeholder="Ex: Arena Bernard v5.0" />
+                      <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Trophy size={12}/> Nome da Arena</label>
+                      <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all font-bold" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Users size={12}/> Limite de Equipes</label>
@@ -160,45 +162,23 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                     </div>
                   </div>
 
-                  {/* Gestão do Cronômetro (NOVO) */}
                   <div className="p-8 bg-orange-600/5 border border-orange-500/20 rounded-[2.5rem] space-y-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform"><Clock size={80}/></div>
                     <div className="space-y-1">
                        <h4 className="text-orange-500 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Hourglass size={14}/> Cronômetro de Rodada</h4>
-                       <p className="text-[9px] text-slate-500 uppercase font-bold">Defina o prazo limite para transmissão das decisões.</p>
                     </div>
-
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
                           <label className="text-[8px] font-black text-slate-500 uppercase">Valor</label>
-                          <input 
-                            type="number" 
-                            min="1"
-                            value={formData.deadlineValue} 
-                            onChange={e => setFormData({...formData, deadlineValue: Number(e.target.value)})} 
-                            className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" 
-                          />
+                          <input type="number" min="1" value={formData.deadlineValue} onChange={e => setFormData({...formData, deadlineValue: Number(e.target.value)})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" />
                        </div>
                        <div className="space-y-2">
                           <label className="text-[8px] font-black text-slate-500 uppercase">Unidade</label>
-                          <select 
-                            value={formData.deadlineUnit} 
-                            onChange={e => setFormData({...formData, deadlineUnit: e.target.value as DeadlineUnit})}
-                            className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-orange-500 appearance-none"
-                          >
+                          <select value={formData.deadlineUnit} onChange={e => setFormData({...formData, deadlineUnit: e.target.value as DeadlineUnit})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-orange-500 appearance-none">
                              <option value="hours">Horas</option>
                              <option value="days">Dias</option>
-                             <option value="weeks">Semanas</option>
-                             <option value="months">Meses</option>
                           </select>
                        </div>
-                    </div>
-                    
-                    <div className="pt-4 flex items-center gap-3">
-                       <div className="p-2 bg-orange-600 rounded-lg text-white"><Zap size={12}/></div>
-                       <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter italic">
-                          O Oráculo aplicará o prazo de {formData.deadlineValue} {formData.deadlineUnit === 'hours' ? 'horas' : formData.deadlineUnit === 'days' ? 'dias' : formData.deadlineUnit === 'weeks' ? 'semanas' : 'meses'} por ciclo.
-                       </span>
                     </div>
                   </div>
                </div>
@@ -207,10 +187,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 3 && financials && (
             <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-               <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-black text-white uppercase italic">3. Estrutura Financeira (Fidelidade Bernard)</h3>
-                  <div className="px-4 py-1.5 bg-blue-600/20 text-blue-400 rounded-full text-[8px] font-black uppercase tracking-widest border border-blue-500/20">Modo Editor Ativo</div>
-               </div>
                <FinancialStructureEditor 
                  initialBalance={financials.balance_sheet} 
                  initialDRE={financials.dre} 
@@ -221,32 +197,40 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 4 && (
             <motion.div key="step4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
-               <h3 className="text-xl font-black text-white uppercase italic">4. Protocolos de Simulação</h3>
+               <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                  <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-lg"><PenTool size={20}/></div>
+                  <h3 className="text-xl font-black text-white uppercase italic">4. Plano de Negócios Progressivo</h3>
+               </div>
+               
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <RuleToggle 
-                    label="ESG & Sustentabilidade" desc="Sua imagem afeta diretamente a demanda regional." 
-                    active={formData.rules.esg_enabled} 
-                    onClick={() => setFormData({...formData, rules: {...formData.rules, esg_enabled: !formData.rules.esg_enabled}})} 
-                    icon={<Leaf />} 
-                  />
-                  <RuleToggle 
-                    label="Cisne Negro (Gemini AI)" desc="Crises e eventos de mercado gerados via IA." 
-                    active={formData.rules.black_swan_events} 
-                    onClick={() => setFormData({...formData, rules: {...formData.rules, black_swan_events: !formData.rules.black_swan_events}})} 
-                    icon={<Flame />} 
-                  />
-                  <RuleToggle 
-                    label="Voto da Comunidade" desc="Observadores influenciam o ranking TSR." 
-                    active={formData.rules.community_voting} 
-                    onClick={() => setFormData({...formData, rules: {...formData.rules, community_voting: !formData.rules.community_voting}})} 
-                    icon={<Users />} 
-                  />
-                  <RuleToggle 
-                    label="Inflação Composta" desc="Ajuste automático de preços MP A e B." 
-                    active={formData.rules.inflation_active} 
-                    onClick={() => setFormData({...formData, rules: {...formData.rules, inflation_active: !formData.rules.inflation_active}})} 
-                    icon={<Zap />} 
-                  />
+                  <div className={`p-10 rounded-[3rem] border-2 transition-all ${formData.bp_enabled ? 'border-indigo-600 bg-indigo-600/10' : 'border-white/5 bg-white/5 opacity-50'}`}>
+                     <div className="flex items-center justify-between mb-6">
+                        <h4 className="text-xl font-black text-white uppercase italic">Ativar Módulo BP</h4>
+                        <button 
+                          onClick={() => setFormData({...formData, bp_enabled: !formData.bp_enabled})}
+                          className={`w-12 h-6 rounded-full transition-all relative ${formData.bp_enabled ? 'bg-indigo-500' : 'bg-slate-700'}`}
+                        >
+                           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.bp_enabled ? 'left-7' : 'left-1'}`} />
+                        </button>
+                     </div>
+                     <div className="space-y-6">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-500 uppercase">Frequência de Submissão (Ciclos)</label>
+                           <input type="number" min="1" value={formData.bp_frequency} onChange={e => setFormData({...formData, bp_frequency: Number(e.target.value)})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-mono" />
+                        </div>
+                        <div className="flex items-center gap-3">
+                           <input type="checkbox" checked={formData.bp_mandatory} onChange={e => setFormData({...formData, bp_mandatory: e.target.checked})} className="w-5 h-5 rounded bg-slate-950 border-white/10 accent-indigo-500" />
+                           <span className="text-xs font-bold text-slate-400 uppercase">Entrega Obrigatória para Avançar</span>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="p-10 rounded-[3rem] bg-white/5 border border-white/10 space-y-6">
+                     <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Sparkles size={14}/> Simulation Data Fill</h4>
+                     <p className="text-sm text-slate-400 leading-relaxed italic">
+                        O motor Empirion preencherá automaticamente as seções financeiras do BP com o histórico das jogadas de cada equipe, forçando a análise SWOT baseada na concorrência real.
+                     </p>
+                  </div>
                </div>
             </motion.div>
           )}
@@ -276,19 +260,5 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     </div>
   );
 };
-
-const RuleToggle = ({ label, desc, active, onClick, icon }: any) => (
-  <button onClick={onClick} className={`p-8 rounded-[2.5rem] border text-left transition-all flex gap-6 ${active ? 'bg-orange-600/10 border-orange-500 shadow-lg' : 'bg-white/5 border-white/10 opacity-60'}`}>
-     <div className={`p-4 rounded-2xl h-fit ${active ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-500'}`}>{icon}</div>
-     <div className="space-y-2">
-        <h4 className={`text-lg font-black uppercase italic ${active ? 'text-white' : 'text-slate-400'}`}>{label}</h4>
-        <p className="text-xs text-slate-500 font-medium">{desc}</p>
-        <div className="flex items-center gap-2 mt-2">
-           {active ? <CheckCircle2 size={12} className="text-orange-500" /> : <ShieldAlert size={12} />}
-           <span className="text-[8px] font-black uppercase tracking-widest">{active ? 'Ativo' : 'Desativado'}</span>
-        </div>
-     </div>
-  </button>
-);
 
 export default ChampionshipWizard;

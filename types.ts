@@ -10,12 +10,8 @@ export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 
-// Prazos Discretos: 0 (Vista), 1 (Pula 1), 2 (50/50)
 export type DiscreteTerm = 0 | 1 | 2;
 
-/**
- * User profile interface for authentication and role management.
- */
 export interface UserProfile {
   id: string;
   supabase_user_id: string;
@@ -26,9 +22,6 @@ export interface UserProfile {
   created_at: string;
 }
 
-/**
- * Team interface representing a participant in a championship.
- */
 export interface Team {
   id: string;
   name: string;
@@ -37,9 +30,18 @@ export interface Team {
   invite_code?: string;
 }
 
-/**
- * Modality interface for dynamic simulation modes.
- */
+export interface BusinessPlan {
+  id?: string;
+  championship_id: string;
+  team_id: string;
+  round: number;
+  version: number;
+  data: any; // Seções do plano (SWOT, Estratégia, etc)
+  status: 'draft' | 'submitted';
+  pdf_url?: string;
+  updated_at?: string;
+}
+
 export interface Modality {
   id: string;
   name: string;
@@ -49,9 +51,6 @@ export interface Modality {
   page_content: any;
 }
 
-/**
- * AccountNode interface for hierarchical financial structures.
- */
 export interface AccountNode {
   id: string;
   label: string;
@@ -63,9 +62,6 @@ export interface AccountNode {
   children?: AccountNode[];
 }
 
-/**
- * Macro indicators for the economic environment.
- */
 export interface MacroIndicators {
   growthRate: number;
   inflationRate: number;
@@ -85,9 +81,6 @@ export interface MacroIndicators {
   demand_regions?: number[];
 }
 
-/**
- * Ecosystem configuration for simulation parameters.
- */
 export interface EcosystemConfig {
   scenarioType: ScenarioType;
   modalityType: ModalityType;
@@ -97,9 +90,6 @@ export interface EcosystemConfig {
   marketVolatility: number;
 }
 
-/**
- * Championship interface representing a simulation arena.
- */
 export interface Championship {
   id: string;
   name: string;
@@ -110,7 +100,12 @@ export interface Championship {
   total_rounds: number;   
   deadline_value: number;
   deadline_unit: DeadlineUnit;
-  config: any;
+  config: {
+    bp_enabled?: boolean;
+    bp_frequency?: number;
+    bp_mandatory?: boolean;
+    [key: string]: any;
+  };
   market_indicators: MacroIndicators;
   initial_financials?: any;
   round_started_at?: string;
@@ -127,9 +122,6 @@ export interface Championship {
   ecosystemConfig?: EcosystemConfig;
 }
 
-/**
- * Template for creating new championships.
- */
 export interface ChampionshipTemplate {
   id: string;
   name: string;
@@ -152,9 +144,6 @@ export interface ChampionshipTemplate {
   };
 }
 
-/**
- * Decision data submitted by teams per round.
- */
 export interface DecisionData {
   regions: Record<number, { price: number; term: DiscreteTerm; marketing: number }>;
   hr: { hired: number; fired: number; salary: number; trainingPercent: number; participationPercent: number; sales_staff_count: number };
@@ -163,9 +152,6 @@ export interface DecisionData {
   legal: { recovery_mode: RecoveryMode };
 }
 
-/**
- * Snapshot of financial status for a round.
- */
 export interface FinancialSnapshot {
   round: number;
   balance_sheet: any;
@@ -181,18 +167,12 @@ export interface FinancialSnapshot {
   };
 }
 
-/**
- * Team history containing snapshots across rounds.
- */
 export interface TeamHistory {
   team_id: string;
   team_name: string;
   snapshots: FinancialSnapshot[];
 }
 
-/**
- * Black Swan event definition for AI-generated crises.
- */
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -205,9 +185,6 @@ export interface BlackSwanEvent {
   };
 }
 
-/**
- * Item for the message board / war feed.
- */
 export interface MessageBoardItem {
   id: string;
   sender: string;
@@ -216,9 +193,6 @@ export interface MessageBoardItem {
   isImportant?: boolean;
 }
 
-/**
- * Criteria for community voting.
- */
 export interface CommunityCriteria {
   id: string;
   label: string;
