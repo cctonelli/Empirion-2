@@ -1,0 +1,14 @@
+
+{
+  "title": "Strategos Business Plan",
+  "subtitle": "Arquitete sua visão empresarial com assistência de IA profunda.",
+  "generate": "Gerar Insight Strategos",
+  "export": "Exportar Protocolo Final",
+  "steps": {
+    "summary": "Sumário Executivo",
+    "market": "Análise de Mercado",
+    "strategy": "Plano Estratégico",
+    "ops": "Plano Operacional",
+    "finance": "Plano Financeiro"
+  }
+}
