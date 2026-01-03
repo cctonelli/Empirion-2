@@ -7,23 +7,26 @@ import {
   ShieldCheck, MessageSquare, Megaphone, Send, Globe, Map as MapIcon,
   Cpu, Newspaper, Landmark, AlertTriangle, ChevronRight, LayoutGrid,
   RefreshCw, RotateCcw, Shield, Box, FileEdit, ClipboardList,
-  ArrowRight
+  ArrowRight, X
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
 import LiveBriefing from './LiveBriefing';
 import DecisionForm from './DecisionForm';
+import GazetteViewer from './GazetteViewer';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { supabase, resetAlphaData, getChampionships } from '../services/supabase';
 import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship } from '../types';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
-  const [gazetaNews, setGazetaNews] = useState<string>('Transmissão de dados criptografados...');
+  const [gazetaNews, setGazetaNews] = useState<string>('');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
   const [scenarioType, setScenarioType] = useState<ScenarioType>('simulated');
   const [isAlphaUser, setIsAlphaUser] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [showDecisionForm, setShowDecisionForm] = useState(false);
+  const [showGazette, setShowGazette] = useState(false);
   
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeamId, setActiveTeamId] = useState<string | null>(null);
@@ -55,7 +58,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       try {
         const [analysis, news] = await Promise.all([
           generateMarketAnalysis(activeArena?.name || 'Arena Empirion Supremo', 1, branch, scenarioType),
-          generateGazetaNews({ period: 1, leader: 'Empresa 8', inflation: '1.0%', scenarioType, focus: [branch] })
+          generateGazetaNews({ 
+            period: (activeArena?.current_round || 0) + 1, 
+            leader: 'Equipe Alpha', 
+            inflation: `${activeArena?.market_indicators?.inflationRate || 1.0}%`, 
+            scenarioType, 
+            focus: [branch] 
+          })
         ]);
         setAiInsight(analysis);
         setGazetaNews(news);
@@ -74,7 +83,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     fetchArenaInfo();
     fetchIntelligence();
     checkAlphaStatus();
-  }, [scenarioType, branch, activeArena?.name]);
+  }, [scenarioType, branch, activeArena?.name, activeArena?.current_round]);
 
   const handleResetAlpha = async () => {
     if (!confirm("Confirmar RESET TOTAL das decisões desta arena?")) return;
@@ -113,7 +122,29 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000 pb-20">
+    <div className="space-y-8 animate-in fade-in duration-1000 pb-20 relative">
+      
+      {/* MODAL JORNAL EMPIRION STREET */}
+      <AnimatePresence>
+         {showGazette && activeArena && (
+           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 md:p-20">
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setShowGazette(false)}
+                className="absolute inset-0 bg-slate-950/90 backdrop-blur-2xl"
+              />
+              <div className="w-full max-w-7xl relative z-10">
+                 <GazetteViewer 
+                    arena={activeArena} 
+                    news={gazetaNews} 
+                    round={(activeArena?.current_round || 0) + 1} 
+                    onClose={() => setShowGazette(false)} 
+                 />
+              </div>
+           </div>
+         )}
+      </AnimatePresence>
+
       {/* ALPHA DEBUG BANNER */}
       {isAlphaUser && (
         <div className="bg-orange-600 px-6 py-3 -mx-10 -mt-10 flex items-center justify-between shadow-2xl z-50">
@@ -161,28 +192,47 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3 space-y-8">
           
-          {/* CTA: ACESSO À FOLHA DE DECISÃO */}
-          <button 
-            onClick={() => setShowDecisionForm(true)}
-            className="w-full bg-blue-600 hover:bg-white p-12 rounded-[4rem] border border-white/10 shadow-2xl flex items-center justify-between group transition-all duration-500 overflow-hidden relative"
-          >
-             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-             <div className="flex items-center gap-10 relative z-10">
-                <div className="w-24 h-24 bg-white text-blue-600 rounded-3xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-xl">
-                   <FileEdit size={48} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             {/* CTA: ACESSO À FOLHA DE DECISÃO */}
+             <button 
+                onClick={() => setShowDecisionForm(true)}
+                className="bg-blue-600 hover:bg-white p-12 rounded-[4rem] border border-white/10 shadow-2xl flex items-center justify-between group transition-all duration-500 overflow-hidden relative"
+             >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="flex items-center gap-10 relative z-10">
+                   <div className="w-20 h-20 bg-white text-blue-600 rounded-3xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-xl">
+                      <FileEdit size={32} />
+                   </div>
+                   <div className="text-left">
+                      <h3 className="text-2xl font-black text-white group-hover:text-slate-950 uppercase italic tracking-tighter leading-none">Terminal de Decisões</h3>
+                      <p className="text-blue-100 group-hover:text-blue-600 font-bold uppercase text-[9px] tracking-[0.3em] mt-3 italic">
+                         Protocolo Ciclo 0{(activeArena?.current_round || 0) + 1}
+                      </p>
+                   </div>
                 </div>
-                <div className="text-left">
-                   <h3 className="text-4xl font-black text-white group-hover:text-slate-950 uppercase italic tracking-tighter leading-none">Central de Decisões</h3>
-                   <p className="text-blue-100 group-hover:text-blue-600 font-bold uppercase text-[11px] tracking-[0.3em] mt-3">
-                      Protocolo de Transmissão: Ciclo 0{(activeArena?.current_round || 0) + 1}
-                   </p>
+                <div className="p-3 bg-white/10 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-all relative z-10"><ArrowRight size={20} /></div>
+             </button>
+
+             {/* CTA: BREAKING NEWS JORNAL */}
+             <button 
+                onClick={() => setShowGazette(true)}
+                className="bg-slate-900 hover:bg-orange-600 p-12 rounded-[4rem] border border-white/10 shadow-2xl flex items-center justify-between group transition-all duration-500 overflow-hidden relative"
+             >
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="flex items-center gap-10 relative z-10">
+                   <div className="w-20 h-20 bg-orange-600 text-white rounded-3xl flex items-center justify-center group-hover:bg-white group-hover:text-orange-600 transition-all shadow-xl">
+                      <Newspaper size={32} className="group-hover:animate-pulse" />
+                   </div>
+                   <div className="text-left">
+                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Breaking News</h3>
+                      <p className="text-slate-400 group-hover:text-white font-bold uppercase text-[9px] tracking-[0.3em] mt-3 italic">
+                         Empirion Street: Edição P0{(activeArena?.current_round || 0) + 1}
+                      </p>
+                   </div>
                 </div>
-             </div>
-             <div className="flex items-center gap-6 relative z-10">
-                <span className="text-white group-hover:text-slate-950 font-black text-[11px] uppercase tracking-[0.2em]">Abrir Terminal</span>
-                <div className="p-4 bg-white/10 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-all"><ArrowRight size={28} /></div>
-             </div>
-          </button>
+                <div className="p-3 bg-white/5 rounded-full group-hover:bg-white group-hover:text-orange-600 transition-all relative z-10"><ArrowUpRight size={20} /></div>
+             </button>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="premium-card p-8 rounded-[3rem] bg-slate-900 border-white/5 flex flex-col items-center justify-center min-h-[300px] shadow-2xl">
@@ -200,25 +250,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                    <div className="space-y-3"><div className="h-4 bg-white/5 rounded-full w-3/4 animate-pulse"></div><div className="h-4 bg-white/5 rounded-full w-full animate-pulse"></div></div>
                  ) : (
                    <p className="text-sm font-medium text-slate-300 leading-relaxed font-mono">
-                     <span className="text-orange-500 font-black italic">MSG_P2:</span> {aiInsight || "Aguardando início do período para análise regional."}
+                     <span className="text-orange-500 font-black italic">MSG_P{(activeArena?.current_round || 0) + 1}:</span> {aiInsight || "Aguardando início do período para análise regional."}
                    </p>
                  )}
               </div>
-            </div>
-          </div>
-
-          <div className="premium-card rounded-[3.5rem] bg-slate-950 overflow-hidden flex flex-col shadow-2xl border border-white/5">
-            <div className="p-8 border-b border-white/5 bg-slate-900/40 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 bg-white text-slate-950 rounded-2xl flex items-center justify-center shadow-xl"><Newspaper size={28} /></div>
-                 <div>
-                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Gazeta Empirion</h3>
-                    <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.3em] mt-1 italic">Sincronização Ativa v6.0</p>
-                 </div>
-              </div>
-            </div>
-            <div className="p-12">
-               <h2 className="text-4xl font-black text-white leading-tight tracking-tight italic">{gazetaNews}</h2>
             </div>
           </div>
         </div>
