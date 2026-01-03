@@ -90,6 +90,8 @@ export interface Championship {
   };
   market_indicators?: MacroIndicators;
   ecosystemConfig?: EcosystemConfig;
+  // Added teams property to fix TypeScript errors in multiple components
+  teams?: any[];
 }
 
 export interface TeamHistoricalData {
