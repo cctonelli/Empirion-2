@@ -1,7 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, UserProfile, UserRole, Modality } from '../types';
-import { ALPHA_TEST_USERS, DEMO_CHAMPIONSHIP_DATA } from '../constants';
+import { ALPHA_TEST_USERS, DEMO_CHAMPIONSHIP_DATA, CHAMPIONSHIP_TEMPLATES } from '../constants';
 
 const getSafeEnv = (key: string): string => {
   const viteKey = `VITE_${key}`;
@@ -12,7 +12,7 @@ const getSafeEnv = (key: string): string => {
 const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = getSafeEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
-export const isTestMode = getSafeEnv('IS_TEST_MODE') === 'true' || true; // Ativado por padrão no MVP para evitar erros de e-mail
+export const isTestMode = getSafeEnv('IS_TEST_MODE') === 'true' || true; 
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -31,13 +31,8 @@ const secureAction = async (action: () => Promise<any>) => {
   return action();
 };
 
-/**
- * ALPHA TERMINAL: Protocolo de Autenticação Inabalável
- * Em Test Mode, injeta uma sessão mock para evitar validações de e-mail do servidor.
- */
 export const silentTestAuth = async (user: typeof ALPHA_TEST_USERS[0]) => {
   if (isTestMode) {
-    console.log("ALPHA_CORE: Injetando Sessão Simulada para", user.email);
     const mockSession = {
       user: { id: user.id, email: user.email, user_metadata: { full_name: user.name, role: user.role } },
       access_token: 'demo-token-bypass',
@@ -53,31 +48,38 @@ export const silentTestAuth = async (user: typeof ALPHA_TEST_USERS[0]) => {
     password: testPassword
   });
 
-  if (error) {
-    // Tenta registrar se for a primeira vez e não estiver em modo demo
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: user.email,
-      password: testPassword,
-      options: { data: { full_name: user.name, role: user.role } }
-    });
-    if (signUpError) throw signUpError;
-    return { data: signUpData, error: null };
-  }
-
   return { data, error };
 };
 
+/**
+ * Provisiona o ambiente Alpha e a arena ARENA 2026 T2.
+ */
 export const provisionDemoEnvironment = async () => {
   try {
-    const { data: champ } = await supabase.from('championships').select('id').eq('id', DEMO_CHAMPIONSHIP_DATA.id).maybeSingle();
-    if (!champ) {
-      console.log("ALPHA_CORE: Provisionando banco de dados...");
-      await supabase.from('championships').insert([DEMO_CHAMPIONSHIP_DATA]);
+    const { data: existing } = await supabase.from('championships').select('id').eq('name', 'ARENA 2026 T2').maybeSingle();
+    
+    if (!existing) {
+      console.log("ALPHA_CORE: Criando ARENA 2026 T2...");
+      const arenaT2 = {
+        ...DEMO_CHAMPIONSHIP_DATA,
+        id: 'arena-2026-t2',
+        name: 'ARENA 2026 T2',
+        description: 'Arena oficial de teste grátis para validacão estratégica v6.0.',
+        is_public: true,
+        status: 'active'
+      };
+      await supabase.from('championships').insert([arenaT2]);
     }
     return true;
   } catch (err) {
     return false;
   }
+};
+
+export const getChampionships = async (onlyPublic: boolean = false) => {
+  let query = supabase.from('championships').select('*').order('created_at', { ascending: false });
+  if (onlyPublic) query = query.eq('is_public', true).eq('status', 'active');
+  return query;
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -134,17 +136,6 @@ export const fetchPageContent = async (slug: string, locale: string = 'pt') => {
   return data?.content || null;
 };
 
-export const getPlatformConfig = async () => {
-  const { data } = await supabase.from('platform_config').select('*').maybeSingle();
-  return data;
-};
-
-export const updatePlatformConfig = async (config: any) => {
-  return secureAction(async () => {
-    await supabase.from('platform_config').upsert({ ...config, id: 1 });
-  });
-};
-
 export const updateEcosystem = async (champId: string, ecosystemData: any) => {
   return secureAction(async () => {
     await supabase.from('championships').update(ecosystemData).eq('id', champId);
@@ -156,6 +147,7 @@ export const getPublicReports = async (champId: string, round: number) => {
   return { data, error };
 };
 
+// Fix: Implement missing submitCommunityVote function to allow community judges to cast votes.
 export const submitCommunityVote = async (vote: any) => {
   return secureAction(async () => {
     return await supabase.from('community_votes').insert([vote]);
@@ -164,6 +156,6 @@ export const submitCommunityVote = async (vote: any) => {
 
 export const resetAlphaData = async () => {
   return secureAction(async () => {
-    await supabase.from('current_decisions').delete().eq('championship_id', DEMO_CHAMPIONSHIP_DATA.id);
+    await supabase.from('current_decisions').delete().eq('championship_id', 'arena-2026-t2');
   });
 };
