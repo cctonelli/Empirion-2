@@ -14,7 +14,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }> = ({ onComplete, isTrial = false }) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<ChampionshipTemplate | null>(CHAMPIONSHIP_TEMPLATES[0]);
+  // Garante que o template industrial seja o padrão
+  const [selectedTemplate, setSelectedTemplate] = useState<ChampionshipTemplate | null>(CHAMPIONSHIP_TEMPLATES[0] || null);
   
   const [formData, setFormData] = useState({
     name: isTrial ? 'ARENA TESTE GRÁTIS' : '', 
@@ -31,7 +32,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
   const [teams, setTeams] = useState<{ name: string }[]>([]);
 
-  // Sincroniza dados do template selecionado
   useEffect(() => {
     if (selectedTemplate) {
       setFormData(prev => ({
@@ -46,7 +46,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     }
   }, [selectedTemplate]);
 
-  // Gera lista de times padrão baseada no limite
   useEffect(() => {
     const currentCount = teams.length;
     if (currentCount !== formData.teamsLimit) {
@@ -58,7 +57,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   }, [formData.teamsLimit]);
 
   const handleLaunch = async () => {
-    if (!selectedTemplate) return;
+    if (!selectedTemplate) {
+      alert("Selecione uma matriz estratégica antes de continuar.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const champPayload: Partial<Championship> = {
@@ -89,9 +91,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       
       await createChampionshipWithTeams(champPayload, teams, isTrial);
       onComplete();
-    } catch (e) { 
+    } catch (e: any) { 
       console.error("Deploy Failure:", e);
-      alert("Falha técnica no deploy da arena. Verifique a conexão com o Oracle Node."); 
+      // Mensagem rica em detalhes para o usuário
+      alert(`FALHA NA ORQUESTRAÇÃO: ${e.message || "Erro de conexão com o Oracle Node. Verifique se as tabelas trial_championships e trial_teams existem no seu banco de dados."}`); 
     }
     setIsSubmitting(false);
   };
@@ -138,7 +141,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                   <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Escolha um template Bernard Legacy pré-configurado.</p>
                </div>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {CHAMPIONSHIP_TEMPLATES.map((tpl) => (
+                  {CHAMPIONSHIP_TEMPLATES.length > 0 ? CHAMPIONSHIP_TEMPLATES.map((tpl) => (
                     <button 
                       key={tpl.id}
                       onClick={() => setSelectedTemplate(tpl)}
@@ -155,7 +158,9 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                           {tpl.description}
                        </p>
                     </button>
-                  ))}
+                  )) : (
+                    <div className="col-span-2 p-10 text-center text-slate-500 font-bold uppercase">Nenhum template carregado no núcleo.</div>
+                  )}
                </div>
             </motion.div>
           )}
@@ -258,7 +263,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                <div className="space-y-4">
                   <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Arena Validada</h3>
                   <p className="text-slate-400 font-medium text-lg max-w-xl mx-auto italic">
-                    "O motor Industrial v6.0 está carregado com R$ 9.1M em ativos. Pronto para orquestração de rede."
+                    "O motor {selectedTemplate?.name || 'Industrial'} está carregado e pronto para orquestração de rede."
                   </p>
                </div>
                <div className="flex justify-center gap-6 text-[10px] font-black uppercase tracking-widest text-slate-500">

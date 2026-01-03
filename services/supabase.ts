@@ -34,7 +34,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       total_rounds: champData.total_rounds || 12,
       config: champData.config || {},
       initial_financials: champData.initial_financials,
-      initial_market_data: champData.initial_market_data,
+      // Garante preenchimento de market data para trial e production
+      initial_market_data: champData.market_indicators || champData.initial_market_data,
       market_indicators: champData.market_indicators
     };
 
@@ -52,13 +53,17 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       .from(table)
       .insert([payload])
       .select()
-      .maybeSingle();
+      .single(); // Mudança para single() para forçar erro imediato se o insert falhar em retornar dados
 
     if (cErr) {
       console.error(`Error inserting into ${table}:`, cErr);
+      if (cErr.message?.includes("does not exist")) {
+        throw new Error(`A tabela "${table}" não foi encontrada no seu Supabase. Execute o script SQL de criação.`);
+      }
       throw cErr;
     }
-    if (!champ) throw new Error("Arena record creation failed - no data returned.");
+
+    if (!champ) throw new Error("A criação da arena falhou (nenhum dado retornado). Verifique as permissões de RLS.");
 
     const teamsToInsert = teams.map(t => ({
       name: t.name,
@@ -77,26 +82,25 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     }
 
     return { champ: { ...champ, is_trial: isTrial } as Championship, teams: teamsData as Team[] };
-  } catch (err) {
-    console.error("CRITICAL SUPABASE ORCHESTRATION ERROR:", err);
+  } catch (err: any) {
+    console.error("ORCHESTRATION ENGINE ERROR:", err);
     throw err;
   }
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {
-  // Query defensiva: se uma tabela falhar (ex: não existir trial), ainda tentamos a real
   let realData: any[] = [];
   let trialData: any[] = [];
 
   try {
     const { data } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
     if (data) realData = data;
-  } catch (e) { console.warn("Could not fetch main championships table."); }
+  } catch (e) { console.warn("Produção offline."); }
 
   try {
     const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
     if (data) trialData = data;
-  } catch (e) { console.warn("Could not fetch trial championships table."); }
+  } catch (e) { console.warn("Sandbox offline."); }
 
   const combined = [
     ...realData.map(c => ({ ...c, is_trial: false })),
@@ -112,15 +116,12 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, isTrial: boolean = false) => {
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
-  
-  // Para trial, tentamos insert se não houver constraint de UNIQUE. Se houver, o upsert resolve.
   const { error } = await supabase.from(table).upsert({ 
     team_id: teamId, 
     championship_id: champId, 
     round, 
     data: decisions 
   }); 
-
   return { error };
 };
 
