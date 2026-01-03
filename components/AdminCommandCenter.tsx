@@ -6,11 +6,14 @@ import {
   CheckCircle2, Save, Loader2, RefreshCw, Star,
   Search, ShieldCheck, Trash2, Mail, Plus,
   Trophy, LayoutGrid, Activity, Calculator, Sliders,
-  ChevronRight, Calendar, BarChart3, Radio
+  ChevronRight, Calendar, BarChart3, Radio, Monitor,
+  Play, Pause, ArrowLeft
 } from 'lucide-react';
 import { listAllUsers, updateUserPremiumStatus, getChampionships, supabase } from '../services/supabase';
 import { UserProfile, Championship } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
+import TutorArenaControl from './TutorArenaControl';
+import TutorDecisionMonitor from './TutorDecisionMonitor';
 
 interface AdminProps {
   preTab?: 'tournaments' | 'users' | 'opal' | 'system';
@@ -22,6 +25,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -38,6 +42,48 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
   useEffect(() => {
     fetchData();
   }, [activeTab]);
+
+  // Se uma arena estiver selecionada, entramos no modo "Drill-down" de gestão
+  if (selectedArena) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+        <header className="flex items-center justify-between px-4">
+           <div className="flex items-center gap-6">
+              <button 
+                onClick={() => setSelectedArena(null)}
+                className="p-4 bg-white/5 text-slate-400 hover:text-white rounded-2xl border border-white/5 transition-all"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <div>
+                 <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">
+                    Gestão: <span className="text-orange-500">{selectedArena.name}</span>
+                 </h1>
+                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2 italic">
+                   Nodo de Operação Industrial v6.0 • Ciclo Atual: 0{selectedArena.current_round}
+                 </p>
+              </div>
+           </div>
+           <div className="flex gap-4">
+              <button className="px-8 py-4 bg-emerald-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl">
+                 <Play size={14} fill="currentColor"/> Processar Rodada
+              </button>
+           </div>
+        </header>
+
+        <div className="grid grid-cols-1 gap-12 px-4">
+           {/* Monitor de Decisões Live */}
+           <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
+           
+           {/* Controle de Ecossistema (Parametrização Próximo Período) */}
+           <TutorArenaControl 
+             championship={selectedArena} 
+             onUpdate={(updates) => setSelectedArena({...selectedArena, ...updates})} 
+           />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
@@ -128,7 +174,12 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                                  </div>
                               </div>
                               <div className="pt-8 flex gap-3">
-                                 <button className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg active:scale-95">Monitorar</button>
+                                 <button 
+                                   onClick={() => setSelectedArena(champ)}
+                                   className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                                 >
+                                   <Monitor size={14}/> Gerenciar Arena
+                                 </button>
                                  <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:text-rose-500 transition-colors border border-slate-100"><Trash2 size={16} /></button>
                               </div>
                            </div>
