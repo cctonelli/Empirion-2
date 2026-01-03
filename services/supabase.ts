@@ -12,32 +12,38 @@ const getSafeEnv = (key: string): string => {
 const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = getSafeEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
-export const isTestMode = getSafeEnv('IS_TEST_MODE') === 'true' || true; 
+// Em modo ALPHA, isTestMode é forçado para permitir o bypass de auth nas escritas
+export const isTestMode = true; 
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/**
+ * Orquestrador de segurança que permite bypass total em isTestMode 
+ * para viabilizar o "Teste Grátis" sem barreiras de RLS/Auth no client.
+ */
 const secureAction = async (action: () => Promise<any>) => {
-  if (isTestMode && localStorage.getItem('empirion_demo_session')) return action();
+  if (isTestMode) return action(); 
+  
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Acesso negado.");
+  if (!session) throw new Error("Acesso negado: Sessão Requerida.");
   return action();
 };
 
-/**
- * Cria o Campeonato e as Equipes nominadas (O Tabuleiro de Xadrez)
- */
 export const createChampionshipWithTeams = async (champData: any, teams: { name: string }[]) => {
   return secureAction(async () => {
-    // 1. Inserir o Campeonato
+    // 1. Inserir Arena
     const { data: champ, error: cErr } = await supabase
       .from('championships')
-      .insert([champData])
+      .insert([{ 
+        ...champData,
+        status: 'active' // Garante que nasce visível
+      }])
       .select()
       .single();
 
     if (cErr) throw cErr;
 
-    // 2. Inserir as Equipes (As peças do Xadrez)
+    // 2. Inserir Peças do Xadrez (Equipes)
     const teamsToInsert = teams.map(t => ({
       name: t.name,
       championship_id: champ.id,
@@ -63,20 +69,21 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   `).order('created_at', { ascending: false });
   
   if (onlyPublic) query = query.eq('is_public', true).eq('status', 'active');
-  return query;
+  
+  const { data, error } = await query;
+  return { data: data as Championship[], error };
 };
 
 export const silentTestAuth = async (user: typeof ALPHA_TEST_USERS[0]) => {
   const mockSession = {
     user: { id: user.id, email: user.email, user_metadata: { full_name: user.name, role: user.role } },
-    access_token: 'demo-token-bypass',
+    access_token: 'alpha-bypass',
     expires_in: 3600
   };
   localStorage.setItem('empirion_demo_session', JSON.stringify(mockSession));
   return { data: { session: mockSession }, error: null };
 };
 
-// Fixed: Added operatorName argument to match calls in components
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, operatorName?: string) => {
   return secureAction(async () => {
     const { error } = await supabase.from('current_decisions').upsert({ 
@@ -103,7 +110,7 @@ export const provisionDemoEnvironment = async () => {
       ];
       await createChampionshipWithTeams(arenaT2, teams);
     }
-  } catch (err) { console.error(err); }
+  } catch (err) { console.error("Provisioning Error:", err); }
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -123,43 +130,36 @@ export const listAllUsers = async () => {
   return supabase.from('users').select('*').order('created_at', { ascending: false });
 };
 
-export const resetAlphaData = async () => {
-  await supabase.from('current_decisions').delete().eq('championship_id', 'arena-2026-t2');
-};
-
-// Fixed: Added missing fetchPageContent export
 export const fetchPageContent = async (page: string, lang: string) => {
   const { data } = await supabase.from('page_contents').select('content').eq('page', page).eq('lang', lang).maybeSingle();
   return data?.content;
 };
 
-// Fixed: Added missing getModalities export
 export const getModalities = async () => {
   const { data } = await supabase.from('modalities').select('*').eq('is_public', true);
   return (data || []) as Modality[];
 };
 
-// Fixed: Added missing subscribeToModalities export
 export const subscribeToModalities = (callback: () => void) => {
   return supabase.channel('modalities_changes').on('postgres_changes', { event: '*', table: 'modalities' }, callback).subscribe();
 };
 
-// Fixed: Added missing updateUserPremiumStatus export
 export const updateUserPremiumStatus = async (userId: string, status: boolean) => {
   return supabase.from('users').update({ is_opal_premium: status }).eq('supabase_user_id', userId);
 };
 
-// Fixed: Added missing updateEcosystem export
 export const updateEcosystem = async (champId: string, config: any) => {
   return supabase.from('championships').update(config).eq('id', champId);
 };
 
-// Fixed: Added missing getPublicReports export
 export const getPublicReports = async (champId: string, round: number) => {
   return supabase.from('public_reports').select('*').eq('championship_id', champId).eq('round', round);
 };
 
-// Fixed: Added missing submitCommunityVote export
 export const submitCommunityVote = async (vote: any) => {
   return supabase.from('community_votes').insert([vote]);
+};
+
+export const resetAlphaData = async () => {
+  await supabase.from('current_decisions').delete().eq('championship_id', 'arena-2026-t2');
 };

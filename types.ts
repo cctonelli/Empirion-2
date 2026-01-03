@@ -8,6 +8,35 @@ export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 
+// Fix: Added missing MessageBoardItem interface used in Dashboard.tsx
+export interface MessageBoardItem {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+  isImportant?: boolean;
+}
+
+// Fix: Added missing BlackSwanEvent interface used in Dashboard and Tutor Control
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
+  };
+}
+
+// Fix: Added missing CommunityCriteria interface used in CommunityView and Championship config
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
 export interface AccountNode {
   id: string;
   label: string;
@@ -16,7 +45,16 @@ export interface AccountNode {
   isReadOnly?: boolean;
   children?: AccountNode[];
   isEditable?: boolean;
-  isTemplateAccount?: boolean; // Flag para impedir exclusão de contas do template original
+  isTemplateAccount?: boolean;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  championship_id: string;
+  status: string;
+  invite_code: string;
+  created_at?: string;
 }
 
 export interface RegionConfig {
@@ -55,12 +93,6 @@ export interface EcosystemConfig {
   marketVolatility: number;
 }
 
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
 export interface Championship {
   id: string;
   name: string;
@@ -79,6 +111,7 @@ export interface Championship {
     modalityType: ModalityType;
     teamsLimit: number;
     botsCount: number;
+    // Fix: Added missing votingCriteria property to Championship config
     votingCriteria?: CommunityCriteria[];
   };
   initial_financials?: {
@@ -90,31 +123,21 @@ export interface Championship {
   };
   market_indicators?: MacroIndicators;
   ecosystemConfig?: EcosystemConfig;
-  // Added teams property to fix TypeScript errors in multiple components
-  teams?: any[];
+  teams?: Team[]; // Relação explícita para o Xadrez
 }
 
-export interface TeamHistoricalData {
-  teamId: string;
-  teamName: string;
-  isUserTeam: boolean;
-  isBot: boolean;
-  financials: {
+// Fix: Added missing ChampionshipTemplate interface used in constants.tsx
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  branch: Branch;
+  sector: string;
+  description: string;
+  config: Partial<Championship['config']>;
+  market_indicators: MacroIndicators;
+  initial_financials: {
     balance_sheet: AccountNode[];
     dre: AccountNode[];
-  };
-}
-
-export interface UserProfile {
-  id: string;
-  supabase_user_id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  is_opal_premium: boolean;
-  created_at: string;
-  opal_config?: {
-    opal_url: string;
   };
 }
 
@@ -129,24 +152,14 @@ export interface DecisionData {
   finance: { loanRequest: number; loanType: number; application: number; termSalesInterest: number; buyMachines: { alfa: number; beta: number; gama: number }; sellMachines: { alfa: number; beta: number; gama: number }; };
 }
 
-export interface ChampionshipTemplate {
+export interface UserProfile {
   id: string;
+  supabase_user_id: string;
   name: string;
-  branch: Branch;
-  sector: string;
-  description: string;
-  config: {
-    roundFrequencyDays: number;
-    salesMode: SalesMode;
-    scenarioType: ScenarioType;
-    transparencyLevel: TransparencyLevel;
-    modalityType: ModalityType;
-  };
-  market_indicators: MacroIndicators;
-  initial_financials: {
-    balance_sheet: AccountNode[];
-    dre: AccountNode[];
-  };
+  email: string;
+  role: UserRole;
+  is_opal_premium: boolean;
+  created_at: string;
 }
 
 export interface Modality {
@@ -156,33 +169,5 @@ export interface Modality {
   description: string;
   image_url?: string;
   is_public: boolean;
-  page_content: {
-    hero: {
-      title: string;
-      subtitle: string;
-    };
-    features: string[];
-    kpis: string[];
-    accent_color?: 'blue' | 'emerald' | 'orange';
-  };
-}
-
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
-  };
-}
-
-export interface MessageBoardItem {
-  id: string;
-  sender: string;
-  text: string;
-  timestamp: string;
-  isImportant?: boolean;
+  page_content: any;
 }

@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, ChevronRight, Play, Loader2, Target, Shield, Globe, Box } from 'lucide-react';
-import { getChampionships, isTestMode } from '../services/supabase';
-import { Championship } from '../types';
+import { getChampionships } from '../services/supabase';
+import { Championship, Team } from '../types';
 
 const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: string) => void }> = ({ onSelectTeam }) => {
   const [championships, setChampionships] = useState<Championship[]>([]);
@@ -13,8 +13,12 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      const { data } = await getChampionships();
-      if (data) setChampionships(data as any);
+      try {
+        const { data } = await getChampionships();
+        if (data) setChampionships(data);
+      } catch (err) {
+        console.error("Fetch Error:", err);
+      }
       setLoading(false);
     };
     fetch();
@@ -66,7 +70,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                      </div>
                      <div className="space-y-1">
                         <span className="text-[8px] font-black text-slate-500 uppercase">Visibilidade</span>
-                        <div className="text-orange-500 font-black uppercase text-[10px] italic">Pública</div>
+                        <div className="text-orange-500 font-black uppercase text-[10px] italic">{champ.is_public ? 'Pública' : 'Privada'}</div>
                      </div>
                   </div>
                   <button 
@@ -94,7 +98,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                    <p className="text-slate-400 font-medium italic">No modo "Xadrez dos Negócios", você pode operar qualquer equipe da arena.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                   {(selectedArena as any).teams?.map((team: any) => (
+                   {selectedArena.teams?.map((team: Team) => (
                      <button 
                        key={team.id}
                        onClick={() => onSelectTeam(selectedArena.id, team.id)}
