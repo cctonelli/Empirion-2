@@ -38,9 +38,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       market_indicators: champData.market_indicators
     };
 
-    // NEVER send is_trial to the physical database columns as it doesn't exist there.
-    // It's a virtual differentiator managed by table names.
-
     if (!isTrial) {
       payload.is_public = champData.is_public || false;
       payload.sales_mode = champData.sales_mode;
@@ -55,9 +52,13 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       .from(table)
       .insert([payload])
       .select()
-      .single();
+      .maybeSingle();
 
-    if (cErr) throw cErr;
+    if (cErr) {
+      console.error(`Error inserting into ${table}:`, cErr);
+      throw cErr;
+    }
+    if (!champ) throw new Error("Arena record creation failed - no data returned.");
 
     const teamsToInsert = teams.map(t => ({
       name: t.name,
@@ -70,23 +71,36 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       .insert(teamsToInsert)
       .select();
 
-    if (tErr) throw tErr;
+    if (tErr) {
+      console.error(`Error inserting into ${teamsTable}:`, tErr);
+      throw tErr;
+    }
 
     return { champ: { ...champ, is_trial: isTrial } as Championship, teams: teamsData as Team[] };
   } catch (err) {
-    console.error("Supabase Persistence Error:", err);
+    console.error("CRITICAL SUPABASE ORCHESTRATION ERROR:", err);
     throw err;
   }
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {
-  // Query both sources and label them for the frontend
-  const { data: realData } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
-  const { data: trialData } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
+  // Query defensiva: se uma tabela falhar (ex: não existir trial), ainda tentamos a real
+  let realData: any[] = [];
+  let trialData: any[] = [];
+
+  try {
+    const { data } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
+    if (data) realData = data;
+  } catch (e) { console.warn("Could not fetch main championships table."); }
+
+  try {
+    const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
+    if (data) trialData = data;
+  } catch (e) { console.warn("Could not fetch trial championships table."); }
 
   const combined = [
-    ...(realData || []).map(c => ({ ...c, is_trial: false })),
-    ...(trialData || []).map(c => ({ ...c, is_trial: true }))
+    ...realData.map(c => ({ ...c, is_trial: false })),
+    ...trialData.map(c => ({ ...c, is_trial: true }))
   ];
 
   if (onlyPublic) {
@@ -99,15 +113,13 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, isTrial: boolean = false) => {
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
   
-  // PostgREST upsert requires a unique constraint. trial_decisions lacks one on (team_id, champ_id, round).
-  // For sandbox, we might want to check existence or just insert if we don't care about duplicates, 
-  // but better to attempt a standard PostgREST upsert if constraints are set.
+  // Para trial, tentamos insert se não houver constraint de UNIQUE. Se houver, o upsert resolve.
   const { error } = await supabase.from(table).upsert({ 
     team_id: teamId, 
     championship_id: champId, 
     round, 
     data: decisions 
-  }, { onConflict: 'team_id,championship_id,round' }); 
+  }); 
 
   return { error };
 };
@@ -124,7 +136,6 @@ export const silentTestAuth = async (user: any) => {
     expires_in: 3600
   };
   localStorage.setItem('empirion_demo_session', JSON.stringify(mockSession));
-  // Store trial session explicitly to help components route logic
   localStorage.setItem('is_trial_session', user.role === 'player' ? 'true' : 'false');
   return { data: { session: mockSession }, error: null };
 };
