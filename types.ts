@@ -70,11 +70,11 @@ export interface Championship {
     votingCriteria?: CommunityCriteria[];
   };
   initial_financials?: any;
-  initial_market_data?: any;
-  market_indicators?: any;
+  initial_market_data?: any; // Específico para Trial/Sandbox
+  market_indicators?: any;   // Coluna padrão para Produção
   teams?: Team[];
   is_local?: boolean; 
-  is_trial?: boolean; // Flag virtual apenas para controle de UI, não necessária no DB principal
+  is_trial?: boolean; 
   created_at?: string;
   ecosystemConfig?: EcosystemConfig;
 }
@@ -83,8 +83,8 @@ export interface Team {
   id: string;
   name: string;
   championship_id: string;
-  status?: string; // Optional for Trial teams
-  invite_code?: string; // Optional for Trial teams
+  status?: string; 
+  invite_code?: string; 
   created_at?: string;
 }
 

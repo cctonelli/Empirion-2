@@ -16,8 +16,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
 /**
- * Persistência Inteligente: 
+ * Persistência Inteligente v6.5: 
  * Diferencia entre tabelas de produção (championships) e sandbox (trial_championships).
+ * Resolve erro de coluna 'initial_market_data' inexistente na tabela principal.
  */
 export const createChampionshipWithTeams = async (champData: Partial<Championship>, teams: { name: string }[], isTrial: boolean = false) => {
   const table = isTrial ? 'trial_championships' : 'championships';
@@ -26,6 +27,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
+    // Construção do payload base (campos comuns)
     const payload: any = {
       name: champData.name,
       branch: champData.branch,
@@ -34,12 +36,15 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       total_rounds: champData.total_rounds || 12,
       config: champData.config || {},
       initial_financials: champData.initial_financials,
-      // Garante preenchimento de market data para trial e production
-      initial_market_data: champData.market_indicators || champData.initial_market_data,
       market_indicators: champData.market_indicators
     };
 
-    if (!isTrial) {
+    // Lógica divergente por Schema
+    if (isTrial) {
+      // Tabela TRIAL possui a coluna initial_market_data
+      payload.initial_market_data = champData.market_indicators || champData.initial_market_data;
+    } else {
+      // Tabela PRODUCTION NÃO possui initial_market_data. Usamos apenas market_indicators.
       payload.is_public = champData.is_public || false;
       payload.sales_mode = champData.sales_mode;
       payload.scenario_type = champData.scenario_type;
@@ -47,23 +52,26 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       payload.round_frequency_days = champData.round_frequency_days;
       payload.transparency_level = champData.transparency_level;
       payload.tutor_id = session?.user?.id;
+      
+      // Sanitização de segurança: garante que a coluna problemática não vá no payload
+      delete payload.initial_market_data;
     }
 
     const { data: champ, error: cErr } = await supabase
       .from(table)
       .insert([payload])
       .select()
-      .single(); // Mudança para single() para forçar erro imediato se o insert falhar em retornar dados
+      .single();
 
     if (cErr) {
-      console.error(`Error inserting into ${table}:`, cErr);
-      if (cErr.message?.includes("does not exist")) {
-        throw new Error(`A tabela "${table}" não foi encontrada no seu Supabase. Execute o script SQL de criação.`);
+      console.error(`Supabase Insert Error [${table}]:`, cErr);
+      if (cErr.message?.includes("initial_market_data")) {
+        throw new Error("Erro de Schema: A coluna 'initial_market_data' foi solicitada mas não existe nesta tabela.");
       }
       throw cErr;
     }
 
-    if (!champ) throw new Error("A criação da arena falhou (nenhum dado retornado). Verifique as permissões de RLS.");
+    if (!champ) throw new Error("A criação da arena falhou (vazio).");
 
     const teamsToInsert = teams.map(t => ({
       name: t.name,
@@ -76,14 +84,11 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       .insert(teamsToInsert)
       .select();
 
-    if (tErr) {
-      console.error(`Error inserting into ${teamsTable}:`, tErr);
-      throw tErr;
-    }
+    if (tErr) throw tErr;
 
     return { champ: { ...champ, is_trial: isTrial } as Championship, teams: teamsData as Team[] };
   } catch (err: any) {
-    console.error("ORCHESTRATION ENGINE ERROR:", err);
+    console.error("ORCHESTRATION ENGINE CRASH:", err);
     throw err;
   }
 };
@@ -95,12 +100,12 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   try {
     const { data } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
     if (data) realData = data;
-  } catch (e) { console.warn("Produção offline."); }
+  } catch (e) { console.warn("Main node unreachable."); }
 
   try {
     const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
     if (data) trialData = data;
-  } catch (e) { console.warn("Sandbox offline."); }
+  } catch (e) { console.warn("Sandbox node unreachable."); }
 
   const combined = [
     ...realData.map(c => ({ ...c, is_trial: false })),
@@ -137,7 +142,7 @@ export const silentTestAuth = async (user: any) => {
     expires_in: 3600
   };
   localStorage.setItem('empirion_demo_session', JSON.stringify(mockSession));
-  localStorage.setItem('is_trial_session', user.role === 'player' ? 'true' : 'false');
+  localStorage.setItem('is_trial_session', 'true');
   return { data: { session: mockSession }, error: null };
 };
 
