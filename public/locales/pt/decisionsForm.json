@@ -1,11 +1,20 @@
 
 {
-  "title": "Folha de Decisões v5.0",
-  "submit": "Transmitir Decisões",
+  "title": "Folha de Decisões v6.0",
+  "submit": "Selar e Transmitir Ciclo",
   "projections": "Oráculo de Projeção",
-  "marketing": "Marketing & Regiões",
-  "production": "Fábrica & OEE",
+  "marketing": "Comercial & Regiões",
+  "production": "Produção & Fábrica",
   "hr": "Recursos Humanos",
   "finance": "CapEx & Finanças",
-  "success_msg": "Comando Selado: Decisões transmitidas com sucesso."
+  "legal": "Protocolo Jurídico",
+  "review": "Revisão Estratégica",
+  "success_msg": "PROTOCOLO SELADO: Suas decisões foram integradas ao engine Oracle.",
+  "recovery": {
+    "none": "Fluxo Normal",
+    "extrajudicial": "Recuperação Extrajudicial",
+    "judicial": "Recuperação Judicial (RJ)",
+    "label": "Declare Status Legal",
+    "warning": "RJ impõe restrições de crédito e CapEx."
+  }
 }

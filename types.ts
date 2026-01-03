@@ -8,6 +8,7 @@ export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
+export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 
 export interface MacroIndicators {
   growthRate: number;
@@ -109,6 +110,9 @@ export interface DecisionData {
   hr: any;
   production: any;
   finance: any;
+  legal?: {
+    recovery_mode: RecoveryMode;
+  };
 }
 
 export interface AccountNode {
