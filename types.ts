@@ -22,46 +22,25 @@ export interface UserProfile {
   created_at: string;
 }
 
-export interface Team {
-  id: string;
-  name: string;
-  championship_id: string;
-  status?: string;
-  invite_code?: string;
+export interface DecisionData {
+  regions: Record<number, { price: number; term: DiscreteTerm; marketing: number }>;
+  hr: { hired: number; fired: number; salary: number; trainingPercent: number; participationPercent: number; sales_staff_count: number };
+  production: { purchaseMPA: number; purchaseMPB: number; paymentType: DiscreteTerm; activityLevel: number; rd_investment: number };
+  finance: { loanRequest: number; application: number; buyMachines: { alfa: number; beta: number; gama: number } };
+  legal: { recovery_mode: RecoveryMode };
 }
 
-export interface BusinessPlan {
-  id?: string;
-  championship_id: string;
-  team_id: string;
-  round: number;
-  version: number;
-  data: any; // Seções do plano (SWOT, Estratégia, etc)
-  status: 'draft' | 'submitted';
-  pdf_url?: string;
-  updated_at?: string;
+export interface MarketPulse {
+  total_rj: number;
+  total_rej: number;
+  total_loans_count: number;
+  total_loans_value: number;
+  machines_traded: { bought: number; sold: number };
+  avg_liquidity: number;
+  avg_debt: number;
 }
 
-export interface Modality {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url?: string;
-  page_content: any;
-}
-
-export interface AccountNode {
-  id: string;
-  label: string;
-  value: number;
-  type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'expense' | 'revenue';
-  isReadOnly?: boolean;
-  isEditable?: boolean;
-  isTemplateAccount?: boolean;
-  children?: AccountNode[];
-}
-
+/* Added MacroIndicators interface to fix multiple errors in constants.tsx, simulation.ts and TutorArenaControl.tsx */
 export interface MacroIndicators {
   growthRate: number;
   inflationRate: number;
@@ -70,7 +49,7 @@ export interface MacroIndicators {
   salesAvgInterest: number;
   avgProdPerMan: number;
   importedProducts: number;
-  laborAvailability: 'low' | 'medium' | 'high';
+  laborAvailability: 'low' | 'medium' | 'high' | string;
   providerPrices: { mpA: number; mpB: number };
   distributionCostUnit: number;
   marketingExpenseBase: number;
@@ -81,6 +60,7 @@ export interface MacroIndicators {
   demand_regions?: number[];
 }
 
+/* Added EcosystemConfig interface to fix multiple errors in supabase.ts, simulation.ts and TutorArenaControl.tsx */
 export interface EcosystemConfig {
   scenarioType: ScenarioType;
   modalityType: ModalityType;
@@ -88,6 +68,15 @@ export interface EcosystemConfig {
   demandMultiplier: number;
   interestRate: number;
   marketVolatility: number;
+}
+
+/* Added Team interface to fix multiple errors in supabase.ts and ChampionshipsView.tsx */
+export interface Team {
+  id: string;
+  name: string;
+  championship_id: string;
+  status?: string;
+  invite_code?: string;
 }
 
 export interface Championship {
@@ -104,6 +93,7 @@ export interface Championship {
     bp_enabled?: boolean;
     bp_frequency?: number;
     bp_mandatory?: boolean;
+    teamsLimit?: number;
     [key: string]: any;
   };
   market_indicators: MacroIndicators;
@@ -111,17 +101,21 @@ export interface Championship {
   round_started_at?: string;
   is_trial?: boolean;
   teams?: Team[];
-  created_at?: string;
+  marketPulse?: MarketPulse;
+  /* Added missing properties to Championship to fix multiple property access errors */
   is_public?: boolean;
+  created_at?: string;
+  initial_market_data?: any;
   sales_mode?: SalesMode;
   scenario_type?: ScenarioType;
   currency?: CurrencyType;
   round_frequency_days?: number;
   transparency_level?: TransparencyLevel;
-  initial_market_data?: any;
   ecosystemConfig?: EcosystemConfig;
+  tutor_id?: string;
 }
 
+/* Added ChampionshipTemplate interface to fix errors in constants.tsx and ChampionshipWizard.tsx */
 export interface ChampionshipTemplate {
   id: string;
   name: string;
@@ -129,11 +123,11 @@ export interface ChampionshipTemplate {
   sector: string;
   description: string;
   config: {
-    roundFrequencyDays?: number;
-    salesMode?: SalesMode;
-    scenarioType?: ScenarioType;
-    transparencyLevel?: TransparencyLevel;
-    modalityType?: ModalityType;
+    roundFrequencyDays: number;
+    salesMode: SalesMode;
+    scenarioType: ScenarioType;
+    transparencyLevel: TransparencyLevel;
+    modalityType: ModalityType;
     deadlineValue?: number;
     deadlineUnit?: DeadlineUnit;
   };
@@ -144,35 +138,7 @@ export interface ChampionshipTemplate {
   };
 }
 
-export interface DecisionData {
-  regions: Record<number, { price: number; term: DiscreteTerm; marketing: number }>;
-  hr: { hired: number; fired: number; salary: number; trainingPercent: number; participationPercent: number; sales_staff_count: number };
-  production: { purchaseMPA: number; purchaseMPB: number; paymentType: DiscreteTerm; activityLevel: number; rd_investment: number };
-  finance: { loanRequest: number; application: number; buyMachines: { alfa: number; beta: number; gama: number } };
-  legal: { recovery_mode: RecoveryMode };
-}
-
-export interface FinancialSnapshot {
-  round: number;
-  balance_sheet: any;
-  dre: any;
-  cash_flow: any;
-  kpis: {
-    ebitda: number;
-    netProfit: number;
-    marketShare: number;
-    oee: number;
-    tsr: number;
-    solvency: number;
-  };
-}
-
-export interface TeamHistory {
-  team_id: string;
-  team_name: string;
-  snapshots: FinancialSnapshot[];
-}
-
+/* Added BlackSwanEvent interface to fix errors in Dashboard.tsx and TutorArenaControl.tsx */
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -185,6 +151,7 @@ export interface BlackSwanEvent {
   };
 }
 
+/* Added MessageBoardItem interface to fix errors in Dashboard.tsx */
 export interface MessageBoardItem {
   id: string;
   sender: string;
@@ -193,8 +160,47 @@ export interface MessageBoardItem {
   isImportant?: boolean;
 }
 
+/* Added BusinessPlan interface to fix errors in supabase.ts and BusinessPlanWizard.tsx */
+export interface BusinessPlan {
+  id: string;
+  championship_id: string;
+  team_id: string;
+  round: number;
+  version: number;
+  data: Record<number, string>;
+  status: 'draft' | 'final';
+  updated_at?: string;
+}
+
+/* Added CommunityCriteria interface to fix errors in TutorArenaControl.tsx and CommunityView.tsx */
 export interface CommunityCriteria {
   id: string;
   label: string;
   weight: number;
+}
+
+/* Added Modality interface to fix errors in LandingPage.tsx, ModalityDetail.tsx and useModalities.ts */
+export interface Modality {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  page_content: {
+    hero: { title: string; subtitle: string };
+    features: string[];
+    kpis: string[];
+    accent_color?: 'blue' | 'emerald' | 'orange';
+  };
+}
+
+export interface AccountNode {
+  id: string;
+  label: string;
+  value: number;
+  type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'expense' | 'revenue';
+  isReadOnly?: boolean;
+  isEditable?: boolean;
+  isTemplateAccount?: boolean;
+  children?: AccountNode[];
 }
