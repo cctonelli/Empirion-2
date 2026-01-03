@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Timer, Sparkles, ChevronRight, Search, Filter, Globe, Loader2, AlertCircle } from 'lucide-react';
@@ -100,7 +101,6 @@ const OpenTournaments: React.FC = () => {
                      <div className="space-y-1">
                         <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Current Cycle</span>
                         <div className="flex items-center gap-2 text-white font-black text-lg">
-                           {/* Fix: changed currentRound to current_round and totalRounds to total_rounds */}
                            <Timer size={16} className="text-orange-500" /> {champ.current_round}/{champ.total_rounds}
                         </div>
                      </div>

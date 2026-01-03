@@ -97,8 +97,8 @@ export interface Championship {
   branch: Branch;
   status: ChampionshipStatus;
   is_public: boolean;
-  current_round: number; // Sincronizado com DB
-  total_rounds: number;   // Sincronizado com DB
+  current_round: number; // DB: current_round
+  total_rounds: number;   // DB: total_rounds
   tutor_id?: string;
   sector?: string;
   sales_mode: SalesMode;

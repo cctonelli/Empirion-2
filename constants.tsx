@@ -1,3 +1,4 @@
+
 import { Branch, ChampionshipTemplate, MacroIndicators, Championship } from './types';
 
 export const COLORS = {
@@ -135,10 +136,13 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   branch: 'industrial',
   status: 'active',
   is_public: true,
-  // Fix: renamed currentRound to current_round to match Championship interface
   current_round: 0,
-  // Fix: renamed totalRounds to total_rounds to match Championship interface
   total_rounds: 12,
+  sales_mode: 'hybrid',
+  scenario_type: 'simulated',
+  currency: 'BRL',
+  round_frequency_days: 7,
+  transparency_level: 'medium',
   config: {
     currency: 'BRL',
     roundFrequencyDays: 7,
@@ -161,9 +165,8 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   }
 };
 
-// Fix: Added missing fields branch and round to match usage in OpenTournaments.tsx
 export const MOCK_ONGOING_CHAMPIONSHIPS = [
-  { id: 'c1', name: "Industrial Mastery", branch: "Industrial", status: "Rodada 1/12", round: "1/12", teams: 8, lead: "Equipe Alpha" }
+  { id: 'c1', name: "Industrial Mastery", branch: "Industrial", status: "Rodada 1/12", current_round: 1, total_rounds: 12, teamsCount: 8, lead: "Equipe Alpha" }
 ];
 
 export const MENU_STRUCTURE = [

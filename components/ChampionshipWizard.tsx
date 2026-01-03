@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Check, Settings, Globe, Layers, Cpu, Zap, Loader2,
@@ -29,7 +30,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
     scenarioType: 'simulated' as ScenarioType, modalityType: 'standard' as ModalityType,
     transparency: 'medium' as TransparencyLevel, totalRounds: 12, teamsLimit: 8, botsCount: 0, 
     currency: 'BRL' as CurrencyType, isPublic: false,
-    // Fix: Added roundFrequencyDays to formData initial state
     roundFrequencyDays: 7,
     rules: {
       esg_enabled: false, black_swan_events: true, labor_strikes: false,
