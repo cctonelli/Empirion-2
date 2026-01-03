@@ -16,8 +16,8 @@ import DecisionForm from './DecisionForm';
 import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
-import { supabase, resetAlphaData, getChampionships } from '../services/supabase';
-import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship } from '../types';
+import { supabase, resetAlphaData, getChampionships, getUserProfile } from '../services/supabase';
+import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship, UserRole } from '../types';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
@@ -29,6 +29,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [showDecisionForm, setShowDecisionForm] = useState(false);
   const [showBusinessPlan, setShowBusinessPlan] = useState(false);
   const [showGazette, setShowGazette] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('player');
   
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeamId, setActiveTeamId] = useState<string | null>(null);
@@ -44,6 +45,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       const champId = localStorage.getItem('active_champ_id');
       const teamId = localStorage.getItem('active_team_id');
       
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const profile = await getUserProfile(session.user.id);
+        if (profile) setUserRole(profile.role);
+      }
+
       if (champId) {
         const { data } = await getChampionships();
         const arena = data?.find(a => a.id === champId);
@@ -144,7 +151,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       
       <AnimatePresence>
          {showGazette && activeArena && (
-           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 md:p-20">
+           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-10">
               <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={() => setShowGazette(false)}
@@ -155,6 +162,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     arena={activeArena} 
                     news={gazetaNews} 
                     round={(activeArena?.current_round || 0) + 1} 
+                    userRole={userRole}
                     onClose={() => setShowGazette(false)} 
                  />
               </div>
