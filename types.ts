@@ -7,6 +7,7 @@ export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
+export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
 
 export interface MacroIndicators {
   growthRate: number;
@@ -57,10 +58,14 @@ export interface Championship {
   scenario_type: ScenarioType;
   currency: CurrencyType;
   round_frequency_days: number;
+  deadline_value: number;
+  deadline_unit: DeadlineUnit;
   transparency_level: TransparencyLevel;
   config: {
     currency: CurrencyType;
     roundFrequencyDays: number;
+    deadlineValue: number;
+    deadlineUnit: DeadlineUnit;
     salesMode: SalesMode;
     scenarioType: ScenarioType;
     transparencyLevel: TransparencyLevel;
@@ -70,12 +75,13 @@ export interface Championship {
     votingCriteria?: CommunityCriteria[];
   };
   initial_financials?: any;
-  initial_market_data?: any; // Específico para Trial/Sandbox
-  market_indicators?: any;   // Coluna padrão para Produção
+  initial_market_data?: any; 
+  market_indicators?: any;   
   teams?: Team[];
   is_local?: boolean; 
   is_trial?: boolean; 
   created_at?: string;
+  round_started_at?: string;
   ecosystemConfig?: EcosystemConfig;
 }
 

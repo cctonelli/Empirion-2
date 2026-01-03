@@ -146,9 +146,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
              {activeArena?.name || 'Carregando...'} • {activeTeamName || 'Equipe Alpha'}
           </span>
         </div>
-        <div className="flex wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <LiveBriefing />
-          <ChampionshipTimer />
+          {activeArena && (
+            <ChampionshipTimer 
+              roundStartedAt={activeArena.round_started_at || activeArena.created_at} 
+              deadlineValue={activeArena.deadline_value}
+              deadlineUnit={activeArena.deadline_unit}
+            />
+          )}
         </div>
       </div>
 

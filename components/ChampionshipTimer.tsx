@@ -1,56 +1,85 @@
+
 import React, { useState, useEffect } from 'react';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, AlertCircle, Hourglass } from 'lucide-react';
+import { DeadlineUnit } from '../types';
 
 interface ChampionshipTimerProps {
-  deadline?: string; // ISO string or target timestamp
+  roundStartedAt?: string; 
+  deadlineValue?: number;
+  deadlineUnit?: DeadlineUnit;
   onExpire?: () => void;
 }
 
-const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ deadline, onExpire }) => {
-  const [timeLeft, setTimeLeft] = useState<string>('00:00:00');
+const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, deadlineValue = 7, deadlineUnit = 'days', onExpire }) => {
+  const [timeLeft, setTimeLeft] = useState<string>('Calculando...');
   const [isCritical, setIsCritical] = useState(false);
+  const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
-    // If no deadline, default to 4h 22m for demo/fallback
-    const targetDate = deadline ? new Date(deadline).getTime() : Date.now() + (4 * 60 * 60 + 22 * 60 + 15) * 1000;
+    // Cálculo do Timestamp Final
+    const startTime = roundStartedAt ? new Date(roundStartedAt).getTime() : Date.now();
+    let durationMs = 0;
+
+    switch(deadlineUnit) {
+      case 'hours': durationMs = deadlineValue * 60 * 60 * 1000; break;
+      case 'days': durationMs = deadlineValue * 24 * 60 * 60 * 1000; break;
+      case 'weeks': durationMs = deadlineValue * 7 * 24 * 60 * 60 * 1000; break;
+      case 'months': durationMs = deadlineValue * 30 * 24 * 60 * 60 * 1000; break;
+      default: durationMs = 7 * 24 * 60 * 60 * 1000;
+    }
+
+    const targetDate = startTime + durationMs;
 
     const timer = setInterval(() => {
       const now = Date.now();
       const diff = targetDate - now;
 
       if (diff <= 0) {
-        setTimeLeft('00:00:00');
+        setTimeLeft('PERÍODO ENCERRADO');
+        setIsCritical(true);
+        setIsUrgent(true);
         clearInterval(timer);
         if (onExpire) onExpire();
         return;
       }
 
-      const h = Math.floor(diff / (1000 * 60 * 60));
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const s = Math.floor((diff % (1000 * 60)) / 1000);
 
-      const formatted = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      let formatted = "";
+      if (d > 0) formatted += `${d}d `;
+      formatted += `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      
       setTimeLeft(formatted);
-      setIsCritical(diff < 30 * 60 * 1000); // Critical if less than 30 mins
+      setIsCritical(diff < 24 * 60 * 60 * 1000); // Alerta laranja < 24h
+      setIsUrgent(diff < 1 * 60 * 60 * 1000);   // Alerta pulsante < 1h
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [deadline, onExpire]);
+  }, [roundStartedAt, deadlineValue, deadlineUnit, onExpire]);
 
   return (
-    <div className={`px-6 py-3 rounded-2xl shadow-sm border flex items-center gap-4 transition-all duration-500 ${
-      isCritical ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-white border-slate-200 text-slate-900'
+    <div className={`px-8 py-4 rounded-[2rem] shadow-2xl border transition-all duration-700 flex items-center gap-6 ${
+      isUrgent ? 'bg-rose-600 border-white text-white animate-pulse scale-105' :
+      isCritical ? 'bg-orange-600 border-orange-400 text-white' : 
+      'bg-slate-900 border-white/10 text-slate-100'
     }`}>
       <div className="flex flex-col">
-        <span className={`text-[10px] font-black uppercase tracking-widest ${isCritical ? 'text-rose-400' : 'text-slate-400'}`}>
-          {isCritical ? 'Urgent Deadline' : 'Cycle Time Remaining'}
+        <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-1 ${
+          isUrgent || isCritical ? 'text-white' : 'text-orange-500'
+        }`}>
+          {isUrgent ? 'Transmissão Crítica' : isCritical ? 'Prazo Próximo' : 'Tempo para Decisão'}
         </span>
-        <span className="text-2xl font-mono font-black tracking-tighter">{timeLeft}</span>
+        <span className="text-2xl font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
       </div>
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-        isCritical ? 'bg-rose-100 text-rose-600 animate-bounce' : 'bg-blue-50 text-blue-600'
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-lg ${
+        isUrgent ? 'bg-white text-rose-600' : 
+        isCritical ? 'bg-white text-orange-600' : 
+        'bg-white/5 text-orange-500 border border-white/5'
       }`}>
-        {isCritical ? <AlertCircle size={24} /> : <Clock size={24} className="animate-pulse" />}
+        {isUrgent ? <AlertCircle size={32} /> : <Clock size={32} className={!isCritical ? 'animate-pulse' : ''} />}
       </div>
     </div>
   );

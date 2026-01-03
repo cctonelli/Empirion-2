@@ -129,6 +129,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   }
 ];
 
+// Fix: Added missing deadline properties to match the Championship interface
 export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   id: 'brazilian-industrial-master',
   name: 'Empirion Street - Industrial Mastery',
@@ -143,10 +144,14 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   scenario_type: 'simulated',
   currency: 'BRL',
   round_frequency_days: 7,
+  deadline_value: 7,
+  deadline_unit: 'days',
   transparency_level: 'medium',
   config: {
     currency: 'BRL',
     roundFrequencyDays: 7,
+    deadlineValue: 7,
+    deadlineUnit: 'days',
     salesMode: 'hybrid',
     scenarioType: 'simulated',
     transparencyLevel: 'medium',

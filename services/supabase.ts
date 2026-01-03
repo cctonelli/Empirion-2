@@ -16,12 +16,10 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
 /**
- * Persistência Inteligente v7.0: 
- * Força o uso de tabelas TRIAL se o usuário estiver em modo demo,
- * prevenindo erros de RLS em tabelas protegidas de produção.
+ * Persistência Inteligente v8.0: 
+ * Inclui agora suporte total à configuração de prazos (Deadlines).
  */
 export const createChampionshipWithTeams = async (champData: Partial<Championship>, teams: { name: string }[], isTrialParam: boolean = false) => {
-  // Detecção dupla de modo trial para segurança máxima
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   
   const table = isTrial ? 'trial_championships' : 'championships';
@@ -36,16 +34,17 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       status: 'active',
       current_round: 0,
       total_rounds: champData.total_rounds || 12,
+      deadline_value: champData.deadline_value || 7,
+      deadline_unit: champData.deadline_unit || 'days',
       config: champData.config || {},
       initial_financials: champData.initial_financials,
-      market_indicators: champData.market_indicators
+      market_indicators: champData.market_indicators,
+      round_started_at: new Date().toISOString()
     };
 
     if (isTrial) {
-      // Sandbox schema possui initial_market_data
       payload.initial_market_data = champData.market_indicators || champData.initial_market_data;
     } else {
-      // Production schema é estrito
       payload.is_public = champData.is_public || false;
       payload.sales_mode = champData.sales_mode;
       payload.scenario_type = champData.scenario_type;
@@ -53,8 +52,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       payload.round_frequency_days = champData.round_frequency_days;
       payload.transparency_level = champData.transparency_level;
       payload.tutor_id = session?.user?.id;
-      
-      // REMOÇÃO OBRIGATÓRIA para evitar erro de coluna inexistente no schema cache
       delete payload.initial_market_data;
     }
 
@@ -69,7 +66,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       throw new Error(`Erro no motor Oracle: ${cErr.message}`);
     }
 
-    if (!champ) throw new Error("A criação da arena falhou (No data return).");
+    if (!champ) throw new Error("A criação da arena falhou.");
 
     const teamsToInsert = teams.map(t => ({
       name: t.name,
@@ -95,11 +92,10 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   let realData: any[] = [];
   let trialData: any[] = [];
 
-  // Queries separadas com catch individual para não travar o app se uma tabela falhar
   try {
     const { data } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
     if (data) realData = data;
-  } catch (e) { console.warn("Produção inacessível ou RLS ativo."); }
+  } catch (e) { console.warn("Produção inacessível."); }
 
   try {
     const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
@@ -119,7 +115,6 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  // Proteção contra IDs de teste não-UUID
   if (!userId || userId === 'tutor' || userId === 'alpha') {
     return {
       id: userId,
@@ -142,7 +137,7 @@ export const silentTestAuth = async (user: any) => {
     expires_in: 3600
   };
   localStorage.setItem('empirion_demo_session', JSON.stringify(mockSession));
-  localStorage.setItem('is_trial_session', 'true'); // Flag crucial para o Wizard
+  localStorage.setItem('is_trial_session', 'true'); 
   return { data: { session: mockSession }, error: null };
 };
 
