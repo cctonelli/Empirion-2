@@ -7,91 +7,86 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * ENGINE V7.5 - Oracle Core Fidelity
- * Tratamento rigoroso de Prazos (0-1-2) e Impacto Temporal.
+ * ENGINE V7.0 - Oracle Core Fidelity
+ * Tratamento rigoroso de Linha do Tempo e Prazos (0-1-2).
+ * Garante que o caixa projetado respeite os recebimentos diferidos de rodadas anteriores.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
   ecoConfig: EcosystemConfig,
   indicators: MacroIndicators,
-  previousState?: any // Estado herdado da rodada anterior
+  previousState?: any // Snapshot herdado do banco de dados (Round anterior)
 ) => {
   const inflation = 1 + (ecoConfig.inflationRate || 0.01);
-  const interestRate = (indicators.interestRateTR / 100);
   
-  // Saldos Iniciais Herdados (Prazos de rodadas anteriores que vencem agora)
-  const previousReceivables = sanitize(previousState?.receivables_t1 || 0);
-  const previousPayables = sanitize(previousState?.payables_t1 || 0);
+  // 1. HERANÇA DE SALDOS (Timing do Caixa)
+  // No fechamento do round anterior, o engine salva 'receivables_t1' (o que entra agora)
+  const inheritedReceivables = sanitize(previousState?.receivables_t1 || 1823735); // Valor inicial do PDF
+  const inheritedPayables = sanitize(previousState?.payables_t1 || 717605);
   const currentCash = sanitize(previousState?.cash || 840200);
 
-  // 1. ANÁLISE DE MERCADO & VENDAS
+  // 2. ANÁLISE COMERCIAL & RECEITA
   const regions = Object.values(decisions.regions);
   const avgPrice = regions.reduce((acc, r) => acc + sanitize(r.price), 0) / (regions.length || 1);
   const totalMarketing = regions.reduce((acc, r) => acc + sanitize(r.marketing), 0);
   
-  // Eficiência de Vendas baseada no Prazo (Prazo 2 atrai mais clientes mas gera risco de caixa)
-  const termEffect = regions.reduce((acc, r) => acc + (r.term === 2 ? 1.15 : r.term === 1 ? 1.05 : 1.0), 0) / 9;
-  
+  // Elasticidade baseada em Preço e Prazo (Prazo 2 atrai +15% demanda, mas impacta caixa futuro)
+  const termEffect = regions.reduce((acc, r) => acc + (r.term === 2 ? 1.15 : r.term === 1 ? 1.05 : 1.0), 0) / (regions.length || 1);
   const marketPotential = (indicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1);
-  const companyImage = Math.min(100, (totalMarketing * 3) + 40);
-  const demand = marketPotential * Math.pow(avgPrice / 330, -1.8) * (companyImage / 70) * termEffect;
-
-  // 2. PRODUÇÃO & CUSTOS
-  const capacity = 10000 * (sanitize(decisions.production.activityLevel, 100) / 100);
-  const salesVolume = Math.min(demand, capacity);
+  
+  const salesVolume = Math.min(marketPotential * termEffect, 10000); // Teto de produção
   const revenue = salesVolume * avgPrice;
-  
-  const unitCostMP = (indicators.providerPrices.mpA + (indicators.providerPrices.mpB / 2)) * inflation;
-  const cpv = salesVolume * unitCostMP;
-  
-  // 3. LOGICA DE PRAZOS (CONSTRUÇÃO DA LINHA DO TEMPO)
-  // Vendas Atuais: 0 = 100% no T+1 | 1 = 100% no T+2 | 2 = 50% T+1, 50% T+2
-  let currentSalesInflowProjected = 0;
-  let nextCycleReceivables = 0;
+
+  // 3. LOGICA DE PRAZOS (CONSTRUÇÃO DO T+1 E T+2)
+  let currentSalesInflow = 0; // O que entra no caixa NESTE round (Prazo 0)
+  let nextCycleReceivables = 0; // O que vai para o T+1 do próximo round (Prazo 1 e 50% do Prazo 2)
 
   regions.forEach(r => {
     const regRev = (sanitize(r.price) * (salesVolume / 9));
     if (r.term === 0) {
-      currentSalesInflowProjected += regRev;
+      currentSalesInflow += regRev;
     } else if (r.term === 1) {
       nextCycleReceivables += regRev;
-    } else {
-      currentSalesInflowProjected += regRev * 0.5;
+    } else if (r.term === 2) {
+      currentSalesInflow += regRev * 0.5;
       nextCycleReceivables += regRev * 0.5;
     }
   });
 
-  // Compras MP Atuais: 0 = 100% no T+1 | 1 = 100% no T+2 | 2 = 50% T+1, 50% T+2
-  const mpTotalCost = (sanitize(decisions.production.purchaseMPA) * indicators.providerPrices.mpA) + 
-                     (sanitize(decisions.production.purchaseMPB) * indicators.providerPrices.mpB);
-  
-  let currentMPOutflowProjected = 0;
+  // 4. CUSTOS & COMPRAS MP
+  const unitCostMP = (indicators.providerPrices.mpA + (indicators.providerPrices.mpB / 2)) * inflation;
+  const cpv = salesVolume * unitCostMP;
+  const mpPurchaseTotal = (sanitize(decisions.production.purchaseMPA) * indicators.providerPrices.mpA) + 
+                          (sanitize(decisions.production.purchaseMPB) * indicators.providerPrices.mpB);
+
+  let currentMPOutflow = 0;
   let nextCyclePayables = 0;
 
   if (decisions.production.paymentType === 0) {
-    currentMPOutflowProjected = mpTotalCost;
+    currentMPOutflow = mpPurchaseTotal;
   } else if (decisions.production.paymentType === 1) {
-    nextCyclePayables = mpTotalCost;
-  } else {
-    currentMPOutflowProjected = mpTotalCost * 0.5;
-    nextCyclePayables = mpTotalCost * 0.5;
+    nextCyclePayables = mpPurchaseTotal;
+  } else if (decisions.production.paymentType === 2) {
+    currentMPOutflow = mpPurchaseTotal * 0.5;
+    nextCyclePayables = mpPurchaseTotal * 0.5;
   }
 
-  // 4. RESULTADOS FINANCEIROS
+  // 5. RESULTADOS FINANCEIROS (DRE)
   const fixedCosts = 120000 + (sanitize(decisions.hr.salary) * 50);
-  const ebitda = revenue - cpv - fixedCosts - (totalMarketing * indicators.marketingExpenseBase / 100);
+  const ebitda = revenue - cpv - fixedCosts;
   const netProfit = ebitda * 0.85; // Simplificação IR
 
-  // FLUXO DE CAIXA REAL (Saldos Herdados + Projeções Atuais)
-  const projectedCashEnd = currentCash 
-    + previousReceivables 
-    + currentSalesInflowProjected 
-    - previousPayables 
-    - currentMPOutflowProjected 
+  // 6. FLUXO DE CAIXA FINAL (O Grande Equilíbrio)
+  // Caixa Final = Saldo Inicial + Entradas (Herdadas + Novas) - Saídas (Herdadas + Novas)
+  const projectedCashNext = currentCash 
+    + inheritedReceivables 
+    + currentSalesInflow 
+    - inheritedPayables 
+    - currentMPOutflow 
     - fixedCosts 
     + sanitize(decisions.finance.loanRequest)
-    - (sanitize(decisions.finance.application));
+    - sanitize(decisions.finance.application);
 
   return {
     revenue,
@@ -99,10 +94,9 @@ export const calculateProjections = (
     netProfit,
     salesVolume,
     marketShare: (salesVolume / (marketPotential * 8)) * 100,
-    oee: sanitize(decisions.production.activityLevel),
-    // Fluxo de Caixa para a Linha do Tempo
-    cashFlowNext: projectedCashEnd,
-    receivables: nextCycleReceivables, // O que sobrará para receber no Round+2
-    payables: nextCyclePayables      // O que sobrará para pagar no Round+2
+    cashFlowNext: projectedCashNext,
+    receivables: nextCycleReceivables, // Vai para o snapshot como 'receivables_t1'
+    payables: nextCyclePayables,       // Vai para o snapshot como 'payables_t1'
+    oee: sanitize(decisions.production.activityLevel)
   };
 };
