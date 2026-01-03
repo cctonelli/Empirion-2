@@ -15,7 +15,33 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const isTestMode = true;
 
-// Fix: Adicionando exportação ausente necessária para o TestTerminal.tsx
+/**
+ * Recupera snapshots históricos de todas as equipes de um campeonato.
+ */
+export const getChampionshipHistoricalData = async (championshipId: string, round: number) => {
+  // No MVP, tentamos buscar da tabela 'companies' que armazena os estados finais
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*, teams(name)')
+    .eq('championship_id', championshipId)
+    .eq('round', round);
+  
+  if (error) {
+    console.warn("Snapshot Engine fallback: Dados históricos não encontrados.");
+    return { data: [], error };
+  }
+  
+  return { 
+    data: data.map(item => ({
+      team_name: item.teams?.name || 'Unidade Anônima',
+      net_profit: item.dre?.net_profit || 0,
+      asset: item.balance_sheet?.total_asset || 9176940,
+      share: item.kpis?.market_share || 12.5
+    })), 
+    error: null 
+  };
+};
+
 /**
  * Provisiona o ambiente de demonstração (Alpha/Trial).
  * No MVP, garante que o modo de teste esteja operacional.
@@ -68,7 +94,6 @@ export const subscribeToBusinessPlan = (teamId: string, callback: (payload: any)
 };
 
 export const getTeamSimulationHistory = async (teamId: string) => {
-  // Simulação de busca de histórico para o MVP
   const { data: decisions } = await supabase
     .from('current_decisions')
     .select('*')
