@@ -61,7 +61,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                   </div>
                   <div>
                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">{champ.name}</h3>
-                     <p className="text-xs text-slate-500 font-medium mt-2">Ciclo {champ.currentRound} de {champ.totalRounds}</p>
+                     <p className="text-xs text-slate-500 font-medium mt-2">Ciclo {champ.current_round} de {champ.total_rounds}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/5">
                      <div className="space-y-1">

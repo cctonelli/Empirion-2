@@ -135,8 +135,10 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   branch: 'industrial',
   status: 'active',
   is_public: true,
-  currentRound: 0,
-  totalRounds: 12,
+  // Fix: renamed currentRound to current_round to match Championship interface
+  current_round: 0,
+  // Fix: renamed totalRounds to total_rounds to match Championship interface
+  total_rounds: 12,
   config: {
     currency: 'BRL',
     roundFrequencyDays: 7,

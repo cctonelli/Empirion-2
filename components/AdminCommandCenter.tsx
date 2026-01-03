@@ -116,7 +116,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                                     <div className="space-y-1">
                                        <span className="text-[8px] font-black text-slate-400 uppercase">Ciclos</span>
                                        <div className="flex items-center gap-2 text-slate-900 font-black">
-                                          <Calendar size={12} className="text-orange-500" /> {champ.currentRound}/{champ.totalRounds}
+                                          <Calendar size={12} className="text-orange-500" /> {champ.current_round}/{champ.total_rounds}
                                        </div>
                                     </div>
                                     <div className="space-y-1">

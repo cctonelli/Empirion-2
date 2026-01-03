@@ -97,8 +97,15 @@ export interface Championship {
   branch: Branch;
   status: ChampionshipStatus;
   is_public: boolean;
-  currentRound: number;
-  totalRounds: number;
+  current_round: number; // Sincronizado com DB
+  total_rounds: number;   // Sincronizado com DB
+  tutor_id?: string;
+  sector?: string;
+  sales_mode: SalesMode;
+  scenario_type: ScenarioType;
+  currency: CurrencyType;
+  round_frequency_days: number;
+  transparency_level: TransparencyLevel;
   config: {
     currency: CurrencyType;
     roundFrequencyDays: number;
@@ -120,7 +127,8 @@ export interface Championship {
   market_indicators?: MacroIndicators;
   ecosystemConfig?: EcosystemConfig;
   teams?: Team[];
-  is_local?: boolean; // Flag para identificar arenas salvas no cache local
+  is_local?: boolean; 
+  created_at?: string;
 }
 
 export interface ChampionshipTemplate {

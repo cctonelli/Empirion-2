@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Check, Settings, Globe, Layers, Cpu, Zap, Loader2,
@@ -8,7 +7,7 @@ import {
   Calculator
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, BRANCH_CONFIGS, DEFAULT_MACRO } from '../constants';
-import { Branch, ScenarioType, ModalityType, RegionConfig, MacroIndicators, AccountNode, CurrencyType, Championship } from '../types';
+import { Branch, ScenarioType, ModalityType, RegionConfig, MacroIndicators, AccountNode, CurrencyType, Championship, TransparencyLevel, SalesMode } from '../types';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import { createChampionshipWithTeams } from '../services/supabase';
 
@@ -26,10 +25,12 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
   const [resultMessage, setResultMessage] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
-    name: '', branch: 'industrial' as Branch, templateId: '', salesMode: 'hybrid',
+    name: '', branch: 'industrial' as Branch, templateId: '', salesMode: 'hybrid' as SalesMode,
     scenarioType: 'simulated' as ScenarioType, modalityType: 'standard' as ModalityType,
-    transparency: 'medium', totalRounds: 12, teamsLimit: 8, botsCount: 0, 
+    transparency: 'medium' as TransparencyLevel, totalRounds: 12, teamsLimit: 8, botsCount: 0, 
     currency: 'BRL' as CurrencyType, isPublic: false,
+    // Fix: Added roundFrequencyDays to formData initial state
+    roundFrequencyDays: 7,
     rules: {
       esg_enabled: false, black_swan_events: true, labor_strikes: false,
       share_issue: false, obsolescence_factor: true, community_score: true,
@@ -64,7 +65,14 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
           balance_sheet: markTemplateNodes(clonedFinancials.balance_sheet),
           dre: markTemplateNodes(clonedFinancials.dre)
         });
-        setFormData(prev => ({ ...prev, ...template.config, branch: template.branch }));
+        setFormData(prev => ({ 
+          ...prev, 
+          ...template.config, 
+          branch: template.branch,
+          salesMode: template.config.salesMode as SalesMode,
+          scenarioType: template.config.scenarioType as ScenarioType,
+          transparency: template.config.transparencyLevel as TransparencyLevel
+        }));
       }
     }
   }, [formData.templateId]);
@@ -89,8 +97,13 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         branch: formData.branch,
         status: 'active',
         is_public: formData.isPublic,
-        currentRound: 0,
+        current_round: 0,
         total_rounds: formData.totalRounds,
+        sales_mode: formData.salesMode,
+        scenario_type: formData.scenarioType,
+        currency: formData.currency,
+        round_frequency_days: formData.roundFrequencyDays || 7,
+        transparency_level: formData.transparency,
         config: { ...formData },
         initial_financials: financials,
         initial_market_data: { regions },
@@ -129,7 +142,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
         ))}
       </div>
 
-      <div className="bg-slate-950 rounded-[4rem] shadow-2xl border border-white/5 overflow-hidden min-h-[750px] flex flex-col transition-all">
+      <div className="bg-slate-950 rounded-[4rem] shadow-2xl border border-white/5 overflow-hidden min-h-[750px] flex flex-col transition-all relative">
         <div className="flex-1 p-12 md:p-16 overflow-y-auto custom-scrollbar">
           
           {resultMessage && (
@@ -156,15 +169,13 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }
             </div>
           )}
 
-          {/* Steps 2-6 placeholder - Logic exists in parent but abbreviated for length here */}
           {step > 1 && step < 7 && (
             <div className="space-y-12 text-center p-20">
                <div className="w-20 h-20 bg-orange-600/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                  {/* Fixed: Calculator icon was missing its import from lucide-react */}
                   <Calculator size={40} className="text-orange-500" />
                </div>
                <h3 className="text-2xl font-black text-white uppercase italic">Configuração de Motor Ativa</h3>
-               <p className="text-slate-500">O Oráculo está processando as variáveis de ${formData.branch}...</p>
+               <p className="text-slate-500">O Oráculo está processando as variáveis de {formData.branch}...</p>
                <div className="flex justify-center gap-4 mt-10">
                   <div className="px-6 py-3 bg-white/5 rounded-2xl border border-white/10 text-white font-bold text-xs">Regiões: 9</div>
                   <div className="px-6 py-3 bg-white/5 rounded-2xl border border-white/10 text-white font-bold text-xs">Moeda: {formData.currency}</div>

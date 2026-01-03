@@ -32,7 +32,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true);
-      const { data } = await getPublicReports(championship.id, championship.currentRound);
+      // Fix: changed currentRound to current_round
+      const { data } = await getPublicReports(championship.id, championship.current_round);
       setReports(data || []);
       setLoading(false);
     };
@@ -43,8 +44,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
     setSubmitting(true);
     const vote = {
       championship_id: championship.id,
-      team_id: teamId,
-      round: championship.currentRound,
+      // Fix: changed currentRound to current_round
+      round: championship.current_round,
       scores: ratings,
       comment: comment
     };
