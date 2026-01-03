@@ -8,7 +8,6 @@ export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 
-// Fix: Added missing MessageBoardItem interface used in Dashboard.tsx
 export interface MessageBoardItem {
   id: string;
   sender: string;
@@ -17,7 +16,6 @@ export interface MessageBoardItem {
   isImportant?: boolean;
 }
 
-// Fix: Added missing BlackSwanEvent interface used in Dashboard and Tutor Control
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -30,7 +28,6 @@ export interface BlackSwanEvent {
   };
 }
 
-// Fix: Added missing CommunityCriteria interface used in CommunityView and Championship config
 export interface CommunityCriteria {
   id: string;
   label: string;
@@ -96,7 +93,7 @@ export interface EcosystemConfig {
 export interface Championship {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   branch: Branch;
   status: ChampionshipStatus;
   is_public: boolean;
@@ -111,7 +108,6 @@ export interface Championship {
     modalityType: ModalityType;
     teamsLimit: number;
     botsCount: number;
-    // Fix: Added missing votingCriteria property to Championship config
     votingCriteria?: CommunityCriteria[];
   };
   initial_financials?: {
@@ -123,10 +119,10 @@ export interface Championship {
   };
   market_indicators?: MacroIndicators;
   ecosystemConfig?: EcosystemConfig;
-  teams?: Team[]; // Relação explícita para o Xadrez
+  teams?: Team[];
+  is_local?: boolean; // Flag para identificar arenas salvas no cache local
 }
 
-// Fix: Added missing ChampionshipTemplate interface used in constants.tsx
 export interface ChampionshipTemplate {
   id: string;
   name: string;

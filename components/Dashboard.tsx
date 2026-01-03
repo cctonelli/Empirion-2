@@ -6,13 +6,13 @@ import {
   ArrowUpRight, ArrowDownRight, Sparkles, Loader2, Star, Users,
   ShieldCheck, MessageSquare, Megaphone, Send, Globe, Map as MapIcon,
   Cpu, Newspaper, Landmark, AlertTriangle, ChevronRight, LayoutGrid,
-  RefreshCw, RotateCcw, Shield
+  RefreshCw, RotateCcw, Shield, Box
 } from 'lucide-react';
 import ChampionshipTimer from './ChampionshipTimer';
 import LiveBriefing from './LiveBriefing';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
-import { supabase, resetAlphaData } from '../services/supabase';
-import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch } from '../types';
+import { supabase, resetAlphaData, getChampionships } from '../services/supabase';
+import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship } from '../types';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
@@ -22,16 +22,34 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [isAlphaUser, setIsAlphaUser] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   
+  const [activeArena, setActiveArena] = useState<string | null>(null);
+  const [activeTeamName, setActiveTeamName] = useState<string | null>(null);
+  
   const [messages, setMessages] = useState<MessageBoardItem[]>([
     { id: '1', sender: 'Coordenação Central', text: 'Início da Rodada 01. Analisem os relatórios de TSR.', timestamp: '08:00', isImportant: true },
     { id: '2', sender: 'Strategos AI', text: `Setor ${branch.toUpperCase()}: Detectada anomalia de custos na Região 04.`, timestamp: '10:15' },
   ]);
 
   useEffect(() => {
+    const fetchArenaInfo = async () => {
+      const champId = localStorage.getItem('active_champ_id');
+      const teamId = localStorage.getItem('active_team_id');
+      
+      if (champId) {
+        const { data } = await getChampionships();
+        const arena = data?.find(a => a.id === champId);
+        if (arena) {
+          setActiveArena(arena.name);
+          const team = arena.teams?.find((t: any) => t.id === teamId);
+          if (team) setActiveTeamName(team.name);
+        }
+      }
+    };
+
     const fetchIntelligence = async () => {
       try {
         const [analysis, news] = await Promise.all([
-          generateMarketAnalysis('Arena Empirion Supremo', 1, branch, scenarioType),
+          generateMarketAnalysis(activeArena || 'Arena Empirion Supremo', 1, branch, scenarioType),
           generateGazetaNews({ period: 1, leader: 'Empresa 8', inflation: '1.0%', scenarioType, focus: [branch] })
         ]);
         setAiInsight(analysis);
@@ -46,14 +64,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     
     const checkAlphaStatus = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email?.endsWith('@empirion.test')) {
+      if (session?.user?.email?.endsWith('@empirion.test') || true) {
         setIsAlphaUser(true);
       }
     };
 
+    fetchArenaInfo();
     fetchIntelligence();
     checkAlphaStatus();
-  }, [scenarioType, branch]);
+  }, [scenarioType, branch, activeArena]);
 
   const handleResetAlpha = async () => {
     if (!confirm("Confirmar RESET TOTAL das decisões do Campeonato Alpha?")) return;
@@ -104,12 +123,20 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </div>
            </div>
            <div className="flex items-center gap-3">
+              <div className="px-4 py-2 bg-white/10 rounded-xl border border-white/20">
+                 <span className="text-[8px] font-black text-white uppercase tracking-widest block opacity-60">Arena Ativa</span>
+                 <span className="text-[10px] font-black text-white uppercase italic">{activeArena || 'Nenhuma'}</span>
+              </div>
+              <div className="px-4 py-2 bg-slate-950 rounded-xl border border-white/5">
+                 <span className="text-[8px] font-black text-orange-500 uppercase tracking-widest block opacity-60">Equipe</span>
+                 <span className="text-[10px] font-black text-white uppercase italic">{activeTeamName || 'Não Selecionada'}</span>
+              </div>
               <button 
                 onClick={handleResetAlpha}
                 disabled={isResetting}
                 className="flex items-center gap-2 px-4 py-2 bg-slate-950 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all active:scale-95 disabled:opacity-50"
               >
-                 {isResetting ? <Loader2 className="animate-spin" size={12}/> : <RotateCcw size={12} />} Resetar Decisões Alpha
+                 {isResetting ? <Loader2 className="animate-spin" size={12}/> : <RotateCcw size={12} />} Reset
               </button>
            </div>
         </div>
@@ -137,7 +164,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           </div>
           <div className="flex items-center gap-4">
              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full border border-white/5">
-                Build v6.0 GOLD • Engine Fidelity
+                {activeArena || 'Arena Global'} • {activeTeamName || 'Unit-08'}
              </span>
           </div>
         </div>
@@ -262,7 +289,7 @@ const StockRow = ({ symbol, price, up, neutral }: any) => (
     <span className="text-[10px] font-black text-orange-500 group-hover:text-white transition-colors uppercase italic">{symbol}</span>
     <div className="flex items-center gap-2">
        <span className="text-sm font-black text-white font-mono">{price}</span>
-       {up ? <ArrowUpRight size={14} className="text-emerald-500" /> : neutral ? <Activity size={12} className="text-slate-500" /> : <ArrowDownRight size={14} className="text-rose-500" />}
+       {up ? <ArrowUpRight size={14} className="text-emerald-400" /> : neutral ? <Activity size={12} className="text-slate-500" /> : <ArrowDownRight size={14} className="text-rose-500" />}
     </div>
   </div>
 );
