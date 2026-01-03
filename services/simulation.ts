@@ -26,18 +26,16 @@ export const calculateProjections = (
   let legalFees = 0;
 
   if (decisions.legal?.recovery_mode === 'judicial') {
-    // RJ: Proteção de caixa (paga apenas 20% do passivo herdado no round), mas juros +50%
     recoveryModifier = 0.2;
     interestPremium = 1.5;
-    legalFees = 50000; // Taxa de protocolo
+    legalFees = 50000;
   } else if (decisions.legal?.recovery_mode === 'extrajudicial') {
-    // REJ: Paga 70% do passivo, juros +10%
     recoveryModifier = 0.7;
     interestPremium = 1.1;
     legalFees = 15000;
   }
 
-  // 3. ANÁLISE COMERCIAL
+  // 3. ANÁLISE COMERCIAL & MARKET SHARE
   const regions = Object.values(decisions.regions);
   const avgPrice = regions.reduce((acc, r) => acc + sanitize(r.price), 0) / (regions.length || 1);
   const termEffect = regions.reduce((acc, r) => acc + (r.term === 2 ? 1.15 : r.term === 1 ? 1.05 : 1.0), 0) / (regions.length || 1);
@@ -46,10 +44,15 @@ export const calculateProjections = (
   const salesVolume = Math.min(marketPotential * termEffect, 10000);
   const revenue = salesVolume * avgPrice;
 
-  // 4. LOGICA DE PRAZOS
+  // 4. RH & PRODUTIVIDADE (NOVO)
+  const salary = sanitize(decisions.hr?.salary || 1313);
+  const staffCount = sanitize(decisions.hr?.sales_staff_count || 50);
+  const trainingExp = (salary * staffCount) * (sanitize(decisions.hr?.trainingPercent) / 100);
+  const payrollTotal = (salary * staffCount * 1.6) + trainingExp; // 1.6 = Encargos Bernard Standard
+
+  // 5. LOGICA DE PRAZOS (ENTRADA)
   let currentSalesInflow = 0;
   let nextCycleReceivables = 0;
-
   regions.forEach(r => {
     const regRev = (sanitize(r.price) * (salesVolume / 9));
     if (r.term === 0) currentSalesInflow += regRev;
@@ -57,44 +60,37 @@ export const calculateProjections = (
     else if (r.term === 2) { currentSalesInflow += regRev * 0.5; nextCycleReceivables += regRev * 0.5; }
   });
 
-  // 5. CUSTOS & COMPRAS
+  // 6. CUSTOS & COMPRAS (SAÍDA)
   const unitCostMP = (indicators.providerPrices.mpA + (indicators.providerPrices.mpB / 2)) * inflation;
   const cpv = salesVolume * unitCostMP;
   const mpPurchaseTotal = (sanitize(decisions.production.purchaseMPA) * indicators.providerPrices.mpA) + 
                           (sanitize(decisions.production.purchaseMPB) * indicators.providerPrices.mpB);
 
   let currentMPOutflow = 0;
-  let nextCyclePayables = 0;
-
   if (decisions.production.paymentType === 0) currentMPOutflow = mpPurchaseTotal;
-  else if (decisions.production.paymentType === 1) nextCyclePayables = mpPurchaseTotal;
-  else if (decisions.production.paymentType === 2) { currentMPOutflow = mpPurchaseTotal * 0.5; nextCyclePayables = mpPurchaseTotal * 0.5; }
+  else if (decisions.production.paymentType === 2) currentMPOutflow = mpPurchaseTotal * 0.5;
 
-  // 6. RESULTADOS FINANCEIROS
-  const fixedCosts = 120000 + (sanitize(decisions.hr.salary) * 50) + legalFees;
+  // 7. RESULTADOS FINANCEIROS
+  const adminCosts = 120000 + legalFees;
+  const fixedCosts = adminCosts + payrollTotal;
   const ebitda = revenue - cpv - fixedCosts;
   const netProfit = ebitda * 0.85;
 
-  // 7. FLUXO DE CAIXA FINAL (Ajustado por Recovery)
+  // 8. FLUXO DE CAIXA FINAL (RECOVERY ADJUSTED)
   const projectedCashNext = currentCash 
     + inheritedReceivables 
     + currentSalesInflow 
-    - (inheritedPayables * recoveryModifier) // Alívio de RJ/REJ
+    - (inheritedPayables * recoveryModifier)
     - currentMPOutflow 
     - fixedCosts 
-    + (sanitize(decisions.finance.loanRequest) * (1 / interestPremium)) // Impacto de risco no crédito
+    + (sanitize(decisions.finance.loanRequest) * (1 / interestPremium))
     - sanitize(decisions.finance.application);
 
   return {
-    revenue,
-    ebitda,
-    netProfit,
-    salesVolume,
+    revenue, ebitda, netProfit, salesVolume,
     marketShare: (salesVolume / (marketPotential * 8)) * 100,
     cashFlowNext: projectedCashNext,
     receivables: nextCycleReceivables,
-    payables: nextCyclePayables,
-    oee: sanitize(decisions.production.activityLevel),
-    suggestRecovery: (projectedCashNext < 0 && (revenue / (inheritedPayables || 1)) < 1.2)
+    suggestRecovery: (projectedCashNext < 0 && (revenue / (inheritedPayables || 1)) < 1.1)
   };
 };
