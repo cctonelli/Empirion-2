@@ -7,7 +7,7 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Motor Industrial Empirion v7.2 - Fidelity Round 0 Fix
+ * Motor Industrial Empirion v7.5 - Fidelity Round 0 & Crisis Engine
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -17,8 +17,9 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // BLOQUEIO ROUND 0: Retorno de valores exatos do Relatório Inicial (Fidelidade PDF)
-  if (isRoundZero) {
+  // BLOQUEIO ROUND 0: Retorno de valores exatos do Relatório Inicial (Fidelidade PDF Legado)
+  // Garante que todas as empresas comecem com exatamente o mesmo Lucro Líquido ($ 73.928)
+  if (isRoundZero || (previousState === undefined && decisions === undefined)) {
     return {
       revenue: 3322735,
       ebitda: 1044555,
@@ -35,7 +36,7 @@ export const calculateProjections = (
 
   const inflation = 1 + (ecoConfig.inflationRate || 0.01);
   
-  // 1. HERANÇA DE SALDOS
+  // 1. HERANÇA DE SALDOS ( Bernard Fidelity Snaps )
   const inheritedReceivables = sanitize(previousState?.receivables_t1 || 1823735);
   const inheritedPayables = sanitize(previousState?.payables_t1 || 717605);
   const currentCash = sanitize(previousState?.cash || 840200);
@@ -58,10 +59,10 @@ export const calculateProjections = (
   }
 
   // 3. ANÁLISE COMERCIAL (9 REGIÕES)
-  const regions = Object.values(decisions.regions);
-  const avgPrice = regions.reduce((acc, r) => acc + sanitize(r.price), 0) / (regions.length || 1);
-  const totalMarketing = regions.reduce((acc, r) => acc + sanitize(r.marketing), 0);
-  const termEffect = regions.reduce((acc, r) => acc + (r.term === 1 ? 1.08 : r.term === 0 ? 0.98 : 1.0), 0) / (regions.length || 1);
+  const regions = Object.values(decisions.regions || {});
+  const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price), 0) / regions.length : 372;
+  const totalMarketing = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.marketing), 0) : 0;
+  const termEffect = regions.length > 0 ? regions.reduce((acc, r) => acc + (r.term === 1 ? 1.08 : r.term === 0 ? 0.98 : 1.0), 0) / regions.length : 1.0;
   
   const marketPotential = (indicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1);
   const baseSales = marketPotential * termEffect * (1 + (totalMarketing / 1200));
@@ -90,12 +91,12 @@ export const calculateProjections = (
   });
 
   // 7. COMPRAS
-  const mpPurchaseTotal = (sanitize(decisions.production.purchaseMPA) * mpA_Price) + 
-                          (sanitize(decisions.production.purchaseMPB) * mpB_Price);
+  const mpPurchaseTotal = (sanitize(decisions.production?.purchaseMPA) * mpA_Price) + 
+                          (sanitize(decisions.production?.purchaseMPB) * mpB_Price);
   
   let currentMPOutflow = 0;
-  if (decisions.production.paymentType === 0) currentMPOutflow = mpPurchaseTotal;
-  else if (decisions.production.paymentType === 2) currentMPOutflow = mpPurchaseTotal * 0.5;
+  if (decisions.production?.paymentType === 0) currentMPOutflow = mpPurchaseTotal;
+  else if (decisions.production?.paymentType === 2) currentMPOutflow = mpPurchaseTotal * 0.5;
 
   // 8. RESULTADO
   const adminCosts = 145000 + legalFees;
@@ -109,8 +110,8 @@ export const calculateProjections = (
     - (inheritedPayables * recoveryModifier)
     - currentMPOutflow 
     - fixedCosts 
-    + (sanitize(decisions.finance.loanRequest) * (1 / interestPremium))
-    - sanitize(decisions.finance.application);
+    + (sanitize(decisions.finance?.loanRequest) * (1 / interestPremium))
+    - sanitize(decisions.finance?.application);
 
   return {
     revenue, ebitda, netProfit, salesVolume,
