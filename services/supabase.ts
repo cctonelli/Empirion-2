@@ -104,7 +104,7 @@ export const getTeamSimulationHistory = async (teamId: string) => {
 };
 
 /**
- * Persistência Inteligente v8.1
+ * Persistência Inteligente v8.2
  */
 export const createChampionshipWithTeams = async (champData: Partial<Championship>, teams: { name: string }[], isTrialParam: boolean = false) => {
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
@@ -113,23 +113,26 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
+    // Encapsulando campos que podem falhar por falta de coluna no root do schema (deadline_unit, etc)
     const payload: any = {
       name: champData.name,
       branch: champData.branch,
       status: 'active',
       current_round: 0,
       total_rounds: champData.total_rounds || 12,
-      deadline_value: champData.deadline_value || 7,
-      deadline_unit: champData.deadline_unit || 'days',
-      config: champData.config || {},
+      // Mover campos dinâmicos para o config JSONB para garantir persistência mesmo sem as colunas
+      config: {
+        ...(champData.config || {}),
+        deadline_value: champData.deadline_value || 7,
+        deadline_unit: champData.deadline_unit || 'days',
+        market_indicators: champData.market_indicators
+      },
       initial_financials: champData.initial_financials,
       market_indicators: champData.market_indicators,
       round_started_at: new Date().toISOString()
     };
 
-    if (isTrial) {
-      payload.initial_market_data = champData.market_indicators || champData.initial_market_data;
-    } else {
+    if (!isTrial) {
       payload.is_public = champData.is_public || false;
       payload.sales_mode = champData.sales_mode;
       payload.scenario_type = champData.scenario_type;
@@ -169,16 +172,35 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 export const getChampionships = async (onlyPublic: boolean = false) => {
   let realData: any[] = [];
   let trialData: any[] = [];
+  
   try {
     const { data } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
     if (data) realData = data;
   } catch (e) { console.warn("Produção inacessível."); }
+  
   try {
     const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
     if (data) trialData = data;
   } catch (e) { console.warn("Sandbox inacessível."); }
-  const combined = [...realData.map(c => ({ ...c, is_trial: false })), ...trialData.map(c => ({ ...c, is_trial: true }))];
-  return { data: onlyPublic ? combined.filter(c => c.is_public || c.is_trial) : combined as Championship[], error: null };
+
+  // Função auxiliar para garantir que campos vitais estejam no nível raiz do objeto
+  // pullando do config se necessário
+  const hydrate = (c: any) => ({
+    ...c,
+    deadline_value: c.deadline_value ?? c.config?.deadline_value ?? 7,
+    deadline_unit: c.deadline_unit ?? c.config?.deadline_unit ?? 'days',
+    market_indicators: c.market_indicators ?? c.config?.market_indicators
+  });
+
+  const combined = [
+    ...realData.map(c => ({ ...hydrate(c), is_trial: false })), 
+    ...trialData.map(c => ({ ...hydrate(c), is_trial: true }))
+  ];
+  
+  return { 
+    data: onlyPublic ? combined.filter(c => c.is_public || c.is_trial) : combined as Championship[], 
+    error: null 
+  };
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -214,37 +236,124 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
   return await supabase.from(table).upsert({ team_id: teamId, championship_id: champId, round, data: decisions }); 
 };
 
+// FIX: Added missing exported functions required by other components
+
+/**
+ * Reseta dados de teste do usuário Alpha.
+ */
 export const resetAlphaData = async () => {
-  return await supabase.from('trial_decisions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  const teamId = localStorage.getItem('active_team_id');
+  if (!teamId) return;
+  const { error } = await supabase
+    .from('trial_decisions')
+    .delete()
+    .eq('team_id', teamId);
+  return { error };
 };
 
-export const listAllUsers = async () => { return await supabase.from('users').select('*'); };
+/**
+ * Lista todos os usuários (Admin context).
+ */
+export const listAllUsers = async () => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return { data, error };
+};
+
+/**
+ * Atualiza status premium de um usuário.
+ */
 export const updateUserPremiumStatus = async (userId: string, status: boolean) => {
-  return await supabase.from('users').update({ is_opal_premium: status }).eq('supabase_user_id', userId);
+  const { data, error } = await supabase
+    .from('users')
+    .update({ is_opal_premium: status })
+    .eq('supabase_user_id', userId)
+    .select()
+    .single();
+  return { data, error };
 };
 
+/**
+ * Atualiza configurações de ecossistema de um campeonato.
+ */
+export const updateEcosystem = async (championshipId: string, updates: any) => {
+  const isTrial = localStorage.getItem('is_trial_session') === 'true';
+  const table = isTrial ? 'trial_championships' : 'championships';
+  const { data, error } = await supabase
+    .from(table)
+    .update(updates)
+    .eq('id', championshipId)
+    .select()
+    .single();
+  return { data, error };
+};
+
+/**
+ * Recupera relatórios públicos para votação da comunidade.
+ */
+export const getPublicReports = async (championshipId: string, round: number) => {
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('championship_id', championshipId)
+    .eq('round', round);
+  
+  if (error) return { data: [], error };
+
+  return {
+    data: data.map(item => ({
+      team_id: item.team_id,
+      alias: item.team_name,
+      kpis: item.kpis,
+      statements: item.statements
+    })),
+    error: null
+  };
+};
+
+/**
+ * Submete voto da comunidade.
+ */
+export const submitCommunityVote = async (vote: any) => {
+  const { data, error } = await supabase
+    .from('community_votes')
+    .insert([vote])
+    .select();
+  return { data, error };
+};
+
+/**
+ * Busca conteúdo dinâmico de páginas.
+ */
 export const fetchPageContent = async (slug: string, lang: string) => {
-  const { data } = await supabase.from('site_content').select('*').eq('page_slug', slug).eq('locale', lang).maybeSingle();
+  const { data } = await supabase
+    .from('page_content')
+    .select('content')
+    .eq('slug', slug)
+    .eq('lang', lang)
+    .maybeSingle();
   return data?.content || null;
 };
 
+/**
+ * Lista modalidades de arena dinâmicas.
+ */
 export const getModalities = async () => {
-  const { data } = await supabase.from('modalities').select('*');
-  return data || [];
+  const { data } = await supabase
+    .from('modalities')
+    .select('*')
+    .order('name');
+  return (data as any[]) || [];
 };
 
+/**
+ * Subscreve a mudanças nas modalidades.
+ */
 export const subscribeToModalities = (callback: () => void) => {
-  return supabase.channel('modalities_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'modalities' }, callback).subscribe();
-};
-
-export const updateEcosystem = async (champId: string, updates: { ecosystemConfig: EcosystemConfig }) => {
-  return await supabase.from('championships').update(updates).eq('id', champId);
-};
-
-export const getPublicReports = async (champId: string, round: number) => {
-  return await supabase.from('public_reports').select('*').eq('championship_id', champId).eq('round', round);
-};
-
-export const submitCommunityVote = async (vote: any) => {
-  return await supabase.from('community_ratings').insert([vote]);
+  return supabase
+    .channel('modalities-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'modalities' }, callback)
+    .subscribe();
 };
