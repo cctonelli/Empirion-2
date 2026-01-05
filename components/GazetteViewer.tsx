@@ -23,7 +23,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   const [activeTab, setActiveTab] = useState<GazetteTab>('macro');
   const teams = arena.teams || [];
   
-  // Simulated Historical Data for Round 0-1 Transition
   const currentInd: AdvancedIndicators = useMemo(() => ({
     nldcg_days: 70,
     trit: 0.95,
@@ -41,7 +40,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       animate={{ opacity: 1, scale: 1 }}
       className="bg-[#020617] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[92vh] max-h-[1100px] relative"
     >
-      {/* 1. TOP COMMAND BAR */}
       <header className="bg-slate-950 p-8 border-b border-white/5">
          <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-6">
@@ -71,8 +69,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
 
       <main className="flex-1 overflow-y-auto p-10 custom-scrollbar">
          <AnimatePresence mode="wait">
-            
-            {/* TAB: CONJUNTURA (MACRO) */}
             {activeTab === 'macro' && (
               <motion.div key="macro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -105,7 +101,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
               </motion.div>
             )}
 
-            {/* TAB: BENCHMARKING (FULL MATRIX 8 EMPRESAS) */}
             {activeTab === 'benchmarking' && (
               <motion.div key="bench" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
                  <div className="flex justify-between items-end">
@@ -113,11 +108,9 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                        <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">Empire <span className="text-orange-500">Audit Matrix</span></h2>
                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.4em] mt-3 italic">Snapshot simultâneo das 8 unidades industriais • Ciclo 0{round}</p>
                     </div>
-                    <div className="flex gap-4">
-                       <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 flex items-center gap-3 font-black text-[9px] uppercase hover:text-white transition-all shadow-xl">
-                          <Download size={16}/> Export Full Snapshot
-                       </button>
-                    </div>
+                    <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 flex items-center gap-3 font-black text-[9px] uppercase hover:text-white transition-all">
+                       <Download size={16}/> Export Full Snapshot
+                    </button>
                  </div>
 
                  <div className="bg-slate-950 border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl">
@@ -135,34 +128,62 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5 text-[11px] font-mono">
+                             {/* DRE SECTION */}
                              <MatrixRow label="RECEITA BRUTA VENDAS" teams={teams} val="3.322.735" bold />
-                             <MatrixRow label="(-) CPV INDUSTRIAL" teams={teams} val="2.278.180" neg />
+                             <MatrixRow label="(-) CUSTO PROD. VENDIDO (CPV)" teams={teams} val="2.278.180" neg indent />
                              <MatrixRow label="(=) LUCRO BRUTO" teams={teams} val="1.044.555" highlight />
                              <MatrixRow label="(-) DESPESAS VENDAS" teams={teams} val="802.702" indent />
                              <MatrixRow label="(-) DESPESAS ADM" teams={teams} val="114.880" indent />
                              <MatrixRow label="(-) DESPESAS FIN." teams={teams} val="40.000" indent />
                              <MatrixRow label="LUCRO OPERACIONAL (EBIT)" teams={teams} val="86.973" bold />
-                             <MatrixRow label="(-) PROVISÃO IR (15%)" teams={teams} val="13.045" neg />
+                             <MatrixRow label="(-) PROVISÃO IR (15%)" teams={teams} val="13.045" neg indent />
                              <MatrixRow label="LUCRO LÍQUIDO PERÍODO" teams={teams} val="73.928" total highlight />
                              
                              <tr className="bg-white/10"><td colSpan={teams.length + 1} className="p-2 border-y border-white/10"></td></tr>
                              
-                             <MatrixRow label="ATIVO CIRCULANTE" teams={teams} val="3.290.340" bold />
-                             <MatrixRow label="CAIXA & BANCOS" teams={teams} val="840.200" indent />
-                             <MatrixRow label="ESTOQUES TOTAIS" teams={teams} val="1.466.605" indent />
-                             <MatrixRow label="CONTAS A RECEBER" teams={teams} val="1.823.735" indent />
-                             <MatrixRow label="IMOBILIZADO LÍQUIDO" teams={teams} val="5.886.600" bold />
+                             {/* ASSETS SECTION */}
+                             <MatrixRow label="ATIVO TOTAL CONSOLIDADO" teams={teams} val="9.176.940" bold highlight />
+                             <MatrixRow label="1.1 ATIVO CIRCULANTE" teams={teams} val="3.290.340" bold indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="Caixa & Bancos" teams={teams} val="840.200" indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="Contas a Receber" teams={teams} val="1.823.735" indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="Estoque Matéria-Prima A" teams={teams} val="628.545" indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="Estoque Matéria-Prima B" teams={teams} val="0" indent />
+                             
+                             <MatrixRow label="1.2 ATIVO NÃO CIRCULANTE" teams={teams} val="5.886.600" bold indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Máquinas e Equip." teams={teams} val="2.360.000" indent />
-                             <MatrixRow label="(-) Depreciação Máq." teams={teams} val="-811.500" indent neg />
-                             <MatrixRow label="TOTAL DO ATIVO" teams={teams} val="9.176.940" total highlight />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="(-) Depreciação Máq." teams={teams} val="-811.500" neg indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="Prédios e Instalações" teams={teams} val="544.000" indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="(-) Depreciação Prédios" teams={teams} val="-2.301.900" neg indent />
 
                              <tr className="bg-white/10"><td colSpan={teams.length + 1} className="p-2 border-y border-white/10"></td></tr>
 
-                             <MatrixRow label="PASSIVO CIRCULANTE" teams={teams} val="4.121.493" bold />
+                             {/* LIABILITIES SECTION */}
+                             <MatrixRow label="PASSIVO + PL CONSOLIDADO" teams={teams} val="9.176.940" bold highlight />
+                             <MatrixRow label="2.1 PASSIVO CIRCULANTE" teams={teams} val="4.121.493" bold indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Fornecedores" teams={teams} val="717.605" indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Empréstimos CP" teams={teams} val="1.872.362" indent />
-                             <MatrixRow label="EXIGÍVEL LONGO PRAZO" teams={teams} val="1.500.000" bold />
-                             <MatrixRow label="PATRIMÔNIO LÍQUIDO" teams={teams} val="5.055.447" bold highlight />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="Impostos a Pagar" teams={teams} val="13.045" indent />
+                             
+                             <MatrixRow label="2.2 EXIGÍVEL LONGO PRAZO" teams={teams} val="1.500.000" bold indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="Financiamentos BDI" teams={teams} val="1.500.000" indent />
+                             
+                             <MatrixRow label="2.3 PATRIMÔNIO LÍQUIDO" teams={teams} val="5.055.447" bold indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="Capital Social" teams={teams} val="5.000.000" indent />
+                             {/* Fixed: Removed duplicated "indent" attribute */}
+                             <MatrixRow label="Lucros Acumulados" teams={teams} val="55.447" indent />
                           </tbody>
                        </table>
                     </div>
@@ -170,7 +191,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
               </motion.div>
             )}
 
-            {/* TAB: FORNECEDORES & REGRAS */}
             {activeTab === 'suppliers' && (
               <motion.div key="suppliers" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                  <div className="space-y-8">
@@ -203,7 +223,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                  </div>
               </motion.div>
             )}
-
          </AnimatePresence>
       </main>
 
@@ -227,20 +246,25 @@ const TabBtn = ({ active, onClick, label, icon, color = 'blue' }: any) => (
   </button>
 );
 
-const MatrixRow = ({ label, teams, val, bold, neg, highlight, total, indent }: any) => (
-  <tr className={`hover:bg-white/[0.03] transition-all group ${bold ? 'font-black text-slate-200 bg-white/[0.02]' : 'text-slate-500'} ${total ? 'bg-slate-950' : ''}`}>
-     <td className={`p-8 border-r border-white/5 sticky left-0 z-10 bg-slate-900 group-hover:bg-slate-800 uppercase tracking-tighter text-[9px] ${highlight ? 'text-orange-500 italic' : ''} ${indent ? 'pl-16 italic text-[8px]' : ''}`}>
-        {label}
-     </td>
-     {teams.map((t: any) => (
-       <td key={t.id} className="p-8 border-r border-white/5 text-center font-mono text-base">
-          <span className={`${neg ? 'text-rose-500 font-bold' : highlight ? 'text-orange-400 font-black' : ''}`}>
-             {neg && '('}$ {val}{neg && ')'}
-          </span>
+const MatrixRow = ({ label, teams, val, bold, neg, highlight, total, indent }: any) => {
+  const labelIndentClass = indent ? 'pl-16' : '';
+  const isSecondIndent = (label.toLowerCase().includes('caixa') || label.toLowerCase().includes('estoque') || label.toLowerCase().includes('máquinas') || label.toLowerCase().includes('fornecedores'));
+
+  return (
+    <tr className={`hover:bg-white/[0.03] transition-all group ${bold ? 'font-black text-slate-200 bg-white/[0.02]' : 'text-slate-500'} ${total ? 'bg-slate-950' : ''}`}>
+       <td className={`p-6 border-r border-white/5 sticky left-0 z-10 bg-slate-900 group-hover:bg-slate-800 uppercase tracking-tighter text-[9px] ${highlight ? 'text-orange-500 italic' : ''} ${labelIndentClass} ${isSecondIndent ? 'pl-24 italic opacity-80 text-[8px]' : ''}`}>
+          {label}
        </td>
-     ))}
-  </tr>
-);
+       {teams.map((t: any) => (
+         <td key={t.id} className="p-6 border-r border-white/5 text-center font-mono text-sm">
+            <span className={`${neg ? 'text-rose-500' : highlight ? 'text-orange-400 font-black' : ''}`}>
+               {neg && '('}$ {val}{neg && ')'}
+            </span>
+         </td>
+       ))}
+    </tr>
+  );
+};
 
 const HighCard = ({ label, val, sub, trend, pos, icon }: any) => (
   <div className="p-8 bg-white/[0.03] border border-white/5 rounded-[3rem] space-y-4 hover:bg-white/[0.06] transition-all group">

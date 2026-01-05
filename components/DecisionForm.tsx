@@ -49,6 +49,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
   };
 
   const isInRJ = decisions.legal.recovery_mode === 'judicial';
+  const displayRound = typeof round === 'number' ? round : 1;
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-3 pb-32 animate-in fade-in duration-700">
@@ -68,7 +69,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
              </div>
            )}
            <div className="text-right">
-              <span className="block text-[7px] font-black text-slate-500 uppercase">CAIXA PROJETADO P{round+1}</span>
+              <span className="block text-[7px] font-black text-slate-500 uppercase">CAIXA PROJETADO P{displayRound+1}</span>
               <span className={`text-sm font-black font-mono italic ${projections.cashFlowNext > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                 $ {projections.cashFlowNext.toLocaleString()}
               </span>
@@ -80,7 +81,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
         <AnimatePresence mode="wait">
           <motion.div key={STEPS[activeStep].id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             
-            {/* 1. COMERCIAL */}
             {activeStep === 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 {Object.entries(decisions.regions).map(([id, data]: [any, any]) => (
@@ -106,7 +106,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
-            {/* 2. RECURSOS HUMANOS */}
             {activeStep === 1 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
                  <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl space-y-6">
@@ -128,7 +127,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
-            {/* 3. PRODUÇÃO & FORNECEDORES (EXPANDIDO) */}
             {activeStep === 2 && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto">
                  <div className="lg:col-span-8 space-y-6">
@@ -160,7 +158,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
                     <div className="p-8 bg-blue-600/10 border border-blue-500/20 rounded-[3rem] space-y-6 shadow-xl">
                        <div className="flex items-center gap-3">
                           <div className="p-2 bg-blue-600 rounded-lg text-white"><TrendingUp size={16}/></div>
-                          <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Painel de Cotações P0{round}</h4>
+                          <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Painel de Cotações P0{displayRound}</h4>
                        </div>
                        <div className="space-y-4">
                           <PriceQuote label="MP-A (Base Oracle)" val="$ 20,20" trend="+2%" />
@@ -170,7 +168,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
                        </div>
                        <div className="pt-6 border-t border-white/10">
                           <p className="text-[9px] text-blue-300 font-bold uppercase leading-relaxed italic">
-                             *Cotação atualizada pelo motor Oracle. Reajustes automáticos aplicados no P0{round+1}.
+                             *Cotação atualizada pelo motor Oracle. Reajustes automáticos aplicados no P0{displayRound+1}.
                           </p>
                        </div>
                     </div>
@@ -182,7 +180,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
-            {/* 4. FINANCEIRO */}
             {activeStep === 3 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
                  <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl space-y-6">
@@ -205,7 +202,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
-            {/* 5. JURÍDICO */}
             {activeStep === 4 && (
               <div className="max-w-3xl mx-auto space-y-8">
                  <div className="text-center space-y-2">
@@ -221,7 +217,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
-            {/* 6. REVISÃO */}
             {activeStep === 5 && (
               <div className="text-center space-y-6 py-4">
                  <div className="bg-white/5 p-8 rounded-[3rem] border border-white/10 max-w-xl mx-auto space-y-6 shadow-2xl">
@@ -232,7 +227,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
                        <SummaryNode label="Status Legal" val={decisions.legal.recovery_mode.toUpperCase()} />
                        <SummaryNode label="Nível Atividade" val={`${decisions.production.activityLevel}%`} />
                     </div>
-                    <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, round, decisions); setIsSaving(false); alert("PROTOCOLADO COM SUCESSO."); }} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-white hover:text-orange-600 transition-all active:scale-95">
+                    <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, displayRound, decisions); setIsSaving(false); alert("PROTOCOLADO COM SUCESSO."); }} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-white hover:text-orange-600 transition-all active:scale-95">
                        {isSaving ? <Loader2 className="animate-spin mx-auto" /> : "Transmitir Decisões de Período"}
                     </button>
                  </div>
