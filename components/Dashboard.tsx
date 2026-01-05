@@ -4,7 +4,7 @@ import {
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
   Sparkles, Loader2, ShieldCheck, Newspaper, Cpu, 
   ChevronRight, RotateCcw, Shield, FileEdit, PenTool, 
-  Eye, Lock, Timer, Box
+  Eye, Timer, Box
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -39,8 +39,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   const isObserver = userRole === 'observer';
 
-  // Oracle Fidelity Sincronização v12.8.2
-  // Using optional chaining (Escape Hatch strategy) to ensure component stability
+  // Sincronização segura de métricas Oracle v12.8.2
   const advancedMetrics = useMemo(() => {
     return activeArena?.advanced_indicators || {
       ciclos: { operacional: 60, financeiro: 35 },
@@ -183,7 +182,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               <div className="p-2 bg-white/20 rounded-lg"><Shield size={16} className="text-white" /></div>
               <div>
                  <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Sandbox Mode Active</span>
-                 <p className="text-[8px] font-bold text-orange-200 uppercase tracking-[0.2em] mt-0.5">Sessão Temporária v12.8.2 Oracle</p>
+                 <p className="text-[8px] font-bold text-orange-200 uppercase tracking-[0.2em] mt-0.5">Sessão Temporária Oracle v12.8.2</p>
               </div>
            </div>
            <button 
@@ -213,7 +212,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             )}
           </div>
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full border border-white/5">
-             {activeArena?.name || 'Carregando Arena...'} • {activeTeamName || 'Equipe Alpha'}
+             {activeArena?.name || 'Sincronizando Node...'} • {activeTeamName || 'Unidade Alpha'}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -236,7 +235,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                 onClick={() => !isObserver && setShowDecisionForm(true)} 
                 icon={<FileEdit size={28}/>}
                 title="Folha de Decisão"
-                subtitle={isObserver ? 'Acesso Restrito' : `Ciclo 0${(activeArena?.current_round || 0) + 1}`}
+                subtitle={isObserver ? 'Acesso Restrito' : `Protocolo P0${(activeArena?.current_round || 0) + 1}`}
                 color="blue"
                 disabled={isObserver}
              />
@@ -244,7 +243,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                 onClick={() => !isObserver && setShowBusinessPlan(true)} 
                 icon={<PenTool size={28}/>}
                 title="Plano de Negócios"
-                subtitle={isObserver ? 'Acesso Restrito' : 'Evolução Progressiva Oracle'}
+                subtitle={isObserver ? 'Acesso Restrito' : 'Evolução Oracle'}
                 color="indigo"
                 disabled={isObserver}
              />
@@ -252,7 +251,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                 onClick={() => setShowGazette(true)} 
                 icon={<Newspaper size={28}/>}
                 title="Gazeta Empirion"
-                subtitle={`Tendências P0${(activeArena?.current_round || 0) + 1}`}
+                subtitle={`Oracle Digest P0${(activeArena?.current_round || 0) + 1}`}
                 color="orange"
              />
           </div>
@@ -268,7 +267,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
              <EfficiencyCard 
                label="Ciclo Financeiro" 
                val={`${advancedMetrics?.ciclos?.financeiro || '0'} dias`} 
-               trend="Fidelity Stable" 
+               trend="Stabilized" 
                positive={true}
                icon={<Timer size={20}/>}
              />
@@ -312,7 +311,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </h3>
               <div className="space-y-10">
                  <KpiRow label="Lucro Líquido" value={activeArena?.current_round === 0 ? "$ 0" : "$ 73.928"} trend={activeArena?.current_round === 0 ? "STABLE" : "+100%"} positive icon={<DollarSign size={16}/>} />
-                 <KpiRow label="Rating Oracle" value={activeArena?.current_round === 0 ? "AAA" : "AAA"} trend="Audit OK" positive icon={<ShieldCheck size={16}/>} />
+                 <KpiRow label="Rating Oracle" value={activeArena?.current_round === 0 ? "AAA" : "AAA"} trend="Verified" positive icon={<ShieldCheck size={16}/>} />
                  <KpiRow label="Market Share" value={`${advancedMetrics?.market_share || 12.5}%`} trend="Target" positive icon={<TrendingUp size={16}/>} />
               </div>
            </div>

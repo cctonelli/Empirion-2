@@ -1,5 +1,6 @@
 /**
  * EMPIRION V12.8.2 - PRODUCTION TYPES (Stabilized Oracle Node)
+ * Includes "Escape Hatch" for dynamic financial objects and core event types.
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -120,7 +121,7 @@ export interface MacroIndicators {
   sectorAvgSalary: number;
   stockMarketPrice: number;
   initialExchangeRateUSD: number;
-  active_event?: any;
+  active_event?: BlackSwanEvent | null;
   difficulty?: {
     price_sensitivity: number;
     marketing_effectiveness: number;
@@ -247,7 +248,6 @@ export interface Modality {
   };
 }
 
-// FIX: Added missing interface BlackSwanEvent
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -257,10 +257,10 @@ export interface BlackSwanEvent {
     demand: number;
     interest: number;
     productivity: number;
+    cost_multiplier?: number;
   };
 }
 
-// FIX: Added missing interface CommunityCriteria
 export interface CommunityCriteria {
   id: string;
   label: string;

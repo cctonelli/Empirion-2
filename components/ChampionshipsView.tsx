@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { Trophy, ChevronRight, Play, Loader2, Target, Globe, Filter, X } from 'lucide-react';
+import { Trophy, ChevronRight, Play, Loader2, Target, Filter, X } from 'lucide-react';
 import { getChampionships } from '../services/supabase';
 import { Championship, Team } from '../types';
 
@@ -28,7 +27,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
       
       const state = location.state as NavigationState | null;
       
-      // Captura robusta de pré-seleção enviada via router state
+      // Robust navigation context mapping
       const preFilter = 
         state?.preSelectedBranch ?? 
         state?.preSelectedSlug ?? 
@@ -55,7 +54,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-40 gap-4">
       <Loader2 className="animate-spin text-orange-500" size={48} />
-      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Sincronizando Arenas...</span>
+      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Sincronizando Nodos Oracle...</span>
     </div>
   );
 
@@ -64,12 +63,12 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end px-4 gap-6">
          <div>
             <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Arena <span className="text-orange-500">Control</span></h1>
-            <p className="text-slate-500 font-medium text-sm mt-1 italic">Arenas ativas e sessões de teste disponíveis.</p>
+            <p className="text-slate-500 font-medium text-sm mt-1 italic">Arenas ativas e instâncias de treinamento disponíveis.</p>
          </div>
          {activeFilter && (
            <div className="flex items-center gap-3 bg-orange-600/10 border border-orange-500/20 px-5 py-2.5 rounded-full">
               <Filter size={14} className="text-orange-500" />
-              <span className="text-[10px] font-black text-white uppercase tracking-widest">Setor: {activeFilter}</span>
+              <span className="text-[10px] font-black text-white uppercase tracking-widest">Filtro Ativo: {activeFilter}</span>
               <button onClick={() => setActiveFilter(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
                  <X size={14} className="text-orange-500" />
               </button>
@@ -80,10 +79,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
       <AnimatePresence mode="wait">
         {!selectedArena ? (
           <motion.div 
-            key="list" 
-            initial={{ opacity: 0, x: -20 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            exit={{ opacity: 0, x: -20 }}
+            key="list" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4"
           >
              {filteredChamps.map((champ) => (
@@ -96,13 +92,13 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                   </div>
                   <div>
                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">{champ.name}</h3>
-                     <p className="text-xs text-slate-500 font-medium mt-2">Ciclo {champ.current_round} de {champ.total_rounds}</p>
+                     <p className="text-xs text-slate-500 font-medium mt-2 uppercase tracking-widest">Ciclo Atual: 0{champ.current_round}</p>
                   </div>
                   <button 
                     onClick={() => setSelectedArena(champ)}
                     className="w-full py-5 bg-white text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"
                   >
-                    Selecionar Equipe <ChevronRight size={16} />
+                    Identificar Unidade <ChevronRight size={16} />
                   </button>
                </div>
              ))}
@@ -110,23 +106,20 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                <div className="col-span-full py-20 text-center bg-white/5 rounded-[4rem] border border-dashed border-white/10">
                   <Trophy size={48} className="text-slate-700 mx-auto mb-6" />
                   <p className="text-slate-500 font-black uppercase text-sm tracking-widest">Nenhuma arena encontrada.</p>
-                  <button onClick={() => setActiveFilter(null)} className="mt-4 text-orange-500 font-bold uppercase text-[10px] tracking-widest hover:underline">Ver todas</button>
                </div>
              )}
           </motion.div>
         ) : (
           <motion.div 
-            key="teams" 
-            initial={{ opacity: 0, scale: 0.95 }} 
-            animate={{ opacity: 1, scale: 1 }}
+            key="teams" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
             className="space-y-10 px-4"
           >
              <button onClick={() => setSelectedArena(null)} className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase hover:text-white transition-colors">
-                <ChevronRight size={14} className="rotate-180" /> Voltar
+                <ChevronRight size={14} className="rotate-180" /> Voltar ao Terminal
              </button>
              <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 space-y-10 shadow-2xl">
                 <div className="text-center space-y-3">
-                   <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Escolha sua <span className="text-orange-600">Unidade</span></h2>
+                   <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Conexão Tática: <span className="text-orange-600">{selectedArena.name}</span></h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                    {selectedArena.teams?.map((team: Team) => (
@@ -140,7 +133,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                         </div>
                         <h4 className="text-xl font-black text-white uppercase italic tracking-tight">{team.name}</h4>
                         <div className="pt-4 border-t border-white/10 flex items-center justify-center gap-2 text-[8px] font-black uppercase text-slate-500 group-hover:text-white">
-                           <Play size={10} fill="currentColor"/> Iniciar Simulação
+                           <Play size={10} fill="currentColor"/> Iniciar Orquestração
                         </div>
                      </button>
                    ))}

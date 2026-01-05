@@ -1,13 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
   Factory, ShoppingCart, Briefcase, Tractor, DollarSign, 
   Hammer, ChevronRight, Zap, Target, BarChart3, Users, Box,
   Gavel, Cpu, Sparkles, ShieldCheck, Globe, Trophy, Play,
-  ArrowRight, Landmark
+  Landmark
 } from 'lucide-react';
 import { getPageContent } from '../constants';
 import { fetchPageContent, getModalities } from '../services/supabase';
@@ -21,14 +20,14 @@ const ActivityDetail: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      // Prioridade: Banco de Dados
+      // 1. DATABASE PRIORITY
       let dbContent = await fetchPageContent(`branch-${slug}`, i18n.language);
       if (!dbContent) dbContent = await fetchPageContent(`activity-${slug}`, i18n.language);
 
       if (dbContent) {
         setContent(dbContent);
       } else {
-        // Tenta modalidades dinâmicas do banco
+        // 2. DYNAMIC MODALITIES FROM SUPABASE
         const mods = await getModalities();
         const foundMod = mods.find(m => m.slug === slug);
         if (foundMod) {
@@ -44,19 +43,19 @@ const ActivityDetail: React.FC = () => {
             return;
         }
 
-        // Fallback para helper seguro de constantes locais
+        // 3. LOCAL CONSTANTS FALLBACK
         const localContent = getPageContent(slug || '');
         if (localContent) {
           setContent(localContent);
         } else {
-          // Fallback final de emergência
+          // 4. CRITICAL FALLBACK (Survival Mode)
           setContent({
             name: slug?.toUpperCase() || 'ARENA',
             heroImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000",
-            body: "Célula estratégica em fase de sincronização com o Oráculo.",
-            description: "Este setor está sendo mapeado para simulações de alta performance v6.0.",
-            features: ["Módulo Alpha", "Engine Sincronizada", "Deep Analytics Ready"],
-            kpis: ["Latência", "Throughput", "SDR"],
+            body: "Aguardando sincronização de briefing regional...",
+            description: "Este setor estratégico está em fase de mapeamento para simulações v12.8.",
+            features: ["Módulo Alpha", "Engine Sincronizada", "Real-time Metrics Ready"],
+            kpis: ["Latência", "Throughput", "Fidelity"],
             accent: "blue"
           });
         }
@@ -69,7 +68,7 @@ const ActivityDetail: React.FC = () => {
     <div className="h-screen w-screen flex items-center justify-center bg-[#020617]">
       <div className="text-center space-y-6">
         <div className="w-16 h-16 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto shadow-[0_0_30px_rgba(249,115,22,0.3)]"></div>
-        <span className="text-white uppercase font-black text-xs tracking-[0.4em] animate-pulse italic">Sincronizando Node {slug}...</span>
+        <span className="text-white uppercase font-black text-xs tracking-[0.4em] animate-pulse italic">Connecting Node {slug}...</span>
       </div>
     </div>
   );
@@ -91,10 +90,6 @@ const ActivityDetail: React.FC = () => {
   const bgAccent = content.accent === 'blue' ? 'bg-blue-600' : content.accent === 'emerald' ? 'bg-emerald-600' : 'bg-orange-600';
   const shadowAccent = content.accent === 'blue' ? 'shadow-blue-500/20' : content.accent === 'emerald' ? 'shadow-emerald-500/20' : 'shadow-orange-500/20';
 
-  const handleStartArena = () => {
-    navigate('/app/championships', { state: { preSelectedBranch: slug } });
-  };
-
   return (
     <div className="min-h-screen relative overflow-hidden bg-transparent selection:bg-orange-500 selection:text-white">
       <EmpireParticles />
@@ -104,25 +99,22 @@ const ActivityDetail: React.FC = () => {
            <div className="absolute inset-0 bg-gradient-to-r from-[#020617] via-[#020617]/80 to-transparent z-10" />
            <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent z-10" />
            <motion.img 
-             initial={{ scale: 1.1 }}
-             animate={{ scale: 1 }}
+             initial={{ scale: 1.1 }} animate={{ scale: 1 }}
              transition={{ duration: 20, repeat: Infinity, repeatType: "reverse" }}
-             src={content.heroImage} 
-             className="w-full h-full object-cover brightness-50" 
-             alt={content.name} 
+             src={content.heroImage} className="w-full h-full object-cover brightness-50 contrast-125" alt={content.name} 
            />
         </div>
 
         <div className="container mx-auto px-8 md:px-24 relative z-20">
            <div className="max-w-4xl space-y-12">
               <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
-                 <div className={`w-24 h-24 ${bgAccent} rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl ${shadowAccent} group hover:rotate-12 transition-transform duration-500`}>
+                 <div className={`w-24 h-24 ${bgAccent} rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl ${shadowAccent} group hover:rotate-12 transition-transform duration-500 border border-white/10`}>
                     {getIcon()}
                  </div>
                  <div className="space-y-6">
                     <h1 className="text-6xl md:text-9xl font-black text-white uppercase tracking-tighter italic leading-none drop-shadow-2xl">
                        {content.name} <br/>
-                       <span className={`${accentColor} italic`}>Setor</span>
+                       <span className={`${accentColor} italic`}>Arena Ativa</span>
                     </h1>
                     <p className="text-2xl md:text-3xl text-slate-300 font-medium leading-relaxed italic opacity-90 max-w-2xl">
                        "{content.body}"
@@ -130,41 +122,32 @@ const ActivityDetail: React.FC = () => {
                  </div>
                  <div className="flex flex-col sm:flex-row gap-6 pt-6">
                     <button 
-                      onClick={handleStartArena}
+                      onClick={() => navigate('/app/championships', { state: { preSelectedBranch: slug } })}
                       className={`px-14 py-6 ${bgAccent} text-white rounded-full font-black text-xs uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-2xl ${shadowAccent} flex items-center justify-center gap-4`}
                     >
-                      <Play size={18} fill="currentColor" /> Iniciar Simulação {content.name}
+                      <Play size={18} fill="currentColor" /> Inicializar Nodo {content.name}
                     </button>
                     <Link to="/features" className="px-12 py-6 bg-white/5 border border-white/10 text-white rounded-full font-black text-xs uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-4 backdrop-blur-xl">
-                      Protocolo Técnico <Sparkles size={18} className={accentColor} />
+                      Technical Blueprint <Sparkles size={18} className={accentColor} />
                     </Link>
                  </div>
               </motion.div>
            </div>
         </div>
-
-        <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity }} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
-           <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.5em] italic">Engine v6.0 GOLD Build</span>
-           <div className="w-0.5 h-12 bg-gradient-to-b from-white/20 to-transparent rounded-full" />
-        </motion.div>
       </section>
 
       <section className="py-40 container mx-auto px-8 md:px-24 space-y-32 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
            <div className="space-y-12">
               <div className="space-y-4">
-                 <h2 className={`text-[10px] font-black uppercase tracking-[0.5em] ${accentColor}`}>Operational Mapping</h2>
-                 <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic">DNA de Mercado</h3>
+                 <h2 className={`text-[10px] font-black uppercase tracking-[0.5em] ${accentColor}`}>DNA Sistêmico</h2>
+                 <h3 className="text-5xl font-black text-white uppercase tracking-tighter italic">Vantagem Operacional</h3>
               </div>
-              <p className="text-xl text-slate-400 leading-relaxed font-medium">
-                 {content.description}
-              </p>
+              <p className="text-xl text-slate-400 leading-relaxed font-medium">{content.description}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
                  {content.features?.map((f: string, i: number) => (
                    <div key={i} className="flex gap-4 items-start group">
-                      <div className={`p-2 rounded-lg ${bgAccent}/10 ${accentColor} mt-1 group-hover:scale-110 transition-transform`}>
-                         <ShieldCheck size={18} />
-                      </div>
+                      <div className={`p-2 rounded-lg ${bgAccent}/10 ${accentColor} mt-1 group-hover:scale-110 transition-transform`}><ShieldCheck size={18} /></div>
                       <span className="text-sm font-black text-slate-200 uppercase tracking-widest">{f}</span>
                    </div>
                  ))}
@@ -186,8 +169,8 @@ const ActivityDetail: React.FC = () => {
         <div className="container mx-auto px-8 md:px-24 space-y-24">
            <div className="text-center space-y-4 max-w-3xl mx-auto">
               <div className="inline-flex p-3 bg-white/5 rounded-2xl mb-4 text-blue-500"><Target size={32} /></div>
-              <h2 className={`text-[10px] font-black uppercase tracking-[0.5em] ${accentColor}`}>Audit Metrics</h2>
-              <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Variáveis de Orquestração</h3>
+              <h2 className={`text-[10px] font-black uppercase tracking-[0.5em] ${accentColor}`}>Oracle Fidelity Nodes</h2>
+              <h3 className="text-6xl font-black text-white uppercase tracking-tighter italic">Alavancas de Performance</h3>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -198,7 +181,7 @@ const ActivityDetail: React.FC = () => {
                    </div>
                    <div>
                       <h4 className="text-3xl font-black text-white uppercase tracking-tight italic">{kpi}</h4>
-                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mt-3">Sincronização Ativa</p>
+                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mt-3 italic">Oracle Synced</p>
                    </div>
                 </div>
               ))}

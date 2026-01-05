@@ -7,7 +7,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 
 /**
  * EXTRAÇÃO DEFENSIVA DE MAQUINÁRIO v12.8.2
- * Only supports alfa, beta, gama. Legacy keys removed.
+ * Standardized Oracle Node mapping for industrial assets.
  */
 export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };
@@ -24,6 +24,7 @@ export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
 
 /**
  * CÁLCULO DE DEPRECIAÇÃO (Fidelity Standard 5%)
+ * Linear period depreciation based on machine types.
  */
 export const calculateDepreciation = (machines: { alfa: number, beta: number, gama: number }, macro: MacroIndicators, rate: number = 0.05) => {
   const prices = getSafeMachineryValues(macro);
@@ -32,6 +33,10 @@ export const calculateDepreciation = (machines: { alfa: number, beta: number, ga
   return { totalValue, periodDepreciation };
 };
 
+/**
+ * CORE ORACLE PROJECTION v12.8.2
+ * Calculates full financial and operational status of a strategy node.
+ */
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
@@ -43,17 +48,17 @@ export const calculateProjections = (
   const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
   const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
   
-  // 1. Asset Management
+  // 1. CAPEX and Asset Cycle
   const machinesOwned = previousState?.resources?.machines || { alfa: 2, beta: 1, gama: 0 };
   const { periodDepreciation } = calculateDepreciation(machinesOwned, indicators || {} as any);
   
-  // 2. Core Result Simulation
-  const revenue = 3322735; 
+  // 2. Operational Dynamics
+  const revenue = 3322735; // Simulated revenue baseline
   const totalMarketingCost = Object.values(decisions.regions).reduce((acc, r) => acc + (r.marketing * 10000), 0);
   const operatingCosts = (decisions.hr.trainingPercent * 500) + 150000 + totalMarketingCost; 
   const netProfit = revenue - operatingCosts - periodDepreciation;
   
-  // 3. Financial Health & Credit Node
+  // 3. Solvency Audit Node
   const finalEquity = prevEquity + netProfit;
   const totalDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362) + decisions.finance.loanRequest;
   const liquidityRatio = (prevCash + revenue) / Math.max(totalDebt, 1);
@@ -71,8 +76,7 @@ export const calculateProjections = (
     rating = 'A'; risk = 15;
   }
 
-  // 4. Advanced Indicators v12.8.2 - Oracle Fidelity Engine
-  // Dynamic financial objects: Cycles, NCG, and Scissors Effect
+  // 4. Advanced Indicators v12.8.2 - Fidelity Logic (NCG, Cycles, Scissors)
   const advanced: AdvancedIndicators = {
     ciclos: {
       operacional: branch === 'industrial' ? 60 : 35,
@@ -108,8 +112,8 @@ export const calculateProjections = (
     },
     advanced,
     costBreakdown: [
-      { name: 'Depreciação de Ativos', total: periodDepreciation, impact: 'Fidelity Wear' },
-      { name: 'OPEX', total: operatingCosts, impact: 'Operational Maintainability' }
+      { name: 'Depreciação', total: periodDepreciation, impact: 'Fidelity Wear' },
+      { name: 'OPEX', total: operatingCosts, impact: 'Maintainability' }
     ],
     statements: {
       dre: { revenue, operating_profit: netProfit + periodDepreciation, net_profit: netProfit },

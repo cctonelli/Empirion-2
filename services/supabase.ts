@@ -17,75 +17,91 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
 /**
- * ORACLE TURNOVER ENGINE v11.2 (Fidelity Upgrade)
- * Encerra o round e gera resultados estruturados para todas as equipes.
+ * ORACLE TURNOVER ENGINE v11.2 (Atomic & Traceable)
+ * Processes all strategy nodes for an arena period.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
-  try {
-    // 1. Fetch Arena Meta
-    const { data: arena } = await supabase.from('championships').select('*').eq('id', championshipId).single();
-    if (!arena) throw new Error("Arena not found in Oracle Node.");
+  console.log(`[TURNOVER v11.2] Initiating: Arena ${championshipId} | R${currentRound}`);
 
-    // 2. Fetch Decisions for round in processing
+  try {
+    // 1. DATA GATHERING (Fail-Fast Validation)
+    const { data: arena } = await supabase.from('championships').select('*').eq('id', championshipId).single();
+    if (!arena) throw new Error("Oracle Node: Arena synchronization lost.");
+
+    const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', championshipId);
+    if (!teams || teams.length === 0) throw new Error("Oracle Node: No strategy units found.");
+
     const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', currentRound + 1);
-    
-    // 3. Fetch Prev States for heritage
     const { data: previousStates } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', currentRound);
 
-    // 4. Fetch Strategy Units
-    const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', championshipId);
-    if (!teams) throw new Error("No teams detected in local node.");
+    // 2. LOGICAL ISOLATION (Memory Process)
+    const batchResults = teams.map(team => {
+      try {
+        const teamDecision = decisions?.find(d => d.team_id === team.id)?.data || {
+          regions: Object.fromEntries(Array.from({ length: 9 }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 1 }])),
+          hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50 },
+          production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0 },
+          finance: { loanRequest: 0, application: 0, buyMachines: { alfa: 0, beta: 0, gama: 0 } },
+          legal: { recovery_mode: 'none' }
+        };
 
-    const newRoundResults: any[] = [];
+        const teamPrevState = currentRound === 0 ? arena.initial_financials : previousStates?.find(s => s.team_id === team.id);
+        
+        const result = calculateProjections(
+          teamDecision as DecisionData, 
+          arena.branch, 
+          arena.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' }, 
+          arena.market_indicators, 
+          teamPrevState
+        );
 
-    // 5. Orquestração de Cálculo (Loop Auditado)
-    for (const team of teams) {
-      const teamDecision = decisions?.find(d => d.team_id === team.id)?.data || null;
-      const teamPrevState = currentRound === 0 ? arena.initial_financials : previousStates?.find(s => s.team_id === team.id);
-      
-      // Default protocol if team failed to submit
-      const effectiveDecision: DecisionData = teamDecision || {
-        regions: Object.fromEntries(Array.from({ length: 9 }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 1 }])),
-        hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50 },
-        production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0 },
-        finance: { loanRequest: 0, application: 0, buyMachines: { alfa: 0, beta: 0, gama: 0 } },
-        legal: { recovery_mode: 'none' }
-      };
+        return {
+          team_id: team.id,
+          championship_id: championshipId,
+          round: currentRound + 1,
+          state: { decisions: teamDecision },
+          dre: result.statements?.dre,
+          balance_sheet: result.statements?.balance_sheet,
+          cash_flow: result.statements?.cash_flow,
+          kpis: result.statements?.kpis,
+          advanced_indicators: result.advanced
+        };
+      } catch (e: any) {
+        console.error(`[TEAM ERROR] Unit ${team.id} processing failure:`, e.message);
+        return null;
+      }
+    }).filter(r => r !== null);
 
-      const result = calculateProjections(
-        effectiveDecision, 
-        arena.branch, 
-        arena.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' }, 
-        arena.market_indicators, 
-        teamPrevState
-      );
-
-      newRoundResults.push({
-        team_id: team.id,
-        championship_id: championshipId,
-        round: currentRound + 1,
-        state: { decisions: effectiveDecision },
-        dre: result.statements?.dre,
-        balance_sheet: result.statements?.balance_sheet,
-        cash_flow: result.statements?.cash_flow,
-        kpis: result.statements?.kpis,
-        advanced_indicators: result.advanced // Persisting the v12.8.2 Oracle intelligence
-      });
+    if (batchResults.length === 0) {
+      throw new Error("Total Process Failure: No units could be validated.");
     }
 
-    // 6. Persistence
-    const { error: insErr } = await supabase.from('companies').insert(newRoundResults);
+    // 3. ATOMIC PERSISTENCE
+    const { error: insErr } = await supabase.from('companies').insert(batchResults);
     if (insErr) throw insErr;
 
-    // 7. Increment Round
-    const { error: updErr } = await supabase.from('championships').update({ current_round: currentRound + 1 }).eq('id', championshipId);
+    const { error: updErr } = await supabase.from('championships').update({ 
+      current_round: currentRound + 1,
+      last_turnover_at: new Date().toISOString() 
+    }).eq('id', championshipId);
+    
     if (updErr) throw updErr;
 
     return { success: true };
   } catch (err: any) {
-    console.error("ORACLE TURNOVER ENGINE CRASH:", err);
+    console.error("[CRITICAL TURNOVER FAILURE]:", { message: err.message, context: { championshipId, currentRound } });
     return { success: false, error: err.message };
   }
+};
+
+export const submitCommunityVote = async (vote: {
+  championship_id: string;
+  team_id: string;
+  round: number;
+  scores: Record<string, number>;
+  comment?: string;
+}) => {
+  return await supabase.from('community_votes').insert([vote]);
 };
 
 export const getChampionshipHistoricalData = async (championshipId: string, round: number) => {
@@ -343,15 +359,4 @@ export const listAllUsers = async () => {
 
 export const updateUserPremiumStatus = async (userId: string, status: boolean) => {
   return await supabase.from('users').update({ is_opal_premium: status }).eq('supabase_user_id', userId).select().single();
-};
-
-// FIX: Added missing function submitCommunityVote
-export const submitCommunityVote = async (vote: {
-  championship_id: string;
-  team_id: string;
-  round: number;
-  scores: Record<string, number>;
-  comment?: string;
-}) => {
-  return await supabase.from('community_votes').insert([vote]);
 };
