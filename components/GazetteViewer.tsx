@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Newspaper, Globe, History, Shield, 
   ChevronLeft, Landmark, Zap, 
-  Gavel, Download, AlertTriangle, Target, Table
+  Gavel, Download, AlertTriangle, Target, LayoutGrid
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Championship, UserRole, AdvancedIndicators, Team } from '../types';
@@ -41,7 +41,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       <header className="bg-slate-950 p-8 border-b border-white/5">
          <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-6">
-               <div className="p-4 bg-orange-600 text-white rounded-3xl shadow-2xl shadow-orange-500/20"><Newspaper size={32} /></div>
+               <div className="p-4 bg-orange-600 text-white rounded-3xl shadow-2xl shadow-orange-500/20"><Zap size={32} /></div>
                <div>
                   <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Empirion <span className="text-orange-500">Street</span></h1>
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Oracle System v6.0 GOLD • Audit Node 08</p>
@@ -60,7 +60,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
             <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} icon={<Globe size={14}/>} label="Conjuntura" />
             <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} icon={<Landmark size={14}/>} label="Fornecedores" />
             <TabBtn active={activeTab === 'cycles'} onClick={() => setActiveTab('cycles')} icon={<History size={14}/>} label="Ciclos & NLDCG" />
-            <TabBtn active={activeTab === 'benchmarking'} onClick={() => setActiveTab('benchmarking')} icon={<Table size={14}/>} label="Matriz 8 Equipes" />
+            <TabBtn active={activeTab === 'benchmarking'} onClick={() => setActiveTab('benchmarking')} icon={<LayoutGrid size={14}/>} label="Matriz 8 Equipes" />
             {userRole === 'tutor' && <TabBtn active={activeTab === 'tutor'} onClick={() => setActiveTab('tutor')} icon={<Shield size={14}/>} label="Tutor Master" color="orange" />}
          </nav>
       </header>

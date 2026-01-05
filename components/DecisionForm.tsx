@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, FileText,
+  Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, 
   MapPin, Boxes, Cpu, Info, ChevronRight, ChevronLeft, ShieldAlert,
   Lock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, 
-  TrendingUp, CheckCircle2
+  TrendingUp, CheckCircle2, ShieldCheck, FileEdit
 } from 'lucide-react';
 import { saveDecisions } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -17,7 +17,7 @@ const STEPS = [
   { id: 'production', label: 'Produção & Fábrica', icon: Factory },
   { id: 'finance', label: 'Finanças & CapEx', icon: DollarSign },
   { id: 'legal', label: 'Protocolo Jurídico', icon: Gavel },
-  { id: 'review', label: 'Revisão & Selo', icon: FileText },
+  { id: 'review', label: 'Revisão & Selo', icon: ShieldCheck },
 ];
 
 const createInitialDecisions = (): DecisionData => ({
@@ -47,8 +47,11 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
   const [decisions, setDecisions] = useState<DecisionData>(createInitialDecisions());
   const [isSaving, setIsSaving] = useState(false);
 
-  // Ensure round is a number for reliable UI rendering
-  const safeRound = Number(round) || 1;
+  // Strict numeric conversion to satisfy build engine and prevent hydration mismatches
+  const safeRound = useMemo(() => {
+    const r = Number(round);
+    return isNaN(r) ? 1 : r;
+  }, [round]);
 
   const projections = useMemo(() => 
     calculateProjections(decisions, branch, { inflationRate: 0.01, demandMultiplier: 1.0 } as any, DEFAULT_MACRO), 
@@ -224,7 +227,7 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
                     <p className="text-slate-500 font-medium text-xs">Gestão de estabilidade e recuperação de unidade industrial.</p>
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <RecoveryCard active={decisions.legal.recovery_mode === 'none'} onClick={() => updateDecision('legal.recovery_mode', 'none')} title="Normal" icon={<FileText size={18}/>} color="blue" desc="Operação plena." />
+                    <RecoveryCard active={decisions.legal.recovery_mode === 'none'} onClick={() => updateDecision('legal.recovery_mode', 'none')} title="Normal" icon={<ShieldCheck size={18}/>} color="blue" desc="Operação plena." />
                     <RecoveryCard active={decisions.legal.recovery_mode === 'extrajudicial'} onClick={() => updateDecision('legal.recovery_mode', 'extrajudicial')} title="REJ" icon={<AlertTriangle size={18}/>} color="amber" desc="Acordo Moderado." />
                     <RecoveryCard active={decisions.legal.recovery_mode === 'judicial'} onClick={() => updateDecision('legal.recovery_mode', 'judicial')} title="Rec. Judicial" icon={<ShieldAlert size={18}/>} color="rose" desc="Proteção Total." />
                  </div>
@@ -249,8 +252,12 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
             )}
 
             <footer className="mt-6 pt-4 border-t border-white/5 flex justify-between">
-               <button onClick={() => setActiveStep(s => Math.max(0, s-1))} className="px-5 py-2 text-slate-500 font-black uppercase text-[7px] tracking-widest hover:text-white transition-all">Voltar</button>
-               <button onClick={() => setActiveStep(s => Math.min(5, s+1))} className="px-8 py-3 bg-white text-slate-950 rounded-full font-black text-[8px] uppercase tracking-[0.2em] shadow-lg hover:bg-orange-600 hover:text-white transition-all">Próximo Protocolo</button>
+               <button onClick={() => setActiveStep(s => Math.max(0, s-1))} className="px-5 py-2 text-slate-500 font-black uppercase text-[7px] tracking-widest hover:text-white transition-all flex items-center gap-2">
+                  <ChevronLeft size={14} /> Voltar
+               </button>
+               <button onClick={() => setActiveStep(s => Math.min(5, s+1))} className="px-8 py-3 bg-white text-slate-950 rounded-full font-black text-[8px] uppercase tracking-[0.2em] shadow-lg hover:bg-orange-600 hover:text-white transition-all flex items-center gap-2">
+                  Próximo Protocolo <ChevronRight size={14} />
+               </button>
             </footer>
           </motion.div>
         </AnimatePresence>
