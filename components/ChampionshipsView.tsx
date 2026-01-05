@@ -45,10 +45,11 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
   }, [location.state]);
 
   const filteredChamps = activeFilter 
-    ? championships.filter(c => 
-        c.branch.toLowerCase().includes(activeFilter!.toLowerCase()) || 
-        activeFilter!.toLowerCase().includes(c.branch.toLowerCase())
-      )
+    ? championships.filter(c => {
+        const branch = (c.branch || '').toLowerCase();
+        const filter = activeFilter!.toLowerCase();
+        return branch.includes(filter) || filter.includes(branch);
+      })
     : championships;
 
   if (loading) return (

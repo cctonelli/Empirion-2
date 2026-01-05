@@ -19,7 +19,12 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       stroke: { curve: 'smooth', width: [4, 2], dashArray: [0, 8] },
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0 } },
       xaxis: { categories: ['R0', 'R1', 'R2', 'R3', 'R4', 'R5'], labels: { style: { colors: '#94a3b8', fontWeight: 700 } } },
-      yaxis: { labels: { style: { colors: '#94a3b8' }, formatter: (v: number) => `$${(v/1000000).toFixed(1)}M` } },
+      yaxis: { 
+        labels: { 
+          style: { colors: '#94a3b8' }, 
+          formatter: (v: number) => v ? `$${(v/1000000).toFixed(1)}M` : '$0' 
+        } 
+      },
       grid: { borderColor: 'rgba(255,255,255,0.05)' },
       tooltip: { theme: 'dark' },
       legend: { show: false }

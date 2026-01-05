@@ -17,7 +17,7 @@ export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const v = macro.machineryValues || (macro as any).config?.machineryValues || {};
   return {
     alfa: sanitize(v.alfa, defaults.alfa),
-    beta: sanitize(v.beta || v.Bird, defaults.beta), // Resgate da chave legada
+    beta: sanitize(v.beta || (v as any).Bird, defaults.beta), // Resgate da chave legada 'Bird' via cast
     gama: sanitize(v.gama, defaults.gama)
   };
 };
