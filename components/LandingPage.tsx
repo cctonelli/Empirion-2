@@ -157,8 +157,8 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
              className="w-[1200px] h-[1200px] bg-orange-500/15 blur-[180px] rounded-full absolute -bottom-1/2 -right-1/4"
            />
            <motion.div 
-             animate={{ opacity: [0.3, 0.6, 0.3] }}
-             transition={{ duration: 8, repeat: Infinity }}
+             animate={{ x: [-50, 50, -50], y: [100, -100, 100], opacity: [0.3, 0.6, 0.3] }}
+             transition={{ duration: 12, repeat: Infinity }}
              className="w-[1000px] h-[1000px] bg-orange-700/10 blur-[220px] rounded-full absolute top-1/4 left-1/4"
            />
         </div>
