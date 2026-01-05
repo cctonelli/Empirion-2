@@ -3,7 +3,7 @@
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
-export type Branch = 'industrial' | 'commercial' | 'service' | 'services' | 'agribusiness' | 'finance' | 'construction';
+export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
 export type SalesMode = 'internal' | 'external' | 'hybrid' | string;
 export type ScenarioType = 'simulated' | 'real' | string;
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
@@ -21,6 +21,20 @@ export interface AuditLog {
   changed_at: string;
   user_id?: string;
   impact_on_cash?: number;
+}
+
+export interface MessageBoardItem {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+  isImportant?: boolean;
+}
+
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
 }
 
 export interface BlackSwanEvent {
@@ -241,20 +255,4 @@ export interface Modality {
 
 export interface AdvancedIndicators {
   [key: string]: any;
-}
-
-// Added missing MessageBoardItem interface to resolve import error in Dashboard.tsx
-export interface MessageBoardItem {
-  id: string;
-  sender: string;
-  text: string;
-  timestamp: string;
-  isImportant?: boolean;
-}
-
-// Added missing CommunityCriteria interface to resolve import error in CommunityView.tsx
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
 }
