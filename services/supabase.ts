@@ -19,7 +19,6 @@ export const isTestMode = true;
  * Recupera snapshots históricos de todas as equipes de um campeonato.
  */
 export const getChampionshipHistoricalData = async (championshipId: string, round: number) => {
-  // No MVP, tentamos buscar da tabela 'companies' que armazena os estados finais
   const { data, error } = await supabase
     .from('companies')
     .select('*, teams(name)')
@@ -42,22 +41,14 @@ export const getChampionshipHistoricalData = async (championshipId: string, roun
   };
 };
 
-/**
- * Provisiona o ambiente de demonstração (Alpha/Trial).
- * No MVP, garante que o modo de teste esteja operacional.
- */
 export const provisionDemoEnvironment = () => {
   if (isTestMode) {
     console.log("EMPIRE ENGINE: Provisioning Alpha Environment...");
-    // No MVP, apenas garante que flags de trial existam no storage
     localStorage.setItem('is_trial_session', 'true');
     localStorage.setItem('active_branch', 'industrial');
   }
 };
 
-/**
- * Gestão Progressiva de Business Plans
- */
 export const getActiveBusinessPlan = async (teamId: string, round: number) => {
   const { data, error } = await supabase
     .from('business_plans')
@@ -104,7 +95,7 @@ export const getTeamSimulationHistory = async (teamId: string) => {
 };
 
 /**
- * Persistência Inteligente v8.2
+ * Persistência Inteligente v8.5 - Resilient Schema Handling
  */
 export const createChampionshipWithTeams = async (champData: Partial<Championship>, teams: { name: string }[], isTrialParam: boolean = false) => {
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
@@ -113,25 +104,32 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
-    // Encapsulando campos que podem falhar por falta de coluna no root do schema (deadline_unit, etc)
+    // Encapsulando campos que costumam falhar por falta de coluna no root do schema trial
+    const now = new Date().toISOString();
     const payload: any = {
       name: champData.name,
       branch: champData.branch,
       status: 'active',
       current_round: 0,
       total_rounds: champData.total_rounds || 12,
-      // Mover campos dinâmicos para o config JSONB para garantir persistência mesmo sem as colunas
+      // Mover campos dinâmicos para o config JSONB para garantir persistência mesmo sem as colunas root
       config: {
         ...(champData.config || {}),
         deadline_value: champData.deadline_value || 7,
         deadline_unit: champData.deadline_unit || 'days',
-        market_indicators: champData.market_indicators
+        market_indicators: champData.market_indicators,
+        round_started_at: now, // Mover para config para evitar erros de coluna no trial
+        sales_mode: champData.sales_mode,
+        scenario_type: champData.scenario_type,
+        currency: champData.currency,
+        transparency_level: champData.transparency_level
       },
       initial_financials: champData.initial_financials,
-      market_indicators: champData.market_indicators,
-      round_started_at: new Date().toISOString()
+      market_indicators: champData.market_indicators
     };
 
+    // Apenas inserir no root se não for trial ou se tivermos certeza que as colunas existem
+    // Para simplificar e resolver o erro do usuário, tratamos de forma híbrida
     if (!isTrial) {
       payload.is_public = champData.is_public || false;
       payload.sales_mode = champData.sales_mode;
@@ -140,6 +138,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       payload.round_frequency_days = champData.round_frequency_days;
       payload.transparency_level = champData.transparency_level;
       payload.tutor_id = session?.user?.id;
+      payload.round_started_at = now;
     }
 
     const { data: champ, error: cErr } = await supabase
@@ -183,13 +182,17 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     if (data) trialData = data;
   } catch (e) { console.warn("Sandbox inacessível."); }
 
-  // Função auxiliar para garantir que campos vitais estejam no nível raiz do objeto
-  // pullando do config se necessário
+  // Recuperação inteligente de campos que podem estar no root ou no config JSONB
   const hydrate = (c: any) => ({
     ...c,
     deadline_value: c.deadline_value ?? c.config?.deadline_value ?? 7,
     deadline_unit: c.deadline_unit ?? c.config?.deadline_unit ?? 'days',
-    market_indicators: c.market_indicators ?? c.config?.market_indicators
+    round_started_at: c.round_started_at ?? c.config?.round_started_at ?? c.created_at,
+    market_indicators: c.market_indicators ?? c.config?.market_indicators,
+    sales_mode: c.sales_mode ?? c.config?.sales_mode ?? 'hybrid',
+    scenario_type: c.scenario_type ?? c.config?.scenario_type ?? 'simulated',
+    currency: c.currency ?? c.config?.currency ?? 'BRL',
+    transparency_level: c.transparency_level ?? c.config?.transparency_level ?? 'medium'
   });
 
   const combined = [
@@ -236,11 +239,6 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
   return await supabase.from(table).upsert({ team_id: teamId, championship_id: champId, round, data: decisions }); 
 };
 
-// FIX: Added missing exported functions required by other components
-
-/**
- * Reseta dados de teste do usuário Alpha.
- */
 export const resetAlphaData = async () => {
   const teamId = localStorage.getItem('active_team_id');
   if (!teamId) return;
@@ -251,9 +249,6 @@ export const resetAlphaData = async () => {
   return { error };
 };
 
-/**
- * Lista todos os usuários (Admin context).
- */
 export const listAllUsers = async () => {
   const { data, error } = await supabase
     .from('users')
@@ -262,9 +257,6 @@ export const listAllUsers = async () => {
   return { data, error };
 };
 
-/**
- * Atualiza status premium de um usuário.
- */
 export const updateUserPremiumStatus = async (userId: string, status: boolean) => {
   const { data, error } = await supabase
     .from('users')
@@ -275,9 +267,6 @@ export const updateUserPremiumStatus = async (userId: string, status: boolean) =
   return { data, error };
 };
 
-/**
- * Atualiza configurações de ecossistema de um campeonato.
- */
 export const updateEcosystem = async (championshipId: string, updates: any) => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_championships' : 'championships';
@@ -290,9 +279,6 @@ export const updateEcosystem = async (championshipId: string, updates: any) => {
   return { data, error };
 };
 
-/**
- * Recupera relatórios públicos para votação da comunidade.
- */
 export const getPublicReports = async (championshipId: string, round: number) => {
   const { data, error } = await supabase
     .from('companies')
@@ -313,9 +299,6 @@ export const getPublicReports = async (championshipId: string, round: number) =>
   };
 };
 
-/**
- * Submete voto da comunidade.
- */
 export const submitCommunityVote = async (vote: any) => {
   const { data, error } = await supabase
     .from('community_votes')
@@ -324,33 +307,32 @@ export const submitCommunityVote = async (vote: any) => {
   return { data, error };
 };
 
-/**
- * Busca conteúdo dinâmico de páginas.
- */
 export const fetchPageContent = async (slug: string, lang: string) => {
-  const { data } = await supabase
-    .from('page_content')
-    .select('content')
-    .eq('slug', slug)
-    .eq('lang', lang)
-    .maybeSingle();
-  return data?.content || null;
+  try {
+    const { data } = await supabase
+      .from('page_content')
+      .select('content')
+      .eq('slug', slug)
+      .eq('lang', lang)
+      .maybeSingle();
+    return data?.content || null;
+  } catch (e) {
+    return null;
+  }
 };
 
-/**
- * Lista modalidades de arena dinâmicas.
- */
 export const getModalities = async () => {
-  const { data } = await supabase
-    .from('modalities')
-    .select('*')
-    .order('name');
-  return (data as any[]) || [];
+  try {
+    const { data } = await supabase
+      .from('modalities')
+      .select('*')
+      .order('name');
+    return (data as any[]) || [];
+  } catch (e) {
+    return [];
+  }
 };
 
-/**
- * Subscreve a mudanças nas modalidades.
- */
 export const subscribeToModalities = (callback: () => void) => {
   return supabase
     .channel('modalities-changes')
