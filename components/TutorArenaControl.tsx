@@ -1,19 +1,20 @@
 
 import React, { useState } from 'react';
+/* Added Target to lucide-react imports */
 import { 
   Zap, Globe, Shield, TrendingUp, Percent, Users, Lock, Unlock, 
   Save, RefreshCw, AlertCircle, CheckCircle2, SlidersHorizontal, 
   Star, Plus, Trash2, LayoutGrid, Activity, Calculator,
   Eye, EyeOff, Flame, Leaf, Loader2, Bot, Newspaper, Layers, Sparkles,
   Search, ExternalLink, Info, Gavel, Cpu, DollarSign, Package,
-  ShoppingCart, Landmark, ShieldAlert, Boxes
+  ShoppingCart, Landmark, ShieldAlert, Boxes, BrainCircuit, Target
 } from 'lucide-react';
-import { EcosystemConfig, Championship, CommunityCriteria, BlackSwanEvent, ScenarioType, ModalityType, MacroIndicators } from '../types';
+import { EcosystemConfig, Championship, MacroIndicators, ChampionshipMacroRules } from '../types';
 import { updateEcosystem } from '../services/supabase';
 import { DEFAULT_MACRO } from '../constants';
 
 const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (config: Partial<Championship>) => void }> = ({ championship, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState<'macro' | 'modality' | 'suppliers' | 'taxes'>('suppliers');
+  const [activeTab, setActiveTab] = useState<'macro' | 'modality' | 'suppliers' | 'taxes' | 'difficulty'>('suppliers');
   const [config, setConfig] = useState<EcosystemConfig>(championship.ecosystemConfig || {
     scenarioType: 'simulated', modalityType: 'standard', inflationRate: 0.04, demandMultiplier: 1.0, interestRate: 0.12, marketVolatility: 0.2
   });
@@ -42,6 +43,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
          <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner overflow-x-auto no-scrollbar">
             <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} label="Tabela Fornecedores" icon={<Package size={14}/>} />
             <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} label="Indicadores Macro" icon={<TrendingUp size={14}/>} />
+            <TabBtn active={activeTab === 'difficulty'} onClick={() => setActiveTab('difficulty')} label="Sensibilidade" icon={<BrainCircuit size={14}/>} />
             <TabBtn active={activeTab === 'taxes'} onClick={() => setActiveTab('taxes')} label="Taxas & Regras" icon={<Gavel size={14}/>} />
             <TabBtn active={activeTab === 'modality'} onClick={() => setActiveTab('modality')} label="Cenário" icon={<Layers size={14}/>} />
          </div>
@@ -64,9 +66,50 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  <MacroInput label="Máquina BETA ($)" val={macro.machineryValues.beta} onChange={v => setMacro({...macro, machineryValues: {...macro.machineryValues, beta: v}})} />
                  <MacroInput label="Máquina GAMA ($)" val={macro.machineryValues.gama} onChange={v => setMacro({...macro, machineryValues: {...macro.machineryValues, gama: v}})} />
               </div>
-              <div className="p-6 bg-blue-50 rounded-3xl border border-blue-100 flex items-center gap-4">
-                 <Info size={20} className="text-blue-600" />
-                 <p className="text-[10px] font-bold text-blue-800 uppercase leading-relaxed">Nota: Reajustes em máquinas afetam apenas novas aquisições.</p>
+           </div>
+        </div>
+      )}
+
+      {activeTab === 'difficulty' && (
+        <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12">
+           <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-lg"><BrainCircuit size={24}/></div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tight">Saltiness Controls</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ajuste a agressividade do mercado e sensibilidade dos consumidores.</p>
+              </div>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              <div className="space-y-6">
+                 <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Target size={16} /> Sensibilidade de Preço</label>
+                    <span className="text-xl font-black text-slate-900">{(macro.difficulty?.price_sensitivity || 2.0).toFixed(1)}x</span>
+                 </div>
+                 <input type="range" min="0.5" max="5.0" step="0.1" value={macro.difficulty?.price_sensitivity || 2.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, price_sensitivity: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                 <p className="text-[9px] text-slate-400 italic">Quanto maior, mais os clientes migram para quem tem o menor preço.</p>
+              </div>
+
+              <div className="space-y-6">
+                 <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Zap size={16} /> Eficácia de Marketing</label>
+                    <span className="text-xl font-black text-slate-900">{(macro.difficulty?.marketing_effectiveness || 1.0).toFixed(1)}x</span>
+                 </div>
+                 <input type="range" min="0.1" max="3.0" step="0.1" value={macro.difficulty?.marketing_effectiveness || 1.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, marketing_effectiveness: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+              </div>
+
+              <div className="space-y-6">
+                 <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Flame size={16} /> Probabilidade de Crise</label>
+                    <span className="text-xl font-black text-slate-900">{((macro.difficulty?.crisis_probability || 0.0) * 100).toFixed(0)}%</span>
+                 </div>
+                 <input type="range" min="0.0" max="1.0" step="0.05" value={macro.difficulty?.crisis_probability || 0.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, crisis_probability: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600" />
+                 <p className="text-[9px] text-slate-400 italic">Chance de cisne negro (aumento súbito de custos) no próximo round.</p>
+              </div>
+
+              <div className="p-8 bg-indigo-50 border border-indigo-100 rounded-[2.5rem] flex flex-col justify-center">
+                 <h4 className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2 mb-2"><Info size={14}/> Impacto em Tempo Real</h4>
+                 <p className="text-[9px] font-bold text-indigo-800 leading-relaxed uppercase">Esses parâmetros afetam as projeções do Oracle no dashboard de todos os estrategistas instantaneamente via link neural.</p>
               </div>
            </div>
         </div>
@@ -89,8 +132,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  </div>
                  <input type="range" min="0.5" max="2" step="0.1" value={config.demandMultiplier} onChange={e => setConfig({...config, demandMultiplier: parseFloat(e.target.value)})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
               </div>
-              <MacroInput label="Crescimento Econômico (%)" val={macro.growthRate} onChange={v => setMacro({...macro, growthRate: v})} />
-              <MacroInput label="Taxa TR Mensal (%)" val={macro.interestRateTR} onChange={v => setMacro({...macro, interestRateTR: v})} />
            </div>
         </div>
       )}
@@ -101,12 +142,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
               <MacroInput label="Imposto de Renda (%)" val={15} onChange={() => {}} disabled />
               <MacroInput label="Juros Fornecedor (%)" val={macro.providerInterest} onChange={v => setMacro({...macro, providerInterest: v})} />
               <MacroInput label="Juros Venda a Prazo (%)" val={macro.salesAvgInterest} onChange={v => setMacro({...macro, salesAvgInterest: v})} />
-              <MacroInput label="Salário Médio Setor ($)" val={macro.sectorAvgSalary} onChange={v => setMacro({...macro, sectorAvgSalary: v})} />
-              <MacroInput label="Cotação Bolsa (EMPR8)" val={macro.stockMarketPrice} onChange={v => setMacro({...macro, stockMarketPrice: v})} />
-              <div className="p-8 bg-amber-50 rounded-[2.5rem] border border-amber-200 flex flex-col justify-center gap-3">
-                 <h4 className="text-[10px] font-black uppercase text-amber-600 tracking-widest flex items-center gap-2"><ShieldAlert size={14}/> Regras de Transmissão</h4>
-                 <p className="text-[9px] font-bold text-amber-800 leading-relaxed uppercase">Processamento Irrevogável: A Rodada 2 bloqueia a compra de novas máquinas ALFA por 1 ciclo.</p>
-              </div>
            </div>
         </div>
       )}

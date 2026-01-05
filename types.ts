@@ -12,17 +12,36 @@ export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 
 export type DiscreteTerm = 0 | 1 | 2;
 
-/**
- * DNA base de uma simulação. Define as regras de partida.
- */
-export interface GameTemplate {
-  id: string;
-  name: string;
-  baseProductionCost: number;
-  baseLaborCost: number;
-  marketSize: number;
-  taxRate: number;
-  inflationSchedule: number[]; 
+export interface ChampionshipMacroRules {
+  id?: string;
+  championship_id: string;
+  round: number;
+  price_sensitivity: number;     // 2.0 default - higher means price matters more
+  demand_elasticity: number;     // 1.5 default - higher means marketing/price affects volume more
+  marketing_effectiveness: number; // 1.0 default
+  crisis_probability: number;    // 0.0 to 1.0
+  machine_block_period?: number;
+}
+
+export interface MacroIndicators {
+  growthRate: number;
+  inflationRate: number;
+  interestRateTR: number;
+  providerInterest: number;
+  salesAvgInterest: number;
+  avgProdPerMan: number;
+  importedProducts: number;
+  laborAvailability: 'low' | 'medium' | 'high' | string;
+  providerPrices: { mpA: number; mpB: number };
+  distributionCostUnit: number;
+  marketingExpenseBase: number;
+  machineryValues: { alfa: number; beta: number; gama: number };
+  sectorAvgSalary: number;
+  stockMarketPrice: number;
+  initialExchangeRateUSD: number;
+  demand_regions?: number[];
+  // Injecting Difficulty Rules into indicators for engine access
+  difficulty?: Partial<ChampionshipMacroRules>;
 }
 
 export interface AdvancedIndicators {
@@ -37,11 +56,11 @@ export interface AdvancedIndicators {
   trit: number;
   insolvency_index: number;
   prazos: {
-    pmre: number; // Estoques
-    pmrv: number; // Recebimento
-    pmpc: number; // Pagamento Compras
-    pmdo: number; // Despesas Operacionais
-    pmmp: number; // Estocagem MP
+    pmre: number; 
+    pmrv: number; 
+    pmpc: number; 
+    pmdo: number; 
+    pmmp: number; 
   };
   ciclos: {
     operacional: number;
@@ -49,9 +68,9 @@ export interface AdvancedIndicators {
     economico: number;
   };
   fontes_financiamento: {
-    ecp: number; // Curto Prazo
-    ccp: number; // Capital Próprio
-    elp: number; // Longo Prazo
+    ecp: number; 
+    ccp: number; 
+    elp: number; 
   };
   scissors_effect: {
     ncg: number;
@@ -76,25 +95,6 @@ export interface DecisionData {
   production: { purchaseMPA: number; purchaseMPB: number; paymentType: DiscreteTerm; activityLevel: number; rd_investment: number };
   finance: { loanRequest: number; application: number; buyMachines: { alfa: number; beta: number; gama: number } };
   legal: { recovery_mode: RecoveryMode };
-}
-
-export interface MacroIndicators {
-  growthRate: number;
-  inflationRate: number;
-  interestRateTR: number;
-  providerInterest: number;
-  salesAvgInterest: number;
-  avgProdPerMan: number;
-  importedProducts: number;
-  laborAvailability: 'low' | 'medium' | 'high' | string;
-  providerPrices: { mpA: number; mpB: number };
-  distributionCostUnit: number;
-  marketingExpenseBase: number;
-  machineryValues: { alfa: number; beta: number; gama: number };
-  sectorAvgSalary: number;
-  stockMarketPrice: number;
-  initialExchangeRateUSD: number;
-  demand_regions?: number[];
 }
 
 export interface EcosystemConfig {
@@ -130,7 +130,6 @@ export interface Championship {
     bp_frequency?: number;
     bp_mandatory?: boolean;
     teamsLimit?: number;
-    customRules?: Partial<GameTemplate>;
     [key: string]: any;
   };
   market_indicators: MacroIndicators;
@@ -174,13 +173,13 @@ export interface ChampionshipTemplate {
     modalityType: ModalityType;
     deadlineValue?: number;
     deadlineUnit?: DeadlineUnit;
-    customRules?: Partial<GameTemplate>;
+    /* Added customRules to fix constants.tsx validation */
+    customRules?: any;
   };
   market_indicators: MacroIndicators;
   initial_financials: any;
 }
 
-// Fixed missing types used across the application
 export interface BlackSwanEvent {
   title: string;
   description: string;
