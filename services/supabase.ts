@@ -18,7 +18,6 @@ export const isTestMode = true;
 
 /**
  * ORACLE TURNOVER ENGINE v11.2.2 (Final Schema Sync)
- * Persists all simulation nodes into 'companies.kpis' for Vercel/Supabase consistency.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
   console.log(`[TURNOVER v11.2.2] Final Sync: Arena ${championshipId} | R${currentRound}`);
@@ -53,7 +52,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           teamPrevState
         );
 
-        // SCHEMA SYNC: KPIs node includes everything needed for UI Benchmarking
         return {
           team_id: team.id,
           championship_id: championshipId,
@@ -199,7 +197,6 @@ export const deleteChampionship = async (id: string, isTrial: boolean) => {
   const table = isTrial ? 'trial_championships' : 'championships';
   console.log(`[CLEANUP] Deleting arena ${id} from ${table}`);
   
-  // Cleanup Local Session if deleted item matches
   if (localStorage.getItem('active_champ_id') === id) {
     localStorage.removeItem('active_champ_id');
     localStorage.removeItem('active_team_id');
@@ -209,14 +206,21 @@ export const deleteChampionship = async (id: string, isTrial: boolean) => {
 };
 
 /**
- * PURGE ALL TRIALS v12.8.2 GOLD
- * Internal technical cleanup to clear all test/sandbox championships at once.
+ * PURGE SYSTEM DATA v12.8.2 GOLD
+ * Allows mass deletion of trial or all data to clear the project stage.
  */
 export const purgeAllTrials = async () => {
   console.log("[PURGE] Initiating total sandbox cleanup...");
   localStorage.removeItem('active_champ_id');
   localStorage.removeItem('active_team_id');
   return await supabase.from('trial_championships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+};
+
+export const purgeAllProduction = async () => {
+  console.log("[PURGE] Initiating total production cleanup...");
+  localStorage.removeItem('active_champ_id');
+  localStorage.removeItem('active_team_id');
+  return await supabase.from('championships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {
@@ -277,13 +281,11 @@ export const resetAlphaData = async () => {
 
 /**
  * Updates the ecosystem parameters of an arena.
- * Aligns with the DDL where ecosystemConfig is stored within 'config' JSONB.
  */
 export const updateEcosystem = async (championshipId: string, updates: any) => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_championships' : 'championships';
   
-  // If updates contain ecosystemConfig, we must merge into config JSONB column
   if (updates.ecosystemConfig) {
     const { data: current } = await supabase.from(table).select('config').eq('id', championshipId).single();
     if (current) {
@@ -308,8 +310,7 @@ export const getPublicReports = async (championshipId: string, round: number) =>
 };
 
 /**
- * Submits community evaluations for a team strategy.
- * Schema targets 'community_ratings' table.
+ * Submits community evaluations.
  */
 export const submitCommunityVote = async (data: {
   championship_id: string;
