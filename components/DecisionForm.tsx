@@ -89,18 +89,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     }
   };
 
-  const updateDecision = (path: string, value: any) => {
-    const newDecisions = JSON.parse(JSON.stringify(decisions));
-    const keys = path.split('.');
-    let current: any = newDecisions;
-    for (let i = 0; i < keys.length - 1; i++) {
-      if (!current[keys[i]]) current[keys[i]] = {};
-      current = current[keys[i]];
-    }
-    current[keys[keys.length - 1]] = value;
-    setDecisions(newDecisions);
-  };
-
   return (
     <div className="max-w-[1600px] mx-auto space-y-4 pb-32 animate-in fade-in duration-700">
       <InsolvencyAlert rating={rating as CreditRating} isOpen={showInsolvencyModal} onClose={() => setShowInsolvencyModal(false)} />

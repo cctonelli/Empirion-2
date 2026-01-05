@@ -271,3 +271,13 @@ export interface CommunityCriteria {
   label: string;
   weight: number;
 }
+
+/**
+ * FIX: Added missing TeamProgress interface to resolve the import error in TutorDecisionMonitor.tsx.
+ * This provides the base structure for monitoring team activity within an arena.
+ */
+export interface TeamProgress {
+  team_id: string;
+  status: string;
+  last_activity?: string;
+}
