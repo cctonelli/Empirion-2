@@ -48,7 +48,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                <div className="p-4 bg-orange-600 text-white rounded-3xl shadow-2xl shadow-orange-500/20"><Newspaper size={32} /></div>
                <div>
                   <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Empirion <span className="text-orange-500">Street</span></h1>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Oracle System v6.0 Gold • Audit Node 08</p>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Oracle System v6.0 GOLD • Audit Node 08</p>
                </div>
             </div>
             <div className="flex items-center gap-4">
@@ -72,6 +72,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       <main className="flex-1 overflow-y-auto p-10 custom-scrollbar">
          <AnimatePresence mode="wait">
             
+            {/* TAB: CONJUNTURA (MACRO) */}
             {activeTab === 'macro' && (
               <motion.div key="macro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -104,11 +105,12 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
               </motion.div>
             )}
 
+            {/* TAB: BENCHMARKING (FULL MATRIX 8 EMPRESAS) */}
             {activeTab === 'benchmarking' && (
               <motion.div key="bench" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
                  <div className="flex justify-between items-end">
                     <div>
-                       <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">Empire <span className="text-orange-500">Comparison Matrix</span></h2>
+                       <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">Empire <span className="text-orange-500">Audit Matrix</span></h2>
                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.4em] mt-3 italic">Snapshot simultâneo das 8 unidades industriais • Ciclo 0{round}</p>
                     </div>
                     <div className="flex gap-4">
@@ -142,7 +144,9 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                              <MatrixRow label="LUCRO OPERACIONAL (EBIT)" teams={teams} val="86.973" bold />
                              <MatrixRow label="(-) PROVISÃO IR (15%)" teams={teams} val="13.045" neg />
                              <MatrixRow label="LUCRO LÍQUIDO PERÍODO" teams={teams} val="73.928" total highlight />
+                             
                              <tr className="bg-white/10"><td colSpan={teams.length + 1} className="p-2 border-y border-white/10"></td></tr>
+                             
                              <MatrixRow label="ATIVO CIRCULANTE" teams={teams} val="3.290.340" bold />
                              <MatrixRow label="CAIXA & BANCOS" teams={teams} val="840.200" indent />
                              <MatrixRow label="ESTOQUES TOTAIS" teams={teams} val="1.466.605" indent />
@@ -151,7 +155,9 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                              <MatrixRow label="Máquinas e Equip." teams={teams} val="2.360.000" indent />
                              <MatrixRow label="(-) Depreciação Máq." teams={teams} val="-811.500" indent neg />
                              <MatrixRow label="TOTAL DO ATIVO" teams={teams} val="9.176.940" total highlight />
+
                              <tr className="bg-white/10"><td colSpan={teams.length + 1} className="p-2 border-y border-white/10"></td></tr>
+
                              <MatrixRow label="PASSIVO CIRCULANTE" teams={teams} val="4.121.493" bold />
                              <MatrixRow label="Fornecedores" teams={teams} val="717.605" indent />
                              <MatrixRow label="Empréstimos CP" teams={teams} val="1.872.362" indent />
@@ -164,6 +170,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
               </motion.div>
             )}
 
+            {/* TAB: FORNECEDORES & REGRAS */}
             {activeTab === 'suppliers' && (
               <motion.div key="suppliers" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                  <div className="space-y-8">

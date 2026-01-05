@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, FileText,
   MapPin, Boxes, Cpu, Info, Save, ChevronRight, ChevronLeft, ShieldAlert,
-  Lock, Unlock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, Coins, TrendingUp, CheckCircle2
+  Lock, Unlock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, 
+  Coins, TrendingUp, CheckCircle2
 } from 'lucide-react';
 import { saveDecisions } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -79,6 +80,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
         <AnimatePresence mode="wait">
           <motion.div key={STEPS[activeStep].id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             
+            {/* 1. COMERCIAL */}
             {activeStep === 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 {Object.entries(decisions.regions).map(([id, data]: [any, any]) => (
@@ -104,6 +106,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
+            {/* 2. RECURSOS HUMANOS */}
             {activeStep === 1 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
                  <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl space-y-6">
@@ -125,6 +128,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
+            {/* 3. PRODUÇÃO & FORNECEDORES (EXPANDIDO) */}
             {activeStep === 2 && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto">
                  <div className="lg:col-span-8 space-y-6">
@@ -164,6 +168,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
                           <PriceQuote label="Distribuição Unit." val="$ 50,50" trend="OK" />
                           <PriceQuote label="Juros Fornecedor" val="2.0% AM" trend="FIXO" />
                        </div>
+                       <div className="pt-6 border-t border-white/10">
+                          <p className="text-[9px] text-blue-300 font-bold uppercase leading-relaxed italic">
+                             *Cotação atualizada pelo motor Oracle. Reajustes automáticos aplicados no P0{round+1}.
+                          </p>
+                       </div>
                     </div>
                     <div className="p-6 bg-slate-900 border border-white/5 rounded-[2.5rem] flex items-center gap-4">
                        <Info size={20} className="text-orange-500" />
@@ -173,6 +182,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
+            {/* 4. FINANCEIRO */}
             {activeStep === 3 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
                  <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl space-y-6">
@@ -195,6 +205,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
+            {/* 5. JURÍDICO */}
             {activeStep === 4 && (
               <div className="max-w-3xl mx-auto space-y-8">
                  <div className="text-center space-y-2">
@@ -210,10 +221,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
+            {/* 6. REVISÃO */}
             {activeStep === 5 && (
               <div className="text-center space-y-6 py-4">
                  <div className="bg-white/5 p-8 rounded-[3rem] border border-white/10 max-w-xl mx-auto space-y-6 shadow-2xl">
-                    <h3 className="text-2xl font-black uppercase italic text-white tracking-tighter flex items-center justify-center gap-3"><FileText className="text-emerald-500" /> Selo Oráculo Oracle</h3>
+                    <h3 className="text-2xl font-black uppercase italic text-white tracking-tighter flex items-center justify-center gap-3"><CheckCircle2 className="text-emerald-500" /> Selo Oráculo Oracle</h3>
                     <div className="grid grid-cols-2 gap-3 text-left border-y border-white/5 py-6">
                        <SummaryNode label="Projeção Lucro" val={`$ ${projections.netProfit.toLocaleString()}`} />
                        <SummaryNode label="Market Share" val={`${projections.marketShare.toFixed(1)}%`} />
