@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, FileText,
-  MapPin, Boxes, Cpu, Info, Save, ChevronRight, ChevronLeft, ShieldAlert,
-  Lock, Unlock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, 
+  MapPin, Boxes, Cpu, Info, ChevronRight, ChevronLeft, ShieldAlert,
+  Lock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, 
   TrendingUp, CheckCircle2
 } from 'lucide-react';
 import { saveDecisions } from '../services/supabase';
@@ -26,20 +26,32 @@ const createInitialDecisions = (): DecisionData => ({
   production: { purchaseMPA: 30000, purchaseMPB: 20000, paymentType: 0, activityLevel: 100, rd_investment: 0 },
   finance: { loanRequest: 0, application: 0, buyMachines: { alfa: 0, beta: 0, gama: 0 } },
   legal: { recovery_mode: 'none' }
-} as any);
+});
 
-const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number; branch?: Branch; userName?: string }> = ({ 
-  teamId = 'team-alpha', champId = 'c1', round = 1, branch = 'industrial'
+interface DecisionFormProps {
+  teamId?: string;
+  champId?: string;
+  round: number;
+  branch?: Branch;
+  userName?: string;
+}
+
+const DecisionForm: React.FC<DecisionFormProps> = ({ 
+  teamId = 'team-alpha', 
+  champId = 'c1', 
+  round = 1, 
+  branch = 'industrial',
+  userName 
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [decisions, setDecisions] = useState<DecisionData>(createInitialDecisions());
   const [isSaving, setIsSaving] = useState(false);
 
-  // Garantia de round como número para o build
+  // Ensure round is a number for reliable UI rendering
   const safeRound = Number(round) || 1;
 
   const projections = useMemo(() => 
-    calculateProjections(decisions, branch as Branch, { inflationRate: 0.01, demandMultiplier: 1.0 } as any, DEFAULT_MACRO), 
+    calculateProjections(decisions, branch, { inflationRate: 0.01, demandMultiplier: 1.0 } as any, DEFAULT_MACRO), 
   [decisions, branch]);
 
   const updateDecision = (path: string, value: any) => {

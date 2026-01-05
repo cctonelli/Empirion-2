@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Newspaper, Globe, History, Shield, 
   ChevronLeft, Landmark, Zap, 
-  Gavel, Download, AlertTriangle, Target
+  Gavel, Download, AlertTriangle, Target, Table
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Championship, UserRole, AdvancedIndicators, Team } from '../types';
@@ -60,7 +60,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
             <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} icon={<Globe size={14}/>} label="Conjuntura" />
             <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} icon={<Landmark size={14}/>} label="Fornecedores" />
             <TabBtn active={activeTab === 'cycles'} onClick={() => setActiveTab('cycles')} icon={<History size={14}/>} label="Ciclos & NLDCG" />
-            <TabBtn active={activeTab === 'benchmarking'} onClick={() => setActiveTab('benchmarking')} icon={<Newspaper size={14}/>} label="Matriz 8 Equipes" />
+            <TabBtn active={activeTab === 'benchmarking'} onClick={() => setActiveTab('benchmarking')} icon={<Table size={14}/>} label="Matriz 8 Equipes" />
             {userRole === 'tutor' && <TabBtn active={activeTab === 'tutor'} onClick={() => setActiveTab('tutor')} icon={<Shield size={14}/>} label="Tutor Master" color="orange" />}
          </nav>
       </header>
