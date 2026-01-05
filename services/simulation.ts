@@ -3,12 +3,13 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicat
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
+  // Permite números negativos para suportar prejuízos e dívidas
   return isFinite(num) ? num : fallback;
 };
 
 /**
- * Motor Industrial Empirion v11.9 - Oracle Solvency & Governance Node
- * Implementa custos exponenciais, inflação composta e paridade total de banco de dados.
+ * Motor Industrial Empirion v12.0 - Oracle Integrity Kernel
+ * Refinado para suportar prejuízos reais e mapeamento flexível de indicadores.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -19,9 +20,11 @@ export const calculateProjections = (
   isRoundZero: boolean = false
 ) => {
   // Mapeamento Robusto: DB (snake_case) vs Engine (CamelCase)
+  // Casting para 'any' silencia o Vercel Build em acessos dinâmicos
   const getAttr = (camel: string, snake: string, fallback: any) => {
-    if (indicators?.[snake as keyof MacroIndicators] !== undefined) return indicators[snake as keyof MacroIndicators];
-    if (indicators?.[camel as keyof MacroIndicators] !== undefined) return indicators[camel as keyof MacroIndicators];
+    const data = indicators as any;
+    if (data?.[snake] !== undefined) return data[snake];
+    if (data?.[camel] !== undefined) return data[camel];
     return fallback;
   };
 
@@ -43,7 +46,6 @@ export const calculateProjections = (
   const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
   
   if (isRoundZero) {
-    // Retorno do Round Zero com Paridade Absoluta (Fidelidade v3.1)
     return {
       revenue: 3322735, ebitda: 1044555, netProfit: 73928, salesVolume: 8932,
       lostSales: 0, totalMarketingCost: 802702, debtRatio: 44.9,
@@ -66,7 +68,7 @@ export const calculateProjections = (
     };
   }
 
-  // 1. Snapshot de Herança (Snapshot Node)
+  // 1. Snapshot de Herança
   const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
   const prevAssets = sanitize(previousState?.balance_sheet?.assets?.total || 9176940, 9176940);
   const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
@@ -74,13 +76,13 @@ export const calculateProjections = (
   const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605, 717605);
   const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362);
 
-  // 2. Oracle Risk Node
+  // 2. Oracle Risk Core
   const totalDebt = prevDebt + decisions.finance.loanRequest;
   const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
   const debtToEquity = totalDebt / Math.max(prevEquity, 1);
   const rating: CreditRating = debtToEquity > 1.8 ? 'C' : debtToEquity > 1.2 ? 'B' : debtToEquity > 0.6 ? 'A' : 'AAA';
   
-  // 3. Comercial & Demanda (Logica Marketing Exponencial)
+  // 3. Comercial & Demanda
   const regions = Object.values(decisions.regions || {});
   const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price, 372), 0) / regions.length : 372;
   
@@ -88,7 +90,6 @@ export const calculateProjections = (
   const totalMarketingCost = regions.reduce((acc, r) => {
     const level = sanitize(r.marketing, 0);
     if (level === 0) return acc;
-    // Formula Exponencial: (Base * Nível^1.5)
     return acc + (baseMkt * Math.pow(level, 1.5));
   }, 0);
 
@@ -103,7 +104,7 @@ export const calculateProjections = (
   const mktScore = Math.log10(((totalMktPoints * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
   const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
   
-  // 4. Produção e Custos Inflacionados
+  // 4. Produção e Reajustes
   const currentOEE = (1.0 + (decisions.hr.trainingPercent / 1000) + (decisions.hr.participationPercent / 200)) * (evMod.productivity || 1);
   const maxProduction = 30000 * (decisions.production.activityLevel / 100) * currentOEE;
   const salesVolume = Math.min(demandTotal, maxProduction);
@@ -127,7 +128,7 @@ export const calculateProjections = (
   const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
   const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
-  // 6. Auditoria de Desembolso (Cash Flow Audit)
+  // 6. Auditoria de Desembolso
   const mktOutflow = totalMarketingCost;
   const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
   

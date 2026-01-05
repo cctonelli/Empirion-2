@@ -9,7 +9,7 @@ export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' 
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
-export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C';
+export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D';
 
 export type DiscreteTerm = 0 | 1 | 2;
 
