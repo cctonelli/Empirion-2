@@ -3,7 +3,7 @@ import Chart from 'react-apexcharts';
 import { 
   Globe, ChevronLeft, Landmark, Zap, 
   AlertTriangle, LayoutGrid, Bird, Scale, ShieldAlert,
-  Activity, Award, User, Star, TrendingUp
+  Activity, Award, User, Star, TrendingUp, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Championship, UserRole } from '../types';
@@ -19,27 +19,31 @@ interface GazetteViewerProps {
 type GazetteTab = 'macro' | 'suppliers' | 'solvency' | 'benchmarking' | 'tutor';
 
 const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, userRole = 'player', onClose }) => {
-  const [activeTab, setActiveTab] = useState<GazetteTab>('macro');
+  const [activeTab, setActiveTab] = useState<GazetteTab>('benchmarking');
   const teams = arena.teams || [];
   const activeEvent = arena.market_indicators?.active_event;
   
-  // v12.8.2 Oracle Ranking Engine (Synchronized with Community Sentiment)
+  // Oracle v12.8.2 GOLD Ranking Engine
+  // Synchronized with Real-time Community Ratings
   const competitiveRanking = useMemo(() => {
     return teams.map((t, i) => {
-      // Simulation metrics aligned with DB KPIs structure
+      // Logic for simulated metrics based on Oracle Node 08 Calibration
       const share = [12.5, 14.2, 11.1, 13.0, 10.5, 15.0, 12.0, 11.7][i] || 12.5;
       const profit = [73928, -120500, 45000, 12000, -8000, 95000, 32000, 15000][i] || 0;
-      const coreKpi = arena.branch === 'industrial' ? `${(80 + Math.random() * 10).toFixed(1)}% OEE` : `${(8 + Math.random() * 2).toFixed(1)} CSAT`;
+      const coreKpiValue = arena.branch === 'industrial' ? (80 + Math.random() * 15) : (8 + Math.random() * 2);
+      const coreKpiLabel = arena.branch === 'industrial' ? `${coreKpiValue.toFixed(1)}% OEE` : `${coreKpiValue.toFixed(1)} CSAT`;
       
-      // Oracle Social Score (Fidelity v12.8 Enhancement)
+      // Community Sentiment (Social Score) - Oracle Fidelity Enhancements
+      // Fallback range: 2.5 to 5.0
       const socialScore = [4.8, 3.2, 4.5, 4.1, 2.8, 4.9, 3.9, 4.0][i] || (3 + Math.random() * 2);
 
       return {
+        id: t.id,
         name: t.name,
         ratio: [35.2, 82.5, 65.0, 41.2, 58.7, 30.1, 74.2, 50.0][i] || 45,
         share,
         profit,
-        coreKpi,
+        coreKpi: coreKpiLabel,
         socialScore
       };
     }).sort((a, b) => b.profit - a.profit);
@@ -61,35 +65,125 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
 
   return (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="bg-[#020617] border border-white/10 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col h-[92vh] max-h-[1100px] relative"
+      initial={{ opacity: 0, scale: 0.98, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      className="bg-[#020617] border border-white/10 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col h-[92vh] max-h-[1100px] relative font-sans"
     >
-      <header className="bg-slate-950 p-8 border-b border-white/5">
+      <header className="bg-slate-950 p-8 border-b border-white/5 shrink-0">
          <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-6">
                <div className="p-4 bg-orange-600 text-white rounded-3xl shadow-2xl shadow-orange-500/20"><Zap size={32} /></div>
                <div>
-                  <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Empirion <span className="text-orange-500">Oracle Gazette</span></h1>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Oracle Node v12.8.2 GOLD • Benchmarking Ready</p>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">
+                      Empirion <span className="text-orange-500">Oracle Gazette</span>
+                    </h1>
+                    <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-500 font-black text-[9px] uppercase tracking-widest rounded-full">
+                      v12.8.2 GOLD
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">
+                    Node: {arena.name} • Período 0{round} Finalizado
+                  </p>
                </div>
             </div>
             <div className="flex items-center gap-4">
-               <button onClick={onClose} className="p-4 bg-white/5 text-slate-400 hover:text-white rounded-full border border-white/5 transition-all active:scale-90"><ChevronLeft size={24} /></button>
+               <button 
+                 onClick={onClose} 
+                 className="p-4 bg-white/5 text-slate-400 hover:text-white hover:bg-rose-600 rounded-full border border-white/5 transition-all active:scale-90"
+               >
+                 <X size={24} />
+               </button>
             </div>
          </div>
 
          <nav className="flex gap-2 p-1.5 bg-slate-900 rounded-2xl border border-white/5 w-fit overflow-x-auto no-scrollbar">
+            <TabBtn active={activeTab === 'benchmarking'} onClick={() => setActiveTab('benchmarking')} icon={<LayoutGrid size={14}/>} label="Competitive Ranking" />
             <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} icon={<Globe size={14}/>} label="Conjuntura" />
             <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} icon={<Landmark size={14}/>} label="Fornecedores" />
             <TabBtn active={activeTab === 'solvency'} onClick={() => setActiveTab('solvency')} icon={<Scale size={14}/>} label="Solvência" />
-            <TabBtn active={activeTab === 'benchmarking'} onClick={() => setActiveTab('benchmarking')} icon={<LayoutGrid size={14}/>} label="Matriz Competitiva" />
             {userRole === 'tutor' && <TabBtn active={activeTab === 'tutor'} onClick={() => setActiveTab('tutor')} icon={<Award size={14}/>} label="Tutor Control" color="orange" />}
          </nav>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+      <main className="flex-1 overflow-y-auto p-10 custom-scrollbar relative">
          <AnimatePresence mode="wait">
+            {activeTab === 'benchmarking' && (
+              <motion.div 
+                key="benchmarking" 
+                initial={{ opacity: 0, x: -10 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                exit={{ opacity: 0, x: 10 }}
+                className="space-y-12"
+              >
+                 <div className="bg-slate-950 border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl relative">
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-600 via-white to-orange-400 opacity-20"></div>
+                    <table className="w-full text-left">
+                       <thead className="bg-slate-900 text-slate-500 font-black text-[9px] uppercase tracking-widest border-b border-white/5">
+                          <tr>
+                             <th className="p-8">Ranking</th>
+                             <th className="p-8">Unidade Strategos</th>
+                             <th className="p-8 text-center">Market Share</th>
+                             <th className="p-8 text-center">Social Score</th>
+                             <th className="p-8 text-center">Lucro (P0{round})</th>
+                             <th className="p-8 text-right">Primary KPI</th>
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-white/5 text-[12px] font-mono">
+                          {competitiveRanking.map((r, i) => (
+                            <tr key={r.id} className="hover:bg-white/[0.02] transition-colors group">
+                               <td className="p-8 font-black text-slate-600 italic text-lg">#0{i+1}</td>
+                               <td className="p-8">
+                                  <div className="flex items-center gap-3">
+                                     <div className="w-10 h-10 rounded-xl bg-orange-600/10 text-orange-500 flex items-center justify-center border border-orange-500/10"><User size={18}/></div>
+                                     <span className="font-black text-white uppercase italic tracking-tighter text-sm">{r.name}</span>
+                                  </div>
+                               </td>
+                               <td className="p-8">
+                                  <div className="flex flex-col items-center gap-2">
+                                     <span className="font-black text-blue-400 text-sm">{r.share.toFixed(1)}%</span>
+                                     <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner">
+                                        <div 
+                                          className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-1000" 
+                                          style={{ width: `${r.share * 4}%` }} 
+                                        />
+                                     </div>
+                                  </div>
+                               </td>
+                               <td className="p-8">
+                                  <div className="flex flex-col items-center gap-1.5">
+                                     <div className="flex items-center gap-0.5">
+                                        <StarRating rating={r.socialScore} />
+                                     </div>
+                                     <span className="text-[7px] text-slate-500 font-black uppercase tracking-[0.2em]">Sentimento Público</span>
+                                  </div>
+                               </td>
+                               <td className={`p-8 text-center font-black text-sm ${r.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                  {r.profit < 0 ? '-' : ''}$ {Math.abs(r.profit).toLocaleString()}
+                               </td>
+                               <td className="p-8 text-right">
+                                  <div className="flex flex-col items-end">
+                                     <span className="text-white font-black italic uppercase tracking-tighter text-sm">{r.coreKpi}</span>
+                                     <div className="flex items-center gap-1 mt-1">
+                                        <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
+                                        <span className="text-[7px] text-slate-500 font-black uppercase tracking-widest italic">Auditado Oracle</span>
+                                     </div>
+                                  </div>
+                               </td>
+                            </tr>
+                          ))}
+                       </tbody>
+                    </table>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <SmallInfo icon={<Award className="text-amber-500" />} label="Líder do Período" val={competitiveRanking[0].name} />
+                    <SmallInfo icon={<Star className="text-orange-500" />} label="Top Social Choice" val={competitiveRanking.sort((a,b) => b.socialScore - a.socialScore)[0].name} />
+                    <SmallInfo icon={<TrendingUp className="text-blue-500" />} label="Média Share Setor" val="12.5%" />
+                 </div>
+              </motion.div>
+            )}
+
             {activeTab === 'macro' && (
               <motion.div key="macro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
                  {activeEvent && (
@@ -102,15 +196,15 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                    </div>
                  )}
                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                    <div className="lg:col-span-8 p-12 bg-white/[0.02] border border-white/5 rounded-[4rem]">
+                    <div className="lg:col-span-8 p-12 bg-white/[0.02] border border-white/5 rounded-[4rem] relative overflow-hidden">
                        <h3 className="text-orange-500 font-black text-[9px] uppercase tracking-[0.4em] mb-6 italic flex items-center gap-3">
-                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" /> Headline Oracle v12.8.2
+                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" /> Headline Oracle Node 08
                        </h3>
                        <h2 className="text-6xl font-black text-white italic leading-[0.9] tracking-tighter mb-8">{aiNews.split('\n')[0] || "Estabilidade no Fluxo de Valor"}</h2>
                        <p className="text-slate-400 text-lg leading-relaxed italic">{aiNews.split('\n').slice(1).join(' ') || "O motor reporta estabilidade operacional. Unidades focadas em NCG apresentam melhores rácios de liquidez."}</p>
                     </div>
                     <div className="lg:col-span-4 bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 space-y-8">
-                       <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Global Pulse Node 08</h3>
+                       <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Global Pulse Analytics</h3>
                        <MacroRow label="Taxa TR Mensal" val="3.0%" />
                        <MacroRow label="Inflação Período" val={`${arena.market_indicators?.inflationRate || 1.0}%`} />
                        <MacroRow label="Risco Médio Setor" val="1.8%" />
@@ -158,101 +252,65 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                  </div>
               </motion.div>
             )}
-
-            {activeTab === 'benchmarking' && (
-              <motion.div key="benchmarking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
-                 <div className="bg-slate-950 border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl">
-                    <table className="w-full text-left">
-                       <thead className="bg-slate-900 text-slate-500 font-black text-[9px] uppercase tracking-widest border-b border-white/5">
-                          <tr>
-                             <th className="p-8">Ranking</th>
-                             <th className="p-8">Unidade Strategos</th>
-                             <th className="p-8 text-center">Market Share</th>
-                             <th className="p-8 text-center">Social Score</th>
-                             <th className="p-8 text-center">Lucro (P0{round})</th>
-                             <th className="p-8 text-right">Primary KPI</th>
-                          </tr>
-                       </thead>
-                       <tbody className="divide-y divide-white/5 text-[12px] font-mono">
-                          {competitiveRanking.map((r, i) => (
-                            <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
-                               <td className="p-8 font-black text-slate-600 italic">#0{i+1}</td>
-                               <td className="p-8">
-                                  <div className="flex items-center gap-3">
-                                     <div className="w-8 h-8 rounded-lg bg-orange-600/10 text-orange-500 flex items-center justify-center"><User size={14}/></div>
-                                     <span className="font-black text-white uppercase italic tracking-tighter">{r.name}</span>
-                                  </div>
-                               </td>
-                               <td className="p-8 text-center">
-                                  <div className="flex flex-col items-center">
-                                     <span className="font-black text-blue-400">{r.share.toFixed(1)}%</span>
-                                     <div className="w-16 h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
-                                        <div className="h-full bg-blue-500" style={{ width: `${r.share * 4}%` }} />
-                                     </div>
-                                  </div>
-                               </td>
-                               <td className="p-8 text-center">
-                                  <div className="flex flex-col items-center">
-                                     <div className="flex items-center gap-1.5 text-orange-400 font-bold">
-                                        <Star size={12} fill="currentColor" /> {r.socialScore.toFixed(1)}
-                                     </div>
-                                     <span className="text-[7px] text-slate-500 uppercase tracking-widest mt-1">Sentimento Público</span>
-                                  </div>
-                               </td>
-                               <td className={`p-8 text-center font-black ${r.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                  $ {r.profit.toLocaleString()}
-                               </td>
-                               <td className="p-8 text-right">
-                                  <div className="flex flex-col items-end">
-                                     <span className="text-white font-black italic uppercase tracking-tighter">{r.coreKpi}</span>
-                                     <span className="text-[7px] text-slate-500 uppercase tracking-widest mt-1">Auditado Oracle</span>
-                                  </div>
-                               </td>
-                            </tr>
-                          ))}
-                       </tbody>
-                    </table>
-                 </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <SmallInfo icon={<Award className="text-amber-500" />} label="Líder do Período" val={competitiveRanking[0].name} />
-                    <SmallInfo icon={<Star className="text-orange-500" />} label="Top Social Choice" val={competitiveRanking.sort((a,b) => b.socialScore - a.socialScore)[0].name} />
-                    <SmallInfo icon={<TrendingUp className="text-blue-500" />} label="Média Share Setor" val="12.5%" />
-                 </div>
-              </motion.div>
-            )}
          </AnimatePresence>
       </main>
 
-      <footer className="p-8 bg-slate-950 border-t border-white/5 flex justify-between items-center px-14">
+      <footer className="p-8 bg-slate-950 border-t border-white/5 flex justify-between items-center px-14 shrink-0">
          <div className="flex items-center gap-4">
             <div className="p-3 bg-orange-600 rounded-xl text-white shadow-xl shadow-orange-500/20"><Landmark size={14}/></div>
-            <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] italic">EMPIRE_GAZETTE_GOLD_v12.8.2_FINAL</p>
+            <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] italic">EMPIRE_GAZETTE_GOLD_v12.8.2_FINAL_BUILD</p>
+         </div>
+         <div className="flex gap-1.5">
+            {[1, 2, 3, 4, 5].map(i => (
+               <div key={i} className={`w-1 h-1 rounded-full bg-orange-600/40 animate-pulse`} style={{ animationDelay: `${i * 0.1}s` }} />
+            ))}
          </div>
       </footer>
     </motion.div>
   );
 };
 
+const StarRating = ({ rating }: { rating: number }) => {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star 
+          key={star} 
+          size={10} 
+          className={star <= Math.round(rating) ? 'text-orange-400 fill-orange-400' : 'text-slate-800'} 
+        />
+      ))}
+      <span className="ml-1 text-[9px] font-black text-orange-400">{rating.toFixed(1)}</span>
+    </div>
+  );
+};
+
 const TabBtn = ({ active, onClick, label, icon, color = 'blue' }: any) => (
-  <button onClick={onClick} className={`px-8 py-5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-4 whitespace-nowrap active:scale-95 ${active ? (color === 'orange' ? 'bg-orange-600 text-white shadow-2xl scale-105' : 'bg-blue-600 text-white shadow-2xl scale-105') : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
+  <button 
+    onClick={onClick} 
+    className={`px-8 py-5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-4 whitespace-nowrap active:scale-95 ${
+      active 
+        ? (color === 'orange' ? 'bg-orange-600 text-white shadow-2xl scale-105 border border-white/20' : 'bg-blue-600 text-white shadow-2xl scale-105 border border-white/20') 
+        : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+    }`}
+  >
     {icon} {label}
   </button>
 );
 
 const MacroRow = ({ label, val }: any) => (
-  <div className="flex justify-between items-center py-2 border-b border-white/5 last:border-0 group">
+  <div className="flex justify-between items-center py-3 border-b border-white/5 last:border-0 group">
      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-300 transition-colors">{label}</span>
      <span className="text-lg font-black text-orange-500 italic font-mono">{val}</span>
   </div>
 );
 
 const SmallInfo = ({ icon, label, val }: any) => (
-  <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center gap-6">
-     <div className="p-3 bg-white/5 rounded-xl">{icon}</div>
+  <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[2.5rem] flex items-center gap-6 hover:bg-white/5 transition-all group">
+     <div className="p-4 bg-white/5 rounded-2xl group-hover:scale-110 transition-transform shadow-inner">{icon}</div>
      <div>
         <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
-        <span className="text-lg font-black text-white italic tracking-tight">{val}</span>
+        <span className="text-xl font-black text-white italic tracking-tight leading-none truncate max-w-[150px] block">{val}</span>
      </div>
   </div>
 );

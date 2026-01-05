@@ -191,6 +191,16 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   } catch (err: any) { throw err; }
 };
 
+/**
+ * DELETE CHAMPIONSHIP v12.8.2
+ * Allows removing legacy test data to clear space for GOLD standards.
+ */
+export const deleteChampionship = async (id: string, isTrial: boolean) => {
+  const table = isTrial ? 'trial_championships' : 'championships';
+  console.log(`[CLEANUP] Deleting arena ${id} from ${table}`);
+  return await supabase.from(table).delete().eq('id', id);
+};
+
 export const getChampionships = async (onlyPublic: boolean = false) => {
   let realData: any[] = [];
   let trialData: any[] = [];
@@ -344,4 +354,4 @@ export const listAllUsers = async () => {
 
 export const updateUserPremiumStatus = async (userId: string, status: boolean) => {
   return await supabase.from('users').update({ is_opal_premium: status }).eq('supabase_user_id', userId).select().single();
-};
+}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, Workflow, Users, Settings, 
@@ -9,7 +8,7 @@ import {
   ChevronRight, Calendar, BarChart3, Radio, Monitor,
   Play, Pause, ArrowLeft
 } from 'lucide-react';
-import { listAllUsers, updateUserPremiumStatus, getChampionships, supabase, processRoundTurnover } from '../services/supabase';
+import { listAllUsers, updateUserPremiumStatus, getChampionships, supabase, processRoundTurnover, deleteChampionship } from '../services/supabase';
 import { UserProfile, Championship } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
@@ -58,6 +57,20 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
     } else {
       alert("ERRO NO MOTOR ORACLE: " + result.error);
     }
+  };
+
+  const handleDeleteArena = async (id: string, isTrial: boolean, name: string) => {
+    if (!confirm(`PROTOCOLO DE EXCLUSÃO: Tem certeza que deseja deletar a arena "${name}"? Esta ação é irreversível e removerá todos os dados de equipes e decisões.`)) return;
+    
+    setLoading(true);
+    const { error } = await deleteChampionship(id, isTrial);
+    if (error) {
+      alert("FALHA NA EXCLUSÃO: " + error.message);
+    } else {
+      alert("ARENA REMOVIDA: Espaço liberado para novos nodos v12.8 GOLD.");
+      fetchData();
+    }
+    setLoading(false);
   };
 
   if (selectedArena) {
@@ -168,7 +181,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                               <div className="space-y-6">
                                  <div className="flex justify-between items-start">
                                     <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${champ.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                                       {champ.status === 'active' ? 'Arena Live' : 'Draft Mode'}
+                                       {champ.is_trial ? 'Teste Grátis' : 'Arena Live'}
                                     </div>
                                     {champ.is_public && <Globe size={14} className="text-blue-500" />}
                                  </div>
@@ -196,9 +209,14 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                                    onClick={() => setSelectedArena(champ)}
                                    className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
                                  >
-                                   <Monitor size={14}/> Gerenciar Arena
+                                   <Monitor size={14}/> Gerenciar
                                  </button>
-                                 <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:text-rose-500 transition-colors border border-slate-100"><Trash2 size={16} /></button>
+                                 <button 
+                                   onClick={() => handleDeleteArena(champ.id, !!champ.is_trial, champ.name)}
+                                   className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:text-rose-500 hover:bg-rose-50 transition-colors border border-slate-100"
+                                 >
+                                   <Trash2 size={16} />
+                                 </button>
                               </div>
                            </div>
                         ))}
