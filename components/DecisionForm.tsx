@@ -5,9 +5,10 @@ import {
   MapPin, Boxes, Cpu, Info, ChevronRight, ChevronLeft, ShieldAlert,
   Lock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, 
   TrendingUp, CheckCircle2, ShieldCheck, Flame, Zap, Landmark, Shield,
-  Activity, HeartPulse, CreditCard, Banknote
+  Activity, HeartPulse, CreditCard, Banknote, AlertOctagon, HelpCircle,
+  Clock
 } from 'lucide-react';
-import { saveDecisions, getChampionships } from '../services/supabase';
+import { saveDecisions, getChampionships, supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { DecisionData, Branch, Championship, MacroIndicators } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,7 +20,7 @@ const STEPS = [
   { id: 'production', label: 'Produção & Fábrica', icon: Factory },
   { id: 'finance', label: 'Finanças & CapEx', icon: DollarSign },
   { id: 'legal', label: 'Protocolo Jurídico', icon: Gavel },
-  { id: 'review', label: 'Revisão & Selo', icon: ShieldCheck },
+  { id: 'review', label: 'Viabilidade & Selo', icon: ShieldCheck },
 ];
 
 const createInitialDecisions = (): DecisionData => ({
@@ -35,23 +36,33 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [decisions, setDecisions] = useState<DecisionData>(createInitialDecisions());
   const [isSaving, setIsSaving] = useState(false);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
+  const [masterKeyUnlocked, setMasterKeyUnlocked] = useState(false);
+  const [helpRequested, setHelpRequested] = useState(false);
 
   useEffect(() => {
     const fetchContext = async () => {
       if (champId) {
-        const { data } = await getChampionships();
-        const found = data?.find(a => a.id === champId);
-        if (found) setActiveArena(found);
+        const { data: champs } = await getChampionships();
+        const found = champs?.find(a => a.id === champId);
+        if (found) {
+          setActiveArena(found);
+          // Check if tutor already authorized submission via master key
+          const { data: teamData } = await supabase.from('teams').select('master_key_enabled').eq('id', teamId).maybeSingle();
+          if (teamData?.master_key_enabled) setMasterKeyUnlocked(true);
+        }
       }
     };
     fetchContext();
-  }, [champId]);
+  }, [champId, teamId]);
 
   const currentIndicators = useMemo(() => activeArena?.market_indicators || DEFAULT_MACRO, [activeArena]);
   const projections = useMemo(() => {
     const eco = activeArena?.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' };
     return calculateProjections(decisions, branch, eco, currentIndicators);
   }, [decisions, branch, activeArena, currentIndicators]);
+
+  const isInsolvent = projections.totalOutflow > projections.totalLiquidity;
+  const canSubmit = !isInsolvent || masterKeyUnlocked;
 
   const updateDecision = (path: string, value: any) => {
     const newDecisions = JSON.parse(JSON.stringify(decisions));
@@ -60,6 +71,20 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     for (let i = 0; i < keys.length - 1; i++) current = current[keys[i]];
     current[keys[keys.length - 1]] = value;
     setDecisions(newDecisions);
+  };
+
+  const handleRequestMasterKey = async () => {
+    setHelpRequested(true);
+    // Simulação de notificação via Supabase (TutorDashboard escuta esta tabela)
+    await supabase.from('help_requests').insert({
+       team_id: teamId,
+       team_name: userName || 'Unidade Alpha',
+       championship_id: champId,
+       deficit: projections.totalOutflow - projections.totalLiquidity,
+       reason: 'Insolvência em rascunho de decisão',
+       created_at: new Date().toISOString()
+    });
+    alert("NOTIFICAÇÃO ENVIADA: O sinal de socorro foi transmitido para o Command Center do Tutor.");
   };
 
   return (
@@ -112,9 +137,15 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
               <div className="space-y-10">
                  <div className="flex items-center justify-between px-4">
                     <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Matriz Regional de Vendas</h3>
-                    <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
-                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Custo Mkt Total:</span>
-                       <span className="text-sm font-black text-orange-500 font-mono">$ {projections.totalMarketingCost?.toLocaleString()}</span>
+                    <div className="flex items-center gap-4">
+                       <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Base Campanha:</span>
+                          <span className="text-sm font-black text-blue-400 font-mono">$ {(17165 * (1 + currentIndicators.inflationRate)).toLocaleString()}</span>
+                       </div>
+                       <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Custo Mkt Total:</span>
+                          <span className="text-sm font-black text-orange-500 font-mono">$ {projections.totalMarketingCost?.toLocaleString()}</span>
+                       </div>
                     </div>
                  </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -152,6 +183,91 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
               </div>
             )}
 
+            {activeStep === 5 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-7xl mx-auto py-6">
+                 {/* LEFT: FEASIBILITY AUDIT */}
+                 <div className="space-y-8">
+                    <div className={`p-10 rounded-[4rem] border-2 transition-all duration-500 ${isInsolvent ? 'bg-rose-950/20 border-rose-500 shadow-[0_0_50px_rgba(244,63,94,0.2)]' : 'bg-slate-900 border-white/5 shadow-2xl'}`}>
+                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-8 flex items-center gap-4">
+                          {isInsolvent ? <AlertOctagon size={32} className="text-rose-500 animate-pulse" /> : <ShieldCheck size={32} className="text-emerald-500" />}
+                          {isInsolvent ? 'Risco de Insolvência' : 'Viabilidade Orçamentária'}
+                       </h3>
+
+                       <div className="space-y-4 mb-10">
+                          {projections.costBreakdown.map((item: any, i: number) => (
+                             <div key={i} className="flex justify-between items-center py-4 border-b border-white/5 group">
+                                <div>
+                                   <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">{item.name}</span>
+                                   <span className="text-[8px] font-bold text-slate-600 uppercase italic">{item.impact}</span>
+                                </div>
+                                <span className="text-lg font-black text-white font-mono">$ {item.total.toLocaleString()}</span>
+                             </div>
+                          ))}
+                          <div className="flex justify-between items-center py-6 bg-white/5 px-6 rounded-2xl border border-white/10 mt-6">
+                             <span className="text-xs font-black text-orange-500 uppercase tracking-[0.2em]">Total a Desembolsar</span>
+                             <span className="text-2xl font-black text-white font-mono tracking-tighter italic">$ {projections.totalOutflow.toLocaleString()}</span>
+                          </div>
+                       </div>
+
+                       <div className={`p-6 rounded-3xl space-y-4 ${isInsolvent ? 'bg-rose-500 text-white' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'}`}>
+                          <div className="flex justify-between items-center">
+                             <span className="text-[10px] font-black uppercase tracking-widest">Sua Liquidez (Caixa + Novos Créditos)</span>
+                             <span className="text-lg font-black font-mono">$ {projections.totalLiquidity.toLocaleString()}</span>
+                          </div>
+                          {isInsolvent && (
+                             <p className="text-xs font-bold uppercase tracking-tight italic animate-pulse">
+                               ❌ SALDO INSUFICIENTE: Reduza custos de marketing, compra de MP ou aumente o empréstimo para sincronizar.
+                             </p>
+                          )}
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* RIGHT: SUBMISSION CORE */}
+                 <div className="flex flex-col justify-between py-10 space-y-12">
+                    <div className="text-center space-y-6">
+                       <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Oracle Final Sync</h3>
+                       <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.4em] italic">Transmitting Strategos Sequence v3.3 GOLD</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                       <SummaryNode label="Share Projetado" val={`${projections.marketShare.toFixed(1)}%`} />
+                       <SummaryNode label="EBITDA Proj." val={`$ ${projections.ebitda.toLocaleString()}`} />
+                       <SummaryNode label="Debt Ratio" val={`${projections.debtRatio?.toFixed(1)}%`} />
+                       <SummaryNode label="Credit Standing" val={projections.health.rating} />
+                    </div>
+
+                    <div className="space-y-4">
+                       <button 
+                         onClick={async () => { 
+                            setIsSaving(true); 
+                            await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions); 
+                            setIsSaving(false); 
+                            alert("DECISÕES INTEGRADAS AO ORÁCULO."); 
+                         }} 
+                         disabled={isSaving || !canSubmit}
+                         className={`w-full py-8 rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 ${
+                            canSubmit ? 'bg-orange-600 text-white hover:bg-white hover:text-orange-600' : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                         }`}
+                       >
+                          {isSaving ? <Loader2 className="animate-spin" /> : masterKeyUnlocked && isInsolvent ? <><Shield size={20}/> Submeter via Master Key</> : "Sincronizar Decisão Industrial"}
+                       </button>
+
+                       {isInsolvent && !masterKeyUnlocked && (
+                          <button 
+                             onClick={handleRequestMasterKey}
+                             disabled={helpRequested}
+                             className="w-full flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-white transition-colors py-4 border border-rose-500/20 rounded-2xl hover:bg-rose-600/10"
+                          >
+                             {helpRequested ? <><CheckCircle2 size={14}/> Notificação enviada ao Slack do Tutor</> : <><HelpCircle size={14}/> Chamar Tutor Master (Protocolo Master Key)</>}
+                          </button>
+                       )}
+                    </div>
+                 </div>
+              </div>
+            )}
+
+            {/* Other steps simplified ... */}
             {activeStep === 3 && (
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
                   <div className="p-10 bg-white/[0.02] border border-white/5 rounded-[4rem] space-y-10 shadow-inner">
@@ -177,46 +293,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                </div>
             )}
 
-            {/* Other steps simplified for brevity - Review & Seal remains same */}
-            {activeStep === 5 && (
-              <div className="text-center space-y-10 py-10">
-                 <div className="bg-slate-900 p-16 rounded-[4rem] border border-white/10 max-w-3xl mx-auto space-y-12 shadow-[0_50px_100px_rgba(0,0,0,0.7)] relative overflow-hidden">
-                    <CheckCircle2 className="absolute -top-10 -right-10 text-emerald-500 opacity-5" size={400} />
-                    <div className="space-y-4 relative z-10">
-                       <h3 className="text-4xl font-black uppercase italic text-white tracking-tighter flex items-center justify-center gap-6"><ShieldCheck className="text-emerald-500" size={48} /> Final Validation Node</h3>
-                       <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.4em] italic">Transmitting Strategos Sequence v3.2</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left border-y border-white/5 py-10 relative z-10">
-                       <SummaryNode label="Share Projetado" val={`${projections.marketShare.toFixed(1)}%`} />
-                       <SummaryNode label="EBITDA P{(activeArena?.current_round || 0) + 1}" val={`$ ${projections.ebitda.toLocaleString()}`} />
-                       <SummaryNode label="Burn Rate Mkt" val={`$ ${projections.totalMarketingCost?.toLocaleString()}`} />
-                       <SummaryNode label="Debt Ratio" val={`${projections.debtRatio?.toFixed(1)}%`} />
-                    </div>
-
-                    <button 
-                      onClick={async () => { 
-                         if (projections.debtRatio! > 85) { alert("SISTEMA BLOQUEADO: Sua solvência crítica impede o encerramento do ciclo. Reduza o empréstimo ou aumente a atividade."); return; }
-                         setIsSaving(true); 
-                         await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions); 
-                         setIsSaving(false); 
-                         alert("DECISÕES INTEGRADAS AO ORÁCULO."); 
-                      }} 
-                      disabled={isSaving}
-                      className="w-full py-8 bg-orange-600 text-white rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all hover:bg-white hover:text-orange-600 active:scale-95 relative z-10"
-                    >
-                       {isSaving ? <Loader2 className="animate-spin mx-auto" /> : "Sincronizar Decisão Industrial"}
-                    </button>
-                 </div>
-              </div>
-            )}
-
             <footer className="mt-12 pt-8 border-t border-white/5 flex justify-between items-center px-6">
                <button onClick={() => setActiveStep(s => Math.max(0, s-1))} className="px-8 py-4 text-slate-500 font-black uppercase text-[10px] tracking-widest hover:text-white transition-all flex items-center gap-3">
                   <ChevronLeft size={18} /> Voltar
                </button>
                <button onClick={() => setActiveStep(s => Math.min(5, s+1))} className="px-12 py-5 bg-white text-slate-950 rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-orange-600 hover:text-white transition-all flex items-center gap-4">
-                  Avançar <ChevronRight size={18} />
+                  {activeStep === 5 ? 'Processar Fechamento' : 'Avançar'} <ChevronRight size={18} />
                </button>
             </footer>
           </motion.div>
