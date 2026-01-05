@@ -265,7 +265,7 @@ const HighCard = ({ label, val, sub, trend, pos, icon }: any) => (
         <div className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${pos ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>{trend}</div>
      </div>
      <div>
-        <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+        <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
         <span className="text-3xl font-black text-white italic tracking-tighter">{val}</span>
         <p className="text-[9px] font-bold text-slate-600 uppercase mt-1">{sub}</p>
      </div>

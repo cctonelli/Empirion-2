@@ -80,6 +80,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         setAiNews(newsContent);
       } catch (err) {
         setAiInsight("Aguardando sincronização neural...");
+        setAiNews("Gazeta em manutenção: Aguardando boletim oficial.");
       } finally {
         setIsInsightLoading(false);
       }
