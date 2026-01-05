@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, 
   MapPin, Boxes, Cpu, Info, ChevronRight, ChevronLeft, ShieldAlert,
   Lock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, 
-  TrendingUp, CheckCircle2, ShieldCheck, FileEdit
+  TrendingUp, CheckCircle2, ShieldCheck
 } from 'lucide-react';
-import { saveDecisions } from '../services/supabase';
+import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
-import { DecisionData, Branch } from '../types';
+import { DecisionData, Branch, Championship, MacroIndicators } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DEFAULT_MACRO } from '../constants';
 
@@ -31,7 +32,7 @@ const createInitialDecisions = (): DecisionData => ({
 interface DecisionFormProps {
   teamId?: string;
   champId?: string;
-  round: number;
+  round: number; // Mandatory for multi-tenant isolation
   branch?: Branch;
   userName?: string;
 }
@@ -46,16 +47,31 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
   const [activeStep, setActiveStep] = useState(0);
   const [decisions, setDecisions] = useState<DecisionData>(createInitialDecisions());
   const [isSaving, setIsSaving] = useState(false);
+  const [activeArena, setActiveArena] = useState<Championship | null>(null);
 
-  // Strict numeric conversion to satisfy build engine and prevent hydration mismatches
+  // Guard against hydration mismatch and ensure numeric operations are safe
   const safeRound = useMemo(() => {
     const r = Number(round);
     return isNaN(r) ? 1 : r;
   }, [round]);
 
-  const projections = useMemo(() => 
-    calculateProjections(decisions, branch, { inflationRate: 0.01, demandMultiplier: 1.0 } as any, DEFAULT_MACRO), 
-  [decisions, branch]);
+  // Sync with Championship rules (Multi-tenant context)
+  useEffect(() => {
+    const fetchContext = async () => {
+      if (champId) {
+        const { data } = await getChampionships();
+        const found = data?.find(a => a.id === champId);
+        if (found) setActiveArena(found);
+      }
+    };
+    fetchContext();
+  }, [champId]);
+
+  const projections = useMemo(() => {
+    const macro = activeArena?.market_indicators || DEFAULT_MACRO;
+    const eco = activeArena?.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' };
+    return calculateProjections(decisions, branch, eco, macro);
+  }, [decisions, branch, activeArena]);
 
   const updateDecision = (path: string, value: any) => {
     const newDecisions = JSON.parse(JSON.stringify(decisions));
@@ -178,10 +194,10 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
                           <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Painel de Cotações P0{safeRound}</h4>
                        </div>
                        <div className="space-y-4">
-                          <PriceQuote label="MP-A (Base Oracle)" val="$ 20,20" trend="+2%" />
-                          <PriceQuote label="MP-B (Base Oracle)" val="$ 40,40" trend="+2%" />
-                          <PriceQuote label="Distribuição Unit." val="$ 50,50" trend="OK" />
-                          <PriceQuote label="Juros Fornecedor" val="2.0% AM" trend="FIXO" />
+                          <PriceQuote label="MP-A (Base Oracle)" val={`$ ${(activeArena?.market_indicators?.providerPrices?.mpA || 20.20).toFixed(2)}`} trend="+2%" />
+                          <PriceQuote label="MP-B (Base Oracle)" val={`$ ${(activeArena?.market_indicators?.providerPrices?.mpB || 40.40).toFixed(2)}`} trend="+2%" />
+                          <PriceQuote label="Distribuição Unit." val={`$ ${(activeArena?.market_indicators?.distributionCostUnit || 50.50).toFixed(2)}`} trend="OK" />
+                          <PriceQuote label="Juros Fornecedor" val={`${activeArena?.market_indicators?.providerInterest || 2.0}% AM`} trend="FIXO" />
                        </div>
                        <div className="pt-6 border-t border-white/10">
                           <p className="text-[9px] text-blue-300 font-bold uppercase leading-relaxed italic">

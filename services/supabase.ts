@@ -1,6 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan } from '../types';
+import { DEFAULT_MACRO } from '../constants';
 
 const getSafeEnv = (key: string): string => {
   const viteKey = `VITE_${key}`;
@@ -104,7 +105,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
-    // Encapsulando campos que costumam falhar por falta de coluna no root do schema trial
     const now = new Date().toISOString();
     const payload: any = {
       name: champData.name,
@@ -112,24 +112,21 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       status: 'active',
       current_round: 0,
       total_rounds: champData.total_rounds || 12,
-      // Mover campos dinâmicos para o config JSONB para garantir persistência mesmo sem as colunas root
       config: {
         ...(champData.config || {}),
         deadline_value: champData.deadline_value || 7,
         deadline_unit: champData.deadline_unit || 'days',
-        market_indicators: champData.market_indicators,
-        round_started_at: now, // Mover para config para evitar erros de coluna no trial
+        market_indicators: champData.market_indicators || DEFAULT_MACRO,
+        round_started_at: now,
         sales_mode: champData.sales_mode,
         scenario_type: champData.scenario_type,
         currency: champData.currency,
         transparency_level: champData.transparency_level
       },
       initial_financials: champData.initial_financials,
-      market_indicators: champData.market_indicators
+      market_indicators: champData.market_indicators || DEFAULT_MACRO
     };
 
-    // Apenas inserir no root se não for trial ou se tivermos certeza que as colunas existem
-    // Para simplificar e resolver o erro do usuário, tratamos de forma híbrida
     if (!isTrial) {
       payload.is_public = champData.is_public || false;
       payload.sales_mode = champData.sales_mode;
@@ -182,17 +179,25 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     if (data) trialData = data;
   } catch (e) { console.warn("Sandbox inacessível."); }
 
-  // Recuperação inteligente de campos que podem estar no root ou no config JSONB
+  // Recuperação inteligente de campos para isolamento de contexto (Multi-tenant)
   const hydrate = (c: any) => ({
     ...c,
     deadline_value: c.deadline_value ?? c.config?.deadline_value ?? 7,
     deadline_unit: c.deadline_unit ?? c.config?.deadline_unit ?? 'days',
     round_started_at: c.round_started_at ?? c.config?.round_started_at ?? c.created_at,
-    market_indicators: c.market_indicators ?? c.config?.market_indicators,
+    market_indicators: c.market_indicators ?? c.config?.market_indicators ?? DEFAULT_MACRO,
     sales_mode: c.sales_mode ?? c.config?.sales_mode ?? 'hybrid',
     scenario_type: c.scenario_type ?? c.config?.scenario_type ?? 'simulated',
     currency: c.currency ?? c.config?.currency ?? 'BRL',
-    transparency_level: c.transparency_level ?? c.config?.transparency_level ?? 'medium'
+    transparency_level: c.transparency_level ?? c.config?.transparency_level ?? 'medium',
+    ecosystemConfig: c.ecosystemConfig ?? c.config?.ecosystemConfig ?? { 
+      inflationRate: 0.01, 
+      demandMultiplier: 1.0, 
+      interestRate: 0.03, 
+      marketVolatility: 0.05, 
+      scenarioType: 'simulated', 
+      modalityType: 'standard' 
+    }
   });
 
   const combined = [

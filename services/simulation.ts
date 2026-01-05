@@ -1,3 +1,4 @@
+
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators } from '../types';
 
 const sanitize = (val: any, fallback: number = 0): number => {
@@ -6,13 +7,14 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Motor Industrial Empirion v8.0 - Full Fidelity Engine
+ * Motor Industrial Empirion v8.1 - Multi-Tenant Fidelity Engine
+ * Agora recebe as regras dinâmicas do campeonato (indicators) injetadas pelo Tutor.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
   ecoConfig: EcosystemConfig,
-  indicators: MacroIndicators,
+  indicators?: MacroIndicators, // SINGLE SOURCE OF TRUTH (Vem do champId)
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
@@ -32,7 +34,15 @@ export const calculateProjections = (
     };
   }
 
-  const inflation = 1 + (ecoConfig.inflationRate || 0.01);
+  // Fix: Ensured fallback object is cast to MacroIndicators to satisfy property access (like sectorAvgSalary)
+  const currentIndicators = (indicators || {
+    inflationRate: 0.01,
+    providerPrices: { mpA: 20.20, mpB: 40.40 },
+    demand_regions: [12000],
+    sectorAvgSalary: 1313
+  }) as MacroIndicators;
+
+  const inflation = 1 + (sanitize(currentIndicators.inflationRate) || 0.01);
   
   // 1. HERANÇA DE SALDOS
   const inheritedReceivables = sanitize(previousState?.receivables_t1 || 1823735);
@@ -66,19 +76,19 @@ export const calculateProjections = (
     : 0;
   
   const termEffect = 1 + (avgTerm / 300);
-  const marketPotential = (indicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1);
+  const marketPotential = (currentIndicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1);
   const baseSales = marketPotential * termEffect * (1 + (totalMarketing / 1200));
   const salesVolume = Math.min(baseSales, 12000); 
   const revenue = salesVolume * avgPrice;
 
   // 4. RH
-  const salary = sanitize(decisions.hr?.salary || 1313);
+  const salary = sanitize(decisions.hr?.salary || currentIndicators.sectorAvgSalary || 1313);
   const staffCount = sanitize(decisions.hr?.sales_staff_count || 50);
   const payrollTotal = (salary * staffCount * 1.6) * recoveryModifier + (sanitize(decisions.hr?.trainingPercent) * 250);
 
-  // 5. CUSTOS
-  const mpA_Price = indicators.providerPrices.mpA * inflation;
-  const mpB_Price = indicators.providerPrices.mpB * inflation;
+  // 5. CUSTOS (Diferenciado por Campeonato)
+  const mpA_Price = currentIndicators.providerPrices.mpA * inflation;
+  const mpB_Price = currentIndicators.providerPrices.mpB * inflation;
   const unitCost = (mpA_Price + (mpB_Price / 2)); 
   const cpv = salesVolume * unitCost;
 
@@ -102,7 +112,7 @@ export const calculateProjections = (
 
 const calculateAdvanced = (
   rev: number, 
-  cpv: number, 
+  cvp: number, 
   ebitda: number, 
   net: number, 
   rec: number, 
@@ -111,7 +121,7 @@ const calculateAdvanced = (
   decisions: DecisionData
 ): AdvancedIndicators => {
   const dailyRev = Math.max(rev / 30, 1);
-  const dailyCPV = Math.max(cpv / 30, 1);
+  const dailyCPV = Math.max(cvp / 30, 1);
   
   const pmrv = rec / dailyRev;
   const pmre = 1466605 / dailyCPV; 

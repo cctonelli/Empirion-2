@@ -1,9 +1,10 @@
+
 import { Branch, ChampionshipTemplate, MacroIndicators, Championship } from './types';
 
-// VERSIONAMENTO OFICIAL EMPIRION - ALINHADO COM ESCOPO V3.0
-export const APP_VERSION = "v3.0.0-MVP-GOLD";
-export const BUILD_DATE = "31/12/2025";
-export const PROTOCOL_NODE = "Node 08-ALPHA";
+// VERSIONAMENTO OFICIAL EMPIRION - ALINHADO COM ESCOPO V3.1
+export const APP_VERSION = "v3.1.0-MVP-GOLD";
+export const BUILD_DATE = "05/01/2026";
+export const PROTOCOL_NODE = "Node 08-ALPHA-TENANT";
 
 export const COLORS = {
   primary: '#020617',
@@ -60,7 +61,13 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       salesMode: 'hybrid',
       scenarioType: 'simulated',
       transparencyLevel: 'medium',
-      modalityType: 'standard'
+      modalityType: 'standard',
+      customRules: {
+        baseProductionCost: 20.20,
+        baseLaborCost: 1313.00,
+        marketSize: 12000,
+        taxRate: 15
+      }
     },
     market_indicators: DEFAULT_MACRO,
     initial_financials: {

@@ -12,6 +12,19 @@ export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 
 export type DiscreteTerm = 0 | 1 | 2;
 
+/**
+ * DNA base de uma simulação. Define as regras de partida.
+ */
+export interface GameTemplate {
+  id: string;
+  name: string;
+  baseProductionCost: number;
+  baseLaborCost: number;
+  marketSize: number;
+  taxRate: number;
+  inflationSchedule: number[]; 
+}
+
 export interface AdvancedIndicators {
   nldcg_days: number;
   nldcg_components: {
@@ -111,11 +124,13 @@ export interface Championship {
   total_rounds: number;   
   deadline_value: number;
   deadline_unit: DeadlineUnit;
+  template_id?: string;
   config: {
     bp_enabled?: boolean;
     bp_frequency?: number;
     bp_mandatory?: boolean;
     teamsLimit?: number;
+    customRules?: Partial<GameTemplate>;
     [key: string]: any;
   };
   market_indicators: MacroIndicators;
@@ -159,11 +174,13 @@ export interface ChampionshipTemplate {
     modalityType: ModalityType;
     deadlineValue?: number;
     deadlineUnit?: DeadlineUnit;
+    customRules?: Partial<GameTemplate>;
   };
   market_indicators: MacroIndicators;
   initial_financials: any;
 }
 
+// Fixed missing types used across the application
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -191,8 +208,7 @@ export interface BusinessPlan {
   round: number;
   version: number;
   data: Record<number, string>;
-  status: 'draft' | 'submitted' | 'approved';
-  created_at: string;
+  status: 'draft' | 'submitted';
   updated_at: string;
 }
 
@@ -203,10 +219,13 @@ export interface Modality {
   description: string;
   image_url?: string;
   page_content: {
-    hero: { title: string; subtitle: string };
+    hero: {
+      title: string;
+      subtitle: string;
+    };
     features: string[];
     kpis: string[];
-    accent_color?: 'blue' | 'emerald' | 'orange';
+    accent_color?: 'orange' | 'blue' | 'emerald';
   };
 }
 
