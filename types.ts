@@ -133,6 +133,7 @@ export interface TeamProgress {
 export interface Championship {
   id: string;
   name: string;
+  description?: string;
   branch: Branch;
   status: ChampionshipStatus;
   current_round: number; 
@@ -153,7 +154,7 @@ export interface Championship {
   currency: CurrencyType;
   transparency_level: TransparencyLevel;
   gazeta_mode: GazetaMode;
-  observers: string[]; // User IDs or emails
+  observers: string[] | any[];
   ecosystemConfig?: EcosystemConfig;
   round_frequency_days?: number;
 }

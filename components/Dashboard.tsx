@@ -5,7 +5,8 @@ import {
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
   Sparkles, Loader2, ShieldCheck, Newspaper, Cpu, 
   ChevronRight, RotateCcw, Shield, FileEdit, PenTool, 
-  Eye, Timer, Box, AlertOctagon, HeartPulse, Gavel
+  Eye, Timer, Box, AlertOctagon, HeartPulse, Gavel,
+  CreditCard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -14,8 +15,8 @@ import DecisionForm from './DecisionForm';
 import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
-import { supabase, resetAlphaData, getChampionships, getUserProfile } from '../services/supabase';
-import { ScenarioType, Branch, Championship, UserRole, CreditRating, InsolvencyStatus } from '../types';
+import { supabase, getChampionships, getUserProfile } from '../services/supabase';
+import { ScenarioType, Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
@@ -29,23 +30,31 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeamId, setActiveTeamId] = useState<string | null>(null);
-  const [activeTeamName, setActiveTeamName] = useState<string | null>(null);
+  const [activeTeam, setActiveTeam] = useState<Team | null>(null);
 
-  // Sincronização segura de métricas Oracle v12.8.5
-  const currentKpis = useMemo(() => {
-    const k = activeArena?.kpis || {
-      ciclos: { operacional: 60, financeiro: 35 },
-      scissors_effect: { ncg: 150000, gap: -50000, is_critical: false },
+  const currentKpis = useMemo((): KPIs => {
+    const baseKpis: KPIs = activeArena?.kpis || {
+      ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 60, financeiro: 35 },
+      scissors_effect: { ncg: 150000, ccl: 200000, gap: -50000, is_critical: false },
       productivity: { oee: 84.2, csat: 9.1 },
       market_share: 12.5,
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
-      banking: { score: 100, rating: 'AAA' as CreditRating, interest_rate: 0.03, credit_limit: 5000000, can_borrow: true }
+      banking: { score: 100, rating: 'AAA' as CreditRating, interest_rate: 0.03, credit_limit: 5000000, can_borrow: true },
+      equity: 5055447
     };
-    // Fix: Ensure nesting for banking metrics
-    if (!k.banking) k.banking = { score: 100, rating: 'AAA' as CreditRating, interest_rate: 0.03, credit_limit: 5000000, can_borrow: true };
+    
+    const k: KPIs = { ...baseKpis };
+    
+    if (activeTeam) {
+      if (!k.banking) k.banking = { score: 100, rating: 'AAA', interest_rate: 0.03, credit_limit: 5000000, can_borrow: true };
+      k.banking.credit_limit = activeTeam.credit_limit ?? k.banking.credit_limit;
+      k.equity = activeTeam.equity ?? k.equity;
+      k.insolvency_status = activeTeam.insolvency_status ?? k.insolvency_status;
+    }
+
     return k;
-  }, [activeArena]);
+  }, [activeArena, activeTeam]);
 
   const isBankrupt = currentKpis.insolvency_status === 'BANKRUPT';
   const isRJ = currentKpis.insolvency_status === 'RJ';
@@ -69,7 +78,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           setActiveArena(arena);
           setActiveTeamId(teamId);
           const team = arena.teams?.find((t: any) => t.id === teamId);
-          if (team) setActiveTeamName(team.name);
+          if (team) setActiveTeam(team);
         }
       }
     };
@@ -135,7 +144,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           teamId={activeTeamId || undefined} 
           champId={activeArena?.id} 
           round={(activeArena?.current_round || 0) + 1} 
-          userName={activeTeamName || undefined}
+          userName={activeTeam?.name || undefined}
         />
       </div>
     );
@@ -143,8 +152,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-20 relative">
-      
-      {/* STATUS BANNER CRÍTICO */}
       {isBankrupt && (
         <div className="bg-slate-950 border-2 border-rose-600 p-8 rounded-[3rem] flex items-center justify-between shadow-2xl animate-pulse">
            <div className="flex items-center gap-6">
@@ -155,18 +162,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </div>
            </div>
            <HeartPulse className="text-rose-900" size={60} />
-        </div>
-      )}
-
-      {isRJ && (
-        <div className="bg-orange-600 p-8 rounded-[3rem] border border-orange-400 flex items-center justify-between shadow-2xl">
-           <div className="flex items-center gap-6">
-              <div className="p-4 bg-white text-orange-600 rounded-2xl"><Gavel size={32} /></div>
-              <div>
-                 <h2 className="text-3xl font-black uppercase text-white italic tracking-tighter">Recuperação Judicial Ativa</h2>
-                 <p className="text-orange-100 font-bold uppercase text-[10px] tracking-widest italic">Dívidas congeladas na SELIC. Investimentos em CAPEX suspensos pelo comitê.</p>
-              </div>
-           </div>
         </div>
       )}
 
@@ -184,7 +179,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             </div>
           </div>
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full border border-white/5">
-             {activeArena?.name || 'Sincronizando Node...'} • {activeTeamName || 'Unidade Alpha'}
+             {activeArena?.name || 'Sincronizando Node...'} • {activeTeam?.name || 'Unidade Alpha'}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -201,7 +196,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3 space-y-8">
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <ActionCard 
                 onClick={() => !isObserver && !isBankrupt && setShowDecisionForm(true)} 
@@ -229,27 +223,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-             <EfficiencyCard 
-               label="NCG (Giro)" 
-               val={`$ ${currentKpis?.scissors_effect?.ncg?.toLocaleString() || '0'}`} 
-               trend={currentKpis?.scissors_effect?.is_critical ? 'Efeito Tesoura!' : 'Equilibrado'} 
-               positive={!currentKpis?.scissors_effect?.is_critical}
-               icon={<Box size={20}/>}
-             />
-             <EfficiencyCard 
-               label="Crédito Disponível" 
-               val={`$ ${currentKpis?.banking?.credit_limit?.toLocaleString() || '0'}`} 
-               trend={`Juros: ${((currentKpis?.banking?.interest_rate ?? 0) * 100).toFixed(1)}%`} 
-               positive={currentKpis?.banking?.can_borrow ?? false}
-               icon={<Timer size={20}/>}
-             />
-             <EfficiencyCard 
-               label="Rating de Risco" 
-               val={currentKpis.rating} 
-               trend={`Score: ${currentKpis?.banking?.score ?? 0}`} 
-               positive={(currentKpis?.banking?.score ?? 0) > 50}
-               icon={<ShieldCheck size={20}/>}
-             />
+             <EfficiencyCard label="NCG (Giro)" val={`$ ${currentKpis?.scissors_effect?.ncg?.toLocaleString() || '0'}`} trend={currentKpis?.scissors_effect?.is_critical ? 'Tesoura!' : 'Estável'} positive={!currentKpis?.scissors_effect?.is_critical} icon={<Box size={20}/>} />
+             <EfficiencyCard label="Linha de Crédito" val={`$ ${currentKpis?.banking?.credit_limit?.toLocaleString() || '0'}`} trend={`Custo: ${((currentKpis?.banking?.interest_rate ?? 0) * 100).toFixed(1)}%`} positive={currentKpis?.banking?.can_borrow ?? false} icon={<CreditCard size={20}/>} />
+             <EfficiencyCard label="Rating Oracle" val={currentKpis.rating} trend={`Score: ${currentKpis?.banking?.score ?? 0}`} positive={(currentKpis?.banking?.score ?? 0) > 50} icon={<ShieldCheck size={20}/>} />
           </div>
 
           <div className="md:col-span-2 premium-card p-8 rounded-[3rem] bg-slate-900 border-white/5 flex flex-col justify-between relative overflow-hidden group shadow-2xl min-h-[300px]">
@@ -276,7 +252,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                  <div className="p-2 bg-orange-600 rounded-xl shadow-lg"><Target size={20} className="text-white"/></div> Core KPIs
               </h3>
               <div className="space-y-10">
-                 <KpiRow label="Lucro Líquido" value={activeArena?.current_round === 0 ? "$ 0" : "$ 73.928"} trend={activeArena?.current_round === 0 ? "STABLE" : "+100%"} positive icon={<DollarSign size={16}/>} />
+                 <KpiRow label="Patrimônio (PL)" value={`$ ${currentKpis.equity?.toLocaleString() || '0'}`} trend="Persistent" positive icon={<Box size={16}/>} />
                  <KpiRow label="Solvência" value={currentKpis.insolvency_status} trend="Real-time" positive={!isBankrupt} icon={<HeartPulse size={16}/>} />
                  <KpiRow label="Market Share" value={`${currentKpis?.market_share || 12.5}%`} trend="Target" positive icon={<TrendingUp size={16}/>} />
               </div>
@@ -287,13 +263,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <AnimatePresence>
         {showGazette && (
           <div className="fixed inset-0 z-[1000] p-6 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
-             <GazetteViewer 
-                arena={activeArena!} 
-                aiNews={aiNews} 
-                round={activeArena?.current_round || 1} 
-                userRole={userRole}
-                onClose={() => setShowGazette(false)} 
-             />
+             <GazetteViewer arena={activeArena!} aiNews={aiNews} round={activeArena?.current_round || 1} userRole={userRole} onClose={() => setShowGazette(false)} />
           </div>
         )}
       </AnimatePresence>

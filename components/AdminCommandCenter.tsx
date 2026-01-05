@@ -4,7 +4,8 @@ import {
   ShieldAlert, Trophy, LayoutGrid, Activity, 
   Monitor, Plus, Trash2, RefreshCw, ArrowLeft,
   ShieldX, ShieldOff, AlertTriangle, Zap, Database,
-  Settings, Loader2, Play, Hammer, HeartPulse, DollarSign, Gavel
+  Settings, Loader2, Play, Hammer, HeartPulse, DollarSign, Gavel,
+  CreditCard
 } from 'lucide-react';
 import { 
   listAllUsers, getChampionships, processRoundTurnover, 
@@ -34,25 +35,21 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
 
   useEffect(() => { fetchData(); }, [activeTab]);
 
-  const handleManualIntervention = async (teamId: string, type: 'CAPITAL' | 'FORGIVE' | 'STATUS', value?: any) => {
+  const handleManualIntervention = async (teamId: string, type: 'CAPITAL' | 'FORGIVE' | 'STATUS' | 'CREDIT_LIMIT', value?: any) => {
     const confirmation = window.confirm(`PROTOCOLO MASTER: Esta intervenção alterará o curso da simulação para esta unidade. Confirmar?`);
     if (!confirmation) return;
     
     setLoading(true);
     try {
       let update: any = {};
-      const logEntry: InterventionEntry = {
-        type: type === 'CAPITAL' ? 'CAPITAL_INJECTION' : type === 'FORGIVE' ? 'DEBT_FORGIVENESS' : 'MANUAL_STATUS',
-        value: typeof value === 'number' ? value : undefined,
-        tutor_note: `Manual intervention by Oracle Master. Action: ${type}`,
-        timestamp: new Date().toISOString()
-      };
-
       if (type === 'STATUS') {
         update.insolvency_status = value as InsolvencyStatus;
+      } else if (type === 'CREDIT_LIMIT') {
+        update.credit_limit = value;
+      } else if (type === 'CAPITAL') {
+        update.equity = (selectedArena?.teams?.find(t => t.id === teamId)?.equity || 0) + value;
       }
       
-      // Upsert logic for team table
       const { error } = await supabase.from('teams').update(update).eq('id', teamId);
       if (error) throw error;
       
@@ -97,9 +94,12 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
                   <div key={team.id} className="bg-slate-900 p-8 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl relative overflow-hidden group">
                      <div className="flex justify-between items-center">
                         <h4 className="text-xl font-black text-white uppercase italic">{team.name}</h4>
-                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${team.kpis?.insolvency_status === 'BANKRUPT' ? 'bg-rose-600 text-white' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                           {team.kpis?.insolvency_status || 'ESTÁVEL'}
-                        </span>
+                        <div className="text-right">
+                           <span className={`block text-[8px] font-black uppercase ${team.insolvency_status === 'BANKRUPT' ? 'text-rose-500' : 'text-emerald-500'}`}>
+                              {team.insolvency_status || 'ESTÁVEL'}
+                           </span>
+                           <span className="text-[10px] text-slate-500 font-mono italic">Equity: ${team.equity?.toLocaleString()}</span>
+                        </div>
                      </div>
                      
                      <div className="grid grid-cols-1 gap-3">
@@ -112,8 +112,11 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
                            label="Suspender Falência" icon={<HeartPulse size={14}/>} color="blue" 
                         />
                         <InterventionBtn 
-                           onClick={() => handleManualIntervention(team.id, 'FORGIVE', 0)} 
-                           label="Perdoar Dívida CP" icon={<Gavel size={14}/>} color="indigo" 
+                           onClick={() => {
+                              const newVal = prompt("Novo limite de crédito ($):", team.credit_limit?.toString());
+                              if (newVal) handleManualIntervention(team.id, 'CREDIT_LIMIT', Number(newVal));
+                           }} 
+                           label="Ajustar Limite Crédito" icon={<CreditCard size={14}/>} color="indigo" 
                         />
                      </div>
                   </div>
