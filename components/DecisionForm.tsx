@@ -106,7 +106,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
               <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">NODE CREDIT RATING</span>
               <div className="flex items-center gap-3">
                  <div className={`w-3 h-3 rounded-full animate-pulse ${projections.health.rating === 'D' ? 'bg-rose-600 shadow-[0_0_12px_#f43f5e]' : projections.debtRatio! > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
-                 <span className={`text-sm font-black italic ${projections.health.rating === 'D' ? 'text-rose-500' : projections.debtRatio! < 40 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                 <span className={`text-sm font-black italic ${projections.health.rating === 'D' ? 'text-rose-500 font-black animate-pulse' : projections.debtRatio! < 40 ? 'text-emerald-400' : 'text-amber-400'}`}>
                     {projections.health.rating} STANDING
                  </span>
               </div>

@@ -2,7 +2,7 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicat
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
-  // Oracle Kernel v12.2: Permite números negativos para suportar prejuízos reais no motor.
+  // Oracle Kernel v12.2: Permite números negativos para suportar prejuízos reais e dívidas.
   return isFinite(num) ? num : fallback;
 };
 
@@ -19,7 +19,7 @@ export const calculateProjections = (
   isRoundZero: boolean = false
 ) => {
   // Mapeamento Dinâmico Robusto para Paridade de Banco de Dados
-  // Casting para 'any' é necessário para evitar erros de tipagem dinâmica no build rigoroso do Vercel.
+  // Casting para 'any' é necessário para evitar erros de tipagem dinâmica no build do Vercel.
   const getAttr = (camel: string, snake: string, fallback: any) => {
     const data = indicators as any;
     if (data?.[snake] !== undefined) return data[snake];
@@ -76,12 +76,12 @@ export const calculateProjections = (
   const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605, 717605);
   const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362);
 
-  // 2. Oracle Risk Node v3.0
+  // 2. Oracle Risk Core
   const totalDebt = prevDebt + decisions.finance.loanRequest;
   const debtToEquity = totalDebt / Math.max(prevEquity, 1);
   const is_bankrupt = prevEquity < 0;
 
-  // Lógica de Rating Expandida com Suporte a Default (D)
+  // Lógica de Rating Expandida com Suporte a Default Crítico (D)
   const rating: CreditRating = 
     is_bankrupt ? 'D' : 
     debtToEquity > 2.5 ? 'D' : 
