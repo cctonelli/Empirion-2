@@ -70,8 +70,7 @@ const AppContent: React.FC = () => {
       <Route path="/auth" element={<Auth onAuth={() => navigate('/app/dashboard')} onBack={() => navigate('/')} />} />
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
       
-      {/* PUBLIC SOLUTIONS ROUTES - UNIFIED ACTIVITY ENGINE v3.0 */}
-      <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
+      {/* PUBLIC SOLUTIONS ROUTES - UNIFIED BRANCH ENGINE v3.1 */}
       <Route path="/branches/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       
       <Route path="/solutions/simulators" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><SimulatorsPage /></div></>} />

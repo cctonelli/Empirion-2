@@ -240,7 +240,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { id: 's1', name: 'Indústria', slug: 'industrial', icon: 'Factory', description: 'Otimize linhas de montagem e gerencie Capex complexo.' }
     ]
   },
-  'activity-industrial': {
+  'branch-industrial': {
     name: 'Industrial',
     heroImage: 'https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000',
     body: 'Otimize linhas de montagem e gerencie Capex complexo na vanguarda da simulação.',
@@ -249,7 +249,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     kpis: ['OEE Factory Efficiency', 'Giro de Estoque MP-A/B', 'Margem Bruta Industrial'],
     accent: 'orange'
   },
-  'activity-commercial': {
+  'branch-commercial': {
     name: 'Comercial',
     heroImage: 'https://images.unsplash.com/photo-1534452286302-2f55043531b9?q=80&w=2000',
     body: 'Varejo híbrido e algoritmos de satisfação do consumidor.',
@@ -258,7 +258,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     kpis: ['Consumer Satisfaction Index', 'Vendas por Metro Quadrado', 'Ticket Médio Regional'],
     accent: 'blue'
   },
-  'activity-services': {
+  'branch-services': {
     name: 'Serviços',
     heroImage: 'https://images.unsplash.com/photo-1454165833767-1316b0215b3f?q=80&w=2000',
     body: 'Capital intelectual e gestão de prestígio SISERV.',
@@ -267,7 +267,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     kpis: ['Billability Rate', 'Client Satisfaction Score', 'Margem por Contrato'],
     accent: 'emerald'
   },
-  'activity-agribusiness': {
+  'branch-agribusiness': {
     name: 'Agronegócio',
     heroImage: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000',
     body: 'Sazonalidade extrema e gestão de ativos biológicos SIAGRO.',
@@ -276,7 +276,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     kpis: ['Yield per Hectare', 'Commodity Exposure Index', 'Logistics Cost Ratio'],
     accent: 'orange'
   },
-  'activity-finance': {
+  'branch-finance': {
     name: 'Financeiro',
     heroImage: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=2000',
     body: ' Spread bancário, hedge e volatilidade SINVEST.',
@@ -285,7 +285,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     kpis: ['Net Interest Margin', 'Capital Adequacy Ratio', 'ROE Progressivo'],
     accent: 'blue'
   },
-  'activity-construction': {
+  'branch-construction': {
     name: 'Construção',
     heroImage: 'https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=2000',
     body: 'Obras pesadas, licitações e gestão de riscos estruturais.',
@@ -295,11 +295,3 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     accent: 'orange'
   }
 };
-
-// Aliases para o Unified Engine
-DEFAULT_PAGE_CONTENT['branch-industrial'] = DEFAULT_PAGE_CONTENT['activity-industrial'];
-DEFAULT_PAGE_CONTENT['branch-commercial'] = DEFAULT_PAGE_CONTENT['activity-commercial'];
-DEFAULT_PAGE_CONTENT['branch-services'] = DEFAULT_PAGE_CONTENT['activity-services'];
-DEFAULT_PAGE_CONTENT['branch-agribusiness'] = DEFAULT_PAGE_CONTENT['activity-agribusiness'];
-DEFAULT_PAGE_CONTENT['branch-finance'] = DEFAULT_PAGE_CONTENT['activity-finance'];
-DEFAULT_PAGE_CONTENT['branch-construction'] = DEFAULT_PAGE_CONTENT['activity-construction'];

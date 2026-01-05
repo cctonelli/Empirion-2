@@ -19,10 +19,10 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
       const { data } = await getChampionships();
       if (data) setChampionships(data);
       
-      // Captura pré-seleção enviada via roteamento
-      const preSlug = location.state?.preSelectedSlug;
-      if (preSlug) {
-        setActiveFilter(preSlug);
+      // Captura pré-seleção enviada via roteamento (ramos/branches)
+      const preBranch = location.state?.preSelectedBranch || location.state?.preSelectedSlug;
+      if (preBranch) {
+        setActiveFilter(preBranch);
       }
       
       setLoading(false);
@@ -54,7 +54,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
          {activeFilter && (
            <div className="flex items-center gap-3 bg-orange-600/10 border border-orange-500/20 px-5 py-2.5 rounded-full">
               <Filter size={14} className="text-orange-500" />
-              <span className="text-[10px] font-black text-white uppercase tracking-widest">Filtro: {activeFilter}</span>
+              <span className="text-[10px] font-black text-white uppercase tracking-widest">Setor: {activeFilter}</span>
               <button onClick={() => setActiveFilter(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
                  <X size={14} className="text-orange-500" />
               </button>
@@ -94,7 +94,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
              {filteredChamps.length === 0 && (
                <div className="col-span-full py-20 text-center bg-white/5 rounded-[4rem] border border-dashed border-white/10">
                   <Trophy size={48} className="text-slate-700 mx-auto mb-6" />
-                  <p className="text-slate-500 font-black uppercase text-sm tracking-widest">Nenhuma arena encontrada para este filtro.</p>
+                  <p className="text-slate-500 font-black uppercase text-sm tracking-widest">Nenhuma arena encontrada para este setor.</p>
                   <button onClick={() => setActiveFilter(null)} className="mt-4 text-orange-500 font-bold uppercase text-[10px] tracking-widest hover:underline">Ver todas as arenas</button>
                </div>
              )}

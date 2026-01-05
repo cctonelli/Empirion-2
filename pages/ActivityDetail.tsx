@@ -21,8 +21,8 @@ const ActivityDetail: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      // Probing order: Activity -> Branch -> Modality
-      const probeKeys = [`activity-${slug}`, `branch-${slug}`, `modality-${slug}`];
+      // Probing order: Branch (Primary) -> Activity (Legacy) -> Modality
+      const probeKeys = [`branch-${slug}`, `activity-${slug}`, `modality-${slug}`];
       let dbContent = null;
       
       for (const key of probeKeys) {
@@ -97,7 +97,7 @@ const ActivityDetail: React.FC = () => {
   const shadowAccent = content.accent === 'blue' ? 'shadow-blue-500/20' : content.accent === 'emerald' ? 'shadow-emerald-500/20' : 'shadow-orange-500/20';
 
   const handleStartArena = () => {
-    navigate('/app/championships', { state: { preSelectedSlug: slug } });
+    navigate('/app/championships', { state: { preSelectedBranch: slug } });
   };
 
   return (
@@ -127,7 +127,7 @@ const ActivityDetail: React.FC = () => {
                  <div className="space-y-6">
                     <h1 className="text-6xl md:text-9xl font-black text-white uppercase tracking-tighter italic leading-none drop-shadow-2xl">
                        {content.name} <br/>
-                       <span className={`${accentColor} italic`}>Arena</span>
+                       <span className={`${accentColor} italic`}>Setor</span>
                     </h1>
                     <p className="text-2xl md:text-3xl text-slate-300 font-medium leading-relaxed italic opacity-90 max-w-2xl">
                        "{content.body}"
@@ -138,7 +138,7 @@ const ActivityDetail: React.FC = () => {
                       onClick={handleStartArena}
                       className={`px-14 py-6 ${bgAccent} text-white rounded-full font-black text-xs uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-2xl ${shadowAccent} flex items-center justify-center gap-4`}
                     >
-                      <Play size={18} fill="currentColor" /> Iniciar Arena {content.name}
+                      <Play size={18} fill="currentColor" /> Iniciar Simulação {content.name}
                     </button>
                     <Link to="/features" className="px-12 py-6 bg-white/5 border border-white/10 text-white rounded-full font-black text-xs uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-4 backdrop-blur-xl">
                       Protocolo Técnico <Sparkles size={18} className={accentColor} />
