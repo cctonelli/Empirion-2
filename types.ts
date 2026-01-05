@@ -132,6 +132,7 @@ export interface Championship {
 }
 
 export interface MacroIndicators {
+  // Engine Properties (CamelCase)
   growthRate: number;
   inflationRate: number;
   interestRateTR: number;
@@ -153,6 +154,12 @@ export interface MacroIndicators {
       marketing_effectiveness?: number;
   };
   active_event?: BlackSwanEvent | null;
+
+  // DB Aliases (Snake_case)
+  inflation_rate?: number;
+  interest_rate?: number;
+  base_marketing_cost?: number;
+  base_admin_cost?: number;
 }
 
 export interface UserProfile {

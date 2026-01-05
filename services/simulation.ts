@@ -3,12 +3,12 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicat
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
-  return isFinite(num) && num >= 0 ? num : fallback;
+  return isFinite(num) ? num : fallback;
 };
 
 /**
- * Motor Industrial Empirion v11.8 - Oracle Integrity Kernel
- * Garante paridade de interface para evitar erros de deploy (Vercel Build Error Fix).
+ * Motor Industrial Empirion v11.9 - Oracle Solvency & Governance Node
+ * Implementa custos exponenciais, inflação composta e paridade total de banco de dados.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -18,24 +18,32 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // Fallbacks seguros para evitar processamento de null/undefined
-  const currentIndicators = (indicators || {
-    inflationRate: 0.01,
-    providerPrices: { mpA: 20.20, mpB: 40.40 },
-    demand_regions: [12000],
-    sectorAvgSalary: 1313,
-    marketingExpenseBase: 17165, // Base Bernard Legada
-    distributionCostUnit: 50.50,
-    difficulty: { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
-    active_event: null
-  }) as MacroIndicators;
+  // Mapeamento Robusto: DB (snake_case) vs Engine (CamelCase)
+  const getAttr = (camel: string, snake: string, fallback: any) => {
+    if (indicators?.[snake as keyof MacroIndicators] !== undefined) return indicators[snake as keyof MacroIndicators];
+    if (indicators?.[camel as keyof MacroIndicators] !== undefined) return indicators[camel as keyof MacroIndicators];
+    return fallback;
+  };
 
-  const inflationMult = (1 + (currentIndicators.inflationRate || 0));
+  const currentIndicators = {
+    inflationRate: getAttr('inflationRate', 'inflation_rate', 0.01),
+    interestRateTR: getAttr('interestRateTR', 'interest_rate', 3.0),
+    marketingExpenseBase: getAttr('marketingExpenseBase', 'base_marketing_cost', 17165),
+    baseAdminCost: getAttr('baseAdminCost', 'base_admin_cost', 114880),
+    providerPrices: indicators?.providerPrices || { mpA: 20.20, mpB: 40.40 },
+    demand_regions: indicators?.demand_regions || [12000],
+    sectorAvgSalary: indicators?.sectorAvgSalary || 1313,
+    distributionCostUnit: indicators?.distributionCostUnit || 50.50,
+    difficulty: indicators?.difficulty || { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
+    active_event: indicators?.active_event || null
+  };
+
+  const inflationMult = (1 + (sanitize(currentIndicators.inflationRate, 0)));
   const event: BlackSwanEvent | null = currentIndicators.active_event || null;
   const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
   
   if (isRoundZero) {
-    // IMPORTANTE: Retornar objeto completo para satisfazer TypeScript e UI
+    // Retorno do Round Zero com Paridade Absoluta (Fidelidade v3.1)
     return {
       revenue: 3322735, ebitda: 1044555, netProfit: 73928, salesVolume: 8932,
       lostSales: 0, totalMarketingCost: 802702, debtRatio: 44.9,
@@ -45,7 +53,7 @@ export const calculateProjections = (
         liquidity_ratio: 1.5, 
         debt_to_equity: 0.6, 
         insolvency_risk: 10, 
-        rating: 'AAA', 
+        rating: 'AAA' as CreditRating, 
         is_bankrupt: false 
       } as FinancialHealth,
       suggestRecovery: false, capexBlocked: false,
@@ -58,28 +66,29 @@ export const calculateProjections = (
     };
   }
 
-  // 1. Snapshot de Herança Financeira
-  const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447);
-  const prevAssets = sanitize(previousState?.balance_sheet?.assets?.total || 9176940);
-  const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200);
-  const prevReceivables = sanitize(previousState?.balance_sheet?.assets?.current?.receivables || 1823735);
-  const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605);
-  const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362);
+  // 1. Snapshot de Herança (Snapshot Node)
+  const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
+  const prevAssets = sanitize(previousState?.balance_sheet?.assets?.total || 9176940, 9176940);
+  const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
+  const prevReceivables = sanitize(previousState?.balance_sheet?.assets?.current?.receivables || 1823735, 1823735);
+  const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605, 717605);
+  const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362);
 
-  // 2. Oracle Risk Core
+  // 2. Oracle Risk Node
   const totalDebt = prevDebt + decisions.finance.loanRequest;
   const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
   const debtToEquity = totalDebt / Math.max(prevEquity, 1);
   const rating: CreditRating = debtToEquity > 1.8 ? 'C' : debtToEquity > 1.2 ? 'B' : debtToEquity > 0.6 ? 'A' : 'AAA';
   
-  // 3. Comercial & Demanda (Marketing Exponencial)
+  // 3. Comercial & Demanda (Logica Marketing Exponencial)
   const regions = Object.values(decisions.regions || {});
-  const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price), 0) / regions.length : 372;
+  const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price, 372), 0) / regions.length : 372;
   
   const baseMkt = sanitize(currentIndicators.marketingExpenseBase, 17165) * inflationMult;
   const totalMarketingCost = regions.reduce((acc, r) => {
-    const level = sanitize(r.marketing);
+    const level = sanitize(r.marketing, 0);
     if (level === 0) return acc;
+    // Formula Exponencial: (Base * Nível^1.5)
     return acc + (baseMkt * Math.pow(level, 1.5));
   }, 0);
 
@@ -90,11 +99,11 @@ export const calculateProjections = (
   const basePotential = (currentIndicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1) * (1 + (evMod.demand || 0));
   const priceRatio = 372 / Math.max(avgPrice, 1);
   const priceScore = Math.pow(priceRatio, currentIndicators.difficulty?.price_sensitivity || 2.0);
-  const totalMktPoints = regions.reduce((a, b) => a + sanitize(b.marketing), 0);
+  const totalMktPoints = regions.reduce((a, b) => a + sanitize(b.marketing, 0), 0);
   const mktScore = Math.log10(((totalMktPoints * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
   const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
   
-  // 4. Produção e Reajustes de Custo
+  // 4. Produção e Custos Inflacionados
   const currentOEE = (1.0 + (decisions.hr.trainingPercent / 1000) + (decisions.hr.participationPercent / 200)) * (evMod.productivity || 1);
   const maxProduction = 30000 * (decisions.production.activityLevel / 100) * currentOEE;
   const salesVolume = Math.min(demandTotal, maxProduction);
@@ -110,18 +119,20 @@ export const calculateProjections = (
   const unitDist = sanitize(currentIndicators.distributionCostUnit, 50.50) * inflationMult;
   const distributionTotal = salesVolume * unitDist;
 
+  const adminExpenses = sanitize(currentIndicators.baseAdminCost, 114880) * inflationMult;
+
   // 5. Demonstração do Resultado (DRE)
   const cpv = salesVolume * (unitMpA + unitMpB * 0.5);
-  const ebitda = revenue - cpv - payrollTotal - totalMarketingCost - (decisions.hr.trainingPercent * 500) - 145000;
+  const ebitda = revenue - cpv - payrollTotal - totalMarketingCost - (decisions.hr.trainingPercent * 500) - adminExpenses;
   const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
   const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
-  // 6. Auditoria de Fluxo de Caixa (Disbursement Audit)
+  // 6. Auditoria de Desembolso (Cash Flow Audit)
   const mktOutflow = totalMarketingCost;
   const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
   
   const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
-  const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + mktOutflow + distributionTotal;
+  const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + mktOutflow + distributionTotal + adminExpenses;
   const finalCash = prevCash + cashInflow + decisions.finance.loanRequest - totalOutflow - decisions.finance.application;
   
   const finalAssets = finalCash + (revenue * 0.6) + (prevAssets * 0.99);
@@ -129,11 +140,11 @@ export const calculateProjections = (
   const debtRatio = ((finalAssets - finalEquity) / Math.max(finalAssets, 1)) * 100;
 
   const costBreakdown = [
-    { name: 'Matéria-Prima (Desembolso)', total: mpOutflow, impact: mpOutflow > 0 ? 'Saída de Caixa Imediata' : 'Vira Passivo Fornecedores' },
-    { name: 'Marketing Exponencial', total: mktOutflow, impact: 'Consumo de Caixa p/ Vendas' },
-    { name: 'Folha Salarial Industrial', total: payrollTotal, impact: 'Custo Fixo Corrigido' },
-    { name: 'Distribuição & Logística', total: distributionTotal, impact: 'Variável por Volume' },
-    { name: 'Juros & Taxas Bancárias', total: interestExp, impact: 'Custo da Dívida Acumulada' }
+    { name: 'Matéria-Prima (Imediato)', total: mpOutflow, impact: mpOutflow > 0 ? 'Saída Direta' : 'Prazo Fornecedor' },
+    { name: 'Marketing Exponencial', total: mktOutflow, impact: 'Consumo Imediato de Caixa' },
+    { name: 'Folha Salarial & Admin', total: payrollTotal + adminExpenses, impact: 'Custos Fixos Inflacionados' },
+    { name: 'Distribuição & Logística', total: distributionTotal, impact: 'Variável por Unidade' },
+    { name: 'Juros de Empréstimo', total: interestExp, impact: 'Custo do Capital' }
   ];
 
   return {

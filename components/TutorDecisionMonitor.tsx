@@ -4,8 +4,8 @@ import {
   Users, Eye, CheckCircle2, AlertCircle, FileText, 
   BarChart3, RefreshCw, ChevronRight, MapPin, DollarSign,
   Factory, Megaphone, UserPlus, Sliders, Target, Monitor,
-  TrendingDown, ShieldAlert, Activity, Scale, Shield,
-  History, User, AlertOctagon, Key
+  TrendingUp, ShieldAlert, Activity, Scale, Shield,
+  History, User, AlertOctagon, Key, Banknote, Landmark
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -68,7 +68,6 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
         });
         setTeams(progress);
         
-        // Update selected team if open
         if (selectedTeam) {
             const updatedSelected = progress.find(t => t.team_id === selectedTeam.team_id);
             if (updatedSelected) setSelectedTeam(updatedSelected);
@@ -197,19 +196,45 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{new Date(log.changed_at).toLocaleString()}</span>
                                </div>
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
-                                  <div>
-                                     <span className="block text-[8px] font-black text-slate-500 uppercase mb-1">Campo Alterado</span>
-                                     <span className="text-xs font-mono text-orange-400">{log.field_path}</span>
-                                  </div>
-                                  <div className="flex justify-between">
+                                  <div className="space-y-4">
                                      <div>
-                                        <span className="block text-[8px] font-black text-slate-500 uppercase mb-1">Anterior</span>
-                                        <span className="text-xs font-mono text-slate-500 line-through">{JSON.stringify(log.old_value)}</span>
+                                        <span className="block text-[8px] font-black text-slate-500 uppercase mb-1">Campo Alterado</span>
+                                        <span className="text-xs font-mono text-orange-400">{log.field_path}</span>
                                      </div>
-                                     <div className="text-right">
-                                        <span className="block text-[8px] font-black text-slate-500 uppercase mb-1">Novo</span>
-                                        <span className="text-xs font-mono text-white font-black">{JSON.stringify(log.new_value)}</span>
+                                     {log.impact_on_cash !== undefined && (
+                                       <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                                          <Banknote size={14} className="text-emerald-500" />
+                                          <div>
+                                             <span className="block text-[7px] font-black text-slate-500 uppercase">Impacto no Caixa</span>
+                                             <span className={`text-xs font-mono font-black ${log.impact_on_cash < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                                $ {log.impact_on_cash.toLocaleString()}
+                                             </span>
+                                          </div>
+                                       </div>
+                                     )}
+                                  </div>
+                                  <div className="space-y-4">
+                                     <div className="flex justify-between">
+                                        <div>
+                                           <span className="block text-[8px] font-black text-slate-500 uppercase mb-1">Anterior</span>
+                                           <span className="text-xs font-mono text-slate-500 line-through">{JSON.stringify(log.old_value)}</span>
+                                        </div>
+                                        <div className="text-right">
+                                           <span className="block text-[8px] font-black text-slate-500 uppercase mb-1">Novo</span>
+                                           <span className="text-xs font-mono text-white font-black">{JSON.stringify(log.new_value)}</span>
+                                        </div>
                                      </div>
+                                     {log.current_balance_at_time !== undefined && (
+                                       <div className="flex items-center justify-end gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                                          <div className="text-right">
+                                             <span className="block text-[7px] font-black text-slate-500 uppercase">Saldo Estimado</span>
+                                             <span className="text-xs font-mono font-black text-blue-400">
+                                                $ {log.current_balance_at_time.toLocaleString()}
+                                             </span>
+                                          </div>
+                                          <Landmark size={14} className="text-blue-500" />
+                                       </div>
+                                     )}
                                   </div>
                                </div>
                             </div>
