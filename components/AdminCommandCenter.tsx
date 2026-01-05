@@ -77,7 +77,8 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
     if (!confirm("LIMPEZA PROFUNDA: Deseja remover TODOS os campeonatos do modo Sandbox/Trial?")) return;
     setLoading(true);
     const { error } = await purgeAllTrials();
-    if (!error) alert("SANDBOX LIMPA: Testes antigos removidos.");
+    if (!error) alert("SANDBOX LIMPA: Testes antigos removidos via Protocolo v12.8.");
+    else alert("ERRO DE EXPURGO: " + error.message);
     fetchData();
     setLoading(false);
   };
@@ -87,7 +88,8 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
     if (!confirm("CONFIRMAÇÃO FINAL: Você tem certeza absoluta? Esta ação não pode ser desfeita.")) return;
     setLoading(true);
     const { error } = await purgeAllProduction();
-    if (!error) alert("PRODUÇÃO LIMPA: Espaço total liberado.");
+    if (!error) alert("PRODUÇÃO LIMPA: Arena resetada para o estado de fábrica.");
+    else alert("ERRO DE EXPURGO: " + error.message);
     fetchData();
     setLoading(false);
   };
@@ -108,7 +110,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                     Gestão: <span className="text-orange-500">{selectedArena.name}</span>
                  </h1>
                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2 italic">
-                   Nodo de Operação Industrial v6.0 • Ciclo Atual: 0{selectedArena.current_round}
+                   Nodo de Operação Industrial v12.8.2 • Ciclo Atual: 0{selectedArena.current_round}
                  </p>
               </div>
            </div>
@@ -143,13 +145,13 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
             <div className="p-2 bg-orange-600 text-white rounded-xl shadow-lg"><ShieldAlert size={28} /></div> 
             Tutor <span className="text-orange-600">Master Control</span>
           </h1>
-          <p className="text-slate-500 mt-1 font-medium text-sm">Parametrização de Arenas e Gestão de Nodos v12.8 GOLD.</p>
+          <p className="text-slate-500 mt-1 font-medium text-sm">Parametrização de Arenas e Gestão de Nodos v12.8.2 GOLD.</p>
         </div>
         <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner overflow-x-auto no-scrollbar">
            <TabBtn active={activeTab === 'tournaments'} onClick={() => setActiveTab('tournaments')} label="Gestão de Arenas" icon={<Trophy size={14}/>} />
            <TabBtn active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Estrategistas" icon={<Users size={14}/>} />
            <TabBtn active={activeTab === 'opal'} onClick={() => setActiveTab('opal')} label="Opal Hub" icon={<Workflow size={14}/>} />
-           <TabBtn active={activeTab === 'system'} onClick={() => setActiveTab('system')} label="Health & Cleanup" icon={<Activity size={14}/>} />
+           <TabBtn active={activeTab === 'system'} onClick={() => setActiveTab('system')} label="Health & Maintenance" icon={<Activity size={14}/>} />
         </div>
       </div>
 
@@ -166,7 +168,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                       <div className="p-5 bg-orange-600 text-white rounded-3xl shadow-2xl shadow-orange-500/20"><Plus size={40} /></div>
                       <div>
                          <h3 className="text-3xl font-black text-white uppercase tracking-tight italic">Criar Nova Arena</h3>
-                         <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">Configure parâmetros e regras v12.8 GOLD.</p>
+                         <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">Configure parâmetros e regras GOLD v12.8.2.</p>
                       </div>
                    </div>
                    <button 
@@ -188,7 +190,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                    {championships.length === 0 && !loading ? (
                      <div className="p-20 bg-slate-50 border border-slate-200 border-dashed rounded-[4rem] flex flex-col items-center justify-center text-center gap-6 opacity-60">
                         <LayoutGrid size={48} className="text-slate-300" />
-                        <p className="font-black text-slate-400 uppercase text-[10px] tracking-[0.2em]">Sem arenas ativas</p>
+                        <p className="font-black text-slate-400 uppercase text-[10px] tracking-[0.2em]">Sem arenas ativas detectadas.</p>
                      </div>
                    ) : (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -196,7 +198,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                            <div key={champ.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between min-h-[320px]">
                               <div className="space-y-6">
                                  <div className="flex justify-between items-start">
-                                    <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${champ.is_trial ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                                    <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${champ.is_trial ? 'bg-orange-600/10 text-orange-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
                                        {champ.is_trial ? 'Teste Grátis' : 'Arena Live'}
                                     </div>
                                     {champ.is_public && <Globe size={14} className="text-blue-500" />}
@@ -268,13 +270,13 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                       <div className="p-4 bg-slate-900 text-white rounded-3xl shadow-xl"><Activity size={28} /></div>
                       <div>
                          <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">System Integrity</h3>
-                         <p className="text-slate-500 font-medium">Monitoramento de nodos e latência de processamento.</p>
+                         <p className="text-slate-500 font-medium">Monitoramento de integridade e latência v12.8.2 GOLD.</p>
                       </div>
                    </div>
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       <HealthMetric label="Database Nodes" val="Active" status="online" />
-                      <HealthMetric label="Memory Usage" val="14%" status="stable" />
-                      <HealthMetric label="Total Arenas" val={championships.length} status="online" />
+                      <HealthMetric label="Turnover Engine" val="v12.8.2" status="stable" />
+                      <HealthMetric label="Memory Stack" val="14%" status="online" />
                    </div>
                 </div>
 
@@ -285,7 +287,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                          <AlertTriangle size={24} />
                          <h3 className="text-xl font-black uppercase italic tracking-tighter">Danger Zone</h3>
                       </div>
-                      <p className="text-xs font-bold text-rose-100 leading-relaxed uppercase">Remova dados legados para garantir que novos nodos operem sem interferência de testes antigos.</p>
+                      <p className="text-xs font-bold text-rose-100 leading-relaxed uppercase">Expurgar resíduos para garantir novos nodos GOLD. Ação irreversível via PostgreSQL Cascade.</p>
                    </div>
                    <div className="space-y-3 relative z-10">
                       <button onClick={handlePurgeTrials} disabled={loading} className="w-full py-5 bg-white text-rose-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-950 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50">

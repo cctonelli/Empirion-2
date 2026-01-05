@@ -17,10 +17,11 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
 /**
- * ORACLE TURNOVER ENGINE v11.2.2 (Final Schema Sync)
+ * ORACLE TURNOVER ENGINE v12.8.2 GOLD (Final Production Build)
+ * Optimized for high-concurrency arena processing.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
-  console.log(`[TURNOVER v11.2.2] Final Sync: Arena ${championshipId} | R${currentRound}`);
+  console.log(`[TURNOVER v12.8.2 GOLD] Processing Arena: ${championshipId} | Cycle: 0${currentRound}`);
 
   try {
     const { data: arena } = await supabase.from('championships').select('*').eq('id', championshipId).single();
@@ -191,11 +192,11 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 
 /**
  * DELETE CHAMPIONSHIP v12.8.2 GOLD
- * Allows removing legacy test data. Cleanup session to prevent ghost data.
+ * Deep cleanup including local session to prevent ghost data references.
  */
 export const deleteChampionship = async (id: string, isTrial: boolean) => {
   const table = isTrial ? 'trial_championships' : 'championships';
-  console.log(`[CLEANUP] Deleting arena ${id} from ${table}`);
+  console.log(`[CLEANUP] Protocol: Deleting arena ${id} from ${table}`);
   
   if (localStorage.getItem('active_champ_id') === id) {
     localStorage.removeItem('active_champ_id');
@@ -207,12 +208,13 @@ export const deleteChampionship = async (id: string, isTrial: boolean) => {
 
 /**
  * PURGE SYSTEM DATA v12.8.2 GOLD
- * Allows mass deletion of trial or all data to clear the project stage.
+ * Mass deletion commands for total project environment reset.
  */
 export const purgeAllTrials = async () => {
   console.log("[PURGE] Initiating total sandbox cleanup...");
   localStorage.removeItem('active_champ_id');
   localStorage.removeItem('active_team_id');
+  // Deletes everything except the system reserved UUID if needed
   return await supabase.from('trial_championships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 };
 
