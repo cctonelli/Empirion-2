@@ -67,7 +67,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
     if (error) {
       alert("FALHA NA EXCLUSÃO: " + error.message);
     } else {
-      alert("ARENA REMOVIDA: Espaço liberado para novos nodos v12.8 GOLD.");
+      alert("ARENA REMOVIDA: Espaço liberado para novos nodos v12.8.2 GOLD.");
       fetchData();
     }
     setLoading(false);
@@ -77,7 +77,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
     if (!confirm("LIMPEZA PROFUNDA: Deseja remover TODOS os campeonatos do modo Sandbox/Trial?")) return;
     setLoading(true);
     const { error } = await purgeAllTrials();
-    if (!error) alert("SANDBOX LIMPA: Testes antigos removidos via Protocolo v12.8.");
+    if (!error) alert("SANDBOX LIMPA: Testes antigos removidos via Protocolo v12.8.2 GOLD.");
     else alert("ERRO DE EXPURGO: " + error.message);
     fetchData();
     setLoading(false);
@@ -88,7 +88,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
     if (!confirm("CONFIRMAÇÃO FINAL: Você tem certeza absoluta? Esta ação não pode ser desfeita.")) return;
     setLoading(true);
     const { error } = await purgeAllProduction();
-    if (!error) alert("PRODUÇÃO LIMPA: Arena resetada para o estado de fábrica.");
+    if (!error) alert("PRODUÇÃO LIMPA: Arena resetada para o estado de fábrica v12.8.2.");
     else alert("ERRO DE EXPURGO: " + error.message);
     fetchData();
     setLoading(false);
@@ -110,7 +110,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
                     Gestão: <span className="text-orange-500">{selectedArena.name}</span>
                  </h1>
                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2 italic">
-                   Nodo de Operação Industrial v12.8.2 • Ciclo Atual: 0{selectedArena.current_round}
+                   Nodo de Operação Industrial v12.8.2 GOLD • Ciclo Atual: 0{selectedArena.current_round}
                  </p>
               </div>
            </div>

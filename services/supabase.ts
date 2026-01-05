@@ -214,7 +214,6 @@ export const purgeAllTrials = async () => {
   console.log("[PURGE] Initiating total sandbox cleanup...");
   localStorage.removeItem('active_champ_id');
   localStorage.removeItem('active_team_id');
-  // Deletes everything except the system reserved UUID if needed
   return await supabase.from('trial_championships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 };
 
