@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -6,12 +7,12 @@ import {
   Factory, Megaphone, UserPlus, Sliders, Target, Monitor,
   TrendingUp, ShieldAlert, Activity, Scale, Shield,
   History, User, AlertOctagon, Key, Banknote, Landmark,
-  TrendingDown, HeartPulse
+  TrendingDown, HeartPulse, Loader2
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Championship, CreditRating } from '../types';
+import { Championship, CreditRating, Branch, EcosystemConfig, MacroIndicators } from '../types';
 
 interface TeamProgress {
   team_id: string;
@@ -36,23 +37,30 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
   const fetchLiveDecisions = async () => {
     setLoading(true);
     try {
-      const { data: arenaData } = await supabase.from('championships').select('*').eq('id', championshipId).single();
-      if (arenaData) setArena(arenaData);
+      const { data: arenaData } = await supabase.from('championships').select('*').eq('id', championshipId).maybeSingle();
+      if (arenaData) setArena(arenaData as Championship);
 
       const { data: teamsData } = await supabase.from('teams').select('id, name, master_key_enabled').eq('championship_id', championshipId);
       const { data: decisionsData } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', round);
       const { data: auditData } = await supabase.from('decision_audit_log').select('*').eq('championship_id', championshipId).eq('round', round).order('changed_at', { ascending: false });
 
       if (teamsData && arenaData) {
-        const progress = teamsData.map(t => {
+        const progress: TeamProgress[] = teamsData.map(t => {
           const decision = decisionsData?.find(d => d.team_id === t.id);
-          const proj = decision ? calculateProjections(
-             decision.data, 
-             arenaData.branch, 
-             arenaData.ecosystemConfig, 
-             arenaData.market_indicators
-          ) : null;
+          
+          // Cast explicitly for calculation safety
+          const branch = (arenaData.branch || 'industrial') as Branch;
+          const eco = (arenaData.ecosystemConfig || { 
+            inflationRate: 0.01, 
+            demandMultiplier: 1.0, 
+            interestRate: 0.03, 
+            marketVolatility: 0.05, 
+            scenarioType: 'simulated', 
+            modalityType: 'standard' 
+          }) as EcosystemConfig;
+          const macro = (arenaData.market_indicators) as MacroIndicators;
 
+          const proj = decision ? calculateProjections(decision.data, branch, eco, macro) : null;
           const teamAudit = auditData?.filter(a => a.team_id === t.id) || [];
 
           return {
@@ -67,8 +75,9 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
             insolvency_deficit: proj?.health?.insolvency_deficit ?? 0,
             master_key_enabled: t.master_key_enabled,
             auditLogs: teamAudit
-          } as TeamProgress;
+          };
         });
+        
         setTeams(progress);
         
         if (selectedTeam) {
@@ -76,8 +85,11 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
             if (updatedSelected) setSelectedTeam(updatedSelected);
         }
       }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+    } catch (e) { 
+      console.error("Monitor Data Fetch Failure:", e); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   useEffect(() => {
@@ -93,6 +105,15 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
     const { error } = await supabase.from('teams').update({ master_key_enabled: !current }).eq('id', teamId);
     if (!error) fetchLiveDecisions();
   };
+
+  if (loading && teams.length === 0) {
+    return (
+      <div className="p-20 text-center space-y-4">
+        <Loader2 className="animate-spin mx-auto text-orange-500" size={48} />
+        <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.4em]">Sincronizando Auditoria...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -164,7 +185,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                         {team.status === 'sealed' ? <CheckCircle2 size={20}/> : team.status === 'draft' ? <Activity size={20}/> : <Monitor size={20}/>}
                      </div>
                      <div className="text-right">
-                        <span className={`block text-[10px] font-black uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 font-black animate-pulse' : 'text-slate-400'}`}>{team.rating}</span>
+                        <span className={`block text-[10px] font-black uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 font-black animate-pulse' : 'text-slate-400'}`}>{team.rating ?? 'N/A'}</span>
                         <div className={`w-12 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden`}>
                            <div className={`h-full ${team.rating === 'D' ? 'bg-rose-600' : (team.risk ?? 0) > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${team.risk ?? 0}%` }} />
                         </div>
@@ -210,13 +231,13 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                      </div>
 
                      <div className="space-y-6 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
-                        {selectedTeam.auditLogs?.length === 0 ? (
+                        {(!selectedTeam.auditLogs || selectedTeam.auditLogs.length === 0) ? (
                           <div className="p-10 bg-white/5 border border-white/5 border-dashed rounded-[3rem] text-center opacity-40">
                              <FileText size={48} className="mx-auto mb-4" />
                              <p className="text-[10px] font-black uppercase tracking-widest">Sem logs de alteração neste round.</p>
                           </div>
                         ) : (
-                          selectedTeam.auditLogs?.map((log, idx) => (
+                          selectedTeam.auditLogs.map((log, idx) => (
                             <div key={idx} className="p-8 bg-white/5 border border-white/5 rounded-[2.5rem] space-y-4 hover:bg-white/[0.08] transition-all">
                                <div className="flex justify-between items-center">
                                   <div className="flex items-center gap-3">
@@ -286,13 +307,14 @@ const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgres
   const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
   
   const distribution = useMemo(() => {
+    if (!teamsProjections) return ratingsOrder.map(r => ({ rating: r, count: 0 }));
     return ratingsOrder.map(r => ({
       rating: r,
-      count: teamsProjections.filter(t => t.rating === r).length
+      count: teamsProjections.filter(t => (t.rating ?? 'N/A') === r).length
     }));
   }, [teamsProjections]);
 
-  const COLORS = {
+  const COLORS_MAP = {
     'AAA': '#10b981', 'AA': '#34d399', 'A': '#6ee7b7',
     'B': '#fbbf24', 'C': '#f87171', 'D': '#b91c1c', 'N/A': '#334155'
   };
@@ -307,7 +329,7 @@ const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgres
         dataLabels: { position: 'top' }
       } 
     },
-    colors: ratingsOrder.map(r => COLORS[r as keyof typeof COLORS]),
+    colors: ratingsOrder.map(r => COLORS_MAP[r as keyof typeof COLORS_MAP]),
     xaxis: {
       categories: ratingsOrder,
       labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 900 } },
@@ -337,7 +359,7 @@ const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgres
              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Distribuição de Rating de Crédito em Tempo Real</p>
           </div>
           <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
-             <span className="text-[10px] text-orange-500 font-black uppercase">N = {teamsProjections.length} Strategists</span>
+             <span className="text-[10px] text-orange-500 font-black uppercase">N = {teamsProjections?.length ?? 0} Strategists</span>
           </div>
        </div>
 
