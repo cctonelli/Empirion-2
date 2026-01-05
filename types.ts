@@ -14,7 +14,6 @@ export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency';
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
-// Fix: Added 'AA' and 'D' to CreditRating to align with monitoring logic and prevent type comparison errors
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'E' | 'N/A';
 export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 

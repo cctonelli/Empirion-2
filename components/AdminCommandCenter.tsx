@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, Trophy, LayoutGrid, Activity, 
@@ -11,7 +12,7 @@ import {
   createChampionshipWithTeams, supabase 
 } from '../services/supabase';
 import { CHAMPIONSHIP_TEMPLATES, ALPHA_TEST_USERS } from '../constants';
-import { UserProfile, Championship, Team, InsolvencyStatus } from '../types';
+import { UserProfile, Championship, Team, InsolvencyStatus, InterventionEntry } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
 import TutorDecisionMonitor from './TutorDecisionMonitor';
@@ -34,20 +35,28 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
   useEffect(() => { fetchData(); }, [activeTab]);
 
   const handleManualIntervention = async (teamId: string, type: 'CAPITAL' | 'FORGIVE' | 'STATUS', value?: any) => {
-    if (!confirm(`CONFIRMAR INTERVENÇÃO: Esta ação alterará o balanço da unidade em tempo real. Prosseguir?`)) return;
+    const confirmation = window.confirm(`PROTOCOLO MASTER: Esta intervenção alterará o curso da simulação para esta unidade. Confirmar?`);
+    if (!confirmation) return;
     
     setLoading(true);
     try {
-      // Exemplo de Injeção de Capital (Aumento de PL)
-      if (type === 'CAPITAL') {
-        alert(`PROTOCOLO ATIVO: Injeção de $ ${value.toLocaleString()} processada.`);
-      } 
-      // Exemplo de Alteração de Status (Tirar da Falência)
-      else if (type === 'STATUS') {
-        const { error } = await supabase.from('teams').update({ insolvency_status: value as InsolvencyStatus }).eq('id', teamId);
-        if (error) throw error;
-        alert(`STATUS SINCRONIZADO: Unidade agora está em modo ${value}.`);
+      let update: any = {};
+      const logEntry: InterventionEntry = {
+        type: type === 'CAPITAL' ? 'CAPITAL_INJECTION' : type === 'FORGIVE' ? 'DEBT_FORGIVENESS' : 'MANUAL_STATUS',
+        value: typeof value === 'number' ? value : undefined,
+        tutor_note: `Manual intervention by Oracle Master. Action: ${type}`,
+        timestamp: new Date().toISOString()
+      };
+
+      if (type === 'STATUS') {
+        update.insolvency_status = value as InsolvencyStatus;
       }
+      
+      // Upsert logic for team table
+      const { error } = await supabase.from('teams').update(update).eq('id', teamId);
+      if (error) throw error;
+      
+      alert(`PROTOCOLO ATIVO: Unidade sincronizada com novos parâmetros.`);
       fetchData();
     } catch (e: any) {
       alert(`FALHA NA INTERVENÇÃO: ${e.message}`);
@@ -78,8 +87,8 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
              <div className="bg-indigo-600/10 border border-indigo-500/20 p-8 rounded-[3rem] flex items-center gap-6">
                 <div className="p-4 bg-indigo-600 text-white rounded-2xl shadow-lg"><Hammer size={24}/></div>
                 <div>
-                   <h3 className="text-xl font-black text-white uppercase italic">Módulo de Gestão de Crise</h3>
-                   <p className="text-xs text-indigo-200 opacity-70 leading-relaxed uppercase font-bold">Injete capital, perdoe dívidas ou altere o status de insolvência para salvar unidades promissoras.</p>
+                   <h3 className="text-xl font-black text-white uppercase italic">Módulo de Gestão de Crise (ERPS)</h3>
+                   <p className="text-xs text-indigo-200 opacity-70 leading-relaxed uppercase font-bold">Resgate unidades insolventes injetando capital ou perdoando dívidas para fins pedagógicos.</p>
                 </div>
              </div>
 
@@ -88,15 +97,15 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
                   <div key={team.id} className="bg-slate-900 p-8 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl relative overflow-hidden group">
                      <div className="flex justify-between items-center">
                         <h4 className="text-xl font-black text-white uppercase italic">{team.name}</h4>
-                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${team.kpis?.insolvency_status === 'BANKRUPT' ? 'bg-slate-950 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${team.kpis?.insolvency_status === 'BANKRUPT' ? 'bg-rose-600 text-white' : 'bg-emerald-500/10 text-emerald-500'}`}>
                            {team.kpis?.insolvency_status || 'ESTÁVEL'}
                         </span>
                      </div>
                      
                      <div className="grid grid-cols-1 gap-3">
                         <InterventionBtn 
-                           onClick={() => handleManualIntervention(team.id, 'CAPITAL', 500000)} 
-                           label="Injetar $500k" icon={<DollarSign size={14}/>} color="emerald" 
+                           onClick={() => handleManualIntervention(team.id, 'CAPITAL', 1000000)} 
+                           label="Injetar $1M (Aporte)" icon={<DollarSign size={14}/>} color="emerald" 
                         />
                         <InterventionBtn 
                            onClick={() => handleManualIntervention(team.id, 'STATUS', 'SAUDAVEL')} 
@@ -104,7 +113,7 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
                         />
                         <InterventionBtn 
                            onClick={() => handleManualIntervention(team.id, 'FORGIVE', 0)} 
-                           label="Perdoar Dívida" icon={<Gavel size={14}/>} color="indigo" 
+                           label="Perdoar Dívida CP" icon={<Gavel size={14}/>} color="indigo" 
                         />
                      </div>
                   </div>
@@ -129,7 +138,7 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
             <div className="p-2 bg-orange-600 text-white rounded-xl shadow-lg"><ShieldAlert size={28} /></div> 
             Tutor <span className="text-orange-600">Master Control</span>
           </h1>
-          <p className="text-slate-500 mt-1 font-medium text-sm">Parametrização Industrial v12.8.5 GOLD Stable.</p>
+          <p className="text-slate-500 mt-1 font-medium text-sm">Orquestração Industrial v12.8.5 GOLD.</p>
         </div>
         <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
            <button onClick={() => setActiveTab('tournaments')} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'tournaments' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400'}`}>Arenas</button>
@@ -147,7 +156,7 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
                       <div className="p-5 bg-orange-600 text-white rounded-3xl shadow-2xl"><Plus size={40} /></div>
                       <div>
                          <h3 className="text-3xl font-black text-white uppercase italic tracking-tight">Criar Nova Arena</h3>
-                         <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">Configure parâmetros GOLD v12.8.5.</p>
+                         <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">Configure parâmetros de fidelidade industrial.</p>
                       </div>
                    </div>
                    <div className="flex gap-4 relative z-10">
@@ -193,6 +202,14 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
                       <div className="p-6 bg-slate-50 rounded-3xl text-center"><span className="block text-[8px] font-black text-slate-400 uppercase">Latency</span><span className="text-xl font-black text-slate-900 font-mono italic">12ms</span></div>
                       <div className="p-6 bg-slate-50 rounded-3xl text-center"><span className="block text-[8px] font-black text-slate-400 uppercase">Engine</span><span className="text-xl font-black text-slate-900 font-mono italic">v12.8.5</span></div>
                       <div className="p-6 bg-slate-50 rounded-3xl text-center"><span className="block text-[8px] font-black text-slate-400 uppercase">Uptime</span><span className="text-xl font-black text-slate-900 font-mono italic">99.9%</span></div>
+                   </div>
+                </div>
+                <div className="bg-rose-600 p-10 rounded-[4rem] text-white shadow-2xl space-y-8 relative overflow-hidden">
+                   <ShieldX className="absolute -bottom-10 -right-10 opacity-10" size={200} />
+                   <h3 className="text-xl font-black uppercase italic flex items-center gap-3"><AlertTriangle /> Danger Zone</h3>
+                   <div className="space-y-3 relative z-10">
+                      <button onClick={() => purgeAllTrials()} className="w-full py-5 bg-white text-rose-600 rounded-2xl font-black text-[10px] uppercase hover:bg-slate-950 hover:text-white transition-all">Limpar Sandbox</button>
+                      <button onClick={() => purgeAllProduction()} className="w-full py-5 bg-rose-950 text-white rounded-2xl font-black text-[10px] uppercase hover:bg-black transition-all">Reset Total Produção</button>
                    </div>
                 </div>
              </div>

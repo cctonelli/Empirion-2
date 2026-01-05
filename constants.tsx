@@ -1,8 +1,8 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit } from './types';
 
-export const APP_VERSION = "v12.8.2-Gold";
-export const BUILD_DATE = "05/01/2026";
+export const APP_VERSION = "v12.8.5-Gold";
+export const BUILD_DATE = "01/01/2026";
 export const PROTOCOL_NODE = "Node 08-ALPHA-TENANT-STABLE";
 
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
@@ -57,11 +57,10 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     sector: 'Manufacturing',
     description: 'Balanço Inicial de $ 9.176.940. Foco em OEE e Ciclo Financeiro.',
     config: {
-      roundFrequencyDays: 7,
-      // Fix: Changed salesMode to sales_mode and scenarioType to scenario_type to match Partial<Championship>
+      round_frequency_days: 7,
       sales_mode: 'internal' as SalesMode,
       scenario_type: 'simulated' as ScenarioType,
-      transparencyLevel: 'high' as TransparencyLevel,
+      transparency_level: 'high' as TransparencyLevel,
       modalityType: 'standard' as ModalityType,
       deadlineValue: 7,
       deadlineUnit: 'days' as DeadlineUnit
@@ -93,7 +92,7 @@ export const ALPHA_TEST_USERS = [
 
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
-    hero: { title: "Forje Seu Império", empire: "GOLD Arena", subtitle: "Simulação Industrial v12.8.2: Onde $9M em ativos exigem maestria estratégica.", cta: "Entrar na Arena", secondaryCta: "Ver Ramos" },
+    hero: { title: "Forje Seu Império", empire: "GOLD Arena", subtitle: "Simulação Industrial v12.8.5: Onde $9M em ativos exigem maestria estratégica.", cta: "Entre na Arena", secondaryCta: "Ver Ramos" },
     carousel: [{ id: 1, title: "Industrial GOLD", subtitle: "Gestão de Ciclo Operacional.", image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", badge: "P0 Validado", link: "/branches/industrial" }],
     leaderboard: [{ id: 'c1', name: "Industrial Mastery GOLD", status: "Ciclo 1/12", teams: 8, lead: "Unidade Alpha" }],
     sectors: [{ id: 's1', name: 'Indústria', slug: 'industrial', icon: 'Factory', description: 'Otimização de OEE e CAPEX.' }]
@@ -111,7 +110,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   }
 };
 
-// Fix: Added missing getPageContent function
 export const getPageContent = (slug: string) => {
   return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`];
 };

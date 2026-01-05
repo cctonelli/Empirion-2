@@ -15,15 +15,13 @@ import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { supabase, resetAlphaData, getChampionships, getUserProfile } from '../services/supabase';
-import { ScenarioType, MessageBoardItem, Branch, Championship, UserRole, CreditRating, InsolvencyStatus } from '../types';
+import { ScenarioType, Branch, Championship, UserRole, CreditRating, InsolvencyStatus } from '../types';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
   const [aiNews, setAiNews] = useState<string>('');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
   const [scenarioType] = useState<ScenarioType>('simulated');
-  const [isAlphaUser, setIsAlphaUser] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
   const [showDecisionForm, setShowDecisionForm] = useState(false);
   const [showBusinessPlan, setShowBusinessPlan] = useState(false);
   const [showGazette, setShowGazette] = useState(false);
@@ -35,16 +33,18 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   // Sincronização segura de métricas Oracle v12.8.5
   const currentKpis = useMemo(() => {
-    return activeArena?.kpis || {
+    const k = activeArena?.kpis || {
       ciclos: { operacional: 60, financeiro: 35 },
       scissors_effect: { ncg: 150000, gap: -50000, is_critical: false },
       productivity: { oee: 84.2, csat: 9.1 },
       market_share: 12.5,
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
-      // Fix: Added missing banking property to fallback object to satisfy union type requirements
       banking: { score: 100, rating: 'AAA' as CreditRating, interest_rate: 0.03, credit_limit: 5000000, can_borrow: true }
     };
+    // Fix: Ensure nesting for banking metrics
+    if (!k.banking) k.banking = { score: 100, rating: 'AAA' as CreditRating, interest_rate: 0.03, credit_limit: 5000000, can_borrow: true };
+    return k;
   }, [activeArena]);
 
   const isBankrupt = currentKpis.insolvency_status === 'BANKRUPT';
@@ -98,20 +98,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     
     fetchArenaInfo();
     fetchIntelligence();
-    const isTrial = localStorage.getItem('is_trial_session') === 'true';
-    setIsAlphaUser(isTrial);
   }, [scenarioType, branch, activeArena?.name, activeArena?.current_round]);
-
-  const handleResetAlpha = async () => {
-    if (isObserver) return;
-    if (!confirm("Confirmar RESET TOTAL das decisões desta arena?")) return;
-    setIsResetting(true);
-    try {
-      await resetAlphaData();
-      window.location.reload();
-    } catch (err) { alert("Falha no Reset."); }
-    finally { setIsResetting(false); }
-  };
 
   const getStatusColor = (status: InsolvencyStatus) => {
     switch(status) {
@@ -251,7 +238,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
              />
              <EfficiencyCard 
                label="Crédito Disponível" 
-               // Fix: Added defensive checks for banking metrics access
                val={`$ ${currentKpis?.banking?.credit_limit?.toLocaleString() || '0'}`} 
                trend={`Juros: ${((currentKpis?.banking?.interest_rate ?? 0) * 100).toFixed(1)}%`} 
                positive={currentKpis?.banking?.can_borrow ?? false}
@@ -297,12 +283,25 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
            </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showGazette && (
+          <div className="fixed inset-0 z-[1000] p-6 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
+             <GazetteViewer 
+                arena={activeArena!} 
+                aiNews={aiNews} 
+                round={activeArena?.current_round || 1} 
+                userRole={userRole}
+                onClose={() => setShowGazette(false)} 
+             />
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
 const ActionCard = ({ onClick, icon, title, subtitle, color, disabled }: any) => {
-  const baseClasses = `p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px]`;
   const themeClasses = {
     blue: disabled ? 'bg-slate-900/50 grayscale opacity-60' : 'bg-blue-600 hover:bg-white',
     indigo: disabled ? 'bg-slate-900/50 grayscale opacity-60' : 'bg-indigo-600 hover:bg-white',
@@ -310,7 +309,7 @@ const ActionCard = ({ onClick, icon, title, subtitle, color, disabled }: any) =>
   }[color as 'blue' | 'indigo' | 'orange'];
 
   return (
-    <button onClick={onClick} className={`${baseClasses} ${themeClasses} ${disabled ? 'cursor-not-allowed' : ''}`}>
+    <button onClick={onClick} disabled={disabled} className={`p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px] ${themeClasses} ${disabled ? 'cursor-not-allowed' : ''}`}>
        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-xl ${disabled ? 'bg-slate-800 text-slate-500' : 'bg-white text-slate-900 group-hover:scale-110'}`}>
           {icon}
        </div>
