@@ -9,7 +9,7 @@ import {
   Clock, TrendingUp, ArrowDown, TrendingDown
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
-import { calculateProjections, sanitize, getRiskSpread } from '../services/simulation';
+import { calculateProjections, sanitize } from '../services/simulation';
 import { DecisionData, Branch, Championship, MacroIndicators, ProjectionResult, CreditRating } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DEFAULT_MACRO } from '../constants';
@@ -37,7 +37,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [decisions, setDecisions] = useState<DecisionData>(createInitialDecisions());
   const [isSaving, setIsSaving] = useState(false);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
-  const [masterKeyUnlocked, setMasterKeyUnlocked] = useState(false);
   const [showInsolvencyModal, setShowInsolvencyModal] = useState(false);
   const [prevRoundData, setPrevRoundData] = useState<any>(null);
 
@@ -48,8 +47,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         const found = champs?.find(a => a.id === champId);
         if (found) {
           setActiveArena(found);
-          const { data: teamData } = await supabase.from('teams').select('master_key_enabled').eq('id', teamId).maybeSingle();
-          if (teamData?.master_key_enabled) setMasterKeyUnlocked(true);
           const { data: prevData } = await supabase.from('companies').select('*').eq('team_id', teamId).eq('round', found.current_round).maybeSingle();
           setPrevRoundData(prevData);
         }
@@ -60,11 +57,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
   const currentIndicators = useMemo(() => activeArena?.market_indicators || DEFAULT_MACRO, [activeArena]);
   const projections: ProjectionResult | null = useMemo(() => {
-    const eco = activeArena?.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' };
+    const eco = (activeArena?.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' }) as any;
     try { return calculateProjections(decisions, branch, eco, currentIndicators, prevRoundData); } catch (e) { return null; }
   }, [decisions, branch, activeArena, currentIndicators, prevRoundData]);
 
-  const isInsolvent = (projections?.health?.rating === 'C' || projections?.health?.rating === 'D');
+  const rating = projections?.health?.rating || 'AAA';
+  const isInsolvent = rating === 'C' || rating === 'D';
 
   const handleSubmit = async () => {
     if (isInsolvent && !showInsolvencyModal) {
@@ -77,58 +75,45 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     alert("PROTOCOLO TRANSMITIDO COM SUCESSO.");
   };
 
-  const updateDecision = (path: string, value: any) => {
-    const newDecisions = JSON.parse(JSON.stringify(decisions));
-    const keys = path.split('.');
-    let current: any = newDecisions;
-    for (let i = 0; i < keys.length - 1; i++) current = current[keys[i]];
-    current[keys[keys.length - 1]] = value;
-    setDecisions(newDecisions);
-  };
-
   return (
-    <div className="max-w-[1600px] mx-auto space-y-3 pb-32 animate-in fade-in duration-700">
-      <InsolvencyAlert 
-        rating={projections?.health?.rating as CreditRating} 
-        isOpen={showInsolvencyModal} 
-        onClose={() => setShowInsolvencyModal(false)} 
-      />
+    <div className="max-w-[1600px] mx-auto space-y-4 pb-32 animate-in fade-in duration-700">
+      <InsolvencyAlert rating={rating as CreditRating} isOpen={showInsolvencyModal} onClose={() => setShowInsolvencyModal(false)} />
 
-      <header className="bg-slate-900 border border-white/5 p-3 rounded-2xl shadow-2xl flex items-center justify-between">
-        <div className="flex items-center gap-1">
+      <header className="bg-slate-900 border border-white/10 p-4 rounded-[2rem] shadow-2xl flex items-center justify-between">
+        <div className="flex items-center gap-2">
            {STEPS.map((s, idx) => (
-             <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5'}`}>
-                <span className="font-black text-[10px]">{idx + 1}</span>
-                <span className="text-[9px] font-black uppercase hidden lg:block">{s.label}</span>
+             <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5'}`}>
+                <s.icon size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block">{s.label}</span>
              </button>
            ))}
         </div>
-        <div className="flex items-center gap-8 pr-6">
-           <div className="text-right">
-              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">RATING PROJETADO</span>
-              <span className={`text-lg font-black italic ${projections?.health?.rating === 'D' ? 'text-rose-500 animate-pulse' : 'text-emerald-400'}`}>
-                {projections?.health?.rating || '---'}
-              </span>
-           </div>
+        <div className="pr-6 text-right">
+           <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Oracle Standing</span>
+           <span className={`text-2xl font-black italic ${rating === 'D' ? 'text-rose-500' : 'text-emerald-400'}`}>{rating}</span>
         </div>
       </header>
 
-      <main className="bg-slate-950 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
-         {/* Conteúdo dinâmico das abas mantido para brevidade */}
-         {activeStep === 5 && (
-            <div className="flex flex-col items-center justify-center py-20 space-y-10">
-               <div className="text-center space-y-4">
-                  <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter">Finalizar Ciclo 0{(activeArena?.current_round || 0) + 1}</h3>
-                  <p className="text-slate-500 font-bold uppercase tracking-widest">Confirme a integridade dos dados antes da transmissão final.</p>
-               </div>
-               <button 
-                 onClick={handleSubmit}
-                 disabled={isSaving}
-                 className={`px-24 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-95 flex items-center gap-4 ${isInsolvent ? 'bg-rose-600 text-white hover:bg-white hover:text-rose-600' : 'bg-orange-600 text-white hover:bg-white hover:text-orange-600'}`}
-               >
-                  {isSaving ? <Loader2 className="animate-spin" /> : "Selar e Transmitir Decisão"}
-               </button>
-            </div>
+      <main className="bg-slate-950/50 backdrop-blur-xl p-12 rounded-[4rem] border border-white/5 shadow-[0_50px_100px_rgba(0,0,0,0.5)] min-h-[500px] flex flex-col items-center justify-center">
+         {activeStep === 5 ? (
+           <div className="text-center space-y-10">
+              <div className="space-y-4">
+                 <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Selo de Integridade</h2>
+                 <p className="text-slate-500 font-bold uppercase tracking-[0.3em]">Protocolo Ciclo 0{(activeArena?.current_round || 0) + 1} Ready</p>
+              </div>
+              <button 
+                onClick={handleSubmit}
+                disabled={isSaving}
+                className={`px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center gap-6 ${isInsolvent ? 'bg-rose-600 text-white' : 'bg-orange-600 text-white'}`}
+              >
+                 {isSaving ? <Loader2 className="animate-spin" /> : <><ShieldCheck size={24}/> Transmitir Nodo Industrial</>}
+              </button>
+           </div>
+         ) : (
+           <div className="text-center space-y-6 opacity-40">
+              <Activity size={80} className="mx-auto text-slate-700" />
+              <p className="text-xl font-black uppercase text-slate-500 tracking-widest">Interface de Edição Ativa</p>
+           </div>
          )}
       </main>
     </div>

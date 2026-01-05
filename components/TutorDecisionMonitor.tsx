@@ -48,7 +48,6 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
         const progress: TeamProgress[] = teamsData.map(t => {
           const decision = decisionsData?.find(d => d.team_id === t.id);
           
-          // Cast explicitly for calculation safety
           const branch = (arenaData.branch || 'industrial') as Branch;
           const eco = (arenaData.ecosystemConfig || { 
             inflationRate: 0.01, 
@@ -71,7 +70,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
             data: decision?.data,
             risk: proj?.health?.insolvency_risk ?? 0,
             rating: (proj?.health?.rating ?? 'N/A') as CreditRating,
-            insolvent: proj ? ((proj.totalOutflow ?? 0) > (proj.totalLiquidity ?? 0)) : false,
+            insolvent: proj ? proj.health?.is_bankrupt : false,
             insolvency_deficit: proj?.health?.insolvency_deficit ?? 0,
             master_key_enabled: t.master_key_enabled,
             auditLogs: teamAudit
@@ -96,7 +95,6 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
     fetchLiveDecisions();
     const channel = supabase.channel(`monitor-${championshipId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'current_decisions' }, () => fetchLiveDecisions())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'help_requests' }, () => fetchLiveDecisions())
       .subscribe();
     return () => { channel.unsubscribe(); };
   }, [championshipId, round]);
@@ -104,6 +102,25 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
   const handleToggleMasterKey = async (teamId: string, current: boolean) => {
     const { error } = await supabase.from('teams').update({ master_key_enabled: !current }).eq('id', teamId);
     if (!error) fetchLiveDecisions();
+  };
+
+  const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
+  const distribution = useMemo(() => {
+    return ratingsOrder.map(r => ({
+      rating: r,
+      count: teams.filter(t => (t.rating ?? 'N/A') === r).length
+    }));
+  }, [teams]);
+
+  const chartOptions: any = {
+    chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
+    plotOptions: { bar: { borderRadius: 8, columnWidth: '50%', distributed: true } },
+    colors: ['#10b981', '#34d399', '#6ee7b7', '#fbbf24', '#f87171', '#b91c1c'],
+    xaxis: { categories: ratingsOrder, labels: { style: { colors: '#94a3b8', fontWeight: 900 } } },
+    yaxis: { labels: { style: { colors: '#475569' } }, tickAmount: 4 },
+    grid: { borderColor: 'rgba(255,255,255,0.05)' },
+    tooltip: { theme: 'dark' },
+    legend: { show: false }
   };
 
   if (loading && teams.length === 0) {
@@ -117,11 +134,20 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
-       
-       {/* DASHBOARD DE SAÚDE SISTÊMICA PARA O TUTOR */}
        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-8">
-             <ClassCreditHealth teamsProjections={teams} />
+          <div className="lg:col-span-8 bg-slate-900 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl space-y-8">
+             <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                   <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Saúde Sistêmica da Arena</h3>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Distribuição de Rating de Crédito em Tempo Real</p>
+                </div>
+                <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
+                   <span className="text-[10px] text-orange-500 font-black uppercase">N = {teams.length} Strategists</span>
+                </div>
+             </div>
+             <div className="h-[280px] w-full">
+                <Chart options={chartOptions} series={[{ name: 'Equipes', data: distribution.map(d => d.count) }]} type="bar" height="100%" />
+             </div>
           </div>
           <div className="lg:col-span-4 bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden">
              <div className="absolute top-0 right-0 p-8 opacity-[0.03] rotate-12"><ShieldAlert size={160} /></div>
@@ -136,11 +162,6 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                    <AuditKPI label="Unidades Insolventes" val={teams.filter(t => t.insolvent).length} color="rose" highlight />
                 </div>
              </div>
-             <div className="pt-6 border-t border-white/5 relative z-10">
-                <p className="text-[10px] text-slate-500 font-bold uppercase italic leading-relaxed">
-                   "Use o Oracle Master para reajustar taxas se o risco sistêmico ultrapassar 50% das unidades."
-                </p>
-             </div>
           </div>
        </div>
 
@@ -153,17 +174,9 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Monitoramento Granular e Autorização Master</p>
                 </div>
              </div>
-             <div className="flex items-center gap-4">
-                <div className="px-6 py-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
-                   <div className="flex flex-col">
-                      <span className="text-[8px] font-black text-slate-400 uppercase">Arena Sync</span>
-                      <span className="text-xs font-black text-emerald-500 uppercase">Realtime Active</span>
-                   </div>
-                   <button onClick={fetchLiveDecisions} className="p-2 text-slate-400 hover:text-orange-600 transition-colors">
-                      <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                   </button>
-                </div>
-             </div>
+             <button onClick={fetchLiveDecisions} className="p-2 text-slate-400 hover:text-orange-600 transition-colors">
+                <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+             </button>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -175,208 +188,56 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                    selectedTeam?.team_id === team.team_id ? 'border-orange-600 bg-orange-50 shadow-2xl scale-[1.02]' : 'bg-white border-slate-100 hover:shadow-xl'
                  }`}
                >
-                  {team.rating === 'D' && (
-                     <div className="absolute top-0 right-0 p-4 bg-rose-600 text-white animate-pulse">
-                        <AlertOctagon size={20} />
-                     </div>
-                  )}
                   <div className="flex justify-between items-start mb-8">
                      <div className={`p-4 rounded-2xl ${team.status === 'sealed' ? 'bg-emerald-500 text-white shadow-emerald-500/20' : team.status === 'draft' ? 'bg-blue-500 text-white shadow-blue-500/20' : 'bg-slate-100 text-slate-300'}`}>
                         {team.status === 'sealed' ? <CheckCircle2 size={20}/> : team.status === 'draft' ? <Activity size={20}/> : <Monitor size={20}/>}
                      </div>
-                     <div className="text-right">
-                        <span className={`block text-[10px] font-black uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 font-black animate-pulse' : 'text-slate-400'}`}>{team.rating ?? 'N/A'}</span>
-                        <div className={`w-12 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden`}>
-                           <div className={`h-full ${team.rating === 'D' ? 'bg-rose-600' : (team.risk ?? 0) > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${team.risk ?? 0}%` }} />
-                        </div>
-                     </div>
+                     <span className={`font-black text-[11px] uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`}>{team.rating ?? 'N/A'}</span>
                   </div>
                   <h4 className="text-2xl font-black text-slate-900 uppercase italic leading-none">{team.team_name}</h4>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">{team.rating === 'D' ? 'INSOLVÊNCIA CRÍTICA DETETADA' : team.status === 'pending' ? 'AGUARDANDO CONEXÃO' : 'DECISÃO EM RASCUNHO'}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">{team.rating === 'D' ? 'INSOLVÊNCIA CRÍTICA' : 'NODE STATUS ACTIVE'}</p>
                </button>
              ))}
           </div>
        </div>
 
-       <AnimatePresence mode="wait">
-          {selectedTeam && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-               <div className="lg:col-span-8 bg-slate-900 p-16 rounded-[5rem] border border-white/10 shadow-2xl text-white space-y-16 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-20 opacity-[0.02] rotate-12"><Scale size={400}/></div>
-                  
-                  <header className="flex justify-between items-end border-b border-white/5 pb-12 relative z-10">
-                     <div className="space-y-4">
-                        <span className="px-5 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Audit Briefing</span>
-                        <h3 className="text-5xl font-black uppercase italic tracking-tighter leading-none">{selectedTeam.team_name}</h3>
-                     </div>
-                     <div className="text-right">
-                        <span className="block text-[9px] font-black text-slate-500 uppercase mb-2">Insolvency Status</span>
-                        <div className={`text-6xl font-black italic font-mono ${selectedTeam.rating === 'D' ? 'text-rose-500 animate-pulse' : 'text-emerald-500'}`}>
-                           {selectedTeam.rating === 'D' ? 'BROKE' : 'STABLE'}
+       {selectedTeam && (
+          <div className="bg-slate-900 p-16 rounded-[5rem] border border-white/10 shadow-2xl text-white space-y-12 animate-in slide-in-from-bottom-4">
+             <header className="flex justify-between items-end border-b border-white/5 pb-12">
+                <div className="space-y-4">
+                   <span className="px-5 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Audit Briefing</span>
+                   <h3 className="text-5xl font-black uppercase italic tracking-tighter leading-none">{selectedTeam.team_name}</h3>
+                </div>
+                <button 
+                  onClick={() => handleToggleMasterKey(selectedTeam.team_id, !!selectedTeam.master_key_enabled)}
+                  className={`px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all ${selectedTeam.master_key_enabled ? 'bg-orange-600 text-white' : 'bg-white/5 text-slate-400'}`}
+                >
+                   <Key size={14} /> {selectedTeam.master_key_enabled ? 'Master Key Unlocked' : 'Authorize Protocol'}
+                </button>
+             </header>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="p-8 bg-white/5 border border-white/5 rounded-[3rem] space-y-6">
+                   <h4 className="text-xl font-black uppercase italic flex items-center gap-3"><History size={20} className="text-blue-400" /> Audit Timeline</h4>
+                   <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                      {selectedTeam.auditLogs?.map((log, i) => (
+                        <div key={i} className="p-4 bg-white/5 rounded-2xl text-xs space-y-1">
+                           <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-500">
+                              <span>{log.field_path}</span>
+                              <span>{new Date(log.changed_at).toLocaleTimeString()}</span>
+                           </div>
+                           <p className="text-white font-bold">{JSON.stringify(log.new_value)}</p>
                         </div>
-                     </div>
-                  </header>
-
-                  <div className="space-y-10 relative z-10">
-                     <div className="flex items-center justify-between">
-                        <h4 className="text-xl font-black uppercase italic flex items-center gap-3"><History size={24} className="text-blue-400" /> Relatório de Auditoria (Timeline)</h4>
-                        <div className="flex gap-2">
-                           <button 
-                             onClick={() => handleToggleMasterKey(selectedTeam.team_id, !!selectedTeam.master_key_enabled)}
-                             className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all ${selectedTeam.master_key_enabled ? 'bg-orange-600 text-white shadow-lg' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
-                           >
-                              <Key size={14} /> {selectedTeam.master_key_enabled ? 'Master Key Ativa' : 'Autorizar Submissão'}
-                           </button>
-                        </div>
-                     </div>
-
-                     <div className="space-y-6 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
-                        {(!selectedTeam.auditLogs || selectedTeam.auditLogs.length === 0) ? (
-                          <div className="p-10 bg-white/5 border border-white/5 border-dashed rounded-[3rem] text-center opacity-40">
-                             <FileText size={48} className="mx-auto mb-4" />
-                             <p className="text-[10px] font-black uppercase tracking-widest">Sem logs de alteração neste round.</p>
-                          </div>
-                        ) : (
-                          selectedTeam.auditLogs.map((log, idx) => (
-                            <div key={idx} className="p-8 bg-white/5 border border-white/5 rounded-[2.5rem] space-y-4 hover:bg-white/[0.08] transition-all">
-                               <div className="flex justify-between items-center">
-                                  <div className="flex items-center gap-3">
-                                     <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center"><User size={16}/></div>
-                                     <span className="text-xs font-black uppercase text-white tracking-tight">{log.user_id || 'Membro Alpha'}</span>
-                                  </div>
-                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{new Date(log.changed_at).toLocaleString()}</span>
-                               </div>
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
-                                  <div className="space-y-4">
-                                     <div>
-                                        <span className="block text-[8px] font-black text-slate-500 uppercase mb-1">Campo Alterado</span>
-                                        <span className="text-xs font-mono text-orange-400">{log.field_path}</span>
-                                     </div>
-                                     {log.impact_on_cash !== undefined && (
-                                       <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
-                                          <Banknote size={14} className="text-emerald-500" />
-                                          <div>
-                                             <span className="block text-[7px] font-black text-slate-500 uppercase">Impacto no Caixa</span>
-                                             <span className={`text-xs font-mono font-black ${log.impact_on_cash < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                                                $ {log.impact_on_cash.toLocaleString()}
-                                             </span>
-                                          </div>
-                                       </div>
-                                     )}
-                                  </div>
-                                  <div className="space-y-4">
-                                     <div className="flex justify-between">
-                                        <div>
-                                           <span className="block text-[8px] font-black text-slate-500 uppercase mb-1">Anterior</span>
-                                           <span className="text-xs font-mono text-slate-500 line-through">{JSON.stringify(log.old_value)}</span>
-                                        </div>
-                                        <div className="text-right">
-                                           <span className="block text-[8px] font-black text-slate-500 uppercase mb-1">Novo</span>
-                                           <span className="text-xs font-mono text-white font-black">{JSON.stringify(log.new_value)}</span>
-                                        </div>
-                                     </div>
-                                  </div>
-                               </div>
-                            </div>
-                          ))
-                        )}
-                     </div>
-                  </div>
-               </div>
-
-               <aside className="lg:col-span-4 space-y-8">
-                  <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-8">
-                     <h4 className="text-xl font-black uppercase text-slate-900 tracking-tight flex items-center gap-3"><Target className="text-orange-600" /> Comando do Tutor</h4>
-                     <div className="space-y-6">
-                        <textarea className="w-full h-40 bg-slate-50 border border-slate-200 rounded-[2.5rem] p-8 text-sm font-medium focus:border-orange-500 outline-none resize-none transition-all" placeholder="Digite seu veredito estratégico..."></textarea>
-                        <button className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-orange-600 transition-all shadow-xl active:scale-95">Injetar Feedback</button>
-                     </div>
-                  </div>
-               </aside>
-            </motion.div>
-          )}
-       </AnimatePresence>
-    </div>
-  );
-};
-
-/**
- * ClassCreditHealth: Histograma de Rating de Crédito da Turma.
- */
-const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgress[] }) => {
-  const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
-  
-  const distribution = useMemo(() => {
-    if (!teamsProjections) return ratingsOrder.map(r => ({ rating: r, count: 0 }));
-    return ratingsOrder.map(r => ({
-      rating: r,
-      count: teamsProjections.filter(t => (t.rating ?? 'N/A') === r).length
-    }));
-  }, [teamsProjections]);
-
-  const COLORS_MAP = {
-    'AAA': '#10b981', 'AA': '#34d399', 'A': '#6ee7b7',
-    'B': '#fbbf24', 'C': '#f87171', 'D': '#b91c1c', 'N/A': '#334155'
-  };
-
-  const chartOptions: any = {
-    chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
-    plotOptions: { 
-      bar: { 
-        borderRadius: 12, 
-        columnWidth: '55%', 
-        distributed: true,
-        dataLabels: { position: 'top' }
-      } 
-    },
-    colors: ratingsOrder.map(r => COLORS_MAP[r as keyof typeof COLORS_MAP]),
-    xaxis: {
-      categories: ratingsOrder,
-      labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 900 } },
-      axisBorder: { show: false },
-      axisTicks: { show: false }
-    },
-    yaxis: {
-      labels: { style: { colors: '#475569', fontWeight: 700 } },
-      tickAmount: 4
-    },
-    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
-    dataLabels: {
-      enabled: true,
-      formatter: (val: number) => val > 0 ? val : '',
-      style: { colors: ['#fff'], fontSize: '10px', fontWeight: 900 },
-      offsetY: -20
-    },
-    tooltip: { theme: 'dark' },
-    legend: { show: false }
-  };
-
-  return (
-    <div className="bg-slate-900 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl space-y-8">
-       <div className="flex justify-between items-start">
-          <div className="space-y-1">
-             <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Saúde Sistêmica da Arena</h3>
-             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Distribuição de Rating de Crédito em Tempo Real</p>
+                      ))}
+                   </div>
+                </div>
+                <div className="bg-orange-600/10 border border-orange-500/20 p-10 rounded-[3rem] space-y-6">
+                   <h4 className="text-xl font-black uppercase italic text-orange-500">Tutor Veredict</h4>
+                   <textarea className="w-full h-40 bg-slate-950/50 border border-white/10 rounded-[2.5rem] p-8 text-sm font-medium focus:border-orange-500 outline-none resize-none" placeholder="Enter strategic feedback for this team..."></textarea>
+                   <button className="w-full py-5 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-white hover:text-orange-600 transition-all">Send Briefing</button>
+                </div>
+             </div>
           </div>
-          <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
-             <span className="text-[10px] text-orange-500 font-black uppercase">N = {teamsProjections?.length ?? 0} Strategists</span>
-          </div>
-       </div>
-
-       <div className="h-[280px] w-full">
-          <Chart options={chartOptions} series={[{ name: 'Equipes', data: distribution.map(d => d.count) }]} type="bar" height="100%" />
-       </div>
-
-       <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
-          <div className="flex items-center gap-3">
-             <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Zona de Estabilidade (AAA-A)</span>
-          </div>
-          <div className="flex items-center gap-3">
-             <div className="w-2.5 h-2.5 bg-rose-600 rounded-full animate-pulse" />
-             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Risco de Default (C-D)</span>
-          </div>
-       </div>
+       )}
     </div>
   );
 };

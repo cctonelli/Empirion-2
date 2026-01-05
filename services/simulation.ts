@@ -6,17 +6,28 @@ export const sanitize = (val: any, fallback: number = 0): number => {
   return isFinite(num) ? num : fallback;
 };
 
+/**
+ * EXTRAÇÃO DEFENSIVA DE MAQUINÁRIO v12.8
+ * Garante que dados legados vindos do banco de dados (chave 'Bird') sejam convertidos para 'beta'.
+ */
 export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };
-  if (!macro) return defaults;
+  
+  if (!macro || (!macro.machineryValues && !(macro as any).config?.machineryValues)) {
+    return defaults;
+  }
+  
   const v = macro.machineryValues || (macro as any).config?.machineryValues || {};
   return {
     alfa: sanitize(v.alfa, defaults.alfa),
-    beta: sanitize(v.beta || (v as any).Bird, defaults.beta),
+    beta: sanitize(v.beta || (v as any).Bird, defaults.beta), // Rescue legacy 'Bird' key
     gama: sanitize(v.gama, defaults.gama)
   };
 };
 
+/**
+ * CÁLCULO DE DEPRECIAÇÃO (Straight Line Method)
+ */
 export const calculateDepreciation = (machines: { alfa: number, beta: number, gama: number }, macro: MacroIndicators, rate: number = 0.05) => {
   const prices = getSafeMachineryValues(macro);
   const totalValue = (machines.alfa * prices.alfa) + (machines.beta * prices.beta) + (machines.gama * prices.gama);
@@ -24,6 +35,9 @@ export const calculateDepreciation = (machines: { alfa: number, beta: number, ga
   return { totalValue, periodDepreciation };
 };
 
+/**
+ * CÁLCULO DE SPREAD DE RISCO v12.8
+ */
 export const getRiskSpread = (rating: CreditRating): number => {
   switch (rating) {
     case 'AAA': return 0.5;
@@ -47,27 +61,30 @@ export const calculateProjections = (
   const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
   const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
   
-  // 1. CAPEX e Depreciação (O coração do v12.8)
-  const machines = decisions.finance.buyMachines || { alfa: 0, beta: 0, gama: 0 };
-  const { totalValue, periodDepreciation } = calculateDepreciation(machines, indicators || {} as any);
+  // 1. CAPEX and Depreciation (Kernel v12.8 Heart)
+  const machinesBuy = decisions.finance.buyMachines || { alfa: 0, beta: 0, gama: 0 };
+  // Mock current machines count for depreciation (in real turnover this is cumulative)
+  const machinesOwned = previousState?.resources?.machines || { alfa: 2, beta: 1, gama: 0 };
+  const { totalValue: currentAssetsValue, periodDepreciation } = calculateDepreciation(machinesOwned, indicators || {} as any);
   
-  // 2. Simulação de Resultado (Simplificada para o Kernel)
+  // 2. Result Simulation (P&L Mock for logic flow)
   const revenue = 3322735; 
-  const operatingCosts = decisions.hr.trainingPercent * 500 + 150000; // Mock de custos
+  const totalMarketingCost = Object.values(decisions.regions).reduce((acc, r) => acc + (r.marketing * 10000), 0);
+  const operatingCosts = (decisions.hr.trainingPercent * 500) + 150000 + totalMarketingCost; 
   const netProfit = revenue - operatingCosts - periodDepreciation;
   
-  // 3. Lógica de Insolvência e Rating
+  // 3. Insolvency Logic and Rating
   const finalEquity = prevEquity + netProfit;
   const totalDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362) + decisions.finance.loanRequest;
   const liquidityRatio = (prevCash + revenue) / Math.max(totalDebt, 1);
   
   let rating: CreditRating = 'AAA';
-  let risk = 0;
+  let risk = 5;
 
-  if (finalEquity <= 0 || prevCash < 0) {
+  if (finalEquity <= 0 || prevCash < 0 || liquidityRatio < 0.5) {
     rating = 'D';
     risk = 100;
-  } else if (liquidityRatio < 0.8) {
+  } else if (liquidityRatio < 0.85) {
     rating = 'C';
     risk = 80;
   } else if (liquidityRatio < 1.3) {
@@ -83,7 +100,7 @@ export const calculateProjections = (
     netProfit,
     debtRatio: (totalDebt / Math.max(finalEquity, 1)) * 100,
     creditRating: rating,
-    totalOutflow: operatingCosts + totalValue,
+    totalOutflow: operatingCosts + (machinesBuy.alfa * mValues.alfa) + (machinesBuy.beta * mValues.beta),
     totalLiquidity: prevCash + decisions.finance.loanRequest,
     health: {
       rating,

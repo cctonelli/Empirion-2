@@ -19,7 +19,7 @@ export const InsolvencyAlert: React.FC<InsolvencyAlertProps> = ({ rating, isOpen
     <div className="fixed inset-0 z-[6000] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl">
       <motion.div 
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
         className="max-w-2xl w-full bg-slate-900 border-2 border-rose-500/50 rounded-[3.5rem] overflow-hidden shadow-[0_0_80px_rgba(244,63,94,0.3)]"
       >
         <div className={`p-10 ${isCritical ? 'bg-rose-600' : 'bg-orange-500'} text-white flex items-center gap-8`}>
@@ -43,9 +43,9 @@ export const InsolvencyAlert: React.FC<InsolvencyAlertProps> = ({ rating, isOpen
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <StrategyCard icon={<Megaphone className="text-orange-500" />} title="Reduzir Marketing" desc="Corte 40% das verbas de propaganda para preservar o caixa." />
-            <StrategyCard icon={<Users className="text-blue-500" />} title="Ajustar Staff" desc="Demitir pessoal ocioso é doloroso, mas vital para a solvência." />
+            <StrategyCard icon={<Users className="text-blue-500" />} title="Ajustar Staff" desc="Demitir pessoal ocioso é vital para a sobrevivência do nodo." />
             <StrategyCard icon={<TrendingDown className="text-rose-500" />} title="Preço de Liquidação" desc="Baixe o preço para escoar estoque e gerar liquidez imediata." />
-            <StrategyCard icon={<ArrowRight className="text-emerald-500" />} title="Pausar CAPEX" desc="Cancele a compra de máquinas até o Rating voltar a 'A'." />
+            <StrategyCard icon={<ArrowRight className="text-emerald-500" />} title="Pausar CAPEX" desc="Cancele a compra de máquinas até o Rating retornar a 'A'." />
           </div>
 
           <button 
