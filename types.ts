@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
 export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
 export type SalesMode = 'internal' | 'external' | 'hybrid';
@@ -12,6 +13,42 @@ export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'N/A';
 
 export type DiscreteTerm = 0 | 1 | 2;
+
+// Added for Dashboard message feed
+export interface MessageBoardItem {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+  isImportant?: boolean;
+}
+
+// Added for Business Plan module
+export interface BusinessPlan {
+  id: string;
+  championship_id: string;
+  team_id: string;
+  round: number;
+  version: number;
+  data: Record<number, string>;
+  status: 'draft' | 'submitted';
+  updated_at: string;
+}
+
+// Added for dynamic game modalities
+export interface Modality {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  page_content: {
+    hero: { title: string; subtitle: string };
+    features: string[];
+    kpis: string[];
+    accent_color?: 'orange' | 'blue' | 'emerald';
+  };
+}
 
 export interface FinancialHealth {
   liquidity_ratio?: number;
@@ -145,6 +182,7 @@ export interface Championship {
     teamsLimit?: number;
     customRules?: any;
     votingCriteria?: CommunityCriteria[];
+    machineryValues?: { alfa: number, beta: number, gama: number };
     [key: string]: any;
   };
   market_indicators: MacroIndicators;
@@ -183,12 +221,7 @@ export interface MacroIndicators {
       marketing_effectiveness?: number;
   };
   active_event?: BlackSwanEvent | null;
-  inflation_rate?: number;
-  interest_rate?: number;
-  base_marketing_cost?: number;
-  base_admin_cost?: number;
-  factory_max_capacity?: number;
-  base_freight_unit_cost?: number;
+  [key: string]: any;
 }
 
 export interface UserProfile {
@@ -240,38 +273,4 @@ export interface CommunityCriteria {
   id: string;
   label: string;
   weight: number;
-}
-
-export interface MessageBoardItem {
-  id: string;
-  sender: string;
-  text: string;
-  timestamp: string;
-  isImportant?: boolean;
-}
-
-export interface BusinessPlan {
-  id?: string;
-  championship_id: string;
-  team_id: string;
-  round: number;
-  version: number;
-  data: Record<number, string>;
-  status: 'draft' | 'final';
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface Modality {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url?: string;
-  page_content: {
-    hero: { title: string; subtitle: string; };
-    features: string[];
-    kpis: string[];
-    accent_color?: 'orange' | 'blue' | 'emerald';
-  };
 }
