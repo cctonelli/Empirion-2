@@ -2,17 +2,17 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Chart from 'react-apexcharts';
 import { 
-  RefreshCw, History, User, Key, Banknote, Landmark, 
-  TrendingDown, HeartPulse, Loader2, Monitor, ShieldAlert,
-  Scale, Activity, FileText, CheckCircle2, AlertOctagon, ShieldCheck
+  RefreshCw, History, User, Key, Landmark, 
+  ShieldAlert, Loader2, Monitor, Scale, 
+  Activity, FileText, CheckCircle2, AlertOctagon, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
-import { Branch, EcosystemConfig, MacroIndicators, CreditRating, TeamProgress, AuditLog } from '../types';
+import { Branch, EcosystemConfig, CreditRating, TeamProgress, AuditLog } from '../types';
 
 /**
- * ClassCreditHealth: Histograma Memoizado para evitar re-renders pesados de gráficos.
+ * ClassCreditHealth: Histograma Memoizado para exibição de Ratings.
  */
 const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: TeamProgress[] }) => {
   const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
@@ -31,10 +31,30 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
 
   const chartOptions: any = {
     chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
-    plotOptions: { bar: { borderRadius: 12, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } },
+    plotOptions: { 
+      bar: { 
+        borderRadius: 12, 
+        columnWidth: '55%', 
+        distributed: true, 
+        dataLabels: { position: 'top' } 
+      } 
+    },
     colors: ratingsOrder.map(r => COLORS_MAP[r as keyof typeof COLORS_MAP]),
-    xaxis: { categories: ratingsOrder, labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 900 } } },
-    yaxis: { labels: { style: { colors: '#475569' } }, tickAmount: 4 },
+    xaxis: { 
+      categories: ratingsOrder, 
+      labels: { 
+        style: { 
+          colors: '#94a3b8', 
+          fontSize: '13px', 
+          fontWeight: 800,
+          fontFamily: 'JetBrains Mono'
+        } 
+      } 
+    },
+    yaxis: { 
+      labels: { style: { colors: '#475569', fontSize: '11px' } }, 
+      tickAmount: 4 
+    },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
     tooltip: { theme: 'dark' },
     legend: { show: false }
@@ -76,10 +96,17 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
 
       const progress: TeamProgress[] = (teamsData || []).map(t => {
         const decision = decisionsData?.find(d => d.team_id === t.id);
-        const branch = (arenaData.branch || 'industrial') as Branch;
-        const eco = (arenaData.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' }) as EcosystemConfig;
+        const branch = (arenaData?.branch || 'industrial') as Branch;
+        const eco = (arenaData?.ecosystemConfig || { 
+          inflationRate: 0.01, 
+          demandMultiplier: 1.0, 
+          interestRate: 0.03, 
+          marketVolatility: 0.05, 
+          scenarioType: 'simulated', 
+          modalityType: 'standard' 
+        }) as EcosystemConfig;
         
-        const proj = decision ? calculateProjections(decision.data, branch, eco, arenaData.market_indicators, null) : null;
+        const proj = decision ? calculateProjections(decision.data, branch, eco, arenaData?.market_indicators, null) : null;
 
         return {
           team_id: t.id,

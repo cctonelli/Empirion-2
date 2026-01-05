@@ -53,7 +53,7 @@ export interface ProjectionResult {
   health: FinancialHealth;
   marketShare?: number;
   costBreakdown?: { name: string; total: number; impact: string }[];
-  statements?: {
+  statements: {
     dre: any;
     balance_sheet: any;
     cash_flow: any;

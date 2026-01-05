@@ -52,6 +52,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     }
   };
 
+  const currentPriceSensitivity = macro.difficulty?.price_sensitivity ?? 2.0;
+  const currentMarketingEffectiveness = macro.difficulty?.marketing_effectiveness ?? 1.0;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-end gap-6">
@@ -83,20 +86,38 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  <div className="space-y-6">
                     <div className="flex justify-between items-center">
                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Target size={16} /> Sensibilidade de Preço</label>
-                       {/* Fixed: Added fallback for difficulty object property access */}
-                       <span className="text-xl font-black text-slate-900">{(macro.difficulty?.price_sensitivity || 2.0).toFixed(1)}x</span>
+                       <span className="text-xl font-black text-slate-900">{currentPriceSensitivity.toFixed(1)}x</span>
                     </div>
-                    {/* Fixed: Safely update difficulty object in MacroIndicators state */}
-                    <input type="range" min="0.5" max="5.0" step="0.1" value={macro.difficulty?.price_sensitivity || 2.0} onChange={e => setMacro({...macro, difficulty: { price_sensitivity: parseFloat(e.target.value), marketing_effectiveness: macro.difficulty?.marketing_effectiveness || 1.0 }})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                    <input 
+                      type="range" min="0.5" max="5.0" step="0.1" 
+                      value={currentPriceSensitivity} 
+                      onChange={e => setMacro(prev => ({
+                        ...prev, 
+                        difficulty: { 
+                          price_sensitivity: parseFloat(e.target.value), 
+                          marketing_effectiveness: currentMarketingEffectiveness 
+                        }
+                      }))} 
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" 
+                    />
                  </div>
                  <div className="space-y-6">
                     <div className="flex justify-between items-center">
                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Zap size={16} /> Eficácia de Marketing</label>
-                       {/* Fixed: Added fallback for difficulty object property access */}
-                       <span className="text-xl font-black text-slate-900">{(macro.difficulty?.marketing_effectiveness || 1.0).toFixed(1)}x</span>
+                       <span className="text-xl font-black text-slate-900">{currentMarketingEffectiveness.toFixed(1)}x</span>
                     </div>
-                    {/* Fixed: Safely update difficulty object in MacroIndicators state */}
-                    <input type="range" min="0.1" max="3.0" step="0.1" value={macro.difficulty?.marketing_effectiveness || 1.0} onChange={e => setMacro({...macro, difficulty: { marketing_effectiveness: parseFloat(e.target.value), price_sensitivity: macro.difficulty?.price_sensitivity || 2.0 }})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                    <input 
+                      type="range" min="0.1" max="3.0" step="0.1" 
+                      value={currentMarketingEffectiveness} 
+                      onChange={e => setMacro(prev => ({
+                        ...prev, 
+                        difficulty: { 
+                          marketing_effectiveness: parseFloat(e.target.value), 
+                          price_sensitivity: currentPriceSensitivity 
+                        }
+                      }))} 
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" 
+                    />
                  </div>
               </div>
            </div>
@@ -130,9 +151,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                    <div className="grid grid-cols-2 gap-2 pt-2">
                       <div className="p-2 bg-slate-950 rounded-xl text-[7px] font-black text-rose-400 uppercase">Inflação: +{(pendingEvent.modifiers.inflation * 100).toFixed(0)}%</div>
                       <div className="p-2 bg-slate-950 rounded-xl text-[7px] font-black text-rose-400 uppercase">Prod.: {(pendingEvent.modifiers.productivity * 100).toFixed(0)}%</div>
-                   </div>
-                   <div className="text-[8px] font-black text-emerald-500 uppercase flex items-center gap-2 mt-2">
-                      <CheckCircle2 size={10}/> Clique em "Selar" para ativar no P0{championship.current_round + 1}
                    </div>
                 </div>
               )}
@@ -182,42 +200,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
         </div>
       )}
 
-      {activeTab === 'taxes' && (
-        <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12">
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-              <MacroInput label="Imposto de Renda (%)" val={15} onChange={() => {}} disabled />
-              <MacroInput label="Juros Fornecedor (%)" val={macro.providerInterest} onChange={v => setMacro({...macro, providerInterest: v})} />
-              <MacroInput label="Juros Venda a Prazo (%)" val={macro.salesAvgInterest} onChange={v => setMacro({...macro, salesAvgInterest: v})} />
-           </div>
-        </div>
-      )}
-
-      {activeTab === 'modality' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-           <ModalityCard 
-              active={config.modalityType === 'standard'} 
-              onClick={() => setConfig({...config, modalityType: 'standard'})}
-              icon={<Layers size={32} />}
-              title="Arena Padrão"
-              desc="Equilíbrio entre produção e comercial sem variáveis extremas."
-           />
-           <ModalityCard 
-              active={config.modalityType === 'business_round'} 
-              onClick={() => setConfig({...config, modalityType: 'business_round'})}
-              icon={<Gavel size={32} />}
-              title="Rodada de Negócios"
-              desc="Foco em Guerra de Preços, Elasticidade-Demanda Alta e Inflação Composta."
-           />
-           <ModalityCard 
-              active={config.modalityType === 'factory_efficiency'} 
-              onClick={() => setConfig({...config, modalityType: 'factory_efficiency'})}
-              icon={<Cpu size={32} />}
-              title="Eficiência de Fábrica"
-              desc="Foco em OEE, Lead Time, JIT/MRP e Níveis de Automação Industrial."
-           />
-        </div>
-      )}
-
       <div className="flex justify-end pt-10">
          <button onClick={handleSave} disabled={isSaving} className="px-20 py-8 bg-slate-900 text-white rounded-full font-black text-xs uppercase tracking-[0.2em] hover:bg-orange-600 transition-all shadow-2xl flex items-center gap-6 active:scale-95 group">
             {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={24} className="group-hover:scale-110 transition-transform" /> Selar Parâmetros Período 0{championship.current_round + 1}</>}
@@ -245,15 +227,6 @@ const MacroInput = ({ label, val, onChange, disabled }: any) => (
         />
      </div>
   </div>
-);
-
-const ModalityCard = ({ active, onClick, icon, title, desc }: any) => (
-  <button onClick={onClick} className={`p-10 rounded-[3.5rem] border-2 text-left transition-all group ${active ? 'border-orange-600 bg-orange-50/50 shadow-2xl' : 'border-slate-100 bg-white opacity-60 grayscale'}`}>
-     <div className={`p-4 rounded-[1.5rem] w-fit mb-6 transition-all ${active ? 'bg-orange-600 text-white shadow-xl' : 'bg-slate-100 text-slate-400'}`}>{icon}</div>
-     <h4 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-3 italic">{title}</h4>
-     <p className="text-xs text-slate-500 font-medium leading-relaxed">{desc}</p>
-     {active && <div className="mt-6 flex items-center gap-2 text-orange-600 font-black text-[10px] uppercase tracking-widest"><CheckCircle2 size={14} /> Modalidade Ativa</div>}
-  </button>
 );
 
 export default TutorArenaControl;
