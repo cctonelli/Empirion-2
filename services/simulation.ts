@@ -1,5 +1,5 @@
 
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, BlackSwanEvent } from '../types';
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
@@ -7,8 +7,8 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Motor Industrial Empirion v8.2 - Real-Time Difficulty Engine
- * Incorporates Price Sensitivity and Demand Elasticity controlled by Tutors.
+ * Motor Industrial Empirion v8.5 - Black Swan Fidelity Engine
+ * Agora processa eventos macroeconômicos aleatórios que alteram o "chão de fábrica" em tempo real.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -31,20 +31,21 @@ export const calculateProjections = (
     providerPrices: { mpA: 20.20, mpB: 40.40 },
     demand_regions: [12000],
     sectorAvgSalary: 1313,
-    difficulty: { price_sensitivity: 2.0, demand_elasticity: 1.5, marketing_effectiveness: 1.0, crisis_probability: 0.0 }
+    difficulty: { price_sensitivity: 2.0, demand_elasticity: 1.5, marketing_effectiveness: 1.0, crisis_probability: 0.0 },
+    active_event: null
   }) as MacroIndicators;
+
+  const event: BlackSwanEvent | null = currentIndicators.active_event || null;
+  const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
 
   const diff = currentIndicators.difficulty || {};
   const sensitivity = sanitize(diff.price_sensitivity, 2.0);
   const elasticity = sanitize(diff.demand_elasticity, 1.5);
   const mktEffect = sanitize(diff.marketing_effectiveness, 1.0);
 
-  const inflation = 1 + (sanitize(currentIndicators.inflationRate) || 0.01);
+  // INFLATION = Base + Event Modifier
+  const inflation = 1 + (sanitize(currentIndicators.inflationRate) || 0.01) + (evMod.inflation || 0);
   
-  // CRISIS MODIFIER (If crisis triggers based on probability)
-  const isCrisisTriggered = Math.random() < (diff.crisis_probability || 0);
-  const crisisPriceMarkup = isCrisisTriggered ? 1.25 : 1.0;
-
   // 1. HERANÇA DE SALDOS
   const inheritedReceivables = sanitize(previousState?.receivables_t1 || 1823735);
   const inheritedPayables = sanitize(previousState?.payables_t1 || 717605);
@@ -73,18 +74,19 @@ export const calculateProjections = (
     ? regions.reduce((acc, r) => acc + (r.term === 1 ? 60 : r.term === 2 ? 30 : 0), 0) / regions.length 
     : 0;
   
-  // Market Potential based on Difficulty Elasticity
-  const basePotential = (currentIndicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1);
+  // Market Potential based on Difficulty Elasticity + Event Demand Shift
+  const basePotential = (currentIndicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1) * (1 + (evMod.demand || 0));
   
-  // Attractiveness Logic: A = (PriceRatio ^ Sensitivity) * Log(Marketing * Effectiveness)
-  const priceRatio = 372 / Math.max(avgPrice, 1); // Relative to baseline market price
+  // Attractiveness Logic
+  const priceRatio = 372 / Math.max(avgPrice, 1);
   const priceScore = Math.pow(priceRatio, sensitivity);
   const marketingScore = Math.log10((totalMarketing * mktEffect) + 10);
   
   const totalAttractiveness = priceScore * marketingScore * (1 + (avgTerm / 300));
   
-  // Potential Sales calibrated by Elasticity
-  const salesVolume = Math.min(basePotential * totalAttractiveness * elasticity, 15000); 
+  // Potential Sales calibrated by Elasticity and Event Productivity caps
+  const theoreticalSales = basePotential * totalAttractiveness * elasticity;
+  const salesVolume = Math.min(theoreticalSales, 15000 * (evMod.productivity || 1)); 
   const revenue = salesVolume * avgPrice;
 
   // 4. RH
@@ -92,9 +94,10 @@ export const calculateProjections = (
   const staffCount = sanitize(decisions.hr?.sales_staff_count || 50);
   const payrollTotal = (salary * staffCount * 1.6) * recoveryModifier + (sanitize(decisions.hr?.trainingPercent) * 250);
 
-  // 5. CUSTOS (Diferenciado por Campeonato + Crise)
-  const mpA_Price = currentIndicators.providerPrices.mpA * inflation * crisisPriceMarkup;
-  const mpB_Price = currentIndicators.providerPrices.mpB * inflation * crisisPriceMarkup;
+  // 5. CUSTOS (Event Cost Multiplier)
+  const costMarkup = evMod.cost_multiplier || 1.0;
+  const mpA_Price = currentIndicators.providerPrices.mpA * inflation * costMarkup;
+  const mpB_Price = currentIndicators.providerPrices.mpB * inflation * costMarkup;
   const unitCost = (mpA_Price + (mpB_Price / 2)); 
   const cpv = salesVolume * unitCost;
 
@@ -113,7 +116,7 @@ export const calculateProjections = (
     suggestRecovery: (netProfit < 0),
     capexBlocked,
     indicators: adv,
-    isCrisisActive: isCrisisTriggered
+    activeEvent: event
   };
 };
 

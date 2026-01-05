@@ -12,14 +12,27 @@ export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 
 export type DiscreteTerm = 0 | 1 | 2;
 
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;     // e.g., 0.05
+    demand: number;        // e.g., -0.2
+    interest: number;      // e.g., 0.02
+    productivity: number;  // e.g., 0.8 (means 80% capacity)
+    cost_multiplier?: number;
+  };
+}
+
 export interface ChampionshipMacroRules {
   id?: string;
   championship_id: string;
   round: number;
-  price_sensitivity: number;     // 2.0 default - higher means price matters more
-  demand_elasticity: number;     // 1.5 default - higher means marketing/price affects volume more
-  marketing_effectiveness: number; // 1.0 default
-  crisis_probability: number;    // 0.0 to 1.0
+  price_sensitivity: number;
+  demand_elasticity: number;
+  marketing_effectiveness: number;
+  crisis_probability: number;
   machine_block_period?: number;
 }
 
@@ -40,8 +53,9 @@ export interface MacroIndicators {
   stockMarketPrice: number;
   initialExchangeRateUSD: number;
   demand_regions?: number[];
-  // Injecting Difficulty Rules into indicators for engine access
   difficulty?: Partial<ChampionshipMacroRules>;
+  // Active Black Swan for the current cycle
+  active_event?: BlackSwanEvent | null;
 }
 
 export interface AdvancedIndicators {
@@ -130,6 +144,7 @@ export interface Championship {
     bp_frequency?: number;
     bp_mandatory?: boolean;
     teamsLimit?: number;
+    customRules?: any;
     [key: string]: any;
   };
   market_indicators: MacroIndicators;
@@ -173,23 +188,10 @@ export interface ChampionshipTemplate {
     modalityType: ModalityType;
     deadlineValue?: number;
     deadlineUnit?: DeadlineUnit;
-    /* Added customRules to fix constants.tsx validation */
     customRules?: any;
   };
   market_indicators: MacroIndicators;
   initial_financials: any;
-}
-
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
-  };
 }
 
 export interface MessageBoardItem {

@@ -1,16 +1,17 @@
 
 import React, { useState } from 'react';
-/* Added Target to lucide-react imports */
 import { 
   Zap, Globe, Shield, TrendingUp, Percent, Users, Lock, Unlock, 
   Save, RefreshCw, AlertCircle, CheckCircle2, SlidersHorizontal, 
   Star, Plus, Trash2, LayoutGrid, Activity, Calculator,
   Eye, EyeOff, Flame, Leaf, Loader2, Bot, Newspaper, Layers, Sparkles,
   Search, ExternalLink, Info, Gavel, Cpu, DollarSign, Package,
-  ShoppingCart, Landmark, ShieldAlert, Boxes, BrainCircuit, Target
+  ShoppingCart, Landmark, ShieldAlert, Boxes, BrainCircuit, Target,
+  Bird, Play
 } from 'lucide-react';
-import { EcosystemConfig, Championship, MacroIndicators, ChampionshipMacroRules } from '../types';
+import { EcosystemConfig, Championship, MacroIndicators, BlackSwanEvent } from '../types';
 import { updateEcosystem } from '../services/supabase';
+import { generateBlackSwanEvent } from '../services/gemini';
 import { DEFAULT_MACRO } from '../constants';
 
 const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (config: Partial<Championship>) => void }> = ({ championship, onUpdate }) => {
@@ -20,17 +21,35 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   });
   const [macro, setMacro] = useState<MacroIndicators>(championship.market_indicators || DEFAULT_MACRO);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSummoning, setIsSummoning] = useState(false);
+  const [pendingEvent, setPendingEvent] = useState<BlackSwanEvent | null>(null);
 
   const handleSave = async () => {
     setIsSaving(true);
     const payload = { 
       ecosystemConfig: config,
-      market_indicators: macro
+      market_indicators: {
+        ...macro,
+        active_event: pendingEvent || macro.active_event
+      }
     };
     await updateEcosystem(championship.id, payload);
     onUpdate(payload);
     setIsSaving(false);
-    alert("PARÂMETROS DE MERCADO SINCRONIZADOS: Os reajustes serão aplicados no processamento do próximo período.");
+    setPendingEvent(null);
+    alert("PARÂMETROS DE MERCADO SINCRONIZADOS: Os reajustes e eventos serão aplicados no próximo período.");
+  };
+
+  const summonBlackSwan = async () => {
+    setIsSummoning(true);
+    try {
+      const event = await generateBlackSwanEvent(championship.branch);
+      if (event) setPendingEvent(event);
+    } catch (e) {
+      alert("Falha no link neural com o Oráculo.");
+    } finally {
+      setIsSummoning(false);
+    }
   };
 
   return (
@@ -49,6 +68,74 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
          </div>
       </div>
 
+      {activeTab === 'difficulty' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+           <div className="lg:col-span-8 bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12">
+              <div className="flex items-center gap-4 mb-4">
+                 <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-lg"><BrainCircuit size={24}/></div>
+                 <div>
+                   <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tight">Saltiness Controls</h3>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ajuste a agressividade do mercado e sensibilidade dos consumidores.</p>
+                 </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                 <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Target size={16} /> Sensibilidade de Preço</label>
+                       <span className="text-xl font-black text-slate-900">{(macro.difficulty?.price_sensitivity || 2.0).toFixed(1)}x</span>
+                    </div>
+                    <input type="range" min="0.5" max="5.0" step="0.1" value={macro.difficulty?.price_sensitivity || 2.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, price_sensitivity: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                 </div>
+                 <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Zap size={16} /> Eficácia de Marketing</label>
+                       <span className="text-xl font-black text-slate-900">{(macro.difficulty?.marketing_effectiveness || 1.0).toFixed(1)}x</span>
+                    </div>
+                    <input type="range" min="0.1" max="3.0" step="0.1" value={macro.difficulty?.marketing_effectiveness || 1.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, marketing_effectiveness: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                 </div>
+              </div>
+           </div>
+
+           <div className="lg:col-span-4 bg-slate-900 p-10 rounded-[4rem] text-white shadow-2xl space-y-10 relative overflow-hidden group">
+              <Bird className="absolute -bottom-10 -right-10 opacity-5 group-hover:scale-110 transition-transform duration-1000" size={240} />
+              <div className="space-y-4">
+                 <div className="flex items-center gap-3">
+                    <Flame className="text-rose-500 animate-pulse" size={24} />
+                    <h3 className="text-xl font-black uppercase italic leading-none">Black Swan Engine</h3>
+                 </div>
+                 <p className="text-[10px] font-medium text-slate-400 leading-relaxed uppercase">Projete crises disruptivas via Gemini 3 para testar a resiliência das equipes.</p>
+              </div>
+
+              {!pendingEvent ? (
+                <button 
+                  onClick={summonBlackSwan}
+                  disabled={isSummoning}
+                  className="w-full py-6 bg-rose-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-white hover:text-rose-600 transition-all shadow-xl shadow-rose-900/20 flex items-center justify-center gap-4"
+                >
+                  {isSummoning ? <Loader2 size={18} className="animate-spin" /> : <><Sparkles size={18} /> Invocar Cisne Negro</>}
+                </button>
+              ) : (
+                <div className="p-6 bg-white/5 border border-white/10 rounded-3xl space-y-4 animate-in zoom-in-95 duration-300">
+                   <div className="flex justify-between items-center">
+                      <span className="text-rose-500 font-black text-[9px] uppercase tracking-widest">Evento Gerado</span>
+                      <button onClick={() => setPendingEvent(null)} className="text-slate-500 hover:text-white"><Trash2 size={14}/></button>
+                   </div>
+                   <h4 className="text-lg font-black italic text-white leading-tight">{pendingEvent.title}</h4>
+                   <p className="text-[9px] text-slate-400 leading-relaxed italic line-clamp-2">{pendingEvent.description}</p>
+                   <div className="grid grid-cols-2 gap-2 pt-2">
+                      <div className="p-2 bg-slate-950 rounded-xl text-[7px] font-black text-rose-400 uppercase">Inflação: +{(pendingEvent.modifiers.inflation * 100).toFixed(0)}%</div>
+                      <div className="p-2 bg-slate-950 rounded-xl text-[7px] font-black text-rose-400 uppercase">Prod.: {(pendingEvent.modifiers.productivity * 100).toFixed(0)}%</div>
+                   </div>
+                   <div className="text-[8px] font-black text-emerald-500 uppercase flex items-center gap-2 mt-2">
+                      <CheckCircle2 size={10}/> Clique em "Selar" para ativar no P0{championship.current_round + 1}
+                   </div>
+                </div>
+              )}
+           </div>
+        </div>
+      )}
+
       {activeTab === 'suppliers' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
            <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10">
@@ -65,51 +152,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  <MacroInput label="Máquina ALFA ($)" val={macro.machineryValues.alfa} onChange={v => setMacro({...macro, machineryValues: {...macro.machineryValues, alfa: v}})} />
                  <MacroInput label="Máquina BETA ($)" val={macro.machineryValues.beta} onChange={v => setMacro({...macro, machineryValues: {...macro.machineryValues, beta: v}})} />
                  <MacroInput label="Máquina GAMA ($)" val={macro.machineryValues.gama} onChange={v => setMacro({...macro, machineryValues: {...macro.machineryValues, gama: v}})} />
-              </div>
-           </div>
-        </div>
-      )}
-
-      {activeTab === 'difficulty' && (
-        <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12">
-           <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-lg"><BrainCircuit size={24}/></div>
-              <div>
-                <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tight">Saltiness Controls</h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ajuste a agressividade do mercado e sensibilidade dos consumidores.</p>
-              </div>
-           </div>
-           
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              <div className="space-y-6">
-                 <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Target size={16} /> Sensibilidade de Preço</label>
-                    <span className="text-xl font-black text-slate-900">{(macro.difficulty?.price_sensitivity || 2.0).toFixed(1)}x</span>
-                 </div>
-                 <input type="range" min="0.5" max="5.0" step="0.1" value={macro.difficulty?.price_sensitivity || 2.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, price_sensitivity: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
-                 <p className="text-[9px] text-slate-400 italic">Quanto maior, mais os clientes migram para quem tem o menor preço.</p>
-              </div>
-
-              <div className="space-y-6">
-                 <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Zap size={16} /> Eficácia de Marketing</label>
-                    <span className="text-xl font-black text-slate-900">{(macro.difficulty?.marketing_effectiveness || 1.0).toFixed(1)}x</span>
-                 </div>
-                 <input type="range" min="0.1" max="3.0" step="0.1" value={macro.difficulty?.marketing_effectiveness || 1.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, marketing_effectiveness: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
-              </div>
-
-              <div className="space-y-6">
-                 <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Flame size={16} /> Probabilidade de Crise</label>
-                    <span className="text-xl font-black text-slate-900">{((macro.difficulty?.crisis_probability || 0.0) * 100).toFixed(0)}%</span>
-                 </div>
-                 <input type="range" min="0.0" max="1.0" step="0.05" value={macro.difficulty?.crisis_probability || 0.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, crisis_probability: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600" />
-                 <p className="text-[9px] text-slate-400 italic">Chance de cisne negro (aumento súbito de custos) no próximo round.</p>
-              </div>
-
-              <div className="p-8 bg-indigo-50 border border-indigo-100 rounded-[2.5rem] flex flex-col justify-center">
-                 <h4 className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2 mb-2"><Info size={14}/> Impacto em Tempo Real</h4>
-                 <p className="text-[9px] font-bold text-indigo-800 leading-relaxed uppercase">Esses parâmetros afetam as projeções do Oracle no dashboard de todos os estrategistas instantaneamente via link neural.</p>
               </div>
            </div>
         </div>

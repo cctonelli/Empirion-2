@@ -1,8 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import { 
   Newspaper, Globe, History, Shield, 
   ChevronLeft, Landmark, Zap, 
-  Gavel, Download, AlertTriangle, Target, LayoutGrid
+  Gavel, Download, AlertTriangle, Target, LayoutGrid,
+  Flame, Bird
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Championship, UserRole, AdvancedIndicators, Team } from '../types';
@@ -15,11 +17,12 @@ interface GazetteViewerProps {
   onClose: () => void;
 }
 
-type GazetteTab = 'macro' | 'suppliers' | 'cycles' | 'capital' | 'benchmarking' | 'tutor';
+type GazetteTab = 'macro' | 'suppliers' | 'cycles' | 'benchmarking' | 'tutor';
 
 const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, userRole = 'player', onClose }) => {
   const [activeTab, setActiveTab] = useState<GazetteTab>('macro');
   const teams = arena.teams || [];
+  const activeEvent = arena.market_indicators?.active_event;
   
   const currentInd: AdvancedIndicators = useMemo(() => ({
     nldcg_days: 70,
@@ -36,7 +39,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
     <motion.div 
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-[#020617] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[92vh] max-h-[1100px] relative"
+      className="bg-[#020617] border border-white/10 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col h-[92vh] max-h-[1100px] relative"
     >
       <header className="bg-slate-950 p-8 border-b border-white/5">
          <div className="flex justify-between items-center mb-8">
@@ -69,30 +72,48 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
          <AnimatePresence mode="wait">
             {activeTab === 'macro' && (
               <motion.div key="macro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
+                 
+                 {/* BLACK SWAN BREAKING NEWS CARD */}
+                 {activeEvent && (
+                   <motion.div 
+                     initial={{ x: -100, opacity: 0 }}
+                     animate={{ x: 0, opacity: 1 }}
+                     className="bg-rose-600 p-12 rounded-[4rem] border border-white/20 shadow-2xl relative overflow-hidden group"
+                   >
+                      <Bird className="absolute -bottom-10 -right-10 opacity-10 rotate-12 group-hover:scale-110 transition-transform" size={300} />
+                      <div className="relative z-10 space-y-6">
+                         <div className="flex items-center gap-3">
+                            <div className="px-5 py-2 bg-white/20 backdrop-blur-xl rounded-full text-[10px] font-black uppercase text-white tracking-[0.4em] border border-white/10 animate-pulse">Breaking News: Black Swan Detected</div>
+                         </div>
+                         <h2 className="text-6xl md:text-7xl font-black text-white italic tracking-tighter leading-[0.9]">{activeEvent.title}</h2>
+                         <p className="text-2xl text-rose-50 font-medium italic max-w-4xl">{activeEvent.impact}</p>
+                         <div className="pt-8 border-t border-white/20 flex flex-wrap gap-8">
+                            <EventStat label="Inflação" val={`+${(activeEvent.modifiers.inflation*100).toFixed(0)}%`} />
+                            <EventStat label="Demanda" val={`${(activeEvent.modifiers.demand*100).toFixed(0)}%`} />
+                            <EventStat label="Produtividade" val={`${(activeEvent.modifiers.productivity*100).toFixed(0)}%`} />
+                         </div>
+                      </div>
+                   </motion.div>
+                 )}
+
                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                     <div className="lg:col-span-8 space-y-10">
                        <div className="p-12 bg-white/[0.02] border border-white/5 rounded-[4rem] relative overflow-hidden group">
                           <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-1000"><Zap size={200} /></div>
                           <h3 className="text-orange-500 font-black text-[9px] uppercase tracking-[0.4em] mb-6 italic flex items-center gap-3">
-                             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" /> Headline Período 0{round}
+                             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" /> Oracle Intelligence Headline
                           </h3>
-                          <h2 className="text-6xl font-black text-white italic leading-[0.9] tracking-tighter mb-8">{aiNews.split('\n')[0] || "Empirion Street: Estabilidade Estratégica"}</h2>
-                          <p className="text-2xl text-slate-400 font-medium italic leading-relaxed">"{aiNews.split('\n')[1] || "O conselho administrativo sinaliza paridade absoluta no início do ciclo industrial."}"</p>
-                       </div>
-                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          <HighCard label="TRIT" val={`${currentInd.trit}%`} sub="Retorno Investimento" trend="+0.1%" pos icon={<Target size={20}/>} />
-                          <HighCard label="SOLVÊNCIA" val={currentInd.insolvency_index.toString()} sub="Índice Kanitz" trend="Seguro" pos icon={<Shield size={20}/>} />
-                          <HighCard label="NLDCG" val={`${currentInd.nldcg_days} dias`} sub="Dias de Venda" trend="Estável" pos icon={<Landmark size={20}/>} />
+                          <h2 className="text-6xl font-black text-white italic leading-[0.9] tracking-tighter mb-8">{aiNews.split('\n')[0] || "Equilíbrio de Mercado Mantido"}</h2>
+                          <p className="text-2xl text-slate-400 font-medium italic leading-relaxed">"{aiNews.split('\n')[1] || "A arena processa novos dados de fluxo de caixa conforme o ciclo avança."}"</p>
                        </div>
                     </div>
                     <div className="lg:col-span-4 bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 space-y-8">
-                       <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em]">Ambiente Econômico</h3>
+                       <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em]">Status Econômico Oracle</h3>
                        <div className="space-y-6">
-                          <MacroRow label="Crescimento Setor" val="3.0%" />
-                          <MacroRow label="Inflação Período" val="1.0%" />
-                          <MacroRow label="Taxa TR Mensal" val="3.0%" />
-                          <MacroRow label="Juros Fornecedor" val="2.0%" />
-                          <MacroRow label="Importados" val="0.0%" />
+                          <MacroRow label="Taxa TR Mensal" val={`${(arena.market_indicators?.interestRateTR || 3.0).toFixed(1)}%`} />
+                          <MacroRow label="Inflação Período" val={`${(arena.market_indicators?.inflationRate || 1.0).toFixed(1)}%`} />
+                          <MacroRow label="Sensibilidade Preço" val={`${(arena.market_indicators?.difficulty?.price_sensitivity || 2.0).toFixed(1)}x`} />
+                          <MacroRow label="Eficácia Mkt" val={`${(arena.market_indicators?.difficulty?.marketing_effectiveness || 1.0).toFixed(1)}x`} />
                        </div>
                     </div>
                  </div>
@@ -104,11 +125,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                  <div className="flex justify-between items-end">
                     <div>
                        <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">Empire <span className="text-orange-500">Audit Matrix</span></h2>
-                       <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.4em] mt-3 italic">Snapshot simultâneo das 8 unidades industriais • Ciclo 0{round}</p>
                     </div>
-                    <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 flex items-center gap-3 font-black text-[9px] uppercase hover:text-white transition-all">
-                       <Download size={16}/> Export Full Snapshot
-                    </button>
                  </div>
 
                  <div className="bg-slate-950 border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl">
@@ -120,86 +137,22 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                                 {teams.map((t: Team, i: number) => (
                                   <th key={t.id} className="p-8 min-w-[200px] border-r border-white/5 text-center">
                                      <div className="text-orange-500 italic text-base mb-1">{t.name}</div>
-                                     <div className="text-[7px] font-black opacity-30 tracking-[0.3em] uppercase">Unidade 0{i+1}</div>
+                                     <div className="text-[7px] font-black opacity-30 tracking-[0.3em] uppercase">Unit 0{i+1}</div>
                                   </th>
                                 ))}
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5 text-[11px] font-mono">
                              <MatrixRow label="RECEITA BRUTA VENDAS" teams={teams} val="3.322.735" bold />
-                             <MatrixRow label="(-) CUSTO PROD. VENDIDO (CPV)" teams={teams} val="2.278.180" neg indent />
                              <MatrixRow label="(=) LUCRO BRUTO" teams={teams} val="1.044.555" highlight />
-                             <MatrixRow label="(-) DESPESAS VENDAS" teams={teams} val="802.702" indent />
-                             <MatrixRow label="(-) DESPESAS ADM" teams={teams} val="114.880" indent />
-                             <MatrixRow label="(-) DESPESAS FIN." teams={teams} val="40.000" indent />
                              <MatrixRow label="LUCRO OPERACIONAL (EBIT)" teams={teams} val="86.973" bold />
-                             <MatrixRow label="(-) PROVISÃO IR (15%)" teams={teams} val="13.045" neg indent />
                              <MatrixRow label="LUCRO LÍQUIDO PERÍODO" teams={teams} val="73.928" total highlight />
-                             
                              <tr className="bg-white/10"><td colSpan={teams.length + 1} className="p-2 border-y border-white/10"></td></tr>
-                             
                              <MatrixRow label="ATIVO TOTAL CONSOLIDADO" teams={teams} val="9.176.940" bold highlight />
-                             <MatrixRow label="1.1 ATIVO CIRCULANTE" teams={teams} val="3.290.340" bold indent />
                              <MatrixRow label="Caixa & Bancos" teams={teams} val="840.200" indent />
-                             <MatrixRow label="Contas a Receber" teams={teams} val="1.823.735" indent />
-                             <MatrixRow label="Estoque Matéria-Prima A" teams={teams} val="628.545" indent />
-                             <MatrixRow label="Estoque Matéria-Prima B" teams={teams} val="0" indent />
-                             
-                             <MatrixRow label="1.2 ATIVO NÃO CIRCULANTE" teams={teams} val="5.886.600" bold indent />
-                             <MatrixRow label="Máquinas e Equip." teams={teams} val="2.360.000" indent />
-                             <MatrixRow label="(-) Depreciação Máq." teams={teams} val="-811.500" neg indent />
-                             <MatrixRow label="Prédios e Instalações" teams={teams} val="544.000" indent />
-                             <MatrixRow label="(-) Depreciação Prédios" teams={teams} val="-2.301.900" neg indent />
-
-                             <tr className="bg-white/10"><td colSpan={teams.length + 1} className="p-2 border-y border-white/10"></td></tr>
-
-                             <MatrixRow label="PASSIVO + PL CONSOLIDADO" teams={teams} val="9.176.940" bold highlight />
-                             <MatrixRow label="2.1 PASSIVO CIRCULANTE" teams={teams} val="4.121.493" bold indent />
-                             <MatrixRow label="Fornecedores" teams={teams} val="717.605" indent />
-                             <MatrixRow label="Empréstimos CP" teams={teams} val="1.872.362" indent />
-                             <MatrixRow label="Impostos a Pagar" teams={teams} val="13.045" indent />
-                             
-                             <MatrixRow label="2.2 EXIGÍVEL LONGO PRAZO" teams={teams} val="1.500.000" bold indent />
-                             <MatrixRow label="Financiamentos BDI" teams={teams} val="1.500.000" indent />
-                             
-                             <MatrixRow label="2.3 PATRIMÔNIO LÍQUIDO" teams={teams} val="5.055.447" bold indent />
-                             <MatrixRow label="Capital Social" teams={teams} val="5.000.000" indent />
-                             <MatrixRow label="Lucros Acumulados" teams={teams} val="55.447" indent />
+                             <MatrixRow label="Patrimônio Líquido" teams={teams} val="5.055.447" bold />
                           </tbody>
                        </table>
-                    </div>
-                 </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'suppliers' && (
-              <motion.div key="suppliers" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                 <div className="space-y-8">
-                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">
-                       <div className="p-3 bg-orange-600 rounded-xl shadow-lg shadow-orange-500/20"><Landmark size={20}/></div> Tabela de Reajustes Oracle
-                    </h3>
-                    <div className="bg-slate-900 border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl">
-                       <table className="w-full text-left">
-                          <thead className="bg-slate-950 text-slate-500 font-black text-[9px] uppercase tracking-widest border-b border-white/10">
-                             <tr><th className="p-8">Componente</th><th className="p-8">Preço/Taxa</th><th className="p-8">Expectativa</th></tr>
-                          </thead>
-                          <tbody className="divide-y divide-white/5 text-[11px] font-bold">
-                             <tr><td className="p-8 text-white uppercase italic">Matéria-Prima A (Unid)</td><td className="p-8 text-orange-500">$ 20,20</td><td className="p-8 text-slate-500">+2,0% Próximo Período</td></tr>
-                             <tr><td className="p-8 text-white uppercase italic">Matéria-Prima B (Unid)</td><td className="p-8 text-orange-500">$ 40,40</td><td className="p-8 text-slate-500">+2,0% Próximo Período</td></tr>
-                             <tr><td className="p-8 text-white uppercase italic">Custo Logístico (Unid)</td><td className="p-8 text-orange-500">$ 50,50</td><td className="p-8 text-slate-500">Estável</td></tr>
-                             <tr><td className="p-8 text-white uppercase italic">Juros Fornecedor</td><td className="p-8 text-orange-500">2.0%</td><td className="p-8 text-slate-500">Mensal Composto</td></tr>
-                          </tbody>
-                       </table>
-                    </div>
-                 </div>
-                 <div className="space-y-8">
-                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">
-                       <div className="p-3 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20"><Gavel size={20}/></div> Protocolos de Transmissão
-                    </h3>
-                    <div className="grid grid-cols-1 gap-4">
-                       <GovCard icon={<Shield size={20}/>} title="Imposto de Renda" desc="Aliquota fixa de 15,0% sobre o lucro líquido (DRE)." />
-                       <GovCard icon={<Landmark size={20}/>} title="Capacidade Maquinário" desc="Máquina Alfa: 10k unid/ciclo. Beta: 30k. Gama: 60k." />
-                       <GovCard icon={<AlertTriangle size={20}/>} title="Prazo de Pagamento" desc="Fornecedores MP A/B exigem pagamento 100% à vista." />
                     </div>
                  </div>
               </motion.div>
@@ -210,11 +163,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       <footer className="p-8 bg-slate-950 border-t border-white/5 flex justify-between items-center px-14">
          <div className="flex items-center gap-4">
             <div className="p-3 bg-orange-600 rounded-xl text-white shadow-xl shadow-orange-500/20"><Landmark size={14}/></div>
-            <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">EMPIRE_STREET_FIDELITY_GOLD_NODE_08</p>
-         </div>
-         <div className="flex items-center gap-3">
-            <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest animate-pulse">Neural Oracle Sync: Active</span>
-            <div className="w-2 h-2 bg-orange-500 rounded-full shadow-[0_0_15px_#f97316]" />
+            <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">EMPIRE_STREET_ORACLE_V6</p>
          </div>
       </footer>
     </motion.div>
@@ -227,13 +176,9 @@ const TabBtn = ({ active, onClick, label, icon, color = 'blue' }: any) => (
   </button>
 );
 
-const MatrixRow = ({ label, teams, val, bold, neg, highlight, total, indent }: any) => {
-  const labelIndentClass = indent ? 'pl-16' : '';
-  const isSecondIndent = (label.toLowerCase().includes('caixa') || label.toLowerCase().includes('estoque') || label.toLowerCase().includes('máquinas') || label.toLowerCase().includes('fornecedores'));
-
-  return (
+const MatrixRow = ({ label, teams, val, bold, neg, highlight, total, indent }: any) => (
     <tr className={`hover:bg-white/[0.03] transition-all group ${bold ? 'font-black text-slate-200 bg-white/[0.02]' : 'text-slate-500'} ${total ? 'bg-slate-950' : ''}`}>
-       <td className={`p-6 border-r border-white/5 sticky left-0 z-10 bg-slate-900 group-hover:bg-slate-800 uppercase tracking-tighter text-[9px] ${highlight ? 'text-orange-500 italic' : ''} ${labelIndentClass} ${isSecondIndent ? 'pl-24 italic opacity-80 text-[8px]' : ''}`}>
+       <td className={`p-6 border-r border-white/5 sticky left-0 z-10 bg-slate-900 group-hover:bg-slate-800 uppercase tracking-tighter text-[9px] ${highlight ? 'text-orange-500 italic' : ''} ${indent ? 'pl-16' : ''}`}>
           {label}
        </td>
        {teams.map((t: any) => (
@@ -244,21 +189,6 @@ const MatrixRow = ({ label, teams, val, bold, neg, highlight, total, indent }: a
          </td>
        ))}
     </tr>
-  );
-};
-
-const HighCard = ({ label, val, sub, trend, pos, icon }: any) => (
-  <div className="p-8 bg-white/[0.03] border border-white/5 rounded-[3rem] space-y-4 hover:bg-white/[0.06] transition-all group">
-     <div className="flex justify-between items-start">
-        <div className="p-4 bg-white/5 text-orange-500 rounded-2xl group-hover:bg-orange-600 group-hover:text-white transition-all">{icon}</div>
-        <div className={`text-[9px] font-black px-2 py-0.5 rounded-lg ${pos ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>{trend}</div>
-     </div>
-     <div>
-        <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
-        <span className="text-3xl font-black text-white italic tracking-tighter">{val}</span>
-        <p className="text-[8px] font-bold text-slate-600 uppercase mt-1">{sub}</p>
-     </div>
-  </div>
 );
 
 const MacroRow = ({ label, val }: any) => (
@@ -282,6 +212,13 @@ const StatusBadge = ({ label, val, color }: any) => (
   <div className="flex items-center gap-3 px-6 py-2 bg-white/5 border border-white/10 rounded-full">
      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{label}:</span>
      <span className={`text-[10px] font-black uppercase ${color === 'orange' ? 'text-orange-500' : 'text-emerald-500'}`}>{val}</span>
+  </div>
+);
+
+const EventStat = ({ label, val }: { label: string, val: string }) => (
+  <div className="flex flex-col">
+     <span className="text-[8px] font-black text-rose-200 uppercase tracking-widest">{label}</span>
+     <span className="text-xl font-black text-white font-mono">{val}</span>
   </div>
 );
 
