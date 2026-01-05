@@ -14,7 +14,6 @@ export type DeadlineUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'N/A';
 
-// Added Team interface to fix import errors in Supabase service and views
 export interface Team {
   id: string;
   name: string;
@@ -61,6 +60,10 @@ export interface BlackSwanEvent {
   };
 }
 
+export interface AdvancedIndicators {
+  [key: string]: string | number | boolean | undefined;
+}
+
 export interface FinancialHealth {
   rating: CreditRating;
   insolvency_risk: number;
@@ -80,6 +83,7 @@ export interface ProjectionResult {
   health: FinancialHealth;
   marketShare?: number;
   costBreakdown?: { name: string; total: number; impact: string }[];
+  advanced?: AdvancedIndicators;
   statements: {
     dre: any;
     balance_sheet: any;
@@ -138,11 +142,6 @@ export interface MacroIndicators {
   [key: string]: any;
 }
 
-// Added AdvancedIndicators interface to fix import errors in simulation and gazette
-export interface AdvancedIndicators {
-  [key: string]: any;
-}
-
 export interface EcosystemConfig {
   scenarioType: ScenarioType;
   modalityType: ModalityType;
@@ -163,6 +162,7 @@ export interface TeamProgress {
   master_key_enabled?: boolean;
   auditLogs: AuditLog[];
   last_activity?: string;
+  advanced?: AdvancedIndicators;
 }
 
 export interface Championship {
@@ -179,10 +179,10 @@ export interface Championship {
   master_key_enabled?: boolean;
   config: any;
   market_indicators: MacroIndicators;
+  advanced_indicators?: AdvancedIndicators;
   initial_financials?: any;
   round_started_at?: string;
   is_trial?: boolean;
-  // Fixed: Updated from any[] to Team[] to resolve type errors in views
   teams?: Team[];
   created_at: string;
   sales_mode?: SalesMode;

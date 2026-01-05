@@ -1,11 +1,11 @@
-
 import React, { useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   Newspaper, Globe, History, Shield, 
   ChevronLeft, Landmark, Zap, 
   Gavel, Download, AlertTriangle, Target, LayoutGrid,
-  Flame, Bird, Scale, ShieldAlert, HeartPulse, TrendingDown
+  Flame, Bird, Scale, ShieldAlert, HeartPulse, TrendingDown,
+  Activity, Award, User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Championship, UserRole, AdvancedIndicators, Team } from '../types';
@@ -25,13 +25,15 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   const teams = arena.teams || [];
   const activeEvent = arena.market_indicators?.active_event;
   
-  // Mock data for ranking demonstration (in production this comes from historicalData fetch)
+  // Mock data for ranking demonstration
   const solvencyRanking = useMemo(() => {
     return teams.map((t, i) => ({
       name: t.name,
       ratio: [35.2, 82.5, 65.0, 41.2, 58.7, 30.1, 74.2, 50.0][i] || 45,
-      debt: [850000, 2450000, 1890000, 1100000, 1600000, 750000, 2100000, 1300000][i] || 1000000
-    })).sort((a, b) => b.ratio - a.ratio);
+      debt: [850000, 2450000, 1890000, 1100000, 1600000, 750000, 2100000, 1300000][i] || 1000000,
+      share: [12.5, 14.2, 11.1, 13.0, 10.5, 15.0, 12.0, 11.7][i] || 12.5,
+      profit: [73928, -120500, 45000, 12000, -8000, 95000, 32000, 15000][i] || 0
+    })).sort((a, b) => b.profit - a.profit);
   }, [teams]);
 
   const chartOptions: any = {
@@ -88,7 +90,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
          <AnimatePresence mode="wait">
             {activeTab === 'macro' && (
               <motion.div key="macro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
-                 {/* Existing Macro Content */}
                  {activeEvent && (
                    <div className="bg-rose-600 p-12 rounded-[4rem] border border-white/20 shadow-2xl relative overflow-hidden group">
                       <Bird className="absolute -bottom-10 -right-10 opacity-10 rotate-12 group-hover:scale-110 transition-transform" size={300} />
@@ -104,11 +105,13 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                           <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" /> Oracle Intelligence Headline
                        </h3>
                        <h2 className="text-6xl font-black text-white italic leading-[0.9] tracking-tighter mb-8">{aiNews.split('\n')[0] || "Equilíbrio de Mercado Mantido"}</h2>
+                       <p className="text-slate-400 text-lg leading-relaxed italic">{aiNews.split('\n').slice(1).join(' ') || "O motor Bernard Fidelity reporta estabilidade nos preços das matérias-primas e juros do período."}</p>
                     </div>
                     <div className="lg:col-span-4 bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 space-y-8">
-                       <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em]">Status Econômico Oracle</h3>
+                       <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Macro Oracle Nodes</h3>
                        <MacroRow label="Taxa TR Mensal" val="3.0%" />
                        <MacroRow label="Inflação Período" val="1.0%" />
+                       <MacroRow label="Spread Risco AAA" val="0.5%" />
                     </div>
                  </div>
               </motion.div>
@@ -138,7 +141,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                        <div className="p-10 bg-white/[0.03] border border-white/10 rounded-[4rem] space-y-8">
                           <h4 className="text-xl font-black text-orange-500 uppercase italic flex items-center gap-3"><ShieldAlert /> Termômetro Editorial</h4>
                           <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                             "O mercado de crédito sinaliza rigidez. As unidades com endividamento superior a 60% sofrerão reajuste de prêmio de risco (+2%) nas taxas de juros do próximo ciclo. A Equipe {solvencyRanking[0].name} lidera a exposição ao risco."
+                             "O mercado de crédito sinaliza rigidez. As unidades com endividamento superior a 60% sofrerão reajuste de prêmio de risco (+2%) nas taxas de juros do próximo ciclo."
                           </p>
                        </div>
                        <div className="p-10 bg-blue-600 rounded-[4rem] shadow-2xl relative overflow-hidden group">
@@ -148,32 +151,46 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                        </div>
                     </div>
                  </div>
+              </motion.div>
+            )}
 
+            {activeTab === 'benchmarking' && (
+              <motion.div key="benchmarking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
                  <div className="bg-slate-950 border border-white/10 rounded-[3.5rem] overflow-hidden">
                     <table className="w-full text-left">
                        <thead className="bg-slate-900 text-slate-500 font-black text-[9px] uppercase tracking-widest">
                           <tr>
                              <th className="p-8">Posição</th>
-                             <th className="p-8">Unidade Industrial</th>
-                             <th className="p-8 text-center">Endividamento (%)</th>
-                             <th className="p-8 text-center">Status de Mercado</th>
-                             <th className="p-8 text-right">Dívida Consolidada ($)</th>
+                             <th className="p-8">Unidade</th>
+                             <th className="p-8 text-center">Market Share</th>
+                             <th className="p-8 text-center">Lucro Líquido</th>
+                             <th className="p-8 text-center">Ramo Atividade</th>
+                             <th className="p-8 text-right">Core KPI Contextual</th>
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-white/5 text-[12px] font-mono">
                           {solvencyRanking.map((r, i) => (
                             <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
                                <td className="p-8 font-black text-slate-500 italic">#{i+1}</td>
-                               <td className="p-8 font-black text-white italic">{r.name}</td>
+                               <td className="p-8">
+                                  <div className="flex items-center gap-3">
+                                     <div className="w-8 h-8 rounded-lg bg-orange-600/10 text-orange-500 flex items-center justify-center"><User size={14}/></div>
+                                     <span className="font-black text-white uppercase italic tracking-tighter">{r.name}</span>
+                                  </div>
+                               </td>
+                               <td className="p-8 text-center font-black text-blue-400">{r.share.toFixed(1)}%</td>
+                               <td className={`p-8 text-center font-black ${r.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                  $ {r.profit.toLocaleString()}
+                               </td>
                                <td className="p-8 text-center">
-                                  <span className={`px-4 py-1.5 rounded-full font-black ${r.ratio > 60 ? 'bg-rose-500 text-white' : r.ratio > 40 ? 'bg-amber-500 text-slate-900' : 'bg-emerald-500 text-slate-950'}`}>
-                                     {r.ratio.toFixed(1)}%
-                                  </span>
+                                  <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-slate-500 uppercase">{arena.branch}</span>
                                </td>
-                               <td className="p-8 text-center uppercase font-black text-[10px] tracking-widest">
-                                  {r.ratio > 60 ? <span className="text-rose-500">🚨 Risco de Default</span> : r.ratio > 40 ? <span className="text-amber-500">⚠️ Alerta Bancário</span> : <span className="text-emerald-500">✅ Investimento Seguro</span>}
+                               <td className="p-8 text-right">
+                                  <div className="flex flex-col items-end">
+                                     <span className="text-white font-black italic">{arena.branch === 'industrial' ? '84% OEE' : '9.1 CSAT'}</span>
+                                     <span className="text-[8px] text-slate-500 uppercase tracking-tighter">Verified by Oracle</span>
+                                  </div>
                                </td>
-                               <td className="p-8 text-right font-black text-slate-300">$ {r.debt.toLocaleString()}</td>
                             </tr>
                           ))}
                        </tbody>
@@ -181,15 +198,13 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                  </div>
               </motion.div>
             )}
-
-            {/* Other tabs Benchmarking / Tutor ... */}
          </AnimatePresence>
       </main>
 
       <footer className="p-8 bg-slate-950 border-t border-white/5 flex justify-between items-center px-14">
          <div className="flex items-center gap-4">
             <div className="p-3 bg-orange-600 rounded-xl text-white shadow-xl shadow-orange-500/20"><Landmark size={14}/></div>
-            <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">EMPIRE_STREET_SOLVENCY_NODE_V3</p>
+            <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">EMPIRE_STREET_ORACLE_v12.8_GOLD</p>
          </div>
       </footer>
     </motion.div>

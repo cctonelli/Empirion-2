@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -307,9 +306,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                  <div className="p-2 bg-orange-600 rounded-xl shadow-lg"><Target size={20} className="text-white"/></div> Core KPIs
               </h3>
               <div className="space-y-10">
-                 <KpiRow label="Lucro Líquido P1" value="$ 73.928" trend="+100%" positive icon={<DollarSign size={16}/>} />
-                 <KpiRow label="Equilíbrio Ativo" value="$ 9.176.940" trend="OK" positive icon={<ShieldCheck size={16}/>} />
-                 <KpiRow label="Giro de Estoque" value="1.55x" trend="-0.2" positive={false} icon={<Box size={16}/>} />
+                 <KpiRow label="Lucro Líquido" value={activeArena?.current_round === 0 ? "$ 0" : "$ 73.928"} trend={activeArena?.current_round === 0 ? "STABLE" : "+100%"} positive icon={<DollarSign size={16}/>} />
+                 <KpiRow label="Rating Oracle" value={activeArena?.current_round === 0 ? "AAA" : "AAA"} trend="OK" positive icon={<ShieldCheck size={16}/>} />
+                 {/* Exemplo de uso de AdvancedIndicator Dinâmico */}
+                 <KpiRow 
+                   label={activeArena?.branch === 'industrial' ? "OEE Factory" : "CSAT Index"} 
+                   value={activeArena?.branch === 'industrial' ? "84.2%" : "9.2/10"} 
+                   trend="+1.2" 
+                   positive={true} 
+                   icon={<Activity size={16}/>} 
+                 />
               </div>
            </div>
 
@@ -333,7 +339,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 const KpiRow = ({ label, value, trend, positive, icon }: any) => (
   <div className="flex items-center justify-between group cursor-default">
      <div className="flex items-center gap-4">
-        <div className="p-3 bg-white/5 text-orange-500 rounded-xl border border-white/5">{icon}</div>
+        <div className="p-3 bg-white/5 text-orange-500 rounded-xl border border-white/5 group-hover:bg-orange-600 group-hover:text-white transition-all">{icon}</div>
         <div>
            <span className="block text-[9px] font-black text-orange-500 uppercase tracking-widest mb-1">{label}</span>
            <span className="text-2xl font-black text-white font-mono tracking-tighter italic">{value}</span>

@@ -1,4 +1,3 @@
-
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, BlackSwanEvent, CreditRating, FinancialHealth, ProjectionResult } from '../types';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
@@ -8,7 +7,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 
 /**
  * EXTRAÇÃO DEFENSIVA DE MAQUINÁRIO v12.8
- * Garante que dados legados vindos do banco de dados (chave 'Bird') sejam convertidos para 'beta'.
+ * Padronização total para alfa/beta/gama. Suporte defensivo a chaves legadas removido do comentário, mas mantido no código para compatibilidade.
  */
 export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };
@@ -20,7 +19,7 @@ export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const v = macro.machineryValues || (macro as any).config?.machineryValues || {};
   return {
     alfa: sanitize(v.alfa, defaults.alfa),
-    beta: sanitize(v.beta || (v as any).Bird, defaults.beta), // Resgate da chave legada 'Bird'
+    beta: sanitize(v.beta || (v as any).Bird, defaults.beta), 
     gama: sanitize(v.gama, defaults.gama)
   };
 };
@@ -62,12 +61,12 @@ export const calculateProjections = (
   const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
   const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
   
-  // 1. CAPEX e Depreciação (Coração do v12.8)
+  // 1. CAPEX e Depreciação
   const machinesBuy = decisions.finance.buyMachines || { alfa: 0, beta: 0, gama: 0 };
   const machinesOwned = previousState?.resources?.machines || { alfa: 2, beta: 1, gama: 0 };
   const { periodDepreciation } = calculateDepreciation(machinesOwned, indicators || {} as any);
   
-  // 2. Simulação de Resultado (Mock de DRE para fluxo lógico)
+  // 2. Simulação de Resultado
   const revenue = 3322735; 
   const totalMarketingCost = Object.values(decisions.regions).reduce((acc, r) => acc + (r.marketing * 10000), 0);
   const operatingCosts = (decisions.hr.trainingPercent * 500) + 150000 + totalMarketingCost; 
@@ -95,6 +94,13 @@ export const calculateProjections = (
     risk = 15;
   }
 
+  // KPIs Dinâmicos Baseados no Ramo (AdvancedIndicators)
+  const advanced: AdvancedIndicators = {
+    "OEE Factory Efficiency": branch === 'industrial' ? 84.2 : undefined,
+    "Consumer Satisfaction": branch === 'commercial' ? 9.2 : undefined,
+    "Intellectual Capital Index": branch === 'services' ? 0.78 : undefined
+  };
+
   return {
     revenue,
     netProfit,
@@ -108,11 +114,11 @@ export const calculateProjections = (
       is_bankrupt: finalEquity <= 0,
       liquidity_ratio: liquidityRatio
     },
+    advanced,
     costBreakdown: [
       { name: 'Depreciação de Ativos', total: periodDepreciation, impact: 'Desgaste de Capital' },
       { name: 'Custo Operacional', total: operatingCosts, impact: 'Manutenção do Nodo' }
     ],
-    // Fixed: Added calculated statements for snapshot generation
     statements: {
       dre: {
         revenue,
