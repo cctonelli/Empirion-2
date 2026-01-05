@@ -20,13 +20,13 @@ export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const v = macro.machineryValues || (macro as any).config?.machineryValues || {};
   return {
     alfa: sanitize(v.alfa, defaults.alfa),
-    beta: sanitize(v.beta || (v as any).Bird, defaults.beta), // Rescue legacy 'Bird' key
+    beta: sanitize(v.beta || (v as any).Bird, defaults.beta), // Resgate da chave legada 'Bird'
     gama: sanitize(v.gama, defaults.gama)
   };
 };
 
 /**
- * CÁLCULO DE DEPRECIAÇÃO (Straight Line Method)
+ * CÁLCULO DE DEPRECIAÇÃO (Método Linha Reta 5% por Round)
  */
 export const calculateDepreciation = (machines: { alfa: number, beta: number, gama: number }, macro: MacroIndicators, rate: number = 0.05) => {
   const prices = getSafeMachineryValues(macro);
@@ -37,6 +37,7 @@ export const calculateDepreciation = (machines: { alfa: number, beta: number, ga
 
 /**
  * CÁLCULO DE SPREAD DE RISCO v12.8
+ * AAA: 0.5% | D: 15.0%
  */
 export const getRiskSpread = (rating: CreditRating): number => {
   switch (rating) {
@@ -61,19 +62,18 @@ export const calculateProjections = (
   const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
   const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
   
-  // 1. CAPEX and Depreciation (Kernel v12.8 Heart)
+  // 1. CAPEX e Depreciação (Coração do v12.8)
   const machinesBuy = decisions.finance.buyMachines || { alfa: 0, beta: 0, gama: 0 };
-  // Mock current machines count for depreciation (in real turnover this is cumulative)
   const machinesOwned = previousState?.resources?.machines || { alfa: 2, beta: 1, gama: 0 };
-  const { totalValue: currentAssetsValue, periodDepreciation } = calculateDepreciation(machinesOwned, indicators || {} as any);
+  const { periodDepreciation } = calculateDepreciation(machinesOwned, indicators || {} as any);
   
-  // 2. Result Simulation (P&L Mock for logic flow)
+  // 2. Simulação de Resultado (Mock de DRE para fluxo lógico)
   const revenue = 3322735; 
   const totalMarketingCost = Object.values(decisions.regions).reduce((acc, r) => acc + (r.marketing * 10000), 0);
   const operatingCosts = (decisions.hr.trainingPercent * 500) + 150000 + totalMarketingCost; 
   const netProfit = revenue - operatingCosts - periodDepreciation;
   
-  // 3. Insolvency Logic and Rating
+  // 3. Lógica de Insolvência e Rating
   const finalEquity = prevEquity + netProfit;
   const totalDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362) + decisions.finance.loanRequest;
   const liquidityRatio = (prevCash + revenue) / Math.max(totalDebt, 1);

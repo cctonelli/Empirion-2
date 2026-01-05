@@ -11,7 +11,7 @@ interface InsolvencyAlertProps {
 }
 
 export const InsolvencyAlert: React.FC<InsolvencyAlertProps> = ({ rating, isOpen, onClose }) => {
-  if (rating !== 'C' && rating !== 'D' || !isOpen) return null;
+  if ((rating !== 'C' && rating !== 'D') || !isOpen) return null;
 
   const isCritical = rating === 'D';
 

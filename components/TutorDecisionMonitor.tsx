@@ -3,11 +3,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   Users, Eye, CheckCircle2, AlertCircle, FileText, 
-  BarChart3, RefreshCw, ChevronRight, MapPin, DollarSign,
-  Factory, Megaphone, UserPlus, Sliders, Target, Monitor,
-  TrendingUp, ShieldAlert, Activity, Scale, Shield,
-  History, User, AlertOctagon, Key, Banknote, Landmark,
-  TrendingDown, HeartPulse, Loader2
+  RefreshCw, ChevronRight, DollarSign, Activity, Scale, 
+  History, User, Key, Banknote, Landmark, TrendingDown, 
+  HeartPulse, Loader2, Monitor, ShieldAlert
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -50,12 +48,8 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
           
           const branch = (arenaData.branch || 'industrial') as Branch;
           const eco = (arenaData.ecosystemConfig || { 
-            inflationRate: 0.01, 
-            demandMultiplier: 1.0, 
-            interestRate: 0.03, 
-            marketVolatility: 0.05, 
-            scenarioType: 'simulated', 
-            modalityType: 'standard' 
+            inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, 
+            scenarioType: 'simulated', modalityType: 'standard' 
           }) as EcosystemConfig;
           const macro = (arenaData.market_indicators) as MacroIndicators;
 
@@ -78,17 +72,12 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
         });
         
         setTeams(progress);
-        
         if (selectedTeam) {
-            const updatedSelected = progress.find(t => t.team_id === selectedTeam.team_id);
-            if (updatedSelected) setSelectedTeam(updatedSelected);
+            const updated = progress.find(t => t.team_id === selectedTeam.team_id);
+            if (updated) setSelectedTeam(updated);
         }
       }
-    } catch (e) { 
-      console.error("Monitor Data Fetch Failure:", e); 
-    } finally { 
-      setLoading(false); 
-    }
+    } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
   useEffect(() => {
@@ -104,53 +93,14 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
     if (!error) fetchLiveDecisions();
   };
 
-  const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
-  const distribution = useMemo(() => {
-    return ratingsOrder.map(r => ({
-      rating: r,
-      count: teams.filter(t => (t.rating ?? 'N/A') === r).length
-    }));
-  }, [teams]);
-
-  const chartOptions: any = {
-    chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
-    plotOptions: { bar: { borderRadius: 8, columnWidth: '50%', distributed: true } },
-    colors: ['#10b981', '#34d399', '#6ee7b7', '#fbbf24', '#f87171', '#b91c1c'],
-    xaxis: { categories: ratingsOrder, labels: { style: { colors: '#94a3b8', fontWeight: 900 } } },
-    yaxis: { labels: { style: { colors: '#475569' } }, tickAmount: 4 },
-    grid: { borderColor: 'rgba(255,255,255,0.05)' },
-    tooltip: { theme: 'dark' },
-    legend: { show: false }
-  };
-
-  if (loading && teams.length === 0) {
-    return (
-      <div className="p-20 text-center space-y-4">
-        <Loader2 className="animate-spin mx-auto text-orange-500" size={48} />
-        <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.4em]">Sincronizando Auditoria...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-8 bg-slate-900 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl space-y-8">
-             <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                   <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Saúde Sistêmica da Arena</h3>
-                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Distribuição de Rating de Crédito em Tempo Real</p>
-                </div>
-                <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
-                   <span className="text-[10px] text-orange-500 font-black uppercase">N = {teams.length} Strategists</span>
-                </div>
-             </div>
-             <div className="h-[280px] w-full">
-                <Chart options={chartOptions} series={[{ name: 'Equipes', data: distribution.map(d => d.count) }]} type="bar" height="100%" />
-             </div>
+          <div className="lg:col-span-8">
+             <ClassCreditHealth teamsProjections={teams} />
           </div>
-          <div className="lg:col-span-4 bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-8 opacity-[0.03] rotate-12"><ShieldAlert size={160} /></div>
+          <div className="lg:col-span-4 bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-8 opacity-[0.03] rotate-12 group-hover:scale-110 transition-transform"><ShieldAlert size={160} /></div>
              <div className="space-y-6 relative z-10">
                 <div className="flex items-center gap-3">
                    <ShieldAlert className="text-orange-500" size={24} />
@@ -201,43 +151,130 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
           </div>
        </div>
 
-       {selectedTeam && (
-          <div className="bg-slate-900 p-16 rounded-[5rem] border border-white/10 shadow-2xl text-white space-y-12 animate-in slide-in-from-bottom-4">
-             <header className="flex justify-between items-end border-b border-white/5 pb-12">
-                <div className="space-y-4">
-                   <span className="px-5 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Audit Briefing</span>
-                   <h3 className="text-5xl font-black uppercase italic tracking-tighter leading-none">{selectedTeam.team_name}</h3>
-                </div>
-                <button 
-                  onClick={() => handleToggleMasterKey(selectedTeam.team_id, !!selectedTeam.master_key_enabled)}
-                  className={`px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all ${selectedTeam.master_key_enabled ? 'bg-orange-600 text-white' : 'bg-white/5 text-slate-400'}`}
-                >
-                   <Key size={14} /> {selectedTeam.master_key_enabled ? 'Master Key Unlocked' : 'Authorize Protocol'}
-                </button>
-             </header>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="p-8 bg-white/5 border border-white/5 rounded-[3rem] space-y-6">
-                   <h4 className="text-xl font-black uppercase italic flex items-center gap-3"><History size={20} className="text-blue-400" /> Audit Timeline</h4>
-                   <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                      {selectedTeam.auditLogs?.map((log, i) => (
-                        <div key={i} className="p-4 bg-white/5 rounded-2xl text-xs space-y-1">
-                           <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-500">
-                              <span>{log.field_path}</span>
-                              <span>{new Date(log.changed_at).toLocaleTimeString()}</span>
+       <AnimatePresence mode="wait">
+        {selectedTeam && (
+           <motion.div 
+             key={selectedTeam.team_id}
+             initial={{ opacity: 0, y: 20 }} 
+             animate={{ opacity: 1, y: 0 }} 
+             exit={{ opacity: 0 }}
+             className="grid grid-cols-1 lg:grid-cols-12 gap-10"
+           >
+              <div className="lg:col-span-8 bg-slate-900 p-16 rounded-[5rem] border border-white/10 shadow-2xl text-white space-y-12 relative overflow-hidden">
+                 <div className="absolute top-0 right-0 p-20 opacity-[0.02] rotate-12"><Scale size={400}/></div>
+                 <header className="flex justify-between items-end border-b border-white/5 pb-12 relative z-10">
+                    <div className="space-y-4">
+                       <span className="px-5 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Audit Briefing</span>
+                       <h3 className="text-5xl font-black uppercase italic tracking-tighter leading-none">{selectedTeam.team_name}</h3>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                       <button 
+                         onClick={() => handleToggleMasterKey(selectedTeam.team_id, !!selectedTeam.master_key_enabled)}
+                         className={`px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all ${selectedTeam.master_key_enabled ? 'bg-orange-600 text-white shadow-xl' : 'bg-white/5 text-slate-400 hover:text-white'}`}
+                       >
+                          <Key size={14} /> {selectedTeam.master_key_enabled ? 'Master Key Unlocked' : 'Authorize Protocol'}
+                       </button>
+                       <div className={`text-[10px] font-black uppercase tracking-widest ${selectedTeam.rating === 'D' ? 'text-rose-500' : 'text-emerald-500'}`}>
+                          Status: {selectedTeam.rating === 'D' ? 'CRITICAL_INSOLVENCY' : 'STABLE_CORE'}
+                       </div>
+                    </div>
+                 </header>
+                 <div className="space-y-10 relative z-10">
+                    <h4 className="text-xl font-black uppercase italic flex items-center gap-3"><History size={24} className="text-blue-400" /> Audit Timeline</h4>
+                    <div className="space-y-6 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                       {(!selectedTeam.auditLogs || selectedTeam.auditLogs.length === 0) ? (
+                         <div className="p-20 bg-white/5 border border-white/5 border-dashed rounded-[3rem] text-center opacity-30">
+                            <FileText size={48} className="mx-auto mb-4" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">Aguardando telemetria de alteração...</p>
+                         </div>
+                       ) : (
+                         selectedTeam.auditLogs.map((log, idx) => (
+                           <div key={idx} className="p-8 bg-white/5 border border-white/5 rounded-[2.5rem] space-y-4 hover:bg-white/[0.08] transition-all">
+                              <div className="flex justify-between items-center">
+                                 <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center"><User size={16}/></div>
+                                    <span className="text-xs font-black uppercase text-white tracking-tight">{log.user_id || 'Membro Alpha'}</span>
+                                 </div>
+                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{new Date(log.changed_at).toLocaleTimeString()}</span>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+                                 <div className="space-y-2">
+                                    <span className="block text-[8px] font-black text-slate-500 uppercase">Campo Alterado</span>
+                                    <span className="text-xs font-mono text-orange-400">{log.field_path}</span>
+                                 </div>
+                                 <div className="flex justify-between">
+                                    <div>
+                                       <span className="block text-[8px] font-black text-slate-500 uppercase">Anterior</span>
+                                       <span className="text-xs font-mono text-slate-500 line-through">{JSON.stringify(log.old_value)}</span>
+                                    </div>
+                                    <div className="text-right">
+                                       <span className="block text-[8px] font-black text-slate-500 uppercase">Novo</span>
+                                       <span className="text-xs font-mono text-white font-black">{JSON.stringify(log.new_value)}</span>
+                                    </div>
+                                 </div>
+                              </div>
                            </div>
-                           <p className="text-white font-bold">{JSON.stringify(log.new_value)}</p>
-                        </div>
-                      ))}
-                   </div>
+                         ))
+                       )}
+                    </div>
+                 </div>
+              </div>
+              <aside className="lg:col-span-4 space-y-8">
+                <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-8">
+                   <h4 className="text-xl font-black uppercase text-slate-900 tracking-tight italic flex items-center gap-3">
+                      <History className="text-orange-600" /> Tutor Veredict
+                   </h4>
+                   <textarea className="w-full h-40 bg-slate-50 border border-slate-200 rounded-[2.5rem] p-8 text-sm font-medium focus:border-orange-500 outline-none resize-none" placeholder="Digite o feedback estratégico para esta unidade..."></textarea>
+                   <button className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-orange-600 transition-all shadow-xl active:scale-95">Injetar Briefing</button>
                 </div>
-                <div className="bg-orange-600/10 border border-orange-500/20 p-10 rounded-[3rem] space-y-6">
-                   <h4 className="text-xl font-black uppercase italic text-orange-500">Tutor Veredict</h4>
-                   <textarea className="w-full h-40 bg-slate-950/50 border border-white/10 rounded-[2.5rem] p-8 text-sm font-medium focus:border-orange-500 outline-none resize-none" placeholder="Enter strategic feedback for this team..."></textarea>
-                   <button className="w-full py-5 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-white hover:text-orange-600 transition-all">Send Briefing</button>
-                </div>
-             </div>
-          </div>
-       )}
+              </aside>
+           </motion.div>
+        )}
+       </AnimatePresence>
+    </div>
+  );
+};
+
+const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgress[] }) => {
+  const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
+  const distribution = useMemo(() => {
+    return ratingsOrder.map(r => ({
+      rating: r,
+      count: teamsProjections.filter(t => (t.rating ?? 'N/A') === r).length
+    }));
+  }, [teamsProjections]);
+
+  const COLORS_MAP = {
+    'AAA': '#10b981', 'AA': '#34d399', 'A': '#6ee7b7',
+    'B': '#fbbf24', 'C': '#f87171', 'D': '#b91c1c', 'N/A': '#334155'
+  };
+
+  const chartOptions: any = {
+    chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
+    plotOptions: { bar: { borderRadius: 12, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } },
+    colors: ratingsOrder.map(r => COLORS_MAP[r as keyof typeof COLORS_MAP]),
+    xaxis: { categories: ratingsOrder, labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 900 } } },
+    yaxis: { labels: { style: { colors: '#475569', fontWeight: 700 } }, tickAmount: 4 },
+    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
+    dataLabels: { enabled: true, style: { colors: ['#fff'], fontSize: '12px', fontWeight: 900 }, offsetY: -20 },
+    tooltip: { theme: 'dark' },
+    legend: { show: false }
+  };
+
+  return (
+    <div className="bg-slate-900 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl space-y-8">
+      <div className="flex justify-between items-start">
+         <div className="space-y-1">
+            <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Saúde de Crédito Sistêmica</h3>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Frequência de Rating na Arena em Tempo Real</p>
+         </div>
+         <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
+            <span className="text-[10px] text-orange-500 font-black uppercase">Σ = {teamsProjections.length} Unidades</span>
+         </div>
+      </div>
+      <div className="h-[280px] w-full">
+         <Chart options={chartOptions} series={[{ name: 'Contagem', data: distribution.map(d => d.count) }]} type="bar" height="100%" />
+      </div>
     </div>
   );
 };
