@@ -18,7 +18,7 @@ export const isTestMode = true;
 
 /**
  * ORACLE TURNOVER ENGINE v11.2 (Atomic & Traceable)
- * Processes all strategy nodes for an arena period.
+ * Processes all strategy nodes for an arena period with error isolation.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
   console.log(`[TURNOVER v11.2] Initiating: Arena ${championshipId} | R${currentRound}`);

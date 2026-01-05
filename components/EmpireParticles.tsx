@@ -103,7 +103,7 @@ const EmpireParticles: React.FC = () => {
             
             ctx.fill();
         } catch (err) {
-            // Skip failing frames to avoid crash
+            // Skip failing frames
         }
         
         ctx.shadowBlur = 0;

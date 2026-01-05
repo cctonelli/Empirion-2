@@ -8,6 +8,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 /**
  * EXTRAÇÃO DEFENSIVA DE MAQUINÁRIO v12.8.2
  * Standardized Oracle Node mapping for industrial assets.
+ * Keys: alfa, beta, gama.
  */
 export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };

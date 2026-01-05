@@ -49,7 +49,6 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     >
       <div className="w-full flex items-center justify-between px-6 md:px-12 h-full">
         
-        {/* LOGO DESIGN - PROFESSIONAL TACTICAL */}
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center gap-4 group">
             <div className="w-11 h-11 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all duration-500 border border-white/10">
@@ -65,7 +64,6 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           </Link>
         </div>
 
-        {/* FULL DESKTOP MENU */}
         <nav className="hidden lg:flex justify-center items-center gap-1">
           {MENU_STRUCTURE.map((item) => {
             const isActive = location.pathname === item.path;
@@ -117,7 +115,6 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           })}
         </nav>
 
-        {/* ACTIONS */}
         <div className="flex items-center gap-5">
           <div className="hidden xl:block scale-90"><LanguageSwitcher light /></div>
           
@@ -141,7 +138,6 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </div>
       </div>
 
-      {/* MOBILE MENU */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div 
@@ -185,10 +181,6 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     )}
                 </div>
               ))}
-              
-              <div className="mt-auto pt-10 text-center opacity-20">
-                 <p className="text-[10px] font-mono font-black text-white uppercase">{APP_VERSION}</p>
-              </div>
             </div>
           </motion.div>
         )}
@@ -217,7 +209,6 @@ const SubmenuItem: React.FC<{ item: any }> = ({ item }) => {
         {hasSub && <ChevronRight size={12} className={`ml-auto transition-transform ${isOpen ? 'translate-x-1 text-orange-500' : ''}`} />}
       </Link>
       
-      {/* CASCADE SIDE MENU */}
       <AnimatePresence>
         {hasSub && isOpen && (
           <motion.div 
