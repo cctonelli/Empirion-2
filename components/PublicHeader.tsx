@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -52,7 +51,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         
         {/* LOGO DESIGN - PROFESSIONAL TACTICAL */}
         <div className="flex-shrink-0">
-          <Link i18nIsDynamicList to="/" className="flex items-center gap-4 group">
+          <Link to="/" className="flex items-center gap-4 group">
             <div className="w-11 h-11 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all duration-500 border border-white/10">
               <span className="text-white font-black text-xl italic select-none">E</span>
             </div>

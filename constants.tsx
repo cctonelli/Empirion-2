@@ -250,5 +250,41 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     features: ['Mix de Produtos Dinâmico', 'E-commerce Integration', 'CRM Predictive Data', 'Logística de Last-Mile'],
     kpis: ['Consumer Satisfaction Index', 'Vendas por Metro Quadrado', 'Ticket Médio Regional'],
     accent: 'blue'
+  },
+  'activity-services': {
+    name: 'Serviços',
+    heroImage: 'https://images.unsplash.com/photo-1454165833767-1316b0215b3f?q=80&w=2000',
+    body: 'Capital intelectual e gestão de prestígio SISERV.',
+    description: 'A simulação de serviços foca na gestão de horas faturáveis, treinamento técnico e reputação de marca. O sucesso depende da retenção de talentos e na eficiência da entrega de contratos complexos.',
+    features: ['Gestão de Talentos Senior/Pleno', 'Acordos de Nível de Serviço (SLA)', 'Quality Assurance Audit', 'Brand Reputation Engine'],
+    kpis: ['Billability Rate', 'Client Satisfaction Score', 'Margem por Contrato'],
+    accent: 'emerald'
+  },
+  'activity-agribusiness': {
+    name: 'Agronegócio',
+    heroImage: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000',
+    body: 'Sazonalidade extrema e gestão de ativos biológicos SIAGRO.',
+    description: 'Enfrente os desafios do campo, desde a volatilidade das commodities até o risco climático. Use inteligência preditiva para maximizar a colheita e gerenciar a logística de exportação.',
+    features: ['Market Commodity Pricing', 'Climate Volatility Simulator', 'Biological Asset Valuation', 'Supply Chain Export Logistics'],
+    kpis: ['Yield per Hectare', 'Commodity Exposure Index', 'Logistics Cost Ratio'],
+    accent: 'orange'
+  },
+  'activity-finance': {
+    name: 'Financeiro',
+    heroImage: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=2000',
+    body: ' Spread bancário, hedge e volatilidade SINVEST.',
+    description: 'Opere como uma instituição financeira de elite. Gerencie carteiras de crédito, fundos de investimento e proteja o capital contra a inflação e variações cambiais.',
+    features: ['Spread Optimization Engine', 'Risk-Weighted Assets (RWA)', 'Arbitrage Tracking', 'Derivatives & Hedge Tools'],
+    kpis: ['Net Interest Margin', 'Capital Adequacy Ratio', 'ROE Progressivo'],
+    accent: 'blue'
+  },
+  'activity-construction': {
+    name: 'Construção',
+    heroImage: 'https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=2000',
+    body: 'Obras pesadas, licitações e gestão de riscos estruturais.',
+    description: 'Participe de grandes licitações e gerencie projetos de infraestrutura de longo prazo. Equilibre custos de materiais, prazos críticos e segurança operacional.',
+    features: ['Bidding & Tenders Logic', 'Critical Path Management (CPM)', 'Material Price Indexing', 'Operational Safety Metrics'],
+    kpis: ['Project Completion Rate', 'Material Efficiency Index', 'Cost Overrun Risk'],
+    accent: 'orange'
   }
 };
