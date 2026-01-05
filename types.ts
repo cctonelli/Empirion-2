@@ -92,11 +92,9 @@ export interface Team {
   championship_id: string;
   status?: string;
   invite_code?: string;
+  master_key_enabled?: boolean;
 }
 
-/**
- * Added missing is_public property to Championship interface to support public arenas and tournament listings.
- */
 export interface Championship {
   id: string;
   name: string;
@@ -177,9 +175,6 @@ export interface AccountNode {
   children?: AccountNode[];
 }
 
-/**
- * Added missing ChampionshipTemplate interface used for pre-configured simulation scenarios.
- */
 export interface ChampionshipTemplate {
   id: string;
   name: string;
@@ -204,9 +199,6 @@ export interface ChampionshipTemplate {
   };
 }
 
-/**
- * Added missing CommunityCriteria interface for community voting features in arenas.
- */
 export interface CommunityCriteria {
   id: string;
   label: string;

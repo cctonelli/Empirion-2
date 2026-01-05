@@ -7,8 +7,8 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Motor Industrial Empirion v11.6 - Solvency & Governance Engine
- * Implementa custos exponenciais de marketing, inflação composta e auditoria de desembolso.
+ * Motor Industrial Empirion v11.7 - Oracle Solvency Kernel
+ * Ajuste de paridade para Round Zero e detecção de insolvência.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -24,7 +24,7 @@ export const calculateProjections = (
     providerPrices: { mpA: 20.20, mpB: 40.40 },
     demand_regions: [12000],
     sectorAvgSalary: 1313,
-    marketingExpenseBase: 17165, // Ajustado para resultar em ~$802k no Round 0 (Nível 3)
+    marketingExpenseBase: 17165,
     distributionCostUnit: 50.50,
     difficulty: { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
     active_event: null
@@ -35,16 +35,27 @@ export const calculateProjections = (
   const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
   
   if (isRoundZero) {
+    // Retorno do Round Zero deve espelhar exatamente a interface de produção
+    // para evitar erros de 'undefined' no DecisionForm
     return {
       revenue: 3322735, ebitda: 1044555, netProfit: 73928, salesVolume: 8932,
       lostSales: 0, totalMarketingCost: 802702, debtRatio: 44.9,
       marketShare: 12.5, cashFlowNext: 840200, receivables: 1823735,
       loanLimit: 2500000, creditRating: 'AAA' as CreditRating,
-      health: { liquidity_ratio: 1.5, debt_to_equity: 0.6, insolvency_risk: 10, rating: 'AAA', is_bankrupt: false } as FinancialHealth,
+      health: { 
+        liquidity_ratio: 1.5, 
+        debt_to_equity: 0.6, 
+        insolvency_risk: 10, 
+        rating: 'AAA', 
+        is_bankrupt: false 
+      } as FinancialHealth,
       suggestRecovery: false, capexBlocked: false,
       statements: null,
       indicators: getRoundZeroAdvanced(),
-      costBreakdown: []
+      costBreakdown: [],
+      totalOutflow: 0, // Inicia em 0 no round zero
+      totalLiquidity: 840200, // Caixa inicial
+      activeEvent: null
     };
   }
 
@@ -66,12 +77,10 @@ export const calculateProjections = (
   const regions = Object.values(decisions.regions || {});
   const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price), 0) / regions.length : 372;
   
-  // LOGICA MARKETING EXPONENCIAL V3.3 - CORREÇÃO INFLACIONÁRIA
   const baseMkt = sanitize(currentIndicators.marketingExpenseBase, 17165) * inflationMult;
   const totalMarketingCost = regions.reduce((acc, r) => {
     const level = sanitize(r.marketing);
     if (level === 0) return acc;
-    // Formula Exponencial: (Base * Nível^1.5)
     return acc + (baseMkt * Math.pow(level, 1.5));
   }, 0);
 
@@ -108,10 +117,9 @@ export const calculateProjections = (
   const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
   const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
-  // 6. CASH FLOW AUDIT (O "PULO DO GATO")
-  // Gastos imediatos (Prazo 0) vs Prazo 1/2
-  const mktOutflow = totalMarketingCost; // Mkt é desembolso imediato
-  const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0; // Se prazo > 0, vira Passivo
+  // 6. CASH FLOW AUDIT
+  const mktOutflow = totalMarketingCost;
+  const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
   
   const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
   const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + mktOutflow + distributionTotal;
@@ -121,7 +129,6 @@ export const calculateProjections = (
   const finalEquity = prevEquity + netProfit;
   const debtRatio = ((finalAssets - finalEquity) / Math.max(finalAssets, 1)) * 100;
 
-  // Itens para a Tabela de Viabilidade
   const costBreakdown = [
     { name: 'Matéria-Prima (Desembolso)', total: mpOutflow, impact: mpOutflow > 0 ? 'Saída de Caixa Imediata' : 'Vira Passivo Fornecedores' },
     { name: 'Marketing Exponencial', total: mktOutflow, impact: 'Consumo de Caixa p/ Vendas' },
