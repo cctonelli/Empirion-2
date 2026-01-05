@@ -15,7 +15,7 @@ import { generateBlackSwanEvent } from '../services/gemini';
 import { DEFAULT_MACRO } from '../constants';
 
 const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (config: Partial<Championship>) => void }> = ({ championship, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState<'macro' | 'modality' | 'suppliers' | 'taxes' | 'difficulty'>('suppliers');
+  const [activeTab, setActiveTab] = useState<'macro' | 'suppliers' | 'difficulty'>('suppliers');
   const [config, setConfig] = useState<EcosystemConfig>(championship.ecosystemConfig || {
     scenarioType: 'simulated', modalityType: 'standard', inflationRate: 0.04, demandMultiplier: 1.0, interestRate: 0.12, marketVolatility: 0.2
   });
@@ -66,8 +66,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
             <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} label="Tabela Fornecedores" icon={<Package size={14}/>} />
             <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} label="Indicadores Macro" icon={<TrendingUp size={14}/>} />
             <TabBtn active={activeTab === 'difficulty'} onClick={() => setActiveTab('difficulty')} label="Sensibilidade" icon={<BrainCircuit size={14}/>} />
-            <TabBtn active={activeTab === 'taxes'} onClick={() => setActiveTab('taxes')} label="Taxas & Regras" icon={<Gavel size={14}/>} />
-            <TabBtn active={activeTab === 'modality'} onClick={() => setActiveTab('modality')} label="Cenário" icon={<Layers size={14}/>} />
          </div>
       </div>
 
