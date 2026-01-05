@@ -1,5 +1,5 @@
 /**
- * EMPIRION V12.8.0 - PRODUCTION TYPES (Armored Version)
+ * EMPIRION V12.8.2 - PRODUCTION TYPES (Stabilized Oracle Node)
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -41,28 +41,10 @@ export interface MessageBoardItem {
   isImportant?: boolean;
 }
 
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
-    cost_multiplier?: number;
-  };
-}
-
 /**
  * AdvancedIndicators v12.8.2
- * Flexibilizado para [key: string]: any para suportar objetos aninhados (Ciclos, NCG).
+ * Loosened to any-map to prevent Vercel build failures on nested financial schemas.
+ * Essential for "Escape Hatch" strategy in dynamic simulation environments.
  */
 export interface AdvancedIndicators {
   [key: string]: any;
@@ -138,7 +120,7 @@ export interface MacroIndicators {
   sectorAvgSalary: number;
   stockMarketPrice: number;
   initialExchangeRateUSD: number;
-  active_event?: BlackSwanEvent | null;
+  active_event?: any;
   difficulty?: {
     price_sensitivity: number;
     marketing_effectiveness: number;
@@ -263,4 +245,24 @@ export interface Modality {
     kpis: string[];
     accent_color?: string;
   };
+}
+
+// FIX: Added missing interface BlackSwanEvent
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
+  };
+}
+
+// FIX: Added missing interface CommunityCriteria
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
 }

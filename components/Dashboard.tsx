@@ -39,7 +39,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   const isObserver = userRole === 'observer';
 
-  // Sincronização profunda de métricas v12.8.2
+  // Oracle Fidelity Sincronização v12.8.2
+  // Using optional chaining (Escape Hatch strategy) to ensure component stability
   const advancedMetrics = useMemo(() => {
     return activeArena?.advanced_indicators || {
       ciclos: { operacional: 60, financeiro: 35 },
@@ -259,21 +260,21 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <EfficiencyCard 
                label="NCG (Capital de Giro)" 
-               val={`$ ${advancedMetrics.scissors_effect.ncg.toLocaleString()}`} 
-               trend={advancedMetrics.scissors_effect.gap < 0 ? 'Optimal' : 'Gap Warning'} 
-               positive={advancedMetrics.scissors_effect.gap < 0}
+               val={`$ ${advancedMetrics?.scissors_effect?.ncg?.toLocaleString() || '0'}`} 
+               trend={advancedMetrics?.scissors_effect?.gap < 0 ? 'Optimal' : 'Gap Warning'} 
+               positive={advancedMetrics?.scissors_effect?.gap < 0}
                icon={<Box size={20}/>}
              />
              <EfficiencyCard 
                label="Ciclo Financeiro" 
-               val={`${advancedMetrics.ciclos.financeiro} dias`} 
+               val={`${advancedMetrics?.ciclos?.financeiro || '0'} dias`} 
                trend="Fidelity Stable" 
                positive={true}
                icon={<Timer size={20}/>}
              />
              <EfficiencyCard 
                label={branch === 'industrial' ? "OEE Factory" : "CSAT Index"} 
-               val={branch === 'industrial' ? `${advancedMetrics.productivity.oee}%` : `${advancedMetrics.productivity.csat}/10`} 
+               val={branch === 'industrial' ? `${advancedMetrics?.productivity?.oee || '0'}%` : `${advancedMetrics?.productivity?.csat || '0'}/10`} 
                trend={activeArena?.current_round === 0 ? "Initial" : "+1.2%"} 
                positive={true}
                icon={<Activity size={20}/>}
@@ -312,7 +313,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               <div className="space-y-10">
                  <KpiRow label="Lucro Líquido" value={activeArena?.current_round === 0 ? "$ 0" : "$ 73.928"} trend={activeArena?.current_round === 0 ? "STABLE" : "+100%"} positive icon={<DollarSign size={16}/>} />
                  <KpiRow label="Rating Oracle" value={activeArena?.current_round === 0 ? "AAA" : "AAA"} trend="Audit OK" positive icon={<ShieldCheck size={16}/>} />
-                 <KpiRow label="Market Share" value={`${advancedMetrics.market_share || 12.5}%`} trend="Target" positive icon={<TrendingUp size={16}/>} />
+                 <KpiRow label="Market Share" value={`${advancedMetrics?.market_share || 12.5}%`} trend="Target" positive icon={<TrendingUp size={16}/>} />
               </div>
            </div>
 
