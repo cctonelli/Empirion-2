@@ -1,8 +1,8 @@
 import React, { useLayoutEffect, useRef } from 'react';
 
 /**
- * Empire Cosmos Particles v9.0 (Bulletproof rendering)
- * Fixed: IndexSizeError on ctx.arc with NaN/Negative values
+ * Empire Cosmos Particles v9.0.2 (Bulletproof Oracle Build)
+ * Fixed: IndexSizeError on ctx.arc with NaN/Negative values during peak CPU.
  */
 const EmpireParticles: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,7 +59,7 @@ const EmpireParticles: React.FC = () => {
 
     let animationId: number;
     const animate = () => {
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.1)';
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.12)';
       ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
       particles.forEach(p => {
@@ -69,41 +69,45 @@ const EmpireParticles: React.FC = () => {
 
         if (dist < 400 && dist > 0) {
           const force = (400 - dist) / 400;
-          p.vx += (dx / dist) * force * 0.12;
-          p.vy += (dy / dist) * force * 0.12;
+          p.vx += (dx / dist) * force * 0.15;
+          p.vy += (dy / dist) * force * 0.15;
         }
 
-        p.vx *= 0.95;
-        p.vy *= 0.95;
+        p.vx *= 0.94;
+        p.vy *= 0.94;
         p.x += p.vx;
         p.y += p.vy;
-        p.pulse += 0.035;
+        p.pulse += 0.04;
 
         p.x = (p.x + window.innerWidth) % window.innerWidth;
         p.y = (p.y + window.innerHeight) % window.innerHeight;
 
-        // SANITIZAÇÃO V9.0 (Previne IndexSizeError)
-        const dynamicPulse = Math.sin(p.pulse) * 1.5;
+        // SANITIZAÇÃO V9.0.2 - FIDELITY PROTECT
+        const dynamicPulse = Math.sin(p.pulse) * 1.8;
         let calculatedSize = p.radius + dynamicPulse;
         
-        // Garante valor numérico válido e positivo
-        if (!isFinite(calculatedSize) || calculatedSize <= 0) {
-            calculatedSize = 1.0;
+        // Garante valor numérico válido, finito e positivo para o arc()
+        if (!Number.isFinite(calculatedSize) || calculatedSize <= 0.1) {
+            calculatedSize = 0.5;
         }
         const size = Math.abs(calculatedSize);
 
         try {
             ctx.beginPath();
-            ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+            // Prevenção extra para coordenadas NaN
+            const drawX = Number.isFinite(p.x) ? p.x : 0;
+            const drawY = Number.isFinite(p.y) ? p.y : 0;
+            
+            ctx.arc(drawX, drawY, size, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
             
             ctx.globalAlpha = dist < 250 ? 1.0 : 0.6;
-            ctx.shadowBlur = dist < 250 ? 35 : 15;
+            ctx.shadowBlur = dist < 250 ? 40 : 15;
             ctx.shadowColor = p.color;
             
             ctx.fill();
         } catch (err) {
-            // Skip failing frames
+            // Silencia erros de frame individual para manter o loop de animação estável
         }
         
         ctx.shadowBlur = 0;
@@ -125,7 +129,7 @@ const EmpireParticles: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[-1] bg-[#020617]"
+      className="fixed inset-0 pointer-events-none z-[-1] bg-[#020617] particle-canvas"
       aria-hidden="true"
     />
   );

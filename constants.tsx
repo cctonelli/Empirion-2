@@ -1,9 +1,9 @@
 import { Branch, ChampionshipTemplate, MacroIndicators, Championship } from './types';
 
-// VERSIONAMENTO OFICIAL EMPIRION - v12.8 ORACLE
-export const APP_VERSION = "v12.8.0-Stable";
+// VERSIONAMENTO OFICIAL EMPIRION - v12.8.2 ORACLE GOLD
+export const APP_VERSION = "v12.8.2-Gold";
 export const BUILD_DATE = "05/01/2026";
-export const PROTOCOL_NODE = "Node 08-ALPHA-TENANT";
+export const PROTOCOL_NODE = "Node 08-ALPHA-TENANT-STABLE";
 
 export const COLORS = {
   primary: '#020617',
@@ -93,7 +93,16 @@ export const MENU_STRUCTURE = [
     ]
   },
   { label: 'soluções', path: '#', sub: [
-    { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu' },
+    { 
+      id: 'sim', 
+      label: 'Simuladores', 
+      path: '/solutions/simulators', 
+      icon: 'Cpu',
+      sub: [
+        { id: 'sim-ind', label: 'Indústria 4.0', path: '/branches/industrial', icon: 'Zap' },
+        { id: 'sim-agro', label: 'Safra Oracle', path: '/branches/agribusiness', icon: 'Tractor' }
+      ]
+    },
     { id: 'otp', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy' }
   ]},
   { label: 'funcionalidades', path: '/features' },
