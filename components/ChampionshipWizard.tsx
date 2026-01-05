@@ -53,8 +53,9 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         ...prev,
         branch: selectedTemplate.branch,
         modalityType: selectedTemplate.config.modalityType || 'standard',
-        salesMode: selectedTemplate.config.salesMode || 'hybrid',
-        scenarioType: selectedTemplate.config.scenarioType || 'simulated',
+        // Fix: Changed property access to use underscored names matching the type definition
+        salesMode: selectedTemplate.config.sales_mode || 'hybrid',
+        scenarioType: selectedTemplate.config.scenario_type || 'simulated',
         transparency: selectedTemplate.config.transparencyLevel || 'medium',
         deadlineValue: selectedTemplate.config.deadlineValue || 7,
         deadlineUnit: selectedTemplate.config.deadlineUnit || 'days'

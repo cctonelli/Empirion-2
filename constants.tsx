@@ -58,8 +58,9 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     description: 'Balanço Inicial de $ 9.176.940. Foco em OEE e Ciclo Financeiro.',
     config: {
       roundFrequencyDays: 7,
-      salesMode: 'internal' as SalesMode,
-      scenarioType: 'simulated' as ScenarioType,
+      // Fix: Changed salesMode to sales_mode and scenarioType to scenario_type to match Partial<Championship>
+      sales_mode: 'internal' as SalesMode,
+      scenario_type: 'simulated' as ScenarioType,
       transparencyLevel: 'high' as TransparencyLevel,
       modalityType: 'standard' as ModalityType,
       deadlineValue: 7,

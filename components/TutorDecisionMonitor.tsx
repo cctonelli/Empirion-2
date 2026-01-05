@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -23,9 +24,10 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
     }));
   }, [teamsProjections]);
 
+  // Fix: Added missing 'E' color to map to satisfy CreditRating exhaustive mappings if needed
   const COLORS_MAP = {
     'AAA': '#10b981', 'AA': '#34d399', 'A': '#6ee7b7',
-    'B': '#fbbf24', 'C': '#f87171', 'D': '#b91c1c', 'N/A': '#334155'
+    'B': '#fbbf24', 'C': '#f87171', 'D': '#b91c1c', 'E': '#7c2d12', 'N/A': '#334155'
   };
 
   const chartOptions: any = {

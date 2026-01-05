@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
   Sparkles, Loader2, ShieldCheck, Newspaper, Cpu, 
   ChevronRight, RotateCcw, Shield, FileEdit, PenTool, 
-  Eye, Timer, Box
+  Eye, Timer, Box, AlertOctagon, HeartPulse, Gavel
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -14,7 +15,7 @@ import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { supabase, resetAlphaData, getChampionships, getUserProfile } from '../services/supabase';
-import { ScenarioType, MessageBoardItem, Branch, Championship, UserRole } from '../types';
+import { ScenarioType, MessageBoardItem, Branch, Championship, UserRole, CreditRating, InsolvencyStatus } from '../types';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
@@ -31,23 +32,24 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeamId, setActiveTeamId] = useState<string | null>(null);
   const [activeTeamName, setActiveTeamName] = useState<string | null>(null);
-  
-  const [messages] = useState<MessageBoardItem[]>([
-    { id: '1', sender: 'Coordenação Central', text: 'Início do Período 2. Abram a folha de decisões.', timestamp: '08:00', isImportant: true },
-    { id: '2', sender: 'Strategos AI', text: `Setor ${branch.toUpperCase()}: Analisem o reajuste de matérias-primas planejado.`, timestamp: '10:15' },
-  ]);
 
-  const isObserver = userRole === 'observer';
-
-  // Sincronização segura de métricas Oracle v12.8.2
+  // Sincronização segura de métricas Oracle v12.8.5
   const currentKpis = useMemo(() => {
     return activeArena?.kpis || {
       ciclos: { operacional: 60, financeiro: 35 },
-      scissors_effect: { ncg: 150000, gap: -50000 },
+      scissors_effect: { ncg: 150000, gap: -50000, is_critical: false },
       productivity: { oee: 84.2, csat: 9.1 },
-      market_share: 12.5
+      market_share: 12.5,
+      rating: 'AAA' as CreditRating,
+      insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
+      // Fix: Added missing banking property to fallback object to satisfy union type requirements
+      banking: { score: 100, rating: 'AAA' as CreditRating, interest_rate: 0.03, credit_limit: 5000000, can_borrow: true }
     };
   }, [activeArena]);
+
+  const isBankrupt = currentKpis.insolvency_status === 'BANKRUPT';
+  const isRJ = currentKpis.insolvency_status === 'RJ';
+  const isObserver = userRole === 'observer';
 
   useEffect(() => {
     const fetchArenaInfo = async () => {
@@ -111,13 +113,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     finally { setIsResetting(false); }
   };
 
-  const marketShareOptions: any = {
-    chart: { type: 'donut', background: 'transparent' },
-    stroke: { show: false },
-    colors: ['#f97316', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#14b8a6'],
-    labels: ['Sua Unidade', 'Unit 02', 'Unit 03', 'Unit 04', 'Unit 05', 'Unit 06', 'Unit 07', 'Unit 08'],
-    legend: { show: false },
-    plotOptions: { donut: { size: '75%', labels: { show: true, total: { show: true, label: 'SHARE', color: '#f97316' } } } }
+  const getStatusColor = (status: InsolvencyStatus) => {
+    switch(status) {
+      case 'BANKRUPT': return 'bg-slate-950 text-white border-white/20';
+      case 'RJ': return 'bg-orange-600 text-white border-orange-400';
+      case 'ALERTA': return 'bg-amber-500 text-slate-950 border-amber-300';
+      default: return 'bg-emerald-500 text-white border-emerald-400';
+    }
   };
 
   if (showBusinessPlan) {
@@ -155,43 +157,29 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-20 relative">
       
-      <AnimatePresence>
-         {showGazette && activeArena && (
-           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-10">
-              <motion.div 
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={() => setShowGazette(false)}
-                className="absolute inset-0 bg-slate-950/90 backdrop-blur-2xl"
-              />
-              <div className="w-full max-w-7xl relative z-10">
-                 <GazetteViewer 
-                    arena={activeArena} 
-                    aiNews={aiNews} 
-                    round={(activeArena?.current_round || 0) + 1} 
-                    userRole={userRole}
-                    onClose={() => setShowGazette(false)} 
-                 />
-              </div>
-           </div>
-         )}
-      </AnimatePresence>
-
-      {isAlphaUser && (
-        <div className="bg-orange-600 px-6 py-3 -mx-10 -mt-10 flex items-center justify-between shadow-2xl z-50">
-           <div className="flex items-center gap-4">
-              <div className="p-2 bg-white/20 rounded-lg"><Shield size={16} className="text-white" /></div>
+      {/* STATUS BANNER CRÍTICO */}
+      {isBankrupt && (
+        <div className="bg-slate-950 border-2 border-rose-600 p-8 rounded-[3rem] flex items-center justify-between shadow-2xl animate-pulse">
+           <div className="flex items-center gap-6">
+              <div className="p-4 bg-rose-600 text-white rounded-2xl"><AlertOctagon size={32} /></div>
               <div>
-                 <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Sandbox Mode Active</span>
-                 <p className="text-[8px] font-bold text-orange-200 uppercase tracking-[0.2em] mt-0.5">Sessão Temporária Oracle v12.8.2</p>
+                 <h2 className="text-3xl font-black uppercase text-white italic tracking-tighter">Nodo de Operação Falido</h2>
+                 <p className="text-rose-400 font-bold uppercase text-[10px] tracking-widest italic">O Oráculo bloqueou o acesso às decisões comerciais. Aguarde intervenção do Tutor.</p>
               </div>
            </div>
-           <button 
-             onClick={handleResetAlpha} 
-             disabled={isResetting || isObserver} 
-             className="px-4 py-2 bg-slate-950 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2"
-           >
-              {isResetting ? <Loader2 className="animate-spin" size={12}/> : <RotateCcw size={12} />} Limpar Engine
-           </button>
+           <HeartPulse className="text-rose-900" size={60} />
+        </div>
+      )}
+
+      {isRJ && (
+        <div className="bg-orange-600 p-8 rounded-[3rem] border border-orange-400 flex items-center justify-between shadow-2xl">
+           <div className="flex items-center gap-6">
+              <div className="p-4 bg-white text-orange-600 rounded-2xl"><Gavel size={32} /></div>
+              <div>
+                 <h2 className="text-3xl font-black uppercase text-white italic tracking-tighter">Recuperação Judicial Ativa</h2>
+                 <p className="text-orange-100 font-bold uppercase text-[10px] tracking-widest italic">Dívidas congeladas na SELIC. Investimentos em CAPEX suspensos pelo comitê.</p>
+              </div>
+           </div>
         </div>
       )}
 
@@ -204,12 +192,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">
               Arena <span className="text-orange-500">Dashboard</span>
             </h1>
-            {isObserver && (
-              <div className="ml-4 px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-full flex items-center gap-2">
-                 <Eye size={12} className="text-blue-400" />
-                 <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Observer Mode</span>
-              </div>
-            )}
+            <div className={`ml-4 px-4 py-1.5 border rounded-full flex items-center gap-2 ${getStatusColor(currentKpis.insolvency_status)}`}>
+               <span className="text-[9px] font-black uppercase tracking-widest">{currentKpis.insolvency_status}</span>
+            </div>
           </div>
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full border border-white/5">
              {activeArena?.name || 'Sincronizando Node...'} • {activeTeamName || 'Unidade Alpha'}
@@ -232,12 +217,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <ActionCard 
-                onClick={() => !isObserver && setShowDecisionForm(true)} 
+                onClick={() => !isObserver && !isBankrupt && setShowDecisionForm(true)} 
                 icon={<FileEdit size={28}/>}
                 title="Folha de Decisão"
-                subtitle={isObserver ? 'Acesso Restrito' : `Protocolo P0${(activeArena?.current_round || 0) + 1}`}
+                subtitle={isBankrupt ? 'BLOQUEADO: FALÊNCIA' : (isObserver ? 'Acesso Restrito' : `Protocolo P0${(activeArena?.current_round || 0) + 1}`)}
                 color="blue"
-                disabled={isObserver}
+                disabled={isObserver || isBankrupt}
              />
              <ActionCard 
                 onClick={() => !isObserver && setShowBusinessPlan(true)} 
@@ -258,34 +243,30 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <EfficiencyCard 
-               label="NCG (Capital de Giro)" 
+               label="NCG (Giro)" 
                val={`$ ${currentKpis?.scissors_effect?.ncg?.toLocaleString() || '0'}`} 
-               trend={currentKpis?.scissors_effect?.gap < 0 ? 'Optimal' : 'Gap Warning'} 
-               positive={currentKpis?.scissors_effect?.gap < 0}
+               trend={currentKpis?.scissors_effect?.is_critical ? 'Efeito Tesoura!' : 'Equilibrado'} 
+               positive={!currentKpis?.scissors_effect?.is_critical}
                icon={<Box size={20}/>}
              />
              <EfficiencyCard 
-               label="Ciclo Financeiro" 
-               val={`${currentKpis?.ciclos?.financeiro || '0'} dias`} 
-               trend="Stabilized" 
-               positive={true}
+               label="Crédito Disponível" 
+               // Fix: Added defensive checks for banking metrics access
+               val={`$ ${currentKpis?.banking?.credit_limit?.toLocaleString() || '0'}`} 
+               trend={`Juros: ${((currentKpis?.banking?.interest_rate ?? 0) * 100).toFixed(1)}%`} 
+               positive={currentKpis?.banking?.can_borrow ?? false}
                icon={<Timer size={20}/>}
              />
              <EfficiencyCard 
-               label={branch === 'industrial' ? "OEE Factory" : "CSAT Index"} 
-               val={branch === 'industrial' ? `${currentKpis?.productivity?.oee || '0'}%` : `${currentKpis?.productivity?.csat || '0'}/10`} 
-               trend={activeArena?.current_round === 0 ? "Initial" : "+1.2%"} 
-               positive={true}
-               icon={<Activity size={20}/>}
+               label="Rating de Risco" 
+               val={currentKpis.rating} 
+               trend={`Score: ${currentKpis?.banking?.score ?? 0}`} 
+               positive={(currentKpis?.banking?.score ?? 0) > 50}
+               icon={<ShieldCheck size={20}/>}
              />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="premium-card p-8 rounded-[3rem] bg-slate-900 border-white/5 flex flex-col items-center justify-center min-h-[300px] shadow-2xl">
-              <Chart options={marketShareOptions} series={[12.5, 12.5, 12.5, 12.5, 12.5, 12.5, 12.5, 12.5]} type="donut" width="100%" />
-            </div>
-
-            <div className="md:col-span-2 premium-card p-8 rounded-[3rem] bg-slate-900 border-white/5 flex flex-col justify-between relative overflow-hidden group shadow-2xl">
+          <div className="md:col-span-2 premium-card p-8 rounded-[3rem] bg-slate-900 border-white/5 flex flex-col justify-between relative overflow-hidden group shadow-2xl min-h-[300px]">
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform"><Cpu size={120} className="text-orange-500" /></div>
               <div className="relative z-10 space-y-6">
                  <div className="flex items-center gap-3">
@@ -301,7 +282,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                  )}
               </div>
             </div>
-          </div>
         </div>
 
         <div className="space-y-8">
@@ -311,20 +291,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </h3>
               <div className="space-y-10">
                  <KpiRow label="Lucro Líquido" value={activeArena?.current_round === 0 ? "$ 0" : "$ 73.928"} trend={activeArena?.current_round === 0 ? "STABLE" : "+100%"} positive icon={<DollarSign size={16}/>} />
-                 <KpiRow label="Rating Oracle" value={activeArena?.current_round === 0 ? "AAA" : "AAA"} trend="Verified" positive icon={<ShieldCheck size={16}/>} />
+                 <KpiRow label="Solvência" value={currentKpis.insolvency_status} trend="Real-time" positive={!isBankrupt} icon={<HeartPulse size={16}/>} />
                  <KpiRow label="Market Share" value={`${currentKpis?.market_share || 12.5}%`} trend="Target" positive icon={<TrendingUp size={16}/>} />
-              </div>
-           </div>
-
-           <div className="bg-slate-950 border border-white/5 p-10 rounded-[3rem] flex flex-col h-[400px] shadow-2xl">
-              <h3 className="text-lg font-black text-orange-500 uppercase italic mb-8">War Feed</h3>
-              <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
-                 {messages.map(m => (
-                   <div key={m.id} className={`p-5 rounded-3xl ${m.isImportant ? 'bg-orange-600/10 border border-orange-500/20' : 'bg-white/5 border border-white/5'}`}>
-                      <span className="text-[9px] font-black uppercase text-orange-500 block mb-2">{m.sender}</span>
-                      <p className="text-xs font-medium text-slate-200 leading-relaxed italic">{m.text}</p>
-                   </div>
-                 ))}
               </div>
            </div>
         </div>
@@ -336,13 +304,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 const ActionCard = ({ onClick, icon, title, subtitle, color, disabled }: any) => {
   const baseClasses = `p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px]`;
   const themeClasses = {
-    blue: disabled ? 'bg-slate-900/50 grayscale' : 'bg-blue-600 hover:bg-white',
-    indigo: disabled ? 'bg-slate-900/50 grayscale' : 'bg-indigo-600 hover:bg-white',
+    blue: disabled ? 'bg-slate-900/50 grayscale opacity-60' : 'bg-blue-600 hover:bg-white',
+    indigo: disabled ? 'bg-slate-900/50 grayscale opacity-60' : 'bg-indigo-600 hover:bg-white',
     orange: 'bg-slate-900 hover:bg-orange-600'
   }[color as 'blue' | 'indigo' | 'orange'];
 
   return (
-    <button onClick={onClick} className={`${baseClasses} ${themeClasses} ${disabled ? 'cursor-default' : ''}`}>
+    <button onClick={onClick} className={`${baseClasses} ${themeClasses} ${disabled ? 'cursor-not-allowed' : ''}`}>
        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-xl ${disabled ? 'bg-slate-800 text-slate-500' : 'bg-white text-slate-900 group-hover:scale-110'}`}>
           {icon}
        </div>

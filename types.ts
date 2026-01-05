@@ -1,7 +1,7 @@
 
 /**
- * EMPIRION V12.8.2 - PRODUCTION TYPES (Stabilized Oracle Node)
- * Strictly aligned with PostgreSQL constraints and Bernard Fidelity standards.
+ * EMPIRION V12.8.5 - PRODUCTION TYPES (ERPS GOLD Build)
+ * Advanced financial status and intervention mapping.
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -14,7 +14,9 @@ export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency';
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
-export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'N/A';
+// Fix: Added 'AA' and 'D' to CreditRating to align with monitoring logic and prevent type comparison errors
+export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'E' | 'N/A';
+export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 
 export interface Team {
   id: string;
@@ -24,7 +26,16 @@ export interface Team {
   invite_code?: string;
   master_key_enabled?: boolean;
   kpis?: KPIs;
+  insolvency_status?: InsolvencyStatus;
+  intervention_log?: InterventionEntry[];
   created_at?: string;
+}
+
+export interface InterventionEntry {
+  type: 'CAPITAL_INJECTION' | 'DEBT_FORGIVENESS' | 'RJ_SUSPENSION' | 'MANUAL_STATUS';
+  value?: number;
+  tutor_note: string;
+  timestamp: string;
 }
 
 export interface KPIs {
@@ -41,8 +52,16 @@ export interface KPIs {
     gap: number;
     is_critical: boolean;
   };
+  banking?: {
+    score: number;
+    rating: CreditRating;
+    interest_rate: number;
+    credit_limit: number;
+    can_borrow: boolean;
+  };
   market_share: number;
   rating: CreditRating;
+  insolvency_status: InsolvencyStatus;
   net_profit?: number;
   equity?: number;
   [key: string]: any;
@@ -55,7 +74,6 @@ export interface ProjectionResult {
   creditRating: CreditRating;
   health: FinancialHealth;
   kpis: KPIs;
-  // Fix: Added missing marketShare property
   marketShare?: number;
   statements: {
     dre: any;
@@ -103,7 +121,6 @@ export interface TeamProgress {
   team_name: string;
   status: string;
   rating: CreditRating;
-  // Fix: Added missing properties for monitoring
   master_key_enabled?: boolean;
   risk?: number;
   insolvent?: boolean;
@@ -133,7 +150,6 @@ export interface Championship {
   scenario_type: ScenarioType;
   currency: CurrencyType;
   transparency_level: TransparencyLevel;
-  // Fix: Added missing properties
   ecosystemConfig?: EcosystemConfig;
   round_frequency_days?: number;
 }
@@ -153,14 +169,12 @@ export interface AccountNode {
   label: string;
   value: number;
   type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'expense' | 'revenue';
-  // Fix: Added missing properties for editor
   isEditable?: boolean;
   isReadOnly?: boolean;
   isTemplateAccount?: boolean;
   children?: AccountNode[];
 }
 
-// Fix: Added missing exported members
 export interface ChampionshipTemplate {
   id: string;
   name: string;
