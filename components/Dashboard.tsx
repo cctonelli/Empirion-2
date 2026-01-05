@@ -21,7 +21,7 @@ import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship, U
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
-  const [gazetaNews, setGazetaNews] = useState<string>('');
+  const [gazetaNews, setAiNews] = useState<string>('');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
   const [scenarioType, setScenarioType] = useState<ScenarioType>('simulated');
   const [isAlphaUser, setIsAlphaUser] = useState(false);
@@ -78,7 +78,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           })
         ]);
         setAiInsight(analysis);
-        setGazetaNews(news);
+        setAiNews(news);
       } catch (err) {
         setAiInsight("Aguardando sincronização neural...");
       } finally {
@@ -183,7 +183,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </div>
            </div>
            <div className="flex items-center gap-3">
-              <button onClick={handleResetAlpha} disabled={isResetting || isObserver} className="px-4 py-2 bg-slate-950 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all flex items-center gap-2 disabled:opacity-50">
+              <button 
+                onClick={handleResetAlpha} 
+                disabled={isResetting || isObserver} 
+                className={`px-4 py-2 bg-slate-950 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all flex items-center gap-2 disabled:opacity-50`}
+              >
                  {isResetting ? <Loader2 className="animate-spin" size={12}/> : <RotateCcw size={12} />} Limpar Decisões
               </button>
            </div>
@@ -228,11 +232,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <button 
                 onClick={() => !isObserver && setShowDecisionForm(true)}
-                disabled={isObserver}
-                className={`p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px] ${isObserver ? 'bg-slate-900/50 cursor-not-allowed grayscale' : 'bg-blue-600 hover:bg-white'}`}
+                className={`p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px] ${isObserver ? 'bg-slate-900/50 cursor-default grayscale' : 'bg-blue-600 hover:bg-white'}`}
              >
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isObserver ? 'bg-slate-800 text-slate-500' : 'bg-white text-blue-600 group-hover:bg-blue-600 group-hover:text-white'}`}>
-                   {/* Fix: Lock icon imported from lucide-react */}
                    {isObserver ? <Lock size={28} /> : <FileEdit size={28} />}
                 </div>
                 <div className="text-left">
@@ -245,11 +247,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
              <button 
                 onClick={() => !isObserver && setShowBusinessPlan(true)}
-                disabled={isObserver}
-                className={`p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px] ${isObserver ? 'bg-slate-900/50 cursor-not-allowed grayscale' : 'bg-indigo-600 hover:bg-white'}`}
+                className={`p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px] ${isObserver ? 'bg-slate-900/50 cursor-default grayscale' : 'bg-indigo-600 hover:bg-white'}`}
              >
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isObserver ? 'bg-slate-800 text-slate-500' : 'bg-white text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white'}`}>
-                   {/* Fix: Lock icon imported from lucide-react */}
                    {isObserver ? <Lock size={28} /> : <PenTool size={28} />}
                 </div>
                 <div className="text-left">

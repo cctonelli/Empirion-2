@@ -8,7 +8,6 @@ const sanitize = (val: any, fallback: number = 0): number => {
 
 /**
  * Motor Industrial Empirion v8.0 - Full Fidelity Engine
- * FIDELITY: Garante paridade absoluta legado ($ 73.928) no Round 0.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -18,8 +17,8 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // BLOQUEIO ROUND 0: Garante paridade absoluta legado ($ 73.928 / $ 9.176.940)
-  if (isRoundZero || (previousState === undefined && !decisions.hr?.hired && !decisions.finance?.loanRequest)) {
+  // BLOQUEIO ROUND 0: Garante paridade absoluta legado ($ 73.928)
+  if (isRoundZero) {
     return {
       revenue: 3322735,
       ebitda: 1044555,
@@ -62,7 +61,13 @@ export const calculateProjections = (
   const regions = Object.values(decisions.regions || {});
   const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price), 0) / regions.length : 372;
   const totalMarketing = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.marketing), 0) : 0;
-  const termEffect = regions.length > 0 ? regions.reduce((acc, r) => acc + (r.term === 1 ? 1.08 : r.term === 0 ? 0.98 : 1.0), 0) / regions.length : 1.0;
+  
+  // Efeito do Prazo Médio de Recebimento (PMRV)
+  const avgTerm = regions.length > 0 
+    ? regions.reduce((acc, r) => acc + (r.term === 1 ? 60 : r.term === 2 ? 30 : 0), 0) / regions.length 
+    : 0;
+  
+  const termEffect = 1 + (avgTerm / 300); // Prazos maiores aumentam ligeiramente a demanda
   
   const marketPotential = (indicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1);
   const baseSales = marketPotential * termEffect * (1 + (totalMarketing / 1200));
@@ -85,8 +90,8 @@ export const calculateProjections = (
   const ebitda = revenue - cpv - fixedCosts;
   const netProfit = ebitda * 0.85;
 
-  // Advanced Calculation
-  const adv = calculateAdvanced(revenue, cpv, ebitda, netProfit, inheritedReceivables, inheritedPayables, currentCash);
+  // Advanced Indicators Logic
+  const adv = calculateAdvanced(revenue, cpv, ebitda, netProfit, inheritedReceivables, inheritedPayables, currentCash, decisions);
 
   return {
     revenue, ebitda, netProfit, salesVolume,
@@ -99,8 +104,24 @@ export const calculateProjections = (
   };
 };
 
-const calculateAdvanced = (rev: number, cpv: number, ebitda: number, net: number, rec: number, pay: number, cash: number): AdvancedIndicators => {
+const calculateAdvanced = (
+  rev: number, 
+  cpv: number, 
+  ebitda: number, 
+  net: number, 
+  rec: number, 
+  pay: number, 
+  cash: number,
+  decisions: DecisionData
+): AdvancedIndicators => {
   const dailySales = rev / 30 || 1;
+  const dailyCPV = cpv / 30 || 1;
+  
+  // Prazos Médios (Bernard Standard)
+  const pmrv = rec / dailySales || 45;
+  const pmre = 1466605 / dailyCPV || 60; // Baseado no estoque inicial MP
+  const pmpc = pay / dailyCPV || 45;
+
   return {
     nldcg_days: (rec + 1466605 - pay) / dailySales,
     nldcg_components: {
@@ -111,23 +132,24 @@ const calculateAdvanced = (rev: number, cpv: number, ebitda: number, net: number
       other_payables: 31528
     },
     trit: (net / 9176940) * 100,
-    insolvency_index: 2.19, // Formula Kanitz simplified
+    insolvency_index: 2.19, 
     prazos: {
-      pmre: 58, pmrv: 49, pmpc: 46, pmdo: 69, pmmp: 96
+      pmre, pmrv, pmpc, pmdo: 69, pmmp: 96
     },
     ciclos: {
-      operacional: 107,
-      financeiro: -7,
-      economico: 62
+      operacional: pmre + pmrv,
+      financeiro: (pmre + pmrv) - pmpc,
+      economico: pmre
     },
     fontes_financiamento: {
-      ecp: 2241288,
-      ccp: -831153,
+      ecp: rec + 417553,
+      ccp: net - 905000,
       elp: 1500000
     },
     scissors_effect: {
-      ncg: 2541209,
-      available_capital: 668847, gap: -1890843
+      ncg: rec + 717474,
+      available_capital: cash + 500000,
+      gap: (cash + 500000) - (rec + 717474)
     }
   };
 };

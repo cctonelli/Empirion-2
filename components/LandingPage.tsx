@@ -143,12 +143,25 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </Slider>
       </section>
 
-      {/* HERO PRINCIPAL COM NUVENS LARANJA (SEBRAE STYLE) */}
-      <section className="py-40 px-6 md:px-24 text-center relative z-20">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-[-1] overflow-hidden">
-           <div className="w-[1200px] h-[1200px] bg-orange-600/20 blur-[180px] rounded-full absolute -top-1/4 -left-1/4 animate-pulse duration-[8s]"></div>
-           <div className="w-[1000px] h-[1000px] bg-orange-500/10 blur-[160px] rounded-full absolute -bottom-1/4 -right-1/4 animate-pulse duration-[10s] [animation-delay:2s]"></div>
-           <div className="w-[800px] h-[800px] bg-orange-700/15 blur-[200px] rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse duration-[12s] [animation-delay:4s]"></div>
+      {/* HERO PRINCIPAL COM NUVENS LARANJA (SEBRAE STYLE - WOW) */}
+      <section className="py-40 px-6 md:px-24 text-center relative z-20 overflow-hidden">
+        {/* MULTI-LAYER DRIFTING CLOUDS */}
+        <div className="absolute inset-0 pointer-events-none z-[-1]">
+           <motion.div 
+             animate={{ x: [-100, 100, -100], y: [-50, 50, -50], scale: [1, 1.2, 1] }}
+             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+             className="w-[1400px] h-[1400px] bg-orange-600/20 blur-[200px] rounded-full absolute -top-1/2 -left-1/4"
+           />
+           <motion.div 
+             animate={{ x: [100, -100, 100], y: [50, -50, 50], scale: [1.1, 0.9, 1.1] }}
+             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+             className="w-[1200px] h-[1200px] bg-orange-500/15 blur-[180px] rounded-full absolute -bottom-1/2 -right-1/4"
+           />
+           <motion.div 
+             animate={{ opacity: [0.3, 0.6, 0.3] }}
+             transition={{ duration: 8, repeat: Infinity }}
+             className="w-[1000px] h-[1000px] bg-orange-700/10 blur-[220px] rounded-full absolute top-1/4 left-1/4"
+           />
         </div>
 
         <motion.div initial={{ opacity: 0, y: 60 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-6xl mx-auto space-y-16">
