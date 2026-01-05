@@ -134,7 +134,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                         {team.status === 'sealed' ? <CheckCircle2 size={20}/> : team.status === 'draft' ? <Activity size={20}/> : <Monitor size={20}/>}
                      </div>
                      <div className="text-right">
-                        <span className={`block text-[10px] font-black uppercase tracking-widest ${team.insolvent ? 'text-rose-600' : 'text-slate-400'}`}>{team.rating}</span>
+                        <span className={`block text-[10px] font-black uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`}>{team.rating}</span>
                         <div className={`w-12 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden`}>
                            <div className={`h-full ${team.risk! > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${team.risk}%` }} />
                         </div>
@@ -160,8 +160,8 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                      </div>
                      <div className="text-right">
                         <span className="block text-[9px] font-black text-slate-500 uppercase mb-2">Insolvency Status</span>
-                        <div className={`text-6xl font-black italic font-mono ${selectedTeam.insolvent ? 'text-rose-500 animate-pulse' : 'text-emerald-500'}`}>
-                           {selectedTeam.insolvent ? 'BROKE' : 'STABLE'}
+                        <div className={`text-6xl font-black italic font-mono ${selectedTeam.rating === 'D' ? 'text-rose-500 animate-pulse' : 'text-emerald-500'}`}>
+                           {selectedTeam.rating === 'D' ? 'BROKE' : 'STABLE'}
                         </div>
                      </div>
                   </header>

@@ -3,13 +3,12 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicat
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
-  // Permite números negativos para suportar prejuízos e dívidas
+  // Agora permite números negativos para suportar prejuízos reais no motor.
   return isFinite(num) ? num : fallback;
 };
 
 /**
- * Motor Industrial Empirion v12.0 - Oracle Integrity Kernel
- * Refinado para suportar prejuízos reais e mapeamento flexível de indicadores.
+ * Motor Industrial Empirion v12.1 - Oracle Integrity Kernel (Vercel Build Stability)
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -19,10 +18,9 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // Mapeamento Robusto: DB (snake_case) vs Engine (CamelCase)
-  // Casting para 'any' silencia o Vercel Build em acessos dinâmicos
+  // Mapeamento Dinâmico Robusto
   const getAttr = (camel: string, snake: string, fallback: any) => {
-    const data = indicators as any;
+    const data = indicators as any; // Bypass TS strictness for dynamic DB mapping
     if (data?.[snake] !== undefined) return data[snake];
     if (data?.[camel] !== undefined) return data[camel];
     return fallback;
@@ -78,9 +76,17 @@ export const calculateProjections = (
 
   // 2. Oracle Risk Core
   const totalDebt = prevDebt + decisions.finance.loanRequest;
-  const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
   const debtToEquity = totalDebt / Math.max(prevEquity, 1);
-  const rating: CreditRating = debtToEquity > 1.8 ? 'C' : debtToEquity > 1.2 ? 'B' : debtToEquity > 0.6 ? 'A' : 'AAA';
+  const is_bankrupt = prevEquity < 0;
+
+  // Lógica de Rating Expandida (A/B/C/D)
+  const rating: CreditRating = 
+    is_bankrupt ? 'D' : 
+    debtToEquity > 2.5 ? 'D' : 
+    debtToEquity > 1.8 ? 'C' : 
+    debtToEquity > 1.2 ? 'B' : 'A';
+  
+  const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
   
   // 3. Comercial & Demanda
   const regions = Object.values(decisions.regions || {});
@@ -129,24 +135,14 @@ export const calculateProjections = (
   const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
   // 6. Auditoria de Desembolso
-  const mktOutflow = totalMarketingCost;
   const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
-  
   const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
-  const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + mktOutflow + distributionTotal + adminExpenses;
+  const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + distributionTotal + adminExpenses;
   const finalCash = prevCash + cashInflow + decisions.finance.loanRequest - totalOutflow - decisions.finance.application;
   
   const finalAssets = finalCash + (revenue * 0.6) + (prevAssets * 0.99);
   const finalEquity = prevEquity + netProfit;
   const debtRatio = ((finalAssets - finalEquity) / Math.max(finalAssets, 1)) * 100;
-
-  const costBreakdown = [
-    { name: 'Matéria-Prima (Imediato)', total: mpOutflow, impact: mpOutflow > 0 ? 'Saída Direta' : 'Prazo Fornecedor' },
-    { name: 'Marketing Exponencial', total: mktOutflow, impact: 'Consumo Imediato de Caixa' },
-    { name: 'Folha Salarial & Admin', total: payrollTotal + adminExpenses, impact: 'Custos Fixos Inflacionados' },
-    { name: 'Distribuição & Logística', total: distributionTotal, impact: 'Variável por Unidade' },
-    { name: 'Juros de Empréstimo', total: interestExp, impact: 'Custo do Capital' }
-  ];
 
   return {
     revenue, ebitda, netProfit, salesVolume, totalMarketingCost, debtRatio, totalOutflow,
@@ -162,9 +158,14 @@ export const calculateProjections = (
         is_bankrupt: finalEquity < 0 
     },
     suggestRecovery: debtRatio > 60,
-    capexBlocked: rating === 'C',
+    capexBlocked: rating === 'C' || rating === 'D',
     activeEvent: event,
-    costBreakdown,
+    costBreakdown: [
+      { name: 'Matéria-Prima', total: mpOutflow, impact: 'Desembolso Imediato' },
+      { name: 'Marketing Exponencial', total: totalMarketingCost, impact: 'Burn Rate Vendas' },
+      { name: 'Folha & Admin', total: payrollTotal + adminExpenses, impact: 'Custo Fixo Inflacionado' },
+      { name: 'Serviço da Dívida', total: interestExp, impact: 'Juros Acumulados' }
+    ],
     totalLiquidity: prevCash + cashInflow + decisions.finance.loanRequest,
     statements: {
         dre: { revenue, cpv, ebitda, net_profit: netProfit },
