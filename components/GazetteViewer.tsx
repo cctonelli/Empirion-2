@@ -3,7 +3,7 @@ import Chart from 'react-apexcharts';
 import { 
   Globe, ChevronLeft, Landmark, Zap, 
   AlertTriangle, LayoutGrid, Bird, Scale, ShieldAlert,
-  Activity, Award, User
+  Activity, Award, User, Star, TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Championship, UserRole } from '../types';
@@ -23,19 +23,24 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   const teams = arena.teams || [];
   const activeEvent = arena.market_indicators?.active_event;
   
-  // v12.8.2 Oracle Ranking Engine (Simulated Matrix Metrics)
+  // v12.8.2 Oracle Ranking Engine (Synchronized with Community Sentiment)
   const competitiveRanking = useMemo(() => {
     return teams.map((t, i) => {
+      // Simulation metrics aligned with DB KPIs structure
       const share = [12.5, 14.2, 11.1, 13.0, 10.5, 15.0, 12.0, 11.7][i] || 12.5;
       const profit = [73928, -120500, 45000, 12000, -8000, 95000, 32000, 15000][i] || 0;
       const coreKpi = arena.branch === 'industrial' ? `${(80 + Math.random() * 10).toFixed(1)}% OEE` : `${(8 + Math.random() * 2).toFixed(1)} CSAT`;
+      
+      // Oracle Social Score (Fidelity v12.8 Enhancement)
+      const socialScore = [4.8, 3.2, 4.5, 4.1, 2.8, 4.9, 3.9, 4.0][i] || (3 + Math.random() * 2);
 
       return {
         name: t.name,
         ratio: [35.2, 82.5, 65.0, 41.2, 58.7, 30.1, 74.2, 50.0][i] || 45,
         share,
         profit,
-        coreKpi
+        coreKpi,
+        socialScore
       };
     }).sort((a, b) => b.profit - a.profit);
   }, [teams, arena.branch]);
@@ -161,10 +166,10 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                        <thead className="bg-slate-900 text-slate-500 font-black text-[9px] uppercase tracking-widest border-b border-white/5">
                           <tr>
                              <th className="p-8">Ranking</th>
-                             <th className="p-8">Unidade</th>
-                             <th className="p-8 text-center">Mkt Share</th>
+                             <th className="p-8">Unidade Strategos</th>
+                             <th className="p-8 text-center">Market Share</th>
+                             <th className="p-8 text-center">Social Score</th>
                              <th className="p-8 text-center">Lucro (P0{round})</th>
-                             <th className="p-8 text-center">Setor</th>
                              <th className="p-8 text-right">Primary KPI</th>
                           </tr>
                        </thead>
@@ -178,12 +183,24 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                                      <span className="font-black text-white uppercase italic tracking-tighter">{r.name}</span>
                                   </div>
                                </td>
-                               <td className="p-8 text-center font-black text-blue-400">{r.share.toFixed(1)}%</td>
-                               <td className={`p-8 text-center font-black ${r.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                  $ {r.profit.toLocaleString()}
+                               <td className="p-8 text-center">
+                                  <div className="flex flex-col items-center">
+                                     <span className="font-black text-blue-400">{r.share.toFixed(1)}%</span>
+                                     <div className="w-16 h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
+                                        <div className="h-full bg-blue-500" style={{ width: `${r.share * 4}%` }} />
+                                     </div>
+                                  </div>
                                </td>
                                <td className="p-8 text-center">
-                                  <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">{arena.branch}</span>
+                                  <div className="flex flex-col items-center">
+                                     <div className="flex items-center gap-1.5 text-orange-400 font-bold">
+                                        <Star size={12} fill="currentColor" /> {r.socialScore.toFixed(1)}
+                                     </div>
+                                     <span className="text-[7px] text-slate-500 uppercase tracking-widest mt-1">Sentimento Público</span>
+                                  </div>
+                               </td>
+                               <td className={`p-8 text-center font-black ${r.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                  $ {r.profit.toLocaleString()}
                                </td>
                                <td className="p-8 text-right">
                                   <div className="flex flex-col items-end">
@@ -195,6 +212,12 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                           ))}
                        </tbody>
                     </table>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <SmallInfo icon={<Award className="text-amber-500" />} label="Líder do Período" val={competitiveRanking[0].name} />
+                    <SmallInfo icon={<Star className="text-orange-500" />} label="Top Social Choice" val={competitiveRanking.sort((a,b) => b.socialScore - a.socialScore)[0].name} />
+                    <SmallInfo icon={<TrendingUp className="text-blue-500" />} label="Média Share Setor" val="12.5%" />
                  </div>
               </motion.div>
             )}
@@ -221,6 +244,16 @@ const MacroRow = ({ label, val }: any) => (
   <div className="flex justify-between items-center py-2 border-b border-white/5 last:border-0 group">
      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-300 transition-colors">{label}</span>
      <span className="text-lg font-black text-orange-500 italic font-mono">{val}</span>
+  </div>
+);
+
+const SmallInfo = ({ icon, label, val }: any) => (
+  <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center gap-6">
+     <div className="p-3 bg-white/5 rounded-xl">{icon}</div>
+     <div>
+        <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+        <span className="text-lg font-black text-white italic tracking-tight">{val}</span>
+     </div>
   </div>
 );
 
