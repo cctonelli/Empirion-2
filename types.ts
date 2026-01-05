@@ -1,16 +1,16 @@
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
 export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
-export type SalesMode = 'internal' | 'external' | 'hybrid';
-export type ScenarioType = 'simulated' | 'real';
+export type SalesMode = 'internal' | 'external' | 'hybrid' | string;
+export type ScenarioType = 'simulated' | 'real' | string;
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
-export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
+export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full' | string;
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
-export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
-export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
+export type CurrencyType = 'BRL' | 'BRL' | 'USD' | 'EUR' | 'GBP';
+export type DeadlineUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
-
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'N/A';
+export type DiscreteTerm = 0 | 1 | 2;
 
 export interface AuditLog {
   field_path: string;
@@ -21,20 +21,17 @@ export interface AuditLog {
   impact_on_cash?: number;
 }
 
-/**
- * TeamProgress: Interface vital para o Monitor do Tutor.
- * Agrega dados de status, saúde financeira (Rating) e histórico de auditoria.
- */
-export interface TeamProgress {
-  team_id: string;
-  team_name: string;
-  status: 'pending' | 'draft' | 'sealed' | string;
-  last_update?: string;
-  rating: CreditRating;
-  risk: number;
-  insolvent: boolean;
-  master_key_enabled?: boolean;
-  auditLogs: AuditLog[];
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
+    cost_multiplier?: number;
+  };
 }
 
 export interface FinancialHealth {
@@ -42,6 +39,7 @@ export interface FinancialHealth {
   insolvency_risk: number;
   is_bankrupt: boolean;
   liquidity_ratio?: number;
+  debt_to_equity?: number;
   insolvency_deficit?: number;
 }
 
@@ -53,9 +51,8 @@ export interface ProjectionResult {
   totalOutflow: number;
   totalLiquidity: number;
   health: FinancialHealth;
-  costBreakdown?: any[];
+  costBreakdown?: { name: string; total: number; impact: string }[];
   marketShare?: number;
-  // Fixed: Added statements property to support turnover engine and persistence
   statements?: {
     dre: any;
     balance_sheet: any;
@@ -66,9 +63,26 @@ export interface ProjectionResult {
 
 export interface DecisionData {
   regions: Record<number, { price: number; term: number; marketing: number }>;
-  hr: { hired: number; fired: number; salary: number; trainingPercent: number; participationPercent: number; sales_staff_count: number };
-  production: { purchaseMPA: number; purchaseMPB: number; paymentType: number; activityLevel: number; rd_investment: number };
-  finance: { loanRequest: number; application: number; buyMachines: { alfa: number; beta: number; gama: number } };
+  hr: { 
+    hired: number; 
+    fired: number; 
+    salary: number; 
+    trainingPercent: number; 
+    participationPercent: number; 
+    sales_staff_count: number 
+  };
+  production: { 
+    purchaseMPA: number; 
+    purchaseMPB: number; 
+    paymentType: number; 
+    activityLevel: number; 
+    rd_investment: number 
+  };
+  finance: { 
+    loanRequest: number; 
+    application: number; 
+    buyMachines: { alfa: number; beta: number; gama: number } 
+  };
   legal: { recovery_mode: RecoveryMode };
 }
 
@@ -88,12 +102,12 @@ export interface MacroIndicators {
   sectorAvgSalary: number;
   stockMarketPrice: number;
   initialExchangeRateUSD: number;
-  active_event?: any;
-  // Fixed: Added difficulty property for saltiness controls used in TutorArenaControl
+  active_event?: BlackSwanEvent | null;
   difficulty?: {
     price_sensitivity: number;
     marketing_effectiveness: number;
   };
+  [key: string]: any;
 }
 
 export interface EcosystemConfig {
@@ -114,6 +128,18 @@ export interface Team {
   master_key_enabled?: boolean;
 }
 
+export interface TeamProgress {
+  team_id: string;
+  team_name: string;
+  status: 'pending' | 'draft' | 'sealed' | string;
+  last_update?: string;
+  rating: CreditRating;
+  risk: number;
+  insolvent: boolean;
+  master_key_enabled?: boolean;
+  auditLogs: AuditLog[];
+}
+
 export interface Championship {
   id: string;
   name: string;
@@ -125,6 +151,7 @@ export interface Championship {
   deadline_value: number;
   deadline_unit: DeadlineUnit;
   is_public?: boolean;
+  master_key_enabled?: boolean;
   config: any;
   market_indicators: MacroIndicators;
   initial_financials?: any;
@@ -161,7 +188,6 @@ export interface AccountNode {
   children?: AccountNode[];
 }
 
-// Fixed: Added missing interfaces imported across various components
 export interface ChampionshipTemplate {
   id: string;
   name: string;
@@ -181,18 +207,6 @@ export interface ChampionshipTemplate {
   initial_financials: {
     balance_sheet: AccountNode[];
     dre: AccountNode[];
-  };
-}
-
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
   };
 }
 
