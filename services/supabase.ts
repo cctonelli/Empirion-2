@@ -17,14 +17,14 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
 /**
- * ORACLE TURNOVER ENGINE v11.2 (Atomic & Traceable)
+ * ORACLE TURNOVER ENGINE v11.2.1 (Schema Aligned)
  * Processes all strategy nodes for an arena period with error isolation.
+ * Metrics from 'advanced_indicators' are merged into 'kpis' to match DB schema.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
-  console.log(`[TURNOVER v11.2] Initiating: Arena ${championshipId} | R${currentRound}`);
+  console.log(`[TURNOVER v11.2.1] Initiating: Arena ${championshipId} | R${currentRound}`);
 
   try {
-    // 1. DATA GATHERING (Fail-Fast Validation)
     const { data: arena } = await supabase.from('championships').select('*').eq('id', championshipId).single();
     if (!arena) throw new Error("Oracle Node: Arena synchronization lost.");
 
@@ -34,7 +34,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
     const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', currentRound + 1);
     const { data: previousStates } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', currentRound);
 
-    // 2. LOGICAL ISOLATION (Memory Process)
     const batchResults = teams.map(team => {
       try {
         const teamDecision = decisions?.find(d => d.team_id === team.id)?.data || {
@@ -55,6 +54,12 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           teamPrevState
         );
 
+        // SCHEMA ALIGNMENT: Merge advanced indicators into kpis object since DB column is missing
+        const mergedKpis = {
+          ...(result.statements?.kpis || {}),
+          advanced: result.advanced
+        };
+
         return {
           team_id: team.id,
           championship_id: championshipId,
@@ -63,8 +68,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           dre: result.statements?.dre,
           balance_sheet: result.statements?.balance_sheet,
           cash_flow: result.statements?.cash_flow,
-          kpis: result.statements?.kpis,
-          advanced_indicators: result.advanced
+          kpis: mergedKpis
         };
       } catch (e: any) {
         console.error(`[TEAM ERROR] Unit ${team.id} processing failure:`, e.message);
@@ -76,20 +80,19 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       throw new Error("Total Process Failure: No units could be validated.");
     }
 
-    // 3. ATOMIC PERSISTENCE
     const { error: insErr } = await supabase.from('companies').insert(batchResults);
     if (insErr) throw insErr;
 
     const { error: updErr } = await supabase.from('championships').update({ 
       current_round: currentRound + 1,
-      last_turnover_at: new Date().toISOString() 
+      updated_at: new Date().toISOString() 
     }).eq('id', championshipId);
     
     if (updErr) throw updErr;
 
     return { success: true };
   } catch (err: any) {
-    console.error("[CRITICAL TURNOVER FAILURE]:", { message: err.message, context: { championshipId, currentRound } });
+    console.error("[CRITICAL TURNOVER FAILURE]:", { message: err.message });
     return { success: false, error: err.message };
   }
 };
@@ -101,7 +104,16 @@ export const submitCommunityVote = async (vote: {
   scores: Record<string, number>;
   comment?: string;
 }) => {
-  return await supabase.from('community_votes').insert([vote]);
+  // Mapping scores to community_ratings format from schema
+  const ratingsToInsert = Object.entries(vote.scores).map(([criteria, score]) => ({
+    championship_id: vote.championship_id,
+    round: vote.round,
+    user_id: null, // Should be fetched from auth if needed
+    criteria,
+    score,
+    comment: vote.comment
+  }));
+  return await supabase.from('community_ratings').insert(ratingsToInsert);
 };
 
 export const getChampionshipHistoricalData = async (championshipId: string, round: number) => {
@@ -119,7 +131,7 @@ export const getChampionshipHistoricalData = async (championshipId: string, roun
       net_profit: item.dre?.net_profit || 0,
       asset: item.balance_sheet?.assets?.total || 9176940,
       share: item.kpis?.market_share || 12.5,
-      advanced: item.advanced_indicators
+      advanced: item.kpis?.advanced || {}
     })), 
     error: null 
   };
@@ -195,14 +207,16 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         currency: champData.currency,
         transparency_level: champData.transparency_level
       },
-      initial_financials: champData.initial_financials,
-      market_indicators: champData.market_indicators || DEFAULT_MACRO
+      initial_financials: champData.initial_financials || {},
+      products: champData.config?.products || {},
+      market_indicators: champData.market_indicators || DEFAULT_MACRO,
+      sales_mode: champData.sales_mode || 'hybrid',
+      scenario_type: champData.scenario_type || 'simulated'
     };
 
     if (!isTrial) {
       payload.is_public = champData.is_public || false;
       payload.tutor_id = session?.user?.id;
-      payload.round_started_at = now;
     }
 
     const { data: champ, error: cErr } = await supabase
@@ -288,7 +302,13 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, isTrialParam: boolean = false) => {
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
-  return await supabase.from(table).upsert({ team_id: teamId, championship_id: champId, round, data: decisions }); 
+  return await supabase.from(table).upsert({ 
+    team_id: teamId, 
+    championship_id: champId, 
+    round, 
+    data: decisions,
+    status: 'sealed' 
+  }); 
 };
 
 export const resetAlphaData = async () => {
@@ -311,7 +331,11 @@ export const getPublicReports = async (championshipId: string, round: number) =>
       team_id: item.team_id,
       alias: item.team_name,
       kpis: item.kpis,
-      statements: item.statements
+      statements: {
+        dre: item.dre,
+        balance_sheet: item.balance_sheet,
+        cash_flow: item.cash_flow
+      }
     })),
     error: null
   };
@@ -319,7 +343,13 @@ export const getPublicReports = async (championshipId: string, round: number) =>
 
 export const fetchPageContent = async (slug: string, lang: string) => {
   try {
-    const { data } = await supabase.from('page_content').select('content').eq('slug', slug).eq('lang', lang).maybeSingle();
+    // SCHEMA ALIGNMENT: Using 'site_content' table with 'page_slug' and 'locale' columns
+    const { data } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('page_slug', slug)
+      .eq('locale', lang)
+      .maybeSingle();
     return data?.content || null;
   } catch (e) { return null; }
 };
