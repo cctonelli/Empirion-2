@@ -66,7 +66,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
     const fetchIntelligence = async () => {
       try {
-        const [analysis, news] = await Promise.all([
+        const [analysis, newsContent] = await Promise.all([
           generateMarketAnalysis(activeArena?.name || 'Arena Empirion Supremo', 1, branch, scenarioType),
           generateGazetaNews({ 
             period: (activeArena?.current_round || 0) + 1, 
@@ -77,7 +77,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           })
         ]);
         setAiInsight(analysis);
-        setAiNews(news);
+        setAiNews(newsContent);
       } catch (err) {
         setAiInsight("Aguardando sincronização neural...");
       } finally {
@@ -162,7 +162,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               <div className="w-full max-w-7xl relative z-10">
                  <GazetteViewer 
                     arena={activeArena} 
-                    news={aiNews} 
+                    aiNews={aiNews} 
                     round={(activeArena?.current_round || 0) + 1} 
                     userRole={userRole}
                     onClose={() => setShowGazette(false)} 

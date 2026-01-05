@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   Newspaper, Globe, Package, Table, History, Shield, 
@@ -12,7 +11,7 @@ import Chart from 'react-apexcharts';
 
 interface GazetteViewerProps {
   arena: Championship;
-  news: string;
+  aiNews: string;
   round: number;
   userRole?: UserRole;
   onClose: () => void;
@@ -20,7 +19,7 @@ interface GazetteViewerProps {
 
 type GazetteTab = 'macro' | 'suppliers' | 'cycles' | 'capital' | 'benchmarking' | 'tutor';
 
-const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, news, round, userRole = 'player', onClose }) => {
+const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, userRole = 'player', onClose }) => {
   const [activeTab, setActiveTab] = useState<GazetteTab>('macro');
   const macro = arena.market_indicators;
   
@@ -88,8 +87,8 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, news, round, userR
                           <h3 className="text-orange-500 font-black text-xs uppercase tracking-[0.4em] mb-6 italic flex items-center gap-3">
                              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" /> Headline Período 0{round}
                           </h3>
-                          <h2 className="text-6xl font-black text-white italic leading-[0.9] tracking-tighter mb-8">{news.split('\n')[0]}</h2>
-                          <p className="text-2xl text-slate-400 font-medium italic leading-relaxed">"{news.split('\n')[1] || "Estabilidade projetada para os próximos ciclos industriais."}"</p>
+                          <h2 className="text-6xl font-black text-white italic leading-[0.9] tracking-tighter mb-8">{aiNews.split('\n')[0]}</h2>
+                          <p className="text-2xl text-slate-400 font-medium italic leading-relaxed">"{aiNews.split('\n')[1] || "Estabilidade projetada para os próximos ciclos industriais."}"</p>
                        </div>
                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           <HighCard label="TRIT" val={`${currentInd.trit}%`} sub="Retorno Investimento" trend="+0.1%" pos icon={<Target size={20}/>} />
