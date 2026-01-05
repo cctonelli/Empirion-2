@@ -62,13 +62,11 @@ export const calculateProjections = (
   const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price), 0) / regions.length : 372;
   const totalMarketing = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.marketing), 0) : 0;
   
-  // Efeito do Prazo Médio de Recebimento (PMRV)
   const avgTerm = regions.length > 0 
     ? regions.reduce((acc, r) => acc + (r.term === 1 ? 60 : r.term === 2 ? 30 : 0), 0) / regions.length 
     : 0;
   
-  const termEffect = 1 + (avgTerm / 300); // Prazos maiores aumentam ligeiramente a demanda
-  
+  const termEffect = 1 + (avgTerm / 300);
   const marketPotential = (indicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1);
   const baseSales = marketPotential * termEffect * (1 + (totalMarketing / 1200));
   const salesVolume = Math.min(baseSales, 12000); 
@@ -90,7 +88,6 @@ export const calculateProjections = (
   const ebitda = revenue - cpv - fixedCosts;
   const netProfit = ebitda * 0.85;
 
-  // Advanced Indicators Logic
   const adv = calculateAdvanced(revenue, cpv, ebitda, netProfit, inheritedReceivables, inheritedPayables, currentCash, decisions);
 
   return {
@@ -114,16 +111,15 @@ const calculateAdvanced = (
   cash: number,
   decisions: DecisionData
 ): AdvancedIndicators => {
-  const dailySales = rev / 30 || 1;
-  const dailyCPV = cpv / 30 || 1;
+  const dailyRev = Math.max(rev / 30, 1);
+  const dailyCPV = Math.max(cpv / 30, 1);
   
-  // Prazos Médios (Bernard Standard)
-  const pmrv = rec / dailySales || 45;
-  const pmre = 1466605 / dailyCPV || 60; // Baseado no estoque inicial MP
-  const pmpc = pay / dailyCPV || 45;
+  const pmrv = rec / dailyRev;
+  const pmre = 1466605 / dailyCPV; 
+  const pmpc = pay / dailyCPV;
 
   return {
-    nldcg_days: (rec + 1466605 - pay) / dailySales,
+    nldcg_days: (rec + 1466605 - pay) / dailyRev,
     nldcg_components: {
       receivables: rec,
       inventory_finished: 0,
@@ -133,9 +129,7 @@ const calculateAdvanced = (
     },
     trit: (net / 9176940) * 100,
     insolvency_index: 2.19, 
-    prazos: {
-      pmre, pmrv, pmpc, pmdo: 69, pmmp: 96
-    },
+    prazos: { pmre, pmrv, pmpc, pmdo: 69, pmmp: 96 },
     ciclos: {
       operacional: pmre + pmrv,
       financeiro: (pmre + pmrv) - pmpc,
