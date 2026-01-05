@@ -1,24 +1,41 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, ChevronRight, Play, Loader2, Target, Globe } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Trophy, ChevronRight, Play, Loader2, Target, Globe, Filter, X } from 'lucide-react';
 import { getChampionships } from '../services/supabase';
 import { Championship, Team } from '../types';
 
 const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: string, isTrial: boolean) => void }> = ({ onSelectTeam }) => {
+  const location = useLocation();
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
       const { data } = await getChampionships();
       if (data) setChampionships(data);
+      
+      // Captura pré-seleção enviada via roteamento
+      const preSlug = location.state?.preSelectedSlug;
+      if (preSlug) {
+        setActiveFilter(preSlug);
+      }
+      
       setLoading(false);
     };
     fetch();
-  }, []);
+  }, [location.state]);
+
+  const filteredChamps = activeFilter 
+    ? championships.filter(c => 
+        c.branch.toLowerCase().includes(activeFilter.toLowerCase()) || 
+        activeFilter.toLowerCase().includes(c.branch.toLowerCase())
+      )
+    : championships;
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-40 gap-4">
@@ -29,11 +46,20 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20">
-      <header className="flex justify-between items-end px-4">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end px-4 gap-6">
          <div>
-            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Arena <span className="text-orange-600">Control</span></h1>
+            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Arena <span className="text-orange-500">Control</span></h1>
             <p className="text-slate-500 font-medium text-sm mt-1 italic">Arenas ativas e sessões de teste disponíveis.</p>
          </div>
+         {activeFilter && (
+           <div className="flex items-center gap-3 bg-orange-600/10 border border-orange-500/20 px-5 py-2.5 rounded-full">
+              <Filter size={14} className="text-orange-500" />
+              <span className="text-[10px] font-black text-white uppercase tracking-widest">Filtro: {activeFilter}</span>
+              <button onClick={() => setActiveFilter(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                 <X size={14} className="text-orange-500" />
+              </button>
+           </div>
+         )}
       </header>
 
       <AnimatePresence mode="wait">
@@ -45,7 +71,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
             exit={{ opacity: 0, x: -20 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4"
           >
-             {championships.map((champ) => (
+             {filteredChamps.map((champ) => (
                <div key={champ.id} className="bg-slate-900/50 backdrop-blur-xl p-10 rounded-[3.5rem] border border-white/5 space-y-8 hover:bg-white/[0.03] transition-all group relative overflow-hidden shadow-2xl">
                   <div className="flex justify-between items-start">
                      <div className={`px-4 py-1 rounded-full text-[8px] font-black uppercase ${champ.is_trial ? 'bg-orange-500 text-white' : 'bg-emerald-500 text-slate-950'}`}>
@@ -65,6 +91,13 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                   </button>
                </div>
              ))}
+             {filteredChamps.length === 0 && (
+               <div className="col-span-full py-20 text-center bg-white/5 rounded-[4rem] border border-dashed border-white/10">
+                  <Trophy size={48} className="text-slate-700 mx-auto mb-6" />
+                  <p className="text-slate-500 font-black uppercase text-sm tracking-widest">Nenhuma arena encontrada para este filtro.</p>
+                  <button onClick={() => setActiveFilter(null)} className="mt-4 text-orange-500 font-bold uppercase text-[10px] tracking-widest hover:underline">Ver todas as arenas</button>
+               </div>
+             )}
           </motion.div>
         ) : (
           <motion.div 

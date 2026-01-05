@@ -192,12 +192,12 @@ export const MENU_STRUCTURE = [
     label: 'ramos', 
     path: '/solutions/simulators',
     sub: [
-      { id: 'ind', label: 'Industrial', path: '/activities/industrial', icon: 'Factory' },
-      { id: 'com', label: 'Comercial', path: '/activities/commercial', icon: 'ShoppingCart' },
-      { id: 'ser', label: 'Serviços', path: '/activities/services', icon: 'Briefcase' },
-      { id: 'agr', label: 'Agro', path: '/activities/agribusiness', icon: 'Tractor' },
-      { id: 'fin', label: 'Financeiro', path: '/activities/finance', icon: 'DollarSign' },
-      { id: 'con', label: 'Construção', path: '/activities/construction', icon: 'Hammer' },
+      { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory' },
+      { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart' },
+      { id: 'ser', label: 'Serviços', path: '/branches/services', icon: 'Briefcase' },
+      { id: 'agr', label: 'Agro', path: '/branches/agribusiness', icon: 'Tractor' },
+      { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign' },
+      { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer' },
     ]
   },
   { 
@@ -231,7 +231,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       secondaryCta: "Ver Atividades"
     },
     carousel: [
-      { id: 1, title: "Mastery Industrial", subtitle: "Otimize seu OEE.", image: "https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000", badge: "Live Arena", link: "/activities/industrial" }
+      { id: 1, title: "Mastery Industrial", subtitle: "Otimize seu OEE.", image: "https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000", badge: "Live Arena", link: "/branches/industrial" }
     ],
     leaderboard: [
       { id: 'c1', name: "Industrial Mastery", status: "Rodada 1/12", teams: 8, lead: "Equipe Alpha" }
@@ -295,3 +295,11 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     accent: 'orange'
   }
 };
+
+// Aliases para o Unified Engine
+DEFAULT_PAGE_CONTENT['branch-industrial'] = DEFAULT_PAGE_CONTENT['activity-industrial'];
+DEFAULT_PAGE_CONTENT['branch-commercial'] = DEFAULT_PAGE_CONTENT['activity-commercial'];
+DEFAULT_PAGE_CONTENT['branch-services'] = DEFAULT_PAGE_CONTENT['activity-services'];
+DEFAULT_PAGE_CONTENT['branch-agribusiness'] = DEFAULT_PAGE_CONTENT['activity-agribusiness'];
+DEFAULT_PAGE_CONTENT['branch-finance'] = DEFAULT_PAGE_CONTENT['activity-finance'];
+DEFAULT_PAGE_CONTENT['branch-construction'] = DEFAULT_PAGE_CONTENT['activity-construction'];

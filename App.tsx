@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -13,7 +14,6 @@ import ActivityDetail from './pages/ActivityDetail';
 import OpenTournaments from './pages/OpenTournaments';
 import SimulatorsPage from './pages/SimulatorsPage';
 import BusinessPlanWizard from './components/BusinessPlanWizard';
-import GenericSolutionPage from './pages/GenericSolutionPage';
 import FeaturesPage from './pages/FeaturesPage';
 import BlogPage from './pages/BlogPage';
 import ContactPage from './pages/ContactPage';
@@ -21,7 +21,7 @@ import PublicRewards from './pages/PublicRewards';
 import TestTerminal from './pages/TestTerminal';
 import Auth from './components/Auth';
 import { supabase, getUserProfile, isTestMode } from './services/supabase';
-import { UserProfile, Championship } from './types';
+import { UserProfile } from './types';
 
 const AppContent: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -70,9 +70,10 @@ const AppContent: React.FC = () => {
       <Route path="/auth" element={<Auth onAuth={() => navigate('/app/dashboard')} onBack={() => navigate('/')} />} />
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
       
-      {/* PUBLIC SOLUTIONS ROUTES - UNIFIED MVP v3.0 */}
+      {/* PUBLIC SOLUTIONS ROUTES - UNIFIED ACTIVITY ENGINE v3.0 */}
       <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       <Route path="/branches/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
+      
       <Route path="/solutions/simulators" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><SimulatorsPage /></div></>} />
       <Route path="/solutions/open-tournaments" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><OpenTournaments /></div></>} />
       <Route path="/solutions/business-plan" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><BusinessPlanWizard /></div></>} />
