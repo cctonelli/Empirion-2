@@ -10,6 +10,7 @@ export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
+export type GazetaMode = 'anonymous' | 'identified';
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency';
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
@@ -28,6 +29,8 @@ export interface Team {
   insolvency_status?: InsolvencyStatus;
   intervention_log?: InterventionEntry[];
   created_at?: string;
+  credit_limit?: number;
+  equity?: number;
 }
 
 export interface InterventionEntry {
@@ -149,6 +152,8 @@ export interface Championship {
   scenario_type: ScenarioType;
   currency: CurrencyType;
   transparency_level: TransparencyLevel;
+  gazeta_mode: GazetaMode;
+  observers: string[]; // User IDs or emails
   ecosystemConfig?: EcosystemConfig;
   round_frequency_days?: number;
 }
@@ -183,6 +188,7 @@ export interface ChampionshipTemplate {
   config: {
     round_frequency_days: number;
     transparency_level: TransparencyLevel;
+    gazeta_mode: GazetaMode;
     modality_type: ModalityType;
     deadline_value: number;
     deadline_unit: DeadlineUnit;

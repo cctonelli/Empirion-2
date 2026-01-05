@@ -1,5 +1,5 @@
 
-import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit } from './types';
+import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode } from './types';
 
 export const APP_VERSION = "v12.8.5-Gold";
 export const BUILD_DATE = "01/01/2026";
@@ -61,6 +61,8 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       sales_mode: 'internal' as SalesMode,
       scenario_type: 'simulated' as ScenarioType,
       transparency_level: 'high' as TransparencyLevel,
+      // Fix: Add missing gazeta_mode property required by ChampionshipTemplate['config'] interface
+      gazeta_mode: 'anonymous' as GazetaMode,
       modality_type: 'standard' as ModalityType,
       deadline_value: 7,
       deadline_unit: 'days' as DeadlineUnit

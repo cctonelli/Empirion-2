@@ -4,7 +4,7 @@ import Chart from 'react-apexcharts';
 import { 
   Globe, ChevronLeft, Landmark, Zap, 
   AlertTriangle, LayoutGrid, Bird, Scale, ShieldAlert,
-  Activity, Award, User, Star, TrendingUp, X
+  Activity, Award, User, Star, TrendingUp, X, EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Championship, UserRole } from '../types';
@@ -23,9 +23,9 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   const [activeTab, setActiveTab] = useState<GazetteTab>('benchmarking');
   const teams = arena.teams || [];
   const activeEvent = arena.market_indicators?.active_event;
+  const isAnonymous = arena.gazeta_mode === 'anonymous' && userRole !== 'tutor' && userRole !== 'admin';
   
   // Oracle v12.8.2 GOLD Ranking Engine
-  // Synchronized with Real-time Community Ratings
   const competitiveRanking = useMemo(() => {
     return teams.map((t, i) => {
       // Logic for simulated metrics based on Oracle Node 08 Calibration
@@ -34,13 +34,14 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       const coreKpiValue = arena.branch === 'industrial' ? (80 + Math.random() * 15) : (8 + Math.random() * 2);
       const coreKpiLabel = arena.branch === 'industrial' ? `${coreKpiValue.toFixed(1)}% OEE` : `${coreKpiValue.toFixed(1)} CSAT`;
       
-      // Community Sentiment (Social Score) - Oracle Fidelity Enhancements
-      // Fallback range: 2.5 to 5.0
       const socialScore = [4.8, 3.2, 4.5, 4.1, 2.8, 4.9, 3.9, 4.0][i] || (3 + Math.random() * 2);
+
+      // Obfuscation logic for anonymous gazeta_mode
+      const displayName = isAnonymous ? `Unidade 0${i + 1}` : t.name;
 
       return {
         id: t.id,
-        name: t.name,
+        name: displayName,
         ratio: [35.2, 82.5, 65.0, 41.2, 58.7, 30.1, 74.2, 50.0][i] || 45,
         share,
         profit,
@@ -48,7 +49,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
         socialScore
       };
     }).sort((a, b) => b.profit - a.profit);
-  }, [teams, arena.branch]);
+  }, [teams, arena.branch, isAnonymous]);
 
   const chartOptions: any = {
     chart: { type: 'bar', background: 'transparent', toolbar: { show: false } },
@@ -83,8 +84,9 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                       v12.8.2 GOLD
                     </span>
                   </div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">
-                    Node: {arena.name} • Período 0{round} Finalizado
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic flex items-center gap-2">
+                    Node: {arena.name} • Período 0{round} Finalizado 
+                    {arena.gazeta_mode === 'anonymous' && <EyeOff size={10} className="text-slate-600" />}
                   </p>
                </div>
             </div>
@@ -103,7 +105,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
             <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} icon={<Globe size={14}/>} label="Conjuntura" />
             <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} icon={<Landmark size={14}/>} label="Fornecedores" />
             <TabBtn active={activeTab === 'solvency'} onClick={() => setActiveTab('solvency')} icon={<Scale size={14}/>} label="Solvência" />
-            {userRole === 'tutor' && <TabBtn active={activeTab === 'tutor'} onClick={() => setActiveTab('tutor')} icon={<Award size={14}/>} label="Tutor Control" color="orange" />}
+            {(userRole === 'tutor' || userRole === 'admin') && <TabBtn active={activeTab === 'tutor'} onClick={() => setActiveTab('tutor')} icon={<Award size={14}/>} label="Tutor Control" color="orange" />}
          </nav>
       </header>
 
@@ -117,6 +119,13 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                 exit={{ opacity: 0, x: 10 }}
                 className="space-y-12"
               >
+                 {isAnonymous && (
+                   <div className="p-6 bg-blue-600/10 border border-blue-500/20 rounded-3xl flex items-center gap-4">
+                      <EyeOff className="text-blue-400" size={20} />
+                      <p className="text-[10px] font-black uppercase text-blue-300 tracking-widest">Protocolo de Anonimato Ativo: Identidades reais de competidores foram ocultadas pelo Tutor.</p>
+                   </div>
+                 )}
+
                  <div className="bg-slate-950 border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl relative">
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-600 via-white to-orange-400 opacity-20"></div>
                     <table className="w-full text-left">
@@ -136,7 +145,9 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                                <td className="p-8 font-black text-slate-600 italic text-lg">#0{i+1}</td>
                                <td className="p-8">
                                   <div className="flex items-center gap-3">
-                                     <div className="w-10 h-10 rounded-xl bg-orange-600/10 text-orange-500 flex items-center justify-center border border-orange-500/10"><User size={18}/></div>
+                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center border border-orange-500/10 ${isAnonymous ? 'bg-slate-800 text-slate-500' : 'bg-orange-600/10 text-orange-500'}`}>
+                                        {isAnonymous ? <EyeOff size={18}/> : <User size={18}/>}
+                                     </div>
                                      <span className="font-black text-white uppercase italic tracking-tighter text-sm">{r.name}</span>
                                   </div>
                                </td>

@@ -6,10 +6,11 @@ import {
   Trophy, Factory, ShoppingCart, Briefcase, Tractor,
   Gavel, Sparkles, Sliders, CheckCircle2, LayoutGrid,
   FileText, ShieldAlert, Zap, Flame, Leaf, Eye, EyeOff,
-  Users, Clock, Calendar, Hourglass, PenTool, Layout
+  Users, Clock, Calendar, Hourglass, PenTool, Layout,
+  Shield, UserCheck
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES } from '../constants';
-import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit } from '../types';
+import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode } from '../types';
 import { createChampionshipWithTeams } from '../services/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import FinancialStructureEditor from './FinancialStructureEditor';
@@ -26,6 +27,9 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     scenario_type: 'simulated' as ScenarioType,
     modality_type: 'standard' as ModalityType,
     transparency_level: 'medium' as TransparencyLevel,
+    gazeta_mode: 'anonymous' as GazetaMode,
+    observers: [] as string[],
+    observerInput: '',
     total_rounds: 12,
     teams_limit: 8,
     currency: 'BRL',
@@ -56,6 +60,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         sales_mode: selectedTemplate.config.sales_mode,
         scenario_type: selectedTemplate.config.scenario_type,
         transparency_level: selectedTemplate.config.transparency_level,
+        gazeta_mode: selectedTemplate.config.gazeta_mode || 'anonymous',
         deadline_value: selectedTemplate.config.deadline_value,
         deadline_unit: selectedTemplate.config.deadline_unit,
         round_frequency_days: selectedTemplate.config.round_frequency_days
@@ -91,6 +96,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         deadline_unit: formData.deadline_unit,
         round_frequency_days: formData.round_frequency_days,
         transparency_level: formData.transparency_level,
+        gazeta_mode: formData.gazeta_mode,
+        observers: formData.observers,
         config: {
            ...formData,
            rules: formData.rules
@@ -105,6 +112,16 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       alert(`FALHA NA ORQUESTRAÇÃO: ${e.message}`); 
     }
     setIsSubmitting(false);
+  };
+
+  const addObserver = () => {
+    if (formData.observerInput.trim() && !formData.observers.includes(formData.observerInput)) {
+      setFormData({
+        ...formData,
+        observers: [...formData.observers, formData.observerInput.trim()],
+        observerInput: ''
+      });
+    }
   };
 
   return (
@@ -122,7 +139,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
            </div>
         </div>
         <div className="flex gap-4">
-           {[1, 2, 3, 4, 5].map((s) => (
+           {[1, 2, 3, 4, 5, 6].map((s) => (
              <div key={s} className={`w-8 h-1.5 rounded-full transition-all duration-500 ${step >= s ? 'bg-orange-600 shadow-[0_0_10px_rgba(249,115,22,0.5)]' : 'bg-white/5'}`} />
            ))}
         </div>
@@ -186,8 +203,74 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
             </motion.div>
           )}
 
-          {step === 3 && financials && (
-            <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+          {step === 3 && (
+            <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
+               <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                  <div className="p-3 bg-emerald-600 rounded-xl text-white shadow-lg"><Shield size={20}/></div>
+                  <h3 className="text-xl font-black text-white uppercase italic">3. Protocolos de Transparência</h3>
+               </div>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-8">
+                     <div className="space-y-4">
+                        <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2">Identidade na Gazeta</label>
+                        <div className="grid grid-cols-2 gap-3">
+                           <button 
+                             onClick={() => setFormData({...formData, gazeta_mode: 'anonymous'})}
+                             className={`p-5 rounded-2xl border transition-all text-left space-y-2 ${formData.gazeta_mode === 'anonymous' ? 'bg-emerald-600 border-white text-white' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                           >
+                              <div className="flex justify-between items-center">
+                                <EyeOff size={16} />
+                                {formData.gazeta_mode === 'anonymous' && <CheckCircle2 size={14} />}
+                              </div>
+                              <span className="block text-[10px] font-black uppercase">Anônimo</span>
+                           </button>
+                           <button 
+                             onClick={() => setFormData({...formData, gazeta_mode: 'identified'})}
+                             className={`p-5 rounded-2xl border transition-all text-left space-y-2 ${formData.gazeta_mode === 'identified' ? 'bg-emerald-600 border-white text-white' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                           >
+                              <div className="flex justify-between items-center">
+                                <UserCheck size={16} />
+                                {formData.gazeta_mode === 'identified' && <CheckCircle2 size={14} />}
+                              </div>
+                              <span className="block text-[10px] font-black uppercase">Identificado</span>
+                           </button>
+                        </div>
+                     </div>
+
+                     <div className="space-y-4">
+                        <label className="text-[10px] font-black text-slate-500 uppercase">Nominar Observadores (ID/Email)</label>
+                        <div className="flex gap-2">
+                           <input 
+                             value={formData.observerInput} 
+                             onChange={e => setFormData({...formData, observerInput: e.target.value})}
+                             placeholder="Ex: tutor@empirion.ia"
+                             className="flex-1 p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-emerald-500"
+                           />
+                           <button onClick={addObserver} className="p-4 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-500 transition-all"><Plus size={20}/></button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                           {formData.observers.map(obs => (
+                             <span key={obs} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-bold text-emerald-400 flex items-center gap-2">
+                               {obs} <button onClick={() => setFormData({...formData, observers: formData.observers.filter(o => o !== obs)})} className="text-rose-500">×</button>
+                             </span>
+                           ))}
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="p-8 bg-emerald-600/5 border border-emerald-500/20 rounded-[2.5rem] space-y-4">
+                     <h4 className="text-emerald-500 font-black text-[10px] uppercase tracking-widest flex items-center gap-2"><Sparkles size={14}/> Oracle Rule</h4>
+                     <p className="text-xs text-slate-400 leading-relaxed italic">
+                        O modo anônimo protege a marca das equipes em fases iniciais de treinamento. Observadores nominados têm acesso read-only completo a todos os balanços independentemente do nível de transparência pública.
+                     </p>
+                  </div>
+               </div>
+            </motion.div>
+          )}
+
+          {step === 4 && financials && (
+            <motion.div key="step4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
                <FinancialStructureEditor 
                  initialBalance={financials.balance_sheet} 
                  initialDRE={financials.dre} 
@@ -196,11 +279,11 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
             </motion.div>
           )}
 
-          {step === 4 && (
-            <motion.div key="step4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
+          {step === 5 && (
+            <motion.div key="step5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
                <div className="flex items-center gap-4 border-b border-white/5 pb-6">
                   <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-lg"><PenTool size={20}/></div>
-                  <h3 className="text-xl font-black text-white uppercase italic">4. Plano de Negócios Progressivo</h3>
+                  <h3 className="text-xl font-black text-white uppercase italic">5. Plano de Negócios Progressivo</h3>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -236,9 +319,9 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
             </motion.div>
           )}
 
-          {step === 5 && (
-            <motion.div key="step5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-               <h3 className="text-xl font-black text-white uppercase italic">5. Matriz de Competidores</h3>
+          {step === 6 && (
+            <motion.div key="step6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+               <h3 className="text-xl font-black text-white uppercase italic">6. Matriz de Competidores</h3>
                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                   {teams.map((t, i) => (
                     <div key={i} className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
@@ -254,8 +337,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
       <footer className="p-10 border-t border-white/5 bg-slate-950/50 flex justify-between">
          <button onClick={() => setStep(s => Math.max(1, s - 1))} disabled={step === 1} className="px-8 py-4 text-slate-500 font-black uppercase text-[10px] tracking-widest hover:text-white transition-colors">Voltar</button>
-         <button onClick={step === 5 ? handleLaunch : () => setStep(s => s + 1)} className="px-14 py-5 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-4 hover:bg-white hover:text-orange-600 transition-all active:scale-95">
-            {isSubmitting ? <Loader2 className="animate-spin" size={18}/> : step === 5 ? 'Ativar Arena Master' : 'Próximo Protocolo'} <ArrowRight size={18} />
+         <button onClick={step === 6 ? handleLaunch : () => setStep(s => s + 1)} className="px-14 py-5 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-4 hover:bg-white hover:text-orange-600 transition-all active:scale-95">
+            {isSubmitting ? <Loader2 className="animate-spin" size={18}/> : step === 6 ? 'Ativar Arena Master' : 'Próximo Protocolo'} <ArrowRight size={18} />
          </button>
       </footer>
     </div>

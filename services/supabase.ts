@@ -20,6 +20,7 @@ export const isTestMode = true;
 /**
  * ORACLE TURNOVER ENGINE v12.8.2 GOLD (Final Production Build)
  * Optimized for high-concurrency arena processing and data integrity.
+ * Maps dedicated credit_rating and insolvency_index columns.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
   console.log(`[TURNOVER v12.8.2 GOLD] Processing Arena: ${championshipId} | Cycle: 0${currentRound}`);
@@ -62,7 +63,9 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           dre: result.statements?.dre,
           balance_sheet: result.statements?.balance_sheet,
           cash_flow: result.statements?.cash_flow,
-          kpis: result.kpis
+          kpis: result.kpis,
+          credit_rating: result.creditRating,
+          insolvency_index: result.health.insolvency_risk
         };
       } catch (e: any) {
         console.error(`[TEAM ERROR] Unit ${team.id} processing failure:`, e.message);
@@ -72,6 +75,8 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     if (batchResults.length === 0) throw new Error("Total Process Failure.");
 
+    // Critical: Companies write only via service_role in production. 
+    // This client assumes sufficient privileges or RPC-based turnover.
     const { error: insErr } = await supabase.from('companies').insert(batchResults);
     if (insErr) throw insErr;
 
@@ -171,6 +176,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       scenario_type: champData.scenario_type || 'simulated',
       currency: champData.currency || 'BRL',
       transparency_level: champData.transparency_level || 'medium',
+      gazeta_mode: champData.gazeta_mode || 'anonymous',
+      observers: champData.observers || [],
       deadline_value: champData.deadline_value || 7,
       deadline_unit: champData.deadline_unit || 'days',
       round_frequency_days: champData.round_frequency_days || 7
@@ -266,6 +273,8 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
       scenario_type: c.scenario_type ?? config.scenario_type ?? 'simulated',
       currency: c.currency ?? config.currency ?? 'BRL',
       transparency_level: c.transparency_level ?? config.transparency_level ?? 'medium',
+      gazeta_mode: c.gazeta_mode ?? config.gazeta_mode ?? 'anonymous',
+      observers: c.observers ?? config.observers ?? [],
       round_frequency_days: c.round_frequency_days ?? config.round_frequency_days ?? 7,
       ecosystemConfig: c.ecosystemConfig ?? config.ecosystemConfig,
       kpis: c.kpis ?? config.kpis ?? {}
@@ -294,6 +303,8 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, isTrialParam: boolean = false) => {
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
+  // Note: 'version' increment should be handled by DB or fetched before save. 
+  // v12.8 simplifies to direct upsert for now.
   return await supabase.from(table).upsert({ team_id: teamId, championship_id: champId, round, data: decisions, status: 'sealed' }); 
 };
 
