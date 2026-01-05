@@ -1,14 +1,16 @@
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, BlackSwanEvent, CreditRating, FinancialHealth, ProjectionResult } from '../types';
 
+/**
+ * Sanitize: Permite números negativos para suportar prejuízos reais no P&L e depreciação.
+ */
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
-  // Permite números negativos para suportar prejuízos reais no P&L.
   return isFinite(num) ? num : fallback;
 };
 
 /**
  * Motor Industrial Empirion v12.6 - Oracle Integrity Kernel
- * Final Blindagem Protocol v2.81
+ * Final Blindagem Protocol v2.82
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -19,12 +21,11 @@ export const calculateProjections = (
   isRoundZero: boolean = false
 ): ProjectionResult => {
   try {
-    // Mapeamento Dinâmico Robusto para resolver colisões entre DB (snake) e Engine (camel)
+    // Mapeamento Dinâmico Robusto para resolver colisões entre DB (snake_case) e Engine (camelCase)
     const getAttr = (camel: string, snake: string, fallback: any) => {
       const data = indicators as any;
-      if (data?.[snake] !== undefined) return data[snake];
-      if (data?.[camel] !== undefined) return data[camel];
-      return fallback;
+      // Refactor: Prioritiza o valor existente no objeto de indicadores independente da convenção de nomes
+      return data?.[snake] ?? data?.[camel] ?? fallback;
     };
 
     const currentIndicators = {
@@ -60,6 +61,7 @@ export const calculateProjections = (
           is_bankrupt: false,
           insolvency_deficit: 0
         } as FinancialHealth,
+        insolvency_deficit: 0,
         suggestRecovery: false, capexBlocked: false,
         statements: null,
         indicators: getRoundZeroAdvanced(),
@@ -131,7 +133,7 @@ export const calculateProjections = (
     const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
     const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
-    // 6. Fluxo de Caixa
+    // 6. Fluxo de Caixa e Insolvência
     const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
     const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
     const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + (salesVolume * unitDist) + adminExpenses;
@@ -157,6 +159,7 @@ export const calculateProjections = (
           is_bankrupt: finalEquity < 0,
           insolvency_deficit
       } as FinancialHealth,
+      insolvency_deficit,
       suggestRecovery: debtRatio > 60,
       capexBlocked: rating === 'C' || rating === 'D',
       activeEvent: event,
@@ -180,7 +183,7 @@ export const calculateProjections = (
   } catch (error) {
     console.error("Simulation Engine Critical Failure (v12.6):", error);
     return {
-      revenue: 0, totalOutflow: 0, totalLiquidity: 0,
+      revenue: 0, totalOutflow: 0, totalLiquidity: 0, insolvency_deficit: 0,
       health: { rating: 'D', is_bankrupt: true, insolvency_deficit: 0 }
     };
   }

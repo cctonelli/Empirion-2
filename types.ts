@@ -36,6 +36,7 @@ export interface ProjectionResult {
   loanLimit?: number;
   creditRating?: CreditRating;
   health?: FinancialHealth;
+  insolvency_deficit?: number;
   suggestRecovery?: boolean;
   capexBlocked?: boolean;
   statements?: any;

@@ -20,6 +20,7 @@ interface TeamProgress {
   risk?: number;
   rating?: string;
   insolvent?: boolean;
+  insolvency_deficit?: number;
   master_key_enabled?: boolean;
   auditLogs?: any[];
 }
@@ -61,6 +62,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
             risk: proj?.health?.insolvency_risk ?? 0,
             rating: proj?.health?.rating ?? 'N/A',
             insolvent: proj ? ((proj.totalOutflow ?? 0) > (proj.totalLiquidity ?? 0)) : false,
+            insolvency_deficit: proj?.health?.insolvency_deficit ?? 0,
             master_key_enabled: t.master_key_enabled,
             auditLogs: teamAudit
           } as TeamProgress;
@@ -141,6 +143,11 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                   </div>
                   <h4 className="text-2xl font-black text-slate-900 uppercase italic leading-none">{team.team_name}</h4>
                   <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">{team.rating === 'D' ? 'INSOLVÊNCIA CRÍTICA DETETADA' : team.status === 'pending' ? 'AGUARDANDO CONEXÃO' : 'DECISÃO EM RASCUNHO'}</p>
+                  {team.insolvent && (
+                     <div className="mt-4 px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-[8px] font-black uppercase tracking-widest border border-rose-100">
+                        Deficit: $ {team.insolvency_deficit?.toLocaleString()}
+                     </div>
+                  )}
                </button>
              ))}
           </div>
