@@ -2,12 +2,13 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicat
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
-  // Oracle Kernel v12.6: Permite números negativos para suportar prejuízos reais.
+  // Permite números negativos para suportar prejuízos reais no P&L.
   return isFinite(num) ? num : fallback;
 };
 
 /**
  * Motor Industrial Empirion v12.6 - Oracle Integrity Kernel
+ * Final Blindagem Protocol v2.81
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -18,7 +19,7 @@ export const calculateProjections = (
   isRoundZero: boolean = false
 ): ProjectionResult => {
   try {
-    // Mapeamento Dinâmico Robusto com Any-Casting (Vercel Build Fix)
+    // Mapeamento Dinâmico Robusto para resolver colisões entre DB (snake) e Engine (camel)
     const getAttr = (camel: string, snake: string, fallback: any) => {
       const data = indicators as any;
       if (data?.[snake] !== undefined) return data[snake];
@@ -56,7 +57,8 @@ export const calculateProjections = (
           debt_to_equity: 0.6, 
           insolvency_risk: 10, 
           rating: 'AAA' as CreditRating, 
-          is_bankrupt: false 
+          is_bankrupt: false,
+          insolvency_deficit: 0
         } as FinancialHealth,
         suggestRecovery: false, capexBlocked: false,
         statements: null,
@@ -133,14 +135,16 @@ export const calculateProjections = (
     const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
     const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
     const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + (salesVolume * unitDist) + adminExpenses;
-    const finalCash = prevCash + cashInflow + decisions.finance.loanRequest - totalOutflow - decisions.finance.application;
+    const totalLiquidity = prevCash + cashInflow + decisions.finance.loanRequest;
+    const finalCash = totalLiquidity - totalOutflow - decisions.finance.application;
+    const insolvency_deficit = Math.max(totalOutflow - totalLiquidity, 0);
     
     const finalAssets = finalCash + (revenue * 0.6) + (prevAssets * 0.99);
     const finalEquity = prevEquity + netProfit;
     const debtRatio = ((finalAssets - finalEquity) / Math.max(finalAssets, 1)) * 100;
 
     return {
-      revenue, ebitda, netProfit, salesVolume, totalMarketingCost, debtRatio, totalOutflow,
+      revenue, ebitda, netProfit, salesVolume, totalMarketingCost, debtRatio, totalOutflow, totalLiquidity,
       marketShare: (salesVolume / (basePotential * 8)) * 100,
       cashFlowNext: finalCash,
       loanLimit,
@@ -150,7 +154,8 @@ export const calculateProjections = (
           debt_to_equity: debtToEquity, 
           insolvency_risk: Math.min((debtRatio * 1.2), 100), 
           rating, 
-          is_bankrupt: finalEquity < 0 
+          is_bankrupt: finalEquity < 0,
+          insolvency_deficit
       } as FinancialHealth,
       suggestRecovery: debtRatio > 60,
       capexBlocked: rating === 'C' || rating === 'D',
@@ -161,7 +166,6 @@ export const calculateProjections = (
         { name: 'Folha & Admin', total: payrollTotal + adminExpenses, impact: 'Custo Fixo Inflacionado' },
         { name: 'Serviço da Dívida', total: interestExp, impact: 'Juros Acumulados' }
       ],
-      totalLiquidity: prevCash + cashInflow + decisions.finance.loanRequest,
       statements: {
           dre: { revenue, cpv, ebitda, net_profit: netProfit },
           balance_sheet: { 
@@ -174,11 +178,10 @@ export const calculateProjections = (
       indicators: calculateAdvanced(revenue, cpv, ebitda, netProfit, (revenue * 0.6), mpCostTotal * 0.3, finalCash, decisions)
     };
   } catch (error) {
-    console.error("Simulation Engine Critical Failure:", error);
+    console.error("Simulation Engine Critical Failure (v12.6):", error);
     return {
-      revenue: 0, ebitda: 0, netProfit: 0, salesVolume: 0, totalMarketingCost: 0,
-      debtRatio: 0, totalOutflow: 0, totalLiquidity: 0, marketShare: 0, cashFlowNext: 0, loanLimit: 0,
-      health: { rating: 'D', is_bankrupt: true }
+      revenue: 0, totalOutflow: 0, totalLiquidity: 0,
+      health: { rating: 'D', is_bankrupt: true, insolvency_deficit: 0 }
     };
   }
 };

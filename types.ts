@@ -18,10 +18,12 @@ export interface FinancialHealth {
   insolvency_risk?: number;
   rating?: CreditRating;
   is_bankrupt?: boolean;
+  insolvency_deficit?: number;
 }
 
 export interface ProjectionResult {
   revenue?: number;
+  cpv?: number;
   ebitda?: number;
   netProfit?: number;
   salesVolume?: number;

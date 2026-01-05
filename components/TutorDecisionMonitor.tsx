@@ -58,9 +58,9 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
             status: decision ? (decision.status === 'sealed' ? 'sealed' : 'draft') : 'pending',
             last_update: decision?.submitted_at,
             data: decision?.data,
-            risk: proj?.health?.insolvency_risk || 0,
-            rating: proj?.health?.rating || 'N/A',
-            insolvent: proj ? (proj.totalOutflow > proj.totalLiquidity) : false,
+            risk: proj?.health?.insolvency_risk ?? 0,
+            rating: proj?.health?.rating ?? 'N/A',
+            insolvent: proj ? ((proj.totalOutflow ?? 0) > (proj.totalLiquidity ?? 0)) : false,
             master_key_enabled: t.master_key_enabled,
             auditLogs: teamAudit
           } as TeamProgress;
@@ -135,7 +135,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                      <div className="text-right">
                         <span className={`block text-[10px] font-black uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 font-black animate-pulse' : 'text-slate-400'}`}>{team.rating}</span>
                         <div className={`w-12 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden`}>
-                           <div className={`h-full ${team.rating === 'D' ? 'bg-rose-600' : team.risk! > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${team.risk}%` }} />
+                           <div className={`h-full ${team.rating === 'D' ? 'bg-rose-600' : (team.risk ?? 0) > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${team.risk ?? 0}%` }} />
                         </div>
                      </div>
                   </div>
