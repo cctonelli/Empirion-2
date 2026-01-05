@@ -111,7 +111,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
               <div className="flex items-center gap-3">
                  <div className={`w-3 h-3 rounded-full animate-pulse ${projections?.health?.rating === 'D' ? 'bg-rose-600 shadow-[0_0_12px_#f43f5e]' : (projections?.debtRatio ?? 0) > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
                  <span className={`text-sm font-black italic ${projections?.health?.rating === 'D' ? 'text-rose-500 font-black animate-pulse' : (projections?.debtRatio ?? 0) < 40 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {projections?.health?.rating ?? '---'} STANDING
+                    {projections?.health?.rating ?? projections?.health?.debt_rating ?? '---'} STANDING
                  </span>
               </div>
            </div>
@@ -196,7 +196,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                           </div>
                           {isInsolvent && (
                              <p className="text-xs font-bold uppercase tracking-tight italic animate-pulse">
-                               ❌ SALDO INSUFICIENTE: Ajuste marketing ou produção para sincronizar.
+                               ❌ DEFICIT DE CAIXA: $ {(projections?.insolvency_deficit ?? projections?.health?.insolvency_deficit ?? 0).toLocaleString()}
                              </p>
                           )}
                        </div>
@@ -210,7 +210,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <SummaryNode label="Share Projetado" val={`${(projections?.marketShare ?? 0).toFixed(1)}%`} />
                        <SummaryNode label="EBITDA Proj." val={`$ ${(projections?.ebitda ?? 0).toLocaleString()}`} />
                        <SummaryNode label="Debt Ratio" val={`${(projections?.debtRatio ?? 0).toFixed(1)}%`} />
-                       <SummaryNode label="Credit Standing" val={projections?.health?.rating ?? '---'} />
+                       <SummaryNode label="Credit Standing" val={projections?.health?.rating ?? projections?.health?.debt_rating ?? '---'} />
                     </div>
                     <div className="space-y-4">
                        <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions); setIsSaving(false); alert("SINAL TRANSMITIDO."); }} disabled={isSaving || !canSubmit} className={`w-full py-8 rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 ${canSubmit ? 'bg-orange-600 text-white hover:bg-white hover:text-orange-600' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>

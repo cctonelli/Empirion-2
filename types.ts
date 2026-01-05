@@ -8,7 +8,7 @@ export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' 
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
-export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D';
+export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | string;
 
 export type DiscreteTerm = 0 | 1 | 2;
 
@@ -17,6 +17,7 @@ export interface FinancialHealth {
   debt_to_equity?: number;
   insolvency_risk?: number;
   rating?: CreditRating;
+  debt_rating?: string;
   is_bankrupt?: boolean;
   insolvency_deficit?: number;
 }
@@ -59,37 +60,37 @@ export interface BlackSwanEvent {
 }
 
 export interface AdvancedIndicators {
-  nldcg_days: number;
-  nldcg_components: {
-    receivables: number;
-    inventory_finished: number;
-    inventory_raw: number;
-    suppliers: number;
-    other_payables: number;
+  nldcg_days?: number;
+  nldcg_components?: {
+    receivables?: number;
+    inventory_finished?: number;
+    inventory_raw?: number;
+    suppliers?: number;
+    other_payables?: number;
   };
-  trit: number;
-  insolvency_index: number;
-  prazos: {
-    pmre: number; 
-    pmrv: number; 
-    pmpc: number; 
-    pmdo: number; 
-    pmmp: number; 
+  trit?: number;
+  insolvency_index?: number;
+  prazos?: {
+    pmre?: number; 
+    pmrv?: number; 
+    pmpc?: number; 
+    pmdo?: number; 
+    pmmp?: number; 
   };
-  ciclos: {
-    operacional: number;
-    financeiro: number;
-    economico: number;
+  ciclos?: {
+    operacional?: number;
+    financeiro?: number;
+    economico?: number;
   };
-  fontes_financiamento: {
-    ecp: number; 
-    ccp: number; 
-    elp: number; 
+  fontes_financiamento?: {
+    ecp?: number; 
+    ccp?: number; 
+    elp?: number; 
   };
-  scissors_effect: {
-    ncg: number;
-    available_capital: number;
-    gap: number;
+  scissors_effect?: {
+    ncg?: number;
+    available_capital?: number;
+    gap?: number;
   };
 }
 

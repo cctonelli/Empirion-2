@@ -9,8 +9,8 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Motor Industrial Empirion v12.6 - Oracle Integrity Kernel
- * Final Blindagem Protocol v2.82
+ * Motor Industrial Empirion v12.7 - Oracle Integrity Kernel
+ * Final Blindagem Protocol v2.83
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -24,7 +24,6 @@ export const calculateProjections = (
     // Mapeamento Dinâmico Robusto para resolver colisões entre DB (snake_case) e Engine (camelCase)
     const getAttr = (camel: string, snake: string, fallback: any) => {
       const data = indicators as any;
-      // Refactor: Prioritiza o valor existente no objeto de indicadores independente da convenção de nomes
       return data?.[snake] ?? data?.[camel] ?? fallback;
     };
 
@@ -58,6 +57,7 @@ export const calculateProjections = (
           debt_to_equity: 0.6, 
           insolvency_risk: 10, 
           rating: 'AAA' as CreditRating, 
+          debt_rating: 'AAA',
           is_bankrupt: false,
           insolvency_deficit: 0
         } as FinancialHealth,
@@ -79,11 +79,10 @@ export const calculateProjections = (
     const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362);
 
     // 2. Oracle Risk Core
-    const totalDebt = prevDebt + decisions.finance.loanRequest;
-    const debtToEquity = totalDebt / Math.max(prevEquity, 1);
+    const totalDebt = sanitize(prevDebt + decisions.finance.loanRequest, 0);
+    const debtToEquity = sanitize(totalDebt / Math.max(prevEquity, 1), 0);
     const is_bankrupt = prevEquity < 0;
 
-    // Lógica de Rating D (Insolvência Crítica)
     const rating: CreditRating = 
       is_bankrupt ? 'D' : 
       debtToEquity > 2.5 ? 'D' : 
@@ -98,8 +97,7 @@ export const calculateProjections = (
     const baseMkt = sanitize(currentIndicators.marketingExpenseBase, 17165) * inflationMult;
     const totalMarketingCost = regions.reduce((acc, r) => {
       const level = sanitize(r.marketing, 0);
-      if (level === 0) return acc;
-      return acc + (baseMkt * Math.pow(level, 1.5));
+      return level === 0 ? acc : acc + (baseMkt * Math.pow(level, 1.5));
     }, 0);
 
     const avgTermDays = regions.length > 0 
@@ -124,7 +122,6 @@ export const calculateProjections = (
     
     const unitSalary = sanitize(currentIndicators.sectorAvgSalary, 1313) * inflationMult;
     const payrollTotal = (decisions.hr.sales_staff_count * unitSalary * 1.6);
-    const unitDist = sanitize(currentIndicators.distributionCostUnit, 50.50) * inflationMult;
     const adminExpenses = sanitize(currentIndicators.baseAdminCost, 114880) * inflationMult;
 
     // 5. DRE
@@ -136,6 +133,7 @@ export const calculateProjections = (
     // 6. Fluxo de Caixa e Insolvência
     const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
     const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
+    const unitDist = sanitize(currentIndicators.distributionCostUnit, 50.50) * inflationMult;
     const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + (salesVolume * unitDist) + adminExpenses;
     const totalLiquidity = prevCash + cashInflow + decisions.finance.loanRequest;
     const finalCash = totalLiquidity - totalOutflow - decisions.finance.application;
@@ -156,6 +154,7 @@ export const calculateProjections = (
           debt_to_equity: debtToEquity, 
           insolvency_risk: Math.min((debtRatio * 1.2), 100), 
           rating, 
+          debt_rating: rating,
           is_bankrupt: finalEquity < 0,
           insolvency_deficit
       } as FinancialHealth,
@@ -181,10 +180,10 @@ export const calculateProjections = (
       indicators: calculateAdvanced(revenue, cpv, ebitda, netProfit, (revenue * 0.6), mpCostTotal * 0.3, finalCash, decisions)
     };
   } catch (error) {
-    console.error("Simulation Engine Critical Failure (v12.6):", error);
+    console.error("Simulation Engine Critical Failure (v12.7):", error);
     return {
       revenue: 0, totalOutflow: 0, totalLiquidity: 0, insolvency_deficit: 0,
-      health: { rating: 'D', is_bankrupt: true, insolvency_deficit: 0 }
+      health: { rating: 'D', debt_rating: 'D', is_bankrupt: true, insolvency_deficit: 0, insolvency_risk: 100 }
     };
   }
 };
