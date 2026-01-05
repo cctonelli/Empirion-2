@@ -43,6 +43,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   providerPrices: { mpA: 20.20, mpB: 40.40 },
   distributionCostUnit: 50.50,
   marketingExpenseBase: 10200,
+  /* Corrected property name from 'Bird' to 'beta' to align with the MacroIndicators interface definition */
   machineryValues: { alfa: 505000, beta: 1515000, gama: 3030000 },
   sectorAvgSalary: 1313.00,
   stockMarketPrice: 60.09,
