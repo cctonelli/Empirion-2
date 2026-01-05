@@ -55,13 +55,12 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     name: 'Industrial Mastery GOLD',
     branch: 'industrial',
     sector: 'Manufacturing',
-    description: 'Balanço Inicial de $ 9.176.940. Foco em OEE e Ciclo Financeiro.',
+    description: 'Balanço Inicial de $ 9.176.940. Foco em OEE, CAPEX e Ciclo Financeiro Bernard v12.8.',
     config: {
       round_frequency_days: 7,
       sales_mode: 'internal' as SalesMode,
       scenario_type: 'simulated' as ScenarioType,
       transparency_level: 'high' as TransparencyLevel,
-      // Fix: Add missing gazeta_mode property required by ChampionshipTemplate['config'] interface
       gazeta_mode: 'anonymous' as GazetaMode,
       modality_type: 'standard' as ModalityType,
       deadline_value: 7,

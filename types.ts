@@ -29,8 +29,8 @@ export interface Team {
   insolvency_status?: InsolvencyStatus;
   intervention_log?: InterventionEntry[];
   created_at?: string;
-  credit_limit?: number;
-  equity?: number;
+  credit_limit: number; // Persistent GOLD Field
+  equity: number;        // Persistent GOLD Field
 }
 
 export interface InterventionEntry {
@@ -133,7 +133,7 @@ export interface TeamProgress {
 export interface Championship {
   id: string;
   name: string;
-  description?: string;
+  description: string; // Required GOLD Field
   branch: Branch;
   status: ChampionshipStatus;
   current_round: number; 

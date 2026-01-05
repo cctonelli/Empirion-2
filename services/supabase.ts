@@ -10,7 +10,7 @@ const getSafeEnv = (key: string): string => {
   return metaEnv[viteKey] || metaEnv[key] || '';
 };
 
-const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
+const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejendfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = getSafeEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -63,7 +63,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           kpis: result.kpis,
           credit_rating: result.creditRating,
           insolvency_index: result.health.insolvency_risk,
-          // Extra values for team update
           team_credit: result.kpis.banking?.credit_limit || 0,
           team_equity: result.kpis.equity || 0
         };
@@ -74,13 +73,11 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     if (batchResults.length === 0) throw new Error("Total Process Failure.");
 
-    // Insert history (dedicated cols)
     const { error: insErr } = await supabase.from('companies').insert(
       batchResults.map(({ team_credit, team_equity, ...rest }) => rest)
     );
     if (insErr) throw insErr;
 
-    // Sync team current state (dedicated cols)
     for (const res of batchResults) {
       await supabase.from('teams').update({
         credit_limit: res.team_credit,
@@ -88,7 +85,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       }).eq('id', res.team_id);
     }
 
-    // Increment Arena Round
     await supabase.from('championships').update({ 
       current_round: currentRound + 1,
       updated_at: new Date().toISOString() 
@@ -136,8 +132,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const teamsToInsert = teams.map(t => ({
       name: t.name,
       championship_id: champ.id,
-      equity: 5055447,
-      credit_limit: 5000000,
+      equity: 5055447, // Default GOLD Initial Equity
+      credit_limit: 5000000, // Default Initial Credit Limit
       status: 'active',
       invite_code: `CODE-${Math.random().toString(36).substring(7).toUpperCase()}`
     }));
@@ -165,6 +161,7 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     const market = c.market_indicators || config.market_indicators || DEFAULT_MACRO;
     return {
       ...c,
+      description: c.description || config.description || 'Arena de Simulação Estratégica',
       gazeta_mode: c.gazeta_mode || config.gazeta_mode || 'anonymous',
       observers: c.observers || config.observers || [],
       deadline_value: c.deadline_value ?? config.deadline_value ?? 7,

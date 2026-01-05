@@ -22,6 +22,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   
   const [formData, setFormData] = useState({
     name: isTrial ? 'ARENA TESTE GRÁTIS' : '', 
+    description: isTrial ? 'Arena de testes para validação de estratégias industriais GOLD.' : '',
     branch: 'industrial' as Branch,
     sales_mode: 'hybrid' as SalesMode,
     scenario_type: 'simulated' as ScenarioType,
@@ -56,6 +57,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       setFormData(prev => ({
         ...prev,
         branch: selectedTemplate.branch,
+        description: selectedTemplate.description,
         modality_type: selectedTemplate.config.modality_type,
         sales_mode: selectedTemplate.config.sales_mode,
         scenario_type: selectedTemplate.config.scenario_type,
@@ -84,6 +86,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     try {
       const champPayload: Partial<Championship> = {
         name: formData.name || (isTrial ? 'ARENA TESTE' : 'Simulação Oracle'),
+        description: formData.description || 'Arena de Simulação Estratégica Empirion',
         branch: formData.branch,
         status: 'active',
         is_public: true,
@@ -173,6 +176,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Trophy size={12}/> Nome da Arena</label>
                       <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all font-bold" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><FileText size={12}/> Descrição Estratégica</label>
+                      <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all text-xs font-medium resize-none" placeholder="Defina o contexto pedagógico da arena..." />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Users size={12}/> Limite de Equipes</label>
