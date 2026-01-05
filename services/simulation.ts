@@ -91,7 +91,7 @@ export const calculateProjections = (
   
   const prevEquity = sanitize(bs.equity?.total || bs.equity?.accumulated_profit + bs.equity?.capital_social, 5055447);
   const prevCash = sanitize(bs.assets?.current?.cash, 840200);
-  const selic = sanitize(indicators?.interestRateTR, 3.0) / 100;
+  const selic = sanitize(indicators?.interest_rate_tr, 3.0) / 100;
   
   // 1. Revenue & Costs (Fidelity Mode)
   const revenue = 3322735; 

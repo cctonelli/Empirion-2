@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -206,7 +207,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                     <div className="lg:col-span-4 bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 space-y-8">
                        <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Global Pulse Analytics</h3>
                        <MacroRow label="Taxa TR Mensal" val="3.0%" />
-                       <MacroRow label="Inflação Período" val={`${arena.market_indicators?.inflationRate || 1.0}%`} />
+                       <MacroRow label="Inflação Período" val={`${arena.market_indicators?.inflation_rate || 1.0}%`} />
                        <MacroRow label="Risco Médio Setor" val="1.8%" />
                        <MacroRow label="Dólar de Referência" val="R$ 5,28" />
                     </div>

@@ -245,20 +245,32 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     if (data) trialData = data;
   } catch (e) {}
 
-  const hydrate = (c: any) => ({
-    ...c,
-    deadline_value: c.deadline_value ?? c.config?.deadline_value ?? 7,
-    deadline_unit: c.deadline_unit ?? c.config?.deadline_unit ?? 'days',
-    round_started_at: c.round_started_at ?? c.config?.round_started_at ?? c.created_at,
-    market_indicators: c.market_indicators ?? c.config?.market_indicators ?? DEFAULT_MACRO,
-    sales_mode: c.sales_mode ?? c.config?.sales_mode ?? 'hybrid',
-    scenario_type: c.scenario_type ?? c.config?.scenario_type ?? 'simulated',
-    currency: c.currency ?? c.config?.currency ?? 'BRL',
-    transparency_level: c.transparency_level ?? c.config?.transparency_level ?? 'medium',
-    round_frequency_days: c.round_frequency_days ?? c.config?.round_frequency_days ?? 7,
-    ecosystemConfig: c.ecosystemConfig ?? c.config?.ecosystemConfig,
-    kpis: c.kpis ?? c.config?.kpis ?? {}
-  });
+  const hydrate = (c: any) => {
+    const config = c.config || {};
+    const market = c.market_indicators || config.market_indicators || DEFAULT_MACRO;
+    
+    return {
+      ...c,
+      deadline_value: c.deadline_value ?? config.deadline_value ?? 7,
+      deadline_unit: c.deadline_unit ?? config.deadline_unit ?? 'days',
+      round_started_at: c.round_started_at ?? config.round_started_at ?? c.created_at,
+      market_indicators: {
+        growth_rate: market.growth_rate ?? market.growthRate ?? 3.0,
+        inflation_rate: market.inflation_rate ?? market.inflationRate ?? 1.0,
+        interest_rate_tr: market.interest_rate_tr ?? market.interestRateTR ?? 3.0,
+        tax_rate_ir: market.tax_rate_ir ?? market.tax_rate_ir ?? 15.0,
+        machinery_values: market.machinery_values ?? market.machineryValues ?? DEFAULT_MACRO.machinery_values,
+        active_event: market.active_event
+      },
+      sales_mode: c.sales_mode ?? config.sales_mode ?? 'hybrid',
+      scenario_type: c.scenario_type ?? config.scenario_type ?? 'simulated',
+      currency: c.currency ?? config.currency ?? 'BRL',
+      transparency_level: c.transparency_level ?? config.transparency_level ?? 'medium',
+      round_frequency_days: c.round_frequency_days ?? config.round_frequency_days ?? 7,
+      ecosystemConfig: c.ecosystemConfig ?? config.ecosystemConfig,
+      kpis: c.kpis ?? config.kpis ?? {}
+    };
+  };
 
   const combined = [
     ...realData.map(c => ({ ...hydrate(c), is_trial: false })), 

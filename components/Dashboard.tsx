@@ -81,7 +81,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           generateGazetaNews({ 
             period: (activeArena?.current_round || 0) + 1, 
             leader: 'Equipe Alpha', 
-            inflation: `${activeArena?.market_indicators?.inflationRate || 1.0}%`, 
+            inflation: `${activeArena?.market_indicators?.inflation_rate || 1.0}%`, 
             scenarioType, 
             focus: [branch] 
           })

@@ -41,11 +41,11 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
 };
 
 export const DEFAULT_MACRO: MacroIndicators = {
-  growthRate: 3.0,
-  inflationRate: 1.0,
-  interestRateTR: 3.0,
+  growth_rate: 3.0,
+  inflation_rate: 1.0,
+  interest_rate_tr: 3.0,
   tax_rate_ir: 15.0,
-  machineryValues: { alfa: 505000, beta: 1515000, gama: 3030000 },
+  machinery_values: { alfa: 505000, beta: 1515000, gama: 3030000 },
   difficulty: { price_sensitivity: 2.0, marketing_effectiveness: 1.0 }
 };
 

@@ -97,11 +97,11 @@ export interface DecisionData {
 }
 
 export interface MacroIndicators {
-  growthRate: number;
-  inflationRate: number;
-  interestRateTR: number;
+  growth_rate: number;
+  inflation_rate: number;
+  interest_rate_tr: number;
   tax_rate_ir: number;
-  machineryValues: { alfa: number; beta: number; gama: number };
+  machinery_values: { alfa: number; beta: number; gama: number };
   active_event?: BlackSwanEvent;
   [key: string]: any;
 }

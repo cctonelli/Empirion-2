@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
 import { calculateProjections, sanitize } from '../services/simulation';
-import { DecisionData, Branch, Championship, MacroIndicators, ProjectionResult, CreditRating } from '../types';
+import { DecisionData, Branch, Championship, MacroIndicators, ProjectionResult, CreditRating, EcosystemConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DEFAULT_MACRO } from '../constants';
 import { InsolvencyAlert } from './InsolvencyAlert';
@@ -56,13 +56,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   
   const projections: ProjectionResult | null = useMemo(() => {
     const eco = (activeArena?.ecosystemConfig || { 
-      inflationRate: 0.01, 
-      demandMultiplier: 1.0, 
-      interestRate: 0.03, 
-      marketVolatility: 0.05, 
-      scenarioType: 'simulated', 
-      modalityType: 'standard' 
-    }) as any;
+      inflation_rate: 0.01, 
+      demand_multiplier: 1.0, 
+      interest_rate: 0.03, 
+      market_volatility: 0.05, 
+      scenario_type: 'simulated', 
+      modality_type: 'standard' 
+    }) as EcosystemConfig;
     try { 
       return calculateProjections(decisions, branch, eco, currentIndicators, prevRoundData); 
     } catch (e) { 
