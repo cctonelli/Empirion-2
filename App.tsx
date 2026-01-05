@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -71,6 +70,17 @@ const AppContent: React.FC = () => {
       <Route path="/auth" element={<Auth onAuth={() => navigate('/app/dashboard')} onBack={() => navigate('/')} />} />
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
       
+      {/* PUBLIC SOLUTIONS ROUTES - UNIFIED MVP v3.0 */}
+      <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
+      <Route path="/branches/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
+      <Route path="/solutions/simulators" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><SimulatorsPage /></div></>} />
+      <Route path="/solutions/open-tournaments" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><OpenTournaments /></div></>} />
+      <Route path="/solutions/business-plan" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><BusinessPlanWizard /></div></>} />
+      <Route path="/features" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><FeaturesPage /></div></>} />
+      <Route path="/blog" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><BlogPage /></div></>} />
+      <Route path="/contact" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ContactPage /></div></>} />
+      <Route path="/rewards" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><PublicRewards /></div></>} />
+
       <Route path="/app/*" element={
         (session || isTestMode) ? (
           <Layout

@@ -1,9 +1,8 @@
-
 import { Branch, ChampionshipTemplate, MacroIndicators, Championship } from './types';
 
-// VERSIONAMENTO OFICIAL EMPIRION
-export const APP_VERSION = "v6.0.242-GOLD";
-export const BUILD_DATE = "03/01/2026";
+// VERSIONAMENTO OFICIAL EMPIRION - ALINHADO COM ESCOPO V3.0
+export const APP_VERSION = "v3.0.0-MVP-GOLD";
+export const BUILD_DATE = "31/12/2025";
 export const PROTOCOL_NODE = "Node 08-ALPHA";
 
 export const COLORS = {
@@ -233,5 +232,23 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     sectors: [
       { id: 's1', name: 'Indústria', slug: 'industrial', icon: 'Factory', description: 'Otimize linhas de montagem e gerencie Capex complexo.' }
     ]
+  },
+  'activity-industrial': {
+    name: 'Industrial',
+    heroImage: 'https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000',
+    body: 'Otimize linhas de montagem e gerencie Capex complexo na vanguarda da simulação.',
+    description: 'A modalidade Industrial Empirion é focada no gerenciamento de cadeias produtivas complexas. Strategistas devem equilibrar o OEE (Overall Equipment Effectiveness), turnover de mão de obra e elasticidade-preço em 9 regiões independentes.',
+    features: ['Gestão de Máquinas Alfa/Beta/Gama', 'Obsolescência Programada', 'Supply Chain Global', 'Turnover de RH Realista'],
+    kpis: ['OEE Factory Efficiency', 'Giro de Estoque MP-A/B', 'Margem Bruta Industrial'],
+    accent: 'orange'
+  },
+  'activity-commercial': {
+    name: 'Comercial',
+    heroImage: 'https://images.unsplash.com/photo-1534452286302-2f55043531b9?q=80&w=2000',
+    body: 'Varejo híbrido e algoritmos de satisfação do consumidor.',
+    description: 'Gerencie operações de varejo em larga escala, equilibrando estoque, promoções sazonais e treinamento de equipe de vendas.',
+    features: ['Mix de Produtos Dinâmico', 'E-commerce Integration', 'CRM Predictive Data', 'Logística de Last-Mile'],
+    kpis: ['Consumer Satisfaction Index', 'Vendas por Metro Quadrado', 'Ticket Médio Regional'],
+    accent: 'blue'
   }
 };

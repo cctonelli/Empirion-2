@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -9,27 +9,44 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { DEFAULT_PAGE_CONTENT } from '../constants';
-import { fetchPageContent } from '../services/supabase';
+import { fetchPageContent, getModalities } from '../services/supabase';
 import EmpireParticles from '../components/EmpireParticles';
 
 const ActivityDetail: React.FC = () => {
   const { slug } = useParams();
   const { i18n } = useTranslation();
+  const navigate = useNavigate();
   const [content, setContent] = useState<any>(null);
 
   useEffect(() => {
     const load = async () => {
-      // 1. Tentar buscar conteúdo dinâmico (Admin)
+      // 1. Tentar buscar conteúdo dinâmico do banco (Activity ou Modality)
       const db = await fetchPageContent(`activity-${slug}`, i18n.language);
       if (db) {
         setContent(db);
       } else {
-        // 2. Fallback para conteúdo local rico em constants.tsx
+        // 2. Tentar encontrar em modalities dinâmicas do Supabase
+        const mods = await getModalities();
+        const foundMod = mods.find(m => m.slug === slug);
+        if (foundMod) {
+            setContent({
+                name: foundMod.name,
+                heroImage: foundMod.image_url || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000",
+                body: foundMod.page_content.hero.subtitle,
+                description: foundMod.description,
+                features: foundMod.page_content.features,
+                kpis: foundMod.page_content.kpis,
+                accent: foundMod.page_content.accent_color || 'orange'
+            });
+            return;
+        }
+
+        // 3. Fallback para conteúdo local rico em constants.tsx
         const localContent = DEFAULT_PAGE_CONTENT[`activity-${slug}`];
         if (localContent) {
           setContent(localContent);
         } else {
-          // 3. Fallback genérico se nada for encontrado
+          // 4. Fallback genérico final
           setContent({
             name: slug?.toUpperCase(),
             heroImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000",
@@ -55,17 +72,16 @@ const ActivityDetail: React.FC = () => {
   );
 
   const getIcon = () => {
-    switch(slug) {
-      case 'industrial': return <Factory size={64} />;
-      case 'commercial': return <ShoppingCart size={64} />;
-      case 'services': return <Briefcase size={64} />;
-      case 'agribusiness': return <Tractor size={64} />;
-      case 'finance': return <DollarSign size={64} />;
-      case 'construction': return <Hammer size={64} />;
-      case 'rodada-negocios': return <Gavel size={64} />;
-      case 'chao-de-fabrica': return <Cpu size={64} />;
-      default: return <Box size={64} />;
-    }
+    const s = slug?.toLowerCase();
+    if (s?.includes('industrial')) return <Factory size={64} />;
+    if (s?.includes('commercial') || s?.includes('comercial')) return <ShoppingCart size={64} />;
+    if (s?.includes('services') || s?.includes('servicos')) return <Briefcase size={64} />;
+    if (s?.includes('agri') || s?.includes('agro')) return <Tractor size={64} />;
+    if (s?.includes('finance')) return <DollarSign size={64} />;
+    if (s?.includes('construction')) return <Hammer size={64} />;
+    if (s?.includes('negocios')) return <Gavel size={64} />;
+    if (s?.includes('fabrica')) return <Cpu size={64} />;
+    return <Box size={64} />;
   };
 
   const accentColor = content.accent === 'blue' ? 'text-blue-500' : content.accent === 'emerald' ? 'text-emerald-500' : 'text-orange-500';
@@ -78,7 +94,6 @@ const ActivityDetail: React.FC = () => {
       
       {/* 1. HERO SECTION DINÂMICO */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
-        {/* Background Image with Rich Overlays */}
         <div className="absolute inset-0 z-0">
            <div className="absolute inset-0 bg-gradient-to-r from-[#020617] via-[#020617]/80 to-transparent z-10" />
            <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent z-10" />
@@ -94,11 +109,7 @@ const ActivityDetail: React.FC = () => {
 
         <div className="container mx-auto px-8 md:px-24 relative z-20">
            <div className="max-w-4xl space-y-12">
-              <motion.div 
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-10"
-              >
+              <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
                  <div className={`w-24 h-24 ${bgAccent} rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl ${shadowAccent} group hover:rotate-12 transition-transform duration-500`}>
                     {getIcon()}
                  </div>
@@ -112,16 +123,13 @@ const ActivityDetail: React.FC = () => {
                     </p>
                  </div>
                  <div className="flex flex-col sm:flex-row gap-6 pt-6">
-                    <Link 
-                      to="/solutions/open-tournaments"
+                    <button 
+                      onClick={() => navigate('/app/championships', { state: { preSelectedSlug: slug } })}
                       className={`px-14 py-6 ${bgAccent} text-white rounded-full font-black text-xs uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-2xl ${shadowAccent} flex items-center justify-center gap-4`}
                     >
-                      <Play size={18} fill="currentColor" /> Criar Campeonato {content.name}
-                    </Link>
-                    <Link 
-                      to="/auth"
-                      className="px-12 py-6 bg-white/5 border border-white/10 text-white rounded-full font-black text-xs uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-4 backdrop-blur-xl"
-                    >
+                      <Play size={18} fill="currentColor" /> Iniciar Arena {content.name}
+                    </button>
+                    <Link to="/features" className="px-12 py-6 bg-white/5 border border-white/10 text-white rounded-full font-black text-xs uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-4 backdrop-blur-xl">
                       Protocolo Técnico <Sparkles size={18} className={accentColor} />
                     </Link>
                  </div>
@@ -129,13 +137,8 @@ const ActivityDetail: React.FC = () => {
            </div>
         </div>
 
-        {/* Scroll Indicator */}
-        <motion.div 
-          animate={{ y: [0, 10, 0] }} 
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
-        >
-           <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.5em] italic">Análise Operacional</span>
+        <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity }} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
+           <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.5em] italic">Consolidando Escopo MVP v3.0</span>
            <div className="w-0.5 h-12 bg-gradient-to-b from-white/20 to-transparent rounded-full" />
         </motion.div>
       </section>
@@ -152,7 +155,7 @@ const ActivityDetail: React.FC = () => {
                  {content.description}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
-                 {content.features.map((f: string, i: number) => (
+                 {content.features?.map((f: string, i: number) => (
                    <div key={i} className="flex gap-4 items-start group">
                       <div className={`p-2 rounded-lg ${bgAccent}/10 ${accentColor} mt-1 group-hover:scale-110 transition-transform`}>
                          <ShieldCheck size={18} />
@@ -164,15 +167,8 @@ const ActivityDetail: React.FC = () => {
            </div>
 
            <div className="grid grid-cols-2 gap-6">
-              {content.features.slice(0, 4).map((f: string, i: number) => (
-                <motion.div 
-                  key={i}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="p-10 bg-slate-900/60 backdrop-blur-3xl border border-white/5 rounded-[3.5rem] space-y-6 hover:bg-slate-900 transition-all shadow-2xl group border-b-2 hover:border-b-orange-500"
-                >
+              {content.features?.slice(0, 4).map((f: string, i: number) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="p-10 bg-slate-900/60 backdrop-blur-3xl border border-white/5 rounded-[3.5rem] space-y-6 hover:bg-slate-900 transition-all shadow-2xl group border-b-2 hover:border-b-orange-500">
                    <div className={`p-4 bg-white/5 rounded-2xl w-fit ${accentColor} group-hover:scale-110 transition-all`}><Zap size={24} /></div>
                    <h4 className="text-lg font-black text-white uppercase tracking-tight leading-tight">{f}</h4>
                    <div className="h-1 w-12 bg-white/10 rounded-full" />
@@ -193,10 +189,10 @@ const ActivityDetail: React.FC = () => {
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              {content.kpis.map((kpi: string, i: number) => (
+              {content.kpis?.map((kpi: string, i: number) => (
                 <div key={i} className="bg-slate-900/40 p-12 rounded-[4rem] border border-white/5 text-center space-y-8 hover:-translate-y-2 transition-all shadow-2xl group">
                    <div className="w-20 h-20 mx-auto bg-white/5 rounded-3xl flex items-center justify-center text-slate-400 border border-white/10 group-hover:bg-white group-hover:text-slate-950 transition-all duration-500">
-                      {i === 0 ? <BarChart3 size={32} /> : i === 1 ? <TrendingUp size={32} /> : <Users size={32} />}
+                      {i === 0 ? <BarChart3 size={32} /> : i === 1 ? <Trophy size={32} /> : <Users size={32} />}
                    </div>
                    <div>
                       <h4 className="text-3xl font-black text-white uppercase tracking-tight italic">{kpi}</h4>
@@ -220,23 +216,21 @@ const ActivityDetail: React.FC = () => {
               <div className="absolute -top-4 -right-4 w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black italic shadow-xl">E</div>
            </div>
            <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-tight drop-shadow-2xl">
-              Inicie a Transmissão no <br/>
+              Implemente o <br/>
               <span className={accentColor}>Protocolo {content.name}</span>
            </h2>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
-              <Link 
-                to="/solutions/open-tournaments"
+              <button 
+                onClick={() => navigate('/app/championships', { state: { preSelectedSlug: slug } })}
                 className={`px-20 py-8 ${bgAccent} text-white rounded-full font-black text-sm uppercase tracking-[0.4em] hover:scale-110 transition-all shadow-[0_30px_70px_rgba(0,0,0,0.4)] active:scale-95 flex items-center gap-5`}
               >
-                Ativar Arena <ArrowRight size={20} />
-              </Link>
+                Ativar Arena Agora <ArrowRight size={20} />
+              </button>
            </div>
         </div>
       </section>
     </div>
   );
 };
-
-const TrendingUp = ({ size }: { size: number }) => <BarChart3 size={size} />;
 
 export default ActivityDetail;

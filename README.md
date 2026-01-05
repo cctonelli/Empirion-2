@@ -1,38 +1,34 @@
-
-# 🚀 Empirion – Business Intelligence Arena (v6.0 GOLD)
+# 🚀 Empirion – Business Intelligence Arena (v3.0.0-MVP-GOLD)
 
 **Forge Your Empire with AI-Driven Strategic Insight.**
 
 Empirion é a plataforma definitiva de simulação empresarial, integrando Inteligência Artificial Generativa (Gemini), Colaboração em Tempo Real (Supabase) e Visualização de Dados de Alta Performance (ApexCharts). 
 
-## 📈 Status do Projeto: MVP Consolidado (Versão 6.0)
-*Última Atualização: 03/01/2026*
+## 📈 Status do Projeto: Escopo Consolidado (v3.0)
+*Última Atualização: 31/12/2025*
 
-### 🛠 Core Architecture & New Features (v6.0)
-- **Empirion High-Fidelity Engine**: Relatórios Auditados e Folha de Decisões otimizados para total compatibilidade com os modelos clássicos de simulação empresarial, agora com arquitetura proprietária.
-- **Gazeta Industrial v6.0**: Sistema de notícias dinâmico alimentado por Gemini 3, gerando manchetes realistas baseadas no desempenho das equipes.
-- **Estrutura de Decisões Profunda**: 9 regiões geográficas independentes, gestão de 3 tipos de maquinário (Alfa, Beta, Gama) e controle de turnover de RH.
-- **Relatórios Coletivos de Mercado**: Comparativo direto de 8 empresas com benchmarking de Balanço Patrimonial, DRE e Market Share.
-- **CVM & Bolsa de Valores**: Painel de cotações dinâmico e indicadores macroeconômicos (Inflação, Juros TR, Salários).
-- **Strategos AI Oracle**: Assistente de estratégia com raciocínio profundo (Deep Reasoning) para suporte 24/7 aos estrategistas.
+### 🛠 Core Architecture & New Features (v3.0)
+- **Unified Activity Engine**: Unificação das páginas de ramo, atividade e modalidade em um componente robusto e dinâmico.
+- **Routing Overhaul**: Correção total do sistema de rotas públicas para permitir navegação fluida entre simuladores, torneios e recursos.
+- **Empire Cosmos Particles v9.0**: Sistema de partículas gravitacionais otimizado para performance e imersão total "WOW".
+- **Oracle Node 08 Calibration**: Sincronização profunda entre o motor matemático legado (Bernard Fidelity) e os briefings de IA Gemini 3.
+- **Strategos Business Builder**: Módulo de plano de negócios unificado com preenchimento assistido por oráculo.
 
 ### ✅ Funcionalidades Implementadas
-- [x] **Motor Econômico v6.0**: Simulação precisa de margens, elasticidade-preço e efeitos de escala.
-- [x] **Relatório Inicial P1**: Geração de balanço com Ativo Total de $ 9.176.940.
-- [x] **Módulo de Concordata**: Opção de Recuperação Judicial para gestão de crises extremas.
-- [x] **Grounded Intelligence**: Pesquisa de mercado com fatos verificados pelo Google Search API.
-- [x] **Real-time Engine**: Sincronização de decisões via Supabase Realtime Channels.
+- [x] **Motor Econômico v8.0**: Simulação precisa de margens, escala industrial e efeitos de caixa.
+- [x] **Relatório Inicial P1**: Geração de balanço com Ativo Total de $ 9.176.940 em paridade absoluta.
+- [x] **Grounded Intelligence Search**: Pesquisa de mercado verificada via Google Search API.
+- [x] **Real-time Arena Control**: Centro de comando para tutores gerenciarem múltiplas arenas simultaneamente.
 
-### 🚀 Roadmap
-1. **Engine de Processamento Batch Automatizado**: Transição automática de rodadas.
-2. **ESG Score System**: Avaliação de sustentabilidade e responsabilidade social.
-3. **Mobile War Room App**: Interface dedicada para monitoramento remoto.
+### 🚀 Roadmap Próximo Ciclo
+1. **ESG Integration Phase 1**: Indicadores de sustentabilidade integrados ao TSR.
+2. **Mobile Pulse Dashboard**: Visualização PWA para monitoramento rápido de rodadas.
 
 ## 💻 Tech Stack
 - **Frontend**: React 19, Tailwind CSS, Framer Motion.
-- **Backend/Realtime**: Supabase (PostgreSQL, Auth, RLS).
+- **Backend/Realtime**: Supabase (PostgreSQL, Auth, RLS Channels).
 - **Intelligence**: Google GenAI SDK (@google/genai - Gemini 3 Pro/Flash).
-- **Visualization**: ApexCharts & Lucide Icons.
+- **Visualization**: ApexCharts.
 
 ---
-*Empirion v6.0 – Construindo impérios empresariais do futuro.*
+*Empirion v3.0 – Construindo impérios empresariais do futuro.*
