@@ -12,7 +12,10 @@ export const sanitize = (val: any, fallback: number = 0): number => {
  */
 export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };
-  if (!macro) return defaults;
+  
+  if (!macro || (!macro.machineryValues && !(macro as any).config?.machineryValues)) {
+    return defaults;
+  }
   
   const v = macro.machineryValues || (macro as any).config?.machineryValues || {};
   return {

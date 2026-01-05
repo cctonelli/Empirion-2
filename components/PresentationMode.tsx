@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, MonitorPlay, Shield, Trophy, Target, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Shield, BarChart3, Target } from 'lucide-react';
 import { Team, ProjectionResult } from '../types';
 
 interface PresentationProps {

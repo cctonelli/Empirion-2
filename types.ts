@@ -14,7 +14,6 @@ export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'N/A';
 
 export type DiscreteTerm = 0 | 1 | 2;
 
-// Added for Dashboard message feed
 export interface MessageBoardItem {
   id: string;
   sender: string;
@@ -23,7 +22,6 @@ export interface MessageBoardItem {
   isImportant?: boolean;
 }
 
-// Added for Business Plan module
 export interface BusinessPlan {
   id: string;
   championship_id: string;
@@ -35,7 +33,6 @@ export interface BusinessPlan {
   updated_at: string;
 }
 
-// Added for dynamic game modalities
 export interface Modality {
   id: string;
   name: string;

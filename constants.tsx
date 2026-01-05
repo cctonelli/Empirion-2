@@ -128,6 +128,10 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   }
 };
 
+/**
+ * PROXY DE ACESSO ORACLE
+ * Recupera conteúdo de página evitando referências circulares ou chaves undefined durante o build.
+ */
 export const getPageContent = (slug: string) => {
   const branchKey = `branch-${slug}`;
   const activityKey = `activity-${slug}`;
