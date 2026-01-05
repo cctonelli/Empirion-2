@@ -49,7 +49,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
           const { data: teamData } = await supabase.from('teams').select('master_key_enabled').eq('id', teamId).maybeSingle();
           if (teamData?.master_key_enabled) setMasterKeyUnlocked(true);
           
-          // Fetch previous round snapshot for comparison
           const { data: prevData } = await supabase.from('companies')
             .select('*')
             .eq('team_id', teamId)
@@ -97,6 +96,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     alert("NOTIFICAÇÃO ENVIADA: O sinal de socorro foi transmitido para o Command Center do Tutor.");
   };
 
+  const currentWACC = sanitize(currentIndicators.interestRateTR, 3.0) + getRiskSpread(projections?.health?.rating as CreditRating);
+
   return (
     <div className="max-w-[1600px] mx-auto space-y-3 pb-32 animate-in fade-in duration-700">
       
@@ -137,7 +138,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         <AnimatePresence mode="wait">
           <motion.div key={STEPS[activeStep].id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             
-            {/* ALERTA DE REBAIXAMENTO (v2.86) */}
+            {/* NOTIFICAÇÃO DE REBAIXAMENTO (v2.87) */}
             <RatingAlert 
               currentRating={projections?.health?.rating} 
               previousRating={projections?.health?.previous_rating} 
@@ -148,12 +149,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
               <div className="space-y-10">
                  <div className="flex items-center justify-between px-4">
                     <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Matriz Regional de Vendas</h3>
-                    <div className="flex items-center gap-4">
-                       <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3">
-                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Base Campanha:</span>
-                          <span className="text-sm font-black text-blue-400 font-mono">$ {currentIndicators.base_marketing_cost?.toLocaleString() ?? '17.165'}</span>
-                       </div>
-                    </div>
                  </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                    {Object.entries(decisions.regions).map(([id, data]: [any, any]) => (
@@ -181,6 +176,74 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                    ))}
                  </div>
               </div>
+            )}
+
+            {activeStep === 3 && (
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+                  <div className="p-10 bg-white/[0.02] border border-white/5 rounded-[4rem] space-y-10 shadow-inner">
+                     <h4 className="text-sm font-black uppercase text-amber-500 flex items-center gap-3 italic border-b border-white/5 pb-6"><Landmark size={22} /> Estrutura de Capital</h4>
+                     <DecInput icon={<DollarSign/>} label="Tomar Empréstimo ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} />
+                     <DecInput icon={<TrendingUp/>} label="Aplicação Financeira ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} />
+                     
+                     {/* MONITOR DE CUSTO DE CAPITAL (v2.87) */}
+                     {projections?.health?.rating && (
+                       <div className="mt-4 p-5 bg-slate-900/80 rounded-[2rem] border border-white/10 shadow-xl space-y-4">
+                          <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                <Activity size={14} className="text-blue-400" />
+                                <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Custo de Capital (WACC)</span>
+                             </div>
+                             <span className={`text-sm font-black font-mono italic ${projections.health.rating === 'C' || projections.health.rating === 'D' ? 'text-rose-500 animate-pulse' : 'text-blue-400'}`}>
+                                {currentWACC.toFixed(2)}% a.a.
+                             </span>
+                          </div>
+                          <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                             <motion.div 
+                               initial={{ width: 0 }}
+                               animate={{ width: `${Math.min(currentWACC * 2, 100)}%` }}
+                               className={`h-full ${projections.health.rating === 'D' ? 'bg-rose-600 shadow-[0_0_10px_#ef4444]' : projections.health.rating === 'C' ? 'bg-rose-500' : 'bg-blue-500'}`} 
+                             />
+                          </div>
+                          <p className="text-[9px] text-slate-500 font-bold italic leading-relaxed uppercase">
+                             * Seu rating atual ({projections.health.rating}) adiciona um spread de risco de {getRiskSpread(projections.health.rating as CreditRating)}% sobre a taxa base de {currentIndicators.interestRateTR}%.
+                          </p>
+                       </div>
+                     )}
+                  </div>
+                  <div className="space-y-8">
+                     <div className="p-10 bg-slate-900/50 rounded-[3.5rem] border border-white/10 space-y-6">
+                        <h5 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2"><Activity size={14}/> Oracle Debt Insight</h5>
+                        <div className="space-y-4">
+                           <div className="flex justify-between items-center py-3 border-b border-white/5">
+                              <span className="text-xs font-bold text-slate-500 uppercase">Limite de Crédito</span>
+                              <span className="text-lg font-black italic text-white">$ {(projections?.loanLimit ?? 0).toLocaleString()}</span>
+                           </div>
+                           <div className="flex justify-between items-center py-3 border-b border-white/5">
+                              <span className="text-xs font-bold text-slate-500 uppercase">Endividamento</span>
+                              <span className={`text-lg font-black italic ${(projections?.debtRatio ?? 0) > 60 ? 'text-rose-500' : 'text-emerald-500'}`}>{(projections?.debtRatio ?? 0).toFixed(1)}%</span>
+                           </div>
+                           
+                           {/* DETALHAMENTO DOS JUROS REAIS */}
+                           <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-4">
+                              <div className="flex justify-between items-end">
+                                 <div>
+                                    <span className="block text-[8px] font-black text-slate-400 uppercase">Juros do Round (P&L Impact)</span>
+                                    <span className={`text-xl font-mono font-black ${projections?.health?.is_downgraded ? 'text-rose-600' : 'text-blue-400'}`}>
+                                       $ {(projections?.interestExp ?? 0).toLocaleString()}
+                                    </span>
+                                 </div>
+                                 <div className="text-right">
+                                    <span className="block text-[8px] font-black text-slate-400 uppercase">Spread Aplicado</span>
+                                    <span className="text-lg font-mono font-black text-white">
+                                       +{(projections?.riskSpread ?? 0).toFixed(2)}%
+                                    </span>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
             )}
 
             {activeStep === 5 && (
@@ -233,82 +296,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions); setIsSaving(false); alert("SINAL TRANSMITIDO."); }} disabled={isSaving || !canSubmit} className={`w-full py-8 rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 ${canSubmit ? 'bg-orange-600 text-white hover:bg-white hover:text-orange-600' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>
                           {isSaving ? <Loader2 className="animate-spin" /> : (masterKeyUnlocked && isInsolvent) ? <><Shield size={20}/> Submeter via Master Key</> : "Sincronizar Decisão"}
                        </button>
-                       {isInsolvent && !masterKeyUnlocked && (
-                          <button onClick={handleRequestMasterKey} disabled={helpRequested} className="w-full flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-white transition-colors py-4 border border-rose-500/20 rounded-2xl hover:bg-rose-600/10">
-                             {helpRequested ? <><CheckCircle2 size={14}/> Sinal Enviado</> : <><HelpCircle size={14}/> Solicitar Master Key</>}
-                          </button>
-                       )}
                     </div>
                  </div>
               </div>
-            )}
-
-            {activeStep === 3 && (
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-                  <div className="p-10 bg-white/[0.02] border border-white/5 rounded-[4rem] space-y-10 shadow-inner">
-                     <h4 className="text-sm font-black uppercase text-amber-500 flex items-center gap-3 italic border-b border-white/5 pb-6"><Landmark size={22} /> Estrutura de Capital</h4>
-                     <DecInput icon={<DollarSign/>} label="Tomar Empréstimo ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} />
-                     <DecInput icon={<TrendingUp/>} label="Aplicação Financeira ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} />
-                     
-                     {/* MONITOR DE CUSTO DE CAPITAL (v2.85) */}
-                     {projections?.health?.rating && (
-                       <div className="mt-4 p-5 bg-slate-900/80 rounded-[2rem] border border-white/10 shadow-xl space-y-4">
-                          <div className="flex justify-between items-center">
-                             <div className="flex items-center gap-2">
-                                <Activity size={14} className="text-blue-400" />
-                                <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Custo de Capital (WACC)</span>
-                             </div>
-                             <span className={`text-sm font-black font-mono italic ${projections.health.rating === 'C' || projections.health.rating === 'D' ? 'text-rose-500 animate-pulse' : 'text-blue-400'}`}>
-                                {(sanitize(currentIndicators.interestRateTR, 3.0) + getRiskSpread(projections.health.rating as CreditRating)).toFixed(2)}% p.p.
-                             </span>
-                          </div>
-                          <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                             <motion.div 
-                               initial={{ width: 0 }}
-                               animate={{ width: `${Math.min((sanitize(currentIndicators.interestRateTR, 3.0) + getRiskSpread(projections.health.rating as CreditRating)) * 2, 100)}%` }}
-                               className={`h-full ${projections.health.rating === 'D' ? 'bg-rose-600' : projections.health.rating === 'C' ? 'bg-rose-500' : 'bg-blue-500'}`} 
-                             />
-                          </div>
-                          <p className="text-[9px] text-slate-500 font-bold italic leading-relaxed uppercase">
-                             * Seu rating atual ({projections.health.rating}) injeta um spread de risco de {getRiskSpread(projections.health.rating as CreditRating)}% sobre a taxa base de {currentIndicators.interestRateTR}%.
-                          </p>
-                       </div>
-                     )}
-                  </div>
-                  <div className="space-y-8">
-                     <div className="p-10 bg-slate-900/50 rounded-[3.5rem] border border-white/10 space-y-6">
-                        <h5 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2"><Activity size={14}/> Oracle Debt Insight</h5>
-                        <div className="space-y-4">
-                           <div className="flex justify-between items-center py-3 border-b border-white/5">
-                              <span className="text-xs font-bold text-slate-500 uppercase">Limite de Crédito</span>
-                              <span className="text-lg font-black italic text-white">$ {(projections?.loanLimit ?? 0).toLocaleString()}</span>
-                           </div>
-                           <div className="flex justify-between items-center py-3 border-b border-white/5">
-                              <span className="text-xs font-bold text-slate-500 uppercase">Endividamento</span>
-                              <span className={`text-lg font-black italic ${(projections?.debtRatio ?? 0) > 60 ? 'text-rose-500' : 'text-emerald-500'}`}>{(projections?.debtRatio ?? 0).toFixed(1)}%</span>
-                           </div>
-                           
-                           {/* DETALHAMENTO DOS JUROS REAIS */}
-                           <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-4">
-                              <div className="flex justify-between items-end">
-                                 <div>
-                                    <span className="block text-[8px] font-black text-slate-400 uppercase">Spread de Risco</span>
-                                    <span className={`text-xl font-mono font-black ${projections?.health?.is_downgraded ? 'text-rose-600' : 'text-blue-400'}`}>
-                                       +{getRiskSpread(projections?.health?.rating as CreditRating).toFixed(2)}%
-                                    </span>
-                                 </div>
-                                 <div className="text-right">
-                                    <span className="block text-[8px] font-black text-slate-400 uppercase">Juros do Round</span>
-                                    <span className="text-lg font-mono font-black text-white">
-                                       $ {(projections?.interestExp ?? 0).toLocaleString()}
-                                    </span>
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
             )}
 
             <footer className="mt-12 pt-8 border-t border-white/5 flex justify-between items-center px-6">

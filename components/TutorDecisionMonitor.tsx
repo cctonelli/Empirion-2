@@ -102,8 +102,9 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
           <div className="lg:col-span-8">
              <ClassCreditHealth teamsProjections={teams} />
           </div>
-          <div className="lg:col-span-4 bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col justify-between">
-             <div className="space-y-6">
+          <div className="lg:col-span-4 bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-8 opacity-[0.03] rotate-12"><ShieldAlert size={160} /></div>
+             <div className="space-y-6 relative z-10">
                 <div className="flex items-center gap-3">
                    <ShieldAlert className="text-orange-500" size={24} />
                    <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Resumo de Auditoria</h3>
@@ -114,7 +115,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                    <AuditKPI label="Unidades Insolventes" val={teams.filter(t => t.insolvent).length} color="rose" highlight />
                 </div>
              </div>
-             <div className="pt-6 border-t border-white/5">
+             <div className="pt-6 border-t border-white/5 relative z-10">
                 <p className="text-[10px] text-slate-500 font-bold uppercase italic leading-relaxed">
                    "Use o Oracle Master para reajustar taxas se o risco sistêmico ultrapassar 50% das unidades."
                 </p>
@@ -171,11 +172,6 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                   </div>
                   <h4 className="text-2xl font-black text-slate-900 uppercase italic leading-none">{team.team_name}</h4>
                   <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">{team.rating === 'D' ? 'INSOLVÊNCIA CRÍTICA DETETADA' : team.status === 'pending' ? 'AGUARDANDO CONEXÃO' : 'DECISÃO EM RASCUNHO'}</p>
-                  {team.insolvent && (
-                     <div className="mt-4 px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-[8px] font-black uppercase tracking-widest border border-rose-100">
-                        Deficit: $ {team.insolvency_deficit?.toLocaleString()}
-                     </div>
-                  )}
                </button>
              ))}
           </div>
@@ -258,17 +254,6 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                                            <span className="text-xs font-mono text-white font-black">{JSON.stringify(log.new_value)}</span>
                                         </div>
                                      </div>
-                                     {log.current_balance_at_time !== undefined && (
-                                       <div className="flex items-center justify-end gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
-                                          <div className="text-right">
-                                             <span className="block text-[7px] font-black text-slate-500 uppercase">Saldo Estimado</span>
-                                             <span className="text-xs font-mono font-black text-blue-400">
-                                                $ {log.current_balance_at_time.toLocaleString()}
-                                             </span>
-                                          </div>
-                                          <Landmark size={14} className="text-blue-500" />
-                                       </div>
-                                     )}
                                   </div>
                                </div>
                             </div>
@@ -285,11 +270,6 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                         <textarea className="w-full h-40 bg-slate-50 border border-slate-200 rounded-[2.5rem] p-8 text-sm font-medium focus:border-orange-500 outline-none resize-none transition-all" placeholder="Digite seu veredito estratégico..."></textarea>
                         <button className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-orange-600 transition-all shadow-xl active:scale-95">Injetar Feedback</button>
                      </div>
-                  </div>
-                  <div className="bg-indigo-600 p-12 rounded-[4rem] text-white shadow-2xl space-y-6 relative overflow-hidden">
-                     <Shield size={140} className="absolute -bottom-10 -right-10 opacity-10 rotate-12" />
-                     <h4 className="text-2xl font-black uppercase italic leading-none">Inquisitor Protocol</h4>
-                     <p className="text-sm font-bold text-indigo-100 opacity-80 leading-relaxed uppercase italic">"A transparência na auditoria é o que evita o colapso da governança em equipes sob pressão."</p>
                   </div>
                </aside>
             </motion.div>
@@ -322,7 +302,7 @@ const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgres
     plotOptions: { 
       bar: { 
         borderRadius: 12, 
-        columnWidth: '50%', 
+        columnWidth: '55%', 
         distributed: true,
         dataLabels: { position: 'top' }
       } 
@@ -330,7 +310,7 @@ const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgres
     colors: ratingsOrder.map(r => COLORS[r as keyof typeof COLORS]),
     xaxis: {
       categories: ratingsOrder,
-      labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 800 } },
+      labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 900 } },
       axisBorder: { show: false },
       axisTicks: { show: false }
     },
@@ -342,7 +322,8 @@ const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgres
     dataLabels: {
       enabled: true,
       formatter: (val: number) => val > 0 ? val : '',
-      style: { colors: ['#fff'], fontSize: '10px', fontWeight: 900 }
+      style: { colors: ['#fff'], fontSize: '10px', fontWeight: 900 },
+      offsetY: -20
     },
     tooltip: { theme: 'dark' },
     legend: { show: false }

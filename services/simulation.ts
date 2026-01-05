@@ -21,7 +21,7 @@ export const isRatingLower = (current: CreditRating, previous: CreditRating): bo
 
 /**
  * Tabela de Spread de Risco - Protocolo v2.85
- * Atribui um prêmio de risco sobre a taxa base.
+ * AAA: 0% | AA: 2% | A: 5% | B: 10% | C: 20% | D: 40%
  */
 export const getRiskSpread = (rating: CreditRating): number => {
   const spreads: Record<string, number> = {
@@ -38,7 +38,7 @@ export const getRiskSpread = (rating: CreditRating): number => {
 
 /**
  * Motor Industrial Empirion v13.0 - Oracle Integrity Kernel
- * Final Blindagem Protocol v2.86 - Downgrade Detection & Risk Premium
+ * Final Blindagem Protocol v2.87 - Differentiated Cost of Capital
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -79,6 +79,8 @@ export const calculateProjections = (
         marketShare: 12.5, cashFlowNext: 840200,
         loanLimit: 2500000, totalOutflow: 0, totalLiquidity: 840200,
         creditRating: 'AAA' as CreditRating,
+        interestExp: 40000,
+        riskSpread: 0,
         health: { 
           liquidity_ratio: 1.5, 
           debt_to_equity: 0.6, 
