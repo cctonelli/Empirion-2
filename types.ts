@@ -43,11 +43,11 @@ export interface MessageBoardItem {
 }
 
 /**
- * AdvancedIndicators v12.8.2
+ * KPIs v12.8.2 (Refactored from AdvancedIndicators)
  * Loosened to any-map to prevent Vercel build failures on nested financial schemas.
  * Essential for "Escape Hatch" strategy in dynamic simulation environments.
  */
-export interface AdvancedIndicators {
+export interface KPIs {
   [key: string]: any;
 }
 
@@ -70,7 +70,7 @@ export interface ProjectionResult {
   health: FinancialHealth;
   marketShare?: number;
   costBreakdown?: { name: string; total: number; impact: string }[];
-  advanced?: AdvancedIndicators;
+  kpis: KPIs; // Centralized metrics node
   statements: {
     dre: any;
     balance_sheet: any;
@@ -149,7 +149,7 @@ export interface TeamProgress {
   master_key_enabled?: boolean;
   auditLogs: AuditLog[];
   last_activity?: string;
-  advanced?: AdvancedIndicators;
+  kpis?: KPIs;
 }
 
 export interface Championship {
@@ -166,7 +166,7 @@ export interface Championship {
   master_key_enabled?: boolean;
   config: any;
   market_indicators: MacroIndicators;
-  advanced_indicators?: AdvancedIndicators;
+  kpis?: KPIs; // Oracle Synced Node
   initial_financials?: any;
   round_started_at?: string;
   is_trial?: boolean;

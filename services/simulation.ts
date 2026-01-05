@@ -1,4 +1,4 @@
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, CreditRating, ProjectionResult } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult } from '../types';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
@@ -25,7 +25,6 @@ export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
 
 /**
  * CÁLCULO DE DEPRECIAÇÃO (Fidelity Standard 5%)
- * Linear period depreciation based on machine types.
  */
 export const calculateDepreciation = (machines: { alfa: number, beta: number, gama: number }, macro: MacroIndicators, rate: number = 0.05) => {
   const prices = getSafeMachineryValues(macro);
@@ -77,15 +76,15 @@ export const calculateProjections = (
     rating = 'A'; risk = 15;
   }
 
-  // 4. Advanced Indicators v12.8.2 - Fidelity Logic (NCG, Cycles, Scissors)
-  const advanced: AdvancedIndicators = {
+  // 4. KPIs v12.8.2 - Fidelity Logic (NCG, Cycles, Scissors)
+  const kpis: KPIs = {
     ciclos: {
       operacional: branch === 'industrial' ? 60 : 35,
       financeiro: branch === 'industrial' ? 40 : 20,
       economico: 25
     },
     scissors_effect: {
-      ncg: revenue * 0.14, // Needs for Working Capital
+      ncg: revenue * 0.14,
       available_capital: prevCash + revenue - operatingCosts,
       gap: (revenue * 0.14) - (prevCash + revenue - operatingCosts)
     },
@@ -95,7 +94,8 @@ export const calculateProjections = (
       efficiency_index: 0.88
     },
     risk_index: risk / 100,
-    market_share: 12.5
+    market_share: 12.5,
+    rating // Redundant but safe for UI selectors
   };
 
   return {
@@ -111,7 +111,7 @@ export const calculateProjections = (
       is_bankrupt: finalEquity <= 0,
       liquidity_ratio: liquidityRatio
     },
-    advanced,
+    kpis,
     costBreakdown: [
       { name: 'Depreciação', total: periodDepreciation, impact: 'Fidelity Wear' },
       { name: 'OPEX', total: operatingCosts, impact: 'Maintainability' }

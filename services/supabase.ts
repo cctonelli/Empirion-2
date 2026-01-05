@@ -17,12 +17,11 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
 /**
- * ORACLE TURNOVER ENGINE v11.2.1 (Schema Aligned)
- * Processes all strategy nodes for an arena period with error isolation.
- * Metrics from 'advanced_indicators' are merged into 'kpis' to match DB schema.
+ * ORACLE TURNOVER ENGINE v11.2.2 (Final Schema Sync)
+ * Persists all simulation nodes into 'companies.kpis' for Vercel/Supabase consistency.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
-  console.log(`[TURNOVER v11.2.1] Initiating: Arena ${championshipId} | R${currentRound}`);
+  console.log(`[TURNOVER v11.2.2] Final Sync: Arena ${championshipId} | R${currentRound}`);
 
   try {
     const { data: arena } = await supabase.from('championships').select('*').eq('id', championshipId).single();
@@ -54,12 +53,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           teamPrevState
         );
 
-        // SCHEMA ALIGNMENT: Merge advanced indicators into kpis object since DB column is missing
-        const mergedKpis = {
-          ...(result.statements?.kpis || {}),
-          advanced: result.advanced
-        };
-
+        // SCHEMA SYNC: KPIs node includes everything needed for UI Benchmarking
         return {
           team_id: team.id,
           championship_id: championshipId,
@@ -68,7 +62,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           dre: result.statements?.dre,
           balance_sheet: result.statements?.balance_sheet,
           cash_flow: result.statements?.cash_flow,
-          kpis: mergedKpis
+          kpis: result.kpis
         };
       } catch (e: any) {
         console.error(`[TEAM ERROR] Unit ${team.id} processing failure:`, e.message);
@@ -76,9 +70,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       }
     }).filter(r => r !== null);
 
-    if (batchResults.length === 0) {
-      throw new Error("Total Process Failure: No units could be validated.");
-    }
+    if (batchResults.length === 0) throw new Error("Total Process Failure.");
 
     const { error: insErr } = await supabase.from('companies').insert(batchResults);
     if (insErr) throw insErr;
@@ -92,28 +84,9 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     return { success: true };
   } catch (err: any) {
-    console.error("[CRITICAL TURNOVER FAILURE]:", { message: err.message });
+    console.error("[CRITICAL TURNOVER FAILURE]:", err.message);
     return { success: false, error: err.message };
   }
-};
-
-export const submitCommunityVote = async (vote: {
-  championship_id: string;
-  team_id: string;
-  round: number;
-  scores: Record<string, number>;
-  comment?: string;
-}) => {
-  // Mapping scores to community_ratings format from schema
-  const ratingsToInsert = Object.entries(vote.scores).map(([criteria, score]) => ({
-    championship_id: vote.championship_id,
-    round: vote.round,
-    user_id: null, // Should be fetched from auth if needed
-    criteria,
-    score,
-    comment: vote.comment
-  }));
-  return await supabase.from('community_ratings').insert(ratingsToInsert);
 };
 
 export const getChampionshipHistoricalData = async (championshipId: string, round: number) => {
@@ -131,7 +104,7 @@ export const getChampionshipHistoricalData = async (championshipId: string, roun
       net_profit: item.dre?.net_profit || 0,
       asset: item.balance_sheet?.assets?.total || 9176940,
       share: item.kpis?.market_share || 12.5,
-      advanced: item.kpis?.advanced || {}
+      kpis: item.kpis || {}
     })), 
     error: null 
   };
@@ -151,34 +124,18 @@ export const getActiveBusinessPlan = async (teamId: string, round: number) => {
 export const saveBusinessPlan = async (plan: Partial<BusinessPlan>) => {
   const { data, error } = await supabase
     .from('business_plans')
-    .upsert({
-      ...plan,
-      updated_at: new Date().toISOString()
-    })
+    .upsert({ ...plan, updated_at: new Date().toISOString() })
     .select()
     .single();
   return { data: data as BusinessPlan, error };
 };
 
 export const subscribeToBusinessPlan = (teamId: string, callback: (payload: any) => void) => {
-  return supabase
-    .channel(`bp-${teamId}`)
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'business_plans',
-      filter: `team_id=eq.${teamId}` 
-    }, callback)
-    .subscribe();
+  return supabase.channel(`bp-${teamId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'business_plans', filter: `team_id=eq.${teamId}` }, callback).subscribe();
 };
 
 export const getTeamSimulationHistory = async (teamId: string) => {
-  const { data: decisions } = await supabase
-    .from('current_decisions')
-    .select('*')
-    .eq('team_id', teamId)
-    .order('round', { ascending: true });
-    
+  const { data: decisions } = await supabase.from('current_decisions').select('*').eq('team_id', teamId).order('round', { ascending: true });
   return decisions || [];
 };
 
@@ -219,12 +176,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       payload.tutor_id = session?.user?.id;
     }
 
-    const { data: champ, error: cErr } = await supabase
-      .from(table)
-      .insert([payload])
-      .select()
-      .single();
-
+    const { data: champ, error: cErr } = await supabase.from(table).insert([payload]).select().single();
     if (cErr) throw cErr;
 
     const teamsToInsert = teams.map(t => ({
@@ -233,27 +185,19 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       ...(isTrial ? {} : { status: 'active', invite_code: `CODE-${Math.random().toString(36).substring(7).toUpperCase()}` })
     }));
 
-    const { data: teamsData, error: tErr } = await supabase
-      .from(teamsTable)
-      .insert(teamsToInsert)
-      .select();
-
+    const { data: teamsData, error: tErr } = await supabase.from(teamsTable).insert(teamsToInsert).select();
     if (tErr) throw tErr;
     return { champ: { ...champ, is_trial: isTrial } as Championship, teams: teamsData as Team[] };
-  } catch (err: any) {
-    throw err;
-  }
+  } catch (err: any) { throw err; }
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {
   let realData: any[] = [];
   let trialData: any[] = [];
-  
   try {
     const { data } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
     if (data) realData = data;
   } catch (e) {}
-  
   try {
     const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
     if (data) trialData = data;
@@ -277,22 +221,14 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     ...trialData.map(c => ({ ...hydrate(c), is_trial: true }))
   ];
   
-  return { 
-    data: onlyPublic ? combined.filter(c => c.is_public || c.is_trial) : combined as Championship[], 
-    error: null 
-  };
+  return { data: onlyPublic ? combined.filter(c => c.is_public || c.is_trial) : combined as Championship[], error: null };
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   if (!userId || userId === 'tutor' || userId === 'alpha') {
     return {
-      id: userId,
-      supabase_user_id: userId,
-      name: userId === 'tutor' ? 'Tutor Master' : 'Capitão Alpha',
-      email: `${userId}@empirion.ia`,
-      role: userId === 'tutor' ? 'tutor' : 'player',
-      is_opal_premium: true,
-      created_at: new Date().toISOString()
+      id: userId, supabase_user_id: userId, name: userId === 'tutor' ? 'Tutor Master' : 'Capitão Alpha',
+      email: `${userId}@empirion.ia`, role: userId === 'tutor' ? 'tutor' : 'player', is_opal_premium: true, created_at: new Date().toISOString()
     };
   }
   const { data } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
@@ -302,13 +238,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData, isTrialParam: boolean = false) => {
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
-  return await supabase.from(table).upsert({ 
-    team_id: teamId, 
-    championship_id: champId, 
-    round, 
-    data: decisions,
-    status: 'sealed' 
-  }); 
+  return await supabase.from(table).upsert({ team_id: teamId, championship_id: champId, round, data: decisions, status: 'sealed' }); 
 };
 
 export const resetAlphaData = async () => {
@@ -328,28 +258,24 @@ export const getPublicReports = async (championshipId: string, round: number) =>
   if (error) return { data: [], error };
   return {
     data: data.map(item => ({
-      team_id: item.team_id,
-      alias: item.team_name,
-      kpis: item.kpis,
-      statements: {
-        dre: item.dre,
-        balance_sheet: item.balance_sheet,
-        cash_flow: item.cash_flow
-      }
+      team_id: item.team_id, alias: item.team_name, kpis: item.kpis,
+      statements: { dre: item.dre, balance_sheet: item.balance_sheet, cash_flow: item.cash_flow }
     })),
     error: null
   };
 };
 
+// Fix: Missing export member submitCommunityVote
+/**
+ * Submits a community evaluation for a team strategy.
+ */
+export const submitCommunityVote = async (vote: any) => {
+  return await supabase.from('community_votes').insert([vote]);
+};
+
 export const fetchPageContent = async (slug: string, lang: string) => {
   try {
-    // SCHEMA ALIGNMENT: Using 'site_content' table with 'page_slug' and 'locale' columns
-    const { data } = await supabase
-      .from('site_content')
-      .select('content')
-      .eq('page_slug', slug)
-      .eq('locale', lang)
-      .maybeSingle();
+    const { data } = await supabase.from('site_content').select('content').eq('page_slug', slug).eq('locale', lang).maybeSingle();
     return data?.content || null;
   } catch (e) { return null; }
 };
@@ -375,8 +301,7 @@ export const provisionDemoEnvironment = () => {
 export const silentTestAuth = async (user: any) => {
   const mockSession = {
     user: { id: user.id, email: user.email, user_metadata: { full_name: user.name, role: user.role } },
-    access_token: 'trial-token',
-    expires_in: 3600
+    access_token: 'trial-token', expires_in: 3600
   };
   localStorage.setItem('empirion_demo_session', JSON.stringify(mockSession));
   localStorage.setItem('is_trial_session', 'true'); 
