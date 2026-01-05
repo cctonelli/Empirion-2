@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Chart from 'react-apexcharts';
 import { 
-  RefreshCw, History, User, Key, Landmark, 
+  History, User, Key, Landmark, 
   ShieldAlert, Loader2, Monitor, Scale, 
   Activity, FileText, CheckCircle2, AlertOctagon, ShieldCheck
 } from 'lucide-react';

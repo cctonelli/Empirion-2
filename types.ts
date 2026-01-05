@@ -1,5 +1,9 @@
+/**
+ * EMPIRION V12.8.0 - PRODUCTION TYPES (Armored Version)
+ */
+
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
-export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
+export type Branch = 'industrial' | 'commercial' | 'service' | 'services' | 'agribusiness' | 'finance' | 'construction';
 export type SalesMode = 'internal' | 'external' | 'hybrid' | string;
 export type ScenarioType = 'simulated' | 'real' | string;
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
@@ -9,7 +13,6 @@ export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'N/A';
-export type DiscreteTerm = 0 | 1 | 2;
 
 export interface AuditLog {
   field_path: string;
@@ -58,6 +61,7 @@ export interface ProjectionResult {
     cash_flow: any;
     kpis: any;
   };
+  [key: string]: any;
 }
 
 export interface DecisionData {
@@ -137,6 +141,7 @@ export interface TeamProgress {
   insolvent: boolean;
   master_key_enabled?: boolean;
   auditLogs: AuditLog[];
+  last_activity?: string;
 }
 
 export interface Championship {
@@ -209,14 +214,6 @@ export interface ChampionshipTemplate {
   };
 }
 
-export interface MessageBoardItem {
-  id: string;
-  sender: string;
-  text: string;
-  timestamp: string;
-  isImportant?: boolean;
-}
-
 export interface BusinessPlan {
   id: string;
   championship_id: string;
@@ -226,12 +223,6 @@ export interface BusinessPlan {
   data: Record<number, string>;
   status: 'draft' | 'submitted' | 'approved';
   updated_at: string;
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
 }
 
 export interface Modality {
@@ -250,4 +241,20 @@ export interface Modality {
 
 export interface AdvancedIndicators {
   [key: string]: any;
+}
+
+// Added missing MessageBoardItem interface to resolve import error in Dashboard.tsx
+export interface MessageBoardItem {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+  isImportant?: boolean;
+}
+
+// Added missing CommunityCriteria interface to resolve import error in CommunityView.tsx
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
 }
