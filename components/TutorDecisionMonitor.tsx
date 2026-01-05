@@ -97,7 +97,6 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
        
-       {/* DASHBOARD DE SAÚDE SISTÊMICA PARA O TUTOR */}
        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8">
              <ClassCreditHealth teamsProjections={teams} />
@@ -279,9 +278,6 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
   );
 };
 
-/**
- * ClassCreditHealth: Histograma de Rating de Crédito da Turma.
- */
 const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgress[] }) => {
   const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
   

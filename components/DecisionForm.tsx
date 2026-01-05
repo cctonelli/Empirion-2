@@ -296,6 +296,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions); setIsSaving(false); alert("SINAL TRANSMITIDO."); }} disabled={isSaving || !canSubmit} className={`w-full py-8 rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 ${canSubmit ? 'bg-orange-600 text-white hover:bg-white hover:text-orange-600' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>
                           {isSaving ? <Loader2 className="animate-spin" /> : (masterKeyUnlocked && isInsolvent) ? <><Shield size={20}/> Submeter via Master Key</> : "Sincronizar Decisão"}
                        </button>
+                       {isInsolvent && !masterKeyUnlocked && (
+                          <button onClick={handleRequestMasterKey} disabled={helpRequested} className="w-full flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-white transition-colors py-4 border border-rose-500/20 rounded-2xl hover:bg-rose-600/10">
+                             {helpRequested ? <><CheckCircle2 size={14}/> Sinal Enviado</> : <><HelpCircle size={14}/> Solicitar Master Key</>}
+                          </button>
+                       )}
                     </div>
                  </div>
               </div>
