@@ -22,6 +22,7 @@ export interface Team {
   status?: string;
   invite_code?: string;
   master_key_enabled?: boolean;
+  kpis?: KPIs; // Oracle Synced Metrics (New for GOLD v12.8.2)
   created_at?: string;
 }
 
@@ -45,7 +46,6 @@ export interface MessageBoardItem {
 /**
  * KPIs v12.8.2 (Refactored from AdvancedIndicators)
  * Loosened to any-map to prevent Vercel build failures on nested financial schemas.
- * Essential for "Escape Hatch" strategy in dynamic simulation environments.
  */
 export interface KPIs {
   [key: string]: any;

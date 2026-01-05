@@ -13,6 +13,7 @@ import { UserProfile, Championship } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
 import TutorDecisionMonitor from './TutorDecisionMonitor';
+import OracleHealthCheck from './OracleHealthCheck';
 
 interface AdminProps {
   preTab?: 'tournaments' | 'users' | 'opal' | 'system';
@@ -264,6 +265,8 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
 
         {activeTab === 'system' && (
           <div className="space-y-12">
+             <OracleHealthCheck />
+             
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2 bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-10">
                    <div className="flex items-center gap-4">

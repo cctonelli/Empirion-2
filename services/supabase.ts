@@ -249,7 +249,8 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     scenario_type: c.scenario_type ?? c.config?.scenario_type ?? 'simulated',
     currency: c.currency ?? c.config?.currency ?? 'BRL',
     transparency_level: c.transparency_level ?? c.config?.transparency_level ?? 'medium',
-    ecosystemConfig: c.ecosystemConfig ?? c.config?.ecosystemConfig
+    ecosystemConfig: c.ecosystemConfig ?? c.config?.ecosystemConfig,
+    kpis: c.kpis ?? c.config?.kpis ?? {}
   });
 
   const combined = [
