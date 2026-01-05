@@ -295,3 +295,11 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     accent: 'orange'
   }
 };
+
+// Aliases para compatibilidade legada com 'activity'
+DEFAULT_PAGE_CONTENT['activity-industrial']    = DEFAULT_PAGE_CONTENT['branch-industrial'];
+DEFAULT_PAGE_CONTENT['activity-commercial']    = DEFAULT_PAGE_CONTENT['branch-commercial'];
+DEFAULT_PAGE_CONTENT['activity-services']      = DEFAULT_PAGE_CONTENT['branch-services'];
+DEFAULT_PAGE_CONTENT['activity-agribusiness']  = DEFAULT_PAGE_CONTENT['branch-agribusiness'];
+DEFAULT_PAGE_CONTENT['activity-finance']       = DEFAULT_PAGE_CONTENT['branch-finance'];
+DEFAULT_PAGE_CONTENT['activity-construction']  = DEFAULT_PAGE_CONTENT['branch-construction'];

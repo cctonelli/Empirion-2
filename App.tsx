@@ -71,6 +71,8 @@ const AppContent: React.FC = () => {
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
       
       {/* PUBLIC SOLUTIONS ROUTES - UNIFIED BRANCH ENGINE v3.1 */}
+      {/* Redirecionamento implícito para compatibilidade legada */}
+      <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       <Route path="/branches/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       
       <Route path="/solutions/simulators" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><SimulatorsPage /></div></>} />

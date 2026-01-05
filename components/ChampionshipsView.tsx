@@ -19,10 +19,15 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
       const { data } = await getChampionships();
       if (data) setChampionships(data);
       
-      // Captura pré-seleção enviada via roteamento (ramos/branches)
-      const preBranch = location.state?.preSelectedBranch || location.state?.preSelectedSlug;
-      if (preBranch) {
-        setActiveFilter(preBranch);
+      // Robust capture of pre-selection sent via router state (branches/activities)
+      const preFilter = 
+        location.state?.preSelectedBranch ?? 
+        location.state?.preSelectedSlug ?? 
+        location.state?.preSelectedActivity ?? 
+        location.state?.preSelectedModality;
+
+      if (preFilter) {
+        setActiveFilter(preFilter);
       }
       
       setLoading(false);
