@@ -59,7 +59,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     return calculateProjections(decisions, branch, eco, currentIndicators);
   }, [decisions, branch, activeArena, currentIndicators]);
 
-  const isInsolvent = projections?.totalOutflow > projections?.totalLiquidity;
+  const isInsolvent = (projections?.totalOutflow || 0) > (projections?.totalLiquidity || 0);
   const canSubmit = !isInsolvent || masterKeyUnlocked;
 
   const updateDecision = (path: string, value: any) => {
@@ -106,7 +106,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
               <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">NODE CREDIT RATING</span>
               <div className="flex items-center gap-3">
                  <div className={`w-3 h-3 rounded-full animate-pulse ${projections?.health?.rating === 'D' ? 'bg-rose-600 shadow-[0_0_12px_#f43f5e]' : projections?.debtRatio! > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
-                 <span className={`text-sm font-black italic ${projections?.health?.rating === 'D' ? 'text-rose-500' : projections?.debtRatio! < 40 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                 <span className={`text-sm font-black italic ${projections?.health?.rating === 'D' ? 'text-rose-500' : (projections?.debtRatio || 0) < 40 ? 'text-emerald-400' : 'text-amber-400'}`}>
                     {projections?.health?.rating || '---'} STANDING
                  </span>
               </div>
@@ -210,7 +210,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                     </div>
                     <div className="space-y-4">
                        <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions); setIsSaving(false); alert("SINAL TRANSMITIDO."); }} disabled={isSaving || !canSubmit} className={`w-full py-8 rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 ${canSubmit ? 'bg-orange-600 text-white hover:bg-white hover:text-orange-600' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>
-                          {isSaving ? <Loader2 className="animate-spin" /> : masterKeyUnlocked && isInsolvent ? <><Shield size={20}/> Submeter via Master Key</> : "Sincronizar Decisão"}
+                          {isSaving ? <Loader2 className="animate-spin" /> : (masterKeyUnlocked && isInsolvent) ? <><Shield size={20}/> Submeter via Master Key</> : "Sincronizar Decisão"}
                        </button>
                        {isInsolvent && !masterKeyUnlocked && (
                           <button onClick={handleRequestMasterKey} disabled={helpRequested} className="w-full flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-white transition-colors py-4 border border-rose-500/20 rounded-2xl hover:bg-rose-600/10">

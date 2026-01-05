@@ -13,9 +13,9 @@ export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D';
 export type DiscreteTerm = 0 | 1 | 2;
 
 export interface FinancialHealth {
-  liquidity_ratio: number;
-  debt_to_equity: number;
-  insolvency_risk: number; // 0 to 100
+  liquidity_ratio?: number;
+  debt_to_equity?: number;
+  insolvency_risk?: number; // 0 to 100
   rating: CreditRating;
   is_bankrupt: boolean;
 }

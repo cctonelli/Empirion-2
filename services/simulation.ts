@@ -7,7 +7,7 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Motor Industrial Empirion v12.3 - Oracle Integrity Kernel
+ * Motor Industrial Empirion v12.4 - Oracle Integrity Kernel
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -17,7 +17,7 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // Mapeamento Dinâmico Robusto
+  // Mapeamento Dinâmico Robusto (Vercel Fix)
   const getAttr = (camel: string, snake: string, fallback: any) => {
     const data = indicators as any;
     if (data?.[snake] !== undefined) return data[snake];
@@ -103,13 +103,12 @@ export const calculateProjections = (
     : 0;
 
   const basePotential = (currentIndicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1) * (1 + (evMod.demand || 0));
-  const priceRatio = 372 / Math.max(avgPrice, 1);
-  const priceScore = Math.pow(priceRatio, currentIndicators.difficulty?.price_sensitivity || 2.0);
+  const priceScore = Math.pow(372 / Math.max(avgPrice, 1), currentIndicators.difficulty?.price_sensitivity || 2.0);
   const totalMktPoints = regions.reduce((a, b) => a + sanitize(b.marketing, 0), 0);
   const mktScore = Math.log10(((totalMktPoints * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
   const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
   
-  // 4. Produção e Reajustes
+  // 4. Produção
   const currentOEE = (1.0 + (decisions.hr.trainingPercent / 1000) + (decisions.hr.participationPercent / 200)) * (evMod.productivity || 1);
   const maxProduction = (currentIndicators.factoryMaxCapacity || 30000) * (decisions.production.activityLevel / 100) * currentOEE;
   const salesVolume = Math.min(demandTotal, maxProduction);
@@ -122,7 +121,6 @@ export const calculateProjections = (
   const unitSalary = sanitize(currentIndicators.sectorAvgSalary, 1313) * inflationMult;
   const payrollTotal = (decisions.hr.sales_staff_count * unitSalary * 1.6);
   const unitDist = sanitize(currentIndicators.distributionCostUnit, 50.50) * inflationMult;
-  const distributionTotal = salesVolume * unitDist;
   const adminExpenses = sanitize(currentIndicators.baseAdminCost, 114880) * inflationMult;
 
   // 5. DRE
@@ -131,10 +129,10 @@ export const calculateProjections = (
   const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
   const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
-  // 6. Fluxo de Caixa e Balanço
+  // 6. Fluxo de Caixa
   const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
   const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
-  const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + distributionTotal + adminExpenses;
+  const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + (salesVolume * unitDist) + adminExpenses;
   const finalCash = prevCash + cashInflow + decisions.finance.loanRequest - totalOutflow - decisions.finance.application;
   
   const finalAssets = finalCash + (revenue * 0.6) + (prevAssets * 0.99);
@@ -153,7 +151,7 @@ export const calculateProjections = (
         insolvency_risk: Math.min((debtRatio * 1.2), 100), 
         rating, 
         is_bankrupt: finalEquity < 0 
-    },
+    } as FinancialHealth,
     suggestRecovery: debtRatio > 60,
     capexBlocked: rating === 'C' || rating === 'D',
     activeEvent: event,
