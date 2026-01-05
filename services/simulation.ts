@@ -1,3 +1,4 @@
+
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult } from '../types';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
@@ -5,17 +6,11 @@ export const sanitize = (val: any, fallback: number = 0): number => {
   return isFinite(num) ? num : fallback;
 };
 
-/**
- * EXTRAÇÃO DEFENSIVA DE MAQUINÁRIO v12.8.2
- * Standardized Oracle Node mapping for industrial assets.
- * Keys: alfa, beta, gama.
- */
 export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };
-  
   if (!macro) return defaults;
-  
-  const v = macro.machineryValues || (macro as any).config?.machineryValues || {};
+  // Fix: Ensure the fallback has the required properties
+  const v = macro.machineryValues || defaults;
   return {
     alfa: sanitize(v.alfa, defaults.alfa),
     beta: sanitize(v.beta, defaults.beta), 
@@ -24,18 +19,8 @@ export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
 };
 
 /**
- * CÁLCULO DE DEPRECIAÇÃO (Fidelity Standard 5%)
- */
-export const calculateDepreciation = (machines: { alfa: number, beta: number, gama: number }, macro: MacroIndicators, rate: number = 0.05) => {
-  const prices = getSafeMachineryValues(macro);
-  const totalValue = (machines.alfa * prices.alfa) + (machines.beta * prices.beta) + (machines.gama * prices.gama);
-  const periodDepreciation = totalValue * rate;
-  return { totalValue, periodDepreciation };
-};
-
-/**
- * CORE ORACLE PROJECTION v12.8.2
- * Calculates full financial and operational status of a strategy node.
+ * CORE ORACLE ENGINE v12.8.2 GOLD
+ * Calculates financial cycles and market health for industrial units.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -45,57 +30,57 @@ export const calculateProjections = (
   previousState?: any
 ): ProjectionResult => {
   const mValues = getSafeMachineryValues(indicators);
-  const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
-  const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
+  const bs = previousState?.balance_sheet || { assets: { current: { cash: 840200, receivables: 1823735, inventory_mpa: 628545 }, fixed: { total: 5886600 } }, equity: { total: 5055447 }, liabilities: { current: { loans_short_term: 1872362 } } };
   
-  // 1. CAPEX and Asset Cycle
-  const machinesOwned = previousState?.resources?.machines || { alfa: 2, beta: 1, gama: 0 };
-  const { periodDepreciation } = calculateDepreciation(machinesOwned, indicators || {} as any);
+  const prevEquity = sanitize(bs.equity?.total, 5055447);
+  const prevCash = sanitize(bs.assets?.current?.cash, 840200);
   
-  // 2. Operational Dynamics
-  const revenue = 3322735; // Simulated revenue baseline
-  const totalMarketingCost = Object.values(decisions.regions).reduce((acc, r) => acc + (r.marketing * 10000), 0);
-  const operatingCosts = (decisions.hr.trainingPercent * 500) + 150000 + totalMarketingCost; 
-  const netProfit = revenue - operatingCosts - periodDepreciation;
+  // 1. Revenue & Costs (Fidelity Calibration)
+  const revenue = 3322735; 
+  const cpv = revenue * 0.65; // Simulated CPV
+  const marketingCost = Object.values(decisions.regions).reduce((acc, r) => acc + (r.marketing * 10000), 0);
+  const opex = 957582 + marketingCost;
+  const depreciation = bs.assets?.fixed?.total * 0.05 || 294330;
   
-  // 3. Solvency Audit Node
+  const netProfit = revenue - cpv - opex - depreciation;
   const finalEquity = prevEquity + netProfit;
-  const totalDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362) + decisions.finance.loanRequest;
-  const liquidityRatio = (prevCash + revenue) / Math.max(totalDebt, 1);
+  
+  // 2. Cycle Calculations (Days)
+  // PMRE = (Stock / CPV) * 90
+  const totalStock = sanitize(bs.assets?.current?.inventory_mpa) + sanitize(bs.assets?.current?.inventory_mpb);
+  const pmre = Math.round((totalStock / Math.max(cpv, 1)) * 90);
+  
+  // PMRV = (Receivables / Revenue) * 90
+  const pmrv = Math.round((sanitize(bs.assets?.current?.receivables) / Math.max(revenue, 1)) * 90);
+  
+  // PMPC = (Suppliers / Compras) * 90 (Simulated constant)
+  const pmpc = 46; 
+  
+  const co = pmre + pmrv;
+  const cf = co - pmpc;
+
+  // 3. Scissors Effect Detection (NCG growth vs CCL)
+  const ncg = revenue * 0.14; 
+  const ccl = bs.assets?.current?.cash + bs.assets?.current?.receivables - bs.liabilities?.current?.loans_short_term;
+  const scissors_gap = ncg - ccl;
+
+  // 4. Rating Logic
+  const totalDebt = sanitize(bs.liabilities?.current?.loans_short_term) + decisions.finance.loanRequest;
+  const liqRatio = (prevCash + revenue) / Math.max(totalDebt, 1);
   
   let rating: CreditRating = 'AAA';
-  let risk = 5;
+  if (finalEquity <= 0 || liqRatio < 0.5) rating = 'D';
+  else if (liqRatio < 0.9) rating = 'C';
+  else if (liqRatio < 1.4) rating = 'B';
+  else if (liqRatio < 1.9) rating = 'A';
 
-  if (finalEquity <= 0 || prevCash < 0 || liquidityRatio < 0.5) {
-    rating = 'D'; risk = 100;
-  } else if (liquidityRatio < 0.85) {
-    rating = 'C'; risk = 80;
-  } else if (liquidityRatio < 1.3) {
-    rating = 'B'; risk = 45;
-  } else if (liquidityRatio < 1.9) {
-    rating = 'A'; risk = 15;
-  }
-
-  // 4. KPIs v12.8.2 - Fidelity Logic (NCG, Cycles, Scissors)
   const kpis: KPIs = {
-    ciclos: {
-      operacional: branch === 'industrial' ? 60 : 35,
-      financeiro: branch === 'industrial' ? 40 : 20,
-      economico: 25
-    },
-    scissors_effect: {
-      ncg: revenue * 0.14,
-      available_capital: prevCash + revenue - operatingCosts,
-      gap: (revenue * 0.14) - (prevCash + revenue - operatingCosts)
-    },
-    productivity: {
-      oee: branch === 'industrial' ? 84.2 : undefined,
-      csat: branch === 'commercial' ? 9.2 : undefined,
-      efficiency_index: 0.88
-    },
-    risk_index: risk / 100,
+    ciclos: { pmre, pmrv, pmpc, operacional: co, financeiro: cf },
+    scissors_effect: { ncg, ccl, gap: scissors_gap, is_critical: scissors_gap > ncg * 0.5 },
     market_share: 12.5,
-    rating // Redundant but safe for UI selectors
+    rating,
+    net_profit: netProfit,
+    equity: finalEquity
   };
 
   return {
@@ -103,28 +88,18 @@ export const calculateProjections = (
     netProfit,
     debtRatio: (totalDebt / Math.max(finalEquity, 1)) * 100,
     creditRating: rating,
-    totalOutflow: operatingCosts + (decisions.finance.buyMachines.alfa * mValues.alfa),
-    totalLiquidity: prevCash + decisions.finance.loanRequest,
-    health: {
-      rating,
-      insolvency_risk: risk,
-      is_bankrupt: finalEquity <= 0,
-      liquidity_ratio: liquidityRatio
-    },
+    health: { rating, insolvency_risk: rating === 'D' ? 100 : rating === 'C' ? 60 : 10, is_bankrupt: finalEquity <= 0, liquidity_ratio: liqRatio },
     kpis,
-    costBreakdown: [
-      { name: 'Depreciação', total: periodDepreciation, impact: 'Fidelity Wear' },
-      { name: 'OPEX', total: operatingCosts, impact: 'Maintainability' }
-    ],
+    // Fix: Added missing marketShare property
+    marketShare: 12.5,
     statements: {
-      dre: { revenue, operating_profit: netProfit + periodDepreciation, net_profit: netProfit },
+      dre: { revenue, cpv, opex, depreciation, net_profit: netProfit },
       balance_sheet: {
-        assets: { current: { cash: prevCash + revenue - operatingCosts }, total: prevCash + revenue + (machinesOwned.alfa * mValues.alfa) },
+        assets: { current: { cash: prevCash + netProfit, receivables: revenue * 0.5 }, total: finalEquity + totalDebt },
         equity: { total: finalEquity },
         liabilities: { total_debt: totalDebt }
       },
-      cash_flow: { operating_cash_flow: revenue - operatingCosts },
-      kpis: { market_share: 12.5, debt_to_equity: (totalDebt / Math.max(finalEquity, 1)) }
+      cash_flow: { operational: revenue - opex }
     }
   };
 };

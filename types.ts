@@ -1,15 +1,16 @@
+
 /**
  * EMPIRION V12.8.2 - PRODUCTION TYPES (Stabilized Oracle Node)
- * Includes "Escape Hatch" for dynamic financial objects and core event types.
+ * Strictly aligned with PostgreSQL constraints and Bernard Fidelity standards.
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
 export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
-export type SalesMode = 'internal' | 'external' | 'hybrid' | string;
-export type ScenarioType = 'simulated' | 'real' | string;
+export type SalesMode = 'internal' | 'external' | 'hybrid';
+export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
-export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full' | string;
-export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
+export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
+export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency';
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
@@ -22,42 +23,29 @@ export interface Team {
   status?: string;
   invite_code?: string;
   master_key_enabled?: boolean;
-  kpis?: KPIs; // Oracle Synced Metrics (New for GOLD v12.8.2)
+  kpis?: KPIs;
   created_at?: string;
 }
 
-export interface AuditLog {
-  field_path: string;
-  old_value: any;
-  new_value: any;
-  changed_at: string;
-  user_id?: string;
-  impact_on_cash?: number;
-}
-
-export interface MessageBoardItem {
-  id: string;
-  sender: string;
-  text: string;
-  timestamp: string;
-  isImportant?: boolean;
-}
-
-/**
- * KPIs v12.8.2 (Refactored from AdvancedIndicators)
- * Loosened to any-map to prevent Vercel build failures on nested financial schemas.
- */
 export interface KPIs {
-  [key: string]: any;
-}
-
-export interface FinancialHealth {
+  ciclos?: {
+    pmre: number;
+    pmrv: number;
+    pmpc: number;
+    operacional: number;
+    financeiro: number;
+  };
+  scissors_effect?: {
+    ncg: number;
+    ccl: number;
+    gap: number;
+    is_critical: boolean;
+  };
+  market_share: number;
   rating: CreditRating;
-  insolvency_risk: number;
-  is_bankrupt: boolean;
-  liquidity_ratio?: number;
-  debt_to_equity?: number;
-  insolvency_deficit?: number;
+  net_profit?: number;
+  equity?: number;
+  [key: string]: any;
 }
 
 export interface ProjectionResult {
@@ -65,43 +53,29 @@ export interface ProjectionResult {
   netProfit: number;
   debtRatio: number;
   creditRating: CreditRating;
-  totalOutflow: number;
-  totalLiquidity: number;
   health: FinancialHealth;
+  kpis: KPIs;
+  // Fix: Added missing marketShare property
   marketShare?: number;
-  costBreakdown?: { name: string; total: number; impact: string }[];
-  kpis: KPIs; // Centralized metrics node
   statements: {
     dre: any;
     balance_sheet: any;
     cash_flow: any;
-    kpis: any;
   };
-  [key: string]: any;
+}
+
+export interface FinancialHealth {
+  rating: CreditRating;
+  insolvency_risk: number;
+  is_bankrupt: boolean;
+  liquidity_ratio: number;
 }
 
 export interface DecisionData {
   regions: Record<number, { price: number; term: number; marketing: number }>;
-  hr: { 
-    hired: number; 
-    fired: number; 
-    salary: number; 
-    trainingPercent: number; 
-    participationPercent: number; 
-    sales_staff_count: number 
-  };
-  production: { 
-    purchaseMPA: number; 
-    purchaseMPB: number; 
-    paymentType: number; 
-    activityLevel: number; 
-    rd_investment: number 
-  };
-  finance: { 
-    loanRequest: number; 
-    application: number; 
-    buyMachines: { alfa: number; beta: number; gama: number } 
-  };
+  hr: { hired: number; fired: number; salary: number; trainingPercent: number; participationPercent: number; sales_staff_count: number };
+  production: { purchaseMPA: number; purchaseMPB: number; paymentType: number; activityLevel: number; rd_investment: number };
+  finance: { loanRequest: number; application: number; buyMachines: { alfa: number; beta: number; gama: number } };
   legal: { recovery_mode: RecoveryMode };
 }
 
@@ -109,23 +83,9 @@ export interface MacroIndicators {
   growthRate: number;
   inflationRate: number;
   interestRateTR: number;
-  providerInterest: number;
-  salesAvgInterest: number;
-  avgProdPerMan: number;
-  importedProducts: number;
-  laborAvailability: string;
-  providerPrices: { mpA: number; mpB: number };
-  distributionCostUnit: number;
-  marketingExpenseBase: number;
+  tax_rate_ir: number;
   machineryValues: { alfa: number; beta: number; gama: number };
-  sectorAvgSalary: number;
-  stockMarketPrice: number;
-  initialExchangeRateUSD: number;
-  active_event?: BlackSwanEvent | null;
-  difficulty?: {
-    price_sensitivity: number;
-    marketing_effectiveness: number;
-  };
+  active_event?: BlackSwanEvent;
   [key: string]: any;
 }
 
@@ -141,21 +101,19 @@ export interface EcosystemConfig {
 export interface TeamProgress {
   team_id: string;
   team_name: string;
-  status: 'pending' | 'draft' | 'sealed' | string;
-  last_update?: string;
+  status: string;
   rating: CreditRating;
-  risk: number;
-  insolvent: boolean;
+  // Fix: Added missing properties for monitoring
   master_key_enabled?: boolean;
-  auditLogs: AuditLog[];
-  last_activity?: string;
+  risk?: number;
+  insolvent?: boolean;
   kpis?: KPIs;
+  auditLogs: AuditLog[];
 }
 
 export interface Championship {
   id: string;
   name: string;
-  description?: string;
   branch: Branch;
   status: ChampionshipStatus;
   current_round: number; 
@@ -163,21 +121,21 @@ export interface Championship {
   deadline_value: number;
   deadline_unit: DeadlineUnit;
   is_public?: boolean;
-  master_key_enabled?: boolean;
   config: any;
   market_indicators: MacroIndicators;
-  kpis?: KPIs; // Oracle Synced Node
-  initial_financials?: any;
-  round_started_at?: string;
+  kpis?: KPIs;
+  initial_financials: any;
+  round_started_at: string;
   is_trial?: boolean;
   teams?: Team[];
   created_at: string;
-  sales_mode?: SalesMode;
-  scenario_type?: ScenarioType;
-  currency?: CurrencyType;
-  round_frequency_days?: number;
-  transparency_level?: TransparencyLevel;
+  sales_mode: SalesMode;
+  scenario_type: ScenarioType;
+  currency: CurrencyType;
+  transparency_level: TransparencyLevel;
+  // Fix: Added missing properties
   ecosystemConfig?: EcosystemConfig;
+  round_frequency_days?: number;
 }
 
 export interface UserProfile {
@@ -195,32 +153,37 @@ export interface AccountNode {
   label: string;
   value: number;
   type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'expense' | 'revenue';
-  isReadOnly?: boolean;
+  // Fix: Added missing properties for editor
   isEditable?: boolean;
+  isReadOnly?: boolean;
   isTemplateAccount?: boolean;
   children?: AccountNode[];
 }
 
+// Fix: Added missing exported members
 export interface ChampionshipTemplate {
   id: string;
   name: string;
   branch: Branch;
   sector: string;
   description: string;
-  config: {
+  config: Partial<Championship> & {
     roundFrequencyDays?: number;
-    salesMode?: SalesMode;
-    scenarioType?: ScenarioType;
     transparencyLevel?: TransparencyLevel;
     modalityType?: ModalityType;
     deadlineValue?: number;
     deadlineUnit?: DeadlineUnit;
   };
   market_indicators: MacroIndicators;
-  initial_financials: {
-    balance_sheet: AccountNode[];
-    dre: AccountNode[];
-  };
+  initial_financials: any;
+}
+
+export interface MessageBoardItem {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+  isImportant?: boolean;
 }
 
 export interface BusinessPlan {
@@ -231,7 +194,26 @@ export interface BusinessPlan {
   version: number;
   data: Record<number, string>;
   status: 'draft' | 'submitted' | 'approved';
+  created_at: string;
   updated_at: string;
+}
+
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
+  };
+}
+
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
 }
 
 export interface Modality {
@@ -248,21 +230,10 @@ export interface Modality {
   };
 }
 
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
-    cost_multiplier?: number;
-  };
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
+export interface AuditLog {
+  user_id: string;
+  changed_at: string;
+  field_path: string;
+  old_value: any;
+  new_value: any;
 }
