@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import Chart from 'react-apexcharts';
 import { 
   Users, Eye, CheckCircle2, AlertCircle, FileText, 
   BarChart3, RefreshCw, ChevronRight, MapPin, DollarSign,
   Factory, Megaphone, UserPlus, Sliders, Target, Monitor,
   TrendingUp, ShieldAlert, Activity, Scale, Shield,
-  History, User, AlertOctagon, Key, Banknote, Landmark
+  History, User, AlertOctagon, Key, Banknote, Landmark,
+  TrendingDown, HeartPulse
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Championship } from '../types';
+import { Championship, CreditRating } from '../types';
 
 interface TeamProgress {
   team_id: string;
@@ -18,7 +20,7 @@ interface TeamProgress {
   last_update?: string;
   data?: any;
   risk?: number;
-  rating?: string;
+  rating?: CreditRating;
   insolvent?: boolean;
   insolvency_deficit?: number;
   master_key_enabled?: boolean;
@@ -60,7 +62,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
             last_update: decision?.submitted_at,
             data: decision?.data,
             risk: proj?.health?.insolvency_risk ?? 0,
-            rating: proj?.health?.rating ?? 'N/A',
+            rating: (proj?.health?.rating ?? 'N/A') as CreditRating,
             insolvent: proj ? ((proj.totalOutflow ?? 0) > (proj.totalLiquidity ?? 0)) : false,
             insolvency_deficit: proj?.health?.insolvency_deficit ?? 0,
             master_key_enabled: t.master_key_enabled,
@@ -93,14 +95,40 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-10 animate-in fade-in duration-500">
+       
+       {/* DASHBOARD DE SAÚDE SISTÊMICA PARA O TUTOR */}
+       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-8">
+             <ClassCreditHealth teamsProjections={teams} />
+          </div>
+          <div className="lg:col-span-4 bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col justify-between">
+             <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                   <ShieldAlert className="text-orange-500" size={24} />
+                   <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Resumo de Auditoria</h3>
+                </div>
+                <div className="space-y-4">
+                   <AuditKPI label="Equipes em Draft" val={teams.filter(t => t.status === 'draft').length} color="blue" />
+                   <AuditKPI label="Risco Crítico (C/D)" val={teams.filter(t => t.rating === 'C' || t.rating === 'D').length} color="rose" />
+                   <AuditKPI label="Unidades Insolventes" val={teams.filter(t => t.insolvent).length} color="rose" highlight />
+                </div>
+             </div>
+             <div className="pt-6 border-t border-white/5">
+                <p className="text-[10px] text-slate-500 font-bold uppercase italic leading-relaxed">
+                   "Use o Oracle Master para reajustar taxas se o risco sistêmico ultrapassar 50% das unidades."
+                </p>
+             </div>
+          </div>
+       </div>
+
        <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12">
           <header className="flex items-center justify-between border-b border-slate-50 pb-10">
              <div className="flex items-center gap-6">
-                <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ShieldAlert size={32}/></div>
+                <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><Monitor size={32}/></div>
                 <div>
-                   <h3 className="text-3xl font-black text-slate-900 uppercase italic tracking-tight">Oracle Inquisitor Node (P0{round})</h3>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Detecção de Risco e Monitoramento de Insolvência</p>
+                   <h3 className="text-3xl font-black text-slate-900 uppercase italic tracking-tight">Node Inquisitor (P0{round})</h3>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Monitoramento Granular e Autorização Master</p>
                 </div>
              </div>
              <div className="flex items-center gap-4">
@@ -270,5 +298,91 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
     </div>
   );
 };
+
+/**
+ * ClassCreditHealth: Histograma de Rating de Crédito da Turma.
+ */
+const ClassCreditHealth = ({ teamsProjections }: { teamsProjections: TeamProgress[] }) => {
+  const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
+  
+  const distribution = useMemo(() => {
+    return ratingsOrder.map(r => ({
+      rating: r,
+      count: teamsProjections.filter(t => t.rating === r).length
+    }));
+  }, [teamsProjections]);
+
+  const COLORS = {
+    'AAA': '#10b981', 'AA': '#34d399', 'A': '#6ee7b7',
+    'B': '#fbbf24', 'C': '#f87171', 'D': '#b91c1c', 'N/A': '#334155'
+  };
+
+  const chartOptions: any = {
+    chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
+    plotOptions: { 
+      bar: { 
+        borderRadius: 12, 
+        columnWidth: '50%', 
+        distributed: true,
+        dataLabels: { position: 'top' }
+      } 
+    },
+    colors: ratingsOrder.map(r => COLORS[r as keyof typeof COLORS]),
+    xaxis: {
+      categories: ratingsOrder,
+      labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 800 } },
+      axisBorder: { show: false },
+      axisTicks: { show: false }
+    },
+    yaxis: {
+      labels: { style: { colors: '#475569', fontWeight: 700 } },
+      tickAmount: 4
+    },
+    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
+    dataLabels: {
+      enabled: true,
+      formatter: (val: number) => val > 0 ? val : '',
+      style: { colors: ['#fff'], fontSize: '10px', fontWeight: 900 }
+    },
+    tooltip: { theme: 'dark' },
+    legend: { show: false }
+  };
+
+  return (
+    <div className="bg-slate-900 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl space-y-8">
+       <div className="flex justify-between items-start">
+          <div className="space-y-1">
+             <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Saúde Sistêmica da Arena</h3>
+             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Distribuição de Rating de Crédito em Tempo Real</p>
+          </div>
+          <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
+             <span className="text-[10px] text-orange-500 font-black uppercase">N = {teamsProjections.length} Strategists</span>
+          </div>
+       </div>
+
+       <div className="h-[280px] w-full">
+          <Chart options={chartOptions} series={[{ name: 'Equipes', data: distribution.map(d => d.count) }]} type="bar" height="100%" />
+       </div>
+
+       <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
+          <div className="flex items-center gap-3">
+             <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
+             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Zona de Estabilidade (AAA-A)</span>
+          </div>
+          <div className="flex items-center gap-3">
+             <div className="w-2.5 h-2.5 bg-rose-600 rounded-full animate-pulse" />
+             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Risco de Default (C-D)</span>
+          </div>
+       </div>
+    </div>
+  );
+};
+
+const AuditKPI = ({ label, val, color, highlight }: any) => (
+  <div className={`p-4 rounded-2xl flex justify-between items-center transition-all ${highlight ? 'bg-rose-500 text-white shadow-xl' : 'bg-white/5 border border-white/5'}`}>
+     <span className={`text-[10px] font-black uppercase tracking-widest ${highlight ? 'text-white' : 'text-slate-500'}`}>{label}</span>
+     <span className={`text-xl font-black font-mono ${highlight ? 'text-white' : color === 'rose' ? 'text-rose-500' : 'text-blue-400'}`}>{val}</span>
+  </div>
+);
 
 export default TutorDecisionMonitor;

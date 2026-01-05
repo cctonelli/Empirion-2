@@ -5,11 +5,11 @@ import {
   Lock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, 
   CheckCircle2, ShieldCheck, Flame, Zap, Landmark, Shield,
   Activity, HeartPulse, CreditCard, Banknote, AlertOctagon, HelpCircle,
-  Clock, TrendingUp
+  Clock, TrendingUp, ArrowDown, TrendingDown
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
-import { calculateProjections } from '../services/simulation';
-import { DecisionData, Branch, Championship, MacroIndicators, ProjectionResult } from '../types';
+import { calculateProjections, sanitize } from '../services/simulation';
+import { DecisionData, Branch, Championship, MacroIndicators, ProjectionResult, CreditRating } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DEFAULT_MACRO } from '../constants';
 
@@ -88,6 +88,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     alert("NOTIFICAÇÃO ENVIADA: O sinal de socorro foi transmitido para o Command Center do Tutor.");
   };
 
+  const getRiskSpreadValue = (rating: CreditRating): number => {
+    const spreads: Record<string, number> = { 'AAA': 0, 'AA': 2.0, 'A': 5.0, 'B': 10.0, 'C': 20.0, 'D': 40.0, 'N/A': 10.0 };
+    return spreads[rating] ?? 10.0;
+  };
+
   return (
     <div className="max-w-[1600px] mx-auto space-y-3 pb-32 animate-in fade-in duration-700">
       
@@ -111,7 +116,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
               <div className="flex items-center gap-3">
                  <div className={`w-3 h-3 rounded-full animate-pulse ${projections?.health?.rating === 'D' ? 'bg-rose-600 shadow-[0_0_12px_#f43f5e]' : (projections?.debtRatio ?? 0) > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
                  <span className={`text-sm font-black italic ${projections?.health?.rating === 'D' ? 'text-rose-500 font-black animate-pulse' : (projections?.debtRatio ?? 0) < 40 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {projections?.health?.rating ?? projections?.health?.debt_rating ?? '---'} STANDING
+                    {projections?.health?.rating ?? '---'} STANDING
                  </span>
               </div>
            </div>
@@ -127,6 +132,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       <main className="bg-slate-950 p-6 md:p-10 rounded-[3rem] border border-white/5 relative shadow-2xl overflow-hidden group">
         <AnimatePresence mode="wait">
           <motion.div key={STEPS[activeStep].id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            
+            {/* NOTIFICAÇÃO DE REBAIXAMENTO (v2.86) */}
+            <RatingAlert 
+              currentRating={projections?.health?.rating} 
+              previousRating={projections?.health?.previous_rating} 
+              isDowngraded={projections?.health?.is_downgraded} 
+            />
+
             {activeStep === 0 && (
               <div className="space-y-10">
                  <div className="flex items-center justify-between px-4">
@@ -196,7 +209,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                           </div>
                           {isInsolvent && (
                              <p className="text-xs font-bold uppercase tracking-tight italic animate-pulse">
-                               ❌ DEFICIT DE CAIXA: $ {(projections?.insolvency_deficit ?? projections?.health?.insolvency_deficit ?? 0).toLocaleString()}
+                               ❌ DEFICIT DE CAIXA: $ {(projections?.insolvency_deficit ?? 0).toLocaleString()}
                              </p>
                           )}
                        </div>
@@ -210,7 +223,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <SummaryNode label="Share Projetado" val={`${(projections?.marketShare ?? 0).toFixed(1)}%`} />
                        <SummaryNode label="EBITDA Proj." val={`$ ${(projections?.ebitda ?? 0).toLocaleString()}`} />
                        <SummaryNode label="Debt Ratio" val={`${(projections?.debtRatio ?? 0).toFixed(1)}%`} />
-                       <SummaryNode label="Credit Standing" val={projections?.health?.rating ?? projections?.health?.debt_rating ?? '---'} />
+                       <SummaryNode label="Credit Standing" val={projections?.health?.rating ?? '---'} />
                     </div>
                     <div className="space-y-4">
                        <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions); setIsSaving(false); alert("SINAL TRANSMITIDO."); }} disabled={isSaving || !canSubmit} className={`w-full py-8 rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 ${canSubmit ? 'bg-orange-600 text-white hover:bg-white hover:text-orange-600' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>
@@ -232,6 +245,31 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      <h4 className="text-sm font-black uppercase text-amber-500 flex items-center gap-3 italic border-b border-white/5 pb-6"><Landmark size={22} /> Estrutura de Capital</h4>
                      <DecInput icon={<DollarSign/>} label="Tomar Empréstimo ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} />
                      <DecInput icon={<TrendingUp/>} label="Aplicação Financeira ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} />
+                     
+                     {/* Alerta de Custo de Capital Estimado (v2.85) */}
+                     {projections?.health?.rating && (
+                       <div className="mt-4 p-5 bg-slate-900/80 rounded-[2rem] border border-white/10 shadow-xl space-y-4">
+                          <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                <Activity size={14} className="text-blue-400" />
+                                <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Custo de Capital (WACC)</span>
+                             </div>
+                             <span className={`text-sm font-black font-mono italic ${projections.health.rating === 'C' || projections.health.rating === 'D' ? 'text-rose-500 animate-pulse' : 'text-blue-400'}`}>
+                                {(sanitize(currentIndicators.interestRateTR, 3.0) + getRiskSpreadValue(projections.health.rating as CreditRating)).toFixed(2)}% p.p.
+                             </span>
+                          </div>
+                          <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                             <motion.div 
+                               initial={{ width: 0 }}
+                               animate={{ width: `${Math.min((sanitize(currentIndicators.interestRateTR, 3.0) + getRiskSpreadValue(projections.health.rating as CreditRating)) * 2, 100)}%` }}
+                               className={`h-full ${projections.health.rating === 'D' ? 'bg-rose-600' : projections.health.rating === 'C' ? 'bg-rose-500' : 'bg-blue-500'}`} 
+                             />
+                          </div>
+                          <p className="text-[9px] text-slate-500 font-bold italic leading-relaxed uppercase">
+                             * Seu rating atual ({projections.health.rating}) injeta um spread de risco de {getRiskSpreadValue(projections.health.rating as CreditRating)}% sobre a taxa base de {currentIndicators.interestRateTR}%.
+                          </p>
+                       </div>
+                     )}
                   </div>
                   <div className="space-y-8">
                      <div className="p-10 bg-slate-900/50 rounded-[3.5rem] border border-white/10 space-y-6">
@@ -244,6 +282,24 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            <div className="flex justify-between items-center py-3 border-b border-white/5">
                               <span className="text-xs font-bold text-slate-500 uppercase">Endividamento</span>
                               <span className={`text-lg font-black italic ${(projections?.debtRatio ?? 0) > 60 ? 'text-rose-500' : 'text-emerald-500'}`}>{(projections?.debtRatio ?? 0).toFixed(1)}%</span>
+                           </div>
+                           
+                           {/* Detalhamento do Custo da Dívida */}
+                           <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-4">
+                              <div className="flex justify-between items-end">
+                                 <div>
+                                    <span className="block text-[8px] font-black text-slate-400 uppercase">Spread de Risco</span>
+                                    <span className={`text-xl font-mono font-black ${projections?.health?.is_downgraded ? 'text-rose-600' : 'text-blue-400'}`}>
+                                       +{getRiskSpreadValue(projections?.health?.rating as CreditRating).toFixed(2)}%
+                                    </span>
+                                 </div>
+                                 <div className="text-right">
+                                    <span className="block text-[8px] font-black text-slate-400 uppercase">Juros do Round</span>
+                                    <span className="text-lg font-mono font-black text-white">
+                                       $ {(projections?.interestExp ?? 0).toLocaleString()}
+                                    </span>
+                                 </div>
+                              </div>
                            </div>
                         </div>
                      </div>
@@ -259,6 +315,30 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         </AnimatePresence>
       </main>
     </div>
+  );
+};
+
+const RatingAlert = ({ currentRating, previousRating, isDowngraded }: { currentRating?: CreditRating, previousRating?: CreditRating, isDowngraded?: boolean }) => {
+  if (!isDowngraded) return null;
+  return (
+    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mb-6 overflow-hidden">
+      <div className="bg-rose-950/40 border-2 border-rose-500/50 p-6 rounded-[2rem] flex items-start gap-6 shadow-2xl">
+        <div className="bg-rose-600 p-3 rounded-2xl text-white shadow-xl animate-pulse"><TrendingDown size={24} /></div>
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-1">
+            <h4 className="text-rose-100 font-black text-sm uppercase tracking-widest">Rebaixamento de Risco de Crédito</h4>
+            <span className="bg-rose-600 text-white text-[8px] px-2 py-0.5 rounded-full font-black uppercase">Alerta de Mercado</span>
+          </div>
+          <p className="text-rose-200/70 text-xs font-medium italic leading-relaxed">
+            Atenção: O mercado rebaixou sua nota de <b>{previousRating}</b> para <b className="text-rose-500 text-lg">{currentRating}</b>. Suas taxas de juros e spread de risco foram elevados. Ajuste sua estrutura de capital para evitar a insolvência.
+          </p>
+        </div>
+        <div className="text-right border-l border-white/5 pl-6">
+           <span className="block text-[8px] font-black text-rose-400 uppercase mb-1">Impacto Previsto</span>
+           <div className="flex items-center gap-1 text-rose-500 font-mono font-black text-xs"><ArrowDown size={14} /> Juros + Spread</div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

@@ -3,14 +3,42 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicat
 /**
  * Sanitize: Permite números negativos para suportar prejuízos reais no P&L e depreciação.
  */
-const sanitize = (val: any, fallback: number = 0): number => {
+export const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
   return isFinite(num) ? num : fallback;
 };
 
 /**
- * Motor Industrial Empirion v12.7 - Oracle Integrity Kernel
- * Final Blindagem Protocol v2.83
+ * Helper: Detecta se o rating atual é pior que o anterior.
+ */
+export const isRatingLower = (current: CreditRating, previous: CreditRating): boolean => {
+  const order: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D', 'N/A'];
+  const curIdx = order.indexOf(current);
+  const prevIdx = order.indexOf(previous);
+  if (curIdx === -1 || prevIdx === -1) return false;
+  return curIdx > prevIdx;
+};
+
+/**
+ * Tabela de Spread de Risco - Protocolo v2.85
+ * AAA: 0% | AA: 2% | A: 5% | B: 10% | C: 20% | D: 40%
+ */
+const getRiskSpread = (rating: CreditRating): number => {
+  const spreads: Record<string, number> = {
+    'AAA': 0,
+    'AA': 2.0,
+    'A': 5.0,
+    'B': 10.0,
+    'C': 20.0,
+    'D': 40.0,
+    'N/A': 10.0
+  };
+  return spreads[rating] ?? 10.0;
+};
+
+/**
+ * Motor Industrial Empirion v13.0 - Oracle Integrity Kernel
+ * Final Blindagem Protocol v2.86 - Downgrade Detection
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -21,7 +49,6 @@ export const calculateProjections = (
   isRoundZero: boolean = false
 ): ProjectionResult => {
   try {
-    // Mapeamento Dinâmico Robusto para resolver colisões entre DB (snake_case) e Engine (camelCase)
     const getAttr = (camel: string, snake: string, fallback: any) => {
       const data = indicators as any;
       return data?.[snake] ?? data?.[camel] ?? fallback;
@@ -57,7 +84,7 @@ export const calculateProjections = (
           debt_to_equity: 0.6, 
           insolvency_risk: 10, 
           rating: 'AAA' as CreditRating, 
-          debt_rating: 'AAA',
+          debt_rating: 'AAA' as CreditRating,
           is_bankrupt: false,
           insolvency_deficit: 0
         } as FinancialHealth,
@@ -77,18 +104,21 @@ export const calculateProjections = (
     const prevReceivables = sanitize(previousState?.balance_sheet?.assets?.current?.receivables || 1823735, 1823735);
     const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605, 717605);
     const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362);
+    const prevRating: CreditRating = previousState?.health?.rating || 'AAA';
 
     // 2. Oracle Risk Core
     const totalDebt = sanitize(prevDebt + decisions.finance.loanRequest, 0);
     const debtToEquity = sanitize(totalDebt / Math.max(prevEquity, 1), 0);
     const is_bankrupt = prevEquity < 0;
 
-    const rating: CreditRating = 
+    const rating: CreditRating = (
       is_bankrupt ? 'D' : 
       debtToEquity > 2.5 ? 'D' : 
       debtToEquity > 1.8 ? 'C' : 
-      debtToEquity > 1.2 ? 'B' : 'A';
-    
+      debtToEquity > 1.2 ? 'B' : 'A'
+    ) as CreditRating;
+
+    const is_downgraded = isRatingLower(rating, prevRating);
     const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
     
     // 3. Comercial & Demanda
@@ -124,10 +154,15 @@ export const calculateProjections = (
     const payrollTotal = (decisions.hr.sales_staff_count * unitSalary * 1.6);
     const adminExpenses = sanitize(currentIndicators.baseAdminCost, 114880) * inflationMult;
 
-    // 5. DRE
+    // 5. DRE com Juros Baseados em Rating (Risk Premium)
     const cpv = salesVolume * (unitMpA + unitMpB * 0.5);
     const ebitda = revenue - cpv - payrollTotal - totalMarketingCost - (decisions.hr.trainingPercent * 500) - adminExpenses;
-    const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
+    
+    const baseInterest = sanitize(currentIndicators.interestRateTR, 3.0);
+    const riskSpread = getRiskSpread(rating);
+    const effectiveAnnualRate = baseInterest + riskSpread;
+    const interestExp = totalDebt * (effectiveAnnualRate / 100); 
+
     const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
     // 6. Fluxo de Caixa e Insolvência
@@ -149,12 +184,16 @@ export const calculateProjections = (
       cashFlowNext: finalCash,
       loanLimit,
       creditRating: rating,
+      interestExp,
+      riskSpread,
       health: { 
           liquidity_ratio: finalCash / Math.max(totalDebt * 0.2, 1), 
           debt_to_equity: debtToEquity, 
           insolvency_risk: Math.min((debtRatio * 1.2), 100), 
           rating, 
           debt_rating: rating,
+          previous_rating: prevRating,
+          is_downgraded,
           is_bankrupt: finalEquity < 0,
           insolvency_deficit
       } as FinancialHealth,
@@ -166,7 +205,7 @@ export const calculateProjections = (
         { name: 'Matéria-Prima', total: mpOutflow, impact: 'Desembolso Imediato' },
         { name: 'Marketing Exponencial', total: totalMarketingCost, impact: 'Burn Rate Vendas' },
         { name: 'Folha & Admin', total: payrollTotal + adminExpenses, impact: 'Custo Fixo Inflacionado' },
-        { name: 'Serviço da Dívida', total: interestExp, impact: 'Juros Acumulados' }
+        { name: `Juros Bancários (Rating ${rating})`, total: interestExp, impact: `Taxa de ${effectiveAnnualRate.toFixed(2)}% (Base: ${baseInterest}% + Risco: ${riskSpread}%)` }
       ],
       statements: {
           dre: { revenue, cpv, ebitda, net_profit: netProfit },
@@ -180,10 +219,10 @@ export const calculateProjections = (
       indicators: calculateAdvanced(revenue, cpv, ebitda, netProfit, (revenue * 0.6), mpCostTotal * 0.3, finalCash, decisions)
     };
   } catch (error) {
-    console.error("Simulation Engine Critical Failure (v12.7):", error);
+    console.error("Simulation Engine Critical Failure (v13.0):", error);
     return {
       revenue: 0, totalOutflow: 0, totalLiquidity: 0, insolvency_deficit: 0,
-      health: { rating: 'D', debt_rating: 'D', is_bankrupt: true, insolvency_deficit: 0, insolvency_risk: 100 }
+      health: { rating: 'D' as CreditRating, debt_rating: 'D' as CreditRating, is_bankrupt: true, insolvency_deficit: 0, insolvency_risk: 100 }
     };
   }
 };

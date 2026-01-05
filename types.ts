@@ -8,7 +8,8 @@ export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' 
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
-export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | string;
+
+export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'N/A';
 
 export type DiscreteTerm = 0 | 1 | 2;
 
@@ -17,7 +18,9 @@ export interface FinancialHealth {
   debt_to_equity?: number;
   insolvency_risk?: number;
   rating?: CreditRating;
-  debt_rating?: string;
+  debt_rating?: CreditRating;
+  previous_rating?: CreditRating;
+  is_downgraded?: boolean;
   is_bankrupt?: boolean;
   insolvency_deficit?: number;
 }
@@ -38,6 +41,8 @@ export interface ProjectionResult {
   creditRating?: CreditRating;
   health?: FinancialHealth;
   insolvency_deficit?: number;
+  interestExp?: number;
+  riskSpread?: number;
   suggestRecovery?: boolean;
   capexBlocked?: boolean;
   statements?: any;
