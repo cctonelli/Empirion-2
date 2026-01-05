@@ -6,7 +6,7 @@ export type ScenarioType = 'simulated' | 'real' | string;
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full' | string;
 export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' | string;
-export type CurrencyType = 'BRL' | 'BRL' | 'USD' | 'EUR' | 'GBP';
+export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'N/A';
@@ -51,8 +51,8 @@ export interface ProjectionResult {
   totalOutflow: number;
   totalLiquidity: number;
   health: FinancialHealth;
-  costBreakdown?: { name: string; total: number; impact: string }[];
   marketShare?: number;
+  costBreakdown?: { name: string; total: number; impact: string }[];
   statements?: {
     dre: any;
     balance_sheet: any;
@@ -242,10 +242,7 @@ export interface Modality {
   description: string;
   image_url?: string;
   page_content: {
-    hero: {
-      title: string;
-      subtitle: string;
-    };
+    hero: { title: string; subtitle: string };
     features: string[];
     kpis: string[];
     accent_color?: string;

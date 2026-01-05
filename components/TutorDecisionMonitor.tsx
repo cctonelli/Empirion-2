@@ -33,7 +33,7 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
     chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
     plotOptions: { bar: { borderRadius: 12, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } },
     colors: ratingsOrder.map(r => COLORS_MAP[r as keyof typeof COLORS_MAP]),
-    xaxis: { categories: ratingsOrder, labels: { style: { colors: '#94a3b8', fontWeight: 900 } } },
+    xaxis: { categories: ratingsOrder, labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 900 } } },
     yaxis: { labels: { style: { colors: '#475569' } }, tickAmount: 4 },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
     tooltip: { theme: 'dark' },
