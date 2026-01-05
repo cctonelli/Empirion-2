@@ -7,8 +7,8 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Motor Industrial Empirion v8.5 - Black Swan Fidelity Engine
- * Agora processa eventos macroeconômicos aleatórios que alteram o "chão de fábrica" em tempo real.
+ * Motor Industrial Empirion v9.0 - Global Mastery Engine
+ * Integração sistêmica: DRE -> Balanço -> Fluxo de Caixa -> Rating de Crédito
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -18,10 +18,12 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
+  // ROUND 0: Paridade absoluta Bernard Legacy ($ 9.176.940 Ativo)
   if (isRoundZero) {
     return {
       revenue: 3322735, ebitda: 1044555, netProfit: 73928, salesVolume: 8932,
       marketShare: 12.5, cashFlowNext: 840200, receivables: 1823735,
+      loanLimit: 2500000, creditRating: 'AAA',
       suggestRecovery: false, capexBlocked: false, indicators: getRoundZeroAdvanced()
     };
   }
@@ -37,84 +39,82 @@ export const calculateProjections = (
 
   const event: BlackSwanEvent | null = currentIndicators.active_event || null;
   const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
-
   const diff = currentIndicators.difficulty || {};
-  const sensitivity = sanitize(diff.price_sensitivity, 2.0);
-  const elasticity = sanitize(diff.demand_elasticity, 1.5);
-  const mktEffect = sanitize(diff.marketing_effectiveness, 1.0);
-
-  // INFLATION = Base + Event Modifier
-  const inflation = 1 + (sanitize(currentIndicators.inflationRate) || 0.01) + (evMod.inflation || 0);
   
-  // 1. HERANÇA DE SALDOS
-  const inheritedReceivables = sanitize(previousState?.receivables_t1 || 1823735);
-  const inheritedPayables = sanitize(previousState?.payables_t1 || 717605);
+  // 1. HERANÇA E ESTRUTURA DE CAPITAL
+  const currentEquity = sanitize(previousState?.equity || 5055447);
+  const currentAssets = sanitize(previousState?.total_assets || 9176940);
   const currentCash = sanitize(previousState?.cash || 840200);
+  const previousReceivables = sanitize(previousState?.receivables || 1823735);
+  const previousPayables = sanitize(previousState?.payables || 717605);
 
-  // 2. LÓGICA DE RECUPERAÇÃO JURÍDICA
-  let recoveryModifier = 1.0;
-  let legalFees = 0;
-  let capexBlocked = false;
+  // 2. RATING DE CRÉDITO E LIMITE BANCÁRIO (Lógica de Risco)
+  // Limite = 40% do PL + 20% do Ativo Total
+  const loanLimit = (currentEquity * 0.4) + (currentAssets * 0.2);
+  const totalDebt = sanitize(previousState?.total_debt || 3372362) + decisions.finance.loanRequest;
+  const leverageRatio = totalDebt / Math.max(currentEquity, 1);
+  const creditRating = leverageRatio > 1.5 ? 'C' : leverageRatio > 0.8 ? 'B' : 'A';
 
-  if (decisions.legal?.recovery_mode === 'judicial') {
-    recoveryModifier = 0.1;
-    legalFees = 75000;
-    capexBlocked = true;
-  } else if (decisions.legal?.recovery_mode === 'extrajudicial') {
-    recoveryModifier = 0.6;
-    legalFees = 25000;
-  }
-
-  // 3. COMERCIAL - Competitive Attractiveness Model
+  // 3. COMERCIAL - Modelo de Atratividade Competitiva
   const regions = Object.values(decisions.regions || {});
   const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price), 0) / regions.length : 372;
   const totalMarketing = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.marketing), 0) : 0;
   
-  const avgTerm = regions.length > 0 
-    ? regions.reduce((acc, r) => acc + (r.term === 1 ? 60 : r.term === 2 ? 30 : 0), 0) / regions.length 
+  // Efeito dos Prazos de Venda (Term 0: Vista, Term 1: 30d, Term 2: 60d)
+  const avgTermDays = regions.length > 0 
+    ? regions.reduce((acc, r) => acc + (r.term === 2 ? 60 : r.term === 1 ? 30 : 0), 0) / regions.length 
     : 0;
-  
-  // Market Potential based on Difficulty Elasticity + Event Demand Shift
+
   const basePotential = (currentIndicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1) * (1 + (evMod.demand || 0));
-  
-  // Attractiveness Logic
   const priceRatio = 372 / Math.max(avgPrice, 1);
-  const priceScore = Math.pow(priceRatio, sensitivity);
-  const marketingScore = Math.log10((totalMarketing * mktEffect) + 10);
+  const priceScore = Math.pow(priceRatio, sanitize(diff.price_sensitivity, 2.0));
+  const mktScore = Math.log10((totalMarketing * sanitize(diff.marketing_effectiveness, 1.0)) + 10);
   
-  const totalAttractiveness = priceScore * marketingScore * (1 + (avgTerm / 300));
+  // Demanda Estimada vs Capacidade Real
+  const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
   
-  // Potential Sales calibrated by Elasticity and Event Productivity caps
-  const theoreticalSales = basePotential * totalAttractiveness * elasticity;
-  const salesVolume = Math.min(theoreticalSales, 15000 * (evMod.productivity || 1)); 
+  // 4. PRODUÇÃO E CUSTOS (OEE)
+  const plrEfficiency = 1 + (decisions.hr.participationPercent / 50); // PLR aumenta produtividade
+  const maxProduction = 30000 * (decisions.production.activityLevel / 100) * plrEfficiency * (evMod.productivity || 1);
+  const salesVolume = Math.min(demandTotal, maxProduction);
   const revenue = salesVolume * avgPrice;
 
-  // 4. RH
-  const salary = sanitize(decisions.hr?.salary || currentIndicators.sectorAvgSalary || 1313);
-  const staffCount = sanitize(decisions.hr?.sales_staff_count || 50);
-  const payrollTotal = (salary * staffCount * 1.6) * recoveryModifier + (sanitize(decisions.hr?.trainingPercent) * 250);
-
-  // 5. CUSTOS (Event Cost Multiplier)
   const costMarkup = evMod.cost_multiplier || 1.0;
-  const mpA_Price = currentIndicators.providerPrices.mpA * inflation * costMarkup;
-  const mpB_Price = currentIndicators.providerPrices.mpB * inflation * costMarkup;
-  const unitCost = (mpA_Price + (mpB_Price / 2)); 
-  const cpv = salesVolume * unitCost;
+  const mpCost = (currentIndicators.providerPrices.mpA * 1.0 + currentIndicators.providerPrices.mpB * 0.5) * costMarkup;
+  const cpv = salesVolume * mpCost;
 
-  const adminCosts = 145000 + legalFees;
-  const fixedCosts = adminCosts + payrollTotal;
-  const ebitda = revenue - cpv - fixedCosts;
-  const netProfit = ebitda * 0.85;
+  // 5. RECURSOS HUMANOS
+  const payroll = (decisions.hr.sales_staff_count * decisions.hr.salary * 1.6);
+  const trainingExp = (decisions.hr.trainingPercent * 500);
+  
+  // 6. DRE (ACCRUAL BASIS)
+  const ebitda = revenue - cpv - payroll - trainingExp - 145000; // 145k despesa fixa admin
+  const depreciation = currentAssets * 0.01; // 1% de depreciação linear
+  const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
+  const netProfitBeforeTax = ebitda - depreciation - interestExp;
+  const taxes = netProfitBeforeTax > 0 ? netProfitBeforeTax * 0.15 : 0;
+  const netProfit = netProfitBeforeTax - taxes;
 
-  const adv = calculateAdvanced(revenue, cpv, ebitda, netProfit, inheritedReceivables, inheritedPayables, currentCash, decisions);
+  // 7. FLUXO DE CAIXA (CASH BASIS)
+  // Entradas: Parte das vendas atuais (baseada em prazos) + Recebíveis do round anterior
+  const cashInflowFromSales = decisions.regions[1]?.term === 0 ? revenue : revenue * 0.5; // Simplificação para projeção
+  const totalInflow = cashInflowFromSales + previousReceivables + decisions.finance.loanRequest;
+  
+  // Saídas: Pagamentos Operacionais + Juros + Investimentos
+  const totalOutflow = cpv + payroll + trainingExp + interestExp + taxes + previousPayables;
+  const projectedCashNext = currentCash + totalInflow - totalOutflow - decisions.finance.application;
+
+  const adv = calculateAdvanced(revenue, cpv, ebitda, netProfit, previousReceivables, previousPayables, currentCash, decisions);
 
   return {
     revenue, ebitda, netProfit, salesVolume,
     marketShare: (salesVolume / (basePotential * 8)) * 100,
-    cashFlowNext: currentCash + inheritedReceivables - inheritedPayables - fixedCosts,
-    receivables: revenue * 0.5,
-    suggestRecovery: (netProfit < 0),
-    capexBlocked,
+    cashFlowNext: projectedCashNext,
+    receivables: revenue - cashInflowFromSales, // O que sobra para o próximo round
+    loanLimit,
+    creditRating,
+    suggestRecovery: projectedCashNext < -500000,
+    capexBlocked: creditRating === 'C',
     indicators: adv,
     activeEvent: event
   };
