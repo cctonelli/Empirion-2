@@ -43,7 +43,6 @@ export const DEFAULT_MACRO: MacroIndicators = {
   providerPrices: { mpA: 20.20, mpB: 40.40 },
   distributionCostUnit: 50.50,
   marketingExpenseBase: 10200,
-  /* Corrected property name from 'Bird' to 'beta' to align with the MacroIndicators interface definition */
   machineryValues: { alfa: 505000, beta: 1515000, gama: 3030000 },
   sectorAvgSalary: 1313.00,
   stockMarketPrice: 60.09,
@@ -297,10 +296,13 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   }
 };
 
-// Aliases para compatibilidade legada com 'activity'
-DEFAULT_PAGE_CONTENT['activity-industrial']    = DEFAULT_PAGE_CONTENT['branch-industrial'];
-DEFAULT_PAGE_CONTENT['activity-commercial']    = DEFAULT_PAGE_CONTENT['branch-commercial'];
-DEFAULT_PAGE_CONTENT['activity-services']      = DEFAULT_PAGE_CONTENT['branch-services'];
-DEFAULT_PAGE_CONTENT['activity-agribusiness']  = DEFAULT_PAGE_CONTENT['branch-agribusiness'];
-DEFAULT_PAGE_CONTENT['activity-finance']       = DEFAULT_PAGE_CONTENT['branch-finance'];
-DEFAULT_PAGE_CONTENT['activity-construction']  = DEFAULT_PAGE_CONTENT['branch-construction'];
+/**
+ * HELPER DE BUSCA SEGURO (Oracle Access Proxy)
+ * Resolve conflitos entre chaves legacy (activity) e novas (branch).
+ */
+export const getPageContent = (slug: string) => {
+  const branchKey = `branch-${slug}`;
+  const activityKey = `activity-${slug}`;
+  const content = (DEFAULT_PAGE_CONTENT as any)[branchKey] || (DEFAULT_PAGE_CONTENT as any)[activityKey];
+  return content || null;
+};

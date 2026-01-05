@@ -1,3 +1,4 @@
+
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, BlackSwanEvent, CreditRating, FinancialHealth, ProjectionResult } from '../types';
 
 /**
@@ -37,6 +38,23 @@ export const getRiskSpread = (rating: CreditRating): number => {
 };
 
 /**
+ * Extração de Maquinário Defensiva (v13.1)
+ * Garante que a transição Bird -> beta no banco de dados não quebre o cálculo.
+ */
+const getSafeMachineryValues = (indicators: MacroIndicators | undefined) => {
+  const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };
+  const raw = indicators?.machineryValues || (indicators as any)?.machinery_values;
+  
+  if (!raw) return defaults;
+  
+  return {
+    alfa: sanitize(raw.alfa, defaults.alfa),
+    beta: sanitize(raw.beta || raw.Bird, defaults.beta), // Fallback para chave antiga
+    gama: sanitize(raw.gama, defaults.gama)
+  };
+};
+
+/**
  * Motor Industrial Empirion v13.0 - Oracle Integrity Kernel
  * Final Blindagem Protocol v2.87 - Differentiated Cost of Capital
  */
@@ -54,6 +72,8 @@ export const calculateProjections = (
       return data?.[snake] ?? data?.[camel] ?? fallback;
     };
 
+    const machineryValues = getSafeMachineryValues(indicators);
+
     const currentIndicators = {
       inflationRate: getAttr('inflationRate', 'inflation_rate', 0.01),
       interestRateTR: getAttr('interestRateTR', 'interest_rate', 3.0),
@@ -65,7 +85,8 @@ export const calculateProjections = (
       sectorAvgSalary: indicators?.sectorAvgSalary || 1313,
       distributionCostUnit: getAttr('distributionCostUnit', 'base_freight_unit_cost', 50.50),
       difficulty: indicators?.difficulty || { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
-      active_event: indicators?.active_event || null
+      active_event: indicators?.active_event || null,
+      machineryValues
     };
 
     const inflationMult = (1 + (sanitize(currentIndicators.inflationRate, 0)));

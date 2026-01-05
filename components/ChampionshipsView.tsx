@@ -6,6 +6,13 @@ import { Trophy, ChevronRight, Play, Loader2, Target, Globe, Filter, X } from 'l
 import { getChampionships } from '../services/supabase';
 import { Championship, Team } from '../types';
 
+interface NavigationState {
+  preSelectedBranch?: string;
+  preSelectedSlug?: string;
+  preSelectedActivity?: string;
+  preSelectedModality?: string;
+}
+
 const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: string, isTrial: boolean) => void }> = ({ onSelectTeam }) => {
   const location = useLocation();
   const [championships, setChampionships] = useState<Championship[]>([]);
@@ -19,12 +26,14 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
       const { data } = await getChampionships();
       if (data) setChampionships(data);
       
+      const state = location.state as NavigationState | null;
+      
       // Robust capture of pre-selection sent via router state (branches/activities)
       const preFilter = 
-        location.state?.preSelectedBranch ?? 
-        location.state?.preSelectedSlug ?? 
-        location.state?.preSelectedActivity ?? 
-        location.state?.preSelectedModality;
+        state?.preSelectedBranch ?? 
+        state?.preSelectedSlug ?? 
+        state?.preSelectedActivity ?? 
+        state?.preSelectedModality;
 
       if (preFilter) {
         setActiveFilter(preFilter);

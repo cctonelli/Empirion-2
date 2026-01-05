@@ -9,7 +9,7 @@ import {
   Gavel, Cpu, Sparkles, ShieldCheck, Globe, Trophy, Play,
   ArrowRight, Landmark
 } from 'lucide-react';
-import { DEFAULT_PAGE_CONTENT } from '../constants';
+import { getPageContent } from '../constants';
 import { fetchPageContent, getModalities } from '../services/supabase';
 import EmpireParticles from '../components/EmpireParticles';
 
@@ -21,14 +21,9 @@ const ActivityDetail: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      // Probing order: Branch (Primary) -> Activity (Legacy) -> Modality
-      const probeKeys = [`branch-${slug}`, `activity-${slug}`, `modality-${slug}`];
-      let dbContent = null;
-      
-      for (const key of probeKeys) {
-        dbContent = await fetchPageContent(key, i18n.language);
-        if (dbContent) break;
-      }
+      // Prioridade: Banco de Dados
+      let dbContent = await fetchPageContent(`branch-${slug}`, i18n.language);
+      if (!dbContent) dbContent = await fetchPageContent(`activity-${slug}`, i18n.language);
 
       if (dbContent) {
         setContent(dbContent);
@@ -49,12 +44,12 @@ const ActivityDetail: React.FC = () => {
             return;
         }
 
-        // Fallback para constantes locais
-        const localKey = probeKeys.find(k => DEFAULT_PAGE_CONTENT[k]);
-        if (localKey) {
-          setContent(DEFAULT_PAGE_CONTENT[localKey]);
+        // Fallback para helper seguro de constantes locais
+        const localContent = getPageContent(slug || '');
+        if (localContent) {
+          setContent(localContent);
         } else {
-          // Fallback final
+          // Fallback final de emergência
           setContent({
             name: slug?.toUpperCase() || 'ARENA',
             heroImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000",

@@ -1,10 +1,11 @@
+
 {
   "name": "empirion-2",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc --skipLibCheck && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
