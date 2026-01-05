@@ -2,12 +2,12 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicat
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
-  // Oracle Kernel v12.5: Permite números negativos para suportar prejuízos reais.
+  // Oracle Kernel v12.6: Permite números negativos para suportar prejuízos reais.
   return isFinite(num) ? num : fallback;
 };
 
 /**
- * Motor Industrial Empirion v12.5 - Oracle Integrity Kernel
+ * Motor Industrial Empirion v12.6 - Oracle Integrity Kernel
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -17,162 +17,170 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ): ProjectionResult => {
-  // Mapeamento Dinâmico Robusto com Any-Casting (Vercel Build Fix)
-  const getAttr = (camel: string, snake: string, fallback: any) => {
-    const data = indicators as any;
-    if (data?.[snake] !== undefined) return data[snake];
-    if (data?.[camel] !== undefined) return data[camel];
-    return fallback;
-  };
+  try {
+    // Mapeamento Dinâmico Robusto com Any-Casting (Vercel Build Fix)
+    const getAttr = (camel: string, snake: string, fallback: any) => {
+      const data = indicators as any;
+      if (data?.[snake] !== undefined) return data[snake];
+      if (data?.[camel] !== undefined) return data[camel];
+      return fallback;
+    };
 
-  const currentIndicators = {
-    inflationRate: getAttr('inflationRate', 'inflation_rate', 0.01),
-    interestRateTR: getAttr('interestRateTR', 'interest_rate', 3.0),
-    marketingExpenseBase: getAttr('marketingExpenseBase', 'base_marketing_cost', 17165),
-    baseAdminCost: getAttr('baseAdminCost', 'base_admin_cost', 114880),
-    factoryMaxCapacity: getAttr('avgProdPerMan', 'factory_max_capacity', 50000),
-    providerPrices: indicators?.providerPrices || { mpA: 20.20, mpB: 40.40 },
-    demand_regions: indicators?.demand_regions || [12000],
-    sectorAvgSalary: indicators?.sectorAvgSalary || 1313,
-    distributionCostUnit: getAttr('distributionCostUnit', 'base_freight_unit_cost', 50.50),
-    difficulty: indicators?.difficulty || { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
-    active_event: indicators?.active_event || null
-  };
+    const currentIndicators = {
+      inflationRate: getAttr('inflationRate', 'inflation_rate', 0.01),
+      interestRateTR: getAttr('interestRateTR', 'interest_rate', 3.0),
+      marketingExpenseBase: getAttr('marketingExpenseBase', 'base_marketing_cost', 17165),
+      baseAdminCost: getAttr('baseAdminCost', 'base_admin_cost', 114880),
+      factoryMaxCapacity: getAttr('avgProdPerMan', 'factory_max_capacity', 50000),
+      providerPrices: indicators?.providerPrices || { mpA: 20.20, mpB: 40.40 },
+      demand_regions: indicators?.demand_regions || [12000],
+      sectorAvgSalary: indicators?.sectorAvgSalary || 1313,
+      distributionCostUnit: getAttr('distributionCostUnit', 'base_freight_unit_cost', 50.50),
+      difficulty: indicators?.difficulty || { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
+      active_event: indicators?.active_event || null
+    };
 
-  const inflationMult = (1 + (sanitize(currentIndicators.inflationRate, 0)));
-  const event: BlackSwanEvent | null = currentIndicators.active_event || null;
-  const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
-  
-  if (isRoundZero) {
-    // Fixed: Removed 'lostSales' and 'receivables' from the object literal because they are not defined in the ProjectionResult interface.
+    const inflationMult = (1 + (sanitize(currentIndicators.inflationRate, 0)));
+    const event: BlackSwanEvent | null = currentIndicators.active_event || null;
+    const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
+    
+    if (isRoundZero) {
+      return {
+        revenue: 3322735, ebitda: 1044555, netProfit: 73928, salesVolume: 8932,
+        totalMarketingCost: 802702, debtRatio: 44.9,
+        marketShare: 12.5, cashFlowNext: 840200,
+        loanLimit: 2500000, totalOutflow: 0, totalLiquidity: 840200,
+        creditRating: 'AAA' as CreditRating,
+        health: { 
+          liquidity_ratio: 1.5, 
+          debt_to_equity: 0.6, 
+          insolvency_risk: 10, 
+          rating: 'AAA' as CreditRating, 
+          is_bankrupt: false 
+        } as FinancialHealth,
+        suggestRecovery: false, capexBlocked: false,
+        statements: null,
+        indicators: getRoundZeroAdvanced(),
+        costBreakdown: [],
+        activeEvent: null
+      };
+    }
+
+    // 1. Snapshot de Herança
+    const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
+    const prevAssets = sanitize(previousState?.balance_sheet?.assets?.total || 9176940, 9176940);
+    const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
+    const prevReceivables = sanitize(previousState?.balance_sheet?.assets?.current?.receivables || 1823735, 1823735);
+    const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605, 717605);
+    const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362);
+
+    // 2. Oracle Risk Core
+    const totalDebt = prevDebt + decisions.finance.loanRequest;
+    const debtToEquity = totalDebt / Math.max(prevEquity, 1);
+    const is_bankrupt = prevEquity < 0;
+
+    // Lógica de Rating D (Insolvência Crítica)
+    const rating: CreditRating = 
+      is_bankrupt ? 'D' : 
+      debtToEquity > 2.5 ? 'D' : 
+      debtToEquity > 1.8 ? 'C' : 
+      debtToEquity > 1.2 ? 'B' : 'A';
+    
+    const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
+    
+    // 3. Comercial & Demanda
+    const regions = Object.values(decisions.regions || {});
+    const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price, 372), 0) / regions.length : 372;
+    const baseMkt = sanitize(currentIndicators.marketingExpenseBase, 17165) * inflationMult;
+    const totalMarketingCost = regions.reduce((acc, r) => {
+      const level = sanitize(r.marketing, 0);
+      if (level === 0) return acc;
+      return acc + (baseMkt * Math.pow(level, 1.5));
+    }, 0);
+
+    const avgTermDays = regions.length > 0 
+      ? regions.reduce((acc, r) => acc + (r.term === 2 ? 60 : r.term === 1 ? 30 : 0), 0) / regions.length 
+      : 0;
+
+    const basePotential = (currentIndicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1) * (1 + (evMod.demand || 0));
+    const priceScore = Math.pow(372 / Math.max(avgPrice, 1), currentIndicators.difficulty?.price_sensitivity || 2.0);
+    const totalMktPoints = regions.reduce((a, b) => a + sanitize(b.marketing, 0), 0);
+    const mktScore = Math.log10(((totalMktPoints * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
+    const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
+    
+    // 4. Produção
+    const currentOEE = (1.0 + (decisions.hr.trainingPercent / 1000) + (decisions.hr.participationPercent / 200)) * (evMod.productivity || 1);
+    const maxProduction = (currentIndicators.factoryMaxCapacity || 30000) * (decisions.production.activityLevel / 100) * currentOEE;
+    const salesVolume = Math.min(demandTotal, maxProduction);
+    const revenue = salesVolume * avgPrice;
+
+    const unitMpA = sanitize(currentIndicators.providerPrices.mpA, 20.20) * inflationMult;
+    const unitMpB = sanitize(currentIndicators.providerPrices.mpB, 40.40) * inflationMult;
+    const mpCostTotal = (decisions.production.purchaseMPA * unitMpA) + (decisions.production.purchaseMPB * unitMpB);
+    
+    const unitSalary = sanitize(currentIndicators.sectorAvgSalary, 1313) * inflationMult;
+    const payrollTotal = (decisions.hr.sales_staff_count * unitSalary * 1.6);
+    const unitDist = sanitize(currentIndicators.distributionCostUnit, 50.50) * inflationMult;
+    const adminExpenses = sanitize(currentIndicators.baseAdminCost, 114880) * inflationMult;
+
+    // 5. DRE
+    const cpv = salesVolume * (unitMpA + unitMpB * 0.5);
+    const ebitda = revenue - cpv - payrollTotal - totalMarketingCost - (decisions.hr.trainingPercent * 500) - adminExpenses;
+    const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
+    const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
+
+    // 6. Fluxo de Caixa
+    const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
+    const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
+    const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + (salesVolume * unitDist) + adminExpenses;
+    const finalCash = prevCash + cashInflow + decisions.finance.loanRequest - totalOutflow - decisions.finance.application;
+    
+    const finalAssets = finalCash + (revenue * 0.6) + (prevAssets * 0.99);
+    const finalEquity = prevEquity + netProfit;
+    const debtRatio = ((finalAssets - finalEquity) / Math.max(finalAssets, 1)) * 100;
+
     return {
-      revenue: 3322735, ebitda: 1044555, netProfit: 73928, salesVolume: 8932,
-      totalMarketingCost: 802702, debtRatio: 44.9,
-      marketShare: 12.5, cashFlowNext: 840200,
-      loanLimit: 2500000, totalOutflow: 0, totalLiquidity: 840200,
-      creditRating: 'AAA' as CreditRating,
+      revenue, ebitda, netProfit, salesVolume, totalMarketingCost, debtRatio, totalOutflow,
+      marketShare: (salesVolume / (basePotential * 8)) * 100,
+      cashFlowNext: finalCash,
+      loanLimit,
+      creditRating: rating,
       health: { 
-        liquidity_ratio: 1.5, 
-        debt_to_equity: 0.6, 
-        insolvency_risk: 10, 
-        rating: 'AAA' as CreditRating, 
-        is_bankrupt: false 
+          liquidity_ratio: finalCash / Math.max(totalDebt * 0.2, 1), 
+          debt_to_equity: debtToEquity, 
+          insolvency_risk: Math.min((debtRatio * 1.2), 100), 
+          rating, 
+          is_bankrupt: finalEquity < 0 
       } as FinancialHealth,
-      suggestRecovery: false, capexBlocked: false,
-      statements: null,
-      indicators: getRoundZeroAdvanced(),
-      costBreakdown: [],
-      activeEvent: null
+      suggestRecovery: debtRatio > 60,
+      capexBlocked: rating === 'C' || rating === 'D',
+      activeEvent: event,
+      costBreakdown: [
+        { name: 'Matéria-Prima', total: mpOutflow, impact: 'Desembolso Imediato' },
+        { name: 'Marketing Exponencial', total: totalMarketingCost, impact: 'Burn Rate Vendas' },
+        { name: 'Folha & Admin', total: payrollTotal + adminExpenses, impact: 'Custo Fixo Inflacionado' },
+        { name: 'Serviço da Dívida', total: interestExp, impact: 'Juros Acumulados' }
+      ],
+      totalLiquidity: prevCash + cashInflow + decisions.finance.loanRequest,
+      statements: {
+          dre: { revenue, cpv, ebitda, net_profit: netProfit },
+          balance_sheet: { 
+              assets: { total: finalAssets, current: { cash: finalCash } },
+              liabilities: { total_debt: totalDebt },
+              equity: { total: finalEquity }
+          },
+          kpis: { market_share: (salesVolume / (basePotential * 8)) * 100, debt_ratio: debtRatio }
+      },
+      indicators: calculateAdvanced(revenue, cpv, ebitda, netProfit, (revenue * 0.6), mpCostTotal * 0.3, finalCash, decisions)
+    };
+  } catch (error) {
+    console.error("Simulation Engine Critical Failure:", error);
+    return {
+      revenue: 0, ebitda: 0, netProfit: 0, salesVolume: 0, totalMarketingCost: 0,
+      debtRatio: 0, totalOutflow: 0, totalLiquidity: 0, marketShare: 0, cashFlowNext: 0, loanLimit: 0,
+      health: { rating: 'D', is_bankrupt: true }
     };
   }
-
-  // 1. Snapshot de Herança
-  const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
-  const prevAssets = sanitize(previousState?.balance_sheet?.assets?.total || 9176940, 9176940);
-  const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
-  const prevReceivables = sanitize(previousState?.balance_sheet?.assets?.current?.receivables || 1823735, 1823735);
-  const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605, 717605);
-  const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362);
-
-  // 2. Oracle Risk Core
-  const totalDebt = prevDebt + decisions.finance.loanRequest;
-  const debtToEquity = totalDebt / Math.max(prevEquity, 1);
-  const is_bankrupt = prevEquity < 0;
-
-  // Lógica de Rating D (Insolvência Crítica)
-  const rating: CreditRating = 
-    is_bankrupt ? 'D' : 
-    debtToEquity > 2.5 ? 'D' : 
-    debtToEquity > 1.8 ? 'C' : 
-    debtToEquity > 1.2 ? 'B' : 'A';
-  
-  const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
-  
-  // 3. Comercial & Demanda
-  const regions = Object.values(decisions.regions || {});
-  const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price, 372), 0) / regions.length : 372;
-  const baseMkt = sanitize(currentIndicators.marketingExpenseBase, 17165) * inflationMult;
-  const totalMarketingCost = regions.reduce((acc, r) => {
-    const level = sanitize(r.marketing, 0);
-    if (level === 0) return acc;
-    return acc + (baseMkt * Math.pow(level, 1.5));
-  }, 0);
-
-  const avgTermDays = regions.length > 0 
-    ? regions.reduce((acc, r) => acc + (r.term === 2 ? 60 : r.term === 1 ? 30 : 0), 0) / regions.length 
-    : 0;
-
-  const basePotential = (currentIndicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1) * (1 + (evMod.demand || 0));
-  const priceScore = Math.pow(372 / Math.max(avgPrice, 1), currentIndicators.difficulty?.price_sensitivity || 2.0);
-  const totalMktPoints = regions.reduce((a, b) => a + sanitize(b.marketing, 0), 0);
-  const mktScore = Math.log10(((totalMktPoints * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
-  const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
-  
-  // 4. Produção
-  const currentOEE = (1.0 + (decisions.hr.trainingPercent / 1000) + (decisions.hr.participationPercent / 200)) * (evMod.productivity || 1);
-  const maxProduction = (currentIndicators.factoryMaxCapacity || 30000) * (decisions.production.activityLevel / 100) * currentOEE;
-  const salesVolume = Math.min(demandTotal, maxProduction);
-  const revenue = salesVolume * avgPrice;
-
-  const unitMpA = sanitize(currentIndicators.providerPrices.mpA, 20.20) * inflationMult;
-  const unitMpB = sanitize(currentIndicators.providerPrices.mpB, 40.40) * inflationMult;
-  const mpCostTotal = (decisions.production.purchaseMPA * unitMpA) + (decisions.production.purchaseMPB * unitMpB);
-  
-  const unitSalary = sanitize(currentIndicators.sectorAvgSalary, 1313) * inflationMult;
-  const payrollTotal = (decisions.hr.sales_staff_count * unitSalary * 1.6);
-  const unitDist = sanitize(currentIndicators.distributionCostUnit, 50.50) * inflationMult;
-  const adminExpenses = sanitize(currentIndicators.baseAdminCost, 114880) * inflationMult;
-
-  // 5. DRE
-  const cpv = salesVolume * (unitMpA + unitMpB * 0.5);
-  const ebitda = revenue - cpv - payrollTotal - totalMarketingCost - (decisions.hr.trainingPercent * 500) - adminExpenses;
-  const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
-  const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
-
-  // 6. Fluxo de Caixa
-  const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
-  const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
-  const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + (salesVolume * unitDist) + adminExpenses;
-  const finalCash = prevCash + cashInflow + decisions.finance.loanRequest - totalOutflow - decisions.finance.application;
-  
-  const finalAssets = finalCash + (revenue * 0.6) + (prevAssets * 0.99);
-  const finalEquity = prevEquity + netProfit;
-  const debtRatio = ((finalAssets - finalEquity) / Math.max(finalAssets, 1)) * 100;
-
-  return {
-    revenue, ebitda, netProfit, salesVolume, totalMarketingCost, debtRatio, totalOutflow,
-    marketShare: (salesVolume / (basePotential * 8)) * 100,
-    cashFlowNext: finalCash,
-    loanLimit,
-    creditRating: rating,
-    health: { 
-        liquidity_ratio: finalCash / Math.max(totalDebt * 0.2, 1), 
-        debt_to_equity: debtToEquity, 
-        insolvency_risk: Math.min((debtRatio * 1.2), 100), 
-        rating, 
-        is_bankrupt: finalEquity < 0 
-    } as FinancialHealth,
-    suggestRecovery: debtRatio > 60,
-    capexBlocked: rating === 'C' || rating === 'D',
-    activeEvent: event,
-    costBreakdown: [
-      { name: 'Matéria-Prima', total: mpOutflow, impact: 'Desembolso Imediato' },
-      { name: 'Marketing Exponencial', total: totalMarketingCost, impact: 'Burn Rate Vendas' },
-      { name: 'Folha & Admin', total: payrollTotal + adminExpenses, impact: 'Custo Fixo Inflacionado' },
-      { name: 'Serviço da Dívida', total: interestExp, impact: 'Juros Acumulados' }
-    ],
-    totalLiquidity: prevCash + cashInflow + decisions.finance.loanRequest,
-    statements: {
-        dre: { revenue, cpv, ebitda, net_profit: netProfit },
-        balance_sheet: { 
-            assets: { total: finalAssets, current: { cash: finalCash } },
-            liabilities: { total_debt: totalDebt },
-            equity: { total: finalEquity }
-        },
-        kpis: { market_share: (salesVolume / (basePotential * 8)) * 100, debt_ratio: debtRatio }
-    },
-    indicators: calculateAdvanced(revenue, cpv, ebitda, netProfit, (revenue * 0.6), mpCostTotal * 0.3, finalCash, decisions)
-  };
 };
 
 const calculateAdvanced = (rev: number, cpv: number, ebitda: number, net: number, rec: number, pay: number, cash: number, decisions: DecisionData): AdvancedIndicators => {
