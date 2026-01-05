@@ -18,7 +18,7 @@ export const isTestMode = true;
 
 /**
  * ORACLE TURNOVER ENGINE v12.8.2 GOLD (Final Production Build)
- * Optimized for high-concurrency arena processing.
+ * Optimized for high-concurrency arena processing and data integrity.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
   console.log(`[TURNOVER v12.8.2 GOLD] Processing Arena: ${championshipId} | Cycle: 0${currentRound}`);
@@ -192,15 +192,16 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 
 /**
  * DELETE CHAMPIONSHIP v12.8.2 GOLD
- * Deep cleanup including local session to prevent ghost data references.
+ * Deep cleanup including local session to prevent ghost data references on Vercel.
  */
 export const deleteChampionship = async (id: string, isTrial: boolean) => {
   const table = isTrial ? 'trial_championships' : 'championships';
-  console.log(`[CLEANUP] Protocol: Deleting arena ${id} from ${table}`);
+  console.log(`[CLEANUP] Protocol GOLD: Deleting arena ${id} from ${table}`);
   
   if (localStorage.getItem('active_champ_id') === id) {
     localStorage.removeItem('active_champ_id');
     localStorage.removeItem('active_team_id');
+    localStorage.removeItem('active_branch');
   }
 
   return await supabase.from(table).delete().eq('id', id);
@@ -211,16 +212,18 @@ export const deleteChampionship = async (id: string, isTrial: boolean) => {
  * Mass deletion commands for total project environment reset.
  */
 export const purgeAllTrials = async () => {
-  console.log("[PURGE] Initiating total sandbox cleanup...");
+  console.log("[PURGE] Initiating total sandbox cleanup v12.8.2 GOLD...");
   localStorage.removeItem('active_champ_id');
   localStorage.removeItem('active_team_id');
+  localStorage.removeItem('active_branch');
   return await supabase.from('trial_championships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 };
 
 export const purgeAllProduction = async () => {
-  console.log("[PURGE] Initiating total production cleanup...");
+  console.log("[PURGE] Initiating total production cleanup v12.8.2 GOLD...");
   localStorage.removeItem('active_champ_id');
   localStorage.removeItem('active_team_id');
+  localStorage.removeItem('active_branch');
   return await supabase.from('championships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 };
 

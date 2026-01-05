@@ -60,14 +60,14 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
   };
 
   const handleDeleteArena = async (id: string, isTrial: boolean, name: string) => {
-    if (!confirm(`PROTOCOLO DE EXCLUSÃO: Tem certeza que deseja deletar a arena "${name}"? Esta ação é irreversível e removerá todos os dados de equipes e decisões.`)) return;
+    if (!confirm(`PROTOCOLO DE EXCLUSÃO v12.8.2: Tem certeza que deseja deletar a arena "${name}"? Esta ação removerá permanentemente todos os nodos e sessões vinculadas.`)) return;
     
     setLoading(true);
     const { error } = await deleteChampionship(id, isTrial);
     if (error) {
       alert("FALHA NA EXCLUSÃO: " + error.message);
     } else {
-      alert("ARENA REMOVIDA: Espaço liberado para novos nodos v12.8.2 GOLD.");
+      alert("ARENA REMOVIDA: Nodos de memória local extirpados com sucesso.");
       fetchData();
     }
     setLoading(false);
@@ -88,7 +88,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
     if (!confirm("CONFIRMAÇÃO FINAL: Você tem certeza absoluta? Esta ação não pode ser desfeita.")) return;
     setLoading(true);
     const { error } = await purgeAllProduction();
-    if (!error) alert("PRODUÇÃO LIMPA: Arena resetada para o estado de fábrica v12.8.2.");
+    if (!error) alert("PRODUÇÃO LIMPA: Arena resetada para o estado de fábrica v12.8.2 GOLD.");
     else alert("ERRO DE EXPURGO: " + error.message);
     fetchData();
     setLoading(false);
