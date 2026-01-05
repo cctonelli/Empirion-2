@@ -1,13 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Newspaper, Globe, Package, Table, History, Shield, 
-  TrendingUp, Activity, BarChart3, PieChart as PieIcon,
-  ChevronLeft, ArrowUpRight, Scale, Landmark, Zap, Info,
-  Boxes, FileText, Target, AlertTriangle, Gavel, Download, Maximize2
+  Newspaper, Globe, History, Shield, 
+  ChevronLeft, Landmark, Zap, 
+  Gavel, Download, AlertTriangle, Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Championship, UserRole, AdvancedIndicators, Team } from '../types';
-import Chart from 'react-apexcharts';
 
 interface GazetteViewerProps {
   arena: Championship;
@@ -62,7 +60,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
             <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} icon={<Globe size={14}/>} label="Conjuntura" />
             <TabBtn active={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} icon={<Landmark size={14}/>} label="Fornecedores" />
             <TabBtn active={activeTab === 'cycles'} onClick={() => setActiveTab('cycles')} icon={<History size={14}/>} label="Ciclos & NLDCG" />
-            <TabBtn active={activeTab === 'benchmarking'} onClick={() => setActiveTab('benchmarking')} icon={<Table size={14}/>} label="Matriz 8 Equipes" />
+            <TabBtn active={activeTab === 'benchmarking'} onClick={() => setActiveTab('benchmarking')} icon={<Newspaper size={14}/>} label="Matriz 8 Equipes" />
             {userRole === 'tutor' && <TabBtn active={activeTab === 'tutor'} onClick={() => setActiveTab('tutor')} icon={<Shield size={14}/>} label="Tutor Master" color="orange" />}
          </nav>
       </header>
@@ -128,7 +126,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5 text-[11px] font-mono">
-                             {/* DRE SECTION */}
                              <MatrixRow label="RECEITA BRUTA VENDAS" teams={teams} val="3.322.735" bold />
                              <MatrixRow label="(-) CUSTO PROD. VENDIDO (CPV)" teams={teams} val="2.278.180" neg indent />
                              <MatrixRow label="(=) LUCRO BRUTO" teams={teams} val="1.044.555" highlight />
@@ -141,48 +138,32 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                              
                              <tr className="bg-white/10"><td colSpan={teams.length + 1} className="p-2 border-y border-white/10"></td></tr>
                              
-                             {/* ASSETS SECTION */}
                              <MatrixRow label="ATIVO TOTAL CONSOLIDADO" teams={teams} val="9.176.940" bold highlight />
                              <MatrixRow label="1.1 ATIVO CIRCULANTE" teams={teams} val="3.290.340" bold indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Caixa & Bancos" teams={teams} val="840.200" indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Contas a Receber" teams={teams} val="1.823.735" indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Estoque Matéria-Prima A" teams={teams} val="628.545" indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Estoque Matéria-Prima B" teams={teams} val="0" indent />
                              
                              <MatrixRow label="1.2 ATIVO NÃO CIRCULANTE" teams={teams} val="5.886.600" bold indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Máquinas e Equip." teams={teams} val="2.360.000" indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="(-) Depreciação Máq." teams={teams} val="-811.500" neg indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Prédios e Instalações" teams={teams} val="544.000" indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="(-) Depreciação Prédios" teams={teams} val="-2.301.900" neg indent />
 
                              <tr className="bg-white/10"><td colSpan={teams.length + 1} className="p-2 border-y border-white/10"></td></tr>
 
-                             {/* LIABILITIES SECTION */}
                              <MatrixRow label="PASSIVO + PL CONSOLIDADO" teams={teams} val="9.176.940" bold highlight />
                              <MatrixRow label="2.1 PASSIVO CIRCULANTE" teams={teams} val="4.121.493" bold indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Fornecedores" teams={teams} val="717.605" indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Empréstimos CP" teams={teams} val="1.872.362" indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Impostos a Pagar" teams={teams} val="13.045" indent />
                              
                              <MatrixRow label="2.2 EXIGÍVEL LONGO PRAZO" teams={teams} val="1.500.000" bold indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Financiamentos BDI" teams={teams} val="1.500.000" indent />
                              
                              <MatrixRow label="2.3 PATRIMÔNIO LÍQUIDO" teams={teams} val="5.055.447" bold indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Capital Social" teams={teams} val="5.000.000" indent />
-                             {/* Fixed: Removed duplicated "indent" attribute */}
                              <MatrixRow label="Lucros Acumulados" teams={teams} val="55.447" indent />
                           </tbody>
                        </table>
