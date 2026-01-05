@@ -9,7 +9,7 @@ import {
   ChevronRight, Calendar, BarChart3, Radio, Monitor,
   Play, Pause, ArrowLeft
 } from 'lucide-react';
-import { listAllUsers, updateUserPremiumStatus, getChampionships, supabase } from '../services/supabase';
+import { listAllUsers, updateUserPremiumStatus, getChampionships, supabase, processRoundTurnover } from '../services/supabase';
 import { UserProfile, Championship } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
@@ -24,6 +24,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
 
@@ -31,7 +32,7 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
     setLoading(true);
     if (activeTab === 'users') {
       const { data } = await listAllUsers();
-      if (data) setUsers(data);
+      if (data) setUsers(data as any[]);
     } else if (activeTab === 'tournaments') {
       const { data } = await getChampionships();
       if (data) setChampionships(data);
@@ -43,7 +44,22 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
     fetchData();
   }, [activeTab]);
 
-  // Se uma arena estiver selecionada, entramos no modo "Drill-down" de gestão
+  const handleTurnover = async () => {
+    if (!selectedArena) return;
+    if (!confirm(`CONFIRMAR TURNOVER: Deseja encerrar o Ciclo 0${selectedArena.current_round} e processar os resultados?`)) return;
+    
+    setIsProcessing(true);
+    const result = await processRoundTurnover(selectedArena.id, selectedArena.current_round);
+    setIsProcessing(false);
+
+    if (result.success) {
+      alert("CICLO CONCLUÍDO: Todos os balanços foram processados e a Gazeta P0" + (selectedArena.current_round + 1) + " está disponível.");
+      setSelectedArena({ ...selectedArena, current_round: selectedArena.current_round + 1 });
+    } else {
+      alert("ERRO NO MOTOR ORACLE: " + result.error);
+    }
+  };
+
   if (selectedArena) {
     return (
       <div className="space-y-8 animate-in fade-in duration-500 pb-20">
@@ -65,17 +81,19 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
               </div>
            </div>
            <div className="flex gap-4">
-              <button className="px-8 py-4 bg-emerald-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl">
-                 <Play size={14} fill="currentColor"/> Processar Rodada
+              <button 
+                onClick={handleTurnover}
+                disabled={isProcessing}
+                className="px-8 py-4 bg-emerald-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-xl hover:bg-white hover:text-emerald-600 transition-all disabled:opacity-50"
+              >
+                 {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} fill="currentColor"/>}
+                 Processar Rodada
               </button>
            </div>
         </header>
 
         <div className="grid grid-cols-1 gap-12 px-4">
-           {/* Monitor de Decisões Live */}
            <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
-           
-           {/* Controle de Ecossistema (Parametrização Próximo Período) */}
            <TutorArenaControl 
              championship={selectedArena} 
              onUpdate={(updates) => setSelectedArena({...selectedArena, ...updates})} 

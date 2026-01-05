@@ -9,53 +9,29 @@ export type ModalityType = 'standard' | 'business_round' | 'factory_efficiency' 
 export type CurrencyType = 'BRL' | 'USD' | 'EUR' | 'GBP';
 export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
+export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C';
 
 export type DiscreteTerm = 0 | 1 | 2;
+
+export interface FinancialHealth {
+  liquidity_ratio: number;
+  debt_to_equity: number;
+  insolvency_risk: number; // 0 to 100
+  rating: CreditRating;
+  is_bankrupt: boolean;
+}
 
 export interface BlackSwanEvent {
   title: string;
   description: string;
   impact: string;
   modifiers: {
-    inflation: number;     // e.g., 0.05
-    demand: number;        // e.g., -0.2
-    interest: number;      // e.g., 0.02
-    productivity: number;  // e.g., 0.8 (means 80% capacity)
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
     cost_multiplier?: number;
   };
-}
-
-export interface ChampionshipMacroRules {
-  id?: string;
-  championship_id: string;
-  round: number;
-  price_sensitivity: number;
-  demand_elasticity: number;
-  marketing_effectiveness: number;
-  crisis_probability: number;
-  machine_block_period?: number;
-}
-
-export interface MacroIndicators {
-  growthRate: number;
-  inflationRate: number;
-  interestRateTR: number;
-  providerInterest: number;
-  salesAvgInterest: number;
-  avgProdPerMan: number;
-  importedProducts: number;
-  laborAvailability: 'low' | 'medium' | 'high' | string;
-  providerPrices: { mpA: number; mpB: number };
-  distributionCostUnit: number;
-  marketingExpenseBase: number;
-  machineryValues: { alfa: number; beta: number; gama: number };
-  sectorAvgSalary: number;
-  stockMarketPrice: number;
-  initialExchangeRateUSD: number;
-  demand_regions?: number[];
-  difficulty?: Partial<ChampionshipMacroRules>;
-  // Active Black Swan for the current cycle
-  active_event?: BlackSwanEvent | null;
 }
 
 export interface AdvancedIndicators {
@@ -93,16 +69,6 @@ export interface AdvancedIndicators {
   };
 }
 
-export interface UserProfile {
-  id: string;
-  supabase_user_id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  is_opal_premium: boolean;
-  created_at: string;
-}
-
 export interface DecisionData {
   regions: Record<number, { price: number; term: DiscreteTerm; marketing: number }>;
   hr: { hired: number; fired: number; salary: number; trainingPercent: number; participationPercent: number; sales_staff_count: number };
@@ -128,6 +94,9 @@ export interface Team {
   invite_code?: string;
 }
 
+/**
+ * Added missing is_public property to Championship interface to support public arenas and tournament listings.
+ */
 export interface Championship {
   id: string;
   name: string;
@@ -139,12 +108,14 @@ export interface Championship {
   deadline_value: number;
   deadline_unit: DeadlineUnit;
   template_id?: string;
+  is_public?: boolean;
   config: {
     bp_enabled?: boolean;
     bp_frequency?: number;
     bp_mandatory?: boolean;
     teamsLimit?: number;
     customRules?: any;
+    votingCriteria?: CommunityCriteria[];
     [key: string]: any;
   };
   market_indicators: MacroIndicators;
@@ -152,8 +123,6 @@ export interface Championship {
   round_started_at?: string;
   is_trial?: boolean;
   teams?: Team[];
-  market_history?: AdvancedIndicators[];
-  is_public?: boolean;
   created_at: string;
   sales_mode?: SalesMode;
   scenario_type?: ScenarioType;
@@ -161,6 +130,40 @@ export interface Championship {
   round_frequency_days?: number;
   transparency_level?: TransparencyLevel;
   ecosystemConfig?: EcosystemConfig;
+}
+
+export interface MacroIndicators {
+  growthRate: number;
+  inflationRate: number;
+  interestRateTR: number;
+  providerInterest: number;
+  salesAvgInterest: number;
+  avgProdPerMan: number;
+  importedProducts: number;
+  laborAvailability: 'low' | 'medium' | 'high' | string;
+  providerPrices: { mpA: number; mpB: number };
+  distributionCostUnit: number;
+  marketingExpenseBase: number;
+  machineryValues: { alfa: number; beta: number; gama: number };
+  sectorAvgSalary: number;
+  stockMarketPrice: number;
+  initialExchangeRateUSD: number;
+  demand_regions?: number[];
+  difficulty?: {
+      price_sensitivity?: number;
+      marketing_effectiveness?: number;
+  };
+  active_event?: BlackSwanEvent | null;
+}
+
+export interface UserProfile {
+  id: string;
+  supabase_user_id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  is_opal_premium: boolean;
+  created_at: string;
 }
 
 export interface AccountNode {
@@ -174,6 +177,9 @@ export interface AccountNode {
   children?: AccountNode[];
 }
 
+/**
+ * Added missing ChampionshipTemplate interface used for pre-configured simulation scenarios.
+ */
 export interface ChampionshipTemplate {
   id: string;
   name: string;
@@ -189,9 +195,22 @@ export interface ChampionshipTemplate {
     deadlineValue?: number;
     deadlineUnit?: DeadlineUnit;
     customRules?: any;
+    [key: string]: any;
   };
   market_indicators: MacroIndicators;
-  initial_financials: any;
+  initial_financials: {
+    balance_sheet: AccountNode[];
+    dre: AccountNode[];
+  };
+}
+
+/**
+ * Added missing CommunityCriteria interface for community voting features in arenas.
+ */
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
 }
 
 export interface MessageBoardItem {
@@ -203,14 +222,15 @@ export interface MessageBoardItem {
 }
 
 export interface BusinessPlan {
-  id: string;
+  id?: string;
   championship_id: string;
   team_id: string;
   round: number;
   version: number;
   data: Record<number, string>;
-  status: 'draft' | 'submitted';
-  updated_at: string;
+  status: 'draft' | 'final';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Modality {
@@ -220,18 +240,9 @@ export interface Modality {
   description: string;
   image_url?: string;
   page_content: {
-    hero: {
-      title: string;
-      subtitle: string;
-    };
+    hero: { title: string; subtitle: string; };
     features: string[];
     kpis: string[];
     accent_color?: 'orange' | 'blue' | 'emerald';
   };
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
 }
