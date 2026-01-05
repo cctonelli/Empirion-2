@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -21,7 +20,7 @@ import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship, U
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
-  const [gazetaNews, setAiNews] = useState<string>('');
+  const [aiNews, setAiNews] = useState<string>('');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
   const [scenarioType, setScenarioType] = useState<ScenarioType>('simulated');
   const [isAlphaUser, setIsAlphaUser] = useState(false);
@@ -163,7 +162,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               <div className="w-full max-w-7xl relative z-10">
                  <GazetteViewer 
                     arena={activeArena} 
-                    news={gazetaNews} 
+                    news={aiNews} 
                     round={(activeArena?.current_round || 0) + 1} 
                     userRole={userRole}
                     onClose={() => setShowGazette(false)} 
