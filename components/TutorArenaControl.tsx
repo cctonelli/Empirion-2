@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Zap, Globe, Shield, TrendingUp, Percent, Users, Lock, Unlock, 
