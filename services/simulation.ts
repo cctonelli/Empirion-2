@@ -6,28 +6,17 @@ export const sanitize = (val: any, fallback: number = 0): number => {
   return isFinite(num) ? num : fallback;
 };
 
-/**
- * EXTRAÇÃO DEFENSIVA DE MAQUINÁRIO v12.8
- * Garante que dados legados vindos do banco de dados (chave 'Bird') sejam convertidos para 'beta'.
- */
 export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };
-  
-  if (!macro || (!macro.machineryValues && !(macro as any).config?.machineryValues)) {
-    return defaults;
-  }
-  
+  if (!macro) return defaults;
   const v = macro.machineryValues || (macro as any).config?.machineryValues || {};
   return {
     alfa: sanitize(v.alfa, defaults.alfa),
-    beta: sanitize(v.beta || (v as any).Bird, defaults.beta), // Resgate da chave legada 'Bird' via cast
+    beta: sanitize(v.beta || (v as any).Bird, defaults.beta),
     gama: sanitize(v.gama, defaults.gama)
   };
 };
 
-/**
- * CÁLCULO DE DEPRECIAÇÃO (Método Linha Reta)
- */
 export const calculateDepreciation = (machines: { alfa: number, beta: number, gama: number }, macro: MacroIndicators, rate: number = 0.05) => {
   const prices = getSafeMachineryValues(macro);
   const totalValue = (machines.alfa * prices.alfa) + (machines.beta * prices.beta) + (machines.gama * prices.gama);
@@ -35,10 +24,6 @@ export const calculateDepreciation = (machines: { alfa: number, beta: number, ga
   return { totalValue, periodDepreciation };
 };
 
-/**
- * CÁLCULO DE SPREAD DE RISCO v12.8
- * AAA: 0.5% | D: 15.0%
- */
 export const getRiskSpread = (rating: CreditRating): number => {
   switch (rating) {
     case 'AAA': return 0.5;
@@ -59,28 +44,56 @@ export const calculateProjections = (
   previousState?: any
 ): ProjectionResult => {
   const mValues = getSafeMachineryValues(indicators);
+  const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447, 5055447);
+  const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200, 840200);
   
-  // Exemplo de cálculo usando os valores normalizados
+  // 1. CAPEX e Depreciação (O coração do v12.8)
   const machines = decisions.finance.buyMachines || { alfa: 0, beta: 0, gama: 0 };
-  const capexRound = (machines.alfa * mValues.alfa) + (machines.beta * mValues.beta) + (machines.gama * mValues.gama);
+  const { totalValue, periodDepreciation } = calculateDepreciation(machines, indicators || {} as any);
+  
+  // 2. Simulação de Resultado (Simplificada para o Kernel)
+  const revenue = 3322735; 
+  const operatingCosts = decisions.hr.trainingPercent * 500 + 150000; // Mock de custos
+  const netProfit = revenue - operatingCosts - periodDepreciation;
+  
+  // 3. Lógica de Insolvência e Rating
+  const finalEquity = prevEquity + netProfit;
+  const totalDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362) + decisions.finance.loanRequest;
+  const liquidityRatio = (prevCash + revenue) / Math.max(totalDebt, 1);
+  
+  let rating: CreditRating = 'AAA';
+  let risk = 0;
 
-  // Lógica de Rating baseada em Endividamento (IE)
-  const ie = sanitize(previousState?.kpis?.debt_ratio, 40);
-  const rating: CreditRating = ie > 80 ? 'D' : ie > 60 ? 'C' : ie > 40 ? 'B' : 'A';
+  if (finalEquity <= 0 || prevCash < 0) {
+    rating = 'D';
+    risk = 100;
+  } else if (liquidityRatio < 0.8) {
+    rating = 'C';
+    risk = 80;
+  } else if (liquidityRatio < 1.3) {
+    rating = 'B';
+    risk = 45;
+  } else if (liquidityRatio < 1.9) {
+    rating = 'A';
+    risk = 15;
+  }
 
   return {
-    revenue: 3322735,
-    netProfit: 73928,
-    debtRatio: ie,
+    revenue,
+    netProfit,
+    debtRatio: (totalDebt / Math.max(finalEquity, 1)) * 100,
     creditRating: rating,
+    totalOutflow: operatingCosts + totalValue,
+    totalLiquidity: prevCash + decisions.finance.loanRequest,
     health: {
       rating,
-      insolvency_risk: ie * 1.2,
-      is_bankrupt: ie > 100
+      insolvency_risk: risk,
+      is_bankrupt: finalEquity <= 0,
+      liquidity_ratio: liquidityRatio
     },
     costBreakdown: [
-      { name: 'Maquinário (CAPEX)', total: capexRound, impact: 'Investimento em Ativos' },
-      { name: 'Juros (Risk Spread)', total: 40000 * (getRiskSpread(rating)/100), impact: `Taxa Rating ${rating}` }
+      { name: 'Depreciação de Ativos', total: periodDepreciation, impact: 'Desgaste de Capital' },
+      { name: 'Custo Operacional', total: operatingCosts, impact: 'Manutenção do Nodo' }
     ]
   };
 };

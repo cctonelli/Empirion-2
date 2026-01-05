@@ -1,22 +1,10 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { 
-  BookOpen, 
-  ShieldCheck, 
-  Users, 
-  Target, 
-  Zap, 
-  FileText, 
-  TrendingUp, 
-  Settings,
-  AlertCircle,
-  PlayCircle,
-  BarChart3,
-  Globe,
-  Cpu,
-  Trophy,
-  Check,
-  Bot
+  BookOpen, ShieldCheck, Users, Target, Zap, FileText, TrendingUp, Settings,
+  AlertCircle, PlayCircle, BarChart3, Globe, Cpu, Trophy, Check, Bot, ChevronDown
 } from 'lucide-react';
+import { StudentManual } from './StudentManual';
 
 export const TutorGuide: React.FC = () => (
   <div className="max-w-5xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-20">
@@ -93,78 +81,103 @@ export const TutorGuide: React.FC = () => (
   </div>
 );
 
-export const TeamGuide: React.FC = () => (
-  <div className="max-w-5xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-20">
-    <header className="text-center space-y-6">
-      <div className="inline-flex p-4 bg-slate-900 text-white rounded-[2rem] shadow-2xl">
-        <Zap size={48} />
+export const TeamGuide: React.FC = () => {
+  const [activeManual, setActiveManual] = useState<'pocket' | 'field'>('field');
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-20">
+      <div className="flex justify-center gap-4">
+         <button 
+           onClick={() => setActiveManual('field')}
+           className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeManual === 'field' ? 'bg-slate-900 text-white shadow-xl' : 'bg-slate-100 text-slate-500'}`}
+         >
+           Field Manual (Operacional)
+         </button>
+         <button 
+           onClick={() => setActiveManual('pocket')}
+           className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeManual === 'pocket' ? 'bg-orange-600 text-white shadow-xl shadow-orange-500/20' : 'bg-slate-100 text-slate-500'}`}
+         >
+           Manual de Bolso (Estratégico)
+         </button>
       </div>
-      <div className="space-y-2">
-        <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tighter">Strategist Field Manual</h1>
-        <p className="text-slate-500 font-medium text-lg">Diretrizes de Operação para Equipes de Elite Empirion.</p>
-      </div>
-    </header>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <GuideCard 
-        icon={<Zap className="text-blue-600" />}
-        title="War Room"
-        description="Você não está sozinho. Cada alteração no formulário de decisões é sincronizada instantaneamente. Coordene com seu time via Audit Log."
-      />
-      <GuideCard 
-        icon={<BarChart3 className="text-emerald-600" />}
-        title="Live Projections"
-        description="A barra lateral de decisões mostra o impacto imediato das suas escolhas no Lucro Líquido e Margem EBITDA antes mesmo de salvar."
-      />
-      <GuideCard 
-        icon={<Target className="text-amber-600" />}
-        title="Intelligence Hub"
-        description="Use a Grounded Search para pesquisar tendências reais. Se o preço do café subir no mundo real, isso pode afetar a simulação Agro."
-      />
-    </div>
+      {activeManual === 'pocket' ? (
+        <StudentManual />
+      ) : (
+        <>
+          <header className="text-center space-y-6">
+            <div className="inline-flex p-4 bg-slate-900 text-white rounded-[2rem] shadow-2xl">
+              <Zap size={48} />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tighter">Strategist Field Manual</h1>
+              <p className="text-slate-500 font-medium text-lg">Diretrizes de Operação para Equipes de Elite Empirion.</p>
+            </div>
+          </header>
 
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <section className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-8">
-        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
-          <FileText className="text-blue-600" /> Análise de Relatórios
-        </h3>
-        <p className="text-sm text-slate-500 leading-relaxed">
-          Os relatórios seguem o padrão Bernard de contabilidade gerencial. Foque no **Giro de Estoque** e no **Prazo Médio de Recebimento** para manter o fluxo de caixa saudável.
-        </p>
-        <div className="p-6 bg-slate-50 rounded-3xl space-y-4">
-           <div className="flex justify-between items-center text-xs font-black uppercase text-slate-400">
-              <span>Importância Analítica</span>
-              <span>Prioridade</span>
-           </div>
-           <div className="space-y-2">
-              <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600 w-[90%]"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <GuideCard 
+              icon={<Zap className="text-blue-600" />}
+              title="War Room"
+              description="Você não está sozinho. Cada alteração no formulário de decisões é sincronizada instantaneamente. Coordene com seu time via Audit Log."
+            />
+            <GuideCard 
+              icon={<BarChart3 className="text-emerald-600" />}
+              title="Live Projections"
+              description="A barra lateral de decisões mostra o impacto imediato das suas escolhas no Lucro Líquido e Margem EBITDA antes mesmo de salvar."
+            />
+            <GuideCard 
+              icon={<Target className="text-amber-600" />}
+              title="Intelligence Hub"
+              description="Use a Grounded Search para pesquisar tendências reais. Se o preço do café subir no mundo real, isso pode afetar a simulação Agro."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <section className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-8">
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
+                <FileText className="text-blue-600" /> Análise de Relatórios
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Os relatórios seguem o padrão Bernard de contabilidade gerencial. Foque no **Giro de Estoque** e no **Prazo Médio de Recebimento** para manter o fluxo de caixa saudável.
+              </p>
+              <div className="p-6 bg-slate-50 rounded-3xl space-y-4">
+                 <div className="flex justify-between items-center text-xs font-black uppercase text-slate-400">
+                    <span>Importância Analítica</span>
+                    <span>Prioridade</span>
+                 </div>
+                 <div className="space-y-2">
+                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-600 w-[90%]"></div>
+                    </div>
+                    <div className="flex justify-between text-[10px] font-bold text-slate-600">
+                      <span>DRE & Margem Bruta</span>
+                      <span>Crítica</span>
+                    </div>
+                 </div>
               </div>
-              <div className="flex justify-between text-[10px] font-bold text-slate-600">
-                <span>DRE & Margem Bruta</span>
-                <span>Crítica</span>
-              </div>
-           </div>
-        </div>
-      </section>
+            </section>
 
-      <section className="bg-blue-600 p-12 rounded-[3.5rem] text-white shadow-2xl shadow-blue-200 flex flex-col justify-between">
-        <div className="space-y-6">
-          <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
-            <Bot className="text-blue-200" /> Consultoria Strategos
-          </h3>
-          <p className="text-sm text-blue-50 leading-relaxed italic">
-            "Sempre que tiver dúvida sobre um termo como 'WACC' ou 'Depreciação', pergunte ao Strategos no chat global. Ele tem acesso aos manuais contábeis da plataforma."
-          </p>
-        </div>
-        <div className="pt-8 border-t border-white/20 mt-8 flex items-center gap-4">
-           <AlertCircle size={20} className="text-blue-200" />
-           <span className="text-[10px] font-black uppercase tracking-widest text-blue-100">Dica: Salve suas decisões 5 min antes do deadline.</span>
-        </div>
-      </section>
+            <section className="bg-blue-600 p-12 rounded-[3.5rem] text-white shadow-2xl shadow-blue-200 flex flex-col justify-between">
+              <div className="space-y-6">
+                <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
+                  <Bot className="text-blue-200" /> Consultoria Strategos
+                </h3>
+                <p className="text-sm text-blue-50 leading-relaxed italic">
+                  "Sempre que tiver dúvida sobre um termo como 'WACC' ou 'Depreciação', pergunte ao Strategos no chat global. Ele tem acesso aos manuais contábeis da plataforma."
+                </p>
+              </div>
+              <div className="pt-8 border-t border-white/20 mt-8 flex items-center gap-4">
+                 <AlertCircle size={20} className="text-blue-200" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-100">Dica: Salve suas decisões 5 min antes do deadline.</span>
+              </div>
+            </section>
+          </div>
+        </>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 const GuideCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
   <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-6 hover:translate-y-[-4px] transition-all">
