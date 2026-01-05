@@ -107,6 +107,7 @@ export interface Championship {
   deadline_unit: DeadlineUnit;
   template_id?: string;
   is_public?: boolean;
+  master_key_enabled?: boolean;
   config: {
     bp_enabled?: boolean;
     bp_frequency?: number;

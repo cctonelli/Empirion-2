@@ -7,8 +7,8 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Motor Industrial Empirion v11.7 - Oracle Solvency Kernel
- * Ajuste de paridade para Round Zero e detecção de insolvência.
+ * Motor Industrial Empirion v11.8 - Oracle Integrity Kernel
+ * Garante paridade de interface para evitar erros de deploy (Vercel Build Error Fix).
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -18,13 +18,13 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // Configurações Base do Oráculo
+  // Fallbacks seguros para evitar processamento de null/undefined
   const currentIndicators = (indicators || {
     inflationRate: 0.01,
     providerPrices: { mpA: 20.20, mpB: 40.40 },
     demand_regions: [12000],
     sectorAvgSalary: 1313,
-    marketingExpenseBase: 17165,
+    marketingExpenseBase: 17165, // Base Bernard Legada
     distributionCostUnit: 50.50,
     difficulty: { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
     active_event: null
@@ -35,8 +35,7 @@ export const calculateProjections = (
   const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
   
   if (isRoundZero) {
-    // Retorno do Round Zero deve espelhar exatamente a interface de produção
-    // para evitar erros de 'undefined' no DecisionForm
+    // IMPORTANTE: Retornar objeto completo para satisfazer TypeScript e UI
     return {
       revenue: 3322735, ebitda: 1044555, netProfit: 73928, salesVolume: 8932,
       lostSales: 0, totalMarketingCost: 802702, debtRatio: 44.9,
@@ -53,13 +52,13 @@ export const calculateProjections = (
       statements: null,
       indicators: getRoundZeroAdvanced(),
       costBreakdown: [],
-      totalOutflow: 0, // Inicia em 0 no round zero
-      totalLiquidity: 840200, // Caixa inicial
+      totalOutflow: 0, 
+      totalLiquidity: 840200,
       activeEvent: null
     };
   }
 
-  // 1. HERANÇA (SNAPSHOT)
+  // 1. Snapshot de Herança Financeira
   const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447);
   const prevAssets = sanitize(previousState?.balance_sheet?.assets?.total || 9176940);
   const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200);
@@ -67,13 +66,13 @@ export const calculateProjections = (
   const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605);
   const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362);
 
-  // 2. ORACLE RISK NODE
+  // 2. Oracle Risk Core
   const totalDebt = prevDebt + decisions.finance.loanRequest;
   const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
   const debtToEquity = totalDebt / Math.max(prevEquity, 1);
   const rating: CreditRating = debtToEquity > 1.8 ? 'C' : debtToEquity > 1.2 ? 'B' : debtToEquity > 0.6 ? 'A' : 'AAA';
   
-  // 3. COMERCIAL & DEMANDA
+  // 3. Comercial & Demanda (Marketing Exponencial)
   const regions = Object.values(decisions.regions || {});
   const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price), 0) / regions.length : 372;
   
@@ -95,7 +94,7 @@ export const calculateProjections = (
   const mktScore = Math.log10(((totalMktPoints * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
   const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
   
-  // 4. PRODUÇÃO & CUSTOS INFLACIONADOS
+  // 4. Produção e Reajustes de Custo
   const currentOEE = (1.0 + (decisions.hr.trainingPercent / 1000) + (decisions.hr.participationPercent / 200)) * (evMod.productivity || 1);
   const maxProduction = 30000 * (decisions.production.activityLevel / 100) * currentOEE;
   const salesVolume = Math.min(demandTotal, maxProduction);
@@ -111,13 +110,13 @@ export const calculateProjections = (
   const unitDist = sanitize(currentIndicators.distributionCostUnit, 50.50) * inflationMult;
   const distributionTotal = salesVolume * unitDist;
 
-  // 5. DRE
+  // 5. Demonstração do Resultado (DRE)
   const cpv = salesVolume * (unitMpA + unitMpB * 0.5);
   const ebitda = revenue - cpv - payrollTotal - totalMarketingCost - (decisions.hr.trainingPercent * 500) - 145000;
   const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
   const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
-  // 6. CASH FLOW AUDIT
+  // 6. Auditoria de Fluxo de Caixa (Disbursement Audit)
   const mktOutflow = totalMarketingCost;
   const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
   
