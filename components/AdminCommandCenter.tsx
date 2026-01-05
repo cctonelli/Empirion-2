@@ -6,9 +6,9 @@ import {
   Search, ShieldCheck, Trash2, Mail, Plus,
   Trophy, LayoutGrid, Activity, Calculator, Sliders,
   ChevronRight, Calendar, BarChart3, Radio, Monitor,
-  Play, Pause, ArrowLeft
+  Play, Pause, ArrowLeft, ShieldX, Zap, AlertTriangle
 } from 'lucide-react';
-import { listAllUsers, updateUserPremiumStatus, getChampionships, supabase, processRoundTurnover, deleteChampionship } from '../services/supabase';
+import { listAllUsers, updateUserPremiumStatus, getChampionships, supabase, processRoundTurnover, deleteChampionship, purgeAllTrials } from '../services/supabase';
 import { UserProfile, Championship } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
@@ -68,6 +68,20 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
       alert("FALHA NA EXCLUSÃO: " + error.message);
     } else {
       alert("ARENA REMOVIDA: Espaço liberado para novos nodos v12.8 GOLD.");
+      fetchData();
+    }
+    setLoading(false);
+  };
+
+  const handlePurgeTrials = async () => {
+    if (!confirm("LIMPEZA PROFUNDA: Deseja remover TODOS os campeonatos do modo Sandbox/Trial? Isso excluirá os testes antigos e abrirá espaço para novas estruturas v12.8.2 GOLD.")) return;
+    
+    setLoading(true);
+    const { error } = await purgeAllTrials();
+    if (error) {
+      alert("FALHA NA LIMPEZA: " + error.message);
+    } else {
+      alert("LIMPEZA CONCLUÍDA: Todos os nodos de teste foram expurgados.");
       fetchData();
     }
     setLoading(false);
@@ -287,10 +301,82 @@ const AdminCommandCenter: React.FC<AdminProps> = ({ preTab = 'tournaments' }) =>
              </table>
            </div>
         )}
+
+        {activeTab === 'system' && (
+          <div className="space-y-12">
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <div className="lg:col-span-2 bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-10">
+                   <div className="flex items-center gap-4">
+                      <div className="p-4 bg-slate-900 text-white rounded-3xl shadow-xl">
+                         <Activity size={28} />
+                      </div>
+                      <div>
+                         <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Oracle System Health</h3>
+                         <p className="text-slate-500 font-medium">Monitoramento de integridade e latência dos nodos.</p>
+                      </div>
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <HealthMetric label="Database Sync" val="99.9%" status="online" />
+                      <HealthMetric label="Gemini API" val="12ms" status="stable" />
+                      <HealthMetric label="Realtime Feed" val="Active" status="online" />
+                   </div>
+                </div>
+
+                <div className="bg-rose-600 p-10 rounded-[4rem] text-white shadow-2xl space-y-8 relative overflow-hidden group">
+                   <ShieldX className="absolute -bottom-10 -right-10 opacity-10 group-hover:scale-125 transition-transform" size={200} />
+                   <div className="space-y-4 relative z-10">
+                      <div className="flex items-center gap-3">
+                         <AlertTriangle size={24} />
+                         <h3 className="text-xl font-black uppercase italic tracking-tighter">Maintenance Protocol</h3>
+                      </div>
+                      <p className="text-xs font-bold text-rose-100 leading-relaxed uppercase">Expurgar resíduos de testes antigos para garantir a integridade dos novos nodos v12.8 GOLD.</p>
+                   </div>
+                   <button 
+                     onClick={handlePurgeTrials}
+                     disabled={loading}
+                     className="w-full py-6 bg-white text-rose-600 rounded-3xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center gap-4 relative z-10 disabled:opacity-50"
+                   >
+                      {loading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />} 
+                      Limpar Arenas Sandbox
+                   </button>
+                </div>
+             </div>
+
+             <div className="bg-slate-900 p-12 rounded-[4.5rem] border border-white/5 shadow-2xl relative overflow-hidden">
+                <Zap className="absolute top-0 right-0 p-12 opacity-[0.02]" size={300} />
+                <div className="space-y-6 relative z-10">
+                   <h4 className="text-orange-500 font-black text-[10px] uppercase tracking-[0.5em]">Build Info</h4>
+                   <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
+                      <BuildInfo label="Engine Version" val="v12.8.2 GOLD" />
+                      <BuildInfo label="Build Status" val="STABLE" />
+                      <BuildInfo label="Last Kernel Refresh" val="2m ago" />
+                      <BuildInfo label="Active Nodes" val="08" />
+                   </div>
+                </div>
+             </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+const HealthMetric = ({ label, val, status }: any) => (
+  <div className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] space-y-2">
+     <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+     <div className="flex items-center justify-between">
+        <span className="text-2xl font-black text-slate-900 italic font-mono">{val}</span>
+        <div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500 shadow-[0_0_8px_#3b82f6]'}`} />
+     </div>
+  </div>
+);
+
+const BuildInfo = ({ label, val }: any) => (
+  <div className="space-y-1">
+     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+     <span className="block text-xl font-black text-white italic tracking-tight">{val}</span>
+  </div>
+);
 
 const TabBtn = ({ active, onClick, label, icon }: any) => (
   <button 

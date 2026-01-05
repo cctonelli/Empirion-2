@@ -208,6 +208,17 @@ export const deleteChampionship = async (id: string, isTrial: boolean) => {
   return await supabase.from(table).delete().eq('id', id);
 };
 
+/**
+ * PURGE ALL TRIALS v12.8.2 GOLD
+ * Internal technical cleanup to clear all test/sandbox championships at once.
+ */
+export const purgeAllTrials = async () => {
+  console.log("[PURGE] Initiating total sandbox cleanup...");
+  localStorage.removeItem('active_champ_id');
+  localStorage.removeItem('active_team_id');
+  return await supabase.from('trial_championships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+};
+
 export const getChampionships = async (onlyPublic: boolean = false) => {
   let realData: any[] = [];
   let trialData: any[] = [];
