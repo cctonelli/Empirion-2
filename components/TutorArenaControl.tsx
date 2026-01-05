@@ -83,16 +83,20 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  <div className="space-y-6">
                     <div className="flex justify-between items-center">
                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Target size={16} /> Sensibilidade de Preço</label>
+                       {/* Fixed: Added fallback for difficulty object property access */}
                        <span className="text-xl font-black text-slate-900">{(macro.difficulty?.price_sensitivity || 2.0).toFixed(1)}x</span>
                     </div>
-                    <input type="range" min="0.5" max="5.0" step="0.1" value={macro.difficulty?.price_sensitivity || 2.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, price_sensitivity: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                    {/* Fixed: Safely update difficulty object in MacroIndicators state */}
+                    <input type="range" min="0.5" max="5.0" step="0.1" value={macro.difficulty?.price_sensitivity || 2.0} onChange={e => setMacro({...macro, difficulty: { price_sensitivity: parseFloat(e.target.value), marketing_effectiveness: macro.difficulty?.marketing_effectiveness || 1.0 }})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
                  </div>
                  <div className="space-y-6">
                     <div className="flex justify-between items-center">
                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Zap size={16} /> Eficácia de Marketing</label>
+                       {/* Fixed: Added fallback for difficulty object property access */}
                        <span className="text-xl font-black text-slate-900">{(macro.difficulty?.marketing_effectiveness || 1.0).toFixed(1)}x</span>
                     </div>
-                    <input type="range" min="0.1" max="3.0" step="0.1" value={macro.difficulty?.marketing_effectiveness || 1.0} onChange={e => setMacro({...macro, difficulty: {...macro.difficulty, marketing_effectiveness: parseFloat(e.target.value)}})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                    {/* Fixed: Safely update difficulty object in MacroIndicators state */}
+                    <input type="range" min="0.1" max="3.0" step="0.1" value={macro.difficulty?.marketing_effectiveness || 1.0} onChange={e => setMacro({...macro, difficulty: { marketing_effectiveness: parseFloat(e.target.value), price_sensitivity: macro.difficulty?.price_sensitivity || 2.0 }})} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
                  </div>
               </div>
            </div>

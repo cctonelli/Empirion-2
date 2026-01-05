@@ -111,6 +111,29 @@ export const calculateProjections = (
     costBreakdown: [
       { name: 'Depreciação de Ativos', total: periodDepreciation, impact: 'Desgaste de Capital' },
       { name: 'Custo Operacional', total: operatingCosts, impact: 'Manutenção do Nodo' }
-    ]
+    ],
+    // Fixed: Added calculated statements for snapshot generation
+    statements: {
+      dre: {
+        revenue,
+        operating_profit: netProfit + periodDepreciation,
+        net_profit: netProfit
+      },
+      balance_sheet: {
+        assets: {
+          current: { cash: prevCash + revenue - operatingCosts },
+          total: prevCash + revenue + (machinesOwned.alfa * mValues.alfa)
+        },
+        equity: { total: finalEquity },
+        liabilities: { total_debt: totalDebt }
+      },
+      cash_flow: {
+        operating_cash_flow: revenue - operatingCosts
+      },
+      kpis: {
+        market_share: 12.5,
+        debt_to_equity: (totalDebt / Math.max(finalEquity, 1))
+      }
+    }
   };
 };

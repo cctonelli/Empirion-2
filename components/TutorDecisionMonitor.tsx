@@ -9,23 +9,12 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
-import { Branch, EcosystemConfig, MacroIndicators, CreditRating, TeamProgress } from '../types';
-
-interface ExtendedTeamProgress extends TeamProgress {
-    team_id: string;
-    team_name: string;
-    status: string;
-    rating: CreditRating;
-    risk: number;
-    insolvent: boolean;
-    master_key_enabled?: boolean;
-    auditLogs: any[];
-}
+import { Branch, EcosystemConfig, MacroIndicators, CreditRating, TeamProgress, AuditLog } from '../types';
 
 /**
  * ClassCreditHealth: Histograma Memoizado para evitar re-renders pesados de gráficos.
  */
-const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: ExtendedTeamProgress[] }) => {
+const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: TeamProgress[] }) => {
   const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
   
   const distribution = useMemo(() => {
@@ -44,7 +33,7 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
     chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
     plotOptions: { bar: { borderRadius: 12, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } },
     colors: ratingsOrder.map(r => COLORS_MAP[r as keyof typeof COLORS_MAP]),
-    xaxis: { categories: ratingsOrder, labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 900 } } },
+    xaxis: { categories: ratingsOrder, labels: { style: { colors: '#94a3b8', fontWeight: 900 } } },
     yaxis: { labels: { style: { colors: '#475569' } }, tickAmount: 4 },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
     tooltip: { theme: 'dark' },
@@ -70,9 +59,9 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
 });
 
 const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> = ({ championshipId, round }) => {
-  const [teams, setTeams] = useState<ExtendedTeamProgress[]>([]);
+  const [teams, setTeams] = useState<TeamProgress[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTeam, setSelectedTeam] = useState<ExtendedTeamProgress | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<TeamProgress | null>(null);
   const isMounted = useRef(true);
 
   const fetchLiveDecisions = async (signal?: AbortSignal) => {
@@ -85,7 +74,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
 
       if (signal?.aborted) return;
 
-      const progress: ExtendedTeamProgress[] = (teamsData || []).map(t => {
+      const progress: TeamProgress[] = (teamsData || []).map(t => {
         const decision = decisionsData?.find(d => d.team_id === t.id);
         const branch = (arenaData.branch || 'industrial') as Branch;
         const eco = (arenaData.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' }) as EcosystemConfig;
@@ -100,7 +89,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
           risk: proj?.health?.insolvency_risk ?? 0,
           insolvent: proj?.health?.is_bankrupt ?? false,
           master_key_enabled: t.master_key_enabled,
-          auditLogs: decision?.audit_logs || []
+          auditLogs: (decision?.audit_logs || []) as AuditLog[]
         };
       });
 
