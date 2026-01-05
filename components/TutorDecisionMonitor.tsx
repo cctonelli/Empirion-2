@@ -58,9 +58,9 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
             status: decision ? (decision.status === 'sealed' ? 'sealed' : 'draft') : 'pending',
             last_update: decision?.submitted_at,
             data: decision?.data,
-            risk: proj?.health.insolvency_risk || 0,
-            rating: proj?.health.rating || 'N/A',
-            insolvent: proj ? proj.totalOutflow > proj.totalLiquidity : false,
+            risk: proj?.health?.insolvency_risk || 0,
+            rating: proj?.health?.rating || 'N/A',
+            insolvent: proj ? (proj.totalOutflow > proj.totalLiquidity) : false,
             master_key_enabled: t.master_key_enabled,
             auditLogs: teamAudit
           } as TeamProgress;

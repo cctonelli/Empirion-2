@@ -2,13 +2,12 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicat
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
-  // Oracle Kernel v12.2: Permite números negativos para suportar prejuízos reais e dívidas.
+  // Permite números negativos para suportar prejuízos reais.
   return isFinite(num) ? num : fallback;
 };
 
 /**
- * Motor Industrial Empirion v12.2 - Oracle Integrity Kernel
- * Estabilização de build Vercel e suporte a insolvência crítica (Rating D).
+ * Motor Industrial Empirion v12.3 - Oracle Integrity Kernel
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -18,8 +17,7 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // Mapeamento Dinâmico Robusto para Paridade de Banco de Dados
-  // Casting para 'any' é necessário para evitar erros de tipagem dinâmica no build do Vercel.
+  // Mapeamento Dinâmico Robusto
   const getAttr = (camel: string, snake: string, fallback: any) => {
     const data = indicators as any;
     if (data?.[snake] !== undefined) return data[snake];
@@ -81,7 +79,7 @@ export const calculateProjections = (
   const debtToEquity = totalDebt / Math.max(prevEquity, 1);
   const is_bankrupt = prevEquity < 0;
 
-  // Lógica de Rating Expandida com Suporte a Default Crítico (D)
+  // Lógica de Rating D (Insolvência Crítica)
   const rating: CreditRating = 
     is_bankrupt ? 'D' : 
     debtToEquity > 2.5 ? 'D' : 
@@ -90,10 +88,9 @@ export const calculateProjections = (
   
   const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
   
-  // 3. Comercial & Demanda (Fórmula Exponencial)
+  // 3. Comercial & Demanda
   const regions = Object.values(decisions.regions || {});
   const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price, 372), 0) / regions.length : 372;
-  
   const baseMkt = sanitize(currentIndicators.marketingExpenseBase, 17165) * inflationMult;
   const totalMarketingCost = regions.reduce((acc, r) => {
     const level = sanitize(r.marketing, 0);
@@ -112,7 +109,7 @@ export const calculateProjections = (
   const mktScore = Math.log10(((totalMktPoints * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
   const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
   
-  // 4. Produção e Reajustes Inflacionários
+  // 4. Produção e Reajustes
   const currentOEE = (1.0 + (decisions.hr.trainingPercent / 1000) + (decisions.hr.participationPercent / 200)) * (evMod.productivity || 1);
   const maxProduction = (currentIndicators.factoryMaxCapacity || 30000) * (decisions.production.activityLevel / 100) * currentOEE;
   const salesVolume = Math.min(demandTotal, maxProduction);
@@ -124,19 +121,17 @@ export const calculateProjections = (
   
   const unitSalary = sanitize(currentIndicators.sectorAvgSalary, 1313) * inflationMult;
   const payrollTotal = (decisions.hr.sales_staff_count * unitSalary * 1.6);
-  
   const unitDist = sanitize(currentIndicators.distributionCostUnit, 50.50) * inflationMult;
   const distributionTotal = salesVolume * unitDist;
-
   const adminExpenses = sanitize(currentIndicators.baseAdminCost, 114880) * inflationMult;
 
-  // 5. Demonstração do Resultado (DRE)
+  // 5. DRE
   const cpv = salesVolume * (unitMpA + unitMpB * 0.5);
   const ebitda = revenue - cpv - payrollTotal - totalMarketingCost - (decisions.hr.trainingPercent * 500) - adminExpenses;
   const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
   const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
-  // 6. Auditoria de Desembolso (Cash Flow Fidelity)
+  // 6. Fluxo de Caixa e Balanço
   const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
   const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
   const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + distributionTotal + adminExpenses;

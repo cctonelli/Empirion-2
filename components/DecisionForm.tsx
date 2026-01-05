@@ -59,7 +59,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     return calculateProjections(decisions, branch, eco, currentIndicators);
   }, [decisions, branch, activeArena, currentIndicators]);
 
-  const isInsolvent = projections.totalOutflow > projections.totalLiquidity;
+  const isInsolvent = projections?.totalOutflow > projections?.totalLiquidity;
   const canSubmit = !isInsolvent || masterKeyUnlocked;
 
   const updateDecision = (path: string, value: any) => {
@@ -77,7 +77,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
        team_id: teamId,
        team_name: userName || 'Unidade Alpha',
        championship_id: champId,
-       deficit: projections.totalOutflow - projections.totalLiquidity,
+       deficit: (projections?.totalOutflow || 0) - (projections?.totalLiquidity || 0),
        reason: 'Insolvência em rascunho de decisão',
        created_at: new Date().toISOString()
     });
@@ -88,8 +88,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     <div className="max-w-[1600px] mx-auto space-y-3 pb-32 animate-in fade-in duration-700">
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-         <MarketingHealthAlert cost={projections.totalMarketingCost || 0} revenue={projections.revenue} />
-         <DebtHealthAlert ratio={projections.debtRatio || 0} />
+         <MarketingHealthAlert cost={projections?.totalMarketingCost || 0} revenue={projections?.revenue || 0} />
+         <DebtHealthAlert ratio={projections?.debtRatio || 0} />
       </div>
 
       <header className="bg-slate-900 border border-white/5 p-3 rounded-2xl shadow-2xl flex items-center justify-between mt-4">
@@ -105,16 +105,16 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
            <div className="text-right border-r border-white/10 pr-8">
               <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">NODE CREDIT RATING</span>
               <div className="flex items-center gap-3">
-                 <div className={`w-3 h-3 rounded-full animate-pulse ${projections.health.rating === 'D' ? 'bg-rose-600 shadow-[0_0_12px_#f43f5e]' : projections.debtRatio! > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
-                 <span className={`text-sm font-black italic ${projections.health.rating === 'D' ? 'text-rose-500 font-black animate-pulse' : projections.debtRatio! < 40 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {projections.health.rating} STANDING
+                 <div className={`w-3 h-3 rounded-full animate-pulse ${projections?.health?.rating === 'D' ? 'bg-rose-600 shadow-[0_0_12px_#f43f5e]' : projections?.debtRatio! > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                 <span className={`text-sm font-black italic ${projections?.health?.rating === 'D' ? 'text-rose-500' : projections?.debtRatio! < 40 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {projections?.health?.rating || '---'} STANDING
                  </span>
               </div>
            </div>
            <div className="text-right">
               <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">LUCRO PROJETADO P{(activeArena?.current_round || 0) + 1}</span>
-              <span className={`text-lg font-black font-mono italic ${projections.netProfit > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                $ {projections.netProfit.toLocaleString()}
+              <span className={`text-lg font-black font-mono italic ${(projections?.netProfit || 0) > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                $ {(projections?.netProfit || 0).toLocaleString()}
               </span>
            </div>
         </div>
@@ -141,7 +141,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            <h4 className="text-xs font-black text-white uppercase italic tracking-tighter">Região 0{id}</h4>
                            <MapPin size={14} className="text-orange-500" />
                         </div>
-                        <DecInputCompact label="Preço Unid." val={data.price} onChange={v => updateDecision(`regions.${id}.price`, v)} />
+                        <DecInputCompact label="Preço Unid." val={data.price} onChange={(v: number) => updateDecision(`regions.${id}.price`, v)} />
                         <div className="space-y-1.5">
                            <div className="flex justify-between items-center">
                               <label className="text-[9px] font-black text-slate-600 uppercase italic">Nível Mkt (0-9)</label>
@@ -171,7 +171,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                           {isInsolvent ? 'Risco de Insolvência' : 'Viabilidade Orçamentária'}
                        </h3>
                        <div className="space-y-4 mb-10">
-                          {projections.costBreakdown.map((item: any, i: number) => (
+                          {projections?.costBreakdown?.map((item: any, i: number) => (
                              <div key={i} className="flex justify-between items-center py-4 border-b border-white/5 group">
                                 <div>
                                    <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">{item.name}</span>
@@ -182,13 +182,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                           ))}
                           <div className="flex justify-between items-center py-6 bg-white/5 px-6 rounded-2xl border border-white/10 mt-6">
                              <span className="text-xs font-black text-orange-500 uppercase tracking-[0.2em]">Total a Desembolsar</span>
-                             <span className="text-2xl font-black text-white font-mono tracking-tighter italic">$ {projections.totalOutflow.toLocaleString()}</span>
+                             <span className="text-2xl font-black text-white font-mono tracking-tighter italic">$ {(projections?.totalOutflow || 0).toLocaleString()}</span>
                           </div>
                        </div>
                        <div className={`p-6 rounded-3xl space-y-4 ${isInsolvent ? 'bg-rose-500 text-white' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'}`}>
                           <div className="flex justify-between items-center">
                              <span className="text-[10px] font-black uppercase tracking-widest">Sua Liquidez (Caixa + Novos Créditos)</span>
-                             <span className="text-lg font-black font-mono">$ {projections.totalLiquidity.toLocaleString()}</span>
+                             <span className="text-lg font-black font-mono">$ {(projections?.totalLiquidity || 0).toLocaleString()}</span>
                           </div>
                           {isInsolvent && (
                              <p className="text-xs font-bold uppercase tracking-tight italic animate-pulse">
@@ -203,10 +203,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Oracle Final Sync</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                       <SummaryNode label="Share Projetado" val={`${projections.marketShare.toFixed(1)}%`} />
-                       <SummaryNode label="EBITDA Proj." val={`$ ${projections.ebitda.toLocaleString()}`} />
-                       <SummaryNode label="Debt Ratio" val={`${projections.debtRatio?.toFixed(1)}%`} />
-                       <SummaryNode label="Credit Standing" val={projections.health.rating} />
+                       <SummaryNode label="Share Projetado" val={`${(projections?.marketShare || 0).toFixed(1)}%`} />
+                       <SummaryNode label="EBITDA Proj." val={`$ ${(projections?.ebitda || 0).toLocaleString()}`} />
+                       <SummaryNode label="Debt Ratio" val={`${(projections?.debtRatio || 0).toFixed(1)}%`} />
+                       <SummaryNode label="Credit Standing" val={projections?.health?.rating || '---'} />
                     </div>
                     <div className="space-y-4">
                        <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions); setIsSaving(false); alert("SINAL TRANSMITIDO."); }} disabled={isSaving || !canSubmit} className={`w-full py-8 rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 ${canSubmit ? 'bg-orange-600 text-white hover:bg-white hover:text-orange-600' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>
@@ -226,8 +226,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
                   <div className="p-10 bg-white/[0.02] border border-white/5 rounded-[4rem] space-y-10 shadow-inner">
                      <h4 className="text-sm font-black uppercase text-amber-500 flex items-center gap-3 italic border-b border-white/5 pb-6"><Landmark size={22} /> Estrutura de Capital</h4>
-                     <DecInput icon={<DollarSign/>} label="Tomar Empréstimo ($)" val={decisions.finance.loanRequest} onChange={v => updateDecision('finance.loanRequest', v)} />
-                     <DecInput icon={<TrendingUp/>} label="Aplicação Financeira ($)" val={decisions.finance.application} onChange={v => updateDecision('finance.application', v)} />
+                     <DecInput icon={<DollarSign/>} label="Tomar Empréstimo ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} />
+                     <DecInput icon={<TrendingUp/>} label="Aplicação Financeira ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} />
                   </div>
                   <div className="space-y-8">
                      <div className="p-10 bg-slate-900/50 rounded-[3.5rem] border border-white/10 space-y-6">
@@ -235,11 +235,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         <div className="space-y-4">
                            <div className="flex justify-between items-center py-3 border-b border-white/5">
                               <span className="text-xs font-bold text-slate-500 uppercase">Limite de Crédito</span>
-                              <span className="text-lg font-black italic text-white">$ {projections.loanLimit.toLocaleString()}</span>
+                              <span className="text-lg font-black italic text-white">$ {(projections?.loanLimit || 0).toLocaleString()}</span>
                            </div>
                            <div className="flex justify-between items-center py-3 border-b border-white/5">
                               <span className="text-xs font-bold text-slate-500 uppercase">Endividamento</span>
-                              <span className={`text-lg font-black italic ${projections.debtRatio! > 60 ? 'text-rose-500' : 'text-emerald-500'}`}>{projections.debtRatio?.toFixed(1)}%</span>
+                              <span className={`text-lg font-black italic ${(projections?.debtRatio || 0) > 60 ? 'text-rose-500' : 'text-emerald-500'}`}>{(projections?.debtRatio || 0).toFixed(1)}%</span>
                            </div>
                         </div>
                      </div>
