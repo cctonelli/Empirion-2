@@ -28,7 +28,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
       
       const state = location.state as NavigationState | null;
       
-      // Robust capture of pre-selection sent via router state (branches/activities)
+      // Captura robusta de pré-seleção enviada via router state
       const preFilter = 
         state?.preSelectedBranch ?? 
         state?.preSelectedSlug ?? 
@@ -46,8 +46,8 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
 
   const filteredChamps = activeFilter 
     ? championships.filter(c => 
-        c.branch.toLowerCase().includes(activeFilter.toLowerCase()) || 
-        activeFilter.toLowerCase().includes(c.branch.toLowerCase())
+        c.branch.toLowerCase().includes(activeFilter!.toLowerCase()) || 
+        activeFilter!.toLowerCase().includes(c.branch.toLowerCase())
       )
     : championships;
 
@@ -108,8 +108,8 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
              {filteredChamps.length === 0 && (
                <div className="col-span-full py-20 text-center bg-white/5 rounded-[4rem] border border-dashed border-white/10">
                   <Trophy size={48} className="text-slate-700 mx-auto mb-6" />
-                  <p className="text-slate-500 font-black uppercase text-sm tracking-widest">Nenhuma arena encontrada para este setor.</p>
-                  <button onClick={() => setActiveFilter(null)} className="mt-4 text-orange-500 font-bold uppercase text-[10px] tracking-widest hover:underline">Ver todas as arenas</button>
+                  <p className="text-slate-500 font-black uppercase text-sm tracking-widest">Nenhuma arena encontrada.</p>
+                  <button onClick={() => setActiveFilter(null)} className="mt-4 text-orange-500 font-bold uppercase text-[10px] tracking-widest hover:underline">Ver todas</button>
                </div>
              )}
           </motion.div>
@@ -121,7 +121,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
             className="space-y-10 px-4"
           >
              <button onClick={() => setSelectedArena(null)} className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase hover:text-white transition-colors">
-                <ChevronRight size={14} className="rotate-180" /> Voltar para Arenas
+                <ChevronRight size={14} className="rotate-180" /> Voltar
              </button>
              <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 space-y-10 shadow-2xl">
                 <div className="text-center space-y-3">

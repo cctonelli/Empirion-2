@@ -53,7 +53,6 @@ export const DEFAULT_MACRO: MacroIndicators = {
   initialExchangeRateUSD: 5.25
 };
 
-// Added for Wizard templates
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   {
     id: 'tpl-industrial',
@@ -76,7 +75,6 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   }
 ];
 
-// Added for Public Header navigation
 export const MENU_STRUCTURE = [
   { label: 'início', path: '/' },
   { 
@@ -91,15 +89,10 @@ export const MENU_STRUCTURE = [
       { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer', desc: 'Real Estate' }
     ]
   },
-  { 
-    label: 'soluções', 
-    path: '#',
-    sub: [
-      { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu', desc: 'Arenas Customizadas' },
-      { id: 'otp', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy', desc: 'Ranking Global' },
-      { id: 'bp', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool', desc: 'Estratégia Guiada' }
-    ]
-  },
+  { label: 'soluções', path: '#', sub: [
+    { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu' },
+    { id: 'otp', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy' }
+  ]},
   { label: 'funcionalidades', path: '/features' },
   { label: 'conteúdos', path: '/blog' },
   { label: 'contato', path: '/contact' }
@@ -128,19 +121,20 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     name: 'Industrial',
     heroImage: 'https://images.unsplash.com/photo-1614850523296-e811cf7eeea4?q=80&w=2000',
     body: 'Otimize linhas de montagem e gerencie Capex complexo na vanguarda da simulação.',
-    description: 'A modalidade Industrial Empirion é focada no gerenciamento de cadeias produtivas complexas. Strategistas devem equilibrar o OEE (Overall Equipment Effectiveness), turnover de mão de obra e elasticidade-preço em 9 regiões independentes.',
-    features: ['Gestão de Máquinas Alfa/Beta/Gama', 'Obsolescência Programada', 'Supply Chain Global', 'Turnover de RH Realista'],
-    kpis: ['OEE Factory Efficiency', 'Giro de Estoque MP-A/B', 'Margem Bruta Industrial'],
+    description: 'A modalidade Industrial Empirion é focada no gerenciamento de cadeias produtivas complexas.',
+    features: ['Gestão de Máquinas Alfa/Beta/Gama', 'Obsolescência Programada', 'Supply Chain Global'],
+    kpis: ['OEE Factory Efficiency', 'Giro de Estoque', 'Margem Bruta'],
     accent: 'orange'
   }
 };
 
 /**
  * PROXY DE ACESSO ORACLE
- * Recupera conteúdo de página evitando referências circulares de constantes.
+ * Recupera conteúdo de página evitando referências circulares ou chaves undefined durante o build.
  */
 export const getPageContent = (slug: string) => {
   const branchKey = `branch-${slug}`;
   const activityKey = `activity-${slug}`;
-  return (DEFAULT_PAGE_CONTENT as any)[branchKey] || (DEFAULT_PAGE_CONTENT as any)[activityKey] || null;
+  const content = (DEFAULT_PAGE_CONTENT as any)[branchKey] || (DEFAULT_PAGE_CONTENT as any)[activityKey];
+  return content || null;
 };
