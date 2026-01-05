@@ -61,9 +61,9 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       sales_mode: 'internal' as SalesMode,
       scenario_type: 'simulated' as ScenarioType,
       transparency_level: 'high' as TransparencyLevel,
-      modalityType: 'standard' as ModalityType,
-      deadlineValue: 7,
-      deadlineUnit: 'days' as DeadlineUnit
+      modality_type: 'standard' as ModalityType,
+      deadline_value: 7,
+      deadline_unit: 'days' as DeadlineUnit
     },
     market_indicators: DEFAULT_MACRO,
     initial_financials: INITIAL_INDUSTRIAL_FINANCIALS

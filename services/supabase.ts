@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan } from '../types';
 import { DEFAULT_MACRO } from '../constants';
@@ -48,7 +49,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
         const result = calculateProjections(
           teamDecision as DecisionData, 
           arena.branch, 
-          arena.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' }, 
+          arena.ecosystemConfig || { inflation_rate: 0.01, demand_multiplier: 1.0, interest_rate: 0.03, market_volatility: 0.05, scenario_type: 'simulated', modality_type: 'standard' }, 
           arena.market_indicators, 
           teamPrevState
         );
@@ -154,20 +155,25 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       total_rounds: champData.total_rounds || 12,
       config: {
         ...(champData.config || {}),
-        deadline_value: champData.deadline_value || 7,
-        deadline_unit: champData.deadline_unit || 'days',
-        market_indicators: champData.market_indicators || DEFAULT_MACRO,
         round_started_at: now,
         sales_mode: champData.sales_mode,
         scenario_type: champData.scenario_type,
         currency: champData.currency,
-        transparency_level: champData.transparency_level
+        transparency_level: champData.transparency_level,
+        deadline_value: champData.deadline_value,
+        deadline_unit: champData.deadline_unit,
+        round_frequency_days: champData.round_frequency_days
       },
       initial_financials: champData.initial_financials || {},
       products: champData.config?.products || {},
       market_indicators: champData.market_indicators || DEFAULT_MACRO,
       sales_mode: champData.sales_mode || 'hybrid',
-      scenario_type: champData.scenario_type || 'simulated'
+      scenario_type: champData.scenario_type || 'simulated',
+      currency: champData.currency || 'BRL',
+      transparency_level: champData.transparency_level || 'medium',
+      deadline_value: champData.deadline_value || 7,
+      deadline_unit: champData.deadline_unit || 'days',
+      round_frequency_days: champData.round_frequency_days || 7
     };
 
     if (!isTrial) {
@@ -249,6 +255,7 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     scenario_type: c.scenario_type ?? c.config?.scenario_type ?? 'simulated',
     currency: c.currency ?? c.config?.currency ?? 'BRL',
     transparency_level: c.transparency_level ?? c.config?.transparency_level ?? 'medium',
+    round_frequency_days: c.round_frequency_days ?? c.config?.round_frequency_days ?? 7,
     ecosystemConfig: c.ecosystemConfig ?? c.config?.ecosystemConfig,
     kpis: c.kpis ?? c.config?.kpis ?? {}
   });

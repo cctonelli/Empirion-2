@@ -22,16 +22,16 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   const [formData, setFormData] = useState({
     name: isTrial ? 'ARENA TESTE GRÁTIS' : '', 
     branch: 'industrial' as Branch,
-    salesMode: 'hybrid' as SalesMode,
-    scenarioType: 'simulated' as ScenarioType,
-    modalityType: 'standard' as ModalityType,
-    transparency: 'medium' as TransparencyLevel,
-    totalRounds: 12,
-    teamsLimit: 8,
+    sales_mode: 'hybrid' as SalesMode,
+    scenario_type: 'simulated' as ScenarioType,
+    modality_type: 'standard' as ModalityType,
+    transparency_level: 'medium' as TransparencyLevel,
+    total_rounds: 12,
+    teams_limit: 8,
     currency: 'BRL',
-    deadlineValue: 7,
-    deadlineUnit: 'days' as DeadlineUnit,
-    roundFrequencyDays: 7, 
+    deadline_value: 7,
+    deadline_unit: 'days' as DeadlineUnit,
+    round_frequency_days: 7, 
     bp_enabled: true,
     bp_frequency: 3,
     bp_mandatory: false,
@@ -52,13 +52,13 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       setFormData(prev => ({
         ...prev,
         branch: selectedTemplate.branch,
-        modalityType: selectedTemplate.config.modalityType || 'standard',
-        // Fix: Changed property access to use underscored names matching the type definition
-        salesMode: selectedTemplate.config.sales_mode || 'hybrid',
-        scenarioType: selectedTemplate.config.scenario_type || 'simulated',
-        transparency: selectedTemplate.config.transparencyLevel || 'medium',
-        deadlineValue: selectedTemplate.config.deadlineValue || 7,
-        deadlineUnit: selectedTemplate.config.deadlineUnit || 'days'
+        modality_type: selectedTemplate.config.modality_type,
+        sales_mode: selectedTemplate.config.sales_mode,
+        scenario_type: selectedTemplate.config.scenario_type,
+        transparency_level: selectedTemplate.config.transparency_level,
+        deadline_value: selectedTemplate.config.deadline_value,
+        deadline_unit: selectedTemplate.config.deadline_unit,
+        round_frequency_days: selectedTemplate.config.round_frequency_days
       }));
       setFinancials(selectedTemplate.initial_financials);
     }
@@ -66,13 +66,13 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
   useEffect(() => {
     const currentCount = teams.length;
-    if (currentCount !== formData.teamsLimit) {
-      const newTeams = Array.from({ length: formData.teamsLimit }).map((_, i) => ({
+    if (currentCount !== formData.teams_limit) {
+      const newTeams = Array.from({ length: formData.teams_limit }).map((_, i) => ({
         name: teams[i]?.name || `Equipe ${String.fromCharCode(65 + i)}` 
       }));
       setTeams(newTeams);
     }
-  }, [formData.teamsLimit]);
+  }, [formData.teams_limit]);
 
   const handleLaunch = async () => {
     setIsSubmitting(true);
@@ -83,14 +83,14 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         status: 'active',
         is_public: true,
         current_round: 0,
-        total_rounds: formData.totalRounds,
-        sales_mode: formData.salesMode,
-        scenario_type: formData.scenarioType,
+        total_rounds: formData.total_rounds,
+        sales_mode: formData.sales_mode,
+        scenario_type: formData.scenario_type,
         currency: formData.currency as any,
-        deadline_value: formData.deadlineValue,
-        deadline_unit: formData.deadlineUnit,
-        round_frequency_days: formData.roundFrequencyDays,
-        transparency_level: formData.transparency,
+        deadline_value: formData.deadline_value,
+        deadline_unit: formData.deadline_unit,
+        round_frequency_days: formData.round_frequency_days,
+        transparency_level: formData.transparency_level,
         config: {
            ...formData,
            rules: formData.rules
@@ -159,7 +159,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Users size={12}/> Limite de Equipes</label>
-                      <input type="number" value={formData.teamsLimit} onChange={e => setFormData({...formData, teamsLimit: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all font-mono" />
+                      <input type="number" value={formData.teams_limit} onChange={e => setFormData({...formData, teams_limit: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all font-mono" />
                     </div>
                   </div>
 
@@ -171,11 +171,11 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
                           <label className="text-[8px] font-black text-slate-500 uppercase">Valor</label>
-                          <input type="number" min="1" value={formData.deadlineValue} onChange={e => setFormData({...formData, deadlineValue: Number(e.target.value)})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" />
+                          <input type="number" min="1" value={formData.deadline_value} onChange={e => setFormData({...formData, deadline_value: Number(e.target.value)})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" />
                        </div>
                        <div className="space-y-2">
                           <label className="text-[8px] font-black text-slate-500 uppercase">Unidade</label>
-                          <select value={formData.deadlineUnit} onChange={e => setFormData({...formData, deadlineUnit: e.target.value as DeadlineUnit})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-orange-500 appearance-none">
+                          <select value={formData.deadline_unit} onChange={e => setFormData({...formData, deadline_unit: e.target.value as DeadlineUnit})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-orange-500 appearance-none">
                              <option value="hours">Horas</option>
                              <option value="days">Dias</option>
                           </select>

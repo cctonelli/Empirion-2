@@ -107,12 +107,12 @@ export interface MacroIndicators {
 }
 
 export interface EcosystemConfig {
-  scenarioType: ScenarioType;
-  modalityType: ModalityType;
-  inflationRate: number;
-  demandMultiplier: number;
-  interestRate: number;
-  marketVolatility: number;
+  scenario_type: ScenarioType;
+  modality_type: ModalityType;
+  inflation_rate: number;
+  demand_multiplier: number;
+  interest_rate: number;
+  market_volatility: number;
 }
 
 export interface TeamProgress {
@@ -180,12 +180,14 @@ export interface ChampionshipTemplate {
   branch: Branch;
   sector: string;
   description: string;
-  config: Partial<Championship> & {
-    roundFrequencyDays?: number;
-    transparencyLevel?: TransparencyLevel;
-    modalityType?: ModalityType;
-    deadlineValue?: number;
-    deadlineUnit?: DeadlineUnit;
+  config: {
+    round_frequency_days: number;
+    transparency_level: TransparencyLevel;
+    modality_type: ModalityType;
+    deadline_value: number;
+    deadline_unit: DeadlineUnit;
+    sales_mode: SalesMode;
+    scenario_type: ScenarioType;
   };
   market_indicators: MacroIndicators;
   initial_financials: any;

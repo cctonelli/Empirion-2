@@ -11,8 +11,14 @@ import { DEFAULT_MACRO } from '../constants';
 
 const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (config: Partial<Championship>) => void }> = ({ championship, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<'macro' | 'suppliers' | 'difficulty'>('suppliers');
+  // Fix: initial value uses snake_case as per EcosystemConfig interface
   const [config, setConfig] = useState<EcosystemConfig>(championship.ecosystemConfig || {
-    scenarioType: 'simulated', modalityType: 'standard', inflationRate: 0.04, demandMultiplier: 1.0, interestRate: 0.12, marketVolatility: 0.2
+    scenario_type: 'simulated', 
+    modality_type: 'standard', 
+    inflation_rate: 0.04, 
+    demand_multiplier: 1.0, 
+    interest_rate: 0.12, 
+    market_volatility: 0.2
   });
   const [macro, setMacro] = useState<MacroIndicators>(championship.market_indicators || DEFAULT_MACRO);
   const [isSaving, setIsSaving] = useState(false);
@@ -182,16 +188,20 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
               <div className="space-y-6">
                  <div className="flex justify-between items-center">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><TrendingUp size={16} /> Taxa de Inflação Acumulada</label>
-                    <span className="text-xl font-black text-slate-900">{(config.inflationRate * 100).toFixed(1)}%</span>
+                    {/* Fix: use snake_case property inflation_rate */}
+                    <span className="text-xl font-black text-slate-900">{(config.inflation_rate * 100).toFixed(1)}%</span>
                  </div>
-                 <input type="range" min="0" max="0.2" step="0.01" value={config.inflationRate} onChange={e => setConfig(prev => ({...prev, inflationRate: parseFloat(e.target.value)}))} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-600" />
+                 {/* Fix: use snake_case property inflation_rate in setConfig */}
+                 <input type="range" min="0" max="0.2" step="0.01" value={config.inflation_rate} onChange={e => setConfig(prev => ({...prev, inflation_rate: parseFloat(e.target.value)}))} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-600" />
               </div>
               <div className="space-y-6">
                  <div className="flex justify-between items-center">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Activity size={16} /> Volatilidade de Demanda</label>
-                    <span className="text-xl font-black text-slate-900">{config.demandMultiplier.toFixed(1)}x</span>
+                    {/* Fix: use snake_case property demand_multiplier */}
+                    <span className="text-xl font-black text-slate-900">{config.demand_multiplier.toFixed(1)}x</span>
                  </div>
-                 <input type="range" min="0.5" max="2" step="0.1" value={config.demandMultiplier} onChange={e => setConfig(prev => ({...prev, demandMultiplier: parseFloat(e.target.value)}))} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-600" />
+                 {/* Fix: use snake_case property demand_multiplier in setConfig */}
+                 <input type="range" min="0.5" max="2" step="0.1" value={config.demand_multiplier} onChange={e => setConfig(prev => ({...prev, demand_multiplier: parseFloat(e.target.value)}))} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-600" />
               </div>
            </div>
         </div>
