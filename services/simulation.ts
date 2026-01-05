@@ -7,7 +7,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 
 /**
  * EXTRAÇÃO DEFENSIVA DE MAQUINÁRIO v12.8
- * Padronização total para alfa/beta/gama. Suporte defensivo a chaves legadas removido do comentário, mas mantido no código para compatibilidade.
+ * Padronização total para alfa/beta/gama. 
  */
 export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };
@@ -19,7 +19,7 @@ export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const v = macro.machineryValues || (macro as any).config?.machineryValues || {};
   return {
     alfa: sanitize(v.alfa, defaults.alfa),
-    beta: sanitize(v.beta || (v as any).Bird, defaults.beta), 
+    beta: sanitize(v.beta, defaults.beta), 
     gama: sanitize(v.gama, defaults.gama)
   };
 };
@@ -36,7 +36,6 @@ export const calculateDepreciation = (machines: { alfa: number, beta: number, ga
 
 /**
  * CÁLCULO DE SPREAD DE RISCO v12.8
- * AAA: 0.5% | D: 15.0%
  */
 export const getRiskSpread = (rating: CreditRating): number => {
   switch (rating) {
@@ -94,11 +93,24 @@ export const calculateProjections = (
     risk = 15;
   }
 
-  // KPIs Dinâmicos Baseados no Ramo (AdvancedIndicators)
+  // 4. KPIs Avançados (AdvancedIndicators) - Bernard Fidelity Engine
   const advanced: AdvancedIndicators = {
-    "OEE Factory Efficiency": branch === 'industrial' ? 84.2 : undefined,
-    "Consumer Satisfaction": branch === 'commercial' ? 9.2 : undefined,
-    "Intellectual Capital Index": branch === 'services' ? 0.78 : undefined
+    ciclos: {
+      operacional: branch === 'industrial' ? 60 : 30,
+      financeiro: branch === 'industrial' ? 35 : 15,
+      economico: 25
+    },
+    scissors_effect: {
+      ncg: revenue * 0.12, // Necessidade de Capital de Giro
+      gap: (revenue * 0.12) - prevCash
+    },
+    productivity: {
+      oee: branch === 'industrial' ? 84.2 : undefined,
+      csat: branch === 'commercial' ? 9.2 : undefined,
+      turnover: 0.05
+    },
+    risk_index: risk / 100,
+    market_share: 12.5
   };
 
   return {

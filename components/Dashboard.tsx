@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   TrendingUp, Activity, DollarSign, Target, Zap, BarChart3, 
-  ArrowUpRight, ArrowDownRight, Sparkles, Loader2, Star, Users,
-  ShieldCheck, MessageSquare, Megaphone, Send, Globe, Map as MapIcon,
-  Cpu, Newspaper, Landmark, AlertTriangle, ChevronRight, LayoutGrid,
-  RefreshCw, RotateCcw, Shield, Box, FileEdit, ClipboardList,
-  ArrowRight, X, PenTool, FileText, Eye, Lock
+  Sparkles, Loader2, Users, ShieldCheck, Newspaper, Cpu, 
+  ChevronRight, RefreshCw, RotateCcw, Shield, FileEdit, PenTool, 
+  Eye, Lock, ClipboardList, Timer, Box
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -16,7 +14,7 @@ import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { supabase, resetAlphaData, getChampionships, getUserProfile } from '../services/supabase';
-import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship, UserRole } from '../types';
+import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship, UserRole, AdvancedIndicators } from '../types';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
@@ -34,12 +32,21 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [activeTeamId, setActiveTeamId] = useState<string | null>(null);
   const [activeTeamName, setActiveTeamName] = useState<string | null>(null);
   
-  const [messages, setMessages] = useState<MessageBoardItem[]>([
+  const [messages] = useState<MessageBoardItem[]>([
     { id: '1', sender: 'Coordenação Central', text: 'Início do Período 2. Abram a folha de decisões.', timestamp: '08:00', isImportant: true },
     { id: '2', sender: 'Strategos AI', text: `Setor ${branch.toUpperCase()}: Analisem o reajuste de matérias-primas planejado.`, timestamp: '10:15' },
   ]);
 
   const isObserver = userRole === 'observer';
+
+  // Sincronização de Indicadores Avançados
+  const advancedMetrics = useMemo(() => {
+    return activeArena?.advanced_indicators || {
+      ciclos: { operacional: 60, financeiro: 35 },
+      scissors_effect: { ncg: 150000, gap: -50000 },
+      productivity: { oee: 84.2, csat: 9.1 }
+    };
+  }, [activeArena]);
 
   useEffect(() => {
     const fetchArenaInfo = async () => {
@@ -86,14 +93,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       }
     };
     
-    const checkAlphaStatus = async () => {
-      const isTrial = localStorage.getItem('is_trial_session') === 'true';
-      setIsAlphaUser(isTrial);
-    };
-
     fetchArenaInfo();
     fetchIntelligence();
-    checkAlphaStatus();
+    const isTrial = localStorage.getItem('is_trial_session') === 'true';
+    setIsAlphaUser(isTrial);
   }, [scenarioType, branch, activeArena?.name, activeArena?.current_round]);
 
   const handleResetAlpha = async () => {
@@ -102,7 +105,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     setIsResetting(true);
     try {
       await resetAlphaData();
-      alert("ENGINE RESET: Limpeza concluída.");
       window.location.reload();
     } catch (err) { alert("Falha no Reset."); }
     finally { setIsResetting(false); }
@@ -120,7 +122,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   if (showBusinessPlan) {
     return (
        <div className="animate-in fade-in duration-500">
-          <button onClick={() => setShowBusinessPlan(false)} className="fixed top-10 left-10 z-[110] p-4 bg-slate-900 border border-white/10 text-white rounded-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all">
+          <button onClick={() => setShowBusinessPlan(false)} className="fixed top-10 left-10 z-[110] p-4 bg-slate-900 border border-white/10 text-white rounded-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-2xl">
              <ChevronRight size={14} className="rotate-180" /> Dashboard
           </button>
           <BusinessPlanWizard 
@@ -179,18 +181,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               <div className="p-2 bg-white/20 rounded-lg"><Shield size={16} className="text-white" /></div>
               <div>
                  <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Sandbox Mode Active</span>
-                 <p className="text-[8px] font-bold text-orange-200 uppercase tracking-[0.2em] mt-0.5">Sessão Temporária • Persistência em Trial Tables</p>
+                 <p className="text-[8px] font-bold text-orange-200 uppercase tracking-[0.2em] mt-0.5">Trial persisting to Oracle Tables</p>
               </div>
            </div>
-           <div className="flex items-center gap-3">
-              <button 
-                onClick={handleResetAlpha} 
-                disabled={isResetting || isObserver} 
-                className={`px-4 py-2 bg-slate-950 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all flex items-center gap-2 disabled:opacity-50`}
-              >
-                 {isResetting ? <Loader2 className="animate-spin" size={12}/> : <RotateCcw size={12} />} Limpar Decisões
-              </button>
-           </div>
+           <button 
+             onClick={handleResetAlpha} 
+             disabled={isResetting || isObserver} 
+             className="px-4 py-2 bg-slate-950 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2"
+           >
+              {isResetting ? <Loader2 className="animate-spin" size={12}/> : <RotateCcw size={12} />} Limpar Engine
+           </button>
         </div>
       )}
 
@@ -211,7 +211,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             )}
           </div>
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full border border-white/5">
-             {activeArena?.name || 'Carregando...'} • {activeTeamName || 'Equipe Alpha'}
+             {activeArena?.name || 'Sincronizando...'} • {activeTeamName || 'Equipe Alpha'}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -230,50 +230,54 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         <div className="lg:col-span-3 space-y-8">
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-             <button 
-                onClick={() => !isObserver && setShowDecisionForm(true)}
-                className={`p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px] ${isObserver ? 'bg-slate-900/50 cursor-default grayscale' : 'bg-blue-600 hover:bg-white'}`}
-             >
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isObserver ? 'bg-slate-800 text-slate-500' : 'bg-white text-blue-600 group-hover:bg-blue-600 group-hover:text-white'}`}>
-                   {isObserver ? <Lock size={28} /> : <FileEdit size={28} />}
-                </div>
-                <div className="text-left">
-                   <h3 className={`text-xl font-black uppercase italic tracking-tighter leading-none ${isObserver ? 'text-slate-600' : 'text-white group-hover:text-slate-950'}`}>Folha de Decisão</h3>
-                   <p className={`font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic ${isObserver ? 'text-slate-700' : 'text-blue-100 group-hover:text-blue-600'}`}>
-                      {isObserver ? 'Acesso Restrito' : `Protocolo Ciclo 0${(activeArena?.current_round || 0) + 1}`}
-                   </p>
-                </div>
-             </button>
+             <ActionCard 
+                onClick={() => !isObserver && setShowDecisionForm(true)} 
+                icon={<FileEdit size={28}/>}
+                title="Folha de Decisão"
+                subtitle={isObserver ? 'Acesso Restrito' : `Protocolo Ciclo 0${(activeArena?.current_round || 0) + 1}`}
+                color="blue"
+                disabled={isObserver}
+             />
+             <ActionCard 
+                onClick={() => !isObserver && setShowBusinessPlan(true)} 
+                icon={<PenTool size={28}/>}
+                title="Plano de Negócios"
+                subtitle={isObserver ? 'Acesso Restrito' : 'Evolução Progressiva Oracle'}
+                color="indigo"
+                disabled={isObserver}
+             />
+             <ActionCard 
+                onClick={() => setShowGazette(true)} 
+                icon={<Newspaper size={28}/>}
+                title="Gazeta Empirion"
+                subtitle={`Tendências P0${(activeArena?.current_round || 0) + 1}`}
+                color="orange"
+             />
+          </div>
 
-             <button 
-                onClick={() => !isObserver && setShowBusinessPlan(true)}
-                className={`p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px] ${isObserver ? 'bg-slate-900/50 cursor-default grayscale' : 'bg-indigo-600 hover:bg-white'}`}
-             >
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isObserver ? 'bg-slate-800 text-slate-500' : 'bg-white text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white'}`}>
-                   {isObserver ? <Lock size={28} /> : <PenTool size={28} />}
-                </div>
-                <div className="text-left">
-                   <h3 className={`text-xl font-black uppercase italic tracking-tighter leading-none ${isObserver ? 'text-slate-600' : 'text-white group-hover:text-slate-950'}`}>Plano de Negócios</h3>
-                   <p className={`font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic ${isObserver ? 'text-slate-700' : 'text-indigo-100 group-hover:text-indigo-600'}`}>
-                      {isObserver ? 'Acesso Restrito' : 'Evolução Progressiva Simulation-Ready'}
-                   </p>
-                </div>
-             </button>
-
-             <button 
-                onClick={() => setShowGazette(true)}
-                className="bg-slate-900 hover:bg-orange-600 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px]"
-             >
-                <div className="w-16 h-16 bg-orange-600 text-white rounded-2xl flex items-center justify-center group-hover:bg-white group-hover:text-orange-600 transition-all shadow-xl">
-                   <Newspaper size={28} />
-                </div>
-                <div className="text-left">
-                   <h3 className="text-xl font-black text-white uppercase italic tracking-tighter leading-none">Gazeta Empirion</h3>
-                   <p className="text-slate-400 group-hover:text-white font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic">
-                      Tendências P0{(activeArena?.current_round || 0) + 1}
-                   </p>
-                </div>
-             </button>
+          {/* NOVO BLOCO: TACTICAL EFFICIENCY (NCG & CICLOS) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             <EfficiencyCard 
+               label="NCG (Capital de Giro)" 
+               val={`$ ${advancedMetrics.scissors_effect.ncg.toLocaleString()}`} 
+               trend={advancedMetrics.scissors_effect.gap < 0 ? 'Optimal' : 'Gap Warning'} 
+               positive={advancedMetrics.scissors_effect.gap < 0}
+               icon={<Box size={20}/>}
+             />
+             <EfficiencyCard 
+               label="Ciclo Financeiro" 
+               val={`${advancedMetrics.ciclos.financeiro} dias`} 
+               trend="Stable" 
+               positive={true}
+               icon={<Timer size={20}/>}
+             />
+             <EfficiencyCard 
+               label={branch === 'industrial' ? "OEE Factory" : "CSAT Index"} 
+               val={branch === 'industrial' ? `${advancedMetrics.productivity.oee}%` : `${advancedMetrics.productivity.csat}/10`} 
+               trend="+1.2%" 
+               positive={true}
+               icon={<Activity size={20}/>}
+             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -292,7 +296,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                    <div className="space-y-3"><div className="h-4 bg-white/5 rounded-full w-3/4 animate-pulse"></div><div className="h-4 bg-white/5 rounded-full w-full animate-pulse"></div></div>
                  ) : (
                    <p className="text-sm font-medium text-slate-300 leading-relaxed font-mono">
-                     <span className="text-orange-500 font-black italic">MSG_P{(activeArena?.current_round || 0) + 1}:</span> {aiInsight || "Aguardando início do período para análise regional."}
+                     <span className="text-orange-500 font-black italic">MSG_P{(activeArena?.current_round || 0) + 1}:</span> {aiInsight || "Aguardando sincronização de briefing regional..."}
                    </p>
                  )}
               </div>
@@ -308,14 +312,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               <div className="space-y-10">
                  <KpiRow label="Lucro Líquido" value={activeArena?.current_round === 0 ? "$ 0" : "$ 73.928"} trend={activeArena?.current_round === 0 ? "STABLE" : "+100%"} positive icon={<DollarSign size={16}/>} />
                  <KpiRow label="Rating Oracle" value={activeArena?.current_round === 0 ? "AAA" : "AAA"} trend="OK" positive icon={<ShieldCheck size={16}/>} />
-                 {/* Exemplo de uso de AdvancedIndicator Dinâmico */}
-                 <KpiRow 
-                   label={activeArena?.branch === 'industrial' ? "OEE Factory" : "CSAT Index"} 
-                   value={activeArena?.branch === 'industrial' ? "84.2%" : "9.2/10"} 
-                   trend="+1.2" 
-                   positive={true} 
-                   icon={<Activity size={16}/>} 
-                 />
+                 <KpiRow label="Market Share" value={`${advancedMetrics.market_share || 12.5}%`} trend="Target" positive icon={<TrendingUp size={16}/>} />
               </div>
            </div>
 
@@ -335,6 +332,40 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     </div>
   );
 };
+
+const ActionCard = ({ onClick, icon, title, subtitle, color, disabled }: any) => {
+  const baseClasses = `p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px]`;
+  const themeClasses = {
+    blue: disabled ? 'bg-slate-900/50 grayscale' : 'bg-blue-600 hover:bg-white',
+    indigo: disabled ? 'bg-slate-900/50 grayscale' : 'bg-indigo-600 hover:bg-white',
+    orange: 'bg-slate-900 hover:bg-orange-600'
+  }[color as 'blue' | 'indigo' | 'orange'];
+
+  return (
+    <button onClick={onClick} className={`${baseClasses} ${themeClasses} ${disabled ? 'cursor-default' : ''}`}>
+       <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-xl ${disabled ? 'bg-slate-800 text-slate-500' : 'bg-white text-slate-900 group-hover:scale-110'}`}>
+          {icon}
+       </div>
+       <div className="text-left">
+          <h3 className={`text-xl font-black uppercase italic tracking-tighter leading-none ${color === 'orange' ? 'text-white' : (disabled ? 'text-slate-600' : 'text-white group-hover:text-slate-950')}`}>{title}</h3>
+          <p className={`font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic ${color === 'orange' ? 'text-slate-400 group-hover:text-white' : (disabled ? 'text-slate-700' : 'text-white/70 group-hover:text-slate-500')}`}>{subtitle}</p>
+       </div>
+    </button>
+  );
+};
+
+const EfficiencyCard = ({ label, val, trend, positive, icon }: any) => (
+  <div className="bg-slate-900/50 border border-white/5 p-8 rounded-[3rem] space-y-6 hover:bg-white/5 transition-all shadow-xl group">
+     <div className="flex justify-between items-center">
+        <div className="p-3 bg-white/5 text-blue-400 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all">{icon}</div>
+        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${positive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>{trend}</span>
+     </div>
+     <div>
+        <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+        <span className="text-2xl font-black text-white font-mono italic">{val}</span>
+     </div>
+  </div>
+);
 
 const KpiRow = ({ label, value, trend, positive, icon }: any) => (
   <div className="flex items-center justify-between group cursor-default">

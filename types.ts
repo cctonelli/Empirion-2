@@ -60,8 +60,9 @@ export interface BlackSwanEvent {
   };
 }
 
+// Updated to any for nested financial objects (Cycles, NCG, etc.)
 export interface AdvancedIndicators {
-  [key: string]: string | number | boolean | undefined;
+  [key: string]: any;
 }
 
 export interface FinancialHealth {
