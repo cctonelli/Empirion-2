@@ -192,12 +192,19 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 };
 
 /**
- * DELETE CHAMPIONSHIP v12.8.2
- * Allows removing legacy test data to clear space for GOLD standards.
+ * DELETE CHAMPIONSHIP v12.8.2 GOLD
+ * Allows removing legacy test data. Cleanup session to prevent ghost data.
  */
 export const deleteChampionship = async (id: string, isTrial: boolean) => {
   const table = isTrial ? 'trial_championships' : 'championships';
   console.log(`[CLEANUP] Deleting arena ${id} from ${table}`);
+  
+  // Cleanup Local Session if deleted item matches
+  if (localStorage.getItem('active_champ_id') === id) {
+    localStorage.removeItem('active_champ_id');
+    localStorage.removeItem('active_team_id');
+  }
+
   return await supabase.from(table).delete().eq('id', id);
 };
 
