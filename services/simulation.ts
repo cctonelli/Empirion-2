@@ -7,8 +7,8 @@ const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Motor Industrial Empirion v11.0 - Full Statement Generator
- * Gera DRE, Balanço e Fluxo de Caixa completos para persistência.
+ * Motor Industrial Empirion v11.5 - Solvency Node
+ * Implementa custos exponenciais de marketing e índices de solvência.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -18,11 +18,10 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // ROUND 0: Bernard Legacy Parity ($ 9.176.940 Assets)
   if (isRoundZero) {
     return {
       revenue: 3322735, ebitda: 1044555, netProfit: 73928, salesVolume: 8932,
-      lostSales: 0,
+      lostSales: 0, totalMarketingCost: 45000, debtRatio: 44.9,
       marketShare: 12.5, cashFlowNext: 840200, receivables: 1823735,
       loanLimit: 2500000, creditRating: 'AAA' as CreditRating,
       health: { liquidity_ratio: 1.5, debt_to_equity: 0.6, insolvency_risk: 10, rating: 'AAA', is_bankrupt: false } as FinancialHealth,
@@ -37,6 +36,7 @@ export const calculateProjections = (
     providerPrices: { mpA: 20.20, mpB: 40.40 },
     demand_regions: [12000],
     sectorAvgSalary: 1313,
+    marketingExpenseBase: 5000,
     difficulty: { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
     active_event: null
   }) as MacroIndicators;
@@ -44,8 +44,7 @@ export const calculateProjections = (
   const event: BlackSwanEvent | null = currentIndicators.active_event || null;
   const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
   
-  // 1. HERANÇA (SNAPSHOT)
-  // Extrai valores do round anterior via JSONB ou template inicial
+  // 1. HERANÇA
   const prevEquity = sanitize(previousState?.balance_sheet?.equity?.total || 5055447);
   const prevAssets = sanitize(previousState?.balance_sheet?.assets?.total || 9176940);
   const prevCash = sanitize(previousState?.balance_sheet?.assets?.current?.cash || 840200);
@@ -53,7 +52,7 @@ export const calculateProjections = (
   const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605);
   const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362);
 
-  // 2. ORACLE RISK NODE
+  // 2. ORACLE RISK NODE & DEBT CALC
   const totalDebt = prevDebt + decisions.finance.loanRequest;
   const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
   const debtToEquity = totalDebt / Math.max(prevEquity, 1);
@@ -62,7 +61,17 @@ export const calculateProjections = (
   // 3. COMERCIAL & DEMANDA
   const regions = Object.values(decisions.regions || {});
   const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price), 0) / regions.length : 372;
-  const totalMarketing = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.marketing), 0) : 0;
+  
+  // LOGICA MARKETING EXPONENCIAL V3.2
+  const inflationMult = (1 + (currentIndicators.inflationRate || 0));
+  const totalMarketingCost = regions.reduce((acc, r) => {
+    const level = sanitize(r.marketing);
+    if (level === 0) return acc;
+    // Formula: (Base * Level^1.5) * Inflation
+    const cost = (sanitize(currentIndicators.marketingExpenseBase, 5000) * Math.pow(level, 1.5)) * inflationMult;
+    return acc + cost;
+  }, 0);
+
   const avgTermDays = regions.length > 0 
     ? regions.reduce((acc, r) => acc + (r.term === 2 ? 60 : r.term === 1 ? 30 : 0), 0) / regions.length 
     : 0;
@@ -70,38 +79,39 @@ export const calculateProjections = (
   const basePotential = (currentIndicators.demand_regions?.[0] || 12000) * (ecoConfig.demandMultiplier || 1) * (1 + (evMod.demand || 0));
   const priceRatio = 372 / Math.max(avgPrice, 1);
   const priceScore = Math.pow(priceRatio, currentIndicators.difficulty?.price_sensitivity || 2.0);
-  const mktScore = Math.log10(((totalMarketing * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
+  // Marketing effectiveness uses logarithmic growth but cost is exponential (The Trap)
+  const totalMktPoints = regions.reduce((a, b) => a + sanitize(b.marketing), 0);
+  const mktScore = Math.log10(((totalMktPoints * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
   const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
   
-  // 4. PRODUÇÃO & OEE
+  // 4. PRODUÇÃO
   const currentOEE = (1.0 + (decisions.hr.trainingPercent / 1000) + (decisions.hr.participationPercent / 200)) * (evMod.productivity || 1);
   const maxProduction = 30000 * (decisions.production.activityLevel / 100) * currentOEE;
   const salesVolume = Math.min(demandTotal, maxProduction);
   const lostSales = Math.max(demandTotal - maxProduction, 0);
   const revenue = salesVolume * avgPrice;
 
-  // 5. DRE GENERATION
-  const mpCost = (currentIndicators.providerPrices.mpA + currentIndicators.providerPrices.mpB * 0.5) * (evMod.cost_multiplier || 1);
+  // 5. DRE
+  const mpCost = (currentIndicators.providerPrices.mpA + currentIndicators.providerPrices.mpB * 0.5) * (evMod.cost_multiplier || 1) * inflationMult;
   const cpv = salesVolume * mpCost;
   const payroll = (decisions.hr.sales_staff_count * decisions.hr.salary * 1.6);
-  const marketingExp = totalMarketing * 5000;
-  const ebitda = revenue - cpv - payroll - marketingExp - (decisions.hr.trainingPercent * 500) - 145000;
+  const ebitda = revenue - cpv - payroll - totalMarketingCost - (decisions.hr.trainingPercent * 500) - 145000;
   const depreciation = prevAssets * 0.01;
   const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
   const netProfit = (ebitda - depreciation - interestExp) * 0.85;
 
-  // 6. CASH FLOW & BALANCE SHEET RECONCILIATION
+  // 6. CASH FLOW & BALANCE SHEET
   const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
-  const cashOutflow = cpv + payroll + interestExp + prevPayables;
+  const cashOutflow = cpv + payroll + interestExp + prevPayables + totalMarketingCost;
   const finalCash = prevCash + cashInflow + decisions.finance.loanRequest - cashOutflow - decisions.finance.application;
   
   const finalReceivables = revenue * (avgTermDays === 0 ? 0 : 0.6);
   const finalAssets = finalCash + finalReceivables + (prevAssets * 0.99);
   const finalEquity = prevEquity + netProfit;
+  const debtRatio = ((finalAssets - finalEquity) / Math.max(finalAssets, 1)) * 100;
 
   return {
-    revenue, ebitda, netProfit, salesVolume,
-    lostSales,
+    revenue, ebitda, netProfit, salesVolume, lostSales, totalMarketingCost, debtRatio,
     marketShare: (salesVolume / (basePotential * 8)) * 100,
     cashFlowNext: finalCash,
     receivables: finalReceivables,
@@ -110,11 +120,11 @@ export const calculateProjections = (
     health: { 
         liquidity_ratio: finalCash / Math.max(totalDebt * 0.2, 1), 
         debt_to_equity: debtToEquity, 
-        insolvency_risk: Math.min((debtToEquity * 50), 100), 
+        insolvency_risk: Math.min((debtRatio * 1.2), 100), 
         rating, 
         is_bankrupt: finalEquity < 0 
     },
-    suggestRecovery: debtToEquity > 1.5,
+    suggestRecovery: debtRatio > 60,
     capexBlocked: rating === 'C',
     activeEvent: event,
     statements: {
@@ -125,7 +135,7 @@ export const calculateProjections = (
             equity: { total: finalEquity }
         },
         cash_flow: { inflow: cashInflow, outflow: cashOutflow, net: cashInflow - cashOutflow },
-        kpis: { market_share: (salesVolume / (basePotential * 8)) * 100, roe: (netProfit / Math.max(finalEquity,1)) * 100 }
+        kpis: { market_share: (salesVolume / (basePotential * 8)) * 100, roe: (netProfit / Math.max(finalEquity,1)) * 100, debt_ratio: debtRatio }
     },
     indicators: calculateAdvanced(revenue, cpv, ebitda, netProfit, finalReceivables, cpv * 0.3, finalCash, decisions)
   };
