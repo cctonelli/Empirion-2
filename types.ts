@@ -1,5 +1,5 @@
 
-export type UserRole = 'admin' | 'tutor' | 'player';
+export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
 export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
 export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
@@ -124,7 +124,6 @@ export interface Championship {
   is_trial?: boolean;
   teams?: Team[];
   market_history?: AdvancedIndicators[];
-  // Fix: Added missing properties to Championship interface used across components/services
   is_public?: boolean;
   created_at: string;
   sales_mode?: SalesMode;
@@ -146,9 +145,6 @@ export interface AccountNode {
   children?: AccountNode[];
 }
 
-/** 
- * Fix: Added missing exported members required by other files (constants.tsx, Dashboard.tsx, etc)
- */
 export interface ChampionshipTemplate {
   id: string;
   name: string;

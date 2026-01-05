@@ -40,8 +40,8 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
   useEffect(() => {
     const loadData = async () => {
-      const dbContent = await fetchPageContent('landing', i18n.language);
-      if (dbContent) setContent({ ...DEFAULT_PAGE_CONTENT['landing'], ...dbContent });
+      const db = await fetchPageContent('landing', i18n.language);
+      if (db) setContent({ ...DEFAULT_PAGE_CONTENT['landing'], ...db });
       const mods = await getModalities();
       setDynamicModalities(mods);
     };
@@ -143,11 +143,12 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </Slider>
       </section>
 
-      {/* HERO PRINCIPAL COM NUVENS LARANJA */}
+      {/* HERO PRINCIPAL COM NUVENS LARANJA (SEBRAE STYLE) */}
       <section className="py-40 px-6 md:px-24 text-center relative z-20">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-[-1] opacity-40">
-           <div className="w-[1000px] h-[1000px] bg-orange-600/10 blur-[180px] rounded-full absolute top-0 left-0 animate-pulse"></div>
-           <div className="w-[800px] h-[800px] bg-orange-50/5 blur-[160px] rounded-full absolute bottom-0 right-0 animate-pulse [animation-delay:2s]"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-[-1] overflow-hidden">
+           <div className="w-[1200px] h-[1200px] bg-orange-600/20 blur-[180px] rounded-full absolute -top-1/4 -left-1/4 animate-pulse duration-[8s]"></div>
+           <div className="w-[1000px] h-[1000px] bg-orange-500/10 blur-[160px] rounded-full absolute -bottom-1/4 -right-1/4 animate-pulse duration-[10s] [animation-delay:2s]"></div>
+           <div className="w-[800px] h-[800px] bg-orange-700/15 blur-[200px] rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse duration-[12s] [animation-delay:4s]"></div>
         </div>
 
         <motion.div initial={{ opacity: 0, y: 60 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-6xl mx-auto space-y-16">
@@ -165,7 +166,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-10 pt-12">
               <Link to="/test/industrial" className="cyber-button w-full sm:w-auto px-20 py-8 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] shadow-[0_30px_70px_rgba(249,115,22,0.4)] active:scale-95 flex items-center justify-center gap-4">
-                Teste Grátis Agora <Rocket size={20} className="animate-pulse" />
+                Entre na Arena <Rocket size={20} className="animate-pulse" />
               </Link>
               <Link to="/solutions/simulators" className="cyber-button w-full sm:w-auto px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-5 backdrop-blur-xl">
                 Explorar Ramos <ArrowRight size={22} className="text-orange-500" />
@@ -235,19 +236,6 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       `}</style>
     </div>
   );
-};
-
-const getBranchIcon = (name: string) => {
-  const size = 32;
-  switch(name) {
-    case 'Factory': return <Factory size={size} />;
-    case 'ShoppingCart': return <ShoppingCart size={size} />;
-    case 'Briefcase': return <Briefcase size={size} />;
-    case 'Tractor': return <Tractor size={size} />;
-    case 'DollarSign': return <DollarSign size={size} />;
-    case 'Hammer': return <Hammer size={size} />;
-    default: return <Box size={size} />;
-  }
 };
 
 export default LandingPage;

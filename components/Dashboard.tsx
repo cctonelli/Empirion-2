@@ -7,7 +7,7 @@ import {
   ShieldCheck, MessageSquare, Megaphone, Send, Globe, Map as MapIcon,
   Cpu, Newspaper, Landmark, AlertTriangle, ChevronRight, LayoutGrid,
   RefreshCw, RotateCcw, Shield, Box, FileEdit, ClipboardList,
-  ArrowRight, X, PenTool, FileText
+  ArrowRight, X, PenTool, FileText, Eye, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -39,6 +39,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     { id: '1', sender: 'Coordenação Central', text: 'Início do Período 2. Abram a folha de decisões.', timestamp: '08:00', isImportant: true },
     { id: '2', sender: 'Strategos AI', text: `Setor ${branch.toUpperCase()}: Analisem o reajuste de matérias-primas planejado.`, timestamp: '10:15' },
   ]);
+
+  const isObserver = userRole === 'observer';
 
   useEffect(() => {
     const fetchArenaInfo = async () => {
@@ -95,6 +97,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   }, [scenarioType, branch, activeArena?.name, activeArena?.current_round]);
 
   const handleResetAlpha = async () => {
+    if (isObserver) return;
     if (!confirm("Confirmar RESET TOTAL das decisões desta arena?")) return;
     setIsResetting(true);
     try {
@@ -180,7 +183,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </div>
            </div>
            <div className="flex items-center gap-3">
-              <button onClick={handleResetAlpha} disabled={isResetting} className="px-4 py-2 bg-slate-950 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all flex items-center gap-2">
+              <button onClick={handleResetAlpha} disabled={isResetting || isObserver} className="px-4 py-2 bg-slate-950 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all flex items-center gap-2 disabled:opacity-50">
                  {isResetting ? <Loader2 className="animate-spin" size={12}/> : <RotateCcw size={12} />} Limpar Decisões
               </button>
            </div>
@@ -196,6 +199,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">
               Arena <span className="text-orange-500">Dashboard</span>
             </h1>
+            {isObserver && (
+              <div className="ml-4 px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-full flex items-center gap-2">
+                 <Eye size={12} className="text-blue-400" />
+                 <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Observer Mode (Read-Only)</span>
+              </div>
+            )}
           </div>
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full border border-white/5">
              {activeArena?.name || 'Carregando...'} • {activeTeamName || 'Equipe Alpha'}
@@ -218,31 +227,35 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <button 
-                onClick={() => setShowDecisionForm(true)}
-                className="bg-blue-600 hover:bg-white p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px]"
+                onClick={() => !isObserver && setShowDecisionForm(true)}
+                disabled={isObserver}
+                className={`p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px] ${isObserver ? 'bg-slate-900/50 cursor-not-allowed grayscale' : 'bg-blue-600 hover:bg-white'}`}
              >
-                <div className="w-16 h-16 bg-white text-blue-600 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-xl">
-                   <FileEdit size={28} />
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isObserver ? 'bg-slate-800 text-slate-500' : 'bg-white text-blue-600 group-hover:bg-blue-600 group-hover:text-white'}`}>
+                   {/* Fix: Lock icon imported from lucide-react */}
+                   {isObserver ? <Lock size={28} /> : <FileEdit size={28} />}
                 </div>
                 <div className="text-left">
-                   <h3 className="text-xl font-black text-white group-hover:text-slate-950 uppercase italic tracking-tighter leading-none">Folha de Decisão</h3>
-                   <p className="text-blue-100 group-hover:text-blue-600 font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic">
-                      Protocolo Ciclo 0{(activeArena?.current_round || 0) + 1}
+                   <h3 className={`text-xl font-black uppercase italic tracking-tighter leading-none ${isObserver ? 'text-slate-600' : 'text-white group-hover:text-slate-950'}`}>Folha de Decisão</h3>
+                   <p className={`font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic ${isObserver ? 'text-slate-700' : 'text-blue-100 group-hover:text-blue-600'}`}>
+                      {isObserver ? 'Acesso Restrito' : `Protocolo Ciclo 0${(activeArena?.current_round || 0) + 1}`}
                    </p>
                 </div>
              </button>
 
              <button 
-                onClick={() => setShowBusinessPlan(true)}
-                className="bg-indigo-600 hover:bg-white p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px]"
+                onClick={() => !isObserver && setShowBusinessPlan(true)}
+                disabled={isObserver}
+                className={`p-10 rounded-[3.5rem] border border-white/10 shadow-2xl flex flex-col justify-between group transition-all duration-500 overflow-hidden relative min-h-[260px] ${isObserver ? 'bg-slate-900/50 cursor-not-allowed grayscale' : 'bg-indigo-600 hover:bg-white'}`}
              >
-                <div className="w-16 h-16 bg-white text-indigo-600 rounded-2xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xl">
-                   <PenTool size={28} />
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isObserver ? 'bg-slate-800 text-slate-500' : 'bg-white text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white'}`}>
+                   {/* Fix: Lock icon imported from lucide-react */}
+                   {isObserver ? <Lock size={28} /> : <PenTool size={28} />}
                 </div>
                 <div className="text-left">
-                   <h3 className="text-xl font-black text-white group-hover:text-slate-950 uppercase italic tracking-tighter leading-none">Plano de Negócios</h3>
-                   <p className="text-indigo-100 group-hover:text-indigo-600 font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic">
-                      Evolução Progressiva Simulation-Ready
+                   <h3 className={`text-xl font-black uppercase italic tracking-tighter leading-none ${isObserver ? 'text-slate-600' : 'text-white group-hover:text-slate-950'}`}>Plano de Negócios</h3>
+                   <p className={`font-bold uppercase text-[8px] tracking-[0.3em] mt-3 italic ${isObserver ? 'text-slate-700' : 'text-indigo-100 group-hover:text-indigo-600'}`}>
+                      {isObserver ? 'Acesso Restrito' : 'Evolução Progressiva Simulation-Ready'}
                    </p>
                 </div>
              </button>

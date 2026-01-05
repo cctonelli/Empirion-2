@@ -165,6 +165,7 @@ export const DEMO_CHAMPIONSHIP_DATA: Championship = {
   },
   initial_financials: CHAMPIONSHIP_TEMPLATES[0].initial_financials,
   market_indicators: DEFAULT_MACRO,
+  created_at: new Date().toISOString(),
   ecosystemConfig: {
     scenarioType: 'simulated',
     modalityType: 'standard',
@@ -197,8 +198,16 @@ export const MENU_STRUCTURE = [
     label: 'solucoes', 
     path: '#',
     sub: [
-      { id: 'arenas', label: 'Arenas Virtuais', path: '/solutions/open-tournaments', icon: 'Trophy' },
-      { id: 'bp_ia', label: 'Strategos Wizard (BP)', path: '/solutions/business-plan', icon: 'PenTool' },
+      { id: 'arenas', label: 'Arenas Virtuais', path: '/solutions/open-tournaments', icon: 'Trophy', desc: 'Competições Globais' },
+      { 
+        id: 'academy', label: 'Empirion Academy', path: '#', icon: 'GraduationCap', desc: 'Treinamentos Elite',
+        sub: [
+          { id: 'online', label: 'Cursos Online', path: '/solutions/training/online', icon: 'PlayCircle' },
+          { id: 'corp', label: 'In-Company', path: '/solutions/training/corporate', icon: 'Briefcase' },
+        ]
+      },
+      { id: 'bp_ia', label: 'Strategos Wizard', path: '/solutions/business-plan', icon: 'PenTool', desc: 'Plano de Negócios IA' },
+      { id: 'consulting', label: 'Audit Consulting', path: '/solutions/consulting', icon: 'ShieldCheck', desc: 'Auditoria Gerencial' },
     ]
   },
   { label: 'funcionalidades', path: '/features' },
@@ -209,7 +218,7 @@ export const MENU_STRUCTURE = [
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
     hero: {
-      title: "Empirion",
+      title: "Forje Seu Império",
       empire: "BI Arena",
       subtitle: "A Arena Definitiva onde a IA e a Estratégia Humana colidem.",
       cta: "Entrar na Arena",

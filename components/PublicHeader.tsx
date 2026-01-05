@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronDown, ChevronRight, LogIn, Factory, ShoppingCart, Briefcase, 
   Tractor, DollarSign, Hammer, Menu, X, Box, Cpu, Sparkles, 
-  Zap, Gavel, PenTool, Trophy, Terminal, Rocket
+  Zap, Gavel, PenTool, Trophy, Terminal, Rocket, GraduationCap,
+  ShieldCheck, PlayCircle
 } from 'lucide-react';
 import { MENU_STRUCTURE, APP_VERSION } from '../constants';
 import { useModalities } from '../hooks/useModalities';
@@ -28,6 +29,9 @@ const getIcon = (iconName?: string) => {
     case 'Trophy': return <Trophy size={size} />;
     case 'Terminal': return <Terminal size={size} />;
     case 'Rocket': return <Rocket size={size} />;
+    case 'GraduationCap': return <GraduationCap size={size} />;
+    case 'ShieldCheck': return <ShieldCheck size={size} />;
+    case 'PlayCircle': return <PlayCircle size={size} />;
     default: return <Box size={size} />;
   }
 };
@@ -48,7 +52,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         
         {/* LOGO DESIGN - PROFESSIONAL TACTICAL */}
         <div className="flex-shrink-0">
-          <Link to="/" className="flex items-center gap-4 group">
+          <Link i18nIsDynamicList to="/" className="flex items-center gap-4 group">
             <div className="w-11 h-11 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all duration-500 border border-white/10">
               <span className="text-white font-black text-xl italic select-none">E</span>
             </div>
@@ -91,7 +95,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                       initial={{ opacity: 0, y: 10, scale: 0.98 }} 
                       animate={{ opacity: 1, y: 0, scale: 1 }} 
                       exit={{ opacity: 0, y: 10, scale: 0.98 }} 
-                      className="absolute top-full left-1/2 -translate-x-1/2 w-[300px] bg-[#0f172a]/98 border border-white/10 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-3 mt-2 backdrop-blur-3xl z-[1050]"
+                      className="absolute top-full left-1/2 -translate-x-1/2 w-[320px] bg-[#0f172a]/98 border border-white/10 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-3 mt-2 backdrop-blur-3xl z-[1050]"
                     >
                       <div className="grid grid-cols-1 gap-1">
                         {item.sub.map((sub: any, idx: number) => (
@@ -118,7 +122,6 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         <div className="flex items-center gap-5">
           <div className="hidden xl:block scale-90"><LanguageSwitcher light /></div>
           
-          {/* CTA TESTE GRÁTIS */}
           <Link 
             to="/test/industrial"
             className="hidden md:flex items-center gap-3 px-6 py-2.5 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-full font-black text-[9px] uppercase tracking-[0.2em] hover:bg-orange-600 hover:text-white transition-all active:scale-95 shadow-lg"
@@ -164,9 +167,20 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     {item.sub && (
                         <div className="grid grid-cols-1 gap-6 pl-4 border-l-2 border-orange-600/30">
                             {item.sub.map((sub: any) => (
-                                <Link key={sub.id} to={sub.path} onClick={() => setIsMobileMenuOpen(false)} className="text-slate-300 font-black uppercase text-sm tracking-widest hover:text-orange-500 flex items-center gap-2">
-                                   <ChevronRight size={12} className="text-orange-500" /> {sub.label}
-                                </Link>
+                                <div key={sub.id} className="space-y-4">
+                                  <Link to={sub.path} onClick={() => !sub.sub && setIsMobileMenuOpen(false)} className="text-slate-300 font-black uppercase text-sm tracking-widest hover:text-orange-500 flex items-center gap-2">
+                                     <ChevronRight size={12} className="text-orange-500" /> {sub.label}
+                                  </Link>
+                                  {sub.sub && (
+                                    <div className="grid grid-cols-1 gap-3 pl-6 border-l border-white/10">
+                                      {sub.sub.map((child: any) => (
+                                        <Link key={child.id} to={child.path} onClick={() => setIsMobileMenuOpen(false)} className="text-slate-500 font-bold uppercase text-xs hover:text-white">
+                                          {child.label}
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                             ))}
                         </div>
                     )}
@@ -186,8 +200,10 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
 const SubmenuItem: React.FC<{ item: any }> = ({ item }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const hasSub = item.sub && item.sub.length > 0;
+
   return (
-    <div className="relative" onMouseEnter={() => item.sub && setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
+    <div className="relative" onMouseEnter={() => hasSub && setIsOpen(true)} onMouseLeave={() => hasSub && setIsOpen(false)}>
       <Link 
         to={item.path || '#'} 
         className="flex items-center gap-4 px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-orange-600/10 rounded-2xl transition-all group/sub"
@@ -199,12 +215,12 @@ const SubmenuItem: React.FC<{ item: any }> = ({ item }) => {
           <span className="flex-1 truncate group-hover/sub:translate-x-1 transition-transform">{item.label}</span>
           {item.desc && <span className="text-[7px] font-bold opacity-30 truncate group-hover/sub:opacity-60 uppercase tracking-widest mt-0.5">{item.desc}</span>}
         </div>
-        {item.sub && <ChevronRight size={12} className={`ml-auto transition-transform ${isOpen ? 'translate-x-1 text-orange-500' : ''}`} />}
+        {hasSub && <ChevronRight size={12} className={`ml-auto transition-transform ${isOpen ? 'translate-x-1 text-orange-500' : ''}`} />}
       </Link>
       
       {/* CASCADE SIDE MENU */}
       <AnimatePresence>
-        {item.sub && isOpen && (
+        {hasSub && isOpen && (
           <motion.div 
             initial={{ opacity: 0, x: 15 }} 
             animate={{ opacity: 1, x: 0 }} 

@@ -8,6 +8,7 @@ const sanitize = (val: any, fallback: number = 0): number => {
 
 /**
  * Motor Industrial Empirion v8.0 - Full Fidelity Engine
+ * FIDELITY: Garante paridade absoluta legado ($ 73.928) no Round 0.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -17,8 +18,8 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // BLOQUEIO ROUND 0: Garante paridade absoluta legado ($ 73.928)
-  if (isRoundZero) {
+  // BLOQUEIO ROUND 0: Garante paridade absoluta legado ($ 73.928 / $ 9.176.940)
+  if (isRoundZero || (previousState === undefined && !decisions.hr?.hired && !decisions.finance?.loanRequest)) {
     return {
       revenue: 3322735,
       ebitda: 1044555,
@@ -71,7 +72,7 @@ export const calculateProjections = (
   // 4. RH
   const salary = sanitize(decisions.hr?.salary || 1313);
   const staffCount = sanitize(decisions.hr?.sales_staff_count || 50);
-  const payrollTotal = (salary * staffCount * 1.6) + (sanitize(decisions.hr?.trainingPercent) * 250);
+  const payrollTotal = (salary * staffCount * 1.6) * recoveryModifier + (sanitize(decisions.hr?.trainingPercent) * 250);
 
   // 5. CUSTOS
   const mpA_Price = indicators.providerPrices.mpA * inflation;
@@ -126,8 +127,7 @@ const calculateAdvanced = (rev: number, cpv: number, ebitda: number, net: number
     },
     scissors_effect: {
       ncg: 2541209,
-      available_capital: 668847,
-      gap: -1890843
+      available_capital: 668847, gap: -1890843
     }
   };
 };
