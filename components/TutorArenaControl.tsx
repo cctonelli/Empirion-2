@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  Zap, Globe, Shield, TrendingUp, Percent, Users, Lock, Unlock, 
-  Save, RefreshCw, AlertCircle, CheckCircle2, SlidersHorizontal, 
-  Star, Plus, Trash2, LayoutGrid, Activity, Calculator,
-  Eye, EyeOff, Flame, Leaf, Loader2, Bot, Newspaper, Layers, Sparkles,
-  Search, ExternalLink, Info, Gavel, Cpu, DollarSign, Package,
-  ShoppingCart, Landmark, ShieldAlert, Boxes, BrainCircuit, Target,
-  Bird, Play
+  Zap, Globe, Shield, TrendingUp, Save, RefreshCw, 
+  Plus, Trash2, LayoutGrid, Activity, Flame, Loader2, 
+  Sparkles, Cpu, Package, Boxes, BrainCircuit, Target, Bird
 } from 'lucide-react';
 import { EcosystemConfig, Championship, MacroIndicators, BlackSwanEvent } from '../types';
 import { updateEcosystem } from '../services/supabase';
@@ -58,7 +54,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-end gap-6">
          <div>
-            <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter italic">Orquestração de Mercado</h2>
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">Orquestração de Mercado</h2>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Parametrização de Reajustes e Taxas (Período 0{championship.current_round + 1})</p>
          </div>
          <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner overflow-x-auto no-scrollbar">
@@ -79,7 +75,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-slate-900">
                  <div className="space-y-6">
                     <div className="flex justify-between items-center">
                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Target size={16} /> Sensibilidade de Preço</label>
@@ -161,16 +157,16 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
       {activeTab === 'suppliers' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-           <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10">
-              <h3 className="text-xl font-black text-slate-900 uppercase italic flex items-center gap-3"><Boxes className="text-orange-500" /> Matérias-Primas e Logística</h3>
+           <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10 text-slate-900">
+              <h3 className="text-xl font-black uppercase italic flex items-center gap-3"><Boxes className="text-orange-500" /> Matérias-Primas e Logística</h3>
               <div className="space-y-8">
                  <MacroInput label="Preço Unitário MP-A ($)" val={macro.providerPrices.mpA} onChange={v => setMacro(prev => ({...prev, providerPrices: {...prev.providerPrices, mpA: v}}))} />
                  <MacroInput label="Preço Unitário MP-B ($)" val={macro.providerPrices.mpB} onChange={v => setMacro(prev => ({...prev, providerPrices: {...prev.providerPrices, mpB: v}}))} />
                  <MacroInput label="Custo Distribuição/Unidade ($)" val={macro.distributionCostUnit} onChange={v => setMacro(prev => ({...prev, distributionCostUnit: v}))} />
               </div>
            </div>
-           <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10">
-              <h3 className="text-xl font-black text-slate-900 uppercase italic flex items-center gap-3"><Cpu className="text-blue-500" /> Ativos de Capital (Máquinas)</h3>
+           <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10 text-slate-900">
+              <h3 className="text-xl font-black uppercase italic flex items-center gap-3"><Cpu className="text-blue-500" /> Ativos de Capital (Máquinas)</h3>
               <div className="space-y-8">
                  <MacroInput label="Máquina ALFA ($)" val={macro.machineryValues.alfa} onChange={v => setMacro(prev => ({...prev, machineryValues: {...prev.machineryValues, alfa: v}}))} />
                  <MacroInput label="Máquina BETA ($)" val={macro.machineryValues.beta} onChange={v => setMacro(prev => ({...prev, machineryValues: {...prev.machineryValues, beta: v}}))} />
@@ -181,8 +177,8 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
       )}
 
       {activeTab === 'macro' && (
-        <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-slate-900">
+        <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12 text-slate-900">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="space-y-6">
                  <div className="flex justify-between items-center">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><TrendingUp size={16} /> Taxa de Inflação Acumulada</label>

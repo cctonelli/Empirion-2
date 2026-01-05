@@ -1,4 +1,3 @@
-
 import { Branch, ChampionshipTemplate, MacroIndicators, Championship } from './types';
 
 // VERSIONAMENTO OFICIAL EMPIRION - v12.8 ORACLE
@@ -45,12 +44,16 @@ export const DEFAULT_MACRO: MacroIndicators = {
   marketingExpenseBase: 10200,
   machineryValues: { 
     alfa: 505000, 
-    beta: 1515000, // Substituindo permanentemente 'Bird'
+    beta: 1515000, 
     gama: 3030000 
   },
   sectorAvgSalary: 1313.00,
   stockMarketPrice: 60.09,
-  initialExchangeRateUSD: 5.25
+  initialExchangeRateUSD: 5.25,
+  difficulty: {
+    price_sensitivity: 2.0,
+    marketing_effectiveness: 1.0
+  }
 };
 
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
@@ -128,10 +131,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   }
 };
 
-/**
- * PROXY DE ACESSO ORACLE
- * Recupera conteúdo de página evitando referências circulares ou chaves undefined durante o build.
- */
 export const getPageContent = (slug: string) => {
   const branchKey = `branch-${slug}`;
   const activityKey = `activity-${slug}`;

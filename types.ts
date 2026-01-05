@@ -14,6 +14,17 @@ export type DeadlineUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'N/A';
 
+// Added Team interface to fix import errors in Supabase service and views
+export interface Team {
+  id: string;
+  name: string;
+  championship_id: string;
+  status?: string;
+  invite_code?: string;
+  master_key_enabled?: boolean;
+  created_at?: string;
+}
+
 export interface AuditLog {
   field_path: string;
   old_value: any;
@@ -127,6 +138,11 @@ export interface MacroIndicators {
   [key: string]: any;
 }
 
+// Added AdvancedIndicators interface to fix import errors in simulation and gazette
+export interface AdvancedIndicators {
+  [key: string]: any;
+}
+
 export interface EcosystemConfig {
   scenarioType: ScenarioType;
   modalityType: ModalityType;
@@ -134,15 +150,6 @@ export interface EcosystemConfig {
   demandMultiplier: number;
   interestRate: number;
   marketVolatility: number;
-}
-
-export interface Team {
-  id: string;
-  name: string;
-  championship_id: string;
-  status?: string;
-  invite_code?: string;
-  master_key_enabled?: boolean;
 }
 
 export interface TeamProgress {
@@ -175,6 +182,7 @@ export interface Championship {
   initial_financials?: any;
   round_started_at?: string;
   is_trial?: boolean;
+  // Fixed: Updated from any[] to Team[] to resolve type errors in views
   teams?: Team[];
   created_at: string;
   sales_mode?: SalesMode;
@@ -251,8 +259,4 @@ export interface Modality {
     kpis: string[];
     accent_color?: string;
   };
-}
-
-export interface AdvancedIndicators {
-  [key: string]: any;
 }
