@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Users, 
@@ -13,7 +12,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { getPublicReports, submitCommunityVote } from '../services/supabase';
+import { getPublicReports, submitCommunityVote, supabase } from '../services/supabase';
 import { Championship, CommunityCriteria } from '../types';
 
 interface CommunityViewProps {
@@ -42,20 +41,26 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
 
   const handleVote = async (teamId: string) => {
     setSubmitting(true);
-    const vote = {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    const voteData = {
       championship_id: championship.id,
-      team_id: teamId,
       round: championship.current_round,
-      scores: ratings,
+      company_alias: reports.find(r => r.team_id === teamId)?.alias || 'Empresa Anônima',
+      user_id: session?.user?.id || null,
+      ratings: ratings,
       comment: comment
     };
 
-    const { error } = await submitCommunityVote(vote);
+    const { error } = await submitCommunityVote(voteData);
     if (!error) {
       setVotedTeams(prev => new Set(prev).add(teamId));
       setSelectedTeam(null);
       setRatings({});
       setComment('');
+    } else {
+      console.error("Evaluation Error:", error.message);
+      alert("Falha ao registrar voto. Protocolo Oracle interrompido.");
     }
     setSubmitting(false);
   };

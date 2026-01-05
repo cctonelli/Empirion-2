@@ -247,9 +247,23 @@ export const resetAlphaData = async () => {
   await supabase.from('trial_decisions').delete().eq('team_id', teamId);
 };
 
+/**
+ * Updates the ecosystem parameters of an arena.
+ * Aligns with the DDL where ecosystemConfig is stored within 'config' JSONB.
+ */
 export const updateEcosystem = async (championshipId: string, updates: any) => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_championships' : 'championships';
+  
+  // If updates contain ecosystemConfig, we must merge into config JSONB column
+  if (updates.ecosystemConfig) {
+    const { data: current } = await supabase.from(table).select('config').eq('id', championshipId).single();
+    if (current) {
+      updates.config = { ...current.config, ecosystemConfig: updates.ecosystemConfig };
+      delete updates.ecosystemConfig;
+    }
+  }
+  
   return await supabase.from(table).update(updates).eq('id', championshipId).select().single();
 };
 
@@ -265,12 +279,28 @@ export const getPublicReports = async (championshipId: string, round: number) =>
   };
 };
 
-// Fix: Missing export member submitCommunityVote
 /**
- * Submits a community evaluation for a team strategy.
+ * Submits community evaluations for a team strategy.
+ * Schema targets 'community_ratings' table.
  */
-export const submitCommunityVote = async (vote: any) => {
-  return await supabase.from('community_votes').insert([vote]);
+export const submitCommunityVote = async (data: {
+  championship_id: string;
+  round: number;
+  company_alias: string;
+  user_id?: string | null;
+  ratings: Record<string, number>;
+  comment?: string;
+}) => {
+  const rows = Object.entries(data.ratings).map(([criteria, score]) => ({
+    championship_id: data.championship_id,
+    round: data.round,
+    company_alias: data.company_alias,
+    user_id: data.user_id || null,
+    criteria,
+    score,
+    comment: data.comment
+  }));
+  return await supabase.from('community_ratings').insert(rows);
 };
 
 export const fetchPageContent = async (slug: string, lang: string) => {
