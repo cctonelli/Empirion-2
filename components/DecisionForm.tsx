@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, 
@@ -228,7 +227,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                   <div className="p-10 bg-white/[0.02] border border-white/5 rounded-[4rem] space-y-10 shadow-inner">
                      <h4 className="text-sm font-black uppercase text-amber-500 flex items-center gap-3 italic border-b border-white/5 pb-6"><Landmark size={22} /> Estrutura de Capital</h4>
                      <DecInput icon={<DollarSign/>} label="Tomar Empréstimo ($)" val={decisions.finance.loanRequest} onChange={v => updateDecision('finance.loanRequest', v)} />
-                     {/* Fix: Added missing TrendingUp icon to imports from lucide-react */}
                      <DecInput icon={<TrendingUp/>} label="Aplicação Financeira ($)" val={decisions.finance.application} onChange={v => updateDecision('finance.application', v)} />
                   </div>
                   <div className="space-y-8">

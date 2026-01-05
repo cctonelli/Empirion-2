@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Eye, CheckCircle2, AlertCircle, FileText, 
@@ -124,7 +123,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                    selectedTeam?.team_id === team.team_id ? 'border-orange-600 bg-orange-50 shadow-2xl scale-[1.02]' : 'bg-white border-slate-100 hover:shadow-xl'
                  }`}
                >
-                  {team.insolvent && (
+                  {team.rating === 'D' && (
                      <div className="absolute top-0 right-0 p-4 bg-rose-600 text-white animate-pulse">
                         <AlertOctagon size={20} />
                      </div>
@@ -134,14 +133,14 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                         {team.status === 'sealed' ? <CheckCircle2 size={20}/> : team.status === 'draft' ? <Activity size={20}/> : <Monitor size={20}/>}
                      </div>
                      <div className="text-right">
-                        <span className={`block text-[10px] font-black uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`}>{team.rating}</span>
+                        <span className={`block text-[10px] font-black uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 font-black animate-pulse' : 'text-slate-400'}`}>{team.rating}</span>
                         <div className={`w-12 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden`}>
-                           <div className={`h-full ${team.risk! > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${team.risk}%` }} />
+                           <div className={`h-full ${team.rating === 'D' ? 'bg-rose-600' : team.risk! > 60 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${team.risk}%` }} />
                         </div>
                      </div>
                   </div>
                   <h4 className="text-2xl font-black text-slate-900 uppercase italic leading-none">{team.team_name}</h4>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">{team.insolvent ? 'INSOLVÊNCIA DETETADA' : team.status === 'pending' ? 'AGUARDANDO CONEXÃO' : 'DECISÃO EM RASCUNHO'}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">{team.rating === 'D' ? 'INSOLVÊNCIA CRÍTICA DETETADA' : team.status === 'pending' ? 'AGUARDANDO CONEXÃO' : 'DECISÃO EM RASCUNHO'}</p>
                </button>
              ))}
           </div>
@@ -172,7 +171,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                         <div className="flex gap-2">
                            <button 
                              onClick={() => handleToggleMasterKey(selectedTeam.team_id, !!selectedTeam.master_key_enabled)}
-                             className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all ${selectedTeam.master_key_enabled ? 'bg-orange-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                             className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all ${selectedTeam.master_key_enabled ? 'bg-orange-600 text-white shadow-lg' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
                            >
                               <Key size={14} /> {selectedTeam.master_key_enabled ? 'Master Key Ativa' : 'Autorizar Submissão'}
                            </button>

@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
 export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
 export type SalesMode = 'internal' | 'external' | 'hybrid';
@@ -132,7 +131,7 @@ export interface Championship {
 }
 
 export interface MacroIndicators {
-  // Engine Properties
+  // Engine Properties (CamelCase)
   growthRate: number;
   inflationRate: number;
   interestRateTR: number;
@@ -155,11 +154,13 @@ export interface MacroIndicators {
   };
   active_event?: BlackSwanEvent | null;
 
-  // DB Fallbacks
+  // DB Aliases (Snake_case)
   inflation_rate?: number;
   interest_rate?: number;
   base_marketing_cost?: number;
   base_admin_cost?: number;
+  factory_max_capacity?: number;
+  base_freight_unit_cost?: number;
 }
 
 export interface UserProfile {

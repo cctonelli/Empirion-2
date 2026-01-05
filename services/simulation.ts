@@ -1,14 +1,14 @@
-
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, BlackSwanEvent, CreditRating, FinancialHealth } from '../types';
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
-  // Agora permite números negativos para suportar prejuízos reais no motor.
+  // Oracle Kernel v12.2: Permite números negativos para suportar prejuízos reais no motor.
   return isFinite(num) ? num : fallback;
 };
 
 /**
- * Motor Industrial Empirion v12.1 - Oracle Integrity Kernel (Vercel Build Stability)
+ * Motor Industrial Empirion v12.2 - Oracle Integrity Kernel
+ * Estabilização de build Vercel e suporte a insolvência crítica (Rating D).
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -18,9 +18,10 @@ export const calculateProjections = (
   previousState?: any,
   isRoundZero: boolean = false
 ) => {
-  // Mapeamento Dinâmico Robusto
+  // Mapeamento Dinâmico Robusto para Paridade de Banco de Dados
+  // Casting para 'any' é necessário para evitar erros de tipagem dinâmica no build rigoroso do Vercel.
   const getAttr = (camel: string, snake: string, fallback: any) => {
-    const data = indicators as any; // Bypass TS strictness for dynamic DB mapping
+    const data = indicators as any;
     if (data?.[snake] !== undefined) return data[snake];
     if (data?.[camel] !== undefined) return data[camel];
     return fallback;
@@ -31,10 +32,11 @@ export const calculateProjections = (
     interestRateTR: getAttr('interestRateTR', 'interest_rate', 3.0),
     marketingExpenseBase: getAttr('marketingExpenseBase', 'base_marketing_cost', 17165),
     baseAdminCost: getAttr('baseAdminCost', 'base_admin_cost', 114880),
+    factoryMaxCapacity: getAttr('avgProdPerMan', 'factory_max_capacity', 50000),
     providerPrices: indicators?.providerPrices || { mpA: 20.20, mpB: 40.40 },
     demand_regions: indicators?.demand_regions || [12000],
     sectorAvgSalary: indicators?.sectorAvgSalary || 1313,
-    distributionCostUnit: indicators?.distributionCostUnit || 50.50,
+    distributionCostUnit: getAttr('distributionCostUnit', 'base_freight_unit_cost', 50.50),
     difficulty: indicators?.difficulty || { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
     active_event: indicators?.active_event || null
   };
@@ -74,12 +76,12 @@ export const calculateProjections = (
   const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605, 717605);
   const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362);
 
-  // 2. Oracle Risk Core
+  // 2. Oracle Risk Node v3.0
   const totalDebt = prevDebt + decisions.finance.loanRequest;
   const debtToEquity = totalDebt / Math.max(prevEquity, 1);
   const is_bankrupt = prevEquity < 0;
 
-  // Lógica de Rating Expandida (A/B/C/D)
+  // Lógica de Rating Expandida com Suporte a Default (D)
   const rating: CreditRating = 
     is_bankrupt ? 'D' : 
     debtToEquity > 2.5 ? 'D' : 
@@ -88,7 +90,7 @@ export const calculateProjections = (
   
   const loanLimit = Math.max((prevEquity * 0.6) + (prevAssets * 0.1), 0);
   
-  // 3. Comercial & Demanda
+  // 3. Comercial & Demanda (Fórmula Exponencial)
   const regions = Object.values(decisions.regions || {});
   const avgPrice = regions.length > 0 ? regions.reduce((acc, r) => acc + sanitize(r.price, 372), 0) / regions.length : 372;
   
@@ -110,9 +112,9 @@ export const calculateProjections = (
   const mktScore = Math.log10(((totalMktPoints * (currentIndicators.difficulty?.marketing_effectiveness || 1.0))) + 10);
   const demandTotal = basePotential * priceScore * mktScore * (1 + (avgTermDays / 365));
   
-  // 4. Produção e Reajustes
+  // 4. Produção e Reajustes Inflacionários
   const currentOEE = (1.0 + (decisions.hr.trainingPercent / 1000) + (decisions.hr.participationPercent / 200)) * (evMod.productivity || 1);
-  const maxProduction = 30000 * (decisions.production.activityLevel / 100) * currentOEE;
+  const maxProduction = (currentIndicators.factoryMaxCapacity || 30000) * (decisions.production.activityLevel / 100) * currentOEE;
   const salesVolume = Math.min(demandTotal, maxProduction);
   const revenue = salesVolume * avgPrice;
 
@@ -134,7 +136,7 @@ export const calculateProjections = (
   const interestExp = totalDebt * (sanitize(currentIndicators.interestRateTR, 3.0) / 100);
   const netProfit = (ebitda - (prevAssets * 0.01) - interestExp) * 0.85;
 
-  // 6. Auditoria de Desembolso
+  // 6. Auditoria de Desembolso (Cash Flow Fidelity)
   const mpOutflow = decisions.production.paymentType === 0 ? mpCostTotal : 0;
   const cashInflow = revenue * (avgTermDays === 0 ? 1 : 0.4) + prevReceivables;
   const totalOutflow = mpOutflow + payrollTotal + interestExp + prevPayables + totalMarketingCost + distributionTotal + adminExpenses;
