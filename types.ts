@@ -60,7 +60,10 @@ export interface BlackSwanEvent {
   };
 }
 
-// Updated to any for nested financial objects (Cycles, NCG, etc.)
+/**
+ * AdvancedIndicators v12.8.2
+ * Flexibilizado para [key: string]: any para suportar objetos aninhados (Ciclos, NCG).
+ */
 export interface AdvancedIndicators {
   [key: string]: any;
 }

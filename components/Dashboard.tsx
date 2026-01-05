@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
-  TrendingUp, Activity, DollarSign, Target, Zap, BarChart3, 
-  Sparkles, Loader2, Users, ShieldCheck, Newspaper, Cpu, 
-  ChevronRight, RefreshCw, RotateCcw, Shield, FileEdit, PenTool, 
-  Eye, Lock, ClipboardList, Timer, Box
+  TrendingUp, Activity, DollarSign, Target, BarChart3, 
+  Sparkles, Loader2, ShieldCheck, Newspaper, Cpu, 
+  ChevronRight, RotateCcw, Shield, FileEdit, PenTool, 
+  Eye, Lock, Timer, Box
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -14,13 +14,13 @@ import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { supabase, resetAlphaData, getChampionships, getUserProfile } from '../services/supabase';
-import { BlackSwanEvent, ScenarioType, MessageBoardItem, Branch, Championship, UserRole, AdvancedIndicators } from '../types';
+import { ScenarioType, MessageBoardItem, Branch, Championship, UserRole } from '../types';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
   const [aiNews, setAiNews] = useState<string>('');
   const [isInsightLoading, setIsInsightLoading] = useState(true);
-  const [scenarioType, setScenarioType] = useState<ScenarioType>('simulated');
+  const [scenarioType] = useState<ScenarioType>('simulated');
   const [isAlphaUser, setIsAlphaUser] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [showDecisionForm, setShowDecisionForm] = useState(false);
@@ -39,12 +39,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   const isObserver = userRole === 'observer';
 
-  // Sincronização de Indicadores Avançados
+  // Sincronização profunda de métricas v12.8.2
   const advancedMetrics = useMemo(() => {
     return activeArena?.advanced_indicators || {
       ciclos: { operacional: 60, financeiro: 35 },
       scissors_effect: { ncg: 150000, gap: -50000 },
-      productivity: { oee: 84.2, csat: 9.1 }
+      productivity: { oee: 84.2, csat: 9.1 },
+      market_share: 12.5
     };
   }, [activeArena]);
 
@@ -181,7 +182,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               <div className="p-2 bg-white/20 rounded-lg"><Shield size={16} className="text-white" /></div>
               <div>
                  <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Sandbox Mode Active</span>
-                 <p className="text-[8px] font-bold text-orange-200 uppercase tracking-[0.2em] mt-0.5">Trial persisting to Oracle Tables</p>
+                 <p className="text-[8px] font-bold text-orange-200 uppercase tracking-[0.2em] mt-0.5">Sessão Temporária v12.8.2 Oracle</p>
               </div>
            </div>
            <button 
@@ -206,12 +207,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             {isObserver && (
               <div className="ml-4 px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-full flex items-center gap-2">
                  <Eye size={12} className="text-blue-400" />
-                 <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Observer Mode (Read-Only)</span>
+                 <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Observer Mode</span>
               </div>
             )}
           </div>
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full border border-white/5">
-             {activeArena?.name || 'Sincronizando...'} • {activeTeamName || 'Equipe Alpha'}
+             {activeArena?.name || 'Carregando Arena...'} • {activeTeamName || 'Equipe Alpha'}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -234,7 +235,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                 onClick={() => !isObserver && setShowDecisionForm(true)} 
                 icon={<FileEdit size={28}/>}
                 title="Folha de Decisão"
-                subtitle={isObserver ? 'Acesso Restrito' : `Protocolo Ciclo 0${(activeArena?.current_round || 0) + 1}`}
+                subtitle={isObserver ? 'Acesso Restrito' : `Ciclo 0${(activeArena?.current_round || 0) + 1}`}
                 color="blue"
                 disabled={isObserver}
              />
@@ -255,7 +256,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
              />
           </div>
 
-          {/* NOVO BLOCO: TACTICAL EFFICIENCY (NCG & CICLOS) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <EfficiencyCard 
                label="NCG (Capital de Giro)" 
@@ -267,14 +267,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
              <EfficiencyCard 
                label="Ciclo Financeiro" 
                val={`${advancedMetrics.ciclos.financeiro} dias`} 
-               trend="Stable" 
+               trend="Fidelity Stable" 
                positive={true}
                icon={<Timer size={20}/>}
              />
              <EfficiencyCard 
                label={branch === 'industrial' ? "OEE Factory" : "CSAT Index"} 
                val={branch === 'industrial' ? `${advancedMetrics.productivity.oee}%` : `${advancedMetrics.productivity.csat}/10`} 
-               trend="+1.2%" 
+               trend={activeArena?.current_round === 0 ? "Initial" : "+1.2%"} 
                positive={true}
                icon={<Activity size={20}/>}
              />
@@ -295,8 +295,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                  {isInsightLoading ? (
                    <div className="space-y-3"><div className="h-4 bg-white/5 rounded-full w-3/4 animate-pulse"></div><div className="h-4 bg-white/5 rounded-full w-full animate-pulse"></div></div>
                  ) : (
-                   <p className="text-sm font-medium text-slate-300 leading-relaxed font-mono">
-                     <span className="text-orange-500 font-black italic">MSG_P{(activeArena?.current_round || 0) + 1}:</span> {aiInsight || "Aguardando sincronização de briefing regional..."}
+                   <p className="text-sm font-medium text-slate-300 leading-relaxed font-mono italic">
+                     <span className="text-orange-500 font-black">MSG_P{(activeArena?.current_round || 0) + 1}:</span> {aiInsight || "Aguardando sincronização de briefing regional."}
                    </p>
                  )}
               </div>
@@ -311,7 +311,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </h3>
               <div className="space-y-10">
                  <KpiRow label="Lucro Líquido" value={activeArena?.current_round === 0 ? "$ 0" : "$ 73.928"} trend={activeArena?.current_round === 0 ? "STABLE" : "+100%"} positive icon={<DollarSign size={16}/>} />
-                 <KpiRow label="Rating Oracle" value={activeArena?.current_round === 0 ? "AAA" : "AAA"} trend="OK" positive icon={<ShieldCheck size={16}/>} />
+                 <KpiRow label="Rating Oracle" value={activeArena?.current_round === 0 ? "AAA" : "AAA"} trend="Audit OK" positive icon={<ShieldCheck size={16}/>} />
                  <KpiRow label="Market Share" value={`${advancedMetrics.market_share || 12.5}%`} trend="Target" positive icon={<TrendingUp size={16}/>} />
               </div>
            </div>

@@ -1,4 +1,4 @@
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, BlackSwanEvent, CreditRating, FinancialHealth, ProjectionResult } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, CreditRating, ProjectionResult } from '../types';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
@@ -6,8 +6,8 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * EXTRAÇÃO DEFENSIVA DE MAQUINÁRIO v12.8
- * Padronização total para alfa/beta/gama. 
+ * EXTRAÇÃO DEFENSIVA DE MAQUINÁRIO v12.8.2
+ * Padronização total para chaves alfa, beta e gama.
  */
 export const getSafeMachineryValues = (macro: MacroIndicators | undefined) => {
   const defaults = { alfa: 505000, beta: 1515000, gama: 3030000 };
@@ -93,7 +93,7 @@ export const calculateProjections = (
     risk = 15;
   }
 
-  // 4. KPIs Avançados (AdvancedIndicators) - Bernard Fidelity Engine
+  // 4. KPIs Avançados (AdvancedIndicators) - Bernard Fidelity Engine Integration
   const advanced: AdvancedIndicators = {
     ciclos: {
       operacional: branch === 'industrial' ? 60 : 30,
@@ -101,8 +101,8 @@ export const calculateProjections = (
       economico: 25
     },
     scissors_effect: {
-      ncg: revenue * 0.12, // Necessidade de Capital de Giro
-      gap: (revenue * 0.12) - prevCash
+      ncg: revenue * 0.12, // Necessidade de Capital de Giro estimativa
+      gap: (revenue * 0.12) - (prevCash + revenue - operatingCosts)
     },
     productivity: {
       oee: branch === 'industrial' ? 84.2 : undefined,
