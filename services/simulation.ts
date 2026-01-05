@@ -1,13 +1,13 @@
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, BlackSwanEvent, CreditRating, FinancialHealth } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, AdvancedIndicators, BlackSwanEvent, CreditRating, FinancialHealth, ProjectionResult } from '../types';
 
 const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
-  // Permite números negativos para suportar prejuízos reais.
+  // Oracle Kernel v12.5: Permite números negativos para suportar prejuízos reais.
   return isFinite(num) ? num : fallback;
 };
 
 /**
- * Motor Industrial Empirion v12.4 - Oracle Integrity Kernel
+ * Motor Industrial Empirion v12.5 - Oracle Integrity Kernel
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -16,8 +16,8 @@ export const calculateProjections = (
   indicators?: MacroIndicators,
   previousState?: any,
   isRoundZero: boolean = false
-) => {
-  // Mapeamento Dinâmico Robusto (Vercel Fix)
+): ProjectionResult => {
+  // Mapeamento Dinâmico Robusto com Any-Casting (Vercel Build Fix)
   const getAttr = (camel: string, snake: string, fallback: any) => {
     const data = indicators as any;
     if (data?.[snake] !== undefined) return data[snake];
@@ -44,11 +44,13 @@ export const calculateProjections = (
   const evMod = event?.modifiers || { inflation: 0, demand: 0, interest: 0, productivity: 1, cost_multiplier: 1 };
   
   if (isRoundZero) {
+    // Fixed: Removed 'lostSales' and 'receivables' from the object literal because they are not defined in the ProjectionResult interface.
     return {
       revenue: 3322735, ebitda: 1044555, netProfit: 73928, salesVolume: 8932,
-      lostSales: 0, totalMarketingCost: 802702, debtRatio: 44.9,
-      marketShare: 12.5, cashFlowNext: 840200, receivables: 1823735,
-      loanLimit: 2500000, creditRating: 'AAA' as CreditRating,
+      totalMarketingCost: 802702, debtRatio: 44.9,
+      marketShare: 12.5, cashFlowNext: 840200,
+      loanLimit: 2500000, totalOutflow: 0, totalLiquidity: 840200,
+      creditRating: 'AAA' as CreditRating,
       health: { 
         liquidity_ratio: 1.5, 
         debt_to_equity: 0.6, 
@@ -60,8 +62,6 @@ export const calculateProjections = (
       statements: null,
       indicators: getRoundZeroAdvanced(),
       costBreakdown: [],
-      totalOutflow: 0, 
-      totalLiquidity: 840200,
       activeEvent: null
     };
   }

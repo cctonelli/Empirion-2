@@ -15,9 +15,31 @@ export type DiscreteTerm = 0 | 1 | 2;
 export interface FinancialHealth {
   liquidity_ratio?: number;
   debt_to_equity?: number;
-  insolvency_risk?: number; // 0 to 100
-  rating: CreditRating;
-  is_bankrupt: boolean;
+  insolvency_risk?: number;
+  rating?: CreditRating;
+  is_bankrupt?: boolean;
+}
+
+export interface ProjectionResult {
+  revenue: number;
+  ebitda: number;
+  netProfit: number;
+  salesVolume: number;
+  totalMarketingCost: number;
+  debtRatio: number;
+  marketShare: number;
+  cashFlowNext: number;
+  totalOutflow: number;
+  totalLiquidity: number;
+  loanLimit: number;
+  creditRating?: CreditRating;
+  health?: FinancialHealth;
+  suggestRecovery?: boolean;
+  capexBlocked?: boolean;
+  statements?: any;
+  indicators?: AdvancedIndicators;
+  costBreakdown?: any[];
+  activeEvent?: BlackSwanEvent | null;
 }
 
 export interface BlackSwanEvent {
