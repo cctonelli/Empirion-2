@@ -8,7 +8,7 @@ import {
   Clock, TrendingUp, ArrowDown, TrendingDown
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
-import { calculateProjections, sanitize } from '../services/simulation';
+import { calculateProjections, sanitize, getRiskSpread } from '../services/simulation';
 import { DecisionData, Branch, Championship, MacroIndicators, ProjectionResult, CreditRating } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DEFAULT_MACRO } from '../constants';
@@ -37,6 +37,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [masterKeyUnlocked, setMasterKeyUnlocked] = useState(false);
   const [helpRequested, setHelpRequested] = useState(false);
+  const [prevRoundData, setPrevRoundData] = useState<any>(null);
 
   useEffect(() => {
     const fetchContext = async () => {
@@ -47,6 +48,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
           setActiveArena(found);
           const { data: teamData } = await supabase.from('teams').select('master_key_enabled').eq('id', teamId).maybeSingle();
           if (teamData?.master_key_enabled) setMasterKeyUnlocked(true);
+          
+          // Fetch previous round snapshot for comparison
+          const { data: prevData } = await supabase.from('companies')
+            .select('*')
+            .eq('team_id', teamId)
+            .eq('round', found.current_round)
+            .maybeSingle();
+          setPrevRoundData(prevData);
         }
       }
     };
@@ -57,11 +66,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const projections: ProjectionResult | null = useMemo(() => {
     const eco = activeArena?.ecosystemConfig || { inflationRate: 0.01, demandMultiplier: 1.0, interestRate: 0.03, marketVolatility: 0.05, scenarioType: 'simulated', modalityType: 'standard' };
     try {
-      return calculateProjections(decisions, branch, eco, currentIndicators);
+      return calculateProjections(decisions, branch, eco, currentIndicators, prevRoundData);
     } catch (e) {
       return null;
     }
-  }, [decisions, branch, activeArena, currentIndicators]);
+  }, [decisions, branch, activeArena, currentIndicators, prevRoundData]);
 
   const isInsolvent = (projections?.totalOutflow ?? 0) > (projections?.totalLiquidity ?? 0);
   const canSubmit = !isInsolvent || masterKeyUnlocked;
@@ -86,11 +95,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
        created_at: new Date().toISOString()
     });
     alert("NOTIFICAÇÃO ENVIADA: O sinal de socorro foi transmitido para o Command Center do Tutor.");
-  };
-
-  const getRiskSpreadValue = (rating: CreditRating): number => {
-    const spreads: Record<string, number> = { 'AAA': 0, 'AA': 2.0, 'A': 5.0, 'B': 10.0, 'C': 20.0, 'D': 40.0, 'N/A': 10.0 };
-    return spreads[rating] ?? 10.0;
   };
 
   return (
@@ -133,7 +137,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         <AnimatePresence mode="wait">
           <motion.div key={STEPS[activeStep].id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             
-            {/* NOTIFICAÇÃO DE REBAIXAMENTO (v2.86) */}
+            {/* ALERTA DE REBAIXAMENTO (v2.86) */}
             <RatingAlert 
               currentRating={projections?.health?.rating} 
               previousRating={projections?.health?.previous_rating} 
@@ -246,7 +250,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      <DecInput icon={<DollarSign/>} label="Tomar Empréstimo ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} />
                      <DecInput icon={<TrendingUp/>} label="Aplicação Financeira ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} />
                      
-                     {/* Alerta de Custo de Capital Estimado (v2.85) */}
+                     {/* MONITOR DE CUSTO DE CAPITAL (v2.85) */}
                      {projections?.health?.rating && (
                        <div className="mt-4 p-5 bg-slate-900/80 rounded-[2rem] border border-white/10 shadow-xl space-y-4">
                           <div className="flex justify-between items-center">
@@ -255,18 +259,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                 <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Custo de Capital (WACC)</span>
                              </div>
                              <span className={`text-sm font-black font-mono italic ${projections.health.rating === 'C' || projections.health.rating === 'D' ? 'text-rose-500 animate-pulse' : 'text-blue-400'}`}>
-                                {(sanitize(currentIndicators.interestRateTR, 3.0) + getRiskSpreadValue(projections.health.rating as CreditRating)).toFixed(2)}% p.p.
+                                {(sanitize(currentIndicators.interestRateTR, 3.0) + getRiskSpread(projections.health.rating as CreditRating)).toFixed(2)}% p.p.
                              </span>
                           </div>
                           <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
                              <motion.div 
                                initial={{ width: 0 }}
-                               animate={{ width: `${Math.min((sanitize(currentIndicators.interestRateTR, 3.0) + getRiskSpreadValue(projections.health.rating as CreditRating)) * 2, 100)}%` }}
+                               animate={{ width: `${Math.min((sanitize(currentIndicators.interestRateTR, 3.0) + getRiskSpread(projections.health.rating as CreditRating)) * 2, 100)}%` }}
                                className={`h-full ${projections.health.rating === 'D' ? 'bg-rose-600' : projections.health.rating === 'C' ? 'bg-rose-500' : 'bg-blue-500'}`} 
                              />
                           </div>
                           <p className="text-[9px] text-slate-500 font-bold italic leading-relaxed uppercase">
-                             * Seu rating atual ({projections.health.rating}) injeta um spread de risco de {getRiskSpreadValue(projections.health.rating as CreditRating)}% sobre a taxa base de {currentIndicators.interestRateTR}%.
+                             * Seu rating atual ({projections.health.rating}) injeta um spread de risco de {getRiskSpread(projections.health.rating as CreditRating)}% sobre a taxa base de {currentIndicators.interestRateTR}%.
                           </p>
                        </div>
                      )}
@@ -284,13 +288,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <span className={`text-lg font-black italic ${(projections?.debtRatio ?? 0) > 60 ? 'text-rose-500' : 'text-emerald-500'}`}>{(projections?.debtRatio ?? 0).toFixed(1)}%</span>
                            </div>
                            
-                           {/* Detalhamento do Custo da Dívida */}
+                           {/* DETALHAMENTO DOS JUROS REAIS */}
                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-4">
                               <div className="flex justify-between items-end">
                                  <div>
                                     <span className="block text-[8px] font-black text-slate-400 uppercase">Spread de Risco</span>
                                     <span className={`text-xl font-mono font-black ${projections?.health?.is_downgraded ? 'text-rose-600' : 'text-blue-400'}`}>
-                                       +{getRiskSpreadValue(projections?.health?.rating as CreditRating).toFixed(2)}%
+                                       +{getRiskSpread(projections?.health?.rating as CreditRating).toFixed(2)}%
                                     </span>
                                  </div>
                                  <div className="text-right">

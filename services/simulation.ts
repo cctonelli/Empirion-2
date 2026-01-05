@@ -9,7 +9,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Helper: Detecta se o rating atual é pior que o anterior.
+ * Helper: Detecta se o rating atual é pior que o anterior (Protocolo v2.86).
  */
 export const isRatingLower = (current: CreditRating, previous: CreditRating): boolean => {
   const order: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D', 'N/A'];
@@ -21,9 +21,9 @@ export const isRatingLower = (current: CreditRating, previous: CreditRating): bo
 
 /**
  * Tabela de Spread de Risco - Protocolo v2.85
- * AAA: 0% | AA: 2% | A: 5% | B: 10% | C: 20% | D: 40%
+ * Atribui um prêmio de risco sobre a taxa base.
  */
-const getRiskSpread = (rating: CreditRating): number => {
+export const getRiskSpread = (rating: CreditRating): number => {
   const spreads: Record<string, number> = {
     'AAA': 0,
     'AA': 2.0,
@@ -38,7 +38,7 @@ const getRiskSpread = (rating: CreditRating): number => {
 
 /**
  * Motor Industrial Empirion v13.0 - Oracle Integrity Kernel
- * Final Blindagem Protocol v2.86 - Downgrade Detection
+ * Final Blindagem Protocol v2.86 - Downgrade Detection & Risk Premium
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -104,7 +104,7 @@ export const calculateProjections = (
     const prevReceivables = sanitize(previousState?.balance_sheet?.assets?.current?.receivables || 1823735, 1823735);
     const prevPayables = sanitize(previousState?.balance_sheet?.liabilities?.current?.suppliers || 717605, 717605);
     const prevDebt = sanitize(previousState?.balance_sheet?.liabilities?.total_debt || 3372362, 3372362);
-    const prevRating: CreditRating = previousState?.health?.rating || 'AAA';
+    const prevRating: CreditRating = (previousState?.health?.rating || previousState?.rating || 'AAA') as CreditRating;
 
     // 2. Oracle Risk Core
     const totalDebt = sanitize(prevDebt + decisions.finance.loanRequest, 0);
