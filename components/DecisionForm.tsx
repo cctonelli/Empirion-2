@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, FileText,
   MapPin, Boxes, Cpu, Info, Save, ChevronRight, ChevronLeft, ShieldAlert,
-  Lock, Unlock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, Coins
+  Lock, Unlock, AlertTriangle, Scale, UserPlus, UserMinus, GraduationCap, Coins, TrendingUp
 } from 'lucide-react';
 import { saveDecisions } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -76,7 +75,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
         </div>
       </header>
 
-      <main className="bg-slate-950 p-4 md:p-8 rounded-[2rem] border border-white/5 relative">
+      <main className="bg-slate-950 p-4 md:p-8 rounded-[2rem] border border-white/5 relative shadow-2xl">
         <AnimatePresence mode="wait">
           <motion.div key={STEPS[activeStep].id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             
@@ -106,7 +105,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
-            {/* 2. RECURSOS HUMANOS (CORRIGIDO) */}
+            {/* 2. RECURSOS HUMANOS */}
             {activeStep === 1 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
                  <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl space-y-6">
@@ -128,31 +127,57 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
               </div>
             )}
 
-            {/* 3. PRODUÇÃO */}
+            {/* 3. PRODUÇÃO & FORNECEDORES (EXPANDIDO) */}
             {activeStep === 2 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-                 <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl space-y-6">
-                    <h4 className="text-sm font-black uppercase text-blue-400 flex items-center gap-2 italic border-b border-white/5 pb-3"><Boxes size={16} /> Suprimentos MP</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                       <DecInput label="Compra MP-A" val={decisions.production.purchaseMPA} onChange={v => updateDecision('production.purchaseMPA', v)} />
-                       <DecInput label="Compra MP-B" val={decisions.production.purchaseMPB} onChange={v => updateDecision('production.purchaseMPB', v)} />
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto">
+                 <div className="lg:col-span-8 space-y-6">
+                    <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[3rem] space-y-8">
+                       <h4 className="text-sm font-black uppercase text-blue-400 flex items-center gap-2 italic border-b border-white/5 pb-4"><Boxes size={18} /> Ordem de Compra & Suprimentos</h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <DecInput label="Compra MP-A (Unid)" val={decisions.production.purchaseMPA} onChange={v => updateDecision('production.purchaseMPA', v)} />
+                          <DecInput label="Compra MP-B (Unid)" val={decisions.production.purchaseMPB} onChange={v => updateDecision('production.purchaseMPB', v)} />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase">Protocolo de Pagamento Insumos</label>
+                          <select value={decisions.production.paymentType} onChange={e => updateDecision('production.paymentType', Number(e.target.value))} className="w-full bg-slate-900 text-white py-4 px-6 rounded-2xl border border-white/10 font-bold text-sm outline-none focus:border-blue-500">
+                             <option value={0}>0 - À Vista (100%) - T+1</option>
+                             <option value={1}>1 - Diferido (100%) - T+2</option>
+                             <option value={2}>2 - Parcelado (50/50)</option>
+                          </select>
+                       </div>
                     </div>
-                    <select value={decisions.production.paymentType} onChange={e => updateDecision('production.paymentType', Number(e.target.value))} className="w-full bg-slate-900 text-white py-2 px-3 rounded-lg border border-white/5 font-bold text-xs">
-                       <option value={0}>0 - À Vista (100%)</option>
-                       <option value={1}>1 - Diferido (100%)</option>
-                       <option value={2}>2 - Parcelado (50/50)</option>
-                    </select>
+                    <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[3rem] space-y-6">
+                       <h4 className="text-sm font-black uppercase text-orange-500 flex items-center gap-2 italic border-b border-white/5 pb-4"><Cpu size={18} /> Escala de Atividade Industrial</h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <DecInput label="Nível Atividade (%)" val={decisions.production.activityLevel} onChange={v => updateDecision('production.activityLevel', v)} />
+                          <DecInput label="Investimento P&D ($)" val={decisions.production.rd_investment} onChange={v => updateDecision('production.rd_investment', v)} />
+                       </div>
+                    </div>
                  </div>
-                 <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl space-y-6 flex flex-col justify-between">
-                    <div className="space-y-6">
-                       <h4 className="text-sm font-black uppercase text-orange-500 flex items-center gap-2 italic border-b border-white/5 pb-3"><Cpu size={16} /> Escala Produtiva</h4>
-                       <DecInput label="Nível Atividade (%)" val={decisions.production.activityLevel} onChange={v => updateDecision('production.activityLevel', v)} />
+
+                 <aside className="lg:col-span-4 space-y-6">
+                    <div className="p-8 bg-blue-600/10 border border-blue-500/20 rounded-[3rem] space-y-6 shadow-xl">
+                       <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-600 rounded-lg text-white"><TrendingUp size={16}/></div>
+                          <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Painel de Cotações P0{round}</h4>
+                       </div>
+                       <div className="space-y-4">
+                          <PriceQuote label="MP-A (Base Oracle)" val="$ 20,20" trend="+2%" />
+                          <PriceQuote label="MP-B (Base Oracle)" val="$ 40,40" trend="+2%" />
+                          <PriceQuote label="Distribuição Unit." val="$ 50,50" trend="OK" />
+                          <PriceQuote label="Juros Fornecedor" val="2.0% AM" trend="FIXO" />
+                       </div>
+                       <div className="pt-6 border-t border-white/10">
+                          <p className="text-[9px] text-blue-300 font-bold uppercase leading-relaxed italic">
+                             *Cotação atualizada pelo motor SIAGRO/SIMCO. Reajustes automáticos aplicados no P0{round+1}.
+                          </p>
+                       </div>
                     </div>
-                    <div className="p-4 bg-blue-600/10 border border-blue-500/20 rounded-xl flex items-center gap-3">
-                       <Info size={14} className="text-blue-400" />
-                       <p className="text-[8px] font-bold text-blue-300 uppercase leading-tight">OEE acima de 100% gera custos fixos extraordinários.</p>
+                    <div className="p-6 bg-slate-900 border border-white/5 rounded-[2.5rem] flex items-center gap-4">
+                       <Info size={20} className="text-orange-500" />
+                       <p className="text-[9px] text-slate-400 font-medium leading-tight uppercase tracking-tighter">OEE industrial base: 100% = 30k unid. Atividade acima de 100% gera custo marginal de 1.5x.</p>
                     </div>
-                 </div>
+                 </aside>
               </div>
             )}
 
@@ -188,7 +213,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
                     <p className="text-slate-500 font-medium text-xs">Gestão de estabilidade e recuperação de unidade industrial.</p>
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <RecoveryCard active={decisions.legal.recovery_mode === 'none'} onClick={() => updateDecision('legal.recovery_mode', 'none')} title="Normal" icon={<CheckCircle2 size={18}/>} color="blue" desc="Operação plena." />
+                    <RecoveryCard active={decisions.legal.recovery_mode === 'none'} onClick={() => updateDecision('legal.recovery_mode', 'none')} title="Normal" icon={<FileText size={18}/>} color="blue" desc="Operação plena." />
                     <RecoveryCard active={decisions.legal.recovery_mode === 'extrajudicial'} onClick={() => updateDecision('legal.recovery_mode', 'extrajudicial')} title="REJ" icon={<AlertTriangle size={18}/>} color="amber" desc="Acordo Moderado." />
                     <RecoveryCard active={decisions.legal.recovery_mode === 'judicial'} onClick={() => updateDecision('legal.recovery_mode', 'judicial')} title="Rec. Judicial" icon={<ShieldAlert size={18}/>} color="rose" desc="Proteção Total." />
                  </div>
@@ -206,7 +231,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
                        <SummaryNode label="Status Legal" val={decisions.legal.recovery_mode.toUpperCase()} />
                        <SummaryNode label="Nível Atividade" val={`${decisions.production.activityLevel}%`} />
                     </div>
-                    <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, round, decisions); setIsSaving(false); alert("PROTOCOLADO COM SUCESSO."); }} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-white hover:text-orange-600 transition-all">
+                    <button onClick={async () => { setIsSaving(true); await saveDecisions(teamId, champId!, round, decisions); setIsSaving(false); alert("PROTOCOLADO COM SUCESSO."); }} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-white hover:text-orange-600 transition-all active:scale-95">
                        {isSaving ? <Loader2 className="animate-spin mx-auto" /> : "Transmitir Decisões de Período"}
                     </button>
                  </div>
@@ -214,7 +239,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
             )}
 
             <footer className="mt-6 pt-4 border-t border-white/5 flex justify-between">
-               <button onClick={() => setActiveStep(s => Math.max(0, s-1))} className="px-5 py-2 text-slate-500 font-black uppercase text-[7px] tracking-widest hover:text-white">Voltar</button>
+               <button onClick={() => setActiveStep(s => Math.max(0, s-1))} className="px-5 py-2 text-slate-500 font-black uppercase text-[7px] tracking-widest hover:text-white transition-all">Voltar</button>
                <button onClick={() => setActiveStep(s => Math.min(5, s+1))} className="px-8 py-3 bg-white text-slate-950 rounded-full font-black text-[8px] uppercase tracking-[0.2em] shadow-lg hover:bg-orange-600 hover:text-white transition-all">Próximo Protocolo</button>
             </footer>
           </motion.div>
@@ -225,12 +250,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round?: number
 };
 
 const DecInput = ({ label, val, onChange, icon }: any) => (
-  <div className="space-y-1.5 flex-1">
+  <div className="space-y-2 flex-1">
      <div className="flex items-center gap-2">
         {icon}
-        <label className="text-[8px] font-black text-slate-500 uppercase italic leading-none">{label}</label>
+        <label className="text-[9px] font-black text-slate-500 uppercase italic leading-none">{label}</label>
      </div>
-     <input type="number" value={val} onChange={e => onChange(Number(e.target.value))} className="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 font-mono font-bold text-white text-sm outline-none focus:border-orange-500 transition-all" />
+     <input type="number" value={val} onChange={e => onChange(Number(e.target.value))} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 font-mono font-bold text-white text-base outline-none focus:border-orange-500 transition-all" />
   </div>
 );
 
@@ -238,6 +263,16 @@ const DecInputCompact = ({ label, val, onChange }: any) => (
   <div className="space-y-0.5">
      <label className="text-[7px] font-black text-slate-600 uppercase italic leading-none">{label}</label>
      <input type="number" value={val} onChange={e => onChange(Number(e.target.value))} className="w-full bg-slate-950 border border-white/5 rounded-lg py-1.5 px-2 font-mono font-bold text-white text-[11px] outline-none focus:border-orange-500 transition-all" />
+  </div>
+);
+
+const PriceQuote = ({ label, val, trend }: any) => (
+  <div className="flex justify-between items-center group">
+     <span className="text-[8px] font-black text-blue-300 uppercase tracking-tighter">{label}</span>
+     <div className="text-right">
+        <span className="block text-sm font-black text-white italic font-mono leading-none">{val}</span>
+        <span className="text-[7px] font-black text-emerald-400 uppercase">{trend}</span>
+     </div>
   </div>
 );
 
@@ -255,7 +290,5 @@ const RecoveryCard = ({ active, onClick, title, icon, color, desc }: any) => (
      <p className="text-[8px] text-slate-400 font-medium leading-tight">{desc}</p>
   </button>
 );
-
-const CheckCircle2 = (props: any) => <FileText {...props} />;
 
 export default DecisionForm;
