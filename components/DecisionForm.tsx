@@ -3,11 +3,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, 
   ChevronRight, ChevronLeft, ShieldCheck, Activity, Scale, 
-  Zap, Landmark, Shield, AlertTriangle
+  Zap, Landmark, Shield, AlertTriangle, Brain, Sparkles
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
-import { calculateProjections, sanitize } from '../services/simulation';
-import { DecisionData, Branch, Championship, MacroIndicators, ProjectionResult, CreditRating, EcosystemConfig } from '../types';
+import { calculateProjections } from '../services/simulation';
+import { getLiveDecisionAdvice } from '../services/gemini';
+import { DecisionData, Branch, Championship, ProjectionResult, CreditRating, EcosystemConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DEFAULT_MACRO } from '../constants';
 import { InsolvencyAlert } from './InsolvencyAlert';
@@ -36,6 +37,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [showInsolvencyModal, setShowInsolvencyModal] = useState(false);
   const [prevRoundData, setPrevRoundData] = useState<any>(null);
+  
+  // AI Coach State
+  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
     const fetchContext = async () => {
@@ -73,6 +78,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const rating = projections?.health?.rating || 'AAA';
   const isInsolvent = rating === 'C' || rating === 'D';
 
+  const handleConsultStrategos = async () => {
+    setIsAiLoading(true);
+    const advice = await getLiveDecisionAdvice(decisions, branch);
+    setAiAdvice(advice);
+    setIsAiLoading(false);
+  };
+
   const handleSubmit = async () => {
     if (isInsolvent && !showInsolvencyModal) {
       setShowInsolvencyModal(true);
@@ -83,77 +95,113 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions);
       alert("PROTOCOLO TRANSMITIDO COM SUCESSO.");
     } catch (e) {
-      alert("FALHA NA TRANSMISSÃO: Link neural instável.");
+      alert("FALHA NA TRANSMISSÃO.");
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-4 pb-32 animate-in fade-in duration-700">
+    <div className="max-w-[1600px] mx-auto space-y-6 pb-32 animate-in fade-in duration-700 grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
       <InsolvencyAlert rating={rating as CreditRating} isOpen={showInsolvencyModal} onClose={() => setShowInsolvencyModal(false)} />
 
-      <header className="bg-slate-900 border border-white/10 p-4 rounded-[2rem] shadow-2xl flex items-center justify-between">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 md:pb-0">
-           {STEPS.map((s, idx) => (
-             <button 
-               key={s.id} 
-               onClick={() => setActiveStep(idx)} 
-               className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all whitespace-nowrap ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5'}`}
-             >
-                <s.icon size={16} />
-                <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block">{s.label}</span>
-             </button>
-           ))}
-        </div>
-        <div className="pr-6 text-right shrink-0">
-           <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Oracle Standing</span>
-           <span className={`text-2xl font-black italic leading-none ${rating === 'D' ? 'text-rose-500' : rating === 'C' ? 'text-amber-500' : 'text-emerald-400'}`}>{rating}</span>
-        </div>
-      </header>
+      <div className="lg:col-span-3 space-y-6">
+        <header className="bg-slate-900 border border-white/10 p-4 rounded-[2rem] shadow-2xl flex items-center justify-between">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+             {STEPS.map((s, idx) => (
+               <button 
+                 key={s.id} 
+                 onClick={() => setActiveStep(idx)} 
+                 className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all whitespace-nowrap ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5'}`}
+               >
+                  <s.icon size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden xl:block">{s.label}</span>
+               </button>
+             ))}
+          </div>
+          <div className="pr-6 text-right shrink-0">
+             <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Oracle Standing</span>
+             <span className={`text-2xl font-black italic leading-none ${rating === 'D' ? 'text-rose-500' : rating === 'C' ? 'text-amber-500' : 'text-emerald-400'}`}>{rating}</span>
+          </div>
+        </header>
 
-      <main className="bg-slate-950/50 backdrop-blur-xl p-12 rounded-[4rem] border border-white/5 shadow-[0_50px_100px_rgba(0,0,0,0.5)] min-h-[600px] flex flex-col items-center justify-center">
-         {activeStep === 5 ? (
-           <div className="text-center space-y-12 max-w-2xl">
-              <div className="space-y-4">
-                 <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Selo de Integridade</h2>
-                 <p className="text-slate-500 font-bold uppercase tracking-[0.3em] italic leading-relaxed">
-                   "A transmissão do ciclo {(activeArena?.current_round || 0) + 1} exige a validação do comitê executivo. O Oráculo auditou sua projeção com Rating {rating}."
-                 </p>
-              </div>
-
-              {isInsolvent && (
-                <div className="p-6 bg-rose-500/10 border border-rose-500/20 rounded-3xl flex items-center gap-6 text-left">
-                  <div className="p-3 bg-rose-600 text-white rounded-xl shadow-lg animate-pulse"><AlertTriangle size={24}/></div>
-                  <div>
-                    <span className="block text-[10px] font-black text-rose-500 uppercase tracking-widest">Alerta de Risco</span>
-                    <p className="text-xs font-bold text-rose-200">Sua unidade está operando em zona de insolvência técnica. A transmissão é permitida, mas o risco de encerramento do nodo é alto.</p>
-                  </div>
+        <main className="bg-slate-950/50 backdrop-blur-xl p-12 rounded-[4rem] border border-white/5 shadow-2xl min-h-[600px] flex flex-col items-center justify-center">
+           {activeStep === 5 ? (
+             <div className="text-center space-y-12 max-w-2xl">
+                <div className="space-y-4">
+                   <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Selo de Integridade</h2>
+                   <p className="text-slate-500 font-bold uppercase tracking-[0.3em] italic leading-relaxed">
+                     A transmissão do ciclo {(activeArena?.current_round || 0) + 1} exige a validação do Oráculo. Rating Atual: {rating}.
+                   </p>
                 </div>
-              )}
+                <button 
+                  onClick={handleSubmit}
+                  disabled={isSaving}
+                  className={`px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center gap-6 ${isInsolvent ? 'bg-rose-600 text-white' : 'bg-orange-600 text-white'}`}
+                >
+                   {isSaving ? <Loader2 className="animate-spin" /> : <><ShieldCheck size={24}/> Transmitir Nodo</>}
+                </button>
+             </div>
+           ) : (
+             <div className="w-full space-y-8 opacity-40 hover:opacity-100 transition-opacity">
+                <p className="text-center text-slate-500 font-black uppercase tracking-[0.4em] italic">Módulo de Entrada em Desenvolvimento - Use o formulário padrão v12.8</p>
+             </div>
+           )}
+        </main>
+      </div>
 
-              <button 
-                onClick={handleSubmit}
-                disabled={isSaving}
-                className={`px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center gap-6 ${isInsolvent ? 'bg-rose-600 text-white' : 'bg-orange-600 text-white'}`}
-              >
-                 {isSaving ? <Loader2 className="animate-spin" /> : <><ShieldCheck size={24}/> Transmitir Nodo {branch?.toUpperCase()}</>}
-              </button>
-           </div>
-         ) : (
-           <div className="text-center space-y-8 max-w-md opacity-30">
-              <div className="p-10 bg-white/5 rounded-full w-fit mx-auto border border-white/5">
-                <Activity size={100} className="text-slate-700" />
-              </div>
-              <div>
-                <p className="text-2xl font-black uppercase text-slate-500 tracking-[0.2em] italic">Módulo em Edição</p>
-                <p className="text-sm font-bold text-slate-600 uppercase mt-4">Preencha os dados estratégicos para habilitar o selo de transmissão.</p>
-              </div>
-           </div>
-         )}
-      </main>
+      {/* STRATEGOS LIVE COACH SIDEBAR */}
+      <aside className="lg:col-span-1 space-y-6">
+         <div className="bg-slate-900 border border-white/10 rounded-[3rem] p-10 space-y-8 shadow-2xl sticky top-24">
+            <div className="flex items-center gap-4">
+               <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-500/20">
+                  <Brain size={24} />
+               </div>
+               <div>
+                  <h3 className="text-lg font-black text-white uppercase italic">Strategos Coach</h3>
+                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Análise Tática Live</p>
+               </div>
+            </div>
+
+            <div className="p-6 bg-slate-950/80 rounded-3xl border border-white/5 space-y-4">
+               {aiAdvice ? (
+                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs font-medium text-slate-300 leading-relaxed italic">
+                   "{aiAdvice}"
+                 </motion.p>
+               ) : (
+                 <p className="text-xs font-medium text-slate-600 leading-relaxed uppercase tracking-tighter">
+                   Solicite uma auditoria rápida das suas decisões atuais antes de selar o período.
+                 </p>
+               )}
+            </div>
+
+            <button 
+              onClick={handleConsultStrategos}
+              disabled={isAiLoading}
+              className="w-full py-5 bg-indigo-600 hover:bg-white hover:text-indigo-950 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl active:scale-95 disabled:opacity-50"
+            >
+               {isAiLoading ? <Loader2 className="animate-spin" size={16}/> : <><Sparkles size={16}/> Consultar Oráculo</>}
+            </button>
+
+            <div className="pt-8 border-t border-white/5">
+               <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Projeção do Oráculo</h4>
+               <div className="space-y-4">
+                  <MiniMetric label="Net Profit" val={`$ ${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) > 0} />
+                  <MiniMetric label="Cash Flow" val={`$ ${(projections?.statements.cash_flow.total || 0).toLocaleString()}`} pos={(projections?.statements.cash_flow.total || 0) > 0} />
+                  <MiniMetric label="Market Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos={true} />
+               </div>
+            </div>
+         </div>
+      </aside>
     </div>
   );
 };
+
+const MiniMetric = ({ label, val, pos }: any) => (
+  <div className="flex justify-between items-center">
+     <span className="text-[8px] font-bold text-slate-500 uppercase">{label}</span>
+     <span className={`text-xs font-black font-mono italic ${pos ? 'text-emerald-400' : 'text-rose-500'}`}>{val}</span>
+  </div>
+);
 
 export default DecisionForm;
