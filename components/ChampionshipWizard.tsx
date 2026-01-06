@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Settings, Globe, Loader2, 
@@ -7,10 +8,10 @@ import {
   FileText, ShieldAlert, Zap, Flame, Leaf, Eye, EyeOff,
   Users, Clock, Calendar, Hourglass, PenTool, Layout,
   Shield, UserCheck, Landmark, Coins, TrendingUp,
-  History
+  History, Map, Flag, Cpu, Bot
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE } from '../constants';
-import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode } from '../types';
+import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode, RegionType, AnalysisSource } from '../types';
 import { createChampionshipWithTeams } from '../services/supabase';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
@@ -28,12 +29,16 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     branch: 'industrial' as Branch,
     sales_mode: 'hybrid' as SalesMode,
     scenario_type: 'simulated' as ScenarioType,
+    region_type: 'mixed' as RegionType,
+    analysis_source: 'parameterized' as AnalysisSource,
     modality_type: 'standard' as ModalityType,
     transparency_level: 'medium' as TransparencyLevel,
     gazeta_mode: 'anonymous' as GazetaMode,
     observers: [] as string[],
     observerInput: '',
     total_rounds: 12,
+    regions_count: 9, 
+    bots_count: 2, // Default v12.9
     initial_share_price: DEFAULT_INITIAL_SHARE_PRICE,
     teams_limit: 8,
     currency: 'BRL',
@@ -53,7 +58,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   });
 
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
-  const [teams, setTeams] = useState<{ name: string }[]>([]);
+  const [teams, setTeams] = useState<{ name: string, is_bot?: boolean }[]>([]);
 
   useEffect(() => {
     if (selectedTemplate) {
@@ -64,26 +69,36 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         modality_type: selectedTemplate.config.modality_type,
         sales_mode: selectedTemplate.config.sales_mode,
         scenario_type: selectedTemplate.config.scenario_type,
+        region_type: selectedTemplate.config.region_type || 'mixed',
+        analysis_source: selectedTemplate.config.analysis_source || 'parameterized',
         transparency_level: selectedTemplate.config.transparency_level,
         gazeta_mode: selectedTemplate.config.gazeta_mode || 'anonymous',
         deadline_value: selectedTemplate.config.deadline_value,
         deadline_unit: selectedTemplate.config.deadline_unit,
         round_frequency_days: selectedTemplate.config.round_frequency_days,
-        total_rounds: selectedTemplate.config.total_rounds
+        total_rounds: selectedTemplate.config.total_rounds,
+        regions_count: selectedTemplate.config.regions_count || 9,
+        bots_count: selectedTemplate.config.bots_count || 2,
+        teams_limit: selectedTemplate.config.teams_limit || 8
       }));
       setFinancials(selectedTemplate.initial_financials || INITIAL_FINANCIAL_TREE);
     }
   }, [selectedTemplate]);
 
   useEffect(() => {
-    const currentCount = teams.length;
-    if (currentCount !== formData.teams_limit) {
-      const newTeams = Array.from({ length: formData.teams_limit }).map((_, i) => ({
-        name: teams[i]?.name || `Equipe ${String.fromCharCode(65 + i)}` 
-      }));
-      setTeams(newTeams);
-    }
-  }, [formData.teams_limit]);
+    const total = formData.teams_limit;
+    const bots = Math.min(formData.bots_count, total);
+    const humans = total - bots;
+
+    const newTeams = Array.from({ length: total }).map((_, i) => {
+      const isBot = i >= humans;
+      return {
+        name: teams[i]?.name || (isBot ? `AI BOT Unit 0${i - humans + 1}` : `Equipe Strategos ${String.fromCharCode(65 + i)}`),
+        is_bot: isBot
+      };
+    });
+    setTeams(newTeams);
+  }, [formData.teams_limit, formData.bots_count]);
 
   const handleLaunch = async () => {
     setIsSubmitting(true);
@@ -99,6 +114,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         is_public: true,
         current_round: 0,
         total_rounds: formData.total_rounds,
+        regions_count: formData.regions_count,
+        bots_count: formData.bots_count,
+        region_type: formData.region_type,
+        analysis_source: formData.analysis_source,
         initial_share_price: formData.initial_share_price,
         sales_mode: formData.sales_mode,
         scenario_type: formData.scenario_type,
@@ -113,7 +132,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
            ...formData,
            rules: formData.rules,
            originalObservers: formData.observers,
-           initial_share_price: formData.initial_share_price // Persiste no config para segurança
+           initial_share_price: formData.initial_share_price 
         } as any,
         initial_financials: financials,
         market_indicators: selectedTemplate?.market_indicators
@@ -126,16 +145,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       alert(`FALHA NA ORQUESTRAÇÃO: ${e.message}`); 
     }
     setIsSubmitting(false);
-  };
-
-  const addObserver = () => {
-    if (formData.observerInput.trim() && !formData.observers.includes(formData.observerInput)) {
-      setFormData({
-        ...formData,
-        observers: [...formData.observers, formData.observerInput.trim()],
-        observerInput: ''
-      });
-    }
   };
 
   return (
@@ -164,7 +173,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                <div className="flex items-center gap-4">
-                  <h3 className="text-xl font-black text-white uppercase italic">1. Matriz de Atividade</h3>
+                  <h3 className="text-xl font-black text-white uppercase italic">1. DNA da Arena</h3>
                   <span className="px-3 py-1 bg-orange-600/20 text-orange-500 rounded-full text-[8px] font-black uppercase tracking-widest border border-orange-500/30">FIDELIDADE CPC 26</span>
                </div>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -193,37 +202,53 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
                <div className="flex items-center gap-4 border-b border-white/5 pb-6">
                   <div className="p-3 bg-orange-600 rounded-xl text-white shadow-lg"><Settings size={20}/></div>
-                  <h3 className="text-xl font-black text-white uppercase italic">2. Arena & Protocolos Temporais</h3>
+                  <h3 className="text-xl font-black text-white uppercase italic">2. Protocolos de Escopo & IA</h3>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Trophy size={12}/> Nome da Arena</label>
+                      <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Trophy size={12}/> Identidade da Arena</label>
                       <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all font-bold" />
                     </div>
+
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><History size={12}/> Total de Rodadas</label>
-                          <input type="number" min="1" max="24" value={formData.total_rounds} onChange={e => setFormData({...formData, total_rounds: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 font-mono font-bold" />
+                          <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Globe size={12}/> Tipo de Mercado</label>
+                          <select value={formData.region_type} onChange={e => setFormData({...formData, region_type: e.target.value as RegionType})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold appearance-none outline-none focus:border-orange-500">
+                             <option value="national">Nacional (Standard)</option>
+                             <option value="international">Exterior (+Logística)</option>
+                             <option value="mixed">Mesclado (Global/Local)</option>
+                          </select>
                        </div>
                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Coins size={12}/> Ação Inicial ($)</label>
-                          <input type="number" step="0.1" value={formData.initial_share_price} onChange={e => setFormData({...formData, initial_share_price: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 font-mono font-bold" />
+                          <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Cpu size={12}/> Cérebro da Análise</label>
+                          <select value={formData.analysis_source} onChange={e => setFormData({...formData, analysis_source: e.target.value as AnalysisSource})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold appearance-none outline-none focus:border-orange-500">
+                             <option value="parameterized">Parametrizado (Tutor)</option>
+                             <option value="ai_real_world">IA Real (Google Grounding)</option>
+                          </select>
                        </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Users size={12}/> Limite de Equipes</label>
-                      <input type="number" value={formData.teams_limit} onChange={e => setFormData({...formData, teams_limit: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all font-mono" />
+
+                    <div className="grid grid-cols-3 gap-4">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Map size={12}/> Regiões</label>
+                          <input type="number" min="1" max="15" value={formData.regions_count} onChange={e => setFormData({...formData, regions_count: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Users size={12}/> Limite Equipes</label>
+                          <input type="number" min="1" max="24" value={formData.teams_limit} onChange={e => setFormData({...formData, teams_limit: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-indigo-400 uppercase flex items-center gap-2"><Bot size={12}/> Competidores Bots</label>
+                          <input type="number" min="0" max={formData.teams_limit} value={formData.bots_count} onChange={e => setFormData({...formData, bots_count: Number(e.target.value)})} className="w-full p-4 bg-indigo-600/10 border border-indigo-500/30 rounded-xl text-indigo-400 font-mono font-bold outline-none focus:border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.15)]" />
+                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <div className="p-8 bg-orange-600/5 border border-orange-500/20 rounded-[2.5rem] space-y-6 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform"><Clock size={80}/></div>
-                      <div className="space-y-1">
-                         <h4 className="text-orange-500 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Hourglass size={14}/> Cronômetro de Rodada</h4>
-                      </div>
+                    <div className="p-8 bg-orange-600/5 border border-orange-500/20 rounded-[2.5rem] space-y-6">
+                      <h4 className="text-orange-500 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Hourglass size={14}/> Cronômetro Oracle</h4>
                       <div className="grid grid-cols-2 gap-4">
                          <div className="space-y-2">
                             <label className="text-[8px] font-black text-slate-500 uppercase">Valor</label>
@@ -240,10 +265,13 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                     </div>
 
                     <div className="p-6 bg-blue-600/5 border border-blue-500/20 rounded-[2rem] flex items-center gap-4">
-                       <div className="p-3 bg-blue-600 rounded-xl text-white"><TrendingUp size={20}/></div>
-                       <div>
-                          <p className="text-[10px] font-black text-white uppercase italic">Market Valuation Node</p>
-                          <p className="text-[9px] text-blue-400 font-medium">O TSR será calculado automaticamente comparando a evolução da ação.</p>
+                       <div className="p-3 bg-blue-600 rounded-xl text-white shadow-lg"><Flag size={20}/></div>
+                       <div className="flex-1">
+                          <p className="text-[10px] font-black text-white uppercase italic">Configuração do Motor</p>
+                          <p className="text-[9px] text-blue-400 font-medium leading-relaxed">
+                            A disputa no setor {formData.branch} terá {formData.bots_count} competidores sintéticos em modo {formData.region_type}. 
+                            {formData.analysis_source === 'ai_real_world' ? ' A IA consultará notícias reais do setor via Google.' : ' O Tutor controla os indicadores via Parametrização.'}
+                          </p>
                        </div>
                     </div>
                   </div>
@@ -295,7 +323,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                              placeholder="Ex: tutor_master ou email@empirion.ia"
                              className="flex-1 p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-emerald-500"
                            />
-                           <button onClick={addObserver} className="p-4 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-500 transition-all"><Plus size={20}/></button>
+                           <button onClick={() => { if (formData.observerInput) { setFormData({...formData, observers: [...formData.observers, formData.observerInput], observerInput: ''}); } }} className="p-4 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-500 transition-all"><Plus size={20}/></button>
                         </div>
                         <div className="flex wrap gap-2">
                            {formData.observers.map(obs => (
@@ -378,12 +406,29 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 6 && (
             <motion.div key="step6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-               <h3 className="text-xl font-black text-white uppercase italic">6. Matriz de Competidores</h3>
+               <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-black text-white uppercase italic">6. Matriz de Competidores</h3>
+                  <div className="flex gap-4">
+                     <div className="flex items-center gap-2 text-[9px] font-black text-orange-500 uppercase">
+                        <div className="w-2 h-2 rounded-full bg-orange-600" /> Humano
+                     </div>
+                     <div className="flex items-center gap-2 text-[9px] font-black text-indigo-400 uppercase">
+                        <div className="w-2 h-2 rounded-full bg-indigo-600" /> Sintético (AI Bot)
+                     </div>
+                  </div>
+               </div>
                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                   {teams.map((t, i) => (
-                    <div key={i} className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
-                       <span className="text-[8px] font-black text-slate-500 uppercase">Unidade 0{i+1}</span>
-                       <input value={t.name} onChange={e => { const nt = [...teams]; nt[i].name = e.target.value; setTeams(nt); }} className="w-full bg-transparent border-none outline-none text-white font-black text-xs uppercase" />
+                    <div key={i} className={`p-5 border rounded-2xl space-y-2 transition-all ${t.is_bot ? 'bg-indigo-600/10 border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'bg-white/5 border-white/10'}`}>
+                       <div className="flex justify-between items-center">
+                          <span className={`text-[8px] font-black uppercase ${t.is_bot ? 'text-indigo-400' : 'text-slate-500'}`}>Unidade 0{i+1}</span>
+                          {t.is_bot && <Bot size={12} className="text-indigo-400" />}
+                       </div>
+                       <input 
+                         value={t.name} 
+                         onChange={e => { const nt = [...teams]; nt[i].name = e.target.value; setTeams(nt); }} 
+                         className={`w-full bg-transparent border-none outline-none font-black text-xs uppercase ${t.is_bot ? 'text-indigo-200 italic' : 'text-white'}`} 
+                       />
                     </div>
                   ))}
                </div>

@@ -1,5 +1,5 @@
 
-import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode } from './types';
+import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource } from './types';
 
 export const APP_VERSION = "v12.9.0-Gold";
 export const BUILD_DATE = "07/01/2026";
@@ -227,13 +227,19 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     config: {
       total_rounds: 12,
       round_frequency_days: 7,
+      regions_count: 9,
+      bots_count: 2,
+      region_type: 'mixed' as RegionType,
+      analysis_source: 'parameterized' as AnalysisSource,
       sales_mode: 'internal' as SalesMode,
       scenario_type: 'simulated' as ScenarioType,
       transparency_level: 'high' as TransparencyLevel,
       gazeta_mode: 'anonymous' as GazetaMode,
       modality_type: 'standard' as ModalityType,
       deadline_value: 7,
-      deadline_unit: 'days' as DeadlineUnit
+      deadline_unit: 'days' as DeadlineUnit,
+      // Fix: Added teams_limit to resolve property access error in ChampionshipWizard
+      teams_limit: 8
     },
     market_indicators: DEFAULT_MACRO,
     initial_financials: INITIAL_FINANCIAL_TREE
@@ -252,7 +258,7 @@ export const MENU_STRUCTURE = [
     { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart', desc: 'Varejo Híbrido' },
     { id: 'ser', label: 'Serviços', path: '/branches/services', icon: 'Briefcase', desc: 'Capital Intelectual' },
     { id: 'agr', label: 'Agronegócio', path: '/branches/agribusiness', icon: 'Tractor', desc: 'Ativos Biológicos' },
-    { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign', desc: 'Hedge & Liquidez' },
+    { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign', desc: 'Spread & Risco' },
     { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer', desc: 'Obras Pesadas' }
   ]},
   { label: 'soluções', path: '#', sub: [

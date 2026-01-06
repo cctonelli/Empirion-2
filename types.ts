@@ -8,6 +8,8 @@ export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
 export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' | 'finance' | 'construction';
 export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
+export type RegionType = 'national' | 'international' | 'mixed';
+export type AnalysisSource = 'parameterized' | 'ai_real_world';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 export type GazetaMode = 'anonymous' | 'identified';
@@ -24,6 +26,7 @@ export interface Team {
   championship_id: string;
   status?: string;
   invite_code?: string;
+  is_bot?: boolean; // Define se a unidade é controlada pela IA Competitiva
   master_key_enabled?: boolean;
   kpis?: KPIs;
   insolvency_status?: InsolvencyStatus;
@@ -146,7 +149,11 @@ export interface Championship {
   total_rounds: number;   
   deadline_value: number;
   deadline_unit: DeadlineUnit;
-  initial_share_price: number; // Novo campo v12.9
+  regions_count: number; 
+  bots_count: number; // Quantidade de bots competidores
+  region_type: RegionType; 
+  analysis_source: AnalysisSource; 
+  initial_share_price: number; 
   is_public?: boolean;
   config: any;
   market_indicators: MacroIndicators;
@@ -186,6 +193,10 @@ export interface ChampionshipTemplate {
   config: {
     total_rounds: number;
     round_frequency_days: number;
+    regions_count: number;
+    bots_count: number;
+    region_type: RegionType;
+    analysis_source: AnalysisSource;
     transparency_level: TransparencyLevel;
     gazeta_mode: GazetaMode;
     modality_type: ModalityType;
@@ -193,6 +204,8 @@ export interface ChampionshipTemplate {
     deadline_unit: DeadlineUnit;
     sales_mode: SalesMode;
     scenario_type: ScenarioType;
+    // Fix: Added teams_limit to resolve property access error in ChampionshipWizard
+    teams_limit?: number;
   };
   market_indicators: MacroIndicators;
   initial_financials: any;
@@ -244,9 +257,6 @@ export interface AuditLog {
   new_value: any;
 }
 
-/**
- * Added to fix import errors in App.tsx, AdminCommandCenter.tsx and services/supabase.ts
- */
 export interface UserProfile {
   id: string;
   supabase_user_id: string;
@@ -257,9 +267,6 @@ export interface UserProfile {
   created_at: string;
 }
 
-/**
- * Added to fix import errors in components/TutorDecisionMonitor.tsx
- */
 export interface TeamProgress {
   team_id: string;
   team_name: string;
@@ -271,9 +278,6 @@ export interface TeamProgress {
   auditLogs: AuditLog[];
 }
 
-/**
- * Added to fix import error in components/CommunityView.tsx
- */
 export interface CommunityCriteria {
   id: string;
   label: string;

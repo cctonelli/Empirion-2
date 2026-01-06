@@ -1,17 +1,9 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import { ScenarioType, DecisionData, MacroIndicators } from "../types";
+import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType } from "../types";
 
-/**
- * Obtém uma nova instância do cliente GenAI.
- * Necessário instanciar por chamada conforme diretrizes de runtime em browser.
- */
 const getClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-/**
- * STRATEGOS BP AUDITOR
- * Evaluates the coherence between user-written text and the company's financial reality.
- */
 export const auditBusinessPlan = async (section: string, text: string, financialContext: any) => {
   try {
     const ai = getClient();
@@ -40,10 +32,6 @@ export const auditBusinessPlan = async (section: string, text: string, financial
   }
 };
 
-/**
- * DECISION COACH
- * Analyzes unsaved decisions and warns about tactical disasters.
- */
 export const getLiveDecisionAdvice = async (decisions: DecisionData, branch: string) => {
   try {
     const ai = getClient();
@@ -65,9 +53,111 @@ export const getLiveDecisionAdvice = async (decisions: DecisionData, branch: str
 };
 
 /**
- * TUTOR OUTLOOK
- * Predicts the butterfly effect of changing macro variables.
+ * Geração de Decisão Tática para Competidores Sintéticos (Bots)
+ * Utiliza o modelo flash para velocidade e custo.
  */
+export const generateBotDecision = async (
+  branch: Branch, 
+  round: number, 
+  regionCount: number,
+  macro: MacroIndicators
+): Promise<DecisionData> => {
+  try {
+    const ai = getClient();
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Você é o CEO de uma empresa concorrente em uma simulação de ${branch}. 
+      Você precisa tomar decisões para o Ciclo ${round}.
+      Regiões em disputa: ${regionCount}.
+      Cenário Macro: Inflação ${macro.inflation_rate}%, TR ${macro.interest_rate_tr}%.
+      
+      Gere um objeto JSON de decisões equilibrado mas competitivo. 
+      Foque em preço médio de mercado de $370.
+      Não seja conservador demais.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            regions: {
+              type: Type.OBJECT,
+              description: "Decisões por região. Chaves devem ser números de 1 a N.",
+            },
+            hr: {
+              type: Type.OBJECT,
+              properties: {
+                hired: { type: Type.NUMBER },
+                fired: { type: Type.NUMBER },
+                salary: { type: Type.NUMBER },
+                trainingPercent: { type: Type.NUMBER },
+                participationPercent: { type: Type.NUMBER },
+                sales_staff_count: { type: Type.NUMBER }
+              }
+            },
+            production: {
+              type: Type.OBJECT,
+              properties: {
+                purchaseMPA: { type: Type.NUMBER },
+                purchaseMPB: { type: Type.NUMBER },
+                paymentType: { type: Type.NUMBER },
+                activityLevel: { type: Type.NUMBER },
+                rd_investment: { type: Type.NUMBER }
+              }
+            },
+            finance: {
+              type: Type.OBJECT,
+              properties: {
+                loanRequest: { type: Type.NUMBER },
+                application: { type: Type.NUMBER },
+                buyMachines: {
+                  type: Type.OBJECT,
+                  properties: {
+                    alfa: { type: Type.NUMBER },
+                    beta: { type: Type.NUMBER },
+                    gama: { type: Type.NUMBER }
+                  }
+                }
+              }
+            },
+            legal: {
+              type: Type.OBJECT,
+              properties: {
+                recovery_mode: { type: Type.STRING }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+    // Ensure regions are properly mapped to integers
+    const cleanedRegions: Record<number, any> = {};
+    for (let i = 1; i <= regionCount; i++) {
+        cleanedRegions[i] = parsed.regions?.[i] || { price: 375, term: 1, marketing: 5000 };
+    }
+    
+    return {
+      ...parsed,
+      regions: cleanedRegions,
+      hr: parsed.hr || { hired: 0, fired: 0, salary: 1313, trainingPercent: 5, participationPercent: 2, sales_staff_count: 50 },
+      production: parsed.production || { purchaseMPA: 15000, purchaseMPB: 10000, paymentType: 1, activityLevel: 80, rd_investment: 5000 },
+      finance: parsed.finance || { loanRequest: 0, application: 0, buyMachines: { alfa: 0, beta: 0, gama: 0 } },
+      legal: parsed.legal || { recovery_mode: 'none' }
+    };
+  } catch (error) {
+    console.error("Bot Decision Error:", error);
+    // Fallback static decision
+    return {
+      regions: Object.fromEntries(Array.from({ length: regionCount }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 1000 }])),
+      hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50 },
+      production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0 },
+      finance: { loanRequest: 0, application: 0, buyMachines: { alfa: 0, beta: 0, gama: 0 } },
+      legal: { recovery_mode: 'none' }
+    };
+  }
+};
+
 export const getTutorOutlook = async (macro: MacroIndicators, teamsData: any[]) => {
   try {
     const ai = getClient();
@@ -112,23 +202,36 @@ export const generateBusinessPlanField = async (
   }
 };
 
-export const generateMarketAnalysis = async (championshipName: string, round: number, branch: string, scenarioType: ScenarioType = 'simulated') => {
-  const isReal = scenarioType === 'real';
+export const generateMarketAnalysis = async (
+  championshipName: string, 
+  round: number, 
+  branch: string, 
+  analysisSource: AnalysisSource = 'parameterized',
+  macroIndicators?: MacroIndicators
+) => {
+  const isReal = analysisSource === 'ai_real_world';
+  
   const groundingPrompt = isReal 
-    ? "Utilize dados reais de mercado e notícias atuais (Google Search) para fundamentar as projeções." 
-    : "Baseie-se exclusivamente nos parâmetros simulados fornecidos pelo motor de inteligência Empirion.";
+    ? `Utilize o Google Search para buscar dados REAIS atuais do setor de ${branch}. Foque em preços de insumos, tendências de demanda e cenários macroeconômicos reais que afetariam um gestor hoje. Se o setor for Industrial, fale sobre aço e energia.` 
+    : `Você deve interpretar os seguintes parâmetros de mercado definidos pelo Tutor: ${JSON.stringify(macroIndicators)}. Analise como a Inflação de ${macroIndicators?.inflation_rate}%, o Crescimento de ${macroIndicators?.growth_rate}% e a TR de ${macroIndicators?.interest_rate_tr}% impactarão o custo operacional e a elasticidade-preço neste ciclo.`;
 
   try {
     const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Você é o Empirion Strategos AI. Forneça um briefing estratégico quantitativo para a Rodada ${round} do campeonato "${championshipName}" (${branch}). 
+      contents: `Você é o Oráculo Empirion. Forneça um briefing tático para a Rodada ${round} da arena "${championshipName}".
+      Contexto do Setor: ${branch}.
+      Fonte da Inteligência: ${analysisSource}.
+      
+      Diretriz:
       ${groundingPrompt}
-      Analise:
-      1. Impactos da volatilidade econômica na margem unitária.
-      2. Pontos de sobrevivência competitiva (Preço vs. Custo).
-      3. Um aviso específico de 'Cisne Negro' (Black Swan).
-      Mantenha o tom executivo e técnico. Máximo 100 palavras. Idioma: Português (Brasil).`,
+      
+      Sua tarefa:
+      1. Explique o impacto na margem de lucro.
+      2. Dê uma recomendação tática sobre precificação.
+      3. Cite um "Cisne Negro" (evento inesperado) coerente com o cenário.
+      
+      Máximo 120 palavras. Idioma: Português (Brasil). Tom: Técnico e Executivo.`,
       config: {
         temperature: 0.6,
         tools: isReal ? [{ googleSearch: {} }] : []
@@ -148,30 +251,24 @@ export const generateGazetaNews = async (context: {
   inflation?: string,
   focus?: string[],
   style?: 'sensationalist' | 'analytical' | 'neutral',
-  scenarioType?: ScenarioType
+  analysisSource?: AnalysisSource
 }) => {
   const focusAreas = context.focus?.join(", ") || "reajuste de insumos, liderança do setor, novos mercados";
   const newsStyle = context.style || "analytical";
-  const isReal = context.scenarioType === 'real';
+  const isReal = context.analysisSource === 'ai_real_world';
   
   const groundingContext = isReal 
-    ? "CORPO DE NOTÍCIA REAL: Pesquise notícias reais da última semana sobre economia e o setor de atuaçao para mesclar com os resultados da simulação."
-    : "MODO SIMULADO: Crie notícias puramente fictícias baseadas no comportamento das equipes e nos parâmetros do motor Empirion.";
+    ? "BASE REAL: Pesquise notícias REAIS da última semana sobre economia global e o setor de atuação para mesclar com os nomes das equipes vencedoras."
+    : "MODO MOTOR: Crie notícias puramente baseadas na interpretação dos indicadores do simulador e na performance das empresas fictícias.";
 
   try {
     const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Gere 3 manchetes de impacto para o jornal "Gazeta Empirion". 
-      Contexto: Fim do Período ${context.period}. Líder atual: ${context.leader || 'Equipe Alpha'}. Inflação: ${context.inflation || '1.0%'}.
-      Áreas de Foco definidas pelo Tutor: ${focusAreas}.
-      Estilo de Escrita: ${newsStyle}. 
+      contents: `Gere 3 manchetes para a "Gazeta Empirion". 
+      Contexto: Ciclo ${context.period}. Líder: ${context.leader || 'Equipe Alpha'}. Inflação: ${context.inflation || '1.0%'}.
+      Áreas de Foco: ${focusAreas}.
       ${groundingContext}
-      
-      Instruções:
-      1. Crie notícias que reflitam diretamente as áreas de foco.
-      2. Mantenha o tom de acordo com o estilo solicitado (${newsStyle}). 
-      3. Relacione os eventos à liderança do setor e à estabilidade econômica.
       Idioma: Português (Brasil).`,
       config: { 
         temperature: 0.8,

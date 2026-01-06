@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -15,7 +16,7 @@ import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { supabase, getChampionships, getUserProfile } from '../services/supabase';
-import { ScenarioType, Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
+import { ScenarioType, Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs, AnalysisSource } from '../types';
 import { logError, LogContext } from '../utils/logger';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
@@ -101,13 +102,17 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
     const fetchIntelligence = async () => {
       try {
+        // Correcting type mismatch: using activeArena.analysis_source instead of scenarioType
+        const currentAnalysisSource: AnalysisSource = activeArena?.analysis_source || 'parameterized';
+        
         const [analysis, newsContent] = await Promise.all([
-          generateMarketAnalysis(activeArena?.name || 'Arena Empirion Supremo', 1, branch, scenarioType),
+          generateMarketAnalysis(activeArena?.name || 'Arena Empirion Supremo', 1, branch, currentAnalysisSource),
           generateGazetaNews({ 
             period: (activeArena?.current_round || 0) + 1, 
             leader: 'Equipe Alpha', 
             inflation: `${activeArena?.market_indicators?.inflation_rate || 1.0}%`, 
-            scenarioType, 
+            // Fix: property name should be analysisSource, not scenarioType
+            analysisSource: currentAnalysisSource, 
             focus: [branch] 
           })
         ]);
@@ -123,7 +128,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     
     fetchArenaInfo();
     fetchIntelligence();
-  }, [scenarioType, branch, activeArena?.name, activeArena?.current_round]);
+  }, [scenarioType, branch, activeArena?.name, activeArena?.current_round, activeArena?.analysis_source]);
 
   const getStatusColor = (status: InsolvencyStatus) => {
     switch(status) {
