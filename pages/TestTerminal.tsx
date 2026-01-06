@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion } from 'framer-motion';
+const motion = _motion as any;
 import { 
   Terminal, ShieldCheck, Rocket, Play, Loader2, Bot, 
-  ChevronRight, Zap, Info, Factory, Cpu, Star
+  ChevronRight, Zap, Info, Factory, Cpu, Star, UserCheck
 } from 'lucide-react';
 import { ALPHA_TEST_USERS } from '../constants';
 import { silentTestAuth, provisionDemoEnvironment } from '../services/supabase';
@@ -20,13 +22,13 @@ const TestTerminal: React.FC = () => {
     provisionDemoEnvironment();
   }, []);
 
-  const handleBypass = async (user: typeof ALPHA_TEST_USERS[0]) => {
+  const handleBypass = async (user: any) => {
     setLoadingId(user.id);
     setError(null);
     try {
       const result = await silentTestAuth(user);
       if (result?.data?.session) {
-        // Redirecionamento Direto baseado na Role
+        // Redirecionamento Direto baseado na Role conforme especificação v12.8
         if (user.role === 'tutor') {
           navigate('/app/admin');
         } else {
@@ -46,7 +48,7 @@ const TestTerminal: React.FC = () => {
       <EmpireParticles />
       <div className="container mx-auto px-6 md:px-24 relative z-10 space-y-16">
         
-        {/* Header */}
+        {/* Header - High Fidelity WOW */}
         <header className="text-center space-y-6 max-w-4xl mx-auto">
            <motion.div 
              initial={{ scale: 0.8, opacity: 0 }} 
@@ -63,7 +65,7 @@ const TestTerminal: React.FC = () => {
            </p>
         </header>
 
-        {/* Test Units Selection */}
+        {/* Test Units Selection Grid */}
         <div className="max-w-6xl mx-auto">
            <div className="bg-slate-900/50 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative overflow-hidden">
               <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-8">
@@ -86,80 +88,74 @@ const TestTerminal: React.FC = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  {ALPHA_TEST_USERS.map((user) => (
-                   <button
+                   <motion.button 
                      key={user.id}
+                     whileHover={{ scale: 1.02 }}
+                     whileTap={{ scale: 0.98 }}
                      onClick={() => handleBypass(user)}
-                     disabled={!!loadingId}
-                     className={`p-8 rounded-[3rem] border transition-all text-left group relative overflow-hidden flex flex-col justify-between min-h-[240px] ${
+                     disabled={loadingId !== null}
+                     className={`group p-10 rounded-[3.5rem] border-2 transition-all text-left relative overflow-hidden flex flex-col justify-between min-h-[320px] ${
                         user.role === 'tutor' 
-                          ? 'bg-blue-600/10 border-blue-500/20 hover:bg-blue-600 hover:border-blue-400' 
-                          : 'bg-white/5 border-white/10 hover:bg-orange-600 hover:border-orange-400 shadow-xl'
+                        ? 'bg-blue-600/5 border-blue-500/20 hover:bg-blue-600 hover:border-white' 
+                        : 'bg-orange-600/5 border-orange-500/20 hover:bg-orange-600 hover:border-white'
                      }`}
                    >
-                      <div className="flex items-center justify-between">
-                         <div className={`p-4 rounded-2xl ${user.role === 'tutor' ? 'bg-blue-600 text-white' : 'bg-white/10 text-orange-400'} group-hover:bg-white group-hover:text-slate-900 transition-colors`}>
-                            {user.role === 'tutor' ? <ShieldCheck size={24} /> : <Zap size={24} />}
-                         </div>
-                         <div className="text-right">
-                            <span className="block text-[8px] font-black text-slate-500 group-hover:text-white/60 uppercase">Perfil Disponível</span>
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${user.role === 'tutor' ? 'text-blue-400' : 'text-orange-500'} group-hover:text-white`}>
-                              {user.role === 'tutor' ? 'Modo Tutor' : 'Modo Equipe'}
+                      <div className="relative z-10 space-y-6">
+                         <div className="flex justify-between items-start">
+                            <div className="p-4 bg-white/5 rounded-2xl text-white group-hover:bg-white group-hover:text-slate-900 transition-colors">
+                               {user.role === 'tutor' ? <UserCheck size={32}/> : <Bot size={32}/>}
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">
+                               Profile Node {user.id.toUpperCase()}
                             </span>
                          </div>
+                         <div>
+                            <h4 className="text-3xl font-black text-white uppercase italic tracking-tight">{user.name}</h4>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-2 group-hover:text-white/80">
+                               {user.role === 'tutor' ? 'Protocolo: Orquestração Total' : `Unidade: ${user.team || 'Alpha Cell'}`}
+                            </p>
+                         </div>
                       </div>
 
-                      <div>
-                         <h4 className="text-2xl font-black text-white uppercase italic tracking-tight">{user.name}</h4>
-                         <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest group-hover:text-white/80 transition-colors">
-                           {user.team || 'Criação e Gestão de Arenas'}
-                         </p>
+                      <div className="relative z-10 flex items-center justify-between pt-6 border-t border-white/5 group-hover:border-white/20">
+                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 group-hover:text-white">
+                            {loadingId === user.id ? 'Sincronizando...' : 'Acessar Instância'}
+                         </span>
+                         {loadingId === user.id ? <Loader2 size={20} className="animate-spin text-white" /> : <ChevronRight size={20} className="group-hover:translate-x-2 transition-transform" />}
                       </div>
 
-                      <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Ambiente: {user.role === 'tutor' ? 'Control Master' : 'Simulação Ativa'}</span>
-                         {loadingId === user.id ? (
-                            <Loader2 size={20} className="animate-spin text-white" />
-                         ) : (
-                            <div className="p-2 bg-white/5 rounded-full group-hover:bg-white group-hover:text-slate-900 transition-all">
-                               <Play size={14} fill="currentColor" />
-                            </div>
-                         )}
+                      {/* Decoration background icon */}
+                      <div className="absolute -bottom-10 -right-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity rotate-12">
+                         {user.role === 'tutor' ? <Cpu size={240}/> : <Factory size={240}/>}
                       </div>
-
-                      {/* Ripple Effect Hover */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                   </button>
+                   </motion.button>
                  ))}
-                 
-                 {/* BLOCO EXTRA: CREATE NEW FREE */}
-                 <div className="p-8 rounded-[3rem] border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-6 group hover:border-orange-500/40 transition-all">
-                    <div className="p-5 bg-white/5 rounded-full text-slate-600 group-hover:text-orange-500 transition-colors">
-                       <Star size={32} />
-                    </div>
-                    <div>
-                       <p className="font-black text-white uppercase text-xs tracking-widest">Sua Própria Arena</p>
-                       <p className="text-slate-500 text-[10px] font-medium mt-2">Crie sua conta freemium para gerenciar times personalizados.</p>
-                    </div>
-                    <button className="text-orange-500 font-black text-[9px] uppercase tracking-[0.2em] border border-orange-500/20 px-4 py-2 rounded-full hover:bg-orange-500 hover:text-white transition-all">Em breve</button>
-                 </div>
               </div>
-           </div>
 
-           <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-8 opacity-60">
-              <div className="flex items-center gap-4 text-slate-500">
-                 <Bot size={32} />
-                 <p className="text-[10px] font-black uppercase tracking-widest max-w-sm leading-relaxed">
-                   "O teste grátis permite que você explore todas as funcionalidades do Empirion, desde a parametrização do balanço até o processamento de rodadas com IA."
+              <div className="mt-16 p-8 bg-white/5 border border-white/10 rounded-[3rem] flex items-center gap-6">
+                 <div className="p-3 bg-blue-600 rounded-xl text-white"><Info size={24}/></div>
+                 <p className="text-xs text-slate-400 font-medium italic leading-relaxed">
+                    Nota: O Teste Grátis utiliza um ambiente sandbox compartilhado. Algumas alterações podem ser resetadas periodicamente para manter a integridade do Nodo Industrial 08.
                  </p>
               </div>
-              <div className="flex items-center gap-3">
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Trial v6.0 GOLD Build</span>
-                 <div className="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-[9px] font-black text-blue-400 uppercase">
-                   Global Node: 08
-                 </div>
-              </div>
+           </div>
+        </div>
+
+        {/* Features Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto px-4 opacity-50">
+           <div className="flex items-center gap-4">
+              <Zap className="text-orange-500" />
+              <span className="text-[10px] font-black uppercase text-white tracking-widest">Sem Cartão de Crédito</span>
+           </div>
+           <div className="flex items-center gap-4">
+              <ShieldCheck className="text-emerald-500" />
+              <span className="text-[10px] font-black uppercase text-white tracking-widest">Acesso Full v12.8.5</span>
+           </div>
+           <div className="flex items-center gap-4">
+              <Terminal className="text-blue-500" />
+              <span className="text-[10px] font-black uppercase text-white tracking-widest">Suporte Oracle Node 08</span>
            </div>
         </div>
       </div>

@@ -1,7 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion } from 'framer-motion';
+const motion = _motion as any;
 import { 
   Zap, Target, BarChart3, Users, Box, ChevronRight, 
   Sparkles, ShieldCheck, Globe, Loader2, Play

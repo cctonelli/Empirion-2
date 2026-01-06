@@ -2,7 +2,9 @@
 import React, { useState, useRef } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import { Mic, MicOff, Radio, Loader2, Volume2, ShieldAlert, Zap } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 
 const LiveBriefing: React.FC = () => {
   const [isActive, setIsActive] = useState(false);

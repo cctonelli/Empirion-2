@@ -24,7 +24,6 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
     }));
   }, [teamsProjections]);
 
-  // Fix: Added missing 'E' color to map to satisfy CreditRating exhaustive mappings if needed
   const COLORS_MAP = {
     'AAA': '#10b981', 'AA': '#34d399', 'A': '#6ee7b7',
     'B': '#fbbf24', 'C': '#f87171', 'D': '#b91c1c', 'E': '#7c2d12', 'N/A': '#334155'
@@ -98,14 +97,14 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
       const progress: TeamProgress[] = (teamsData || []).map(t => {
         const decision = decisionsData?.find(d => d.team_id === t.id);
         const branch = (arenaData?.branch || 'industrial') as Branch;
-        const eco = (arenaData?.ecosystemConfig || { 
-          inflationRate: 0.01, 
-          demandMultiplier: 1.0, 
-          interestRate: 0.03, 
-          marketVolatility: 0.05, 
-          scenarioType: 'simulated', 
-          modalityType: 'standard' 
-        }) as EcosystemConfig;
+        const eco: EcosystemConfig = (arenaData?.ecosystemConfig || { 
+          inflation_rate: 0.01, 
+          demand_multiplier: 1.0, 
+          interest_rate: 0.03, 
+          market_volatility: 0.05, 
+          scenario_type: 'simulated', 
+          modality_type: 'standard' 
+        });
         
         const proj = decision ? calculateProjections(decision.data, branch, eco, arenaData?.market_indicators, null) : null;
 

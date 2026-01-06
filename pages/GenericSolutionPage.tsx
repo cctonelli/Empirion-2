@@ -1,5 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { useTranslation } from 'react-i18next';
 import { 
   Shield, Users, Trophy, Brain, PlusCircle, ArrowRight, 

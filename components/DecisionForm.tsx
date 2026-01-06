@@ -9,7 +9,9 @@ import { saveDecisions, getChampionships, supabase } from '../services/supabase'
 import { calculateProjections } from '../services/simulation';
 import { getLiveDecisionAdvice } from '../services/gemini';
 import { DecisionData, Branch, Championship, ProjectionResult, CreditRating, EcosystemConfig } from '../types';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { DEFAULT_MACRO } from '../constants';
 import { InsolvencyAlert } from './InsolvencyAlert';
 

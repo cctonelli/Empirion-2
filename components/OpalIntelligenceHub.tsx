@@ -1,6 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { 
   Workflow, BrainCircuit, Rocket, Lock, Sparkles, 
   ChevronRight, ArrowRight, ShieldCheck, Zap,

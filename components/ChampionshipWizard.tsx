@@ -12,7 +12,9 @@ import {
 import { CHAMPIONSHIP_TEMPLATES } from '../constants';
 import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode } from '../types';
 import { createChampionshipWithTeams } from '../services/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import FinancialStructureEditor from './FinancialStructureEditor';
 
 const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }> = ({ onComplete, isTrial = false }) => {

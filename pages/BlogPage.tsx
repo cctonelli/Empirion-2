@@ -1,5 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion } from 'framer-motion';
+const motion = _motion as any;
 import { useTranslation } from 'react-i18next';
 import { 
   Newspaper, Calendar, User, ArrowRight, 
@@ -94,7 +97,7 @@ const BlogPage: React.FC = () => {
                  <h4 className="text-xs font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
                     <TrendingUp size={16} /> Tópicos em Alta
                  </h4>
-                 <div className="flex flex-wrap gap-3">
+                 <div className="flex wrap gap-3">
                     {['Estratégia IA', 'Industrial', 'Market Share', 'Bernard Legacy', 'CVM', 'Strategos'].map(tag => (
                       <span key={tag} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-orange-600 hover:text-white transition-all cursor-pointer">
                         #{tag}

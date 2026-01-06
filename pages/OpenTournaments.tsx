@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { Trophy, Users, Timer, Sparkles, ChevronRight, Search, Filter, Globe, Loader2, AlertCircle } from 'lucide-react';
 import { getChampionships } from '../services/supabase';
 import { Championship } from '../types';

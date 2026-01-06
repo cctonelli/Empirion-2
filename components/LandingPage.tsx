@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -6,7 +7,9 @@ import {
   Factory, ShoppingCart, Briefcase, Tractor, DollarSign, 
   Hammer, Box, Zap, Rocket, Terminal
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import Slider from 'react-slick';
 import { DEFAULT_PAGE_CONTENT, APP_VERSION, BUILD_DATE } from '../constants';
 import { fetchPageContent, getModalities, subscribeToModalities } from '../services/supabase';

@@ -7,7 +7,9 @@ import {
   CheckCircle2, Sparkles, Loader2, Save, ShieldCheck, Zap,
   TrendingUp, Activity, PieChart, Info, ShieldAlert, Star
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { DEFAULT_PAGE_CONTENT } from '../constants';
 import { fetchPageContent, getActiveBusinessPlan, saveBusinessPlan, subscribeToBusinessPlan, getTeamSimulationHistory } from '../services/supabase';
 import { generateBusinessPlanField, auditBusinessPlan } from '../services/gemini';

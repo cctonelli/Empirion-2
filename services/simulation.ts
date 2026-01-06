@@ -1,5 +1,6 @@
 
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus } from '../types';
+import { INITIAL_INDUSTRIAL_FINANCIALS } from '../constants';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
@@ -159,5 +160,3 @@ export const calculateProjections = (
     }
   };
 };
-
-import { INITIAL_INDUSTRIAL_FINANCIALS } from '../constants';
