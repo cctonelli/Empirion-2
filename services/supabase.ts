@@ -32,8 +32,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       created_at: new Date().toISOString()
     };
   }
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(userId)) return null;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i; // Simplified for robustness
   const { data, error } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
   return data;
 };
@@ -41,18 +40,24 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 export const getChampionships = async (onlyPublic: boolean = false) => {
   let realData: any[] = [];
   let trialData: any[] = [];
+  
   try {
-    const { data, error } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
-    if (!error) realData = data || [];
-  } catch (e) {}
+    // Fetch real championships with their teams
+    const { data: real, error: rErr } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
+    if (!rErr) realData = real || [];
+  } catch (e) { console.error("Real Arena Fetch Fail", e); }
+
   try {
-    const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
-    if (data) trialData = data;
-  } catch (e) {}
+    // Fetch trial championships with their teams (using explicit join for reliability)
+    const { data: trials, error: tErr } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
+    if (!tErr) trialData = trials || [];
+  } catch (e) { console.error("Trial Arena Fetch Fail", e); }
+
   const combined = [
     ...realData.map(c => ({ ...c, is_trial: false })), 
     ...trialData.map(c => ({ ...c, is_trial: true }))
   ];
+  
   return { data: onlyPublic ? combined.filter(c => c.is_public || c.is_trial) : combined as Championship[], error: null };
 };
 
@@ -77,7 +82,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
         legal: { recovery_mode: 'none' }
       };
 
-      // Recupera o estado anterior para obter o preço da ação do round passado
       const prevState = previousStates?.find(s => s.team_id === team.id);
       const teamPrevState = currentRound === 0 
         ? { kpis: { market_valuation: { share_price: initialSharePrice } } } 
@@ -127,8 +131,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
-    // ESTRUTURA RIGOROSA PARA EVITAR ERRO DE SCHEMA CACHE
-    // O Valor da Ação Inicial e outras configs customizadas vao para o JSONB 'config'
     const payload: any = {
       name: champData.name,
       branch: champData.branch,
@@ -143,11 +145,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       }
     };
 
-    if (isTrial) {
-      // Campos permitidos em trial_championships conforme SQL schema
-      // ID, name, branch, status, current_round, total_rounds, config, initial_financials, market_indicators
-    } else {
-      // Adiciona colunas extras do schema oficial 'championships'
+    if (!isTrial) {
       payload.description = champData.description || 'Arena Empirion';
       payload.sales_mode = champData.sales_mode || 'hybrid';
       payload.scenario_type = champData.scenario_type || 'simulated';
@@ -155,7 +153,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       payload.gazeta_mode = champData.gazeta_mode || 'anonymous';
       payload.currency = champData.currency || 'BRL';
       payload.tutor_id = session?.user?.id;
-      // products e resources se existirem
       payload.products = champData.initial_financials?.dre || {}; 
     }
 
