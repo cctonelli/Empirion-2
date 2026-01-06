@@ -57,12 +57,16 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 };
 
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
-  logInfo(LogContext.TURNOVER, `Iniciando Processamento de Valuation | Arena ${championshipId} | Ciclo ${currentRound}`);
+  logInfo(LogContext.TURNOVER, `Iniciando Turnover v12.9 | Arena ${championshipId} | Ciclo ${currentRound}`);
   try {
     const { data: arena } = await supabase.from('championships').select('*').eq('id', championshipId).single();
+    if (!arena) throw new Error("Arena não encontrada.");
+
     const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', championshipId);
     const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', currentRound + 1);
     const { data: previousStates } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', currentRound);
+
+    const initialSharePrice = arena.config?.initial_share_price || 1.0;
 
     const batchResults = teams!.map(team => {
       const teamDecision = decisions?.find(d => d.team_id === team.id)?.data || {
@@ -73,9 +77,12 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
         legal: { recovery_mode: 'none' }
       };
 
-      const teamPrevState = currentRound === 0 ? { kpis: { market_valuation: { share_price: arena.initial_share_price || 1.0 } } } : previousStates?.find(s => s.team_id === team.id);
+      // Recupera o estado anterior para obter o preço da ação do round passado
+      const prevState = previousStates?.find(s => s.team_id === team.id);
+      const teamPrevState = currentRound === 0 
+        ? { kpis: { market_valuation: { share_price: initialSharePrice } } } 
+        : prevState;
       
-      // Oracle Engine Executa Projeção + Valuation (Pulo do Gato)
       const result = calculateProjections(
         teamDecision as DecisionData, 
         arena.branch, 
@@ -120,28 +127,36 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
-    // PAYLOAD SANEADO PARA TABELAS TRIAL (Resiliência de Schema)
+    // ESTRUTURA RIGOROSA PARA EVITAR ERRO DE SCHEMA CACHE
+    // O Valor da Ação Inicial e outras configs customizadas vao para o JSONB 'config'
     const payload: any = {
       name: champData.name,
       branch: champData.branch,
       status: 'active',
       current_round: 0,
       total_rounds: champData.total_rounds || 12,
-      initial_share_price: champData.initial_share_price || 1.0,
       initial_financials: champData.initial_financials || {},
       market_indicators: champData.market_indicators || DEFAULT_MACRO,
-      tutor_id: isTrial ? null : session?.user?.id
+      config: {
+        ...(champData.config || {}),
+        initial_share_price: champData.initial_share_price || 1.0
+      }
     };
 
-    // Apenas adiciona colunas extras se NÃO for modo Trial
-    if (!isTrial) {
-      payload.description = champData.description;
-      payload.sales_mode = champData.sales_mode;
-      payload.scenario_type = champData.scenario_type;
-      payload.transparency_level = champData.transparency_level;
-      payload.gazeta_mode = champData.gazeta_mode;
-      payload.observers = champData.observers || [];
+    if (isTrial) {
+      // Campos permitidos em trial_championships conforme SQL schema
+      // ID, name, branch, status, current_round, total_rounds, config, initial_financials, market_indicators
+    } else {
+      // Adiciona colunas extras do schema oficial 'championships'
+      payload.description = champData.description || 'Arena Empirion';
+      payload.sales_mode = champData.sales_mode || 'hybrid';
+      payload.scenario_type = champData.scenario_type || 'simulated';
+      payload.transparency_level = champData.transparency_level || 'medium';
+      payload.gazeta_mode = champData.gazeta_mode || 'anonymous';
       payload.currency = champData.currency || 'BRL';
+      payload.tutor_id = session?.user?.id;
+      // products e resources se existirem
+      payload.products = champData.initial_financials?.dre || {}; 
     }
 
     const { data: champ, error: cErr } = await supabase.from(table).insert([payload]).select().single();
@@ -178,8 +193,10 @@ export const fetchPageContent = async (slug: string, lang: string) => {
 };
 
 export const getModalities = async () => {
-  const { data } = await supabase.from('modalities').select('*').order('name');
-  return (data as any[]) || [];
+  try {
+    const { data } = await supabase.from('modalities').select('*').order('name');
+    return (data as any[]) || [];
+  } catch (e) { return []; }
 };
 
 export const subscribeToModalities = (callback: () => void) => {

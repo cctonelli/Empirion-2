@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Settings, Globe, Loader2, 
@@ -8,7 +7,6 @@ import {
   FileText, ShieldAlert, Zap, Flame, Leaf, Eye, EyeOff,
   Users, Clock, Calendar, Hourglass, PenTool, Layout,
   Shield, UserCheck, Landmark, Coins, TrendingUp,
-  // Added History to fix JSX component error
   History
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE } from '../constants';
@@ -114,7 +112,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         config: {
            ...formData,
            rules: formData.rules,
-           originalObservers: formData.observers
+           originalObservers: formData.observers,
+           initial_share_price: formData.initial_share_price // Persiste no config para segurança
         } as any,
         initial_financials: financials,
         market_indicators: selectedTemplate?.market_indicators
@@ -288,7 +287,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                      </div>
 
                      <div className="space-y-4">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Mudanças Observadores (ID Alpha ou Email)</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase">Nominar Observadores (ID Alpha ou Email)</label>
                         <div className="flex gap-2">
                            <input 
                              value={formData.observerInput} 
