@@ -33,6 +33,27 @@ export interface Team {
   equity: number;        // Persistent GOLD Field (NOT NULL)
 }
 
+/**
+ * Interface representing a snapshot in the 'companies' table.
+ */
+export interface CompanyHistoryRecord {
+  id?: string;
+  team_id: string;
+  team_name: string;
+  championship_id: string;
+  round: number;
+  state: any;
+  dre: any;
+  balance_sheet: any;
+  cash_flow: any;
+  kpis: KPIs;
+  credit_rating: CreditRating;
+  insolvency_index: number;
+  credit_limit: number; // Persistent GOLD Field (NOT NULL)
+  equity: number;        // Persistent GOLD Field (NOT NULL)
+  created_at?: string;
+}
+
 export interface InterventionEntry {
   type: 'CAPITAL_INJECTION' | 'DEBT_FORGIVENESS' | 'RJ_SUSPENSION' | 'MANUAL_STATUS';
   value?: number;

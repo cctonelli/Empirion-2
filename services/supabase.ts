@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan } from '../types';
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, CompanyHistoryRecord } from '../types';
 import { DEFAULT_MACRO } from '../constants';
 import { calculateProjections } from './simulation';
 
@@ -10,7 +10,7 @@ const getSafeEnv = (key: string): string => {
   return metaEnv[viteKey] || metaEnv[key] || '';
 };
 
-const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejendfdvxxvuxa.supabase.co';
+const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = getSafeEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -32,7 +32,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
     const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', currentRound + 1);
     const { data: previousStates } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', currentRound);
 
-    const batchResults = teams.map(team => {
+    const batchResults: CompanyHistoryRecord[] = teams.map(team => {
       try {
         const teamDecision = decisions?.find(d => d.team_id === team.id)?.data || {
           regions: Object.fromEntries(Array.from({ length: 9 }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 1 }])),
@@ -54,6 +54,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
         return {
           team_id: team.id,
+          team_name: team.name,
           championship_id: championshipId,
           round: currentRound + 1,
           state: { decisions: teamDecision },
@@ -63,14 +64,14 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           kpis: result.kpis,
           credit_rating: result.creditRating,
           insolvency_index: result.health.insolvency_risk,
-          // Fixed Database column names to match companies table schema
+          // Fixed Database column names to match 'companies' table schema GOLD v12.8.2
           credit_limit: result.kpis.banking?.credit_limit || 0,
           equity: result.kpis.equity || 0
         };
       } catch (e: any) {
         return null;
       }
-    }).filter(r => r !== null) as any[];
+    }).filter(r => r !== null) as CompanyHistoryRecord[];
 
     if (batchResults.length === 0) throw new Error("Total Process Failure.");
 
@@ -134,8 +135,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const teamsToInsert = teams.map(t => ({
       name: t.name,
       championship_id: champ.id,
-      equity: 5055447, // Initial Equity is NOT NULL
-      credit_limit: 5000000, // Initial Credit is NOT NULL
+      equity: 5055447, // Initial Equity is NOT NULL (GOLD default)
+      credit_limit: 5000000, // Initial Credit is NOT NULL (GOLD default)
       status: 'active',
       invite_code: `CODE-${Math.random().toString(36).substring(7).toUpperCase()}`
     }));
