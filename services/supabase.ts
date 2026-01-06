@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, CompanyHistoryRecord } from '../types';
 import { DEFAULT_MACRO } from '../constants';
@@ -21,11 +20,15 @@ export const isTestMode = true;
 /**
  * ALPHA BYPASS WHITELIST
  * Previne erros de sintaxe UUID ao usar IDs amigáveis no modo teste.
+ * Intercepta IDs literais antes de chegar ao Postgres.
  */
-const ALPHA_IDS = ['tutor', 'alpha', 'tutor_master', 'alpha_street', 'alpha_cell'];
+const ALPHA_IDS = ['tutor', 'alpha', 'tutor_master', 'alpha_street', 'alpha_cell', 'alpha_user'];
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  if (!userId || ALPHA_IDS.includes(userId)) {
+  if (!userId) return null;
+
+  // Intercepta IDs Alpha para evitar Erro 22P02 no Supabase
+  if (ALPHA_IDS.includes(userId)) {
     return {
       id: userId, 
       supabase_user_id: userId, 
@@ -37,16 +40,56 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     };
   }
   
-  // Validação simples de UUID antes de consultar o banco
+  // Validação estrita de UUID antes da consulta
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(userId)) return null;
+  if (!uuidRegex.test(userId)) {
+    logInfo(LogContext.AUTH, `Skipping invalid UUID format profile fetch: ${userId}`);
+    return null;
+  }
 
   const { data, error } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
   if (error) logError(LogContext.DATABASE, `Error fetching user profile ${userId}`, error);
   return data;
 };
 
-// ... (Restante do arquivo permanece igual para manter estabilidade)
+export const getChampionships = async (onlyPublic: boolean = false) => {
+  let realData: any[] = [];
+  let trialData: any[] = [];
+  
+  try {
+    // Busca simplificada para reduzir impacto de recursão RLS (Infinite Recursion mitigation)
+    const { data, error } = await supabase
+      .from('championships')
+      .select('*, teams(id, name, status, equity, credit_limit, insolvency_status)')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      if (error.code === '42P17') {
+        logError(LogContext.DATABASE, "RLS Recursion detected. Retrying simple fetch.");
+        const { data: simpleData } = await supabase.from('championships').select('*');
+        realData = simpleData || [];
+      } else {
+        throw error;
+      }
+    } else {
+      realData = data || [];
+    }
+  } catch (e: any) {
+    logError(LogContext.DATABASE, "Championship fetch failure", e.message);
+  }
+
+  try {
+    const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
+    if (data) trialData = data;
+  } catch (e) {}
+
+  const combined = [
+    ...realData.map(c => ({ ...c, market_indicators: c.market_indicators || DEFAULT_MACRO, is_trial: false })), 
+    ...trialData.map(c => ({ ...c, market_indicators: c.market_indicators || DEFAULT_MACRO, is_trial: true }))
+  ];
+  
+  return { data: onlyPublic ? combined.filter(c => c.is_public || c.is_trial) : combined as Championship[], error: null };
+};
 
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
   logInfo(LogContext.TURNOVER, `Initializing turnover for arena ${championshipId} | Round ${currentRound} -> ${currentRound + 1}`);
@@ -99,7 +142,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       await supabase.from('teams').update({ credit_limit: res.credit_limit, equity: res.equity }).eq('id', res.team_id);
     }
 
-    await supabase.from('championships').update({ current_round: currentRound + 1 }).eq('id', championshipId);
+    await supabase.from('championships').update({ current_round: currentRound + 1, round_started_at: new Date().toISOString() }).eq('id', championshipId);
     return { success: true };
   } catch (err: any) {
     logError(LogContext.TURNOVER, "Turnover Fault", err.message);
@@ -111,7 +154,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_championships' : 'championships';
   const teamsTable = isTrial ? 'trial_teams' : 'teams';
-  const { data: { session } } = await supabase.auth.getSession();
+  // Fix: Use v1 session() for compatibility with SupabaseAuthClient
+  const session = supabase.auth.session();
   
   try {
     const payload = {
@@ -151,31 +195,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   }
 };
 
-export const getChampionships = async (onlyPublic: boolean = false) => {
-  let realData: any[] = [];
-  let trialData: any[] = [];
-  try {
-    const { data } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
-    if (data) realData = data;
-  } catch (e) {}
-  try {
-    const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
-    if (data) trialData = data;
-  } catch (e) {}
-
-  const hydrate = (c: any) => ({
-    ...c,
-    market_indicators: c.market_indicators || DEFAULT_MACRO
-  });
-
-  const combined = [
-    ...realData.map(c => ({ ...hydrate(c), is_trial: false })), 
-    ...trialData.map(c => ({ ...hydrate(c), is_trial: true }))
-  ];
-  
-  return { data: onlyPublic ? combined.filter(c => c.is_public || c.is_trial) : combined as Championship[], error: null };
-};
-
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
@@ -193,8 +212,10 @@ export const fetchPageContent = async (slug: string, lang: string) => {
 };
 
 export const getModalities = async () => {
-  const { data } = await supabase.from('modalities').select('*').order('name');
-  return (data as any[]) || [];
+  try {
+    const { data } = await supabase.from('modalities').select('*').order('name');
+    return (data as any[]) || [];
+  } catch (e) { return []; }
 };
 
 export const subscribeToModalities = (callback: () => void) => {

@@ -79,7 +79,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         const champId = localStorage.getItem('active_champ_id');
         const teamId = localStorage.getItem('active_team_id');
         
-        const { data: { session } } = await supabase.auth.getSession();
+        // Fix: Use v1 session() for compatibility with SupabaseAuthClient
+        const session = supabase.auth.session();
         if (session) {
           const profile = await getUserProfile(session.user.id);
           if (profile) setUserRole(profile.role);

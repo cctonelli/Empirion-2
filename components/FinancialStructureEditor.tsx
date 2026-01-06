@@ -20,8 +20,10 @@ const formatInt = (val: number): string => {
 
 const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onChange, initialBalance = [], initialDRE = [] }) => {
   const [activeTab, setActiveTab] = useState<'balance' | 'dre'>('balance');
-  const [balanceNodes, setBalanceNodes] = useState<AccountNode[]>(initialBalance);
-  const [dreNodes, setDRENodes] = useState<AccountNode[]>(initialDRE);
+  
+  // Resiliência: Converte para array vazio se receber objeto legado para evitar crash no boot
+  const [balanceNodes, setBalanceNodes] = useState<AccountNode[]>(Array.isArray(initialBalance) ? initialBalance : []);
+  const [dreNodes, setDRENodes] = useState<AccountNode[]>(Array.isArray(initialDRE) ? initialDRE : []);
 
   const calculateTotalsRecursive = useCallback((list: AccountNode[], tabType: 'balance' | 'dre'): AccountNode[] => {
     if (!Array.isArray(list)) return [];
@@ -70,6 +72,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
 
   const addSubNode = (parentId: string) => {
     const add = (list: AccountNode[]): AccountNode[] => {
+      if (!Array.isArray(list)) return [];
       return list.map(n => {
         if (n.id === parentId) {
           const newId = `${n.id}.${(n.children?.length || 0) + 1}`;
@@ -93,6 +96,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
 
   const removeNode = (id: string) => {
     const remove = (list: AccountNode[]): AccountNode[] => {
+      if (!Array.isArray(list)) return [];
       return list.filter(n => n.id !== id).map(n => ({
         ...n,
         children: n.children ? remove(n.children) : undefined
@@ -104,9 +108,13 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
 
   const nodes = activeTab === 'balance' ? balanceNodes : dreNodes;
   
-  // SAFE FIND para evitar TypeError
-  const assets = Array.isArray(balanceNodes) ? balanceNodes.find(n => n.label.includes('ATIVO'))?.value || 0 : 0;
-  const liabPL = Array.isArray(balanceNodes) ? balanceNodes.find(n => n.label.includes('PASSIVO'))?.value || 0 : 0;
+  // PROTEÇÃO N.FIND: Garante que estamos operando sobre arrays válidos
+  const assetsNode = Array.isArray(balanceNodes) ? balanceNodes.find(n => n.id === 'assets' || n.label.includes('ATIVO')) : null;
+  const assets = assetsNode?.value || 0;
+  
+  const liabPLNode = Array.isArray(balanceNodes) ? balanceNodes.find(n => n.id === 'liabilities' || n.label.includes('PASSIVO')) : null;
+  const liabPL = liabPLNode?.value || 0;
+  
   const isBalanced = Math.abs(assets - liabPL) < 1; 
 
   return (
@@ -130,7 +138,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
         <div className="flex gap-4">
            <StatusBox label="Valuation Inicial" val={assets} color="orange" />
            {activeTab === 'balance' && (
-             <div className={`p-4 rounded-2xl border flex items-center gap-3 ${isBalanced ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
+             <div className={`p-4 rounded-2xl border flex items-center gap-3 ${isBalanced ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'}`}>
                 {isBalanced ? <CheckCircle2 size={16}/> : <AlertTriangle size={16}/>}
                 <span className="text-[10px] font-black uppercase tracking-tighter italic">
                   {isBalanced ? 'Equilíbrio OK' : `Desvio: $ ${formatInt(assets - liabPL)}`}
@@ -154,7 +162,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
 
       <div className="bg-slate-950 rounded-[4rem] border border-white/5 shadow-2xl overflow-hidden min-h-[500px]">
         <div className="p-10 space-y-3">
-          {Array.isArray(nodes) && nodes.map((node) => (
+          {Array.isArray(nodes) && nodes.length > 0 ? nodes.map((node) => (
             <TreeNode 
               key={node.id} 
               node={node} 
@@ -162,7 +170,11 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
               onAdd={addSubNode} 
               onRemove={removeNode}
             />
-          ))}
+          )) : (
+            <div className="py-20 text-center text-slate-500 uppercase font-black text-xs tracking-widest">
+              Aguardando Estrutura Financeira do Template...
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -177,8 +189,7 @@ const TreeNode: React.FC<{
   level?: number;
 }> = ({ node, onUpdate, onAdd, onRemove, level = 0 }) => {
   const [isOpen, setIsOpen] = useState(true);
-  const [showCalc, setShowCalc] = useState(false);
-  const isParent = node.children && node.children.length > 0;
+  const isParent = Array.isArray(node.children) && node.children.length > 0;
   const canAdd = !node.isReadOnly && (node.type === 'totalizer');
   const canDelete = node.isEditable && !node.isTemplateAccount; 
   const isNegative = node.value < 0;
@@ -216,9 +227,7 @@ const TreeNode: React.FC<{
                         onUpdate(node.id, { value: parseInt(raw) || 0 });
                       }} 
                     />
-                    <button onClick={() => setShowCalc(!showCalc)} className="text-slate-500 hover:text-orange-500 transition-colors">
-                      <Calculator size={14} />
-                    </button>
+                    <Calculator size={14} className="text-slate-700" />
                   </div>
                 )}
               </div>

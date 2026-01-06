@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -39,7 +38,8 @@ const AppContent: React.FC = () => {
         await fetchProfile(parsed.user.id);
         return;
       }
-      const { data: { session: realSession } } = await supabase.auth.getSession();
+      // Fix: Use v1 session() for compatibility with SupabaseAuthClient
+      const realSession = supabase.auth.session();
       setSession(realSession);
       if (realSession) await fetchProfile(realSession.user.id);
       else setLoading(false);

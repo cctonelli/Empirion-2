@@ -9,7 +9,7 @@ import {
   Users, Clock, Calendar, Hourglass, PenTool, Layout,
   Shield, UserCheck
 } from 'lucide-react';
-import { CHAMPIONSHIP_TEMPLATES } from '../constants';
+import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE } from '../constants';
 import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode } from '../types';
 import { createChampionshipWithTeams } from '../services/supabase';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
@@ -51,7 +51,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     }
   });
 
-  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(null);
+  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
   const [teams, setTeams] = useState<{ name: string }[]>([]);
 
   useEffect(() => {
@@ -69,7 +69,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         deadline_unit: selectedTemplate.config.deadline_unit,
         round_frequency_days: selectedTemplate.config.round_frequency_days
       }));
-      setFinancials(selectedTemplate.initial_financials);
+      setFinancials(selectedTemplate.initial_financials || INITIAL_FINANCIAL_TREE);
     }
   }, [selectedTemplate]);
 
@@ -86,6 +86,11 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   const handleLaunch = async () => {
     setIsSubmitting(true);
     try {
+      // UUID FILTER: Remove IDs Alpha do array de observers para evitar erro 22P02 no Supabase
+      // Se o ID não for um UUID válido, ele não deve ir para a coluna uuid[]
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const validObservers = formData.observers.filter(obs => uuidRegex.test(obs));
+
       const champPayload: Partial<Championship> = {
         name: formData.name || (isTrial ? 'ARENA TESTE' : 'Simulação Oracle'),
         description: formData.description || 'Arena de Simulação Estratégica Empirion',
@@ -102,10 +107,11 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         round_frequency_days: formData.round_frequency_days,
         transparency_level: formData.transparency_level,
         gazeta_mode: formData.gazeta_mode,
-        observers: formData.observers,
+        observers: validObservers,
         config: {
            ...formData,
-           rules: formData.rules
+           rules: formData.rules,
+           originalObservers: formData.observers // Mantém os nomes originais no JSON de config
         } as any,
         initial_financials: financials,
         market_indicators: selectedTemplate?.market_indicators
@@ -114,6 +120,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       await createChampionshipWithTeams(champPayload, teams, isTrial);
       onComplete();
     } catch (e: any) { 
+      console.error("Wizard Launch Failure:", e);
       alert(`FALHA NA ORQUESTRAÇÃO: ${e.message}`); 
     }
     setIsSubmitting(false);
@@ -248,12 +255,12 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                      </div>
 
                      <div className="space-y-4">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Nominar Observadores (ID/Email)</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase">Nominar Observadores (ID Alpha ou Email)</label>
                         <div className="flex gap-2">
                            <input 
                              value={formData.observerInput} 
                              onChange={e => setFormData({...formData, observerInput: e.target.value})}
-                             placeholder="Ex: tutor@empirion.ia"
+                             placeholder="Ex: tutor_master ou email@empirion.ia"
                              className="flex-1 p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-emerald-500"
                            />
                            <button onClick={addObserver} className="p-4 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-500 transition-all"><Plus size={20}/></button>
@@ -271,7 +278,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                   <div className="p-8 bg-emerald-600/5 border border-emerald-500/20 rounded-[2.5rem] space-y-4">
                      <h4 className="text-emerald-500 font-black text-[10px] uppercase tracking-widest flex items-center gap-2"><Sparkles size={14}/> Oracle Rule</h4>
                      <p className="text-xs text-slate-400 leading-relaxed italic">
-                        O modo anônimo protege a marca das equipes em fases iniciais de treinamento. Observadores nominados têm acesso read-only completo a todos os balanços independentemente do nível de transparência pública.
+                        Nota Alpha: Observadores com nomes literais (ex: tutor_master) são aceitos para fins pedagógicos no modo trial, mas apenas UUIDs válidos são persistidos na coluna oficial do banco de dados para evitar erros de sintaxe.
                      </p>
                   </div>
                </div>

@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { 
   ArrowRight, ChevronLeft, ChevronRight, Sparkles, Trophy, 
   Factory, ShoppingCart, Briefcase, Tractor, DollarSign, 
-  Hammer, Box, Zap, Rocket, Terminal
+  Hammer, Box, Zap, Rocket, Terminal, Loader2
 } from 'lucide-react';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
@@ -45,7 +44,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       const db = await fetchPageContent('landing', i18n.language);
       if (db) setContent({ ...DEFAULT_PAGE_CONTENT['landing'], ...db });
       const mods = await getModalities();
-      setDynamicModalities(mods);
+      if (Array.isArray(mods)) setDynamicModalities(mods);
     };
     loadData();
     const channel = subscribeToModalities(loadData);
@@ -68,7 +67,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   };
 
   const allCarouselSlides = [
-    ...content.carousel,
+    ...(content.carousel || []),
     ...dynamicModalities.map(m => ({
       id: m.id,
       title: m.name,
@@ -94,10 +93,10 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </Link>
       </div>
 
-      {/* CARROSSEL NEBULOSA */}
+      {/* CARROSSEL NEBULOSA - RESTAURADO */}
       <section className="h-[85vh] min-h-[600px] relative overflow-hidden bg-transparent">
         <Slider {...carouselSettings}>
-          {allCarouselSlides.map((slide: any) => (
+          {allCarouselSlides.length > 0 ? allCarouselSlides.map((slide: any) => (
             <div key={slide.id} className="relative h-[85vh] min-h-[600px] bg-transparent outline-none">
               <div className="absolute inset-0 z-0 bg-transparent">
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/90 z-10" />
@@ -124,13 +123,18 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 </div>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="h-[85vh] flex items-center justify-center bg-slate-950/50">
+               <Loader2 className="animate-spin text-orange-500" size={48} />
+            </div>
+          )}
         </Slider>
       </section>
 
-      {/* HERO PRINCIPAL COM NUVENS LARANJA (SEBRAE STYLE) */}
+      {/* HERO PRINCIPAL COM NUVENS LARANJA (SEBRAE STYLE) - RESTAURADO */}
       <section className="py-40 px-6 md:px-24 text-center relative z-20 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none z-[-1]">
+           {/* Orange Clouds Animadas */}
            <motion.div 
              animate={{ x: [-100, 100], y: [-50, 50], scale: [1, 1.1, 1] }}
              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
@@ -164,8 +168,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </motion.div>
       </section>
 
-      {/* SEÇÕES ADICIONAIS ... */}
-      
+      {/* FOOTER */}
       <footer className="py-20 border-t border-white/5 text-center relative z-20 bg-slate-950/40 backdrop-blur-3xl">
          <div className="container mx-auto px-6">
             <p className="text-[11px] font-black uppercase tracking-[0.6em] text-orange-500 italic mb-4">
@@ -181,6 +184,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         .custom-dots { bottom: 60px !important; }
         .custom-dots li button:before { color: white !important; opacity: 0.1 !important; }
         .custom-dots li.slick-active button:before { color: #f97316 !important; opacity: 1 !important; }
+        .fluid-title { font-size: clamp(3rem, 10vw, 8rem); }
       `}</style>
     </div>
   );

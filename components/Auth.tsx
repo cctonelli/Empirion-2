@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -29,14 +28,17 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
 
     try {
       if (isLogin) {
-        const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+        // Fix: Use v1 signIn for compatibility with SupabaseAuthClient
+        const { session, error: authError } = await supabase.auth.signIn({ email, password });
         if (authError) throw authError;
-        if (data.session) onAuth();
+        if (session) onAuth();
       } else {
+        // Fix: Use v1 signUp for compatibility with SupabaseAuthClient
         const { error: signUpError } = await supabase.auth.signUp({ 
           email, 
-          password,
-          options: { data: { full_name: name } }
+          password
+        }, { 
+          data: { full_name: name } 
         });
         if (signUpError) throw signUpError;
         alert('Cadastro realizado! Se o e-mail de confirmação estiver ativo, verifique sua caixa de entrada.');

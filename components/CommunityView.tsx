@@ -41,7 +41,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
 
   const handleVote = async (teamId: string) => {
     setSubmitting(true);
-    const { data: { session } } = await supabase.auth.getSession();
+    // Fix: Use v1 session() for compatibility with SupabaseAuthClient
+    const session = supabase.auth.session();
     
     const voteData = {
       championship_id: championship.id,
