@@ -152,7 +152,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
-    const payload = {
+    const payload: any = {
       name: champData.name,
       description: champData.description,
       branch: champData.branch,
@@ -161,7 +161,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       total_rounds: champData.total_rounds || 12,
       sales_mode: champData.sales_mode || 'hybrid',
       scenario_type: champData.scenario_type || 'simulated',
-      currency: champData.currency || 'BRL',
       transparency_level: champData.transparency_level || 'medium',
       gazeta_mode: champData.gazeta_mode || 'anonymous',
       observers: champData.observers || [],
@@ -169,6 +168,11 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       market_indicators: champData.market_indicators || DEFAULT_MACRO,
       tutor_id: isTrial ? null : session?.user?.id
     };
+
+    // FIX: Somente envia 'currency' se não for arena de teste para evitar erro de schema cache
+    if (!isTrial) {
+      payload.currency = champData.currency || 'BRL';
+    }
 
     const { data: champ, error: cErr } = await supabase.from(table).insert([payload]).select().single();
     if (cErr) throw cErr;

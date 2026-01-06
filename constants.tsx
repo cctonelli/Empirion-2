@@ -1,12 +1,12 @@
+
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode } from './types';
 
-export const APP_VERSION = "v12.8.5-Gold";
-export const BUILD_DATE = "06/01/2026";
+export const APP_VERSION = "v12.9.0-Gold";
+export const BUILD_DATE = "07/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-STABLE";
+export const DEFAULT_INITIAL_SHARE_PRICE = 1.00;
+export const DEFAULT_TOTAL_SHARES = 5000000; // 1 ação por $1 de Capital Social inicial
 
-/**
- * ESTRUTURA LEGADA PARA MOTOR DE SIMULAÇÃO (FIDELIDADE DOCUMENTAL)
- */
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
     assets: {
@@ -50,10 +50,6 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
   }
 };
 
-/**
- * ESTRUTURA DE ÁRVORE PARA EDITOR FINANCEIRO (CPC 26 COMPLIANT)
- * Reflete exatamente o balanço do Período 0 anexado.
- */
 export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: AccountNode[] } = {
   balance_sheet: [
     {
@@ -104,15 +100,15 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
             },
             {
               id: 'assets.fixed',
-              label: 'IMOBILIZADO',
+              label: 'IMOBILIZADO (CAPEX)',
               value: 5886600,
               type: 'totalizer',
               children: [
                 { id: 'machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true },
-                { id: 'depr_machines', label: '(-) Depreciação acumulada de equipamentos', value: -811500, type: 'asset', isEditable: true },
+                { id: 'depr_machines', label: '(-) Depreciação acumulada equipamentos', value: -811500, type: 'asset', isEditable: true },
                 { id: 'land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true },
                 { id: 'buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true },
-                { id: 'depr_buildings', label: '(-) Depreciação acumulada de prédios e instalações', value: -2301900, type: 'asset', isEditable: true }
+                { id: 'depr_buildings', label: '(-) Depreciação acumulada prédios', value: -2301900, type: 'asset', isEditable: true }
               ]
             }
           ]
@@ -203,7 +199,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
       ]
     },
     { id: 'lair', label: '(=) LAIR - LUCRO LÍQUIDO ANTES DO IR', value: 86973, type: 'totalizer', isReadOnly: true },
-    { id: 'ir_prov', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
+    { id: 'ir_prev', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
     { id: 'net_after_tax', label: '(=) LUCRO LÍQUIDO APÓS O I. R.', value: 73928, type: 'totalizer', isReadOnly: true },
     { id: 'ppr', label: '( - ) PPR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true },
     { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true }
@@ -229,6 +225,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     sector: 'Manufacturing',
     description: 'Balanço Inicial de $ 9.176.940 conforme CPC 26. Gestão total de Imobilizado e Ciclos Bernard.',
     config: {
+      total_rounds: 12,
       round_frequency_days: 7,
       sales_mode: 'internal' as SalesMode,
       scenario_type: 'simulated' as ScenarioType,
@@ -241,6 +238,11 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     market_indicators: DEFAULT_MACRO,
     initial_financials: INITIAL_FINANCIAL_TREE
   }
+];
+
+export const ALPHA_TEST_USERS = [
+  { id: 'tutor_master', name: 'Tutor Master', email: 'tutor@empirion.ia', role: 'tutor' as const },
+  { id: 'alpha_street', name: 'Capitão Alpha', email: 'alpha@empirion.ia', role: 'player' as const, team: 'Unidade Alpha STREET' },
 ];
 
 export const MENU_STRUCTURE = [
@@ -263,17 +265,12 @@ export const MENU_STRUCTURE = [
   { label: 'contato', path: '/contact' }
 ];
 
-export const ALPHA_TEST_USERS = [
-  { id: 'tutor_master', name: 'Tutor Master', email: 'tutor@empirion.ia', role: 'tutor' as const },
-  { id: 'alpha_street', name: 'Capitão Alpha', email: 'alpha@empirion.ia', role: 'player' as const, team: 'Unidade Alpha STREET' },
-];
-
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
     hero: { 
       title: "Forje Seu Império", 
       empire: "STREET Arena", 
-      subtitle: "Simulação Industrial v12.8.5: Onde $9M em ativos exigem maestria estratégica.", 
+      subtitle: "Simulação Industrial v12.9.0: Onde $9M em ativos e TSR ditam o vencedor.", 
       cta: "Entre na Arena", 
       secondaryCta: "Ver Ramos" 
     },
@@ -281,7 +278,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { 
         id: 1, 
         title: "Empirion Street", 
-        subtitle: "Gestão de Ciclo Operacional Bernard v12.8.", 
+        subtitle: "Gestão de Ciclo Operacional Bernard v12.9 Gold.", 
         image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", 
         badge: "Industrial Node 08", 
         link: "/branches/industrial" 
@@ -291,7 +288,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { id: 'c1', name: "Empirion Street: Industrial Mastery", status: "Ciclo 1/12", teams: 8, lead: "Unidade Alpha" }
     ],
     sectors: [
-      { id: 's1', name: 'Empirion Street', slug: 'industrial', icon: 'Factory', description: 'Otimização de OEE e CAPEX.' }
+      { id: 's1', name: 'Empirion Street', slug: 'industrial', icon: 'Factory', description: 'Otimização de OEE e TSR.' }
     ]
   },
   'solutions-bp': {

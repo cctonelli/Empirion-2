@@ -1,5 +1,6 @@
+
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus } from '../types';
-import { INITIAL_INDUSTRIAL_FINANCIALS } from '../constants';
+import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES } from '../constants';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
@@ -48,6 +49,43 @@ export const calculateBankRating = (financials: any, hasScissorsEffect: boolean,
 };
 
 /**
+ * MARKET VALUATION KERNEL v1.0
+ * O "Pulo do Gato": Transforma dados contábeis em valor de mercado.
+ */
+export const calculateMarketValuation = (
+  equity: number, 
+  netProfit: number, 
+  rating: CreditRating, 
+  previousSharePrice: number,
+  initialShares: number = DEFAULT_TOTAL_SHARES
+) => {
+  // 1. Valor Patrimonial por Ação (VPA)
+  const vpa = equity / initialShares;
+
+  // 2. Multiplicador de Mercado baseado no Rating (Percepção de Risco)
+  const ratingMultipliers: Record<CreditRating, number> = {
+    'AAA': 1.4, 'AA': 1.25, 'A': 1.15, 'B': 1.0, 'C': 0.8, 'D': 0.5, 'E': 0.2, 'N/A': 1.0
+  };
+  const multi = ratingMultipliers[rating] || 1.0;
+
+  // 3. Prêmio por Rentabilidade (Bônus se Lucro for positivo)
+  const profitBonus = netProfit > 0 ? (netProfit / equity) * 5 : (netProfit / equity) * 10;
+
+  // 4. Preço da Ação Final
+  const share_price = Math.max(0.01, vpa * (multi + profitBonus));
+
+  // 5. TSR (Total Shareholder Return) - Métrica Final de Vitória
+  const tsr = ((share_price - previousSharePrice) / Math.max(previousSharePrice, 0.01)) * 100;
+
+  return {
+    share_price,
+    total_shares: initialShares,
+    market_cap: share_price * initialShares,
+    tsr
+  };
+};
+
+/**
  * INSOLVENCY MONITOR v1.0
  */
 export const checkInsolvencyStatus = (financials: any, history: any): { status: InsolvencyStatus, severity: number, canOperate: boolean, restriction?: string } => {
@@ -70,8 +108,8 @@ export const checkInsolvencyStatus = (financials: any, history: any): { status: 
 };
 
 /**
- * CORE ORACLE ENGINE v12.8.5 GOLD
- * Orchestrates cycles, ratings and insolvency for industrial fidelity.
+ * CORE ORACLE ENGINE v12.9.0 GOLD
+ * Orchestrates cycles, ratings, share valuation and insolvency.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -82,12 +120,15 @@ export const calculateProjections = (
   history?: any
 ): ProjectionResult => {
   const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
+  const prevKpis = previousState?.kpis || {};
   
-  const prevEquity = sanitize(bs.equity?.total || bs.equity?.accumulated_profit + bs.equity?.capital_social, 5055447);
+  const prevEquity = sanitize(bs.equity?.total || (bs.equity?.accumulated_profit + bs.equity?.capital_social), 5055447);
   const prevCash = sanitize(bs.assets?.current?.cash, 0);
   const selic = sanitize(indicators?.interest_rate_tr, 3.0) / 100;
+  const prevSharePrice = sanitize(prevKpis.market_valuation?.share_price, 1.0);
   
   // 1. Revenue & Costs (Fidelity Mode P0 Document)
+  // Nota: No Turnover real, esses valores seriam calculados via matriz de elasticidade
   const revenue = 3322735; 
   const cpv = 2278180;
   const opex = 917582;
@@ -118,10 +159,14 @@ export const calculateProjections = (
     endividamento, lc 
   }, history);
 
+  // 5. Market Valuation (Ação e TSR)
+  const valuation = calculateMarketValuation(finalEquity, netProfit, bankDetails.rating, prevSharePrice);
+
   const kpis: KPIs = {
     ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
     scissors_effect: { ncg, ccl, gap: ncg - ccl, is_critical: hasScissorsEffect },
     banking: bankDetails,
+    market_valuation: valuation,
     market_share: 12.5,
     rating: bankDetails.rating,
     insolvency_status: insolvency.status,

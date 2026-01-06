@@ -1,7 +1,7 @@
 
 /**
- * EMPIRION V12.8.5 - PRODUCTION TYPES (ERPS GOLD Build)
- * Advanced financial status and intervention mapping.
+ * EMPIRION V12.9 - PRODUCTION TYPES (MARKET CAP Build)
+ * Advanced financial status and share valuation mapping.
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -29,13 +29,10 @@ export interface Team {
   insolvency_status?: InsolvencyStatus;
   intervention_log?: InterventionEntry[];
   created_at?: string;
-  credit_limit: number; // Persistent GOLD Field (NOT NULL)
-  equity: number;        // Persistent GOLD Field (NOT NULL)
+  credit_limit: number;
+  equity: number;
 }
 
-/**
- * Interface representing a snapshot in the 'companies' table (History).
- */
 export interface CompanyHistoryRecord {
   id?: string;
   team_id: string;
@@ -49,8 +46,8 @@ export interface CompanyHistoryRecord {
   kpis: KPIs;
   credit_rating: CreditRating;
   insolvency_index: number;
-  credit_limit: number; // Persistent GOLD Field (NOT NULL)
-  equity: number;        // Persistent GOLD Field (NOT NULL)
+  credit_limit: number;
+  equity: number;
   created_at?: string;
 }
 
@@ -69,11 +66,11 @@ export interface KPIs {
     operacional: number;
     financeiro: number;
   };
-  scissors_effect?: {
-    ncg: number;
-    ccl: number;
-    gap: number;
-    is_critical: boolean;
+  market_valuation?: {
+    share_price: number;
+    total_shares: number;
+    market_cap: number;
+    tsr: number; // Total Shareholder Return (Métrica de Vitória)
   };
   banking?: {
     score: number;
@@ -139,28 +136,17 @@ export interface EcosystemConfig {
   market_volatility: number;
 }
 
-export interface TeamProgress {
-  team_id: string;
-  team_name: string;
-  status: string;
-  rating: CreditRating;
-  master_key_enabled?: boolean;
-  risk?: number;
-  insolvent?: boolean;
-  kpis?: KPIs;
-  auditLogs: AuditLog[];
-}
-
 export interface Championship {
   id: string;
   name: string;
-  description: string; // Required GOLD Field (NOT NULL)
+  description: string;
   branch: Branch;
   status: ChampionshipStatus;
   current_round: number; 
   total_rounds: number;   
   deadline_value: number;
   deadline_unit: DeadlineUnit;
+  initial_share_price: number; // Novo campo v12.9
   is_public?: boolean;
   config: any;
   market_indicators: MacroIndicators;
@@ -178,16 +164,6 @@ export interface Championship {
   observers: string[] | any[];
   ecosystemConfig?: EcosystemConfig;
   round_frequency_days?: number;
-}
-
-export interface UserProfile {
-  id: string;
-  supabase_user_id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  is_opal_premium: boolean;
-  created_at: string;
 }
 
 export interface AccountNode {
@@ -208,6 +184,7 @@ export interface ChampionshipTemplate {
   sector: string;
   description: string;
   config: {
+    total_rounds: number;
     round_frequency_days: number;
     transparency_level: TransparencyLevel;
     gazeta_mode: GazetaMode;
@@ -219,14 +196,6 @@ export interface ChampionshipTemplate {
   };
   market_indicators: MacroIndicators;
   initial_financials: any;
-}
-
-export interface MessageBoardItem {
-  id: string;
-  sender: string;
-  text: string;
-  timestamp: string;
-  isImportant?: boolean;
 }
 
 export interface BusinessPlan {
@@ -253,12 +222,6 @@ export interface BlackSwanEvent {
   };
 }
 
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
 export interface Modality {
   id: string;
   name: string;
@@ -279,4 +242,40 @@ export interface AuditLog {
   field_path: string;
   old_value: any;
   new_value: any;
+}
+
+/**
+ * Added to fix import errors in App.tsx, AdminCommandCenter.tsx and services/supabase.ts
+ */
+export interface UserProfile {
+  id: string;
+  supabase_user_id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  is_opal_premium?: boolean;
+  created_at: string;
+}
+
+/**
+ * Added to fix import errors in components/TutorDecisionMonitor.tsx
+ */
+export interface TeamProgress {
+  team_id: string;
+  team_name: string;
+  status: string;
+  rating: CreditRating;
+  risk: number;
+  insolvent: boolean;
+  master_key_enabled?: boolean;
+  auditLogs: AuditLog[];
+}
+
+/**
+ * Added to fix import error in components/CommunityView.tsx
+ */
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
 }

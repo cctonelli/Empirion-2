@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Settings, Globe, Loader2, 
@@ -6,9 +7,11 @@ import {
   Gavel, Sparkles, Sliders, CheckCircle2, LayoutGrid,
   FileText, ShieldAlert, Zap, Flame, Leaf, Eye, EyeOff,
   Users, Clock, Calendar, Hourglass, PenTool, Layout,
-  Shield, UserCheck, Landmark
+  Shield, UserCheck, Landmark, Coins, TrendingUp,
+  // Added History to fix JSX component error
+  History
 } from 'lucide-react';
-import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE } from '../constants';
+import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE } from '../constants';
 import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode } from '../types';
 import { createChampionshipWithTeams } from '../services/supabase';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
@@ -33,6 +36,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     observers: [] as string[],
     observerInput: '',
     total_rounds: 12,
+    initial_share_price: DEFAULT_INITIAL_SHARE_PRICE,
     teams_limit: 8,
     currency: 'BRL',
     deadline_value: 7,
@@ -66,7 +70,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         gazeta_mode: selectedTemplate.config.gazeta_mode || 'anonymous',
         deadline_value: selectedTemplate.config.deadline_value,
         deadline_unit: selectedTemplate.config.deadline_unit,
-        round_frequency_days: selectedTemplate.config.round_frequency_days
+        round_frequency_days: selectedTemplate.config.round_frequency_days,
+        total_rounds: selectedTemplate.config.total_rounds
       }));
       setFinancials(selectedTemplate.initial_financials || INITIAL_FINANCIAL_TREE);
     }
@@ -96,6 +101,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         is_public: true,
         current_round: 0,
         total_rounds: formData.total_rounds,
+        initial_share_price: formData.initial_share_price,
         sales_mode: formData.sales_mode,
         scenario_type: formData.scenario_type,
         currency: formData.currency as any,
@@ -169,8 +175,13 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                        <div className="space-y-4">
                           <h4 className="text-2xl font-black uppercase italic text-white leading-tight">{tpl.name}</h4>
                           <p className={`text-xs font-medium leading-relaxed ${selectedTemplate?.id === tpl.id ? 'text-white/80' : 'text-slate-400'}`}>{tpl.description}</p>
-                          <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${selectedTemplate?.id === tpl.id ? 'text-white' : 'text-orange-500'}`}>
-                             <Landmark size={14} /> Ativo Inicial: $ 9.176.940
+                          <div className="flex wrap gap-4">
+                             <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${selectedTemplate?.id === tpl.id ? 'text-white' : 'text-orange-500'}`}>
+                                <Landmark size={14} /> Ativo: $ 9.17M
+                             </div>
+                             <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${selectedTemplate?.id === tpl.id ? 'text-white' : 'text-blue-400'}`}>
+                                <History size={14} /> Ciclo: {tpl.config.total_rounds} Rodadas
+                             </div>
                           </div>
                        </div>
                     </button>
@@ -192,9 +203,15 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                       <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Trophy size={12}/> Nome da Arena</label>
                       <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all font-bold" />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><FileText size={12}/> Descrição Estratégica</label>
-                      <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 transition-all text-xs font-medium resize-none" placeholder="Defina o contexto pedagógico da arena..." />
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><History size={12}/> Total de Rodadas</label>
+                          <input type="number" min="1" max="24" value={formData.total_rounds} onChange={e => setFormData({...formData, total_rounds: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 font-mono font-bold" />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Coins size={12}/> Ação Inicial ($)</label>
+                          <input type="number" step="0.1" value={formData.initial_share_price} onChange={e => setFormData({...formData, initial_share_price: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-orange-500 font-mono font-bold" />
+                       </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Users size={12}/> Limite de Equipes</label>
@@ -202,22 +219,32 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                     </div>
                   </div>
 
-                  <div className="p-8 bg-orange-600/5 border border-orange-500/20 rounded-[2.5rem] space-y-6 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform"><Clock size={80}/></div>
-                    <div className="space-y-1">
-                       <h4 className="text-orange-500 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Hourglass size={14}/> Cronômetro de Rodada</h4>
+                  <div className="space-y-6">
+                    <div className="p-8 bg-orange-600/5 border border-orange-500/20 rounded-[2.5rem] space-y-6 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform"><Clock size={80}/></div>
+                      <div className="space-y-1">
+                         <h4 className="text-orange-500 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Hourglass size={14}/> Cronômetro de Rodada</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <label className="text-[8px] font-black text-slate-500 uppercase">Valor</label>
+                            <input type="number" min="1" value={formData.deadline_value} onChange={e => setFormData({...formData, deadline_value: Number(e.target.value)})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" />
+                         </div>
+                         <div className="space-y-2">
+                            <label className="text-[8px] font-black text-slate-500 uppercase">Unidade</label>
+                            <select value={formData.deadline_unit} onChange={e => setFormData({...formData, deadline_unit: e.target.value as DeadlineUnit})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-orange-500 appearance-none">
+                               <option value="hours">Horas</option>
+                               <option value="days">Dias</option>
+                            </select>
+                         </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-2">
-                          <label className="text-[8px] font-black text-slate-500 uppercase">Valor</label>
-                          <input type="number" min="1" value={formData.deadline_value} onChange={e => setFormData({...formData, deadline_value: Number(e.target.value)})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" />
-                       </div>
-                       <div className="space-y-2">
-                          <label className="text-[8px] font-black text-slate-500 uppercase">Unidade</label>
-                          <select value={formData.deadline_unit} onChange={e => setFormData({...formData, deadline_unit: e.target.value as DeadlineUnit})} className="w-full p-4 bg-slate-950 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-orange-500 appearance-none">
-                             <option value="hours">Horas</option>
-                             <option value="days">Dias</option>
-                          </select>
+
+                    <div className="p-6 bg-blue-600/5 border border-blue-500/20 rounded-[2rem] flex items-center gap-4">
+                       <div className="p-3 bg-blue-600 rounded-xl text-white"><TrendingUp size={20}/></div>
+                       <div>
+                          <p className="text-[10px] font-black text-white uppercase italic">Market Valuation Node</p>
+                          <p className="text-[9px] text-blue-400 font-medium">O TSR será calculado automaticamente comparando a evolução da ação.</p>
                        </div>
                     </div>
                   </div>
@@ -261,7 +288,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                      </div>
 
                      <div className="space-y-4">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Nominar Observadores (ID Alpha ou Email)</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase">Mudanças Observadores (ID Alpha ou Email)</label>
                         <div className="flex gap-2">
                            <input 
                              value={formData.observerInput} 
@@ -271,7 +298,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                            />
                            <button onClick={addObserver} className="p-4 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-500 transition-all"><Plus size={20}/></button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex wrap gap-2">
                            {formData.observers.map(obs => (
                              <span key={obs} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-bold text-emerald-400 flex items-center gap-2">
                                {obs} <button onClick={() => setFormData({...formData, observers: formData.observers.filter(o => o !== obs)})} className="text-rose-500">×</button>
@@ -299,7 +326,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                      <h3 className="text-xl font-black text-white uppercase italic">4. Auditoria de Estrutura Inicial (CPC 26)</h3>
                   </div>
                   <div className="flex items-center gap-3 px-6 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-full text-[8px] font-black uppercase tracking-widest">
-                     <ShieldCheck size={14} /> Ativos Segregados v12.8
+                     <ShieldCheck size={14} /> Ativos Segregados v12.9
                   </div>
                </div>
                <FinancialStructureEditor 
