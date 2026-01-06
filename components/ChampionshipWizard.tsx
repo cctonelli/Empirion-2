@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Settings, Globe, Loader2, 
@@ -7,7 +6,7 @@ import {
   Gavel, Sparkles, Sliders, CheckCircle2, LayoutGrid,
   FileText, ShieldAlert, Zap, Flame, Leaf, Eye, EyeOff,
   Users, Clock, Calendar, Hourglass, PenTool, Layout,
-  Shield, UserCheck
+  Shield, UserCheck, Landmark
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE } from '../constants';
 import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode } from '../types';
@@ -86,8 +85,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   const handleLaunch = async () => {
     setIsSubmitting(true);
     try {
-      // UUID FILTER: Remove IDs Alpha do array de observers para evitar erro 22P02 no Supabase
-      // Se o ID não for um UUID válido, ele não deve ir para a coluna uuid[]
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const validObservers = formData.observers.filter(obs => uuidRegex.test(obs));
 
@@ -111,7 +108,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         config: {
            ...formData,
            rules: formData.rules,
-           originalObservers: formData.observers // Mantém os nomes originais no JSON de config
+           originalObservers: formData.observers
         } as any,
         initial_financials: financials,
         market_indicators: selectedTemplate?.market_indicators
@@ -161,12 +158,21 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
-               <h3 className="text-xl font-black text-white uppercase italic">1. Matriz de Atividade</h3>
+               <div className="flex items-center gap-4">
+                  <h3 className="text-xl font-black text-white uppercase italic">1. Matriz de Atividade</h3>
+                  <span className="px-3 py-1 bg-orange-600/20 text-orange-500 rounded-full text-[8px] font-black uppercase tracking-widest border border-orange-500/30">FIDELIDADE CPC 26</span>
+               </div>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {CHAMPIONSHIP_TEMPLATES.map((tpl) => (
-                    <button key={tpl.id} onClick={() => setSelectedTemplate(tpl)} className={`p-8 rounded-[3rem] border transition-all text-left ${selectedTemplate?.id === tpl.id ? 'bg-orange-600 border-white shadow-2xl scale-[1.02]' : 'bg-white/5 border-white/10 hover:border-orange-500/50'}`}>
-                       <h4 className="text-xl font-black uppercase italic text-white">{tpl.name}</h4>
-                       <p className="text-xs text-slate-400 mt-2">{tpl.description}</p>
+                    <button key={tpl.id} onClick={() => setSelectedTemplate(tpl)} className={`p-10 rounded-[3rem] border-2 transition-all text-left group relative overflow-hidden ${selectedTemplate?.id === tpl.id ? 'bg-orange-600 border-white shadow-2xl scale-[1.02]' : 'bg-white/5 border-white/10 hover:border-orange-500/50'}`}>
+                       {selectedTemplate?.id === tpl.id && <Sparkles className="absolute top-6 right-6 text-white animate-pulse" size={24} />}
+                       <div className="space-y-4">
+                          <h4 className="text-2xl font-black uppercase italic text-white leading-tight">{tpl.name}</h4>
+                          <p className={`text-xs font-medium leading-relaxed ${selectedTemplate?.id === tpl.id ? 'text-white/80' : 'text-slate-400'}`}>{tpl.description}</p>
+                          <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${selectedTemplate?.id === tpl.id ? 'text-white' : 'text-orange-500'}`}>
+                             <Landmark size={14} /> Ativo Inicial: $ 9.176.940
+                          </div>
+                       </div>
                     </button>
                   ))}
                </div>
@@ -286,7 +292,16 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
           )}
 
           {step === 4 && financials && (
-            <motion.div key="step4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <motion.div key="step4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
+               <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                  <div className="flex items-center gap-4">
+                     <div className="p-3 bg-blue-600 rounded-xl text-white shadow-lg"><Calculator size={20}/></div>
+                     <h3 className="text-xl font-black text-white uppercase italic">4. Auditoria de Estrutura Inicial (CPC 26)</h3>
+                  </div>
+                  <div className="flex items-center gap-3 px-6 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-full text-[8px] font-black uppercase tracking-widest">
+                     <ShieldCheck size={14} /> Ativos Segregados v12.8
+                  </div>
+               </div>
                <FinancialStructureEditor 
                  initialBalance={financials.balance_sheet} 
                  initialDRE={financials.dre} 
