@@ -1,8 +1,8 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, CompanyHistoryRecord } from '../types';
 import { DEFAULT_MACRO } from '../constants';
 import { calculateProjections } from './simulation';
+import { logError, logInfo, LogContext } from '../utils/logger';
 
 const getSafeEnv = (key: string): string => {
   const viteKey = `VITE_${key}`;
@@ -18,16 +18,22 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
 /**
- * ORACLE TURNOVER ENGINE v12.8.2 GOLD
+ * ORACLE TURNOVER ENGINE v12.8.5 GOLD
  * Correctly maps persistent columns for history (companies table) and team current status.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
+  logInfo(LogContext.TURNOVER, `Initializing turnover for arena ${championshipId} | Round ${currentRound} -> ${currentRound + 1}`);
+  
   try {
     const { data: arena } = await supabase.from('championships').select('*').eq('id', championshipId).single();
-    if (!arena) throw new Error("Arena synchronization lost.");
+    if (!arena) {
+      throw new Error(`Synchronization lost: Arena ${championshipId} not found.`);
+    }
 
     const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', championshipId);
-    if (!teams || teams.length === 0) throw new Error("No strategy units found.");
+    if (!teams || teams.length === 0) {
+      throw new Error(`Orphan Arena: No strategy units found for championship ${championshipId}.`);
+    }
 
     const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', currentRound + 1);
     const { data: previousStates } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', currentRound);
@@ -54,7 +60,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
         return {
           team_id: team.id,
-          team_name: team.name, // Persisted for Gazette speed
+          team_name: team.name, 
           championship_id: championshipId,
           round: currentRound + 1,
           state: { decisions: teamDecision },
@@ -64,37 +70,47 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           kpis: result.kpis,
           credit_rating: result.creditRating,
           insolvency_index: result.health.insolvency_risk,
-          // DB column alignment for GOLD v12.8.2 (NOT NULL)
           credit_limit: result.kpis.banking?.credit_limit || 0,
           equity: result.kpis.equity || 0
         };
       } catch (e: any) {
+        logError(LogContext.TURNOVER, `Calculation failure for team ${team.id}`, e.message);
         return null;
       }
     }).filter(r => r !== null) as CompanyHistoryRecord[];
 
-    if (batchResults.length === 0) throw new Error("Total Process Failure.");
+    if (batchResults.length === 0) {
+      throw new Error("Total Process Failure: No teams could be processed.");
+    }
 
-    // Insert history snapshots
     const { error: insErr } = await supabase.from('companies').insert(batchResults);
-    if (insErr) throw insErr;
+    if (insErr) {
+      logError(LogContext.SUPABASE, "Failed to insert turnover history", insErr);
+      throw insErr;
+    }
 
-    // Sync teams current state (equity and credit_limit are NOT NULL in teams table)
     for (const res of batchResults) {
-      await supabase.from('teams').update({
+      const { error: upErr } = await supabase.from('teams').update({
         credit_limit: res.credit_limit,
         equity: res.equity
       }).eq('id', res.team_id);
+      
+      if (upErr) {
+        logError(LogContext.SUPABASE, `Failed to sync persistent state for team ${res.team_id}`, upErr);
+      }
     }
 
-    // Advance Arena Clock
-    await supabase.from('championships').update({ 
+    const { error: arenaErr } = await supabase.from('championships').update({ 
       current_round: currentRound + 1,
       updated_at: new Date().toISOString() 
     }).eq('id', championshipId);
 
+    if (arenaErr) throw arenaErr;
+
+    logInfo(LogContext.TURNOVER, `Turnover successfully completed for arena ${championshipId}`);
     return { success: true };
   } catch (err: any) {
+    logError(LogContext.TURNOVER, "Critical Turnover Fault", err.message);
     return { success: false, error: err.message };
   }
 };
@@ -109,7 +125,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const now = new Date().toISOString();
     const payload = {
       name: champData.name,
-      description: champData.description || 'Arena de Simulação Estratégica Gold', // Mandatory NOT NULL
+      description: champData.description || 'Arena de Simulação Estratégica Gold', 
       branch: champData.branch,
       status: 'active',
       current_round: 0,
@@ -135,8 +151,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const teamsToInsert = teams.map(t => ({
       name: t.name,
       championship_id: champ.id,
-      equity: 5055447, // Default Initial Equity (NOT NULL)
-      credit_limit: 5000000, // Default Initial Credit (NOT NULL)
+      equity: 5055447, 
+      credit_limit: 5000000, 
       status: 'active',
       invite_code: `CODE-${Math.random().toString(36).substring(7).toUpperCase()}`
     }));
@@ -144,7 +160,10 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const { data: teamsData, error: tErr } = await supabase.from(teamsTable).insert(teamsToInsert).select();
     if (tErr) throw tErr;
     return { champ: { ...champ, is_trial: isTrial } as Championship, teams: teamsData as Team[] };
-  } catch (err: any) { throw err; }
+  } catch (err: any) { 
+    logError(LogContext.SUPABASE, "Championship Creation Failed", err.message);
+    throw err; 
+  }
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {

@@ -16,6 +16,7 @@ import BusinessPlanWizard from './BusinessPlanWizard';
 import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { supabase, getChampionships, getUserProfile } from '../services/supabase';
 import { ScenarioType, Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
+import { logError, LogContext } from '../utils/logger';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [aiInsight, setAiInsight] = useState<string>('');
@@ -46,11 +47,23 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     const k: KPIs = { ...baseKpis };
     
     if (activeTeam) {
-      if (!k.banking) k.banking = { score: 100, rating: 'AAA', interest_rate: 0.03, credit_limit: 5000000, can_borrow: true };
-      // Sync with NOT NULL persistent fields from Team - v12.8.5 Gold Calibration
-      k.banking.credit_limit = activeTeam.credit_limit;
-      k.equity = activeTeam.equity;
-      k.insolvency_status = activeTeam.insolvency_status ?? k.insolvency_status;
+      try {
+        if (!k.banking) k.banking = { score: 100, rating: 'AAA', interest_rate: 0.03, credit_limit: 5000000, can_borrow: true };
+        
+        // Validation for persistent fields to avoid Vercel generic errors
+        if (activeTeam.credit_limit === undefined || activeTeam.credit_limit === null) {
+          throw new Error("Missing credit_limit in activeTeam object.");
+        }
+        if (activeTeam.equity === undefined || activeTeam.equity === null) {
+          throw new Error("Missing equity in activeTeam object.");
+        }
+
+        k.banking.credit_limit = activeTeam.credit_limit;
+        k.equity = activeTeam.equity;
+        k.insolvency_status = activeTeam.insolvency_status ?? k.insolvency_status;
+      } catch (err: any) {
+        logError(LogContext.DASHBOARD, "KPI Sync Failure", { teamId: activeTeam.id, error: err.message });
+      }
     }
 
     return k;
@@ -62,24 +75,28 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   useEffect(() => {
     const fetchArenaInfo = async () => {
-      const champId = localStorage.getItem('active_champ_id');
-      const teamId = localStorage.getItem('active_team_id');
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const profile = await getUserProfile(session.user.id);
-        if (profile) setUserRole(profile.role);
-      }
-
-      if (champId) {
-        const { data } = await getChampionships();
-        const arena = data?.find(a => a.id === champId);
-        if (arena) {
-          setActiveArena(arena);
-          setActiveTeamId(teamId);
-          const team = arena.teams?.find((t: any) => t.id === teamId);
-          if (team) setActiveTeam(team);
+      try {
+        const champId = localStorage.getItem('active_champ_id');
+        const teamId = localStorage.getItem('active_team_id');
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const profile = await getUserProfile(session.user.id);
+          if (profile) setUserRole(profile.role);
         }
+
+        if (champId) {
+          const { data } = await getChampionships();
+          const arena = data?.find(a => a.id === champId);
+          if (arena) {
+            setActiveArena(arena);
+            setActiveTeamId(teamId);
+            const team = arena.teams?.find((t: any) => t.id === teamId);
+            if (team) setActiveTeam(team);
+          }
+        }
+      } catch (err: any) {
+        logError(LogContext.DASHBOARD, "Arena Info Fetch Failed", err.message);
       }
     };
 
