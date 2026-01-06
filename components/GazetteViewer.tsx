@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -238,7 +237,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                              </div>
                              <div className="flex items-center gap-4 px-6 py-2 bg-rose-600/10 border border-rose-500/20 rounded-full text-rose-500">
                                 <AlertTriangle size={16}/>
-                                <span className="text-[9px] font-black uppercase tracking-widest">Zona Crítica > 60%</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest">Zona Crítica &gt; 60%</span>
                              </div>
                           </div>
                           <div className="h-[400px]">
