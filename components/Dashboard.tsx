@@ -48,7 +48,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     
     if (activeTeam) {
       if (!k.banking) k.banking = { score: 100, rating: 'AAA', interest_rate: 0.03, credit_limit: 5000000, can_borrow: true };
-      // Sync with NOT NULL fields from Team
+      // Sync with NOT NULL fields from Team - v12.8.5 Gold
       k.banking.credit_limit = activeTeam.credit_limit;
       k.equity = activeTeam.equity;
       k.insolvency_status = activeTeam.insolvency_status ?? k.insolvency_status;

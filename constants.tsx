@@ -2,8 +2,8 @@
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode } from './types';
 
 export const APP_VERSION = "v12.8.5-Gold";
-export const BUILD_DATE = "01/01/2026";
-export const PROTOCOL_NODE = "Node 08-ALPHA-TENANT-STABLE";
+export const BUILD_DATE = "05/01/2026";
+export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-STABLE";
 
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
@@ -52,7 +52,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   {
     id: 'tpl-industrial-gold',
-    name: 'Industrial Mastery GOLD',
+    name: 'Empirion Street: Industrial Mastery',
     branch: 'industrial',
     sector: 'Manufacturing',
     description: 'Balanço Inicial de $ 9.176.940. Foco em OEE, CAPEX e Ciclo Financeiro Bernard v12.8.',
@@ -74,7 +74,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
 export const MENU_STRUCTURE = [
   { label: 'início', path: '/' },
   { label: 'ramos', path: '/solutions/simulators', sub: [
-    { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory', desc: 'Produção $9M Assets' },
+    { id: 'ind', label: 'Empirion Street', path: '/branches/industrial', icon: 'Factory', desc: 'Produção $9M Assets' },
     { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart', desc: 'Varejo Híbrido' }
   ]},
   { label: 'soluções', path: '#', sub: [
@@ -88,15 +88,15 @@ export const MENU_STRUCTURE = [
 
 export const ALPHA_TEST_USERS = [
   { id: 'tutor', name: 'Tutor Master', email: 'tutor@empirion.ia', role: 'tutor' as const },
-  { id: 'alpha', name: 'Capitão Alpha', email: 'alpha@empirion.ia', role: 'player' as const, team: 'Unidade Alpha GOLD' },
+  { id: 'alpha', name: 'Capitão Alpha', email: 'alpha@empirion.ia', role: 'player' as const, team: 'Unidade Alpha STREET' },
 ];
 
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
-    hero: { title: "Forje Seu Império", empire: "GOLD Arena", subtitle: "Simulação Industrial v12.8.5: Onde $9M em ativos exigem maestria estratégica.", cta: "Entre na Arena", secondaryCta: "Ver Ramos" },
-    carousel: [{ id: 1, title: "Industrial GOLD", subtitle: "Gestão de Ciclo Operacional.", image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", badge: "P0 Validado", link: "/branches/industrial" }],
+    hero: { title: "Forje Seu Império", empire: "STREET Arena", subtitle: "Simulação Industrial v12.8.5: Onde $9M em ativos exigem maestria estratégica.", cta: "Entre na Arena", secondaryCta: "Ver Ramos" },
+    carousel: [{ id: 1, title: "Empirion Street", subtitle: "Gestão de Ciclo Operacional.", image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", badge: "P0 Validado", link: "/branches/industrial" }],
     leaderboard: [{ id: 'c1', name: "Industrial Mastery GOLD", status: "Ciclo 1/12", teams: 8, lead: "Unidade Alpha" }],
-    sectors: [{ id: 's1', name: 'Indústria', slug: 'industrial', icon: 'Factory', description: 'Otimização de OEE e CAPEX.' }]
+    sectors: [{ id: 's1', name: 'Empirion Street', slug: 'industrial', icon: 'Factory', description: 'Otimização de OEE e CAPEX.' }]
   },
   'solutions-bp': {
     title: "Plano de Negócios Progressivo",
