@@ -1,4 +1,3 @@
-
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode } from './types';
 
 export const APP_VERSION = "v12.8.5-Gold";
@@ -46,7 +45,9 @@ export const DEFAULT_MACRO: MacroIndicators = {
   interest_rate_tr: 3.0,
   tax_rate_ir: 15.0,
   machinery_values: { alfa: 505000, beta: 1515000, gama: 3030000 },
-  difficulty: { price_sensitivity: 2.0, marketing_effectiveness: 1.0 }
+  difficulty: { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
+  providerPrices: { mpA: 62.8, mpB: 83.8 },
+  distributionCostUnit: 12.5
 };
 
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
@@ -87,16 +88,35 @@ export const MENU_STRUCTURE = [
 ];
 
 export const ALPHA_TEST_USERS = [
-  { id: 'tutor', name: 'Tutor Master', email: 'tutor@empirion.ia', role: 'tutor' as const },
-  { id: 'alpha', name: 'Capitão Alpha', email: 'alpha@empirion.ia', role: 'player' as const, team: 'Unidade Alpha STREET' },
+  { id: 'tutor_master', name: 'Tutor Master', email: 'tutor@empirion.ia', role: 'tutor' as const },
+  { id: 'alpha_street', name: 'Capitão Alpha', email: 'alpha@empirion.ia', role: 'player' as const, team: 'Unidade Alpha STREET' },
 ];
 
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
-    hero: { title: "Forje Seu Império", empire: "STREET Arena", subtitle: "Simulação Industrial v12.8.5: Onde $9M em ativos exigem maestria estratégica.", cta: "Entre na Arena", secondaryCta: "Ver Ramos" },
-    carousel: [{ id: 1, title: "Empirion Street", subtitle: "Gestão de Ciclo Operacional.", image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", badge: "P0 Validado", link: "/branches/industrial" }],
-    leaderboard: [{ id: 'c1', name: "Industrial Mastery GOLD", status: "Ciclo 1/12", teams: 8, lead: "Unidade Alpha" }],
-    sectors: [{ id: 's1', name: 'Empirion Street', slug: 'industrial', icon: 'Factory', description: 'Otimização de OEE e CAPEX.' }]
+    hero: { 
+      title: "Forje Seu Império", 
+      empire: "STREET Arena", 
+      subtitle: "Simulação Industrial v12.8.5: Onde $9M em ativos exigem maestria estratégica.", 
+      cta: "Entre na Arena", 
+      secondaryCta: "Ver Ramos" 
+    },
+    carousel: [
+      { 
+        id: 1, 
+        title: "Empirion Street", 
+        subtitle: "Gestão de Ciclo Operacional.", 
+        image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", 
+        badge: "P0 Validado", 
+        link: "/branches/industrial" 
+      }
+    ],
+    leaderboard: [
+      { id: 'c1', name: "Empirion Street: Industrial Mastery", status: "Ciclo 1/12", teams: 8, lead: "Unidade Alpha" }
+    ],
+    sectors: [
+      { id: 's1', name: 'Empirion Street', slug: 'industrial', icon: 'Factory', description: 'Otimização de OEE e CAPEX.' }
+    ]
   },
   'solutions-bp': {
     title: "Plano de Negócios Progressivo",
