@@ -47,7 +47,8 @@ const AdminCommandCenter: React.FC<{ preTab?: 'tournaments' | 'users' | 'system'
       } else if (type === 'CREDIT_LIMIT') {
         update.credit_limit = value;
       } else if (type === 'CAPITAL') {
-        update.equity = (selectedArena?.teams?.find(t => t.id === teamId)?.equity || 0) + value;
+        const team = selectedArena?.teams?.find(t => t.id === teamId);
+        update.equity = (team?.equity || 0) + value;
       }
       
       const { error } = await supabase.from('teams').update(update).eq('id', teamId);

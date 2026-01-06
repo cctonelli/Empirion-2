@@ -19,7 +19,7 @@ export const isTestMode = true;
 
 /**
  * ORACLE TURNOVER ENGINE v12.8.2 GOLD
- * Correctly maps persistent columns for history (companies) and teams.
+ * Correctly maps persistent columns for history (companies table) and team current status.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
   try {
@@ -54,7 +54,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
         return {
           team_id: team.id,
-          team_name: team.name,
+          team_name: team.name, // Persisted for Gazette speed
           championship_id: championshipId,
           round: currentRound + 1,
           state: { decisions: teamDecision },
@@ -64,7 +64,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           kpis: result.kpis,
           credit_rating: result.creditRating,
           insolvency_index: result.health.insolvency_risk,
-          // Fixed Database column names to match 'companies' table schema GOLD v12.8.2
+          // DB column alignment for GOLD v12.8.2 (NOT NULL)
           credit_limit: result.kpis.banking?.credit_limit || 0,
           equity: result.kpis.equity || 0
         };
@@ -75,11 +75,11 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     if (batchResults.length === 0) throw new Error("Total Process Failure.");
 
-    // Insert history (companies table now has NOT NULL constraints on credit_limit/equity)
+    // Insert history snapshots
     const { error: insErr } = await supabase.from('companies').insert(batchResults);
     if (insErr) throw insErr;
 
-    // Sync team current state
+    // Sync teams current state (equity and credit_limit are NOT NULL in teams table)
     for (const res of batchResults) {
       await supabase.from('teams').update({
         credit_limit: res.credit_limit,
@@ -87,7 +87,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       }).eq('id', res.team_id);
     }
 
-    // Increment Arena Round
+    // Advance Arena Clock
     await supabase.from('championships').update({ 
       current_round: currentRound + 1,
       updated_at: new Date().toISOString() 
@@ -109,7 +109,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const now = new Date().toISOString();
     const payload = {
       name: champData.name,
-      description: champData.description || 'Arena de Simulação Estratégica Gold',
+      description: champData.description || 'Arena de Simulação Estratégica Gold', // Mandatory NOT NULL
       branch: champData.branch,
       status: 'active',
       current_round: 0,
@@ -135,8 +135,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const teamsToInsert = teams.map(t => ({
       name: t.name,
       championship_id: champ.id,
-      equity: 5055447, // Initial Equity is NOT NULL (GOLD default)
-      credit_limit: 5000000, // Initial Credit is NOT NULL (GOLD default)
+      equity: 5055447, // Default Initial Equity (NOT NULL)
+      credit_limit: 5000000, // Default Initial Credit (NOT NULL)
       status: 'active',
       invite_code: `CODE-${Math.random().toString(36).substring(7).toUpperCase()}`
     }));

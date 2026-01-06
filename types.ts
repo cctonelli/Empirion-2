@@ -34,7 +34,7 @@ export interface Team {
 }
 
 /**
- * Interface representing a snapshot in the 'companies' table.
+ * Interface representing a snapshot in the 'companies' table (History).
  */
 export interface CompanyHistoryRecord {
   id?: string;
