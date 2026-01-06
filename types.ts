@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V12.9 - PRODUCTION TYPES (MARKET CAP Build)
+ * EMPIRION V12.9.1 - PRODUCTION TYPES (MARKET CAP & SCISSORS Build)
  * Advanced financial status and share valuation mapping.
  */
 
@@ -26,7 +26,7 @@ export interface Team {
   championship_id: string;
   status?: string;
   invite_code?: string;
-  is_bot?: boolean; // Define se a unidade é controlada pela IA Competitiva
+  is_bot?: boolean;
   master_key_enabled?: boolean;
   kpis?: KPIs;
   insolvency_status?: InsolvencyStatus;
@@ -34,31 +34,6 @@ export interface Team {
   created_at?: string;
   credit_limit: number;
   equity: number;
-}
-
-export interface CompanyHistoryRecord {
-  id?: string;
-  team_id: string;
-  team_name: string;
-  championship_id: string;
-  round: number;
-  state: any;
-  dre: any;
-  balance_sheet: any;
-  cash_flow: any;
-  kpis: KPIs;
-  credit_rating: CreditRating;
-  insolvency_index: number;
-  credit_limit: number;
-  equity: number;
-  created_at?: string;
-}
-
-export interface InterventionEntry {
-  type: 'CAPITAL_INJECTION' | 'DEBT_FORGIVENESS' | 'RJ_SUSPENSION' | 'MANUAL_STATUS';
-  value?: number;
-  tutor_note: string;
-  timestamp: string;
 }
 
 export interface KPIs {
@@ -69,11 +44,18 @@ export interface KPIs {
     operacional: number;
     financeiro: number;
   };
+  scissors_effect?: {
+    ncg: number;          // Necessidade de Capital de Giro
+    ccl: number;          // Capital Circulante Líquido
+    tesouraria: number;   // Saldo de Tesouraria (CCL - NCG)
+    ccp: number;          // Capital Circulante Próprio
+    is_critical: boolean; // "Abertura de Tesoura"
+  };
   market_valuation?: {
     share_price: number;
     total_shares: number;
     market_cap: number;
-    tsr: number; // Total Shareholder Return (Métrica de Vitória)
+    tsr: number;
   };
   banking?: {
     score: number;
@@ -150,7 +132,7 @@ export interface Championship {
   deadline_value: number;
   deadline_unit: DeadlineUnit;
   regions_count: number; 
-  bots_count: number; // Quantidade de bots competidores
+  bots_count: number; 
   region_type: RegionType; 
   analysis_source: AnalysisSource; 
   initial_share_price: number; 
@@ -204,7 +186,6 @@ export interface ChampionshipTemplate {
     deadline_unit: DeadlineUnit;
     sales_mode: SalesMode;
     scenario_type: ScenarioType;
-    // Fix: Added teams_limit to resolve property access error in ChampionshipWizard
     teams_limit?: number;
   };
   market_indicators: MacroIndicators;
@@ -282,4 +263,11 @@ export interface CommunityCriteria {
   id: string;
   label: string;
   weight: number;
+}
+
+export interface InterventionEntry {
+  type: 'CAPITAL_INJECTION' | 'DEBT_FORGIVENESS' | 'RJ_SUSPENSION' | 'MANUAL_STATUS';
+  value?: number;
+  tutor_note: string;
+  timestamp: string;
 }

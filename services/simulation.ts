@@ -1,3 +1,4 @@
+
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType } from '../types';
 import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES } from '../constants';
 
@@ -166,7 +167,14 @@ export const calculateProjections = (
 
   const kpis: KPIs = {
     ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
-    scissors_effect: { ncg, ccl, gap: ncg - ccl, is_critical: hasScissorsEffect },
+    // Fix: Correcting scissors_effect to include required properties tesouraria and ccp, and removing invalid gap
+    scissors_effect: { 
+      ncg, 
+      ccl, 
+      tesouraria: ccl - ncg, 
+      ccp: finalEquity - 5886600, 
+      is_critical: hasScissorsEffect 
+    },
     banking: bankDetails,
     market_valuation: valuation,
     market_share: Math.min(100, (unitsSold / 100000) * 100),

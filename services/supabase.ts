@@ -1,6 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, CompanyHistoryRecord } from '../types';
+// Removed undefined member CompanyHistoryRecord from import
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan } from '../types';
 import { DEFAULT_MACRO } from '../constants';
 import { calculateProjections } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';

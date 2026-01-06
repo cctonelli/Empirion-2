@@ -6,7 +6,7 @@ import {
   Sparkles, Loader2, ShieldCheck, Newspaper, Cpu, 
   ChevronRight, RotateCcw, Shield, FileEdit, PenTool, 
   Eye, Timer, Box, AlertOctagon, HeartPulse, Gavel,
-  CreditCard
+  CreditCard, Landmark
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -36,8 +36,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const currentKpis = useMemo((): KPIs => {
     const baseKpis: KPIs = activeArena?.kpis || {
       ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 60, financeiro: 35 },
-      scissors_effect: { ncg: 150000, ccl: 200000, gap: -50000, is_critical: false },
-      productivity: { oee: 84.2, csat: 9.1 },
+      scissors_effect: { ncg: 150000, ccl: 200000, tesouraria: 50000, ccp: 180000, is_critical: false },
       market_share: 12.5,
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
@@ -50,14 +49,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     if (activeTeam) {
       try {
         if (!k.banking) k.banking = { score: 100, rating: 'AAA', interest_rate: 0.03, credit_limit: 5000000, can_borrow: true };
-        
-        if (activeTeam.credit_limit === undefined || activeTeam.credit_limit === null) {
-          throw new Error("Missing credit_limit in activeTeam object.");
-        }
-        if (activeTeam.equity === undefined || activeTeam.equity === null) {
-          throw new Error("Missing equity in activeTeam object.");
-        }
-
         k.banking.credit_limit = activeTeam.credit_limit;
         k.equity = activeTeam.equity;
         k.insolvency_status = activeTeam.insolvency_status ?? k.insolvency_status;
@@ -70,7 +61,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   }, [activeArena, activeTeam]);
 
   const isBankrupt = currentKpis.insolvency_status === 'BANKRUPT';
-  const isRJ = currentKpis.insolvency_status === 'RJ';
   const isObserver = userRole === 'observer';
 
   useEffect(() => {
@@ -102,16 +92,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
     const fetchIntelligence = async () => {
       try {
-        // Correcting type mismatch: using activeArena.analysis_source instead of scenarioType
         const currentAnalysisSource: AnalysisSource = activeArena?.analysis_source || 'parameterized';
-        
         const [analysis, newsContent] = await Promise.all([
           generateMarketAnalysis(activeArena?.name || 'Arena Empirion Supremo', 1, branch, currentAnalysisSource),
           generateGazetaNews({ 
             period: (activeArena?.current_round || 0) + 1, 
             leader: 'Equipe Alpha', 
             inflation: `${activeArena?.market_indicators?.inflation_rate || 1.0}%`, 
-            // Fix: property name should be analysisSource, not scenarioType
             analysisSource: currentAnalysisSource, 
             focus: [branch] 
           })
@@ -128,7 +115,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     
     fetchArenaInfo();
     fetchIntelligence();
-  }, [scenarioType, branch, activeArena?.name, activeArena?.current_round, activeArena?.analysis_source]);
+  }, [branch, activeArena?.name, activeArena?.current_round, activeArena?.analysis_source]);
 
   const getStatusColor = (status: InsolvencyStatus) => {
     switch(status) {
@@ -244,9 +231,27 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-             <EfficiencyCard label="NCG (Giro)" val={`$ ${currentKpis?.scissors_effect?.ncg?.toLocaleString() || '0'}`} trend={currentKpis?.scissors_effect?.is_critical ? 'Tesoura!' : 'Estável'} positive={!currentKpis?.scissors_effect?.is_critical} icon={<Box size={20}/>} />
-             <EfficiencyCard label="Linha de Crédito" val={`$ ${currentKpis?.banking?.credit_limit?.toLocaleString() || '0'}`} trend={`Custo: ${((currentKpis?.banking?.interest_rate ?? 0) * 100).toFixed(1)}%`} positive={currentKpis?.banking?.can_borrow ?? false} icon={<CreditCard size={20}/>} />
-             <EfficiencyCard label="Rating Oracle" val={currentKpis.rating} trend={`Score: ${currentKpis?.banking?.score ?? 0}`} positive={(currentKpis?.banking?.score ?? 0) > 50} icon={<ShieldCheck size={20}/>} />
+             <EfficiencyCard 
+               label="Status Tesouraria" 
+               val={`$ ${currentKpis?.scissors_effect?.tesouraria?.toLocaleString() || '0'}`} 
+               trend={currentKpis?.scissors_effect?.is_critical ? 'EFEITO TESOURA!' : 'LIQUIDEZ OK'} 
+               positive={!currentKpis?.scissors_effect?.is_critical} 
+               icon={<Landmark size={20}/>} 
+             />
+             <EfficiencyCard 
+               label="Necessidade de Capital (NCG)" 
+               val={`$ ${currentKpis?.scissors_effect?.ncg?.toLocaleString() || '0'}`} 
+               trend={`CCL: $ ${currentKpis?.scissors_effect?.ccl?.toLocaleString() || '0'}`} 
+               positive={true} 
+               icon={<Activity size={20}/>} 
+             />
+             <EfficiencyCard 
+               label="Rating Oracle" 
+               val={currentKpis.rating} 
+               trend={`Score: ${currentKpis?.banking?.score ?? 0}`} 
+               positive={(currentKpis?.banking?.score ?? 0) > 50} 
+               icon={<ShieldCheck size={20}/>} 
+             />
           </div>
 
           <div className="md:col-span-2 premium-card p-8 rounded-[3rem] bg-slate-900 border-white/5 flex flex-col justify-between relative overflow-hidden group shadow-2xl min-h-[300px]">

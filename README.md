@@ -1,85 +1,72 @@
 
-# 🚀 Empirion – Business Intelligence Arena (v12.9.0-Gold)
+# 🚀 Empirion – Business Intelligence Arena (v12.9.1-Gold)
 
 **Forge Your Empire with AI-Driven Strategic Insight.**
 
-O Empirion é a plataforma definitiva de simulação empresarial multiplayer, projetada para converter complexidade em vantagem competitiva. No build **v12.9.0 GOLD**, o sistema integra normas **CPC 26**, inteligência generativa **Gemini 3 Pro** e um motor de **Market Valuation** de alta fidelidade.
+O Empirion é a plataforma definitiva de simulação empresarial multiplayer, projetada para converter complexidade em vantagem competitiva. No build **v12.9.1 GOLD**, o sistema integra normas **CPC 26**, inteligência generativa **Gemini 3 Pro** e o avançado monitor de **Efeito Tesoura**.
 
 ---
 
-## 🏗️ 1. Processo de Criação de Campeonato (Tutor Master)
+## 📈 1. O Termômetro Financeiro: Efeito Tesoura
+
+Baseado na metodologia clássica de gestão de capital de giro, o Empirion monitora em tempo real o descompasso entre a operação e o caixa.
+
+### Variáveis Monitoradas (Conforme PDF Técnico):
+*   **NCG (Necessidade de Capital de Giro):** Recursos aplicados no ciclo operacional (Estoques + Clientes - Fornecedores).
+*   **CCL (Capital Circulante Líquido):** Diferença entre Ativo Circulante e Passivo Circulante. Reflete a folga financeira de curto prazo.
+*   **Tesouraria (T = CCL - NCG):** O saldo real de liquidez imediata. 
+*   **O Alerta "Tesoura":** Ocorre quando a NCG cresce acima do CCL, forçando a empresa a buscar empréstimos bancários caros para financiar suas vendas, degradando o **Rating Oracle**.
+
+---
+
+## 🏗️ 2. Processo de Criação (Tutor Master)
 
 O Tutor atua como o Arquiteto do Ecossistema através do **Strategos Wizard Gold**.
 
-### O Quê, Como, Quem e Quando:
-*   **Quem:** Usuários com role `tutor` ou `admin`.
-*   **Quando:** Fase de pré-ciclo (Round 0).
-*   **Onde:** `components/ChampionshipWizard.tsx`.
-
 ### Etapas do Wizard:
-1.  **Matriz de Atividade:** Escolha do DNA da simulação (Industrial, Comercial, Agro, etc). 
-    *   *Tabelas:* `championship_templates`.
+1.  **Matriz de Atividade:** DNA da simulação (Industrial, Comercial, Agro, etc).
 2.  **Protocolos de Escopo & IA:** 
-    *   **Quantidade de Regiões:** 1 a 15 nodos de disputa.
-    *   **Quantidade de Bots:** Competidores sintéticos (AI Bots) para preencher a arena.
-    *   **Tipo de Região:** Nacional, Exterior ou Mesclado (afeta moedas e custos logísticos).
-    *   **Fonte de Inteligência:**
-        *   *Parametrizado:* IA interpreta as métricas (Inflação, TR, ICE) definidas pelo Tutor.
-        *   *IA Real:* IA utiliza Google Search Grounding para trazer o cenário do mundo real para dentro da arena.
-    *   **Protocolos Temporais:** Duração do ciclo e preço da ação inicial.
-3.  **Transparência & Observadores:** Configuração do nível de exposição de dados e convite de avaliadores externos.
-    *   *Campos:* `gazeta_mode` (Anonymous/Identified), `observers` (UUIDs).
-4.  **Auditoria Estrutural (CPC 26):** Edição das contas contábeis iniciais.
-    *   *Código:* `FinancialStructureEditor.tsx`.
-    *   *Campos:* `initial_financials` (JSONB).
-5.  **Módulo Business Plan:** Ativação da orquestração estratégica via IA.
-6.  **Matriz de Competidores:** Nomeação das unidades operacionais e diferenciação visual de Bots.
+    *   **Bots Competidores:** Adicione IA sintética para disputar Market Share com humanos.
+    *   **Escopo Geográfico:** Nodos de venda Nacionais, Internacionais ou Mesclados.
+    *   **Fonte de Inteligência:** Parametrizado (Tutor) ou IA Real (Google Grounding).
+3.  **Transparência:** Modo `Anonymous` (Unidades mascaradas) ou `Identified` (Nomes reais na Gazeta).
+4.  **Auditoria Estrutural (CPC 26):** Edição total do Balanço Inicial de ~$9.1M.
 
 ---
 
-## 🎮 2. Gerenciamento da Equipe (Strategist Flow)
+## 🎮 3. Gerenciamento da Equipe (Strategist Flow)
 
-As equipes operam dentro de um ciclo de decisão hermético assistido pelo **Oracle Kernel**.
+As equipes operam em ciclos herméticos assistidos pelo **Oracle Kernel**.
 
-### O Fluxo de Operação:
-1.  **Análise (Intelligence Hub):** A equipe consulta o Oráculo para entender se o mercado é influenciado por parâmetros do tutor ou notícias mundiais.
-2.  **Decisão Tática (`DecisionForm.tsx`):**
-    *   **Comercial:** Definição de Preço e Marketing por região (conforme escopo Geográfico do Tutor).
-    *   **RH:** Impacto na produtividade real.
-    *   **Produção:** Gestão de Capex (Máquinas Alfa/Beta/Gama).
-    *   **Financeiro:** Alocação de recursos e tomada de crédito.
-3.  **Projeção Real-time:** Visualização do impacto esperado no TSR e Rating antes da transmissão.
-4.  **Selo de Integridade:** Transmissão para o Oracle para processamento de turnover.
+### Decisões Táticas:
+*   **Comercial:** Preço, Marketing e Prazos por região.
+*   **RH:** Salários, Treinamentos e Dimensionamento de Staff.
+*   **Produção:** Compra de Matéria-Prima e Investimento em CapEx (Máquinas Alfa/Beta/Gama).
+*   **Financeiro:** Tomada de crédito e aplicações de excedente.
 
 ---
 
-## 🤖 3. Competidores Sintéticos (AI Bots)
-A arena Empirion suporta bots competitivos que:
-*   Geram decisões táticas baseadas na rentabilidade do setor.
-*   Disputam Market Share real com os jogadores humanos.
-*   Aparecem na Gazeta e no Ranking Geral como unidades de inteligência.
+## 🔒 4. Segurança e Realtime (Supabase)
+
+As políticas de **RLS (Row Level Security)** garantem isolamento total:
+*   **Admin/Tutor:** Visão holística da arena e logs de auditoria.
+*   **Equipe:** Acesso exclusivo aos seus demonstrativos e histórico de decisões.
+*   **Realtime:** Sincronização via WebSockets para colaboração instantânea entre membros da mesma unidade.
 
 ---
 
-## 📊 4. Dashboards & Indicadores de Performance
+## 📊 5. Indicadores de Performance (Gold Standard)
 
-O Empirion v12.9 Gold não foca apenas em lucro, mas em **Geração de Valor**.
-
-### Indicadores da Empresa:
-*   **TSR (Total Shareholder Return):** Valorização da ação + Dividendos.
-*   **NCG vs CCL (Efeito Tesoura):** Detecção automática de desequilíbrio de giro.
-*   **Rating Oracle (AAA a D):** Custo de capital dinâmico.
-
-### Indicadores de Mercado Global (IA & Tutor):
-*   **Gazeta Empirion:** Notícias geradas dinamicamente com base no Escopo (Nacional/Internacional) e Fonte (Parametrizada/Real).
-*   **Black Swan Engine:** Eventos disparados pelo Tutor para testar resiliência.
+*   **TSR (Total Shareholder Return):** A métrica de vitória definitiva baseada no valor de mercado da ação.
+*   **Rating Oracle (AAA a E):** Score de crédito dinâmico baseado em liquidez, margem e endividamento.
+*   **EBITDA & Net Profit:** Resultados operacionais e líquidos auditados.
 
 ---
 
-## 🛠️ Especificações Técnicas (Build Oracle)
-*   **Frontend:** React 19 + Framer Motion.
-*   **Backend:** Supabase (Realtime Sync).
-*   **AI:** Gemini 3 Pro (Complex Logic) & Gemini 3 Flash (Fast Response).
+## 🛠️ Especificações Técnicas
+*   **Frontend:** React 19 + Framer Motion + ApexCharts.
+*   **Backend:** Supabase (PostgreSQL + Realtime).
+*   **AI Engine:** Gemini 3 Pro (Raciocínio) & Gemini 3 Flash (Turnover Bots).
 
 ---
-*Empirion v12.9 Gold – Onde a estratégia encontra o valor real de mercado.*
+*Empirion v12.9.1 Gold – Onde a estratégia encontra o valor real de mercado.*
