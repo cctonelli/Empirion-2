@@ -25,18 +25,29 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
   logInfo(LogContext.TURNOVER, `Initializing turnover for arena ${championshipId} | Round ${currentRound} -> ${currentRound + 1}`);
   
   try {
-    const { data: arena } = await supabase.from('championships').select('*').eq('id', championshipId).single();
+    const { data: arena, error: arenaFetchErr } = await supabase.from('championships').select('*').eq('id', championshipId).single();
+    if (arenaFetchErr) {
+      logError(LogContext.DATABASE, "Championship fetch failed during turnover", arenaFetchErr);
+      throw arenaFetchErr;
+    }
     if (!arena) {
       throw new Error(`Synchronization lost: Arena ${championshipId} not found.`);
     }
 
-    const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', championshipId);
+    const { data: teams, error: teamsFetchErr } = await supabase.from('teams').select('*').eq('championship_id', championshipId);
+    if (teamsFetchErr) {
+      logError(LogContext.DATABASE, "Teams fetch failed during turnover", teamsFetchErr);
+      throw teamsFetchErr;
+    }
     if (!teams || teams.length === 0) {
       throw new Error(`Orphan Arena: No strategy units found for championship ${championshipId}.`);
     }
 
-    const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', currentRound + 1);
-    const { data: previousStates } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', currentRound);
+    const { data: decisions, error: decErr } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', currentRound + 1);
+    if (decErr) logError(LogContext.DATABASE, "Decisions fetch warning", decErr);
+
+    const { data: previousStates, error: prevErr } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', currentRound);
+    if (prevErr) logError(LogContext.DATABASE, "Previous state fetch warning", prevErr);
 
     const batchResults: CompanyHistoryRecord[] = teams.map(team => {
       try {
@@ -85,7 +96,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     const { error: insErr } = await supabase.from('companies').insert(batchResults);
     if (insErr) {
-      logError(LogContext.SUPABASE, "Failed to insert turnover history", insErr);
+      logError(LogContext.DATABASE, "Turnover history batch insert failed", insErr);
       throw insErr;
     }
 
@@ -96,7 +107,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       }).eq('id', res.team_id);
       
       if (upErr) {
-        logError(LogContext.SUPABASE, `Failed to sync persistent state for team ${res.team_id}`, upErr);
+        logError(LogContext.DATABASE, `Persistent state sync failed for team ${res.team_id}`, upErr);
       }
     }
 
@@ -105,7 +116,10 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       updated_at: new Date().toISOString() 
     }).eq('id', championshipId);
 
-    if (arenaErr) throw arenaErr;
+    if (arenaErr) {
+      logError(LogContext.DATABASE, "Arena round update failed", arenaErr);
+      throw arenaErr;
+    }
 
     logInfo(LogContext.TURNOVER, `Turnover successfully completed for arena ${championshipId}`);
     return { success: true };
@@ -146,7 +160,10 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     };
 
     const { data: champ, error: cErr } = await supabase.from(table).insert([payload]).select().single();
-    if (cErr) throw cErr;
+    if (cErr) {
+      logError(LogContext.DATABASE, `Failed to create championship in ${table}`, cErr);
+      throw cErr;
+    }
 
     const teamsToInsert = teams.map(t => ({
       name: t.name,
@@ -158,10 +175,13 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     }));
 
     const { data: teamsData, error: tErr } = await supabase.from(teamsTable).insert(teamsToInsert).select();
-    if (tErr) throw tErr;
+    if (tErr) {
+      logError(LogContext.DATABASE, `Failed to create teams in ${teamsTable}`, tErr);
+      throw tErr;
+    }
     return { champ: { ...champ, is_trial: isTrial } as Championship, teams: teamsData as Team[] };
   } catch (err: any) { 
-    logError(LogContext.SUPABASE, "Championship Creation Failed", err.message);
+    logError(LogContext.SUPABASE, "Championship Creation Orchestration Failed", err.message);
     throw err; 
   }
 };
@@ -170,11 +190,13 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   let realData: any[] = [];
   let trialData: any[] = [];
   try {
-    const { data } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
+    if (error) logError(LogContext.DATABASE, "Error fetching production championships", error);
     if (data) realData = data;
   } catch (e) {}
   try {
-    const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
+    if (error) logError(LogContext.DATABASE, "Error fetching trial championships", error);
     if (data) trialData = data;
   } catch (e) {}
 
@@ -211,10 +233,12 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
   
-  const { data: current } = await supabase.from(table).select('version').eq('team_id', teamId).eq('round', round).maybeSingle();
+  const { data: current, error: fetchErr } = await supabase.from(table).select('version').eq('team_id', teamId).eq('round', round).maybeSingle();
+  if (fetchErr) logError(LogContext.DATABASE, "Error checking decision version", fetchErr);
+  
   const nextVersion = (current?.version || 0) + 1;
 
-  return await supabase.from(table).upsert({ 
+  const { error: upsertErr } = await supabase.from(table).upsert({ 
     team_id: teamId, 
     championship_id: champId, 
     round, 
@@ -223,11 +247,19 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
     version: nextVersion,
     updated_at: new Date().toISOString()
   }); 
+
+  if (upsertErr) {
+    logError(LogContext.DATABASE, `Failed to upsert decision to ${table}`, upsertErr);
+    throw upsertErr;
+  }
+
+  return { success: true };
 };
 
 export const getTeamSimulationHistory = async (teamId: string) => {
-  const { data: decisions } = await supabase.from('current_decisions').select('*').eq('team_id', teamId).order('round', { ascending: true });
-  return decisions || [];
+  const { data, error } = await supabase.from('current_decisions').select('*').eq('team_id', teamId).order('round', { ascending: true });
+  if (error) logError(LogContext.DATABASE, `Error fetching history for team ${teamId}`, error);
+  return data || [];
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -237,20 +269,23 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       email: `${userId}@empirion.ia`, role: userId === 'tutor' ? 'tutor' : 'player', is_opal_premium: true, created_at: new Date().toISOString()
     };
   }
-  const { data } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
+  const { data, error } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
+  if (error) logError(LogContext.DATABASE, `Error fetching user profile ${userId}`, error);
   return data;
 };
 
 export const fetchPageContent = async (slug: string, lang: string) => {
   try {
-    const { data } = await supabase.from('site_content').select('content').eq('page_slug', slug).eq('locale', lang).maybeSingle();
+    const { data, error } = await supabase.from('site_content').select('content').eq('page_slug', slug).eq('locale', lang).maybeSingle();
+    if (error) logError(LogContext.DATABASE, `Error fetching site content for ${slug}`, error);
     return data?.content || null;
   } catch (e) { return null; }
 };
 
 export const getModalities = async () => {
   try {
-    const { data } = await supabase.from('modalities').select('*').order('name');
+    const { data, error } = await supabase.from('modalities').select('*').order('name');
+    if (error) logError(LogContext.DATABASE, "Error fetching modalities", error);
     return (data as any[]) || [];
   } catch (e) { return []; }
 };
@@ -260,12 +295,16 @@ export const subscribeToModalities = (callback: () => void) => {
 };
 
 export const listAllUsers = async () => {
-  return await supabase.from('users').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+  if (error) logError(LogContext.DATABASE, "Error listing users", error);
+  return { data, error };
 };
 
 export const deleteChampionship = async (id: string, isTrial: boolean) => {
   const table = isTrial ? 'trial_championships' : 'championships';
-  return await supabase.from(table).delete().eq('id', id);
+  const { error } = await supabase.from(table).delete().eq('id', id);
+  if (error) logError(LogContext.DATABASE, `Error deleting from ${table}`, error);
+  return { error };
 };
 
 export const purgeAllTrials = async () => {
@@ -292,12 +331,17 @@ export const provisionDemoEnvironment = () => {
 };
 
 export const updateEcosystem = async (championshipId: string, updates: any) => {
-  return await supabase.from('championships').update(updates).eq('id', championshipId).select().single();
+  const { data, error } = await supabase.from('championships').update(updates).eq('id', championshipId).select().single();
+  if (error) logError(LogContext.DATABASE, `Error updating ecosystem for ${championshipId}`, error);
+  return { data, error };
 };
 
 export const getPublicReports = async (championshipId: string, round: number) => {
   const { data, error } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', round);
-  if (error) return { data: [], error };
+  if (error) {
+    logError(LogContext.DATABASE, "Error fetching public reports", error);
+    return { data: [], error };
+  }
   return {
     data: data.map(item => ({
       team_id: item.team_id, alias: item.team_name, kpis: item.kpis,
@@ -308,7 +352,9 @@ export const getPublicReports = async (championshipId: string, round: number) =>
 };
 
 export const submitCommunityVote = async (data: any) => {
-  return await supabase.from('community_ratings').insert(data);
+  const { error } = await supabase.from('community_ratings').insert(data);
+  if (error) logError(LogContext.DATABASE, "Error submitting community vote", error);
+  return { error };
 };
 
 export const subscribeToBusinessPlan = (teamId: string, callback: (payload: any) => void) => {
@@ -323,6 +369,7 @@ export const getActiveBusinessPlan = async (teamId: string, round: number) => {
     .order('version', { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (error) logError(LogContext.DATABASE, `Error fetching business plan for team ${teamId}`, error);
   return { data: data as BusinessPlan | null, error };
 };
 
@@ -332,5 +379,6 @@ export const saveBusinessPlan = async (plan: Partial<BusinessPlan>) => {
     .upsert({ ...plan, updated_at: new Date().toISOString() })
     .select()
     .single();
+  if (error) logError(LogContext.DATABASE, "Error saving business plan", error);
   return { data: data as BusinessPlan, error };
 };

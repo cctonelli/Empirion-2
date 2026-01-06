@@ -9,7 +9,8 @@ export enum LogContext {
   SUPABASE = "Supabase-Data-Node",
   SIMULATION = "Simulation-Kernel",
   ADMIN = "Admin-Command",
-  AUTH = "Auth-Protocol"
+  AUTH = "Auth-Protocol",
+  DATABASE = "Database-Query"
 }
 
 export const logError = (context: LogContext, message: string, data?: any) => {
