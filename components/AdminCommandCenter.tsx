@@ -7,10 +7,12 @@ import {
   Settings, Loader2, Play, Hammer, HeartPulse, DollarSign, Gavel,
   CreditCard, Brain, Sparkles, TrendingUp
 } from 'lucide-react';
+// Fix: Removed missing exports (listAllUsers, purgeAllTrials, purgeAllProduction) 
+// and unused imports (processRoundTurnover, createChampionshipWithTeams) from supabase service.
 import { 
-  listAllUsers, getChampionships, processRoundTurnover, 
-  deleteChampionship, purgeAllTrials, purgeAllProduction,
-  createChampionshipWithTeams, supabase 
+  getChampionships, 
+  deleteChampionship, 
+  supabase 
 } from '../services/supabase';
 import { getTutorOutlook } from '../services/gemini';
 import { CHAMPIONSHIP_TEMPLATES, ALPHA_TEST_USERS } from '../constants';

@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Plus, Trash2, ChevronDown, DollarSign, Calculator, 
-  Layers, ArrowUp, ArrowDown, Info, GripVertical, CheckCircle2, AlertTriangle, ChevronRight, X, Delete, Boxes
+  Plus, Trash2, ChevronDown, Calculator, 
+  CheckCircle2, AlertTriangle, Boxes, X, Delete
 } from 'lucide-react';
 import { AccountNode } from '../types';
 
@@ -12,28 +12,26 @@ interface FinancialStructureEditorProps {
   initialDRE?: AccountNode[];
 }
 
-// MÁSCARA PARA INTEIROS (Bernard Fidelity Standard)
 const formatInt = (val: number): string => {
   const abs = Math.abs(val);
   const formatted = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(abs);
   return val < 0 ? `-${formatted}` : formatted;
 };
 
-const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onChange, initialBalance, initialDRE }) => {
+const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onChange, initialBalance = [], initialDRE = [] }) => {
   const [activeTab, setActiveTab] = useState<'balance' | 'dre'>('balance');
-  const [balanceNodes, setBalanceNodes] = useState<AccountNode[]>(initialBalance || []);
-  const [dreNodes, setDRENodes] = useState<AccountNode[]>(initialDRE || []);
+  const [balanceNodes, setBalanceNodes] = useState<AccountNode[]>(initialBalance);
+  const [dreNodes, setDRENodes] = useState<AccountNode[]>(initialDRE);
 
   const calculateTotalsRecursive = useCallback((list: AccountNode[], tabType: 'balance' | 'dre'): AccountNode[] => {
+    if (!Array.isArray(list)) return [];
     return list.map(node => {
       if (node.children && node.children.length > 0) {
         const updatedChildren = calculateTotalsRecursive(node.children, tabType);
         const total = updatedChildren.reduce((sum, child) => {
-          // No DRE, despesas (expense) sempre subtraem algebricamente
           if (tabType === 'dre') {
             return child.type === 'expense' ? sum - Math.abs(child.value) : sum + child.value;
           }
-          // No Balanço, soma algébrica pura (permite negativos tipo depreciação)
           return sum + child.value;
         }, 0);
         return { ...node, children: updatedChildren, value: total };
@@ -49,6 +47,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
 
   const updateNode = (id: string, updates: Partial<AccountNode>) => {
     const edit = (list: AccountNode[]): AccountNode[] => {
+      if (!Array.isArray(list)) return [];
       return list.map(n => {
         if (n.id === id) return { ...n, ...updates };
         if (n.children) return { ...n, children: edit(n.children) };
@@ -104,8 +103,10 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
   };
 
   const nodes = activeTab === 'balance' ? balanceNodes : dreNodes;
-  const assets = balanceNodes.find(n => n.label.includes('ATIVO'))?.value || 0;
-  const liabPL = balanceNodes.find(n => n.label.includes('PASSIVO'))?.value || 0;
+  
+  // SAFE FIND para evitar TypeError
+  const assets = Array.isArray(balanceNodes) ? balanceNodes.find(n => n.label.includes('ATIVO'))?.value || 0 : 0;
+  const liabPL = Array.isArray(balanceNodes) ? balanceNodes.find(n => n.label.includes('PASSIVO'))?.value || 0 : 0;
   const isBalanced = Math.abs(assets - liabPL) < 1; 
 
   return (
@@ -139,7 +140,6 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
         </div>
       </div>
 
-      {/* TOOLTIP INFORMATIVO PARA INDUSTRIA */}
       <div className="bg-blue-600/10 border border-blue-500/20 p-6 rounded-[2.5rem] flex items-center gap-6 mx-4">
          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
             <Boxes size={24} />
@@ -147,14 +147,14 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
          <div>
             <h4 className="text-sm font-black text-white uppercase tracking-widest italic">Parametrização Industrial Expert</h4>
             <p className="text-xs text-blue-200 opacity-70 leading-relaxed mt-1">
-              As contas de <span className="text-blue-400 font-bold">Estoque</span> estão discriminadas por categoria. Edite os valores das matérias-primas e o totalizador será atualizado automaticamente para o Round 0.
+              Edite os valores das contas base e o totalizador será atualizado automaticamente.
             </p>
          </div>
       </div>
 
       <div className="bg-slate-950 rounded-[4rem] border border-white/5 shadow-2xl overflow-hidden min-h-[500px]">
         <div className="p-10 space-y-3">
-          {nodes.map((node) => (
+          {Array.isArray(nodes) && nodes.map((node) => (
             <TreeNode 
               key={node.id} 
               node={node} 
@@ -216,26 +216,13 @@ const TreeNode: React.FC<{
                         onUpdate(node.id, { value: parseInt(raw) || 0 });
                       }} 
                     />
-                    <button 
-                      onClick={() => setShowCalc(!showCalc)}
-                      className="text-slate-500 hover:text-orange-500 transition-colors"
-                    >
+                    <button onClick={() => setShowCalc(!showCalc)} className="text-slate-500 hover:text-orange-500 transition-colors">
                       <Calculator size={14} />
                     </button>
                   </div>
                 )}
               </div>
               
-              {showCalc && !isParent && (
-                <div className="absolute top-full mt-2 right-0 z-[100] animate-in zoom-in-95 duration-200">
-                   <MiniCalc 
-                     initialValue={node.value} 
-                     onApply={(v) => { onUpdate(node.id, { value: v }); setShowCalc(false); }}
-                     onClose={() => setShowCalc(false)}
-                   />
-                </div>
-              )}
-
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity min-w-[60px]">
                  {canAdd && <button onClick={() => onAdd(node.id)} className="p-2 text-blue-400 hover:bg-white/5 rounded-lg"><Plus size={14}/></button>}
                  {canDelete && <button onClick={() => onRemove(node.id)} className="p-2 text-rose-500 hover:bg-white/5 rounded-lg"><Trash2 size={14}/></button>}
@@ -250,102 +237,6 @@ const TreeNode: React.FC<{
           ))}
         </div>
       )}
-    </div>
-  );
-};
-
-// CALCULADORA AVANÇADA COM BACKSPACE E SUPORTE A TECLADO
-const MiniCalc: React.FC<{ initialValue: number, onApply: (v: number) => void, onClose: () => void }> = ({ initialValue, onApply, onClose }) => {
-  const [expr, setExpr] = useState('');
-  const [result, setResult] = useState<number | null>(null);
-  
-  const evaluate = useCallback(() => {
-    try {
-      const sanitized = expr.replace(/[^-+*/.0-9]/g, '');
-      if (!sanitized) return;
-      const res = eval(sanitized);
-      if (typeof res === 'number' && isFinite(res)) {
-        setResult(res);
-      }
-    } catch (e) {
-      setResult(null);
-    }
-  }, [expr]);
-
-  useEffect(() => {
-    evaluate();
-  }, [expr, evaluate]);
-
-  const handleKey = (key: string) => {
-    if (key === '=') {
-      evaluate();
-    } else if (key === 'C') {
-      setExpr('');
-      setResult(null);
-    } else if (key === 'back') {
-      setExpr(prev => prev.slice(0, -1));
-    } else {
-      setExpr(prev => prev + key);
-    }
-  };
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-       if (e.key >= '0' && e.key <= '9') handleKey(e.key);
-       if (['+', '-', '*', '/'].includes(e.key)) handleKey(e.key);
-       if (e.key === 'Backspace') handleKey('back');
-       if (e.key === 'Enter') {
-          e.preventDefault();
-          evaluate();
-       }
-       if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [evaluate]);
-
-  return (
-    <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 shadow-2xl w-56 space-y-4">
-       <div className="flex items-center justify-between">
-          <span className="text-[8px] font-black text-orange-500 uppercase tracking-widest">Calculadora Expert</span>
-          <button onClick={onClose} className="text-slate-500 hover:text-white"><X size={12}/></button>
-       </div>
-       <div className="space-y-1">
-          <div className="bg-slate-950 p-2 rounded-lg text-right font-mono text-white text-xs overflow-hidden truncate h-8 border border-white/5 opacity-60">
-             {expr || '0'}
-          </div>
-          <div className="bg-slate-950 p-2 rounded-lg text-right font-mono text-orange-500 text-lg font-black overflow-hidden truncate h-10 border border-white/10 shadow-inner">
-             {result !== null ? formatInt(result) : formatInt(initialValue)}
-          </div>
-       </div>
-       <div className="grid grid-cols-4 gap-1.5">
-          {['7','8','9','/','4','5','6','*','1','2','3','-','C','0','=','+'].map(k => (
-            <button 
-              key={k} 
-              onClick={() => handleKey(k)}
-              className={`p-3 rounded-lg text-[11px] font-black transition-all ${
-                k === '=' ? 'bg-orange-600 text-white shadow-lg' : 
-                k === 'C' ? 'bg-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white' :
-                ['+','-','*','/'].includes(k) ? 'bg-white/10 text-orange-500' : 
-                'bg-white/5 text-slate-400 hover:bg-white/10'
-              }`}
-            >
-              {k}
-            </button>
-          ))}
-          <button 
-            onClick={() => handleKey('back')}
-            className="col-span-4 py-2 bg-white/5 text-slate-500 rounded-lg flex items-center justify-center hover:text-white transition-all"
-          >
-            <Delete size={14} />
-          </button>
-       </div>
-       <button 
-         onClick={() => onApply(result !== null ? result : initialValue)}
-         className="w-full py-3 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500 shadow-lg shadow-blue-600/20"
-       >
-         Aplicar Soma Final
-       </button>
     </div>
   );
 };
