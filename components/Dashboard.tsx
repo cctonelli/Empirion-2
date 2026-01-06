@@ -6,7 +6,7 @@ import {
   Sparkles, Loader2, ShieldCheck, Newspaper, Cpu, 
   ChevronRight, RotateCcw, Shield, FileEdit, PenTool, 
   Eye, Timer, Box, AlertOctagon, HeartPulse, Gavel,
-  CreditCard, Landmark
+  CreditCard, Landmark, Thermometer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -36,7 +36,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const currentKpis = useMemo((): KPIs => {
     const baseKpis: KPIs = activeArena?.kpis || {
       ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 60, financeiro: 35 },
-      scissors_effect: { ncg: 150000, ccl: 200000, tesouraria: 50000, ccp: 180000, is_critical: false },
+      scissors_effect: { ncg: 150000, ccl: 200000, tesouraria: 50000, ccp: 180000, tsf: -73, is_critical: false },
       market_share: 12.5,
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
@@ -232,18 +232,18 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <EfficiencyCard 
-               label="Status Tesouraria" 
-               val={`$ ${currentKpis?.scissors_effect?.tesouraria?.toLocaleString() || '0'}`} 
-               trend={currentKpis?.scissors_effect?.is_critical ? 'EFEITO TESOURA!' : 'LIQUIDEZ OK'} 
+               label="Termômetro TSF" 
+               val={`${currentKpis?.scissors_effect?.tsf?.toFixed(2) || '0.00'}`} 
+               trend={currentKpis?.scissors_effect?.is_critical ? 'ALERTA: TESOURA' : 'EQUILÍBRIO'} 
                positive={!currentKpis?.scissors_effect?.is_critical} 
-               icon={<Landmark size={20}/>} 
+               icon={<Thermometer size={20}/>} 
              />
              <EfficiencyCard 
-               label="Necessidade de Capital (NCG)" 
-               val={`$ ${currentKpis?.scissors_effect?.ncg?.toLocaleString() || '0'}`} 
-               trend={`CCL: $ ${currentKpis?.scissors_effect?.ccl?.toLocaleString() || '0'}`} 
-               positive={true} 
-               icon={<Activity size={20}/>} 
+               label="Saldo Tesouraria" 
+               val={`$ ${currentKpis?.scissors_effect?.tesouraria?.toLocaleString() || '0'}`} 
+               trend={`NCG: $ ${currentKpis?.scissors_effect?.ncg?.toLocaleString() || '0'}`} 
+               positive={!currentKpis?.scissors_effect?.is_critical} 
+               icon={<Landmark size={20}/>} 
              />
              <EfficiencyCard 
                label="Rating Oracle" 

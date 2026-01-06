@@ -85,13 +85,12 @@ export const checkInsolvencyStatus = (financials: any, history: any): { status: 
 };
 
 /**
- * CORE ORACLE ENGINE v12.9.0 GOLD
+ * CORE ORACLE ENGINE v12.9.1 GOLD
  */
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
   ecoConfig: EcosystemConfig,
-  // Added tax_rate_ir to default object literal to satisfy MacroIndicators requirements
   indicators: MacroIndicators = { growth_rate: 3, inflation_rate: 1, interest_rate_tr: 3, tax_rate_ir: 15.0, machinery_values: { alfa: 505000, beta: 1515000, gama: 3030000 } },
   previousState?: any,
   history?: any,
@@ -110,51 +109,51 @@ export const calculateProjections = (
   let opexBase = 917582;
   
   if (regionType === 'international') {
-      logisticsMultiplier = 1.6; // Custos de exportação, frete internacional
-      opexBase *= 1.25; // Taxas alfandegárias, compliance internacional
+      logisticsMultiplier = 1.6;
+      opexBase *= 1.25;
   } else if (regionType === 'mixed') {
       logisticsMultiplier = 1.3;
       opexBase *= 1.1;
   }
 
-  // Calculo de Receita Dinâmico (Simplificado para MVP)
-  // Baseado na somatória de marketing e média de preço nas regiões
   const regionArray = Object.values(decisions.regions);
   const avgPrice = regionArray.reduce((acc, curr) => acc + curr.price, 0) / Math.max(regionArray.length, 1);
   const totalMarketing = regionArray.reduce((acc, curr) => acc + curr.marketing, 0);
   
-  // Elasticidade base: Preço ideal $370. Marketing ideal $5000/região.
   const priceElasticity = Math.max(0.5, 1 - ((avgPrice - 370) / 370));
   const marketingBoost = Math.min(1.5, 1 + (totalMarketing / (regionArray.length * 5000)));
   const demandFactor = indicators.growth_rate / 100 + 1;
   
-  // Receita v12.9: Vendas * Preço * Elasticidade
   const unitsSold = Math.floor(10000 * priceElasticity * marketingBoost * demandFactor * (ecoConfig.demand_multiplier || 1));
   const revenue = unitsSold * avgPrice;
   
-  // Custos Operacionais
-  const cpv = unitsSold * (indicators.providerPrices?.mpA || 62.8) * 0.8; // Simplificado
+  const cpv = unitsSold * (indicators.providerPrices?.mpA || 62.8) * 0.8;
   const opex = opexBase * (1 + indicators.inflation_rate / 100);
-  const fin_exp = 40000 * (1 + selic); // Juros sobre dívida ST/LT
+  const fin_exp = 40000 * (1 + selic);
   const ir_prov = Math.max(0, (revenue - cpv - opex - fin_exp) * 0.15);
   
   const netProfit = revenue - cpv - opex - fin_exp - ir_prov;
   const finalEquity = prevEquity + netProfit;
   
-  // 2. Base Indices for Rating
+  // EFEITO TESOURA - Cálculos Precisos v12.9.1
   const ac = 3290340; 
-  const pc = 2621493;
+  const pc = 4121493; // Ajustado conforme exemplo P0 (incluindo financiamentos CP)
+  const cgl = ac - pc;
+  
+  const estoques = 1466605;
+  const clientes = 1823735;
+  const fornecedores = 717605;
+  
+  const ncg = clientes + estoques - fornecedores;
+  const tesouraria = cgl - ncg;
+  const hasScissorsEffect = ncg > cgl;
+  const tsf = (tesouraria / Math.max(ncg, 1)) * 100;
+
   const lc = ac / Math.max(pc, 1);
   const totalDebt = pc + 1500000;
   const endividamento = (totalDebt / Math.max(finalEquity, 1)) * 100;
   const margem = (netProfit / Math.max(revenue, 1)) * 100;
 
-  // 3. Scissors Effect Detection
-  const ncg = revenue * 0.14; 
-  const ccl = ac - pc;      
-  const hasScissorsEffect = ncg > ccl;
-
-  // 4. Banking Rating & Insolvency Execution
   const bankDetails = calculateBankRating({ lc, endividamento, margem, equity: finalEquity }, hasScissorsEffect, selic);
   const insolvency = checkInsolvencyStatus({ 
     pl: finalEquity, ac, pc, caixa: prevCash + netProfit, 
@@ -162,17 +161,16 @@ export const calculateProjections = (
     endividamento, lc 
   }, history);
 
-  // 5. Market Valuation (Ação e TSR)
   const valuation = calculateMarketValuation(finalEquity, netProfit, bankDetails.rating, prevSharePrice);
 
   const kpis: KPIs = {
     ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
-    // Fix: Correcting scissors_effect to include required properties tesouraria and ccp, and removing invalid gap
     scissors_effect: { 
       ncg, 
-      ccl, 
-      tesouraria: ccl - ncg, 
+      ccl: cgl, 
+      tesouraria, 
       ccp: finalEquity - 5886600, 
+      tsf,
       is_critical: hasScissorsEffect 
     },
     banking: bankDetails,

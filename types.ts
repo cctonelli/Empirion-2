@@ -49,6 +49,7 @@ export interface KPIs {
     ccl: number;          // Capital Circulante Líquido
     tesouraria: number;   // Saldo de Tesouraria (CCL - NCG)
     ccp: number;          // Capital Circulante Próprio
+    tsf: number;          // Termômetro da Situação Financeira
     is_critical: boolean; // "Abertura de Tesoura"
   };
   market_valuation?: {
