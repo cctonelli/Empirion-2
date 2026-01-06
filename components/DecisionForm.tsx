@@ -69,7 +69,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       modality_type: 'standard' 
     }) as EcosystemConfig;
     try { 
-      return calculateProjections(decisions, branch, eco, currentIndicators, prevRoundData); 
+      // Fix for TypeScript error: Argument of type 'string' is not assignable to parameter of type 'Branch'
+      // Explicitly casting 'branch' to 'Branch' union type as expected by calculateProjections.
+      return calculateProjections(decisions, branch as Branch, eco, currentIndicators, prevRoundData); 
     } catch (e) { 
       return null; 
     }
