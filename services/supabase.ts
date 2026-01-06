@@ -19,7 +19,7 @@ export const isTestMode = true;
 
 /**
  * ORACLE TURNOVER ENGINE v12.8.2 GOLD
- * Syncs dedicated columns: credit_rating, insolvency_index (companies) and credit_limit, equity (teams).
+ * Correctly maps persistent columns for history (companies) and teams.
  */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
   try {
@@ -63,8 +63,9 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           kpis: result.kpis,
           credit_rating: result.creditRating,
           insolvency_index: result.health.insolvency_risk,
-          team_credit: result.kpis.banking?.credit_limit || 0,
-          team_equity: result.kpis.equity || 0
+          // Fixed Database column names to match companies table schema
+          credit_limit: result.kpis.banking?.credit_limit || 0,
+          equity: result.kpis.equity || 0
         };
       } catch (e: any) {
         return null;
@@ -73,18 +74,19 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     if (batchResults.length === 0) throw new Error("Total Process Failure.");
 
-    const { error: insErr } = await supabase.from('companies').insert(
-      batchResults.map(({ team_credit, team_equity, ...rest }) => rest)
-    );
+    // Insert history (companies table now has NOT NULL constraints on credit_limit/equity)
+    const { error: insErr } = await supabase.from('companies').insert(batchResults);
     if (insErr) throw insErr;
 
+    // Sync team current state
     for (const res of batchResults) {
       await supabase.from('teams').update({
-        credit_limit: res.team_credit,
-        equity: res.team_equity
+        credit_limit: res.credit_limit,
+        equity: res.equity
       }).eq('id', res.team_id);
     }
 
+    // Increment Arena Round
     await supabase.from('championships').update({ 
       current_round: currentRound + 1,
       updated_at: new Date().toISOString() 
@@ -106,7 +108,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const now = new Date().toISOString();
     const payload = {
       name: champData.name,
-      description: champData.description || 'Arena Simulação Gold',
+      description: champData.description || 'Arena de Simulação Estratégica Gold',
       branch: champData.branch,
       status: 'active',
       current_round: 0,
@@ -132,8 +134,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const teamsToInsert = teams.map(t => ({
       name: t.name,
       championship_id: champ.id,
-      equity: 5055447, // Default GOLD Initial Equity
-      credit_limit: 5000000, // Default Initial Credit Limit
+      equity: 5055447, // Initial Equity is NOT NULL
+      credit_limit: 5000000, // Initial Credit is NOT NULL
       status: 'active',
       invite_code: `CODE-${Math.random().toString(36).substring(7).toUpperCase()}`
     }));
@@ -161,7 +163,7 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     const market = c.market_indicators || config.market_indicators || DEFAULT_MACRO;
     return {
       ...c,
-      description: c.description || config.description || 'Arena de Simulação Estratégica',
+      description: c.description || config.description || 'Arena de Simulação Estratégica Empirion',
       gazeta_mode: c.gazeta_mode || config.gazeta_mode || 'anonymous',
       observers: c.observers || config.observers || [],
       deadline_value: c.deadline_value ?? config.deadline_value ?? 7,
