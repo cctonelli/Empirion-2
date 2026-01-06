@@ -41,8 +41,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
 
   const handleVote = async (teamId: string) => {
     setSubmitting(true);
-    // Fix: Use v1 session() for compatibility with SupabaseAuthClient
-    const session = supabase.auth.session();
+    const { data: { session } } = await supabase.auth.getSession();
     
     const voteData = {
       championship_id: championship.id,
@@ -95,7 +94,6 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Teams List */}
         <div className="lg:col-span-2 space-y-6">
           {reports.length === 0 ? (
             <div className="p-20 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem]">
@@ -154,7 +152,6 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
           )}
         </div>
 
-        {/* Voting Panel */}
         <aside className="space-y-8">
            {selectedTeam ? (
              <div className="bg-slate-900 p-10 rounded-[3rem] text-white shadow-2xl space-y-10 animate-in slide-in-from-right-8 duration-500 sticky top-10">

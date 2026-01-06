@@ -38,8 +38,8 @@ const AppContent: React.FC = () => {
         await fetchProfile(parsed.user.id);
         return;
       }
-      // Fix: Use v1 session() for compatibility with SupabaseAuthClient
-      const realSession = supabase.auth.session();
+      
+      const { data: { session: realSession } } = await supabase.auth.getSession();
       setSession(realSession);
       if (realSession) await fetchProfile(realSession.user.id);
       else setLoading(false);
@@ -70,8 +70,6 @@ const AppContent: React.FC = () => {
       <Route path="/auth" element={<Auth onAuth={() => navigate('/app/dashboard')} onBack={() => navigate('/')} />} />
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
       
-      {/* PUBLIC SOLUTIONS ROUTES - UNIFIED BRANCH ENGINE v3.1 */}
-      {/* Redirecionamento implícito para compatibilidade legada */}
       <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       <Route path="/branches/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       

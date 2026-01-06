@@ -50,7 +50,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       try {
         if (!k.banking) k.banking = { score: 100, rating: 'AAA', interest_rate: 0.03, credit_limit: 5000000, can_borrow: true };
         
-        // Validation for persistent fields to avoid Vercel generic errors
         if (activeTeam.credit_limit === undefined || activeTeam.credit_limit === null) {
           throw new Error("Missing credit_limit in activeTeam object.");
         }
@@ -79,8 +78,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         const champId = localStorage.getItem('active_champ_id');
         const teamId = localStorage.getItem('active_team_id');
         
-        // Fix: Use v1 session() for compatibility with SupabaseAuthClient
-        const session = supabase.auth.session();
+        const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           const profile = await getUserProfile(session.user.id);
           if (profile) setUserRole(profile.role);

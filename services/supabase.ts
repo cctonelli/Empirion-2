@@ -19,15 +19,12 @@ export const isTestMode = true;
 
 /**
  * ALPHA BYPASS WHITELIST
- * Previne erros de sintaxe UUID ao usar IDs amigáveis no modo teste.
- * Intercepta IDs literais antes de chegar ao Postgres.
  */
 const ALPHA_IDS = ['tutor', 'alpha', 'tutor_master', 'alpha_street', 'alpha_cell', 'alpha_user'];
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   if (!userId) return null;
 
-  // Intercepta IDs Alpha para evitar Erro 22P02 no Supabase
   if (ALPHA_IDS.includes(userId)) {
     return {
       id: userId, 
@@ -40,7 +37,6 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     };
   }
   
-  // Validação estrita de UUID antes da consulta
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(userId)) {
     logInfo(LogContext.AUTH, `Skipping invalid UUID format profile fetch: ${userId}`);
@@ -57,7 +53,6 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   let trialData: any[] = [];
   
   try {
-    // Busca simplificada para reduzir impacto de recursão RLS (Infinite Recursion mitigation)
     const { data, error } = await supabase
       .from('championships')
       .select('*, teams(id, name, status, equity, credit_limit, insolvency_status)')
@@ -65,7 +60,6 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     
     if (error) {
       if (error.code === '42P17') {
-        logError(LogContext.DATABASE, "RLS Recursion detected. Retrying simple fetch.");
         const { data: simpleData } = await supabase.from('championships').select('*');
         realData = simpleData || [];
       } else {
@@ -154,8 +148,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_championships' : 'championships';
   const teamsTable = isTrial ? 'trial_teams' : 'teams';
-  // Fix: Use v1 session() for compatibility with SupabaseAuthClient
-  const session = supabase.auth.session();
+  
+  const { data: { session } } = await supabase.auth.getSession();
   
   try {
     const payload = {

@@ -28,17 +28,16 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
 
     try {
       if (isLogin) {
-        // Fix: Use v1 signIn for compatibility with SupabaseAuthClient
-        const { session, error: authError } = await supabase.auth.signIn({ email, password });
+        const { data: { session }, error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
         if (session) onAuth();
       } else {
-        // Fix: Use v1 signUp for compatibility with SupabaseAuthClient
         const { error: signUpError } = await supabase.auth.signUp({ 
           email, 
-          password
-        }, { 
-          data: { full_name: name } 
+          password,
+          options: {
+            data: { full_name: name }
+          }
         });
         if (signUpError) throw signUpError;
         alert('Cadastro realizado! Se o e-mail de confirmação estiver ativo, verifique sua caixa de entrada.');
@@ -53,7 +52,6 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] p-6 font-sans relative overflow-hidden">
-      {/* Background Decor */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none opacity-30">
         <div className="w-[800px] h-[800px] bg-blue-600/10 blur-[150px] rounded-full absolute -top-1/4 -left-1/4 animate-pulse"></div>
         <div className="w-[600px] h-[600px] bg-orange-600/10 blur-[130px] rounded-full absolute -bottom-1/4 -right-1/4 animate-pulse [animation-delay:2s]"></div>
@@ -69,8 +67,6 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
       )}
       
       <div className="max-w-xl w-full relative z-10">
-        
-        {/* LOGIN FORM */}
         <div className="bg-slate-900/50 backdrop-blur-3xl p-10 rounded-[3rem] shadow-2xl border border-white/5 animate-in fade-in zoom-in-95 duration-500">
           <div className="text-center mb-10">
             <div className="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
@@ -122,7 +118,6 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
              </div>
           </div>
         </div>
-
       </div>
     </div>
   );
