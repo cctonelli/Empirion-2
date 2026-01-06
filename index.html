@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,105 +8,42 @@
     <meta name="title" content="Empirion | Business Intelligence Arena">
     <meta name="description" content="A arena definitiva onde IA e Estratégia Humana colidem. Simulação empresarial de alta performance.">
     
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
+    <!-- Carousel CSS -->
     <link rel="stylesheet" type="text/css" charset="UTF-8" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" />
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" />
 
-    <script>
-        window.process = window.process || { env: {} };
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa',
-                            500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a', 950: '#0f172a',
-                        },
-                    },
-                }
-            }
-        }
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@19.0.0",
+        "react-dom": "https://esm.sh/react-dom@19.0.0",
+        "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+        "react/jsx-runtime": "https://esm.sh/react@19.0.0/jsx-runtime",
+        "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?external=react,react-dom",
+        "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
+        "@google/genai": "https://esm.sh/@google/genai@latest",
+        "react-apexcharts": "https://esm.sh/react-apexcharts@1.9.0?external=react,react-dom,apexcharts",
+        "apexcharts": "https://esm.sh/apexcharts@4.0.0",
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.46.1",
+        "framer-motion": "https://esm.sh/framer-motion@11.11.11?external=react,react-dom",
+        "i18next": "https://esm.sh/i18next@23.7.11",
+        "react-i18next": "https://esm.sh/react-i18next@13.5.0?external=i18next,react",
+        "i18next-browser-languagedetector": "https://esm.sh/i18next-browser-languagedetector@7.2.0",
+        "i18next-http-backend": "https://esm.sh/i18next-http-backend@2.4.2",
+        "react-dom/": "https://esm.sh/react-dom@19.0.0/",
+        "react/": "https://esm.sh/react@19.0.0/",
+        "react-slick": "https://esm.sh/react-slick@0.30.2",
+        "slick-carousel": "https://esm.sh/slick-carousel@1.8.1",
+        "vite": "https://esm.sh/vite@latest",
+        "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@latest"
+      }
+    }
     </script>
-    <style>
-        body { background-color: #020617; color: #f8fafc; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-        
-        /* WOW Fluid Styles */
-        .fluid-title { font-size: clamp(2.5rem, 6vw + 1rem, 7.5rem); }
-        .fluid-menu-item { font-size: clamp(9px, 0.75vw, 11px); white-space: nowrap; }
-        
-        .cyber-button { 
-          position: relative; 
-          overflow: hidden; 
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          z-index: 1;
-        }
-        .cyber-button::before {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 0;
-          height: 0;
-          background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
-          transform: translate(-50%, -50%);
-          transition: width 0.6s ease, height 0.6s ease;
-          z-index: -1;
-        }
-        .cyber-button:hover::before { width: 400px; height: 400px; }
-        .cyber-button:hover { 
-          box-shadow: 0 0 30px rgba(59, 130, 246, 0.25); 
-          transform: scale(1.02); 
-        }
-
-        /* Glass Elevation */
-        .premium-card { 
-          background: rgba(15, 23, 42, 0.5); 
-          border: 1px solid rgba(255,255,255,0.05); 
-          backdrop-filter: blur(20px); 
-          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
-        }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Particle Sync */
-        .particle-canvas { mix-blend-mode: screen; opacity: 0.8; }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "react/jsx-runtime": "https://esm.sh/react@19.0.0/jsx-runtime",
-    "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?external=react,react-dom",
-    "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
-    "@google/genai": "https://esm.sh/@google/genai@latest",
-    "react-apexcharts": "https://esm.sh/react-apexcharts@1.9.0?external=react,react-dom,apexcharts",
-    "apexcharts": "https://esm.sh/apexcharts@4.0.0",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.46.1",
-    "framer-motion": "https://esm.sh/framer-motion@11.11.11?external=react,react-dom",
-    "i18next": "https://esm.sh/i18next@23.7.11",
-    "react-i18next": "https://esm.sh/react-i18next@13.5.0?external=i18next,react",
-    "i18next-browser-languagedetector": "https://esm.sh/i18next-browser-languagedetector@7.2.0",
-    "i18next-http-backend": "https://esm.sh/i18next-http-backend@2.4.2",
-    "react-dom/": "https://esm.sh/react-dom@19.0.0/",
-    "react/": "https://esm.sh/react@19.0.0/",
-    "react-slick": "https://esm.sh/react-slick@0.30.2",
-    "slick-carousel": "https://esm.sh/slick-carousel@1.8.1",
-    "vite": "https://esm.sh/vite@latest",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@latest"
-  }
-}
-</script>
 </head>
 <body>
     <div id="root"></div>

@@ -2,7 +2,11 @@
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ScenarioType, DecisionData, MacroIndicators } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+/**
+ * Obtém uma nova instância do cliente GenAI.
+ * Necessário instanciar por chamada conforme diretrizes de runtime em browser.
+ */
+const getClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
  * STRATEGOS BP AUDITOR
@@ -10,6 +14,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
  */
 export const auditBusinessPlan = async (section: string, text: string, financialContext: any) => {
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: `Você é o Auditor Master do Empirion. Analise a coerência desta seção do Plano de Negócios.
@@ -30,16 +35,18 @@ export const auditBusinessPlan = async (section: string, text: string, financial
 
     return response.text || "Auditoria indisponível no momento.";
   } catch (error) {
+    console.error("Audit error:", error);
     return "Erro no link de auditoria neural.";
   }
 };
 
 /**
  * DECISION COACH
- * Analyzes unsaved decisions and warns about tactical disasters (e.g., huge price, zero marketing).
+ * Analyzes unsaved decisions and warns about tactical disasters.
  */
 export const getLiveDecisionAdvice = async (decisions: DecisionData, branch: string) => {
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Analise estas decisões de simulação empresarial (${branch}): ${JSON.stringify(decisions)}.
@@ -51,15 +58,19 @@ export const getLiveDecisionAdvice = async (decisions: DecisionData, branch: str
       config: { temperature: 0.5 }
     });
     return response.text;
-  } catch (err) { return null; }
+  } catch (err) { 
+    console.error("Advice error:", err);
+    return null; 
+  }
 };
 
 /**
  * TUTOR OUTLOOK
- * Predicts the butterfly effect of changing macro variables on the whole championship.
+ * Predicts the butterfly effect of changing macro variables.
  */
 export const getTutorOutlook = async (macro: MacroIndicators, teamsData: any[]) => {
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: `Como a alteração para estes indicadores afetará a arena: ${JSON.stringify(macro)}?
@@ -68,10 +79,12 @@ export const getTutorOutlook = async (macro: MacroIndicators, teamsData: any[]) 
       config: { temperature: 0.7 }
     });
     return response.text;
-  } catch (err) { return "Outlook em manutenção."; }
+  } catch (err) { 
+    console.error("Outlook error:", err);
+    return "Outlook em manutenção."; 
+  }
 };
 
-// ... (Existing functions like generateMarketAnalysis, generateGazetaNews, etc. remain here)
 export const generateBusinessPlanField = async (
   sectionTitle: string, 
   fieldLabel: string, 
@@ -80,6 +93,7 @@ export const generateBusinessPlanField = async (
   branch: string
 ) => {
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Você é o Strategos Business Architect do Empirion. 
@@ -92,15 +106,20 @@ export const generateBusinessPlanField = async (
       config: { temperature: 0.7 }
     });
     return response.text || "Não consegui gerar este insight.";
-  } catch (error) { return "Erro na arquitetura cognitiva."; }
+  } catch (error) { 
+    console.error("Generator error:", error);
+    return "Erro na arquitetura cognitiva."; 
+  }
 };
 
 export const generateMarketAnalysis = async (championshipName: string, round: number, branch: string, scenarioType: ScenarioType = 'simulated') => {
-  const groundingPrompt = scenarioType === 'real' 
+  const isReal = scenarioType === 'real';
+  const groundingPrompt = isReal 
     ? "Utilize dados reais de mercado e notícias atuais (Google Search) para fundamentar as projeções." 
     : "Baseie-se exclusivamente nos parâmetros simulados fornecidos pelo motor de inteligência Empirion.";
 
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Você é o Empirion Strategos AI. Forneça um briefing estratégico quantitativo para a Rodada ${round} do campeonato "${championshipName}" (${branch}). 
@@ -112,12 +131,15 @@ export const generateMarketAnalysis = async (championshipName: string, round: nu
       Mantenha o tom executivo e técnico. Máximo 100 palavras. Idioma: Português (Brasil).`,
       config: {
         temperature: 0.6,
-        tools: scenarioType === 'real' ? [{ googleSearch: {} }] : []
+        tools: isReal ? [{ googleSearch: {} }] : []
       }
     });
 
     return response.text || "Mercado estável.";
-  } catch (error) { return "Link tático interrompido."; }
+  } catch (error) { 
+    console.error("Market error:", error);
+    return "Link tático interrompido."; 
+  }
 };
 
 export const generateGazetaNews = async (context: { 
@@ -137,6 +159,7 @@ export const generateGazetaNews = async (context: {
     : "MODO SIMULADO: Crie notícias puramente fictícias baseadas no comportamento das equipes e nos parâmetros do motor Empirion.";
 
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Gere 3 manchetes de impacto para o jornal "Gazeta Empirion". 
@@ -157,11 +180,15 @@ export const generateGazetaNews = async (context: {
     });
 
     return response.text || "Gazeta em manutenção.";
-  } catch (error) { return "Gazeta offline."; }
+  } catch (error) { 
+    console.error("Gazeta error:", error);
+    return "Gazeta offline."; 
+  }
 };
 
 export const generateBlackSwanEvent = async (branch: string) => {
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Gere um evento 'Cisne Negro' (Black Swan) para uma simulação empresarial do setor ${branch}. 
@@ -191,11 +218,15 @@ export const generateBlackSwanEvent = async (branch: string) => {
       }
     });
     return JSON.parse(response.text.trim());
-  } catch (error) { return null; }
+  } catch (error) { 
+    console.error("Event error:", error);
+    return null; 
+  }
 };
 
 export const performGroundedSearch = async (query: string) => {
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Pesquise tendências reais de mercado relevantes para: ${query}. Sintetize para um estrategista empresarial Empirion. Cite fontes.`,
@@ -210,10 +241,14 @@ export const performGroundedSearch = async (query: string) => {
     }));
 
     return { text, sources };
-  } catch (error) { return { text: "Falha na busca.", sources: [] }; }
+  } catch (error) { 
+    console.error("Search error:", error);
+    return { text: "Falha na busca.", sources: [] }; 
+  }
 };
 
 export const createChatSession = () => {
+  const ai = getClient();
   return ai.chats.create({
     model: 'gemini-3-pro-preview',
     config: {

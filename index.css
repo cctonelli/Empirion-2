@@ -1,0 +1,68 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#020617] text-[#f8fafc] antialiased overflow-x-hidden;
+  }
+}
+
+/* WOW Fluid Styles */
+.fluid-title {
+  font-size: clamp(2.5rem, 6vw + 1rem, 7.5rem);
+}
+
+.fluid-menu-item {
+  font-size: clamp(9px, 0.75vw, 11px);
+  white-space: nowrap;
+}
+
+.cyber-button {
+  @apply relative overflow-hidden z-[1];
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cyber-button::before {
+  content: '';
+  @apply absolute top-1/2 left-1/2 w-0 h-0 -z-[1];
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.cyber-button:hover::before {
+  width: 400px;
+  height: 400px;
+}
+
+.cyber-button:hover {
+  @apply scale-[1.02];
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.25);
+}
+
+/* Glass Elevation */
+.premium-card {
+  @apply backdrop-blur-[20px] bg-slate-900/50 border border-white/5;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Particle Sync */
+.particle-canvas {
+  @apply mix-blend-screen opacity-80;
+}
+
+/* ApexCharts Overrides */
+.apexcharts-canvas {
+  @apply font-mono;
+}

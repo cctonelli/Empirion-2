@@ -2,7 +2,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './i18n'; // Activate internationalization
+import './index.css';
+import './i18n';
 
 // Global error tracking for deployment diagnosis
 window.addEventListener('error', (event) => {
