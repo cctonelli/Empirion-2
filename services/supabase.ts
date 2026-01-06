@@ -17,14 +17,10 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const isTestMode = true;
 
-/**
- * ALPHA BYPASS WHITELIST
- */
 const ALPHA_IDS = ['tutor', 'alpha', 'tutor_master', 'alpha_street', 'alpha_cell', 'alpha_user'];
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   if (!userId) return null;
-
   if (ALPHA_IDS.includes(userId)) {
     return {
       id: userId, 
@@ -36,71 +32,39 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       created_at: new Date().toISOString()
     };
   }
-  
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(userId)) {
-    logInfo(LogContext.AUTH, `Skipping invalid UUID format profile fetch: ${userId}`);
-    return null;
-  }
-
+  if (!uuidRegex.test(userId)) return null;
   const { data, error } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
-  if (error) logError(LogContext.DATABASE, `Error fetching user profile ${userId}`, error);
   return data;
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {
   let realData: any[] = [];
   let trialData: any[] = [];
-  
   try {
-    const { data, error } = await supabase
-      .from('championships')
-      .select('*, teams(id, name, status, equity, credit_limit, insolvency_status)')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      if (error.code === '42P17') {
-        const { data: simpleData } = await supabase.from('championships').select('*');
-        realData = simpleData || [];
-      } else {
-        throw error;
-      }
-    } else {
-      realData = data || [];
-    }
-  } catch (e: any) {
-    logError(LogContext.DATABASE, "Championship fetch failure", e.message);
-  }
-
+    const { data, error } = await supabase.from('championships').select('*, teams(*)').order('created_at', { ascending: false });
+    if (!error) realData = data || [];
+  } catch (e) {}
   try {
     const { data } = await supabase.from('trial_championships').select('*, teams:trial_teams(*)').order('created_at', { ascending: false });
     if (data) trialData = data;
   } catch (e) {}
-
   const combined = [
-    ...realData.map(c => ({ ...c, market_indicators: c.market_indicators || DEFAULT_MACRO, is_trial: false })), 
-    ...trialData.map(c => ({ ...c, market_indicators: c.market_indicators || DEFAULT_MACRO, is_trial: true }))
+    ...realData.map(c => ({ ...c, is_trial: false })), 
+    ...trialData.map(c => ({ ...c, is_trial: true }))
   ];
-  
   return { data: onlyPublic ? combined.filter(c => c.is_public || c.is_trial) : combined as Championship[], error: null };
 };
 
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
-  logInfo(LogContext.TURNOVER, `Initializing turnover for arena ${championshipId} | Round ${currentRound} -> ${currentRound + 1}`);
-  
+  logInfo(LogContext.TURNOVER, `Iniciando Processamento de Valuation | Arena ${championshipId} | Ciclo ${currentRound}`);
   try {
-    const { data: arena, error: arenaFetchErr } = await supabase.from('championships').select('*').eq('id', championshipId).single();
-    if (arenaFetchErr) throw arenaFetchErr;
-    if (!arena) throw new Error(`Arena ${championshipId} not found.`);
-
-    const { data: teams, error: teamsFetchErr } = await supabase.from('teams').select('*').eq('championship_id', championshipId);
-    if (teamsFetchErr) throw teamsFetchErr;
-    if (!teams || teams.length === 0) throw new Error(`No teams found for championship ${championshipId}.`);
-
+    const { data: arena } = await supabase.from('championships').select('*').eq('id', championshipId).single();
+    const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', championshipId);
     const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', currentRound + 1);
     const { data: previousStates } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', currentRound);
 
-    const batchResults = teams.map(team => {
+    const batchResults = teams!.map(team => {
       const teamDecision = decisions?.find(d => d.team_id === team.id)?.data || {
         regions: Object.fromEntries(Array.from({ length: 9 }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 1 }])),
         hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50 },
@@ -109,8 +73,16 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
         legal: { recovery_mode: 'none' }
       };
 
-      const teamPrevState = currentRound === 0 ? arena.initial_financials : previousStates?.find(s => s.team_id === team.id);
-      const result = calculateProjections(teamDecision as DecisionData, arena.branch, arena.ecosystemConfig, arena.market_indicators, teamPrevState);
+      const teamPrevState = currentRound === 0 ? { kpis: { market_valuation: { share_price: arena.initial_share_price || 1.0 } } } : previousStates?.find(s => s.team_id === team.id);
+      
+      // Oracle Engine Executa Projeção + Valuation (Pulo do Gato)
+      const result = calculateProjections(
+        teamDecision as DecisionData, 
+        arena.branch, 
+        arena.ecosystemConfig, 
+        arena.market_indicators, 
+        teamPrevState
+      );
 
       return {
         team_id: team.id,
@@ -129,13 +101,10 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       };
     });
 
-    const { error: insErr } = await supabase.from('companies').insert(batchResults);
-    if (insErr) throw insErr;
-
+    await supabase.from('companies').insert(batchResults);
     for (const res of batchResults) {
       await supabase.from('teams').update({ credit_limit: res.credit_limit, equity: res.equity }).eq('id', res.team_id);
     }
-
     await supabase.from('championships').update({ current_round: currentRound + 1, round_started_at: new Date().toISOString() }).eq('id', championshipId);
     return { success: true };
   } catch (err: any) {
@@ -148,29 +117,30 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_championships' : 'championships';
   const teamsTable = isTrial ? 'trial_teams' : 'teams';
-  
   const { data: { session } } = await supabase.auth.getSession();
   
   try {
+    // PAYLOAD SANEADO PARA TABELAS TRIAL (Resiliência de Schema)
     const payload: any = {
       name: champData.name,
-      description: champData.description,
       branch: champData.branch,
       status: 'active',
       current_round: 0,
       total_rounds: champData.total_rounds || 12,
-      sales_mode: champData.sales_mode || 'hybrid',
-      scenario_type: champData.scenario_type || 'simulated',
-      transparency_level: champData.transparency_level || 'medium',
-      gazeta_mode: champData.gazeta_mode || 'anonymous',
-      observers: champData.observers || [],
+      initial_share_price: champData.initial_share_price || 1.0,
       initial_financials: champData.initial_financials || {},
       market_indicators: champData.market_indicators || DEFAULT_MACRO,
       tutor_id: isTrial ? null : session?.user?.id
     };
 
-    // FIX: Somente envia 'currency' se não for arena de teste para evitar erro de schema cache
+    // Apenas adiciona colunas extras se NÃO for modo Trial
     if (!isTrial) {
+      payload.description = champData.description;
+      payload.sales_mode = champData.sales_mode;
+      payload.scenario_type = champData.scenario_type;
+      payload.transparency_level = champData.transparency_level;
+      payload.gazeta_mode = champData.gazeta_mode;
+      payload.observers = champData.observers || [];
       payload.currency = champData.currency || 'BRL';
     }
 
@@ -194,9 +164,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 };
 
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
-  const isTrial = localStorage.getItem('is_trial_session') === 'true';
-  const table = isTrial ? 'trial_decisions' : 'current_decisions';
-  await supabase.from(table).upsert({ 
+  await supabase.from('current_decisions').upsert({ 
     team_id: teamId, championship_id: champId, round, data: decisions, status: 'sealed'
   }); 
   return { success: true };
@@ -210,10 +178,8 @@ export const fetchPageContent = async (slug: string, lang: string) => {
 };
 
 export const getModalities = async () => {
-  try {
-    const { data } = await supabase.from('modalities').select('*').order('name');
-    return (data as any[]) || [];
-  } catch (e) { return []; }
+  const { data } = await supabase.from('modalities').select('*').order('name');
+  return (data as any[]) || [];
 };
 
 export const subscribeToModalities = (callback: () => void) => {
