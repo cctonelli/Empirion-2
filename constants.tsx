@@ -5,45 +5,54 @@ export const BUILD_DATE = "06/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-STABLE";
 
 /**
- * ESTRUTURA LEGADA PARA MOTOR DE SIMULAÇÃO (GOLD V12.8)
- * Necessário para o calculateProjections em simulation.ts
+ * ESTRUTURA LEGADA PARA MOTOR DE SIMULAÇÃO (FIDELIDADE DOCUMENTAL)
  */
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
     assets: {
       current: {
-        cash: 840200,
+        cash: 0,
+        banks: 0,
+        investments: 0,
         receivables: 1823735,
+        pvdd: 0,
+        inventory_finished: 0,
         inventory_mpa: 628545,
         inventory_mpb: 838060
       },
-      fixed: {
-        machinery_gross: 5000000,
-        land: 1500000,
-        accumulated_depreciation: -613540
+      non_current: {
+        long_term_receivables: 0,
+        fixed_assets: {
+          machinery: 2360000,
+          depr_machinery: -811500,
+          land: 1200000,
+          buildings: 5440000,
+          depr_buildings: -2301900
+        }
       }
     },
     liabilities: {
       current: {
         suppliers: 717605,
-        taxes_payable: 13045,
-        loans_short_term: 1872362
+        income_tax_payable: 13045,
+        ppr_payable: 0,
+        dividends_payable: 18481,
+        loans_st: 1872362
       },
-      long_term: {
-        loans_long_term: 1500000
+      non_current: {
+        loans_lt: 1500000
       }
     },
     equity: {
       capital_social: 5000000,
-      accumulated_profit: 73928,
-      total: 5073928
+      accumulated_profit: 55447
     }
   }
 };
 
 /**
- * ESTRUTURA DE ÁRVORE PARA EDITOR FINANCEIRO (GOLD V12.8)
- * Resolve TypeError .find convertendo o objeto legado em nós indexáveis.
+ * ESTRUTURA DE ÁRVORE PARA EDITOR FINANCEIRO (CPC 26 COMPLIANT)
+ * Reflete exatamente o balanço do Período 0 anexado.
  */
 export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: AccountNode[] } = {
   balance_sheet: [
@@ -56,31 +65,62 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
       children: [
         {
           id: 'assets.current',
-          label: '1.1 Ativo Circulante',
-          value: 3290480,
+          label: '1.1 ATIVO CIRCULANTE',
+          value: 3290340,
           type: 'totalizer',
           children: [
-            { id: 'cash', label: 'Caixa e Equivalentes', value: 840200, type: 'asset', isEditable: true },
-            { id: 'receivables', label: 'Contas a Receber (P1)', value: 1823735, type: 'asset', isEditable: true },
-            { id: 'inv_mpa', label: 'Estoque Matéria-Prima A', value: 628545, type: 'asset', isEditable: true },
-            { id: 'inv_mpb', label: 'Estoque Matéria-Prima B', value: 838060, type: 'asset', isEditable: true }
+            { id: 'cash', label: 'Caixa', value: 0, type: 'asset', isEditable: true },
+            { id: 'banks', label: 'Bancos', value: 0, type: 'asset', isEditable: true },
+            { id: 'investments', label: 'Aplicação', value: 0, type: 'asset', isEditable: true },
+            { id: 'receivables', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true },
+            { id: 'pvdd', label: '(-) Provisão devedores duvidosos', value: 0, type: 'asset', isEditable: true },
+            {
+              id: 'inventory',
+              label: 'ESTOQUE',
+              value: 1466605,
+              type: 'totalizer',
+              children: [
+                { id: 'inv_finished', label: 'Estoque Prod. Acabado ALPHA', value: 0, type: 'asset', isEditable: true },
+                { id: 'inv_mpa', label: 'Estoque MP A', value: 628545, type: 'asset', isEditable: true },
+                { id: 'inv_mpb', label: 'Estoque MP B', value: 838060, type: 'asset', isEditable: true }
+              ]
+            }
           ]
         },
         {
-          id: 'assets.fixed',
-          label: '1.2 Ativo Não Circulante (CapEx)',
-          value: 5886460,
+          id: 'assets.noncurrent',
+          label: '1.2 ATIVO NÃO CIRCULANTE',
+          value: 5886600,
           type: 'totalizer',
           children: [
-            { id: 'land', label: 'Terrenos e Galpões', value: 1500000, type: 'asset', isEditable: true },
-            { id: 'machinery', label: 'Maquinário Industrial', value: 5000000, type: 'asset', isEditable: true },
-            { id: 'deprec', label: '(-) Depreciação Acumulada', value: -613540, type: 'asset', isEditable: true }
+            {
+              id: 'assets.longterm',
+              label: 'REALIZÁVEL À LONGO PRAZO',
+              value: 0,
+              type: 'totalizer',
+              children: [
+                { id: 'fixed_sale', label: 'Venda de ativo imobilizado', value: 0, type: 'asset', isEditable: true }
+              ]
+            },
+            {
+              id: 'assets.fixed',
+              label: 'IMOBILIZADO',
+              value: 5886600,
+              type: 'totalizer',
+              children: [
+                { id: 'machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true },
+                { id: 'depr_machines', label: '(-) Depreciação acumulada de equipamentos', value: -811500, type: 'asset', isEditable: true },
+                { id: 'land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true },
+                { id: 'buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true },
+                { id: 'depr_buildings', label: '(-) Depreciação acumulada de prédios e instalações', value: -2301900, type: 'asset', isEditable: true }
+              ]
+            }
           ]
         }
       ]
     },
     {
-      id: 'liabilities',
+      id: 'liabilities_equity',
       label: '2. PASSIVO + PL',
       value: 9176940,
       type: 'totalizer',
@@ -88,32 +128,34 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
       children: [
         {
           id: 'liab.current',
-          label: '2.1 Passivo Circulante',
-          value: 2603012,
+          label: '2.1 PASSIVO CIRCULANTE',
+          value: 2621493,
           type: 'totalizer',
           children: [
-            { id: 'suppliers', label: 'Fornecedores (MP)', value: 717605, type: 'liability', isEditable: true },
-            { id: 'taxes', label: 'Impostos a Recolher', value: 13045, type: 'liability', isEditable: true },
-            { id: 'loans_st', label: 'Empréstimos Curto Prazo', value: 1872362, type: 'liability', isEditable: true }
+            { id: 'suppliers', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true },
+            { id: 'tax_payable', label: 'Imposto de Renda a pagar', value: 13045, type: 'liability', isEditable: true },
+            { id: 'ppr_payable', label: 'Participações a pagar', value: 0, type: 'liability', isEditable: true },
+            { id: 'dividends', label: 'Dividendos a pagar', value: 18481, type: 'liability', isEditable: true },
+            { id: 'loans_st', label: 'Empréstimos de curto prazo', value: 1872362, type: 'liability', isEditable: true }
           ]
         },
         {
-          id: 'liab.long',
-          label: '2.2 Passivo Não Circulante',
+          id: 'liab.noncurrent',
+          label: '2.2 PASSIVO NÃO CIRCULANTE',
           value: 1500000,
           type: 'totalizer',
           children: [
-            { id: 'loans_lt', label: 'Financiamentos Longo Prazo', value: 1500000, type: 'liability', isEditable: true }
+            { id: 'loans_lt', label: 'Empréstimos de longo prazo', value: 1500000, type: 'liability', isEditable: true }
           ]
         },
         {
           id: 'equity',
-          label: '2.3 Patrimônio Líquido',
-          value: 5073928,
+          label: '2.3 PATRIMÔNIO LÍQUIDO',
+          value: 5055447,
           type: 'totalizer',
           children: [
-            { id: 'capital', label: 'Capital Social Integralizado', value: 5000000, type: 'equity', isEditable: true },
-            { id: 'profit', label: 'Lucros Acumulados', value: 73928, type: 'equity', isEditable: true }
+            { id: 'capital', label: 'Capital Social', value: 5000000, type: 'equity', isEditable: true },
+            { id: 'profit_acc', label: 'Lucros Acumulados no ano', value: 55447, type: 'equity', isEditable: true }
           ]
         }
       ]
@@ -121,27 +163,50 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
   ],
   dre: [
     {
-      id: 'rev',
-      label: 'RECEITA OPERACIONAL BRUTA',
+      id: 'rev_gross',
+      label: 'RECEITA DE VENDAS',
       value: 3322735,
       type: 'totalizer',
-      isReadOnly: true,
       children: [
-        { id: 'sales', label: 'Venda de Produtos Acabados', value: 3322735, type: 'revenue', isEditable: true }
+        { id: 'sales_raw', label: 'Receita Bruta', value: 3322735, type: 'revenue', isEditable: true }
+      ]
+    },
+    { id: 'cpv', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: -2278180, type: 'expense', isEditable: true },
+    { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true },
+    {
+      id: 'op_expenses_group',
+      label: '( - ) DESPESAS OPERACIONAIS:',
+      value: -917582,
+      type: 'totalizer',
+      children: [
+        { id: 'exp_sales', label: 'DE VENDAS', value: -802702, type: 'expense', isEditable: true },
+        { id: 'exp_admin', label: 'ADMINISTRATIVAS', value: -114880, type: 'expense', isEditable: true }
+      ]
+    },
+    { id: 'op_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true },
+    {
+      id: 'fin_rev_group',
+      label: '( + ) RECEITAS FINANCEIRAS',
+      value: 0,
+      type: 'totalizer',
+      children: [
+        { id: 'fin_yield', label: 'RENDIMENTOS DE APLICAÇÕES FINANCEIRAS', value: 0, type: 'revenue', isEditable: true }
       ]
     },
     {
-      id: 'exp',
-      label: 'CUSTOS E DESPESAS',
-      value: -3248807,
+      id: 'fin_exp_group',
+      label: '( - ) DESPESAS FINANCEIRAS',
+      value: -40000,
       type: 'totalizer',
-      isReadOnly: true,
       children: [
-        { id: 'cpv', label: '(-) Custo Prod. Vendidos (CPV)', value: -2278180, type: 'expense', isEditable: true },
-        { id: 'opex', label: '(-) Despesas Administrativas', value: -957582, type: 'expense', isEditable: true },
-        { id: 'depr_round', label: '(-) Depreciação do Período', value: -13045, type: 'expense', isEditable: true }
+        { id: 'fin_net', label: 'FINANCEIRAS LÍQUIDAS', value: -40000, type: 'expense', isEditable: true }
       ]
-    }
+    },
+    { id: 'lair', label: '(=) LAIR - LUCRO LÍQUIDO ANTES DO IR', value: 86973, type: 'totalizer', isReadOnly: true },
+    { id: 'ir_prov', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
+    { id: 'net_after_tax', label: '(=) LUCRO LÍQUIDO APÓS O I. R.', value: 73928, type: 'totalizer', isReadOnly: true },
+    { id: 'ppr', label: '( - ) PPR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true },
+    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true }
   ]
 };
 
@@ -162,7 +227,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     name: 'Empirion Street: Industrial Mastery',
     branch: 'industrial',
     sector: 'Manufacturing',
-    description: 'Balanço Inicial de $ 9.176.940. Foco em OEE, CAPEX e Ciclo Financeiro Bernard v12.8.',
+    description: 'Balanço Inicial de $ 9.176.940 conforme CPC 26. Gestão total de Imobilizado e Ciclos Bernard.',
     config: {
       round_frequency_days: 7,
       sales_mode: 'internal' as SalesMode,
@@ -220,14 +285,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
         image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", 
         badge: "Industrial Node 08", 
         link: "/branches/industrial" 
-      },
-      { 
-        id: 2, 
-        title: "Global Supply Chain", 
-        subtitle: "Logística integrada e volatilidade de MP-A/MP-B.", 
-        image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2000", 
-        badge: "Supply Engine", 
-        link: "/features" 
       }
     ],
     leaderboard: [
