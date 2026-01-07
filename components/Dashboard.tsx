@@ -7,15 +7,15 @@ import {
   ChevronRight, Shield, FileEdit, PenTool, 
   Eye, Timer, Box, HeartPulse, Landmark, 
   Thermometer, EyeOff, Globe, Map, PieChart, Users,
-  ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon
+  ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon, Info,
+  Trophy // Fix: Added missing Trophy icon import
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
 import DecisionForm from './DecisionForm';
 import GazetteViewer from './GazetteViewer';
-import { generateMarketAnalysis, generateGazetaNews } from '../services/gemini';
 import { supabase, getChampionships, getUserProfile } from '../services/supabase';
-import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
+import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs, RegionalData } from '../types';
 import { logError, LogContext } from '../utils/logger';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
@@ -24,7 +24,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [userRole, setUserRole] = useState<UserRole>('player');
   const [loading, setLoading] = useState(true);
   const [showGazette, setShowGazette] = useState(false);
-  const [aiNews, setAiNews] = useState<string>('');
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -59,11 +58,20 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     return activeTeam?.kpis || activeArena?.kpis || {
       ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
       scissors_effect: { ncg: 1466605, ccl: 3290340 - 2621493, tesouraria: 50000, ccp: 180000, tsf: -73.87, is_critical: false },
-      market_valuation: { share_price: 60.09, market_cap: 300450000, tsr: 4.2 },
+      market_valuation: { share_price: 60.09, total_shares: 5000000, market_cap: 300450000, tsr: 4.2 },
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
       equity: 5055447,
-      market_share: 12.5
+      market_share: 12.5,
+      regional_pulse: Array.from({ length: 9 }).map((_, i) => ({
+        region_id: i + 1,
+        region_name: `Região 0${i + 1}`,
+        demand: 12500,
+        units_sold: 1562,
+        market_share: 12.5,
+        avg_price: 372.40,
+        competitors_count: 8
+      }))
     } as KPIs;
   }, [activeArena, activeTeam]);
 
@@ -79,23 +87,23 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] bg-[#020617] overflow-hidden font-sans">
       
-      {/* TOP STRATEGIC STRIP */}
-      <section className="grid grid-cols-2 md:grid-cols-5 gap-px bg-white/5 border-b border-white/5 shrink-0">
-         <CockpitStat label="Valor da Ação" val={`$ ${currentKpis.market_valuation?.share_price.toFixed(2)}`} sub="EMPR 08" trend="+1.2%" pos icon={<TrendingUp size={14}/>} />
+      {/* TOP STRATEGIC KPI STRIP (ERP Cockpit) */}
+      <section className="grid grid-cols-2 md:grid-cols-5 gap-px bg-white/5 border-b border-white/5 shrink-0 shadow-2xl z-20">
+         <CockpitStat label="Valor da Ação" val={`$ ${currentKpis.market_valuation?.share_price.toFixed(2)}`} sub="EMPR 08 Index" trend="+1.2%" pos icon={<TrendingUp size={14}/>} />
          <CockpitStat label="Receita Bruta" val={`$ ${(3322735).toLocaleString()}`} sub="Acumulado P0" trend="Consistente" pos icon={<DollarSign size={14}/>} />
          <CockpitStat label="Lucro Líquido" val={`$ ${(73928).toLocaleString()}`} sub="Margem 2.2%" trend="+4.5%" pos icon={<Activity size={14}/>} />
          <CockpitStat label="TSR (Shareholder)" val={`${currentKpis.market_valuation?.tsr || 0}%`} sub="Retorno p/ Sócio" trend="High" pos icon={<PieChart size={14}/>} />
          <CockpitStat label="Rating Oracle" val={currentKpis.rating} sub="Classificação de Risco" trend="Estável" pos icon={<ShieldCheck size={14}/>} />
       </section>
 
-      {/* MAIN COCKPIT VIEWPORT */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* MAIN OPERATIONAL HUB */}
+      <div className="flex flex-1 overflow-hidden relative">
          
-         {/* LEFT WING: FINANCIAL CORE (20%) */}
-         <aside className="w-80 bg-slate-900/40 border-r border-white/5 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
+         {/* LEFT WING: FINANCIAL CORE & RATIOS (20%) */}
+         <aside className="w-80 bg-slate-900/40 border-r border-white/5 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-xl">
             <div className="p-6 space-y-8">
                <div className="space-y-4">
-                  <header className="flex items-center justify-between">
+                  <header className="flex items-center justify-between border-b border-white/5 pb-2">
                      <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">
                         <Landmark size={14}/> Financial Core
                      </h3>
@@ -103,7 +111,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </header>
                   
                   {/* MINI DRE */}
-                  <div className="bg-slate-950 p-5 rounded-2xl border border-white/5 space-y-4">
+                  <div className="bg-slate-950 p-5 rounded-2xl border border-white/5 space-y-4 shadow-inner">
                      <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-tight">Mini-DRE (Auditado)</h4>
                      <div className="space-y-2 font-mono text-[10px]">
                         <MiniFinRow label="Receita Vendas" val="3.32M" />
@@ -114,7 +122,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
 
                   {/* MINI BALANCE SHEET */}
-                  <div className="bg-slate-950 p-5 rounded-2xl border border-white/5 space-y-4">
+                  <div className="bg-slate-950 p-5 rounded-2xl border border-white/5 space-y-4 shadow-inner">
                      <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-tight">Posição Patrimonial</h4>
                      <div className="space-y-2 font-mono text-[10px]">
                         <MiniFinRow label="Ativo Circulante" val="3.29M" />
@@ -123,7 +131,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      </div>
                   </div>
 
-                  {/* SCISSORS EFFECT WIDGET */}
+                  {/* SCISSORS EFFECT / TSF WIDGET */}
                   <div className="bg-orange-600/10 p-5 rounded-2xl border border-orange-500/20 space-y-4">
                      <header className="flex justify-between items-center">
                         <h4 className="text-[9px] font-black text-orange-500 uppercase tracking-tight">Efeito Tesoura</h4>
@@ -132,8 +140,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      <div className="space-y-1">
                         <span className="text-[8px] font-black text-slate-500 uppercase">Termômetro TSF</span>
                         <div className="flex items-center justify-between">
-                           <span className="text-xl font-black text-white italic">-73.87</span>
-                           <span className="text-[8px] font-black px-2 py-0.5 bg-emerald-500 text-white rounded">EQUILIBRADO</span>
+                           <span className="text-xl font-black text-white italic">{(currentKpis.scissors_effect?.tsf || 0).toFixed(2)}</span>
+                           <span className={`text-[8px] font-black px-2 py-0.5 rounded ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-500' : 'bg-emerald-500'} text-white`}>
+                              {currentKpis.scissors_effect?.is_critical ? 'CRÍTICO' : 'ESTÁVEL'}
+                           </span>
                         </div>
                      </div>
                   </div>
@@ -141,14 +151,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             </div>
          </aside>
 
-         {/* CENTER HUB: DECISION ENGINE (60%) */}
-         <main className="flex-1 flex flex-col bg-[#020617] overflow-y-auto custom-scrollbar relative">
+         {/* CENTER HUB: DECISION WIZARD ENGINE (60%) */}
+         <main className="flex-1 flex flex-col bg-[#020617] overflow-y-auto custom-scrollbar relative z-10">
             <div className="p-8 md:p-12">
                <div className="max-w-4xl mx-auto space-y-10">
-                  <header className="flex justify-between items-end">
+                  <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                      <div>
                         <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Decision <span className="text-orange-600">Hub</span></h2>
-                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Orquestração tática para o Período 01</p>
+                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Orquestração tática para o Período 0{(activeArena?.current_round || 0) + 1}</p>
                      </div>
                      <div className="flex gap-4">
                         <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
@@ -158,7 +168,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      </div>
                   </header>
 
-                  <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-[3rem] p-1 shadow-2xl">
+                  <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-[3rem] p-1 shadow-2xl overflow-hidden">
                      <DecisionForm 
                         teamId={activeTeam?.id} 
                         champId={activeArena?.id} 
@@ -170,43 +180,43 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             </div>
          </main>
 
-         {/* RIGHT WING: MARKET PULSE (20%) */}
-         <aside className="w-96 bg-slate-900/40 border-l border-white/5 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
+         {/* RIGHT WING: MARKET PULSE & MACRO (20%) */}
+         <aside className="w-96 bg-slate-900/40 border-l border-white/5 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-xl">
             <div className="p-6 space-y-8">
                
-               {/* MACRO INDICATORS BOARD */}
+               {/* MACRO BOARD */}
                <div className="space-y-4">
                   <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
                      <Cpu size={14}/> Macro board
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
-                     <MacroTile label="ICE" val="+3.0%" icon={<TrendingUp size={12}/>} />
-                     <MacroTile label="Inflação" val="1.0%" icon={<Activity size={12}/>} />
-                     <MacroTile label="TR (Juros)" val="2.0%" icon={<Landmark size={12}/>} />
+                     <MacroTile label="ICE" val={`+${activeArena?.market_indicators.growth_rate}%`} icon={<TrendingUp size={12}/>} />
+                     <MacroTile label="Inflação" val={`${activeArena?.market_indicators.inflation_rate}%`} icon={<Activity size={12}/>} />
+                     <MacroTile label="TR (Juros)" val={`${activeArena?.market_indicators.interest_rate_tr}%`} icon={<Landmark size={12}/>} />
                      <MacroTile label="Mão de Obra" val="Média" icon={<Users size={12}/>} />
                   </div>
                </div>
 
-               {/* REGIONAL MARKET OVERVIEW */}
+               {/* REGIONAL INTELLIGENCE TABLE */}
                <div className="space-y-4">
                   <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
                      <Globe size={14}/> Regional Pulse
                   </h3>
-                  <div className="bg-slate-950 rounded-2xl border border-white/5 overflow-hidden">
+                  <div className="bg-slate-950 rounded-2xl border border-white/5 overflow-hidden shadow-inner">
                      <table className="w-full text-left">
                         <thead className="bg-white/5 text-[8px] font-black uppercase text-slate-500">
                            <tr>
                               <th className="px-4 py-3">Região</th>
-                              <th className="px-2 py-3">Demanda</th>
-                              <th className="px-2 py-3 text-right">M.Share</th>
+                              <th className="px-2 py-3 text-center">Venda</th>
+                              <th className="px-2 py-3 text-right">Share %</th>
                            </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 font-mono text-[9px]">
-                           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
-                             <tr key={i} className="hover:bg-white/5 transition-colors">
-                                <td className="px-4 py-3 text-slate-300">Norte 0{i}</td>
-                                <td className="px-2 py-3 text-white">12.500</td>
-                                <td className="px-2 py-3 text-right text-orange-500 font-black">12.5%</td>
+                           {currentKpis.regional_pulse?.map((reg: RegionalData) => (
+                             <tr key={reg.region_id} className="hover:bg-white/5 transition-colors group">
+                                <td className="px-4 py-3 text-slate-300 font-bold">{reg.region_name}</td>
+                                <td className="px-2 py-3 text-white text-center">{reg.units_sold.toLocaleString()}</td>
+                                <td className="px-2 py-3 text-right text-orange-500 font-black">{reg.market_share}%</td>
                              </tr>
                            ))}
                         </tbody>
@@ -214,25 +224,25 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* COMPETITION RADAR */}
+               {/* MARKET DEPTH (Prices & Leaders) */}
                <div className="space-y-4">
                   <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-                     <Shield size={14}/> Market Depth
+                     <Shield size={14}/> Competition Radar
                   </h3>
                   <div className="space-y-3">
-                     <div className="p-4 bg-slate-950 border border-white/5 rounded-2xl flex justify-between items-center group cursor-help">
+                     <div className="p-4 bg-slate-950 border border-white/5 rounded-2xl flex justify-between items-center group cursor-help hover:border-indigo-500/30 transition-all">
                         <div>
-                           <span className="block text-[8px] font-black text-slate-500 uppercase">Preço Médio Regional</span>
-                           <span className="text-lg font-black text-white">$ 372,40</span>
+                           <span className="block text-[8px] font-black text-slate-500 uppercase">Preço Médio Mercado</span>
+                           <span className="text-lg font-black text-white italic">$ 372,40</span>
                         </div>
-                        <Info size={14} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
+                        <Info size={14} className="text-slate-600 group-hover:text-indigo-400 transition-colors" />
                      </div>
-                     <div className="p-4 bg-slate-950 border border-white/5 rounded-2xl flex justify-between items-center group cursor-help">
+                     <div className="p-4 bg-slate-950 border border-white/5 rounded-2xl flex justify-between items-center group cursor-help hover:border-orange-500/30 transition-all">
                         <div>
-                           <span className="block text-[8px] font-black text-slate-500 uppercase">Líder do Período</span>
+                           <span className="block text-[8px] font-black text-slate-500 uppercase">Líder Market Share</span>
                            <span className="text-lg font-black text-white italic">UNIT ALPHA</span>
                         </div>
-                        <Trophy size={14} className="text-orange-500" />
+                        <TrophyIcon size={14} className="text-orange-500" />
                      </div>
                   </div>
                </div>
@@ -240,11 +250,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </aside>
       </div>
 
-      {/* GAZETTE MODAL */}
+      {/* GAZETTE MODAL OVERLAY */}
       <AnimatePresence>
         {showGazette && (
           <div className="fixed inset-0 z-[5000] p-10 bg-slate-950/90 backdrop-blur-md flex items-center justify-center">
-             <GazetteViewer arena={activeArena!} aiNews={aiNews} round={activeArena?.current_round || 1} userRole={userRole} onClose={() => setShowGazette(false)} />
+             <GazetteViewer arena={activeArena!} aiNews="" round={activeArena?.current_round || 0} userRole={userRole} onClose={() => setShowGazette(false)} />
           </div>
         )}
       </AnimatePresence>
@@ -253,19 +263,19 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 };
 
 const CockpitStat = ({ label, val, sub, trend, pos, icon }: any) => (
-  <div className="p-6 hover:bg-white/[0.03] transition-all group flex flex-col justify-between min-h-[120px]">
+  <div className="p-6 hover:bg-white/[0.03] transition-all group flex flex-col justify-between min-h-[110px]">
      <div className="flex justify-between items-start">
         <div className="flex items-center gap-2">
            <div className="p-2 bg-white/5 rounded-lg text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-md">{icon}</div>
-           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+           <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
         </div>
-        <div className={`flex items-center gap-1 text-[10px] font-black ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
-           {pos ? <ArrowUpRight size={12}/> : <ArrowDownRight size={12}/>} {trend}
+        <div className={`flex items-center gap-1 text-[9px] font-black ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
+           {pos ? <ArrowUpRight size={10}/> : <ArrowDownRight size={10}/>} {trend}
         </div>
      </div>
      <div className="mt-4">
-        <span className="text-2xl font-black text-white font-mono tracking-tighter italic">{val}</span>
-        <p className="text-[8px] font-bold text-slate-600 uppercase mt-1">{sub}</p>
+        <span className="text-2xl font-black text-white font-mono tracking-tighter italic leading-none">{val}</span>
+        <p className="text-[7px] font-bold text-slate-600 uppercase mt-1 tracking-widest">{sub}</p>
      </div>
   </div>
 );
@@ -278,17 +288,15 @@ const MiniFinRow = ({ label, val, neg, bold, highlight }: any) => (
 );
 
 const MacroTile = ({ label, val, icon }: any) => (
-  <div className="bg-slate-950 p-4 rounded-2xl border border-white/5 space-y-2 hover:border-blue-500/30 transition-all">
+  <div className="bg-slate-950 p-4 rounded-2xl border border-white/5 space-y-2 hover:border-blue-500/30 transition-all shadow-inner">
      <div className="flex items-center gap-2 text-slate-500">
         {icon}
-        <span className="text-[8px] font-black uppercase tracking-tight">{label}</span>
+        <span className="text-[7px] font-black uppercase tracking-tight">{label}</span>
      </div>
      <span className="block text-sm font-black text-white font-mono italic">{val}</span>
   </div>
 );
 
-const Info = ({ size, className }: { size: number, className: string }) => <Map size={size} className={className} />;
-const Trophy = ({ size, className }: { size: number, className: string }) => <TrophyIcon size={size} className={className} />;
 const TrophyIcon = ({ size, className }: { size: number, className: string }) => <Trophy size={size} className={className} />;
 
 export default Dashboard;

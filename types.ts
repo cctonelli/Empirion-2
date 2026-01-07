@@ -1,7 +1,7 @@
 
 /**
- * EMPIRION V12.9.1 - PRODUCTION TYPES (MARKET CAP & SCISSORS Build)
- * Advanced financial status and share valuation mapping.
+ * EMPIRION V13.0 - ORACLE COCKPIT BUILD
+ * Advanced high-density data structures for ERP-style orchestration.
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -20,6 +20,23 @@ export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'E' | 'N/A';
 export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 
+// Fix: Added missing EcosystemConfig interface
+export interface EcosystemConfig {
+  scenario_type: ScenarioType;
+  modality_type: ModalityType;
+  inflation_rate: number;
+  demand_multiplier: number;
+  interest_rate: number;
+  market_volatility: number;
+}
+
+// Fix: Added missing CommunityCriteria interface
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
 export interface Team {
   id: string;
   name: string;
@@ -36,6 +53,16 @@ export interface Team {
   equity: number;
 }
 
+export interface RegionalData {
+  region_id: number;
+  region_name: string;
+  demand: number;
+  units_sold: number;
+  market_share: number;
+  avg_price: number;
+  competitors_count: number;
+}
+
 export interface KPIs {
   ciclos?: {
     pmre: number;
@@ -45,12 +72,12 @@ export interface KPIs {
     financeiro: number;
   };
   scissors_effect?: {
-    ncg: number;          // Necessidade de Capital de Giro
-    ccl: number;          // Capital Circulante Líquido
-    tesouraria: number;   // Saldo de Tesouraria (CCL - NCG)
-    ccp: number;          // Capital Circulante Próprio
-    tsf: number;          // Termômetro da Situação Financeira
-    is_critical: boolean; // "Abertura de Tesoura"
+    ncg: number;
+    ccl: number;
+    tesouraria: number;
+    ccp: number;
+    tsf: number;
+    is_critical: boolean;
   };
   market_valuation?: {
     share_price: number;
@@ -70,6 +97,7 @@ export interface KPIs {
   insolvency_status: InsolvencyStatus;
   net_profit?: number;
   equity?: number;
+  regional_pulse?: RegionalData[];
   [key: string]: any;
 }
 
@@ -113,15 +141,6 @@ export interface MacroIndicators {
   [key: string]: any;
 }
 
-export interface EcosystemConfig {
-  scenario_type: ScenarioType;
-  modality_type: ModalityType;
-  inflation_rate: number;
-  demand_multiplier: number;
-  interest_rate: number;
-  market_volatility: number;
-}
-
 export interface Championship {
   id: string;
   name: string;
@@ -132,6 +151,8 @@ export interface Championship {
   total_rounds: number;   
   deadline_value: number;
   deadline_unit: DeadlineUnit;
+  // Fix: Added missing round_frequency_days property
+  round_frequency_days: number;
   regions_count: number; 
   bots_count: number; 
   region_type: RegionType; 
@@ -153,7 +174,6 @@ export interface Championship {
   gazeta_mode: GazetaMode;
   observers: string[] | any[];
   ecosystemConfig?: EcosystemConfig;
-  round_frequency_days?: number;
 }
 
 export interface AccountNode {
@@ -163,6 +183,7 @@ export interface AccountNode {
   type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'expense' | 'revenue';
   isEditable?: boolean;
   isReadOnly?: boolean;
+  // Fix: Added missing isTemplateAccount property
   isTemplateAccount?: boolean;
   children?: AccountNode[];
 }
@@ -201,8 +222,6 @@ export interface BusinessPlan {
   version: number;
   data: Record<number, string>;
   status: 'draft' | 'submitted' | 'approved';
-  created_at: string;
-  updated_at: string;
 }
 
 export interface BlackSwanEvent {
@@ -256,14 +275,9 @@ export interface TeamProgress {
   rating: CreditRating;
   risk: number;
   insolvent: boolean;
-  master_key_enabled?: boolean;
   auditLogs: AuditLog[];
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
+  // Fix: Added missing master_key_enabled property
+  master_key_enabled?: boolean;
 }
 
 export interface InterventionEntry {

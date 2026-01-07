@@ -8,11 +8,8 @@ import {
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
-import { getLiveDecisionAdvice } from '../services/gemini';
 import { DecisionData, Branch, Championship, ProjectionResult, CreditRating, EcosystemConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DEFAULT_MACRO } from '../constants';
-import { InsolvencyAlert } from './InsolvencyAlert';
 
 const STEPS = [
   { id: 'marketing', label: 'Comercial', icon: Megaphone, color: 'orange' },
@@ -35,11 +32,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [decisions, setDecisions] = useState<DecisionData>(createInitialDecisions(9));
   const [isSaving, setIsSaving] = useState(false);
-  const [showInsolvencyModal, setShowInsolvencyModal] = useState(false);
   const [prevRoundData, setPrevRoundData] = useState<any>(null);
   const [activeRegion, setActiveRegion] = useState(1);
-  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
-  const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
     const fetchContext = async () => {
@@ -83,37 +77,36 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/50 rounded-[2.5rem] overflow-hidden">
+    <div className="flex flex-col h-full bg-slate-900/30 rounded-[2.5rem] overflow-hidden">
       
       {/* WIZARD NAVIGATION BAR */}
-      <nav className="flex items-center gap-1 bg-slate-950 p-1 border-b border-white/5">
+      <nav className="flex items-center gap-1 bg-slate-950/80 p-1 border-b border-white/5">
          {STEPS.map((s, idx) => {
             const active = activeStep === idx;
             return (
               <button 
                 key={s.id} 
                 onClick={() => setActiveStep(idx)}
-                className={`flex-1 flex items-center justify-center gap-3 py-4 transition-all rounded-xl ${active ? 'bg-white/5 text-orange-500 shadow-inner' : 'text-slate-600 hover:text-slate-400'}`}
+                className={`flex-1 flex items-center justify-center gap-3 py-4 transition-all rounded-xl ${active ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-400'}`}
               >
                  <s.icon size={14} strokeWidth={active ? 3 : 2} />
                  <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">{s.label}</span>
-                 {active && <motion.div layoutId="stepUnder" className="w-1 h-1 rounded-full bg-orange-600" />}
               </button>
             );
          })}
       </nav>
 
       {/* OPERATIONAL WORKSPACE */}
-      <div className="flex-1 p-8 overflow-y-auto no-scrollbar min-h-[500px]">
+      <div className="flex-1 p-8 overflow-y-auto no-scrollbar min-h-[480px]">
          <AnimatePresence mode="wait">
             {activeStep === 0 && (
                <motion.div key="mkt" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
                   <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                     <div className="p-3 bg-orange-600 text-white rounded-xl shadow-lg shadow-orange-500/20"><Megaphone size={20}/></div>
+                     <div className="p-3 bg-orange-600 text-white rounded-xl shadow-lg"><Megaphone size={20}/></div>
                      <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Estratégia Regional</h3>
                   </div>
                   
-                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4 border-b border-white/5">
                      {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
                        <button 
                          key={i} 
@@ -147,7 +140,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             {activeStep === 1 && (
                <motion.div key="prod" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
                   <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                     <div className="p-3 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20"><Factory size={20}/></div>
+                     <div className="p-3 bg-blue-600 text-white rounded-xl shadow-lg"><Factory size={20}/></div>
                      <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Supply & Produção</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -160,7 +153,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             )}
 
             {activeStep === 4 && (
-               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-20 text-center space-y-12">
+               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-10 text-center space-y-12">
                   <div className="space-y-4">
                      <div className="w-24 h-24 bg-orange-600/10 rounded-[2rem] flex items-center justify-center mx-auto border-2 border-orange-500/30 text-orange-500 shadow-inner animate-pulse">
                         <ShieldCheck size={48} />
@@ -195,7 +188,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       </div>
 
       {/* FOOTER WIZARD CONTROLS */}
-      <footer className="p-6 bg-slate-950 border-t border-white/5 flex justify-between items-center">
+      <footer className="p-6 bg-slate-950/50 border-t border-white/5 flex justify-between items-center shrink-0">
          <button 
            onClick={() => setActiveStep(s => Math.max(0, s-1))}
            disabled={activeStep === 0}
@@ -205,7 +198,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          </button>
          <button 
            onClick={() => setActiveStep(s => Math.min(STEPS.length-1, s+1))}
-           className="px-10 py-4 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95"
+           disabled={activeStep === STEPS.length-1}
+           className="px-10 py-4 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95 disabled:opacity-0"
          >
             Próximo Protocolo <ChevronRight size={14} />
          </button>
@@ -215,7 +209,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 };
 
 const ErpInput = ({ label, desc, val, onChange }: any) => (
-  <div className="p-6 bg-slate-950 rounded-2xl border border-white/5 space-y-4 hover:border-orange-500/30 transition-all group">
+  <div className="p-6 bg-slate-950 rounded-2xl border border-white/5 space-y-4 hover:border-orange-500/30 transition-all group shadow-inner">
      <div className="space-y-1">
         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-orange-500 transition-colors">{label}</label>
         <p className="text-[8px] font-bold text-slate-700 uppercase italic leading-none">{desc}</p>
@@ -233,7 +227,7 @@ const ErpInput = ({ label, desc, val, onChange }: any) => (
 );
 
 const ReviewStat = ({ label, val, pos }: any) => (
-  <div className="p-6 bg-slate-950 rounded-3xl border border-white/5 space-y-2">
+  <div className="p-6 bg-slate-950 rounded-3xl border border-white/5 space-y-2 shadow-inner">
      <span className="block text-[8px] font-black text-slate-500 uppercase">{label}</span>
      <span className={`text-2xl font-black italic font-mono ${pos ? 'text-emerald-400' : 'text-rose-500'}`}>{val}</span>
   </div>
