@@ -20,7 +20,6 @@ export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'E' | 'N/A';
 export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 
-// Fix: Added missing EcosystemConfig interface
 export interface EcosystemConfig {
   scenario_type: ScenarioType;
   modality_type: ModalityType;
@@ -30,11 +29,18 @@ export interface EcosystemConfig {
   market_volatility: number;
 }
 
-// Fix: Added missing CommunityCriteria interface
 export interface CommunityCriteria {
   id: string;
   label: string;
   weight: number;
+}
+
+export interface MenuItemConfig {
+  id: string;
+  label: string;
+  path: string;
+  icon?: string;
+  isVisible: boolean;
 }
 
 export interface Team {
@@ -151,7 +157,6 @@ export interface Championship {
   total_rounds: number;   
   deadline_value: number;
   deadline_unit: DeadlineUnit;
-  // Fix: Added missing round_frequency_days property
   round_frequency_days: number;
   regions_count: number; 
   bots_count: number; 
@@ -183,7 +188,6 @@ export interface AccountNode {
   type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'expense' | 'revenue';
   isEditable?: boolean;
   isReadOnly?: boolean;
-  // Fix: Added missing isTemplateAccount property
   isTemplateAccount?: boolean;
   children?: AccountNode[];
 }
@@ -276,7 +280,6 @@ export interface TeamProgress {
   risk: number;
   insolvent: boolean;
   auditLogs: AuditLog[];
-  // Fix: Added missing master_key_enabled property
   master_key_enabled?: boolean;
 }
 
