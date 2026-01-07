@@ -1,77 +1,44 @@
-
 # 🚀 Empirion – Business Intelligence Arena (v12.9.1-Gold)
 
 **Forge Your Empire with AI-Driven Strategic Insight.**
 
-O Empirion é a plataforma definitiva de simulação empresarial multiplayer, projetada para converter complexidade em vantagem competitiva. No build **v12.9.1 GOLD**, o sistema integra normas **CPC 26**, inteligência generativa **Gemini 3 Pro** e o avançado monitor de **Efeito Tesoura**.
+O Empirion é a plataforma definitiva de simulação empresarial multiplayer. No build **v12.9.1 GOLD**, o sistema introduz a **Governança Absoluta**, permitindo controle total sobre a experiência do usuário e a integridade competitiva.
 
 ---
 
-## 📉 1. O Termômetro Financeiro: Efeito Tesoura
+## 👥 1. Matriz de Papéis e Permissões (Roles)
 
-Baseado na metodologia clássica de gestão de capital de giro, o Empirion monitora em tempo real o descompasso entre a operação e o caixa.
-
-### Estrutura de Capital:
-*   **CGL (Capital de Giro Líquido):** Ativo Circulante – Passivo Circulante.
-*   **NCG (Necessidade de Capital de Giro):** Clientes + Estoques – Fornecedores.
-*   **Tesouraria (T = CGL – NCG):** O saldo real de liquidez imediata. 
-*   **TSF (Termômetro da Situação Financeira):** Indicador de desequilíbrio estrutural.
-*   **O Alerta "Tesoura":** Ocorre quando a NCG cresce acima do CGL, forçando a empresa a buscar empréstimos caros.
+| Papel | Visão | Poderes Principais | Restrições |
+| :--- | :--- | :--- | :--- |
+| **Administrador** | **Global (360°)** | CMS (Menus/Carrossel), Gestão de Templates, Controle de Usuários, Auditoria Total. | Nenhuma (Dono da Bola). |
+| **Tutor** | **Arena (Específica)** | Criar Campeonatos, Configurar Macroeconomia, Processar Turnover, Dar Feedback. | Apenas em suas arenas. |
+| **Equipe** | **Unidade (Interna)** | Decisões Táticas (Preço, RH, CapEx), Plano de Negócios, Dashboards Próprios. | Sem acesso a dados de rivais. |
+| **Observador** | **Analítica (Read-Only)** | Relatórios Públicos, Gazeta, Dashboard de Rankings, Grounded Search. | Bloqueio total de edição. |
 
 ---
 
-## 📊 2. Indicadores Financeiros (Fórmulas Oficiais)
+## 🔄 2. Processos de Campeonato
 
-### Liquidez
-*   **Liquidez Corrente:** Ativo Circulante / Passivo Circulante
-*   **Liquidez Seca:** (Ativo Circulante – Estoques) / Passivo Circulante
+### A. Criação (Tutor/Admin)
+Utiliza o **Strategos Wizard Gold** para definir o DNA da simulação:
+1.  **DNA da Arena:** Seleção de templates (Industrial, Comercial, etc.).
+2.  **Protocolos IA:** Ativação de bots Gemini e Grounding Search real.
+3.  **Transparência:** Definição do modo da Gazeta (Anônimo/Identificado).
+4.  **Audit Inicial:** Personalização do Balanço P0 conforme normas CPC 26.
 
-### Rentabilidade
-*   **Margem Líquida:** Lucro Líquido / Receita Líquida
-*   **ROE (Return on Equity):** Lucro Líquido / Patrimônio Líquido
-*   **ROA (Return on Assets):** Lucro Líquido / Ativo Total
-
-### Eficiência Operacional
-*   **PMR (Recebimento):** (Contas a Receber / Receita Líquida) × 360
-*   **PMP (Pagamento):** (Fornecedores / CPV) × 360
-*   **PME (Estocagem):** (Estoques / CPV) × 360
-
----
-
-## 📋 3. Exemplos Calculados – Período 0 (Inicial)
-Use estes dados para validar sua estratégia inicial:
-
-*   **Liquidez Corrente:** 3.290.340 / 4.121.493 ≈ **0,80**
-*   **Margem Bruta:** 1.044.555 / 3.322.735 ≈ **31,4%**
-*   **NCG:** 1.823.735 + 1.466.605 – 717.605 = **2.572.735**
-*   **Saldo de Tesouraria (T):** **-3.403.888** (Tesoura aberta!)
+### B. Disputa (Equipes)
+As equipes operam em **Ciclos Herméticos**:
+*   **War Room:** Edição colaborativa de decisões em tempo real.
+*   **Oracle Validation:** O sistema impede a transmissão de decisões que causem insolvência imediata sem aviso.
+*   **Turnover:** O motor processa o impacto das decisões e gera o próximo período.
 
 ---
 
-## 🔒 4. Políticas de Segurança (RLS – Supabase)
-
-O acesso aos dados é protegido via Row Level Security. Exemplo de implementação:
-
-```sql
--- Equipe acessa apenas seu próprio Business Plan
-CREATE POLICY "Equipe acessa seu business plan"
-ON public.business_plans
-AS PERMISSIVE
-FOR ALL
-TO authenticated
-USING (team_id IN (
-  SELECT tm.team_id
-  FROM team_members tm
-  WHERE tm.user_id = auth.uid()
-));
-```
+## 👑 3. Visão do Administrador (Command Center)
+O Administrador tem o controle de infraestrutura e conteúdo:
+*   **Parametrização UI:** Troca de labels, imagens de carrossel e conteúdos de subseções sem necessidade de código.
+*   **Templates Hub:** Criação de novos modelos de simulação para áreas Trial e Premium.
+*   **System Health:** Monitoramento de latência e integridade das tabelas Supabase.
 
 ---
-
-## 🛠️ Especificações Técnicas
-*   **Frontend:** React 19 + Framer Motion + ApexCharts.
-*   **Backend:** Supabase (PostgreSQL + Realtime).
-*   **AI Engine:** Gemini 3 Pro (Raciocínio) & Gemini 3 Flash (Turnover Bots).
-
----
-*Empirion v12.9.1 Gold – Onde a estratégia encontra o valor real de mercado.*
+*Empirion v12.9.1 Gold – Onde a estratégia encontra a governança absoluta.*

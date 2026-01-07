@@ -98,7 +98,7 @@ const BlogPage: React.FC = () => {
                     <TrendingUp size={16} /> Tópicos em Alta
                  </h4>
                  <div className="flex wrap gap-3">
-                    {['Estratégia IA', 'Industrial', 'Market Share', 'Bernard Legacy', 'CVM', 'Strategos'].map(tag => (
+                    {['Estratégia IA', 'Industrial', 'Market Share', 'Empirion Legacy', 'CVM', 'Strategos'].map(tag => (
                       <span key={tag} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-orange-600 hover:text-white transition-all cursor-pointer">
                         #{tag}
                       </span>

@@ -223,7 +223,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
     name: 'Empirion Street: Industrial Mastery',
     branch: 'industrial',
     sector: 'Manufacturing',
-    description: 'Balanço Inicial de $ 9.176.940 conforme CPC 26. Gestão total de Imobilizado e Ciclos Bernard.',
+    description: 'Balanço Inicial de $ 9.176.940 conforme CPC 26. Gestão total de Imobilizado e Ciclos Empirion.',
     config: {
       total_rounds: 12,
       round_frequency_days: 7,
@@ -238,7 +238,6 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
       modality_type: 'standard' as ModalityType,
       deadline_value: 7,
       deadline_unit: 'days' as DeadlineUnit,
-      // Fix: Added teams_limit to resolve property access error in ChampionshipWizard
       teams_limit: 8
     },
     market_indicators: DEFAULT_MACRO,
@@ -284,7 +283,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { 
         id: 1, 
         title: "Empirion Street", 
-        subtitle: "Gestão de Ciclo Operacional Bernard v12.9 Gold.", 
+        subtitle: "Gestão de Ciclo Operacional Empirion v12.9 Gold.", 
         image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", 
         badge: "Industrial Node 08", 
         link: "/branches/industrial" 

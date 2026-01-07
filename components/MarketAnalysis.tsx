@@ -81,7 +81,7 @@ const MarketAnalysis: React.FC = () => {
           </div>
         </div>
 
-        {/* Bolsa de Valores Fictícia (Bernard SIND Style) */}
+        {/* Bolsa de Valores Fictícia (Empirion SIND Style) */}
         <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-8 flex flex-col">
            <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-slate-900 text-white rounded-xl"><Landmark size={20} /></div>

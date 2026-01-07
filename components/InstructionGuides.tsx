@@ -139,7 +139,7 @@ export const TeamGuide: React.FC = () => {
                 <FileText className="text-blue-600" /> Análise de Relatórios
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Os relatórios seguem o padrão Bernard de contabilidade gerencial. Foque no **Giro de Estoque** e no **Prazo Médio de Recebimento** para manter o fluxo de caixa saudável.
+                Os relatórios seguem o padrão Empirion de contabilidade gerencial. Foque no **Giro de Estoque** e no **Prazo Médio de Recebimento** para manter o fluxo de caixa saudável.
               </p>
               <div className="p-6 bg-slate-50 rounded-3xl space-y-4">
                  <div className="flex justify-between items-center text-xs font-black uppercase text-slate-400">

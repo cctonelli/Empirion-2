@@ -85,7 +85,7 @@ const FeaturesPage: React.FC = () => {
                     <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter">O Motor Empirion v6.0</h3>
                  </div>
                  <p className="text-lg text-slate-400 leading-relaxed font-medium">
-                    Nossa infraestrutura combina o legado de décadas de simulação Bernard com o poder de processamento da IA generativa de última geração.
+                    Nossa infraestrutura combina o legado de décadas de simulação Empirion com o poder de processamento da IA generativa de última geração.
                  </p>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <TechItem label="IA Gemini 3 Pro" icon={<BrainCircuit size={20}/>} />
