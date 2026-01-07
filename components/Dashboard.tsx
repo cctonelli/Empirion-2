@@ -91,16 +91,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
       
       {/* KPI TOP BAR - RESPONSIVE & HIGH VISIBILITY */}
-      <section className="h-16 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
-         <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend="+1.2%" pos icon={<TrendingUp size={12}/>} />
-         <CockpitStat label="Receita Bruta" val={`${currencySymbol} 3.32M`} trend="Estável" pos icon={<DollarSign size={12}/>} />
-         <CockpitStat label="Lucro Líquido" val={`${currencySymbol} 73.9K`} trend="+4.5%" pos icon={<ActivityIcon size={12}/>} />
-         <CockpitStat label="Market Share" val={`${currentKpis.market_share.toFixed(1)}%`} trend="Target" pos icon={<PieChart size={12}/>} />
-         <CockpitStat label="Rating" val={currentKpis.rating} trend="Prime" pos icon={<ShieldCheck size={12}/>} />
-         <div className="px-6 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
+      <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
+         <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend="+1.2%" pos icon={<TrendingUp size={16}/>} />
+         <CockpitStat label="Receita Bruta" val={`${currencySymbol} 3.32M`} trend="Estável" pos icon={<DollarSign size={16}/>} />
+         <CockpitStat label="Lucro Líquido" val={`${currencySymbol} 73.9K`} trend="+4.5%" pos icon={<ActivityIcon size={16}/>} />
+         <CockpitStat label="Market Share" val={`${currentKpis.market_share.toFixed(1)}%`} trend="Target" pos icon={<PieChart size={16}/>} />
+         <CockpitStat label="Rating" val={currentKpis.rating} trend="Prime" pos icon={<ShieldCheck size={16}/>} />
+         <div className="px-8 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
             <div className="flex flex-col">
-               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Time Remaining</span>
-               <div className="scale-[0.8] origin-left -ml-2">
+               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Time Remaining</span>
+               <div className="scale-[0.9] origin-left -ml-2">
                   <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
                </div>
             </div>
@@ -111,21 +111,21 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <div className="flex flex-1 overflow-hidden">
          
          {/* SIDEBAR LEFT: FINANCIAL AUDIT */}
-         <aside className="w-72 bg-slate-900/60 border-r border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar shadow-2xl z-10">
-            <div className="p-6 space-y-6">
-               <header className="flex items-center justify-between border-b border-white/10 pb-2">
-                  <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                     <Landmark size={12}/> Auditoria Interna
+         <aside className="w-80 bg-slate-900/60 border-r border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar shadow-2xl z-10">
+            <div className="p-8 space-y-8">
+               <header className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                     <Landmark size={14}/> Auditoria Interna
                   </h3>
-                  <span className="text-[9px] font-black text-slate-600 uppercase">Cycle 0{activeArena?.current_round}</span>
+                  <span className="text-[10px] font-black text-slate-600 uppercase">Cycle 0{activeArena?.current_round}</span>
                </header>
                
-               <div className="bg-slate-950/80 p-5 rounded-3xl border border-white/5 space-y-3 shadow-inner">
+               <div className="bg-slate-950/80 p-6 rounded-[2rem] border border-white/5 space-y-4 shadow-inner">
                   <div className="flex justify-between items-center mb-1">
-                     <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest">DRE Tático</h4>
-                     <Zap size={10} className="text-orange-500" />
+                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">DRE Tático</h4>
+                     <Zap size={12} className="text-orange-500" />
                   </div>
-                  <div className="space-y-1.5 font-mono text-[10px]">
+                  <div className="space-y-2 font-mono text-[11px]">
                      <MiniFinRow label="Faturamento" val={`3.32M`} />
                      <MiniFinRow label="Custos (CPV)" val={`(2.27M)`} neg />
                      <MiniFinRow label="EBITDA" val={`126.9K`} bold />
@@ -133,27 +133,27 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               <div className="bg-slate-950/80 p-5 rounded-3xl border border-white/5 space-y-4">
-                  <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Saúde de Capital</h4>
-                  <div className="space-y-2">
+               <div className="bg-slate-950/80 p-6 rounded-[2rem] border border-white/5 space-y-5">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Saúde de Capital</h4>
+                  <div className="space-y-3">
                      <div className="flex justify-between items-end">
-                        <span className="text-[9px] font-bold text-slate-600 uppercase">Liquidez Corrente</span>
-                        <span className="text-sm font-black text-emerald-500 font-mono italic">1.25x</span>
+                        <span className="text-[10px] font-bold text-slate-600 uppercase">Liquidez Corrente</span>
+                        <span className="text-lg font-black text-emerald-500 font-mono italic">1.25x</span>
                      </div>
-                     <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: '65%' }} />
+                     <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner">
+                        <div className="h-full bg-emerald-500 transition-all duration-1000 shadow-[0_0_10px_#10b981]" style={{ width: '65%' }} />
                      </div>
                   </div>
                </div>
 
-               <div className="bg-orange-600/5 p-5 rounded-3xl border border-orange-500/10 space-y-2">
+               <div className="bg-orange-600/5 p-6 rounded-[2rem] border border-orange-500/10 space-y-3">
                   <div className="flex justify-between items-center">
-                     <span className="text-[9px] font-black text-orange-500 uppercase italic">Tesoura (TSF)</span>
-                     <Gauge size={12} className="text-orange-500" />
+                     <span className="text-[10px] font-black text-orange-500 uppercase italic">Tesoura (TSF)</span>
+                     <Gauge size={14} className="text-orange-500" />
                   </div>
                   <div className="flex items-center justify-between">
-                     <span className="text-xl font-black text-white font-mono italic">{(currentKpis.scissors_effect?.tsf || 0).toFixed(2)}</span>
-                     <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-600 text-white shadow-lg' : 'bg-emerald-600/20 text-emerald-500'}`}>
+                     <span className="text-2xl font-black text-white font-mono italic">{(currentKpis.scissors_effect?.tsf || 0).toFixed(2)}</span>
+                     <span className={`text-[9px] font-black px-3 py-1 rounded-full ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-600 text-white shadow-lg animate-pulse' : 'bg-emerald-600/20 text-emerald-500'}`}>
                         {currentKpis.scissors_effect?.is_critical ? 'CRÍTICO' : 'ÓTIMO'}
                      </span>
                   </div>
@@ -164,18 +164,18 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          {/* CENTRAL: COMMAND FEED (WAR ROOM) */}
          <main className="flex-1 bg-slate-950 flex flex-col overflow-hidden relative">
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8 pb-32">
-               <div className="max-w-4xl mx-auto space-y-6">
-                  <div className="flex justify-between items-end border-b border-white/5 pb-4">
+               <div className="max-w-5xl mx-auto space-y-8">
+                  <div className="flex justify-between items-end border-b border-white/5 pb-6">
                      <div>
-                        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Decision <span className="text-orange-600">Matrix</span></h2>
-                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-2 italic">Unit Command • Nodo {activeTeam?.name || 'ALPHA'}</p>
+                        <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Decision <span className="text-orange-600">Matrix</span></h2>
+                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-2 italic">Unit Command • Nodo {activeTeam?.name || 'ALPHA'}</p>
                      </div>
-                     <button onClick={() => setShowGazette(true)} className="px-5 py-2.5 bg-slate-900 border border-white/10 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2 shadow-2xl">
-                        <Newspaper size={14} /> Oracle Gazette
+                     <button onClick={() => setShowGazette(true)} className="px-6 py-3 bg-slate-900 border border-white/10 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-3 shadow-2xl active:scale-95">
+                        <Newspaper size={18} /> Oracle Gazette
                      </button>
                   </div>
 
-                  <div className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                  <div className="bg-slate-900/40 border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
                      <DecisionForm 
                         teamId={activeTeam?.id} 
                         champId={activeArena?.id} 
@@ -188,14 +188,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </main>
 
          {/* SIDEBAR RIGHT: MARKET PULSE */}
-         <aside className="w-72 bg-slate-900/60 border-l border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar shadow-2xl z-10">
-            <div className="p-6 space-y-6">
+         <aside className="w-80 bg-slate-900/60 border-l border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar shadow-2xl z-10">
+            <div className="p-8 space-y-8">
                
-               <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                     <Globe size={12}/> Ingestão de Mundo
+               <div className="space-y-5">
+                  <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 leading-none">
+                     <Globe size={14}/> Ingestão de Mundo
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                      <MacroTileCompact label="Growth" val={`+${activeArena?.market_indicators.growth_rate}%`} color="blue" />
                      <MacroTileCompact label="Inflação" val={`${activeArena?.market_indicators.inflation_rate}%`} color="rose" />
                      <MacroTileCompact label="Juros" val={`${activeArena?.market_indicators.interest_rate_tr}%`} color="amber" />
@@ -203,25 +203,25 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                     <Scale size={12}/> Market Intelligence
+               <div className="space-y-5">
+                  <h3 className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2 leading-none">
+                     <Scale size={14}/> Market Intelligence
                   </h3>
-                  <div className="bg-slate-950/80 rounded-3xl border border-white/5 overflow-hidden">
+                  <div className="bg-slate-950/80 rounded-[2rem] border border-white/5 overflow-hidden shadow-inner">
                      <table className="w-full text-left">
-                        <thead className="bg-white/5 text-[8px] font-black uppercase text-slate-500 tracking-tighter">
+                        <thead className="bg-white/5 text-[10px] font-black uppercase text-slate-500 tracking-tighter">
                            <tr>
-                              <th className="px-3 py-3">Equipe</th>
-                              <th className="px-1 py-3 text-center">Share</th>
-                              <th className="px-3 py-3 text-right">Yield</th>
+                              <th className="px-4 py-4">Equipe</th>
+                              <th className="px-1 py-4 text-center">Share</th>
+                              <th className="px-4 py-4 text-right">Yield</th>
                            </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5 font-mono text-[9px]">
+                        <tbody className="divide-y divide-white/5 font-mono text-[11px]">
                            {currentKpis.regional_pulse?.slice(0, 6).map((reg: RegionalData, i: number) => (
-                             <tr key={reg.region_id} className="hover:bg-white/5 transition-colors">
-                                <td className="px-3 py-3 text-slate-400 font-bold uppercase truncate max-w-[80px]">UNIT 0{i+1}</td>
-                                <td className="px-1 py-3 text-white text-center">{reg.market_share}%</td>
-                                <td className="px-3 py-3 text-right text-orange-500 font-black">{(reg.market_share * 1.15).toFixed(1)}%</td>
+                             <tr key={reg.region_id} className="hover:bg-white/5 transition-colors group">
+                                <td className="px-4 py-4 text-slate-400 font-bold uppercase truncate max-w-[100px] group-hover:text-white transition-colors">UNIT 0{i+1}</td>
+                                <td className="px-1 py-4 text-white text-center">{reg.market_share}%</td>
+                                <td className="px-4 py-4 text-right text-orange-500 font-black">{(reg.market_share * 1.15).toFixed(1)}%</td>
                              </tr>
                            ))}
                         </tbody>
@@ -229,12 +229,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               <div className="p-4 bg-indigo-600/10 border border-indigo-500/20 rounded-[2rem] space-y-2 shadow-lg">
-                  <div className="flex items-center gap-2 text-indigo-400">
-                     <Sparkles size={12} />
-                     <span className="text-[8px] font-black uppercase tracking-widest">Dica Strategos</span>
+               <div className="p-6 bg-indigo-600/10 border border-indigo-500/20 rounded-[2.5rem] space-y-3 shadow-lg group hover:bg-indigo-600/20 transition-all">
+                  <div className="flex items-center gap-3 text-indigo-400">
+                     <Sparkles size={16} />
+                     <span className="text-[10px] font-black uppercase tracking-widest">Dica Strategos</span>
                   </div>
-                  <p className="text-[10px] text-indigo-100 font-medium italic leading-relaxed">
+                  <p className="text-[11px] text-indigo-100 font-medium italic leading-relaxed">
                      "O preço médio do setor subiu 2%. Suas margens podem ser expandidas sem perda de share este ciclo."
                   </p>
                </div>
@@ -244,7 +244,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
       <AnimatePresence>
         {showGazette && (
-          <div className="fixed inset-0 z-[5000] p-6 md:p-12 bg-slate-950/90 backdrop-blur-md flex items-center justify-center">
+          <div className="fixed inset-0 z-[5000] p-6 md:p-12 bg-slate-950/95 backdrop-blur-3xl flex items-center justify-center">
              <GazetteViewer arena={activeArena!} aiNews="" round={activeArena?.current_round || 0} userRole={userRole} onClose={() => setShowGazette(false)} />
           </div>
         )}
@@ -254,22 +254,22 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 };
 
 const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
-  <div className="px-6 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden">
+  <div className="px-8 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden">
      <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
-           <div className="text-orange-500 group-hover:scale-110 transition-transform">{icon}</div>
-           <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</span>
+           <div className="text-orange-500 group-hover:scale-125 transition-transform duration-500">{icon}</div>
+           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</span>
         </div>
-        <span className={`text-[8px] font-black ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
+        <span className={`text-[10px] font-black ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
            {pos ? '▲' : '▼'}{trend}
         </span>
      </div>
-     <span className="text-xl font-black text-white font-mono tracking-tighter italic leading-none truncate drop-shadow-lg">{val}</span>
+     <span className="text-2xl font-black text-white font-mono tracking-tighter italic leading-none truncate drop-shadow-2xl">{val}</span>
   </div>
 );
 
 const MiniFinRow = ({ label, val, neg, bold, highlight }: any) => (
-  <div className={`flex justify-between items-center py-1 border-b border-white/[0.02] last:border-0 ${highlight ? 'text-orange-500 font-black' : ''}`}>
+  <div className={`flex justify-between items-center py-1.5 border-b border-white/[0.02] last:border-0 ${highlight ? 'text-orange-500 font-black' : ''}`}>
      <span className={`${bold ? 'font-black text-slate-400' : 'text-slate-600'}`}>{label}</span>
      <span className={`font-black ${neg ? 'text-rose-500' : bold ? 'text-white' : 'text-slate-500'}`}>{val}</span>
   </div>
@@ -277,16 +277,16 @@ const MiniFinRow = ({ label, val, neg, bold, highlight }: any) => (
 
 const MacroTileCompact = ({ label, val, color }: any) => {
   const colors = {
-    blue: 'text-blue-400 bg-blue-500/5 border-blue-500/10',
-    rose: 'text-rose-400 bg-rose-500/5 border-rose-500/10',
-    amber: 'text-amber-400 bg-amber-500/5 border-amber-500/10',
-    emerald: 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10'
+    blue: 'text-blue-400 bg-blue-500/5 border-blue-500/10 hover:bg-blue-500/10',
+    rose: 'text-rose-400 bg-rose-500/5 border-rose-500/10 hover:bg-rose-500/10',
+    amber: 'text-amber-400 bg-amber-500/5 border-amber-500/10 hover:bg-amber-500/10',
+    emerald: 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10 hover:bg-emerald-500/10'
   }[color as 'blue' | 'rose' | 'amber' | 'emerald'];
 
   return (
-    <div className={`p-2 rounded-2xl border flex flex-col gap-0.5 shadow-inner ${colors}`}>
-       <span className="text-[7px] font-black uppercase opacity-60 truncate tracking-tighter">{label}</span>
-       <span className="text-xs font-black font-mono leading-none italic">{val}</span>
+    <div className={`p-3 rounded-[1.5rem] border flex flex-col gap-1 shadow-inner transition-colors ${colors}`}>
+       <span className="text-[8px] font-black uppercase opacity-60 truncate tracking-widest">{label}</span>
+       <span className="text-sm font-black font-mono leading-none italic">{val}</span>
     </div>
   );
 };
