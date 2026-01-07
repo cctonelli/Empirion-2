@@ -13,11 +13,11 @@ import { DecisionData, Branch, Championship, ProjectionResult, CreditRating, Eco
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STEPS = [
-  { id: 'marketing', label: 'Comercial', icon: Megaphone, color: 'orange' },
-  { id: 'production', label: 'Operações', icon: Factory, color: 'blue' },
-  { id: 'hr', label: 'Recursos', icon: Users2, color: 'emerald' },
-  { id: 'finance', label: 'Dívida/Cap', icon: DollarSign, color: 'indigo' },
-  { id: 'review', label: 'Transmitir', icon: ShieldCheck, color: 'orange' },
+  { id: 'marketing', label: 'Comercial', icon: Megaphone },
+  { id: 'production', label: 'Operações', icon: Factory },
+  { id: 'hr', label: 'Recursos', icon: Users2 },
+  { id: 'finance', label: 'Finanças', icon: DollarSign },
+  { id: 'review', label: 'Transmitir', icon: ShieldCheck },
 ];
 
 const createInitialDecisions = (regionsCount: number): DecisionData => ({
@@ -43,8 +43,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         const found = champs?.find(a => a.id === champId);
         if (found) {
           setActiveArena(found);
-          const rCount = found.regions_count || 9;
-          setDecisions(createInitialDecisions(rCount));
+          setDecisions(createInitialDecisions(found.regions_count || 9));
           const { data: prevData } = await supabase.from('companies').select('*').eq('team_id', teamId).eq('round', found.current_round).maybeSingle();
           setPrevRoundData(prevData);
         }
@@ -56,9 +55,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const projections: ProjectionResult | null = useMemo(() => {
     if (!activeArena) return null;
     const eco = (activeArena.ecosystemConfig || { inflation_rate: 0.01, demand_multiplier: 1.0, interest_rate: 0.03, market_volatility: 0.05, scenario_type: 'simulated', modality_type: 'standard' }) as EcosystemConfig;
-    try { 
-      return calculateProjections(decisions, branch as Branch, eco, activeArena.market_indicators, prevRoundData); 
-    } catch (e) { return null; }
+    try { return calculateProjections(decisions, branch as Branch, eco, activeArena.market_indicators, prevRoundData); } catch (e) { return null; }
   }, [decisions, branch, activeArena, prevRoundData]);
 
   const rating = projections?.health?.rating || 'AAA';
@@ -74,67 +71,48 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     try {
       await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions);
       alert("PROTOCOLO SINCRONIZADO: O Oráculo recebeu os dados.");
-    } catch (e) {
-      alert("ERRO DE TRANSMISSÃO.");
-    } finally { setIsSaving(false); }
+    } catch (e) { alert("ERRO DE TRANSMISSÃO."); } finally { setIsSaving(false); }
   };
 
   return (
-    <div className={`flex flex-col h-full bg-slate-900 rounded-[2rem] overflow-hidden border border-white/5 relative ${isReadOnly ? 'grayscale-[0.5] opacity-90' : ''}`}>
+    <div className={`flex flex-col h-full bg-slate-900/60 rounded-[3rem] overflow-hidden border border-white/5 relative ${isReadOnly ? 'grayscale-[0.5] opacity-90' : ''}`}>
       
-      {/* COMPACT SECTOR NAV */}
-      <nav className="flex bg-slate-950/80 p-1 border-b border-white/5 shrink-0">
-         {STEPS.map((s, idx) => {
-            const active = activeStep === idx;
-            return (
-              <button 
-                key={s.id} 
-                onClick={() => setActiveStep(idx)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 transition-all rounded-xl ${active ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-400'}`}
-              >
-                 <s.icon size={12} strokeWidth={active ? 3 : 2} />
-                 <span className="text-[9px] font-black uppercase tracking-widest hidden lg:block">{s.label}</span>
-              </button>
-            );
-         })}
+      {/* MINIMALIST STEP INDICATOR */}
+      <nav className="flex bg-slate-950/40 p-1.5 border-b border-white/5 shrink-0">
+         {STEPS.map((s, idx) => (
+           <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 py-3 transition-all rounded-2xl flex flex-col items-center gap-1.5 ${activeStep === idx ? 'bg-orange-600 text-white shadow-xl' : 'text-slate-600 hover:text-slate-400'}`}>
+              <s.icon size={14} />
+              <span className="text-[7px] font-black uppercase tracking-[0.2em]">{s.label}</span>
+           </button>
+         ))}
       </nav>
 
-      {/* WORKSPACE AREA */}
-      <div className="flex-1 p-6 overflow-y-auto no-scrollbar min-h-[400px] bg-slate-900/30">
+      {/* SCROLLABLE WORKSPACE */}
+      <div className="flex-1 p-8 overflow-y-auto no-scrollbar bg-slate-900/20">
          <AnimatePresence mode="wait">
             {activeStep === 0 && (
-               <motion.div key="mkt" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                  <div className="flex items-center gap-3 border-b border-white/5 pb-3">
-                     <Megaphone size={16} className="text-orange-500"/>
-                     <h3 className="text-sm font-black text-white uppercase italic tracking-tighter">Architecture Comercial</h3>
+               <motion.div key="mkt" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                     <Megaphone size={18} className="text-orange-500"/>
+                     <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Architecture Comercial</h3>
                   </div>
                   
-                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                     {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
-                       <button 
-                         key={i} 
-                         onClick={() => setActiveRegion(i+1)}
-                         className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all whitespace-nowrap border ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-500 shadow-md' : 'bg-slate-950 text-slate-600 border-white/5 hover:border-white/20'}`}
-                       >
-                         Região 0{i+1}
-                       </button>
-                     ))}
+                  {/* REGIONAL HORIZONTAL SCROLL */}
+                  <div className="horizontal-scroll-container pb-4">
+                     <div className="flex gap-2">
+                        {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
+                          <button key={i} onClick={() => setActiveRegion(i+1)} className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase border transition-all ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-500 shadow-lg' : 'bg-slate-950 text-slate-600 border-white/5 hover:border-white/20'}`}>Região 0{i+1}</button>
+                        ))}
+                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                     <ErpInputCompact label="Preço de Venda ($)" val={decisions.regions[activeRegion]?.price || 0} onChange={v => updateRegionDecision(activeRegion, 'price', v)} icon={<DollarSign size={10}/>} readOnly={isReadOnly} />
-                     <ErpInputCompact label="Marketing Regional ($)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={v => updateRegionDecision(activeRegion, 'marketing', v)} icon={<Sparkles size={10}/>} readOnly={isReadOnly} />
-                     <div className="space-y-1.5 p-3 bg-slate-950/50 rounded-2xl border border-white/5 col-span-2">
+                  <div className="grid grid-cols-2 gap-6">
+                     <InputCompact label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 0} onChange={v => updateRegionDecision(activeRegion, 'price', v)} icon={<DollarSign size={12}/>} readOnly={isReadOnly} />
+                     <InputCompact label="Marketing Regional ($)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={v => updateRegionDecision(activeRegion, 'marketing', v)} icon={<Sparkles size={12}/>} readOnly={isReadOnly} />
+                     <div className="col-span-2 space-y-2 p-5 bg-slate-950/50 rounded-[2rem] border border-white/5">
                         <label className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Protocolo de Recebimento</label>
-                        <select 
-                           disabled={isReadOnly}
-                           value={decisions.regions[activeRegion]?.term || 1} 
-                           onChange={e => updateRegionDecision(activeRegion, 'term', Number(e.target.value))}
-                           className="w-full bg-slate-900 border-none rounded-xl p-2.5 text-white font-black text-[11px] outline-none cursor-pointer appearance-none shadow-inner"
-                        >
-                           <option value={1}>1x (Imediato / Cash)</option>
-                           <option value={2}>2x (Termo Padrão)</option>
-                           <option value={3}>3x (Diferimento Tático)</option>
+                        <select disabled={isReadOnly} value={decisions.regions[activeRegion]?.term || 1} onChange={e => updateRegionDecision(activeRegion, 'term', Number(e.target.value))} className="w-full bg-slate-900 border-none rounded-xl p-3 text-white font-black text-xs outline-none cursor-pointer">
+                           <option value={1}>1x (Imediato / Cash)</option><option value={2}>2x (Termo Padrão)</option><option value={3}>3x (Diferimento Tático)</option>
                         </select>
                      </div>
                   </div>
@@ -142,126 +120,79 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             )}
 
             {activeStep === 1 && (
-               <motion.div key="prod" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                  <div className="flex items-center gap-3 border-b border-white/5 pb-3">
-                     <Factory size={16} className="text-blue-500"/>
-                     <h3 className="text-sm font-black text-white uppercase italic tracking-tighter">Produção & SCM</h3>
+               <motion.div key="prod" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                     <Factory size={18} className="text-blue-500"/>
+                     <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Produção & SCM</h3>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                     <ErpInputCompact label="Compra MP-A (Unid)" val={decisions.production.purchaseMPA} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPA: v}})} icon={<Package size={10}/>} readOnly={isReadOnly} />
-                     <ErpInputCompact label="Compra MP-B (Unid)" val={decisions.production.purchaseMPB} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPB: v}})} icon={<Package size={10}/>} readOnly={isReadOnly} />
-                     <ErpInputCompact label="Meta de OEE (%)" val={decisions.production.activityLevel} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, activityLevel: v}})} icon={<Activity size={10}/>} readOnly={isReadOnly} />
-                     <ErpInputCompact label="Pesquisa & Desenv. ($)" val={decisions.production.rd_investment} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, rd_investment: v}})} icon={<Cpu size={10}/>} readOnly={isReadOnly} />
+                  <div className="grid grid-cols-2 gap-6">
+                     <InputCompact label="Compra MP-A" val={decisions.production.purchaseMPA} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPA: v}})} icon={<Package size={12}/>} readOnly={isReadOnly} />
+                     <InputCompact label="Compra MP-B" val={decisions.production.purchaseMPB} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPB: v}})} icon={<Package size={12}/>} readOnly={isReadOnly} />
+                     <InputCompact label="OEE Goal (%)" val={decisions.production.activityLevel} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, activityLevel: v}})} icon={<Activity size={12}/>} readOnly={isReadOnly} />
+                     <InputCompact label="Invest. R&D ($)" val={decisions.production.rd_investment} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, rd_investment: v}})} icon={<Cpu size={12}/>} readOnly={isReadOnly} />
                   </div>
                </motion.div>
             )}
 
             {activeStep === 4 && (
-               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-6 text-center space-y-8">
-                  <div className="space-y-2">
-                     <div className="w-16 h-16 bg-orange-600/10 rounded-[2rem] flex items-center justify-center mx-auto border border-orange-500/30 text-orange-500 shadow-inner">
-                        <ShieldCheck size={32} />
-                     </div>
-                     <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Selo de Integridade</h2>
-                     <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[8px] italic">Revisão Oracle P0{activeArena?.current_round + 1}</p>
+               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-10 text-center space-y-10">
+                  <div className="w-20 h-20 bg-orange-600/10 rounded-[2.5rem] flex items-center justify-center border border-orange-500/30 text-orange-500 shadow-inner"><ShieldCheck size={40} /></div>
+                  <div className="grid grid-cols-3 gap-4 w-full">
+                     <ReviewBox label="Net Profit" val={`$ ${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) >= 0} />
+                     <ReviewBox label="Rating" val={rating} pos={rating.includes('A')} />
+                     <ReviewBox label="Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos />
                   </div>
-
-                  <div className="grid grid-cols-3 gap-3 w-full">
-                     <ReviewBox label="Lucro Projetado" val={`${(projections?.netProfit || 0) >= 0 ? '+' : ''}${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) > 0} />
-                     <ReviewBox label="Market Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos />
-                     <ReviewBox label="Rating Oracle" val={rating} pos={rating.includes('A')} />
-                  </div>
-
                   {!isReadOnly && (
-                    <button 
-                      onClick={handleTransmition}
-                      disabled={isSaving}
-                      className="w-full py-6 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl hover:bg-white hover:text-orange-950 transition-all active:scale-95 flex items-center justify-center gap-4 border border-orange-500/30"
-                    >
-                       {isSaving ? <Loader2 className="animate-spin" size={18} /> : <><Save size={18}/> Transmitir ao Oráculo</>}
+                    <button onClick={handleTransmition} disabled={isSaving} className="w-full py-7 bg-orange-600 text-white rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:bg-white hover:text-orange-950 transition-all flex items-center justify-center gap-4">
+                       {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={20}/> Transmitir Ciclo</>}
                     </button>
                   )}
                </motion.div>
             )}
 
             {(activeStep === 2 || activeStep === 3) && (
-               <div className="flex flex-col items-center justify-center py-24 text-slate-700 italic font-black uppercase tracking-widest space-y-6">
-                  <Loader2 size={40} className="animate-spin opacity-20" />
-                  <span className="text-[8px] tracking-[0.4em]">Sincronizando Módulo {STEPS[activeStep].label}...</span>
+               <div className="flex flex-col items-center justify-center py-32 text-slate-700 font-black uppercase tracking-widest space-y-4">
+                  <Loader2 size={32} className="animate-spin opacity-20" />
+                  <span className="text-[7px] tracking-[0.4em]">Sincronizando Módulo...</span>
                </div>
             )}
          </AnimatePresence>
       </div>
 
-      {/* FIXED FLOATING RATING HUD - ALTA VISIBILIDADE */}
-      <div className="h-12 bg-slate-900 border-t border-orange-500/30 px-6 flex items-center justify-between shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.7)]">
-         <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-               <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_#f97316]"></div>
-               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Real-time Feedback</span>
-            </div>
-            <div className="flex items-center gap-3">
-               <span className="text-lg font-black text-white italic tracking-tighter">Oracle Rating: {rating}</span>
-               <div className={`flex items-center gap-1 ${(projections?.netProfit || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  <TrendingUp size={10} className={ (projections?.netProfit || 0) < 0 ? 'rotate-180' : '' }/>
-                  <span className="text-[9px] font-black">{ (projections?.netProfit || 0) >= 0 ? '▲' : '▼' } Delta</span>
-               </div>
-            </div>
-         </div>
-         <div className="flex items-center gap-6 border-l border-white/10 pl-6 h-6">
-            <div className="flex items-center gap-2 text-blue-400">
-               <BarChart3 size={14}/>
-               <span className="text-sm font-black font-mono">{(projections?.marketShare || 12.5).toFixed(1)}% Share</span>
-            </div>
-         </div>
-      </div>
-
-      {/* FOOTER WIZARD CONTROLS */}
-      <footer className="p-3 bg-slate-950 border-t border-white/5 flex justify-between items-center shrink-0">
-         <button 
-           onClick={() => setActiveStep(s => Math.max(0, s-1))}
-           disabled={activeStep === 0}
-           className="px-6 py-2.5 text-slate-500 font-black uppercase text-[9px] tracking-widest hover:text-white transition-all disabled:opacity-0 flex items-center gap-2"
-         >
-            <ChevronLeft size={14} /> Voltar
+      {/* STICKY OPERATIONAL FOOTER */}
+      <footer className="sticky-wizard-footer flex justify-between items-center bg-slate-950/60 border-t border-orange-500/20 shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
+         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className="px-8 py-3 text-slate-500 font-black uppercase text-[9px] tracking-widest hover:text-white transition-all disabled:opacity-0 flex items-center gap-2">
+            <ChevronLeft size={16} /> Voltar
          </button>
-         <div className="flex gap-2">
-            {STEPS.map((_, i) => (
-               <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${i === activeStep ? 'bg-orange-500 w-6 shadow-[0_0_10px_#f97316]' : 'bg-white/10'}`} />
-            ))}
+         
+         <div className="flex items-center gap-10">
+            <div className="hidden md:flex items-center gap-3">
+               <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+               <span className="text-[10px] font-black text-white italic">Oracle Rating: {rating}</span>
+            </div>
+            <button onClick={() => setActiveStep(s => Math.min(STEPS.length-1, s+1))} disabled={activeStep === STEPS.length-1} className="px-12 py-4 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95 disabled:hidden">
+               Avançar <ChevronRight size={16} />
+            </button>
          </div>
-         <button 
-           onClick={() => setActiveStep(s => Math.min(STEPS.length-1, s+1))}
-           disabled={activeStep === STEPS.length-1}
-           className="px-8 py-2.5 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95 disabled:opacity-0"
-         >
-            Avançar <ChevronRight size={14} />
-         </button>
       </footer>
     </div>
   );
 };
 
-const ErpInputCompact = ({ label, val, onChange, icon, readOnly }: any) => (
-  <div className="p-3 bg-slate-950/60 rounded-[1.5rem] border border-white/5 space-y-1.5 hover:border-orange-500/40 transition-all group shadow-inner">
+const InputCompact = ({ label, val, onChange, icon, readOnly }: any) => (
+  <div className="p-4 bg-slate-950/80 rounded-[2rem] border border-white/5 space-y-2 hover:border-orange-500/30 transition-all group shadow-inner">
      <div className="flex items-center gap-2">
         <div className="text-slate-600 group-hover:text-orange-500 transition-colors">{icon}</div>
-        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-300 transition-colors truncate">{label}</label>
+        <label className="text-[7px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</label>
      </div>
-     <input 
-        readOnly={readOnly}
-        type="number" 
-        value={val} 
-        onChange={e => onChange(Number(e.target.value))}
-        className="w-full bg-slate-900 border-none rounded-xl px-3 py-2 text-white font-mono font-black text-sm outline-none focus:ring-1 focus:ring-orange-600 transition-all shadow-inner"
-     />
+     <input readOnly={readOnly} type="number" value={val} onChange={e => onChange(Number(e.target.value))} className="w-full bg-slate-900 border-none rounded-xl px-3 py-2 text-white font-mono font-black text-sm outline-none focus:ring-1 focus:ring-orange-600 transition-all" />
   </div>
 );
 
 const ReviewBox = ({ label, val, pos }: any) => (
-  <div className="p-3 bg-slate-950/80 rounded-2xl border border-white/5 space-y-1 shadow-inner">
-     <span className="block text-[7px] font-black text-slate-600 uppercase tracking-widest">{label}</span>
-     <span className={`text-sm font-black italic font-mono leading-none ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
+  <div className="p-4 bg-slate-950/80 rounded-2xl border border-white/5 space-y-1 shadow-inner text-center">
+     <span className="block text-[6px] font-black text-slate-600 uppercase tracking-widest">{label}</span>
+     <span className={`text-xs font-black italic font-mono leading-none ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
   </div>
 );
 

@@ -46,7 +46,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       if (session) {
         const prof = await getUserProfile(session.user.id);
         setProfile(prof);
-        // Se for Tutor, foca na gestão de arenas
         if (prof?.role === 'tutor' && activeTab === 'system') {
           setActiveTab('tournaments');
         }
@@ -55,7 +54,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       const { data } = await getChampionships();
       if (data) setChampionships(data);
 
-      if (activeTab === 'users' && profile?.role === 'admin') {
+      if (activeTab === 'users') {
         const allUsers = await getAllUsers();
         setUsers(allUsers);
       }
@@ -73,7 +72,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const isAdmin = profile?.role === 'admin';
   const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
 
-  // Visão do Tutor: Painel de Controle de Arena
   if (selectedArena) {
     return (
       <div className="space-y-8 animate-in fade-in duration-500 pb-20 font-sans max-w-[1600px] mx-auto">
@@ -120,7 +118,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
         </div>
       </div>
 
-      {/* Tabs Exclusivas */}
       <div className="flex gap-4 px-6 overflow-x-auto no-scrollbar pb-4 sticky top-0 z-[100] bg-[#020617]/80 backdrop-blur-xl py-4 border-b border-white/5">
          {isAdmin && <NavTab active={activeTab === 'system'} onClick={() => setActiveTab('system')} label="Cluster Metrics" color="indigo" />}
          <NavTab active={activeTab === 'tournaments'} onClick={() => setActiveTab('tournaments')} label="Arenas & Campeonatos" color="orange" />
@@ -202,7 +199,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
 
           {activeTab === 'uidesign' && isAdmin && (
             <motion.div key="cms" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-               {/* CMS MENUS */}
                <div className="bg-slate-900 p-12 rounded-[4rem] border border-white/5 space-y-10 shadow-2xl">
                   <div className="space-y-2">
                      <h3 className="text-3xl font-black text-white uppercase italic flex items-center gap-4"><MenuIcon className="text-indigo-400" /> Menu Editor</h3>
@@ -230,7 +226,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                   </button>
                </div>
 
-               {/* CMS BRANDING / CAROUSEL */}
                <div className="bg-slate-900 p-12 rounded-[4rem] border border-white/5 space-y-10 shadow-2xl">
                   <div className="space-y-2">
                      <h3 className="text-3xl font-black text-white uppercase italic flex items-center gap-4"><Palette className="text-orange-500" /> Branding Engine</h3>
@@ -277,7 +272,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {users.length > 0 ? users.map((user, i) => (
+                  {users.length > 0 ? users.map((user) => (
                     <div key={user.id} className="p-8 bg-white/5 border border-white/10 rounded-[3rem] space-y-6 hover:border-emerald-500/30 transition-all group relative overflow-hidden">
                        <div className="flex justify-between items-start relative z-10">
                           <div className="w-16 h-16 bg-slate-950 rounded-[1.5rem] flex items-center justify-center text-slate-500 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all shadow-inner border border-white/5"><Users size={24}/></div>
@@ -285,16 +280,14 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                        </div>
                        <div className="relative z-10">
                           <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-2">
-                             <AtSign size={14} className="text-emerald-500" /> {user.nickname || 'Guest'}
+                             <AtSign size={14} className="text-emerald-500" /> {user.nickname || 'Unidentified'}
                           </h4>
                           <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{user.name}</p>
                           <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-white/5">
-                             {user.phone && (
-                               <div className="flex items-center gap-2 text-slate-500">
-                                  <Phone size={12} className="text-blue-400" />
-                                  <span className="text-[10px] font-mono font-bold">{user.phone}</span>
-                               </div>
-                             )}
+                             <div className="flex items-center gap-2 text-slate-500">
+                                <Phone size={12} className="text-blue-400" />
+                                <span className="text-[10px] font-mono font-bold">{user.phone || 'No phone set'}</span>
+                             </div>
                              <div className="flex items-center gap-2 text-slate-500">
                                 <FileCode size={12} className="text-slate-600" />
                                 <span className="text-[9px] font-mono truncate max-w-[150px]">{user.email}</span>

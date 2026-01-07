@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -36,9 +35,14 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
         if (authError) throw authError;
         if (session) onAuth();
       } else {
-        // Validação básica de telefone E.164
+        // Validação E.164 flexível: + ou número seguido de 7 a 15 dígitos
         if (phone && !/^\+?[1-9]\d{1,14}$/.test(phone)) {
-           throw new Error("Formato de telefone inválido. Use +5511999999999");
+           throw new Error("Formato de telefone inválido. Use padrão internacional, ex: +5511999998888");
+        }
+        
+        // Validação Nickname: Alfanumérico, 3-20 chars
+        if (nickname && !/^[a-zA-Z0-9_]{3,20}$/.test(nickname)) {
+           throw new Error("Nickname deve ter de 3 a 20 caracteres (letras, números e underline).");
         }
 
         const { error: signUpError } = await supabase.auth.signUp({ 
@@ -105,7 +109,7 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
                   </div>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                    <input className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="+5511..." value={phone} onChange={(e) => setPhone(e.target.value)} />
+                    <input className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="+55..." value={phone} onChange={(e) => setPhone(e.target.value)} />
                   </div>
                 </div>
               </>

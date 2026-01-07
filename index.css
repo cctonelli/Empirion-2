@@ -9,18 +9,18 @@
   }
 }
 
-/* ERP COCKPIT UI */
+/* ERP COCKPIT UI - MINIMALIST SCROLLBARS */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(2, 6, 23, 0.5);
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full hover:bg-orange-600 transition-colors;
+  @apply bg-slate-800/50 rounded-full hover:bg-orange-600/50 transition-colors;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -32,16 +32,17 @@
   scrollbar-width: none;
 }
 
-/* ERP Layout Utilities */
-.edge-to-edge {
-  width: 100%;
-  max-width: 100% !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+/* FLUID LAYOUT UTILS */
+.glass-panel {
+  @apply bg-slate-900/40 backdrop-blur-2xl border border-white/5 shadow-2xl;
 }
 
-.mono-data {
-  @apply font-mono font-bold tracking-tighter;
+.sticky-wizard-footer {
+  @apply sticky bottom-0 left-0 right-0 z-[200] bg-slate-950/80 backdrop-blur-xl border-t border-white/10 p-6;
+}
+
+.horizontal-scroll-container {
+  @apply overflow-x-auto custom-scrollbar whitespace-nowrap;
 }
 
 /* WOW Fluid Styles */
