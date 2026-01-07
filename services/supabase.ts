@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan } from '../types';
 import { DEFAULT_MACRO } from '../constants';
@@ -22,23 +21,58 @@ export const isTestMode = true;
 // NAVEGAÇÃO DE SEGURANÇA: LOCAL PERSISTENCE KEY
 const LOCAL_CHAMPS_KEY = 'empirion_v12_arenas';
 
-const ALPHA_IDS = ['tutor', 'alpha', 'tutor_master', 'alpha_street', 'alpha_cell', 'alpha_user'];
+const ALPHA_IDS = ['admin', 'tutor', 'alpha', 'tutor_master', 'alpha_street', 'alpha_cell', 'alpha_user'];
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   if (!userId) return null;
   if (ALPHA_IDS.includes(userId)) {
+    const isTutor = userId.includes('tutor');
+    const isAdmin = userId === 'admin' || userId === 'tutor_master';
     return {
       id: userId, 
       supabase_user_id: userId, 
-      name: userId.includes('tutor') ? 'Tutor Master Alpha' : 'Capitão Alpha Node 08',
+      name: isAdmin ? 'System Admin Master' : isTutor ? 'Tutor Master Alpha' : 'Capitão Alpha Node 08',
+      nickname: isAdmin ? 'Admin_Oracle' : isTutor ? 'Imperador_Alpha' : 'Alpha_Strategist',
+      phone: '+5511999990000',
       email: `${userId}@empirion.ia`, 
-      role: userId.includes('tutor') ? 'tutor' : 'player', 
+      role: isAdmin ? 'admin' : isTutor ? 'tutor' : 'player', 
       is_opal_premium: true, 
       created_at: new Date().toISOString()
     };
   }
   const { data } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
   return data;
+};
+
+/**
+ * FETCH ALL USERS (ADMIN ONLY)
+ */
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+  const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+  if (error) {
+    logError(LogContext.DATABASE, "User fetch fault", error.message);
+    // Return mocks if in test mode/fail
+    return [
+      { id: '1', supabase_user_id: 'u1', name: 'Tutor Master Alpha', nickname: 'Imperador_Alpha', role: 'tutor', phone: '+5511999990000', email: 'tutor@empirion.ia', created_at: new Date().toISOString() },
+      { id: '2', supabase_user_id: 'u2', name: 'Strategos User 01', nickname: 'Alpha_Strategist', role: 'player', phone: '+5521988887777', email: 'alpha@empirion.ia', created_at: new Date().toISOString() },
+      { id: '3', supabase_user_id: 'u3', name: 'Market Observer', nickname: 'Charlie_Analyst', role: 'observer', phone: '+12025550123', email: 'observer@empirion.ia', created_at: new Date().toISOString() }
+    ];
+  }
+  return data || [];
+};
+
+/**
+ * SEARCH USERS FOR INVITES/OBSERVERS
+ */
+export const searchUsers = async (query: string): Promise<UserProfile[]> => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .or(`name.ilike.%${query}%,nickname.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
+    .limit(5);
+  
+  if (error) return [];
+  return data || [];
 };
 
 /**
@@ -144,7 +178,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       config: champData.config || {},
       sales_mode: champData.sales_mode || 'hybrid',
       region_type: champData.region_type || 'mixed',
-      analysis_source: champData.analysis_source || 'parameterized'
+      analysis_source: champData.analysis_source || 'parameterized',
+      observers: champData.observers || []
     };
 
     if (!isTrial && session?.user) {

@@ -9,14 +9,14 @@ import {
   Globe, Database, Command, Users, Landmark,
   BarChart3, Eye, Layers, CreditCard, Gauge,
   UserPlus, UserMinus, Globe2, Phone, AtSign,
-  // Fix: Added missing Shield icon import from lucide-react
   Shield
 } from 'lucide-react';
 import { 
   getChampionships, 
   deleteChampionship, 
   supabase,
-  getUserProfile
+  getUserProfile,
+  getAllUsers
 } from '../services/supabase';
 import { Championship, Team, InsolvencyStatus, UserProfile, MenuItemConfig } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
@@ -29,6 +29,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState(preTab);
   const [championships, setChampionships] = useState<Championship[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
   const [showWizard, setShowWizard] = useState(false);
@@ -54,6 +55,11 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       const { data } = await getChampionships();
       if (data) setChampionships(data);
 
+      if (activeTab === 'users' && profile?.role === 'admin') {
+        const allUsers = await getAllUsers();
+        setUsers(allUsers);
+      }
+
       setMenus(MENU_STRUCTURE.map((m, i) => ({ id: `m-${i}`, label: m.label, path: m.path, isVisible: true })));
     } catch (err) {
       console.error("Sync Error:", err);
@@ -62,7 +68,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [activeTab]);
 
   const isAdmin = profile?.role === 'admin';
   const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
@@ -271,26 +277,27 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {/* Mock de Usuários com Nickname e Phone para Exemplo de UI v13.6 */}
-                  {[
-                    { name: 'Tutor Master Alpha', nick: 'Imperador_Alpha', role: 'TUTOR', phone: '+5511999990000' },
-                    { name: 'Strategos User 01', nick: 'Alpha_Strategist', role: 'PLAYER', phone: '+5521988887777' },
-                    { name: 'Market Observer', nick: 'Charlie_Analyst', role: 'OBSERVER', phone: '+12025550123' }
-                  ].map((user, i) => (
-                    <div key={i} className="p-8 bg-white/5 border border-white/10 rounded-[3rem] space-y-6 hover:border-emerald-500/30 transition-all group relative overflow-hidden">
+                  {users.length > 0 ? users.map((user, i) => (
+                    <div key={user.id} className="p-8 bg-white/5 border border-white/10 rounded-[3rem] space-y-6 hover:border-emerald-500/30 transition-all group relative overflow-hidden">
                        <div className="flex justify-between items-start relative z-10">
                           <div className="w-16 h-16 bg-slate-950 rounded-[1.5rem] flex items-center justify-center text-slate-500 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all shadow-inner border border-white/5"><Users size={24}/></div>
                           <span className="px-4 py-1 bg-white/5 rounded-full text-[8px] font-black uppercase text-slate-500 border border-white/5">{user.role}</span>
                        </div>
                        <div className="relative z-10">
                           <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-2">
-                             <AtSign size={14} className="text-emerald-500" /> {user.nick}
+                             <AtSign size={14} className="text-emerald-500" /> {user.nickname || 'Guest'}
                           </h4>
                           <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{user.name}</p>
-                          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/5">
+                          <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-white/5">
+                             {user.phone && (
+                               <div className="flex items-center gap-2 text-slate-500">
+                                  <Phone size={12} className="text-blue-400" />
+                                  <span className="text-[10px] font-mono font-bold">{user.phone}</span>
+                               </div>
+                             )}
                              <div className="flex items-center gap-2 text-slate-500">
-                                <Phone size={12} className="text-blue-400" />
-                                <span className="text-[10px] font-mono font-bold">{user.phone}</span>
+                                <FileCode size={12} className="text-slate-600" />
+                                <span className="text-[9px] font-mono truncate max-w-[150px]">{user.email}</span>
                              </div>
                           </div>
                        </div>
@@ -302,7 +309,12 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                           <Shield size={120} />
                        </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="col-span-full py-20 text-center bg-white/5 rounded-[3rem] border border-dashed border-white/10 opacity-40">
+                       <Loader2 size={32} className="animate-spin mx-auto mb-4" />
+                       <p className="text-xs font-black uppercase tracking-widest">Sincronizando Banco de Operadores...</p>
+                    </div>
+                  )}
                </div>
             </motion.div>
           )}

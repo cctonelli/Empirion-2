@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, ArrowRight, Settings, Globe, Loader2, 
@@ -9,11 +8,12 @@ import {
   Users, Clock, Calendar, Hourglass, PenTool, Layout,
   Shield, UserCheck, Landmark, Coins, TrendingUp,
   History, Map, Flag, Cpu, Bot, Coins as CurrencyIcon,
-  Scale, FileSearch, AlertCircle, Newspaper, RefreshCw
+  Scale, FileSearch, AlertCircle, Newspaper, RefreshCw,
+  Search, X, AtSign, Phone
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE } from '../constants';
-import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode, RegionType, AnalysisSource, CurrencyType } from '../types';
-import { createChampionshipWithTeams } from '../services/supabase';
+import { Branch, ScenarioType, ModalityType, Championship, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode, RegionType, AnalysisSource, CurrencyType, UserProfile } from '../types';
+import { createChampionshipWithTeams, searchUsers } from '../services/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import FinancialStructureEditor from './FinancialStructureEditor';
 
@@ -57,6 +57,11 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
   const [teams, setTeams] = useState<{ name: string, is_bot?: boolean }[]>([]);
+  
+  // Observer Search State
+  const [observerSearch, setObserverSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     if (selectedTemplate) {
@@ -132,6 +137,26 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       onComplete();
     } catch (e: any) { alert(`ERRO NA ORQUESTRAÇÃO: ${e.message}`); }
     setIsSubmitting(false);
+  };
+
+  const handleSearchObservers = async (query: string) => {
+    setObserverSearch(query);
+    if (query.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    const results = await searchUsers(query);
+    setSearchResults(results);
+    setIsSearching(false);
+  };
+
+  const addObserver = (user: UserProfile) => {
+    if (!formData.observers.includes(user.id)) {
+      setFormData({ ...formData, observers: [...formData.observers, user.id] });
+    }
+    setObserverSearch('');
+    setSearchResults([]);
   };
 
   return (
@@ -278,6 +303,51 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                            <button onClick={() => setFormData({...formData, gazeta_mode: 'identified'})} className={`flex-1 py-4 rounded-xl text-xs font-black uppercase transition-all ${formData.gazeta_mode === 'identified' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-600'}`}>
                               Identificado
                            </button>
+                        </div>
+                     </WizardField>
+
+                     <WizardField label="Nomear Observadores (Nickname/Fone/Email)" icon={<Eye size={18}/>}>
+                        <div className="space-y-4">
+                           <div className="relative">
+                              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                              <input 
+                                value={observerSearch}
+                                onChange={e => handleSearchObservers(e.target.value)}
+                                className="wizard-input pl-12 text-sm py-4" 
+                                placeholder="Busque por Operador..." 
+                              />
+                              {isSearching && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-orange-500" size={16} />}
+                           </div>
+                           
+                           {searchResults.length > 0 && (
+                             <div className="bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                                {searchResults.map(user => (
+                                  <button 
+                                    key={user.id} 
+                                    onClick={() => addObserver(user)}
+                                    className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                                  >
+                                     <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-blue-600/20 text-blue-400 rounded-lg"><AtSign size={14}/></div>
+                                        <div className="text-left">
+                                           <span className="block text-xs font-black text-white uppercase italic">{user.nickname || user.name}</span>
+                                           <span className="block text-[8px] text-slate-500 uppercase tracking-widest">{user.email}</span>
+                                        </div>
+                                     </div>
+                                     <Plus size={14} className="text-slate-500" />
+                                  </button>
+                                ))}
+                             </div>
+                           )}
+
+                           <div className="flex flex-wrap gap-2 pt-2">
+                              {formData.observers.map(obsId => (
+                                <div key={obsId} className="px-3 py-1.5 bg-orange-600/10 border border-orange-500/20 rounded-full flex items-center gap-2">
+                                   <span className="text-[9px] font-black text-white uppercase tracking-widest">{obsId.slice(0,8)}...</span>
+                                   <button onClick={() => setFormData({...formData, observers: formData.observers.filter(id => id !== obsId)})} className="text-orange-500 hover:text-white transition-colors"><X size={10}/></button>
+                                </div>
+                              ))}
+                           </div>
                         </div>
                      </WizardField>
                   </div>
