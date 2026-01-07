@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -53,15 +52,19 @@ const AppContent: React.FC = () => {
       const prof = await getUserProfile(uid);
       setProfile(prof);
       
-      // Auto-redirecionamento baseado na ROLE ao entrar no cluster /app
+      // Auto-redirecionamento baseada na ROLE para isolamento de ambientes
       if (location.pathname === '/app' || location.pathname === '/app/') {
-        if (prof?.role === 'admin') navigate('/app/admin');
-        else if (prof?.role === 'tutor') navigate('/app/admin');
-        else if (prof?.role === 'observer') navigate('/app/dashboard'); // Observador vê cockpit read-only
-        else navigate('/app/dashboard');
+        if (prof?.role === 'admin' || prof?.role === 'tutor') {
+           navigate('/app/admin');
+        } else {
+           navigate('/app/dashboard');
+        }
       }
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) { 
+      console.error("Profile sync error:", err); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleSelectTeam = (champId: string, teamId: string, isTrial: boolean = false) => {
@@ -71,20 +74,21 @@ const AppContent: React.FC = () => {
     navigate('/app/dashboard');
   };
 
-  if (loading) return <div className="h-screen bg-slate-950 flex items-center justify-center text-white font-black uppercase italic tracking-[0.4em]">Node Syncing...</div>;
+  if (loading) return (
+    <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4">
+       <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" />
+       <span className="font-black uppercase italic tracking-[0.4em]">Node Syncing...</span>
+    </div>
+  );
 
   return (
     <Routes>
-      <Route path="/" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><LandingPage onLogin={() => navigate('/auth')}/></div></>} />
-      <Route path="/auth" element={<Auth onAuth={() => {
-          // Após login, o useEffect do Perfil cuidará do redirecionamento por Role
-          navigate('/app'); 
-      }} onBack={() => navigate('/')} />} />
+      {/* AMBIENTE: USUÁRIOS COMUNS / PÚBLICO */}
+      <Route path="/" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-0"><LandingPage onLogin={() => navigate('/auth')}/></div></>} />
+      <Route path="/auth" element={<Auth onAuth={() => navigate('/app')} onBack={() => navigate('/')} />} />
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
-      
       <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       <Route path="/branches/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
-      
       <Route path="/solutions/simulators" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><SimulatorsPage /></div></>} />
       <Route path="/solutions/open-tournaments" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><OpenTournaments /></div></>} />
       <Route path="/solutions/business-plan" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><BusinessPlanWizard /></div></>} />
@@ -93,6 +97,7 @@ const AppContent: React.FC = () => {
       <Route path="/contact" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ContactPage /></div></>} />
       <Route path="/rewards" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><PublicRewards /></div></>} />
 
+      {/* AMBIENTE: OPERACIONAL (LOGADO) */}
       <Route path="/app/*" element={
         (session || isTestMode) ? (
           <Layout
@@ -103,12 +108,17 @@ const AppContent: React.FC = () => {
             onNavigate={(view) => navigate(`/app/${view}`)}
           >
             <Routes>
+              {/* Redirecionamento de Pouso Baseado na Role */}
               <Route path="/" element={<Navigate to={profile?.role === 'admin' || profile?.role === 'tutor' ? 'admin' : 'dashboard'} />} />
+              
+              {/* AMBIENTE: EQUIPES & OBSERVADORES */}
               <Route path="dashboard" element={<Dashboard branch="industrial" />} />
               <Route path="championships" element={<ChampionshipsView onSelectTeam={handleSelectTeam} />} />
               <Route path="reports" element={<Reports branch="industrial" />} />
               <Route path="market" element={<MarketAnalysis />} />
               <Route path="intelligence" element={<OpalIntelligenceHub isPremium={true} onUpgrade={() => {}} />} />
+              
+              {/* AMBIENTE: ADMIN GERAL & TUTOR */}
               <Route path="admin" element={<AdminCommandCenter />} />
               <Route path="settings" element={<AdminCommandCenter preTab="tournaments" />} />
             </Routes>
