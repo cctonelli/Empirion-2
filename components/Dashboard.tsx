@@ -8,7 +8,8 @@ import {
   Eye, Timer, Box, HeartPulse, Landmark, 
   Thermometer, EyeOff, Globe, Map, PieChart, Users,
   ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon, Info,
-  Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon
+  Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon,
+  ChevronDown, Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -85,91 +86,105 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans">
+    <div className="flex flex-col h-screen bg-[#020617] overflow-hidden font-sans border-t border-white/5">
       
       {/* TOP KPI HUD - ULTRA DENSO */}
-      <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
-         <CockpitStat label="Ação" val={`$ ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend="+1.2%" pos icon={<TrendingUp size={12}/>} />
-         <CockpitStat label="Receita" val={`$ 3.32M`} trend="Estável" pos icon={<DollarSign size={12}/>} />
-         <CockpitStat label="Lucro" val={`$ 73.9K`} trend="+4.5%" pos icon={<ActivityIcon size={12}/>} />
-         <CockpitStat label="Share" val={`${currentKpis.market_share.toFixed(1)}%`} trend="High" pos icon={<PieChart size={12}/>} />
-         <CockpitStat label="Rating" val={currentKpis.rating} trend="Prime" pos icon={<ShieldCheck size={12}/>} />
-         <div className="px-6 flex flex-col justify-center border-l border-white/5 bg-slate-950/40">
-            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Time Remaining</span>
-            <div className="scale-75 origin-left -ml-2">
-               <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
+      <section className="h-16 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
+         <CockpitStat label="Ação" val={`$ ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend="+1.2%" pos icon={<TrendingUp size={10}/>} />
+         <CockpitStat label="Receita" val={`$ 3.32M`} trend="Estável" pos icon={<DollarSign size={10}/>} />
+         <CockpitStat label="Lucro" val={`$ 73.9K`} trend="+4.5%" pos icon={<ActivityIcon size={10}/>} />
+         <CockpitStat label="Share" val={`${currentKpis.market_share.toFixed(1)}%`} trend="High" pos icon={<PieChart size={10}/>} />
+         <CockpitStat label="Rating" val={currentKpis.rating} trend="Prime" pos icon={<ShieldCheck size={10}/>} />
+         <div className="px-6 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
+            <div className="flex flex-col">
+               <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Time Remaining</span>
+               <div className="scale-75 origin-left -ml-2">
+                  <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
+               </div>
             </div>
          </div>
       </section>
 
-      {/* CORE OPERATIONAL WORKSPACE */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* CORE OPERATIONAL WORKSPACE - ZERO SCROLL LAYOUT */}
+      <div className="flex flex-1 overflow-hidden h-[calc(100vh-theme(spacing.16)-theme(spacing.12))]">
          
-         {/* LEFT PANEL: INTERNAL AUDIT (22%) */}
-         <aside className="w-80 bg-slate-900/60 border-r border-white/10 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-2xl">
-            <div className="p-4 space-y-6">
-               <div className="space-y-4">
-                  <header className="flex items-center justify-between border-b border-white/5 pb-1">
-                     <h3 className="text-[9px] font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <Landmark size={12}/> Audit HUD
-                     </h3>
-                     <span className="px-2 py-0.5 bg-orange-600/10 text-orange-500 text-[7px] font-black rounded border border-orange-500/20 uppercase">P0 Active</span>
-                  </header>
-                  
-                  {/* MINI DRE DENSE */}
-                  <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5 space-y-2 shadow-inner">
-                     <h4 className="text-[8px] font-black text-slate-500 uppercase tracking-tight">Consolidado DRE</h4>
-                     <div className="space-y-1 font-mono text-[9px]">
-                        <MiniFinRow label="Faturamento" val="3.32M" />
-                        <MiniFinRow label="Custo (CPV)" val="(2.27M)" neg />
-                        <MiniFinRow label="Op. Profit" val="126.9K" bold />
-                        <MiniFinRow label="Net Income" val="73.9K" bold highlight />
+         {/* LEFT PANEL: INTERNAL AUDIT (20%) */}
+         <aside className="w-64 bg-slate-900/60 border-r border-white/10 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-2xl z-10">
+            <div className="p-4 space-y-4">
+               <header className="flex items-center justify-between border-b border-white/5 pb-1">
+                  <h3 className="text-[8px] font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                     <Landmark size={10}/> Audit HUD
+                  </h3>
+                  <span className="text-[7px] font-black text-slate-500 uppercase">Período 0{activeArena?.current_round}</span>
+               </header>
+               
+               {/* MINI DRE DENSE */}
+               <div className="bg-slate-950/80 p-3 rounded-xl border border-white/5 space-y-1.5 shadow-inner">
+                  <div className="flex justify-between items-center mb-1">
+                     <h4 className="text-[7px] font-black text-slate-600 uppercase">DRE Consolidado</h4>
+                     <Maximize2 size={8} className="text-slate-700" />
+                  </div>
+                  <div className="space-y-0.5 font-mono text-[8px]">
+                     <MiniFinRow label="Faturamento" val="3.32M" />
+                     <MiniFinRow label="Custo (CPV)" val="(2.27M)" neg />
+                     <MiniFinRow label="Op. Profit" val="126.9K" bold />
+                     <MiniFinRow label="Net Income" val="73.9K" bold highlight />
+                  </div>
+               </div>
+
+               {/* FINANCIAL HEALTH GAUGE */}
+               <div className="bg-slate-950/80 p-3 rounded-xl border border-white/5 space-y-2">
+                  <h4 className="text-[7px] font-black text-slate-600 uppercase">Liquidez Corrente</h4>
+                  <div className="space-y-1.5">
+                     <div className="flex justify-between items-end">
+                        <span className="text-[7px] font-bold text-slate-500 uppercase">Capacidade 1.25x</span>
+                        <TrendingUp size={8} className="text-emerald-500" />
+                     </div>
+                     <div className="w-full h-0.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500" style={{ width: '65%' }} />
                      </div>
                   </div>
+               </div>
 
-                  {/* FINANCIAL HEALTH GAUGE */}
-                  <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5 space-y-3">
-                     <h4 className="text-[8px] font-black text-slate-500 uppercase tracking-tight">Estabilidade de Capital</h4>
-                     <div className="space-y-3">
-                        <div className="flex justify-between items-end">
-                           <span className="text-[8px] font-bold text-slate-500 uppercase">Liquidez Corrente</span>
-                           <span className="text-xs font-black text-emerald-500 font-mono">1.25x</span>
-                        </div>
-                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                           <div className="h-full bg-emerald-500" style={{ width: '65%' }} />
-                        </div>
-                     </div>
+               {/* TSF THERMOMETER */}
+               <div className="bg-orange-600/5 p-3 rounded-xl border border-orange-500/10 space-y-1.5">
+                  <div className="flex justify-between items-center">
+                     <span className="text-[7px] font-black text-orange-500 uppercase">Efeito Tesoura (TSF)</span>
+                     <Gauge size={8} className="text-orange-500" />
                   </div>
+                  <div className="flex items-center justify-between">
+                     <span className="text-sm font-black text-white font-mono italic">{(currentKpis.scissors_effect?.tsf || 0).toFixed(2)}</span>
+                     <span className={`text-[6px] font-black px-1 py-0.5 rounded ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-600 text-white' : 'bg-emerald-600/20 text-emerald-500'}`}>
+                        {currentKpis.scissors_effect?.is_critical ? 'CRITICAL' : 'OPTIMAL'}
+                     </span>
+                  </div>
+               </div>
 
-                  {/* TSF THERMOMETER */}
-                  <div className="bg-orange-600/5 p-4 rounded-xl border border-orange-500/10 space-y-2">
-                     <div className="flex justify-between items-center">
-                        <span className="text-[8px] font-black text-orange-500 uppercase">Efeito Tesoura (TSF)</span>
-                        <Gauge size={10} className="text-orange-500" />
-                     </div>
-                     <div className="flex items-center justify-between">
-                        <span className="text-lg font-black text-white font-mono italic">{(currentKpis.scissors_effect?.tsf || 0).toFixed(2)}</span>
-                        <span className={`text-[7px] font-black px-1.5 py-0.5 rounded ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-600 text-white' : 'bg-emerald-600/20 text-emerald-500'}`}>
-                           {currentKpis.scissors_effect?.is_critical ? 'CRITICAL' : 'OPTIMAL'}
-                        </span>
-                     </div>
+               {/* CAPEX MONITOR */}
+               <div className="bg-slate-950/80 p-3 rounded-xl border border-white/5 space-y-1.5">
+                  <h4 className="text-[7px] font-black text-slate-600 uppercase">CapEx Ativo</h4>
+                  <div className="flex items-center justify-between">
+                     <span className="text-[10px] font-black text-slate-300">$ 5.88M</span>
+                     <span className="text-[7px] font-bold text-rose-500 uppercase">Deprec. -5%</span>
                   </div>
                </div>
             </div>
          </aside>
 
-         {/* CENTER PANEL: DECISION ENGINE (56%) */}
+         {/* CENTER PANEL: DECISION ENGINE (60%) - SCROLLABLE WORKSPACE */}
          <main className="flex-1 bg-slate-950 flex flex-col overflow-hidden relative shadow-inner">
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-               <div className="max-w-3xl mx-auto space-y-6">
-                  <div className="flex justify-between items-end border-b border-white/5 pb-4">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 pb-20">
+               <div className="max-w-3xl mx-auto space-y-4">
+                  <div className="flex justify-between items-end border-b border-white/5 pb-2">
                      <div>
-                        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Decision <span className="text-orange-600">Matrix</span></h2>
-                        <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest mt-2 italic">Transmissão Tática • Unidade {activeTeam?.name || 'ALPHA'}</p>
+                        <h2 className="text-xl font-black text-white uppercase italic tracking-tighter leading-none">War <span className="text-orange-600">Feed</span></h2>
+                        <p className="text-[7px] font-bold text-slate-600 uppercase tracking-widest mt-1 italic">Operando Nodo {activeTeam?.name || 'ALPHA'}</p>
                      </div>
-                     <button onClick={() => setShowGazette(true)} className="px-4 py-2 bg-slate-900 border border-white/10 text-white rounded-lg font-black text-[8px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2 shadow-lg">
-                        <Newspaper size={12} /> News Feed
-                     </button>
+                     <div className="flex gap-2">
+                        <button onClick={() => setShowGazette(true)} className="px-3 py-1.5 bg-slate-900 border border-white/10 text-white rounded-lg font-black text-[7px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-1.5">
+                           <Newspaper size={10} /> Oracle Gazette
+                        </button>
+                     </div>
                   </div>
 
                   <div className="bg-slate-900/40 border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
@@ -184,16 +199,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             </div>
          </main>
 
-         {/* RIGHT PANEL: EXTERNAL PULSE (22%) */}
-         <aside className="w-80 bg-slate-900/60 border-l border-white/10 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-2xl">
-            <div className="p-4 space-y-6">
+         {/* RIGHT PANEL: EXTERNAL PULSE (20%) */}
+         <aside className="w-64 bg-slate-900/60 border-l border-white/10 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-2xl z-10">
+            <div className="p-4 space-y-4">
                
                {/* MACRO DENSITY */}
-               <div className="space-y-3">
-                  <h3 className="text-[9px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                     <Globe size={12}/> World Pulse
+               <div className="space-y-2">
+                  <h3 className="text-[8px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                     <Globe size={10}/> World Indicators
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5">
                      <MacroTileCompact label="Growth" val={`+${activeArena?.market_indicators.growth_rate}%`} color="blue" />
                      <MacroTileCompact label="Inflação" val={`${activeArena?.market_indicators.inflation_rate}%`} color="rose" />
                      <MacroTileCompact label="Juros" val={`${activeArena?.market_indicators.interest_rate_tr}%`} color="amber" />
@@ -201,26 +216,26 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* MARKET RANKING (RELATORIO COLETIVO) */}
-               <div className="space-y-3">
-                  <h3 className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                     <Scale size={12}/> Sector Competition
+               {/* COMPETITION RANKING (RELATORIO COLETIVO) */}
+               <div className="space-y-2">
+                  <h3 className="text-[8px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                     <Scale size={10}/> Sector Yields
                   </h3>
                   <div className="bg-slate-950/80 rounded-xl border border-white/5 overflow-hidden">
                      <table className="w-full text-left">
-                        <thead className="bg-white/5 text-[7px] font-black uppercase text-slate-500">
+                        <thead className="bg-white/5 text-[6px] font-black uppercase text-slate-500">
                            <tr>
-                              <th className="px-3 py-2">Team</th>
-                              <th className="px-2 py-2 text-center">Share</th>
-                              <th className="px-2 py-2 text-right">Yield</th>
+                              <th className="px-2 py-1.5">Team</th>
+                              <th className="px-1 py-1.5 text-center">Share</th>
+                              <th className="px-2 py-1.5 text-right">Yield</th>
                            </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5 font-mono text-[8px]">
-                           {currentKpis.regional_pulse?.slice(0, 5).map((reg: RegionalData, i: number) => (
+                        <tbody className="divide-y divide-white/5 font-mono text-[7px]">
+                           {currentKpis.regional_pulse?.slice(0, 6).map((reg: RegionalData, i: number) => (
                              <tr key={reg.region_id} className="hover:bg-white/5 transition-colors">
-                                <td className="px-3 py-2 text-slate-400 font-bold uppercase truncate max-w-[80px]">UNIT 0{i+1}</td>
-                                <td className="px-2 py-2 text-white text-center">{reg.market_share}%</td>
-                                <td className="px-2 py-2 text-right text-orange-500 font-black">{(reg.market_share * 1.2).toFixed(1)}%</td>
+                                <td className="px-2 py-1.5 text-slate-400 font-bold uppercase truncate max-w-[60px]">UNIT 0{i+1}</td>
+                                <td className="px-1 py-1.5 text-white text-center">{reg.market_share}%</td>
+                                <td className="px-2 py-1.5 text-right text-orange-500 font-black">{(reg.market_share * 1.2).toFixed(1)}%</td>
                              </tr>
                            ))}
                         </tbody>
@@ -228,25 +243,25 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* RADAR DENSE */}
+               {/* REGIONAL DEMAND */}
                <div className="space-y-2">
-                  <h3 className="text-[9px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-                     <Target size={12}/> Strategic Radar
+                  <h3 className="text-[8px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                     <Map size={10}/> Demand Pulse
                   </h3>
-                  <div className="p-3 bg-slate-950/80 border border-white/5 rounded-xl space-y-1">
-                     <span className="text-[7px] font-black text-slate-500 uppercase">Preço Médio Setor</span>
-                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-black text-white font-mono">$ 372.40</span>
-                        <div className="flex items-center gap-1 text-rose-500 text-[8px] font-bold"><TrendingUp size={10} className="rotate-180"/> -0.5%</div>
-                     </div>
+                  <div className="space-y-1.5">
+                     {currentKpis.regional_pulse?.slice(0, 3).map((reg) => (
+                       <div key={reg.region_id} className="p-2 bg-slate-950/80 border border-white/5 rounded-lg flex items-center justify-between">
+                          <span className="text-[7px] font-black text-slate-500 uppercase">{reg.region_name}</span>
+                          <span className="text-[9px] font-black text-white font-mono">{reg.demand.toLocaleString()} units</span>
+                       </div>
+                     ))}
                   </div>
-                  <div className="p-3 bg-slate-950/80 border border-white/5 rounded-xl flex items-center justify-between">
-                     <div className="space-y-0.5">
-                        <span className="text-[7px] font-black text-slate-500 uppercase">Líder Market Share</span>
-                        <p className="text-[10px] font-black text-orange-500 uppercase italic leading-none">UNIT ALPHA Node 08</p>
-                     </div>
-                     <Trophy size={14} className="text-orange-500" />
-                  </div>
+               </div>
+
+               {/* STRATEGIC RADAR */}
+               <div className="p-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl space-y-1">
+                  <span className="text-[6px] font-black text-indigo-400 uppercase">Conselho Oracle</span>
+                  <p className="text-[8px] text-indigo-100 font-medium italic leading-relaxed">"O preço médio do setor subiu 2%. Suas margens podem ser expandidas no Round 1."</p>
                </div>
             </div>
          </aside>
@@ -255,7 +270,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       {/* GAZETTE MODAL OVERLAY */}
       <AnimatePresence>
         {showGazette && (
-          <div className="fixed inset-0 z-[5000] p-10 bg-slate-950/90 backdrop-blur-md flex items-center justify-center">
+          <div className="fixed inset-0 z-[5000] p-4 md:p-10 bg-slate-950/90 backdrop-blur-md flex items-center justify-center">
              <GazetteViewer arena={activeArena!} aiNews="" round={activeArena?.current_round || 0} userRole={userRole} onClose={() => setShowGazette(false)} />
           </div>
         )}
@@ -265,24 +280,24 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 };
 
 const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
-  <div className="px-5 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center">
-     <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1.5">
-           <div className="p-1 bg-white/5 rounded text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all">{icon}</div>
-           <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+  <div className="px-4 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden">
+     <div className="flex items-center justify-between mb-0.5">
+        <div className="flex items-center gap-1">
+           <div className="text-orange-500">{icon}</div>
+           <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</span>
         </div>
-        <span className={`text-[7px] font-black ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
-           {pos ? '+' : ''}{trend}
+        <span className={`text-[6px] font-black ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
+           {pos ? '▲' : '▼'}{trend}
         </span>
      </div>
-     <span className="text-lg font-black text-white font-mono tracking-tighter italic leading-none">{val}</span>
+     <span className="text-sm font-black text-white font-mono tracking-tighter italic leading-none truncate">{val}</span>
   </div>
 );
 
 const MiniFinRow = ({ label, val, neg, bold, highlight }: any) => (
-  <div className={`flex justify-between items-center py-1 border-b border-white/[0.02] last:border-0 ${highlight ? 'text-orange-500' : ''}`}>
-     <span className={`${bold ? 'font-black text-slate-300' : 'text-slate-500'}`}>{label}</span>
-     <span className={`font-black ${neg ? 'text-rose-500' : bold ? 'text-white' : 'text-slate-400'}`}>{val}</span>
+  <div className={`flex justify-between items-center py-0.5 border-b border-white/[0.02] last:border-0 ${highlight ? 'text-orange-500' : ''}`}>
+     <span className={`${bold ? 'font-black text-slate-400' : 'text-slate-600'}`}>{label}</span>
+     <span className={`font-black ${neg ? 'text-rose-500' : bold ? 'text-white' : 'text-slate-500'}`}>{val}</span>
   </div>
 );
 
@@ -295,9 +310,9 @@ const MacroTileCompact = ({ label, val, color }: any) => {
   }[color as 'blue' | 'rose' | 'amber' | 'emerald'];
 
   return (
-    <div className={`p-2 rounded-lg border flex flex-col gap-0.5 ${colors}`}>
-       <span className="text-[7px] font-black uppercase opacity-60">{label}</span>
-       <span className="text-xs font-black font-mono leading-none italic">{val}</span>
+    <div className={`p-1.5 rounded-lg border flex flex-col gap-0 ${colors}`}>
+       <span className="text-[6px] font-black uppercase opacity-60 truncate">{label}</span>
+       <span className="text-[10px] font-black font-mono leading-none italic">{val}</span>
     </div>
   );
 };

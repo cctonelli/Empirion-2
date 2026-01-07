@@ -1,11 +1,11 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource } from './types';
 
-export const APP_VERSION = "v12.9.0-Gold";
-export const BUILD_DATE = "07/01/2026";
+export const APP_VERSION = "v13.0.0-Oracle";
+export const BUILD_DATE = "08/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-STABLE";
 export const DEFAULT_INITIAL_SHARE_PRICE = 1.00;
-export const DEFAULT_TOTAL_SHARES = 5000000; // 1 ação por $1 de Capital Social inicial
+export const DEFAULT_TOTAL_SHARES = 5000000; 
 
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
@@ -275,7 +275,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     hero: { 
       title: "Forje Seu Império", 
       empire: "STREET Arena", 
-      subtitle: "Simulação Industrial v12.9.0: Onde $9M em ativos e TSR ditam o vencedor.", 
+      subtitle: "Simulação Industrial v13.0: Onde $9M em ativos e TSR ditam o vencedor.", 
       cta: "Entre na Arena", 
       secondaryCta: "Ver Ramos" 
     },
@@ -283,7 +283,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { 
         id: 1, 
         title: "Empirion Street", 
-        subtitle: "Gestão de Ciclo Operacional Empirion v12.9 Gold.", 
+        subtitle: "Gestão de Ciclo Operacional Empirion v13.0 Gold.", 
         image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", 
         badge: "Industrial Node 08", 
         link: "/branches/industrial" 
