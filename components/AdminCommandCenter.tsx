@@ -28,7 +28,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
-  const [showWizard, setShowWizard] = useState(false);
+  const [showWizard, setSelectedWizard] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   // UI / CMS / Branding State
@@ -154,7 +154,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                           <p className="text-slate-400 font-bold uppercase text-xs tracking-[0.4em] mt-5 leading-relaxed italic max-w-xl">Implantar novos simuladores industriais, comerciais ou financeiros no cluster.</p>
                        </div>
                     </div>
-                    <button onClick={() => setShowWizard(true)} className="px-20 py-8 bg-white text-slate-950 rounded-full font-black text-sm uppercase tracking-[0.4em] hover:bg-orange-600 hover:text-white transition-all shadow-2xl active:scale-95 z-10 shrink-0">Iniciar Orquestração</button>
+                    <button onClick={() => setSelectedWizard(true)} className="px-20 py-8 bg-white text-slate-950 rounded-full font-black text-sm uppercase tracking-[0.4em] hover:bg-orange-600 hover:text-white transition-all shadow-2xl active:scale-95 z-10 shrink-0">Iniciar Orquestração</button>
                  </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
@@ -177,8 +177,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
               </motion.div>
             ) : (
               <motion.div key="wizard" initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}}>
-                <button onClick={() => setShowWizard(false)} className="absolute -top-24 right-0 p-6 bg-rose-600/10 hover:bg-rose-600 text-rose-500 hover:text-white rounded-2xl flex items-center gap-3 font-black text-xs uppercase tracking-[0.2em] transition-all"><X size={20} /> Abortar Setup</button>
-                <ChampionshipWizard isTrial={isTrialSession} onComplete={() => { setShowWizard(false); fetchData(); }} />
+                <button onClick={() => setSelectedWizard(false)} className="absolute -top-24 right-0 p-6 bg-rose-600/10 hover:bg-rose-600 text-rose-500 hover:text-white rounded-2xl flex items-center gap-3 font-black text-xs uppercase tracking-[0.2em] transition-all"><X size={20} /> Abortar Setup</button>
+                <ChampionshipWizard isTrial={isTrialSession} onComplete={() => { setSelectedWizard(false); fetchData(); }} />
               </motion.div>
             )
           )}

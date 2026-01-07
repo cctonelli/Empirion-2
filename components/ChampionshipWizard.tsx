@@ -273,7 +273,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                         </div>
                      </WizardField>
                      
-                     {/* Fix: Added missing Newspaper icon to lucide-react import and using it here */}
                      <WizardField label="Modo Gazeta (Relatório Coletivo)" icon={<Newspaper size={18}/>}>
                         <div className="flex gap-4 p-1.5 bg-slate-950 rounded-2xl border border-white/5">
                            <button onClick={() => setFormData({...formData, gazeta_mode: 'anonymous'})} className={`flex-1 py-4 rounded-xl text-xs font-black uppercase transition-all ${formData.gazeta_mode === 'anonymous' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500'}`}>
@@ -361,7 +360,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                      {formData.bp_enabled && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-10 pt-10 border-t border-white/5">
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                              {/* Fix: Added missing RefreshCw icon to lucide-react import and using it here */}
                               <WizardField label="Frequência de Atualização" icon={<RefreshCw size={18}/>}>
                                  <select value={formData.bp_frequency} onChange={e => setFormData({...formData, bp_frequency: Number(e.target.value)})} className="wizard-input">
                                     <option value={1}>Todo Ciclo (Crítico)</option>
