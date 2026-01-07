@@ -1,15 +1,12 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, 
-  ChevronRight, ChevronLeft, ShieldCheck, Activity, Scale, 
-  Zap, Landmark, Shield, AlertTriangle, Brain, Sparkles, MapPin,
-  Save, LayoutGrid, CheckCircle2, Package, TrendingUp, Info, Cpu,
-  Target, BarChart3, Star
+  Loader2, Megaphone, Users2, Factory, DollarSign, 
+  ChevronRight, ChevronLeft, ShieldCheck, Activity, 
+  Zap, Save, Sparkles, Package, Cpu, Target
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
-import { DecisionData, Branch, Championship, ProjectionResult, CreditRating, EcosystemConfig } from '../types';
+import { DecisionData, Branch, Championship, ProjectionResult, EcosystemConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STEPS = [
@@ -60,139 +57,106 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
   const rating = projections?.health?.rating || 'AAA';
 
-  const updateRegionDecision = (regionId: number, field: string, val: number) => {
-     if (isReadOnly) return;
-     setDecisions(prev => ({ ...prev, regions: { ...prev.regions, [regionId]: { ...prev.regions[regionId], [field]: val } } }));
-  };
-
   const handleTransmition = async () => {
     if (isReadOnly) return;
     setIsSaving(true);
     try {
       await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions);
-      alert("PROTOCOLO SINCRONIZADO: O Oráculo recebeu os dados.");
-    } catch (e) { alert("ERRO DE TRANSMISSÃO."); } finally { setIsSaving(false); }
+      alert("PROTOCOLO SINCRONIZADO COM O ORÁCULO.");
+    } catch (e) { alert("ERRO NA TRANSMISSÃO."); } finally { setIsSaving(false); }
   };
 
   return (
-    <div className={`flex flex-col h-full bg-slate-900/60 rounded-[3rem] overflow-hidden border border-white/5 relative ${isReadOnly ? 'grayscale-[0.5] opacity-90' : ''}`}>
+    <div className="flex flex-col h-full bg-slate-900/60 rounded-[2.5rem] overflow-hidden border border-white/5 relative">
       
-      {/* MINIMALIST STEP INDICATOR */}
-      <nav className="flex bg-slate-950/40 p-1.5 border-b border-white/5 shrink-0">
+      {/* HUD DE RATING PERSISTENTE */}
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-3 bg-slate-950/80 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10 shadow-2xl">
+         <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+         <span className="text-[10px] font-black text-white italic tracking-widest uppercase">Oracle Rating: {rating}</span>
+      </div>
+
+      <nav className="flex bg-slate-950/40 p-1 border-b border-white/5 shrink-0">
          {STEPS.map((s, idx) => (
-           <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 py-3 transition-all rounded-2xl flex flex-col items-center gap-1.5 ${activeStep === idx ? 'bg-orange-600 text-white shadow-xl' : 'text-slate-600 hover:text-slate-400'}`}>
+           <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 py-3 transition-all rounded-xl flex flex-col items-center gap-1 ${activeStep === idx ? 'bg-orange-600 text-white shadow-xl' : 'text-slate-600 hover:text-slate-400'}`}>
               <s.icon size={14} />
-              <span className="text-[7px] font-black uppercase tracking-[0.2em]">{s.label}</span>
+              <span className="text-[7px] font-black uppercase tracking-widest">{s.label}</span>
            </button>
          ))}
       </nav>
 
-      {/* SCROLLABLE WORKSPACE */}
-      <div className="flex-1 p-8 overflow-y-auto no-scrollbar bg-slate-900/20">
+      <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-slate-900/20">
          <AnimatePresence mode="wait">
             {activeStep === 0 && (
-               <motion.div key="mkt" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
-                  <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                     <Megaphone size={18} className="text-orange-500"/>
-                     <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Architecture Comercial</h3>
-                  </div>
-                  
-                  {/* REGIONAL HORIZONTAL SCROLL */}
-                  <div className="horizontal-scroll-container pb-4">
+               <motion.div key="mkt" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                  <div className="horizontal-scroll-container pb-2">
                      <div className="flex gap-2">
                         {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
-                          <button key={i} onClick={() => setActiveRegion(i+1)} className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase border transition-all ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-500 shadow-lg' : 'bg-slate-950 text-slate-600 border-white/5 hover:border-white/20'}`}>Região 0{i+1}</button>
+                          <button key={i} onClick={() => setActiveRegion(i+1)} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase border transition-all ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-500 shadow-md' : 'bg-slate-950 text-slate-600 border-white/5 hover:border-white/20'}`}>Região 0{i+1}</button>
                         ))}
                      </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                     <InputCompact label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 0} onChange={v => updateRegionDecision(activeRegion, 'price', v)} icon={<DollarSign size={12}/>} readOnly={isReadOnly} />
-                     <InputCompact label="Marketing Regional ($)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={v => updateRegionDecision(activeRegion, 'marketing', v)} icon={<Sparkles size={12}/>} readOnly={isReadOnly} />
-                     <div className="col-span-2 space-y-2 p-5 bg-slate-950/50 rounded-[2rem] border border-white/5">
-                        <label className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Protocolo de Recebimento</label>
-                        <select disabled={isReadOnly} value={decisions.regions[activeRegion]?.term || 1} onChange={e => updateRegionDecision(activeRegion, 'term', Number(e.target.value))} className="w-full bg-slate-900 border-none rounded-xl p-3 text-white font-black text-xs outline-none cursor-pointer">
-                           <option value={1}>1x (Imediato / Cash)</option><option value={2}>2x (Termo Padrão)</option><option value={3}>3x (Diferimento Tático)</option>
-                        </select>
-                     </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <InputCompact label="Preço Unitário" val={decisions.regions[activeRegion]?.price || 0} onChange={v => !isReadOnly && setDecisions({...decisions, regions: {...decisions.regions, [activeRegion]: {...decisions.regions[activeRegion], price: v}}})} icon={<DollarSign size={12}/>} />
+                     <InputCompact label="Marketing" val={decisions.regions[activeRegion]?.marketing || 0} onChange={v => !isReadOnly && setDecisions({...decisions, regions: {...decisions.regions, [activeRegion]: {...decisions.regions[activeRegion], marketing: v}}})} icon={<Sparkles size={12}/>} />
                   </div>
                </motion.div>
             )}
 
             {activeStep === 1 && (
-               <motion.div key="prod" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-                  <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                     <Factory size={18} className="text-blue-500"/>
-                     <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Produção & SCM</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-6">
-                     <InputCompact label="Compra MP-A" val={decisions.production.purchaseMPA} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPA: v}})} icon={<Package size={12}/>} readOnly={isReadOnly} />
-                     <InputCompact label="Compra MP-B" val={decisions.production.purchaseMPB} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPB: v}})} icon={<Package size={12}/>} readOnly={isReadOnly} />
-                     <InputCompact label="OEE Goal (%)" val={decisions.production.activityLevel} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, activityLevel: v}})} icon={<Activity size={12}/>} readOnly={isReadOnly} />
-                     <InputCompact label="Invest. R&D ($)" val={decisions.production.rd_investment} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, rd_investment: v}})} icon={<Cpu size={12}/>} readOnly={isReadOnly} />
-                  </div>
+               <motion.div key="prod" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-4">
+                  <InputCompact label="MP-A" val={decisions.production.purchaseMPA} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPA: v}})} icon={<Package size={12}/>} />
+                  <InputCompact label="MP-B" val={decisions.production.purchaseMPB} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPB: v}})} icon={<Package size={12}/>} />
+                  <InputCompact label="OEE Goal %" val={decisions.production.activityLevel} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, activityLevel: v}})} icon={<Activity size={12}/>} />
+                  <InputCompact label="R&D Inv." val={decisions.production.rd_investment} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, rd_investment: v}})} icon={<Cpu size={12}/>} />
                </motion.div>
             )}
 
             {activeStep === 4 && (
-               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-10 text-center space-y-10">
-                  <div className="w-20 h-20 bg-orange-600/10 rounded-[2.5rem] flex items-center justify-center border border-orange-500/30 text-orange-500 shadow-inner"><ShieldCheck size={40} /></div>
-                  <div className="grid grid-cols-3 gap-4 w-full">
+               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center h-full text-center space-y-6">
+                  <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 text-emerald-500 shadow-inner"><ShieldCheck size={32} /></div>
+                  <div className="grid grid-cols-3 gap-3 w-full">
                      <ReviewBox label="Net Profit" val={`$ ${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) >= 0} />
                      <ReviewBox label="Rating" val={rating} pos={rating.includes('A')} />
                      <ReviewBox label="Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos />
                   </div>
                   {!isReadOnly && (
-                    <button onClick={handleTransmition} disabled={isSaving} className="w-full py-7 bg-orange-600 text-white rounded-3xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:bg-white hover:text-orange-950 transition-all flex items-center justify-center gap-4">
-                       {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={20}/> Transmitir Ciclo</>}
+                    <button onClick={handleTransmition} disabled={isSaving} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl hover:bg-white hover:text-orange-950 transition-all flex items-center justify-center gap-4">
+                       {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={18}/> Transmitir Ciclo</>}
                     </button>
                   )}
                </motion.div>
             )}
-
-            {(activeStep === 2 || activeStep === 3) && (
-               <div className="flex flex-col items-center justify-center py-32 text-slate-700 font-black uppercase tracking-widest space-y-4">
-                  <Loader2 size={32} className="animate-spin opacity-20" />
-                  <span className="text-[7px] tracking-[0.4em]">Sincronizando Módulo...</span>
-               </div>
-            )}
+            
+            {(activeStep === 2 || activeStep === 3) && <div className="flex items-center justify-center h-full opacity-20"><Loader2 size={32} className="animate-spin" /></div>}
          </AnimatePresence>
       </div>
 
-      {/* STICKY OPERATIONAL FOOTER */}
-      <footer className="sticky-wizard-footer flex justify-between items-center bg-slate-950/60 border-t border-orange-500/20 shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
-         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className="px-8 py-3 text-slate-500 font-black uppercase text-[9px] tracking-widest hover:text-white transition-all disabled:opacity-0 flex items-center gap-2">
-            <ChevronLeft size={16} /> Voltar
+      <footer className="sticky-wizard-footer bg-slate-950/80 p-4 border-t border-white/5">
+         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className="px-6 py-2 text-slate-500 font-black uppercase text-[8px] tracking-widest hover:text-white transition-all disabled:opacity-0 flex items-center gap-2">
+            <ChevronLeft size={14} /> Voltar
          </button>
-         
-         <div className="flex items-center gap-10">
-            <div className="hidden md:flex items-center gap-3">
-               <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-               <span className="text-[10px] font-black text-white italic">Oracle Rating: {rating}</span>
-            </div>
-            <button onClick={() => setActiveStep(s => Math.min(STEPS.length-1, s+1))} disabled={activeStep === STEPS.length-1} className="px-12 py-4 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95 disabled:hidden">
-               Avançar <ChevronRight size={16} />
-            </button>
-         </div>
+         <button onClick={() => setActiveStep(s => Math.min(STEPS.length-1, s+1))} disabled={activeStep === STEPS.length-1} className="px-10 py-3 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2 disabled:hidden">
+            Avançar <ChevronRight size={14} />
+         </button>
       </footer>
     </div>
   );
 };
 
-const InputCompact = ({ label, val, onChange, icon, readOnly }: any) => (
-  <div className="p-4 bg-slate-950/80 rounded-[2rem] border border-white/5 space-y-2 hover:border-orange-500/30 transition-all group shadow-inner">
+const InputCompact = ({ label, val, onChange, icon }: any) => (
+  <div className="p-4 bg-slate-950/80 rounded-2xl border border-white/5 space-y-2 hover:border-orange-500/30 transition-all shadow-inner">
      <div className="flex items-center gap-2">
-        <div className="text-slate-600 group-hover:text-orange-500 transition-colors">{icon}</div>
+        <div className="text-slate-600">{icon}</div>
         <label className="text-[7px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</label>
      </div>
-     <input readOnly={readOnly} type="number" value={val} onChange={e => onChange(Number(e.target.value))} className="w-full bg-slate-900 border-none rounded-xl px-3 py-2 text-white font-mono font-black text-sm outline-none focus:ring-1 focus:ring-orange-600 transition-all" />
+     <input type="number" value={val} onChange={e => onChange(Number(e.target.value))} className="w-full bg-slate-900 border-none rounded-lg px-3 py-1.5 text-white font-mono font-black text-sm outline-none focus:ring-1 focus:ring-orange-600 transition-all" />
   </div>
 );
 
 const ReviewBox = ({ label, val, pos }: any) => (
-  <div className="p-4 bg-slate-950/80 rounded-2xl border border-white/5 space-y-1 shadow-inner text-center">
+  <div className="p-3 bg-slate-950/80 rounded-xl border border-white/5 space-y-1 shadow-inner text-center">
      <span className="block text-[6px] font-black text-slate-600 uppercase tracking-widest">{label}</span>
-     <span className={`text-xs font-black italic font-mono leading-none ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
+     <span className={`text-[10px] font-black italic font-mono leading-none ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
   </div>
 );
 
