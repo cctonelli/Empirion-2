@@ -35,7 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
 
   return (
     <div className="h-screen bg-[#020617] text-slate-100 flex flex-col font-sans selection:bg-orange-500/30 overflow-hidden">
-      {/* ELITE ERP HEADER - h-12 v13.0 */}
+      {/* ELITE ERP HEADER - h-12 v13.0 Oracle Cockpit */}
       <header className="h-12 bg-slate-900 border-b border-white/5 px-6 flex items-center justify-between z-[1000] shadow-2xl shrink-0">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2 group">

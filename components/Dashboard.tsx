@@ -86,7 +86,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   );
 
   return (
-    <div className="flex flex-col h-screen bg-[#020617] overflow-hidden font-sans border-t border-white/5">
+    <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
       
       {/* TOP KPI HUD - ULTRA DENSO */}
       <section className="h-16 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
@@ -105,23 +105,23 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </div>
       </section>
 
-      {/* CORE OPERATIONAL WORKSPACE - ZERO SCROLL LAYOUT */}
-      <div className="flex flex-1 overflow-hidden h-[calc(100vh-theme(spacing.16)-theme(spacing.12))]">
+      {/* CORE OPERATIONAL WORKSPACE - ZERO SCROLL ARCHITECTURE */}
+      <div className="flex flex-1 overflow-hidden">
          
-         {/* LEFT PANEL: INTERNAL AUDIT (20%) */}
+         {/* LEFT PANEL: INTERNAL AUDIT (FIXED SIDEBAR) */}
          <aside className="w-64 bg-slate-900/60 border-r border-white/10 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-2xl z-10">
             <div className="p-4 space-y-4">
                <header className="flex items-center justify-between border-b border-white/5 pb-1">
                   <h3 className="text-[8px] font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
                      <Landmark size={10}/> Audit HUD
                   </h3>
-                  <span className="text-[7px] font-black text-slate-500 uppercase">Período 0{activeArena?.current_round}</span>
+                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Cycle 0{activeArena?.current_round}</span>
                </header>
                
                {/* MINI DRE DENSE */}
                <div className="bg-slate-950/80 p-3 rounded-xl border border-white/5 space-y-1.5 shadow-inner">
                   <div className="flex justify-between items-center mb-1">
-                     <h4 className="text-[7px] font-black text-slate-600 uppercase">DRE Consolidado</h4>
+                     <h4 className="text-[7px] font-black text-slate-600 uppercase">DRE Snapshot</h4>
                      <Maximize2 size={8} className="text-slate-700" />
                   </div>
                   <div className="space-y-0.5 font-mono text-[8px]">
@@ -134,10 +134,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
                {/* FINANCIAL HEALTH GAUGE */}
                <div className="bg-slate-950/80 p-3 rounded-xl border border-white/5 space-y-2">
-                  <h4 className="text-[7px] font-black text-slate-600 uppercase">Liquidez Corrente</h4>
+                  <h4 className="text-[7px] font-black text-slate-600 uppercase">Current Liquidity</h4>
                   <div className="space-y-1.5">
                      <div className="flex justify-between items-end">
-                        <span className="text-[7px] font-bold text-slate-500 uppercase">Capacidade 1.25x</span>
+                        <span className="text-[7px] font-bold text-slate-500 uppercase">Target 1.25x</span>
                         <TrendingUp size={8} className="text-emerald-500" />
                      </div>
                      <div className="w-full h-0.5 bg-white/5 rounded-full overflow-hidden">
@@ -149,12 +149,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                {/* TSF THERMOMETER */}
                <div className="bg-orange-600/5 p-3 rounded-xl border border-orange-500/10 space-y-1.5">
                   <div className="flex justify-between items-center">
-                     <span className="text-[7px] font-black text-orange-500 uppercase">Efeito Tesoura (TSF)</span>
+                     <span className="text-[7px] font-black text-orange-500 uppercase italic">TSF Termometer</span>
                      <Gauge size={8} className="text-orange-500" />
                   </div>
                   <div className="flex items-center justify-between">
                      <span className="text-sm font-black text-white font-mono italic">{(currentKpis.scissors_effect?.tsf || 0).toFixed(2)}</span>
-                     <span className={`text-[6px] font-black px-1 py-0.5 rounded ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-600 text-white' : 'bg-emerald-600/20 text-emerald-500'}`}>
+                     <span className={`text-[6px] font-black px-1.5 py-0.5 rounded ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-600 text-white' : 'bg-emerald-600/20 text-emerald-500'}`}>
                         {currentKpis.scissors_effect?.is_critical ? 'CRITICAL' : 'OPTIMAL'}
                      </span>
                   </div>
@@ -162,27 +162,27 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
                {/* CAPEX MONITOR */}
                <div className="bg-slate-950/80 p-3 rounded-xl border border-white/5 space-y-1.5">
-                  <h4 className="text-[7px] font-black text-slate-600 uppercase">CapEx Ativo</h4>
+                  <h4 className="text-[7px] font-black text-slate-600 uppercase">CapEx Nodes</h4>
                   <div className="flex items-center justify-between">
                      <span className="text-[10px] font-black text-slate-300">$ 5.88M</span>
-                     <span className="text-[7px] font-bold text-rose-500 uppercase">Deprec. -5%</span>
+                     <span className="text-[7px] font-bold text-rose-500 uppercase italic">Obsolescence ACTIVE</span>
                   </div>
                </div>
             </div>
          </aside>
 
-         {/* CENTER PANEL: DECISION ENGINE (60%) - SCROLLABLE WORKSPACE */}
+         {/* CENTER PANEL: WAR ROOM (SCROLLABLE FORM) */}
          <main className="flex-1 bg-slate-950 flex flex-col overflow-hidden relative shadow-inner">
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 pb-20">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 pb-24">
                <div className="max-w-3xl mx-auto space-y-4">
                   <div className="flex justify-between items-end border-b border-white/5 pb-2">
                      <div>
-                        <h2 className="text-xl font-black text-white uppercase italic tracking-tighter leading-none">War <span className="text-orange-600">Feed</span></h2>
-                        <p className="text-[7px] font-bold text-slate-600 uppercase tracking-widest mt-1 italic">Operando Nodo {activeTeam?.name || 'ALPHA'}</p>
+                        <h2 className="text-xl font-black text-white uppercase italic tracking-tighter leading-none">Decision <span className="text-orange-600">Feed</span></h2>
+                        <p className="text-[7px] font-bold text-slate-600 uppercase tracking-widest mt-1 italic">Strategos Alpha Control • Unit {activeTeam?.name || 'ALPHA'}</p>
                      </div>
                      <div className="flex gap-2">
-                        <button onClick={() => setShowGazette(true)} className="px-3 py-1.5 bg-slate-900 border border-white/10 text-white rounded-lg font-black text-[7px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-1.5">
-                           <Newspaper size={10} /> Oracle Gazette
+                        <button onClick={() => setShowGazette(true)} className="px-3 py-1.5 bg-slate-900 border border-white/10 text-white rounded-lg font-black text-[7px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-1.5 shadow-lg">
+                           <Newspaper size={10} /> Sector Intelligence
                         </button>
                      </div>
                   </div>
@@ -199,33 +199,33 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             </div>
          </main>
 
-         {/* RIGHT PANEL: EXTERNAL PULSE (20%) */}
+         {/* RIGHT PANEL: MARKET PULSE (FIXED SIDEBAR) */}
          <aside className="w-64 bg-slate-900/60 border-l border-white/10 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-2xl z-10">
             <div className="p-4 space-y-4">
                
-               {/* MACRO DENSITY */}
+               {/* WORLD MACRO INDICATORS */}
                <div className="space-y-2">
                   <h3 className="text-[8px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                     <Globe size={10}/> World Indicators
+                     <Globe size={10}/> World Ingestion
                   </h3>
                   <div className="grid grid-cols-2 gap-1.5">
                      <MacroTileCompact label="Growth" val={`+${activeArena?.market_indicators.growth_rate}%`} color="blue" />
-                     <MacroTileCompact label="Inflação" val={`${activeArena?.market_indicators.inflation_rate}%`} color="rose" />
-                     <MacroTileCompact label="Juros" val={`${activeArena?.market_indicators.interest_rate_tr}%`} color="amber" />
-                     <MacroTileCompact label="Labor" val="Fair" color="emerald" />
+                     <MacroTileCompact label="CPI" val={`${activeArena?.market_indicators.inflation_rate}%`} color="rose" />
+                     <MacroTileCompact label="Interest" val={`${activeArena?.market_indicators.interest_rate_tr}%`} color="amber" />
+                     <MacroTileCompact label="Wages" val="Fixed" color="emerald" />
                   </div>
                </div>
 
-               {/* COMPETITION RANKING (RELATORIO COLETIVO) */}
+               {/* SECTOR RANKING FEED */}
                <div className="space-y-2">
                   <h3 className="text-[8px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                     <Scale size={10}/> Sector Yields
+                     <Scale size={10}/> Market Capture
                   </h3>
-                  <div className="bg-slate-950/80 rounded-xl border border-white/5 overflow-hidden">
+                  <div className="bg-slate-950/80 rounded-xl border border-white/5 overflow-hidden shadow-inner">
                      <table className="w-full text-left">
                         <thead className="bg-white/5 text-[6px] font-black uppercase text-slate-500">
                            <tr>
-                              <th className="px-2 py-1.5">Team</th>
+                              <th className="px-2 py-1.5">Unit</th>
                               <th className="px-1 py-1.5 text-center">Share</th>
                               <th className="px-2 py-1.5 text-right">Yield</th>
                            </tr>
@@ -233,9 +233,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                         <tbody className="divide-y divide-white/5 font-mono text-[7px]">
                            {currentKpis.regional_pulse?.slice(0, 6).map((reg: RegionalData, i: number) => (
                              <tr key={reg.region_id} className="hover:bg-white/5 transition-colors">
-                                <td className="px-2 py-1.5 text-slate-400 font-bold uppercase truncate max-w-[60px]">UNIT 0{i+1}</td>
+                                <td className="px-2 py-1.5 text-slate-400 font-bold uppercase truncate max-w-[60px]">NODE 0{i+1}</td>
                                 <td className="px-1 py-1.5 text-white text-center">{reg.market_share}%</td>
-                                <td className="px-2 py-1.5 text-right text-orange-500 font-black">{(reg.market_share * 1.2).toFixed(1)}%</td>
+                                <td className="px-2 py-1.5 text-right text-orange-500 font-black">{(reg.market_share * 1.15).toFixed(1)}%</td>
                              </tr>
                            ))}
                         </tbody>
@@ -243,25 +243,30 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* REGIONAL DEMAND */}
+               {/* REGIONAL DEMAND PULSE */}
                <div className="space-y-2">
                   <h3 className="text-[8px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-                     <Map size={10}/> Demand Pulse
+                     <Map size={10}/> Regional Heat
                   </h3>
                   <div className="space-y-1.5">
                      {currentKpis.regional_pulse?.slice(0, 3).map((reg) => (
-                       <div key={reg.region_id} className="p-2 bg-slate-950/80 border border-white/5 rounded-lg flex items-center justify-between">
-                          <span className="text-[7px] font-black text-slate-500 uppercase">{reg.region_name}</span>
+                       <div key={reg.region_id} className="p-2 bg-slate-950/80 border border-white/5 rounded-lg flex items-center justify-between group hover:border-indigo-500/30 transition-all">
+                          <span className="text-[7px] font-black text-slate-500 uppercase group-hover:text-slate-300 transition-colors">{reg.region_name}</span>
                           <span className="text-[9px] font-black text-white font-mono">{reg.demand.toLocaleString()} units</span>
                        </div>
                      ))}
                   </div>
                </div>
 
-               {/* STRATEGIC RADAR */}
-               <div className="p-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl space-y-1">
-                  <span className="text-[6px] font-black text-indigo-400 uppercase">Conselho Oracle</span>
-                  <p className="text-[8px] text-indigo-100 font-medium italic leading-relaxed">"O preço médio do setor subiu 2%. Suas margens podem ser expandidas no Round 1."</p>
+               {/* STRATEGIC RADAR FEED */}
+               <div className="p-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl space-y-1.5 shadow-lg">
+                  <div className="flex items-center gap-1.5">
+                     <Sparkles size={10} className="text-indigo-400" />
+                     <span className="text-[6px] font-black text-indigo-400 uppercase tracking-widest">Oracle Briefing</span>
+                  </div>
+                  <p className="text-[8px] text-indigo-100 font-medium italic leading-relaxed">
+                     "Sector avg price increased by 2%. Margin expansion is viable for Unit Alpha this cycle."
+                  </p>
                </div>
             </div>
          </aside>
@@ -283,7 +288,7 @@ const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
   <div className="px-4 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden">
      <div className="flex items-center justify-between mb-0.5">
         <div className="flex items-center gap-1">
-           <div className="text-orange-500">{icon}</div>
+           <div className="text-orange-500 group-hover:scale-110 transition-transform">{icon}</div>
            <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</span>
         </div>
         <span className={`text-[6px] font-black ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
@@ -295,7 +300,7 @@ const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
 );
 
 const MiniFinRow = ({ label, val, neg, bold, highlight }: any) => (
-  <div className={`flex justify-between items-center py-0.5 border-b border-white/[0.02] last:border-0 ${highlight ? 'text-orange-500' : ''}`}>
+  <div className={`flex justify-between items-center py-0.5 border-b border-white/[0.02] last:border-0 ${highlight ? 'text-orange-500 font-black' : ''}`}>
      <span className={`${bold ? 'font-black text-slate-400' : 'text-slate-600'}`}>{label}</span>
      <span className={`font-black ${neg ? 'text-rose-500' : bold ? 'text-white' : 'text-slate-500'}`}>{val}</span>
   </div>
@@ -310,8 +315,8 @@ const MacroTileCompact = ({ label, val, color }: any) => {
   }[color as 'blue' | 'rose' | 'amber' | 'emerald'];
 
   return (
-    <div className={`p-1.5 rounded-lg border flex flex-col gap-0 ${colors}`}>
-       <span className="text-[6px] font-black uppercase opacity-60 truncate">{label}</span>
+    <div className={`p-1.5 rounded-lg border flex flex-col gap-0 shadow-inner ${colors}`}>
+       <span className="text-[6px] font-black uppercase opacity-60 truncate tracking-tighter">{label}</span>
        <span className="text-[10px] font-black font-mono leading-none italic">{val}</span>
     </div>
   );
