@@ -1,44 +1,41 @@
-# 🚀 Empirion – Business Intelligence Arena (v12.9.1-Gold)
+# 🚀 Empirion – Business Intelligence Arena (v13.0-Oracle Gold)
 
 **Forge Your Empire with AI-Driven Strategic Insight.**
 
-O Empirion é a plataforma definitiva de simulação empresarial multiplayer. No build **v12.9.1 GOLD**, o sistema introduz a **Governança Absoluta**, permitindo controle total sobre a experiência do usuário e a integridade competitiva.
+O Empirion é a plataforma definitiva de simulação empresarial multiplayer. No build **v13.0 Oracle Gold**, o sistema consolida a **Separação Estrita de Ambientes**, garantindo ergonomia visual e segurança operacional.
 
 ---
 
-## 👥 1. Matriz de Papéis e Permissões (Roles)
+## 👥 1. Matriz de Ambientes e Funções (Roles)
 
-| Papel | Visão | Poderes Principais | Restrições |
+| Ambiente | Perfil | Funções Principais | Visão Exclusiva |
 | :--- | :--- | :--- | :--- |
-| **Administrador** | **Global (360°)** | CMS (Menus/Carrossel), Gestão de Templates, Controle de Usuários, Auditoria Total. | Nenhuma (Dono da Bola). |
-| **Tutor** | **Arena (Específica)** | Criar Campeonatos, Configurar Macroeconomia, Processar Turnover, Dar Feedback. | Apenas em suas arenas. |
-| **Equipe** | **Unidade (Interna)** | Decisões Táticas (Preço, RH, CapEx), Plano de Negócios, Dashboards Próprios. | Sem acesso a dados de rivais. |
-| **Observador** | **Analítica (Read-Only)** | Relatórios Públicos, Gazeta, Dashboard de Rankings, Grounded Search. | Bloqueio total de edição. |
+| **Command Center** | **Admin Geral** | Gestão de CMS (Menus/Cores/Fontes), Cadastro de Templates, Controle Financeiro do Site. | Métricas de Sistema (Usuários, Tráfego, Vendas SaaS). |
+| **Control Room** | **Tutor** | Parametrização de Arenas (Moeda, Regiões), Condução de Rodadas, Intervenção Tática. | Monitor de Decisões Tabular, Gráficos Coletivos. |
+| **War Room** | **Equipe** | Decisões de Preço, Marketing, Produção e RH. Gestão da Unidade. | Dashboard Privado, HUD de Rating Oracle. |
+| **Public Arena** | **Observador** | Acompanhamento de Rankings, Relatórios Públicos, Votação de Comunidade. | Leitura Pura (Read-Only), Feed de Notícias. |
 
 ---
 
-## 🔄 2. Processos de Campeonato
+## 🔄 2. Fluxos de Trabalho Unificados
 
-### A. Criação (Tutor/Admin)
-Utiliza o **Strategos Wizard Gold** para definir o DNA da simulação:
-1.  **DNA da Arena:** Seleção de templates (Industrial, Comercial, etc.).
-2.  **Protocolos IA:** Ativação de bots Gemini e Grounding Search real.
-3.  **Transparência:** Definição do modo da Gazeta (Anônimo/Identificado).
-4.  **Audit Inicial:** Personalização do Balanço P0 conforme normas CPC 26.
+### A. Governança de Marca (Admin)
+O Admin Geral utiliza o **Branding Node** para:
+*   Alterar a identidade visual (Cores e Escala de Fontes).
+*   Trocar ativos do carrossel principal.
+*   Configurar novas moedas (BRL, USD, EUR) para os templates master.
 
-### B. Disputa (Equipes)
-As equipes operam em **Ciclos Herméticos**:
-*   **War Room:** Edição colaborativa de decisões em tempo real.
-*   **Oracle Validation:** O sistema impede a transmissão de decisões que causem insolvência imediata sem aviso.
-*   **Turnover:** O motor processa o impacto das decisões e gera o próximo período.
+### B. Setup de Arena (Tutor)
+Utiliza o **Strategos Wizard Gold** com:
+*   **Sticky Actions:** Botões de navegação sempre visíveis.
+*   **Currency Locking:** Definição da moeda base que rege todos os relatórios do campeonato.
+*   **Audit P00:** Personalização do balanço inicial conforme normas CPC.
 
----
-
-## 👑 3. Visão do Administrador (Command Center)
-O Administrador tem o controle de infraestrutura e conteúdo:
-*   **Parametrização UI:** Troca de labels, imagens de carrossel e conteúdos de subseções sem necessidade de código.
-*   **Templates Hub:** Criação de novos modelos de simulação para áreas Trial e Premium.
-*   **System Health:** Monitoramento de latência e integridade das tabelas Supabase.
+### C. Execução Estratégica (Equipes)
+As equipes operam no **Oracle Grid**:
+*   Interface One-Screen sem scroll vertical.
+*   Inputs de alta densidade para preenchimento rápido.
+*   HUD Flutuante com Δ Rating em tempo real.
 
 ---
-*Empirion v12.9.1 Gold – Onde a estratégia encontra a governança absoluta.*
+*Empirion v13.0 Oracle Gold – Governança Absoluta, Performance de Elite.*

@@ -13,11 +13,11 @@ import { DecisionData, Branch, Championship, ProjectionResult, CreditRating, Eco
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STEPS = [
-  { id: 'marketing', label: 'Commercial', icon: Megaphone, color: 'orange' },
-  { id: 'production', label: 'Manufacturing', icon: Factory, color: 'blue' },
-  { id: 'hr', label: 'Staffing', icon: Users2, color: 'emerald' },
-  { id: 'finance', label: 'Asset/Cap', icon: DollarSign, color: 'indigo' },
-  { id: 'review', label: 'Finalize', icon: ShieldCheck, color: 'orange' },
+  { id: 'marketing', label: 'Comercial', icon: Megaphone, color: 'orange' },
+  { id: 'production', label: 'Operações', icon: Factory, color: 'blue' },
+  { id: 'hr', label: 'Recursos', icon: Users2, color: 'emerald' },
+  { id: 'finance', label: 'Dívida/Cap', icon: DollarSign, color: 'indigo' },
+  { id: 'review', label: 'Transmitir', icon: ShieldCheck, color: 'orange' },
 ];
 
 const createInitialDecisions = (regionsCount: number): DecisionData => ({
@@ -28,7 +28,7 @@ const createInitialDecisions = (regionsCount: number): DecisionData => ({
   legal: { recovery_mode: 'none' }
 });
 
-const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; }> = ({ teamId = 'alpha', champId = 'c1', round = 1, branch = 'industrial' }) => {
+const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean }> = ({ teamId = 'alpha', champId = 'c1', round = 1, branch = 'industrial', isReadOnly = false }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [decisions, setDecisions] = useState<DecisionData>(createInitialDecisions(9));
@@ -64,10 +64,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const rating = projections?.health?.rating || 'AAA';
 
   const updateRegionDecision = (regionId: number, field: string, val: number) => {
+     if (isReadOnly) return;
      setDecisions(prev => ({ ...prev, regions: { ...prev.regions, [regionId]: { ...prev.regions[regionId], [field]: val } } }));
   };
 
   const handleTransmition = async () => {
+    if (isReadOnly) return;
     setIsSaving(true);
     try {
       await saveDecisions(teamId, champId!, (activeArena?.current_round || 0) + 1, decisions);
@@ -78,60 +80,61 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 rounded-2xl overflow-hidden border border-white/5 relative">
+    <div className={`flex flex-col h-full bg-slate-900 rounded-[2rem] overflow-hidden border border-white/5 relative ${isReadOnly ? 'grayscale-[0.5] opacity-90' : ''}`}>
       
       {/* COMPACT SECTOR NAV */}
-      <nav className="flex bg-slate-950/80 p-0.5 border-b border-white/5 shrink-0">
+      <nav className="flex bg-slate-950/80 p-1 border-b border-white/5 shrink-0">
          {STEPS.map((s, idx) => {
             const active = activeStep === idx;
             return (
               <button 
                 key={s.id} 
                 onClick={() => setActiveStep(idx)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 transition-all rounded-lg ${active ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-400'}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 transition-all rounded-xl ${active ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-400'}`}
               >
-                 <s.icon size={10} strokeWidth={active ? 3 : 2} />
-                 <span className="text-[7px] font-black uppercase tracking-widest hidden lg:block">{s.label}</span>
+                 <s.icon size={12} strokeWidth={active ? 3 : 2} />
+                 <span className="text-[9px] font-black uppercase tracking-widest hidden lg:block">{s.label}</span>
               </button>
             );
          })}
       </nav>
 
       {/* WORKSPACE AREA */}
-      <div className="flex-1 p-4 overflow-y-auto no-scrollbar min-h-[360px] bg-slate-900/30">
+      <div className="flex-1 p-6 overflow-y-auto no-scrollbar min-h-[400px] bg-slate-900/30">
          <AnimatePresence mode="wait">
             {activeStep === 0 && (
-               <motion.div key="mkt" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                     <Megaphone size={12} className="text-orange-500"/>
-                     <h3 className="text-xs font-black text-white uppercase italic tracking-tighter">Market Architecture</h3>
+               <motion.div key="mkt" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+                     <Megaphone size={16} className="text-orange-500"/>
+                     <h3 className="text-sm font-black text-white uppercase italic tracking-tighter">Architecture Comercial</h3>
                   </div>
                   
-                  <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1">
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                      {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
                        <button 
                          key={i} 
                          onClick={() => setActiveRegion(i+1)}
-                         className={`px-2.5 py-1.5 rounded-lg text-[7px] font-black uppercase transition-all whitespace-nowrap border ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-500 shadow-md' : 'bg-slate-950 text-slate-600 border-white/5 hover:border-white/20'}`}
+                         className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all whitespace-nowrap border ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-500 shadow-md' : 'bg-slate-950 text-slate-600 border-white/5 hover:border-white/20'}`}
                        >
-                         R0{i+1}
+                         Região 0{i+1}
                        </button>
                      ))}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                     <ErpInputCompact label="Unit Price ($)" val={decisions.regions[activeRegion]?.price || 0} onChange={v => updateRegionDecision(activeRegion, 'price', v)} icon={<DollarSign size={8}/>} />
-                     <ErpInputCompact label="Regional Mkt ($)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={v => updateRegionDecision(activeRegion, 'marketing', v)} icon={<Sparkles size={8}/>} />
-                     <div className="space-y-1 p-2 bg-slate-950/50 rounded-xl border border-white/5 col-span-2">
-                        <label className="text-[6px] font-black text-slate-600 uppercase tracking-widest">Collection Protocol</label>
+                  <div className="grid grid-cols-2 gap-4">
+                     <ErpInputCompact label="Preço de Venda ($)" val={decisions.regions[activeRegion]?.price || 0} onChange={v => updateRegionDecision(activeRegion, 'price', v)} icon={<DollarSign size={10}/>} readOnly={isReadOnly} />
+                     <ErpInputCompact label="Marketing Regional ($)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={v => updateRegionDecision(activeRegion, 'marketing', v)} icon={<Sparkles size={10}/>} readOnly={isReadOnly} />
+                     <div className="space-y-1.5 p-3 bg-slate-950/50 rounded-2xl border border-white/5 col-span-2">
+                        <label className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Protocolo de Recebimento</label>
                         <select 
+                           disabled={isReadOnly}
                            value={decisions.regions[activeRegion]?.term || 1} 
                            onChange={e => updateRegionDecision(activeRegion, 'term', Number(e.target.value))}
-                           className="w-full bg-slate-900 border-none rounded-lg p-1.5 text-white font-black text-[9px] outline-none cursor-pointer appearance-none shadow-inner"
+                           className="w-full bg-slate-900 border-none rounded-xl p-2.5 text-white font-black text-[11px] outline-none cursor-pointer appearance-none shadow-inner"
                         >
-                           <option value={1}>1x (Immediate Cash)</option>
-                           <option value={2}>2x (Standard Term)</option>
-                           <option value={3}>3x (Strategic Delay)</option>
+                           <option value={1}>1x (Imediato / Cash)</option>
+                           <option value={2}>2x (Termo Padrão)</option>
+                           <option value={3}>3x (Diferimento Tático)</option>
                         </select>
                      </div>
                   </div>
@@ -139,123 +142,126 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             )}
 
             {activeStep === 1 && (
-               <motion.div key="prod" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                     <Factory size={12} className="text-blue-500"/>
-                     <h3 className="text-xs font-black text-white uppercase italic tracking-tighter">Factory & SCM</h3>
+               <motion.div key="prod" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+                     <Factory size={16} className="text-blue-500"/>
+                     <h3 className="text-sm font-black text-white uppercase italic tracking-tighter">Produção & SCM</h3>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                     <ErpInputCompact label="Purchase MP-A (Units)" val={decisions.production.purchaseMPA} onChange={v => setDecisions({...decisions, production: {...decisions.production, purchaseMPA: v}})} icon={<Package size={8}/>} />
-                     <ErpInputCompact label="Purchase MP-B (Units)" val={decisions.production.purchaseMPB} onChange={v => setDecisions({...decisions, production: {...decisions.production, purchaseMPB: v}})} icon={<Package size={8}/>} />
-                     <ErpInputCompact label="OEE Target (%)" val={decisions.production.activityLevel} onChange={v => setDecisions({...decisions, production: {...decisions.production, activityLevel: v}})} icon={<Activity size={8}/>} />
-                     <ErpInputCompact label="R&D Protocol ($)" val={decisions.production.rd_investment} onChange={v => setDecisions({...decisions, production: {...decisions.production, rd_investment: v}})} icon={<Cpu size={8}/>} />
+                  <div className="grid grid-cols-2 gap-4">
+                     <ErpInputCompact label="Compra MP-A (Unid)" val={decisions.production.purchaseMPA} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPA: v}})} icon={<Package size={10}/>} readOnly={isReadOnly} />
+                     <ErpInputCompact label="Compra MP-B (Unid)" val={decisions.production.purchaseMPB} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, purchaseMPB: v}})} icon={<Package size={10}/>} readOnly={isReadOnly} />
+                     <ErpInputCompact label="Meta de OEE (%)" val={decisions.production.activityLevel} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, activityLevel: v}})} icon={<Activity size={10}/>} readOnly={isReadOnly} />
+                     <ErpInputCompact label="Pesquisa & Desenv. ($)" val={decisions.production.rd_investment} onChange={v => !isReadOnly && setDecisions({...decisions, production: {...decisions.production, rd_investment: v}})} icon={<Cpu size={10}/>} readOnly={isReadOnly} />
                   </div>
                </motion.div>
             )}
 
             {activeStep === 4 && (
-               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-4 text-center space-y-6">
-                  <div className="space-y-1">
-                     <div className="w-12 h-12 bg-orange-600/10 rounded-2xl flex items-center justify-center mx-auto border border-orange-500/30 text-orange-500 shadow-inner">
-                        <ShieldCheck size={28} />
+               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-6 text-center space-y-8">
+                  <div className="space-y-2">
+                     <div className="w-16 h-16 bg-orange-600/10 rounded-[2rem] flex items-center justify-center mx-auto border border-orange-500/30 text-orange-500 shadow-inner">
+                        <ShieldCheck size={32} />
                      </div>
-                     <h2 className="text-lg font-black text-white uppercase italic tracking-tighter">Sync Integrity</h2>
-                     <p className="text-slate-600 font-bold uppercase tracking-widest text-[7px]">Oracle v13.0 Simulation Preview</p>
+                     <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Selo de Integridade</h2>
+                     <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[8px] italic">Revisão Oracle P0{activeArena?.current_round + 1}</p>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 w-full">
-                     <ReviewBox label="Net Profit" val={`$${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) > 0} />
-                     <ReviewBox label="Proj Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos />
-                     <ReviewBox label="Oracle Rating" val={rating} pos={rating.includes('A')} />
+                  <div className="grid grid-cols-3 gap-3 w-full">
+                     <ReviewBox label="Lucro Projetado" val={`${(projections?.netProfit || 0) >= 0 ? '+' : ''}${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) > 0} />
+                     <ReviewBox label="Market Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos />
+                     <ReviewBox label="Rating Oracle" val={rating} pos={rating.includes('A')} />
                   </div>
 
-                  <button 
-                    onClick={handleTransmition}
-                    disabled={isSaving}
-                    className="w-full py-4 bg-orange-600 text-white rounded-xl font-black text-[8px] uppercase tracking-[0.4em] shadow-xl hover:bg-white hover:text-orange-950 transition-all active:scale-95 flex items-center justify-center gap-3 border border-orange-500/30"
-                  >
-                     {isSaving ? <Loader2 className="animate-spin" size={14} /> : <><Save size={14}/> Transmit Protocol</>}
-                  </button>
+                  {!isReadOnly && (
+                    <button 
+                      onClick={handleTransmition}
+                      disabled={isSaving}
+                      className="w-full py-6 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl hover:bg-white hover:text-orange-950 transition-all active:scale-95 flex items-center justify-center gap-4 border border-orange-500/30"
+                    >
+                       {isSaving ? <Loader2 className="animate-spin" size={18} /> : <><Save size={18}/> Transmitir ao Oráculo</>}
+                    </button>
+                  )}
                </motion.div>
             )}
 
             {(activeStep === 2 || activeStep === 3) && (
-               <div className="flex flex-col items-center justify-center py-20 text-slate-700 italic font-black uppercase tracking-widest space-y-4">
-                  <Loader2 size={32} className="animate-spin opacity-20" />
-                  <span className="text-[7px] tracking-[0.3em]">Synchronizing Module {STEPS[activeStep].label}...</span>
+               <div className="flex flex-col items-center justify-center py-24 text-slate-700 italic font-black uppercase tracking-widest space-y-6">
+                  <Loader2 size={40} className="animate-spin opacity-20" />
+                  <span className="text-[8px] tracking-[0.4em]">Sincronizando Módulo {STEPS[activeStep].label}...</span>
                </div>
             )}
          </AnimatePresence>
       </div>
 
-      {/* FIXED FLOATING RATING HUD */}
-      <div className="h-10 bg-slate-900 border-t border-orange-500/30 px-5 flex items-center justify-between shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
-         <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-               <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
-               <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Real-time HUD</span>
-            </div>
+      {/* FIXED FLOATING RATING HUD - ALTA VISIBILIDADE */}
+      <div className="h-12 bg-slate-900 border-t border-orange-500/30 px-6 flex items-center justify-between shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.7)]">
+         <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-               <span className="text-[9px] font-black text-white italic tracking-tighter">Rating: {rating}</span>
-               <div className={`flex items-center gap-0.5 ${(projections?.netProfit || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  <TrendingUp size={8} className={ (projections?.netProfit || 0) < 0 ? 'rotate-180' : '' }/>
-                  <span className="text-[7px] font-black">{ (projections?.netProfit || 0) >= 0 ? '+' : '' }Oracle Delta</span>
+               <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_#f97316]"></div>
+               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Real-time Feedback</span>
+            </div>
+            <div className="flex items-center gap-3">
+               <span className="text-lg font-black text-white italic tracking-tighter">Oracle Rating: {rating}</span>
+               <div className={`flex items-center gap-1 ${(projections?.netProfit || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  <TrendingUp size={10} className={ (projections?.netProfit || 0) < 0 ? 'rotate-180' : '' }/>
+                  <span className="text-[9px] font-black">{ (projections?.netProfit || 0) >= 0 ? '▲' : '▼' } Delta</span>
                </div>
             </div>
          </div>
-         <div className="flex items-center gap-4 border-l border-white/5 pl-5">
-            <div className="flex items-center gap-1.5 text-blue-400">
-               <BarChart3 size={10}/>
-               <span className="text-[8px] font-black font-mono">{(projections?.marketShare || 12.5).toFixed(1)}% Share</span>
+         <div className="flex items-center gap-6 border-l border-white/10 pl-6 h-6">
+            <div className="flex items-center gap-2 text-blue-400">
+               <BarChart3 size={14}/>
+               <span className="text-sm font-black font-mono">{(projections?.marketShare || 12.5).toFixed(1)}% Share</span>
             </div>
          </div>
       </div>
 
       {/* FOOTER WIZARD CONTROLS */}
-      <footer className="p-2 bg-slate-950 border-t border-white/5 flex justify-between items-center shrink-0">
+      <footer className="p-3 bg-slate-950 border-t border-white/5 flex justify-between items-center shrink-0">
          <button 
            onClick={() => setActiveStep(s => Math.max(0, s-1))}
            disabled={activeStep === 0}
-           className="px-3 py-1.5 text-slate-600 font-black uppercase text-[7px] tracking-widest hover:text-white transition-all disabled:opacity-0 flex items-center gap-1"
+           className="px-6 py-2.5 text-slate-500 font-black uppercase text-[9px] tracking-widest hover:text-white transition-all disabled:opacity-0 flex items-center gap-2"
          >
-            <ChevronLeft size={10} /> Prev
+            <ChevronLeft size={14} /> Voltar
          </button>
-         <div className="flex gap-1.5">
+         <div className="flex gap-2">
             {STEPS.map((_, i) => (
-               <div key={i} className={`w-1 h-1 rounded-full transition-all duration-500 ${i === activeStep ? 'bg-orange-500 w-4 shadow-[0_0_8px_#f97316]' : 'bg-white/10'}`} />
+               <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${i === activeStep ? 'bg-orange-500 w-6 shadow-[0_0_10px_#f97316]' : 'bg-white/10'}`} />
             ))}
          </div>
          <button 
            onClick={() => setActiveStep(s => Math.min(STEPS.length-1, s+1))}
            disabled={activeStep === STEPS.length-1}
-           className="px-5 py-1.5 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-lg font-black text-[7px] uppercase tracking-widest transition-all flex items-center gap-1 active:scale-95 disabled:opacity-0"
+           className="px-8 py-2.5 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95 disabled:opacity-0"
          >
-            Next <ChevronRight size={10} />
+            Avançar <ChevronRight size={14} />
          </button>
       </footer>
     </div>
   );
 };
 
-const ErpInputCompact = ({ label, val, onChange, icon }: any) => (
-  <div className="p-2.5 bg-slate-950/50 rounded-xl border border-white/5 space-y-1 hover:border-orange-500/30 transition-all group shadow-inner">
-     <div className="flex items-center gap-1.5">
+const ErpInputCompact = ({ label, val, onChange, icon, readOnly }: any) => (
+  <div className="p-3 bg-slate-950/60 rounded-[1.5rem] border border-white/5 space-y-1.5 hover:border-orange-500/40 transition-all group shadow-inner">
+     <div className="flex items-center gap-2">
         <div className="text-slate-600 group-hover:text-orange-500 transition-colors">{icon}</div>
-        <label className="text-[6px] font-black text-slate-600 uppercase tracking-widest group-hover:text-slate-300 transition-colors truncate">{label}</label>
+        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-300 transition-colors truncate">{label}</label>
      </div>
      <input 
+        readOnly={readOnly}
         type="number" 
         value={val} 
         onChange={e => onChange(Number(e.target.value))}
-        className="w-full bg-slate-900 border-none rounded-lg px-2 py-1 text-white font-mono font-black text-[10px] outline-none focus:ring-1 focus:ring-orange-600 transition-all shadow-inner"
+        className="w-full bg-slate-900 border-none rounded-xl px-3 py-2 text-white font-mono font-black text-sm outline-none focus:ring-1 focus:ring-orange-600 transition-all shadow-inner"
      />
   </div>
 );
 
 const ReviewBox = ({ label, val, pos }: any) => (
-  <div className="p-2 bg-slate-950 rounded-lg border border-white/5 space-y-0.5 shadow-inner">
-     <span className="block text-[5px] font-black text-slate-600 uppercase tracking-widest">{label}</span>
-     <span className={`text-[9px] font-black italic font-mono leading-none ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
+  <div className="p-3 bg-slate-950/80 rounded-2xl border border-white/5 space-y-1 shadow-inner">
+     <span className="block text-[7px] font-black text-slate-600 uppercase tracking-widest">{label}</span>
+     <span className={`text-sm font-black italic font-mono leading-none ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
   </div>
 );
 
