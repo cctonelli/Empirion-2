@@ -10,8 +10,8 @@ O Empirion é a plataforma definitiva de simulação empresarial multiplayer. No
 
 | Ambiente | Perfil | Funções Principais | Visão Exclusiva |
 | :--- | :--- | :--- | :--- |
-| **Command Center** | **Admin Geral** | Gestão de CMS (Menus/Cores/Fontes), Cadastro de Templates, Controle Financeiro do Site. | Métricas de Sistema (Usuários, Tráfego, Vendas SaaS). |
-| **Control Room** | **Tutor** | Parametrização de Arenas (Moeda, Regiões), Condução de Rodadas, Intervenção Tática. | Monitor de Decisões Tabular, Gráficos Coletivos. |
+| **Command Center** | **Admin Geral** | Gestão de CMS (Menus/Cores/Fontes), Cadastro de Templates, Controle Financeiro do Site. | Métricas de Sistema (Usuários Online, Tráfego SaaS, Latência). |
+| **Control Room** | **Tutor** | Parametrização de Arenas (Moeda, Regiões), Condução de Rodadas, Intervenção Tática. | Monitor de Decisões Tabular, Gráficos Coletivos, Gestão de Equipes. |
 | **War Room** | **Equipe** | Decisões de Preço, Marketing, Produção e RH. Gestão da Unidade. | Dashboard Privado, HUD de Rating Oracle. |
 | **Public Arena** | **Observador** | Acompanhamento de Rankings, Relatórios Públicos, Votação de Comunidade. | Leitura Pura (Read-Only), Feed de Notícias. |
 
@@ -23,19 +23,18 @@ O Empirion é a plataforma definitiva de simulação empresarial multiplayer. No
 O Admin Geral utiliza o **Branding Node** para:
 *   Alterar a identidade visual (Cores e Escala de Fontes).
 *   Trocar ativos do carrossel principal.
-*   Configurar novas moedas (BRL, USD, EUR) para os templates master.
+*   Configurar novos Ramos e moedas baseline.
 
 ### B. Setup de Arena (Tutor)
 Utiliza o **Strategos Wizard Gold** com:
-*   **Sticky Actions:** Botões de navegação sempre visíveis.
-*   **Currency Locking:** Definição da moeda base que rege todos os relatórios do campeonato.
-*   **Audit P00:** Personalização do balanço inicial conforme normas CPC.
+*   **Contenção Vertical:** Header e Footer fixos para navegação sem scroll na tela inteira.
+*   **Currency Locking:** Definição da moeda base que rege todos os relatórios.
+*   **Audit P00:** Personalização do balanço inicial e DRE tático.
 
 ### C. Execução Estratégica (Equipes)
 As equipes operam no **Oracle Grid**:
-*   Interface One-Screen sem scroll vertical.
-*   Inputs de alta densidade para preenchimento rápido.
-*   HUD Flutuante com Δ Rating em tempo real.
+*   Interface de alta densidade otimizada para visão panorâmica.
+*   Inputs compactos e HUD de Rating em tempo real.
 
 ---
 *Empirion v13.0 Oracle Gold – Governança Absoluta, Performance de Elite.*

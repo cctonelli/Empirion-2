@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -51,6 +52,14 @@ const AppContent: React.FC = () => {
     try {
       const prof = await getUserProfile(uid);
       setProfile(prof);
+      
+      // Auto-redirecionamento baseado na ROLE ao entrar no cluster /app
+      if (location.pathname === '/app' || location.pathname === '/app/') {
+        if (prof?.role === 'admin') navigate('/app/admin');
+        else if (prof?.role === 'tutor') navigate('/app/admin');
+        else if (prof?.role === 'observer') navigate('/app/dashboard'); // Observador vê cockpit read-only
+        else navigate('/app/dashboard');
+      }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -67,7 +76,10 @@ const AppContent: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><LandingPage onLogin={() => navigate('/auth')}/></div></>} />
-      <Route path="/auth" element={<Auth onAuth={() => navigate('/app/dashboard')} onBack={() => navigate('/')} />} />
+      <Route path="/auth" element={<Auth onAuth={() => {
+          // Após login, o useEffect do Perfil cuidará do redirecionamento por Role
+          navigate('/app'); 
+      }} onBack={() => navigate('/')} />} />
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
       
       <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
@@ -91,7 +103,7 @@ const AppContent: React.FC = () => {
             onNavigate={(view) => navigate(`/app/${view}`)}
           >
             <Routes>
-              <Route path="/" element={<Navigate to="dashboard" />} />
+              <Route path="/" element={<Navigate to={profile?.role === 'admin' || profile?.role === 'tutor' ? 'admin' : 'dashboard'} />} />
               <Route path="dashboard" element={<Dashboard branch="industrial" />} />
               <Route path="championships" element={<ChampionshipsView onSelectTeam={handleSelectTeam} />} />
               <Route path="reports" element={<Reports branch="industrial" />} />
