@@ -8,7 +8,9 @@ import {
   X, Terminal, Cpu, Zap, ArrowRight, ShieldCheck,
   Globe, Database, Command, Users, Landmark,
   BarChart3, Eye, Layers, CreditCard, Gauge,
-  UserPlus, UserMinus, Globe2
+  UserPlus, UserMinus, Globe2, Phone, AtSign,
+  // Fix: Added missing Shield icon import from lucide-react
+  Shield
 } from 'lucide-react';
 import { 
   getChampionships, 
@@ -105,7 +107,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
            <div className="flex items-center gap-4">
               <div className={`w-3.5 h-3.5 rounded-full animate-pulse shadow-[0_0_15px] ${isAdmin ? 'bg-blue-500 shadow-blue-500' : 'bg-emerald-500 shadow-emerald-500'}`} />
               <div className="flex flex-col">
-                 <span className="text-lg font-black text-white uppercase italic tracking-tight">{profile?.name || 'ADMIN MASTER'}</span>
+                 <span className="text-lg font-black text-white uppercase italic tracking-tight">{profile?.nickname || profile?.name || 'ADMIN MASTER'}</span>
                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{isAdmin ? 'SYSTEM OWNER' : 'ARENA TUTOR'}</span>
               </div>
            </div>
@@ -269,19 +271,35 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {['Tutor Master Alpha', 'Strategos User 01', 'Market Observer'].map((name, i) => (
-                    <div key={i} className="p-8 bg-white/5 border border-white/10 rounded-[3rem] space-y-6 hover:border-emerald-500/30 transition-all group">
-                       <div className="flex justify-between items-start">
-                          <div className="w-16 h-16 bg-slate-950 rounded-[1.5rem] flex items-center justify-center text-slate-500 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all shadow-inner"><Users size={24}/></div>
-                          <span className="px-4 py-1 bg-white/5 rounded-full text-[8px] font-black uppercase text-slate-500">{i === 0 ? 'TUTOR' : i === 1 ? 'PLAYER' : 'OBSERVER'}</span>
+                  {/* Mock de Usuários com Nickname e Phone para Exemplo de UI v13.6 */}
+                  {[
+                    { name: 'Tutor Master Alpha', nick: 'Imperador_Alpha', role: 'TUTOR', phone: '+5511999990000' },
+                    { name: 'Strategos User 01', nick: 'Alpha_Strategist', role: 'PLAYER', phone: '+5521988887777' },
+                    { name: 'Market Observer', nick: 'Charlie_Analyst', role: 'OBSERVER', phone: '+12025550123' }
+                  ].map((user, i) => (
+                    <div key={i} className="p-8 bg-white/5 border border-white/10 rounded-[3rem] space-y-6 hover:border-emerald-500/30 transition-all group relative overflow-hidden">
+                       <div className="flex justify-between items-start relative z-10">
+                          <div className="w-16 h-16 bg-slate-950 rounded-[1.5rem] flex items-center justify-center text-slate-500 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all shadow-inner border border-white/5"><Users size={24}/></div>
+                          <span className="px-4 py-1 bg-white/5 rounded-full text-[8px] font-black uppercase text-slate-500 border border-white/5">{user.role}</span>
                        </div>
-                       <div>
-                          <h4 className="text-xl font-black text-white uppercase italic">{name}</h4>
-                          <p className="text-[10px] font-bold text-slate-600 uppercase mt-1">auth-token-0{i+1}@empirion.ia</p>
+                       <div className="relative z-10">
+                          <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-2">
+                             <AtSign size={14} className="text-emerald-500" /> {user.nick}
+                          </h4>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{user.name}</p>
+                          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/5">
+                             <div className="flex items-center gap-2 text-slate-500">
+                                <Phone size={12} className="text-blue-400" />
+                                <span className="text-[10px] font-mono font-bold">{user.phone}</span>
+                             </div>
+                          </div>
                        </div>
-                       <div className="pt-6 border-t border-white/5 flex justify-between">
+                       <div className="pt-6 border-t border-white/5 flex justify-between relative z-10">
                           <button className="text-[10px] font-black uppercase text-blue-400 hover:text-white flex items-center gap-2 transition-all"><Settings size={12}/> Config</button>
                           <button className="text-[10px] font-black uppercase text-rose-500 hover:text-white flex items-center gap-2 transition-all"><UserMinus size={12}/> Revogar</button>
+                       </div>
+                       <div className="absolute top-0 right-0 p-8 opacity-[0.02] -rotate-12 pointer-events-none">
+                          <Shield size={120} />
                        </div>
                     </div>
                   ))}

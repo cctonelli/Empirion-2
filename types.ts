@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V13.0 - ORACLE COCKPIT BUILD
+ * EMPIRION V13.6 - ORACLE COCKPIT BUILD
  * Advanced high-density data structures for ERP-style orchestration.
  */
 
@@ -266,6 +266,8 @@ export interface UserProfile {
   id: string;
   supabase_user_id: string;
   name: string;
+  nickname?: string;
+  phone?: string;
   email: string;
   role: UserRole;
   is_opal_premium?: boolean;

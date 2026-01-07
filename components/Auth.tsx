@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { 
   Shield, Mail, Lock, ChevronLeft, 
-  User, AlertTriangle, Loader2, Terminal
+  User, AlertTriangle, Loader2, Terminal,
+  Phone, AtSign
 } from 'lucide-react';
 import { APP_VERSION } from '../constants';
 
@@ -18,6 +20,8 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ message: string; type: 'standard' | 'critical' } | null>(null);
 
@@ -32,11 +36,20 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
         if (authError) throw authError;
         if (session) onAuth();
       } else {
+        // Validação básica de telefone E.164
+        if (phone && !/^\+?[1-9]\d{1,14}$/.test(phone)) {
+           throw new Error("Formato de telefone inválido. Use +5511999999999");
+        }
+
         const { error: signUpError } = await supabase.auth.signUp({ 
           email, 
           password,
           options: {
-            data: { full_name: name }
+            data: { 
+              full_name: name,
+              nickname: nickname,
+              phone: phone
+            }
           }
         });
         if (signUpError) throw signUpError;
@@ -80,18 +93,30 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
 
           <form className="space-y-4" onSubmit={handleAuth}>
             {!isLogin && (
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                <input required className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none" placeholder="Nome Completo" value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
+              <>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                  <input required className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="Nome Completo" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="relative">
+                    <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <input className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="Nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} />
+                  </div>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <input className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="+5511..." value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  </div>
+                </div>
+              </>
             )}
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <input required type="email" className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input required type="email" className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <input required type="password" minLength={6} className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <input required type="password" minLength={6} className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
 
             {error && (

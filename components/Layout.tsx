@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { 
@@ -10,6 +10,8 @@ import {
 import GlobalChat from './GlobalChat';
 import LanguageSwitcher from './LanguageSwitcher';
 import { APP_VERSION, PROTOCOL_NODE } from '../constants';
+import { getUserProfile, supabase } from '../services/supabase';
+import { UserProfile } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -22,6 +24,18 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout, activeView, onNavigate }) => {
   const { t } = useTranslation('common');
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const prof = await getUserProfile(session.user.id);
+        setProfile(prof);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const navItems = [
     { id: 'dashboard', label: 'Cockpit', icon: LayoutDashboard },
@@ -32,6 +46,9 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
   ];
 
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(userRole));
+  
+  // Prioriza o Nickname para o display do Header
+  const displayName = profile?.nickname || profile?.name || userName;
 
   return (
     <div className="h-screen bg-[#020617] text-slate-100 flex flex-col font-sans selection:bg-orange-500/30 overflow-hidden">
@@ -76,7 +93,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
              </button>
              <div className="flex items-center gap-2 cursor-default group">
                 <div className="text-right hidden sm:block">
-                   <p className="text-[8px] font-black text-white uppercase leading-none group-hover:text-orange-500 transition-colors">{userName}</p>
+                   <p className="text-[8px] font-black text-white uppercase leading-none group-hover:text-orange-500 transition-colors">{displayName}</p>
                 </div>
                 <div className="w-6 h-6 bg-slate-800 rounded flex items-center justify-center text-slate-500 border border-white/5 group-hover:border-orange-500/30 transition-all">
                    <User size={12} />
