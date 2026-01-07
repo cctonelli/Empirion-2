@@ -47,7 +47,8 @@ const LiveBriefing: React.FC = () => {
       nextStartTimeRef.current = audioContextRef.current.currentTime;
 
       const sessionPromise = ai.live.connect({
-        model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+        // Fix: Updated model to 'gemini-2.5-flash-native-audio-preview-12-2025' per GenAI guidelines
+        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         callbacks: {
           onopen: () => {
             setIsConnecting(false);

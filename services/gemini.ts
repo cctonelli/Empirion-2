@@ -76,12 +76,22 @@ export const generateBotDecision = async (
       Não seja conservador demais.`,
       config: {
         responseMimeType: "application/json",
+        // Fix: Type.OBJECT cannot be empty per Gemini guidelines. Redefined 'regions' as an array of structured objects.
         responseSchema: {
           type: Type.OBJECT,
           properties: {
             regions: {
-              type: Type.OBJECT,
-              description: "Decisões por região. Chaves devem ser números de 1 a N.",
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  regionId: { type: Type.NUMBER, description: "ID da região de 1 a N" },
+                  price: { type: Type.NUMBER, description: "Preço de venda" },
+                  term: { type: Type.NUMBER, description: "Prazo médio de recebimento" },
+                  marketing: { type: Type.NUMBER, description: "Investimento em marketing" }
+                },
+                required: ["regionId", "price", "term", "marketing"]
+              }
             },
             hr: {
               type: Type.OBJECT,
@@ -131,10 +141,23 @@ export const generateBotDecision = async (
     });
 
     const parsed = JSON.parse(response.text || '{}');
-    // Ensure regions are properly mapped to integers
+    // Fix: Updated parsing logic to handle the regions as an array from the improved schema
     const cleanedRegions: Record<number, any> = {};
+    if (Array.isArray(parsed.regions)) {
+        parsed.regions.forEach((r: any) => {
+            if (r.regionId) {
+                cleanedRegions[r.regionId] = { 
+                    price: r.price || 375, 
+                    term: r.term || 1, 
+                    marketing: r.marketing || 5000 
+                };
+            }
+        });
+    }
     for (let i = 1; i <= regionCount; i++) {
-        cleanedRegions[i] = parsed.regions?.[i] || { price: 375, term: 1, marketing: 5000 };
+        if (!cleanedRegions[i]) {
+            cleanedRegions[i] = { price: 375, term: 1, marketing: 5000 };
+        }
     }
     
     return {
