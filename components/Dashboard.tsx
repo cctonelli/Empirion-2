@@ -8,7 +8,7 @@ import {
   Eye, Timer, Box, HeartPulse, Landmark, 
   Thermometer, EyeOff, Globe, Map, PieChart, Users,
   ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon, Info,
-  Trophy // Fix: Added missing Trophy icon import
+  Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChampionshipTimer from './ChampionshipTimer';
@@ -76,99 +76,103 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   }, [activeArena, activeTeam]);
 
   if (loading) return (
-    <div className="h-[calc(100vh-64px)] flex items-center justify-center bg-[#020617]">
+    <div className="h-full flex items-center justify-center bg-[#020617]">
       <div className="text-center space-y-6">
         <Loader2 className="animate-spin text-orange-600 mx-auto" size={48} />
-        <span className="text-white uppercase font-black text-xs tracking-[0.4em] animate-pulse italic">Synchronizing Oracle Cockpit...</span>
+        <span className="text-white uppercase font-black text-xs tracking-[0.4em] animate-pulse italic">Connecting Oracle Node...</span>
       </div>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-[#020617] overflow-hidden font-sans">
+    <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans">
       
-      {/* TOP STRATEGIC KPI STRIP (ERP Cockpit) */}
-      <section className="grid grid-cols-2 md:grid-cols-5 gap-px bg-white/5 border-b border-white/5 shrink-0 shadow-2xl z-20">
-         <CockpitStat label="Valor da Ação" val={`$ ${currentKpis.market_valuation?.share_price.toFixed(2)}`} sub="EMPR 08 Index" trend="+1.2%" pos icon={<TrendingUp size={14}/>} />
-         <CockpitStat label="Receita Bruta" val={`$ ${(3322735).toLocaleString()}`} sub="Acumulado P0" trend="Consistente" pos icon={<DollarSign size={14}/>} />
-         <CockpitStat label="Lucro Líquido" val={`$ ${(73928).toLocaleString()}`} sub="Margem 2.2%" trend="+4.5%" pos icon={<Activity size={14}/>} />
-         <CockpitStat label="TSR (Shareholder)" val={`${currentKpis.market_valuation?.tsr || 0}%`} sub="Retorno p/ Sócio" trend="High" pos icon={<PieChart size={14}/>} />
-         <CockpitStat label="Rating Oracle" val={currentKpis.rating} sub="Classificação de Risco" trend="Estável" pos icon={<ShieldCheck size={14}/>} />
+      {/* TOP KPI HUD - ULTRA DENSO */}
+      <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
+         <CockpitStat label="Ação" val={`$ ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend="+1.2%" pos icon={<TrendingUp size={12}/>} />
+         <CockpitStat label="Receita" val={`$ 3.32M`} trend="Estável" pos icon={<DollarSign size={12}/>} />
+         <CockpitStat label="Lucro" val={`$ 73.9K`} trend="+4.5%" pos icon={<ActivityIcon size={12}/>} />
+         <CockpitStat label="Share" val={`${currentKpis.market_share.toFixed(1)}%`} trend="High" pos icon={<PieChart size={12}/>} />
+         <CockpitStat label="Rating" val={currentKpis.rating} trend="Prime" pos icon={<ShieldCheck size={12}/>} />
+         <div className="px-6 flex flex-col justify-center border-l border-white/5 bg-slate-950/40">
+            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Time Remaining</span>
+            <div className="scale-75 origin-left -ml-2">
+               <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
+            </div>
+         </div>
       </section>
 
-      {/* MAIN OPERATIONAL HUB */}
-      <div className="flex flex-1 overflow-hidden relative">
+      {/* CORE OPERATIONAL WORKSPACE */}
+      <div className="flex flex-1 overflow-hidden">
          
-         {/* LEFT WING: FINANCIAL CORE & RATIOS (20%) */}
-         <aside className="w-80 bg-slate-900/40 border-r border-white/5 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-xl">
-            <div className="p-6 space-y-8">
+         {/* LEFT PANEL: INTERNAL AUDIT (22%) */}
+         <aside className="w-80 bg-slate-900/60 border-r border-white/10 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-2xl">
+            <div className="p-4 space-y-6">
                <div className="space-y-4">
-                  <header className="flex items-center justify-between border-b border-white/5 pb-2">
-                     <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">
-                        <Landmark size={14}/> Financial Core
+                  <header className="flex items-center justify-between border-b border-white/5 pb-1">
+                     <h3 className="text-[9px] font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Landmark size={12}/> Audit HUD
                      </h3>
-                     <span className="text-[8px] font-mono text-slate-500">P0 ACTIVE</span>
+                     <span className="px-2 py-0.5 bg-orange-600/10 text-orange-500 text-[7px] font-black rounded border border-orange-500/20 uppercase">P0 Active</span>
                   </header>
                   
-                  {/* MINI DRE */}
-                  <div className="bg-slate-950 p-5 rounded-2xl border border-white/5 space-y-4 shadow-inner">
-                     <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-tight">Mini-DRE (Auditado)</h4>
-                     <div className="space-y-2 font-mono text-[10px]">
-                        <MiniFinRow label="Receita Vendas" val="3.32M" />
-                        <MiniFinRow label="CPV Total" val="(2.27M)" neg />
-                        <MiniFinRow label="Lucro Oper." val="126K" bold />
-                        <MiniFinRow label="Lucro Líq." val="73K" bold highlight />
+                  {/* MINI DRE DENSE */}
+                  <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5 space-y-2 shadow-inner">
+                     <h4 className="text-[8px] font-black text-slate-500 uppercase tracking-tight">Consolidado DRE</h4>
+                     <div className="space-y-1 font-mono text-[9px]">
+                        <MiniFinRow label="Faturamento" val="3.32M" />
+                        <MiniFinRow label="Custo (CPV)" val="(2.27M)" neg />
+                        <MiniFinRow label="Op. Profit" val="126.9K" bold />
+                        <MiniFinRow label="Net Income" val="73.9K" bold highlight />
                      </div>
                   </div>
 
-                  {/* MINI BALANCE SHEET */}
-                  <div className="bg-slate-950 p-5 rounded-2xl border border-white/5 space-y-4 shadow-inner">
-                     <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-tight">Posição Patrimonial</h4>
-                     <div className="space-y-2 font-mono text-[10px]">
-                        <MiniFinRow label="Ativo Circulante" val="3.29M" />
-                        <MiniFinRow label="Ativo Fixo (Capex)" val="5.88M" />
-                        <MiniFinRow label="Patrimônio Líq." val="5.05M" bold />
-                     </div>
-                  </div>
-
-                  {/* SCISSORS EFFECT / TSF WIDGET */}
-                  <div className="bg-orange-600/10 p-5 rounded-2xl border border-orange-500/20 space-y-4">
-                     <header className="flex justify-between items-center">
-                        <h4 className="text-[9px] font-black text-orange-500 uppercase tracking-tight">Efeito Tesoura</h4>
-                        <Thermometer size={12} className="text-orange-500" />
-                     </header>
-                     <div className="space-y-1">
-                        <span className="text-[8px] font-black text-slate-500 uppercase">Termômetro TSF</span>
-                        <div className="flex items-center justify-between">
-                           <span className="text-xl font-black text-white italic">{(currentKpis.scissors_effect?.tsf || 0).toFixed(2)}</span>
-                           <span className={`text-[8px] font-black px-2 py-0.5 rounded ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-500' : 'bg-emerald-500'} text-white`}>
-                              {currentKpis.scissors_effect?.is_critical ? 'CRÍTICO' : 'ESTÁVEL'}
-                           </span>
+                  {/* FINANCIAL HEALTH GAUGE */}
+                  <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5 space-y-3">
+                     <h4 className="text-[8px] font-black text-slate-500 uppercase tracking-tight">Estabilidade de Capital</h4>
+                     <div className="space-y-3">
+                        <div className="flex justify-between items-end">
+                           <span className="text-[8px] font-bold text-slate-500 uppercase">Liquidez Corrente</span>
+                           <span className="text-xs font-black text-emerald-500 font-mono">1.25x</span>
                         </div>
+                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                           <div className="h-full bg-emerald-500" style={{ width: '65%' }} />
+                        </div>
+                     </div>
+                  </div>
+
+                  {/* TSF THERMOMETER */}
+                  <div className="bg-orange-600/5 p-4 rounded-xl border border-orange-500/10 space-y-2">
+                     <div className="flex justify-between items-center">
+                        <span className="text-[8px] font-black text-orange-500 uppercase">Efeito Tesoura (TSF)</span>
+                        <Gauge size={10} className="text-orange-500" />
+                     </div>
+                     <div className="flex items-center justify-between">
+                        <span className="text-lg font-black text-white font-mono italic">{(currentKpis.scissors_effect?.tsf || 0).toFixed(2)}</span>
+                        <span className={`text-[7px] font-black px-1.5 py-0.5 rounded ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-600 text-white' : 'bg-emerald-600/20 text-emerald-500'}`}>
+                           {currentKpis.scissors_effect?.is_critical ? 'CRITICAL' : 'OPTIMAL'}
+                        </span>
                      </div>
                   </div>
                </div>
             </div>
          </aside>
 
-         {/* CENTER HUB: DECISION WIZARD ENGINE (60%) */}
-         <main className="flex-1 flex flex-col bg-[#020617] overflow-y-auto custom-scrollbar relative z-10">
-            <div className="p-8 md:p-12">
-               <div className="max-w-4xl mx-auto space-y-10">
-                  <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+         {/* CENTER PANEL: DECISION ENGINE (56%) */}
+         <main className="flex-1 bg-slate-950 flex flex-col overflow-hidden relative shadow-inner">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+               <div className="max-w-3xl mx-auto space-y-6">
+                  <div className="flex justify-between items-end border-b border-white/5 pb-4">
                      <div>
-                        <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Decision <span className="text-orange-600">Hub</span></h2>
-                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Orquestração tática para o Período 0{(activeArena?.current_round || 0) + 1}</p>
+                        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Decision <span className="text-orange-600">Matrix</span></h2>
+                        <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest mt-2 italic">Transmissão Tática • Unidade {activeTeam?.name || 'ALPHA'}</p>
                      </div>
-                     <div className="flex gap-4">
-                        <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
-                        <button onClick={() => setShowGazette(true)} className="px-6 py-3 bg-slate-900 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-3 shadow-xl">
-                           <Newspaper size={16} /> Gazeta Empirion
-                        </button>
-                     </div>
-                  </header>
+                     <button onClick={() => setShowGazette(true)} className="px-4 py-2 bg-slate-900 border border-white/10 text-white rounded-lg font-black text-[8px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2 shadow-lg">
+                        <Newspaper size={12} /> News Feed
+                     </button>
+                  </div>
 
-                  <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-[3rem] p-1 shadow-2xl overflow-hidden">
+                  <div className="bg-slate-900/40 border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                      <DecisionForm 
                         teamId={activeTeam?.id} 
                         champId={activeArena?.id} 
@@ -180,43 +184,43 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             </div>
          </main>
 
-         {/* RIGHT WING: MARKET PULSE & MACRO (20%) */}
-         <aside className="w-96 bg-slate-900/40 border-l border-white/5 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-xl">
-            <div className="p-6 space-y-8">
+         {/* RIGHT PANEL: EXTERNAL PULSE (22%) */}
+         <aside className="w-80 bg-slate-900/60 border-l border-white/10 flex flex-col shrink-0 overflow-y-auto no-scrollbar shadow-2xl">
+            <div className="p-4 space-y-6">
                
-               {/* MACRO BOARD */}
-               <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                     <Cpu size={14}/> Macro board
+               {/* MACRO DENSITY */}
+               <div className="space-y-3">
+                  <h3 className="text-[9px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                     <Globe size={12}/> World Pulse
                   </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                     <MacroTile label="ICE" val={`+${activeArena?.market_indicators.growth_rate}%`} icon={<TrendingUp size={12}/>} />
-                     <MacroTile label="Inflação" val={`${activeArena?.market_indicators.inflation_rate}%`} icon={<Activity size={12}/>} />
-                     <MacroTile label="TR (Juros)" val={`${activeArena?.market_indicators.interest_rate_tr}%`} icon={<Landmark size={12}/>} />
-                     <MacroTile label="Mão de Obra" val="Média" icon={<Users size={12}/>} />
+                  <div className="grid grid-cols-2 gap-2">
+                     <MacroTileCompact label="Growth" val={`+${activeArena?.market_indicators.growth_rate}%`} color="blue" />
+                     <MacroTileCompact label="Inflação" val={`${activeArena?.market_indicators.inflation_rate}%`} color="rose" />
+                     <MacroTileCompact label="Juros" val={`${activeArena?.market_indicators.interest_rate_tr}%`} color="amber" />
+                     <MacroTileCompact label="Labor" val="Fair" color="emerald" />
                   </div>
                </div>
 
-               {/* REGIONAL INTELLIGENCE TABLE */}
-               <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                     <Globe size={14}/> Regional Pulse
+               {/* MARKET RANKING (RELATORIO COLETIVO) */}
+               <div className="space-y-3">
+                  <h3 className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                     <Scale size={12}/> Sector Competition
                   </h3>
-                  <div className="bg-slate-950 rounded-2xl border border-white/5 overflow-hidden shadow-inner">
+                  <div className="bg-slate-950/80 rounded-xl border border-white/5 overflow-hidden">
                      <table className="w-full text-left">
-                        <thead className="bg-white/5 text-[8px] font-black uppercase text-slate-500">
+                        <thead className="bg-white/5 text-[7px] font-black uppercase text-slate-500">
                            <tr>
-                              <th className="px-4 py-3">Região</th>
-                              <th className="px-2 py-3 text-center">Venda</th>
-                              <th className="px-2 py-3 text-right">Share %</th>
+                              <th className="px-3 py-2">Team</th>
+                              <th className="px-2 py-2 text-center">Share</th>
+                              <th className="px-2 py-2 text-right">Yield</th>
                            </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5 font-mono text-[9px]">
-                           {currentKpis.regional_pulse?.map((reg: RegionalData) => (
-                             <tr key={reg.region_id} className="hover:bg-white/5 transition-colors group">
-                                <td className="px-4 py-3 text-slate-300 font-bold">{reg.region_name}</td>
-                                <td className="px-2 py-3 text-white text-center">{reg.units_sold.toLocaleString()}</td>
-                                <td className="px-2 py-3 text-right text-orange-500 font-black">{reg.market_share}%</td>
+                        <tbody className="divide-y divide-white/5 font-mono text-[8px]">
+                           {currentKpis.regional_pulse?.slice(0, 5).map((reg: RegionalData, i: number) => (
+                             <tr key={reg.region_id} className="hover:bg-white/5 transition-colors">
+                                <td className="px-3 py-2 text-slate-400 font-bold uppercase truncate max-w-[80px]">UNIT 0{i+1}</td>
+                                <td className="px-2 py-2 text-white text-center">{reg.market_share}%</td>
+                                <td className="px-2 py-2 text-right text-orange-500 font-black">{(reg.market_share * 1.2).toFixed(1)}%</td>
                              </tr>
                            ))}
                         </tbody>
@@ -224,26 +228,24 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* MARKET DEPTH (Prices & Leaders) */}
-               <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-                     <Shield size={14}/> Competition Radar
+               {/* RADAR DENSE */}
+               <div className="space-y-2">
+                  <h3 className="text-[9px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                     <Target size={12}/> Strategic Radar
                   </h3>
-                  <div className="space-y-3">
-                     <div className="p-4 bg-slate-950 border border-white/5 rounded-2xl flex justify-between items-center group cursor-help hover:border-indigo-500/30 transition-all">
-                        <div>
-                           <span className="block text-[8px] font-black text-slate-500 uppercase">Preço Médio Mercado</span>
-                           <span className="text-lg font-black text-white italic">$ 372,40</span>
-                        </div>
-                        <Info size={14} className="text-slate-600 group-hover:text-indigo-400 transition-colors" />
+                  <div className="p-3 bg-slate-950/80 border border-white/5 rounded-xl space-y-1">
+                     <span className="text-[7px] font-black text-slate-500 uppercase">Preço Médio Setor</span>
+                     <div className="flex justify-between items-center">
+                        <span className="text-sm font-black text-white font-mono">$ 372.40</span>
+                        <div className="flex items-center gap-1 text-rose-500 text-[8px] font-bold"><TrendingUp size={10} className="rotate-180"/> -0.5%</div>
                      </div>
-                     <div className="p-4 bg-slate-950 border border-white/5 rounded-2xl flex justify-between items-center group cursor-help hover:border-orange-500/30 transition-all">
-                        <div>
-                           <span className="block text-[8px] font-black text-slate-500 uppercase">Líder Market Share</span>
-                           <span className="text-lg font-black text-white italic">UNIT ALPHA</span>
-                        </div>
-                        <TrophyIcon size={14} className="text-orange-500" />
+                  </div>
+                  <div className="p-3 bg-slate-950/80 border border-white/5 rounded-xl flex items-center justify-between">
+                     <div className="space-y-0.5">
+                        <span className="text-[7px] font-black text-slate-500 uppercase">Líder Market Share</span>
+                        <p className="text-[10px] font-black text-orange-500 uppercase italic leading-none">UNIT ALPHA Node 08</p>
                      </div>
+                     <Trophy size={14} className="text-orange-500" />
                   </div>
                </div>
             </div>
@@ -262,41 +264,42 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   );
 };
 
-const CockpitStat = ({ label, val, sub, trend, pos, icon }: any) => (
-  <div className="p-6 hover:bg-white/[0.03] transition-all group flex flex-col justify-between min-h-[110px]">
-     <div className="flex justify-between items-start">
-        <div className="flex items-center gap-2">
-           <div className="p-2 bg-white/5 rounded-lg text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-md">{icon}</div>
-           <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
+  <div className="px-5 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center">
+     <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5">
+           <div className="p-1 bg-white/5 rounded text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all">{icon}</div>
+           <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
         </div>
-        <div className={`flex items-center gap-1 text-[9px] font-black ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
-           {pos ? <ArrowUpRight size={10}/> : <ArrowDownRight size={10}/>} {trend}
-        </div>
+        <span className={`text-[7px] font-black ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
+           {pos ? '+' : ''}{trend}
+        </span>
      </div>
-     <div className="mt-4">
-        <span className="text-2xl font-black text-white font-mono tracking-tighter italic leading-none">{val}</span>
-        <p className="text-[7px] font-bold text-slate-600 uppercase mt-1 tracking-widest">{sub}</p>
-     </div>
+     <span className="text-lg font-black text-white font-mono tracking-tighter italic leading-none">{val}</span>
   </div>
 );
 
 const MiniFinRow = ({ label, val, neg, bold, highlight }: any) => (
-  <div className={`flex justify-between items-center py-1.5 ${highlight ? 'bg-orange-500/10 -mx-5 px-5 py-2' : ''}`}>
-     <span className={`tracking-wider ${bold ? 'font-black text-slate-200' : 'text-slate-500'}`}>{label}</span>
-     <span className={`font-black ${neg ? 'text-rose-500' : bold ? 'text-white' : 'text-slate-300'}`}>$ {val}</span>
+  <div className={`flex justify-between items-center py-1 border-b border-white/[0.02] last:border-0 ${highlight ? 'text-orange-500' : ''}`}>
+     <span className={`${bold ? 'font-black text-slate-300' : 'text-slate-500'}`}>{label}</span>
+     <span className={`font-black ${neg ? 'text-rose-500' : bold ? 'text-white' : 'text-slate-400'}`}>{val}</span>
   </div>
 );
 
-const MacroTile = ({ label, val, icon }: any) => (
-  <div className="bg-slate-950 p-4 rounded-2xl border border-white/5 space-y-2 hover:border-blue-500/30 transition-all shadow-inner">
-     <div className="flex items-center gap-2 text-slate-500">
-        {icon}
-        <span className="text-[7px] font-black uppercase tracking-tight">{label}</span>
-     </div>
-     <span className="block text-sm font-black text-white font-mono italic">{val}</span>
-  </div>
-);
+const MacroTileCompact = ({ label, val, color }: any) => {
+  const colors = {
+    blue: 'text-blue-400 bg-blue-500/5 border-blue-500/10',
+    rose: 'text-rose-400 bg-rose-500/5 border-rose-500/10',
+    amber: 'text-amber-400 bg-amber-500/5 border-amber-500/10',
+    emerald: 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10'
+  }[color as 'blue' | 'rose' | 'amber' | 'emerald'];
 
-const TrophyIcon = ({ size, className }: { size: number, className: string }) => <Trophy size={size} className={className} />;
+  return (
+    <div className={`p-2 rounded-lg border flex flex-col gap-0.5 ${colors}`}>
+       <span className="text-[7px] font-black uppercase opacity-60">{label}</span>
+       <span className="text-xs font-black font-mono leading-none italic">{val}</span>
+    </div>
+  );
+};
 
 export default Dashboard;

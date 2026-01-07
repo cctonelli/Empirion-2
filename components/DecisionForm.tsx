@@ -1,10 +1,10 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, Gavel, 
   ChevronRight, ChevronLeft, ShieldCheck, Activity, Scale, 
   Zap, Landmark, Shield, AlertTriangle, Brain, Sparkles, MapPin,
-  Save, LayoutGrid, CheckCircle2
+  // Fix: Added missing Cpu icon import
+  Save, LayoutGrid, CheckCircle2, Package, TrendingUp, Info, Cpu
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -12,11 +12,11 @@ import { DecisionData, Branch, Championship, ProjectionResult, CreditRating, Eco
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STEPS = [
-  { id: 'marketing', label: 'Comercial', icon: Megaphone, color: 'orange' },
-  { id: 'production', label: 'Fábrica', icon: Factory, color: 'blue' },
+  { id: 'marketing', label: 'Market', icon: Megaphone, color: 'orange' },
+  { id: 'production', label: 'Factory', icon: Factory, color: 'blue' },
   { id: 'hr', label: 'Staff', icon: Users2, color: 'emerald' },
   { id: 'finance', label: 'Capital', icon: DollarSign, color: 'indigo' },
-  { id: 'review', label: 'Oracle Seal', icon: ShieldCheck, color: 'orange' },
+  { id: 'review', label: 'Seal', icon: ShieldCheck, color: 'orange' },
 ];
 
 const createInitialDecisions = (regionsCount: number): DecisionData => ({
@@ -77,60 +77,60 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/30 rounded-[2.5rem] overflow-hidden">
+    <div className="flex flex-col h-full bg-slate-900 rounded-2xl overflow-hidden border border-white/5">
       
-      {/* WIZARD NAVIGATION BAR */}
-      <nav className="flex items-center gap-1 bg-slate-950/80 p-1 border-b border-white/5">
+      {/* COMPACT NAV */}
+      <nav className="flex bg-slate-950/80 p-0.5 border-b border-white/5 shrink-0">
          {STEPS.map((s, idx) => {
             const active = activeStep === idx;
             return (
               <button 
                 key={s.id} 
                 onClick={() => setActiveStep(idx)}
-                className={`flex-1 flex items-center justify-center gap-3 py-4 transition-all rounded-xl ${active ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-400'}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 transition-all rounded-lg ${active ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-400'}`}
               >
-                 <s.icon size={14} strokeWidth={active ? 3 : 2} />
-                 <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">{s.label}</span>
+                 <s.icon size={12} strokeWidth={active ? 3 : 2} />
+                 <span className="text-[8px] font-black uppercase tracking-widest hidden md:block">{s.label}</span>
               </button>
             );
          })}
       </nav>
 
-      {/* OPERATIONAL WORKSPACE */}
-      <div className="flex-1 p-8 overflow-y-auto no-scrollbar min-h-[480px]">
+      {/* WORKSPACE */}
+      <div className="flex-1 p-5 overflow-y-auto no-scrollbar min-h-[380px] bg-slate-900/30">
          <AnimatePresence mode="wait">
             {activeStep === 0 && (
-               <motion.div key="mkt" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-                  <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                     <div className="p-3 bg-orange-600 text-white rounded-xl shadow-lg"><Megaphone size={20}/></div>
-                     <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Estratégia Regional</h3>
+               <motion.div key="mkt" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+                     <div className="p-1.5 bg-orange-600 text-white rounded-lg"><Megaphone size={14}/></div>
+                     <h3 className="text-sm font-black text-white uppercase italic tracking-tighter">Market Strategy</h3>
                   </div>
                   
-                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4 border-b border-white/5">
+                  <div className="flex gap-1 overflow-x-auto no-scrollbar pb-2">
                      {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
                        <button 
                          key={i} 
                          onClick={() => setActiveRegion(i+1)}
-                         className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all whitespace-nowrap ${activeRegion === i+1 ? 'bg-orange-600 text-white shadow-lg' : 'bg-slate-950 text-slate-500 border border-white/5 hover:border-white/20'}`}
+                         className={`px-3 py-1.5 rounded-lg text-[7px] font-black uppercase transition-all whitespace-nowrap border ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-500 shadow-md' : 'bg-slate-950 text-slate-600 border-white/5 hover:border-white/20'}`}
                        >
-                         Região 0{i+1}
+                         R0{i+1}
                        </button>
                      ))}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                     <ErpInput label="Preço Unitário ($)" desc="Baseline: $370.00" val={decisions.regions[activeRegion]?.price || 0} onChange={v => updateRegionDecision(activeRegion, 'price', v)} />
-                     <ErpInput label="Marketing Regional ($)" desc="Impulso de Demanda" val={decisions.regions[activeRegion]?.marketing || 0} onChange={v => updateRegionDecision(activeRegion, 'marketing', v)} />
-                     <div className="space-y-2 p-6 bg-slate-950 rounded-2xl border border-white/5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Prazo (Ciclos)</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <ErpInputCompact label="Unit Price ($)" val={decisions.regions[activeRegion]?.price || 0} onChange={v => updateRegionDecision(activeRegion, 'price', v)} icon={<DollarSign size={10}/>} />
+                     <ErpInputCompact label="Regional Mkt ($)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={v => updateRegionDecision(activeRegion, 'marketing', v)} icon={<Sparkles size={10}/>} />
+                     <div className="space-y-1.5 p-3 bg-slate-950/50 rounded-xl border border-white/5">
+                        <label className="text-[7px] font-black text-slate-600 uppercase tracking-widest">Payment Term</label>
                         <select 
                            value={decisions.regions[activeRegion]?.term || 1} 
                            onChange={e => updateRegionDecision(activeRegion, 'term', Number(e.target.value))}
-                           className="w-full bg-slate-900 border-none rounded-xl p-4 text-white font-black text-sm outline-none cursor-pointer"
+                           className="w-full bg-slate-900 border-none rounded-lg p-2 text-white font-black text-[10px] outline-none cursor-pointer appearance-none"
                         >
-                           <option value={1}>1x (Liquidez Imediata)</option>
-                           <option value={2}>2x (Parcelado)</option>
-                           <option value={3}>3x (Longo Prazo)</option>
+                           <option value={1}>1x (Immediate)</option>
+                           <option value={2}>2x (Installments)</option>
+                           <option value={3}>3x (Long Term)</option>
                         </select>
                      </div>
                   </div>
@@ -138,98 +138,97 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             )}
 
             {activeStep === 1 && (
-               <motion.div key="prod" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-                  <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                     <div className="p-3 bg-blue-600 text-white rounded-xl shadow-lg"><Factory size={20}/></div>
-                     <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Supply & Produção</h3>
+               <motion.div key="prod" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+                     <div className="p-1.5 bg-blue-600 text-white rounded-lg"><Factory size={14}/></div>
+                     <h3 className="text-sm font-black text-white uppercase italic tracking-tighter">Supply & Activity</h3>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <ErpInput label="Compra MP-A (Unid)" desc="Estoque Ótimo: 10k" val={decisions.production.purchaseMPA} onChange={v => setDecisions({...decisions, production: {...decisions.production, purchaseMPA: v}})} />
-                     <ErpInput label="Compra MP-B (Unid)" desc="Estoque Ótimo: 5k" val={decisions.production.purchaseMPB} onChange={v => setDecisions({...decisions, production: {...decisions.production, purchaseMPB: v}})} />
-                     <ErpInput label="Nível de Atividade (%)" desc="Máx 100% (Sem OEE extra)" val={decisions.production.activityLevel} onChange={v => setDecisions({...decisions, production: {...decisions.production, activityLevel: v}})} />
-                     <ErpInput label="Investimento P&D ($)" desc="Melhoria de Qualidade" val={decisions.production.rd_investment} onChange={v => setDecisions({...decisions, production: {...decisions.production, rd_investment: v}})} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <ErpInputCompact label="Buy MP-A (Units)" val={decisions.production.purchaseMPA} onChange={v => setDecisions({...decisions, production: {...decisions.production, purchaseMPA: v}})} icon={<Package size={10}/>} />
+                     <ErpInputCompact label="Buy MP-B (Units)" val={decisions.production.purchaseMPB} onChange={v => setDecisions({...decisions, production: {...decisions.production, purchaseMPB: v}})} icon={<Package size={10}/>} />
+                     <ErpInputCompact label="Activity Level (%)" val={decisions.production.activityLevel} onChange={v => setDecisions({...decisions, production: {...decisions.production, activityLevel: v}})} icon={<Activity size={10}/>} />
+                     <ErpInputCompact label="R&D Inv. ($)" val={decisions.production.rd_investment} onChange={v => setDecisions({...decisions, production: {...decisions.production, rd_investment: v}})} icon={<Cpu size={10}/>} />
                   </div>
                </motion.div>
             )}
 
             {activeStep === 4 && (
-               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-10 text-center space-y-12">
-                  <div className="space-y-4">
-                     <div className="w-24 h-24 bg-orange-600/10 rounded-[2rem] flex items-center justify-center mx-auto border-2 border-orange-500/30 text-orange-500 shadow-inner animate-pulse">
-                        <ShieldCheck size={48} />
+               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-6 text-center space-y-8">
+                  <div className="space-y-2">
+                     <div className="w-16 h-16 bg-orange-600/10 rounded-2xl flex items-center justify-center mx-auto border border-orange-500/30 text-orange-500 shadow-inner">
+                        <ShieldCheck size={32} />
                      </div>
-                     <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">Final Review</h2>
-                     <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px]">Oracle Fidelity Node Build v13</p>
+                     <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Final Approval</h2>
+                     <p className="text-slate-600 font-bold uppercase tracking-widest text-[8px]">Oracle Node Gold Certification</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-2xl">
-                     <ReviewStat label="Impacto Lucro" val={`$ ${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) > 0} />
-                     <ReviewStat label="Market Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos />
-                     <ReviewStat label="Rating Final" val={rating} pos={rating.includes('A')} />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                     <ReviewBox label="Profit Impact" val={`$ ${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) > 0} />
+                     <ReviewBox label="Target Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos />
+                     <ReviewBox label="Final Rating" val={rating} pos={rating.includes('A')} />
                   </div>
 
                   <button 
                     onClick={handleTransmition}
                     disabled={isSaving}
-                    className="px-20 py-8 bg-orange-600 text-white rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:bg-white hover:text-orange-950 transition-all active:scale-95 flex items-center gap-6"
+                    className="w-full py-5 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.4em] shadow-xl hover:bg-white hover:text-orange-950 transition-all active:scale-95 flex items-center justify-center gap-4"
                   >
-                     {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={24}/> Transmitir Comando</>}
+                     {isSaving ? <Loader2 className="animate-spin" size={14} /> : <><Save size={16}/> Transmit Sequence</>}
                   </button>
                </motion.div>
             )}
 
             {(activeStep === 2 || activeStep === 3) && (
-               <div className="flex flex-col items-center justify-center py-40 text-slate-700 italic font-black uppercase tracking-[0.3em]">
-                  <LayoutGrid size={48} className="mb-6 opacity-10" />
-                  Carregando Telemetria do Módulo {STEPS[activeStep].label}...
+               <div className="flex flex-col items-center justify-center py-20 text-slate-700 italic font-black uppercase tracking-widest">
+                  <Loader2 size={32} className="mb-4 animate-spin opacity-20" />
+                  <span className="text-[8px]">Synchronizing Module {STEPS[activeStep].label}...</span>
                </div>
             )}
          </AnimatePresence>
       </div>
 
       {/* FOOTER WIZARD CONTROLS */}
-      <footer className="p-6 bg-slate-950/50 border-t border-white/5 flex justify-between items-center shrink-0">
+      <footer className="p-3 bg-slate-950/80 border-t border-white/5 flex justify-between items-center shrink-0">
          <button 
            onClick={() => setActiveStep(s => Math.max(0, s-1))}
            disabled={activeStep === 0}
-           className="px-8 py-3 text-slate-500 font-black uppercase text-[10px] tracking-widest hover:text-white transition-all disabled:opacity-0 flex items-center gap-2"
+           className="px-4 py-2 text-slate-600 font-black uppercase text-[8px] tracking-widest hover:text-white transition-all disabled:opacity-0 flex items-center gap-1.5"
          >
-            <ChevronLeft size={14} /> Anterior
+            <ChevronLeft size={10} /> Prev
          </button>
          <button 
            onClick={() => setActiveStep(s => Math.min(STEPS.length-1, s+1))}
            disabled={activeStep === STEPS.length-1}
-           className="px-10 py-4 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95 disabled:opacity-0"
+           className="px-6 py-2 bg-white/5 hover:bg-orange-600 text-white border border-white/10 rounded-lg font-black text-[8px] uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95 disabled:opacity-0"
          >
-            Próximo Protocolo <ChevronRight size={14} />
+            Forward <ChevronRight size={10} />
          </button>
       </footer>
     </div>
   );
 };
 
-const ErpInput = ({ label, desc, val, onChange }: any) => (
-  <div className="p-6 bg-slate-950 rounded-2xl border border-white/5 space-y-4 hover:border-orange-500/30 transition-all group shadow-inner">
-     <div className="space-y-1">
-        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-orange-500 transition-colors">{label}</label>
-        <p className="text-[8px] font-bold text-slate-700 uppercase italic leading-none">{desc}</p>
+const ErpInputCompact = ({ label, val, onChange, icon }: any) => (
+  <div className="p-3 bg-slate-950/50 rounded-xl border border-white/5 space-y-2 hover:border-orange-500/30 transition-all group shadow-inner">
+     <div className="flex items-center gap-2">
+        <div className="p-1 bg-white/5 rounded text-slate-500 group-hover:text-orange-500 transition-colors">{icon}</div>
+        <label className="text-[7px] font-black text-slate-600 uppercase tracking-widest group-hover:text-slate-300 transition-colors">{label}</label>
      </div>
      <div className="relative">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-700 font-mono text-xs">$</span>
         <input 
            type="number" 
            value={val} 
            onChange={e => onChange(Number(e.target.value))}
-           className="w-full bg-slate-900 border-none rounded-xl pl-10 pr-4 py-4 text-white font-mono font-bold text-sm outline-none focus:ring-1 focus:ring-orange-600 transition-all shadow-inner"
+           className="w-full bg-slate-900 border-none rounded-lg px-3 py-2 text-white font-mono font-black text-xs outline-none focus:ring-1 focus:ring-orange-600 transition-all shadow-inner"
         />
      </div>
   </div>
 );
 
-const ReviewStat = ({ label, val, pos }: any) => (
-  <div className="p-6 bg-slate-950 rounded-3xl border border-white/5 space-y-2 shadow-inner">
-     <span className="block text-[8px] font-black text-slate-500 uppercase">{label}</span>
-     <span className={`text-2xl font-black italic font-mono ${pos ? 'text-emerald-400' : 'text-rose-500'}`}>{val}</span>
+const ReviewBox = ({ label, val, pos }: any) => (
+  <div className="p-4 bg-slate-950 rounded-xl border border-white/5 space-y-1 shadow-inner">
+     <span className="block text-[6px] font-black text-slate-600 uppercase tracking-widest">{label}</span>
+     <span className={`text-base font-black italic font-mono leading-none ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
   </div>
 );
 
