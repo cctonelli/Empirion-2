@@ -9,7 +9,6 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 
 /**
  * BANKING RATING ENGINE v1.0
- * Calculates credit score based on fidelity indicators.
  */
 export const calculateBankRating = (financials: any, hasScissorsEffect: boolean, selic: number) => {
   const { lc, endividamento, margem, equity } = financials;
@@ -104,18 +103,7 @@ export const calculateProjections = (
   const selic = sanitize(indicators?.interest_rate_tr, 3.0) / 100;
   const prevSharePrice = sanitize(prevKpis.market_valuation?.share_price, 1.0);
   
-  // LOGICA DE ESCOPO GEOGRÁFICO
-  let logisticsMultiplier = 1.0;
-  let opexBase = 917582;
-  
-  if (regionType === 'international') {
-      logisticsMultiplier = 1.6;
-      opexBase *= 1.25;
-  } else if (regionType === 'mixed') {
-      logisticsMultiplier = 1.3;
-      opexBase *= 1.1;
-  }
-
+  // LOGICA DE RECEITA
   const regionArray = Object.values(decisions.regions);
   const avgPrice = regionArray.reduce((acc, curr) => acc + curr.price, 0) / Math.max(regionArray.length, 1);
   const totalMarketing = regionArray.reduce((acc, curr) => acc + curr.marketing, 0);
@@ -128,16 +116,13 @@ export const calculateProjections = (
   const revenue = unitsSold * avgPrice;
   
   const cpv = unitsSold * (indicators.providerPrices?.mpA || 62.8) * 0.8;
-  const opex = opexBase * (1 + indicators.inflation_rate / 100);
-  const fin_exp = 40000 * (1 + selic);
-  const ir_prov = Math.max(0, (revenue - cpv - opex - fin_exp) * 0.15);
-  
-  const netProfit = revenue - cpv - opex - fin_exp - ir_prov;
+  const opex = 917582 * (1 + indicators.inflation_rate / 100);
+  const netProfit = revenue - cpv - opex - 40000; // Despesa Financeira Fixa para MVP
   const finalEquity = prevEquity + netProfit;
   
-  // EFEITO TESOURA - Cálculos Precisos v12.9.1
+  // EFEITO TESOURA (NCG vs CGL)
   const ac = 3290340; 
-  const pc = 4121493; // Ajustado conforme exemplo P0 (incluindo financiamentos CP)
+  const pc = 4121493; 
   const cgl = ac - pc;
   
   const estoques = 1466605;
@@ -147,32 +132,19 @@ export const calculateProjections = (
   const ncg = clientes + estoques - fornecedores;
   const tesouraria = cgl - ncg;
   const hasScissorsEffect = ncg > cgl;
-  const tsf = (tesouraria / Math.max(ncg, 1)) * 100;
+  const tsf = (tesouraria / Math.max(ncg, 1)) * 100; // Termômetro da Situação Financeira
 
   const lc = ac / Math.max(pc, 1);
-  const totalDebt = pc + 1500000;
-  const endividamento = (totalDebt / Math.max(finalEquity, 1)) * 100;
+  const endividamento = ((pc + 1500000) / Math.max(finalEquity, 1)) * 100;
   const margem = (netProfit / Math.max(revenue, 1)) * 100;
 
   const bankDetails = calculateBankRating({ lc, endividamento, margem, equity: finalEquity }, hasScissorsEffect, selic);
-  const insolvency = checkInsolvencyStatus({ 
-    pl: finalEquity, ac, pc, caixa: prevCash + netProfit, 
-    capitalSocial: 5000000, 
-    endividamento, lc 
-  }, history);
-
+  const insolvency = checkInsolvencyStatus({ pl: finalEquity, ac, pc, caixa: prevCash + netProfit, capitalSocial: 5000000, endividamento, lc }, history);
   const valuation = calculateMarketValuation(finalEquity, netProfit, bankDetails.rating, prevSharePrice);
 
   const kpis: KPIs = {
     ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
-    scissors_effect: { 
-      ncg, 
-      ccl: cgl, 
-      tesouraria, 
-      ccp: finalEquity - 5886600, 
-      tsf,
-      is_critical: hasScissorsEffect 
-    },
+    scissors_effect: { ncg, ccl: cgl, tesouraria, ccp: finalEquity - 5886600, tsf, is_critical: hasScissorsEffect },
     banking: bankDetails,
     market_valuation: valuation,
     market_share: Math.min(100, (unitsSold / 100000) * 100),
@@ -183,24 +155,15 @@ export const calculateProjections = (
   };
 
   return {
-    revenue,
-    netProfit,
-    debtRatio: endividamento,
-    creditRating: bankDetails.rating,
-    health: { 
-      rating: bankDetails.rating, 
-      insolvency_risk: bankDetails.score < 50 ? 80 : 10, 
-      is_bankrupt: !insolvency.canOperate, 
-      liquidity_ratio: lc 
-    },
-    kpis,
-    marketShare: kpis.market_share,
+    revenue, netProfit, debtRatio: endividamento, creditRating: bankDetails.rating,
+    health: { rating: bankDetails.rating, insolvency_risk: bankDetails.score < 50 ? 80 : 10, is_bankrupt: !insolvency.canOperate, liquidity_ratio: lc },
+    kpis, marketShare: kpis.market_share,
     statements: {
       dre: { revenue, cpv, opex, depreciation: 0, net_profit: netProfit },
       balance_sheet: {
         assets: { current: { cash: prevCash + netProfit, receivables: 1823735 }, total: 9176940 },
         equity: { total: finalEquity },
-        liabilities: { total_debt: totalDebt }
+        liabilities: { total_debt: pc + 1500000 }
       },
       cash_flow: { operational: revenue - opex, total: prevCash + netProfit }
     }
