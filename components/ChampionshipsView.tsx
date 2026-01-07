@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { Trophy, ChevronRight, Play, Loader2, Filter, X, Users, Building2, Terminal, Shield, RefreshCw } from 'lucide-react';
+import { Trophy, ChevronRight, Play, Loader2, Filter, X, Users, Building2, Terminal, Shield, RefreshCw, Bot, Eye } from 'lucide-react';
 import { getChampionships } from '../services/supabase';
 import { Championship, Team } from '../types';
 
@@ -21,16 +22,21 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
 
   const fetchArenas = async () => {
     setLoading(true);
-    const { data } = await getChampionships();
-    if (data) setChampionships(data);
-    
-    const state = location.state as NavigationState | null;
-    const preFilter = state?.preSelectedBranch ?? state?.preSelectedSlug ?? state?.preSelectedActivity ?? state?.preSelectedModality;
+    try {
+      const { data } = await getChampionships();
+      if (data) setChampionships(data);
+      
+      const state = location.state as NavigationState | null;
+      const preFilter = state?.preSelectedBranch ?? state?.preSelectedSlug ?? state?.preSelectedActivity ?? state?.preSelectedModality;
 
-    if (preFilter) {
-      setActiveFilter(preFilter);
+      if (preFilter) {
+        setActiveFilter(preFilter);
+      }
+    } catch (err) {
+      console.error("Arena Sync Fault", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -94,7 +100,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tight leading-none">{champ.name}</h3>
                    <div className="flex items-center gap-4 pt-2">
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase">
-                         <Users size={14} className="text-orange-500" /> {champ.teams?.length || 0} Empresas
+                         <Users size={14} className="text-orange-500" /> {champ.teams?.length || 0} Unidades
                       </div>
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase">
                          <Terminal size={14} className="text-blue-500" /> Ciclo 0{champ.current_round}
@@ -107,31 +113,50 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                     onClick={() => setExpandedArena(champ.id)}
                     className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"
                   >
-                    Ver Equipes & Entrar <ChevronRight size={16} />
+                    Ver Equipes & Bots <ChevronRight size={16} />
                   </button>
                 ) : (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pt-6 border-t border-white/5">
                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Unidades Disponíveis:</span>
+                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Selecione uma Unidade:</span>
                         <button onClick={() => setExpandedArena(null)} className="text-[9px] font-black text-slate-500 uppercase hover:text-white transition-colors flex items-center gap-1">Fechar <X size={12}/></button>
                      </div>
-                     <div className="grid grid-cols-1 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                     <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                         {champ.teams && champ.teams.length > 0 ? (
                           champ.teams.map((team: Team) => (
                             <button 
                               key={team.id}
+                              disabled={team.is_bot}
                               onClick={() => onSelectTeam(champ.id, team.id, !!champ.is_trial)}
-                              className="w-full p-6 bg-slate-950/80 border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-orange-600 hover:border-white transition-all text-left"
+                              className={`w-full p-6 bg-slate-950/80 border rounded-2xl flex items-center justify-between group transition-all text-left ${
+                                team.is_bot 
+                                ? 'border-indigo-500/20 cursor-default opacity-80' 
+                                : 'border-white/5 hover:bg-orange-600 hover:border-white'
+                              }`}
                             >
                                <div className="flex items-center gap-4">
-                                  <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-orange-500 group-hover:bg-white group-hover:text-orange-600 transition-colors">
-                                     <Shield size={18} />
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                                    team.is_bot ? 'bg-indigo-600/20 text-indigo-400' : 'bg-white/5 text-orange-500 group-hover:bg-white group-hover:text-orange-600'
+                                  }`}>
+                                     {team.is_bot ? <Bot size={20}/> : <Shield size={18} />}
                                   </div>
-                                  <span className="text-sm font-black text-white uppercase italic group-hover:text-white transition-colors">{team.name}</span>
+                                  <div className="flex flex-col">
+                                     <span className="text-sm font-black text-white uppercase italic">{team.name}</span>
+                                     {team.is_bot && <span className="text-[7px] font-black text-indigo-400 uppercase tracking-widest mt-0.5">Autonomous Synthetic Node</span>}
+                                  </div>
                                </div>
-                               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <span className="text-[9px] font-black text-white uppercase">Assumir Comando</span>
-                                  <Play size={12} fill="currentColor" />
+                               <div className="flex items-center gap-2">
+                                  {team.is_bot ? (
+                                    <div className="px-3 py-1 bg-indigo-600/20 border border-indigo-500/30 rounded-lg flex items-center gap-2">
+                                       <div className="w-1 h-1 bg-indigo-400 rounded-full animate-pulse" />
+                                       <span className="text-[8px] font-black text-indigo-400 uppercase">AI OPERATING</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                       <span className="text-[9px] font-black text-white uppercase">Assumir Comando</span>
+                                       <Play size={12} fill="currentColor" />
+                                    </div>
+                                  )}
                                </div>
                             </button>
                           ))

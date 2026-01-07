@@ -38,9 +38,9 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     observerInput: '',
     total_rounds: 12,
     regions_count: 9, 
-    bots_count: 2, // Default v12.9
+    bots_count: 1, // Default v12.9
     initial_share_price: DEFAULT_INITIAL_SHARE_PRICE,
-    teams_limit: 8,
+    teams_limit: 4,
     currency: 'BRL',
     deadline_value: 7,
     deadline_unit: 'days' as DeadlineUnit,
@@ -78,8 +78,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         round_frequency_days: selectedTemplate.config.round_frequency_days,
         total_rounds: selectedTemplate.config.total_rounds,
         regions_count: selectedTemplate.config.regions_count || 9,
-        bots_count: selectedTemplate.config.bots_count || 2,
-        teams_limit: selectedTemplate.config.teams_limit || 8
+        bots_count: selectedTemplate.config.bots_count || 1,
+        teams_limit: selectedTemplate.config.teams_limit || 4
       }));
       setFinancials(selectedTemplate.initial_financials || INITIAL_FINANCIAL_TREE);
     }
@@ -87,13 +87,13 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
   useEffect(() => {
     const total = formData.teams_limit;
-    const bots = Math.min(formData.bots_count, total);
-    const humans = total - bots;
+    const botsCount = Math.min(formData.bots_count, total);
+    const humansCount = total - botsCount;
 
     const newTeams = Array.from({ length: total }).map((_, i) => {
-      const isBot = i >= humans;
+      const isBot = i >= humansCount;
       return {
-        name: teams[i]?.name || (isBot ? `AI BOT Unit 0${i - humans + 1}` : `Equipe Strategos ${String.fromCharCode(65 + i)}`),
+        name: (isBot ? `AI BOT UNIT 0${i - humansCount + 1}` : `EQUIPE STRATEGOS ${String.fromCharCode(65 + i)}`),
         is_bot: isBot
       };
     });
@@ -233,7 +233,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                     <div className="grid grid-cols-3 gap-4">
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Map size={12}/> Regiões</label>
-                          <input type="number" min="1" max="15" value={formData.regions_count} onChange={e => setFormData({...formData, regions_count: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" />
+                          <input type="number" min="1" max="25" value={formData.regions_count} onChange={e => setFormData({...formData, regions_count: Number(e.target.value)})} className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono font-bold outline-none focus:border-orange-500" />
                        </div>
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2"><Users size={12}/> Limite Equipes</label>
@@ -407,22 +407,25 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
           {step === 6 && (
             <motion.div key="step6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-black text-white uppercase italic">6. Matriz de Competidores</h3>
+                  <div className="space-y-1">
+                     <h3 className="text-xl font-black text-white uppercase italic">6. Matriz de Competidores</h3>
+                     <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Verifique se o bot alocado está visível abaixo.</p>
+                  </div>
                   <div className="flex gap-4">
                      <div className="flex items-center gap-2 text-[9px] font-black text-orange-500 uppercase">
                         <div className="w-2 h-2 rounded-full bg-orange-600" /> Humano
                      </div>
-                     <div className="flex items-center gap-2 text-[9px] font-black text-indigo-400 uppercase">
+                     <div className="flex items-center gap-2 text-[9px] font-black text-indigo-400 uppercase shadow-[0_0_10px_rgba(99,102,241,0.5)]">
                         <div className="w-2 h-2 rounded-full bg-indigo-600" /> Sintético (AI Bot)
                      </div>
                   </div>
                </div>
                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                   {teams.map((t, i) => (
-                    <div key={i} className={`p-5 border rounded-2xl space-y-2 transition-all ${t.is_bot ? 'bg-indigo-600/10 border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'bg-white/5 border-white/10'}`}>
+                    <div key={i} className={`p-5 border rounded-2xl space-y-2 transition-all ${t.is_bot ? 'bg-indigo-600/10 border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.1)]' : 'bg-white/5 border-white/10'}`}>
                        <div className="flex justify-between items-center">
                           <span className={`text-[8px] font-black uppercase ${t.is_bot ? 'text-indigo-400' : 'text-slate-500'}`}>Unidade 0{i+1}</span>
-                          {t.is_bot && <Bot size={12} className="text-indigo-400" />}
+                          {t.is_bot && <Bot size={12} className="text-indigo-400 animate-pulse" />}
                        </div>
                        <input 
                          value={t.name} 
