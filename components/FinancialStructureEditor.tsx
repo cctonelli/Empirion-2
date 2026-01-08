@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, Trash2, ChevronDown, Calculator, 
-  CheckCircle2, AlertTriangle, Boxes, X, Delete
+  CheckCircle2, AlertTriangle, Boxes, X, 
+  TrendingUp, Landmark, ShieldCheck
 } from 'lucide-react';
 import { AccountNode } from '../types';
 
@@ -111,38 +112,38 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
   const isBalanced = Math.abs(assets - liabPL) < 1; 
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900 p-8 rounded-[3rem] border border-white/10 shadow-2xl">
-        <div className="flex gap-2 p-1.5 bg-slate-950 rounded-2xl w-fit border border-white/5">
+    <div className="space-y-10">
+      {/* HEADER LOCAL - TABS E STATUS */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+        <div className="flex gap-2 p-1.5 bg-slate-950 rounded-[1.75rem] w-fit border border-white/5 shadow-inner">
           <button 
             onClick={() => setActiveTab('balance')} 
-            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'balance' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`px-8 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'balance' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            Balanço Patrimonial
+            <Landmark size={14} /> Balanço Patrimonial
           </button>
           <button 
             onClick={() => setActiveTab('dre')} 
-            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dre' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`px-8 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'dre' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            DRE Tático
+            <TrendingUp size={14} /> DRE Tático
           </button>
         </div>
         
-        <div className="flex gap-4">
-           <StatusBox label="Ativo Total" val={assets} color="orange" />
-           {activeTab === 'balance' && (
-             <div className={`px-6 rounded-2xl border flex items-center gap-3 ${isBalanced ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'}`}>
-                {isBalanced ? <CheckCircle2 size={18}/> : <AlertTriangle size={18}/>}
-                <span className="text-[10px] font-black uppercase italic tracking-widest">
-                  {isBalanced ? 'Audit Passed' : `Deviation: $ ${formatInt(assets - liabPL)}`}
-                </span>
-             </div>
-           )}
+        <div className="flex flex-wrap gap-4 items-center">
+           <StatusBox label="Vulnerabilidade Ativa" val={assets} color="orange" />
+           <div className={`px-6 py-4 rounded-2xl border flex items-center gap-3 transition-all duration-700 ${isBalanced ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400 animate-pulse'}`}>
+              {isBalanced ? <ShieldCheck size={20}/> : <AlertTriangle size={20}/>}
+              <span className="text-[9px] font-black uppercase italic tracking-[0.2em]">
+                {isBalanced ? 'Audit Passed' : `Divergência: $ ${formatInt(assets - liabPL)}`}
+              </span>
+           </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto custom-scrollbar pb-6">
-        <div className="space-y-3 min-w-[800px]">
+      {/* TREE CONTENT - DENSE VIEW */}
+      <div className="matrix-container p-6 md:p-10">
+        <div className="space-y-4 min-w-[900px]">
           {Array.isArray(nodes) && nodes.length > 0 ? nodes.map((node) => (
             <TreeNode 
               key={node.id} 
@@ -152,8 +153,8 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
               onRemove={removeNode}
             />
           )) : (
-            <div className="py-32 text-center bg-slate-900/40 rounded-[3rem] border border-dashed border-white/5 text-slate-500 uppercase font-black text-xs tracking-[0.4em]">
-              Waiting for Oracle Master Node Initialization...
+            <div className="py-32 text-center bg-slate-900/40 rounded-[3.5rem] border border-dashed border-white/5 text-slate-500 uppercase font-black text-[10px] tracking-[0.5em]">
+              Handshaking with Oracle Master Core...
             </div>
           )}
         </div>
@@ -176,24 +177,34 @@ const TreeNode: React.FC<{
   const isNegative = node.value < 0;
 
   return (
-    <div className="space-y-2">
-      <div className={`group flex items-center gap-4 p-4 rounded-2xl transition-all border ${isParent ? 'bg-slate-900 border-white/10' : 'bg-white/5 border-white/5 hover:border-orange-500/30'}`} style={{ marginLeft: level * 32 }}>
-        <button onClick={() => setIsOpen(!isOpen)} className={`p-1.5 text-slate-600 ${!isParent && 'opacity-0'} transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`}><ChevronDown size={16}/></button>
-        <div className="flex-1 flex items-center justify-between gap-6">
-           <input 
-             readOnly={node.isReadOnly || !node.isEditable}
-             className={`bg-transparent outline-none font-black text-sm flex-1 ${isParent ? 'text-orange-500 uppercase italic' : 'text-slate-300'}`} 
-             value={node.label} 
-             onChange={e => onUpdate(node.id, { label: e.target.value })} 
-           />
-           <div className={`flex items-center gap-3 bg-slate-950 px-5 py-2.5 rounded-xl border border-white/5 shadow-inner`}>
-             <span className={`text-[10px] font-black ${isNegative ? 'text-rose-500' : 'text-slate-600'}`}>{isNegative ? '(-)' : '$'}</span>
+    <div className="space-y-3">
+      <div className={`group flex items-center gap-5 p-4 rounded-2xl transition-all border ${isParent ? 'bg-slate-900/80 border-white/10 shadow-lg' : 'bg-white/5 border-white/5 hover:border-white/20'}`} style={{ marginLeft: level * 32 }}>
+        <button 
+          onClick={() => setIsOpen(!isOpen)} 
+          className={`p-2 text-slate-600 hover:text-white transition-all ${!isParent && 'opacity-0 pointer-events-none'} ${isOpen ? 'rotate-0' : '-rotate-90'}`}
+        >
+          <ChevronDown size={18}/>
+        </button>
+        
+        <div className="flex-1 flex items-center justify-between gap-10">
+           <div className="flex-1 flex items-center gap-3">
+              <input 
+                readOnly={node.isReadOnly || !node.isEditable}
+                className={`bg-transparent outline-none font-black text-sm flex-1 transition-colors ${isParent ? 'text-orange-500 uppercase italic tracking-tight' : 'text-slate-300'}`} 
+                value={node.label} 
+                onChange={e => onUpdate(node.id, { label: e.target.value })} 
+              />
+              {node.isReadOnly && <ShieldCheck size={12} className="text-slate-700" />}
+           </div>
+
+           <div className={`flex items-center gap-4 bg-slate-950 px-6 py-2.5 rounded-xl border border-white/5 shadow-inner transition-all group-hover:border-orange-500/30`}>
+             <span className={`text-[10px] font-black ${isNegative ? 'text-rose-500' : 'text-slate-700'}`}>{isNegative ? '(-)' : '$'}</span>
              {isParent ? (
-               <span className={`font-mono font-black text-sm ${isNegative ? 'text-rose-400' : 'text-white'}`}>{formatInt(node.value)}</span>
+               <span className={`font-mono font-black text-sm ${isNegative ? 'text-rose-400' : 'text-white'} italic`}>{formatInt(node.value)}</span>
              ) : (
                <input 
                  type="text" 
-                 className={`w-32 bg-transparent outline-none font-mono font-bold text-sm ${isNegative ? 'text-rose-400' : 'text-white'}`} 
+                 className={`w-36 bg-transparent outline-none font-mono font-bold text-sm ${isNegative ? 'text-rose-400' : 'text-white'}`} 
                  value={formatInt(node.value)} 
                  onChange={e => {
                    const raw = e.target.value.replace(/[^-0-9]/g, '');
@@ -203,14 +214,24 @@ const TreeNode: React.FC<{
              )}
            </div>
            
-           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              {canAdd && <button onClick={() => onAdd(node.id)} className="p-2 text-blue-400 hover:bg-white/10 rounded-xl transition-all"><Plus size={16}/></button>}
-              {canDelete && <button onClick={() => onRemove(node.id)} className="p-2 text-rose-500 hover:bg-white/10 rounded-xl transition-all"><Trash2 size={16}/></button>}
+           <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              {canAdd && (
+                <button onClick={() => onAdd(node.id)} className="p-2.5 text-blue-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all shadow-lg active:scale-90">
+                  <Plus size={16}/>
+                </button>
+              )}
+              {canDelete && (
+                <button onClick={() => onRemove(node.id)} className="p-2.5 text-rose-500 hover:bg-rose-600 hover:text-white rounded-xl transition-all shadow-lg active:scale-90">
+                  <Trash2 size={16}/>
+                </button>
+              )}
            </div>
         </div>
       </div>
+
       {isOpen && isParent && (
-        <div className="space-y-2">
+        <div className="space-y-3 relative">
+          <div className="absolute left-[24px] top-0 bottom-0 w-px bg-white/5" />
           {node.children!.map(child => (
             <TreeNode key={child.id} node={child} onUpdate={onUpdate} onAdd={onAdd} onRemove={onRemove} level={level + 1} />
           ))}
@@ -221,9 +242,9 @@ const TreeNode: React.FC<{
 };
 
 const StatusBox = ({ label, val, color }: any) => (
-  <div className={`p-4 px-8 rounded-2xl border shadow-xl ${color === 'orange' ? 'bg-orange-600 text-white border-orange-500' : 'bg-blue-600 text-white border-blue-500'}`}>
-     <span className="block text-[8px] font-black uppercase opacity-80 tracking-[0.25em] mb-1">{label}</span>
-     <span className="text-xl font-black font-mono italic leading-none">$ {formatInt(val)}</span>
+  <div className={`p-4 px-10 rounded-[2rem] border shadow-2xl transition-all hover:scale-105 ${color === 'orange' ? 'bg-orange-600 text-white border-orange-500 shadow-orange-600/10' : 'bg-blue-600 text-white border-blue-500 shadow-blue-600/10'}`}>
+     <span className="block text-[9px] font-black uppercase opacity-70 tracking-[0.4em] mb-1">{label}</span>
+     <span className="text-2xl font-black font-mono italic leading-none">$ {formatInt(val)}</span>
   </div>
 );
 

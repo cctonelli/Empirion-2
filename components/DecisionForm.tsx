@@ -1,11 +1,11 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, 
   ArrowRight, ArrowLeft, ShieldCheck, Activity, 
-  Save, Sparkles, Package, Cpu
+  Save, Sparkles, Package, Cpu, ChevronRight, Target, 
+  TrendingUp, Landmark
 } from 'lucide-react';
-import { saveDecisions, getChampionships, supabase } from '../services/supabase';
+import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { DecisionData, Branch, Championship, ProjectionResult, EcosystemConfig } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,7 +23,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeRegion, setActiveRegion] = useState(1);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [decisions, setDecisions] = useState<DecisionData>({
     regions: {}, hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 2, sales_staff_count: 50 },
@@ -32,10 +32,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     legal: { recovery_mode: 'none' }
   });
 
-  // Auto-scroll reset on step change
+  // UX Improvement: Auto scroll to top on step transition
   useEffect(() => {
-    if (contentRef.current) {
-      contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [activeStep]);
 
@@ -44,7 +44,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       if (champId) {
         const { data: champs } = await getChampionships();
         const found = champs?.find(a => a.id === champId);
-        if (found) setActiveArena(found);
+        if (found) {
+          setActiveArena(found);
+          const initialRegions: any = {};
+          for (let i = 1; i <= (found.regions_count || 9); i++) {
+            initialRegions[i] = { price: 372, term: 1, marketing: 1000 };
+          }
+          setDecisions(prev => ({ ...prev, regions: initialRegions }));
+        }
       }
     };
     fetchContext();
@@ -58,86 +65,158 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
   const rating = projections?.health?.rating || 'AAA';
 
+  const updateDecision = (path: string, val: any) => {
+    const keys = path.split('.');
+    setDecisions(prev => {
+      const next = { ...prev };
+      let current: any = next;
+      for (let i = 0; i < keys.length - 1; i++) {
+        current = current[keys[i]];
+      }
+      current[keys[keys.length - 1]] = val;
+      return next;
+    });
+  };
+
   return (
     <div className="wizard-shell">
-      {/* HUD DE RATING PERSISTENTE NO TOPO DO WIZARD */}
-      <div className="absolute top-4 right-8 z-[500] flex items-center gap-3 bg-slate-950/80 backdrop-blur-2xl px-6 py-3 rounded-full border border-white/10 shadow-2xl">
+      <div className="absolute top-4 right-8 z-[60] flex items-center gap-3 bg-slate-950/80 backdrop-blur-2xl px-6 py-2.5 rounded-full border border-white/10 shadow-2xl pointer-events-none">
          <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-         <span className="text-xs font-black text-white italic tracking-[0.2em] uppercase">Oracle Rating: {rating}</span>
+         <span className="text-[10px] font-black text-white italic tracking-[0.2em] uppercase">Oracle Projection: {rating}</span>
       </div>
 
-      {/* STEPPER DE NAVEGAÇÃO DA EQUIPE - FIXED AT TOP OF SHELL */}
-      <nav className="wizard-header-fixed flex p-2 shrink-0">
+      <nav className="wizard-header-fixed flex p-2.5 shrink-0 gap-1.5 overflow-x-auto no-scrollbar">
          {STEPS.map((s, idx) => (
-           <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 py-4 transition-all rounded-2xl flex flex-col items-center gap-2 ${activeStep === idx ? 'bg-orange-600 text-white shadow-xl scale-[1.02]' : 'text-slate-600 hover:text-slate-400'}`}>
-              <s.icon size={18} />
-              <span className="text-[9px] font-black uppercase tracking-widest">{s.label}</span>
+           <button 
+             key={s.id} 
+             onClick={() => setActiveStep(idx)} 
+             className={`flex-1 min-w-[80px] py-3 transition-all rounded-2xl flex flex-col items-center gap-1.5 ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg scale-[1.02]' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+           >
+              <s.icon size={16} />
+              <span className="text-[8px] font-black uppercase tracking-widest">{s.label}</span>
            </button>
          ))}
       </nav>
 
-      <div ref={contentRef} className="wizard-content">
+      <div ref={scrollContainerRef} className="wizard-content">
          <AnimatePresence mode="wait">
-            {activeStep === 0 && (
-               <motion.div key="mkt" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10 pb-10">
-                  <div className="matrix-container p-5">
-                     <div className="flex gap-3">
-                        {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
-                          <button key={i} onClick={() => setActiveRegion(i+1)} className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase border transition-all ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-500 shadow-xl' : 'bg-slate-950 text-slate-600 border-white/5 hover:border-white/20'}`}>Região 0{i+1}</button>
-                        ))}
+            <motion.div 
+              key={activeStep} 
+              initial={{ opacity: 0, x: 20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="pb-10"
+            >
+               {activeStep === 0 && (
+                  <div className="space-y-12">
+                     <div className="matrix-container p-4">
+                        <div className="flex gap-2">
+                           {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
+                             <button 
+                               key={i} 
+                               onClick={() => setActiveRegion(i+1)} 
+                               className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase border transition-all whitespace-nowrap ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-400 shadow-lg' : 'bg-slate-950 text-slate-500 border-white/5 hover:border-white/20'}`}
+                             >
+                               Região 0{i+1}
+                             </button>
+                           ))}
+                        </div>
+                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <InputCard 
+                          label="Preço de Venda" 
+                          val={decisions.regions[activeRegion]?.price || 372} 
+                          onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)}
+                          icon={<DollarSign size={18}/>} 
+                          desc="Preço unitário regional."
+                        />
+                        <InputCard 
+                          label="Marketing Local" 
+                          val={decisions.regions[activeRegion]?.marketing || 1000} 
+                          onChange={(v: number) => updateDecision(`regions.${activeRegion}.marketing`, v)}
+                          icon={<Sparkles size={18}/>} 
+                          desc="Investimento publicitário."
+                        />
                      </div>
                   </div>
+               )}
+
+               {activeStep === 1 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <InputCard label="Preço Unitário" val={decisions.regions[activeRegion]?.price || 372} icon={<DollarSign size={16}/>} />
-                     <InputCard label="Marketing Regional" val={decisions.regions[activeRegion]?.marketing || 1000} icon={<Sparkles size={16}/>} />
+                     <InputCard label="Compra MP-A" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={18}/>} />
+                     <InputCard label="Compra MP-B" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={18}/>} />
+                     <InputCard label="OEE Goal %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={18}/>} />
+                     <InputCard label="P&D Inv." val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Cpu size={18}/>} />
                   </div>
-               </motion.div>
-            )}
+               )}
 
-            {activeStep === 1 && (
-               <motion.div key="prod" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-10">
-                  <InputCard label="Compra MP-A" val={decisions.production.purchaseMPA} icon={<Package size={16}/>} />
-                  <InputCard label="Compra MP-B" val={decisions.production.purchaseMPB} icon={<Package size={16}/>} />
-                  <InputCard label="OEE Goal %" val={decisions.production.activityLevel} icon={<Activity size={16}/>} />
-                  <InputCard label="P&D Inv." val={decisions.production.rd_investment} icon={<Cpu size={16}/>} />
-               </motion.div>
-            )}
-
-            {activeStep === 4 && (
-               <motion.div key="rev" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center text-center space-y-12 py-16 pb-10">
-                  <div className="w-28 h-28 bg-emerald-500/10 rounded-[3rem] flex items-center justify-center border border-emerald-500/20 text-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.1)]"><ShieldCheck size={56} /></div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full max-w-4xl">
-                     <ReviewPanel label="Net Profit" val={`$ ${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) >= 0} />
-                     <ReviewPanel label="Oracle Rating" val={rating} pos={rating.includes('A')} />
-                     <ReviewPanel label="Market Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos />
+               {activeStep === 2 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <InputCard label="Contratações" val={decisions.hr.hired} onChange={(v: number) => updateDecision('hr.hired', v)} icon={<Users2 size={18}/>} />
+                     <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v: number) => updateDecision('hr.fired', v)} icon={<Users2 size={18}/>} />
+                     <InputCard label="Salário Médio" val={decisions.hr.salary} onChange={(v: number) => updateDecision('hr.salary', v)} icon={<DollarSign size={18}/>} />
+                     <InputCard label="Treinamento %" val={decisions.hr.trainingPercent} onChange={(v: number) => updateDecision('hr.trainingPercent', v)} icon={<Target size={18}/>} />
                   </div>
-                  <p className="text-slate-500 font-bold italic text-sm">"Revise as métricas acima antes da transmissão final para o núcleo."</p>
-               </motion.div>
-            )}
-            
-            {(activeStep === 2 || activeStep === 3) && (
-                <div className="flex flex-col items-center justify-center py-40">
-                    <Loader2 size={64} className="animate-spin text-orange-500" />
-                    <p className="mt-6 font-black uppercase text-xs tracking-[0.5em] text-slate-500">Syncing Module Terminal...</p>
-                </div>
-            )}
+               )}
+
+               {activeStep === 3 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <InputCard label="Tomada Empréstimo" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<Landmark size={18}/>} />
+                     <InputCard label="Aplicação Fin." val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={18}/>} />
+                  </div>
+               )}
+
+               {activeStep === 4 && (
+                  <div className="flex flex-col items-center justify-center text-center space-y-12 py-10">
+                     <div className="w-24 h-24 bg-emerald-500/10 rounded-[2.5rem] flex items-center justify-center border border-emerald-500/20 text-emerald-500 shadow-2xl"><ShieldCheck size={48} /></div>
+                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl">
+                        <ReviewPanel label="Net Profit Est." val={`$ ${(projections?.netProfit || 0).toLocaleString()}`} pos={(projections?.netProfit || 0) >= 0} />
+                        <ReviewPanel label="Oracle Rating" val={rating} pos={rating.includes('A')} />
+                        <ReviewPanel label="Market Share" val={`${(projections?.marketShare || 12.5).toFixed(1)}%`} pos />
+                     </div>
+                     <p className="text-slate-500 font-bold italic text-sm max-w-xl">"O selo Oracle garante que os dados estão prontos para transmissão."</p>
+                  </div>
+               )}
+            </motion.div>
          </AnimatePresence>
       </div>
 
       <footer className="wizard-footer-dock">
-         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className={`px-10 py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all flex items-center gap-4 active:scale-95 ${activeStep === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}>
-            <ArrowLeft size={20} /> Anterior
+         <button 
+           onClick={() => setActiveStep(s => Math.max(0, s-1))} 
+           disabled={activeStep === 0} 
+           className={`px-8 py-4 font-black uppercase text-[10px] tracking-[0.3em] transition-all flex items-center gap-3 active:scale-95 ${activeStep === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}
+         >
+            <ArrowLeft size={18} /> Voltar
          </button>
          
-         <div className="flex items-center gap-8">
-            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hidden sm:block">Etapa {activeStep + 1}/5</span>
+         <div className="flex items-center gap-6">
+            <div className="hidden sm:flex flex-col items-end">
+               <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Etapa Atual</span>
+               <span className="text-[10px] font-black text-slate-400 uppercase">{activeStep + 1} de {STEPS.length}</span>
+            </div>
             {activeStep === STEPS.length - 1 ? (
-              <button disabled={isReadOnly} className="px-16 py-6 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-2xl hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95 group">
-                <Save size={20} /> Transmitir Ciclo
+              <button 
+                disabled={isReadOnly || isSaving} 
+                onClick={async () => {
+                  setIsSaving(true);
+                  try {
+                    await saveDecisions(teamId!, champId!, round, decisions);
+                    alert("TRANSMISSÃO CONCLUÍDA.");
+                  } catch (e) { alert("ERRO NA TRANSMISSÃO."); }
+                  setIsSaving(false);
+                }}
+                className="px-14 py-5 bg-orange-600 text-white rounded-full font-black text-[11px] uppercase tracking-[0.4em] shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-4 active:scale-95 group"
+              >
+                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} Transmitir Ciclo
               </button>
             ) : (
-              <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="px-16 py-6 bg-white/5 border border-white/10 hover:bg-orange-600 text-white rounded-full font-black text-[11px] uppercase tracking-[0.4em] transition-all flex items-center gap-6 active:scale-95 group">
-                Próximo Passo <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
+              <button 
+                onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} 
+                className="px-14 py-5 bg-white/5 border border-white/10 hover:bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.4em] transition-all flex items-center gap-4 active:scale-95 group"
+              >
+                Avançar <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
             )}
          </div>
@@ -146,20 +225,32 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   );
 };
 
-const InputCard = ({ label, val, icon }: any) => (
-  <div className="p-8 bg-slate-900/80 rounded-[2.5rem] border border-white/5 space-y-6 hover:border-orange-500/40 transition-all shadow-xl group text-left">
-     <div className="flex items-center gap-4">
-        <div className="p-3 bg-white/5 rounded-xl text-slate-500 group-hover:text-orange-500 transition-colors border border-white/5">{icon}</div>
-        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{label}</label>
+const InputCard = ({ label, val, icon, desc, onChange }: any) => (
+  <div className="glass-card p-6 md:p-8 space-y-6 group text-left">
+     <div className="flex items-start justify-between">
+        <div className="flex items-center gap-4">
+           <div className="p-3 bg-white/5 rounded-xl text-slate-500 group-hover:text-orange-500 transition-colors border border-white/5 group-hover:scale-110 duration-500">{icon}</div>
+           <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{label}</label>
+              <p className="text-[8px] font-bold text-slate-700 uppercase tracking-tighter mt-0.5">{desc || 'Entrada Oracle'}</p>
+           </div>
+        </div>
      </div>
-     <input type="number" defaultValue={val} className="w-full bg-slate-950 border-none rounded-2xl px-6 py-5 text-white font-mono font-black text-2xl outline-none focus:ring-2 focus:ring-orange-600 transition-all shadow-inner" />
+     <div className="relative">
+        <input 
+          type="number" 
+          value={val} 
+          onChange={e => onChange?.(Number(e.target.value))}
+          className="w-full bg-slate-950/60 border-none rounded-2xl px-6 py-5 text-white font-mono font-black text-3xl outline-none focus:ring-2 focus:ring-orange-600 transition-all shadow-inner" 
+        />
+     </div>
   </div>
 );
 
 const ReviewPanel = ({ label, val, pos }: any) => (
-  <div className="p-10 bg-slate-950/80 rounded-[2.5rem] border border-white/5 space-y-3 shadow-inner">
-     <span className="block text-[10px] font-black text-slate-600 uppercase tracking-widest">{label}</span>
-     <span className={`text-3xl font-black italic font-mono leading-none ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
+  <div className="p-8 bg-slate-950/60 rounded-[2rem] border border-white/5 space-y-3 shadow-inner group hover:border-white/10 transition-colors">
+     <span className="block text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">{label}</span>
+     <span className={`text-2xl font-black italic font-mono leading-none group-hover:scale-105 transition-transform inline-block ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
   </div>
 );
 
