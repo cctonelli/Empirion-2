@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
