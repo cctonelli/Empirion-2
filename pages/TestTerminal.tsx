@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +25,7 @@ const TestTerminal: React.FC = () => {
       const { data } = await getChampionships();
       const trial = data?.find(a => a.is_trial);
       if (trial) setTrialArenaId(trial.id);
+      else setTrialArenaId('trial-master-node-08'); // Direct fallback for Node 08
     };
     fetchTrialArena();
   }, []);
@@ -39,7 +41,7 @@ const TestTerminal: React.FC = () => {
         } else {
           // If it's a predefined team, we need to set the team ID
           if (user.team) {
-            localStorage.setItem('active_team_id', user.id); // Predefined users use their ID as team ID in mocks
+            localStorage.setItem('active_team_id', user.id); 
             localStorage.setItem('active_champ_id', trialArenaId || 'trial-master-node-08');
           }
           navigate('/app/dashboard');
@@ -60,10 +62,13 @@ const TestTerminal: React.FC = () => {
     setIsCreatingCustom(true);
     setError(null);
     try {
-      // 1. Create Team in trial_teams
-      const newTeam = await createTrialTeam(trialArenaId, customTeamName);
+      // 1. Ensure environment is trial-flagged
+      provisionDemoEnvironment();
       
-      // 2. Perform silent auth as a guest
+      // 2. Create Team in trial_teams
+      const newTeam = await createTrialTeam(trialArenaId, customTeamName.toUpperCase());
+      
+      // 3. Perform silent auth as a guest
       const guestUser = {
         id: newTeam.id,
         name: `CEO ${customTeamName}`,

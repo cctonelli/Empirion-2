@@ -158,11 +158,20 @@ const ActivityDetail: React.FC = () => {
            </div>
 
            <div className="grid grid-cols-2 gap-6">
-              {content.features?.slice(0, 4).map((f: string, i: number) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="p-10 bg-slate-900/60 backdrop-blur-3xl border border-white/5 rounded-[3.5rem] space-y-6 hover:bg-slate-900 transition-all shadow-2xl group border-b-2 hover:border-b-orange-500">
-                   <div className={`p-4 bg-white/5 rounded-2xl w-fit ${accentColor} group-hover:scale-110 transition-all`}><Zap size={24} /></div>
-                   <h4 className="text-lg font-black text-white uppercase tracking-tight leading-tight">{f}</h4>
-                </motion.div>
+              {[
+                 { label: 'Industrial', icon: <Factory />, slug: 'industrial', desc: 'CapEx & Produção' },
+                 { label: 'Comercial', icon: <ShoppingCart />, slug: 'commercial', desc: 'Varejo Híbrido' },
+                 { label: 'Serviços', icon: <Briefcase />, slug: 'services', desc: 'Capital Intelectual' },
+                 { label: 'Agronegócio', icon: <Tractor />, slug: 'agribusiness', desc: 'Ativos Biológicos' },
+                 { label: 'Financeiro', icon: <DollarSign />, slug: 'finance', desc: 'Spread & Risco' },
+                 { label: 'Construção', icon: <Hammer />, slug: 'construction', desc: 'Obras Pesadas' }
+               ].map((r, i) => (
+                 <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="p-10 bg-slate-900/60 backdrop-blur-3xl border border-white/5 rounded-[3.5rem] space-y-6 hover:bg-slate-900 transition-all shadow-2xl group border-b-2 hover:border-b-orange-500">
+                    <div className={`p-4 bg-white/5 rounded-2xl w-fit ${accentColor} group-hover:scale-110 transition-all`}>
+                      {React.cloneElement(r.icon as React.ReactElement<any>, { size: 24 })}
+                    </div>
+                    <h4 className="text-lg font-black text-white uppercase tracking-tight leading-tight">{r.label}</h4>
+                 </motion.div>
               ))}
            </div>
         </div>

@@ -140,7 +140,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                  <div className="container mx-auto px-16 md:px-32 h-full flex items-center relative z-20">
                    <div className="max-w-4xl space-y-10">
                      <div className="inline-flex items-center gap-4 px-8 py-3 bg-orange-600 text-white rounded-full text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl border border-white/20">
-                        <Sparkles size={18} fill="currentColor" /> {slide.badge}
+                        <Sparkles size={18} /> {slide.badge}
                      </div>
                      <h2 className="text-6xl md:text-9xl font-black text-white uppercase italic leading-[0.85] tracking-tighter drop-shadow-2xl">{slide.title}</h2>
                      <p className="text-2xl md:text-3xl text-slate-300 font-medium italic opacity-90 leading-relaxed max-w-2xl">{slide.subtitle}</p>
@@ -205,7 +205,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-125 transition-transform rotate-12">{r.icon}</div>
                     <div className="flex justify-between items-start mb-10 relative z-10">
                        <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-xl border border-white/5">
-                          {React.cloneElement(r.icon as React.ReactElement, { size: 32 })}
+                          {React.cloneElement(r.icon as React.ReactElement<any>, { size: 32 })}
                        </div>
                        <ArrowRight className="text-slate-700 group-hover:text-white group-hover:translate-x-2 transition-all" size={28} />
                     </div>
@@ -242,7 +242,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                        </div>
                     </div>
                     <Link to="/auth" className="w-full sm:w-auto px-10 py-6 bg-white/5 border border-white/10 rounded-3xl text-orange-500 hover:bg-orange-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-4 group/play active:scale-95">
-                       <Play size={28} fill="currentColor" className="group-hover/play:scale-110 transition-transform" />
+                       <Play size={28} className="group-hover/play:scale-110 transition-transform" />
                     </Link>
                  </div>
                ))}
@@ -337,7 +337,7 @@ const FeatureCard = ({ icon, title, desc }: any) => (
   <div className="p-16 bg-slate-900/60 border border-white/5 rounded-[5rem] space-y-10 hover:bg-slate-900 transition-all group shadow-2xl relative overflow-hidden border-b-4 hover:border-b-orange-600">
      <div className="absolute top-0 right-0 p-10 opacity-[0.02] rotate-12 group-hover:scale-125 transition-transform">{icon}</div>
      <div className="w-24 h-24 bg-orange-600/10 rounded-[2.5rem] flex items-center justify-center text-orange-500 shadow-xl group-hover:bg-orange-600 group-hover:text-white transition-all border border-orange-500/10">
-        {React.cloneElement(icon, { size: 40 })}
+        {React.cloneElement(icon as React.ReactElement<any>, { size: 40 })}
      </div>
      <div className="space-y-4">
         <h3 className="text-4xl font-black text-white uppercase italic tracking-tight leading-none">{title}</h3>
