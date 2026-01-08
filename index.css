@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,10 +9,10 @@
   }
 }
 
-/* EMPIRION STANDARD WIZARD SCROLLBARS */
+/* EMPIRION ORACLE SCROLLBARS - ULTRA DISCREET */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -22,17 +23,23 @@
   @apply bg-slate-800 rounded-full hover:bg-orange-600 transition-colors;
 }
 
-/* WIZARD STRUCTURAL KERNEL */
+/* WIZARD STRUCTURAL KERNEL V15.1 */
 .wizard-shell {
-  @apply flex flex-col h-full w-full overflow-hidden bg-slate-950/40 rounded-[3rem] border border-white/5 shadow-2xl;
+  @apply flex flex-col w-full h-full max-h-screen overflow-hidden bg-slate-900/40 backdrop-blur-md rounded-[3rem] border border-white/5 shadow-2xl;
 }
 
 .wizard-content {
-  @apply flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar scroll-smooth;
+  @apply flex-1 overflow-y-auto p-8 md:p-14 custom-scrollbar scroll-smooth relative;
+  /* Garante que o scroll exista se o conteúdo exceder a altura */
+  min-height: 0; 
+}
+
+.wizard-header-fixed {
+  @apply shrink-0 bg-slate-900/80 backdrop-blur-xl border-b border-white/5 z-50;
 }
 
 .wizard-footer-dock {
-  @apply shrink-0 sticky bottom-0 bg-slate-950/95 backdrop-blur-3xl border-t border-white/10 p-6 px-10 flex justify-between items-center z-[300] shadow-[0_-20px_50px_rgba(0,0,0,0.8)];
+  @apply shrink-0 sticky bottom-0 bg-slate-950/95 backdrop-blur-2xl border-t border-white/10 p-6 px-12 flex justify-between items-center z-[400] shadow-[0_-20px_50px_rgba(0,0,0,0.8)];
 }
 
 /* TABLE & MATRIX UTILS */
@@ -41,7 +48,7 @@
 }
 
 .fluid-title {
-  font-size: clamp(2rem, 5vw + 1rem, 6rem);
+  font-size: clamp(3rem, 10vw, 8rem);
 }
 
 .cyber-button {
@@ -50,4 +57,9 @@
 
 .glass-panel {
   @apply bg-slate-900/40 backdrop-blur-2xl border border-white/5 shadow-2xl;
+}
+
+/* Section styling */
+.landing-section {
+  @apply py-32 px-6 md:px-24 relative z-20;
 }

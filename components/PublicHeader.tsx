@@ -1,14 +1,12 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-// Fix: Use motion as any to bypass internal library type resolution issues in this environment
-import { motion as _motion, AnimatePresence } from 'framer-motion';
-const motion = _motion as any;
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronDown, ChevronRight, LogIn, Factory, ShoppingCart, Briefcase, 
   Tractor, DollarSign, Hammer, Menu, X, Box, Cpu, Sparkles, 
   Zap, Gavel, PenTool, Trophy, Terminal, Rocket, GraduationCap,
-  ShieldCheck, PlayCircle
+  ShieldCheck, PlayCircle, Settings, MapPin, Globe
 } from 'lucide-react';
 import { MENU_STRUCTURE, APP_VERSION } from '../constants';
 import { useModalities } from '../hooks/useModalities';
@@ -34,6 +32,9 @@ const getIcon = (iconName?: string) => {
     case 'GraduationCap': return <GraduationCap size={size} />;
     case 'ShieldCheck': return <ShieldCheck size={size} />;
     case 'PlayCircle': return <PlayCircle size={size} />;
+    case 'Settings': return <Settings size={size} />;
+    case 'MapPin': return <MapPin size={size} />;
+    case 'Globe': return <Globe size={size} />;
     default: return <Box size={size} />;
   }
 };
@@ -95,7 +96,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                       initial={{ opacity: 0, y: 10, scale: 0.98 }} 
                       animate={{ opacity: 1, y: 0, scale: 1 }} 
                       exit={{ opacity: 0, y: 10, scale: 0.98 }} 
-                      className="absolute top-full left-1/2 -translate-x-1/2 w-[280px] bg-[#0f172a]/98 border border-white/10 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-2.5 mt-1 backdrop-blur-3xl z-[1050]"
+                      className="absolute top-full left-1/2 -translate-x-1/2 w-[300px] bg-[#0f172a]/98 border border-white/10 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-2.5 mt-1 backdrop-blur-3xl z-[1050]"
                     >
                       <div className="grid grid-cols-1 gap-0.5">
                         {item.sub.map((sub: any, idx: number) => (
@@ -122,7 +123,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <div className="hidden xl:block scale-75 origin-right"><LanguageSwitcher light /></div>
           
           <Link 
-            to="/test/industrial"
+            to="/auth"
             className="hidden md:flex items-center gap-2 px-5 py-2 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-full font-black text-[8px] uppercase tracking-[0.15em] hover:bg-orange-600 hover:text-white transition-all active:scale-95 shadow-lg whitespace-nowrap"
           >
             <Rocket size={10} className="animate-pulse" /> Teste Grátis
@@ -184,11 +185,11 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 };
 
 const SubmenuItem: React.FC<{ item: any }> = ({ item }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isSubOpen, setIsSubOpen] = useState(false);
   const hasSub = item.sub && item.sub.length > 0;
 
   return (
-    <div className="relative" onMouseEnter={() => hasSub && setIsOpen(true)} onMouseLeave={() => hasSub && setIsOpen(false)}>
+    <div className="relative" onMouseEnter={() => hasSub && setIsSubOpen(true)} onMouseLeave={() => hasSub && setIsSubOpen(false)}>
       <Link 
         to={item.path || '#'} 
         className="flex items-center gap-3 px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-orange-600/10 rounded-2xl transition-all group/sub"
@@ -200,11 +201,11 @@ const SubmenuItem: React.FC<{ item: any }> = ({ item }) => {
           <span className="flex-1 truncate group-hover/sub:translate-x-1 transition-transform">{item.label}</span>
           {item.desc && <span className="text-[6px] font-bold opacity-30 truncate group-hover/sub:opacity-60 uppercase tracking-widest mt-0.5">{item.desc}</span>}
         </div>
-        {hasSub && <ChevronRight size={10} className={`ml-auto transition-transform ${isOpen ? 'translate-x-1 text-orange-500' : ''}`} />}
+        {hasSub && <ChevronRight size={10} className={`ml-auto transition-transform ${isSubOpen ? 'translate-x-1 text-orange-500' : ''}`} />}
       </Link>
       
       <AnimatePresence>
-        {hasSub && isOpen && (
+        {hasSub && isSubOpen && (
           <motion.div 
             initial={{ opacity: 0, x: 10 }} 
             animate={{ opacity: 1, x: 0 }} 

@@ -261,8 +261,14 @@ export const MENU_STRUCTURE = [
     { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer', desc: 'Obras Pesadas' }
   ]},
   { label: 'soluções', path: '#', sub: [
-    { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu' },
-    { id: 'otp', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy' },
+    { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu', sub: [
+        { id: 'sim-live', label: 'Arenas Live', path: '/solutions/simulators', icon: 'Zap' },
+        { id: 'sim-custom', label: 'Customizados', path: '/solutions/simulators', icon: 'Settings' }
+    ]},
+    { id: 'otp', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy', sub: [
+        { id: 'otp-global', label: 'Ranking Global', path: '/rewards', icon: 'Globe' },
+        { id: 'otp-local', label: 'Sessões Locais', path: '/solutions/open-tournaments', icon: 'MapPin' }
+    ]},
     { id: 'ibp', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool' }
   ]},
   { label: 'funcionalidades', path: '/features' },
@@ -274,10 +280,10 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
     hero: { 
       title: "Forje Seu Império", 
-      empire: "STREET Arena", 
-      subtitle: "Simulação Industrial v13.0: Onde $9M em ativos e TSR ditam o vencedor.", 
+      empire: "Insight Estratégico IA", 
+      subtitle: "A maior arena de simulações empresariais multiplayer assistida por Gemini IA.", 
       cta: "Entre na Arena", 
-      secondaryCta: "Ver Ramos" 
+      secondaryCta: "Explorar Ramos" 
     },
     carousel: [
       { 
@@ -287,13 +293,33 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
         image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", 
         badge: "Industrial Node 08", 
         link: "/branches/industrial" 
+      },
+      { 
+        id: 2, 
+        title: "Hub Comercial", 
+        subtitle: "Omnichannel e Varejo Híbrido de Alto Desempenho.", 
+        image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2000", 
+        badge: "Retail Node 05", 
+        link: "/branches/commercial" 
+      },
+      { 
+        id: 3, 
+        title: "Agro Intelligence", 
+        subtitle: "Gestão de Ativos Biológicos e Risco Climático.", 
+        image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000", 
+        badge: "Agro Node 12", 
+        link: "/branches/agribusiness" 
       }
     ],
     leaderboard: [
-      { id: 'c1', name: "Empirion Street: Industrial Mastery", status: "Ciclo 1/12", teams: 8, lead: "Unidade Alpha" }
+      { id: 'c1', name: "Industrial Mastery: Node 08", status: "Ciclo 4/12", teams: 15, lead: "Unidade Alpha" },
+      { id: 'c2', name: "Varejo Híbrido: São Paulo", status: "Ciclo 1/10", teams: 8, lead: "Beta Retail" },
+      { id: 'c3', name: "Agro Global: Ciclo Safra", status: "Finalizado", teams: 24, lead: "Farm Tech" }
     ],
-    sectors: [
-      { id: 's1', name: 'Empirion Street', slug: 'industrial', icon: 'Factory', description: 'Otimização de OEE e TSR.' }
+    badges: [
+      { id: 'b1', name: 'Elite Strategist', icon: 'Award', color: 'text-amber-500' },
+      { id: 'b2', name: 'Master Financer', icon: 'TrendingUp', color: 'text-emerald-500' },
+      { id: 'b3', name: 'Industrial Titan', icon: 'Factory', color: 'text-blue-500' }
     ]
   },
   'solutions-bp': {

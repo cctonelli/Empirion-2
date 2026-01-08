@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -158,27 +159,25 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </aside>
 
          {/* CENTRAL: COMMAND FEED (WAR ROOM) */}
-         <main className="flex-1 bg-slate-950 flex flex-col overflow-hidden relative">
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pb-20">
-               <div className="max-w-5xl mx-auto space-y-6">
-                  <div className="flex justify-between items-end border-b border-white/5 pb-4">
-                     <div>
-                        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Decision <span className="text-orange-600">Matrix</span></h2>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">Nodo {activeTeam?.name || 'ALPHA'}</p>
-                     </div>
-                     <button onClick={() => setShowGazette(true)} className="px-5 py-2.5 bg-slate-900 border border-white/10 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2">
-                        <Newspaper size={14} /> Oracle Gazette
-                     </button>
+         <main className="flex-1 bg-slate-950 flex flex-col overflow-hidden relative p-6">
+            <div className="flex-1 flex flex-col overflow-hidden max-w-5xl mx-auto w-full">
+               <div className="flex justify-between items-end border-b border-white/5 pb-4 mb-6 shrink-0">
+                  <div>
+                     <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Decision <span className="text-orange-600">Matrix</span></h2>
+                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">Nodo {activeTeam?.name || 'ALPHA'}</p>
                   </div>
+                  <button onClick={() => setShowGazette(true)} className="px-5 py-2.5 bg-slate-900 border border-white/10 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2">
+                     <Newspaper size={14} /> Oracle Gazette
+                  </button>
+               </div>
 
-                  <div className="bg-slate-900/40 border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl min-h-[500px]">
-                     <DecisionForm 
-                        teamId={activeTeam?.id} 
-                        champId={activeArena?.id} 
-                        round={(activeArena?.current_round || 0) + 1} 
-                        branch={activeArena?.branch} 
-                     />
-                  </div>
+               <div className="flex-1 overflow-hidden relative">
+                  <DecisionForm 
+                     teamId={activeTeam?.id} 
+                     champId={activeArena?.id} 
+                     round={(activeArena?.current_round || 0) + 1} 
+                     branch={activeArena?.branch} 
+                  />
                </div>
             </div>
          </main>
