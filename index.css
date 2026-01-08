@@ -11,8 +11,8 @@
 
 /* EMPIRION ORACLE SCROLLBARS - ULTRA DISCREET */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -23,43 +23,66 @@
   @apply bg-slate-800 rounded-full hover:bg-orange-600 transition-colors;
 }
 
-/* WIZARD STRUCTURAL KERNEL V15.1 */
+/* WIZARD STRUCTURAL KERNEL V15.2 */
 .wizard-shell {
-  @apply flex flex-col w-full h-full max-h-screen overflow-hidden bg-slate-900/40 backdrop-blur-md rounded-[3rem] border border-white/5 shadow-2xl;
+  @apply flex flex-col w-full h-full max-h-screen overflow-hidden bg-slate-900/40 backdrop-blur-3xl rounded-[4rem] border border-white/10 shadow-2xl;
 }
 
 .wizard-content {
-  @apply flex-1 overflow-y-auto p-8 md:p-14 custom-scrollbar scroll-smooth relative;
-  /* Garante que o scroll exista se o conteúdo exceder a altura */
+  @apply flex-1 overflow-y-auto p-10 md:p-16 custom-scrollbar scroll-smooth relative;
   min-height: 0; 
 }
 
 .wizard-header-fixed {
-  @apply shrink-0 bg-slate-900/80 backdrop-blur-xl border-b border-white/5 z-50;
+  @apply shrink-0 bg-slate-900/90 backdrop-blur-2xl border-b border-white/10 z-50;
 }
 
 .wizard-footer-dock {
-  @apply shrink-0 sticky bottom-0 bg-slate-950/95 backdrop-blur-2xl border-t border-white/10 p-6 px-12 flex justify-between items-center z-[400] shadow-[0_-20px_50px_rgba(0,0,0,0.8)];
+  @apply shrink-0 sticky bottom-0 bg-slate-950/98 backdrop-blur-3xl border-t border-white/10 p-8 px-16 flex justify-between items-center z-[400] shadow-[0_-30px_60px_rgba(0,0,0,0.9)];
 }
 
 /* TABLE & MATRIX UTILS */
 .matrix-container {
-  @apply overflow-x-auto custom-scrollbar whitespace-nowrap border border-white/5 rounded-3xl bg-slate-950/40;
+  @apply overflow-x-auto custom-scrollbar whitespace-nowrap border border-white/10 rounded-[3rem] bg-slate-950/60 shadow-inner;
 }
 
 .fluid-title {
-  font-size: clamp(3rem, 10vw, 8rem);
+  font-size: clamp(3.5rem, 12vw, 10rem);
+  line-height: 0.85;
 }
 
 .cyber-button {
-  @apply relative overflow-hidden z-[1] transition-all duration-300 active:scale-95;
+  @apply relative overflow-hidden z-[1] transition-all duration-500 active:scale-95;
 }
 
 .glass-panel {
-  @apply bg-slate-900/40 backdrop-blur-2xl border border-white/5 shadow-2xl;
+  @apply bg-slate-900/60 backdrop-blur-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)];
+}
+
+.glass-card {
+  @apply bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-[4rem] shadow-2xl hover:bg-white/[0.06] transition-all;
 }
 
 /* Section styling */
 .landing-section {
-  @apply py-32 px-6 md:px-24 relative z-20;
+  @apply py-40 px-8 md:px-32 relative z-20;
+}
+
+/* ORANGE CLOUDS ANIMATION BASE */
+.orange-cloud-pulse {
+  @apply absolute rounded-full blur-[200px] pointer-events-none z-[-1] animate-pulse opacity-20;
+}
+
+/* SLICK DOTS CUSTOMIZATION */
+.slick-dots.custom-dots {
+  bottom: 40px !important;
+}
+.slick-dots.custom-dots li button:before {
+  color: white !important;
+  font-size: 12px !important;
+  opacity: 0.2 !important;
+}
+.slick-dots.custom-dots li.slick-active button:before {
+  color: #f97316 !important;
+  opacity: 1 !important;
 }

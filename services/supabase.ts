@@ -266,6 +266,26 @@ export const provisionDemoEnvironment = () => {
   localStorage.setItem('is_trial_session', 'true');
 };
 
+export const createTrialTeam = async (championshipId: string, teamName: string) => {
+  const newId = crypto.randomUUID();
+  const timestamp = new Date().toISOString();
+  
+  const payload = {
+    id: newId,
+    name: teamName,
+    championship_id: championshipId,
+    equity: 5055447,
+    credit_limit: 5000000,
+    status: 'active',
+    created_at: timestamp
+  };
+
+  const { error } = await supabase.from('trial_teams').insert([payload]);
+  if (error) throw error;
+  
+  return payload;
+};
+
 export const updateEcosystem = async (championshipId: string, updates: any) => {
   const { data } = await supabase.from('championships').update(updates).eq('id', championshipId).select().single();
   return { data, error: null };

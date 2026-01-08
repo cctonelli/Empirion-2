@@ -49,9 +49,9 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     <motion.header 
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="fixed top-0 left-0 right-0 h-20 bg-[#020617]/95 backdrop-blur-2xl border-b border-white/5 z-[1000] flex items-center shadow-2xl"
+      className="fixed top-0 left-0 right-0 h-20 bg-[#020617]/90 backdrop-blur-2xl border-b border-white/10 z-[1000] flex items-center shadow-2xl"
     >
-      <div className="w-full flex items-center justify-between px-4 md:px-8 lg:px-12 h-full">
+      <div className="w-full flex items-center justify-between px-6 md:px-12 h-full max-w-[1800px] mx-auto">
         
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center gap-3 group">
@@ -61,14 +61,14 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="text-lg font-black tracking-tighter uppercase text-white italic leading-none group-hover:text-orange-500 transition-colors">EMPIRION</span>
-                <span className="px-1 py-0.5 bg-white/5 rounded border border-white/10 text-[5px] font-mono text-orange-500/80 font-black uppercase tracking-tighter hidden sm:block">{APP_VERSION}</span>
+                <span className="px-1 py-0.5 bg-orange-600 text-white rounded border border-white/20 text-[5px] font-mono font-black uppercase tracking-tighter hidden sm:block">v13.2</span>
               </div>
-              <span className="text-[7px] font-black text-slate-500 uppercase tracking-[0.4em] leading-none mt-1">Strategic Node 08</span>
+              <span className="text-[7px] font-black text-slate-500 uppercase tracking-[0.4em] leading-none mt-1">Strategic Command Node</span>
             </div>
           </Link>
         </div>
 
-        <nav className="hidden lg:flex justify-center items-center gap-0.5">
+        <nav className="hidden lg:flex justify-center items-center gap-1">
           {MENU_STRUCTURE.map((item) => {
             const isActive = location.pathname === item.path;
             const isHovered = activeMenu === item.label;
@@ -77,10 +77,10 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               <div key={item.label} className="relative" onMouseEnter={() => setActiveMenu(item.label)} onMouseLeave={() => setActiveMenu(null)}>
                 <Link 
                   to={item.path} 
-                  className={`relative z-10 px-3.5 py-1.5 fluid-menu-item font-black uppercase text-[9px] tracking-[0.12em] transition-all flex items-center gap-1.5 rounded-full ${isActive ? 'text-orange-500' : isHovered ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`relative z-10 px-4 py-2 font-black uppercase text-[9px] tracking-[0.15em] transition-all flex items-center gap-1.5 rounded-full ${isActive ? 'text-orange-500' : isHovered ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   {item.label}
-                  {item.sub && <ChevronDown size={8} className={`transition-transform duration-300 ${isHovered ? 'rotate-180 text-orange-500' : ''}`} />}
+                  {item.sub && <ChevronDown size={10} className={`transition-transform duration-300 ${isHovered ? 'rotate-180 text-orange-500' : ''}`} />}
                   {isHovered && (
                     <motion.div 
                       layoutId="navGlowPill" 
@@ -96,17 +96,17 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                       initial={{ opacity: 0, y: 10, scale: 0.98 }} 
                       animate={{ opacity: 1, y: 0, scale: 1 }} 
                       exit={{ opacity: 0, y: 10, scale: 0.98 }} 
-                      className="absolute top-full left-1/2 -translate-x-1/2 w-[300px] bg-[#0f172a]/98 border border-white/10 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-2.5 mt-1 backdrop-blur-3xl z-[1050]"
+                      className="absolute top-full left-1/2 -translate-x-1/2 w-[320px] bg-[#0f172a]/95 border border-white/10 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-3 mt-2 backdrop-blur-3xl z-[1050]"
                     >
-                      <div className="grid grid-cols-1 gap-0.5">
+                      <div className="grid grid-cols-1 gap-1">
                         {item.sub.map((sub: any, idx: number) => (
                            <SubmenuItem key={sub.id || idx} item={sub} />
                         ))}
                         {item.label === 'ramos' && modalities.length > 0 && (
-                          <div className="mt-2 pt-2 border-t border-white/5">
-                             <p className="px-3 pb-1.5 text-[7px] font-black text-orange-500 uppercase tracking-widest">Arenas Real-time</p>
+                          <div className="mt-2 pt-2 border-t border-white/10">
+                             <p className="px-4 pb-2 text-[7px] font-black text-orange-500 uppercase tracking-widest">Arenas Ativas em Real-time</p>
                              {modalities.map(m => (
-                               <SubmenuItem key={m.id} item={{ id: m.slug, label: m.name, path: `/activities/${m.slug}`, icon: 'Sparkles', desc: 'Sincronização Ativa' }} />
+                               <SubmenuItem key={m.id} item={{ id: m.slug, label: m.name, path: `/activities/${m.slug}`, icon: 'Sparkles', desc: 'Sincronização Oracle' }} />
                              ))}
                           </div>
                         )}
@@ -119,24 +119,24 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           })}
         </nav>
 
-        <div className="flex items-center gap-3 lg:gap-4">
-          <div className="hidden xl:block scale-75 origin-right"><LanguageSwitcher light /></div>
+        <div className="flex items-center gap-4">
+          <div className="hidden xl:block scale-90"><LanguageSwitcher light /></div>
           
           <Link 
-            to="/auth"
-            className="hidden md:flex items-center gap-2 px-5 py-2 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-full font-black text-[8px] uppercase tracking-[0.15em] hover:bg-orange-600 hover:text-white transition-all active:scale-95 shadow-lg whitespace-nowrap"
+            to="/test/industrial"
+            className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white rounded-full font-black text-[9px] uppercase tracking-[0.2em] hover:bg-white hover:text-orange-950 transition-all active:scale-95 shadow-[0_0_20px_rgba(249,115,22,0.4)] whitespace-nowrap"
           >
-            <Rocket size={10} className="animate-pulse" /> Teste Grátis
+            <Rocket size={12} className="animate-pulse" /> Trial Master
           </Link>
 
           <button 
             onClick={onLogin} 
-            className="cyber-button hidden md:flex items-center gap-2 px-6 py-2.5 bg-white/5 text-white border border-white/10 rounded-full font-black text-[9px] uppercase tracking-[0.15em] active:scale-95 whitespace-nowrap hover:bg-white hover:text-slate-950"
+            className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white/5 text-white border border-white/10 rounded-full font-black text-[9px] uppercase tracking-[0.2em] active:scale-95 hover:bg-white hover:text-slate-950 transition-all"
           >
             <LogIn size={12} /> Entrar
           </button>
           
-          <button className="lg:hidden p-2 text-white hover:bg-white/5 rounded-xl" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          <button className="lg:hidden p-3 text-white bg-white/5 rounded-xl border border-white/10" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -148,27 +148,27 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             initial={{ opacity: 0, x: '100%' }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
-            className="fixed inset-0 bg-slate-950 z-[2000] p-6 flex flex-col gap-8 overflow-y-auto"
+            className="fixed inset-0 bg-[#020617] z-[2000] p-8 flex flex-col gap-10 overflow-y-auto"
           >
             <div className="flex justify-between items-center">
-              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3">
-                 <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black italic">E</div>
-                 <span className="font-black text-white uppercase italic tracking-tighter">Empirion</span>
+              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black italic shadow-lg">E</div>
+                 <span className="font-black text-2xl text-white uppercase italic tracking-tighter">Empirion</span>
               </Link>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="p-3 text-white bg-white/5 rounded-full"><X size={24} /></button>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-4 text-white bg-white/5 rounded-full border border-white/10"><X size={28} /></button>
             </div>
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-8">
               {MENU_STRUCTURE.map(item => (
                 <div key={item.label} className="space-y-4">
-                    <Link to={item.path} onClick={() => !item.sub && setIsMobileMenuOpen(false)} className="block text-3xl font-black text-white uppercase tracking-tighter hover:text-orange-500">
+                    <Link to={item.path} onClick={() => !item.sub && setIsMobileMenuOpen(false)} className="block text-4xl font-black text-white uppercase tracking-tighter hover:text-orange-500 transition-colors italic">
                       {item.label}
                     </Link>
                     {item.sub && (
-                        <div className="grid grid-cols-1 gap-4 pl-4 border-l-2 border-orange-600/30">
+                        <div className="grid grid-cols-1 gap-6 pl-6 border-l-2 border-orange-600/30">
                             {item.sub.map((sub: any) => (
-                                <div key={sub.id} className="space-y-3">
-                                  <Link to={sub.path} onClick={() => !sub.sub && setIsMobileMenuOpen(false)} className="text-slate-300 font-black uppercase text-xs tracking-widest hover:text-orange-500 flex items-center gap-2">
-                                     <ChevronRight size={10} className="text-orange-500" /> {sub.label}
+                                <div key={sub.id} className="space-y-2">
+                                  <Link to={sub.path} onClick={() => !sub.sub && setIsMobileMenuOpen(false)} className="text-slate-300 font-black uppercase text-sm tracking-widest hover:text-orange-500 flex items-center gap-3 transition-colors">
+                                     <ChevronRight size={14} className="text-orange-500" /> {sub.label}
                                   </Link>
                                 </div>
                             ))}
@@ -176,6 +176,10 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     )}
                 </div>
               ))}
+            </div>
+            <div className="mt-auto flex flex-col gap-4">
+               <Link to="/test/industrial" onClick={() => setIsMobileMenuOpen(false)} className="w-full py-6 bg-orange-600 text-white rounded-3xl font-black text-center uppercase tracking-widest text-sm shadow-xl">Teste Grátis (Trial Master)</Link>
+               <button onClick={onLogin} className="w-full py-6 bg-white/5 border border-white/10 text-white rounded-3xl font-black uppercase tracking-widest text-sm">Entrar no Cockpit</button>
             </div>
           </motion.div>
         )}
@@ -192,27 +196,27 @@ const SubmenuItem: React.FC<{ item: any }> = ({ item }) => {
     <div className="relative" onMouseEnter={() => hasSub && setIsSubOpen(true)} onMouseLeave={() => hasSub && setIsSubOpen(false)}>
       <Link 
         to={item.path || '#'} 
-        className="flex items-center gap-3 px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-orange-600/10 rounded-2xl transition-all group/sub"
+        className="flex items-center gap-4 px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-orange-600/10 rounded-2xl transition-all group/sub"
       >
-        <div className="p-2 bg-white/5 rounded-lg text-orange-500 group-hover/sub:bg-orange-600 group-hover/sub:text-white group-hover/sub:scale-105 transition-all shadow-sm shrink-0 border border-white/5">
+        <div className="p-3 bg-white/5 rounded-xl text-orange-500 group-hover/sub:bg-orange-600 group-hover/sub:text-white group-hover/sub:scale-110 transition-all shadow-sm shrink-0 border border-white/5">
            {getIcon(item.icon)}
         </div>
         <div className="flex flex-col min-w-0">
           <span className="flex-1 truncate group-hover/sub:translate-x-1 transition-transform">{item.label}</span>
-          {item.desc && <span className="text-[6px] font-bold opacity-30 truncate group-hover/sub:opacity-60 uppercase tracking-widest mt-0.5">{item.desc}</span>}
+          {item.desc && <span className="text-[7px] font-bold opacity-30 truncate group-hover/sub:opacity-70 uppercase tracking-widest mt-1">{item.desc}</span>}
         </div>
-        {hasSub && <ChevronRight size={10} className={`ml-auto transition-transform ${isSubOpen ? 'translate-x-1 text-orange-500' : ''}`} />}
+        {hasSub && <ChevronRight size={12} className={`ml-auto transition-transform ${isSubOpen ? 'translate-x-1 text-orange-500' : ''}`} />}
       </Link>
       
       <AnimatePresence>
         {hasSub && isSubOpen && (
           <motion.div 
-            initial={{ opacity: 0, x: 10 }} 
+            initial={{ opacity: 0, x: 15 }} 
             animate={{ opacity: 1, x: 0 }} 
-            exit={{ opacity: 0, x: 10 }} 
-            className="absolute left-[102%] top-0 min-w-[240px] bg-[#1e293b]/98 border border-white/10 rounded-[1.8rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] p-2 backdrop-blur-3xl z-[1100]"
+            exit={{ opacity: 0, x: 15 }} 
+            className="absolute left-[102%] top-0 min-w-[260px] bg-[#1e293b]/95 border border-white/10 rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.7)] p-3 backdrop-blur-3xl z-[1100]"
           >
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {item.sub.map((subChild: any, subIdx: number) => (
                 <SubmenuItem key={subChild.id || subIdx} item={subChild} />
               ))}

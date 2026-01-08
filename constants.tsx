@@ -1,7 +1,6 @@
-
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource } from './types';
 
-export const APP_VERSION = "v13.0.0-Oracle";
+export const APP_VERSION = "v13.2.0-Oracle-Gold";
 export const BUILD_DATE = "08/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-STABLE";
 export const DEFAULT_INITIAL_SHARE_PRICE = 1.00;
@@ -283,7 +282,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       empire: "Insight Estratégico IA", 
       subtitle: "A maior arena de simulações empresariais multiplayer assistida por Gemini IA.", 
       cta: "Entre na Arena", 
-      secondaryCta: "Explorar Ramos" 
+      secondaryCta: "Trial Master (Sandbox)" 
     },
     carousel: [
       { 

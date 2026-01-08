@@ -1,25 +1,31 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Fix: Use motion as any to bypass internal library type resolution issues in this environment
-import { motion as _motion } from 'framer-motion';
-const motion = _motion as any;
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Terminal, ShieldCheck, Rocket, Play, Loader2, Bot, 
-  ChevronRight, Zap, Info, Factory, Cpu, Star, UserCheck
+  ChevronRight, Zap, Info, Factory, Cpu, Star, UserCheck,
+  Building2, ArrowRight
 } from 'lucide-react';
 import { ALPHA_TEST_USERS } from '../constants';
-import { silentTestAuth, provisionDemoEnvironment } from '../services/supabase';
+import { silentTestAuth, provisionDemoEnvironment, getChampionships, createTrialTeam } from '../services/supabase';
 import EmpireParticles from '../components/EmpireParticles';
 
 const TestTerminal: React.FC = () => {
   const navigate = useNavigate();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [trialArenaId, setTrialArenaId] = useState<string | null>(null);
+  const [customTeamName, setCustomTeamName] = useState('');
+  const [isCreatingCustom, setIsCreatingCustom] = useState(false);
 
   useEffect(() => {
-    // Provisiona o ambiente industrial alpha ao carregar
     provisionDemoEnvironment();
+    const fetchTrialArena = async () => {
+      const { data } = await getChampionships();
+      const trial = data?.find(a => a.is_trial);
+      if (trial) setTrialArenaId(trial.id);
+    };
+    fetchTrialArena();
   }, []);
 
   const handleBypass = async (user: any) => {
@@ -28,10 +34,14 @@ const TestTerminal: React.FC = () => {
     try {
       const result = await silentTestAuth(user);
       if (result?.data?.session) {
-        // Redirecionamento Direto baseado na Role conforme especificação v12.8
         if (user.role === 'tutor') {
           navigate('/app/admin');
         } else {
+          // If it's a predefined team, we need to set the team ID
+          if (user.team) {
+            localStorage.setItem('active_team_id', user.id); // Predefined users use their ID as team ID in mocks
+            localStorage.setItem('active_champ_id', trialArenaId || 'trial-master-node-08');
+          }
           navigate('/app/dashboard');
         }
       }
@@ -40,6 +50,38 @@ const TestTerminal: React.FC = () => {
       setError(`Falha no protocolo Alpha: ${err.message}`);
     } finally {
       setLoadingId(null);
+    }
+  };
+
+  const handleCreateTrial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customTeamName.trim() || !trialArenaId) return;
+    
+    setIsCreatingCustom(true);
+    setError(null);
+    try {
+      // 1. Create Team in trial_teams
+      const newTeam = await createTrialTeam(trialArenaId, customTeamName);
+      
+      // 2. Perform silent auth as a guest
+      const guestUser = {
+        id: newTeam.id,
+        name: `CEO ${customTeamName}`,
+        email: `trial_${newTeam.id}@empirion.ia`,
+        role: 'player'
+      };
+      
+      const result = await silentTestAuth(guestUser);
+      if (result?.data?.session) {
+        localStorage.setItem('active_team_id', newTeam.id);
+        localStorage.setItem('active_champ_id', trialArenaId);
+        navigate('/app/dashboard');
+      }
+    } catch (err: any) {
+      console.error("Trial Creation Failure:", err);
+      setError(`Protocolo de criação interrompido: ${err.message}`);
+    } finally {
+      setIsCreatingCustom(false);
     }
   };
 
@@ -61,101 +103,124 @@ const TestTerminal: React.FC = () => {
               Inicie seu <span className="text-orange-500">Teste Grátis</span>
            </h1>
            <p className="text-xl md:text-2xl text-slate-400 font-medium italic">
-             "Acesse instâncias reais da arena Empirion e valide sua estratégia em segundos."
+             "Modo TRAIL: Acesse instâncias reais da arena Industrial Node 08 e valide sua estratégia."
            </p>
         </header>
 
         {/* Test Units Selection Grid */}
-        <div className="max-w-6xl mx-auto">
-           <div className="bg-slate-900/50 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative overflow-hidden">
-              <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
+           
+           {/* GUEST CREATION BOX */}
+           <div className="bg-slate-900/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-orange-500/20 shadow-2xl flex flex-col justify-between">
+              <div className="space-y-8">
                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white/5 rounded-2xl text-orange-500"><Star size={24} fill="currentColor" /></div>
+                    <div className="p-4 bg-orange-600 text-white rounded-3xl shadow-xl shadow-orange-500/20">
+                       <Building2 size={32} />
+                    </div>
                     <div>
-                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Seleção de Perfil Grátis</h3>
-                       <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]">Experiência Premium • Período de Avaliação</p>
+                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Criar Unidade Trial</h3>
+                       <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.4em]">Handshake dinâmico • Sandbox v13.2</p>
                     </div>
                  </div>
-                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Acesso Instantâneo</span>
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                 
+                 <p className="text-sm text-slate-400 font-medium italic leading-relaxed">
+                   Inicie sua própria operação sandbox solo. Suas decisões serão auditadas pelo engine Oracle Node 08.
+                 </p>
+
+                 <form onSubmit={handleCreateTrial} className="space-y-4">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Nome da Empresa</label>
+                       <input 
+                         value={customTeamName}
+                         onChange={e => setCustomTeamName(e.target.value)}
+                         placeholder="Ex: ATLAS INDUSTRIAL"
+                         className="w-full bg-slate-950 border border-white/10 rounded-2xl px-6 py-5 text-white font-black uppercase tracking-widest outline-none focus:border-orange-500 transition-all placeholder:text-slate-800 shadow-inner"
+                       />
+                    </div>
+                    <button 
+                      type="submit"
+                      disabled={isCreatingCustom || !customTeamName.trim() || !trialArenaId}
+                      className="w-full py-6 bg-orange-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.4em] hover:bg-white hover:text-orange-950 transition-all shadow-xl active:scale-95 disabled:opacity-30 flex items-center justify-center gap-4 group"
+                    >
+                       {isCreatingCustom ? <Loader2 className="animate-spin" /> : <><Rocket size={18} /> Inicializar Comando <ArrowRight className="group-hover:translate-x-2 transition-transform" /></>}
+                    </button>
+                 </form>
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-white/5 flex items-center gap-3 text-emerald-500">
+                 <ShieldCheck size={16} />
+                 <span className="text-[9px] font-black uppercase tracking-widest">Protocolo Trial Master Node 08 Sincronizado</span>
+              </div>
+           </div>
+
+           {/* PRESET USERS BOX */}
+           <div className="bg-slate-900/40 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl space-y-10">
+              <div className="flex items-center gap-4">
+                 <div className="p-4 bg-white/5 rounded-3xl text-orange-500 border border-white/5">
+                    <Star size={32} fill="currentColor" />
+                 </div>
+                 <div>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Perfis Pré-configurados</h3>
+                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.4em]">Unidades de Elite • Fast Access</p>
                  </div>
               </div>
 
-              {error && (
-                <div className="mb-8 p-6 bg-rose-500/10 border border-rose-500/20 rounded-3xl text-rose-400 font-bold text-xs uppercase tracking-widest text-center">
-                  {error}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 gap-4">
                  {ALPHA_TEST_USERS.map((user) => (
-                   <motion.button 
+                   <button 
                      key={user.id}
-                     whileHover={{ scale: 1.02 }}
-                     whileTap={{ scale: 0.98 }}
                      onClick={() => handleBypass(user)}
-                     disabled={loadingId !== null}
-                     className={`group p-10 rounded-[3.5rem] border-2 transition-all text-left relative overflow-hidden flex flex-col justify-between min-h-[320px] ${
+                     disabled={loadingId !== null || isCreatingCustom}
+                     className={`group p-6 rounded-3xl border transition-all text-left flex items-center justify-between ${
                         user.role === 'tutor' 
                         ? 'bg-blue-600/5 border-blue-500/20 hover:bg-blue-600 hover:border-white' 
-                        : 'bg-orange-600/5 border-orange-500/20 hover:bg-orange-600 hover:border-white'
+                        : 'bg-white/5 border-white/10 hover:bg-white hover:border-slate-900'
                      }`}
                    >
-                      <div className="relative z-10 space-y-6">
-                         <div className="flex justify-between items-start">
-                            <div className="p-4 bg-white/5 rounded-2xl text-white group-hover:bg-white group-hover:text-slate-900 transition-colors">
-                               {user.role === 'tutor' ? <UserCheck size={32}/> : <Bot size={32}/>}
-                            </div>
-                            <span className="text-[9px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">
-                               Profile Node {user.id.toUpperCase()}
-                            </span>
+                      <div className="flex items-center gap-4">
+                         <div className="p-3 bg-white/5 rounded-xl text-white group-hover:bg-white group-hover:text-slate-900 transition-colors">
+                            {user.role === 'tutor' ? <UserCheck size={24}/> : <Bot size={24}/>}
                          </div>
                          <div>
-                            <h4 className="text-3xl font-black text-white uppercase italic tracking-tight">{user.name}</h4>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-2 group-hover:text-white/80">
-                               {user.role === 'tutor' ? 'Protocolo: Orquestração Total' : `Unidade: ${user.team || 'Alpha Cell'}`}
+                            <h4 className="text-lg font-black text-white uppercase italic tracking-tight group-hover:text-current">{user.name}</h4>
+                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest group-hover:text-current/60">
+                               {user.role === 'tutor' ? 'Protocolo: Orquestração' : `Unit: ${user.team}`}
                             </p>
                          </div>
                       </div>
-
-                      <div className="relative z-10 flex items-center justify-between pt-6 border-t border-white/5 group-hover:border-white/20">
-                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 group-hover:text-white">
-                            {loadingId === user.id ? 'Sincronizando...' : 'Acessar Instância'}
-                         </span>
-                         {loadingId === user.id ? <Loader2 size={20} className="animate-spin text-white" /> : <ChevronRight size={20} className="group-hover:translate-x-2 transition-transform" />}
-                      </div>
-
-                      {/* Decoration background icon */}
-                      <div className="absolute -bottom-10 -right-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity rotate-12">
-                         {user.role === 'tutor' ? <Cpu size={240}/> : <Factory size={240}/>}
-                      </div>
-                   </motion.button>
+                      {loadingId === user.id ? <Loader2 size={16} className="animate-spin" /> : <ChevronRight size={18} className="text-slate-700 group-hover:text-current" />}
+                   </button>
                  ))}
               </div>
 
-              <div className="mt-16 p-8 bg-white/5 border border-white/10 rounded-[3rem] flex items-center gap-6">
-                 <div className="p-3 bg-blue-600 rounded-xl text-white"><Info size={24}/></div>
-                 <p className="text-xs text-slate-400 font-medium italic leading-relaxed">
-                    Nota: O Teste Grátis utiliza um ambiente sandbox compartilhado. Algumas alterações podem ser resetadas periodicamente para manter a integridade do Nodo Industrial 08.
-                 </p>
-              </div>
+              {error && (
+                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 font-bold text-[9px] uppercase tracking-widest text-center">
+                  {error}
+                </div>
+              )}
            </div>
         </div>
 
+        <div className="max-w-6xl mx-auto p-10 bg-white/5 border border-white/10 rounded-[3rem] flex items-center gap-8 opacity-70">
+           <div className="p-4 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/20 shrink-0"><Info size={28}/></div>
+           <p className="text-sm text-slate-400 font-medium italic leading-relaxed">
+             O **Modo TRAIL** utiliza um ambiente sandbox compartilhado em tempo real. Algumas alterações podem ser resetadas periodicamente pelo Oráculo para manter a integridade do Nodo Industrial 08. Para persistência absoluta e torneios reais, crie uma conta.
+           </p>
+        </div>
+
         {/* Features Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto px-4 opacity-50">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto px-4 opacity-40">
            <div className="flex items-center gap-4">
               <Zap className="text-orange-500" />
-              <span className="text-[10px] font-black uppercase text-white tracking-widest">Sem Cartão de Crédito</span>
+              <span className="text-[10px] font-black uppercase text-white tracking-[0.2em]">Sem Cartão de Crédito</span>
            </div>
            <div className="flex items-center gap-4">
               <ShieldCheck className="text-emerald-500" />
-              <span className="text-[10px] font-black uppercase text-white tracking-widest">Acesso Full v12.8.5</span>
+              <span className="text-[10px] font-black uppercase text-white tracking-[0.2em]">Acesso Oracle Gold</span>
            </div>
            <div className="flex items-center gap-4">
               <Terminal className="text-blue-500" />
-              <span className="text-[10px] font-black uppercase text-white tracking-widest">Suporte Oracle Node 08</span>
+              <span className="text-[10px] font-black uppercase text-white tracking-[0.2em]">Suporte Node 08 Active</span>
            </div>
         </div>
       </div>
