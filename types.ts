@@ -60,19 +60,16 @@ export interface DecisionData {
 }
 
 export interface MacroIndicators {
-  // Índices Macro (PDF Tutor)
-  ice: number; // Índice Crescimento
+  ice: number;
   demand_variation: number;
   inflation_rate: number;
-  customer_default_rate: number; // Inadimplência
+  customer_default_rate: number;
   interest_rate_tr: number;
   supplier_interest: number;
-  sales_interest_rate: number; // Juros Vendas
-  tax_rate_ir: number; // Imposto de Renda
-  late_penalty_rate: number; // Multa atrasos
-  machine_sale_discount: number; // Deságio máquinas
-  
-  // Reajustes (PDF Tutor)
+  sales_interest_rate: number;
+  tax_rate_ir: number;
+  late_penalty_rate: number;
+  machine_sale_discount: number;
   raw_material_a_adjust: number;
   raw_material_b_adjust: number;
   marketing_campaign_adjust: number;
@@ -82,13 +79,9 @@ export interface MacroIndicators {
   machine_beta_price_adjust: number;
   machine_gamma_price_adjust: number;
   salary_adjust: number;
-
-  // Variáveis Operacionais (PDF Tutor)
   allow_machine_sale: boolean;
-  labor_productivity: number; // Produção/Homem
+  labor_productivity: number;
   labor_availability: LaborAvailability;
-
-  // Valores de Base (P0)
   prices: {
     mp_a: number;
     mp_b: number;
@@ -106,12 +99,10 @@ export interface MacroIndicators {
     profit_sharing: number;
     misc: number;
   };
-  
   active_event?: BlackSwanEvent;
   [key: string]: any;
 }
 
-// Interfaces auxiliares...
 export interface Team { id: string; name: string; championship_id: string; status?: string; invite_code?: string; is_bot?: boolean; master_key_enabled?: boolean; kpis?: KPIs; insolvency_status?: InsolvencyStatus; intervention_log?: any[]; created_at?: string; credit_limit: number; equity: number; }
 export interface KPIs { market_share: number; rating: CreditRating; insolvency_status: InsolvencyStatus; [key: string]: any; }
 export interface ProjectionResult { revenue: number; netProfit: number; debtRatio: number; creditRating: CreditRating; health: any; kpis: KPIs; marketShare?: number; statements: any; }
@@ -120,7 +111,42 @@ export interface BlackSwanEvent { title: string; description: string; impact: st
 export interface BusinessPlan { id: string; championship_id: string; team_id: string; round: number; version: number; data: Record<number, string>; status: string; }
 export interface UserProfile { id: string; supabase_user_id: string; name: string; nickname?: string; email: string; role: UserRole; created_at: string; phone?: string; is_opal_premium?: boolean; }
 export interface CommunityCriteria { id: string; label: string; weight: number; }
-export interface Championship { id: string; name: string; description: string; branch: Branch; status: ChampionshipStatus; current_round: number; total_rounds: number; deadline_value: number; deadline_unit: DeadlineUnit; round_frequency_days: number; regions_count: number; bots_count: number; region_type: RegionType; analysis_source: AnalysisSource; initial_share_price: number; is_public?: boolean; config: any; market_indicators: MacroIndicators; kpis?: KPIs; initial_financials: any; round_started_at: string; is_trial?: boolean; teams?: Team[]; created_at: string; sales_mode: SalesMode; scenario_type: ScenarioType; currency: CurrencyType; transparency_level: TransparencyLevel; gazeta_mode: GazetaMode; observers: string[] | any[]; ecosystemConfig?: EcosystemConfig; }
+
+export interface Championship { 
+  id: string; 
+  name: string; 
+  description: string; 
+  branch: Branch; 
+  status: ChampionshipStatus; 
+  current_round: number; 
+  total_rounds: number; 
+  deadline_value: number; 
+  deadline_unit: DeadlineUnit; 
+  round_frequency_days: number; 
+  regions_count: number; 
+  bots_count: number; 
+  region_type: RegionType; 
+  analysis_source: AnalysisSource; 
+  initial_share_price: number; 
+  is_public?: boolean; 
+  config: any; 
+  market_indicators: MacroIndicators; 
+  round_rules?: Record<number, Partial<MacroIndicators>>; // Regras por Round
+  kpis?: KPIs; 
+  initial_financials: any; 
+  round_started_at: string; 
+  is_trial?: boolean; 
+  teams?: Team[]; 
+  created_at: string; 
+  sales_mode: SalesMode; 
+  scenario_type: ScenarioType; 
+  currency: CurrencyType; 
+  transparency_level: TransparencyLevel; 
+  gazeta_mode: GazetaMode; 
+  observers: string[] | any[]; 
+  ecosystemConfig?: EcosystemConfig; 
+}
+
 export interface EcosystemConfig { scenario_type: ScenarioType; modality_type: ModalityType; inflation_rate: number; demand_multiplier: number; interest_rate: number; market_volatility: number; }
 export interface MenuItemConfig { id: string; label: string; path: string; isVisible: boolean; }
 export interface Modality { id: string; name: string; slug: string; description: string; image_url?: string; page_content: { hero: { title: string; subtitle: string }; features: string[]; kpis: string[]; accent_color?: 'blue' | 'emerald' | 'orange'; }; }

@@ -1,5 +1,4 @@
-
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType, Championship } from '../types';
 import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO } from '../constants';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
@@ -7,10 +6,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
   return isFinite(num) ? num : fallback;
 };
 
-/**
- * Added missing calculateBankRating implementation
- */
-export const calculateBankRating = (data: { lc: number, endividamento: number, margem: number, equity: number }, hasScissorsEffect: boolean, selic: number) => {
+export const calculateBankRating = (data: { lc: number, endividamento: number, margem: number, equity: number }, hasScissorsEffect: boolean, tr: number) => {
   let score = 0;
   if (data.lc > 1.2) score += 30;
   if (data.endividamento < 50) score += 30;
@@ -27,9 +23,6 @@ export const calculateBankRating = (data: { lc: number, endividamento: number, m
   return { rating, score, credit_limit: Math.max(0, data.equity * 0.5) };
 };
 
-/**
- * Added missing calculateMarketValuation implementation
- */
 export const calculateMarketValuation = (equity: number, profit: number, rating: CreditRating, prevPrice: number) => {
   const multiplier = rating === 'AAA' ? 1.5 : rating === 'AA' ? 1.3 : rating === 'A' ? 1.1 : rating === 'B' ? 0.9 : 0.7;
   const valuation = (equity + Math.max(0, profit) * 12) * multiplier;
@@ -42,10 +35,6 @@ export const calculateMarketValuation = (equity: number, profit: number, rating:
   };
 };
 
-/**
- * Added missing checkInsolvencyStatus implementation
- * Fix: Ensure 'BANKRUPT' is reachable to avoid unintentional type comparison error
- */
 export const checkInsolvencyStatus = (data: any, history?: any) => {
   const isHealthy = data.lc > 1.0 && data.endividamento < 150;
   let status: InsolvencyStatus = 'SAUDAVEL';
@@ -62,90 +51,96 @@ export const checkInsolvencyStatus = (data: any, history?: any) => {
 };
 
 /**
- * CORE ORACLE ENGINE v13.2 GOLD
+ * CORE ORACLE ENGINE v13.2 GOLD - ROUND-AWARE & CUMULATIVE
  */
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
   ecoConfig: EcosystemConfig,
-  indicators: MacroIndicators = DEFAULT_MACRO,
+  baseIndicators: MacroIndicators = DEFAULT_MACRO,
   previousState?: any,
-  history?: any,
-  regionType: RegionType = 'mixed'
+  roundHistory: any[] = [],
+  regionType: RegionType = 'mixed',
+  currentRound: number = 1,
+  roundRules?: Record<number, Partial<MacroIndicators>>
 ): ProjectionResult => {
   const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevKpis = previousState?.kpis || {};
-  
-  const prevEquity = sanitize(bs.equity?.total || (bs.equity?.accumulated_profit + bs.equity?.capital_social), 5055447);
-  const prevCash = sanitize(bs.assets?.current?.cash, 0);
-  const selic = sanitize(indicators?.interest_rate_tr, 3.0) / 100;
+  const prevCash = sanitize(previousState?.current_cash, 1466605);
+  const prevEquity = sanitize(bs.equity?.total, 5055447);
   const prevSharePrice = sanitize(prevKpis.market_valuation?.share_price, 1.0);
-  
-  // LOGICA DE RECEITA E DEMANDA
+
+  // 1. RESOLVER INDICADORES DO ROUND (Prioriza roundRules)
+  const roundSpecific = roundRules ? roundRules[currentRound] : {};
+  const indicators = { ...baseIndicators, ...roundSpecific };
+
+  // 2. CÁLCULO CUMULATIVO DE PREÇOS (Geométrico baseado no histórico)
+  // Simula o acúmulo de reajustes passados até o round atual
+  let cumulativeInflation = 1.0;
+  let cumulativeMPA = 1.0;
+  let cumulativeSalary = 1.0;
+
+  for (let r = 1; r <= currentRound; r++) {
+      const rRule = roundRules?.[r] || {};
+      cumulativeInflation *= (1 + (rRule.inflation_rate ?? indicators.inflation_rate) / 100);
+      cumulativeMPA *= (1 + (rRule.raw_material_a_adjust ?? indicators.raw_material_a_adjust) / 100);
+      cumulativeSalary *= (1 + (rRule.salary_adjust ?? indicators.salary_adjust) / 100);
+  }
+
+  // 3. LOGICA DE RECEITA E DEMANDA
   const regionArray = Object.values(decisions.regions);
   const avgPrice = regionArray.reduce((acc: number, curr: any) => acc + (curr.price || 0), 0) / Math.max(regionArray.length, 1);
   const totalMarketing = regionArray.reduce((acc: number, curr: any) => acc + (curr.marketing || 0), 0);
   
-  const priceElasticity = Math.max(0.5, 1 - ((avgPrice - 370) / 370));
-  const marketingBoost = Math.min(1.5, 1 + (totalMarketing / (Math.max(1, regionArray.length) * 5))); // Escala 0-9
-  const demandFactor = (indicators.ice || 3) / 100 + 1;
+  const priceElasticity = Math.max(0.3, 1 - ((avgPrice - 370) / 370));
+  const marketingBoost = Math.min(1.8, 1 + (totalMarketing / (Math.max(1, regionArray.length) * 10)));
+  const demandFactor = (indicators.ice / 100 + 1) * (1 + (indicators.demand_variation / 100));
   
-  // PRODUÇÃO IMPACTADA POR PRODUTIVIDADE (PDF TUTOR)
-  const laborFactor = indicators.labor_productivity || 1.0;
-  const rawUnitsSold = 10000 * priceElasticity * marketingBoost * demandFactor * (ecoConfig.demand_multiplier || 1);
-  const unitsSold = Math.floor(rawUnitsSold * laborFactor);
-  
+  const unitsSold = Math.floor(10000 * priceElasticity * marketingBoost * demandFactor * (indicators.labor_productivity || 1.0));
   const revenue = unitsSold * avgPrice;
   
-  // CUSTOS REAJUSTADOS
-  const mpACost = (indicators.prices?.mp_a || 20) * (1 + (indicators.raw_material_a_adjust || 0) / 100);
-  const mpBCost = (indicators.prices?.mp_b || 40) * (1 + (indicators.raw_material_b_adjust || 0) / 100);
+  // 4. CUSTOS ACUMULADOS
+  const mpACost = (indicators.prices.mp_a) * cumulativeMPA;
+  const currentSalary = (indicators.hr_base.salary) * cumulativeSalary;
   
-  const cpv = unitsSold * (mpACost * 0.8 + mpBCost * 0.2); // Mix simplificado
-  const opex = 917582 * (1 + (indicators.inflation_rate || 0) / 100);
-  const netProfit = revenue - cpv - opex - 40000; 
+  const cpv = unitsSold * (mpACost * 0.7) + (currentSalary * 50); // Simplificado: MP + MO
+  const opex = 917582 * cumulativeInflation;
+  
+  // 5. TRABALHAR ATIVOS (MÁQUINAS)
+  const canSell = indicators.allow_machine_sale;
+  const saleRevenue = canSell ? (decisions.machinery.sell.alfa * indicators.machinery_values.alfa * (1 - indicators.machine_sale_discount/100)) : 0;
+  const machineBuyCost = (decisions.machinery.buy.alfa * indicators.machinery_values.alfa);
+
+  const netProfit = revenue - cpv - opex - (indicators.tax_rate_ir / 100 * revenue * 0.1); 
   const finalEquity = prevEquity + netProfit;
   
-  // EFEITO TESOURA E RATING (Lógica Financeira v1.0)
-  const ac = 3290340; 
-  const pc = 4121493; 
-  const cgl = ac - pc;
-  const ncg = 1823735 + 1466605 - 717605;
-  const tesouraria = cgl - ncg;
-  const hasScissorsEffect = ncg > cgl;
-
+  // 6. EFEITO TESOURA E RATING
+  const ac = 3290340 + netProfit; 
+  const pc = 4121493 + machineBuyCost - saleRevenue; 
   const lc = ac / Math.max(pc, 1);
-  const endividamento = ((pc + 1500000) / Math.max(finalEquity, 1)) * 100;
+  const endividamento = (pc / Math.max(finalEquity, 1)) * 100;
   const margem = (netProfit / Math.max(revenue, 1)) * 100;
 
-  const bankDetails = calculateBankRating({ lc, endividamento, margem, equity: finalEquity }, hasScissorsEffect, selic);
-  const insolvency = checkInsolvencyStatus({ pl: finalEquity, ac, pc, caixa: prevCash + netProfit, capitalSocial: 5000000, endividamento, lc }, history);
+  const bankDetails = calculateBankRating({ lc, endividamento, margem, equity: finalEquity }, pc > ac, indicators.interest_rate_tr);
+  const insolvency = checkInsolvencyStatus({ pl: finalEquity, ac, pc, endividamento, lc });
   const valuation = calculateMarketValuation(finalEquity, netProfit, bankDetails.rating, prevSharePrice);
-
-  const kpis: KPIs = {
-    ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
-    scissors_effect: { ncg, ccl: cgl, tesouraria, ccp: finalEquity - 5886600, tsf: (tesouraria/ncg)*100, is_critical: hasScissorsEffect },
-    banking: bankDetails,
-    market_valuation: valuation,
-    market_share: Math.min(100, (unitsSold / 100000) * 100),
-    rating: bankDetails.rating,
-    insolvency_status: insolvency.status,
-    net_profit: netProfit,
-    equity: finalEquity
-  };
 
   return {
     revenue, netProfit, debtRatio: endividamento, creditRating: bankDetails.rating,
     health: { rating: bankDetails.rating, insolvency_risk: insolvency.insolvency_risk, is_bankrupt: !insolvency.canOperate, liquidity_ratio: lc },
-    kpis, marketShare: kpis.market_share,
+    kpis: {
+      market_share: Math.min(100, (unitsSold / 100000) * 100),
+      rating: bankDetails.rating,
+      // Fix: Added missing property 'insolvency_status' which is required by the KPIs interface
+      insolvency_status: insolvency.status,
+      market_valuation: valuation,
+      equity: finalEquity,
+      banking: bankDetails,
+      scissors_effect: { ncg: 1000000, ccl: ac-pc, tesouraria: (ac-pc)-1000000, is_critical: pc > ac, tsf: -10 }
+    },
     statements: {
-      dre: { revenue, cpv, opex, depreciation: 0, net_profit: netProfit },
-      balance_sheet: {
-        assets: { current: { cash: prevCash + netProfit, receivables: 1823735 }, total: 9176940 },
-        equity: { total: finalEquity },
-        liabilities: { total_debt: pc + 1500000 }
-      },
-      current_cash: prevCash + netProfit
-    } as any
+      dre: { revenue, cpv, opex, net_profit: netProfit },
+      balance_sheet: { assets: { total: ac + 5886600 }, equity: { total: finalEquity }, liabilities: { total_debt: pc } }
+    }
   };
 };

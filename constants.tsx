@@ -1,4 +1,3 @@
-
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource } from './types';
 
 export const APP_VERSION = "v13.2.0-Oracle-Gold";
@@ -29,7 +28,8 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
 };
 
 /**
- * Restored INITIAL_FINANCIAL_TREE for financial editors
+ * FIXED INITIAL_FINANCIAL_TREE v13.2 GOLD
+ * Estrutura auditada para garantir Ativo = Passivo + PL ($ 9.176.940)
  */
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
@@ -37,21 +37,47 @@ export const INITIAL_FINANCIAL_TREE = {
       id: 'assets', label: 'ATIVO TOTAL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Disponibilidades (Caixa/Bancos)', value: 1466605, type: 'asset', isEditable: true }
+            { id: 'assets.current.cash', label: 'Disponibilidades (Caixa/Bancos)', value: 1466605, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.receivables', label: 'Contas a Receber (Clientes)', value: 1823735, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.inventory', label: 'Estoques (Insumos e Acabados)', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true }
+          ]
+        },
+        {
+          id: 'assets.fixed', label: 'ATIVO PERMANENTE (IMOBILIZADO)', value: 5886600, type: 'totalizer', children: [
+            { id: 'assets.fixed.machines', label: 'Máquinas e Equipamentos (Custo)', value: 9000000, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.fixed.depreciation', label: '(-) Depreciação Acumulada', value: -3113400, type: 'asset', isEditable: true, isTemplateAccount: true }
           ]
         }
       ]
     },
     { 
       id: 'liabilities', label: 'PASSIVO + PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
-        { id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 4121493, type: 'totalizer', children: [] },
-        { id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 5055447, type: 'totalizer', children: [] }
+        { 
+          id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 4121493, type: 'totalizer', children: [
+            { id: 'liabilities.current.suppliers', label: 'Fornecedores e Contas a Pagar', value: 2471493, type: 'liability', isEditable: true, isTemplateAccount: true },
+            { id: 'liabilities.current.taxes', label: 'Impostos e Encargos a Recolher', value: 150000, type: 'liability', isEditable: true, isTemplateAccount: true },
+            { id: 'liabilities.current.loans', label: 'Empréstimos de Curto Prazo', value: 1500000, type: 'liability', isEditable: true, isTemplateAccount: true }
+          ] 
+        },
+        { 
+          id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 5055447, type: 'totalizer', children: [
+            { id: 'equity.capital', label: 'Capital Social Integralizado', value: 5000000, type: 'equity', isEditable: true, isTemplateAccount: true },
+            { id: 'equity.profit', label: 'Lucros ou Prejuízos Acumulados', value: 55447, type: 'equity', isEditable: true, isTemplateAccount: true }
+          ] 
+        }
       ]
     }
   ],
   dre: [
-    { id: 'rev', label: 'RECEITA BRUTA', value: 3322735, type: 'revenue', isEditable: true, children: [] },
-    { id: 'exp', label: 'CUSTOS E DESPESAS', value: 3248807, type: 'totalizer', children: [] }
+    { id: 'rev', label: 'RECEITA OPERACIONAL BRUTA', value: 3322735, type: 'revenue', isEditable: true, isTemplateAccount: true, children: [] },
+    { 
+      id: 'exp', label: 'CUSTOS E DESPESAS', value: -3248807, type: 'totalizer', children: [
+        { id: 'exp.cpv', label: 'Custo dos Produtos Vendidos (CPV)', value: 2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'exp.mkt', label: 'Despesas com Marketing e Vendas', value: 350000, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'exp.adm', label: 'Despesas Administrativas e Gais', value: 567582, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'exp.fin', label: 'Despesas Financeiras Líquidas', value: 53045, type: 'expense', isEditable: true, isTemplateAccount: true }
+      ] 
+    }
   ]
 };
 
@@ -177,7 +203,6 @@ export const DEFAULT_MACRO: MacroIndicators = {
   machine_alpha_price_adjust: 0.0,
   machine_beta_price_adjust: 0.0,
   machine_gamma_price_adjust: 0.0,
-  // Add missing property salary_adjust to satisfy MacroIndicators interface
   salary_adjust: 1.0,
 
   allow_machine_sale: false,
