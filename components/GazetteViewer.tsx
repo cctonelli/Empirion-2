@@ -135,7 +135,8 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   );
 };
 
-const TabBtn = ({ active, onClick, label, color }: any) => {
+// Fix: Added 'icon' to destructured props to resolve reference error.
+const TabBtn = ({ active, onClick, label, color, icon }: any) => {
   const activeClasses = {
     benchmarking: 'bg-blue-600 text-white shadow-lg',
     macro: 'bg-blue-600 text-white shadow-lg'
