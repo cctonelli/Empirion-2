@@ -44,17 +44,20 @@ export const calculateMarketValuation = (equity: number, profit: number, rating:
 
 /**
  * Added missing checkInsolvencyStatus implementation
+ * Fix: Ensure 'BANKRUPT' is reachable to avoid unintentional type comparison error
  */
 export const checkInsolvencyStatus = (data: any, history?: any) => {
   const isHealthy = data.lc > 1.0 && data.endividamento < 150;
   let status: InsolvencyStatus = 'SAUDAVEL';
+  
   if (!isHealthy) status = 'ALERTA';
   if (data.endividamento > 300 || data.lc < 0.2) status = 'RJ';
+  if (data.endividamento > 500 || data.lc < 0.05) status = 'BANKRUPT';
   
   return { 
     status, 
     canOperate: status !== 'BANKRUPT',
-    insolvency_risk: isHealthy ? 5 : 45
+    insolvency_risk: status === 'SAUDAVEL' ? 5 : status === 'ALERTA' ? 25 : status === 'RJ' ? 60 : 100
   };
 };
 
@@ -95,8 +98,8 @@ export const calculateProjections = (
   const revenue = unitsSold * avgPrice;
   
   // CUSTOS REAJUSTADOS
-  const mpACost = indicators.prices?.mp_a * (1 + (indicators.raw_material_a_adjust || 0) / 100);
-  const mpBCost = indicators.prices?.mp_b * (1 + (indicators.raw_material_b_adjust || 0) / 100);
+  const mpACost = (indicators.prices?.mp_a || 20) * (1 + (indicators.raw_material_a_adjust || 0) / 100);
+  const mpBCost = (indicators.prices?.mp_b || 40) * (1 + (indicators.raw_material_b_adjust || 0) / 100);
   
   const cpv = unitsSold * (mpACost * 0.8 + mpBCost * 0.2); // Mix simplificado
   const opex = 917582 * (1 + (indicators.inflation_rate || 0) / 100);
@@ -133,7 +136,7 @@ export const calculateProjections = (
 
   return {
     revenue, netProfit, debtRatio: endividamento, creditRating: bankDetails.rating,
-    health: { rating: bankDetails.rating, insolvency_risk: bankDetails.score < 50 ? 80 : 10, is_bankrupt: !insolvency.canOperate, liquidity_ratio: lc },
+    health: { rating: bankDetails.rating, insolvency_risk: insolvency.insolvency_risk, is_bankrupt: !insolvency.canOperate, liquidity_ratio: lc },
     kpis, marketShare: kpis.market_share,
     statements: {
       dre: { revenue, cpv, opex, depreciation: 0, net_profit: netProfit },
