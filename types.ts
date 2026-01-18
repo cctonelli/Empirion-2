@@ -1,4 +1,3 @@
-
 /**
  * EMPIRION V13.6 - ORACLE COCKPIT BUILD
  * Advanced high-density data structures for ERP-style orchestration.
@@ -20,45 +19,39 @@ export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'E' | 'N/A';
 export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 
-export interface EcosystemConfig {
-  scenario_type: ScenarioType;
-  modality_type: ModalityType;
-  inflation_rate: number;
-  demand_multiplier: number;
-  interest_rate: number;
-  market_volatility: number;
+// Add missing DecisionData
+export interface DecisionData {
+  regions: Record<number, { price: number; term: number; marketing: number }>;
+  hr: {
+    hired: number;
+    fired: number;
+    salary: number;
+    trainingPercent: number;
+    participationPercent: number;
+    sales_staff_count: number;
+  };
+  production: {
+    purchaseMPA: number;
+    purchaseMPB: number;
+    paymentType: number;
+    activityLevel: number;
+    rd_investment: number;
+  };
+  finance: {
+    loanRequest: number;
+    application: number;
+    buyMachines: {
+      alfa: number;
+      beta: number;
+      gama: number;
+    };
+  };
+  legal: {
+    recovery_mode: string;
+  };
 }
 
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
-export interface MenuItemConfig {
-  id: string;
-  label: string;
-  path: string;
-  icon?: string;
-  isVisible: boolean;
-}
-
-export interface Team {
-  id: string;
-  name: string;
-  championship_id: string;
-  status?: string;
-  invite_code?: string;
-  is_bot?: boolean;
-  master_key_enabled?: boolean;
-  kpis?: KPIs;
-  insolvency_status?: InsolvencyStatus;
-  intervention_log?: InterventionEntry[];
-  created_at?: string;
-  credit_limit: number;
-  equity: number;
-}
-
+// Add missing RegionalData
 export interface RegionalData {
   region_id: number;
   region_name: string;
@@ -69,82 +62,108 @@ export interface RegionalData {
   competitors_count: number;
 }
 
-export interface KPIs {
-  ciclos?: {
-    pmre: number;
-    pmrv: number;
-    pmpc: number;
-    operacional: number;
-    financeiro: number;
+// Add missing MenuItemConfig
+export interface MenuItemConfig {
+  id: string;
+  label: string;
+  path: string;
+  isVisible: boolean;
+}
+
+// Add missing Modality
+export interface Modality {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  page_content: {
+    hero: { title: string; subtitle: string };
+    features: string[];
+    kpis: string[];
+    accent_color?: 'blue' | 'emerald' | 'orange';
   };
-  scissors_effect?: {
-    ncg: number;
-    ccl: number;
-    tesouraria: number;
-    ccp: number;
-    tsf: number;
-    is_critical: boolean;
-  };
-  market_valuation?: {
-    share_price: number;
-    total_shares: number;
-    market_cap: number;
-    tsr: number;
-  };
-  banking?: {
-    score: number;
-    rating: CreditRating;
-    interest_rate: number;
-    credit_limit: number;
-    can_borrow: boolean;
-  };
-  market_share: number;
+}
+
+// Add missing TeamProgress and AuditLog
+export interface AuditLog {
+  user_id: string;
+  changed_at: string;
+  field_path: string;
+  new_value: any;
+}
+
+export interface TeamProgress {
+  team_id: string;
+  team_name: string;
+  status: string;
   rating: CreditRating;
-  insolvency_status: InsolvencyStatus;
-  net_profit?: number;
-  equity?: number;
-  regional_pulse?: RegionalData[];
-  [key: string]: any;
+  risk: number;
+  insolvent: boolean;
+  master_key_enabled?: boolean;
+  auditLogs?: AuditLog[];
 }
 
-export interface ProjectionResult {
-  revenue: number;
-  netProfit: number;
-  debtRatio: number;
-  creditRating: CreditRating;
-  health: FinancialHealth;
-  kpis: KPIs;
-  marketShare?: number;
-  statements: {
-    dre: any;
-    balance_sheet: any;
-    cash_flow: any;
-  };
-}
-
-export interface FinancialHealth {
-  rating: CreditRating;
-  insolvency_risk: number;
-  is_bankrupt: boolean;
-  liquidity_ratio: number;
-}
-
-export interface DecisionData {
-  regions: Record<number, { price: number; term: number; marketing: number }>;
-  hr: { hired: number; fired: number; salary: number; trainingPercent: number; participationPercent: number; sales_staff_count: number };
-  production: { purchaseMPA: number; purchaseMPB: number; paymentType: number; activityLevel: number; rd_investment: number };
-  finance: { loanRequest: number; application: number; buyMachines: { alfa: number; beta: number; gama: number } };
-  legal: { recovery_mode: RecoveryMode };
+export interface EcosystemConfig {
+  scenario_type: ScenarioType;
+  modality_type: ModalityType;
+  inflation_rate: number;
+  demand_multiplier: number;
+  interest_rate: number;
+  market_volatility: number;
 }
 
 export interface MacroIndicators {
-  growth_rate: number;
+  // Índices Variáveis (Planilha Tutor)
+  growth_rate_ice: number;
+  demand_variation: number;
   inflation_rate: number;
+  delinquency_rate: number; // Inadimplência
   interest_rate_tr: number;
+  interest_suppliers: number;
+  interest_sales_avg: number;
   tax_rate_ir: number;
-  machinery_values: { alfa: number; beta: number; gama: number };
+  late_fee_fine: number;
+  machine_sale_discount: number; // Deságio
+  
+  // Índices de Reajuste
+  readjust_raw_material: number;
+  readjust_machine_alfa: number;
+  readjust_machine_beta: number;
+  readjust_machine_gama: number;
+  readjust_marketing: number;
+  readjust_distribution: number;
+  readjust_storage: number;
+
+  // Valores de Base (Valor Inicial / P0)
+  prices: {
+    mp_a: number;
+    mp_b: number;
+    distribution_unit: number;
+    marketing_campaign: number;
+  };
+  machinery_values: {
+    alfa: number;
+    beta: number;
+    gama: number;
+  };
+  hr_base: {
+    salary: number;
+    training: number;
+    profit_sharing: number;
+    misc: number;
+  };
+  
   active_event?: BlackSwanEvent;
   [key: string]: any;
+}
+
+// Add missing ChampionshipTemplate
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  description: string;
+  branch: Branch;
 }
 
 export interface Championship {
@@ -181,113 +200,24 @@ export interface Championship {
   ecosystemConfig?: EcosystemConfig;
 }
 
-export interface AccountNode {
-  id: string;
-  label: string;
-  value: number;
-  type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'expense' | 'revenue';
-  isEditable?: boolean;
-  isReadOnly?: boolean;
-  isTemplateAccount?: boolean;
-  children?: AccountNode[];
-}
+export interface Team { id: string; name: string; championship_id: string; status?: string; invite_code?: string; is_bot?: boolean; master_key_enabled?: boolean; kpis?: KPIs; insolvency_status?: InsolvencyStatus; intervention_log?: any[]; created_at?: string; credit_limit: number; equity: number; }
+export interface KPIs { market_share: number; rating: CreditRating; insolvency_status: InsolvencyStatus; [key: string]: any; }
+export interface ProjectionResult { revenue: number; netProfit: number; debtRatio: number; creditRating: CreditRating; health: any; kpis: KPIs; marketShare?: number; statements: any; }
+export interface AccountNode { id: string; label: string; value: number; type: string; isEditable?: boolean; isReadOnly?: boolean; isTemplateAccount?: boolean; children?: AccountNode[]; }
+export interface BlackSwanEvent { title: string; description: string; impact: string; modifiers: any; }
+export interface BusinessPlan { id: string; championship_id: string; team_id: string; round: number; version: number; data: Record<number, string>; status: string; }
 
-export interface ChampionshipTemplate {
-  id: string;
-  name: string;
-  branch: Branch;
-  sector: string;
-  description: string;
-  config: {
-    total_rounds: number;
-    round_frequency_days: number;
-    regions_count: number;
-    bots_count: number;
-    region_type: RegionType;
-    analysis_source: AnalysisSource;
-    transparency_level: TransparencyLevel;
-    gazeta_mode: GazetaMode;
-    modality_type: ModalityType;
-    deadline_value: number;
-    deadline_unit: DeadlineUnit;
-    sales_mode: SalesMode;
-    scenario_type: ScenarioType;
-    teams_limit?: number;
-  };
-  market_indicators: MacroIndicators;
-  initial_financials: any;
-}
-
-export interface BusinessPlan {
-  id: string;
-  championship_id: string;
-  team_id: string;
-  round: number;
-  version: number;
-  data: Record<number, string>;
-  status: 'draft' | 'submitted' | 'approved';
-}
-
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
-  };
-}
-
-export interface Modality {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url?: string;
-  page_content: {
-    hero: { title: string; subtitle: string };
-    features: string[];
-    kpis: string[];
-    accent_color?: string;
-  };
-}
-
-export interface AuditLog {
-  user_id: string;
-  changed_at: string;
-  field_path: string;
-  old_value: any;
-  new_value: any;
-}
-
-export interface UserProfile {
-  id: string;
-  supabase_user_id: string;
-  name: string;
-  nickname?: string;
-  phone?: string;
-  email: string;
-  role: UserRole;
-  is_opal_premium?: boolean;
+// Add phone property to UserProfile
+export interface UserProfile { 
+  id: string; 
+  supabase_user_id: string; 
+  name: string; 
+  nickname?: string; 
+  email: string; 
+  role: UserRole; 
   created_at: string;
+  phone?: string;
+  is_opal_premium?: boolean;
 }
 
-export interface TeamProgress {
-  team_id: string;
-  team_name: string;
-  status: string;
-  rating: CreditRating;
-  risk: number;
-  insolvent: boolean;
-  auditLogs: AuditLog[];
-  master_key_enabled?: boolean;
-}
-
-export interface InterventionEntry {
-  type: 'CAPITAL_INJECTION' | 'DEBT_FORGIVENESS' | 'RJ_SUSPENSION' | 'MANUAL_STATUS';
-  value?: number;
-  tutor_note: string;
-  timestamp: string;
-}
+export interface CommunityCriteria { id: string; label: string; weight: number; }

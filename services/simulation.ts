@@ -1,4 +1,3 @@
-
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType } from '../types';
 import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES } from '../constants';
 
@@ -90,7 +89,29 @@ export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
   ecoConfig: EcosystemConfig,
-  indicators: MacroIndicators = { growth_rate: 3, inflation_rate: 1, interest_rate_tr: 3, tax_rate_ir: 15.0, machinery_values: { alfa: 505000, beta: 1515000, gama: 3030000 } },
+  // Fix: Default indicators must match MacroIndicators type
+  indicators: MacroIndicators = { 
+    growth_rate_ice: 3, 
+    demand_variation: 0, 
+    inflation_rate: 1, 
+    delinquency_rate: 2.6, 
+    interest_rate_tr: 3, 
+    interest_suppliers: 1.5, 
+    interest_sales_avg: 1.5, 
+    tax_rate_ir: 15.0, 
+    late_fee_fine: 5.0, 
+    machine_sale_discount: 10.0, 
+    readjust_raw_material: 1.0, 
+    readjust_machine_alfa: 1.0, 
+    readjust_machine_beta: 1.0, 
+    readjust_machine_gama: 1.0, 
+    readjust_marketing: 2.0, 
+    readjust_distribution: 1.0, 
+    readjust_storage: 2.0, 
+    prices: { mp_a: 20, mp_b: 40, distribution_unit: 50, marketing_campaign: 10000 }, 
+    machinery_values: { alfa: 505000, beta: 1515000, gama: 3030000 }, 
+    hr_base: { salary: 1300, training: 0, profit_sharing: 0, misc: 0 } 
+  },
   previousState?: any,
   history?: any,
   regionType: RegionType = 'mixed'
@@ -105,18 +126,19 @@ export const calculateProjections = (
   
   // LOGICA DE RECEITA
   const regionArray = Object.values(decisions.regions);
-  const avgPrice = regionArray.reduce((acc, curr) => acc + curr.price, 0) / Math.max(regionArray.length, 1);
-  const totalMarketing = regionArray.reduce((acc, curr) => acc + curr.marketing, 0);
+  // Fix: Added explicit typing to accumulator and current item in reduce calls
+  const avgPrice = regionArray.reduce((acc: number, curr: any) => acc + (curr.price || 0), 0) / Math.max(regionArray.length, 1);
+  const totalMarketing = regionArray.reduce((acc: number, curr: any) => acc + (curr.marketing || 0), 0);
   
   const priceElasticity = Math.max(0.5, 1 - ((avgPrice - 370) / 370));
   const marketingBoost = Math.min(1.5, 1 + (totalMarketing / (regionArray.length * 5000)));
-  const demandFactor = indicators.growth_rate / 100 + 1;
+  const demandFactor = (indicators.growth_rate_ice || 3) / 100 + 1;
   
   const unitsSold = Math.floor(10000 * priceElasticity * marketingBoost * demandFactor * (ecoConfig.demand_multiplier || 1));
   const revenue = unitsSold * avgPrice;
   
-  const cpv = unitsSold * (indicators.providerPrices?.mpA || 62.8) * 0.8;
-  const opex = 917582 * (1 + indicators.inflation_rate / 100);
+  const cpv = unitsSold * (indicators.prices?.mp_a || 62.8) * 0.8;
+  const opex = 917582 * (1 + (indicators.inflation_rate || 0) / 100);
   const netProfit = revenue - cpv - opex - 40000; // Despesa Financeira Fixa para MVP
   const finalEquity = prevEquity + netProfit;
   
@@ -165,7 +187,7 @@ export const calculateProjections = (
         equity: { total: finalEquity },
         liabilities: { total_debt: pc + 1500000 }
       },
-      cash_flow: { operational: revenue - opex, total: prevCash + netProfit }
-    }
+      current_cash: prevCash + netProfit
+    } as any
   };
 };

@@ -46,8 +46,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         if (found) {
           setActiveArena(found);
           const initialRegions: any = {};
+          // Suporta 1 a N regiões conforme parametrização do tutor
           for (let i = 1; i <= (found.regions_count || 9); i++) {
-            initialRegions[i] = { price: 372, term: 1, marketing: 0 };
+            initialRegions[i] = { price: 372, term: 1, marketing: 0 }; // Marketing Default: 0
           }
           setDecisions(prev => ({ ...prev, regions: initialRegions }));
         }
@@ -95,10 +96,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     setIsSaving(true);
     try {
       const result = await saveDecisions(teamId, champId, round, decisions);
-      if (result.source === 'cloud') {
-         alert("TRANSMISSÃO CONCLUÍDA: Dados sincronizados na nuvem Oracle.");
-      } else {
-         alert(`TRANSMISSÃO LOCAL: Decisões salvas em modo sandbox resiliente.`);
+      if (result.success) {
+         alert("TRANSMISSÃO CONCLUÍDA: Dados sincronizados.");
       }
     } catch (e: any) { 
       alert(`ERRO NA TRANSMISSÃO: ${e.message}`); 

@@ -167,6 +167,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
          await saveDecisions(team.id, championshipId, currentRound + 1, teamDecision);
       }
       if (!teamDecision) {
+         // Suporte a 1 a N equipes e 1 a N regiões
          teamDecision = {
             regions: Object.fromEntries(Array.from({ length: arena.regions_count || 9 }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 0 }])),
             hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50 },

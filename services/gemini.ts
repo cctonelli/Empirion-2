@@ -54,6 +54,7 @@ export const getLiveDecisionAdvice = async (decisions: DecisionData, branch: str
 /**
  * Geração de Decisão Tática para Competidores Sintéticos (Bots)
  * Utiliza o modelo flash para velocidade e custo.
+ * Suporta 1 a N regiões.
  */
 export const generateBotDecision = async (
   branch: Branch, 
@@ -147,11 +148,12 @@ export const generateBotDecision = async (
                 cleanedRegions[r.regionId] = { 
                     price: r.price || 375, 
                     term: r.term || 1, 
-                    marketing: Math.min(9, Math.max(0, r.marketing || 0))
+                    marketing: Math.min(9, Math.max(0, r.marketing || 0)) // Limita 0-9
                 };
             }
         });
     }
+    // Garante preenchimento de 1 a N regiões
     for (let i = 1; i <= regionCount; i++) {
         if (!cleanedRegions[i]) {
             cleanedRegions[i] = { price: 375, term: 1, marketing: 0 };

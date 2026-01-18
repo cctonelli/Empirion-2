@@ -206,134 +206,137 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
 };
 
 export const DEFAULT_MACRO: MacroIndicators = {
-  growth_rate: 3.0,
+  growth_rate_ice: 3.0,
+  demand_variation: 0.0,
   inflation_rate: 1.0,
-  interest_rate_tr: 3.0,
+  delinquency_rate: 2.6,
+  interest_rate_tr: 2.0,
+  interest_suppliers: 1.5,
+  interest_sales_avg: 1.5,
   tax_rate_ir: 15.0,
-  machinery_values: { alfa: 505000, beta: 1515000, gama: 3030000 },
-  difficulty: { price_sensitivity: 2.0, marketing_effectiveness: 1.0 },
-  providerPrices: { mpA: 62.8, mpB: 83.8 },
-  distributionCostUnit: 12.5
+  late_fee_fine: 5.0,
+  machine_sale_discount: 10.0,
+  
+  readjust_raw_material: 1.0,
+  readjust_machine_alfa: 1.0,
+  readjust_machine_beta: 1.0,
+  readjust_machine_gama: 1.0,
+  readjust_marketing: 2.0,
+  readjust_distribution: 1.0,
+  readjust_storage: 2.0,
+
+  prices: {
+    mp_a: 20.00,
+    mp_b: 40.00,
+    distribution_unit: 50.00,
+    marketing_campaign: 10000.00
+  },
+  machinery_values: {
+    alfa: 500000,
+    beta: 1500000,
+    gama: 3000000
+  },
+  hr_base: {
+    salary: 1300.00,
+    training: 0,
+    profit_sharing: 0,
+    misc: 0
+  }
 };
 
+// Add missing constants
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
-  {
-    id: 'tpl-industrial-gold',
-    name: 'Empirion Street: Industrial Mastery',
-    branch: 'industrial',
-    sector: 'Manufacturing',
-    description: 'Balanço Inicial de $ 9.176.940 conforme CPC 26. Gestão total de Imobilizado e Ciclos Empirion.',
-    config: {
-      total_rounds: 12,
-      round_frequency_days: 7,
-      regions_count: 9,
-      bots_count: 2,
-      region_type: 'mixed' as RegionType,
-      analysis_source: 'parameterized' as AnalysisSource,
-      sales_mode: 'internal' as SalesMode,
-      scenario_type: 'simulated' as ScenarioType,
-      transparency_level: 'high' as TransparencyLevel,
-      gazeta_mode: 'anonymous' as GazetaMode,
-      modality_type: 'standard' as ModalityType,
-      deadline_value: 7,
-      deadline_unit: 'days' as DeadlineUnit,
-      teams_limit: 8
-    },
-    market_indicators: DEFAULT_MACRO,
-    initial_financials: INITIAL_FINANCIAL_TREE
-  }
-];
-
-export const ALPHA_TEST_USERS = [
-  { id: 'tutor_master', name: 'Tutor Master', email: 'tutor@empirion.ia', role: 'tutor' as const },
-  { id: 'alpha_street', name: 'Capitão Alpha', email: 'alpha@empirion.ia', role: 'player' as const, team: 'Unidade Alpha STREET' },
+  { id: 'ind-master', name: 'Master Industrial', description: 'Simulação completa de manufatura e CapEx.', branch: 'industrial' },
+  { id: 'comm-retail', name: 'Varejo Híbrido', description: 'Foco em giro de estoque e canais digitais.', branch: 'commercial' },
+  { id: 'serv-elite', name: 'Serviços de Elite', description: 'Gestão de capital intelectual e projetos.', branch: 'services' }
 ];
 
 export const MENU_STRUCTURE = [
-  { label: 'início', path: '/' },
-  { label: 'ramos', path: '/solutions/simulators', sub: [
-    { id: 'ind', label: 'Empirion Street', path: '/branches/industrial', icon: 'Factory', desc: 'Produção $9M Assets' },
-    { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart', desc: 'Varejo Híbrido' },
-    { id: 'ser', label: 'Serviços', path: '/branches/services', icon: 'Briefcase', desc: 'Capital Intelectual' },
-    { id: 'agr', label: 'Agronegócio', path: '/branches/agribusiness', icon: 'Tractor', desc: 'Ativos Biológicos' },
-    { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign', desc: 'Spread & Risco' },
-    { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer', desc: 'Obras Pesadas' }
-  ]},
-  { label: 'soluções', path: '#', sub: [
-    { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu', sub: [
-        { id: 'sim-live', label: 'Arenas Live', path: '/solutions/simulators', icon: 'Zap' },
-        { id: 'sim-custom', label: 'Customizados', path: '/solutions/simulators', icon: 'Settings' }
-    ]},
-    { id: 'otp', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy', sub: [
-        { id: 'otp-global', label: 'Ranking Global', path: '/rewards', icon: 'Globe' },
-        { id: 'otp-local', label: 'Sessões Locais', path: '/solutions/open-tournaments', icon: 'MapPin' }
-    ]},
-    { id: 'ibp', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool' }
-  ]},
-  { label: 'funcionalidades', path: '/features' },
-  { label: 'conteúdos', path: '/blog' },
-  { label: 'contato', path: '/contact' }
+  { label: 'Início', path: '/' },
+  { 
+    label: 'ramos', 
+    path: '#', 
+    sub: [
+      { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory', desc: 'Produção $9M Assets' },
+      { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart', desc: 'Varejo Híbrido' },
+      { id: 'serv', label: 'Serviços', path: '/branches/services', icon: 'Briefcase', desc: 'Capital Intelectual' }
+    ]
+  },
+  { 
+    label: 'soluções', 
+    path: '#',
+    sub: [
+      { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu', desc: 'Arenas Real-time' },
+      { id: 'bp', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool', desc: 'Strategos AI' }
+    ]
+  },
+  { label: 'Funcionalidades', path: '/features' },
+  { label: 'Conteúdos', path: '/blog' },
+  { label: 'Contato', path: '/contact' }
 ];
 
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
-  'landing': {
-    hero: { 
-      title: "Forje Seu Império", 
-      empire: "Insight Estratégico IA", 
-      subtitle: "A maior arena de simulações empresariais multiplayer assistida por Gemini IA.", 
-      cta: "Entre na Arena", 
-      secondaryCta: "Trial Master (Sandbox)" 
-    },
+  landing: {
     carousel: [
-      { 
-        id: 1, 
-        title: "Empirion Street", 
-        subtitle: "Gestão de Ciclo Operacional Empirion v13.0 Gold.", 
-        image: "https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000", 
-        badge: "Industrial Node 08", 
-        link: "/branches/industrial" 
-      },
-      { 
-        id: 2, 
-        title: "Hub Comercial", 
-        subtitle: "Omnichannel e Varejo Híbrido de Alto Desempenho.", 
-        image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2000", 
-        badge: "Retail Node 05", 
-        link: "/branches/commercial" 
-      },
-      { 
-        id: 3, 
-        title: "Agro Intelligence", 
-        subtitle: "Gestão de Ativos Biológicos e Risco Climático.", 
-        image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000", 
-        badge: "Agro Node 12", 
-        link: "/branches/agribusiness" 
-      }
-    ],
-    leaderboard: [
-      { id: 'c1', name: "Industrial Mastery: Node 08", status: "Ciclo 4/12", teams: 15, lead: "Unidade Alpha" },
-      { id: 'c2', name: "Varejo Híbrido: São Paulo", status: "Ciclo 1/10", teams: 8, lead: "Beta Retail" },
-      { id: 'c3', name: "Agro Global: Ciclo Safra", status: "Finalizado", teams: 24, lead: "Farm Tech" }
-    ],
-    badges: [
-      { id: 'b1', name: 'Elite Strategist', icon: 'Award', color: 'text-amber-500' },
-      { id: 'b2', name: 'Master Financer', icon: 'TrendingUp', color: 'text-emerald-500' },
-      { id: 'b3', name: 'Industrial Titan', icon: 'Factory', color: 'text-blue-500' }
+      { id: 1, title: 'IA Generativa v13.2', subtitle: 'Assistência Oracle em tempo real.', image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000', badge: 'Gold Build' }
     ]
   },
   'solutions-bp': {
-    title: "Plano de Negócios Progressivo",
-    subtitle: "Orquestração Estratégica via IA",
+    title: 'Strategos Business Plan',
+    subtitle: 'Arquitetura neural para planos de elite.',
     steps: [
-      { id: 0, label: "Executivo", body: "Resumo da visão estratégica do império." },
-      { id: 1, label: "Mercado", body: "Análise competitiva e SWOT regional." },
-      { id: 2, label: "Operações", body: "Configuração de CAPEX e infraestrutura." },
-      { id: 3, label: "Marketing", body: "Estratégia de penetração e elasticidade." },
-      { id: 4, label: "Finanças", body: "Projeção de fluxo de caixa e Rating." }
+      { id: 0, label: 'Executivo' },
+      { id: 1, label: 'Mercado' },
+      { id: 2, label: 'Estratégia' },
+      { id: 3, label: 'Operações' },
+      { id: 4, label: 'Financeiro' }
+    ]
+  },
+  'rewards': {
+    subtitle: 'Seu prestígio convertido em ativos.',
+    tiers: [
+      { name: 'Bronze', pts: '0', color: 'text-amber-700' },
+      { name: 'Silver', pts: '1000', color: 'text-slate-400' },
+      { name: 'Gold', pts: '5000', color: 'text-amber-400' },
+      { name: 'Platinum', pts: '10000', color: 'text-indigo-400' }
+    ],
+    accumulation: [
+      { action: 'Participação', val: '50 pts' },
+      { action: 'Vitória', val: '500 pts' }
+    ]
+  },
+  'features': {
+    items: [
+      { id: 'ia', title: 'Oracle Intelligence', body: 'IA profunda para análise estratégica.' },
+      { id: 'rt', title: 'Real-time Engine', body: 'Sincronização atômica v6.0.' }
+    ]
+  },
+  'blog': {
+    subtitle: 'Mantenha-se à frente com briefings oficiais.',
+    items: [
+      { id: 1, title: 'Novos Protocolos v13.2', date: '08 Jan 2026', author: 'Command Core' }
+    ]
+  },
+  'solutions-simulators': {
+    title: 'Nodos de Simulação',
+    subtitle: 'Arenas de alta fidelidade para treinamento.',
+    items: [
+      { id: 'ind', label: 'Industrial Mastery', icon: 'Factory', desc: 'Produção $9M Assets', slug: 'industrial' }
     ]
   }
 };
 
 export const getPageContent = (slug: string) => {
-  return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`];
+    const contents: Record<string, any> = {
+        'industrial': {
+            name: 'Industrial Mastery',
+            heroImage: 'https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000',
+            body: 'Orquestre cadeias de suprimentos e CapEx massivos.',
+            description: 'O ramo industrial exige precisão na gestão de ativos fixos e fluxos produtivos.',
+            features: ['Gestão de CapEx', 'OEE Real-time', 'Elasticidade Regional'],
+            kpis: ['EBITDA', 'Rating', 'Market Share'],
+            accent: 'orange'
+        }
+    };
+    return contents[slug] || null;
 };
