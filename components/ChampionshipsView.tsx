@@ -103,7 +103,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tight leading-none">{champ.name}</h3>
                    <div className="flex items-center gap-4 pt-2">
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase">
-                         <Users size={14} className="text-orange-500" /> {champ.teams?.length || 0} Unidades
+                         <Users size={14} className="text-orange-500" /> {champ.teams?.length || 0} Equipes
                       </div>
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase">
                          <Terminal size={14} className="text-blue-500" /> Ciclo 0{champ.current_round}
@@ -121,7 +121,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                 ) : (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pt-6 border-t border-white/5">
                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Selecione uma Unidade:</span>
+                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Selecione uma Equipe:</span>
                         <button onClick={() => setExpandedArena(null)} className="text-[9px] font-black text-slate-500 uppercase hover:text-white transition-colors flex items-center gap-1">Fechar <X size={12}/></button>
                      </div>
                      <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
@@ -165,7 +165,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
                           ))
                         ) : (
                           <div className="py-10 text-center space-y-4">
-                            <p className="text-[10px] text-slate-500 italic uppercase font-black">Nenhuma unidade detectada.</p>
+                            <p className="text-[10px] text-slate-500 italic uppercase font-black">Nenhuma equipe detectada.</p>
                             <button onClick={fetchArenas} className="text-[9px] text-orange-500 font-bold uppercase underline">Forçar Re-scan</button>
                           </div>
                         )}

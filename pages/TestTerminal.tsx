@@ -150,7 +150,7 @@ const TestTerminal: React.FC = () => {
                      <div className="bg-slate-950 p-5 rounded-3xl space-y-2 border border-white/5">
                         <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Market Leader</span>
                         <div className="flex justify-between items-end">
-                           <span className="text-sm font-black text-white uppercase italic">Alpha Unit</span>
+                           <span className="text-sm font-black text-white uppercase italic">Alpha Team</span>
                            <span className="text-xs font-black text-emerald-500">$ 60.12</span>
                         </div>
                      </div>

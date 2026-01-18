@@ -34,7 +34,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   });
 
   // Estados para nomes customizados
-  const [teamNames, setTeamNames] = useState<string[]>(['ALPHA UNIT']);
+  const [teamNames, setTeamNames] = useState<string[]>(['EQUIPE ALPHA']);
   const [regionNames, setRegionNames] = useState<string[]>(['SUDESTE', 'EUROPA', 'NORDESTE', 'SUL']);
 
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
@@ -45,7 +45,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       const next = [...prev];
       if (next.length < formData.humanTeamsCount) {
         for (let i = next.length; i < formData.humanTeamsCount; i++) {
-          next.push(`UNIDADE TRIAL 0${i + 1}`);
+          next.push(`EQUIPE TRIAL 0${i + 1}`);
         }
       }
       return next.slice(0, formData.humanTeamsCount);
@@ -142,7 +142,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <WizardField label="Nome da Instância Trial" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TESTE INDUSTRIAL ALPHA" />
                     <div className="grid grid-cols-2 gap-6">
-                       {/* Fix: Changed total_rounds to totalRounds to match formData definition */}
                        <WizardField label="Total de Ciclos" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
                        <WizardField label="Preço Ação P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
                     </div>
@@ -156,22 +155,22 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             )}
 
             {step === 2 && (
-              <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
-                 <WizardStepTitle icon={<Users size={32}/>} title="Unidades e Bots" desc="Defina quem participará da competição no cluster." />
+              <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
+                 <WizardStepTitle icon={<Users size={32}/>} title="Equipes e Bots" desc="Defina quem participará da competição no cluster." />
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
                     <div className="space-y-8 bg-white/5 p-10 rounded-[3.5rem] border border-white/5 shadow-2xl">
                        <h4 className="text-sm font-black text-orange-500 uppercase tracking-widest italic border-b border-white/5 pb-4">Dimensionamento</h4>
                        <div className="grid grid-cols-2 gap-6">
-                          <WizardField label="Unidades Humanas" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
+                          <WizardField label="Equipes Humanas" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
                           <WizardField label="Synthetic Bots (IA)" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
                        </div>
                        <p className="text-[10px] text-slate-500 font-bold uppercase leading-relaxed italic">"Bots utilizam o Gemini 3 Flash para tomar decisões táticas competitivas baseadas no cenário macro."</p>
                     </div>
                     <div className="space-y-6">
-                       <h4 className="text-sm font-black text-blue-400 uppercase tracking-widest italic flex items-center gap-3"><CheckCircle2 size={16}/> Identificadores das Unidades</h4>
+                       <h4 className="text-sm font-black text-blue-400 uppercase tracking-widest italic flex items-center gap-3"><CheckCircle2 size={16}/> Identificadores das Equipes</h4>
                        <div className="space-y-4 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar">
                           {teamNames.map((n, i) => (
-                             <input key={i} value={n} onChange={e => { const next = [...teamNames]; next[i] = e.target.value; setTeamNames(next); }} className="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-xs font-black text-white uppercase outline-none focus:border-blue-500 transition-all shadow-inner" placeholder={`Nome da Unidade ${i+1}`} />
+                             <input key={i} value={n} onChange={e => { const next = [...teamNames]; next[i] = e.target.value; setTeamNames(next); }} className="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-xs font-black text-white uppercase outline-none focus:border-blue-500 transition-all shadow-inner" placeholder={`Nome da Equipe ${i+1}`} />
                           ))}
                        </div>
                     </div>
@@ -223,7 +222,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <div className="space-y-6">
                     <h1 className="text-6xl font-black text-white uppercase italic tracking-tighter">Nodo Pronto</h1>
                     <p className="text-xl text-slate-400 font-medium italic max-w-2xl mx-auto leading-relaxed">
-                       Sua Arena Trial com {formData.humanTeamsCount} unidades e {formData.regionsCount} regiões está pronta para inicializar o cluster.
+                       Sua Arena Trial com {formData.humanTeamsCount} equipes e {formData.regionsCount} regiões está pronta para inicializar o cluster.
                     </p>
                  </div>
                  <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] max-w-lg mx-auto inline-block">

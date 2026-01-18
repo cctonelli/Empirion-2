@@ -69,7 +69,7 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Distribuição de Rating em Tempo Real</p>
          </div>
          <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
-            <span className="text-[10px] text-orange-500 font-black uppercase">N = {teamsProjections.length} Strategists</span>
+            <span className="text-[10px] text-orange-500 font-black uppercase">N = {teamsProjections.length} Equipes</span>
          </div>
       </div>
       <div className="h-[280px] w-full">
@@ -181,7 +181,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
               </div>
               <div className="space-y-4">
                  <div className="flex justify-between items-end">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Unidades Críticas</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Equipes Críticas</span>
                     <span className="text-3xl font-black text-rose-500 italic">{teams.filter(t => t.rating === 'D').length}</span>
                  </div>
                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -190,7 +190,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
               </div>
            </div>
            <p className="text-[9px] text-slate-500 font-bold uppercase italic mt-6 leading-relaxed relative z-10">
-              "Use o Oracle Master para reajustar taxas se o risco sistêmico ultrapassar 50% das unidades."
+              "Use o Oracle Master para reajustar taxas se o risco sistêmico ultrapassar 50% das equipes."
            </p>
         </div>
       </div>
@@ -212,7 +212,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                 <span className={`font-black text-[11px] uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`}>{team.rating}</span>
              </div>
              <h4 className="text-xl font-black text-white uppercase italic leading-none truncate">{team.team_name}</h4>
-             <p className="text-[8px] font-bold text-slate-500 uppercase mt-2">{team.rating === 'D' ? 'INSOLVÊNCIA CRÍTICA' : 'NODE STATUS ACTIVE'}</p>
+             <p className="text-[8px] font-bold text-slate-500 uppercase mt-2">{team.rating === 'D' ? 'INSOLVÊNCIA CRÍTICA' : 'EQUIPE STATUS ACTIVE'}</p>
           </button>
         ))}
       </div>

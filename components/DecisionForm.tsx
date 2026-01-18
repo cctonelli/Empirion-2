@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, 
@@ -5,7 +6,7 @@ import {
   Save, Sparkles, Package, Cpu, ChevronRight, Target, 
   TrendingUp, Landmark, Cloud, HardDrive, AlertCircle, 
   ShieldAlert, Gavel, Trash2, ShoppingCart, Info, Award,
-  Zap // Fix: Added missing Zap icon import
+  Zap
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -40,6 +41,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     finance: { loanRequest: 0, loanType: 1, application: 0 },
     estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
   });
+
+  // Fix: Derived activeTeamName from activeArena teams using teamId prop to resolve the missing 'activeTeam' reference
+  const activeTeamName = useMemo(() => {
+    return activeArena?.teams?.find(t => t.id === teamId)?.name || 'ALPHA';
+  }, [activeArena, teamId]);
 
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -99,14 +105,21 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
   return (
     <div className="wizard-shell">
-      <div className="absolute top-4 right-8 z-[60] flex items-center gap-3 bg-slate-950/80 backdrop-blur-2xl px-6 py-2.5 rounded-full border border-white/10 shadow-2xl pointer-events-none">
-         <div className={`w-2 h-2 rounded-full animate-pulse ${decisions.judicial_recovery ? 'bg-rose-500' : 'bg-orange-500'}`} />
-         <span className="text-[10px] font-black text-white italic tracking-[0.2em] uppercase">Oracle Projection: {rating} {decisions.judicial_recovery && '• RJ'}</span>
+      {/* INTEGRATED STATUS BAR (Fixed overlap issue) */}
+      <div className="w-full bg-slate-950/40 border-b border-white/5 px-8 py-3 flex items-center justify-between shrink-0">
+         <div className="flex items-center gap-4">
+            <div className={`w-2 h-2 rounded-full animate-pulse ${decisions.judicial_recovery ? 'bg-rose-500 shadow-[0_0_10px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_10px_#10b981]'}`} />
+            {/* Fix: Replaced missing activeTeam reference with activeTeamName */}
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Equipe: {activeTeamName}</span>
+         </div>
+         <div className="flex items-center gap-3 bg-white/5 px-6 py-1.5 rounded-full border border-white/10 shadow-inner">
+            <span className="text-[10px] font-black text-white italic tracking-[0.2em] uppercase">Oracle Projection: <span className="text-orange-500 ml-1">{rating}</span> {decisions.judicial_recovery && '• RJ'}</span>
+         </div>
       </div>
 
       <nav className="wizard-header-fixed flex p-2.5 shrink-0 gap-1.5 overflow-x-auto no-scrollbar">
          {STEPS.map((s, idx) => (
-           <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[100px] py-3 transition-all rounded-2xl flex flex-col items-center gap-1.5 ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg scale-[1.02]' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
+           <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[120px] py-3 transition-all rounded-2xl flex flex-col items-center gap-1.5 ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg scale-[1.02]' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
               <s.icon size={16} />
               <span className="text-[8px] font-black uppercase tracking-widest">{s.label}</span>
            </button>
@@ -206,7 +219,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      </div>
                      <div className="p-10 bg-slate-900/60 rounded-[3rem] border border-white/5 text-center space-y-6">
                         <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 mx-auto animate-pulse"><ShieldCheck size={32}/></div>
-                        <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">Ready for Sincronização</h4>
+                        <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">Pronto para Sincronização</h4>
                         <p className="text-slate-500 font-bold uppercase text-[9px] tracking-[0.3em]">Protocolo v13.6 Industrial. Todas as métricas estão prontas para turnover.</p>
                      </div>
                   </div>
