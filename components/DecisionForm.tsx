@@ -3,7 +3,7 @@ import {
   Loader2, Megaphone, Users2, Factory, DollarSign, 
   ArrowRight, ArrowLeft, ShieldCheck, Activity, 
   Save, Sparkles, Package, Cpu, ChevronRight, Target, 
-  TrendingUp, Landmark
+  TrendingUp, Landmark, Cloud, HardDrive, AlertCircle, ShieldAlert
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -18,7 +18,7 @@ const STEPS = [
   { id: 'review', label: 'Sincronizar', icon: ShieldCheck },
 ];
 
-const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean }> = ({ teamId = 'alpha', champId = 'c1', round = 1, branch = 'industrial', isReadOnly = false }) => {
+const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -32,7 +32,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     legal: { recovery_mode: 'none' }
   });
 
-  // UX Improvement: Auto scroll to top on step transition
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -65,6 +64,20 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
   const rating = projections?.health?.rating || 'AAA';
 
+  if (!teamId || !champId) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-center p-10 space-y-6 bg-slate-900/40 rounded-[3rem] border border-white/5">
+         <div className="p-5 bg-orange-600/10 rounded-2xl text-orange-500 animate-pulse"><ShieldAlert size={48}/></div>
+         <div className="space-y-2">
+            <h3 className="text-2xl font-black text-white uppercase italic">Aguardando Sincronização</h3>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest max-w-sm">
+               O formulário de decisões requer um Nodo de Equipe ativo. Selecione sua unidade no menu de campeonatos.
+            </p>
+         </div>
+      </div>
+    );
+  }
+
   const updateDecision = (path: string, val: any) => {
     const keys = path.split('.');
     setDecisions(prev => {
@@ -76,6 +89,21 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       current[keys[keys.length - 1]] = val;
       return next;
     });
+  };
+
+  const handleTransmit = async () => {
+    setIsSaving(true);
+    try {
+      const result = await saveDecisions(teamId, champId, round, decisions);
+      if (result.source === 'cloud') {
+         alert("TRANSMISSÃO CONCLUÍDA: Dados sincronizados na nuvem Oracle.");
+      } else {
+         alert(`TRANSMISSÃO LOCAL: Decisões salvas em modo sandbox resiliente.`);
+      }
+    } catch (e: any) { 
+      alert(`ERRO NA TRANSMISSÃO: ${e.message}`); 
+    }
+    setIsSaving(false);
   };
 
   return (
@@ -102,42 +130,23 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          <AnimatePresence mode="wait">
             <motion.div 
               key={activeStep} 
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="pb-10"
+              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }} className="pb-10"
             >
                {activeStep === 0 && (
                   <div className="space-y-12">
                      <div className="matrix-container p-4">
                         <div className="flex gap-2">
                            {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
-                             <button 
-                               key={i} 
-                               onClick={() => setActiveRegion(i+1)} 
-                               className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase border transition-all whitespace-nowrap ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-400 shadow-lg' : 'bg-slate-950 text-slate-500 border-white/5 hover:border-white/20'}`}
-                             >
+                             <button key={i} onClick={() => setActiveRegion(i+1)} className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase border transition-all whitespace-nowrap ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-400 shadow-lg' : 'bg-slate-950 text-slate-500 border-white/5 hover:border-white/20'}`}>
                                Região 0{i+1}
                              </button>
                            ))}
                         </div>
                      </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <InputCard 
-                          label="Preço de Venda" 
-                          val={decisions.regions[activeRegion]?.price || 372} 
-                          onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)}
-                          icon={<DollarSign size={18}/>} 
-                          desc="Preço unitário regional."
-                        />
-                        <InputCard 
-                          label="Marketing Local" 
-                          val={decisions.regions[activeRegion]?.marketing || 1000} 
-                          onChange={(v: number) => updateDecision(`regions.${activeRegion}.marketing`, v)}
-                          icon={<Sparkles size={18}/>} 
-                          desc="Investimento publicitário."
-                        />
+                        <InputCard label="Preço de Venda" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={18}/>} />
+                        <InputCard label="Marketing Local" val={decisions.regions[activeRegion]?.marketing || 1000} onChange={(v: number) => updateDecision(`regions.${activeRegion}.marketing`, v)} icon={<Sparkles size={18}/>} />
                      </div>
                   </div>
                )}
@@ -183,11 +192,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       </div>
 
       <footer className="wizard-footer-dock">
-         <button 
-           onClick={() => setActiveStep(s => Math.max(0, s-1))} 
-           disabled={activeStep === 0} 
-           className={`px-8 py-4 font-black uppercase text-[10px] tracking-[0.3em] transition-all flex items-center gap-3 active:scale-95 ${activeStep === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}
-         >
+         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className={`px-8 py-4 font-black uppercase text-[10px] tracking-[0.3em] transition-all flex items-center gap-3 active:scale-95 ${activeStep === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}>
             <ArrowLeft size={18} /> Voltar
          </button>
          
@@ -197,26 +202,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                <span className="text-[10px] font-black text-slate-400 uppercase">{activeStep + 1} de {STEPS.length}</span>
             </div>
             {activeStep === STEPS.length - 1 ? (
-              <button 
-                disabled={isReadOnly || isSaving} 
-                onClick={async () => {
-                  setIsSaving(true);
-                  try {
-                    await saveDecisions(teamId!, champId!, round, decisions);
-                    alert("TRANSMISSÃO CONCLUÍDA.");
-                  } catch (e) { alert("ERRO NA TRANSMISSÃO."); }
-                  setIsSaving(false);
-                }}
-                className="px-14 py-5 bg-orange-600 text-white rounded-full font-black text-[11px] uppercase tracking-[0.4em] shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-4 active:scale-95 group"
-              >
+              <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="px-14 py-5 bg-orange-600 text-white rounded-full font-black text-[11px] uppercase tracking-[0.4em] shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-4 active:scale-95 group">
                 {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} Transmitir Ciclo
               </button>
             ) : (
-              <button 
-                onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} 
-                className="px-14 py-5 bg-white/5 border border-white/10 hover:bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.4em] transition-all flex items-center gap-4 active:scale-95 group"
-              >
-                Avançar <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="px-14 py-5 bg-white/5 border border-white/10 hover:bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.4em] transition-all flex items-center gap-4 active:scale-95 group">
+                Avançar <ArrowRight size={18} />
               </button>
             )}
          </div>
@@ -225,32 +216,20 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   );
 };
 
-const InputCard = ({ label, val, icon, desc, onChange }: any) => (
-  <div className="glass-card p-6 md:p-8 space-y-6 group text-left">
-     <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-           <div className="p-3 bg-white/5 rounded-xl text-slate-500 group-hover:text-orange-500 transition-colors border border-white/5 group-hover:scale-110 duration-500">{icon}</div>
-           <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{label}</label>
-              <p className="text-[8px] font-bold text-slate-700 uppercase tracking-tighter mt-0.5">{desc || 'Entrada Oracle'}</p>
-           </div>
-        </div>
+const InputCard = ({ label, val, icon, onChange }: any) => (
+  <div className="glass-card p-8 space-y-6 group text-left">
+     <div className="flex items-center gap-4">
+        <div className="p-3 bg-white/5 rounded-xl text-slate-500 group-hover:text-orange-500 transition-colors border border-white/5">{icon}</div>
+        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{label}</label>
      </div>
-     <div className="relative">
-        <input 
-          type="number" 
-          value={val} 
-          onChange={e => onChange?.(Number(e.target.value))}
-          className="w-full bg-slate-950/60 border-none rounded-2xl px-6 py-5 text-white font-mono font-black text-3xl outline-none focus:ring-2 focus:ring-orange-600 transition-all shadow-inner" 
-        />
-     </div>
+     <input type="number" value={val} onChange={e => onChange?.(Number(e.target.value))} className="w-full bg-slate-950/60 border-none rounded-2xl px-6 py-5 text-white font-mono font-black text-3xl outline-none focus:ring-2 focus:ring-orange-600 transition-all shadow-inner" />
   </div>
 );
 
 const ReviewPanel = ({ label, val, pos }: any) => (
   <div className="p-8 bg-slate-950/60 rounded-[2rem] border border-white/5 space-y-3 shadow-inner group hover:border-white/10 transition-colors">
      <span className="block text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">{label}</span>
-     <span className={`text-2xl font-black italic font-mono leading-none group-hover:scale-105 transition-transform inline-block ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
+     <span className={`text-2xl font-black italic font-mono leading-none ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{val}</span>
   </div>
 );
 

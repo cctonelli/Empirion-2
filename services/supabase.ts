@@ -19,8 +19,18 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
 const LOCAL_CHAMPS_KEY = 'empirion_v12_arenas';
+const LOCAL_DECISIONS_KEY = 'empirion_trial_decisions';
 
 const ALPHA_IDS = ['admin', 'tutor', 'alpha', 'tutor_master', 'alpha_street', 'alpha_cell', 'alpha_user'];
+
+/**
+ * Validador de UUID para evitar erros de cast no Postgres
+ */
+const isValidUUID = (id: string | null | undefined): boolean => {
+  if (!id) return false;
+  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return regex.test(id);
+};
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   if (!userId) return null;
@@ -47,23 +57,8 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
   const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
   if (error) {
     logError(LogContext.DATABASE, "User fetch fault", error.message);
-    return [
-      { id: '1', supabase_user_id: 'u1', name: 'Tutor Master Alpha', nickname: 'Imperador_Alpha', role: 'tutor', phone: '+5511999990000', email: 'tutor@empirion.ia', created_at: new Date().toISOString() },
-      { id: '2', supabase_user_id: 'u2', name: 'Strategos User 01', nickname: 'Alpha_Strategist', role: 'player', phone: '+5521988887777', email: 'alpha@empirion.ia', created_at: new Date().toISOString() },
-      { id: '3', supabase_user_id: 'u3', name: 'Market Observer', nickname: 'Charlie_Analyst', role: 'observer', phone: '+12025550123', email: 'observer@empirion.ia', created_at: new Date().toISOString() }
-    ];
+    return [];
   }
-  return data || [];
-};
-
-export const searchUsers = async (query: string): Promise<UserProfile[]> => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .or(`name.ilike.%${query}%,nickname.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
-    .limit(5);
-  
-  if (error) return [];
   return data || [];
 };
 
@@ -142,20 +137,17 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       payload.tutor_id = session.user.id;
       payload.description = champData.description || 'Arena Oracle';
     }
-    const { error: cErr } = await supabase.from(table).insert([payload]);
-    if (!cErr) {
-       await supabase.from(teamsTable).insert(teamsWithIds.map(t => ({
-         id: t.id, name: t.name, championship_id: newId, is_bot: t.is_bot,
-         equity: t.equity, credit_limit: t.credit_limit, status: 'active'
-       })));
-    }
+    await supabase.from(table).insert([payload]);
+    await supabase.from(teamsTable).insert(teamsWithIds.map(t => ({
+      id: t.id, name: t.name, championship_id: newId, is_bot: t.is_bot,
+      equity: t.equity, credit_limit: t.credit_limit, status: 'active'
+    })));
   } catch (err: any) { logError(LogContext.SUPABASE, "Cloud push deferred", err.message); }
 
   return { champ: fullChamp, teams: teamsWithIds };
 };
 
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
-  logInfo(LogContext.TURNOVER, `Turnover v12.9.1 | Arena ${championshipId} | Ciclo ${currentRound}`);
   try {
     const { data: allArenas } = await getChampionships();
     const arena = allArenas?.find(a => a.id === championshipId);
@@ -199,17 +191,10 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
     const idx = local.findIndex((a: any) => a.id === championshipId);
     if (idx !== -1) {
        local[idx].current_round = currentRound + 1;
-       local[idx].teams = local[idx].teams.map((t: any) => {
-         const res = batchResults.find(r => r.team_id === t.id);
-         return res ? { ...t, equity: res.equity, credit_limit: res.credit_limit } : t;
-       });
        localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify(local));
     }
 
     await supabase.from('companies').insert(batchResults);
-    for (const res of batchResults) {
-      await supabase.from('teams').update({ credit_limit: res.credit_limit, equity: res.equity }).eq('id', res.team_id);
-    }
     await supabase.from('championships').update({ current_round: currentRound + 1, round_started_at: new Date().toISOString() }).eq('id', championshipId);
     return { success: true };
   } catch (err: any) {
@@ -221,9 +206,34 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
-  const { error } = await supabase.from(table).upsert({ team_id: teamId, championship_id: champId, round, data: decisions }); 
-  if (error) throw error;
-  return { success: true };
+  const payload = { team_id: teamId, championship_id: champId, round, data: decisions, updated_at: new Date().toISOString() };
+
+  // VALIDAÇÃO DE SEGURANÇA: Se não for UUID, força LocalStorage imediatamente
+  if (!isValidUUID(teamId) || !isValidUUID(champId)) {
+     logInfo(LogContext.TURNOVER, "ID Inválido detectado. Redirecionando para salvamento local resiliente.");
+     const localDecisions = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
+     const key = `${champId}_${teamId}_${round}`;
+     localDecisions[key] = payload;
+     localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(localDecisions));
+     return { success: true, source: 'local', error: 'Invalid UUID format' };
+  }
+
+  try {
+    const { error } = await supabase.from(table).upsert(payload);
+    if (error) throw error;
+    logInfo(LogContext.SUPABASE, `Decisões sincronizadas na nuvem: ${table}`);
+    return { success: true, source: 'cloud' };
+  } catch (err: any) {
+    try {
+      const localDecisions = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
+      const key = `${champId}_${teamId}_${round}`;
+      localDecisions[key] = payload;
+      localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(localDecisions));
+      return { success: true, source: 'local', error: err.message };
+    } catch (localErr) {
+      throw new Error(`Falha Crítica: ${err.message}`);
+    }
+  }
 };
 
 export const fetchPageContent = async (slug: string, lang: string) => {
@@ -269,26 +279,14 @@ export const provisionDemoEnvironment = () => {
 export const createTrialTeam = async (championshipId: string, teamName: string) => {
   const newId = crypto.randomUUID();
   const timestamp = new Date().toISOString();
-  
-  const payload = {
-    id: newId,
-    name: teamName,
-    championship_id: championshipId,
-    equity: 5055447,
-    credit_limit: 5000000,
-    status: 'active',
-    created_at: timestamp
-  };
-
-  const { error } = await supabase.from('trial_teams').insert([payload]);
-  if (error) throw error;
-  
+  const payload = { id: newId, name: teamName, championship_id: championshipId, created_at: timestamp };
+  await supabase.from('trial_teams').insert([payload]);
   return payload;
 };
 
 export const updateEcosystem = async (championshipId: string, updates: any) => {
-  const { data } = await supabase.from('championships').update(updates).eq('id', championshipId).select().single();
-  return { data, error: null };
+  await supabase.from('championships').update(updates).eq('id', championshipId);
+  return { error: null };
 };
 
 export const getPublicReports = async (championshipId: string, round: number) => {

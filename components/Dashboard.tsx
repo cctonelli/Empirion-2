@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -12,6 +11,7 @@ import {
   ChevronDown, Maximize2, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import ChampionshipTimer from './ChampionshipTimer';
 import DecisionForm from './DecisionForm';
 import GazetteViewer from './GazetteViewer';
@@ -20,6 +20,7 @@ import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, K
 import { logError, LogContext } from '../utils/logger';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
+  const navigate = useNavigate();
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeam, setActiveTeam] = useState<Team | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('player');
@@ -32,28 +33,32 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       try {
         const champId = localStorage.getItem('active_champ_id');
         const teamId = localStorage.getItem('active_team_id');
-        const { data: { session } } = await supabase.auth.getSession();
         
+        if (!champId || !teamId) {
+           console.warn("Sessão incompleta. Retornando ao seletor.");
+           navigate('/app/championships');
+           return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           const profile = await getUserProfile(session.user.id);
           if (profile) setUserRole(profile.role);
         }
 
-        if (champId) {
-          const { data } = await getChampionships();
-          const arena = data?.find(a => a.id === champId);
-          if (arena) {
-            setActiveArena(arena);
-            const team = arena.teams?.find((t: any) => t.id === teamId);
-            if (team) setActiveTeam(team);
-          }
+        const { data } = await getChampionships();
+        const arena = data?.find(a => a.id === champId);
+        if (arena) {
+          setActiveArena(arena);
+          const team = arena.teams?.find((t: any) => t.id === teamId);
+          if (team) setActiveTeam(team);
         }
       } catch (err: any) {
         logError(LogContext.DASHBOARD, "Cockpit Init Fault", err.message);
       } finally { setLoading(false); }
     };
     fetchAll();
-  }, []);
+  }, [navigate]);
 
   const currentKpis = useMemo((): KPIs => {
     return activeTeam?.kpis || activeArena?.kpis || {
@@ -89,8 +94,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
-      
-      {/* KPI TOP BAR - RESPONSIVE & HIGH VISIBILITY */}
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
          <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend="+1.2%" pos icon={<TrendingUp size={16}/>} />
          <CockpitStat label="Receita Bruta" val={`${currencySymbol} 3.32M`} trend="Estável" pos icon={<DollarSign size={16}/>} />
@@ -107,10 +110,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </div>
       </section>
 
-      {/* WORKSPACE LAYOUT */}
       <div className="flex flex-1 overflow-hidden">
-         
-         {/* SIDEBAR LEFT: FINANCIAL AUDIT */}
          <aside className="w-80 bg-slate-900/60 border-r border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar shadow-2xl z-10">
             <div className="p-6 space-y-6">
                <header className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -119,7 +119,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </h3>
                   <span className="text-[10px] font-black text-slate-600 uppercase">Cycle 0{activeArena?.current_round}</span>
                </header>
-               
                <div className="bg-slate-950/80 p-5 rounded-[2rem] border border-white/5 space-y-3 shadow-inner">
                   <div className="flex justify-between items-center mb-1">
                      <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">DRE Tático</h4>
@@ -132,7 +131,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      <MiniFinRow label="Net Profit" val={`73.9K`} bold highlight />
                   </div>
                </div>
-
                <div className="bg-orange-600/5 p-5 rounded-[2rem] border border-orange-500/10 space-y-3">
                   <div className="flex justify-between items-center">
                      <span className="text-[10px] font-black text-orange-500 uppercase italic">Tesoura (TSF)</span>
@@ -145,7 +143,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      </span>
                   </div>
                </div>
-
                <div className="p-5 bg-indigo-600/10 border border-indigo-500/20 rounded-[2.5rem] space-y-3 shadow-lg">
                   <div className="flex items-center gap-3 text-indigo-400">
                      <Sparkles size={16} />
@@ -158,7 +155,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             </div>
          </aside>
 
-         {/* CENTRAL: COMMAND FEED (WAR ROOM) */}
          <main className="flex-1 bg-slate-950 flex flex-col overflow-hidden relative p-6">
             <div className="flex-1 flex flex-col overflow-hidden max-w-5xl mx-auto w-full">
                <div className="flex justify-between items-end border-b border-white/5 pb-4 mb-6 shrink-0">
@@ -170,7 +166,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      <Newspaper size={14} /> Oracle Gazette
                   </button>
                </div>
-
                <div className="flex-1 overflow-hidden relative">
                   <DecisionForm 
                      teamId={activeTeam?.id} 

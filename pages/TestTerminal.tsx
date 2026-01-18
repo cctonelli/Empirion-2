@@ -23,7 +23,6 @@ const TestTerminal: React.FC = () => {
       setLoading(true);
       try {
         const { data } = await getChampionships();
-        // Filtra apenas arenas trial
         const trials = (data || []).filter(a => a.is_trial);
         setChampionships(trials);
       } catch (err) {
@@ -35,6 +34,19 @@ const TestTerminal: React.FC = () => {
     fetchTrialArenas();
   }, []);
 
+  const handlePlayTrial = (champ: Championship) => {
+    localStorage.setItem('active_champ_id', champ.id);
+    localStorage.setItem('is_trial_session', 'true');
+    
+    // Auto-select first human team for the trial session
+    const firstHuman = champ.teams?.find(t => !t.is_bot);
+    if (firstHuman) {
+      localStorage.setItem('active_team_id', firstHuman.id);
+    }
+    
+    navigate('/app/dashboard');
+  };
+
   const filtered = championships.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -44,12 +56,10 @@ const TestTerminal: React.FC = () => {
       <EmpireParticles />
       <div className="container mx-auto px-6 md:px-24 relative z-10 space-y-20">
         
-        {/* HEADER TELA 1 - TRIAL MASTER HUB */}
         <section className="flex flex-col lg:flex-row justify-between items-end gap-10 border-b border-white/5 pb-16">
            <div className="space-y-6">
               <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                 className="inline-flex items-center gap-3 px-6 py-2 bg-orange-600/10 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-[0.5em] border border-orange-500/20"
               >
                  <Rocket size={14} className="animate-pulse" /> Trial Master Node 08
@@ -67,23 +77,17 @@ const TestTerminal: React.FC = () => {
               <div className="relative flex-1 lg:w-80">
                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                  <input 
-                   type="text" 
-                   value={searchTerm}
-                   onChange={e => setSearchTerm(e.target.value)}
+                   type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                    placeholder="Buscar Arena Trial..."
                    className="w-full pl-14 pr-6 py-5 bg-white/5 border border-white/10 rounded-[1.5rem] text-white font-bold outline-none focus:border-orange-500 transition-all placeholder:text-slate-700"
                  />
               </div>
-              <button 
-                onClick={() => navigate('/trial/new')}
-                className="px-10 py-5 bg-orange-600 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-[0_20px_50px_rgba(249,115,22,0.4)] flex items-center justify-center gap-4 active:scale-95"
-              >
+              <button onClick={() => navigate('/trial/new')} className="px-10 py-5 bg-orange-600 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-[0_20px_50px_rgba(249,115,22,0.4)] flex items-center justify-center gap-4 active:scale-95">
                  <Plus size={20} /> Novo Torneio Trial
               </button>
            </div>
         </section>
 
-        {/* LISTA DE CARDS - TELA 1 (GRID) */}
         {loading ? (
           <div className="py-40 text-center space-y-6">
              <Loader2 size={48} className="text-orange-600 animate-spin mx-auto" />
@@ -103,10 +107,7 @@ const TestTerminal: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
              {filtered.map((champ, i) => (
                <motion.div 
-                 key={champ.id}
-                 initial={{ opacity: 0, y: 20 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: i * 0.1 }}
+                 key={champ.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                  className="bg-slate-900/40 backdrop-blur-3xl p-10 rounded-[3.5rem] border border-white/5 hover:border-orange-500/40 transition-all group flex flex-col justify-between min-h-[480px] shadow-2xl overflow-hidden relative"
                >
                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Building2 size={160}/></div>
@@ -114,7 +115,7 @@ const TestTerminal: React.FC = () => {
                   <div className="space-y-8 relative z-10">
                      <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]" />
+                           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest italic">Live Session</span>
                         </div>
                         <div className="flex gap-1">
@@ -152,19 +153,10 @@ const TestTerminal: React.FC = () => {
                   </div>
 
                   <div className="pt-10 flex gap-3 relative z-10">
-                     <button 
-                       onClick={() => navigate('/app/championships', { state: { preSelectedBranch: 'industrial' } })}
-                       className="flex-1 py-5 bg-white/5 border border-white/10 hover:bg-white hover:text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 group/btn"
-                     >
+                     <button onClick={() => navigate('/app/championships', { state: { preSelectedBranch: 'industrial' } })} className="flex-1 py-5 bg-white/5 border border-white/10 hover:bg-white hover:text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 group/btn">
                         Ver Ranking <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                      </button>
-                     <button 
-                       onClick={() => {
-                         localStorage.setItem('active_champ_id', champ.id);
-                         navigate('/app/dashboard');
-                       }}
-                       className="p-5 bg-orange-600 text-white rounded-2xl hover:bg-white hover:text-orange-600 transition-all shadow-xl active:scale-90"
-                     >
+                     <button onClick={() => handlePlayTrial(champ)} className="p-5 bg-orange-600 text-white rounded-2xl hover:bg-white hover:text-orange-600 transition-all shadow-xl active:scale-90">
                         <Play size={20} fill="currentColor" />
                      </button>
                   </div>
