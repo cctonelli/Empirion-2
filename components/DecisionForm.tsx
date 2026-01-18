@@ -11,18 +11,17 @@ import {
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { DecisionData, Branch, Championship, ProjectionResult, EcosystemConfig } from '../types';
-// Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 
 const STEPS = [
-  { id: 'legal', label: 'Protocolo Legal', icon: Gavel },
-  { id: 'marketing', label: 'Estratégia Comercial', icon: Megaphone },
-  { id: 'production', label: 'Operações & Fábrica', icon: Factory },
-  { id: 'hr', label: 'Recursos Humanos', icon: Users2 },
-  { id: 'assets', label: 'Bens de Capital', icon: Cpu },
-  { id: 'finance', label: 'Finanças & CapEx', icon: Landmark },
-  { id: 'review', label: 'Sincronizar Ciclo', icon: ShieldCheck },
+  { id: 'legal', label: 'Legal', icon: Gavel },
+  { id: 'marketing', label: 'Comercial', icon: Megaphone },
+  { id: 'production', label: 'Operações', icon: Factory },
+  { id: 'hr', label: 'Talentos', icon: Users2 },
+  { id: 'assets', label: 'Ativos', icon: Cpu },
+  { id: 'finance', label: 'Finanças', icon: Landmark },
+  { id: 'review', label: 'Sincronizar', icon: ShieldCheck },
 ];
 
 const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false }) => {
@@ -42,7 +41,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
   });
 
-  // Fix: Derived activeTeamName from activeArena teams using teamId prop to resolve the missing 'activeTeam' reference
   const activeTeamName = useMemo(() => {
     return activeArena?.teams?.find(t => t.id === teamId)?.name || 'ALPHA';
   }, [activeArena, teamId]);
@@ -101,99 +99,108 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     setIsSaving(false);
   };
 
-  if (!teamId || !champId) return <div className="h-full flex items-center justify-center text-slate-500 font-black uppercase text-xs">Aguardando Conexão...</div>;
+  if (!teamId || !champId) return <div className="h-full flex items-center justify-center text-slate-500 font-black uppercase text-xs">Handshake...</div>;
 
   return (
-    <div className="wizard-shell">
-      {/* INTEGRATED STATUS BAR (Fixed overlap issue) */}
-      <div className="w-full bg-slate-950/40 border-b border-white/5 px-8 py-3 flex items-center justify-between shrink-0">
+    <div className="flex flex-col h-full bg-slate-900/20 rounded-[2rem] border border-white/5 overflow-hidden">
+      
+      {/* 1. SLIM STATUS BAR (Terminologia EQUIPE corrigida) */}
+      <div className="bg-slate-950/60 px-6 py-2 flex items-center justify-between border-b border-white/5 shrink-0">
          <div className="flex items-center gap-4">
-            <div className={`w-2 h-2 rounded-full animate-pulse ${decisions.judicial_recovery ? 'bg-rose-500 shadow-[0_0_10px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_10px_#10b981]'}`} />
-            {/* Fix: Replaced missing activeTeam reference with activeTeamName */}
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Equipe: {activeTeamName}</span>
+            <div className={`w-2 h-2 rounded-full ${decisions.judicial_recovery ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Equipe: <span className="text-white">{activeTeamName}</span></span>
          </div>
-         <div className="flex items-center gap-3 bg-white/5 px-6 py-1.5 rounded-full border border-white/10 shadow-inner">
-            <span className="text-[10px] font-black text-white italic tracking-[0.2em] uppercase">Oracle Projection: <span className="text-orange-500 ml-1">{rating}</span> {decisions.judicial_recovery && '• RJ'}</span>
+         <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-white/5 px-4 py-1 rounded-full border border-white/10">
+               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Projection:</span>
+               <span className={`text-[10px] font-black ${rating === 'D' ? 'text-rose-500' : 'text-orange-500'}`}>{rating}</span>
+            </div>
+            <div className="h-3 w-px bg-white/10" />
+            <span className="text-[9px] font-black text-slate-500 uppercase">Ciclo 0{round}</span>
          </div>
       </div>
 
-      <nav className="wizard-header-fixed flex p-2.5 shrink-0 gap-1.5 overflow-x-auto no-scrollbar">
+      {/* 2. COMPACT STEP NAV */}
+      <nav className="flex p-1 gap-1 bg-slate-900/40 border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
          {STEPS.map((s, idx) => (
-           <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[120px] py-3 transition-all rounded-2xl flex flex-col items-center gap-1.5 ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg scale-[1.02]' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
-              <s.icon size={16} />
-              <span className="text-[8px] font-black uppercase tracking-widest">{s.label}</span>
+           <button 
+            key={s.id} 
+            onClick={() => setActiveStep(idx)} 
+            className={`flex-1 min-w-[90px] py-3 px-2 rounded-xl transition-all flex flex-col items-center gap-1 ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'}`}
+           >
+              <s.icon size={14} />
+              <span className="text-[8px] font-black uppercase tracking-tighter text-center whitespace-nowrap">{s.label}</span>
            </button>
          ))}
       </nav>
 
-      <div ref={scrollContainerRef} className="wizard-content">
+      {/* 3. OPTIMIZED CONTENT AREA (MAX HEIGHT) */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-950/20">
          <AnimatePresence mode="wait">
-            <motion.div key={activeStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="pb-10">
+            <motion.div key={activeStep} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">
                
                {activeStep === 0 && (
-                  <div className="flex flex-col items-center justify-center text-center space-y-12 py-10">
-                     <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center border shadow-2xl transition-colors duration-700 ${decisions.judicial_recovery ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'}`}><Gavel size={48} /></div>
-                     <div className="space-y-4 max-w-xl">
-                        <h2 className="text-4xl font-black text-white uppercase italic">Protocolo de Recuperação</h2>
-                        <p className="text-slate-400 font-medium leading-relaxed italic">"Deseja declarar Recuperação Judicial para este ciclo? Isso impõe restrições de crédito mas congela dívidas passíveis."</p>
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-8 max-w-2xl mx-auto">
+                     <div className={`p-6 rounded-[2rem] border-2 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'}`}><Gavel size={40} /></div>
+                     <div className="space-y-2">
+                        <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Protocolo de Recuperação</h2>
+                        <p className="text-slate-400 text-sm italic">"O status de Recuperação Judicial (RJ) preserva ativos mas impede novos empréstimos bancários."</p>
                      </div>
-                     <div className="flex gap-6">
-                        <button onClick={() => updateDecision('judicial_recovery', false)} className={`px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${!decisions.judicial_recovery ? 'bg-emerald-600 text-white shadow-xl' : 'bg-white/5 text-slate-500'}`}>Manter Fluxo Normal</button>
-                        <button onClick={() => updateDecision('judicial_recovery', true)} className={`px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${decisions.judicial_recovery ? 'bg-rose-600 text-white shadow-xl' : 'bg-white/5 text-slate-500'}`}>Solicitar RJ</button>
+                     <div className="flex gap-4">
+                        <button onClick={() => updateDecision('judicial_recovery', false)} className={`flex-1 px-8 py-4 rounded-xl font-black text-[9px] uppercase tracking-widest border transition-all ${!decisions.judicial_recovery ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-slate-900 border-white/5 text-slate-500'}`}>Operação Padrão</button>
+                        <button onClick={() => updateDecision('judicial_recovery', true)} className={`flex-1 px-8 py-4 rounded-xl font-black text-[9px] uppercase tracking-widest border transition-all ${decisions.judicial_recovery ? 'bg-rose-600 text-white border-rose-400' : 'bg-slate-900 border-white/5 text-slate-500'}`}>Solicitar RJ</button>
                      </div>
                   </div>
                )}
 
                {activeStep === 1 && (
-                  <div className="space-y-12">
-                     <div className="matrix-container p-4">
-                        <div className="flex gap-2">
-                           {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
-                             <button key={i} onClick={() => setActiveRegion(i+1)} className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase border transition-all ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-400 shadow-lg' : 'bg-slate-950 text-slate-500 border-white/5'}`}>Região 0{i+1}</button>
-                           ))}
-                        </div>
+                  <div className="space-y-8 h-full flex flex-col">
+                     <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2">
+                        {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
+                           <button key={i} onClick={() => setActiveRegion(i+1)} className={`px-4 py-2 rounded-lg text-[8px] font-black uppercase transition-all whitespace-nowrap border ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-400' : 'bg-slate-900 text-slate-500 border-white/5'}`}>R{i+1}</button>
+                        ))}
                      </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <InputCard label="Preço de Venda ($)" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={18}/>} />
-                        <SelectCard label="Prazo de Venda" val={decisions.regions[activeRegion]?.term || 1} onChange={(v: number) => updateDecision(`regions.${activeRegion}.term`, v)} options={[{v:0,l:'À VISTA'},{v:1,l:'PROX. PERÍODO'},{v:2,l:'PROX + 1 (50/50)'}]} icon={<TimerCardIcon />} />
-                        <InputCard label="Marketing Local" desc="(0 a 9)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={(v: number) => updateDecision(`regions.${activeRegion}.marketing`, v)} icon={<Sparkles size={18}/>} />
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <InputCard label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={16}/>} />
+                        <SelectCard label="Condição Prazo" val={decisions.regions[activeRegion]?.term || 1} onChange={(v: number) => updateDecision(`regions.${activeRegion}.term`, v)} options={[{v:0,l:'VISTA'},{v:1,l:'PERÍODO + 1'},{v:2,l:'DIVIDIDO (50/50)'}]} icon={<Landmark size={16} />} />
+                        <InputCard label="Promoção Regional" desc="(0 a 9)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={(v: number) => updateDecision(`regions.${activeRegion}.marketing`, v)} icon={<Sparkles size={16}/>} />
                      </div>
                   </div>
                )}
 
                {activeStep === 2 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <InputCard label="Compra MP-A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={18}/>} />
-                     <InputCard label="Compra MP-B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={18}/>} />
-                     <SelectCard label="Pagamento MP" val={decisions.production.paymentType} onChange={(v: number) => updateDecision('production.paymentType', v)} options={[{v:0,l:'À VISTA'},{v:1,l:'PROX. PERÍODO'},{v:2,l:'PROX + 1 (50/50)'}]} icon={<DollarSign size={18}/>} />
-                     <InputCard label="Nível Atividade %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={18}/>} />
-                     <InputCard label="Produção Extra %" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={18}/>} />
-                     <InputCard label="Investimento P&D" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Cpu size={18}/>} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <InputCard label="Matéria-Prima A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={16}/>} />
+                     <InputCard label="Matéria-Prima B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={16}/>} />
+                     <SelectCard label="Tipo Pagamento Fornecedor" val={decisions.production.paymentType} onChange={(v: number) => updateDecision('production.paymentType', v)} options={[{v:0,l:'VISTA'},{v:1,l:'A PRAZO'},{v:2,l:'MISTO'}]} icon={<DollarSign size={16}/>} />
+                     <InputCard label="Nível Utilização Fábrica %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={16}/>} />
+                     <InputCard label="Capacidade Extra %" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={16}/>} />
+                     <InputCard label="Verba P&D e Qualidade" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Cpu size={16}/>} />
                   </div>
                )}
 
                {activeStep === 3 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <InputCard label="Admitidos (QTDE)" val={decisions.hr.hired} onChange={(v: number) => updateDecision('hr.hired', v)} icon={<Users2 size={18}/>} />
-                     <InputCard label="Demitidos (QTDE)" val={decisions.hr.fired} onChange={(v: number) => updateDecision('hr.fired', v)} icon={<Users2 size={18}/>} />
-                     <InputCard label="Salário Base ($)" val={decisions.hr.salary} onChange={(v: number) => updateDecision('hr.salary', v)} icon={<DollarSign size={18}/>} />
-                     <InputCard label="Treinamento %" val={decisions.hr.trainingPercent} onChange={(v: number) => updateDecision('hr.trainingPercent', v)} icon={<Target size={18}/>} />
-                     <InputCard label="Participação Lucros %" val={decisions.hr.participationPercent} onChange={(v: number) => updateDecision('hr.participationPercent', v)} icon={<ShieldCheck size={18}/>} />
-                     <InputCard label="Diversos ($)" val={decisions.hr.misc} onChange={(v: number) => updateDecision('hr.misc', v)} icon={<DollarSign size={18}/>} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <InputCard label="Novas Admissões" val={decisions.hr.hired} onChange={(v: number) => updateDecision('hr.hired', v)} icon={<Users2 size={16}/>} />
+                     <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v: number) => updateDecision('hr.fired', v)} icon={<Users2 size={16}/>} />
+                     <InputCard label="Salário Base Equipe ($)" val={decisions.hr.salary} onChange={(v: number) => updateDecision('hr.salary', v)} icon={<DollarSign size={16}/>} />
+                     <InputCard label="Invest. Treinamento %" val={decisions.hr.trainingPercent} onChange={(v: number) => updateDecision('hr.trainingPercent', v)} icon={<Target size={16}/>} />
+                     <InputCard label="PLR (Lucros) %" val={decisions.hr.participationPercent} onChange={(v: number) => updateDecision('hr.participationPercent', v)} icon={<Award size={16}/>} />
+                     <InputCard label="Encargos Diversos ($)" val={decisions.hr.misc} onChange={(v: number) => updateDecision('hr.misc', v)} icon={<Info size={16}/>} />
                   </div>
                )}
 
                {activeStep === 4 && (
-                  <div className="space-y-12">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        <div className="space-y-6">
-                           <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-2"><ShoppingCart size={14}/> Aquisição de Máquinas</h4>
+                  <div className="space-y-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3 bg-white/5 p-6 rounded-3xl border border-white/5 shadow-inner">
+                           <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-2"><ShoppingCart size={14}/> Investimento CapEx</h4>
                            <InputCard label="Compra ALFA" val={decisions.machinery.buy.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
                            <InputCard label="Compra BETA" val={decisions.machinery.buy.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
                            <InputCard label="Compra GAMA" val={decisions.machinery.buy.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
                         </div>
-                        <div className="space-y-6">
-                           <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-widest flex items-center gap-2"><Trash2 size={14}/> Venda de Ativos</h4>
+                        <div className="space-y-3 bg-white/5 p-6 rounded-3xl border border-white/5 shadow-inner">
+                           <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-widest flex items-center gap-2"><Trash2 size={14}/> Desinvestimento</h4>
                            <InputCard label="Venda ALFA" val={decisions.machinery.sell.alfa} onChange={(v: number) => updateDecision('machinery.sell.alfa', v)} />
                            <InputCard label="Venda BETA" val={decisions.machinery.sell.beta} onChange={(v: number) => updateDecision('machinery.sell.beta', v)} />
                            <InputCard label="Venda GAMA" val={decisions.machinery.sell.gama} onChange={(v: number) => updateDecision('machinery.sell.gama', v)} />
@@ -203,24 +210,24 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 5 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                     <InputCard label="Tomada Empréstimo ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<Landmark size={18}/>} />
-                     <SelectCard label="Tipo de Empréstimo" val={decisions.finance.loanType} onChange={(v: number) => updateDecision('finance.loanType', v)} options={[{v:1,l:'CURTO PRAZO'},{v:2,l:'MEDIO (50/50)'},{v:3,l:'LONGO (33/33/33)'}]} icon={<ShieldAlert size={18}/>} />
-                     <InputCard label="Aplicação Fin. ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={18}/>} />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <InputCard label="Empréstimo Requisitado ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<Landmark size={16}/>} />
+                     <SelectCard label="Amortização Alvo" val={decisions.finance.loanType} onChange={(v: number) => updateDecision('finance.loanType', v)} options={[{v:1,l:'CURTO'},{v:2,l:'MÉDIO'},{v:3,l:'LONGO'}]} icon={<ShieldAlert size={16}/>} />
+                     <InputCard label="Aplicação Liquidez ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={16}/>} />
                   </div>
                )}
 
                {activeStep === 6 && (
-                  <div className="space-y-12">
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <InputCard label="Faturamento Previsto ($)" val={decisions.estimates.forecasted_revenue} onChange={(v: number) => updateDecision('estimates.forecasted_revenue', v)} icon={<Award size={18}/>} placeholder="Opcional para Premiação" />
-                        <InputCard label="Custo Médio Previsto ($)" val={decisions.estimates.forecasted_unit_cost} onChange={(v: number) => updateDecision('estimates.forecasted_unit_cost', v)} icon={<Award size={18}/>} />
-                        <InputCard label="Lucro Líquido Previsto ($)" val={decisions.estimates.forecasted_net_profit} onChange={(v: number) => updateDecision('estimates.forecasted_net_profit', v)} icon={<Award size={18}/>} />
+                  <div className="space-y-8 h-full flex flex-col justify-center">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <InputCard label="Faturamento Estimado" val={decisions.estimates.forecasted_revenue} onChange={(v: number) => updateDecision('estimates.forecasted_revenue', v)} icon={<Activity size={16}/>} />
+                        <InputCard label="Custo Unitário Alvo" val={decisions.estimates.forecasted_unit_cost} onChange={(v: number) => updateDecision('estimates.forecasted_unit_cost', v)} icon={<Zap size={16}/>} />
+                        <InputCard label="Lucro Alvo Estimado" val={decisions.estimates.forecasted_net_profit} onChange={(v: number) => updateDecision('estimates.forecasted_net_profit', v)} icon={<Target size={16}/>} />
                      </div>
-                     <div className="p-10 bg-slate-900/60 rounded-[3rem] border border-white/5 text-center space-y-6">
-                        <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 mx-auto animate-pulse"><ShieldCheck size={32}/></div>
-                        <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">Pronto para Sincronização</h4>
-                        <p className="text-slate-500 font-bold uppercase text-[9px] tracking-[0.3em]">Protocolo v13.6 Industrial. Todas as métricas estão prontas para turnover.</p>
+                     <div className="p-8 bg-orange-600/5 rounded-3xl border border-orange-500/20 text-center space-y-4">
+                        <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500 mx-auto"><ShieldCheck size={24}/></div>
+                        <h4 className="text-lg font-black text-white uppercase italic tracking-tighter">Sincronização Pronta</h4>
+                        <p className="text-slate-500 font-bold uppercase text-[8px] tracking-[0.2em]">Todas as telemetrias da Equipe foram auditadas para o turnover do Ciclo.</p>
                      </div>
                   </div>
                )}
@@ -229,19 +236,24 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          </AnimatePresence>
       </div>
 
-      <footer className="wizard-footer-dock">
-         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className={`px-8 py-4 font-black uppercase text-[10px] tracking-[0.3em] transition-all flex items-center gap-3 active:scale-95 ${activeStep === 0 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}>
-            <ArrowLeft size={18} /> Voltar
+      {/* 4. SLIM FOOTER DOCK */}
+      <footer className="shrink-0 bg-slate-950 border-t border-white/10 px-8 py-4 flex justify-between items-center shadow-2xl">
+         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className={`text-slate-500 hover:text-white transition-all flex items-center gap-2 ${activeStep === 0 ? 'opacity-0' : ''}`}>
+            <ArrowLeft size={16} /> <span className="text-[9px] font-black uppercase tracking-widest">Voltar</span>
          </button>
-         <div className="flex items-center gap-10">
-            <div className="hidden sm:flex flex-col items-end opacity-40"><span className="text-[8px] font-black text-white uppercase tracking-widest">Protocolo Oracle</span><span className="text-[10px] font-black text-orange-500 italic uppercase">Fase {activeStep + 1} de {STEPS.length}</span></div>
+         
+         <div className="flex items-center gap-8">
+            <div className="hidden sm:flex flex-col items-end opacity-40">
+               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Protocolo Oracle Gold</span>
+               <span className="text-[9px] font-black text-orange-500 uppercase">Fase {activeStep + 1} / {STEPS.length}</span>
+            </div>
             {activeStep === STEPS.length - 1 ? (
-              <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="px-16 py-6 bg-orange-600 text-white rounded-full font-black text-[11px] uppercase tracking-[0.4em] shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-4 active:scale-95 group">
-                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} Selar e Transmitir Ciclo
+              <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="px-10 py-4 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-white hover:text-orange-950 transition-all flex items-center gap-3 active:scale-95">
+                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Selar Ciclo
               </button>
             ) : (
-              <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="px-16 py-6 bg-white text-slate-950 hover:bg-orange-600 hover:text-white rounded-full font-black text-[10px] uppercase tracking-[0.4em] transition-all flex items-center gap-4 active:scale-95 group">
-                Avançar Protocolo <ArrowRight size={18} />
+              <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="px-10 py-4 bg-white text-slate-950 hover:bg-orange-600 hover:text-white rounded-full font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-3 active:scale-95 group">
+                Avançar <ArrowRight size={14} />
               </button>
             )}
          </div>
@@ -251,33 +263,39 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 };
 
 const InputCard = ({ label, desc, val, icon, onChange, placeholder }: any) => (
-  <div className="glass-card p-8 space-y-6 group text-left">
-     <div className="flex items-center gap-4">
-        <div className="p-3 bg-white/5 rounded-xl text-slate-500 group-hover:text-orange-500 transition-colors border border-white/5">{icon || <Info size={18}/>}</div>
-        <div>
-           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{label}</label>
-           {desc && <p className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter mt-0.5">{desc}</p>}
-        </div>
+  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex flex-col gap-2 group hover:bg-white/[0.06] transition-all">
+     <div className="flex items-center gap-2">
+        <div className="text-slate-500 group-hover:text-orange-500 transition-colors">{icon || <Info size={14}/>}</div>
+        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</label>
      </div>
-     <input type="number" value={val} placeholder={placeholder} onChange={e => onChange?.(Number(e.target.value))} className="w-full bg-slate-950/60 border-none rounded-2xl px-6 py-5 text-white font-mono font-black text-3xl outline-none focus:ring-2 focus:ring-orange-600 transition-all shadow-inner" />
+     <input 
+        type="number" 
+        value={val} 
+        placeholder={placeholder} 
+        onChange={e => onChange?.(Number(e.target.value))} 
+        className="w-full bg-slate-950/60 border-none rounded-xl px-4 py-3 text-white font-mono font-black text-xl outline-none focus:ring-1 focus:ring-orange-600 transition-all shadow-inner" 
+     />
+     {desc && <span className="text-[7px] font-bold text-slate-600 uppercase italic ml-1">{desc}</span>}
   </div>
 );
 
 const SelectCard = ({ label, val, options, icon, onChange }: any) => (
-  <div className="glass-card p-8 space-y-6 group text-left">
-     <div className="flex items-center gap-4">
-        <div className="p-3 bg-white/5 rounded-xl text-slate-500 group-hover:text-blue-500 transition-colors border border-white/5">{icon}</div>
-        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{label}</label>
+  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex flex-col gap-2 group hover:bg-white/[0.06] transition-all">
+     <div className="flex items-center gap-2">
+        <div className="text-slate-500 group-hover:text-blue-500 transition-colors">{icon}</div>
+        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</label>
      </div>
      <div className="relative">
-        <select value={val} onChange={e => onChange?.(Number(e.target.value))} className="w-full bg-slate-950/60 border-none rounded-2xl px-6 py-5 text-white font-black text-sm uppercase outline-none focus:ring-2 focus:ring-blue-600 transition-all shadow-inner appearance-none cursor-pointer">
+        <select 
+          value={val} 
+          onChange={e => onChange?.(Number(e.target.value))} 
+          className="w-full bg-slate-950/60 border-none rounded-xl px-4 py-3 text-white font-black text-[10px] uppercase outline-none focus:ring-1 focus:ring-blue-600 transition-all shadow-inner appearance-none cursor-pointer"
+        >
            {options.map((o: any) => <option key={o.v} value={o.v} className="bg-slate-900">{o.l}</option>)}
         </select>
-        <ChevronRight size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-700 rotate-90" />
+        <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700 rotate-90" />
      </div>
   </div>
 );
-
-const TimerCardIcon = () => <Activity size={18} />;
 
 export default DecisionForm;
