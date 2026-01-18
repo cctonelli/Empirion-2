@@ -6,7 +6,8 @@ import {
   Save, Sparkles, Package, Cpu, ChevronRight, Target, 
   TrendingUp, Landmark, Cloud, HardDrive, AlertCircle, 
   ShieldAlert, Gavel, Trash2, ShoppingCart, Info, Award,
-  Zap, HelpCircle, ArrowUpCircle, ArrowDownCircle
+  Zap, HelpCircle, ArrowUpCircle, ArrowDownCircle, MapPin,
+  Layers, Copy, CheckCircle2
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -63,19 +64,15 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     return activeArena?.teams?.find(t => t.id === teamId)?.name || 'ALPHA';
   }, [activeArena, teamId]);
 
-  // CÁLCULO DE PREÇOS ATUALIZADOS (REAJUSTE ACUMULADO)
   const machinePrices = useMemo(() => {
     if (!activeArena) return { alfa: 0, beta: 0, gama: 0, desagio: 0 };
     const macro = activeArena.market_indicators;
-    
     const getAdjusted = (model: MachineModel, base: number) => {
       let adj = 1.0;
-      // Simula reajuste acumulado até o round atual
       const rate = macro[`machine_${model}_price_adjust`] || 0;
       for (let i = 0; i < round; i++) adj *= (1 + rate / 100);
       return base * adj;
     };
-
     return {
       alfa: getAdjusted('alfa', macro.machinery_values.alfa),
       beta: getAdjusted('beta', macro.machinery_values.beta),
@@ -103,6 +100,16 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       current[keys[keys.length - 1]] = val;
       return next;
     });
+  };
+
+  const syncAllRegions = () => {
+    const source = decisions.regions[activeRegion];
+    const nextRegions = { ...decisions.regions };
+    Object.keys(nextRegions).forEach(key => {
+      nextRegions[Number(key)] = { ...source };
+    });
+    setDecisions(prev => ({ ...prev, regions: nextRegions }));
+    alert(`SINCRONIZADO: Parâmetros da Região ${activeRegion} aplicados em todo o cluster.`);
   };
 
   const handleTransmit = async () => {
@@ -150,13 +157,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       </nav>
 
       {/* 3. OPTIMIZED CONTENT AREA */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-950/20">
+      <div ref={scrollContainerRef} className="flex-1 overflow-hidden bg-slate-950/20">
          <AnimatePresence mode="wait">
-            <motion.div key={activeStep} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">
+            <motion.div key={activeStep} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto custom-scrollbar p-6">
                
                {activeStep === 0 && (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-8 max-w-2xl mx-auto">
-                     <div className={`p-6 rounded-[2rem] border-2 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'}`}><Gavel size={40} /></div>
+                     <div className={`p-6 rounded-[2rem] border-2 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'}`}><Gavel size={40} /></div>
                      <div className="space-y-2">
                         <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Protocolo de Recuperação</h2>
                         <p className="text-slate-400 text-sm italic">"O status de Recuperação Judicial (RJ) preserva ativos mas impede novos empréstimos bancários."</p>
@@ -169,26 +176,97 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 1 && (
-                  <div className="space-y-8 h-full flex flex-col">
-                     <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2">
-                        {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => (
-                           <button key={i} onClick={() => setActiveRegion(i+1)} className={`px-4 py-2 rounded-lg text-[8px] font-black uppercase transition-all whitespace-nowrap border ${activeRegion === i+1 ? 'bg-orange-600 text-white border-orange-400' : 'bg-slate-900 text-slate-500 border-white/5'}`}>R{i+1}</button>
-                        ))}
+                  <div className="flex h-full gap-6 overflow-hidden">
+                     {/* SIDEBAR DE REGIÕES VISÍVEIS */}
+                     <div className="w-1/3 flex flex-col gap-4 border-r border-white/5 pr-6 overflow-y-auto custom-scrollbar">
+                        <div className="sticky top-0 bg-slate-950/20 backdrop-blur-md z-10 pb-4">
+                           <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                              <MapPin size={12} /> Nodos Regionais
+                           </h3>
+                        </div>
+                        
+                        {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => {
+                           const regId = i + 1;
+                           const regName = activeArena?.region_names?.[i] || `Região ${regId}`;
+                           const data = decisions.regions[regId];
+                           const isActive = activeRegion === regId;
+
+                           return (
+                              <button 
+                                 key={i} 
+                                 onClick={() => setActiveRegion(regId)} 
+                                 className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-2 group relative overflow-hidden ${
+                                    isActive 
+                                    ? 'bg-orange-600 border-orange-400 shadow-lg' 
+                                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                 }`}
+                              >
+                                 {isActive && <div className="absolute top-0 right-0 p-2"><CheckCircle2 size={10} className="text-white opacity-40" /></div>}
+                                 <div className="flex justify-between items-center">
+                                    <span className={`text-[8px] font-black uppercase tracking-widest ${isActive ? 'text-white' : 'text-slate-500'}`}>Node R{regId}</span>
+                                    <span className={`text-[10px] font-mono font-bold ${isActive ? 'text-white' : 'text-emerald-500'}`}>$ {data?.price || 0}</span>
+                                 </div>
+                                 <h4 className={`text-xs font-black uppercase truncate italic ${isActive ? 'text-white' : 'text-slate-300'}`}>{regName}</h4>
+                                 <div className="flex gap-2 items-center">
+                                    <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                                       <div className={`h-full ${isActive ? 'bg-white' : 'bg-orange-500'}`} style={{ width: `${(data?.marketing || 0) * 11.1}%` }} />
+                                    </div>
+                                    <span className={`text-[8px] font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>{data?.marketing || 0}</span>
+                                 </div>
+                              </button>
+                           );
+                        })}
                      </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <InputCard label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={16}/>} />
-                        <SelectCard 
-                           label="Condição Prazo" 
-                           val={decisions.regions[activeRegion]?.term || 1} 
-                           onChange={(v: number) => updateDecision(`regions.${activeRegion}.term`, v)} 
-                           options={[
-                              {v:0,l:'À VISTA (MESMO PERÍODO)'},
-                              {v:1,l:'50/50 (VISTA + P1 + JUROS)'},
-                              {v:2,l:'33/33/33 (VISTA + P1 + P2 + JUROS)'}
-                           ]} 
-                           icon={<Landmark size={16} />} 
-                        />
-                        <InputCard label="Promoção Regional" desc="(0 a 9)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={(v: number) => updateDecision(`regions.${activeRegion}.marketing`, v)} icon={<Sparkles size={16}/>} />
+
+                     {/* PAINEL DE COMANDO CENTRAL DA REGIÃO */}
+                     <div className="flex-1 space-y-8 flex flex-col justify-center">
+                        <div className="flex justify-between items-end bg-slate-900/40 p-6 rounded-[2.5rem] border border-white/5">
+                           <div>
+                              <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Configuração Ativa</span>
+                              <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none mt-2">
+                                 {activeArena?.region_names?.[activeRegion-1] || `Região ${activeRegion}`}
+                              </h4>
+                           </div>
+                           <button 
+                              onClick={syncAllRegions}
+                              className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-orange-600 hover:text-white text-slate-400 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95"
+                           >
+                              <Copy size={14} /> Replicar para Todos
+                           </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                           <InputCard label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={24}/>} />
+                           
+                           <SelectCard 
+                              label="Condição Prazo de Venda" 
+                              val={decisions.regions[activeRegion]?.term || 1} 
+                              onChange={(v: number) => updateDecision(`regions.${activeRegion}.term`, v)} 
+                              options={[
+                                 {v:0,l:'À VISTA (MESMO PERÍODO)'},
+                                 {v:1,l:'50/50 (VISTA + P1 + JUROS MÉDIOS)'},
+                                 {v:2,l:'33/33/33 (VISTA + P1 + P2 + JUROS MÉDIOS)'}
+                              ]} 
+                              icon={<Landmark size={24} />} 
+                           />
+                           
+                           <div className="bg-white/[0.03] border border-white/5 rounded-3xl p-6 flex flex-col gap-4">
+                              <div className="flex items-center justify-between">
+                                 <div className="flex items-center gap-3">
+                                    <Sparkles size={24} className="text-orange-500" />
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Promoção Regional (0 a 9)</label>
+                                 </div>
+                                 <span className="text-3xl font-black text-white italic">{decisions.regions[activeRegion]?.marketing || 0}</span>
+                              </div>
+                              <input 
+                                 type="range" min="0" max="9" step="1"
+                                 value={decisions.regions[activeRegion]?.marketing || 0} 
+                                 onChange={e => updateDecision(`regions.${activeRegion}.marketing`, Number(e.target.value))} 
+                                 className="w-full h-2 bg-slate-900 rounded-full appearance-none cursor-pointer accent-orange-600" 
+                              />
+                              <p className="text-[9px] text-slate-600 font-bold uppercase italic">Fator de elasticidade e lembrança de marca na região.</p>
+                           </div>
+                        </div>
                      </div>
                   </div>
                )}
