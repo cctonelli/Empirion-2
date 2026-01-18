@@ -47,7 +47,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
           setActiveArena(found);
           const initialRegions: any = {};
           for (let i = 1; i <= (found.regions_count || 9); i++) {
-            initialRegions[i] = { price: 372, term: 1, marketing: 1000 };
+            initialRegions[i] = { price: 372, term: 1, marketing: 0 };
           }
           setDecisions(prev => ({ ...prev, regions: initialRegions }));
         }
@@ -146,7 +146,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <InputCard label="Preço de Venda" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={18}/>} />
-                        <InputCard label="Marketing Local" val={decisions.regions[activeRegion]?.marketing || 1000} onChange={(v: number) => updateDecision(`regions.${activeRegion}.marketing`, v)} icon={<Sparkles size={18}/>} />
+                        <InputCard label="Marketing Local" desc="(0 a 9)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={(v: number) => updateDecision(`regions.${activeRegion}.marketing`, v)} icon={<Sparkles size={18}/>} />
                      </div>
                   </div>
                )}
@@ -216,11 +216,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   );
 };
 
-const InputCard = ({ label, val, icon, onChange }: any) => (
+const InputCard = ({ label, desc, val, icon, onChange }: any) => (
   <div className="glass-card p-8 space-y-6 group text-left">
      <div className="flex items-center gap-4">
         <div className="p-3 bg-white/5 rounded-xl text-slate-500 group-hover:text-orange-500 transition-colors border border-white/5">{icon}</div>
-        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{label}</label>
+        <div>
+           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{label}</label>
+           {desc && <p className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter mt-0.5">{desc}</p>}
+        </div>
      </div>
      <input type="number" value={val} onChange={e => onChange?.(Number(e.target.value))} className="w-full bg-slate-950/60 border-none rounded-2xl px-6 py-5 text-white font-mono font-black text-3xl outline-none focus:ring-2 focus:ring-orange-600 transition-all shadow-inner" />
   </div>

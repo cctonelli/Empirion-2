@@ -26,11 +26,40 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     totalRounds: 12,
     roundTime: 24,
     roundUnit: 'hours' as DeadlineUnit,
-    initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE * 60.09, // Fixed P0 based on specs
+    initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE * 60.09,
     currency: 'BRL' as CurrencyType
   });
 
+  // Estados para nomes customizados
+  const [teamNames, setTeamNames] = useState<string[]>(['EQUIPE ALPHA', 'EQUIPE BETA']);
+  const [regionNames, setRegionNames] = useState<string[]>(['SUDESTE', 'EUROPA', 'NORDESTE', 'REGIÃO 04']);
+
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
+
+  // Sincroniza tamanho dos arrays de nomes ao mudar contagem no Step 2
+  useEffect(() => {
+    setTeamNames(prev => {
+      const next = [...prev];
+      if (next.length < formData.humanTeamsCount) {
+        for (let i = next.length; i < formData.humanTeamsCount; i++) {
+          next.push(`EQUIPE TRIAL 0${i + 1}`);
+        }
+      }
+      return next.slice(0, formData.humanTeamsCount);
+    });
+  }, [formData.humanTeamsCount]);
+
+  useEffect(() => {
+    setRegionNames(prev => {
+      const next = [...prev];
+      if (next.length < formData.regionsCount) {
+        for (let i = next.length; i < formData.regionsCount; i++) {
+          next.push(`REGIÃO 0${i + 1}`);
+        }
+      }
+      return next.slice(0, formData.regionsCount);
+    });
+  }, [formData.regionsCount]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -40,7 +69,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     setIsSubmitting(true);
     try {
       const teams = [
-        ...Array.from({ length: formData.humanTeamsCount }).map((_, i) => ({ name: `Equipe Trial 0${i + 1}`, is_bot: false })),
+        ...teamNames.map((name, i) => ({ name: name.toUpperCase() || `EQUIPE TRIAL 0${i + 1}`, is_bot: false })),
         ...Array.from({ length: formData.botsCount }).map((_, i) => ({ name: `BOT 0${i + 1}`, is_bot: true }))
       ];
 
@@ -57,7 +86,12 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         is_public: true,
         currency: formData.currency,
         sales_mode: formData.marketMode,
-        initial_share_price: formData.initialStockPrice
+        initial_share_price: formData.initialStockPrice,
+        // Persiste nomes das regiões no config
+        config: { 
+          region_names: regionNames.map(r => r.toUpperCase()),
+          initial_share_price: formData.initialStockPrice
+        }
       }, teams, true);
 
       onComplete();
@@ -65,13 +99,12 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     setIsSubmitting(false);
   };
 
-  const stepsCount = 7; // Intro + 6 steps
+  const stepsCount = 7;
 
   return (
     <div className="h-screen w-screen bg-[#020617] flex flex-col font-sans selection:bg-orange-500 overflow-hidden relative">
       <EmpireParticles />
       
-      {/* HUD HEADER - FIXED */}
       <header className="h-20 bg-slate-900/90 backdrop-blur-2xl border-b border-white/10 px-10 flex items-center justify-between z-[200]">
          <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black italic shadow-lg">E</div>
@@ -88,7 +121,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
          <button className="p-3 text-slate-500 hover:text-white transition-colors"><Info size={20}/></button>
       </header>
 
-      {/* CONTENT PORT - SCROLLABLE */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar relative z-10">
          <div className="max-w-6xl mx-auto w-full px-6 py-20">
             <AnimatePresence mode="wait">
@@ -115,17 +147,17 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12 max-w-4xl mx-auto">
                     <StepHeader icon={<Settings size={28}/>} title="Configuração da Arena" desc="Parametrize o ecossistema do torneio trial." />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                       <InputGroup label="Nome do Torneio" placeholder="Ex: ARENA ALPHA INDUSTRIAL" value={formData.name} onChange={v => setFormData({...formData, name: v})} />
+                       <InputGroup label="Nome do Torneio" placeholder="Ex: ARENA ALPHA INDUSTRIAL" value={formData.name} onChange={(v: string) => setFormData({...formData, name: v})} />
                        <div className="grid grid-cols-2 gap-4">
-                          <InputGroup type="number" label="Equipes Humanas" value={formData.humanTeamsCount} onChange={v => setFormData({...formData, humanTeamsCount: Number(v)})} />
-                          <InputGroup type="number" label="Bots (IA)" value={formData.botsCount} onChange={v => setFormData({...formData, botsCount: Number(v)})} />
+                          <InputGroup type="number" label="Equipes Humanas" value={formData.humanTeamsCount} onChange={(v: string) => setFormData({...formData, humanTeamsCount: Math.max(1, Number(v))})} />
+                          <InputGroup type="number" label="Bots (IA)" value={formData.botsCount} onChange={(v: string) => setFormData({...formData, botsCount: Math.max(0, Number(v))})} />
                        </div>
-                       <SelectGroup label="Mercado Principal" value={formData.marketMode} onChange={v => setFormData({...formData, marketMode: v as SalesMode})} options={[{v:'internal',l:'NACIONAL (BRL)'},{v:'external',l:'INTERNACIONAL (USD)'},{v:'hybrid',l:'HÍBRIDO (MIXED)'}]} />
-                       <InputGroup type="number" label="Número de Regiões" value={formData.regionsCount} onChange={v => setFormData({...formData, regionsCount: Number(v)})} />
-                       <InputGroup type="number" label="Rodadas Totais" value={formData.totalRounds} onChange={v => setFormData({...formData, totalRounds: Number(v)})} />
+                       <SelectGroup label="Mercado Principal" value={formData.marketMode} onChange={(v: string) => setFormData({...formData, marketMode: v as SalesMode})} options={[{v:'internal',l:'NACIONAL (BRL)'},{v:'external',l:'INTERNACIONAL (USD)'},{v:'hybrid',l:'HÍBRIDO (MIXED)'}]} />
+                       <InputGroup type="number" label="Número de Regiões" value={formData.regionsCount} onChange={(v: string) => setFormData({...formData, regionsCount: Math.max(1, Number(v))})} />
+                       <InputGroup type="number" label="Rodadas Totais" value={formData.totalRounds} onChange={(v: string) => setFormData({...formData, totalRounds: Math.max(3, Number(v))})} />
                        <div className="grid grid-cols-2 gap-4">
-                          <InputGroup type="number" label="Tempo/Rodada" value={formData.roundTime} onChange={v => setFormData({...formData, roundTime: Number(v)})} />
-                          <SelectGroup label="Unidade" value={formData.roundUnit} onChange={v => setFormData({...formData, roundUnit: v as DeadlineUnit})} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} />
+                          <InputGroup type="number" label="Tempo/Rodada" value={formData.roundTime} onChange={(v: string) => setFormData({...formData, roundTime: Number(v)})} />
+                          <SelectGroup label="Unidade" value={formData.roundUnit} onChange={(v: string) => setFormData({...formData, roundUnit: v as DeadlineUnit})} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} />
                        </div>
                     </div>
                  </motion.div>
@@ -142,7 +174,16 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 {Array.from({ length: formData.humanTeamsCount }).map((_, i) => (
                                    <div key={i} className="flex gap-4 items-center">
                                       <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-xs font-black">0{i+1}</div>
-                                      <input className="flex-1 bg-slate-950 border border-white/5 p-4 rounded-xl text-xs font-bold text-white outline-none" defaultValue={`EQUIPE ALPHA 0${i+1}`} />
+                                      <input 
+                                        className="flex-1 bg-slate-950 border border-white/5 p-4 rounded-xl text-xs font-bold text-white outline-none focus:border-orange-500 transition-colors" 
+                                        value={teamNames[i] || ''}
+                                        onChange={e => {
+                                          const next = [...teamNames];
+                                          next[i] = e.target.value;
+                                          setTeamNames(next);
+                                        }}
+                                        placeholder={`Nome da Equipe 0${i+1}`}
+                                      />
                                    </div>
                                 ))}
                              </div>
@@ -153,7 +194,16 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 {Array.from({ length: formData.regionsCount }).map((_, i) => (
                                    <div key={i} className="flex gap-4 items-center">
                                       <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-xs font-black"><Globe size={14}/></div>
-                                      <input className="flex-1 bg-slate-950 border border-white/5 p-4 rounded-xl text-xs font-bold text-white outline-none" defaultValue={i === 0 ? 'SUDESTE' : i === 1 ? 'EUROPA' : i === 2 ? 'NORDESTE' : `REGIÃO 0${i+1}`} />
+                                      <input 
+                                        className="flex-1 bg-slate-950 border border-white/5 p-4 rounded-xl text-xs font-bold text-white outline-none focus:border-blue-500 transition-colors" 
+                                        value={regionNames[i] || ''}
+                                        onChange={e => {
+                                          const next = [...regionNames];
+                                          next[i] = e.target.value;
+                                          setRegionNames(next);
+                                        }}
+                                        placeholder={`Nome da Região 0${i+1}`}
+                                      />
                                    </div>
                                 ))}
                              </div>

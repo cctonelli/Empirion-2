@@ -168,7 +168,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       }
       if (!teamDecision) {
          teamDecision = {
-            regions: Object.fromEntries(Array.from({ length: arena.regions_count || 9 }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 1000 }])),
+            regions: Object.fromEntries(Array.from({ length: arena.regions_count || 9 }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 0 }])),
             hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50 },
             production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0 },
             finance: { loanRequest: 0, application: 0, buyMachines: { alfa: 0, beta: 0, gama: 0 } },

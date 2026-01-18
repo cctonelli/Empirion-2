@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType } from "../types";
 
@@ -41,7 +40,7 @@ export const getLiveDecisionAdvice = async (decisions: DecisionData, branch: str
       Identifique erros fatais como:
       - Preço muito acima da média histórica (~$370).
       - Investimento em máquinas sem caixa suficiente.
-      - Marketing insuficiente para o nível de produção.
+      - Marketing regional fora da escala padrão (0 a 9).
       Seja curto e use tom de alerta tático.`,
       config: { temperature: 0.5 }
     });
@@ -73,10 +72,10 @@ export const generateBotDecision = async (
       
       Gere um objeto JSON de decisões equilibrado mas competitivo. 
       Foque em preço médio de mercado de $370.
+      O marketing regional DEVE estar entre 0 e 9.
       Não seja conservador demais.`,
       config: {
         responseMimeType: "application/json",
-        // Fix: Type.OBJECT cannot be empty per Gemini guidelines. Redefined 'regions' as an array of structured objects.
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -88,7 +87,7 @@ export const generateBotDecision = async (
                   regionId: { type: Type.NUMBER, description: "ID da região de 1 a N" },
                   price: { type: Type.NUMBER, description: "Preço de venda" },
                   term: { type: Type.NUMBER, description: "Prazo médio de recebimento" },
-                  marketing: { type: Type.NUMBER, description: "Investimento em marketing" }
+                  marketing: { type: Type.NUMBER, description: "Investimento em marketing de 0 a 9" }
                 },
                 required: ["regionId", "price", "term", "marketing"]
               }
@@ -141,7 +140,6 @@ export const generateBotDecision = async (
     });
 
     const parsed = JSON.parse(response.text || '{}');
-    // Fix: Updated parsing logic to handle the regions as an array from the improved schema
     const cleanedRegions: Record<number, any> = {};
     if (Array.isArray(parsed.regions)) {
         parsed.regions.forEach((r: any) => {
@@ -149,14 +147,14 @@ export const generateBotDecision = async (
                 cleanedRegions[r.regionId] = { 
                     price: r.price || 375, 
                     term: r.term || 1, 
-                    marketing: r.marketing || 5000 
+                    marketing: Math.min(9, Math.max(0, r.marketing || 0))
                 };
             }
         });
     }
     for (let i = 1; i <= regionCount; i++) {
         if (!cleanedRegions[i]) {
-            cleanedRegions[i] = { price: 375, term: 1, marketing: 5000 };
+            cleanedRegions[i] = { price: 375, term: 1, marketing: 0 };
         }
     }
     
@@ -170,9 +168,8 @@ export const generateBotDecision = async (
     };
   } catch (error) {
     console.error("Bot Decision Error:", error);
-    // Fallback static decision
     return {
-      regions: Object.fromEntries(Array.from({ length: regionCount }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 1000 }])),
+      regions: Object.fromEntries(Array.from({ length: regionCount }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 0 }])),
       hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50 },
       production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0 },
       finance: { loanRequest: 0, application: 0, buyMachines: { alfa: 0, beta: 0, gama: 0 } },
