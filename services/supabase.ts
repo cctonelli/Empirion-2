@@ -131,7 +131,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       bots_count: champData.bots_count || 0, initial_financials: champData.initial_financials || {},
       market_indicators: champData.market_indicators || DEFAULT_MACRO, config: champData.config || {},
       sales_mode: champData.sales_mode || 'hybrid', region_type: champData.region_type || 'mixed',
-      analysis_source: champData.analysis_source || 'parameterized', observers: champData.observers || []
+      analysis_source: champData.analysis_source || 'parameterized', observers: champData.observers || [],
+      initial_share_price: champData.initial_share_price || 1.0
     };
     if (!isTrial && session?.user) {
       payload.tutor_id = session.user.id;
@@ -157,7 +158,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
     const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', currentRound + 1);
     const { data: previousStates } = await supabase.from('companies').select('*').eq('championship_id', championshipId).eq('round', currentRound);
 
-    const initialSharePrice = arena.config?.initial_share_price || 1.0;
+    const initialSharePrice = arena.initial_share_price || arena.config?.initial_share_price || 1.0;
     const batchResults = [];
     
     for (const team of teams) {
@@ -178,7 +179,17 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       }
       const prevState = previousStates?.find(s => s.team_id === team.id);
       const teamPrevState = currentRound === 0 ? { kpis: { market_valuation: { share_price: initialSharePrice } } } : prevState;
-      const result = calculateProjections(teamDecision, arena.branch, arena.ecosystemConfig || {} as any, arena.market_indicators, teamPrevState, null, arena.region_type);
+      // FIX: Chamada correta dos parâmetros para o motor de projeção v13.5
+      const result = calculateProjections(
+        teamDecision, 
+        arena.branch, 
+        arena.ecosystemConfig || {} as any, 
+        arena.market_indicators, 
+        teamPrevState, 
+        [], 
+        currentRound + 1, 
+        arena.round_rules
+      );
       batchResults.push({
         team_id: team.id, team_name: team.name, championship_id: championshipId, round: currentRound + 1,
         state: { decisions: teamDecision }, dre: result.statements?.dre, balance_sheet: result.statements?.balance_sheet,

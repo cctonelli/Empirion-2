@@ -152,6 +152,7 @@ export interface Championship {
   round_rules?: Record<number, Partial<MacroIndicators>>; 
   kpis?: KPIs; 
   initial_financials: any; 
+  initial_share_price: number;
   created_at: string; 
   sales_mode: SalesMode; 
   scenario_type: ScenarioType; 
@@ -159,7 +160,6 @@ export interface Championship {
   transparency_level: TransparencyLevel; 
   gazeta_mode: GazetaMode; 
   observers: string[] | any[]; 
-  // Added properties to resolve TS errors across multiple components
   teams?: Team[];
   is_public?: boolean;
   is_trial?: boolean;
@@ -171,7 +171,6 @@ export interface Championship {
   tutor_id?: string;
 }
 
-// Fixed missing exported members required by other files
 export interface ChampionshipTemplate {
   id: string;
   name: string;
