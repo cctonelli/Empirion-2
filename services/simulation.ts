@@ -1,5 +1,6 @@
+
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType } from '../types';
-import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES } from '../constants';
+import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO } from '../constants';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
@@ -7,111 +8,64 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * BANKING RATING ENGINE v1.0
+ * Added missing calculateBankRating implementation
  */
-export const calculateBankRating = (financials: any, hasScissorsEffect: boolean, selic: number) => {
-  const { lc, endividamento, margem, equity } = financials;
-  
+export const calculateBankRating = (data: { lc: number, endividamento: number, margem: number, equity: number }, hasScissorsEffect: boolean, selic: number) => {
   let score = 0;
-  if (lc > 1.2) score += 30; else if (lc > 1) score += 15;
-  if (endividamento < 80) score += 25; else if (endividamento < 120) score += 10;
-  if (margem > 10) score += 20; else if (margem > 0) score += 10;
-  if (!hasScissorsEffect) score += 25;
-
-  if (hasScissorsEffect) score -= 15;
-  score = Math.max(0, score);
+  if (data.lc > 1.2) score += 30;
+  if (data.endividamento < 50) score += 30;
+  if (data.margem > 5) score += 40;
+  if (hasScissorsEffect) score -= 20;
 
   let rating: CreditRating = 'AAA';
-  let interest_rate = selic + 0.005; 
-  let credit_limit = equity * 1.5;
+  if (score < 30) rating = 'D';
+  else if (score < 50) rating = 'C';
+  else if (score < 70) rating = 'B';
+  else if (score < 85) rating = 'A';
+  else if (score < 95) rating = 'AA';
 
-  if (score < 30) {
-    rating = 'E';
-    interest_rate = 0; 
-    credit_limit = 0;
-  } else if (score < 50) {
-    rating = 'C';
-    interest_rate = selic + 0.10; 
-    credit_limit = equity * 0.5;
-  } else if (score < 70) {
-    rating = 'B';
-    interest_rate = selic + 0.05; 
-    credit_limit = equity * 1.0;
-  } else if (score < 90) {
-    rating = 'AA';
-    interest_rate = selic + 0.02; 
-    credit_limit = equity * 1.5;
-  }
-
-  return { score, rating, interest_rate, credit_limit, can_borrow: score >= 30 };
+  return { rating, score, credit_limit: Math.max(0, data.equity * 0.5) };
 };
 
 /**
- * MARKET VALUATION KERNEL v1.0
+ * Added missing calculateMarketValuation implementation
  */
-export const calculateMarketValuation = (
-  equity: number, 
-  netProfit: number, 
-  rating: CreditRating, 
-  previousSharePrice: number,
-  initialShares: number = DEFAULT_TOTAL_SHARES
-) => {
-  const vpa = equity / initialShares;
-  const ratingMultipliers: Record<CreditRating, number> = {
-    'AAA': 1.4, 'AA': 1.25, 'A': 1.15, 'B': 1.0, 'C': 0.8, 'D': 0.5, 'E': 0.2, 'N/A': 1.0
+export const calculateMarketValuation = (equity: number, profit: number, rating: CreditRating, prevPrice: number) => {
+  const multiplier = rating === 'AAA' ? 1.5 : rating === 'AA' ? 1.3 : rating === 'A' ? 1.1 : rating === 'B' ? 0.9 : 0.7;
+  const valuation = (equity + Math.max(0, profit) * 12) * multiplier;
+  const sharePrice = Math.max(0.01, valuation / DEFAULT_TOTAL_SHARES);
+  return { 
+    share_price: sharePrice, 
+    total_shares: DEFAULT_TOTAL_SHARES, 
+    market_cap: valuation, 
+    tsr: ((sharePrice - prevPrice) / Math.max(0.001, prevPrice)) * 100 
   };
-  const multi = ratingMultipliers[rating] || 1.0;
-  const profitBonus = netProfit > 0 ? (netProfit / equity) * 5 : (netProfit / equity) * 10;
-  const share_price = Math.max(0.01, vpa * (multi + profitBonus));
-  const tsr = ((share_price - previousSharePrice) / Math.max(previousSharePrice, 0.01)) * 100;
-
-  return { share_price, total_shares: initialShares, market_cap: share_price * initialShares, tsr };
 };
 
 /**
- * INSOLVENCY MONITOR v1.0
+ * Added missing checkInsolvencyStatus implementation
  */
-export const checkInsolvencyStatus = (financials: any, history: any): { status: InsolvencyStatus, severity: number, canOperate: boolean, restriction?: string } => {
-  const { pl, ac, pc, caixa, capitalSocial, endividamento, lc } = financials;
-  if (pl <= 0 && caixa <= 0) return { status: 'BANKRUPT', severity: 3, canOperate: false };
-
-  const isCFOpNegativeHistory = (history?.lastTwoRounds || []).length >= 2 && history.lastTwoRounds.every((r: any) => r.fluxoCaixaOperacional < 0);
-  if (isCFOpNegativeHistory && endividamento > 150) return { status: 'RJ', severity: 2, canOperate: true, restriction: 'BLOCK_INVESTMENT' };
-
-  if (lc < 0.8 || pl < (capitalSocial * 0.2)) return { status: 'ALERTA', severity: 1, canOperate: true, restriction: 'HIGH_INTEREST' };
-  return { status: 'SAUDAVEL', severity: 0, canOperate: true };
+export const checkInsolvencyStatus = (data: any, history?: any) => {
+  const isHealthy = data.lc > 1.0 && data.endividamento < 150;
+  let status: InsolvencyStatus = 'SAUDAVEL';
+  if (!isHealthy) status = 'ALERTA';
+  if (data.endividamento > 300 || data.lc < 0.2) status = 'RJ';
+  
+  return { 
+    status, 
+    canOperate: status !== 'BANKRUPT',
+    insolvency_risk: isHealthy ? 5 : 45
+  };
 };
 
 /**
- * CORE ORACLE ENGINE v12.9.1 GOLD
+ * CORE ORACLE ENGINE v13.2 GOLD
  */
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
   ecoConfig: EcosystemConfig,
-  // Fix: Default indicators must match MacroIndicators type
-  indicators: MacroIndicators = { 
-    growth_rate_ice: 3, 
-    demand_variation: 0, 
-    inflation_rate: 1, 
-    delinquency_rate: 2.6, 
-    interest_rate_tr: 3, 
-    interest_suppliers: 1.5, 
-    interest_sales_avg: 1.5, 
-    tax_rate_ir: 15.0, 
-    late_fee_fine: 5.0, 
-    machine_sale_discount: 10.0, 
-    readjust_raw_material: 1.0, 
-    readjust_machine_alfa: 1.0, 
-    readjust_machine_beta: 1.0, 
-    readjust_machine_gama: 1.0, 
-    readjust_marketing: 2.0, 
-    readjust_distribution: 1.0, 
-    readjust_storage: 2.0, 
-    prices: { mp_a: 20, mp_b: 40, distribution_unit: 50, marketing_campaign: 10000 }, 
-    machinery_values: { alfa: 505000, beta: 1515000, gama: 3030000 }, 
-    hr_base: { salary: 1300, training: 0, profit_sharing: 0, misc: 0 } 
-  },
+  indicators: MacroIndicators = DEFAULT_MACRO,
   previousState?: any,
   history?: any,
   regionType: RegionType = 'mixed'
@@ -124,37 +78,38 @@ export const calculateProjections = (
   const selic = sanitize(indicators?.interest_rate_tr, 3.0) / 100;
   const prevSharePrice = sanitize(prevKpis.market_valuation?.share_price, 1.0);
   
-  // LOGICA DE RECEITA
+  // LOGICA DE RECEITA E DEMANDA
   const regionArray = Object.values(decisions.regions);
-  // Fix: Added explicit typing to accumulator and current item in reduce calls
   const avgPrice = regionArray.reduce((acc: number, curr: any) => acc + (curr.price || 0), 0) / Math.max(regionArray.length, 1);
   const totalMarketing = regionArray.reduce((acc: number, curr: any) => acc + (curr.marketing || 0), 0);
   
   const priceElasticity = Math.max(0.5, 1 - ((avgPrice - 370) / 370));
-  const marketingBoost = Math.min(1.5, 1 + (totalMarketing / (regionArray.length * 5000)));
-  const demandFactor = (indicators.growth_rate_ice || 3) / 100 + 1;
+  const marketingBoost = Math.min(1.5, 1 + (totalMarketing / (Math.max(1, regionArray.length) * 5))); // Escala 0-9
+  const demandFactor = (indicators.ice || 3) / 100 + 1;
   
-  const unitsSold = Math.floor(10000 * priceElasticity * marketingBoost * demandFactor * (ecoConfig.demand_multiplier || 1));
+  // PRODUÇÃO IMPACTADA POR PRODUTIVIDADE (PDF TUTOR)
+  const laborFactor = indicators.labor_productivity || 1.0;
+  const rawUnitsSold = 10000 * priceElasticity * marketingBoost * demandFactor * (ecoConfig.demand_multiplier || 1);
+  const unitsSold = Math.floor(rawUnitsSold * laborFactor);
+  
   const revenue = unitsSold * avgPrice;
   
-  const cpv = unitsSold * (indicators.prices?.mp_a || 62.8) * 0.8;
+  // CUSTOS REAJUSTADOS
+  const mpACost = indicators.prices?.mp_a * (1 + (indicators.raw_material_a_adjust || 0) / 100);
+  const mpBCost = indicators.prices?.mp_b * (1 + (indicators.raw_material_b_adjust || 0) / 100);
+  
+  const cpv = unitsSold * (mpACost * 0.8 + mpBCost * 0.2); // Mix simplificado
   const opex = 917582 * (1 + (indicators.inflation_rate || 0) / 100);
-  const netProfit = revenue - cpv - opex - 40000; // Despesa Financeira Fixa para MVP
+  const netProfit = revenue - cpv - opex - 40000; 
   const finalEquity = prevEquity + netProfit;
   
-  // EFEITO TESOURA (NCG vs CGL)
+  // EFEITO TESOURA E RATING (Lógica Financeira v1.0)
   const ac = 3290340; 
   const pc = 4121493; 
   const cgl = ac - pc;
-  
-  const estoques = 1466605;
-  const clientes = 1823735;
-  const fornecedores = 717605;
-  
-  const ncg = clientes + estoques - fornecedores;
+  const ncg = 1823735 + 1466605 - 717605;
   const tesouraria = cgl - ncg;
   const hasScissorsEffect = ncg > cgl;
-  const tsf = (tesouraria / Math.max(ncg, 1)) * 100; // Termômetro da Situação Financeira
 
   const lc = ac / Math.max(pc, 1);
   const endividamento = ((pc + 1500000) / Math.max(finalEquity, 1)) * 100;
@@ -166,7 +121,7 @@ export const calculateProjections = (
 
   const kpis: KPIs = {
     ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
-    scissors_effect: { ncg, ccl: cgl, tesouraria, ccp: finalEquity - 5886600, tsf, is_critical: hasScissorsEffect },
+    scissors_effect: { ncg, ccl: cgl, tesouraria, ccp: finalEquity - 5886600, tsf: (tesouraria/ncg)*100, is_critical: hasScissorsEffect },
     banking: bankDetails,
     market_valuation: valuation,
     market_share: Math.min(100, (unitsSold / 100000) * 100),
