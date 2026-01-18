@@ -104,7 +104,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   return (
     <div className="flex flex-col h-full bg-slate-900/20 rounded-[2rem] border border-white/5 overflow-hidden">
       
-      {/* 1. SLIM STATUS BAR (Terminologia EQUIPE corrigida) */}
+      {/* 1. SLIM STATUS BAR */}
       <div className="bg-slate-950/60 px-6 py-2 flex items-center justify-between border-b border-white/5 shrink-0">
          <div className="flex items-center gap-4">
             <div className={`w-2 h-2 rounded-full ${decisions.judicial_recovery ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
@@ -134,7 +134,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          ))}
       </nav>
 
-      {/* 3. OPTIMIZED CONTENT AREA (MAX HEIGHT) */}
+      {/* 3. OPTIMIZED CONTENT AREA */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-950/20">
          <AnimatePresence mode="wait">
             <motion.div key={activeStep} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">
@@ -172,7 +172,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <InputCard label="Matéria-Prima A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={16}/>} />
                      <InputCard label="Matéria-Prima B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={16}/>} />
-                     <SelectCard label="Tipo Pagamento Fornecedor" val={decisions.production.paymentType} onChange={(v: number) => updateDecision('production.paymentType', v)} options={[{v:0,l:'VISTA'},{v:1,l:'A PRAZO'},{v:2,l:'MISTO'}]} icon={<DollarSign size={16}/>} />
+                     {/* FIX: Atualizados rótulos conforme definição 0-1-2 de fornecedores */}
+                     <SelectCard 
+                        label="Tipo Pagamento Fornecedor" 
+                        val={decisions.production.paymentType} 
+                        onChange={(v: number) => updateDecision('production.paymentType', v)} 
+                        options={[
+                           {v:0,l:'À VISTA (MESMO PERÍODO)'},
+                           {v:1,l:'50/50 (VISTA + P1 + JUROS)'},
+                           {v:2,l:'33/33/33 (VISTA + P1 + P2 + JUROS)'}
+                        ]} 
+                        icon={<DollarSign size={16}/>} 
+                     />
                      <InputCard label="Nível Utilização Fábrica %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={16}/>} />
                      <InputCard label="Capacidade Extra %" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={16}/>} />
                      <InputCard label="Verba P&D e Qualidade" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Cpu size={16}/>} />
