@@ -18,6 +18,21 @@ export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'E' | 'N/A';
 export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 export type LaborAvailability = 'BAIXA' | 'MEDIA' | 'ALTA';
+export type MachineModel = 'alfa' | 'beta' | 'gama';
+
+export interface MachineSpec {
+  model: MachineModel;
+  initial_value: number;
+  production_capacity: number;
+  operators_required: number;
+  depreciation_rate: number; // ex: 0.025 (2.5%)
+}
+
+export interface InitialMachine {
+  id: string;
+  model: MachineModel;
+  age: number; // em períodos
+}
 
 export interface DecisionData {
   judicial_recovery: boolean;
@@ -82,6 +97,16 @@ export interface MacroIndicators {
   allow_machine_sale: boolean;
   labor_productivity: number;
   labor_availability: LaborAvailability;
+  
+  // Machinery Specs & Physics (Oracle Gold v13.2)
+  machine_specs: Record<MachineModel, MachineSpec>;
+  initial_machinery_mix: InitialMachine[];
+  maintenance_physics: {
+    alpha: number; // taxa de crescimento por idade
+    beta: number;  // expoente de aceleração (1.2 a 1.5)
+    gamma: number; // sensibilidade à utilização (ex: 0.5)
+  };
+
   prices: {
     mp_a: number;
     mp_b: number;

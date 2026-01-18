@@ -1,4 +1,4 @@
-import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource } from './types';
+import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine } from './types';
 
 export const APP_VERSION = "v13.2.0-Oracle-Gold";
 export const BUILD_DATE = "08/01/2026";
@@ -244,6 +244,25 @@ export const DEFAULT_MACRO: MacroIndicators = {
   allow_machine_sale: false,
   labor_productivity: 1.0,
   labor_availability: 'MEDIA',
+
+  // Machinery Specs v13.2
+  machine_specs: {
+    alfa: { model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025 },
+    beta: { model: 'beta', initial_value: 1500000, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025 },
+    gama: { model: 'gama', initial_value: 3000000, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025 }
+  },
+  initial_machinery_mix: [
+    { id: 'm1', model: 'alfa', age: 6 },
+    { id: 'm2', model: 'alfa', age: 11 },
+    { id: 'm3', model: 'alfa', age: 11 },
+    { id: 'm4', model: 'alfa', age: 21 },
+    { id: 'm5', model: 'alfa', age: 21 }
+  ],
+  maintenance_physics: {
+    alpha: 0.05,
+    beta: 1.2,
+    gamma: 0.5
+  },
 
   prices: {
     mp_a: 20.00,

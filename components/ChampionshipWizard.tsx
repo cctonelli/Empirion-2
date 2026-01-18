@@ -6,10 +6,11 @@ import {
   Hourglass, Scale, Sparkles, X, Settings2,
   TrendingUp, Zap, Users, DollarSign, Package, Cpu,
   Briefcase, BarChart3, ShieldAlert, Award,
-  Factory, HardDrive, Thermometer, UserPlus, Info, CalendarRange
+  Factory, HardDrive, Thermometer, UserPlus, Info, CalendarRange, 
+  Trash2, ClipboardList, Gauge
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO } from '../constants';
-import { Branch, ScenarioType, ModalityType, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode, RegionType, AnalysisSource, CurrencyType, MacroIndicators, LaborAvailability } from '../types';
+import { Branch, ScenarioType, ModalityType, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode, RegionType, AnalysisSource, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine } from '../types';
 import { createChampionshipWithTeams } from '../services/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import FinancialStructureEditor from './FinancialStructureEditor';
@@ -58,6 +59,42 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     }));
   };
 
+  const updateMachineSpec = (model: MachineModel, updates: Partial<MachineSpec>) => {
+    setMarketIndicators(prev => ({
+      ...prev,
+      machine_specs: {
+        ...prev.machine_specs,
+        [model]: { ...prev.machine_specs[model], ...updates }
+      }
+    }));
+  };
+
+  const addInitialMachine = (model: MachineModel) => {
+    const newMachine: InitialMachine = {
+      id: crypto.randomUUID(),
+      model,
+      age: 0
+    };
+    setMarketIndicators(prev => ({
+      ...prev,
+      initial_machinery_mix: [...prev.initial_machinery_mix, newMachine]
+    }));
+  };
+
+  const removeInitialMachine = (id: string) => {
+    setMarketIndicators(prev => ({
+      ...prev,
+      initial_machinery_mix: prev.initial_machinery_mix.filter(m => m.id !== id)
+    }));
+  };
+
+  const updateInitialMachineAge = (id: string, age: number) => {
+    setMarketIndicators(prev => ({
+      ...prev,
+      initial_machinery_mix: prev.initial_machinery_mix.map(m => m.id === id ? { ...m, age } : m)
+    }));
+  };
+
   const handleLaunch = async () => {
     setIsSubmitting(true);
     try {
@@ -75,7 +112,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     setIsSubmitting(false);
   };
 
-  const stepsCount = 8; // Aumentado para incluir Ciclos
+  const stepsCount = 10; 
 
   return (
     <div className="wizard-shell">
@@ -148,7 +185,109 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
           )}
 
           {step === 4 && (
-            <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12 max-w-6xl mx-auto pb-20">
+            <motion.div key="s4" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-7xl mx-auto pb-20">
+               <WizardStepTitle icon={<Factory size={28}/>} title="Catálogo de Ativos" desc="Defina a capacidade e o custo operacional por modelo." />
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {(['alfa', 'beta', 'gama'] as MachineModel[]).map(model => (
+                    <div key={model} className="bg-slate-900/60 p-8 rounded-[3.5rem] border border-white/10 space-y-8 shadow-2xl">
+                       <h4 className="text-2xl font-black text-white uppercase italic flex items-center gap-3">
+                          <Cpu className={model === 'alfa' ? 'text-orange-500' : model === 'beta' ? 'text-blue-500' : 'text-emerald-500'} /> Máquina {model}
+                       </h4>
+                       <div className="space-y-6">
+                          <WizardField label="Valor Inicial P0 ($)" type="number" val={marketIndicators.machine_specs[model].initial_value} onChange={(v:any) => updateMachineSpec(model, { initial_value: parseFloat(v) })} />
+                          <WizardField label="Produção a 100% (UN)" type="number" val={marketIndicators.machine_specs[model].production_capacity} onChange={(v:any) => updateMachineSpec(model, { production_capacity: parseInt(v) })} />
+                          <WizardField label="Operadores / Máquina" type="number" val={marketIndicators.machine_specs[model].operators_required} onChange={(v:any) => updateMachineSpec(model, { operators_required: parseInt(v) })} />
+                          <WizardField label="Depreciação / Ciclo (%)" type="number" val={marketIndicators.machine_specs[model].depreciation_rate * 100} onChange={(v:any) => updateMachineSpec(model, { depreciation_rate: parseFloat(v) / 100 })} />
+                       </div>
+                    </div>
+                  ))}
+               </div>
+            </motion.div>
+          )}
+
+          {step === 5 && (
+            <motion.div key="s5" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-6xl mx-auto pb-20">
+               <WizardStepTitle icon={<ClipboardList size={28}/>} title="Inventário P00 (Round 0)" desc="Defina o mix inicial de máquinas e suas idades." />
+               <div className="bg-white/[0.02] p-12 rounded-[4rem] border border-white/5 space-y-10 shadow-2xl">
+                  <div className="flex justify-between items-center">
+                     <div className="space-y-1">
+                        <h4 className="text-xl font-black text-white uppercase italic">Máquinas em Operação</h4>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Idade média impacta custo de manutenção.</p>
+                     </div>
+                     <div className="flex gap-2">
+                        <button onClick={() => addInitialMachine('alfa')} className="px-5 py-2 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all">+ ALFA</button>
+                        <button onClick={() => addInitialMachine('beta')} className="px-5 py-2 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">+ BETA</button>
+                        <button onClick={() => addInitialMachine('gama')} className="px-5 py-2 bg-emerald-600/10 border border-emerald-500/20 text-emerald-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all">+ GAMA</button>
+                     </div>
+                  </div>
+                  
+                  <div className="matrix-container max-h-[400px] overflow-y-auto">
+                     <table className="w-full text-left">
+                        <thead className="bg-slate-900/80 sticky top-0 z-10">
+                           <tr className="text-[10px] font-black uppercase text-slate-500 tracking-widest border-b border-white/5">
+                              <th className="p-6"># ID Node</th>
+                              <th className="p-6">Modelo</th>
+                              <th className="p-6">Idade (Ciclos)</th>
+                              <th className="p-6 text-right">Ação</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                           {marketIndicators.initial_machinery_mix.map((m, i) => (
+                             <tr key={m.id} className="hover:bg-white/5 transition-colors">
+                                <td className="p-6 font-mono text-slate-500">M-0{i+1}</td>
+                                <td className="p-6 font-black text-white uppercase italic">{m.model}</td>
+                                <td className="p-6">
+                                   <input 
+                                     type="number" 
+                                     value={m.age} 
+                                     onChange={e => updateInitialMachineAge(m.id, parseInt(e.target.value) || 0)}
+                                     className="bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-xs font-black text-orange-500 w-24 outline-none focus:border-orange-500" 
+                                   />
+                                </td>
+                                <td className="p-6 text-right">
+                                   <button onClick={() => removeInitialMachine(m.id)} className="p-2 text-slate-600 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
+                                </td>
+                             </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  </div>
+               </div>
+            </motion.div>
+          )}
+
+          {step === 6 && (
+            <motion.div key="s6" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-5xl mx-auto pb-20">
+               <WizardStepTitle icon={<Gauge size={28}/>} title="Engenharia de Manutenção" desc="Defina a física de custo por obsolescência." />
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="bg-slate-900 p-12 rounded-[4rem] border border-white/10 space-y-10 shadow-2xl relative overflow-hidden">
+                     <div className="absolute top-0 right-0 p-10 opacity-5"><TrendingUp size={120} /></div>
+                     <h4 className="text-xs font-black uppercase text-blue-400 tracking-widest flex items-center gap-3">
+                        <Sparkles size={16}/> Parâmetros da Fórmula
+                     </h4>
+                     <div className="space-y-8 relative z-10">
+                        <WizardField label="Alpha (Crescimento Base %)" type="number" val={marketIndicators.maintenance_physics.alpha * 100} onChange={(v:any)=>setMarketIndicators({...marketIndicators, maintenance_physics: {...marketIndicators.maintenance_physics, alpha: parseFloat(v)/100}})} />
+                        <WizardField label="Beta (Aceleração Exponencial)" type="number" val={marketIndicators.maintenance_physics.beta} onChange={(v:any)=>setMarketIndicators({...marketIndicators, maintenance_physics: {...marketIndicators.maintenance_physics, beta: parseFloat(v)}})} />
+                        <WizardField label="Gamma (Impacto de Carga)" type="number" val={marketIndicators.maintenance_physics.gamma} onChange={(v:any)=>setMarketIndicators({...marketIndicators, maintenance_physics: {...marketIndicators.maintenance_physics, gamma: parseFloat(v)}})} />
+                     </div>
+                  </div>
+                  <div className="bg-indigo-600/10 border border-indigo-500/20 p-12 rounded-[4rem] space-y-8 flex flex-col justify-center">
+                     <h4 className="text-xl font-black text-white uppercase italic">Impacto Projetado</h4>
+                     <p className="text-lg text-indigo-100 font-medium italic leading-relaxed">
+                        "Com Beta em {marketIndicators.maintenance_physics.beta}, máquinas com mais de 20 períodos de idade terão custo de manutenção {marketIndicators.maintenance_physics.beta > 1.2 ? 'agressivo' : 'moderado'}."
+                     </p>
+                     <div className="p-6 bg-slate-950/60 rounded-3xl border border-white/5">
+                        <code className="text-[10px] text-emerald-400 font-mono">
+                           Maintenance = ValBase * (1 + {marketIndicators.maintenance_physics.alpha} * Age ^ {marketIndicators.maintenance_physics.beta})
+                        </code>
+                     </div>
+                  </div>
+               </div>
+            </motion.div>
+          )}
+
+          {step === 7 && (
+            <motion.div key="s7" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12 max-w-6xl mx-auto pb-20">
                <WizardStepTitle icon={<CalendarRange size={28}/>} title="Arquitetura de Ciclos" desc="Defina a volatilidade futura round a round." />
                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                   <div className="lg:col-span-3 space-y-3 overflow-y-auto max-h-[500px] pr-4 custom-scrollbar">
@@ -167,14 +306,14 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                         <WizardField label="Reajuste MP-A (%)" type="number" val={roundRules[activeRoundEdit]?.raw_material_a_adjust ?? marketIndicators.raw_material_a_adjust} onChange={(v:any)=>updateRoundRule(activeRoundEdit, 'raw_material_a_adjust', parseFloat(v))} />
                         <WizardField label="Reajuste Salário (%)" type="number" val={roundRules[activeRoundEdit]?.salary_adjust ?? marketIndicators.salary_adjust} onChange={(v:any)=>updateRoundRule(activeRoundEdit, 'salary_adjust', parseFloat(v))} />
                      </div>
-                     <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Os valores em branco herdam a base definida no passo anterior.</p>
+                     <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Os valores em branco herdam a base definida nos passos anteriores.</p>
                   </div>
                </div>
             </motion.div>
           )}
 
-          {step === 5 && (
-            <motion.div key="s5" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-6xl mx-auto pb-20">
+          {step === 8 && (
+            <motion.div key="s8" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-6xl mx-auto pb-20">
                <WizardStepTitle icon={<Package size={28}/>} title="Insumos e Custos Base" desc="Defina a base P0 dos suprimentos." />
                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="bg-white/[0.02] p-10 rounded-[4rem] border border-white/5 space-y-8 shadow-inner">
@@ -201,19 +340,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
             </motion.div>
           )}
 
-          {step === 6 && (
-            <motion.div key="s6" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-6xl mx-auto pb-20">
-               <WizardStepTitle icon={<Cpu size={28}/>} title="Matriz de Ativos e RH" desc="Capacidade instalada v13.2." />
-               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <MachineryCard model="Alfa" icon={<Factory className="text-orange-500" />} price={marketIndicators.machinery_values.alfa} onPriceChange={v => setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: v}})} adjust={marketIndicators.machine_alpha_price_adjust} onAdjustChange={v => setMarketIndicators({...marketIndicators, machine_alpha_price_adjust: v})} />
-                  <MachineryCard model="Beta" icon={<Factory className="text-blue-500" />} price={marketIndicators.machinery_values.beta} onPriceChange={v => setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, beta: v}})} adjust={marketIndicators.machine_beta_price_adjust} onAdjustChange={v => setMarketIndicators({...marketIndicators, machine_beta_price_adjust: v})} />
-                  <MachineryCard model="Gama" icon={<Factory className="text-emerald-500" />} price={marketIndicators.machinery_values.gama} onPriceChange={v => setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, gama: v}})} adjust={marketIndicators.machine_gamma_price_adjust} onAdjustChange={v => setMarketIndicators({...marketIndicators, machine_gamma_price_adjust: v})} />
-               </div>
-            </motion.div>
-          )}
-
-          {step === 7 && (
-            <motion.div key="s7" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12 pb-20">
+          {step === 9 && (
+            <motion.div key="s9" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12 pb-20">
                <WizardStepTitle icon={<Calculator size={28}/>} title="Balanço Inicial P00" desc="Ajuste o capital social e reservas." />
                <div className="bg-slate-950/60 p-4 rounded-[4rem] border border-white/5">
                   <FinancialStructureEditor initialBalance={financials?.balance_sheet} initialDRE={financials?.dre} onChange={setFinancials} />
@@ -221,12 +349,12 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
             </motion.div>
           )}
 
-          {step === 8 && (
+          {step === 10 && (
             <motion.div key="finish" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 max-w-4xl mx-auto text-center py-24 pb-20">
                <WizardStepTitle icon={<ShieldCheck size={28}/>} title="Handshake Final" desc="Pronto para despacho v13.2 Oracle Gold." />
                <div className="bg-slate-900/60 p-20 rounded-[5rem] border border-white/5 space-y-10 shadow-2xl relative overflow-hidden group">
                   <Sparkles size={80} className="text-orange-600 mx-auto animate-pulse" />
-                  <div className="space-y-4 relative z-10"><h3 className="text-4xl font-black text-white uppercase italic leading-none">Baseline Ready</h3><p className="text-xl text-slate-400 font-medium italic max-w-2xl mx-auto leading-relaxed">Arena estratégica com cronograma de {formData.total_rounds} rounds e governança de ativos ativada.</p></div>
+                  <div className="space-y-4 relative z-10"><h3 className="text-4xl font-black text-white uppercase italic leading-none">Baseline Ready</h3><p className="text-xl text-slate-400 font-medium italic max-w-2xl mx-auto leading-relaxed">Arena estratégica com catálogo de {Object.keys(marketIndicators.machine_specs).length} modelos, inventário de {marketIndicators.initial_machinery_mix.length} máquinas e física de manutenção ativada.</p></div>
                </div>
             </motion.div>
           )}
@@ -263,19 +391,6 @@ const WizardSelect = ({ label, val, onChange, options }: any) => (
      <div className="relative"><select value={val} onChange={e => onChange(e.target.value)} className="w-full bg-slate-950 border border-white/10 rounded-2xl px-8 py-5 text-[10px] font-black text-white uppercase outline-none focus:border-orange-500 transition-all cursor-pointer appearance-none">
           {options.map((o: any) => <option key={o.v} value={o.v} className="bg-slate-900">{o.l}</option>)}
        </select><div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500"><Settings2 size={16} /></div></div>
-  </div>
-);
-
-const MachineryCard = ({ model, icon, price, onPriceChange, adjust, onAdjustChange }: any) => (
-  <div className="bg-slate-900/60 p-8 rounded-[3.5rem] border border-white/10 space-y-8 shadow-2xl group hover:border-orange-500/30 transition-all">
-     <div className="flex items-center gap-4">
-        <div className="p-3 bg-white/5 rounded-xl group-hover:scale-110 transition-transform">{icon}</div>
-        <h4 className="text-2xl font-black text-white uppercase italic">Máquina {model}</h4>
-     </div>
-     <div className="space-y-6">
-        <WizardField label={`Valor Unit. ${model} P0 ($)`} type="number" val={price} onChange={onPriceChange} />
-        <WizardField label={`Reajuste Periódico ${model} (%)`} type="number" val={adjust} onChange={onAdjustChange} />
-     </div>
   </div>
 );
 

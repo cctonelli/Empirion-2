@@ -1,9 +1,24 @@
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType, Championship } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType, Championship, MachineModel, MachineSpec, InitialMachine } from '../types';
 import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO } from '../constants';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
   return isFinite(num) ? num : fallback;
+};
+
+/**
+ * CÁLCULO DE CUSTO DE MANUTENÇÃO v13.2
+ * Formula: Valor base * (1 + alpha * idade ^ beta) * (1 + gamma * utilizacao)
+ */
+export const calculateMaintenanceCost = (
+  baseValue: number, 
+  age: number, 
+  utilization: number, 
+  physics: { alpha: number, beta: number, gamma: number }
+): number => {
+  const ageFactor = 1 + physics.alpha * Math.pow(age, physics.beta);
+  const utilizationFactor = 1 + physics.gamma * utilization;
+  return baseValue * ageFactor * utilizationFactor * 0.01; // Estimativa de 1% do valor base escalonado
 };
 
 export const calculateBankRating = (data: { lc: number, endividamento: number, margem: number, equity: number }, hasScissorsEffect: boolean, tr: number) => {
@@ -66,7 +81,6 @@ export const calculateProjections = (
 ): ProjectionResult => {
   const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevKpis = previousState?.kpis || {};
-  const prevCash = sanitize(previousState?.current_cash, 1466605);
   const prevEquity = sanitize(bs.equity?.total, 5055447);
   const prevSharePrice = sanitize(prevKpis.market_valuation?.share_price, 1.0);
 
@@ -74,8 +88,7 @@ export const calculateProjections = (
   const roundSpecific = roundRules ? roundRules[currentRound] : {};
   const indicators = { ...baseIndicators, ...roundSpecific };
 
-  // 2. CÁLCULO CUMULATIVO DE PREÇOS (Geométrico baseado no histórico)
-  // Simula o acúmulo de reajustes passados até o round atual
+  // 2. CÁLCULO CUMULATIVO DE PREÇOS (Geométrico)
   let cumulativeInflation = 1.0;
   let cumulativeMPA = 1.0;
   let cumulativeSalary = 1.0;
@@ -87,7 +100,23 @@ export const calculateProjections = (
       cumulativeSalary *= (1 + (rRule.salary_adjust ?? indicators.salary_adjust) / 100);
   }
 
-  // 3. LOGICA DE RECEITA E DEMANDA
+  // 3. CAPACIDADE PRODUTIVA E MANUTENÇÃO (v13.2)
+  const specs = indicators.machine_specs || DEFAULT_MACRO.machine_specs;
+  const mix = indicators.initial_machinery_mix || DEFAULT_MACRO.initial_machinery_mix;
+  const physics = indicators.maintenance_physics || DEFAULT_MACRO.maintenance_physics;
+  
+  // Mix atualizado (considerando compras passadas - simplificado para o MVP)
+  // No motor real, iteraríamos sobre o array individual de máquinas do time
+  const totalCapacity = mix.reduce((acc, m) => acc + specs[m.model].production_capacity, 0);
+  const totalOperators = mix.reduce((acc, m) => acc + specs[m.model].operators_required, 0);
+  
+  const utilization = decisions.production.activityLevel / 100;
+  const maintenanceExpense = mix.reduce((acc, m) => {
+    const cost = calculateMaintenanceCost(specs[m.model].initial_value, m.age + currentRound, utilization, physics);
+    return acc + cost;
+  }, 0);
+
+  // 4. LOGICA DE RECEITA E DEMANDA
   const regionArray = Object.values(decisions.regions);
   const avgPrice = regionArray.reduce((acc: number, curr: any) => acc + (curr.price || 0), 0) / Math.max(regionArray.length, 1);
   const totalMarketing = regionArray.reduce((acc: number, curr: any) => acc + (curr.marketing || 0), 0);
@@ -96,25 +125,28 @@ export const calculateProjections = (
   const marketingBoost = Math.min(1.8, 1 + (totalMarketing / (Math.max(1, regionArray.length) * 10)));
   const demandFactor = (indicators.ice / 100 + 1) * (1 + (indicators.demand_variation / 100));
   
-  const unitsSold = Math.floor(10000 * priceElasticity * marketingBoost * demandFactor * (indicators.labor_productivity || 1.0));
+  const unitsSold = Math.min(
+    totalCapacity * (1 + decisions.production.extraProductionPercent/100),
+    Math.floor(10000 * priceElasticity * marketingBoost * demandFactor * (indicators.labor_productivity || 1.0))
+  );
   const revenue = unitsSold * avgPrice;
   
-  // 4. CUSTOS ACUMULADOS
+  // 5. CUSTOS ACUMULADOS
   const mpACost = (indicators.prices.mp_a) * cumulativeMPA;
   const currentSalary = (indicators.hr_base.salary) * cumulativeSalary;
   
-  const cpv = unitsSold * (mpACost * 0.7) + (currentSalary * 50); // Simplificado: MP + MO
+  const cpv = unitsSold * (mpACost * 0.7) + (totalOperators * currentSalary) + maintenanceExpense;
   const opex = 917582 * cumulativeInflation;
   
-  // 5. TRABALHAR ATIVOS (MÁQUINAS)
+  // 6. TRABALHAR ATIVOS (MÁQUINAS)
   const canSell = indicators.allow_machine_sale;
-  const saleRevenue = canSell ? (decisions.machinery.sell.alfa * indicators.machinery_values.alfa * (1 - indicators.machine_sale_discount/100)) : 0;
-  const machineBuyCost = (decisions.machinery.buy.alfa * indicators.machinery_values.alfa);
+  const saleRevenue = canSell ? (decisions.machinery.sell.alfa * specs.alfa.initial_value * (1 - indicators.machine_sale_discount/100)) : 0;
+  const machineBuyCost = (decisions.machinery.buy.alfa * specs.alfa.initial_value);
 
   const netProfit = revenue - cpv - opex - (indicators.tax_rate_ir / 100 * revenue * 0.1); 
   const finalEquity = prevEquity + netProfit;
   
-  // 6. EFEITO TESOURA E RATING
+  // 7. EFEITO TESOURA E RATING
   const ac = 3290340 + netProfit; 
   const pc = 4121493 + machineBuyCost - saleRevenue; 
   const lc = ac / Math.max(pc, 1);
@@ -131,7 +163,6 @@ export const calculateProjections = (
     kpis: {
       market_share: Math.min(100, (unitsSold / 100000) * 100),
       rating: bankDetails.rating,
-      // Fix: Added missing property 'insolvency_status' which is required by the KPIs interface
       insolvency_status: insolvency.status,
       market_valuation: valuation,
       equity: finalEquity,
