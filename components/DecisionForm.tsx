@@ -16,13 +16,13 @@ import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 
 const STEPS = [
-  { id: 'legal', label: 'Legal', icon: Gavel },
-  { id: 'marketing', label: 'Comercial', icon: Megaphone },
-  { id: 'production', label: 'Operações', icon: Factory },
-  { id: 'hr', label: 'Talentos', icon: Users2 },
-  { id: 'assets', label: 'Ativos', icon: Cpu },
-  { id: 'finance', label: 'Finanças', icon: Landmark },
-  { id: 'review', label: 'Sincronizar', icon: ShieldCheck },
+  { id: 'legal', label: '1. JURÍDICO', icon: Gavel },
+  { id: 'marketing', label: '2. COMERCIAL', icon: Megaphone },
+  { id: 'production', label: '3. OPERAÇÕES', icon: Factory },
+  { id: 'hr', label: '4. TALENTOS', icon: Users2 },
+  { id: 'assets', label: '5. ATIVOS', icon: Cpu },
+  { id: 'finance', label: '6. FINANÇAS', icon: Landmark },
+  { id: 'review', label: '7. FINALIZAR', icon: ShieldCheck },
 ];
 
 const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false }) => {
@@ -109,85 +109,88 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       nextRegions[Number(key)] = { ...source };
     });
     setDecisions(prev => ({ ...prev, regions: nextRegions }));
-    alert(`SINCRONIZADO: Parâmetros da Região ${activeRegion} aplicados em todo o cluster.`);
+    alert(`CLUSTER SINCRONIZADO: Parâmetros da R0${activeRegion} aplicados.`);
   };
 
   const handleTransmit = async () => {
     setIsSaving(true);
     try {
       const result = await saveDecisions(teamId!, champId!, round, decisions);
-      if (result.success) alert("TRANSMISSÃO CONCLUÍDA: Protocolo selado.");
+      if (result.success) alert("TRANSMISSÃO CONCLUÍDA: Arquivos de decisão selados.");
     } catch (e: any) { alert(`ERRO: ${e.message}`); }
     setIsSaving(false);
   };
 
-  if (!teamId || !champId) return <div className="h-full flex items-center justify-center text-slate-500 font-black uppercase text-xs">Handshake...</div>;
+  if (!teamId || !champId) return <div className="h-full flex items-center justify-center text-slate-500 font-black uppercase text-xs">Node Ready...</div>;
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/20 rounded-[2rem] border border-white/5 overflow-hidden">
+    <div className="flex flex-col h-full bg-slate-900/10 rounded-[2.5rem] border border-white/5 overflow-hidden">
       
-      {/* 1. SLIM STATUS BAR */}
-      <div className="bg-slate-950/60 px-6 py-2 flex items-center justify-between border-b border-white/5 shrink-0">
-         <div className="flex items-center gap-4">
-            <div className={`w-2 h-2 rounded-full ${decisions.judicial_recovery ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Equipe: <span className="text-white">{activeTeamName}</span></span>
+      {/* 1. ULTRA HIGH VISIBILITY STATUS */}
+      <div className="bg-slate-950 px-8 py-3 flex items-center justify-between border-b border-orange-500/20 shrink-0">
+         <div className="flex items-center gap-6">
+            <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${decisions.judicial_recovery ? 'bg-rose-500 shadow-rose-500 animate-pulse' : 'bg-emerald-500 shadow-emerald-500'}`} />
+            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Operador: <span className="text-orange-500">{activeTeamName}</span></span>
          </div>
-         <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-white/5 px-4 py-1 rounded-full border border-white/10">
-               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Projection:</span>
-               <span className={`text-[10px] font-black ${rating === 'D' ? 'text-rose-500' : 'text-orange-500'}`}>{rating}</span>
+         <div className="flex items-center gap-8">
+            <div className="flex items-center gap-3 px-5 py-1.5 bg-orange-600/10 rounded-full border border-orange-500/30 shadow-lg">
+               <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Oracle Health:</span>
+               <span className="text-[12px] font-mono font-black text-white">{rating}</span>
             </div>
-            <div className="h-3 w-px bg-white/10" />
-            <span className="text-[9px] font-black text-slate-500 uppercase">Ciclo 0{round}</span>
+            <div className="h-4 w-px bg-white/10" />
+            <span className="text-[10px] font-black text-white uppercase italic tracking-widest">Turnover Ciclo 0{round}</span>
          </div>
       </div>
 
-      {/* 2. COMPACT STEP NAV */}
-      <nav className="flex p-1 gap-1 bg-slate-900/40 border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
+      {/* 2. DENSE STEP NAVIGATION */}
+      <nav className="flex p-1.5 gap-1.5 bg-slate-900 border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar shadow-inner">
          {STEPS.map((s, idx) => (
            <button 
             key={s.id} 
             onClick={() => setActiveStep(idx)} 
-            className={`flex-1 min-w-[90px] py-3 px-2 rounded-xl transition-all flex flex-col items-center gap-1 ${activeStep === idx ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'}`}
+            className={`flex-1 min-w-[120px] py-4 px-3 rounded-2xl transition-all flex flex-col items-center gap-2 border ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-xl shadow-orange-600/20 scale-105 z-10' : 'bg-slate-950 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/20'}`}
            >
-              <s.icon size={14} />
-              <span className="text-[8px] font-black uppercase tracking-tighter text-center whitespace-nowrap">{s.label}</span>
+              <s.icon size={16} strokeWidth={3} />
+              <span className="text-[9px] font-black uppercase tracking-tighter text-center whitespace-nowrap">{s.label}</span>
            </button>
          ))}
       </nav>
 
-      {/* 3. OPTIMIZED CONTENT AREA */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-hidden bg-slate-950/20">
+      {/* 3. CONTENT VIEWPORT */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-hidden bg-slate-950/40">
          <AnimatePresence mode="wait">
-            <motion.div key={activeStep} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto custom-scrollbar p-6">
+            <motion.div key={activeStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto custom-scrollbar p-8">
                
                {activeStep === 0 && (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-8 max-w-2xl mx-auto">
-                     <div className={`p-6 rounded-[2rem] border-2 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'}`}><Gavel size={40} /></div>
-                     <div className="space-y-2">
-                        <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Protocolo de Recuperação</h2>
-                        <p className="text-slate-400 text-sm italic">"O status de Recuperação Judicial (RJ) preserva ativos mas impede novos empréstimos bancários."</p>
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-10 max-w-2xl mx-auto">
+                     <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity }} className={`p-10 rounded-[3rem] border-4 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-600 border-rose-400 text-white shadow-rose-600/20' : 'bg-slate-900 border-emerald-500 text-emerald-500 shadow-emerald-500/10'}`}>
+                        <Gavel size={64} strokeWidth={2.5} />
+                     </motion.div>
+                     <div className="space-y-4">
+                        <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">Status de Solvência</h2>
+                        <p className="text-slate-400 text-sm font-medium italic leading-relaxed">
+                           "A Recuperação Judicial bloqueia CAPEX e empréstimos, mas protege seus ativos contra liquidação imediata."
+                        </p>
                      </div>
-                     <div className="flex gap-4">
-                        <button onClick={() => updateDecision('judicial_recovery', false)} className={`flex-1 px-8 py-4 rounded-xl font-black text-[9px] uppercase tracking-widest border transition-all ${!decisions.judicial_recovery ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-slate-900 border-white/5 text-slate-500'}`}>Operação Padrão</button>
-                        <button onClick={() => updateDecision('judicial_recovery', true)} className={`flex-1 px-8 py-4 rounded-xl font-black text-[9px] uppercase tracking-widest border transition-all ${decisions.judicial_recovery ? 'bg-rose-600 text-white border-rose-400' : 'bg-slate-900 border-white/5 text-slate-500'}`}>Solicitar RJ</button>
+                     <div className="flex gap-6 w-full">
+                        <button onClick={() => updateDecision('judicial_recovery', false)} className={`flex-1 py-8 rounded-3xl font-black text-xs uppercase tracking-[0.2em] border-2 transition-all ${!decisions.judicial_recovery ? 'bg-emerald-600 text-white border-emerald-400 shadow-xl' : 'bg-slate-900 border-white/5 text-slate-600'}`}>Arena Padrão</button>
+                        <button onClick={() => updateDecision('judicial_recovery', true)} className={`flex-1 py-8 rounded-3xl font-black text-xs uppercase tracking-[0.2em] border-2 transition-all ${decisions.judicial_recovery ? 'bg-rose-600 text-white border-rose-400 shadow-xl' : 'bg-slate-900 border-white/5 text-slate-600'}`}>Protocolo RJ</button>
                      </div>
                   </div>
                )}
 
                {activeStep === 1 && (
-                  <div className="flex h-full gap-6 overflow-hidden">
+                  <div className="flex h-full gap-8 overflow-hidden">
                      {/* SIDEBAR DE REGIÕES VISÍVEIS */}
-                     <div className="w-1/3 flex flex-col gap-4 border-r border-white/5 pr-6 overflow-y-auto custom-scrollbar">
-                        <div className="sticky top-0 bg-slate-950/20 backdrop-blur-md z-10 pb-4">
-                           <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] flex items-center gap-2">
-                              <MapPin size={12} /> Nodos Regionais
+                     <div className="w-[300px] flex flex-col gap-3 border-r border-white/5 pr-6 overflow-y-auto custom-scrollbar shrink-0">
+                        <div className="sticky top-0 bg-[#020617] backdrop-blur-md z-10 pb-4 border-b border-white/5 mb-4">
+                           <h3 className="text-[11px] font-black text-orange-500 uppercase tracking-[0.4em] flex items-center gap-3">
+                              <MapPin size={16} /> Nodos de Venda
                            </h3>
                         </div>
                         
                         {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => {
                            const regId = i + 1;
-                           const regName = activeArena?.region_names?.[i] || `Região ${regId}`;
                            const data = decisions.regions[regId];
                            const isActive = activeRegion === regId;
 
@@ -195,76 +198,73 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <button 
                                  key={i} 
                                  onClick={() => setActiveRegion(regId)} 
-                                 className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-2 group relative overflow-hidden ${
+                                 className={`p-6 rounded-3xl border-2 transition-all text-left flex flex-col gap-2 group relative overflow-hidden ${
                                     isActive 
-                                    ? 'bg-orange-600 border-orange-400 shadow-lg' 
-                                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                    ? 'bg-orange-600 border-orange-400 shadow-2xl scale-[1.03]' 
+                                    : 'bg-slate-900 border-white/10 hover:border-white/30 hover:bg-slate-800'
                                  }`}
                               >
-                                 {isActive && <div className="absolute top-0 right-0 p-2"><CheckCircle2 size={10} className="text-white opacity-40" /></div>}
-                                 <div className="flex justify-between items-center">
-                                    <span className={`text-[8px] font-black uppercase tracking-widest ${isActive ? 'text-white' : 'text-slate-500'}`}>Node R{regId}</span>
-                                    <span className={`text-[10px] font-mono font-bold ${isActive ? 'text-white' : 'text-emerald-500'}`}>$ {data?.price || 0}</span>
+                                 <div className="flex justify-between items-center relative z-10">
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-white' : 'text-slate-600'}`}>Nodo 0{regId}</span>
+                                    <span className={`text-sm font-mono font-black ${isActive ? 'text-white' : 'text-emerald-500'}`}>$ {data?.price || 0}</span>
                                  </div>
-                                 <h4 className={`text-xs font-black uppercase truncate italic ${isActive ? 'text-white' : 'text-slate-300'}`}>{regName}</h4>
-                                 <div className="flex gap-2 items-center">
-                                    <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                                       <div className={`h-full ${isActive ? 'bg-white' : 'bg-orange-500'}`} style={{ width: `${(data?.marketing || 0) * 11.1}%` }} />
-                                    </div>
-                                    <span className={`text-[8px] font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>{data?.marketing || 0}</span>
-                                 </div>
+                                 <h4 className={`text-md font-black uppercase truncate italic ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                                    {activeArena?.region_names?.[i] || `Região ${regId}`}
+                                 </h4>
                               </button>
                            );
                         })}
                      </div>
 
-                     {/* PAINEL DE COMANDO CENTRAL DA REGIÃO */}
-                     <div className="flex-1 space-y-8 flex flex-col justify-center">
-                        <div className="flex justify-between items-end bg-slate-900/40 p-6 rounded-[2.5rem] border border-white/5">
-                           <div>
-                              <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Configuração Ativa</span>
-                              <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none mt-2">
-                                 {activeArena?.region_names?.[activeRegion-1] || `Região ${activeRegion}`}
-                              </h4>
+                     {/* COMANDO CENTRAL */}
+                     <div className="flex-1 space-y-10 flex flex-col justify-center">
+                        <div className="flex justify-between items-center bg-slate-900 p-8 rounded-[3.5rem] border border-white/10 shadow-2xl">
+                           <div className="flex items-center gap-6">
+                              <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white font-black italic shadow-xl text-3xl">R{activeRegion}</div>
+                              <div>
+                                 <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.5em]">Edição Ativa</span>
+                                 <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none mt-1">
+                                    {activeArena?.region_names?.[activeRegion-1] || `Região ${activeRegion}`}
+                                 </h4>
+                              </div>
                            </div>
-                           <button 
-                              onClick={syncAllRegions}
-                              className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-orange-600 hover:text-white text-slate-400 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95"
-                           >
-                              <Copy size={14} /> Replicar para Todos
+                           <button onClick={syncAllRegions} className="px-8 py-4 bg-white/5 border border-white/10 hover:bg-white hover:text-slate-950 text-white rounded-3xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95 shadow-xl">
+                              <Copy size={16} /> Replicar em Cluster
                            </button>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <InputCard label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={24}/>} />
                            
                            <SelectCard 
-                              label="Condição Prazo de Venda" 
+                              label="Prazo de Venda" 
                               val={decisions.regions[activeRegion]?.term || 1} 
                               onChange={(v: number) => updateDecision(`regions.${activeRegion}.term`, v)} 
                               options={[
-                                 {v:0,l:'À VISTA (MESMO PERÍODO)'},
-                                 {v:1,l:'50/50 (VISTA + P1 + JUROS MÉDIOS)'},
-                                 {v:2,l:'33/33/33 (VISTA + P1 + P2 + JUROS MÉDIOS)'}
+                                 {v:0,l:'À VISTA (TOTAL LIQUIDEZ)'},
+                                 {v:1,l:'50/50 (CURTO PRAZO)'},
+                                 {v:2,l:'33/33/33 (MÉDIO PRAZO)'}
                               ]} 
                               icon={<Landmark size={24} />} 
                            />
                            
-                           <div className="bg-white/[0.03] border border-white/5 rounded-3xl p-6 flex flex-col gap-4">
+                           <div className="md:col-span-2 bg-slate-900 border border-white/10 rounded-[3.5rem] p-10 flex flex-col gap-6 shadow-2xl">
                               <div className="flex items-center justify-between">
-                                 <div className="flex items-center gap-3">
-                                    <Sparkles size={24} className="text-orange-500" />
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Promoção Regional (0 a 9)</label>
+                                 <div className="flex items-center gap-5">
+                                    <div className="p-4 bg-orange-600/20 text-orange-500 rounded-2xl shadow-inner"><Sparkles size={32} /></div>
+                                    <div>
+                                       <label className="text-[12px] font-black text-white uppercase tracking-widest">Investimento em Marketing Regional</label>
+                                       <p className="text-[10px] text-slate-500 font-bold uppercase italic mt-1">Intensidade do nodo: 0 a 9</p>
+                                    </div>
                                  </div>
-                                 <span className="text-3xl font-black text-white italic">{decisions.regions[activeRegion]?.marketing || 0}</span>
+                                 <span className="text-6xl font-black text-orange-500 italic drop-shadow-lg">{decisions.regions[activeRegion]?.marketing || 0}</span>
                               </div>
                               <input 
                                  type="range" min="0" max="9" step="1"
                                  value={decisions.regions[activeRegion]?.marketing || 0} 
                                  onChange={e => updateDecision(`regions.${activeRegion}.marketing`, Number(e.target.value))} 
-                                 className="w-full h-2 bg-slate-900 rounded-full appearance-none cursor-pointer accent-orange-600" 
+                                 className="w-full h-3 bg-slate-950 rounded-full appearance-none cursor-pointer accent-orange-600 border border-white/5" 
                               />
-                              <p className="text-[9px] text-slate-600 font-bold uppercase italic">Fator de elasticidade e lembrança de marca na região.</p>
                            </div>
                         </div>
                      </div>
@@ -272,54 +272,50 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 2 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <InputCard label="Matéria-Prima A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={16}/>} />
-                     <InputCard label="Matéria-Prima B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={16}/>} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                     <InputCard label="Matéria-Prima A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={24}/>} />
+                     <InputCard label="Matéria-Prima B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={24}/>} />
                      <SelectCard 
-                        label="Tipo Pagamento Fornecedor" 
+                        label="Fluxo Pagamento Fornecedor" 
                         val={decisions.production.paymentType} 
                         onChange={(v: number) => updateDecision('production.paymentType', v)} 
-                        options={[
-                           {v:0,l:'À VISTA (MESMO PERÍODO)'},
-                           {v:1,l:'50/50 (VISTA + P1 + JUROS)'},
-                           {v:2,l:'33/33/33 (VISTA + P1 + P2 + JUROS)'}
-                        ]} 
-                        icon={<DollarSign size={16}/>} 
+                        options={[{v:0,l:'À VISTA'},{v:1,l:'50/50'},{v:2,l:'33/33/33'}]} 
+                        icon={<DollarSign size={24}/>} 
                      />
-                     <InputCard label="Nível Utilização Fábrica %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={16}/>} />
-                     <InputCard label="Capacidade Extra %" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={16}/>} />
-                     <InputCard label="Verba P&D e Qualidade" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Cpu size={16}/>} />
+                     <InputCard label="Uso da Capacidade %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={24}/>} />
+                     <InputCard label="Turno Extra (%)" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={24}/>} />
+                     <InputCard label="Investimento P&D ($)" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Cpu size={24}/>} />
                   </div>
                )}
 
                {activeStep === 3 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <InputCard label="Novas Admissões" val={decisions.hr.hired} onChange={(v: number) => updateDecision('hr.hired', v)} icon={<Users2 size={16}/>} />
-                     <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v: number) => updateDecision('hr.fired', v)} icon={<Users2 size={16}/>} />
-                     <InputCard label="Salário Base Equipe ($)" val={decisions.hr.salary} onChange={(v: number) => updateDecision('hr.salary', v)} icon={<DollarSign size={16}/>} />
-                     <InputCard label="Invest. Treinamento %" val={decisions.hr.trainingPercent} onChange={(v: number) => updateDecision('hr.trainingPercent', v)} icon={<Target size={16}/>} />
-                     <InputCard label="PLR (Lucros) %" val={decisions.hr.participationPercent} onChange={(v: number) => updateDecision('hr.participationPercent', v)} icon={<Award size={16}/>} />
-                     <InputCard label="Encargos Diversos ($)" val={decisions.hr.misc} onChange={(v: number) => updateDecision('hr.misc', v)} icon={<Info size={16}/>} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                     <InputCard label="Novas Admissões" val={decisions.hr.hired} onChange={(v: number) => updateDecision('hr.hired', v)} icon={<Users2 size={24}/>} />
+                     <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v: number) => updateDecision('hr.fired', v)} icon={<Users2 size={24}/>} />
+                     <InputCard label="Piso Salarial ($)" val={decisions.hr.salary} onChange={(v: number) => updateDecision('hr.salary', v)} icon={<DollarSign size={24}/>} />
+                     <InputCard label="Treinamento Profissional %" val={decisions.hr.trainingPercent} onChange={(v: number) => updateDecision('hr.trainingPercent', v)} icon={<Target size={24}/>} />
+                     <InputCard label="Participação Lucros %" val={decisions.hr.participationPercent} onChange={(v: number) => updateDecision('hr.participationPercent', v)} icon={<Award size={24}/>} />
+                     <InputCard label="Benefícios Extras ($)" val={decisions.hr.misc} onChange={(v: number) => updateDecision('hr.misc', v)} icon={<Info size={24}/>} />
                   </div>
                )}
 
                {activeStep === 4 && (
-                  <div className="space-y-6">
-                     <div className="p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex gap-4 items-center">
-                        <Info size={24} className="text-blue-400 shrink-0" />
-                        <p className="text-[9px] font-medium text-blue-100 italic leading-relaxed">
-                           "Protocolo BDI: 60% Financiado / 40% À Vista. Carência de 4 períodos (apenas juros TR). Amortização em 4x a partir do 5º período. Máquinas iniciam produção no ato, depreciação inicia no próximo ciclo."
+                  <div className="space-y-10">
+                     <div className="p-8 bg-blue-600/10 border-2 border-blue-500/30 rounded-[3rem] flex gap-8 items-center shadow-2xl">
+                        <Info size={48} className="text-blue-400 shrink-0" />
+                        <p className="text-md font-black text-blue-100 italic leading-relaxed uppercase tracking-tight">
+                           "Protocolo BDI: 60% Financiado / 40% À Vista. 4 Rounds de carência (juros TR). Depreciação inicia no Ciclo P+1."
                         </p>
                      </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-3 bg-white/5 p-6 rounded-3xl border border-white/5 shadow-inner">
-                           <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-2"><ShoppingCart size={14}/> Investimento CapEx (Novo)</h4>
-                           <PriceInput label="Compra ALFA" val={decisions.machinery.buy.alfa} price={machinePrices.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
-                           <PriceInput label="Compra BETA" val={decisions.machinery.buy.beta} price={machinePrices.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
-                           <PriceInput label="Compra GAMA" val={decisions.machinery.buy.gama} price={machinePrices.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-emerald-500/30 shadow-2xl">
+                           <h4 className="text-2xl font-black uppercase text-emerald-500 tracking-tighter flex items-center gap-4 italic"><ShoppingCart size={28}/> Expansão CAPEX</h4>
+                           <PriceInput label="Máquina ALFA" val={decisions.machinery.buy.alfa} price={machinePrices.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
+                           <PriceInput label="Máquina BETA" val={decisions.machinery.buy.beta} price={machinePrices.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
+                           <PriceInput label="Máquina GAMA" val={decisions.machinery.buy.gama} price={machinePrices.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
                         </div>
-                        <div className="space-y-3 bg-white/5 p-6 rounded-3xl border border-white/5 shadow-inner">
-                           <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-widest flex items-center gap-2"><Trash2 size={14}/> Desinvestimento (Usado)</h4>
+                        <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-rose-500/30 shadow-2xl">
+                           <h4 className="text-2xl font-black uppercase text-rose-500 tracking-tighter flex items-center gap-4 italic"><Trash2 size={28}/> Desinvestimento</h4>
                            <PriceInput label="Venda ALFA" val={decisions.machinery.sell.alfa} price={machinePrices.alfa * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.alfa', v)} />
                            <PriceInput label="Venda BETA" val={decisions.machinery.sell.beta} price={machinePrices.beta * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.beta', v)} />
                            <PriceInput label="Venda GAMA" val={decisions.machinery.sell.gama} price={machinePrices.gama * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.gama', v)} />
@@ -329,33 +325,37 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 5 && (
-                  <div className="space-y-8">
-                     <div className="p-4 bg-orange-600/10 border border-orange-500/20 rounded-2xl flex gap-4 items-center">
-                        <HelpCircle size={24} className="text-orange-400 shrink-0" />
-                        <p className="text-[9px] font-medium text-orange-100 italic leading-relaxed">
-                           "Protocolo Bancário: Empréstimos possuem prazo (0-1-2). Juros TR acoplados mesmo no prazo 0. A mutação do Balanço converte a próxima parcela a vencer em Curto Prazo automaticamente."
+                  <div className="space-y-12 max-w-5xl mx-auto">
+                     <div className="p-8 bg-orange-600/10 border-2 border-orange-500/30 rounded-[3rem] flex gap-8 items-center shadow-2xl">
+                        <Landmark size={48} className="text-orange-400 shrink-0" />
+                        <p className="text-md font-black text-orange-100 italic leading-relaxed uppercase tracking-tight">
+                           "Protocolo Bancário: Juros TR aplicados ao saldo devedor. Mutação automática de LP para CP no fechamento."
                         </p>
                      </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <InputCard label="Empréstimo Requisitado ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<Landmark size={16}/>} />
-                        <SelectCard label="Condição Prazo" val={decisions.finance.loanType} onChange={(v: number) => updateDecision('finance.loanType', v)} options={[{v:1,l:'À VISTA (PERÍODO ATUAL)'},{v:2,l:'CURTO (DIVIDIDO P1)'},{v:3,l:'MÉDIO (P1 + P2)'}]} icon={<ShieldAlert size={16}/>} />
-                        <InputCard label="Aplicação Liquidez ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={16}/>} />
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <InputCard label="Empréstimo Solicitado ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<Landmark size={24}/>} />
+                        <SelectCard label="Configuração de Prazo" val={decisions.finance.loanType} onChange={(v: number) => updateDecision('finance.loanType', v)} options={[{v:1,l:'À VISTA (IMEDIATO)'},{v:2,l:'CURTO PRAZO (P1)'},{v:3,l:'MÉDIO PRAZO (P2)'}]} icon={<ShieldAlert size={24}/>} />
+                        <div className="md:col-span-2">
+                           <InputCard label="Aplicação de Liquidez ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={24}/>} />
+                        </div>
                      </div>
                   </div>
                )}
 
                {activeStep === 6 && (
-                  <div className="space-y-8 h-full flex flex-col justify-center">
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <InputCard label="Faturamento Estimado" val={decisions.estimates.forecasted_revenue} onChange={(v: number) => updateDecision('estimates.forecasted_revenue', v)} icon={<Activity size={16}/>} />
-                        <InputCard label="Custo Unitário Alvo" val={decisions.estimates.forecasted_unit_cost} onChange={(v: number) => updateDecision('estimates.forecasted_unit_cost', v)} icon={<Zap size={16}/>} />
-                        <InputCard label="Lucro Alvo Estimado" val={decisions.estimates.forecasted_net_profit} onChange={(v: number) => updateDecision('estimates.forecasted_net_profit', v)} icon={<Target size={16}/>} />
+                  <div className="space-y-12 h-full flex flex-col justify-center max-w-4xl mx-auto">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <InputCard label="Target: Receita" val={decisions.estimates.forecasted_revenue} onChange={(v: number) => updateDecision('estimates.forecasted_revenue', v)} />
+                        <InputCard label="Target: Custo Un." val={decisions.estimates.forecasted_unit_cost} onChange={(v: number) => updateDecision('estimates.forecasted_unit_cost', v)} />
+                        <InputCard label="Target: Lucro Liq." val={decisions.estimates.forecasted_net_profit} onChange={(v: number) => updateDecision('estimates.forecasted_net_profit', v)} />
                      </div>
-                     <div className="p-8 bg-orange-600/5 rounded-3xl border border-orange-500/20 text-center space-y-4">
-                        <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500 mx-auto"><ShieldCheck size={24}/></div>
-                        <h4 className="text-lg font-black text-white uppercase italic tracking-tighter">Sincronização Pronta</h4>
-                        <p className="text-slate-500 font-bold uppercase text-[8px] tracking-[0.2em]">Todas as telemetrias da Equipe foram auditadas para o turnover do Ciclo.</p>
-                     </div>
+                     <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="p-16 bg-emerald-600/5 rounded-[4rem] border-4 border-emerald-500/20 text-center space-y-8 shadow-2xl">
+                        <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500 mx-auto shadow-inner"><ShieldCheck size={48} strokeWidth={2.5}/></div>
+                        <div className="space-y-4">
+                           <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Célula Sincronizada</h4>
+                           <p className="text-slate-500 font-black uppercase text-[10px] tracking-[0.4em] leading-relaxed">Arquivos prontos para turnovers do motor oracle.</p>
+                        </div>
+                     </motion.div>
                   </div>
                )}
 
@@ -363,24 +363,24 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          </AnimatePresence>
       </div>
 
-      {/* 4. SLIM FOOTER DOCK */}
-      <footer className="shrink-0 bg-slate-950 border-t border-white/10 px-8 py-4 flex justify-between items-center shadow-2xl">
-         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className={`text-slate-500 hover:text-white transition-all flex items-center gap-2 ${activeStep === 0 ? 'opacity-0' : ''}`}>
-            <ArrowLeft size={16} /> <span className="text-[9px] font-black uppercase tracking-widest">Voltar</span>
+      {/* 4. FOOTER CTAS - ULTRA VISIBILITY */}
+      <footer className="shrink-0 bg-slate-950 border-t border-white/10 px-10 py-6 flex justify-between items-center shadow-[0_-30px_60px_rgba(0,0,0,0.5)] z-50">
+         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className={`text-slate-500 hover:text-white transition-all flex items-center gap-3 active:scale-95 ${activeStep === 0 ? 'opacity-0' : ''}`}>
+            <ArrowLeft size={24} /> <span className="text-[11px] font-black uppercase tracking-widest italic">Anterior</span>
          </button>
          
-         <div className="flex items-center gap-8">
-            <div className="hidden sm:flex flex-col items-end opacity-40">
-               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Protocolo Oracle Gold</span>
-               <span className="text-[9px] font-black text-orange-500 uppercase">Fase {activeStep + 1} / {STEPS.length}</span>
+         <div className="flex items-center gap-12">
+            <div className="hidden sm:flex flex-col items-end opacity-60">
+               <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Protocolo Gold v13.2</span>
+               <span className="text-[11px] font-black text-orange-500 uppercase italic">Etapa {activeStep + 1} de {STEPS.length}</span>
             </div>
             {activeStep === STEPS.length - 1 ? (
-              <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="px-10 py-4 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-white hover:text-orange-950 transition-all flex items-center gap-3 active:scale-95">
-                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Selar Ciclo
+              <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="px-16 py-8 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-[0_15px_40px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95">
+                {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} Transmitir para Oracle
               </button>
             ) : (
-              <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="px-10 py-4 bg-white text-slate-950 hover:bg-orange-600 hover:text-white rounded-full font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-3 active:scale-95 group">
-                Avançar <ArrowRight size={14} />
+              <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="px-16 py-8 bg-white text-slate-950 hover:bg-orange-600 hover:text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-2xl transition-all flex items-center gap-6 active:scale-95 group">
+                Avançar Protocolo <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
               </button>
             )}
          </div>
@@ -390,19 +390,19 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 };
 
 const InputCard = ({ label, desc, val, icon, onChange, placeholder }: any) => (
-  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex flex-col gap-2 group hover:bg-white/[0.06] transition-all">
-     <div className="flex items-center gap-2">
-        <div className="text-slate-500 group-hover:text-orange-500 transition-colors">{icon || <Info size={14}/>}</div>
-        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</label>
+  <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-8 flex flex-col gap-4 group hover:bg-slate-800 hover:border-orange-500/30 transition-all shadow-xl">
+     <div className="flex items-center gap-4">
+        <div className="text-slate-500 group-hover:text-orange-500 transition-colors shadow-sm">{icon || <Info size={20}/>}</div>
+        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic group-focus-within:text-orange-500">{label}</label>
      </div>
      <input 
         type="number" 
         value={val} 
         placeholder={placeholder} 
         onChange={e => onChange?.(Number(e.target.value))} 
-        className="w-full bg-slate-950/60 border-none rounded-xl px-4 py-3 text-white font-mono font-black text-xl outline-none focus:ring-1 focus:ring-orange-600 transition-all shadow-inner" 
+        className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-5 text-white font-mono font-black text-2xl outline-none focus:border-orange-600 transition-all shadow-inner" 
      />
-     {desc && <span className="text-[7px] font-bold text-slate-600 uppercase italic ml-1">{desc}</span>}
+     {desc && <span className="text-[8px] font-bold text-slate-600 uppercase italic ml-2">{desc}</span>}
   </div>
 );
 
@@ -411,35 +411,35 @@ const PriceInput = ({ label, val, price, isSell, desagio, onChange }: any) => {
   const financed = isSell ? 0 : price * 0.6;
 
   return (
-    <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex flex-col gap-3 group hover:bg-white/[0.06] transition-all">
+    <div className="bg-slate-950 border-2 border-white/5 rounded-[2rem] p-6 flex flex-col gap-4 group hover:border-blue-500/30 transition-all shadow-inner">
        <div className="flex justify-between items-start">
-          <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</label>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] italic">{label}</label>
           <div className="text-right">
-             <span className="block text-[7px] font-bold text-slate-400 uppercase italic">Preço Un. {isSell ? 'c/ Deságio' : 'Ajustado'}</span>
-             <span className="text-xs font-mono font-black text-white">$ {price.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+             <span className="block text-[8px] font-black text-slate-600 uppercase italic">P0 {isSell ? 'Deságio' : 'Mercado'}</span>
+             <span className="text-sm font-mono font-black text-white italic">$ {price.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
           </div>
        </div>
-       <div className="flex items-center gap-3">
+       <div className="flex items-center gap-5">
           <input 
              type="number" 
              value={val} 
              onChange={e => onChange?.(Number(e.target.value))} 
-             className="w-20 bg-slate-950/60 border-none rounded-lg px-2 py-2 text-white font-mono font-black text-lg outline-none focus:ring-1 focus:ring-blue-600 transition-all shadow-inner" 
+             className="w-24 bg-slate-900 border-2 border-white/5 rounded-xl px-4 py-4 text-white font-mono font-black text-2xl outline-none focus:border-blue-600 transition-all shadow-inner" 
           />
-          <div className="flex-1 space-y-1">
-             <div className="flex justify-between text-[7px] font-black uppercase">
-                <span className="text-slate-500 flex items-center gap-1"><ArrowUpCircle size={8}/> {isSell ? 'Crédito Caixa' : 'Entrada (40%)'}</span>
-                <span className="text-emerald-500">$ {(upfront * val).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+          <div className="flex-1 space-y-2">
+             <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
+                <span className="text-slate-500 flex items-center gap-2"><ArrowUpCircle size={10}/> {isSell ? 'Cash Inflow' : 'Entrada (40%)'}</span>
+                <span className="text-emerald-500 italic">$ {(upfront * val).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
              </div>
              {!isSell && (
-               <div className="flex justify-between text-[7px] font-black uppercase">
-                  <span className="text-slate-500 flex items-center gap-1"><ArrowDownCircle size={8}/> BDI Fin. (60%)</span>
-                  <span className="text-orange-500">$ {(financed * val).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+               <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
+                  <span className="text-slate-500 flex items-center gap-2"><ArrowDownCircle size={10}/> BDI Fin. (60%)</span>
+                  <span className="text-orange-500 italic">$ {(financed * val).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
                </div>
              )}
              {isSell && (
-                <div className="flex justify-between text-[7px] font-black uppercase">
-                   <span className="text-rose-500">Deságio: {desagio}%</span>
+                <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
+                   <span className="text-rose-500 animate-pulse italic">Deságio: {desagio}%</span>
                 </div>
              )}
           </div>
@@ -449,20 +449,20 @@ const PriceInput = ({ label, val, price, isSell, desagio, onChange }: any) => {
 };
 
 const SelectCard = ({ label, val, options, icon, onChange }: any) => (
-  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex flex-col gap-2 group hover:bg-white/[0.06] transition-all">
-     <div className="flex items-center gap-2">
-        <div className="text-slate-500 group-hover:text-blue-500 transition-colors">{icon}</div>
-        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</label>
+  <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-8 flex flex-col gap-4 group hover:bg-slate-800 hover:border-blue-500/30 transition-all shadow-xl">
+     <div className="flex items-center gap-4">
+        <div className="text-slate-500 group-hover:text-blue-500 transition-colors shadow-sm">{icon}</div>
+        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic group-focus-within:text-blue-500">{label}</label>
      </div>
      <div className="relative">
         <select 
           value={val} 
           onChange={e => onChange?.(Number(e.target.value))} 
-          className="w-full bg-slate-950/60 border-none rounded-xl px-4 py-3 text-white font-black text-[10px] uppercase outline-none focus:ring-1 focus:ring-blue-600 transition-all shadow-inner appearance-none cursor-pointer"
+          className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-5 text-white font-black text-[12px] uppercase outline-none focus:border-blue-600 transition-all shadow-inner appearance-none cursor-pointer"
         >
            {options.map((o: any) => <option key={o.v} value={o.v} className="bg-slate-900">{o.l}</option>)}
         </select>
-        <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700 rotate-90" />
+        <ChevronRight size={18} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600 rotate-90" />
      </div>
   </div>
 );
