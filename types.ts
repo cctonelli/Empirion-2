@@ -1,4 +1,3 @@
-
 /**
  * EMPIRION V13.6 - ORACLE COCKPIT BUILD
  */
@@ -82,6 +81,7 @@ export interface MacroIndicators {
   machine_alpha_price_adjust: number;
   machine_beta_price_adjust: number;
   machine_gamma_price_adjust: number;
+  salary_adjust: number;
 
   // Variáveis Operacionais (PDF Tutor)
   allow_machine_sale: boolean;
@@ -128,9 +128,6 @@ export interface AuditLog { user_id: string; changed_at: string; field_path: str
 export interface TeamProgress { team_id: string; team_name: string; status: string; rating: CreditRating; risk: number; insolvent: boolean; master_key_enabled?: boolean; auditLogs?: AuditLog[]; }
 export interface ChampionshipTemplate { id: string; name: string; description: string; branch: Branch; }
 
-/**
- * Added missing RegionalData interface for Dashboard KPIs
- */
 export interface RegionalData {
   region_id: number;
   region_name: string;

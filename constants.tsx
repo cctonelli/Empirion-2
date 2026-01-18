@@ -177,6 +177,8 @@ export const DEFAULT_MACRO: MacroIndicators = {
   machine_alpha_price_adjust: 0.0,
   machine_beta_price_adjust: 0.0,
   machine_gamma_price_adjust: 0.0,
+  // Add missing property salary_adjust to satisfy MacroIndicators interface
+  salary_adjust: 1.0,
 
   allow_machine_sale: false,
   labor_productivity: 1.0,
