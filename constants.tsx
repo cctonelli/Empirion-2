@@ -8,11 +8,12 @@ export const DEFAULT_TOTAL_SHARES = 5000000;
 
 /**
  * Restored INITIAL_INDUSTRIAL_FINANCIALS for simulation engine
+ * Baseado no Período 0 do PDF
  */
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
     assets: { 
-      current: { cash: 1466605, receivables: 1823735 }, 
+      current: { cash: 0, receivables: 1823735, inventory_mpa: 628545, inventory_mpb: 838060 }, 
       total: 9176940 
     },
     equity: { 
@@ -21,63 +22,98 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
       accumulated_profit: 55447 
     },
     liabilities: { 
-      current: 4121493, 
+      current: 2621493, 
+      long_term: 1500000,
       total_debt: 4121493 
     }
+  },
+  dre: {
+    revenue: 3322735,
+    net_profit: 73928
   }
 };
 
 /**
  * FIXED INITIAL_FINANCIAL_TREE v13.2 GOLD
- * Estrutura auditada para garantir Ativo = Passivo + PL ($ 9.176.940)
+ * Cópia fiel da TELA 4 - Período 0
  */
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
-      id: 'assets', label: 'ATIVO TOTAL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
+      id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Disponibilidades (Caixa/Bancos)', value: 1466605, type: 'asset', isEditable: true, isTemplateAccount: true },
-            { id: 'assets.current.receivables', label: 'Contas a Receber (Clientes)', value: 1823735, type: 'asset', isEditable: true, isTemplateAccount: true },
-            { id: 'assets.current.inventory', label: 'Estoques (Insumos e Acabados)', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true }
+            { id: 'assets.current.cash', label: 'Caixa', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.banks', label: 'Bancos', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.apps', label: 'Aplicação', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.clients', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.stock', label: 'ESTOQUE', value: 1466605, type: 'totalizer', children: [
+                { id: 'assets.current.stock.finished', label: 'Estoque Prod. Acabado ALPHA', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
+                { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 628545, type: 'asset', isEditable: true, isTemplateAccount: true },
+                { id: 'assets.current.stock.mpb', label: 'Estoque MP B', value: 838060, type: 'asset', isEditable: true, isTemplateAccount: true }
+            ]}
           ]
         },
         {
-          id: 'assets.fixed', label: 'ATIVO PERMANENTE (IMOBILIZADO)', value: 5886600, type: 'totalizer', children: [
-            { id: 'assets.fixed.machines', label: 'Máquinas e Equipamentos (Custo)', value: 9000000, type: 'asset', isEditable: true, isTemplateAccount: true },
-            { id: 'assets.fixed.depreciation', label: '(-) Depreciação Acumulada', value: -3113400, type: 'asset', isEditable: true, isTemplateAccount: true }
+          id: 'assets.noncurrent', label: 'ATIVO NÃO CIRCULANTE', value: 5886600, type: 'totalizer', children: [
+            { id: 'assets.noncurrent.longterm', label: 'REALIZÁVEL À LONGO PRAZO', value: 0, type: 'totalizer', children: [
+                { id: 'assets.noncurrent.longterm.sale', label: 'Venda de ativo imobilizado', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true }
+            ]},
+            { id: 'assets.noncurrent.fixed', label: 'IMOBILIZADO', value: 5886600, type: 'totalizer', children: [
+                { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true, isTemplateAccount: true },
+                { id: 'assets.noncurrent.fixed.dep_machines', label: '(-) Depreciação acumulada de equipamentos', value: -811500, type: 'asset', isEditable: true, isTemplateAccount: true },
+                { id: 'assets.noncurrent.fixed.land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true, isTemplateAccount: true },
+                { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true, isTemplateAccount: true },
+                { id: 'assets.noncurrent.fixed.dep_buildings', label: '(-) Depreciação acumulada de prédios e instalações', value: -2301900, type: 'asset', isEditable: true, isTemplateAccount: true }
+            ]}
           ]
         }
       ]
     },
     { 
-      id: 'liabilities', label: 'PASSIVO + PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
+      id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
-          id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 4121493, type: 'totalizer', children: [
-            { id: 'liabilities.current.suppliers', label: 'Fornecedores e Contas a Pagar', value: 2471493, type: 'liability', isEditable: true, isTemplateAccount: true },
-            { id: 'liabilities.current.taxes', label: 'Impostos e Encargos a Recolher', value: 150000, type: 'liability', isEditable: true, isTemplateAccount: true },
-            { id: 'liabilities.current.loans', label: 'Empréstimos de Curto Prazo', value: 1500000, type: 'liability', isEditable: true, isTemplateAccount: true }
+          id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2621493, type: 'totalizer', children: [
+            { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true, isTemplateAccount: true },
+            { id: 'liabilities.current.taxes', label: 'Imposto de Renda a pagar', value: 13045, type: 'liability', isEditable: true, isTemplateAccount: true },
+            { id: 'liabilities.current.sharing', label: 'Participações a pagar', value: 0, type: 'liability', isEditable: true, isTemplateAccount: true },
+            { id: 'liabilities.current.divs', label: 'Dividendos a pagar', value: 18481, type: 'liability', isEditable: true, isTemplateAccount: true },
+            { id: 'liabilities.current.loans_st', label: 'Empréstimos de curto prazo', value: 1872362, type: 'liability', isEditable: true, isTemplateAccount: true }
           ] 
+        },
+        {
+          id: 'liabilities.longterm', label: 'PASSIVO NÃO CIRCULANTE', value: 1500000, type: 'totalizer', children: [
+            { id: 'liabilities.longterm.loans_lt', label: 'Empréstimos de longo prazo', value: 1500000, type: 'liability', isEditable: true, isTemplateAccount: true }
+          ]
         },
         { 
           id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 5055447, type: 'totalizer', children: [
-            { id: 'equity.capital', label: 'Capital Social Integralizado', value: 5000000, type: 'equity', isEditable: true, isTemplateAccount: true },
-            { id: 'equity.profit', label: 'Lucros ou Prejuízos Acumulados', value: 55447, type: 'equity', isEditable: true, isTemplateAccount: true }
+            { id: 'equity.capital', label: 'Capital Social', value: 5000000, type: 'equity', isEditable: true, isTemplateAccount: true },
+            { id: 'equity.profit', label: 'Lucros Acumulados no ano', value: 55447, type: 'equity', isEditable: true, isTemplateAccount: true }
           ] 
         }
       ]
     }
   ],
   dre: [
-    { id: 'rev', label: 'RECEITA OPERACIONAL BRUTA', value: 3322735, type: 'revenue', isEditable: true, isTemplateAccount: true, children: [] },
-    { 
-      id: 'exp', label: 'CUSTOS E DESPESAS', value: -3248807, type: 'totalizer', children: [
-        { id: 'exp.cpv', label: 'Custo dos Produtos Vendidos (CPV)', value: 2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'exp.mkt', label: 'Despesas com Marketing e Vendas', value: 350000, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'exp.adm', label: 'Despesas Administrativas e Gais', value: 567582, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'exp.fin', label: 'Despesas Financeiras Líquidas', value: 53045, type: 'expense', isEditable: true, isTemplateAccount: true }
-      ] 
-    }
+    { id: 'rev', label: 'RECEITA DE VENDAS', value: 3322735, type: 'revenue', isEditable: true, isTemplateAccount: true },
+    { id: 'cpv', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: -2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
+    { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true, children: [] },
+    { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
+        { id: 'opex.prod', label: 'PRODUÇÃO', value: 212100, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'opex.sales', label: 'VENDAS', value: 802702, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true, isTemplateAccount: true }
+    ]},
+    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true, children: [] },
+    { id: 'fin_rev', label: '( + ) RECEITAS FINANCEIRAS', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
+    { id: 'fin_exp', label: '( - ) DESPESAS FINANCEIRAS', value: -40000, type: 'totalizer', children: [
+        { id: 'fin_exp.liquid', label: 'FINANCEIRAS LÍQUIDAS', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
+    ]},
+    { id: 'lair', label: '(=) LAIR - LUCRO LÍQUIDO ANTES DO IR', value: 86973, type: 'totalizer', isReadOnly: true, children: [] },
+    { id: 'tax_prov', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true, isTemplateAccount: true },
+    { id: 'net_profit_after_tax', label: '(=) LUCRO LÍQUIDO APÓS O I. R.', value: 73928, type: 'totalizer', isReadOnly: true, children: [] },
+    { id: 'ppr', label: '( - ) PPR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true, children: [] }
   ]
 };
 
