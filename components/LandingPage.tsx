@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+// Fix: Use any to bypass react-router-dom type resolution issues in this environment
+import * as ReactRouterDOM from 'react-router-dom';
+const { Link } = ReactRouterDOM as any;
 import { 
   ArrowRight, ChevronLeft, ChevronRight, Sparkles, Trophy, 
   Factory, ShoppingCart, Briefcase, Tractor, DollarSign, 
   Hammer, Zap, Rocket, Terminal, Award, 
   BarChart3, Users, Play
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion } from 'framer-motion';
+const motion = _motion as any;
 import Slider from 'react-slick';
 import { DEFAULT_PAGE_CONTENT, APP_VERSION, BUILD_DATE } from '../constants';
 import { fetchPageContent, getModalities, subscribeToModalities } from '../services/supabase';
@@ -50,42 +54,18 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     return () => { channel.unsubscribe(); };
   }, [i18n.language]);
 
-  const carouselSettings = {
-    dots: true,
-    infinite: true,
-    speed: 1500,
-    autoplay: true,
-    autoplaySpeed: 7000,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    fade: true,
-    arrows: true,
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
-    dotsClass: "slick-dots custom-dots"
-  };
-
-  const allCarouselSlides = [
-    ...(content.carousel || []),
-    ...dynamicModalities.map(m => ({
-      id: m.id,
-      title: m.name,
-      subtitle: m.description,
-      image: m.image_url || 'https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?q=80&w=2000',
-      badge: 'Arena Live',
-      link: `/activities/${m.slug}`
-    }))
-  ];
-
   return (
     <div className="min-h-screen bg-[#020617] font-sans text-slate-100 relative selection:bg-orange-500 selection:text-white overflow-x-hidden">
       <EmpireParticles />
       
-      <section className="min-h-screen flex items-center justify-center pt-24 px-8 md:px-24 text-center relative z-20 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none z-[-1]">
-           <motion.div animate={{ x: [-100, 100], opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 20, repeat: Infinity }} className="w-[1200px] h-[1200px] bg-orange-600/20 blur-[250px] rounded-full absolute -top-[30%] -left-[10%]" />
-        </div>
+      {/* SEBRAE-STYLE ORANGE CLOUDS LAYERS */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+         <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1], x: [0, 50, 0] }} transition={{ duration: 15, repeat: Infinity }} className="orange-cloud-pulse w-[1000px] h-[1000px] bg-orange-600/30 -top-[20%] -left-[10%]" />
+         <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.05, 0.15, 0.05], x: [0, -30, 0] }} transition={{ duration: 12, repeat: Infinity, delay: 2 }} className="orange-cloud-pulse w-[800px] h-[800px] bg-orange-50/20 top-[40%] -right-[10%]" />
+         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#020617]/40 to-[#020617] z-[1]" />
+      </div>
 
+      <section className="min-h-screen flex items-center justify-center pt-24 px-8 md:px-24 text-center relative z-20 overflow-hidden">
         <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto space-y-16">
            <div className="flex flex-col items-center gap-6">
               <div className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-mono font-black text-orange-500 uppercase tracking-[0.5em] backdrop-blur-xl">
@@ -103,11 +83,14 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               <Link to="/auth" className="px-16 py-8 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:scale-105 transition-all">
                 Entre na Arena <Rocket size={20} className="inline ml-3" />
               </Link>
+              <Link to="/solutions/simulators" className="px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.4em] hover:bg-white hover:text-slate-950 transition-all">
+                Explorar Ramos
+              </Link>
            </div>
         </motion.div>
       </section>
 
-      {/* RAMOS CARDS */}
+      {/* RAMOS CARDS CLICÁVEIS */}
       <section className="landing-section bg-white/[0.01]">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
@@ -140,25 +123,14 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      <footer className="py-20 border-t border-white/5 text-center bg-[#020617]">
+      <footer className="py-20 border-t border-white/5 text-center bg-[#020617] relative z-20">
          <div className="container mx-auto px-8 opacity-60">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">© 2026 EMPIRION BI ARENA | PROTOCOL NODE 08 STREET</p>
+            <div className="mt-6 flex justify-center scale-75 opacity-50"><LanguageSwitcher light /></div>
          </div>
       </footer>
     </div>
   );
 };
-
-const FeatureCard = ({ icon, title, desc }: any) => (
-  <div className="p-12 bg-slate-900 border border-white/5 rounded-[3.5rem] space-y-8 hover:bg-slate-900 transition-all group shadow-2xl">
-     <div className="w-20 h-20 bg-orange-600/10 rounded-2xl flex items-center justify-center text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all">
-        {React.cloneElement(icon as React.ReactElement<any>, { size: 32 })}
-     </div>
-     <div className="space-y-3">
-        <h3 className="text-3xl font-black text-white uppercase italic tracking-tight">{title}</h3>
-        <p className="text-lg text-slate-400 font-medium italic opacity-80">{desc}</p>
-     </div>
-  </div>
-);
 
 export default LandingPage;

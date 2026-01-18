@@ -1,3 +1,4 @@
+
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine } from './types';
 
 export const APP_VERSION = "v13.2.0-Oracle-Gold";
@@ -8,7 +9,6 @@ export const DEFAULT_TOTAL_SHARES = 5000000;
 
 /**
  * Restored INITIAL_INDUSTRIAL_FINANCIALS for simulation engine
- * Baseado no Período 0 do PDF
  */
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
@@ -33,10 +33,6 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
   }
 };
 
-/**
- * FIXED INITIAL_FINANCIAL_TREE v13.2 GOLD
- * Cópia fiel da TELA 4 - Período 0
- */
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
@@ -117,28 +113,35 @@ export const INITIAL_FINANCIAL_TREE = {
   ]
 };
 
-/**
- * Restored CHAMPIONSHIP_TEMPLATES for wizards
- */
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   { id: 'tpl-industrial', name: 'Industrial Master', description: 'Simulação completa de manufatura e CapEx.', branch: 'industrial' },
   { id: 'tpl-commercial', name: 'Global Retail', description: 'Foco em logística e marketing de varejo.', branch: 'commercial' }
 ];
 
-/**
- * Restored MENU_STRUCTURE for header and CMS
- */
 export const MENU_STRUCTURE = [
   { label: 'Início', path: '/' },
   { 
     label: 'ramos', path: '/solutions/simulators', sub: [
       { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory', desc: 'Produção $9M Assets' },
-      { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart', desc: 'Varejo Híbrido' }
+      { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart', desc: 'Varejo Híbrido' },
+      { id: 'srv', label: 'Serviços', path: '/branches/services', icon: 'Briefcase', desc: 'Capital Intelectual' },
+      { id: 'agr', label: 'Agronegócio', path: '/branches/agribusiness', icon: 'Tractor', desc: 'Ativos Biológicos' },
+      { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign', desc: 'Spread & Risco' },
+      { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer', desc: 'Obras Pesadas' }
     ]
   },
   { 
     label: 'Soluções', path: '/solutions', sub: [
-      { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu', desc: 'Engine v6.0' },
+      { id: 'edu', label: 'Educacional', path: '#', icon: 'GraduationCap', desc: 'Universidades e Escolas', sub: [
+          { id: 'edu-uni', label: 'University Node', path: '/solutions/university', icon: 'Box' },
+          { id: 'edu-train', label: 'Custom Training', path: '/solutions/training', icon: 'Zap' }
+      ]},
+      { id: 'corp', label: 'Corporativo', path: '#', icon: 'ShieldCheck', desc: 'Enterprise Solutions', sub: [
+          { id: 'corp-elite', label: 'Elite Training', path: '/solutions/corporate', icon: 'Trophy' }
+      ]},
+      { id: 'indiv', label: 'Individual', path: '#', icon: 'User', desc: 'Professional Growth', sub: [
+          { id: 'indiv-pro', label: 'Pro-Player Mode', path: '/solutions/individual', icon: 'Target' }
+      ]},
       { id: 'plan', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool', desc: 'Oracle Wizard' }
     ]
   },
@@ -147,9 +150,6 @@ export const MENU_STRUCTURE = [
   { label: 'Contato', path: '/contact' }
 ];
 
-/**
- * Restored DEFAULT_PAGE_CONTENT for landing and static pages
- */
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': { 
     title: 'Forje Seu Império', 
@@ -214,9 +214,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'solution-individual': { title: 'Individual', body: 'Personal strategy development', icon: 'Brain' }
 };
 
-/**
- * Restored getPageContent helper function
- */
 export const getPageContent = (slug: string) => DEFAULT_PAGE_CONTENT[slug] || null;
 
 export const DEFAULT_MACRO: MacroIndicators = {
@@ -230,7 +227,6 @@ export const DEFAULT_MACRO: MacroIndicators = {
   tax_rate_ir: 15.0,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
-  
   raw_material_a_adjust: 1.0,
   raw_material_b_adjust: 1.0,
   marketing_campaign_adjust: 2.0,
@@ -240,12 +236,9 @@ export const DEFAULT_MACRO: MacroIndicators = {
   machine_beta_price_adjust: 0.0,
   machine_gamma_price_adjust: 0.0,
   salary_adjust: 1.0,
-
   allow_machine_sale: false,
   labor_productivity: 1.0,
   labor_availability: 'MEDIA',
-
-  // Machinery Specs v13.2
   machine_specs: {
     alfa: { model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025 },
     beta: { model: 'beta', initial_value: 1500000, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025 },
@@ -258,27 +251,8 @@ export const DEFAULT_MACRO: MacroIndicators = {
     { id: 'm4', model: 'alfa', age: 21 },
     { id: 'm5', model: 'alfa', age: 21 }
   ],
-  maintenance_physics: {
-    alpha: 0.05,
-    beta: 1.2,
-    gamma: 0.5
-  },
-
-  prices: {
-    mp_a: 20.00,
-    mp_b: 40.00,
-    distribution_unit: 50.00,
-    marketing_campaign: 10000.00
-  },
-  machinery_values: {
-    alfa: 500000,
-    beta: 1500000,
-    gama: 3000000
-  },
-  hr_base: {
-    salary: 1300.00,
-    training: 0,
-    profit_sharing: 0,
-    misc: 0
-  }
+  maintenance_physics: { alpha: 0.05, beta: 1.2, gamma: 0.5 },
+  prices: { mp_a: 20.00, mp_b: 40.00, distribution_unit: 50.00, marketing_campaign: 10000.00 },
+  machinery_values: { alfa: 500000, beta: 1500000, gama: 3000000 },
+  hr_base: { salary: 1300.00, training: 0, profit_sharing: 0, misc: 0 }
 };

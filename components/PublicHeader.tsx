@@ -1,12 +1,15 @@
-
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use any to bypass react-router-dom type resolution issues in this environment
+import * as ReactRouterDOM from 'react-router-dom';
+const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { 
   ChevronDown, ChevronRight, LogIn, Factory, ShoppingCart, Briefcase, 
   Tractor, DollarSign, Hammer, Menu, X, Box, Cpu, Sparkles, 
   Zap, Gavel, PenTool, Trophy, Terminal, Rocket, GraduationCap,
-  ShieldCheck, PlayCircle, Settings, MapPin, Globe
+  ShieldCheck, PlayCircle, Settings, MapPin, Globe, User
 } from 'lucide-react';
 import { MENU_STRUCTURE, APP_VERSION } from '../constants';
 import { useModalities } from '../hooks/useModalities';
@@ -35,6 +38,7 @@ const getIcon = (iconName?: string) => {
     case 'Settings': return <Settings size={size} />;
     case 'MapPin': return <MapPin size={size} />;
     case 'Globe': return <Globe size={size} />;
+    case 'User': return <User size={size} />;
     default: return <Box size={size} />;
   }
 };
@@ -102,14 +106,6 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                         {item.sub.map((sub: any, idx: number) => (
                            <SubmenuItem key={sub.id || idx} item={sub} />
                         ))}
-                        {item.label === 'ramos' && modalities.length > 0 && (
-                          <div className="mt-2 pt-2 border-t border-white/10">
-                             <p className="px-4 pb-2 text-[7px] font-black text-orange-500 uppercase tracking-widest">Arenas Ativas em Real-time</p>
-                             {modalities.map(m => (
-                               <SubmenuItem key={m.id} item={{ id: m.slug, label: m.name, path: `/activities/${m.slug}`, icon: 'Sparkles', desc: 'Sincronização Oracle' }} />
-                             ))}
-                          </div>
-                        )}
                       </div>
                     </motion.div>
                   )}
@@ -121,21 +117,12 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
         <div className="flex items-center gap-4">
           <div className="hidden xl:block scale-90"><LanguageSwitcher light /></div>
-          
-          <Link 
-            to="/test/industrial"
-            className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white rounded-full font-black text-[9px] uppercase tracking-[0.2em] hover:bg-white hover:text-orange-950 transition-all active:scale-95 shadow-[0_0_20px_rgba(249,115,22,0.4)] whitespace-nowrap"
-          >
+          <Link to="/test/industrial" className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white rounded-full font-black text-[9px] uppercase tracking-[0.2em] hover:bg-white hover:text-orange-950 transition-all active:scale-95 shadow-[0_0_20px_rgba(249,115,22,0.4)] whitespace-nowrap">
             <Rocket size={12} className="animate-pulse" /> Trial Master
           </Link>
-
-          <button 
-            onClick={onLogin} 
-            className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white/5 text-white border border-white/10 rounded-full font-black text-[9px] uppercase tracking-[0.2em] active:scale-95 hover:bg-white hover:text-slate-950 transition-all"
-          >
+          <button onClick={onLogin} className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white/5 text-white border border-white/10 rounded-full font-black text-[9px] uppercase tracking-[0.2em] active:scale-95 hover:bg-white hover:text-slate-950 transition-all">
             <LogIn size={12} /> Entrar
           </button>
-          
           <button className="lg:hidden p-3 text-white bg-white/5 rounded-xl border border-white/10" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -176,10 +163,6 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     )}
                 </div>
               ))}
-            </div>
-            <div className="mt-auto flex flex-col gap-4">
-               <Link to="/test/industrial" onClick={() => setIsMobileMenuOpen(false)} className="w-full py-6 bg-orange-600 text-white rounded-3xl font-black text-center uppercase tracking-widest text-sm shadow-xl">Teste Grátis (Trial Master)</Link>
-               <button onClick={onLogin} className="w-full py-6 bg-white/5 border border-white/10 text-white rounded-3xl font-black uppercase tracking-widest text-sm">Entrar no Cockpit</button>
             </div>
           </motion.div>
         )}

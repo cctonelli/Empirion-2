@@ -1,6 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+// Fix: Use any to bypass react-router-dom type resolution issues in this environment
+import * as ReactRouterDOM from 'react-router-dom';
+const { useParams, Link } = ReactRouterDOM as any;
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion } from 'framer-motion';
 const motion = _motion as any;

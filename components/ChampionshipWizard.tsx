@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, ArrowRight, Globe, Loader2, 
@@ -7,13 +6,14 @@ import {
   Hourglass, Scale, Sparkles, X, Settings2,
   TrendingUp, Zap, Users, DollarSign, Package, Cpu,
   Factory, Trash2, ClipboardList, Gauge, Table as TableIcon,
-  // Fix: Added missing Landmark icon import
   Landmark
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO } from '../constants';
 import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource } from '../types';
 import { createChampionshipWithTeams } from '../services/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import FinancialStructureEditor from './FinancialStructureEditor';
 
 const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }> = ({ onComplete, isTrial = false }) => {

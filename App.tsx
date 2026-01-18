@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+// Fix: Use any to bypass react-router-dom type resolution issues in this environment
+import * as Router from 'react-router-dom';
+const { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } = Router as any;
 import Layout from './components/Layout';
 import PublicHeader from './components/PublicHeader';
 import Dashboard from './components/Dashboard';

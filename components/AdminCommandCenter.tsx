@@ -15,7 +15,9 @@ import { Championship, UserProfile, MenuItemConfig } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
 import TutorDecisionMonitor from './TutorDecisionMonitor';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES } from '../constants';
 
 const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }) => {

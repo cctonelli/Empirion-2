@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import Chart from 'react-apexcharts';
 import { 
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
   Sparkles, Loader2, ShieldCheck, Newspaper, Cpu, 
@@ -8,10 +7,12 @@ import {
   Thermometer, EyeOff, Globe, Map, PieChart, Users,
   ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon, Info,
   Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon,
-  ChevronDown, Maximize2, Zap
+  ChevronDown, Maximize2, Zap, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+// Fix: Use any to bypass react-router-dom type resolution issues in this environment
+import * as ReactRouterDOM from 'react-router-dom';
+const { useNavigate } = ReactRouterDOM as any;
 import ChampionshipTimer from './ChampionshipTimer';
 import DecisionForm from './DecisionForm';
 import GazetteViewer from './GazetteViewer';
@@ -35,7 +36,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         const teamId = localStorage.getItem('active_team_id');
         
         if (!champId || !teamId) {
-           console.warn("Sessão incompleta. Retornando ao seletor.");
            navigate('/app/championships');
            return;
         }
@@ -60,6 +60,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     fetchAll();
   }, [navigate]);
 
+  const isObserver = userRole === 'observer';
+
   const currentKpis = useMemo((): KPIs => {
     return activeTeam?.kpis || activeArena?.kpis || {
       ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
@@ -69,15 +71,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
       equity: 5055447,
       market_share: 12.5,
-      regional_pulse: Array.from({ length: 9 }).map((_, i) => ({
-        region_id: i + 1,
-        region_name: `Região 0${i + 1}`,
-        demand: 12500,
-        units_sold: 1562,
-        market_share: 12.5,
-        avg_price: 372.40,
-        competitors_count: 8
-      }))
     } as KPIs;
   }, [activeArena, activeTeam]);
 
@@ -94,6 +87,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
+      {/* OBSERVER ALERT BANNER */}
+      {isObserver && (
+        <div className="h-10 bg-indigo-600 flex items-center justify-center gap-3 animate-pulse shrink-0">
+           <ShieldAlert size={14} className="text-white" />
+           <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Modo Observador: Acesso Read-Only Ativado</span>
+        </div>
+      )}
+
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
          <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend="+1.2%" pos icon={<TrendingUp size={16}/>} />
          <CockpitStat label="Receita Bruta" val={`${currencySymbol} 3.32M`} trend="Estável" pos icon={<DollarSign size={16}/>} />
@@ -171,7 +172,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      teamId={activeTeam?.id} 
                      champId={activeArena?.id} 
                      round={(activeArena?.current_round || 0) + 1} 
-                     branch={activeArena?.branch} 
+                     branch={activeArena?.branch}
+                     isReadOnly={isObserver}
                   />
                </div>
             </div>

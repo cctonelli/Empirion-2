@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use any to bypass react-router-dom type resolution issues in this environment
+import * as Router from 'react-router-dom';
+const { useNavigate, Link } = Router as any;
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { 
   Plus, Trophy, Timer, ChevronRight, Search, 
   Filter, Globe, Loader2, AlertCircle, Rocket, 

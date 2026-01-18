@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, 
@@ -11,7 +10,9 @@ import {
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { DecisionData, Branch, Championship, ProjectionResult, EcosystemConfig } from '../types';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 
 const STEPS = [
   { id: 'legal', label: 'Protocolo Legal', icon: Gavel },

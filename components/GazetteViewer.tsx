@@ -1,11 +1,12 @@
-
 import React, { useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   Globe, Landmark, Zap, AlertTriangle, LayoutGrid, Bird, Scale, ShieldAlert,
   Award, User, Star, TrendingUp, X, EyeOff
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { Championship, UserRole } from '../types';
 
 interface GazetteViewerProps {
@@ -134,11 +135,18 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   );
 };
 
-const TabBtn = ({ active, onClick, label, icon }: any) => (
-  <button onClick={onClick} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95 ${active ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white bg-white/5'}`}>
-    {icon} {label}
-  </button>
-);
+const TabBtn = ({ active, onClick, label, color }: any) => {
+  const activeClasses = {
+    benchmarking: 'bg-blue-600 text-white shadow-lg',
+    macro: 'bg-blue-600 text-white shadow-lg'
+  }[color as 'benchmarking' | 'macro'];
+
+  return (
+    <button onClick={onClick} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95 ${active ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white bg-white/5'}`}>
+      {icon} {label}
+    </button>
+  );
+};
 
 const Trophy = ({ size }: { size: number }) => <Award size={size} />;
 

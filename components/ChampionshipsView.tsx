@@ -1,7 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
+// Fix: Use any to bypass react-router-dom type resolution issues in this environment
+import * as Router from 'react-router-dom';
+const { useLocation } = Router as any;
 import { Trophy, ChevronRight, Play, Loader2, Filter, X, Users, Building2, Terminal, Shield, RefreshCw, Bot, Eye } from 'lucide-react';
 import { getChampionships } from '../services/supabase';
 import { Championship, Team } from '../types';

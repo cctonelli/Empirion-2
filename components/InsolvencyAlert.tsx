@@ -1,6 +1,7 @@
-
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { ShieldAlert, Megaphone, Users, TrendingDown, ArrowRight, X } from 'lucide-react';
 import { CreditRating } from '../types';
 

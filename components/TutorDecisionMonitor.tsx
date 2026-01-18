@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -6,7 +5,9 @@ import {
   ShieldAlert, Loader2, Monitor, Scale, 
   Activity, FileText, CheckCircle2, AlertOctagon, ShieldCheck
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Use motion as any to bypass internal library type resolution issues in this environment
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { Branch, EcosystemConfig, CreditRating, TeamProgress, AuditLog } from '../types';

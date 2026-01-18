@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// Fix: Use any to bypass react-router-dom type resolution issues in this environment
+import * as ReactRouterDOM from 'react-router-dom';
+const { useNavigate } = ReactRouterDOM as any;
 import { supabase } from '../services/supabase';
 import { 
   Shield, Mail, Lock, ChevronLeft, 
