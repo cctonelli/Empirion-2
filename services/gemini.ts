@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType } from "../types";
 
@@ -160,22 +161,53 @@ export const generateBotDecision = async (
         }
     }
     
+    // Fix: Explicitly constructed DecisionData return to satisfy TypeScript and include all required properties (misc, extraProductionPercent, etc.)
     return {
-      ...parsed,
+      judicial_recovery: parsed.legal?.recovery_mode === 'judicial',
       regions: cleanedRegions,
-      hr: parsed.hr || { hired: 0, fired: 0, salary: 1313, trainingPercent: 5, participationPercent: 2, sales_staff_count: 50 },
-      production: parsed.production || { purchaseMPA: 15000, purchaseMPB: 10000, paymentType: 1, activityLevel: 80, rd_investment: 5000 },
-      finance: parsed.finance || { loanRequest: 0, application: 0, buyMachines: { alfa: 0, beta: 0, gama: 0 } },
-      legal: parsed.legal || { recovery_mode: 'none' }
+      hr: {
+        hired: parsed.hr?.hired || 0,
+        fired: parsed.hr?.fired || 0,
+        salary: parsed.hr?.salary || 1313,
+        trainingPercent: parsed.hr?.trainingPercent || 5,
+        participationPercent: parsed.hr?.participationPercent || 2,
+        sales_staff_count: parsed.hr?.sales_staff_count || 50,
+        misc: 0
+      },
+      production: {
+        purchaseMPA: parsed.production?.purchaseMPA || 15000,
+        purchaseMPB: parsed.production?.purchaseMPB || 10000,
+        paymentType: parsed.production?.paymentType || 1,
+        activityLevel: parsed.production?.activityLevel || 80,
+        rd_investment: parsed.production?.rd_investment || 5000,
+        extraProductionPercent: 0
+      },
+      machinery: {
+        buy: parsed.finance?.buyMachines || { alfa: 0, beta: 0, gama: 0 },
+        sell: { alfa: 0, beta: 0, gama: 0 }
+      },
+      finance: {
+        loanRequest: parsed.finance?.loanRequest || 0,
+        loanType: 1,
+        application: parsed.finance?.application || 0
+      },
+      estimates: {
+        forecasted_revenue: 0,
+        forecasted_unit_cost: 0,
+        forecasted_net_profit: 0
+      }
     };
   } catch (error) {
     console.error("Bot Decision Error:", error);
+    // Fix: Return valid DecisionData structure in catch block with all required fields
     return {
+      judicial_recovery: false,
       regions: Object.fromEntries(Array.from({ length: regionCount }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 0 }])),
-      hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50 },
-      production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0 },
-      finance: { loanRequest: 0, application: 0, buyMachines: { alfa: 0, beta: 0, gama: 0 } },
-      legal: { recovery_mode: 'none' }
+      hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50, misc: 0 },
+      production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0, extraProductionPercent: 0 },
+      machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
+      finance: { loanRequest: 0, loanType: 1, application: 0 },
+      estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
     };
   }
 };

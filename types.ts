@@ -1,6 +1,5 @@
 /**
  * EMPIRION V13.6 - ORACLE COCKPIT BUILD
- * Advanced high-density data structures for ERP-style orchestration.
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -19,39 +18,46 @@ export type RecoveryMode = 'none' | 'extrajudicial' | 'judicial';
 export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'E' | 'N/A';
 export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 
-// Add missing DecisionData
 export interface DecisionData {
-  regions: Record<number, { price: number; term: number; marketing: number }>;
+  judicial_recovery: boolean;
+  regions: Record<number, { 
+    price: number; 
+    term: number; // 0, 1, 2
+    marketing: number 
+  }>;
   hr: {
     hired: number;
     fired: number;
     salary: number;
     trainingPercent: number;
     participationPercent: number;
+    misc: number;
     sales_staff_count: number;
   };
   production: {
     purchaseMPA: number;
     purchaseMPB: number;
-    paymentType: number;
+    paymentType: number; // 0, 1, 2
     activityLevel: number;
+    extraProductionPercent: number;
     rd_investment: number;
+  };
+  machinery: {
+    buy: { alfa: number; beta: number; gama: number };
+    sell: { alfa: number; beta: number; gama: number };
   };
   finance: {
     loanRequest: number;
+    loanType: number; // 1, 2, 3
     application: number;
-    buyMachines: {
-      alfa: number;
-      beta: number;
-      gama: number;
-    };
   };
-  legal: {
-    recovery_mode: string;
+  estimates: {
+    forecasted_revenue: number;
+    forecasted_unit_cost: number;
+    forecasted_net_profit: number;
   };
 }
 
-// Add missing RegionalData
 export interface RegionalData {
   region_id: number;
   region_name: string;
@@ -62,7 +68,6 @@ export interface RegionalData {
   competitors_count: number;
 }
 
-// Add missing MenuItemConfig
 export interface MenuItemConfig {
   id: string;
   label: string;
@@ -70,7 +75,6 @@ export interface MenuItemConfig {
   isVisible: boolean;
 }
 
-// Add missing Modality
 export interface Modality {
   id: string;
   name: string;
@@ -85,7 +89,6 @@ export interface Modality {
   };
 }
 
-// Add missing TeamProgress and AuditLog
 export interface AuditLog {
   user_id: string;
   changed_at: string;
@@ -114,19 +117,16 @@ export interface EcosystemConfig {
 }
 
 export interface MacroIndicators {
-  // Índices Variáveis (Planilha Tutor)
   growth_rate_ice: number;
   demand_variation: number;
   inflation_rate: number;
-  delinquency_rate: number; // Inadimplência
+  delinquency_rate: number;
   interest_rate_tr: number;
   interest_suppliers: number;
   interest_sales_avg: number;
   tax_rate_ir: number;
   late_fee_fine: number;
-  machine_sale_discount: number; // Deságio
-  
-  // Índices de Reajuste
+  machine_sale_discount: number;
   readjust_raw_material: number;
   readjust_machine_alfa: number;
   readjust_machine_beta: number;
@@ -134,31 +134,13 @@ export interface MacroIndicators {
   readjust_marketing: number;
   readjust_distribution: number;
   readjust_storage: number;
-
-  // Valores de Base (Valor Inicial / P0)
-  prices: {
-    mp_a: number;
-    mp_b: number;
-    distribution_unit: number;
-    marketing_campaign: number;
-  };
-  machinery_values: {
-    alfa: number;
-    beta: number;
-    gama: number;
-  };
-  hr_base: {
-    salary: number;
-    training: number;
-    profit_sharing: number;
-    misc: number;
-  };
-  
+  prices: { mp_a: number; mp_b: number; distribution_unit: number; marketing_campaign: number; };
+  machinery_values: { alfa: number; beta: number; gama: number; };
+  hr_base: { salary: number; training: number; profit_sharing: number; misc: number; };
   active_event?: BlackSwanEvent;
   [key: string]: any;
 }
 
-// Add missing ChampionshipTemplate
 export interface ChampionshipTemplate {
   id: string;
   name: string;
@@ -207,7 +189,6 @@ export interface AccountNode { id: string; label: string; value: number; type: s
 export interface BlackSwanEvent { title: string; description: string; impact: string; modifiers: any; }
 export interface BusinessPlan { id: string; championship_id: string; team_id: string; round: number; version: number; data: Record<number, string>; status: string; }
 
-// Add phone property to UserProfile
 export interface UserProfile { 
   id: string; 
   supabase_user_id: string; 
