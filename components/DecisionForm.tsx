@@ -6,11 +6,11 @@ import {
   Save, Sparkles, Package, Cpu, ChevronRight, Target, 
   TrendingUp, Landmark, Cloud, HardDrive, AlertCircle, 
   ShieldAlert, Gavel, Trash2, ShoppingCart, Info, Award,
-  Zap
+  Zap, HelpCircle, ArrowUpCircle, ArrowDownCircle
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
-import { DecisionData, Branch, Championship, ProjectionResult, EcosystemConfig } from '../types';
+import { DecisionData, Branch, Championship, ProjectionResult, EcosystemConfig, MachineModel } from '../types';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 
@@ -41,16 +41,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
   });
 
-  const activeTeamName = useMemo(() => {
-    return activeArena?.teams?.find(t => t.id === teamId)?.name || 'ALPHA';
-  }, [activeArena, teamId]);
-
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [activeStep]);
-
   useEffect(() => {
     const fetchContext = async () => {
       if (champId) {
@@ -68,6 +58,31 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     };
     fetchContext();
   }, [champId]);
+
+  const activeTeamName = useMemo(() => {
+    return activeArena?.teams?.find(t => t.id === teamId)?.name || 'ALPHA';
+  }, [activeArena, teamId]);
+
+  // CÁLCULO DE PREÇOS ATUALIZADOS (REAJUSTE ACUMULADO)
+  const machinePrices = useMemo(() => {
+    if (!activeArena) return { alfa: 0, beta: 0, gama: 0, desagio: 0 };
+    const macro = activeArena.market_indicators;
+    
+    const getAdjusted = (model: MachineModel, base: number) => {
+      let adj = 1.0;
+      // Simula reajuste acumulado até o round atual
+      const rate = macro[`machine_${model}_price_adjust`] || 0;
+      for (let i = 0; i < round; i++) adj *= (1 + rate / 100);
+      return base * adj;
+    };
+
+    return {
+      alfa: getAdjusted('alfa', macro.machinery_values.alfa),
+      beta: getAdjusted('beta', macro.machinery_values.beta),
+      gama: getAdjusted('gama', macro.machinery_values.gama),
+      desagio: macro.machine_sale_discount || 0
+    };
+  }, [activeArena, round]);
 
   const projections: ProjectionResult | null = useMemo(() => {
     if (!activeArena) return null;
@@ -141,7 +156,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                
                {activeStep === 0 && (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-8 max-w-2xl mx-auto">
-                     <div className={`p-6 rounded-[2rem] border-2 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'}`}><Gavel size={40} /></div>
+                     <div className={`p-6 rounded-[2rem] border-2 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'}`}><Gavel size={40} /></div>
                      <div className="space-y-2">
                         <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Protocolo de Recuperação</h2>
                         <p className="text-slate-400 text-sm italic">"O status de Recuperação Judicial (RJ) preserva ativos mas impede novos empréstimos bancários."</p>
@@ -162,7 +177,17 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      </div>
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <InputCard label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={16}/>} />
-                        <SelectCard label="Condição Prazo" val={decisions.regions[activeRegion]?.term || 1} onChange={(v: number) => updateDecision(`regions.${activeRegion}.term`, v)} options={[{v:0,l:'VISTA'},{v:1,l:'PERÍODO + 1'},{v:2,l:'DIVIDIDO (50/50)'}]} icon={<Landmark size={16} />} />
+                        <SelectCard 
+                           label="Condição Prazo" 
+                           val={decisions.regions[activeRegion]?.term || 1} 
+                           onChange={(v: number) => updateDecision(`regions.${activeRegion}.term`, v)} 
+                           options={[
+                              {v:0,l:'À VISTA (MESMO PERÍODO)'},
+                              {v:1,l:'50/50 (VISTA + P1 + JUROS)'},
+                              {v:2,l:'33/33/33 (VISTA + P1 + P2 + JUROS)'}
+                           ]} 
+                           icon={<Landmark size={16} />} 
+                        />
                         <InputCard label="Promoção Regional" desc="(0 a 9)" val={decisions.regions[activeRegion]?.marketing || 0} onChange={(v: number) => updateDecision(`regions.${activeRegion}.marketing`, v)} icon={<Sparkles size={16}/>} />
                      </div>
                   </div>
@@ -172,7 +197,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <InputCard label="Matéria-Prima A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={16}/>} />
                      <InputCard label="Matéria-Prima B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={16}/>} />
-                     {/* FIX: Atualizados rótulos conforme definição 0-1-2 de fornecedores */}
                      <SelectCard 
                         label="Tipo Pagamento Fornecedor" 
                         val={decisions.production.paymentType} 
@@ -203,28 +227,42 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                {activeStep === 4 && (
                   <div className="space-y-6">
+                     <div className="p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex gap-4 items-center">
+                        <Info size={24} className="text-blue-400 shrink-0" />
+                        <p className="text-[9px] font-medium text-blue-100 italic leading-relaxed">
+                           "Protocolo BDI: 60% Financiado / 40% À Vista. Carência de 4 períodos (apenas juros TR). Amortização em 4x a partir do 5º período. Máquinas iniciam produção no ato, depreciação inicia no próximo ciclo."
+                        </p>
+                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-3 bg-white/5 p-6 rounded-3xl border border-white/5 shadow-inner">
-                           <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-2"><ShoppingCart size={14}/> Investimento CapEx</h4>
-                           <InputCard label="Compra ALFA" val={decisions.machinery.buy.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
-                           <InputCard label="Compra BETA" val={decisions.machinery.buy.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
-                           <InputCard label="Compra GAMA" val={decisions.machinery.buy.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
+                           <h4 className="text-[10px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-2"><ShoppingCart size={14}/> Investimento CapEx (Novo)</h4>
+                           <PriceInput label="Compra ALFA" val={decisions.machinery.buy.alfa} price={machinePrices.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
+                           <PriceInput label="Compra BETA" val={decisions.machinery.buy.beta} price={machinePrices.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
+                           <PriceInput label="Compra GAMA" val={decisions.machinery.buy.gama} price={machinePrices.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
                         </div>
                         <div className="space-y-3 bg-white/5 p-6 rounded-3xl border border-white/5 shadow-inner">
-                           <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-widest flex items-center gap-2"><Trash2 size={14}/> Desinvestimento</h4>
-                           <InputCard label="Venda ALFA" val={decisions.machinery.sell.alfa} onChange={(v: number) => updateDecision('machinery.sell.alfa', v)} />
-                           <InputCard label="Venda BETA" val={decisions.machinery.sell.beta} onChange={(v: number) => updateDecision('machinery.sell.beta', v)} />
-                           <InputCard label="Venda GAMA" val={decisions.machinery.sell.gama} onChange={(v: number) => updateDecision('machinery.sell.gama', v)} />
+                           <h4 className="text-[10px] font-black uppercase text-rose-500 tracking-widest flex items-center gap-2"><Trash2 size={14}/> Desinvestimento (Usado)</h4>
+                           <PriceInput label="Venda ALFA" val={decisions.machinery.sell.alfa} price={machinePrices.alfa * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.alfa', v)} />
+                           <PriceInput label="Venda BETA" val={decisions.machinery.sell.beta} price={machinePrices.beta * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.beta', v)} />
+                           <PriceInput label="Venda GAMA" val={decisions.machinery.sell.gama} price={machinePrices.gama * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.gama', v)} />
                         </div>
                      </div>
                   </div>
                )}
 
                {activeStep === 5 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <InputCard label="Empréstimo Requisitado ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<Landmark size={16}/>} />
-                     <SelectCard label="Amortização Alvo" val={decisions.finance.loanType} onChange={(v: number) => updateDecision('finance.loanType', v)} options={[{v:1,l:'CURTO'},{v:2,l:'MÉDIO'},{v:3,l:'LONGO'}]} icon={<ShieldAlert size={16}/>} />
-                     <InputCard label="Aplicação Liquidez ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={16}/>} />
+                  <div className="space-y-8">
+                     <div className="p-4 bg-orange-600/10 border border-orange-500/20 rounded-2xl flex gap-4 items-center">
+                        <HelpCircle size={24} className="text-orange-400 shrink-0" />
+                        <p className="text-[9px] font-medium text-orange-100 italic leading-relaxed">
+                           "Protocolo Bancário: Empréstimos possuem prazo (0-1-2). Juros TR acoplados mesmo no prazo 0. A mutação do Balanço converte a próxima parcela a vencer em Curto Prazo automaticamente."
+                        </p>
+                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <InputCard label="Empréstimo Requisitado ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<Landmark size={16}/>} />
+                        <SelectCard label="Condição Prazo" val={decisions.finance.loanType} onChange={(v: number) => updateDecision('finance.loanType', v)} options={[{v:1,l:'À VISTA (PERÍODO ATUAL)'},{v:2,l:'CURTO (DIVIDIDO P1)'},{v:3,l:'MÉDIO (P1 + P2)'}]} icon={<ShieldAlert size={16}/>} />
+                        <InputCard label="Aplicação Liquidez ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={16}/>} />
+                     </div>
                   </div>
                )}
 
@@ -289,6 +327,48 @@ const InputCard = ({ label, desc, val, icon, onChange, placeholder }: any) => (
      {desc && <span className="text-[7px] font-bold text-slate-600 uppercase italic ml-1">{desc}</span>}
   </div>
 );
+
+const PriceInput = ({ label, val, price, isSell, desagio, onChange }: any) => {
+  const upfront = isSell ? price : price * 0.4;
+  const financed = isSell ? 0 : price * 0.6;
+
+  return (
+    <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex flex-col gap-3 group hover:bg-white/[0.06] transition-all">
+       <div className="flex justify-between items-start">
+          <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</label>
+          <div className="text-right">
+             <span className="block text-[7px] font-bold text-slate-400 uppercase italic">Preço Un. {isSell ? 'c/ Deságio' : 'Ajustado'}</span>
+             <span className="text-xs font-mono font-black text-white">$ {price.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+          </div>
+       </div>
+       <div className="flex items-center gap-3">
+          <input 
+             type="number" 
+             value={val} 
+             onChange={e => onChange?.(Number(e.target.value))} 
+             className="w-20 bg-slate-950/60 border-none rounded-lg px-2 py-2 text-white font-mono font-black text-lg outline-none focus:ring-1 focus:ring-blue-600 transition-all shadow-inner" 
+          />
+          <div className="flex-1 space-y-1">
+             <div className="flex justify-between text-[7px] font-black uppercase">
+                <span className="text-slate-500 flex items-center gap-1"><ArrowUpCircle size={8}/> {isSell ? 'Crédito Caixa' : 'Entrada (40%)'}</span>
+                <span className="text-emerald-500">$ {(upfront * val).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+             </div>
+             {!isSell && (
+               <div className="flex justify-between text-[7px] font-black uppercase">
+                  <span className="text-slate-500 flex items-center gap-1"><ArrowDownCircle size={8}/> BDI Fin. (60%)</span>
+                  <span className="text-orange-500">$ {(financed * val).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+               </div>
+             )}
+             {isSell && (
+                <div className="flex justify-between text-[7px] font-black uppercase">
+                   <span className="text-rose-500">Deságio: {desagio}%</span>
+                </div>
+             )}
+          </div>
+       </div>
+    </div>
+  );
+};
 
 const SelectCard = ({ label, val, options, icon, onChange }: any) => (
   <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex flex-col gap-2 group hover:bg-white/[0.06] transition-all">

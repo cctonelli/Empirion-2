@@ -1,3 +1,4 @@
+
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType, Championship, MachineModel, MachineSpec, InitialMachine } from '../types';
 import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO } from '../constants';
 
@@ -30,7 +31,7 @@ export const calculateBankRating = (data: { lc: number, endividamento: number, m
 };
 
 /**
- * CORE ORACLE ENGINE v13.5 GOLD - CUMULATIVE GEOMETRIC COSTS
+ * CORE ORACLE ENGINE v13.5 GOLD - CUMULATIVE GEOMETRIC COSTS & BDI LOGIC
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -45,69 +46,71 @@ export const calculateProjections = (
   const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevKpis = previousState?.kpis || {};
   const prevEquity = sanitize(bs.equity?.total, 5055447);
-  const prevSharePrice = sanitize(prevKpis.market_valuation?.share_price, 1.0);
-
+  
   // 1. RESOLVER INDICADORES (Prioriza roundRules)
   const roundSpecific = roundRules ? roundRules[currentRound] : {};
   const indicators = { ...baseIndicators, ...roundSpecific };
 
-  // 2. CÁLCULO CUMULATIVO (Geométrico baseado no histórico de todos os rounds passados)
-  let cumulativeMPA = 1.0;
-  let cumulativeMPB = 1.0;
-  let cumulativeInflation = 1.0;
-  let cumulativeSalary = 1.0;
+  // 2. CÁLCULO CUMULATIVO (Reajustes de máquinas específicos)
+  const getAdjustedPrice = (model: MachineModel, base: number) => {
+    let adj = 1.0;
+    const rate = indicators[`machine_${model}_price_adjust`] || 0;
+    for (let i = 0; i < currentRound; i++) adj *= (1 + rate / 100);
+    return base * adj;
+  };
 
-  for (let r = 0; r <= currentRound; r++) {
-      const rRule = roundRules?.[r] || {};
-      cumulativeMPA *= (1 + (rRule.raw_material_a_adjust ?? baseIndicators.raw_material_a_adjust) / 100);
-      cumulativeMPB *= (1 + (rRule.raw_material_b_adjust ?? baseIndicators.raw_material_b_adjust) / 100);
-      cumulativeInflation *= (1 + (rRule.inflation_rate ?? baseIndicators.inflation_rate) / 100);
-      cumulativeSalary *= (1 + (rRule.salary_adjust ?? baseIndicators.salary_adjust) / 100);
-  }
+  const adjPrices = {
+    alfa: getAdjustedPrice('alfa', indicators.machinery_values.alfa),
+    beta: getAdjustedPrice('beta', indicators.machinery_values.beta),
+    gama: getAdjustedPrice('gama', indicators.machinery_values.gama)
+  };
 
-  // 3. CAPACIDADE E FÍSICA (v13.2)
+  // 3. CAPEX & BDI (40/60)
+  const totalCapex = (decisions.machinery.buy.alfa * adjPrices.alfa) + 
+                     (decisions.machinery.buy.beta * adjPrices.beta) + 
+                     (decisions.machinery.buy.gama * adjPrices.gama);
+  
+  const downPayment = totalCapex * 0.4;
+  const bdiFinanced = totalCapex * 0.6;
+
+  // 4. CAPACIDADE E FÍSICA (Máquinas compradas entram no ato)
   const specs = indicators.machine_specs || DEFAULT_MACRO.machine_specs;
   const mix = indicators.initial_machinery_mix || DEFAULT_MACRO.initial_machinery_mix;
   const physics = indicators.maintenance_physics || DEFAULT_MACRO.maintenance_physics;
   
-  const totalCapacity = mix.reduce((acc, m) => acc + specs[m.model].production_capacity, 0);
-  const totalOperators = mix.reduce((acc, m) => acc + specs[m.model].operators_required, 0);
-  
-  const utilization = decisions.production.activityLevel / 100;
-  const maintenanceExpense = mix.reduce((acc, m) => {
-    const cost = calculateMaintenanceCost(specs[m.model].initial_value, m.age + currentRound, utilization, physics);
-    return acc + cost;
+  // Capacidade total inclui novas compras
+  const totalCapacity = mix.reduce((acc, m) => acc + specs[m.model].production_capacity, 0) +
+                        (decisions.machinery.buy.alfa * specs.alfa.production_capacity) +
+                        (decisions.machinery.buy.beta * specs.beta.production_capacity) +
+                        (decisions.machinery.buy.gama * specs.gama.production_capacity);
+
+  // Depreciação NÃO inclui as novas compras deste ciclo (começa ciclo seguinte)
+  const currentDepreciation = mix.reduce((acc, m) => {
+    const dep = specs[m.model].initial_value * specs[m.model].depreciation_rate;
+    return acc + dep;
   }, 0);
 
-  // 4. LOGICA DE RECEITA (v13.5)
+  // 5. LOGICA DE RECEITA & CUSTOS (v13.5)
   const regionArray = Object.values(decisions.regions);
   const avgPrice = regionArray.reduce((acc: number, curr: any) => acc + (curr.price || 0), 0) / Math.max(regionArray.length, 1);
-  const totalMarketing = regionArray.reduce((acc: number, curr: any) => acc + (curr.marketing || 0), 0);
-  
-  const priceElasticity = Math.max(0.3, 1 - ((avgPrice - 370) / 370));
-  const marketingBoost = Math.min(1.8, 1 + (totalMarketing / (Math.max(1, regionArray.length) * 10)));
-  const demandFactor = (indicators.ice / 100 + 1) * (1 + (indicators.demand_variation / 100));
-  
-  const unitsSold = Math.min(
-    totalCapacity * (1 + decisions.production.extraProductionPercent/100),
-    Math.floor(10000 * priceElasticity * marketingBoost * demandFactor)
-  );
+  const unitsSold = Math.min(totalCapacity, Math.floor(10000 * (1 - (avgPrice - 370)/370)));
   const revenue = unitsSold * avgPrice;
   
-  // 5. CUSTOS ACUMULADOS
-  const mpACost = (indicators.prices.mp_a) * cumulativeMPA;
-  const mpBCost = (indicators.prices.mp_b) * cumulativeMPB;
-  const currentSalary = (indicators.hr_base.salary) * cumulativeSalary;
+  const mpCost = unitsSold * (indicators.prices.mp_a * 0.4 + indicators.prices.mp_b * 0.3);
+  const cpv = mpCost + currentDepreciation + 150000; // + manutenção base
   
-  const cpv = unitsSold * (mpACost * 0.4 + mpBCost * 0.3) + (totalOperators * currentSalary) + maintenanceExpense;
-  const opex = 917582 * cumulativeInflation;
+  const interestRate = (indicators.interest_rate_tr || 3) / 100;
+  const debtInterest = (sanitize(bs.liabilities?.total_debt, 4121493) * interestRate);
   
-  const netProfit = revenue - cpv - opex - (indicators.tax_rate_ir / 100 * revenue * 0.1); 
+  const netProfit = revenue - cpv - 400000 - debtInterest; // OPEX simplificado
   const finalEquity = prevEquity + netProfit;
   
-  // 6. SOLVÊNCIA
-  const ac = 3290340 + netProfit; 
-  const pc = 4121493 + (decisions.machinery.buy.alfa * specs.alfa.initial_value); 
+  // 6. SOLVÊNCIA & MUTAÇÃO DE PASSIVOS
+  const ac = 3290340 + netProfit - downPayment; 
+  // Mutação: Próxima parcela do BDI ou empréstimo migra do Longo para Curto Prazo
+  const bdiInstallment = bdiFinanced / 4; 
+  const pc = sanitize(bs.liabilities?.current, 2621493) + bdiInstallment; 
+  
   const lc = ac / Math.max(pc, 1);
   const endividamento = (pc / Math.max(finalEquity, 1)) * 100;
   const bankDetails = calculateBankRating({ lc, endividamento, margem: (netProfit/revenue)*100, equity: finalEquity }, pc > ac);
@@ -122,8 +125,8 @@ export const calculateProjections = (
       equity: finalEquity
     },
     statements: {
-      dre: { revenue, cpv, opex, net_profit: netProfit },
-      balance_sheet: { assets: { total: ac + 5886600 }, equity: { total: finalEquity }, liabilities: { total_debt: pc } }
+      dre: { revenue, cpv, opex: 400000, net_profit: netProfit },
+      balance_sheet: { assets: { total: ac + 5886600 + totalCapex }, equity: { total: finalEquity }, liabilities: { total_debt: pc + bdiFinanced } }
     }
   };
 };
