@@ -4,10 +4,11 @@ import {
   ShieldCheck, ArrowLeft, Calculator,
   Sliders, CheckCircle2, LayoutGrid,
   Hourglass, Scale, Sparkles, X, Settings2,
-  TrendingUp, Zap, Users, DollarSign, Package, Cpu
+  TrendingUp, Zap, Users, DollarSign, Package, Cpu,
+  Briefcase, BarChart3, ShieldAlert, Award
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO } from '../constants';
-import { Branch, ScenarioType, ModalityType, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode, RegionType, AnalysisSource, CurrencyType, MacroIndicators } from '../types';
+import { Branch, ScenarioType, ModalityType, TransparencyLevel, SalesMode, ChampionshipTemplate, AccountNode, DeadlineUnit, GazetaMode, RegionType, AnalysisSource, CurrencyType, MacroIndicators, LaborAvailability } from '../types';
 import { createChampionshipWithTeams } from '../services/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import FinancialStructureEditor from './FinancialStructureEditor';
@@ -74,7 +75,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
            <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-600/20"><Sliders size={22} /></div>
            <div>
               <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Strategos Wizard</h2>
-              <p className="text-[9px] font-black uppercase text-orange-500 tracking-[0.4em] mt-1.5 opacity-80">Orquestração v15.2 GOLD</p>
+              <p className="text-[9px] font-black uppercase text-orange-500 tracking-[0.4em] mt-1.5 opacity-80">Orquestração v13.2 GOLD</p>
            </div>
         </div>
         <div className="flex gap-2">
@@ -125,33 +126,40 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 3 && (
             <motion.div key="s3" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-6xl mx-auto pb-20">
-               <WizardStepTitle icon={<TrendingUp size={28}/>} title="Macroeconomia (Planilha Tutor)" desc="Defina os índices variáveis para o Período 0." />
+               <WizardStepTitle icon={<TrendingUp size={28}/>} title="Macroeconomia (Planilha Tutor)" desc="Índices e Taxas Financeiras Base." />
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  <WizardField label="ICE (Crescimento)" type="number" val={marketIndicators.growth_rate_ice} onChange={(v:any)=>setMarketIndicators({...marketIndicators, growth_rate_ice: parseFloat(v)})} />
-                  <WizardField label="Inflação (%)" type="number" val={marketIndicators.inflation_rate} onChange={(v:any)=>setMarketIndicators({...marketIndicators, inflation_rate: parseFloat(v)})} />
-                  <WizardField label="Juros TR (%)" type="number" val={marketIndicators.interest_rate_tr} onChange={(v:any)=>setMarketIndicators({...marketIndicators, interest_rate_tr: parseFloat(v)})} />
-                  <WizardField label="Inadimplência (%)" type="number" val={marketIndicators.delinquency_rate} onChange={(v:any)=>setMarketIndicators({...marketIndicators, delinquency_rate: parseFloat(v)})} />
-                  <WizardField label="IR (%)" type="number" val={marketIndicators.tax_rate_ir} onChange={(v:any)=>setMarketIndicators({...marketIndicators, tax_rate_ir: parseFloat(v)})} />
-                  <WizardField label="Deságio Máquinas (%)" type="number" val={marketIndicators.machine_sale_discount} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machine_sale_discount: parseFloat(v)})} />
+                  <WizardField label="ICE (Crescimento %)" type="number" val={marketIndicators.ice} onChange={(v:any)=>setMarketIndicators({...marketIndicators, ice: parseFloat(v)})} />
+                  <WizardField label="Inflação Período (%)" type="number" val={marketIndicators.inflation_rate} onChange={(v:any)=>setMarketIndicators({...marketIndicators, inflation_rate: parseFloat(v)})} />
+                  <WizardField label="Juros Bancários TR (%)" type="number" val={marketIndicators.interest_rate_tr} onChange={(v:any)=>setMarketIndicators({...marketIndicators, interest_rate_tr: parseFloat(v)})} />
+                  <WizardField label="Inadimplência (%)" type="number" val={marketIndicators.customer_default_rate} onChange={(v:any)=>setMarketIndicators({...marketIndicators, customer_default_rate: parseFloat(v)})} />
+                  <WizardField label="Juros Fornecedores (%)" type="number" val={marketIndicators.supplier_interest} onChange={(v:any)=>setMarketIndicators({...marketIndicators, supplier_interest: parseFloat(v)})} />
+                  <WizardField label="Juros Vendas (%)" type="number" val={marketIndicators.sales_interest_rate} onChange={(v:any)=>setMarketIndicators({...marketIndicators, sales_interest_rate: parseFloat(v)})} />
+                  <WizardField label="Imposto de Renda (%)" type="number" val={marketIndicators.tax_rate_ir} onChange={(v:any)=>setMarketIndicators({...marketIndicators, tax_rate_ir: parseFloat(v)})} />
+                  <WizardField label="Multa por Atrasos (%)" type="number" val={marketIndicators.late_penalty_rate} onChange={(v:any)=>setMarketIndicators({...marketIndicators, late_penalty_rate: parseFloat(v)})} />
+                  <WizardField label="Deságio Venda Máquinas (%)" type="number" val={marketIndicators.machine_sale_discount} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machine_sale_discount: parseFloat(v)})} />
                </div>
             </motion.div>
           )}
 
           {step === 4 && (
             <motion.div key="s4" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-6xl mx-auto pb-20">
-               <WizardStepTitle icon={<Package size={28}/>} title="Insumos e Reajustes" desc="Defina valores iniciais e índices de inflação interna." />
+               <WizardStepTitle icon={<Package size={28}/>} title="Insumos e Reajustes" desc="Defina valores P0 e índices de inflação interna." />
                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="glass-card p-10 space-y-6">
-                     <h4 className="text-sm font-black uppercase text-orange-500 tracking-widest border-b border-white/5 pb-4">Valores Iniciais (P0)</h4>
+                     <h4 className="text-sm font-black uppercase text-orange-500 tracking-widest border-b border-white/5 pb-4 flex items-center gap-2"><DollarSign size={14}/> Valores Iniciais (P0)</h4>
                      <WizardField label="Matéria Prima A ($)" type="number" val={marketIndicators.prices.mp_a} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_a: parseFloat(v)}})} />
                      <WizardField label="Matéria Prima B ($)" type="number" val={marketIndicators.prices.mp_b} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_b: parseFloat(v)}})} />
                      <WizardField label="Custo Distribuição ($)" type="number" val={marketIndicators.prices.distribution_unit} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, distribution_unit: parseFloat(v)}})} />
                   </div>
                   <div className="bg-slate-900 p-10 rounded-[3rem] border border-white/10 space-y-6 shadow-2xl">
-                     <h4 className="text-sm font-black uppercase text-blue-400 tracking-widest border-b border-white/5 pb-4">Índices de Reajuste (%)</h4>
-                     <WizardField label="Reajuste Matérias-Primas" type="number" val={marketIndicators.readjust_raw_material} onChange={(v:any)=>setMarketIndicators({...marketIndicators, readjust_raw_material: parseFloat(v)})} />
-                     <WizardField label="Reajuste Marketing" type="number" val={marketIndicators.readjust_marketing} onChange={(v:any)=>setMarketIndicators({...marketIndicators, readjust_marketing: parseFloat(v)})} />
-                     <WizardField label="Reajuste Distribuição" type="number" val={marketIndicators.readjust_distribution} onChange={(v:any)=>setMarketIndicators({...marketIndicators, readjust_distribution: parseFloat(v)})} />
+                     <h4 className="text-sm font-black uppercase text-blue-400 tracking-widest border-b border-white/5 pb-4 flex items-center gap-2"><Zap size={14}/> Índices de Reajuste (%)</h4>
+                     <div className="grid grid-cols-2 gap-4">
+                        <WizardField label="Reajuste MP-A" type="number" val={marketIndicators.raw_material_a_adjust} onChange={(v:any)=>setMarketIndicators({...marketIndicators, raw_material_a_adjust: parseFloat(v)})} />
+                        <WizardField label="Reajuste MP-B" type="number" val={marketIndicators.raw_material_b_adjust} onChange={(v:any)=>setMarketIndicators({...marketIndicators, raw_material_b_adjust: parseFloat(v)})} />
+                     </div>
+                     <WizardField label="Reajuste Marketing" type="number" val={marketIndicators.marketing_campaign_adjust} onChange={(v:any)=>setMarketIndicators({...marketIndicators, marketing_campaign_adjust: parseFloat(v)})} />
+                     <WizardField label="Reajuste Distribuição" type="number" val={marketIndicators.distribution_cost_adjust} onChange={(v:any)=>setMarketIndicators({...marketIndicators, distribution_cost_adjust: parseFloat(v)})} />
+                     <WizardField label="Reajuste Estocagem" type="number" val={marketIndicators.storage_cost_adjust} onChange={(v:any)=>setMarketIndicators({...marketIndicators, storage_cost_adjust: parseFloat(v)})} />
                   </div>
                </div>
             </motion.div>
@@ -159,18 +167,38 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 5 && (
             <motion.div key="s5" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-6xl mx-auto pb-20">
-               <WizardStepTitle icon={<Cpu size={28}/>} title="Ativos e RH" desc="Parametrize o custo de capital e força de trabalho." />
+               <WizardStepTitle icon={<Cpu size={28}/>} title="Ativos e Capital Humano" desc="Parametrize o custo de máquinas e força de trabalho." />
                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="glass-card p-10 space-y-6">
-                     <h4 className="text-sm font-black uppercase text-orange-500 tracking-widest border-b border-white/5 pb-4">Custo de Máquinas ($)</h4>
-                     <WizardField label="Máquina ALFA" type="number" val={marketIndicators.machinery_values.alfa} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: parseFloat(v)}})} />
-                     <WizardField label="Máquina BETA" type="number" val={marketIndicators.machinery_values.beta} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, beta: parseFloat(v)}})} />
-                     <WizardField label="Máquina GAMA" type="number" val={marketIndicators.machinery_values.gama} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, gama: parseFloat(v)}})} />
+                  <div className="glass-card p-10 space-y-8">
+                     <h4 className="text-sm font-black uppercase text-orange-500 tracking-widest border-b border-white/5 pb-4 flex items-center gap-2"><Cpu size={14}/> Máquinas (P0 e Reajuste %)</h4>
+                     <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                           <WizardField label="Custo ALFA ($)" type="number" val={marketIndicators.machinery_values.alfa} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: parseFloat(v)}})} />
+                           <WizardField label="Reajuste ALFA (%)" type="number" val={marketIndicators.machine_alpha_price_adjust} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machine_alpha_price_adjust: parseFloat(v)})} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           <WizardField label="Custo BETA ($)" type="number" val={marketIndicators.machinery_values.beta} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, beta: parseFloat(v)}})} />
+                           <WizardField label="Reajuste BETA (%)" type="number" val={marketIndicators.machine_beta_price_adjust} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machine_beta_price_adjust: parseFloat(v)})} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           <WizardField label="Custo GAMA ($)" type="number" val={marketIndicators.machinery_values.gama} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, gama: parseFloat(v)}})} />
+                           <WizardField label="Reajuste GAMA (%)" type="number" val={marketIndicators.machine_gamma_price_adjust} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machine_gamma_price_adjust: parseFloat(v)})} />
+                        </div>
+                     </div>
                   </div>
-                  <div className="bg-slate-900 p-10 rounded-[3rem] border border-white/10 space-y-6 shadow-2xl">
-                     <h4 className="text-sm font-black uppercase text-emerald-400 tracking-widest border-b border-white/5 pb-4">Recursos Humanos ($)</h4>
+                  <div className="bg-slate-900 p-10 rounded-[3rem] border border-white/10 space-y-8 shadow-2xl">
+                     <h4 className="text-sm font-black uppercase text-emerald-400 tracking-widest border-b border-white/5 pb-4 flex items-center gap-2"><Users size={14}/> Recursos Humanos</h4>
                      <WizardField label="Salário Base (P0)" type="number" val={marketIndicators.hr_base.salary} onChange={(v:any)=>setMarketIndicators({...marketIndicators, hr_base: {...marketIndicators.hr_base, salary: parseFloat(v)}})} />
-                     <WizardField label="Treinamento" type="number" val={marketIndicators.hr_base.training} onChange={(v:any)=>setMarketIndicators({...marketIndicators, hr_base: {...marketIndicators.hr_base, training: parseFloat(v)}})} />
+                     
+                     <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                           <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Produtividade Média/Homem</label>
+                           <span className="text-lg font-black text-white">{marketIndicators.labor_productivity.toFixed(1)}x</span>
+                        </div>
+                        <input type="range" min="0.5" max="2.0" step="0.1" value={marketIndicators.labor_productivity} onChange={e => setMarketIndicators({...marketIndicators, labor_productivity: parseFloat(e.target.value)})} className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
+                     </div>
+
+                     <WizardSelect label="Disponibilidade de Mão de Obra" val={marketIndicators.labor_availability} onChange={(v: string) => setMarketIndicators({...marketIndicators, labor_availability: v as LaborAvailability})} options={[{v:'BAIXA',l:'BAIXA DISPONIBILIDADE'},{v:'MEDIA',l:'MÉDIA (ESTÁVEL)'},{v:'ALTA',l:'ALTA (EXCESSO)'}]} />
                   </div>
                </div>
             </motion.div>
@@ -190,7 +218,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                <WizardStepTitle icon={<ShieldCheck size={28}/>} title="Validação Final" desc="Pronto para despacho para a rede Oracle." />
                <div className="bg-slate-900/60 p-20 rounded-[5rem] border border-white/5 space-y-10 shadow-2xl relative overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-tr from-orange-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" /><Sparkles size={80} className="text-orange-600 mx-auto animate-pulse" />
-                  <div className="space-y-4 relative z-10"><h3 className="text-4xl font-black text-white uppercase italic leading-none">Baseline v15.2 Ready</h3><p className="text-xl text-slate-400 font-medium italic max-w-2xl mx-auto leading-relaxed">"Arena estratégica mapeada e auditada conforme colunas da planilha oficial."</p></div>
+                  <div className="space-y-4 relative z-10"><h3 className="text-4xl font-black text-white uppercase italic leading-none">Baseline v13.2 Gold Ready</h3><p className="text-xl text-slate-400 font-medium italic max-w-2xl mx-auto leading-relaxed">"Arena estratégica mapeada com cobertura total de 18 índices macro e variáveis operacionais."</p></div>
                   <div className="flex items-center justify-center gap-4 text-emerald-500 font-black text-[11px] uppercase tracking-[0.5em] relative z-10 pt-6"><div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" /> Link de Dados Estável</div>
                </div>
             </motion.div>
@@ -211,7 +239,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   );
 };
 
-// ... WizardStepTitle, WizardField e WizardSelect permanecem iguais ...
 const WizardStepTitle = ({ icon, title, desc }: any) => (
   <div className="flex items-center gap-8 border-b border-white/5 pb-12">
      <div className="p-5 bg-white/5 rounded-[1.75rem] text-orange-500 shadow-inner flex items-center justify-center border border-white/5">{icon}</div>
