@@ -18,6 +18,7 @@ import BlogPage from './pages/BlogPage';
 import ContactPage from './pages/ContactPage';
 import PublicRewards from './pages/PublicRewards';
 import TestTerminal from './pages/TestTerminal';
+import TrailWizard from './components/TrailWizard';
 import Auth from './components/Auth';
 import { supabase, getUserProfile, isTestMode } from './services/supabase';
 import { UserProfile } from './types';
@@ -52,7 +53,6 @@ const AppContent: React.FC = () => {
       const prof = await getUserProfile(uid);
       setProfile(prof);
       
-      // Auto-redirecionamento baseada na ROLE para isolamento de ambientes
       if (location.pathname === '/app' || location.pathname === '/app/') {
         if (prof?.role === 'admin' || prof?.role === 'tutor') {
            navigate('/app/admin');
@@ -83,10 +83,10 @@ const AppContent: React.FC = () => {
 
   return (
     <Routes>
-      {/* AMBIENTE: USUÁRIOS COMUNS / PÚBLICO */}
       <Route path="/" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-0"><LandingPage onLogin={() => navigate('/auth')}/></div></>} />
       <Route path="/auth" element={<Auth onAuth={() => navigate('/app')} onBack={() => navigate('/')} />} />
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
+      <Route path="/trial/new" element={<TrailWizard onComplete={() => navigate('/test/industrial')} />} />
       <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       <Route path="/branches/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       <Route path="/solutions/simulators" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><SimulatorsPage /></div></>} />
@@ -97,7 +97,6 @@ const AppContent: React.FC = () => {
       <Route path="/contact" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ContactPage /></div></>} />
       <Route path="/rewards" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><PublicRewards /></div></>} />
 
-      {/* AMBIENTE: OPERACIONAL (LOGADO) */}
       <Route path="/app/*" element={
         (session || isTestMode) ? (
           <Layout
@@ -108,17 +107,12 @@ const AppContent: React.FC = () => {
             onNavigate={(view) => navigate(`/app/${view}`)}
           >
             <Routes>
-              {/* Redirecionamento de Pouso Baseado na Role */}
               <Route path="/" element={<Navigate to={profile?.role === 'admin' || profile?.role === 'tutor' ? 'admin' : 'dashboard'} />} />
-              
-              {/* AMBIENTE: EQUIPES & OBSERVADORES */}
               <Route path="dashboard" element={<Dashboard branch="industrial" />} />
               <Route path="championships" element={<ChampionshipsView onSelectTeam={handleSelectTeam} />} />
               <Route path="reports" element={<Reports branch="industrial" />} />
               <Route path="market" element={<MarketAnalysis />} />
               <Route path="intelligence" element={<OpalIntelligenceHub isPremium={true} onUpgrade={() => {}} />} />
-              
-              {/* AMBIENTE: ADMIN GERAL & TUTOR */}
               <Route path="admin" element={<AdminCommandCenter />} />
               <Route path="settings" element={<AdminCommandCenter preTab="tournaments" />} />
             </Routes>
