@@ -106,10 +106,10 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     const currentRound = selectedArena?.current_round || 0;
 
     return (
-      <div className="space-y-8 animate-in fade-in duration-500 pb-20 font-sans max-w-[1600px] mx-auto p-6 min-h-screen">
+      <div className="flex flex-col h-full animate-in fade-in duration-500 font-sans max-w-[1600px] mx-auto p-6 overflow-hidden">
         
         {/* HEADER DA ARENA - DESIGN SEBRAE STICKY v13.9 */}
-        <header className="sticky top-0 z-[2000] bg-slate-900 border-2 border-white/10 p-6 md:p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.8)] backdrop-blur-3xl space-y-8 mb-10 border-t-orange-500/40">
+        <header className="shrink-0 z-[2000] bg-slate-900 border-2 border-white/10 p-6 md:p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.8)] backdrop-blur-3xl space-y-8 mb-10 border-t-orange-500/40">
            <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
               <div className="flex items-center gap-6 shrink-0">
                  <button onClick={() => { 
@@ -142,8 +142,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
            </div>
         </header>
 
-        {/* VIEWPORT OPERACIONAL */}
-        <main className="relative z-10">
+        {/* VIEWPORT OPERACIONAL COM ROLAGEM PRÓPRIA */}
+        <main className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-10">
            <AnimatePresence mode="wait">
               {tutorView === 'dashboard' && selectedArena && (
                 <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-8">
@@ -158,7 +158,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
               )}
 
               {tutorView === 'planning' && (
-                <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
+                <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="h-full">
                    {isCreatingTrial ? (
                       <TrailWizard onComplete={() => {
                         setIsCreatingTrial(false);

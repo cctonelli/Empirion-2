@@ -9,28 +9,34 @@
   }
 }
 
-/* EMPIRION ORACLE SCROLLBARS - ULTRA DISCREET */
+/* EMPIRION ORACLE SCROLLBARS - TACTICAL ORANGE */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  @apply bg-slate-950/50 rounded-full;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-white/10 rounded-full hover:bg-orange-600/50 transition-colors;
+  @apply bg-orange-600/40 rounded-full border-2 border-transparent bg-clip-content hover:bg-orange-500 transition-colors;
 }
 
-/* WIZARD STRUCTURAL KERNEL V15.2 - FIX HEIGHT TO VIEWPORT */
+/* WIZARD STRUCTURAL KERNEL V15.5 - FULL COCKPIT MODE */
 .wizard-shell {
-  @apply flex flex-col w-full h-full bg-slate-900/40 backdrop-blur-3xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden;
+  @apply flex flex-col w-full bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden;
+  height: calc(100vh - 280px); /* Altura calculada para caber entre o menu superior e a base */
+  min-height: 500px;
 }
 
 .wizard-content {
-  @apply flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 custom-scrollbar scroll-smooth relative;
-  min-height: 0;
+  @apply flex-1 overflow-y-auto p-8 md:p-12 lg:p-16 custom-scrollbar scroll-smooth relative;
+}
+
+/* Garante que o conteúdo não seja cortado por baixo */
+.wizard-content > div {
+  @apply pb-20; 
 }
 
 .wizard-header-fixed {
@@ -38,7 +44,7 @@
 }
 
 .wizard-footer-dock {
-  @apply shrink-0 bg-slate-950/95 backdrop-blur-3xl border-t border-white/10 p-4 md:p-6 px-6 md:px-10 flex justify-between items-center z-[100] shadow-[0_-20px_50px_rgba(0,0,0,0.5)];
+  @apply shrink-0 bg-slate-950/95 backdrop-blur-3xl border-t border-white/10 p-6 px-10 flex justify-between items-center z-[100] shadow-[0_-20px_50px_rgba(0,0,0,0.5)];
 }
 
 /* TABLE & MATRIX UTILS */
