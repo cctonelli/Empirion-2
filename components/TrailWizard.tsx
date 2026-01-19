@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowRight, ArrowLeft, ShieldCheck, Rocket, 
@@ -82,7 +83,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         branch: 'industrial',
         status: 'active',
         current_round: 0,
-        // Fix: Changed total_rounds to totalRounds to match formData definition
         total_rounds: formData.totalRounds,
         deadline_value: formData.roundTime,
         deadline_unit: formData.roundUnit,
@@ -111,52 +111,32 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const stepsCount = 5;
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-[#020617] flex flex-col font-sans overflow-hidden">
-      <EmpireParticles />
-      
-      <header className="shrink-0 h-24 bg-slate-900/80 backdrop-blur-2xl border-b border-white/5 flex items-center justify-between px-10 relative z-50">
-        <div className="flex items-center gap-6">
-           <div className="w-14 h-14 bg-orange-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-600/20">
-              <Rocket size={28} />
-           </div>
-           <div>
-              <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Trial Master Wizard</h2>
-              <p className="text-[9px] font-black uppercase text-orange-500 tracking-[0.4em] mt-1.5 opacity-80">Protocolo de Simulação Efêmera</p>
-           </div>
-        </div>
-        <div className="flex gap-3">
-           {Array.from({ length: stepsCount }).map((_, i) => (
-             <div key={i} className={`h-1.5 rounded-full transition-all duration-700 ${step === i+1 ? 'w-16 bg-orange-600 shadow-[0_0_15px_#f97316]' : step > i+1 ? 'w-8 bg-emerald-500' : 'w-8 bg-white/10'}`} />
-           ))}
-        </div>
-        <button onClick={() => window.history.back()} className="p-4 hover:bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X size={24}/></button>
-      </header>
-
-      <main ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-8 md:p-20 relative z-10">
+    <div className="relative w-full flex flex-col font-sans overflow-hidden bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-2xl">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-8 md:p-16 relative z-10">
         <div className="max-w-6xl mx-auto pb-32">
           <AnimatePresence mode="wait">
             
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
-                 <WizardStepTitle icon={<Globe size={32}/>} title="Identidade da Arena" desc="Configurações globais do ambiente sandbox." />
+                 <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DA ARENA" desc="CONFIGURAÇÕES GLOBAIS DO AMBIENTE SANDBOX." />
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <WizardField label="Nome da Instância Trial" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TESTE INDUSTRIAL ALPHA" />
+                    <WizardField label="NOME DA INSTÂNCIA TRIAL" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TESTE INDUSTRIAL ALPHA" />
                     <div className="grid grid-cols-2 gap-6">
-                       <WizardField label="Total de Ciclos" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
-                       <WizardField label="Preço Ação P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
+                       <WizardField label="TOTAL DE CICLOS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
+                       <WizardField label="PREÇO AÇÃO P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
                     </div>
                     <div className="grid grid-cols-2 gap-6">
-                       <WizardField label="Tempo por Rodada" type="number" val={formData.roundTime} onChange={(v:any)=>setFormData({...formData, roundTime: parseInt(v)})} />
-                       <WizardSelect label="Unidade Temporal" val={formData.roundUnit} onChange={(v:any)=>setFormData({...formData, roundUnit: v as DeadlineUnit})} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} />
+                       <WizardField label="TEMPO POR RODADA" type="number" val={formData.roundTime} onChange={(v:any)=>setFormData({...formData, roundTime: parseInt(v)})} />
+                       <WizardSelect label="UNIDADE TEMPORAL" val={formData.roundUnit} onChange={(v:any)=>setFormData({...formData, roundUnit: v as DeadlineUnit})} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} />
                     </div>
-                    <WizardSelect label="Moeda do Nodo" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'}]} />
+                    <WizardSelect label="MOEDA DO NODO" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'}]} />
                  </div>
               </motion.div>
             )}
 
             {step === 2 && (
               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
-                 <WizardStepTitle icon={<Users size={32}/>} title="Equipes e Bots" desc="Defina quem participará da competição no cluster." />
+                 <WizardStepTitle icon={<Users size={32}/>} title="EQUIPES E BOTS" desc="DEFINA QUEM PARTICIPARÁ DA COMPETIÇÃO NO CLUSTER." />
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
                     <div className="space-y-8 bg-white/5 p-10 rounded-[3.5rem] border border-white/5 shadow-2xl">
                        <h4 className="text-sm font-black text-orange-500 uppercase tracking-widest italic border-b border-white/5 pb-4">Dimensionamento</h4>
@@ -164,7 +144,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <WizardField label="Equipes Humanas" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
                           <WizardField label="Synthetic Bots (IA)" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
                        </div>
-                       <p className="text-[10px] text-slate-500 font-bold uppercase leading-relaxed italic">"Bots utilizam o Gemini 3 Flash para tomar decisões táticas competitivas baseadas no cenário macro."</p>
                     </div>
                     <div className="space-y-6">
                        <h4 className="text-sm font-black text-blue-400 uppercase tracking-widest italic flex items-center gap-3"><CheckCircle2 size={16}/> Identificadores das Equipes</h4>
@@ -180,14 +159,10 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 3 && (
               <motion.div key="s3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
-                 <WizardStepTitle icon={<Globe size={32}/>} title="Geopolítica Regional" desc="Configure as áreas de disputa comercial." />
+                 <WizardStepTitle icon={<Globe size={32}/>} title="GEOPOLÍTICA REGIONAL" desc="CONFIGURE AS ÁREAS DE DISPUTA COMERCIAL." />
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
                     <div className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/10 space-y-10 shadow-2xl">
                        <WizardField label="Quantidade de Regiões" type="number" val={formData.regionsCount} onChange={(v:any)=>setFormData({...formData, regionsCount: Math.min(15, Math.max(1, parseInt(v)))})} />
-                       <div className="p-6 bg-orange-600/10 border border-orange-500/20 rounded-3xl flex gap-6 items-center">
-                          <Info size={32} className="text-orange-500" />
-                          <p className="text-xs text-slate-300 font-medium leading-relaxed italic">Recomenda-se 4 a 9 regiões para torneios curtos de até 12 ciclos.</p>
-                       </div>
                     </div>
                     <div className="space-y-6">
                        <h4 className="text-sm font-black text-emerald-400 uppercase tracking-widest italic flex items-center gap-3"><Boxes size={16}/> Nomenclatura dos Nodos</h4>
@@ -203,7 +178,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 4 && (
               <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                 <WizardStepTitle icon={<Calculator size={32}/>} title="Oracle Baseline" desc="Edite os balanços e DREs iniciais para o Round Zero." />
+                 <WizardStepTitle icon={<Calculator size={32}/>} title="ORACLE BASELINE" desc="EDITE OS BALANÇOS E DRES INICIAIS PARA O ROUND ZERO." />
                  <div className="bg-slate-950/60 p-2 rounded-[4rem] border border-white/5 shadow-2xl overflow-hidden">
                     <FinancialStructureEditor 
                        initialBalance={financials?.balance_sheet} 
@@ -222,22 +197,17 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <div className="space-y-6">
                     <h1 className="text-6xl font-black text-white uppercase italic tracking-tighter">Nodo Pronto</h1>
                     <p className="text-xl text-slate-400 font-medium italic max-w-2xl mx-auto leading-relaxed">
-                       Sua Arena Trial com {formData.humanTeamsCount} equipes e {formData.regionsCount} regiões está pronta para inicializar o cluster.
+                       Sua Arena Trial está pronta para inicializar o cluster.
                     </p>
-                 </div>
-                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] max-w-lg mx-auto inline-block">
-                    <div className="flex items-center gap-4 text-emerald-500 font-black uppercase text-[10px] tracking-widest">
-                       <Sparkles size={16} /> Alta Fidelidade Oracle v13.2 Ativa
-                    </div>
                  </div>
               </motion.div>
             )}
 
           </AnimatePresence>
         </div>
-      </main>
+      </div>
 
-      <footer className="shrink-0 h-28 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 px-12 flex items-center justify-between relative z-50 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
+      <footer className="shrink-0 h-32 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 px-12 flex items-center justify-between relative z-50 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
          <button 
            onClick={() => setStep(s => Math.max(1, s-1))} 
            disabled={step === 1} 
@@ -254,7 +224,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             <button 
               onClick={step === stepsCount ? handleLaunch : () => setStep(s => s + 1)} 
               disabled={isSubmitting} 
-              className="px-20 py-7 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95 group"
+              className="px-20 py-8 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95 group"
             >
                {isSubmitting ? (
                  <><Loader2 className="animate-spin" size={20}/> Sincronizando Cluster...</>

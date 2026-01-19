@@ -23,7 +23,7 @@ import PublicRewards from './pages/PublicRewards';
 import TestTerminal from './pages/TestTerminal';
 import TrailWizard from './components/TrailWizard';
 import Auth from './components/Auth';
-import { supabase, getUserProfile, isTestMode } from './services/supabase';
+import { supabase, getUserProfile, isTestMode, provisionDemoEnvironment } from './services/supabase';
 import { UserProfile } from './types';
 
 const AppContent: React.FC = () => {
@@ -53,7 +53,7 @@ const AppContent: React.FC = () => {
         await fetchProfile(realSession.user.id);
       } else if (isTrial) {
         // Se for trial mas não logado, ainda sim buscamos um "perfil mock" de tutor
-        await fetchProfile('trial-user-id');
+        await fetchProfile('trial-master-id');
       } else {
         setLoading(false);
       }
@@ -101,7 +101,10 @@ const AppContent: React.FC = () => {
       <Route path="/" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-0"><LandingPage onLogin={() => navigate('/auth')}/></div></>} />
       <Route path="/auth" element={<Auth onAuth={() => navigate('/app')} onBack={() => navigate('/')} />} />
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
-      <Route path="/trial/new" element={<TrailWizard onComplete={() => navigate('/test/industrial')} />} />
+      
+      {/* NOVO FLUXO TRIAL: Abre diretamente no Command Center em modo Orquestração */}
+      <Route path="/trial/new" element={<Navigate to="/app/admin?mode=new_trial" replace />} />
+
       <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       <Route path="/branches/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
       <Route path="/solutions/simulators" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><SimulatorsPage /></div></>} />

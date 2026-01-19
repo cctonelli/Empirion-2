@@ -1,23 +1,28 @@
 
 import React, { useState, useEffect } from 'react';
+// Fix: Use any to bypass react-router-dom type resolution issues in this environment
+import * as Router from 'react-router-dom';
+const { useLocation, useNavigate } = Router as any;
 import { 
   Plus, Trash2, ArrowLeft, Monitor, Command, Users, Globe, CreditCard, Cpu, Gauge,
   X, Palette, Menu as MenuIcon, Save, AtSign, Phone, FileCode, UserPlus, UserMinus, Shield,
   Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity, LayoutDashboard,
-  PenTool, Newspaper, History, Settings2
+  PenTool, Newspaper, History, Settings2, Rocket, Lock
 } from 'lucide-react';
 import { 
   getChampionships, 
   deleteChampionship, 
   supabase,
   getUserProfile,
-  getAllUsers
+  getAllUsers,
+  provisionDemoEnvironment
 } from '../services/supabase';
 import { Championship, UserProfile, MenuItemConfig } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
 import TutorDecisionMonitor from './TutorDecisionMonitor';
 import GazetteViewer from './GazetteViewer';
+import TrailWizard from './TrailWizard';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -26,6 +31,8 @@ import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES } from '../constant
 type TutorView = 'dashboard' | 'planning' | 'decisions' | 'teams' | 'gazette';
 
 const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState(preTab);
   const [championships, setChampionships] = useState<Championship[]>([]);
@@ -33,6 +40,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const [loading, setLoading] = useState(false);
   const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
   const [showWizard, setShowWizard] = useState(false);
+  const [isCreatingTrial, setIsCreatingTrial] = useState(false);
   
   // View interna da Arena selecionada
   const [tutorView, setTutorView] = useState<TutorView>('dashboard');
@@ -41,6 +49,15 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const [heroTitle, setHeroTitle] = useState('Forje Seu Império');
   const [accentColor, setAccentColor] = useState('#f97316');
   const [menus, setMenus] = useState<MenuItemConfig[]>([]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'new_trial') {
+       provisionDemoEnvironment();
+       setIsCreatingTrial(true);
+       setTutorView('planning');
+    }
+  }, [location.search]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -64,7 +81,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       if (data) {
          setChampionships(data);
          // AUTO-LOAD TRIAL ARENA: Se estivermos em trial e houver um ID salvo, selecionamos automaticamente
-         if (isTrial && storedArenaId && !selectedArena) {
+         if (isTrial && storedArenaId && !selectedArena && !isCreatingTrial) {
             const found = data.find(c => c.id === storedArenaId);
             if (found) setSelectedArena(found);
          }
@@ -78,38 +95,49 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     } catch (err) { console.error("Sync Error:", err); } finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, [activeTab]);
+  useEffect(() => { fetchData(); }, [activeTab, isCreatingTrial]);
 
   const isAdmin = profile?.role === 'admin';
   const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
 
-  if (selectedArena) {
+  // --- VIEW DE COMANDO (ARENA SELECIONADA OU EM CRIAÇÃO) ---
+  if (selectedArena || isCreatingTrial) {
+    const arenaName = selectedArena?.name || "Nova Arena Trial";
+    const currentRound = selectedArena?.current_round || 0;
+
     return (
       <div className="space-y-8 animate-in fade-in duration-500 pb-20 font-sans max-w-[1600px] mx-auto p-6 min-h-screen">
         
-        {/* HEADER DA ARENA - DESIGN SEBRAE INSPIRED STICKY v13.8 */}
-        <header className="sticky top-0 z-[1000] bg-slate-900 border-2 border-white/10 p-6 md:p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.6)] backdrop-blur-3xl space-y-8 mb-10 border-t-orange-500/40">
+        {/* HEADER DA ARENA - DESIGN SEBRAE STICKY v13.9 */}
+        <header className="sticky top-0 z-[2000] bg-slate-900 border-2 border-white/10 p-6 md:p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.8)] backdrop-blur-3xl space-y-8 mb-10 border-t-orange-500/40">
            <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
               <div className="flex items-center gap-6 shrink-0">
-                 <button onClick={() => { localStorage.removeItem('active_champ_id'); setSelectedArena(null); }} className="p-4 bg-white/5 text-slate-400 hover:text-white rounded-2xl border border-white/10 transition-all active:scale-95"><ArrowLeft size={24} /></button>
+                 <button onClick={() => { 
+                   localStorage.removeItem('active_champ_id'); 
+                   setSelectedArena(null); 
+                   setIsCreatingTrial(false);
+                   navigate('/app/admin');
+                 }} className="p-4 bg-white/5 text-slate-400 hover:text-white rounded-2xl border border-white/10 transition-all active:scale-95"><ArrowLeft size={24} /></button>
                  <div>
                     <div className="flex items-center gap-3">
-                       <h1 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Arena <span className="text-orange-500">{selectedArena.name}</span></h1>
-                       {selectedArena.is_trial && (
-                         <span className="px-3 py-0.5 bg-emerald-600/20 border border-emerald-500/30 text-emerald-500 rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">Sandbox Oracle</span>
-                       )}
+                       <h1 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Arena <span className="text-orange-500">{arenaName}</span></h1>
+                       <span className="px-3 py-0.5 bg-emerald-600/20 border border-emerald-500/30 text-emerald-500 rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">
+                          {isCreatingTrial ? 'Orquestração Ativa' : 'Sandbox Oracle'}
+                       </span>
                     </div>
-                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.5em] mt-2 italic opacity-70">Ciclo Ativo: 0{selectedArena.current_round} • Protocolo de Orquestração Industrial</p>
+                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.5em] mt-2 italic opacity-70">
+                       Ciclo: 0{currentRound} • Protocolo Industrial v13.9
+                    </p>
                  </div>
               </div>
               
-              {/* MENU SUPERIOR TÁTICO - RÓTULOS OFICIAIS EMPIRION v13.8 */}
+              {/* MENU SUPERIOR TÁTICO - RÓTULOS OFICIAIS EMPIRION v13.9 */}
               <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 bg-slate-950 rounded-[2rem] border border-white/5 shadow-inner">
-                 <ArenaNavBtn active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="COCKPIT" icon={<LayoutDashboard size={14}/>} />
+                 <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="COCKPIT" icon={<LayoutDashboard size={14}/>} />
                  <ArenaNavBtn active={tutorView === 'planning'} onClick={() => setTutorView('planning')} label="PLANEJAMENTO" icon={<PenTool size={14}/>} />
-                 <ArenaNavBtn active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="ANÁLISE DAS DECISÕES" icon={<History size={14}/>} />
-                 <ArenaNavBtn active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="EQUIPES" icon={<Users size={14}/>} />
-                 <ArenaNavBtn active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="GAZETA INDUSTRIAL" icon={<Newspaper size={14}/>} />
+                 <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="ANÁLISE DAS DECISÕES" icon={<History size={14}/>} />
+                 <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="EQUIPES" icon={<Users size={14}/>} />
+                 <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="GAZETA INDUSTRIAL" icon={<Newspaper size={14}/>} />
               </div>
            </div>
         </header>
@@ -117,7 +145,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
         {/* VIEWPORT OPERACIONAL */}
         <main className="relative z-10">
            <AnimatePresence mode="wait">
-              {tutorView === 'dashboard' && (
+              {tutorView === 'dashboard' && selectedArena && (
                 <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-8">
                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       <MetricCard label="Equipes" val={selectedArena.teams?.length?.toString() || '0'} icon={<Users className="text-blue-500"/>} trend="Active" />
@@ -131,17 +159,24 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
 
               {tutorView === 'planning' && (
                 <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
-                   <TutorArenaControl championship={selectedArena} onUpdate={(u) => setSelectedArena({...selectedArena, ...u})} />
+                   {isCreatingTrial ? (
+                      <TrailWizard onComplete={() => {
+                        setIsCreatingTrial(false);
+                        fetchData();
+                      }} />
+                   ) : selectedArena && (
+                      <TutorArenaControl championship={selectedArena} onUpdate={(u) => setSelectedArena({...selectedArena, ...u})} />
+                   )}
                 </motion.div>
               )}
 
-              {tutorView === 'decisions' && (
+              {tutorView === 'decisions' && selectedArena && (
                 <motion.div key="dec" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
                    <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
                 </motion.div>
               )}
 
-              {tutorView === 'teams' && (
+              {tutorView === 'teams' && selectedArena && (
                 <motion.div key="teams" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="grid grid-cols-1 md:grid-cols-3 gap-8">
                    {selectedArena.teams?.map(t => (
                       <div key={t.id} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 shadow-xl relative overflow-hidden group">
@@ -153,22 +188,12 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                             </span>
                          </div>
                          <h4 className="text-2xl font-black text-white uppercase italic relative z-10">{t.name}</h4>
-                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 relative z-10">
-                            <div className="space-y-1">
-                               <span className="text-[8px] font-black text-slate-500 uppercase">Equity</span>
-                               <span className="block text-sm font-mono font-bold">$ {t.equity.toLocaleString()}</span>
-                            </div>
-                            <div className="space-y-1">
-                               <span className="text-[8px] font-black text-slate-500 uppercase">Rating</span>
-                               <span className="block text-sm font-black text-orange-500">{t.kpis?.rating || 'AAA'}</span>
-                            </div>
-                         </div>
                       </div>
                    ))}
                 </motion.div>
               )}
 
-              {tutorView === 'gazette' && (
+              {tutorView === 'gazette' && selectedArena && (
                 <motion.div key="gaz" initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}} exit={{opacity:0}} className="flex justify-center">
                    <GazetteViewer arena={selectedArena} aiNews="O Oráculo Strategos está processando o briefing deste ciclo..." round={selectedArena.current_round} userRole="tutor" onClose={() => setTutorView('dashboard')} />
                 </motion.div>
@@ -185,7 +210,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
         <div className="space-y-2">
           <div className="flex items-center gap-5">
             <div className="p-4 bg-orange-600 text-white rounded-[2rem] shadow-2xl"><Command size={40} /></div> 
-            <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter italic leading-none">
+            <h1 className="text-5xl md:text-6xl font-black text-white uppercase italic leading-none">
               {isAdmin ? 'Command' : 'Tutor'} <span className="text-orange-600">Center</span>
             </h1>
           </div>
@@ -195,7 +220,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
            <div className="flex items-center gap-4">
               <div className={`w-3.5 h-3.5 rounded-full animate-pulse shadow-[0_0_15px] ${isAdmin ? 'bg-blue-500 shadow-blue-500' : 'bg-emerald-500 shadow-emerald-500'}`} />
               <div className="flex flex-col">
-                 <span className="text-lg font-black text-white uppercase italic tracking-tight">{profile?.nickname || 'TRIAL_MASTER'}</span>
+                 <span className="text-lg font-black text-white uppercase italic tracking-tight">{profile?.nickname || 'ARENA_MASTER'}</span>
                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{isAdmin ? 'SYSTEM OWNER' : isTrialSession ? 'ARENA ORCHESTRATOR' : 'ARENA TUTOR'}</span>
               </div>
            </div>
@@ -241,7 +266,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                                {isAdmin && <button onClick={() => deleteChampionship(champ.id, !!champ.is_trial).then(fetchData)} className="p-4 bg-white/5 rounded-2xl text-slate-600 hover:text-rose-500 transition-colors"><Trash2 size={24}/></button>}
                             </div>
                             <h5 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tight mb-6 group-hover:text-orange-500 transition-colors">{champ.name}</h5>
-                            <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest italic">{champ.branch} Simulation Unit</p>
                          </div>
                          <button onClick={() => { localStorage.setItem('active_champ_id', champ.id); setSelectedArena(champ); }} className="w-full py-6 mt-12 bg-white/5 border border-white/10 text-white rounded-[1.5rem] font-black text-[12px] uppercase tracking-[0.3em] hover:bg-orange-600 transition-all flex items-center justify-center gap-4 shadow-2xl active:scale-95">
                             <Monitor size={20} /> Entrar na Control Room
@@ -259,57 +283,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                 <ChampionshipWizard isTrial={isTrialSession} onComplete={() => { setShowWizard(false); fetchData(); }} />
               </motion.div>
             )
-          )}
-
-          {activeTab === 'system' && (
-             <motion.div key="sys" initial={{opacity:0}} animate={{opacity:1}} className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <MetricCard label="Operadores Online" val="1.428" icon={<Users className="text-emerald-500"/>} trend="+12%" />
-                <MetricCard label="Nodos Ativos" val={championships.length.toString()} icon={<Globe className="text-blue-500"/>} trend="Stable" />
-                <MetricCard label="Receita SaaS" val="R$ 48.900" icon={<CreditCard className="text-amber-500"/>} trend="+5.4%" />
-                <MetricCard label="Latência" val="14ms" icon={<Cpu className="text-indigo-500"/>} trend="Optimal" />
-             </motion.div>
-          )}
-
-          {activeTab === 'uidesign' && (
-            <motion.div key="cms" initial={{opacity:0}} animate={{opacity:1}} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-               <div className="bg-slate-900 p-12 rounded-[4rem] border border-white/5 space-y-10 shadow-2xl">
-                  <h3 className="text-3xl font-black text-white uppercase italic flex items-center gap-4"><Palette className="text-orange-500" /> Branding Engine</h3>
-                  <div className="space-y-8">
-                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Título do Hero (Home)</label>
-                        <input value={heroTitle} onChange={e => setHeroTitle(e.target.value)} className="w-full p-6 bg-white/5 border border-white/10 rounded-2xl text-white font-black text-lg outline-none" />
-                     </div>
-                  </div>
-                  <button className="w-full py-8 bg-orange-600 text-white rounded-3xl font-black text-sm uppercase tracking-[0.4em] flex items-center justify-center gap-4 shadow-2xl hover:bg-white hover:text-orange-950 transition-all">
-                     <Save size={24} /> Publicar Branding Node
-                  </button>
-               </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'users' && (
-            <motion.div key="users" initial={{opacity:0}} animate={{opacity:1}} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-               {users.map(u => (
-                 <div key={u.id} className="p-8 bg-white/5 border border-white/10 rounded-[3rem] space-y-6">
-                    <div className="flex justify-between items-start">
-                       <div className="w-12 h-12 bg-slate-950 rounded-xl flex items-center justify-center text-emerald-500"><AtSign size={20}/></div>
-                       <span className="px-3 py-1 bg-white/5 rounded-full text-[8px] font-black uppercase text-slate-500">{u.role}</span>
-                    </div>
-                    <h4 className="text-xl font-black text-white uppercase italic">{u.nickname || 'Anônimo'}</h4>
-                 </div>
-               ))}
-            </motion.div>
-          )}
-
-          {activeTab === 'templates' && (
-            <motion.div key="tpl" initial={{opacity:0}} animate={{opacity:1}} className="grid grid-cols-1 md:grid-cols-3 gap-12">
-               {CHAMPIONSHIP_TEMPLATES.map(tpl => (
-                 <div key={tpl.id} className="bg-slate-900 border border-white/5 p-12 rounded-[4rem] flex flex-col justify-between min-h-[400px] group">
-                    <h4 className="text-4xl font-black text-white uppercase italic tracking-tight group-hover:text-orange-500 transition-colors">{tpl.name}</h4>
-                    <button className="text-[10px] font-black uppercase text-blue-400 hover:text-white tracking-[0.3em] transition-all flex items-center gap-3">Edit Blueprint <ArrowRight size={16}/></button>
-                 </div>
-               ))}
-            </motion.div>
           )}
         </AnimatePresence>
       </div>
@@ -331,12 +304,13 @@ const NavTab = ({ active, onClick, label, color }: any) => {
   );
 };
 
-const ArenaNavBtn = ({ active, onClick, label, icon }: { active: boolean, onClick: () => void, label: string, icon: React.ReactNode }) => (
+const ArenaNavBtn = ({ active, onClick, label, icon, disabled }: { active: boolean, onClick: () => void, label: string, icon: React.ReactNode, disabled?: boolean }) => (
   <button 
+    disabled={disabled}
     onClick={onClick} 
-    className={`relative flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all italic active:scale-95 border-2 ${active ? 'bg-orange-600 text-white border-orange-400 shadow-[0_0_40px_rgba(249,115,22,0.6)] scale-105 z-10' : 'text-slate-500 border-transparent hover:text-slate-200 hover:bg-white/5'}`}
+    className={`relative flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all italic active:scale-95 border-2 ${disabled ? 'opacity-30 grayscale cursor-not-allowed border-transparent text-slate-700' : active ? 'bg-orange-600 text-white border-orange-400 shadow-[0_0_40px_rgba(249,115,22,0.6)] scale-105 z-10' : 'text-slate-500 border-transparent hover:text-slate-200 hover:bg-white/5'}`}
   >
-     {icon} {label}
+     {disabled ? <Lock size={12} /> : icon} {label}
      {active && (
        <motion.div 
          layoutId="navPulse" 
