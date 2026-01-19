@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Trash2, ArrowLeft, Monitor, Command, Users, Globe, CreditCard, Cpu, Gauge,
   X, Palette, Menu as MenuIcon, Save, AtSign, Phone, FileCode, UserPlus, UserMinus, Shield,
-  Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity
+  Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity, LayoutDashboard,
+  PenTool, Newspaper, History, Settings2
 } from 'lucide-react';
 import { 
   getChampionships, 
@@ -15,10 +17,13 @@ import { Championship, UserProfile, MenuItemConfig } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
 import TutorDecisionMonitor from './TutorDecisionMonitor';
+import GazetteViewer from './GazetteViewer';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES } from '../constants';
+
+type TutorView = 'dashboard' | 'planning' | 'decisions' | 'teams' | 'gazette';
 
 const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -28,6 +33,9 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const [loading, setLoading] = useState(false);
   const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
   const [showWizard, setShowWizard] = useState(false);
+  
+  // View interna da Arena selecionada
+  const [tutorView, setTutorView] = useState<TutorView>('dashboard');
 
   // CMS State
   const [heroTitle, setHeroTitle] = useState('Forje Seu Império');
@@ -61,15 +69,87 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   if (selectedArena) {
     return (
       <div className="space-y-8 animate-in fade-in duration-500 pb-20 font-sans max-w-[1600px] mx-auto p-6">
-        <header className="flex items-center gap-6">
-           <button onClick={() => setSelectedArena(null)} className="p-5 bg-white/5 text-slate-400 hover:text-white rounded-[1.5rem] border border-white/5 transition-all active:scale-95"><ArrowLeft size={28} /></button>
-           <div>
-              <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Control <span className="text-orange-500">Room</span></h1>
-              <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.4em] mt-3 italic">Arena: {selectedArena.name}</p>
+        {/* HEADER DA ARENA COM NAV SUPERIOR TÁTICA DO TUTOR */}
+        <header className="bg-slate-900 border-2 border-white/5 p-8 rounded-[3.5rem] shadow-2xl space-y-8">
+           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-6">
+                 <button onClick={() => setSelectedArena(null)} className="p-4 bg-white/5 text-slate-400 hover:text-white rounded-2xl border border-white/10 transition-all active:scale-95"><ArrowLeft size={24} /></button>
+                 <div>
+                    <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Arena <span className="text-orange-500">{selectedArena.name}</span></h1>
+                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.5em] mt-2 italic">Ciclo Ativo: 0{selectedArena.current_round} • Status: {selectedArena.status.toUpperCase()}</p>
+                 </div>
+              </div>
+              
+              {/* MENU PILL ACTIVE COM BRILHO LARANJA */}
+              <div className="flex items-center gap-3 p-2 bg-slate-950 rounded-[2rem] border border-white/5 shadow-inner">
+                 <ArenaNavBtn active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="Cockpit" icon={<LayoutDashboard size={14}/>} />
+                 <ArenaNavBtn active={tutorView === 'planning'} onClick={() => setTutorView('planning')} label="Planejamento" icon={<PenTool size={14}/>} />
+                 <ArenaNavBtn active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="Decisões" icon={<History size={14}/>} />
+                 <ArenaNavBtn active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="Equipes" icon={<Users size={14}/>} />
+                 <ArenaNavBtn active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="Gazeta" icon={<Newspaper size={14}/>} />
+              </div>
            </div>
         </header>
-        <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
-        <TutorArenaControl championship={selectedArena} onUpdate={(u) => setSelectedArena({...selectedArena, ...u})} />
+
+        <main className="min-h-[60vh]">
+           <AnimatePresence mode="wait">
+              {tutorView === 'dashboard' && (
+                <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-8">
+                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                      <MetricCard label="Equipes" val={selectedArena.teams?.length?.toString() || '0'} icon={<Users className="text-blue-500"/>} trend="Active" />
+                      <MetricCard label="Market Share Médio" val="12.5%" icon={<Activity className="text-emerald-500"/>} trend="Balanced" />
+                      <MetricCard label="Insolvência" val="0%" icon={<ShieldAlert className="text-rose-500"/>} trend="Safe" />
+                      <MetricCard label="Ciclos Restantes" val={(selectedArena.total_rounds - selectedArena.current_round).toString()} icon={<Trophy className="text-amber-500"/>} trend="Live" />
+                   </div>
+                   <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
+                </motion.div>
+              )}
+
+              {tutorView === 'planning' && (
+                <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
+                   <TutorArenaControl championship={selectedArena} onUpdate={(u) => setSelectedArena({...selectedArena, ...u})} />
+                </motion.div>
+              )}
+
+              {tutorView === 'decisions' && (
+                <motion.div key="dec" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
+                   <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
+                </motion.div>
+              )}
+
+              {tutorView === 'teams' && (
+                <motion.div key="teams" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                   {selectedArena.teams?.map(t => (
+                      <div key={t.id} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 shadow-xl">
+                         <div className="flex justify-between items-center">
+                            <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-orange-500"><Shield size={20}/></div>
+                            <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase ${t.is_bot ? 'bg-indigo-600/20 text-indigo-400' : 'bg-emerald-600/20 text-emerald-400'}`}>
+                               {t.is_bot ? 'Bot Node' : 'Human Operator'}
+                            </span>
+                         </div>
+                         <h4 className="text-2xl font-black text-white uppercase italic">{t.name}</h4>
+                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                            <div className="space-y-1">
+                               <span className="text-[8px] font-black text-slate-500 uppercase">Equity</span>
+                               <span className="block text-sm font-mono font-bold">$ {t.equity.toLocaleString()}</span>
+                            </div>
+                            <div className="space-y-1">
+                               <span className="text-[8px] font-black text-slate-500 uppercase">Rating</span>
+                               <span className="block text-sm font-black text-orange-500">{t.kpis?.rating || 'AAA'}</span>
+                            </div>
+                         </div>
+                      </div>
+                   ))}
+                </motion.div>
+              )}
+
+              {tutorView === 'gazette' && (
+                <motion.div key="gaz" initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}} exit={{opacity:0}} className="flex justify-center">
+                   <GazetteViewer arena={selectedArena} aiNews="Briefing tático disponível na rodada." round={selectedArena.current_round} userRole="tutor" onClose={() => setTutorView('dashboard')} />
+                </motion.div>
+              )}
+           </AnimatePresence>
+        </main>
       </div>
     );
   }
@@ -225,6 +305,15 @@ const NavTab = ({ active, onClick, label, color }: any) => {
     </button>
   );
 };
+
+const ArenaNavBtn = ({ active, onClick, label, icon }: { active: boolean, onClick: () => void, label: string, icon: React.ReactNode }) => (
+  <button 
+    onClick={onClick} 
+    className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all italic active:scale-95 ${active ? 'bg-orange-600 text-white shadow-[0_0_20px_rgba(249,115,22,0.4)]' : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'}`}
+  >
+     {icon} {label}
+  </button>
+);
 
 const MetricCard = ({ label, val, icon, trend }: any) => (
   <div className="bg-slate-900 p-8 rounded-[3rem] border border-white/5 shadow-2xl space-y-4">
