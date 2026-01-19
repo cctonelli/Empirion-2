@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowRight, ArrowLeft, ShieldCheck, Rocket, 
@@ -7,7 +6,8 @@ import {
   Settings, Landmark, DollarSign, Target, Calculator,
   Settings2, X, Bot, Boxes, TrendingUp, Percent,
   ArrowUpCircle, ArrowDownCircle, HardDrive, LayoutGrid,
-  Zap, Flame, ShieldAlert, BarChart3
+  // Added missing Package icon to fix reference error on line 204
+  Zap, Flame, ShieldAlert, BarChart3, Coins, Hammer, Package
 } from 'lucide-react';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
@@ -29,14 +29,17 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     botsCount: 2,
     marketMode: 'hybrid' as SalesMode,
     regionsCount: 4,
-    totalRounds: 12, // Número de rodadas editáveis após a base P00
+    totalRounds: 12,
     roundTime: 24,
     roundUnit: 'hours' as DeadlineUnit,
     initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE,
     currency: 'BRL' as CurrencyType
   });
 
-  // Cronograma de Índices
+  // Estado dos Indicadores Base (Preços P00)
+  const [baseIndicators, setBaseIndicators] = useState<MacroIndicators>(DEFAULT_MACRO);
+
+  // Cronograma de Índices (Variações %)
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
 
   const [teamNames, setTeamNames] = useState<string[]>(['EQUIPE ALPHA']);
@@ -96,7 +99,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         sales_mode: formData.marketMode,
         scenario_type: 'simulated' as ScenarioType,
         is_trial: true,
-        market_indicators: DEFAULT_MACRO,
+        market_indicators: baseIndicators,
         round_rules: roundRules,
         transparency_level: 'medium',
         gazeta_mode: 'anonymous',
@@ -121,8 +124,10 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     }));
   };
 
-  const stepsCount = 6;
-  const totalPeriods = formData.totalRounds + 1; // P00 (Base) + P01..PN
+  const stepsCount = 7;
+  const totalPeriods = formData.totalRounds + 1;
+
+  const currencySymbol = formData.currency === 'BRL' ? 'R$' : formData.currency === 'EUR' ? '€' : '$';
 
   return (
     <div className="relative w-full flex flex-col font-sans overflow-hidden bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-2xl">
@@ -191,7 +196,40 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             )}
 
             {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+              <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                 <WizardStepTitle icon={<Coins size={32}/>} title="MATRIZ DE PREÇOS BASE" desc="VALORES INICIAIS DE MERCADO (P00) PARA CÁLCULO DE REAJUSTES." />
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1 space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5">
+                       <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] flex items-center gap-2 italic"><Package size={16}/> Insumos & Escala</h4>
+                       <WizardField label="Matéria Prima A ($)" type="number" val={baseIndicators.prices.mp_a} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_a: parseFloat(v)}})} />
+                       <WizardField label="Matéria Prima B ($)" type="number" val={baseIndicators.prices.mp_b} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_b: parseFloat(v)}})} />
+                       <WizardField label="Custo Distribuição ($)" type="number" val={baseIndicators.prices.distribution_unit} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, distribution_unit: parseFloat(v)}})} />
+                       <WizardField label="Campanha Marketing ($)" type="number" val={baseIndicators.prices.marketing_campaign} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
+                    </div>
+
+                    <div className="md:col-span-1 space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5">
+                       <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] flex items-center gap-2 italic"><Cpu size={16}/> Ativos de Capital</h4>
+                       <WizardField label="Máquina ALFA ($)" type="number" val={baseIndicators.machinery_values.alfa} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, alfa: parseFloat(v)}})} />
+                       <WizardField label="Máquina BETA ($)" type="number" val={baseIndicators.machinery_values.beta} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, beta: parseFloat(v)}})} />
+                       <WizardField label="Máquina GAMA ($)" type="number" val={baseIndicators.machinery_values.gama} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, gama: parseFloat(v)}})} />
+                    </div>
+
+                    <div className="md:col-span-1 space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5">
+                       <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] flex items-center gap-2 italic"><Users size={16}/> Capital Humano</h4>
+                       <WizardField label="Salário Base P00 ($)" type="number" val={baseIndicators.hr_base.salary} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
+                       <div className="p-6 bg-orange-600/5 rounded-2xl border border-orange-500/10 mt-8">
+                          <p className="text-[9px] text-slate-500 font-bold uppercase leading-relaxed italic">
+                             "Estes valores definem o custo inicial absoluto. Os passos seguintes aplicarão variações percentuais (%) sobre estes montantes."
+                          </p>
+                       </div>
+                    </div>
+                 </div>
+              </motion.div>
+            )}
+
+            {step === 5 && (
+              <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                  <WizardStepTitle icon={<BarChart3 size={32}/>} title="CRONOGRAMA ESTRATÉGICO" desc="P00 É A BASE DE RELATÓRIO INICIAL. ROUNDS COMPETITIVOS INICIAM NO P01." />
                  
                  <div className="rounded-[2.5rem] bg-slate-950/80 border-2 border-white/5 shadow-2xl overflow-hidden h-[550px] flex flex-col relative">
@@ -250,8 +288,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
-            {step === 5 && (
-              <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+            {step === 6 && (
+              <motion.div key="s6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
                  <WizardStepTitle icon={<Calculator size={32}/>} title="ORACLE BASELINE" desc="EDITE OS BALANÇOS E DRES INICIAIS PARA O ROUND ZERO." />
                  <div className="bg-slate-950/60 p-2 rounded-[3.5rem] border border-white/5 shadow-2xl overflow-hidden">
                     <FinancialStructureEditor 
@@ -263,8 +301,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
-            {step === 6 && (
-              <motion.div key="s6" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-20 text-center space-y-12">
+            {step === 7 && (
+              <motion.div key="s7" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-20 text-center space-y-12">
                  <div className="w-32 h-32 bg-orange-600 rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl animate-bounce">
                     <ShieldCheck size={64} className="text-white" />
                  </div>
