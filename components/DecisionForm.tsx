@@ -143,15 +143,15 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       </div>
 
       {/* 2. DENSE STEP NAVIGATION */}
-      <nav className="flex p-1.5 gap-1.5 bg-slate-900 border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar shadow-inner">
+      <nav className="flex p-1 gap-1 bg-slate-900 border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar shadow-inner">
          {STEPS.map((s, idx) => (
            <button 
             key={s.id} 
             onClick={() => setActiveStep(idx)} 
-            className={`flex-1 min-w-[120px] py-4 px-3 rounded-2xl transition-all flex flex-col items-center gap-2 border ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-xl shadow-orange-600/20 scale-105 z-10' : 'bg-slate-950 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/20'}`}
+            className={`flex-1 min-w-[110px] py-3 px-2 rounded-2xl transition-all flex flex-col items-center gap-1.5 border ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-xl shadow-orange-600/20 scale-[1.02] z-10' : 'bg-slate-950 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/20'}`}
            >
-              <s.icon size={16} strokeWidth={3} />
-              <span className="text-[9px] font-black uppercase tracking-tighter text-center whitespace-nowrap">{s.label}</span>
+              <s.icon size={14} strokeWidth={3} />
+              <span className="text-[8px] font-black uppercase tracking-tighter text-center whitespace-nowrap">{s.label}</span>
            </button>
          ))}
       </nav>
@@ -159,11 +159,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       {/* 3. CONTENT VIEWPORT */}
       <div ref={scrollContainerRef} className="flex-1 overflow-hidden bg-slate-950/40">
          <AnimatePresence mode="wait">
-            <motion.div key={activeStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto custom-scrollbar p-8">
+            <motion.div key={activeStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto custom-scrollbar p-6 md:p-10">
                
                {activeStep === 0 && (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-10 max-w-2xl mx-auto">
-                     <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity }} className={`p-10 rounded-[3rem] border-4 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-600 border-rose-400 text-white shadow-rose-600/20' : 'bg-slate-900 border-emerald-500 text-emerald-500 shadow-emerald-500/10'}`}>
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-10 max-w-4xl mx-auto">
+                     <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 4, repeat: Infinity }} className={`p-8 rounded-[3rem] border-4 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-600 border-rose-400 text-white shadow-rose-600/20' : 'bg-slate-900 border-emerald-500 text-emerald-500 shadow-emerald-500/10'}`}>
                         <Gavel size={64} strokeWidth={2.5} />
                      </motion.div>
                      <div className="space-y-4">
@@ -172,9 +172,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            "A Recuperação Judicial bloqueia CAPEX e empréstimos, mas protege seus ativos contra liquidação imediata."
                         </p>
                      </div>
-                     <div className="flex gap-6 w-full">
-                        <button onClick={() => updateDecision('judicial_recovery', false)} className={`flex-1 py-8 rounded-3xl font-black text-xs uppercase tracking-[0.2em] border-2 transition-all ${!decisions.judicial_recovery ? 'bg-emerald-600 text-white border-emerald-400 shadow-xl' : 'bg-slate-900 border-white/5 text-slate-600'}`}>Arena Padrão</button>
-                        <button onClick={() => updateDecision('judicial_recovery', true)} className={`flex-1 py-8 rounded-3xl font-black text-xs uppercase tracking-[0.2em] border-2 transition-all ${decisions.judicial_recovery ? 'bg-rose-600 text-white border-rose-400 shadow-xl' : 'bg-slate-900 border-white/5 text-slate-600'}`}>Protocolo RJ</button>
+                     <div className="flex gap-6 w-full max-w-2xl">
+                        <button onClick={() => updateDecision('judicial_recovery', false)} className={`flex-1 py-6 rounded-3xl font-black text-xs uppercase tracking-[0.2em] border-2 transition-all ${!decisions.judicial_recovery ? 'bg-emerald-600 text-white border-emerald-400 shadow-xl' : 'bg-slate-900 border-white/5 text-slate-600'}`}>Arena Padrão</button>
+                        <button onClick={() => updateDecision('judicial_recovery', true)} className={`flex-1 py-6 rounded-3xl font-black text-xs uppercase tracking-[0.2em] border-2 transition-all ${decisions.judicial_recovery ? 'bg-rose-600 text-white border-rose-400 shadow-xl' : 'bg-slate-900 border-white/5 text-slate-600'}`}>Protocolo RJ</button>
                      </div>
                   </div>
                )}
@@ -182,8 +182,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                {activeStep === 1 && (
                   <div className="flex h-full gap-8 overflow-hidden">
                      {/* SIDEBAR DE REGIÕES VISÍVEIS */}
-                     <div className="w-[300px] flex flex-col gap-3 border-r border-white/5 pr-6 overflow-y-auto custom-scrollbar shrink-0">
-                        <div className="sticky top-0 bg-[#020617] backdrop-blur-md z-10 pb-4 border-b border-white/5 mb-4">
+                     <div className="w-[320px] flex flex-col gap-3 border-r border-white/5 pr-6 overflow-y-auto custom-scrollbar shrink-0">
+                        <div className="sticky top-0 bg-[#020617]/40 backdrop-blur-md z-10 pb-4 border-b border-white/5 mb-4">
                            <h3 className="text-[11px] font-black text-orange-500 uppercase tracking-[0.4em] flex items-center gap-3">
                               <MapPin size={16} /> Nodos de Venda
                            </h3>
@@ -216,8 +216,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         })}
                      </div>
 
-                     {/* COMANDO CENTRAL */}
-                     <div className="flex-1 space-y-10 flex flex-col justify-center">
+                     {/* COMANDO CENTRAL AMPLIPICADO */}
+                     <div className="flex-1 space-y-8 flex flex-col">
                         <div className="flex justify-between items-center bg-slate-900 p-8 rounded-[3.5rem] border border-white/10 shadow-2xl">
                            <div className="flex items-center gap-6">
                               <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white font-black italic shadow-xl text-3xl">R{activeRegion}</div>
@@ -233,7 +233,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                            <InputCard label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={24}/>} />
                            
                            <SelectCard 
@@ -272,7 +272,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 2 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full">
                      <InputCard label="Matéria-Prima A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={24}/>} />
                      <InputCard label="Matéria-Prima B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={24}/>} />
                      <SelectCard 
@@ -289,7 +289,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 3 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full">
                      <InputCard label="Novas Admissões" val={decisions.hr.hired} onChange={(v: number) => updateDecision('hr.hired', v)} icon={<Users2 size={24}/>} />
                      <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v: number) => updateDecision('hr.fired', v)} icon={<Users2 size={24}/>} />
                      <InputCard label="Piso Salarial ($)" val={decisions.hr.salary} onChange={(v: number) => updateDecision('hr.salary', v)} icon={<DollarSign size={24}/>} />
@@ -300,7 +300,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 4 && (
-                  <div className="space-y-10">
+                  <div className="space-y-10 max-w-full">
                      <div className="p-8 bg-blue-600/10 border-2 border-blue-500/30 rounded-[3rem] flex gap-8 items-center shadow-2xl">
                         <Info size={48} className="text-blue-400 shrink-0" />
                         <p className="text-md font-black text-blue-100 italic leading-relaxed uppercase tracking-tight">
@@ -310,46 +310,48 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                         <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-emerald-500/30 shadow-2xl">
                            <h4 className="text-2xl font-black uppercase text-emerald-500 tracking-tighter flex items-center gap-4 italic"><ShoppingCart size={28}/> Expansão CAPEX</h4>
-                           <PriceInput label="Máquina ALFA" val={decisions.machinery.buy.alfa} price={machinePrices.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
-                           <PriceInput label="Máquina BETA" val={decisions.machinery.buy.beta} price={machinePrices.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
-                           <PriceInput label="Máquina GAMA" val={decisions.machinery.buy.gama} price={machinePrices.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
+                           <div className="grid grid-cols-1 gap-4">
+                              <PriceInput label="Máquina ALFA" val={decisions.machinery.buy.alfa} price={machinePrices.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
+                              <PriceInput label="Máquina BETA" val={decisions.machinery.buy.beta} price={machinePrices.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
+                              <PriceInput label="Máquina GAMA" val={decisions.machinery.buy.gama} price={machinePrices.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
+                           </div>
                         </div>
                         <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-rose-500/30 shadow-2xl">
                            <h4 className="text-2xl font-black uppercase text-rose-500 tracking-tighter flex items-center gap-4 italic"><Trash2 size={28}/> Desinvestimento</h4>
-                           <PriceInput label="Venda ALFA" val={decisions.machinery.sell.alfa} price={machinePrices.alfa * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.alfa', v)} />
-                           <PriceInput label="Venda BETA" val={decisions.machinery.sell.beta} price={machinePrices.beta * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.beta', v)} />
-                           <PriceInput label="Venda GAMA" val={decisions.machinery.sell.gama} price={machinePrices.gama * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.gama', v)} />
+                           <div className="grid grid-cols-1 gap-4">
+                              <PriceInput label="Venda ALFA" val={decisions.machinery.sell.alfa} price={machinePrices.alfa * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.alfa', v)} />
+                              <PriceInput label="Venda BETA" val={decisions.machinery.sell.beta} price={machinePrices.beta * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.beta', v)} />
+                              <PriceInput label="Venda GAMA" val={decisions.machinery.sell.gama} price={machinePrices.gama * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.gama', v)} />
+                           </div>
                         </div>
                      </div>
                   </div>
                )}
 
                {activeStep === 5 && (
-                  <div className="space-y-12 max-w-5xl mx-auto">
+                  <div className="space-y-12 max-w-full">
                      <div className="p-8 bg-orange-600/10 border-2 border-orange-500/30 rounded-[3rem] flex gap-8 items-center shadow-2xl">
                         <Landmark size={48} className="text-orange-400 shrink-0" />
                         <p className="text-md font-black text-orange-100 italic leading-relaxed uppercase tracking-tight">
                            "Protocolo Bancário: Juros TR aplicados ao saldo devedor. Mutação automática de LP para CP no fechamento."
                         </p>
                      </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <InputCard label="Empréstimo Solicitado ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<Landmark size={24}/>} />
                         <SelectCard label="Configuração de Prazo" val={decisions.finance.loanType} onChange={(v: number) => updateDecision('finance.loanType', v)} options={[{v:1,l:'À VISTA (IMEDIATO)'},{v:2,l:'CURTO PRAZO (P1)'},{v:3,l:'MÉDIO PRAZO (P2)'}]} icon={<ShieldAlert size={24}/>} />
-                        <div className="md:col-span-2">
-                           <InputCard label="Aplicação de Liquidez ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={24}/>} />
-                        </div>
+                        <InputCard label="Aplicação de Liquidez ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={24}/>} />
                      </div>
                   </div>
                )}
 
                {activeStep === 6 && (
-                  <div className="space-y-12 h-full flex flex-col justify-center max-w-4xl mx-auto">
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-12 h-full flex flex-col justify-center max-w-6xl mx-auto">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <InputCard label="Target: Receita" val={decisions.estimates.forecasted_revenue} onChange={(v: number) => updateDecision('estimates.forecasted_revenue', v)} />
                         <InputCard label="Target: Custo Un." val={decisions.estimates.forecasted_unit_cost} onChange={(v: number) => updateDecision('estimates.forecasted_unit_cost', v)} />
                         <InputCard label="Target: Lucro Liq." val={decisions.estimates.forecasted_net_profit} onChange={(v: number) => updateDecision('estimates.forecasted_net_profit', v)} />
                      </div>
-                     <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="p-16 bg-emerald-600/5 rounded-[4rem] border-4 border-emerald-500/20 text-center space-y-8 shadow-2xl">
+                     <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="p-16 bg-emerald-600/5 rounded-[4rem] border-4 border-emerald-500/20 text-center space-y-8 shadow-2xl">
                         <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500 mx-auto shadow-inner"><ShieldCheck size={48} strokeWidth={2.5}/></div>
                         <div className="space-y-4">
                            <h4 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Célula Sincronizada</h4>
@@ -375,11 +377,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                <span className="text-[11px] font-black text-orange-500 uppercase italic">Etapa {activeStep + 1} de {STEPS.length}</span>
             </div>
             {activeStep === STEPS.length - 1 ? (
-              <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="px-16 py-8 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-[0_15px_40px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95">
+              <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="px-16 py-6 md:py-8 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-[0_15px_40px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95">
                 {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} Transmitir para Oracle
               </button>
             ) : (
-              <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="px-16 py-8 bg-white text-slate-950 hover:bg-orange-600 hover:text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-2xl transition-all flex items-center gap-6 active:scale-95 group">
+              <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="px-16 py-6 md:py-8 bg-white text-slate-950 hover:bg-orange-600 hover:text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-2xl transition-all flex items-center gap-6 active:scale-95 group">
                 Avançar Protocolo <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
               </button>
             )}
@@ -390,7 +392,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 };
 
 const InputCard = ({ label, desc, val, icon, onChange, placeholder }: any) => (
-  <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-8 flex flex-col gap-4 group hover:bg-slate-800 hover:border-orange-500/30 transition-all shadow-xl">
+  <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-6 md:p-8 flex flex-col gap-4 group hover:bg-slate-800 hover:border-orange-500/30 transition-all shadow-xl">
      <div className="flex items-center gap-4">
         <div className="text-slate-500 group-hover:text-orange-500 transition-colors shadow-sm">{icon || <Info size={20}/>}</div>
         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic group-focus-within:text-orange-500">{label}</label>
@@ -400,7 +402,7 @@ const InputCard = ({ label, desc, val, icon, onChange, placeholder }: any) => (
         value={val} 
         placeholder={placeholder} 
         onChange={e => onChange?.(Number(e.target.value))} 
-        className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-5 text-white font-mono font-black text-2xl outline-none focus:border-orange-600 transition-all shadow-inner" 
+        className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-4 md:py-5 text-white font-mono font-black text-xl md:text-2xl outline-none focus:border-orange-600 transition-all shadow-inner" 
      />
      {desc && <span className="text-[8px] font-bold text-slate-600 uppercase italic ml-2">{desc}</span>}
   </div>
@@ -449,7 +451,7 @@ const PriceInput = ({ label, val, price, isSell, desagio, onChange }: any) => {
 };
 
 const SelectCard = ({ label, val, options, icon, onChange }: any) => (
-  <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-8 flex flex-col gap-4 group hover:bg-slate-800 hover:border-blue-500/30 transition-all shadow-xl">
+  <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-6 md:p-8 flex flex-col gap-4 group hover:bg-slate-800 hover:border-blue-500/30 transition-all shadow-xl">
      <div className="flex items-center gap-4">
         <div className="text-slate-500 group-hover:text-blue-500 transition-colors shadow-sm">{icon}</div>
         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic group-focus-within:text-blue-500">{label}</label>
@@ -458,7 +460,7 @@ const SelectCard = ({ label, val, options, icon, onChange }: any) => (
         <select 
           value={val} 
           onChange={e => onChange?.(Number(e.target.value))} 
-          className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-5 text-white font-black text-[12px] uppercase outline-none focus:border-blue-600 transition-all shadow-inner appearance-none cursor-pointer"
+          className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-4 md:py-5 text-white font-black text-[12px] uppercase outline-none focus:border-blue-600 transition-all shadow-inner appearance-none cursor-pointer"
         >
            {options.map((o: any) => <option key={o.v} value={o.v} className="bg-slate-900">{o.l}</option>)}
         </select>

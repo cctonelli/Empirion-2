@@ -102,7 +102,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const kanitzColor = kanitz > 0 ? 'text-emerald-500' : kanitz > -3 ? 'text-orange-500' : 'text-rose-500';
   
   const sources = currentKpis.financing_sources || { ecp: 0, elp: 0, ccp: 0 };
-  // Cálculo de pesos absolutos para a barra empilhada (Fleuriet Style)
   const totalAbs = Math.abs(sources.ecp) + Math.abs(sources.elp) + Math.max(0, sources.ccp);
 
   return (
@@ -140,14 +139,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   <span className="text-[10px] font-black text-slate-600 uppercase">Cycle 0{activeArena?.current_round}</span>
                </header>
                
-               {/* FONTES DE FINANCIAMENTO NLCDG (DASHBOARD WIDGET IDÊNTICO AO PDF) */}
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-4 shadow-inner">
                   <div className="flex justify-between items-center mb-1">
                      <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Fontes de Giro (Fleuriet)</h4>
                      <Layers3 size={12} className="text-blue-500" />
                   </div>
                   
-                  {/* BARRA EMPILHADA DINÂMICA */}
                   <div className="flex h-12 w-full rounded-xl overflow-hidden border border-white/5 shadow-2xl bg-slate-900">
                      <motion.div 
                         initial={{width:0}} 
@@ -180,7 +177,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* TERMÔMETRO DE KANITZ */}
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-3 shadow-inner group">
                   <div className="flex justify-between items-center mb-1">
                      <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Saúde de Kanitz</h4>
@@ -213,9 +209,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             </div>
          </aside>
 
-         <main className="flex-1 bg-slate-950 flex flex-col overflow-hidden relative p-6">
-            <div className="flex-1 flex flex-col overflow-hidden max-w-5xl mx-auto w-full">
-               <div className="flex justify-between items-end border-b border-white/5 pb-4 mb-6 shrink-0">
+         <main className="flex-1 bg-slate-950 flex flex-col overflow-hidden relative p-4 md:p-8">
+            <div className="flex-1 flex flex-col overflow-hidden max-w-[1400px] mx-auto w-full">
+               <div className="flex justify-between items-end border-b border-white/5 pb-4 mb-4 shrink-0">
                   <div>
                      <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Decision <span className="text-orange-600">Matrix</span></h2>
                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">Nodo {activeTeam?.name || 'ALPHA'}</p>
