@@ -29,7 +29,8 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Fix: Casting auth to any to resolve property missing error in this environment
+      const { data: { session } } = await (supabase.auth as any).getSession();
       if (session) {
         const prof = await getUserProfile(session.user.id);
         setProfile(prof);

@@ -40,7 +40,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
            return;
         }
 
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await (supabase.auth as any).getSession();
         if (session) {
           const profile = await getUserProfile(session.user.id);
           if (profile) setUserRole(profile.role);

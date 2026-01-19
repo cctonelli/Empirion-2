@@ -34,14 +34,18 @@ const isValidUUID = (id: string | null | undefined): boolean => {
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   if (!userId) return null;
-  if (ALPHA_IDS.includes(userId)) {
-    const isTutor = userId.includes('tutor');
+  
+  // FIX: Se estiver em modo TRIAL, forçar perfil de TUTOR para liberar menus
+  const isTrial = localStorage.getItem('is_trial_session') === 'true';
+
+  if (ALPHA_IDS.includes(userId) || isTrial) {
+    const isTutor = userId.includes('tutor') || isTrial;
     const isAdmin = userId === 'admin' || userId === 'tutor_master';
     return {
       id: userId, 
       supabase_user_id: userId, 
-      name: isAdmin ? 'System Admin Master' : isTutor ? 'Tutor Master Alpha' : 'Capitão Alpha Node 08',
-      nickname: isAdmin ? 'Admin_Oracle' : isTutor ? 'Imperador_Alpha' : 'Alpha_Strategist',
+      name: isAdmin ? 'System Admin Master' : isTutor ? 'Tutor Master Trial' : 'Capitão Alpha Node 08',
+      nickname: isAdmin ? 'Admin_Oracle' : isTutor ? 'Tutor_Trial' : 'Alpha_Strategist',
       phone: '+5511999990000',
       email: `${userId}@empirion.ia`, 
       role: isAdmin ? 'admin' : isTutor ? 'tutor' : 'player', 
@@ -86,7 +90,7 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
           const { data: tTeams } = await supabase.from('trial_teams').select('*').eq('championship_id', tc.id);
           finalArenas.push({ 
             ...tc, 
-            teams: (tTeams || []).map(t => ({ ...t, equity: 5000000, credit_limit: 5000000 })), 
+            teams: (tTeams || []).map(t => ({ ...t, equity: 5055447, credit_limit: 5000000 })), 
             is_trial: true 
           });
         }
@@ -124,7 +128,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   } catch (e) { console.error("Local persist failure", e); }
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    // Fix: Casting auth to any to resolve property missing error in this environment
+    const { data: { session } } = await (supabase.auth as any).getSession();
     const payload: any = {
       id: newId, name: champData.name, branch: champData.branch, status: 'active', current_round: 0,
       total_rounds: champData.total_rounds || 12, regions_count: champData.regions_count || 9,
@@ -179,7 +184,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       }
       const prevState = previousStates?.find(s => s.team_id === team.id);
       const teamPrevState = currentRound === 0 ? { kpis: { market_valuation: { share_price: initialSharePrice } } } : prevState;
-      // FIX: Chamada correta dos parâmetros para o motor de projeção v13.5
+      
       const result = calculateProjections(
         teamDecision, 
         arena.branch, 
@@ -220,7 +225,6 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
   const payload = { team_id: teamId, championship_id: champId, round, data: decisions, updated_at: new Date().toISOString() };
 
-  // VALIDAÇÃO DE SEGURANÇA: Se não for UUID, força LocalStorage imediatamente
   if (!isValidUUID(teamId) || !isValidUUID(champId)) {
      logInfo(LogContext.TURNOVER, "ID Inválido detectado. Redirecionando para salvamento local resiliente.");
      const localDecisions = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');

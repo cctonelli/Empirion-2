@@ -42,7 +42,8 @@ const AppContent: React.FC = () => {
         return;
       }
       
-      const { data: { session: realSession } } = await supabase.auth.getSession();
+      // Fix: Casting auth to any to resolve property missing error in this environment
+      const { data: { session: realSession } } = await (supabase.auth as any).getSession();
       setSession(realSession);
       if (realSession) await fetchProfile(realSession.user.id);
       else setLoading(false);

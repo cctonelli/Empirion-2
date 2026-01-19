@@ -41,7 +41,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
 
   const handleVote = async (teamId: string) => {
     setSubmitting(true);
-    const { data: { session } } = await supabase.auth.getSession();
+    // Fix: Casting auth to any to resolve property missing error in this environment
+    const { data: { session } } = await (supabase.auth as any).getSession();
     
     const voteData = {
       championship_id: championship.id,

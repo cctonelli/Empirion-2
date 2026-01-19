@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 // Fix: Use any to bypass react-router-dom type resolution issues in this environment
 import * as Router from 'react-router-dom';
@@ -9,7 +10,7 @@ import {
   Plus, Trophy, Timer, ChevronRight, Search, 
   Filter, Globe, Loader2, AlertCircle, Rocket, 
   Terminal, ShieldCheck, Building2, Star, Play, 
-  ArrowRight, Users, Bot, Landmark
+  ArrowRight, Users, Bot, Landmark, Settings2, Monitor
 } from 'lucide-react';
 import { getChampionships, provisionDemoEnvironment } from '../services/supabase';
 import { Championship } from '../types';
@@ -49,6 +50,12 @@ const TestTerminal: React.FC = () => {
     }
     
     navigate('/app/dashboard');
+  };
+
+  const handleManageTrial = (champ: Championship) => {
+    localStorage.setItem('is_trial_session', 'true');
+    // Para gerenciar, enviamos para a área administrativa que lidará com a arena selecionada
+    navigate('/app/admin');
   };
 
   const filtered = championships.filter(c => 
@@ -112,11 +119,11 @@ const TestTerminal: React.FC = () => {
              {filtered.map((champ, i) => (
                <motion.div 
                  key={champ.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                 className="bg-slate-900/40 backdrop-blur-3xl p-10 rounded-[3.5rem] border border-white/5 hover:border-orange-500/40 transition-all group flex flex-col justify-between min-h-[480px] shadow-2xl overflow-hidden relative"
+                 className="bg-slate-900/40 backdrop-blur-3xl p-10 rounded-[3.5rem] border border-white/5 hover:border-orange-500/40 transition-all group flex flex-col justify-between min-h-[520px] shadow-2xl overflow-hidden relative"
                >
                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform"><Building2 size={160}/></div>
                   
-                  <div className="space-y-8 relative z-10">
+                  <div className="space-y-6 relative z-10">
                      <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
@@ -156,12 +163,17 @@ const TestTerminal: React.FC = () => {
                      </div>
                   </div>
 
-                  <div className="pt-10 flex gap-3 relative z-10">
-                     <button onClick={() => navigate('/app/championships', { state: { preSelectedBranch: 'industrial' } })} className="flex-1 py-5 bg-white/5 border border-white/10 hover:bg-white hover:text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 group/btn">
-                        Ver Ranking <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                     </button>
-                     <button onClick={() => handlePlayTrial(champ)} className="p-5 bg-orange-600 text-white rounded-2xl hover:bg-white hover:text-orange-600 transition-all shadow-xl active:scale-90">
-                        <Play size={20} fill="currentColor" />
+                  <div className="pt-8 flex flex-col gap-3 relative z-10">
+                     <div className="grid grid-cols-2 gap-3">
+                        <button onClick={() => handlePlayTrial(champ)} className="py-5 bg-white text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2">
+                           <Play size={14} fill="currentColor" /> Batalha
+                        </button>
+                        <button onClick={() => handleManageTrial(champ)} className="py-5 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2">
+                           <Monitor size={14} /> Tutor Room
+                        </button>
+                     </div>
+                     <button onClick={() => navigate('/app/championships', { state: { preSelectedBranch: 'industrial' } })} className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white hover:text-slate-950 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 group/btn">
+                        Ver Ranking Global <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                      </button>
                   </div>
                </motion.div>
@@ -174,7 +186,7 @@ const TestTerminal: React.FC = () => {
               <ShieldCheck className="text-emerald-500" size={32} />
               <div>
                  <span className="block text-white font-black uppercase text-xs italic tracking-widest leading-none">Security Node</span>
-                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Protocolo RLS Desabilitado no modo Trial</span>
+                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Protocolo Trial Master v13.2 Ativo</span>
               </div>
            </div>
            <div className="flex gap-12 text-slate-600 text-[9px] font-black uppercase tracking-[0.4em] italic">

@@ -33,7 +33,8 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
 
     try {
       if (isLogin) {
-        const { data: { session }, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+        // Fix: Casting auth to any to resolve property missing error in this environment
+        const { data: { session }, error: authError } = await (supabase.auth as any).signInWithPassword({ email, password });
         if (authError) throw authError;
         if (session) onAuth();
       } else {
@@ -47,7 +48,8 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
            throw new Error("Nickname deve ter de 3 a 20 caracteres (letras, números e underline).");
         }
 
-        const { error: signUpError } = await supabase.auth.signUp({ 
+        // Fix: Casting auth to any to resolve property missing error in this environment
+        const { error: signUpError } = await (supabase.auth as any).signUp({ 
           email, 
           password,
           options: {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Trash2, ArrowLeft, Monitor, Command, Users, Globe, CreditCard, Cpu, Gauge,
@@ -45,15 +44,25 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const prof = await getUserProfile(session.user.id);
+      // Fix: Casting auth to any to resolve property missing error in this environment
+      const { data: { session } } = await (supabase.auth as any).getSession();
+      const isTrial = localStorage.getItem('is_trial_session') === 'true';
+
+      if (session || isTrial) {
+        const userId = session?.user?.id || 'trial_user';
+        const prof = await getUserProfile(userId);
         setProfile(prof);
-        if (prof?.role === 'tutor' && activeTab === 'system') setActiveTab('tournaments');
+        
+        // Se for tutor (ou trial master), a aba inicial deve ser Arenas
+        if (prof?.role === 'tutor' && activeTab === 'system') {
+           setActiveTab('tournaments');
+        }
       }
+
       const { data } = await getChampionships();
       if (data) setChampionships(data);
-      if (activeTab === 'users') {
+      
+      if (activeTab === 'users' && profile?.role === 'admin') {
         const allUsers = await getAllUsers();
         setUsers(allUsers);
       }
@@ -75,12 +84,15 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
               <div className="flex items-center gap-6">
                  <button onClick={() => setSelectedArena(null)} className="p-4 bg-white/5 text-slate-400 hover:text-white rounded-2xl border border-white/10 transition-all active:scale-95"><ArrowLeft size={24} /></button>
                  <div>
-                    <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Arena <span className="text-orange-500">{selectedArena.name}</span></h1>
+                    <div className="flex items-center gap-3">
+                       <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Arena <span className="text-orange-500">{selectedArena.name}</span></h1>
+                       {selectedArena.is_trial && <span className="px-3 py-0.5 bg-orange-600/20 border border-orange-500/30 text-orange-500 rounded-lg text-[8px] font-black uppercase tracking-widest">Sandbox</span>}
+                    </div>
                     <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.5em] mt-2 italic">Ciclo Ativo: 0{selectedArena.current_round} • Status: {selectedArena.status.toUpperCase()}</p>
                  </div>
               </div>
               
-              {/* MENU PILL ACTIVE COM BRILHO LARANJA */}
+              {/* MENU PILL ACTIVE COM BRILHO LARANJA - Sempre Visível para o Tutor */}
               <div className="flex items-center gap-3 p-2 bg-slate-950 rounded-[2rem] border border-white/5 shadow-inner">
                  <ArenaNavBtn active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="Cockpit" icon={<LayoutDashboard size={14}/>} />
                  <ArenaNavBtn active={tutorView === 'planning'} onClick={() => setTutorView('planning')} label="Planejamento" icon={<PenTool size={14}/>} />
@@ -170,8 +182,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
            <div className="flex items-center gap-4">
               <div className={`w-3.5 h-3.5 rounded-full animate-pulse shadow-[0_0_15px] ${isAdmin ? 'bg-blue-500 shadow-blue-500' : 'bg-emerald-500 shadow-emerald-500'}`} />
               <div className="flex flex-col">
-                 <span className="text-lg font-black text-white uppercase italic tracking-tight">{profile?.nickname || 'ADMIN MASTER'}</span>
-                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{isAdmin ? 'SYSTEM OWNER' : 'ARENA TUTOR'}</span>
+                 <span className="text-lg font-black text-white uppercase italic tracking-tight">{profile?.nickname || 'ARENA_MASTER'}</span>
+                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{isAdmin ? 'SYSTEM OWNER' : isTrialSession ? 'TRIAL MASTER' : 'ARENA TUTOR'}</span>
               </div>
            </div>
         </div>
