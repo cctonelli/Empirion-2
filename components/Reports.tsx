@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   TrendingUp, BarChart3, Brain, ChevronRight, Landmark,
-  ArrowUpRight, Target, Download, HeartPulse
+  ArrowUpRight, Target, Download, HeartPulse, Zap, Plus, Minus
 } from 'lucide-react';
 import { Branch } from '../types';
 import { motion } from 'framer-motion';
@@ -82,7 +83,13 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                   <ReportLine label="(=) LUCRO BRUTO" val="1.044.555" highlight />
                   <ReportLine label="(-) Despesas Operacionais (Vendas + Admin)" val="917.582" neg />
                   <ReportLine label="(=) LUCRO OPERACIONAL" val="126.973" highlight />
-                  <ReportLine label="(-) Despesas Financeiras Líquidas" val="40.000" neg />
+                  
+                  {/* SEÇÃO FINANCEIRA AJUSTADA */}
+                  <div className="bg-white/5 p-4 rounded-2xl space-y-3">
+                    <ReportLine label="( + ) Receitas Financeiras (Rendimentos)" val="0" pos icon={<Plus size={10}/>} />
+                    <ReportLine label="( - ) Despesas Financeiras (Encargos/Juros)" val="40.000" neg icon={<Minus size={10}/>} />
+                  </div>
+
                   <ReportLine label="(=) LAIR - Lucro antes do IR" val="86.973" />
                   <ReportLine label="(-) Provisão para o IR" val="13.045" neg />
                   <ReportLine label="(=) LUCRO LÍQUIDO DO EXERCÍCIO" val="73.928" total />
@@ -112,10 +119,13 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   );
 };
 
-const ReportLine = ({ label, val, neg, bold, total, highlight }: any) => (
+const ReportLine = ({ label, val, neg, pos, bold, total, highlight, icon }: any) => (
   <div className={`flex justify-between p-4 rounded-2xl transition-all ${total ? 'bg-slate-950 border-y-2 border-white/10 mt-6' : highlight ? 'bg-white/5' : 'hover:bg-white/[0.02]'}`}>
-    <span className={`text-[11px] uppercase tracking-wider ${bold ? 'font-black text-white' : 'text-slate-500'}`}>{label}</span>
-    <span className={`text-sm font-black ${neg ? 'text-rose-500' : total ? 'text-orange-500' : 'text-slate-200'}`}>{neg ? '(' : ''}$ {val}{neg ? ')' : ''}</span>
+    <div className="flex items-center gap-2">
+      {icon && <span className={neg ? 'text-rose-500' : 'text-emerald-500'}>{icon}</span>}
+      <span className={`text-[11px] uppercase tracking-wider ${bold ? 'font-black text-white' : 'text-slate-500'}`}>{label}</span>
+    </div>
+    <span className={`text-sm font-black ${neg ? 'text-rose-500' : pos ? 'text-emerald-500' : total ? 'text-orange-500' : 'text-slate-200'}`}>{neg ? '(' : ''}$ {val}{neg ? ')' : ''}</span>
   </div>
 );
 

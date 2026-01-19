@@ -29,6 +29,11 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
   },
   dre: {
     revenue: 3322735,
+    cpv: 2278180,
+    opex: 917582,
+    financial_revenue: 0,
+    financial_expense: 40000,
+    tax: 13045,
     net_profit: 73928
   }
 };
@@ -96,13 +101,14 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'cpv', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: -2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
     { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
-        { id: 'opex.prod', label: 'PRODUÇÃO', value: 212100, type: 'expense', isEditable: true, isTemplateAccount: true },
         { id: 'opex.sales', label: 'VENDAS', value: 802702, type: 'expense', isEditable: true, isTemplateAccount: true },
         { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
     { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true, children: [] },
-    { id: 'fin_rev', label: '( + ) RECEITAS FINANCEIRAS', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
-    { id: 'fin_exp', label: '( - ) DESPESAS FINANCEIRAS', value: -40000, type: 'totalizer', children: [
+    { id: 'fin_rev_group', label: '( + ) RECEITAS FINANCEIRAS', value: 0, type: 'totalizer', children: [
+        { id: 'fin_rev.yields', label: 'RENDIMENTOS DE APLICAÇÕES FINANCEIRAS', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true }
+    ]},
+    { id: 'fin_exp_group', label: '( - ) DESPESAS FINANCEIRAS', value: -40000, type: 'totalizer', children: [
         { id: 'fin_exp.liquid', label: 'FINANCEIRAS LÍQUIDAS', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
     { id: 'lair', label: '(=) LAIR - LUCRO LÍQUIDO ANTES DO IR', value: 86973, type: 'totalizer', isReadOnly: true, children: [] },
