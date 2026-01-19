@@ -29,7 +29,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     botsCount: 2,
     marketMode: 'hybrid' as SalesMode,
     regionsCount: 4,
-    totalRounds: 8, // Começa com 8 conforme PDF padrão
+    totalRounds: 12, // Número de rodadas editáveis após a base P00
     roundTime: 24,
     roundUnit: 'hours' as DeadlineUnit,
     initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE,
@@ -122,6 +122,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   };
 
   const stepsCount = 6;
+  const totalPeriods = formData.totalRounds + 1; // P00 (Base) + P01..PN
 
   return (
     <div className="relative w-full flex flex-col font-sans overflow-hidden bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-2xl">
@@ -135,7 +136,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <WizardField label="NOME DA INSTÂNCIA TRIAL" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TESTE INDUSTRIAL ALPHA" />
                     <div className="grid grid-cols-2 gap-4">
-                       <WizardField label="TOTAL DE CICLOS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
+                       <WizardField label="TOTAL DE ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
                        <WizardField label="PREÇO AÇÃO P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -191,38 +192,39 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 4 && (
               <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="CRONOGRAMA ESTRATÉGICO" desc="PARAMETRIZE OS ÍNDICES VARIÁVEIS POR PERÍODO (PDF BUILD)." />
+                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="CRONOGRAMA ESTRATÉGICO" desc="P00 É A BASE DE RELATÓRIO INICIAL. ROUNDS COMPETITIVOS INICIAM NO P01." />
                  
-                 {/* CONTAINER DA TABELA COM SCROLL DUPLO */}
                  <div className="rounded-[2.5rem] bg-slate-950/80 border-2 border-white/5 shadow-2xl overflow-hidden h-[550px] flex flex-col relative">
                     <div className="overflow-auto custom-scrollbar flex-1 relative">
                        <table className="w-full text-left border-separate border-spacing-0">
                           <thead>
                              <tr>
-                                {/* CANTO SUPERIOR ESQUERDO FIXO (ÂNCORA) */}
                                 <th className="p-3 sticky top-0 left-0 bg-slate-900 z-50 border-b-2 border-r-2 border-white/10 w-[200px] min-w-[200px]">
-                                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Índice / Período</span>
+                                   <div className="flex flex-col">
+                                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Matrix / Período</span>
+                                      <span className="text-[7px] font-bold text-orange-500 mt-1 uppercase italic tracking-tighter">Total: {formData.totalRounds} Rounds + Base</span>
+                                   </div>
                                 </th>
-                                {/* CABEÇALHO DE PERÍODOS STICKY TOP */}
-                                {Array.from({ length: formData.totalRounds }).map((_, i) => (
-                                   <th key={i} className="p-3 sticky top-0 bg-slate-900 z-40 border-b-2 border-r border-white/5 text-center min-w-[80px]">
-                                      <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest">P0{i}</span>
+                                {Array.from({ length: totalPeriods }).map((_, i) => (
+                                   <th key={i} className={`p-3 sticky top-0 bg-slate-900 z-40 border-b-2 border-r border-white/5 text-center min-w-[75px] ${i === 0 ? 'bg-orange-600/10' : ''}`}>
+                                      <span className={`text-[10px] font-black uppercase tracking-widest ${i === 0 ? 'text-white underline' : 'text-orange-500'}`}>P{i < 10 ? `0${i}` : i}</span>
+                                      {i === 0 && <span className="block text-[6px] font-black text-white/40 leading-none mt-1">BASELINE</span>}
                                    </th>
                                 ))}
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5 font-mono">
-                             <MatrixRow periods={formData.totalRounds} label="ICE (Cresc. %)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
-                             <MatrixRow periods={formData.totalRounds} label="Demanda Mercado (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
-                             <MatrixRow periods={formData.totalRounds} label="Inflação (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
-                             <MatrixRow periods={formData.totalRounds} label="Inadimplência (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
-                             <MatrixRow periods={formData.totalRounds} label="Juros (TR %)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
-                             <MatrixRow periods={formData.totalRounds} label="Juros Fornecedores (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Zap size={10}/>} />
-                             <MatrixRow periods={formData.totalRounds} label="Juros Vendas (%)" macroKey="sales_interest_rate" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} />
+                             <MatrixRow periods={totalPeriods} label="ICE (Cresc. %)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             <MatrixRow periods={totalPeriods} label="Demanda Mercado (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
+                             <MatrixRow periods={totalPeriods} label="Inflação (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
+                             <MatrixRow periods={totalPeriods} label="Inadimplência (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
+                             <MatrixRow periods={totalPeriods} label="Juros (TR %)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             <MatrixRow periods={totalPeriods} label="Juros Fornecedores (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Zap size={10}/>} />
+                             <MatrixRow periods={totalPeriods} label="Juros Vendas (%)" macroKey="sales_interest_rate" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} />
                              
                              <tr className="hover:bg-white/[0.02] transition-colors">
                                 <td className="p-3 sticky left-0 bg-slate-950 z-30 font-black text-[8px] text-emerald-400 uppercase tracking-tighter border-r-2 border-white/10 whitespace-nowrap">Venda Máquinas?</td>
-                                {Array.from({ length: formData.totalRounds }).map((_, i) => (
+                                {Array.from({ length: totalPeriods }).map((_, i) => (
                                    <td key={i} className="p-1 border-r border-white/5 text-center">
                                       <button 
                                         onClick={() => updateRoundMacro(i, 'allow_machine_sale', !(roundRules[i]?.allow_machine_sale ?? false))}
@@ -234,13 +236,13 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 ))}
                              </tr>
 
-                             <MatrixRow periods={formData.totalRounds} label="Reaj. Matérias-Primas (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={formData.totalRounds} label="Reaj. Máquina ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={formData.totalRounds} label="Reaj. Máquina BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={formData.totalRounds} label="Reaj. Máquina GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={formData.totalRounds} label="Reaj. Marketing (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={formData.totalRounds} label="Reaj. Distribuição (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={formData.totalRounds} label="Reaj. Estocagem (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="Reaj. Matérias-Primas (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="Reaj. Máquina ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="Reaj. Máquina BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="Reaj. Máquina GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="Reaj. Marketing (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="Reaj. Distribuição (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="Reaj. Estocagem (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
                           </tbody>
                        </table>
                     </div>
@@ -314,21 +316,19 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
 const MatrixRow = ({ label, macroKey, rules, update, icon, periods }: any) => (
    <tr className="hover:bg-white/[0.02] transition-colors group">
-      {/* COLUNA DE RÓTULOS STICKY LEFT */}
       <td className="p-2 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[200px] min-w-[200px]">
          <div className="flex items-center gap-2">
             <div className="text-slate-600 group-hover:text-orange-500 transition-colors shrink-0">{icon || <Settings size={8}/>}</div>
             <span className="text-[8px] font-black text-slate-300 uppercase tracking-tighter italic whitespace-nowrap overflow-hidden truncate">{label}</span>
          </div>
       </td>
-      {/* CÉLULAS DE DADOS DINÂMICAS */}
       {Array.from({ length: periods }).map((_, i) => (
-         <td key={i} className="p-0.5 border-r border-white/5">
+         <td key={i} className={`p-0.5 border-r border-white/5 ${i === 0 ? 'bg-orange-600/5' : ''}`}>
             <input 
                type="number" step="0.1"
                value={rules[i]?.[macroKey] ?? DEFAULT_MACRO[macroKey] ?? 0}
                onChange={e => update(i, macroKey, parseFloat(e.target.value))}
-               className="w-full bg-slate-900 border border-white/5 rounded px-1 py-1.5 text-center text-[9px] font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner"
+               className={`w-full bg-slate-900 border border-white/5 rounded px-1 py-1.5 text-center text-[9px] font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner ${i === 0 ? 'border-orange-500/20' : ''}`}
             />
          </td>
       ))}
