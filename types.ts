@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V13.6 - ORACLE COCKPIT BUILD
+ * EMPIRION V14.0 - ORACLE MASTER BUILD
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -86,6 +86,8 @@ export interface MacroIndicators {
   tax_rate_ir: number;
   late_penalty_rate: number;
   machine_sale_discount: number;
+  
+  // Reajustes (Índices)
   raw_material_a_adjust: number;
   raw_material_b_adjust: number;
   marketing_campaign_adjust: number;
@@ -95,6 +97,7 @@ export interface MacroIndicators {
   machine_beta_price_adjust: number;
   machine_gamma_price_adjust: number;
   salary_adjust: number;
+  
   allow_machine_sale: boolean;
   labor_productivity: number;
   labor_availability: LaborAvailability;

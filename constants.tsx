@@ -1,15 +1,12 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine } from './types';
 
-export const APP_VERSION = "v13.2.0-Oracle-Gold";
-export const BUILD_DATE = "08/01/2026";
-export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-STABLE";
+export const APP_VERSION = "v14.0.0-Oracle-Master";
+export const BUILD_DATE = "09/01/2026";
+export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 1.00;
 export const DEFAULT_TOTAL_SHARES = 5000000; 
 
-/**
- * Restored INITIAL_INDUSTRIAL_FINANCIALS for simulation engine
- */
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
     assets: { 
@@ -161,7 +158,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     title: 'Forje Seu Império', 
     subtitle: 'A arena definitiva estrategos IA', 
     carousel: [
-      { id: '1', title: 'Domine a Indústria', subtitle: 'Simulações de alta fidelidade', image: 'https://images.unsplash.com/photo-1565106430482-8f6e74349ca1', badge: 'v13.2 Gold', link: '/branches/industrial' }
+      { id: '1', title: 'Domine a Indústria', subtitle: 'Simulações de alta fidelidade', image: 'https://images.unsplash.com/photo-1565106430482-8f6e74349ca1', badge: 'v14.0 Master', link: '/branches/industrial' }
     ] 
   },
   'solutions-bp': { 
@@ -229,19 +226,21 @@ export const DEFAULT_MACRO: MacroIndicators = {
   customer_default_rate: 2.6,
   interest_rate_tr: 2.0,
   supplier_interest: 1.5,
-  sales_interest_rate: 1.5,
+  sales_interest_rate: 0.75, // Conforme PDF (Juros Médios Vendas P0)
   tax_rate_ir: 15.0,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
+  
   raw_material_a_adjust: 1.0,
   raw_material_b_adjust: 1.0,
   marketing_campaign_adjust: 2.0,
   distribution_cost_adjust: 1.0,
   storage_cost_adjust: 2.0,
-  machine_alpha_price_adjust: 0.0,
-  machine_beta_price_adjust: 0.0,
-  machine_gamma_price_adjust: 0.0,
+  machine_alpha_price_adjust: 1.0,
+  machine_beta_price_adjust: 1.0,
+  machine_gamma_price_adjust: 1.0,
   salary_adjust: 1.0,
+  
   allow_machine_sale: false,
   labor_productivity: 1.0,
   labor_availability: 'MEDIA',
@@ -258,7 +257,24 @@ export const DEFAULT_MACRO: MacroIndicators = {
     { id: 'm5', model: 'alfa', age: 21 }
   ],
   maintenance_physics: { alpha: 0.05, beta: 1.2, gamma: 0.5 },
-  prices: { mp_a: 20.00, mp_b: 40.00, distribution_unit: 50.00, marketing_campaign: 10000.00 },
+  prices: { 
+    mp_a: 20.00, 
+    mp_b: 40.00, 
+    distribution_unit: 50.00, 
+    marketing_campaign: 10000.00 
+  },
   machinery_values: { alfa: 500000, beta: 1500000, gama: 3000000 },
   hr_base: { salary: 1300.00, training: 0, profit_sharing: 0, misc: 0 }
+};
+
+// CRONOGRAMA INDUSTRIAL DEFAULT (BASEADO NO PDF)
+export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
+  0: { ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, supplier_interest: 1.5, sales_interest_rate: 1.5, allow_machine_sale: false },
+  1: { ice: 4.0, demand_variation: 6.7, inflation_rate: 2.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 2.0, sales_interest_rate: 2.4, allow_machine_sale: false },
+  2: { ice: 5.0, demand_variation: -6.3, inflation_rate: 3.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 3.0, sales_interest_rate: 3.0, allow_machine_sale: true },
+  3: { ice: 5.0, demand_variation: 55.0, inflation_rate: 3.0, customer_default_rate: 2.8, interest_rate_tr: 4.0, supplier_interest: 3.0, sales_interest_rate: 3.2, allow_machine_sale: true },
+  4: { ice: 5.0, demand_variation: -25.0, inflation_rate: 4.0, customer_default_rate: 2.6, interest_rate_tr: 4.0, supplier_interest: 4.0, sales_interest_rate: 4.0, allow_machine_sale: true },
+  5: { ice: 5.0, demand_variation: 18.2, inflation_rate: 4.5, customer_default_rate: 2.8, interest_rate_tr: 4.0, supplier_interest: 4.5, sales_interest_rate: 3.9, allow_machine_sale: true },
+  6: { ice: 3.0, demand_variation: 9.2, inflation_rate: 4.5, customer_default_rate: 2.6, interest_rate_tr: 5.0, supplier_interest: 4.5, sales_interest_rate: 4.6, allow_machine_sale: true },
+  7: { ice: 4.0, demand_variation: 56.2, inflation_rate: 4.5, customer_default_rate: 2.8, interest_rate_tr: 5.0, supplier_interest: 4.5, sales_interest_rate: 4.5, allow_machine_sale: true }
 };

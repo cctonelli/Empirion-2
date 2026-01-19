@@ -5,13 +5,15 @@ import {
   Loader2, Info, CheckCircle2, Factory, 
   Users, Globe, Timer, Cpu, Sparkles, 
   Settings, Landmark, DollarSign, Target, Calculator,
-  Settings2, X, Bot, Boxes
+  Settings2, X, Bot, Boxes, TrendingUp, Percent,
+  ArrowUpCircle, ArrowDownCircle, HardDrive, LayoutGrid,
+  Zap, Flame, ShieldAlert, BarChart3
 } from 'lucide-react';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { createChampionshipWithTeams } from '../services/supabase';
-import { INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO } from '../constants';
+import { INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import EmpireParticles from './EmpireParticles';
 import { Branch, SalesMode, ScenarioType, ModalityType, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators } from '../types';
@@ -33,6 +35,9 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE,
     currency: 'BRL' as CurrencyType
   });
+
+  // Cronograma de Índices (Step 4 Novo)
+  const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
 
   // Estados para nomes customizados
   const [teamNames, setTeamNames] = useState<string[]>(['EQUIPE ALPHA']);
@@ -95,6 +100,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         scenario_type: 'simulated' as ScenarioType,
         is_trial: true,
         market_indicators: DEFAULT_MACRO,
+        round_rules: roundRules,
         transparency_level: 'medium',
         gazeta_mode: 'anonymous',
         observers: []
@@ -108,7 +114,17 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     }
   };
 
-  const stepsCount = 5;
+  const updateRoundMacro = (round: number, key: string, val: any) => {
+    setRoundRules(prev => ({
+      ...prev,
+      [round]: {
+        ...(prev[round] || {}),
+        [key]: val
+      }
+    }));
+  };
+
+  const stepsCount = 6;
 
   return (
     <div className="relative w-full flex flex-col font-sans overflow-hidden bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-2xl">
@@ -178,6 +194,62 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 4 && (
               <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="CRONOGRAMA ESTRATÉGICO" desc="PARAMETRIZE OS ÍNDICES VARIÁVEIS POR PERÍODO (PDF BUILD)." />
+                 
+                 <div className="matrix-container p-2 md:p-4 rounded-[2rem] bg-slate-950/60 border border-white/5 shadow-2xl">
+                    <div className="overflow-x-auto custom-scrollbar">
+                       <table className="w-full text-left border-collapse min-w-[1200px]">
+                          <thead>
+                             <tr className="bg-slate-900/80">
+                                <th className="p-6 sticky left-0 bg-slate-900 z-10 border-b border-white/10 min-w-[280px]">
+                                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Índice Variável / Período</span>
+                                </th>
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                   <th key={i} className="p-6 border-b border-white/10 text-center">
+                                      <span className="text-[11px] font-black text-orange-500 uppercase tracking-widest">P0{i}</span>
+                                   </th>
+                                ))}
+                             </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5 font-mono">
+                             <MatrixRow label="Crescimento Econômico (ICE %)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={12}/>} />
+                             <MatrixRow label="Variação Demanda Mercado (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={12}/>} />
+                             <MatrixRow label="Índice de Inflação (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={12}/>} />
+                             <MatrixRow label="Inadimplência de Clientes (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={12}/>} />
+                             <MatrixRow label="Juros Bancários (TR %)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={12}/>} />
+                             <MatrixRow label="Juros Fornecedores (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Zap size={12}/>} />
+                             <MatrixRow label="Juros Médios Vendas (%)" macroKey="sales_interest_rate" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={12}/>} />
+                             
+                             <tr className="bg-white/[0.02]">
+                                <td className="p-6 sticky left-0 bg-[#0f172a] z-10 font-black text-[9px] text-emerald-400 uppercase tracking-widest">Libera Venda Máquinas?</td>
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                   <td key={i} className="p-4 text-center">
+                                      <button 
+                                        onClick={() => updateRoundMacro(i, 'allow_machine_sale', !(roundRules[i]?.allow_machine_sale ?? false))}
+                                        className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all border ${roundRules[i]?.allow_machine_sale ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500'}`}
+                                      >
+                                         {roundRules[i]?.allow_machine_sale ? 'SIM' : 'NÃO'}
+                                      </button>
+                                   </td>
+                                ))}
+                             </tr>
+
+                             <MatrixRow label="Reajuste Matérias-Primas (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow label="Reajuste Máquina ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow label="Reajuste Máquina BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow label="Reajuste Máquina GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow label="Reajuste Marketing (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow label="Reajuste Distribuição (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow label="Reajuste Estocagem (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                          </tbody>
+                       </table>
+                    </div>
+                 </div>
+              </motion.div>
+            )}
+
+            {step === 5 && (
+              <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
                  <WizardStepTitle icon={<Calculator size={32}/>} title="ORACLE BASELINE" desc="EDITE OS BALANÇOS E DRES INICIAIS PARA O ROUND ZERO." />
                  <div className="bg-slate-950/60 p-2 rounded-[4rem] border border-white/5 shadow-2xl overflow-hidden">
                     <FinancialStructureEditor 
@@ -189,15 +261,15 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
-            {step === 5 && (
-              <motion.div key="s5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-20 text-center space-y-12">
+            {step === 6 && (
+              <motion.div key="s6" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-20 text-center space-y-12">
                  <div className="w-32 h-32 bg-orange-600 rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl animate-bounce">
                     <ShieldCheck size={64} className="text-white" />
                  </div>
                  <div className="space-y-6">
                     <h1 className="text-6xl font-black text-white uppercase italic tracking-tighter">Nodo Pronto</h1>
                     <p className="text-xl text-slate-400 font-medium italic max-w-2xl mx-auto leading-relaxed">
-                       Sua Arena Trial está pronta para inicializar o cluster.
+                       Sua Arena Trial foi orquestrada com parâmetros macro e financeiros auditados. Pronta para inicializar.
                     </p>
                  </div>
               </motion.div>
@@ -239,6 +311,27 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     </div>
   );
 };
+
+const MatrixRow = ({ label, macroKey, rules, update, icon }: any) => (
+   <tr className="hover:bg-white/[0.02] transition-colors group">
+      <td className="p-6 sticky left-0 bg-[#020617] z-10 border-r border-white/5">
+         <div className="flex items-center gap-3">
+            <div className="text-slate-600 group-hover:text-orange-500 transition-colors">{icon || <Settings size={12}/>}</div>
+            <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter italic">{label}</span>
+         </div>
+      </td>
+      {Array.from({ length: 8 }).map((_, i) => (
+         <td key={i} className="p-4">
+            <input 
+               type="number" step="0.1"
+               value={rules[i]?.[macroKey] ?? DEFAULT_MACRO[macroKey] ?? 0}
+               onChange={e => update(i, macroKey, parseFloat(e.target.value))}
+               className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-center text-xs font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner"
+            />
+         </td>
+      ))}
+   </tr>
+);
 
 const WizardStepTitle = ({ icon, title, desc }: any) => (
   <div className="flex items-center gap-8 border-b border-white/5 pb-12">
