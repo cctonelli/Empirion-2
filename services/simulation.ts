@@ -7,32 +7,56 @@ export const sanitize = (val: any, fallback: number = 0): number => {
   return isFinite(num) ? num : fallback;
 };
 
-export const calculateMaintenanceCost = (baseValue: number, age: number, utilization: number, physics: { alpha: number, beta: number, gamma: number }): number => {
-  const ageFactor = 1 + physics.alpha * Math.pow(age, physics.beta);
-  const utilizationFactor = 1 + physics.gamma * utilization;
-  return baseValue * ageFactor * utilizationFactor * 0.01;
+/**
+ * Modelo de Kanitz – ÍNDICE DE SOLVÊNCIA
+ * FI = 0,05*X1 + 1,65*X2 + 3,55*X3 - 1,06*X4 - 0,33*X5
+ */
+export const calculateKanitzFactor = (data: {
+  netProfit: number,
+  equity: number,
+  currentAssets: number,
+  longTermAssets: number,
+  currentLiabilities: number,
+  longTermLiabilities: number,
+  inventory: number
+}) => {
+  const exigivelTotal = data.currentLiabilities + data.longTermLiabilities;
+  const pl = Math.max(data.equity, 1);
+  const pc = Math.max(data.currentLiabilities, 1);
+
+  const x1 = data.netProfit / pl; // Rentabilidade do PL
+  const x2 = (data.currentAssets + data.longTermAssets) / Math.max(exigivelTotal, 1); // Liquidez Geral
+  const x3 = (data.currentAssets - data.inventory) / pc; // Liquidez Seca
+  const x4 = data.currentAssets / pc; // Liquidez Corrente
+  const x5 = exigivelTotal / pl; // Grau de Endividamento
+
+  const fi = (0.05 * x1) + (1.65 * x2) + (3.55 * x3) - (1.06 * x4) - (0.33 * x5);
+  
+  return {
+    fi,
+    x1, x2, x3, x4, x5,
+    status: fi > 0 ? 'SAUDAVEL' : fi > -3 ? 'ALERTA' : 'RJ' as InsolvencyStatus
+  };
 };
 
-export const calculateBankRating = (data: { lc: number, endividamento: number, margem: number, equity: number }, hasScissorsEffect: boolean) => {
-  let score = 0;
-  if (data.lc > 1.2) score += 30;
-  if (data.endividamento < 50) score += 30;
-  if (data.margem > 5) score += 40;
-  if (hasScissorsEffect) score -= 20;
-
+export const calculateBankRating = (fi: number, netProfit: number) => {
   let rating: CreditRating = 'AAA';
-  if (score < 30) rating = 'D';
-  else if (score < 50) rating = 'C';
-  else if (score < 70) rating = 'B';
-  else if (score < 85) rating = 'A';
-  else if (score < 95) rating = 'AA';
+  
+  if (fi > 4) rating = 'AAA';
+  else if (fi > 2) rating = 'AA';
+  else if (fi > 0) rating = 'A';
+  else if (fi > -1.5) rating = 'B';
+  else if (fi > -3) rating = 'C';
+  else rating = 'D';
 
-  return { rating, score, credit_limit: Math.max(0, data.equity * 0.5) };
+  // Penalidade por prejuízo severo
+  if (netProfit < 0 && (rating === 'AAA' || rating === 'AA')) rating = 'A';
+
+  return rating;
 };
 
 /**
- * CORE ORACLE ENGINE v14.1 GOLD - DYNAMIC MARKET SHARE BUILD
- * Calcula vendas e market share proporcionalmente ao número de regiões ativas.
+ * CORE ORACLE ENGINE v14.2 GOLD - KANITZ INSOLVENCY BUILD
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -47,11 +71,10 @@ export const calculateProjections = (
   const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(bs.equity?.total, 5055447);
   
-  // 1. RESOLVER INDICADORES (Prioriza roundRules)
   const roundSpecific = roundRules ? roundRules[currentRound] : {};
   const indicators = { ...baseIndicators, ...roundSpecific };
 
-  // 2. CÁLCULO CUMULATIVO DE PREÇOS DE MÁQUINAS
+  // 1. CAPEX & PREÇOS (v14.1 logic maintained)
   const getAdjustedPrice = (model: MachineModel, base: number) => {
     let adj = 1.0;
     const rate = indicators[`machine_${model}_price_adjust`] || 0;
@@ -65,7 +88,6 @@ export const calculateProjections = (
     gama: getAdjustedPrice('gama', indicators.machinery_values.gama)
   };
 
-  // 3. CAPEX & BDI (40/60)
   const totalCapex = (decisions.machinery.buy.alfa * adjPrices.alfa) + 
                      (decisions.machinery.buy.beta * adjPrices.beta) + 
                      (decisions.machinery.buy.gama * adjPrices.gama);
@@ -73,7 +95,7 @@ export const calculateProjections = (
   const downPayment = totalCapex * 0.4;
   const bdiFinanced = totalCapex * 0.6;
 
-  // 4. CAPACIDADE PRODUTIVA
+  // 2. PRODUÇÃO & VENDAS (v14.1 dynamic share logic)
   const specs = indicators.machine_specs || DEFAULT_MACRO.machine_specs;
   const mix = indicators.initial_machinery_mix || DEFAULT_MACRO.initial_machinery_mix;
   
@@ -82,12 +104,9 @@ export const calculateProjections = (
                         (decisions.machinery.buy.beta * specs.beta.production_capacity) +
                         (decisions.machinery.buy.gama * specs.gama.production_capacity);
 
-  // 5. LÓGICA DE VENDAS REGIONAIS DINÂMICAS
   const regions = decisions.regions || {};
   const regionIds = Object.keys(regions);
   const numRegions = Math.max(regionIds.length, 1);
-  
-  // Demanda Base por Região: 2.500 unidades
   const baseDemandPerRegion = 2500 * (indicators.demand_multiplier || 1.0);
   const totalMarketDemand = baseDemandPerRegion * numRegions;
   
@@ -98,79 +117,72 @@ export const calculateProjections = (
     const reg = regions[Number(id)];
     const price = reg.price || 370;
     const marketing = reg.marketing || 0;
-    
-    // Elasticidade: Preço ideal $370. Marketing (0-9) adiciona até 20% de bônus de tração.
     const priceEffect = 1 - (price - 370) / 370;
-    const marketingEffect = 1 + (marketing * 0.022); // Max 1.2x
-    
+    const marketingEffect = 1 + (marketing * 0.022);
     const regionalSales = Math.floor(baseDemandPerRegion * priceEffect * marketingEffect);
     totalUnitsSold += Math.max(0, regionalSales);
     totalRevenue += Math.max(0, regionalSales) * price;
   });
 
-  // Limita vendas à capacidade produtiva
   const actualUnitsSold = Math.min(totalUnitsSold, totalCapacity);
-  // Ajusta receita proporcionalmente se houver quebra de estoque (falta de capacidade)
   const revenue = totalUnitsSold > 0 ? (actualUnitsSold / totalUnitsSold) * totalRevenue : 0;
-  
   const marketShare = (actualUnitsSold / totalMarketDemand) * 100;
 
-  // 6. CPV DETALHADO
-  const baseDepreciation = 54400;
-  const prodFixedCosts = baseDepreciation * 0.60;
+  // 3. FINANCEIRO & DRE
   const mpCost = actualUnitsSold * (indicators.prices.mp_a * 3 + indicators.prices.mp_b * 2);
   const modCost = (actualUnitsSold / Math.max(totalCapacity, 1)) * (decisions.hr.salary * 500);
-  const supplierCharges = decisions.production.paymentType > 0 ? mpCost * 0.03 : 0;
+  const cpv = mpCost + modCost + 32640; // 32640 = prod fixed costs
   
-  const cpv = mpCost + modCost + prodFixedCosts + supplierCharges;
-  
-  // 7. RESULTADO FINANCEIRO
   const interestRate = (indicators.interest_rate_tr || 3) / 100;
   const debtInterest = (sanitize(bs.liabilities?.total_debt, 4121493) * interestRate);
-  const finRevenue = (sanitize(bs.assets?.current?.cash, 0) * 0.005);
-  
-  // 8. RESULTADO LÍQUIDO
-  const opex = (actualUnitsSold * 22) + 400000 + (baseDepreciation * 0.40);
-  const ebitda = revenue - cpv - opex;
-  const netProfit = ebitda + finRevenue - debtInterest;
+  const opex = (actualUnitsSold * 22) + 400000 + 21760;
+  const netProfit = revenue - cpv - opex - debtInterest;
   const finalEquity = prevEquity + netProfit;
-  
-  // 9. SOLVÊNCIA & RATING
-  const ac = 3290340 + netProfit - downPayment; 
-  const bdiInstallment = bdiFinanced / 4; 
-  const pc = sanitize(bs.liabilities?.current, 2621493) + bdiInstallment; 
-  
-  const lc = ac / Math.max(pc, 1);
-  const endividamento = (pc / Math.max(finalEquity, 1)) * 100;
-  const bankDetails = calculateBankRating({ lc, endividamento, margem: (netProfit/Math.max(revenue, 1))*100, equity: finalEquity }, pc > ac);
+
+  // 4. BALANÇO PROJETADO PARA KANITZ
+  const ac = 3290340 + netProfit - downPayment;
+  const inventory = (sanitize(bs.assets?.current?.inventory_mpa, 0) + sanitize(bs.assets?.current?.inventory_mpb, 0)) * 0.8; // Simplificação de quebra de estoque
+  const realizavelLP = sanitize(bs.assets?.noncurrent?.longterm?.sale, 0);
+  const pc = sanitize(bs.liabilities?.current, 2621493) + (bdiFinanced / 4);
+  const pnc = sanitize(bs.liabilities?.long_term, 1500000) + (bdiFinanced * 0.75);
+
+  // 5. CÁLCULO DO FATOR DE KANITZ
+  const kanitz = calculateKanitzFactor({
+    netProfit,
+    equity: finalEquity,
+    currentAssets: ac,
+    longTermAssets: realizavelLP,
+    currentLiabilities: pc,
+    longTermLiabilities: pnc,
+    inventory
+  });
+
+  const rating = calculateBankRating(kanitz.fi, netProfit);
 
   return {
-    revenue, netProfit, debtRatio: endividamento, creditRating: bankDetails.rating,
+    revenue, netProfit, debtRatio: ( (pc+pnc) / Math.max(finalEquity, 1) ) * 100, creditRating: rating,
     marketShare,
     health: { 
-      rating: bankDetails.rating, 
-      insolvency_risk: (lc < 0.5 ? 80 : 10), 
-      is_bankrupt: lc < 0.1, 
-      liquidity_ratio: lc 
+      rating, 
+      insolvency_risk: kanitz.fi < -3 ? 90 : kanitz.fi < 0 ? 50 : 10,
+      is_bankrupt: kanitz.fi < -4,
+      liquidity_ratio: ac / pc,
+      kanitz_fi: kanitz.fi 
     },
     kpis: {
       market_share: marketShare,
-      rating: bankDetails.rating,
-      insolvency_status: lc < 0.5 ? 'RJ' : 'SAUDAVEL',
+      rating,
+      insolvency_status: kanitz.status,
       equity: finalEquity,
-      scissors_effect: { tsf: lc - 1.0, is_critical: lc < 1.0 }
+      kanitz_factor: kanitz.fi,
+      scissors_effect: { tsf: (ac/pc) - 1.0, is_critical: (ac/pc) < 1.0 }
     },
     statements: {
-      dre: { 
-        revenue, cpv, opex, 
-        financial_revenue: finRevenue,
-        financial_expense: debtInterest,
-        net_profit: netProfit 
-      },
+      dre: { revenue, cpv, opex, net_profit: netProfit },
       balance_sheet: { 
         assets: { total: ac + 5886600 + totalCapex }, 
         equity: { total: finalEquity }, 
-        liabilities: { total_debt: pc + bdiFinanced } 
+        liabilities: { total_debt: pc + pnc } 
       }
     }
   };

@@ -8,8 +8,8 @@ import {
   Thermometer, EyeOff, Globe, Map, PieChart, Users,
   ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon, Info,
   Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon,
-  ChevronDown, Maximize2, Zap, ShieldAlert
-} from 'lucide-react';
+  ChevronDown, Maximize2, Zap, ShieldAlert, ThermometerSun
+} from 'lucide-center';
 import { motion, AnimatePresence } from 'framer-motion';
 // Fix: Use any to bypass react-router-dom type resolution issues in this environment
 import * as ReactRouterDOM from 'react-router-dom';
@@ -64,15 +64,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const isObserver = userRole === 'observer';
 
   const currentKpis = useMemo((): KPIs => {
-    // Tenta extrair KPIs reais. Fallback para estrutura v14 se vazio.
     return activeTeam?.kpis || activeArena?.kpis || {
       ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
-      scissors_effect: { ncg: 1466605, ccl: 668847, tesouraria: 50000, ccp: 180000, tsf: -73.87, is_critical: false },
       market_valuation: { share_price: 1.0, total_shares: 5000000, market_cap: 5000000, tsr: 0.0 },
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
       equity: 5055447,
       market_share: 0.0,
+      kanitz_factor: 7.0,
       statements: { 
         dre: { revenue: 0, net_profit: 0, cpv: 0, opex: 0 },
         balance_sheet: { assets: { total: 9176940 } }
@@ -82,7 +81,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   const currencySymbol = activeArena?.currency === 'BRL' ? 'R$' : activeArena?.currency === 'EUR' ? '€' : '$';
 
-  // Formatação de valores grandes
   const fmt = (val: number) => {
     if (Math.abs(val) >= 1000000) return `${(val / 1000000).toFixed(2)}M`;
     if (Math.abs(val) >= 1000) return `${(val / 1000).toFixed(1)}K`;
@@ -98,6 +96,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     </div>
   );
 
+  const kanitz = currentKpis.kanitz_factor ?? 7.0;
+  const kanitzColor = kanitz > 0 ? 'text-emerald-500' : kanitz > -3 ? 'text-orange-500' : 'text-rose-500';
+
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
       {isObserver && (
@@ -112,7 +113,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          <CockpitStat label="Receita Bruta" val={`${currencySymbol} ${fmt(currentKpis.statements?.dre?.revenue || 0)}`} trend="Real" pos icon={<DollarSign size={16}/>} />
          <CockpitStat label="Lucro Líquido" val={`${currencySymbol} ${fmt(currentKpis.statements?.dre?.net_profit || 0)}`} trend="Net" pos={ (currentKpis.statements?.dre?.net_profit || 0) >= 0 } icon={<ActivityIcon size={16}/>} />
          <CockpitStat label="Market Share" val={`${(currentKpis.market_share || 0).toFixed(1)}%`} trend="MKT" pos icon={<PieChart size={16}/>} />
-         <CockpitStat label="Rating" val={currentKpis.rating} trend="Credit" pos icon={<ShieldCheck size={16}/>} />
+         <CockpitStat label="Rating" val={currentKpis.rating} trend="Kanitz" pos icon={<ShieldCheck size={16}/>} />
          <div className="px-8 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
             <div className="flex flex-col">
                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Time Remaining</span>
@@ -132,6 +133,28 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </h3>
                   <span className="text-[10px] font-black text-slate-600 uppercase">Cycle 0{activeArena?.current_round}</span>
                </header>
+               
+               {/* TERMÔMETRO DE KANITZ */}
+               <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-3 shadow-inner group">
+                  <div className="flex justify-between items-center mb-1">
+                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Modelo de Kanitz</h4>
+                     <ThermometerSun size={12} className={kanitzColor} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                     <span className={`text-4xl font-black font-mono italic drop-shadow-lg ${kanitzColor}`}>{kanitz.toFixed(2)}</span>
+                     <div className="text-right">
+                        <span className={`block text-[8px] font-black uppercase tracking-widest ${kanitzColor}`}>{currentKpis.insolvency_status}</span>
+                        <span className="block text-[7px] text-slate-600 font-bold uppercase italic mt-1">Fator de Insolvência</span>
+                     </div>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mt-4">
+                     <div 
+                        className={`h-full transition-all duration-1000 ${kanitz > 0 ? 'bg-emerald-500' : kanitz > -3 ? 'bg-orange-500' : 'bg-rose-500'}`} 
+                        style={{ width: `${Math.min(100, Math.max(5, ((kanitz + 7) / 14) * 100))}%` }} 
+                     />
+                  </div>
+               </div>
+
                <div className="bg-slate-950/80 p-5 rounded-[2rem] border border-white/5 space-y-3 shadow-inner">
                   <div className="flex justify-between items-center mb-1">
                      <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">DRE Tático</h4>
@@ -144,25 +167,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      <MiniFinRow label="Net Profit" val={fmt(currentKpis.statements?.dre?.net_profit || 0)} bold highlight />
                   </div>
                </div>
-               <div className="bg-orange-600/5 p-5 rounded-[2rem] border border-orange-500/10 space-y-3">
-                  <div className="flex justify-between items-center">
-                     <span className="text-[10px] font-black text-orange-500 uppercase italic">Tesoura (TSF)</span>
-                     <Gauge size={14} className="text-orange-500" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                     <span className="text-3xl font-black text-white font-mono italic">{(currentKpis.scissors_effect?.tsf || 0).toFixed(2)}</span>
-                     <span className={`text-[8px] font-black px-2 py-1 rounded-full ${currentKpis.scissors_effect?.is_critical ? 'bg-rose-600 text-white' : 'bg-emerald-600/20 text-emerald-500'}`}>
-                        {currentKpis.scissors_effect?.is_critical ? 'CRÍTICO' : 'ÓTIMO'}
-                     </span>
-                  </div>
-               </div>
+
                <div className="p-5 bg-indigo-600/10 border border-indigo-500/20 rounded-[2.5rem] space-y-3 shadow-lg">
                   <div className="flex items-center gap-3 text-indigo-400">
                      <Sparkles size={16} />
                      <span className="text-[10px] font-black uppercase tracking-widest">Oracle Advice</span>
                   </div>
                   <p className="text-[10px] text-indigo-100 font-medium italic leading-relaxed">
-                     { (currentKpis.market_share || 0) < 5 ? "Sua fatia de mercado está abaixo do target de 5%. Aumente o Marketing regional." : "Performance sólida. Monitore a liquidez corrente." }
+                     { kanitz < 0 ? "Atenção: Seu Fator de Kanitz está em zona de penumbra. Reduza o endividamento e priorize a liquidez seca." : "Performance sólida. Seu rating permite novas rodadas de CAPEX planejado." }
                   </p>
                </div>
             </div>
