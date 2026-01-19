@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
@@ -63,18 +64,30 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const isObserver = userRole === 'observer';
 
   const currentKpis = useMemo((): KPIs => {
+    // Tenta extrair KPIs reais. Fallback para estrutura v14 se vazio.
     return activeTeam?.kpis || activeArena?.kpis || {
       ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
       scissors_effect: { ncg: 1466605, ccl: 668847, tesouraria: 50000, ccp: 180000, tsf: -73.87, is_critical: false },
-      market_valuation: { share_price: 60.09, total_shares: 5000000, market_cap: 300450000, tsr: 4.2 },
+      market_valuation: { share_price: 1.0, total_shares: 5000000, market_cap: 5000000, tsr: 0.0 },
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
       equity: 5055447,
-      market_share: 12.5,
+      market_share: 0.0,
+      statements: { 
+        dre: { revenue: 0, net_profit: 0, cpv: 0, opex: 0 },
+        balance_sheet: { assets: { total: 9176940 } }
+      }
     } as KPIs;
   }, [activeArena, activeTeam]);
 
   const currencySymbol = activeArena?.currency === 'BRL' ? 'R$' : activeArena?.currency === 'EUR' ? '€' : '$';
+
+  // Formatação de valores grandes
+  const fmt = (val: number) => {
+    if (Math.abs(val) >= 1000000) return `${(val / 1000000).toFixed(2)}M`;
+    if (Math.abs(val) >= 1000) return `${(val / 1000).toFixed(1)}K`;
+    return val.toFixed(0);
+  };
 
   if (loading) return (
     <div className="h-full flex items-center justify-center bg-[#020617]">
@@ -87,7 +100,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
-      {/* OBSERVER ALERT BANNER */}
       {isObserver && (
         <div className="h-10 bg-indigo-600 flex items-center justify-center gap-3 animate-pulse shrink-0">
            <ShieldAlert size={14} className="text-white" />
@@ -96,11 +108,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       )}
 
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
-         <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend="+1.2%" pos icon={<TrendingUp size={16}/>} />
-         <CockpitStat label="Receita Bruta" val={`${currencySymbol} 3.32M`} trend="Estável" pos icon={<DollarSign size={16}/>} />
-         <CockpitStat label="Lucro Líquido" val={`${currencySymbol} 73.9K`} trend="+4.5%" pos icon={<ActivityIcon size={16}/>} />
-         <CockpitStat label="Market Share" val={`${currentKpis.market_share.toFixed(1)}%`} trend="Target" pos icon={<PieChart size={16}/>} />
-         <CockpitStat label="Rating" val={currentKpis.rating} trend="Prime" pos icon={<ShieldCheck size={16}/>} />
+         <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend={`${currentKpis.market_valuation?.tsr.toFixed(1)}%`} pos={currentKpis.market_valuation?.tsr >= 0} icon={<TrendingUp size={16}/>} />
+         <CockpitStat label="Receita Bruta" val={`${currencySymbol} ${fmt(currentKpis.statements?.dre?.revenue || 0)}`} trend="Real" pos icon={<DollarSign size={16}/>} />
+         <CockpitStat label="Lucro Líquido" val={`${currencySymbol} ${fmt(currentKpis.statements?.dre?.net_profit || 0)}`} trend="Net" pos={ (currentKpis.statements?.dre?.net_profit || 0) >= 0 } icon={<ActivityIcon size={16}/>} />
+         <CockpitStat label="Market Share" val={`${(currentKpis.market_share || 0).toFixed(1)}%`} trend="MKT" pos icon={<PieChart size={16}/>} />
+         <CockpitStat label="Rating" val={currentKpis.rating} trend="Credit" pos icon={<ShieldCheck size={16}/>} />
          <div className="px-8 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
             <div className="flex flex-col">
                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Time Remaining</span>
@@ -126,10 +138,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      <Zap size={12} className="text-orange-500" />
                   </div>
                   <div className="space-y-2 font-mono text-[10px]">
-                     <MiniFinRow label="Faturamento" val={`3.32M`} />
-                     <MiniFinRow label="Custos (CPV)" val={`(2.27M)`} neg />
-                     <MiniFinRow label="EBITDA" val={`126.9K`} bold />
-                     <MiniFinRow label="Net Profit" val={`73.9K`} bold highlight />
+                     <MiniFinRow label="Faturamento" val={fmt(currentKpis.statements?.dre?.revenue || 0)} />
+                     <MiniFinRow label="Custos (CPV)" val={`(${fmt(currentKpis.statements?.dre?.cpv || 0)})`} neg />
+                     <MiniFinRow label="Despesas Op." val={`(${fmt(currentKpis.statements?.dre?.opex || 0)})`} neg />
+                     <MiniFinRow label="Net Profit" val={fmt(currentKpis.statements?.dre?.net_profit || 0)} bold highlight />
                   </div>
                </div>
                <div className="bg-orange-600/5 p-5 rounded-[2rem] border border-orange-500/10 space-y-3">
@@ -150,7 +162,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      <span className="text-[10px] font-black uppercase tracking-widest">Oracle Advice</span>
                   </div>
                   <p className="text-[10px] text-indigo-100 font-medium italic leading-relaxed">
-                     "Margens expandiram 2% este ciclo. Mantenha o Marketing regional acima de $5.000."
+                     { (currentKpis.market_share || 0) < 5 ? "Sua fatia de mercado está abaixo do target de 5%. Aumente o Marketing regional." : "Performance sólida. Monitore a liquidez corrente." }
                   </p>
                </div>
             </div>

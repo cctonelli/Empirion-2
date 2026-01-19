@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 // Fix: Use any to bypass react-router-dom type resolution issues in this environment
 import * as Router from 'react-router-dom';
 const { useLocation, useNavigate } = Router as any;
@@ -17,7 +17,7 @@ import {
   getAllUsers,
   provisionDemoEnvironment
 } from '../services/supabase';
-import { Championship, UserProfile, MenuItemConfig } from '../types';
+import { Championship, UserProfile, MenuItemConfig, Team } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
 import TutorDecisionMonitor from './TutorDecisionMonitor';
@@ -42,10 +42,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const [showWizard, setShowWizard] = useState(false);
   const [isCreatingTrial, setIsCreatingTrial] = useState(false);
   
-  // View interna da Arena selecionada
   const [tutorView, setTutorView] = useState<TutorView>('dashboard');
 
-  // CMS State
   const [heroTitle, setHeroTitle] = useState('Forje Seu Império');
   const [accentColor, setAccentColor] = useState('#f97316');
   const [menus, setMenus] = useState<MenuItemConfig[]>([]);
@@ -62,17 +60,14 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fix: Casting auth to any to resolve property missing error in this environment
       const { data: { session } } = await (supabase.auth as any).getSession();
       const isTrial = localStorage.getItem('is_trial_session') === 'true';
       const storedArenaId = localStorage.getItem('active_champ_id');
 
-      // Handshake do perfil
       const userId = session?.user?.id || 'trial_user';
       const prof = await getUserProfile(userId);
       setProfile(prof);
       
-      // No Trial, forçamos a aba de Arenas se não estiver logado como admin real
       if ((isTrial || prof?.role === 'tutor') && activeTab === 'system') {
          setActiveTab('tournaments');
       }
@@ -80,7 +75,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       const { data } = await getChampionships();
       if (data) {
          setChampionships(data);
-         // AUTO-LOAD TRIAL ARENA: Se estivermos em trial e houver um ID salvo, selecionamos automaticamente
          if (isTrial && storedArenaId && !selectedArena && !isCreatingTrial) {
             const found = data.find(c => c.id === storedArenaId);
             if (found) setSelectedArena(found);
@@ -100,15 +94,25 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const isAdmin = profile?.role === 'admin';
   const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
 
-  // --- VIEW DE COMANDO (ARENA SELECIONADA OU EM CRIAÇÃO) ---
+  // CÁLCULO DE MÉTRICAS DINÂMICAS DO CLUSTER
+  const clusterMetrics = useMemo(() => {
+    if (!selectedArena?.teams) return { avgShare: 0, insolvencyRate: 0 };
+    const teams = selectedArena.teams as Team[];
+    const totalShare = teams.reduce((acc, t) => acc + (t.kpis?.market_share || 0), 0);
+    const insolventCount = teams.filter(t => t.kpis?.insolvency_status === 'BANKRUPT' || t.kpis?.insolvency_status === 'RJ').length;
+    
+    return {
+      avgShare: totalShare / Math.max(teams.length, 1),
+      insolvencyRate: (insolventCount / Math.max(teams.length, 1)) * 100
+    };
+  }, [selectedArena]);
+
   if (selectedArena || isCreatingTrial) {
     const arenaName = selectedArena?.name || "Nova Arena Trial";
     const currentRound = selectedArena?.current_round || 0;
 
     return (
       <div className="flex flex-col h-full animate-in fade-in duration-500 font-sans max-w-[1600px] mx-auto p-6 overflow-hidden">
-        
-        {/* HEADER DA ARENA - DESIGN SEBRAE STICKY v13.9 */}
         <header className="shrink-0 z-[2000] bg-slate-900 border-2 border-white/10 p-6 md:p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.8)] backdrop-blur-3xl space-y-8 mb-10 border-t-orange-500/40">
            <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
               <div className="flex items-center gap-6 shrink-0">
@@ -131,7 +135,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                  </div>
               </div>
               
-              {/* MENU SUPERIOR TÁTICO - RÓTULOS OFICIAIS EMPIRION v13.9 */}
               <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 bg-slate-950 rounded-[2rem] border border-white/5 shadow-inner">
                  <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="COCKPIT" icon={<LayoutDashboard size={14}/>} />
                  <ArenaNavBtn active={tutorView === 'planning'} onClick={() => setTutorView('planning')} label="PLANEJAMENTO" icon={<PenTool size={14}/>} />
@@ -142,21 +145,20 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
            </div>
         </header>
 
-        {/* VIEWPORT OPERACIONAL COM ROLAGEM PRÓPRIA */}
         <main className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-10">
            <AnimatePresence mode="wait">
               {tutorView === 'dashboard' && selectedArena && (
                 <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-8">
                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       <MetricCard label="Equipes" val={selectedArena.teams?.length?.toString() || '0'} icon={<Users className="text-blue-500"/>} trend="Active" />
-                      <MetricCard label="Market Share Médio" val="12.5%" icon={<Activity className="text-emerald-500"/>} trend="Balanced" />
-                      <MetricCard label="Insolvência" val="0%" icon={<ShieldAlert className="text-rose-500"/>} trend="Safe" />
+                      <MetricCard label="Market Share Médio" val={`${clusterMetrics.avgShare.toFixed(1)}%`} icon={<Activity className="text-emerald-500"/>} trend="Real-time" />
+                      <MetricCard label="Insolvência" val={`${clusterMetrics.insolvencyRate.toFixed(0)}%`} icon={<ShieldAlert className="text-rose-500"/>} trend="Critical" />
                       <MetricCard label="Ciclos Restantes" val={(selectedArena.total_rounds - selectedArena.current_round).toString()} icon={<Trophy className="text-amber-500"/>} trend="Live" />
                    </div>
                    <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
                 </motion.div>
               )}
-
+              {/* ... Resto do componente mantido ... */}
               {tutorView === 'planning' && (
                 <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="h-full">
                    {isCreatingTrial ? (
@@ -169,13 +171,11 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                    )}
                 </motion.div>
               )}
-
               {tutorView === 'decisions' && selectedArena && (
                 <motion.div key="dec" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
                    <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
                 </motion.div>
               )}
-
               {tutorView === 'teams' && selectedArena && (
                 <motion.div key="teams" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="grid grid-cols-1 md:grid-cols-3 gap-8">
                    {selectedArena.teams?.map(t => (
@@ -192,7 +192,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                    ))}
                 </motion.div>
               )}
-
               {tutorView === 'gazette' && selectedArena && (
                 <motion.div key="gaz" initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}} exit={{opacity:0}} className="flex justify-center">
                    <GazetteViewer arena={selectedArena} aiNews="O Oráculo Strategos está processando o briefing deste ciclo..." round={selectedArena.current_round} userRole="tutor" onClose={() => setTutorView('dashboard')} />
