@@ -29,7 +29,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     botsCount: 2,
     marketMode: 'hybrid' as SalesMode,
     regionsCount: 4,
-    totalRounds: 12, // Padrão
+    totalRounds: 8, // Começa com 8 conforme PDF padrão
     roundTime: 24,
     roundUnit: 'hours' as DeadlineUnit,
     initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE,
@@ -39,13 +39,10 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   // Cronograma de Índices
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
 
-  // Estados para nomes customizados
   const [teamNames, setTeamNames] = useState<string[]>(['EQUIPE ALPHA']);
   const [regionNames, setRegionNames] = useState<string[]>(['SUDESTE', 'EUROPA', 'NORDESTE', 'SUL']);
-
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
 
-  // Sincroniza tamanho dos arrays de nomes ao mudar contagem
   useEffect(() => {
     setTeamNames(prev => {
       const next = [...prev];
@@ -128,20 +125,20 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   return (
     <div className="relative w-full flex flex-col font-sans overflow-hidden bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-2xl">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 relative z-10">
-        <div className="max-w-[1600px] mx-auto pb-32">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 relative z-10">
+        <div className="max-w-[1700px] mx-auto pb-32">
           <AnimatePresence mode="wait">
             
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
                  <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DA ARENA" desc="CONFIGURAÇÕES GLOBAIS DO AMBIENTE SANDBOX." />
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <WizardField label="NOME DA INSTÂNCIA TRIAL" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TESTE INDUSTRIAL ALPHA" />
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 gap-4">
                        <WizardField label="TOTAL DE CICLOS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
                        <WizardField label="PREÇO AÇÃO P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
                     </div>
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 gap-4">
                        <WizardField label="TEMPO POR RODADA" type="number" val={formData.roundTime} onChange={(v:any)=>setFormData({...formData, roundTime: parseInt(v)})} />
                        <WizardSelect label="UNIDADE TEMPORAL" val={formData.roundUnit} onChange={(v:any)=>setFormData({...formData, roundUnit: v as DeadlineUnit})} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} />
                     </div>
@@ -153,19 +150,19 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             {step === 2 && (
               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
                  <WizardStepTitle icon={<Users size={32}/>} title="EQUIPES E BOTS" desc="DEFINA QUEM PARTICIPARÁ DA COMPETIÇÃO NO CLUSTER." />
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    <div className="space-y-8 bg-white/5 p-8 rounded-[3.5rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-sm font-black text-orange-500 uppercase tracking-widest italic border-b border-white/5 pb-4">Dimensionamento</h4>
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div className="space-y-8 bg-white/5 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-xs font-black text-orange-500 uppercase tracking-widest italic border-b border-white/5 pb-4">Dimensionamento</h4>
                        <div className="grid grid-cols-2 gap-6">
                           <WizardField label="Equipes Humanas" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
                           <WizardField label="Synthetic Bots (IA)" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
                        </div>
                     </div>
-                    <div className="space-y-6">
-                       <h4 className="text-sm font-black text-blue-400 uppercase tracking-widest italic flex items-center gap-3"><CheckCircle2 size={16}/> Identificadores das Equipes</h4>
-                       <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-4">
+                       <h4 className="text-xs font-black text-blue-400 uppercase tracking-widest italic flex items-center gap-3"><CheckCircle2 size={16}/> Identificadores</h4>
+                       <div className="space-y-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                           {teamNames.map((n, i) => (
-                             <input key={i} value={n} onChange={e => { const next = [...teamNames]; next[i] = e.target.value; setTeamNames(next); }} className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-[11px] font-black text-white uppercase outline-none focus:border-blue-500 transition-all shadow-inner" placeholder={`Nome da Equipe ${i+1}`} />
+                             <input key={i} value={n} onChange={e => { const next = [...teamNames]; next[i] = e.target.value; setTeamNames(next); }} className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-[10px] font-black text-white uppercase outline-none focus:border-blue-500 transition-all shadow-inner" placeholder={`Nome da Equipe ${i+1}`} />
                           ))}
                        </div>
                     </div>
@@ -176,15 +173,15 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             {step === 3 && (
               <motion.div key="s3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
                  <WizardStepTitle icon={<Globe size={32}/>} title="GEOPOLÍTICA REGIONAL" desc="CONFIGURE AS ÁREAS DE DISPUTA COMERCIAL." />
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    <div className="bg-slate-900/60 p-8 rounded-[3.5rem] border border-white/10 space-y-10 shadow-2xl">
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/10 space-y-10 shadow-2xl h-fit">
                        <WizardField label="Quantidade de Regiões" type="number" val={formData.regionsCount} onChange={(v:any)=>setFormData({...formData, regionsCount: Math.min(15, Math.max(1, parseInt(v)))})} />
                     </div>
-                    <div className="space-y-6">
-                       <h4 className="text-sm font-black text-emerald-400 uppercase tracking-widest italic flex items-center gap-3"><Boxes size={16}/> Nomenclatura dos Nodos</h4>
-                       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-4">
+                       <h4 className="text-xs font-black text-emerald-400 uppercase tracking-widest italic flex items-center gap-3"><Boxes size={16}/> Nomenclatura dos Nodos</h4>
+                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                           {regionNames.map((n, i) => (
-                             <input key={i} value={n} onChange={e => { const next = [...regionNames]; next[i] = e.target.value; setRegionNames(next); }} className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-[11px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all" placeholder={`Região ${i+1}`} />
+                             <input key={i} value={n} onChange={e => { const next = [...regionNames]; next[i] = e.target.value; setRegionNames(next); }} className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-[10px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all" placeholder={`Região ${i+1}`} />
                           ))}
                        </div>
                     </div>
@@ -193,20 +190,23 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             )}
 
             {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
+              <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                  <WizardStepTitle icon={<BarChart3 size={32}/>} title="CRONOGRAMA ESTRATÉGICO" desc="PARAMETRIZE OS ÍNDICES VARIÁVEIS POR PERÍODO (PDF BUILD)." />
                  
-                 <div className="matrix-container rounded-3xl bg-slate-950/60 border border-white/10 shadow-2xl overflow-hidden h-[600px] flex flex-col relative">
-                    <div className="overflow-auto custom-scrollbar flex-1">
-                       <table className="w-full text-left border-collapse table-fixed">
+                 {/* CONTAINER DA TABELA COM SCROLL DUPLO */}
+                 <div className="rounded-[2.5rem] bg-slate-950/80 border-2 border-white/5 shadow-2xl overflow-hidden h-[550px] flex flex-col relative">
+                    <div className="overflow-auto custom-scrollbar flex-1 relative">
+                       <table className="w-full text-left border-separate border-spacing-0">
                           <thead>
-                             <tr className="z-30">
-                                <th className="p-3 sticky left-0 top-0 bg-slate-900 z-40 border-b border-r border-white/10 w-[240px]">
-                                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Índice / Período</span>
+                             <tr>
+                                {/* CANTO SUPERIOR ESQUERDO FIXO (ÂNCORA) */}
+                                <th className="p-3 sticky top-0 left-0 bg-slate-900 z-50 border-b-2 border-r-2 border-white/10 w-[200px] min-w-[200px]">
+                                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Índice / Período</span>
                                 </th>
+                                {/* CABEÇALHO DE PERÍODOS STICKY TOP */}
                                 {Array.from({ length: formData.totalRounds }).map((_, i) => (
-                                   <th key={i} className="p-3 sticky top-0 bg-slate-900 z-30 border-b border-white/10 text-center w-[100px]">
-                                      <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">P0{i}</span>
+                                   <th key={i} className="p-3 sticky top-0 bg-slate-900 z-40 border-b-2 border-r border-white/5 text-center min-w-[80px]">
+                                      <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest">P0{i}</span>
                                    </th>
                                 ))}
                              </tr>
@@ -220,13 +220,13 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <MatrixRow periods={formData.totalRounds} label="Juros Fornecedores (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Zap size={10}/>} />
                              <MatrixRow periods={formData.totalRounds} label="Juros Vendas (%)" macroKey="sales_interest_rate" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} />
                              
-                             <tr className="bg-white/[0.02]">
-                                <td className="p-3 sticky left-0 bg-[#0f172a] z-10 font-black text-[8px] text-emerald-400 uppercase tracking-widest border-r border-white/10">Venda Máquinas?</td>
+                             <tr className="hover:bg-white/[0.02] transition-colors">
+                                <td className="p-3 sticky left-0 bg-slate-950 z-30 font-black text-[8px] text-emerald-400 uppercase tracking-tighter border-r-2 border-white/10 whitespace-nowrap">Venda Máquinas?</td>
                                 {Array.from({ length: formData.totalRounds }).map((_, i) => (
-                                   <td key={i} className="p-2 text-center">
+                                   <td key={i} className="p-1 border-r border-white/5 text-center">
                                       <button 
                                         onClick={() => updateRoundMacro(i, 'allow_machine_sale', !(roundRules[i]?.allow_machine_sale ?? false))}
-                                        className={`w-full py-2 rounded-lg text-[8px] font-black uppercase transition-all border ${roundRules[i]?.allow_machine_sale ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500'}`}
+                                        className={`w-full py-1.5 rounded-lg text-[7px] font-black uppercase transition-all border ${roundRules[i]?.allow_machine_sale ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500'}`}
                                       >
                                          {roundRules[i]?.allow_machine_sale ? 'SIM' : 'NÃO'}
                                       </button>
@@ -251,7 +251,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             {step === 5 && (
               <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
                  <WizardStepTitle icon={<Calculator size={32}/>} title="ORACLE BASELINE" desc="EDITE OS BALANÇOS E DRES INICIAIS PARA O ROUND ZERO." />
-                 <div className="bg-slate-950/60 p-2 rounded-[4rem] border border-white/5 shadow-2xl overflow-hidden">
+                 <div className="bg-slate-950/60 p-2 rounded-[3.5rem] border border-white/5 shadow-2xl overflow-hidden">
                     <FinancialStructureEditor 
                        initialBalance={financials?.balance_sheet} 
                        initialDRE={financials?.dre} 
@@ -266,10 +266,10 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <div className="w-32 h-32 bg-orange-600 rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl animate-bounce">
                     <ShieldCheck size={64} className="text-white" />
                  </div>
-                 <div className="space-y-6">
-                    <h1 className="text-6xl font-black text-white uppercase italic tracking-tighter">Nodo Pronto</h1>
-                    <p className="text-xl text-slate-400 font-medium italic max-w-2xl mx-auto leading-relaxed">
-                       Sua Arena Trial foi orquestrada com parâmetros macro e financeiros auditados. Pronta para inicializar.
+                 <div className="space-y-4">
+                    <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter">Nodo Sincronizado</h1>
+                    <p className="text-lg text-slate-400 font-medium italic max-w-2xl mx-auto leading-relaxed">
+                       Sua Arena Trial foi orquestrada com parâmetros macro e financeiros auditados. Pronta para inicializar o cluster industrial.
                     </p>
                  </div>
               </motion.div>
@@ -279,31 +279,31 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         </div>
       </div>
 
-      <footer className="shrink-0 h-28 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 px-10 flex items-center justify-between relative z-50 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
+      <footer className="shrink-0 h-24 bg-slate-950/95 backdrop-blur-3xl border-t border-white/10 px-8 flex items-center justify-between relative z-50 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
          <button 
            onClick={() => setStep(s => Math.max(1, s-1))} 
            disabled={step === 1} 
-           className={`px-8 py-4 font-black uppercase text-[10px] tracking-[0.3em] transition-all flex items-center gap-4 active:scale-95 ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}
+           className={`px-6 py-3 font-black uppercase text-[9px] tracking-[0.3em] transition-all flex items-center gap-3 active:scale-95 ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}
          >
-           <ArrowLeft size={16} /> Voltar
+           <ArrowLeft size={14} /> Voltar
          </button>
          
-         <div className="flex items-center gap-10">
-            <div className="hidden md:flex flex-col items-end opacity-40">
-               <span className="text-[7px] font-black text-white uppercase tracking-widest">Fase de Orquestração</span>
-               <span className="text-[9px] font-black text-orange-500 italic uppercase">{step} de {stepsCount}</span>
+         <div className="flex items-center gap-8">
+            <div className="hidden sm:flex flex-col items-end opacity-40">
+               <span className="text-[7px] font-black text-white uppercase tracking-widest">Protocolo Trial</span>
+               <span className="text-[8px] font-black text-orange-500 italic uppercase">Fase {step} de {stepsCount}</span>
             </div>
             <button 
               onClick={step === stepsCount ? handleLaunch : () => setStep(s => s + 1)} 
               disabled={isSubmitting} 
-              className="px-16 py-6 bg-orange-600 text-white rounded-full font-black text-[11px] uppercase tracking-[0.4em] shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95 group"
+              className="px-12 py-5 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.4em] shadow-[0_15px_40px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-5 active:scale-95 group"
             >
                {isSubmitting ? (
-                 <><Loader2 className="animate-spin" size={18}/> Sincronizando...</>
+                 <><Loader2 className="animate-spin" size={16}/> Sincronizando...</>
                ) : step === stepsCount ? (
                  'Lançar Arena Trial'
                ) : (
-                 <>Próxima Fase <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" /></>
+                 <>Próxima Fase <ArrowRight size={16} className="group-hover:translate-x-1.5 transition-transform" /></>
                )}
             </button>
          </div>
@@ -314,19 +314,21 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
 const MatrixRow = ({ label, macroKey, rules, update, icon, periods }: any) => (
    <tr className="hover:bg-white/[0.02] transition-colors group">
-      <td className="p-3 sticky left-0 bg-[#020617] z-10 border-r border-white/10 group-hover:bg-slate-900 transition-colors">
+      {/* COLUNA DE RÓTULOS STICKY LEFT */}
+      <td className="p-2 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[200px] min-w-[200px]">
          <div className="flex items-center gap-2">
-            <div className="text-slate-600 group-hover:text-orange-500 transition-colors">{icon || <Settings size={10}/>}</div>
-            <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter italic whitespace-nowrap overflow-hidden truncate">{label}</span>
+            <div className="text-slate-600 group-hover:text-orange-500 transition-colors shrink-0">{icon || <Settings size={8}/>}</div>
+            <span className="text-[8px] font-black text-slate-300 uppercase tracking-tighter italic whitespace-nowrap overflow-hidden truncate">{label}</span>
          </div>
       </td>
+      {/* CÉLULAS DE DADOS DINÂMICAS */}
       {Array.from({ length: periods }).map((_, i) => (
-         <td key={i} className="p-1">
+         <td key={i} className="p-0.5 border-r border-white/5">
             <input 
                type="number" step="0.1"
                value={rules[i]?.[macroKey] ?? DEFAULT_MACRO[macroKey] ?? 0}
                onChange={e => update(i, macroKey, parseFloat(e.target.value))}
-               className="w-full bg-slate-900 border border-white/5 rounded-lg px-2 py-2 text-center text-[10px] font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner"
+               className="w-full bg-slate-900 border border-white/5 rounded px-1 py-1.5 text-center text-[9px] font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner"
             />
          </td>
       ))}
@@ -334,43 +336,43 @@ const MatrixRow = ({ label, macroKey, rules, update, icon, periods }: any) => (
 );
 
 const WizardStepTitle = ({ icon, title, desc }: any) => (
-  <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+  <div className="flex items-center gap-6 border-b border-white/5 pb-6">
      <div className="p-4 bg-white/5 rounded-2xl text-orange-500 shadow-inner flex items-center justify-center border border-white/5">
         {icon}
      </div>
      <div>
-        <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3>
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2">{desc}</p>
+        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3>
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mt-1.5">{desc}</p>
      </div>
   </div>
 );
 
 const WizardField = ({ label, val, onChange, type = 'text', placeholder }: any) => (
-  <div className="space-y-2 text-left group">
-     <label className="text-[9px] font-black uppercase text-slate-600 tracking-widest ml-1 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
+  <div className="space-y-1.5 text-left group">
+     <label className="text-[8px] font-black uppercase text-slate-600 tracking-widest ml-1 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
      <input 
         type={type} 
         value={val} 
         onChange={e => onChange(e.target.value)} 
-        className="w-full bg-slate-900 border border-white/10 rounded-xl px-6 py-4 text-xs font-bold text-white outline-none focus:border-orange-500 transition-all shadow-inner placeholder:text-slate-800 font-mono" 
+        className="w-full bg-slate-900 border border-white/10 rounded-xl px-5 py-3 text-xs font-bold text-white outline-none focus:border-orange-500 transition-all shadow-inner placeholder:text-slate-800 font-mono" 
         placeholder={placeholder} 
      />
   </div>
 );
 
 const WizardSelect = ({ label, val, onChange, options }: any) => (
-  <div className="space-y-2 text-left group">
-     <label className="text-[9px] font-black uppercase text-slate-600 tracking-widest ml-1 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
+  <div className="space-y-1.5 text-left group">
+     <label className="text-[8px] font-black uppercase text-slate-600 tracking-widest ml-1 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
      <div className="relative">
         <select 
           value={val} 
           onChange={e => onChange(e.target.value)} 
-          className="w-full bg-slate-900 border border-white/10 rounded-xl px-6 py-4 text-[9px] font-black text-white uppercase outline-none focus:border-orange-500 transition-all cursor-pointer appearance-none shadow-inner"
+          className="w-full bg-slate-900 border border-white/10 rounded-xl px-5 py-3 text-[9px] font-black text-white uppercase outline-none focus:border-orange-500 transition-all cursor-pointer appearance-none shadow-inner"
         >
           {options.map((o: any) => <option key={o.v} value={o.v} className="bg-slate-900">{o.l}</option>)}
         </select>
         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-           <Settings2 size={14} />
+           <Settings2 size={12} />
         </div>
      </div>
   </div>
