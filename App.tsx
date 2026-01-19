@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 // Fix: Use any to bypass react-router-dom type resolution issues in this environment
 import * as Router from 'react-router-dom';
@@ -34,7 +35,9 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     const checkInitialSession = async () => {
+      const isTrial = localStorage.getItem('is_trial_session') === 'true';
       const demoSession = localStorage.getItem('empirion_demo_session');
+      
       if (isTestMode && demoSession) {
         const parsed = JSON.parse(demoSession);
         setSession(parsed);
@@ -45,8 +48,15 @@ const AppContent: React.FC = () => {
       // Fix: Casting auth to any to resolve property missing error in this environment
       const { data: { session: realSession } } = await (supabase.auth as any).getSession();
       setSession(realSession);
-      if (realSession) await fetchProfile(realSession.user.id);
-      else setLoading(false);
+
+      if (realSession) {
+        await fetchProfile(realSession.user.id);
+      } else if (isTrial) {
+        // Se for trial mas não logado, ainda sim buscamos um "perfil mock" de tutor
+        await fetchProfile('trial-user-id');
+      } else {
+        setLoading(false);
+      }
     };
     checkInitialSession();
   }, []);
@@ -77,6 +87,8 @@ const AppContent: React.FC = () => {
     navigate('/app/dashboard');
   };
 
+  const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
+
   if (loading) return (
     <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4">
        <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" />
@@ -101,10 +113,10 @@ const AppContent: React.FC = () => {
       <Route path="/rewards" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><PublicRewards /></div></>} />
 
       <Route path="/app/*" element={
-        (session || isTestMode) ? (
+        (session || isTrialSession || isTestMode) ? (
           <Layout
-            userName={profile?.name || "Strategos Player"}
-            userRole={profile?.role || 'player'}
+            userName={profile?.nickname || profile?.name || "Trial Orchestrator"}
+            userRole={profile?.role || 'tutor'}
             onLogout={() => { localStorage.clear(); navigate('/'); window.location.reload(); }}
             activeView={location.pathname.replace('/app/', '') || 'dashboard'}
             onNavigate={(view) => navigate(`/app/${view}`)}

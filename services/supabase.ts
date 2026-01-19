@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan } from '../types';
 import { DEFAULT_MACRO } from '../constants';
@@ -33,26 +34,29 @@ const isValidUUID = (id: string | null | undefined): boolean => {
 };
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  if (!userId) return null;
-  
-  // FIX: Se estiver em modo TRIAL, forçar perfil de TUTOR para liberar menus
+  // FIX: Se estiver em modo TRIAL, forçar perfil de TUTOR Master para liberar menus e abas táticas
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
 
-  if (ALPHA_IDS.includes(userId) || isTrial) {
-    const isTutor = userId.includes('tutor') || isTrial;
+  if (isTrial || ALPHA_IDS.includes(userId)) {
+    // No Trial, o usuário age como Tutor por padrão para validar o sistema
+    const isTutor = isTrial || userId.includes('tutor');
     const isAdmin = userId === 'admin' || userId === 'tutor_master';
+    
     return {
-      id: userId, 
-      supabase_user_id: userId, 
-      name: isAdmin ? 'System Admin Master' : isTutor ? 'Tutor Master Trial' : 'Capitão Alpha Node 08',
+      id: userId || 'trial-master-id', 
+      supabase_user_id: userId || 'trial-master-id', 
+      name: isAdmin ? 'System Admin Master' : isTutor ? 'Trial Orchestrator' : 'Capitão Alpha Node 08',
       nickname: isAdmin ? 'Admin_Oracle' : isTutor ? 'Tutor_Trial' : 'Alpha_Strategist',
       phone: '+5511999990000',
-      email: `${userId}@empirion.ia`, 
+      email: `${userId || 'trial'}@empirion.ia`, 
       role: isAdmin ? 'admin' : isTutor ? 'tutor' : 'player', 
       is_opal_premium: true, 
       created_at: new Date().toISOString()
     };
   }
+
+  if (!userId || userId === 'undefined') return null;
+
   const { data } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
   return data;
 };
@@ -125,10 +129,11 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     const local = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
     local.unshift(fullChamp);
     localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify(local));
+    // Importante: Marcar esta arena como ativa para o tutor trial
+    localStorage.setItem('active_champ_id', newId);
   } catch (e) { console.error("Local persist failure", e); }
 
   try {
-    // Fix: Casting auth to any to resolve property missing error in this environment
     const { data: { session } } = await (supabase.auth as any).getSession();
     const payload: any = {
       id: newId, name: champData.name, branch: champData.branch, status: 'active', current_round: 0,
@@ -330,6 +335,6 @@ export const saveBusinessPlan = async (plan: Partial<BusinessPlan>) => {
 };
 
 export const getTeamSimulationHistory = async (teamId: string) => {
-  const { data } = await supabase.from('current_decisions').select('*').eq('team_id', teamId).order('round', { ascending: true });
-  return data || [];
+  const { data = [] } = await supabase.from('current_decisions').select('*').eq('team_id', teamId).order('round', { ascending: true });
+  return data;
 };
