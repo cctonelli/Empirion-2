@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowRight, ArrowLeft, ShieldCheck, Rocket, 
@@ -6,7 +7,6 @@ import {
   Settings, Landmark, DollarSign, Target, Calculator,
   Settings2, X, Bot, Boxes, TrendingUp, Percent,
   ArrowUpCircle, ArrowDownCircle, HardDrive, LayoutGrid,
-  // Added missing Package icon to fix reference error on line 204
   Zap, Flame, ShieldAlert, BarChart3, Coins, Hammer, Package
 } from 'lucide-react';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
@@ -237,7 +237,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <table className="w-full text-left border-separate border-spacing-0">
                           <thead>
                              <tr>
-                                <th className="p-3 sticky top-0 left-0 bg-slate-900 z-50 border-b-2 border-r-2 border-white/10 w-[200px] min-w-[200px]">
+                                <th className="p-3 sticky top-0 left-0 bg-slate-900 z-50 border-b-2 border-r-2 border-white/10 w-[240px] min-w-[240px]">
                                    <div className="flex flex-col">
                                       <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Matrix / Período</span>
                                       <span className="text-[7px] font-bold text-orange-500 mt-1 uppercase italic tracking-tighter">Total: {formData.totalRounds} Rounds + Base</span>
@@ -274,13 +274,14 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 ))}
                              </tr>
 
-                             <MatrixRow periods={totalPeriods} label="Reaj. Matérias-Primas (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={totalPeriods} label="Reaj. Máquina ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={totalPeriods} label="Reaj. Máquina BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={totalPeriods} label="Reaj. Máquina GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={totalPeriods} label="Reaj. Marketing (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={totalPeriods} label="Reaj. Distribuição (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow periods={totalPeriods} label="Reaj. Estocagem (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             {/* LINHAS SINCRONIZADAS COM A IMAGEM DE REFERÊNCIA */}
+                             <MatrixRow periods={totalPeriods} label="ÍNDICE REAJUSTE MATÉRIAS-PRIMAS" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="ÍNDICE REAJUSTE MÁQUINA ALFA" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="ÍNDICE REAJUSTE MÁQUINA BETA" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="ÍNDICE REAJUSTE MÁQUINA GAMA" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="ÍNDICE REAJUSTE MARKETING" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="ÍNDICE REAJUSTE DISTRIBUIÇÃO" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={totalPeriods} label="ÍNDICE REAJUSTE GASTOS ESTOCAGEM" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
                           </tbody>
                        </table>
                     </div>
@@ -354,22 +355,26 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
 const MatrixRow = ({ label, macroKey, rules, update, icon, periods }: any) => (
    <tr className="hover:bg-white/[0.02] transition-colors group">
-      <td className="p-2 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[200px] min-w-[200px]">
+      <td className="p-2 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[240px] min-w-[240px]">
          <div className="flex items-center gap-2">
             <div className="text-slate-600 group-hover:text-orange-500 transition-colors shrink-0">{icon || <Settings size={8}/>}</div>
             <span className="text-[8px] font-black text-slate-300 uppercase tracking-tighter italic whitespace-nowrap overflow-hidden truncate">{label}</span>
          </div>
       </td>
-      {Array.from({ length: periods }).map((_, i) => (
-         <td key={i} className={`p-0.5 border-r border-white/5 ${i === 0 ? 'bg-orange-600/5' : ''}`}>
-            <input 
-               type="number" step="0.1"
-               value={rules[i]?.[macroKey] ?? DEFAULT_MACRO[macroKey] ?? 0}
-               onChange={e => update(i, macroKey, parseFloat(e.target.value))}
-               className={`w-full bg-slate-900 border border-white/5 rounded px-1 py-1.5 text-center text-[9px] font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner ${i === 0 ? 'border-orange-500/20' : ''}`}
-            />
-         </td>
-      ))}
+      {Array.from({ length: periods }).map((_, i) => {
+         // Fallback prioritário: P01 adiante usa valores do cronograma industrial se não houver regra customizada
+         const defaultVal = DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.[macroKey] ?? DEFAULT_MACRO[macroKey] ?? 0;
+         return (
+            <td key={i} className={`p-0.5 border-r border-white/5 ${i === 0 ? 'bg-orange-600/5' : ''}`}>
+               <input 
+                  type="number" step="0.1"
+                  value={rules[i]?.[macroKey] ?? defaultVal}
+                  onChange={e => update(i, macroKey, parseFloat(e.target.value))}
+                  className={`w-full bg-slate-900 border border-white/5 rounded px-1 py-1.5 text-center text-[9px] font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner ${i === 0 ? 'border-orange-500/20' : ''}`}
+               />
+            </td>
+         );
+      })}
    </tr>
 );
 
