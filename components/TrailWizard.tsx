@@ -29,14 +29,14 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     botsCount: 2,
     marketMode: 'hybrid' as SalesMode,
     regionsCount: 4,
-    totalRounds: 12,
+    totalRounds: 12, // Padrão
     roundTime: 24,
     roundUnit: 'hours' as DeadlineUnit,
     initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE,
     currency: 'BRL' as CurrencyType
   });
 
-  // Cronograma de Índices (Step 4 Novo)
+  // Cronograma de Índices
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
 
   // Estados para nomes customizados
@@ -128,14 +128,14 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   return (
     <div className="relative w-full flex flex-col font-sans overflow-hidden bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-2xl">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-8 md:p-16 relative z-10">
-        <div className="max-w-6xl mx-auto pb-32">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 relative z-10">
+        <div className="max-w-[1600px] mx-auto pb-32">
           <AnimatePresence mode="wait">
             
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
                  <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DA ARENA" desc="CONFIGURAÇÕES GLOBAIS DO AMBIENTE SANDBOX." />
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <WizardField label="NOME DA INSTÂNCIA TRIAL" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TESTE INDUSTRIAL ALPHA" />
                     <div className="grid grid-cols-2 gap-6">
                        <WizardField label="TOTAL DE CICLOS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
@@ -153,8 +153,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             {step === 2 && (
               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
                  <WizardStepTitle icon={<Users size={32}/>} title="EQUIPES E BOTS" desc="DEFINA QUEM PARTICIPARÁ DA COMPETIÇÃO NO CLUSTER." />
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                    <div className="space-y-8 bg-white/5 p-10 rounded-[3.5rem] border border-white/5 shadow-2xl">
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div className="space-y-8 bg-white/5 p-8 rounded-[3.5rem] border border-white/5 shadow-2xl">
                        <h4 className="text-sm font-black text-orange-500 uppercase tracking-widest italic border-b border-white/5 pb-4">Dimensionamento</h4>
                        <div className="grid grid-cols-2 gap-6">
                           <WizardField label="Equipes Humanas" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
@@ -163,9 +163,9 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     </div>
                     <div className="space-y-6">
                        <h4 className="text-sm font-black text-blue-400 uppercase tracking-widest italic flex items-center gap-3"><CheckCircle2 size={16}/> Identificadores das Equipes</h4>
-                       <div className="space-y-4 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar">
+                       <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                           {teamNames.map((n, i) => (
-                             <input key={i} value={n} onChange={e => { const next = [...teamNames]; next[i] = e.target.value; setTeamNames(next); }} className="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-xs font-black text-white uppercase outline-none focus:border-blue-500 transition-all shadow-inner" placeholder={`Nome da Equipe ${i+1}`} />
+                             <input key={i} value={n} onChange={e => { const next = [...teamNames]; next[i] = e.target.value; setTeamNames(next); }} className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-[11px] font-black text-white uppercase outline-none focus:border-blue-500 transition-all shadow-inner" placeholder={`Nome da Equipe ${i+1}`} />
                           ))}
                        </div>
                     </div>
@@ -176,15 +176,15 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             {step === 3 && (
               <motion.div key="s3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
                  <WizardStepTitle icon={<Globe size={32}/>} title="GEOPOLÍTICA REGIONAL" desc="CONFIGURE AS ÁREAS DE DISPUTA COMERCIAL." />
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                    <div className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/10 space-y-10 shadow-2xl">
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div className="bg-slate-900/60 p-8 rounded-[3.5rem] border border-white/10 space-y-10 shadow-2xl">
                        <WizardField label="Quantidade de Regiões" type="number" val={formData.regionsCount} onChange={(v:any)=>setFormData({...formData, regionsCount: Math.min(15, Math.max(1, parseInt(v)))})} />
                     </div>
                     <div className="space-y-6">
                        <h4 className="text-sm font-black text-emerald-400 uppercase tracking-widest italic flex items-center gap-3"><Boxes size={16}/> Nomenclatura dos Nodos</h4>
-                       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                           {regionNames.map((n, i) => (
-                             <input key={i} value={n} onChange={e => { const next = [...regionNames]; next[i] = e.target.value; setRegionNames(next); }} className="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-xs font-black text-white uppercase outline-none focus:border-emerald-500 transition-all" placeholder={`Região ${i+1}`} />
+                             <input key={i} value={n} onChange={e => { const next = [...regionNames]; next[i] = e.target.value; setRegionNames(next); }} className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-[11px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all" placeholder={`Região ${i+1}`} />
                           ))}
                        </div>
                     </div>
@@ -193,40 +193,40 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             )}
 
             {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+              <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
                  <WizardStepTitle icon={<BarChart3 size={32}/>} title="CRONOGRAMA ESTRATÉGICO" desc="PARAMETRIZE OS ÍNDICES VARIÁVEIS POR PERÍODO (PDF BUILD)." />
                  
-                 <div className="matrix-container p-2 md:p-4 rounded-[2rem] bg-slate-950/60 border border-white/5 shadow-2xl">
-                    <div className="overflow-x-auto custom-scrollbar">
-                       <table className="w-full text-left border-collapse min-w-[1200px]">
+                 <div className="matrix-container rounded-3xl bg-slate-950/60 border border-white/10 shadow-2xl overflow-hidden h-[600px] flex flex-col relative">
+                    <div className="overflow-auto custom-scrollbar flex-1">
+                       <table className="w-full text-left border-collapse table-fixed">
                           <thead>
-                             <tr className="bg-slate-900/80">
-                                <th className="p-6 sticky left-0 bg-slate-900 z-10 border-b border-white/10 min-w-[280px]">
-                                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Índice Variável / Período</span>
+                             <tr className="z-30">
+                                <th className="p-3 sticky left-0 top-0 bg-slate-900 z-40 border-b border-r border-white/10 w-[240px]">
+                                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Índice / Período</span>
                                 </th>
-                                {Array.from({ length: 8 }).map((_, i) => (
-                                   <th key={i} className="p-6 border-b border-white/10 text-center">
-                                      <span className="text-[11px] font-black text-orange-500 uppercase tracking-widest">P0{i}</span>
+                                {Array.from({ length: formData.totalRounds }).map((_, i) => (
+                                   <th key={i} className="p-3 sticky top-0 bg-slate-900 z-30 border-b border-white/10 text-center w-[100px]">
+                                      <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">P0{i}</span>
                                    </th>
                                 ))}
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5 font-mono">
-                             <MatrixRow label="Crescimento Econômico (ICE %)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={12}/>} />
-                             <MatrixRow label="Variação Demanda Mercado (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={12}/>} />
-                             <MatrixRow label="Índice de Inflação (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={12}/>} />
-                             <MatrixRow label="Inadimplência de Clientes (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={12}/>} />
-                             <MatrixRow label="Juros Bancários (TR %)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={12}/>} />
-                             <MatrixRow label="Juros Fornecedores (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Zap size={12}/>} />
-                             <MatrixRow label="Juros Médios Vendas (%)" macroKey="sales_interest_rate" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={12}/>} />
+                             <MatrixRow periods={formData.totalRounds} label="ICE (Cresc. %)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             <MatrixRow periods={formData.totalRounds} label="Demanda Mercado (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
+                             <MatrixRow periods={formData.totalRounds} label="Inflação (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
+                             <MatrixRow periods={formData.totalRounds} label="Inadimplência (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
+                             <MatrixRow periods={formData.totalRounds} label="Juros (TR %)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             <MatrixRow periods={formData.totalRounds} label="Juros Fornecedores (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Zap size={10}/>} />
+                             <MatrixRow periods={formData.totalRounds} label="Juros Vendas (%)" macroKey="sales_interest_rate" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} />
                              
                              <tr className="bg-white/[0.02]">
-                                <td className="p-6 sticky left-0 bg-[#0f172a] z-10 font-black text-[9px] text-emerald-400 uppercase tracking-widest">Libera Venda Máquinas?</td>
-                                {Array.from({ length: 8 }).map((_, i) => (
-                                   <td key={i} className="p-4 text-center">
+                                <td className="p-3 sticky left-0 bg-[#0f172a] z-10 font-black text-[8px] text-emerald-400 uppercase tracking-widest border-r border-white/10">Venda Máquinas?</td>
+                                {Array.from({ length: formData.totalRounds }).map((_, i) => (
+                                   <td key={i} className="p-2 text-center">
                                       <button 
                                         onClick={() => updateRoundMacro(i, 'allow_machine_sale', !(roundRules[i]?.allow_machine_sale ?? false))}
-                                        className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all border ${roundRules[i]?.allow_machine_sale ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500'}`}
+                                        className={`w-full py-2 rounded-lg text-[8px] font-black uppercase transition-all border ${roundRules[i]?.allow_machine_sale ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500'}`}
                                       >
                                          {roundRules[i]?.allow_machine_sale ? 'SIM' : 'NÃO'}
                                       </button>
@@ -234,13 +234,13 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 ))}
                              </tr>
 
-                             <MatrixRow label="Reajuste Matérias-Primas (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow label="Reajuste Máquina ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow label="Reajuste Máquina BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow label="Reajuste Máquina GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow label="Reajuste Marketing (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow label="Reajuste Distribuição (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <MatrixRow label="Reajuste Estocagem (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={formData.totalRounds} label="Reaj. Matérias-Primas (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={formData.totalRounds} label="Reaj. Máquina ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={formData.totalRounds} label="Reaj. Máquina BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={formData.totalRounds} label="Reaj. Máquina GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={formData.totalRounds} label="Reaj. Marketing (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={formData.totalRounds} label="Reaj. Distribuição (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <MatrixRow periods={formData.totalRounds} label="Reaj. Estocagem (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
                           </tbody>
                        </table>
                     </div>
@@ -279,31 +279,31 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         </div>
       </div>
 
-      <footer className="shrink-0 h-32 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 px-12 flex items-center justify-between relative z-50 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
+      <footer className="shrink-0 h-28 bg-slate-950/90 backdrop-blur-3xl border-t border-white/5 px-10 flex items-center justify-between relative z-50 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
          <button 
            onClick={() => setStep(s => Math.max(1, s-1))} 
            disabled={step === 1} 
-           className={`px-10 py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all flex items-center gap-4 active:scale-95 ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}
+           className={`px-8 py-4 font-black uppercase text-[10px] tracking-[0.3em] transition-all flex items-center gap-4 active:scale-95 ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}
          >
-           <ArrowLeft size={20} /> Voltar
+           <ArrowLeft size={16} /> Voltar
          </button>
          
-         <div className="flex items-center gap-12">
+         <div className="flex items-center gap-10">
             <div className="hidden md:flex flex-col items-end opacity-40">
-               <span className="text-[8px] font-black text-white uppercase tracking-widest">Fase de Orquestração</span>
-               <span className="text-[10px] font-black text-orange-500 italic uppercase">{step} de {stepsCount}</span>
+               <span className="text-[7px] font-black text-white uppercase tracking-widest">Fase de Orquestração</span>
+               <span className="text-[9px] font-black text-orange-500 italic uppercase">{step} de {stepsCount}</span>
             </div>
             <button 
               onClick={step === stepsCount ? handleLaunch : () => setStep(s => s + 1)} 
               disabled={isSubmitting} 
-              className="px-20 py-8 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95 group"
+              className="px-16 py-6 bg-orange-600 text-white rounded-full font-black text-[11px] uppercase tracking-[0.4em] shadow-[0_20px_50px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95 group"
             >
                {isSubmitting ? (
-                 <><Loader2 className="animate-spin" size={20}/> Sincronizando Cluster...</>
+                 <><Loader2 className="animate-spin" size={18}/> Sincronizando...</>
                ) : step === stepsCount ? (
                  'Lançar Arena Trial'
                ) : (
-                 <>Próxima Fase <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" /></>
+                 <>Próxima Fase <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" /></>
                )}
             </button>
          </div>
@@ -312,21 +312,21 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   );
 };
 
-const MatrixRow = ({ label, macroKey, rules, update, icon }: any) => (
+const MatrixRow = ({ label, macroKey, rules, update, icon, periods }: any) => (
    <tr className="hover:bg-white/[0.02] transition-colors group">
-      <td className="p-6 sticky left-0 bg-[#020617] z-10 border-r border-white/5">
-         <div className="flex items-center gap-3">
-            <div className="text-slate-600 group-hover:text-orange-500 transition-colors">{icon || <Settings size={12}/>}</div>
-            <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter italic">{label}</span>
+      <td className="p-3 sticky left-0 bg-[#020617] z-10 border-r border-white/10 group-hover:bg-slate-900 transition-colors">
+         <div className="flex items-center gap-2">
+            <div className="text-slate-600 group-hover:text-orange-500 transition-colors">{icon || <Settings size={10}/>}</div>
+            <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter italic whitespace-nowrap overflow-hidden truncate">{label}</span>
          </div>
       </td>
-      {Array.from({ length: 8 }).map((_, i) => (
-         <td key={i} className="p-4">
+      {Array.from({ length: periods }).map((_, i) => (
+         <td key={i} className="p-1">
             <input 
                type="number" step="0.1"
                value={rules[i]?.[macroKey] ?? DEFAULT_MACRO[macroKey] ?? 0}
                onChange={e => update(i, macroKey, parseFloat(e.target.value))}
-               className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-center text-xs font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner"
+               className="w-full bg-slate-900 border border-white/5 rounded-lg px-2 py-2 text-center text-[10px] font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner"
             />
          </td>
       ))}
@@ -334,43 +334,43 @@ const MatrixRow = ({ label, macroKey, rules, update, icon }: any) => (
 );
 
 const WizardStepTitle = ({ icon, title, desc }: any) => (
-  <div className="flex items-center gap-8 border-b border-white/5 pb-12">
-     <div className="p-6 bg-white/5 rounded-[2rem] text-orange-500 shadow-inner flex items-center justify-center border border-white/5">
+  <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+     <div className="p-4 bg-white/5 rounded-2xl text-orange-500 shadow-inner flex items-center justify-center border border-white/5">
         {icon}
      </div>
      <div>
-        <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3>
-        <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] mt-3">{desc}</p>
+        <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3>
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2">{desc}</p>
      </div>
   </div>
 );
 
 const WizardField = ({ label, val, onChange, type = 'text', placeholder }: any) => (
-  <div className="space-y-3 text-left group">
-     <label className="text-[10px] font-black uppercase text-slate-600 tracking-widest ml-1 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
+  <div className="space-y-2 text-left group">
+     <label className="text-[9px] font-black uppercase text-slate-600 tracking-widest ml-1 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
      <input 
         type={type} 
         value={val} 
         onChange={e => onChange(e.target.value)} 
-        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-8 py-5 text-sm font-bold text-white outline-none focus:border-orange-500 transition-all shadow-inner placeholder:text-slate-800 font-mono" 
+        className="w-full bg-slate-900 border border-white/10 rounded-xl px-6 py-4 text-xs font-bold text-white outline-none focus:border-orange-500 transition-all shadow-inner placeholder:text-slate-800 font-mono" 
         placeholder={placeholder} 
      />
   </div>
 );
 
 const WizardSelect = ({ label, val, onChange, options }: any) => (
-  <div className="space-y-3 text-left group">
-     <label className="text-[10px] font-black uppercase text-slate-600 tracking-widest ml-1 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
+  <div className="space-y-2 text-left group">
+     <label className="text-[9px] font-black uppercase text-slate-600 tracking-widest ml-1 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
      <div className="relative">
         <select 
           value={val} 
           onChange={e => onChange(e.target.value)} 
-          className="w-full bg-slate-900 border border-white/10 rounded-2xl px-8 py-5 text-[10px] font-black text-white uppercase outline-none focus:border-orange-500 transition-all cursor-pointer appearance-none shadow-inner"
+          className="w-full bg-slate-900 border border-white/10 rounded-xl px-6 py-4 text-[9px] font-black text-white uppercase outline-none focus:border-orange-500 transition-all cursor-pointer appearance-none shadow-inner"
         >
           {options.map((o: any) => <option key={o.v} value={o.v} className="bg-slate-900">{o.l}</option>)}
         </select>
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-           <Settings2 size={16} />
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+           <Settings2 size={14} />
         </div>
      </div>
   </div>
