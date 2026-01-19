@@ -54,7 +54,7 @@ const TestTerminal: React.FC = () => {
 
   const handleManageTrial = (champ: Championship) => {
     localStorage.setItem('is_trial_session', 'true');
-    // Para gerenciar, enviamos para a área administrativa que lidará com a arena selecionada
+    localStorage.setItem('active_champ_id', champ.id); // Save ID for auto-load in Admin
     navigate('/app/admin');
   };
 

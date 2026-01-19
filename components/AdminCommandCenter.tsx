@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Trash2, ArrowLeft, Monitor, Command, Users, Globe, CreditCard, Cpu, Gauge,
@@ -47,6 +48,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       // Fix: Casting auth to any to resolve property missing error in this environment
       const { data: { session } } = await (supabase.auth as any).getSession();
       const isTrial = localStorage.getItem('is_trial_session') === 'true';
+      const storedArenaId = localStorage.getItem('active_champ_id');
 
       if (session || isTrial) {
         const userId = session?.user?.id || 'trial_user';
@@ -60,7 +62,14 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       }
 
       const { data } = await getChampionships();
-      if (data) setChampionships(data);
+      if (data) {
+         setChampionships(data);
+         // AUTO-LOAD TRIAL ARENA: Se estivermos em trial e houver um ID salvo, selecionamos automaticamente
+         if (isTrial && storedArenaId && !selectedArena) {
+            const found = data.find(c => c.id === storedArenaId);
+            if (found) setSelectedArena(found);
+         }
+      }
       
       if (activeTab === 'users' && profile?.role === 'admin') {
         const allUsers = await getAllUsers();
@@ -77,33 +86,33 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
 
   if (selectedArena) {
     return (
-      <div className="space-y-8 animate-in fade-in duration-500 pb-20 font-sans max-w-[1600px] mx-auto p-6">
-        {/* HEADER DA ARENA COM NAV SUPERIOR TÁTICA DO TUTOR */}
-        <header className="bg-slate-900 border-2 border-white/5 p-8 rounded-[3.5rem] shadow-2xl space-y-8">
-           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex items-center gap-6">
-                 <button onClick={() => setSelectedArena(null)} className="p-4 bg-white/5 text-slate-400 hover:text-white rounded-2xl border border-white/10 transition-all active:scale-95"><ArrowLeft size={24} /></button>
+      <div className="space-y-8 animate-in fade-in duration-500 pb-20 font-sans max-w-[1600px] mx-auto p-6 min-h-screen">
+        {/* HEADER DA ARENA - STICKY TOP PARA EVITAR SOBREPOSIÇÃO */}
+        <header className="sticky top-0 z-[500] bg-slate-900 border-2 border-white/10 p-6 md:p-8 rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.4)] backdrop-blur-3xl space-y-8 mb-10">
+           <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-6 shrink-0">
+                 <button onClick={() => { localStorage.removeItem('active_champ_id'); setSelectedArena(null); }} className="p-4 bg-white/5 text-slate-400 hover:text-white rounded-2xl border border-white/10 transition-all active:scale-95"><ArrowLeft size={24} /></button>
                  <div>
                     <div className="flex items-center gap-3">
                        <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Arena <span className="text-orange-500">{selectedArena.name}</span></h1>
-                       {selectedArena.is_trial && <span className="px-3 py-0.5 bg-orange-600/20 border border-orange-500/30 text-orange-500 rounded-lg text-[8px] font-black uppercase tracking-widest">Sandbox</span>}
+                       {selectedArena.is_trial && <span className="px-3 py-0.5 bg-orange-600/20 border border-orange-500/30 text-orange-500 rounded-lg text-[8px] font-black uppercase tracking-widest">Sandbox Mode</span>}
                     </div>
-                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.5em] mt-2 italic">Ciclo Ativo: 0{selectedArena.current_round} • Status: {selectedArena.status.toUpperCase()}</p>
+                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.5em] mt-2 italic">Ciclo Ativo: 0{selectedArena.current_round} • Protocolo Industrial Node 08</p>
                  </div>
               </div>
               
-              {/* MENU PILL ACTIVE COM BRILHO LARANJA - Sempre Visível para o Tutor */}
-              <div className="flex items-center gap-3 p-2 bg-slate-950 rounded-[2rem] border border-white/5 shadow-inner">
-                 <ArenaNavBtn active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="Cockpit" icon={<LayoutDashboard size={14}/>} />
-                 <ArenaNavBtn active={tutorView === 'planning'} onClick={() => setTutorView('planning')} label="Planejamento" icon={<PenTool size={14}/>} />
-                 <ArenaNavBtn active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="Decisões" icon={<History size={14}/>} />
-                 <ArenaNavBtn active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="Equipes" icon={<Users size={14}/>} />
-                 <ArenaNavBtn active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="Gazeta" icon={<Newspaper size={14}/>} />
+              {/* MENU PILL ACTIVE - DESIGN REFORÇADO v13.6 */}
+              <div className="flex flex-wrap items-center justify-center gap-2 p-2 bg-slate-950 rounded-[2.5rem] border border-white/5 shadow-inner">
+                 <ArenaNavBtn active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="COCKPIT" icon={<LayoutDashboard size={14}/>} />
+                 <ArenaNavBtn active={tutorView === 'planning'} onClick={() => setTutorView('planning')} label="PLANEJAMENTO" icon={<PenTool size={14}/>} />
+                 <ArenaNavBtn active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="ANÁLISE DAS DECISÕES" icon={<History size={14}/>} />
+                 <ArenaNavBtn active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="EQUIPES" icon={<Users size={14}/>} />
+                 <ArenaNavBtn active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="GAZETA INDUSTRIAL" icon={<Newspaper size={14}/>} />
               </div>
            </div>
         </header>
 
-        <main className="min-h-[60vh]">
+        <main className="relative z-10">
            <AnimatePresence mode="wait">
               {tutorView === 'dashboard' && (
                 <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-8">
@@ -321,9 +330,16 @@ const NavTab = ({ active, onClick, label, color }: any) => {
 const ArenaNavBtn = ({ active, onClick, label, icon }: { active: boolean, onClick: () => void, label: string, icon: React.ReactNode }) => (
   <button 
     onClick={onClick} 
-    className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all italic active:scale-95 ${active ? 'bg-orange-600 text-white shadow-[0_0_20px_rgba(249,115,22,0.4)]' : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'}`}
+    className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all italic active:scale-95 ${active ? 'bg-orange-600 text-white shadow-[0_0_25px_rgba(249,115,22,0.5)] scale-105 ring-2 ring-orange-400/30' : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'}`}
   >
      {icon} {label}
+     {active && (
+       <motion.div 
+         layoutId="navGlow" 
+         className="absolute inset-0 bg-orange-600/20 blur-md rounded-2xl -z-10"
+         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+       />
+     )}
   </button>
 );
 
