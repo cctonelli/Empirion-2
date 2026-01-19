@@ -8,8 +8,8 @@ import {
   Thermometer, EyeOff, Globe, Map, PieChart, Users,
   ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon, Info,
   Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon,
-  ChevronDown, Maximize2, Zap, ShieldAlert, ThermometerSun
-} from 'lucide-center';
+  ChevronDown, Maximize2, Zap, ShieldAlert, ThermometerSun, Layers3
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 // Fix: Use any to bypass react-router-dom type resolution issues in this environment
 import * as ReactRouterDOM from 'react-router-dom';
@@ -72,6 +72,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       equity: 5055447,
       market_share: 0.0,
       kanitz_factor: 7.0,
+      nlcdg: 2559690,
+      financing_sources: { ecp: 2205716, elp: 1000000, ccp: -604097 },
       statements: { 
         dre: { revenue: 0, net_profit: 0, cpv: 0, opex: 0 },
         balance_sheet: { assets: { total: 9176940 } }
@@ -98,6 +100,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   const kanitz = currentKpis.kanitz_factor ?? 7.0;
   const kanitzColor = kanitz > 0 ? 'text-emerald-500' : kanitz > -3 ? 'text-orange-500' : 'text-rose-500';
+  
+  const sources = currentKpis.financing_sources || { ecp: 0, elp: 0, ccp: 0 };
+  // Cálculo de pesos absolutos para a barra empilhada (Fleuriet Style)
+  const totalAbs = Math.abs(sources.ecp) + Math.abs(sources.elp) + Math.max(0, sources.ccp);
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
@@ -134,17 +140,57 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   <span className="text-[10px] font-black text-slate-600 uppercase">Cycle 0{activeArena?.current_round}</span>
                </header>
                
+               {/* FONTES DE FINANCIAMENTO NLCDG (DASHBOARD WIDGET IDÊNTICO AO PDF) */}
+               <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-4 shadow-inner">
+                  <div className="flex justify-between items-center mb-1">
+                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Fontes de Giro (Fleuriet)</h4>
+                     <Layers3 size={12} className="text-blue-500" />
+                  </div>
+                  
+                  {/* BARRA EMPILHADA DINÂMICA */}
+                  <div className="flex h-12 w-full rounded-xl overflow-hidden border border-white/5 shadow-2xl bg-slate-900">
+                     <motion.div 
+                        initial={{width:0}} 
+                        animate={{width: `${(Math.abs(sources.elp) / totalAbs) * 100}%`}} 
+                        className="h-full bg-blue-600 relative group"
+                        title="ELP: Empréstimos LP"
+                     />
+                     <motion.div 
+                        initial={{width:0}} 
+                        animate={{width: `${(Math.max(0, sources.ccp) / totalAbs) * 100}%`}} 
+                        className={`h-full bg-slate-400 relative group ${sources.ccp < 0 ? 'opacity-0' : ''}`}
+                        title="CCP: Capital Circulante Próprio"
+                     />
+                     <motion.div 
+                        initial={{width:0}} 
+                        animate={{width: `${(Math.abs(sources.ecp) / totalAbs) * 100}%`}} 
+                        className="h-full bg-orange-600 relative group"
+                        title="ECP: Empréstimos CP"
+                     />
+                  </div>
+
+                  <div className="space-y-2">
+                     <SourceRow label="ECP (Curto Prazo)" val={fmt(sources.ecp)} color="bg-orange-600" />
+                     <SourceRow label="ELP (Longo Prazo)" val={fmt(sources.elp)} color="bg-blue-600" />
+                     <SourceRow label="CCP (Proprio/CCL)" val={fmt(sources.ccp)} color="bg-slate-400" />
+                     <div className="pt-2 border-t border-white/5 flex justify-between items-center">
+                        <span className="text-[9px] font-black text-white uppercase italic">NLCDG TOTAL</span>
+                        <span className="text-sm font-mono font-black text-orange-500">$ {fmt(currentKpis.nlcdg || 0)}</span>
+                     </div>
+                  </div>
+               </div>
+
                {/* TERMÔMETRO DE KANITZ */}
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-3 shadow-inner group">
                   <div className="flex justify-between items-center mb-1">
-                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Modelo de Kanitz</h4>
+                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Saúde de Kanitz</h4>
                      <ThermometerSun size={12} className={kanitzColor} />
                   </div>
                   <div className="flex items-center justify-between">
                      <span className={`text-4xl font-black font-mono italic drop-shadow-lg ${kanitzColor}`}>{kanitz.toFixed(2)}</span>
                      <div className="text-right">
                         <span className={`block text-[8px] font-black uppercase tracking-widest ${kanitzColor}`}>{currentKpis.insolvency_status}</span>
-                        <span className="block text-[7px] text-slate-600 font-bold uppercase italic mt-1">Fator de Insolvência</span>
+                        <span className="block text-[7px] text-slate-600 font-bold uppercase italic mt-1">Status de Solvência</span>
                      </div>
                   </div>
                   <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mt-4">
@@ -155,26 +201,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               <div className="bg-slate-950/80 p-5 rounded-[2rem] border border-white/5 space-y-3 shadow-inner">
-                  <div className="flex justify-between items-center mb-1">
-                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">DRE Tático</h4>
-                     <Zap size={12} className="text-orange-500" />
-                  </div>
-                  <div className="space-y-2 font-mono text-[10px]">
-                     <MiniFinRow label="Faturamento" val={fmt(currentKpis.statements?.dre?.revenue || 0)} />
-                     <MiniFinRow label="Custos (CPV)" val={`(${fmt(currentKpis.statements?.dre?.cpv || 0)})`} neg />
-                     <MiniFinRow label="Despesas Op." val={`(${fmt(currentKpis.statements?.dre?.opex || 0)})`} neg />
-                     <MiniFinRow label="Net Profit" val={fmt(currentKpis.statements?.dre?.net_profit || 0)} bold highlight />
-                  </div>
-               </div>
-
                <div className="p-5 bg-indigo-600/10 border border-indigo-500/20 rounded-[2.5rem] space-y-3 shadow-lg">
                   <div className="flex items-center gap-3 text-indigo-400">
                      <Sparkles size={16} />
                      <span className="text-[10px] font-black uppercase tracking-widest">Oracle Advice</span>
                   </div>
                   <p className="text-[10px] text-indigo-100 font-medium italic leading-relaxed">
-                     { kanitz < 0 ? "Atenção: Seu Fator de Kanitz está em zona de penumbra. Reduza o endividamento e priorize a liquidez seca." : "Performance sólida. Seu rating permite novas rodadas de CAPEX planejado." }
+                     { (sources.ccp < 0) ? "Crítico: Seu CCP está negativo. Você está usando dívida bancária para financiar ativos fixos." : "Equilíbrio Fleuriet detectado. NLCDG sustentada majoritariamente por ELP e Capital Próprio." }
                   </p>
                </div>
             </div>
@@ -215,6 +248,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   );
 };
 
+const SourceRow = ({ label, val, color }: any) => (
+   <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+         <div className={`w-1.5 h-1.5 rounded-full ${color}`} />
+         <span className="text-[8px] font-black text-slate-500 uppercase tracking-tight">{label}</span>
+      </div>
+      <span className="text-[9px] font-mono font-bold text-slate-300">$ {val}</span>
+   </div>
+);
+
 const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
   <div className="px-8 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden">
      <div className="flex items-center justify-between mb-1">
@@ -227,13 +270,6 @@ const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
         </span>
      </div>
      <span className="text-3xl font-black text-white font-mono tracking-tighter italic leading-none truncate drop-shadow-lg">{val}</span>
-  </div>
-);
-
-const MiniFinRow = ({ label, val, neg, bold, highlight }: any) => (
-  <div className={`flex justify-between items-center py-1 border-b border-white/[0.02] last:border-0 ${highlight ? 'text-orange-500 font-black' : ''}`}>
-     <span className={`${bold ? 'font-black text-slate-400' : 'text-slate-600'}`}>{label}</span>
-     <span className={`font-black ${neg ? 'text-rose-500' : bold ? 'text-white' : 'text-slate-500'}`}>{val}</span>
   </div>
 );
 
