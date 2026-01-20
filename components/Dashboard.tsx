@@ -66,16 +66,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const currentKpis = useMemo((): KPIs => {
     return activeTeam?.kpis || activeArena?.kpis || {
       ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
-      market_valuation: { share_price: 1.0, total_shares: 5000000, market_cap: 5000000, tsr: 0.0 },
+      market_valuation: { share_price: 1.01, total_shares: 5000000, market_cap: 5055447, tsr: 1.1 },
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
       equity: 5055447,
-      market_share: 0.0,
-      kanitz_factor: 7.0,
+      market_share: 12.5,
+      kanitz_factor: 2.19, 
       nlcdg: 2559690,
       financing_sources: { ecp: 2205716, elp: 1000000, ccp: -604097 },
       statements: { 
-        dre: { revenue: 0, net_profit: 0, cpv: 0, opex: 0 },
+        dre: { revenue: 3322735, net_profit: 73928, cpv: 2278180, opex: 917582 },
         balance_sheet: { assets: { total: 9176940 } }
       }
     } as KPIs;
@@ -98,7 +98,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     </div>
   );
 
-  const kanitz = currentKpis.kanitz_factor ?? 7.0;
+  const kanitz = currentKpis.kanitz_factor ?? 2.19;
+  const kanitzLabel = kanitz > 0 ? 'SOLVENTE' : kanitz > -3 ? 'INDEFINIDA' : 'INSOLVENTE';
   const kanitzColor = kanitz > 0 ? 'text-emerald-500' : kanitz > -3 ? 'text-orange-500' : 'text-rose-500';
   
   const sources = currentKpis.financing_sources || { ecp: 0, elp: 0, ccp: 0 };
@@ -179,19 +180,19 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-3 shadow-inner group">
                   <div className="flex justify-between items-center mb-1">
-                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Saúde de Kanitz</h4>
+                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Termômetro de Insolvência</h4>
                      <ThermometerSun size={12} className={kanitzColor} />
                   </div>
                   <div className="flex items-center justify-between">
                      <span className={`text-4xl font-black font-mono italic drop-shadow-lg ${kanitzColor}`}>{kanitz.toFixed(2)}</span>
                      <div className="text-right">
-                        <span className={`block text-[8px] font-black uppercase tracking-widest ${kanitzColor}`}>{currentKpis.insolvency_status}</span>
+                        <span className={`block text-[8px] font-black uppercase tracking-widest ${kanitzColor}`}>{kanitzLabel}</span>
                         <span className="block text-[7px] text-slate-600 font-bold uppercase italic mt-1">Status de Solvência</span>
                      </div>
                   </div>
                   <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mt-4">
                      <div 
-                        className={`h-full transition-all duration-1000 ${kanitz > 0 ? 'bg-emerald-500' : kanitz > -3 ? 'bg-orange-500' : 'bg-rose-500'}`} 
+                        className={`h-full transition-all duration-1000 ${kanitzColor.replace('text', 'bg')}`} 
                         style={{ width: `${Math.min(100, Math.max(5, ((kanitz + 7) / 14) * 100))}%` }} 
                      />
                   </div>
@@ -203,7 +204,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      <span className="text-[10px] font-black uppercase tracking-widest">Oracle Advice</span>
                   </div>
                   <p className="text-[10px] text-indigo-100 font-medium italic leading-relaxed">
-                     { (sources.ccp < 0) ? "Crítico: Seu CCP está negativo. Você está usando dívida bancária para financiar ativos fixos." : "Equilíbrio Fleuriet detectado. NLCDG sustentada majoritariamente por ELP e Capital Próprio." }
+                     { (sources.ccp < 0) ? "Crítico: Seu CCP está negativo. Você está usando dívida bancária para financiar ativos fixos." : "Equilíbrio Fleuriet detectado. FI de " + kanitz.toFixed(2) + " indica operação saudável." }
                   </p>
                </div>
             </div>

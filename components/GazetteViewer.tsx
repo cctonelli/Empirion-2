@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -7,7 +8,7 @@ import {
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
-import { Championship, UserRole } from '../types';
+import { Championship, UserRole, CreditRating } from '../types';
 
 interface GazetteViewerProps {
   arena: Championship;
@@ -22,14 +23,20 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   const teams = arena.teams || [];
   const isAnonymous = arena.gazeta_mode === 'anonymous' && userRole !== 'tutor' && userRole !== 'admin';
   
+  // RANKING REAL - CONEXÃO COM KPIs REAIS DAS EQUIPES (REMOVIDO MOCK)
   const competitiveRanking = useMemo(() => {
-    return teams.map((t, i) => ({
-      id: t.id,
-      name: isAnonymous ? `Unidade 0${i + 1}` : t.name,
-      share: [12.5, 14.2, 11.1, 13.0, 10.5, 15.0, 12.0, 11.7][i] || 12.5,
-      profit: [73928, -120500, 45000, 12000, -8000, 95000, 32000, 15000][i] || 0,
-      socialScore: [4.8, 3.2, 4.5, 4.1, 2.8, 4.9, 3.9, 4.0][i] || 3.5
-    })).sort((a, b) => b.profit - a.profit);
+    return teams.map((t, i) => {
+      // Fix: Added rating property to the fallback object to satisfy the union type requirement
+      const kpis = t.kpis || { market_share: 0, equity: 5055447, rating: 'N/A' as CreditRating, statements: { dre: { net_profit: 0 } } };
+      return {
+        id: t.id,
+        name: isAnonymous ? `Unidade 0${i + 1}` : t.name,
+        share: kpis.market_share || 0,
+        profit: kpis.statements?.dre?.net_profit || 0,
+        equity: kpis.equity || 5055447,
+        rating: kpis.rating || 'N/A'
+      };
+    }).sort((a, b) => b.equity - a.equity); // Ordenação por Patrimônio (Padrão Elite)
   }, [teams, isAnonymous]);
 
   return (
@@ -61,7 +68,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Status de Fechamento da Arena</p>
                  </div>
                  <div className="text-right">
-                    <span className="block text-[8px] font-black text-orange-500 uppercase tracking-[0.4em]">Leader Unit</span>
+                    <span className="block text-[8px] font-black text-orange-500 uppercase tracking-[0.4em]">Leader Unit (Equity)</span>
                     <span className="text-2xl font-black text-white uppercase italic">{competitiveRanking[0]?.name || 'N/A'}</span>
                  </div>
               </div>
@@ -72,6 +79,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                        <th className="p-6 rounded-tl-2xl">Ranking</th>
                        <th className="p-6">Unidade Strategos</th>
                        <th className="p-6 text-center">Market Share</th>
+                       <th className="p-6 text-center">Rating</th>
                        <th className="p-6 text-right rounded-tr-2xl">Lucro Líquido</th>
                     </tr>
                  </thead>
@@ -81,6 +89,9 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                          <td className="p-6 text-slate-600">#0{i+1}</td>
                          <td className="p-6 text-white font-black uppercase italic">{r.name}</td>
                          <td className="p-6 text-blue-400 text-center font-bold">{r.share.toFixed(1)}%</td>
+                         <td className="p-6 text-center">
+                            <span className="px-3 py-1 bg-white/5 rounded-lg text-[10px] font-black text-orange-500">{r.rating}</span>
+                         </td>
                          <td className={`p-6 text-right font-black ${r.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                            {r.profit >= 0 ? '+' : ''}$ {r.profit.toLocaleString()}
                          </td>
@@ -98,7 +109,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                  <h3 className="text-orange-500 font-black text-[9px] uppercase tracking-widest mb-6 flex items-center gap-3">
                     <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" /> Oracle Feed Ativo
                  </h3>
-                 {/* CORREÇÃO CODE LEAK: Renderiza o texto sem escapar entidades que o React já trata nativamente */}
                  <div className="text-3xl text-white font-medium italic leading-relaxed whitespace-pre-wrap max-w-4xl">
                     {aiNews || "Aguardando sincronização de briefing regional..."}
                  </div>
@@ -135,13 +145,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   );
 };
 
-// Fix: Added 'icon' to destructured props to resolve reference error.
 const TabBtn = ({ active, onClick, label, color, icon }: any) => {
-  const activeClasses = {
-    benchmarking: 'bg-blue-600 text-white shadow-lg',
-    macro: 'bg-blue-600 text-white shadow-lg'
-  }[color as 'benchmarking' | 'macro'];
-
   return (
     <button onClick={onClick} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95 ${active ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white bg-white/5'}`}>
       {icon} {label}

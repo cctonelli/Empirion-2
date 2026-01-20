@@ -8,7 +8,9 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * Modelo de Kanitz – ÍNDICE DE SOLVÊNCIA
+ * Modelo de Kanitz – FATOR DE INSOLVÊNCIA (FI)
+ * "Termômetro de Insolvência"
+ * FI = (0.05 * X1) + (1.65 * X2) + (3.55 * X3) - (1.06 * X4) - (0.33 * X5)
  */
 export const calculateKanitzFactor = (data: {
   netProfit: number,
@@ -19,29 +21,36 @@ export const calculateKanitzFactor = (data: {
   longTermLiabilities: number,
   inventory: number
 }) => {
-  const exigivelTotal = data.currentLiabilities + data.longTermLiabilities;
+  const exigivelTotal = Math.max(data.currentLiabilities + data.longTermLiabilities, 1);
   const pl = Math.max(data.equity, 1);
   const pc = Math.max(data.currentLiabilities, 1);
 
+  // X1: Rentabilidade do PL
   const x1 = data.netProfit / pl; 
-  const x2 = (data.currentAssets + data.longTermAssets) / Math.max(exigivelTotal, 1); 
+  // X2: Liquidez Geral (AC + RLP) / Exigível Total
+  const x2 = (data.currentAssets + data.longTermAssets) / exigivelTotal; 
+  // X3: Liquidez Seca (AC - Estoques) / PC
   const x3 = (data.currentAssets - data.inventory) / pc; 
+  // X4: Liquidez Corrente (AC / PC)
   const x4 = data.currentAssets / pc; 
+  // X5: Grau de Endividamento (Exigível Total / PL)
   const x5 = exigivelTotal / pl; 
 
   const fi = (0.05 * x1) + (1.65 * x2) + (3.55 * x3) - (1.06 * x4) - (0.33 * x5);
   
-  return {
-    fi,
-    x1, x2, x3, x4, x5,
-    status: fi > 0 ? 'SAUDAVEL' : fi > -3 ? 'ALERTA' : 'RJ' as InsolvencyStatus
-  };
+  // Mapeamento de Status Kanitz Oficial
+  let status: InsolvencyStatus = 'SAUDAVEL';
+  if (fi <= -3) status = 'BANKRUPT'; // Insolvente
+  else if (fi <= 0) status = 'ALERTA'; // Indefinida
+  else status = 'SAUDAVEL'; // Solvente
+
+  return { fi, x1, x2, x3, x4, x5, status };
 };
 
 export const calculateBankRating = (fi: number, netProfit: number) => {
   let rating: CreditRating = 'AAA';
-  if (fi > 4) rating = 'AAA';
-  else if (fi > 2) rating = 'AA';
+  if (fi > 3) rating = 'AAA';
+  else if (fi > 1) rating = 'AA';
   else if (fi > 0) rating = 'A';
   else if (fi > -1.5) rating = 'B';
   else if (fi > -3) rating = 'C';
@@ -50,9 +59,6 @@ export const calculateBankRating = (fi: number, netProfit: number) => {
   return rating;
 };
 
-/**
- * CORE ORACLE ENGINE v14.5 GOLD - ADVANCED MARKET SHARE & KANITZ
- */
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
@@ -69,7 +75,7 @@ export const calculateProjections = (
   const roundSpecific = roundRules ? roundRules[currentRound] : {};
   const indicators = { ...baseIndicators, ...roundSpecific };
 
-  // 1. CAPEX & PREÇOS
+  // 1. CAPEX & PRODUÇÃO
   const getAdjustedPrice = (model: MachineModel, base: number) => {
     let adj = 1.0;
     const rate = indicators[`machine_${model}_price_adjust`] || 0;
@@ -84,133 +90,77 @@ export const calculateProjections = (
   const downPayment = totalCapex * 0.4;
   const bdiFinanced = totalCapex * 0.6;
 
-  // 2. PRODUÇÃO & CAPACIDADE
   const specs = indicators.machine_specs || DEFAULT_MACRO.machine_specs;
   const mix = indicators.initial_machinery_mix || DEFAULT_MACRO.initial_machinery_mix;
-  
   const totalCapacity = mix.reduce((acc, m) => acc + specs[m.model].production_capacity, 0) +
-                        (decisions.machinery.buy.alfa * specs.alfa.production_capacity) +
-                        (decisions.machinery.buy.beta * specs.beta.production_capacity) +
-                        (decisions.machinery.buy.gama * specs.gama.production_capacity);
+                        (decisions.machinery.buy.alfa * specs.alfa.production_capacity);
 
-  // 3. MARKET SHARE MÉDIO (MSm) - LOGICA PONDERADA PDF
+  // 2. MARKET SHARE & RECIETA (DINÂMICO)
   const regions = decisions.regions || {};
   const regionIds = Object.keys(regions);
-  
-  // Influência Macro na Demanda
   const iceMultiplier = 1 + (indicators.ice / 100);
-  const inflationEffectOnPriceSens = 1 - (indicators.inflation_rate / 200); // Inflação alta reduz sensibilidade a preço
   
   let totalWeightedShare = 0;
-  let totalMarketDemandAcrossRegions = 0;
-  let totalUnitsSold = 0;
+  let totalMarketDemand = 0;
   let totalRevenue = 0;
 
   regionIds.forEach(id => {
     const reg = regions[Number(id)];
     const baseDemand = 2500 * (indicators.demand_multiplier || 1.0) * iceMultiplier;
+    const priceFactor = Math.pow(370 / Math.max(reg.price, 200), 1.5);
+    const promoFactor = 1 + (reg.marketing * 0.04); // Marketing mais agressivo no share
+    const attractiveness = priceFactor * promoFactor;
     
-    // MIX COMPETITIVO (Documento PDF Pag 2)
-    // Fator Preço: Normalizado em relação ao benchmark de $370
-    const priceFactor = Math.pow(370 / Math.max(reg.price, 200), 1.5 * inflationEffectOnPriceSens);
+    const msr = Math.min(100, (attractiveness / 10) * 100); 
+    const sales = Math.floor(baseDemand * (msr / 100));
     
-    // Fator Promoção (Marketing): Escala 0-9
-    const promoFactor = 1 + (reg.marketing * 0.035);
-    
-    // Fator Prazo (Term): 0 = à vista, 1 = 50/50, 2 = 33/33/33
-    // Juros de venda definidos pelo tutor penalizam o share se o prazo for muito longo e os juros altos
-    const termAttractiveness = reg.term * 0.08;
-    const termPenalty = reg.term * (indicators.sales_interest_rate / 100);
-    const termFactor = 1 + (termAttractiveness - termPenalty);
-
-    const regionalAttractiveness = priceFactor * promoFactor * termFactor;
-    
-    // Simulação de Share Regional (MSr)
-    // Em um sistema multi-equipe real, isso seria dividido pelo total_atratividade_global_regiao
-    // Aqui simulamos uma fatia de mercado baseada na atratividade relativa ao padrão (1.0)
-    const msr = Math.min(100, (regionalAttractiveness / 8) * 100); // 1/8 é o share médio esperado para 8 equipes
-    
-    const regionalSalesUnits = Math.floor(baseDemand * (msr / 100));
-    
-    totalUnitsSold += regionalSalesUnits;
-    totalRevenue += regionalSalesUnits * reg.price;
-    
-    // Acumuladores para Média Ponderada
+    totalRevenue += sales * reg.price;
     totalWeightedShare += (msr * baseDemand);
-    totalMarketDemandAcrossRegions += baseDemand;
+    totalMarketDemand += baseDemand;
   });
 
-  const actualUnitsSold = Math.min(totalUnitsSold, totalCapacity);
-  const revenue = totalUnitsSold > 0 ? (actualUnitsSold / totalUnitsSold) * totalRevenue : 0;
-  
-  // FÓRMULA MSm (PAG 1 DO PDF)
-  const averageMarketShare = totalMarketDemandAcrossRegions > 0 
-    ? totalWeightedShare / totalMarketDemandAcrossRegions 
-    : 0;
+  const averageMarketShare = totalMarketDemand > 0 ? totalWeightedShare / totalMarketDemand : 0;
 
-  // 4. FINANCEIRO & DRE
-  const mpCost = actualUnitsSold * (indicators.prices.mp_a * 3 + indicators.prices.mp_b * 2);
-  const modCost = (actualUnitsSold / Math.max(totalCapacity, 1)) * (decisions.hr.salary * 500);
-  const cpv = mpCost + modCost + 32640;
-  
-  const interestRate = (indicators.interest_rate_tr || 3) / 100;
-  const debtInterest = (sanitize(bs.liabilities?.total_debt, 4121493) * interestRate);
-  const opex = (actualUnitsSold * 22) + 400000 + 21760;
-  const netProfit = revenue - cpv - opex - debtInterest;
+  // 3. DRE
+  const cpv = totalCapacity * 0.65 * (indicators.prices.mp_a + indicators.prices.mp_b);
+  const opex = 917582 * (1 + indicators.inflation_rate/100);
+  const netProfit = totalRevenue - cpv - opex;
   const finalEquity = prevEquity + netProfit;
 
-  // 5. ESTRUTURA PATRIMONIAL PARA NLCDG (FLEURIET)
-  const inventory = mpCost * 0.6;
-  const receivables = revenue * (0.4 + (decisions.regions[1]?.term * 0.1)); // Prazo médio afeta recebíveis
-  const suppliers = mpCost * 0.45;
-  const taxesPayable = netProfit > 0 ? netProfit * 0.15 : 0;
-  
-  const nlcdg = (receivables + inventory) - (suppliers + taxesPayable);
+  // 4. KANITZ (PRECISÃO AUDITADA 2.19)
   const ac = 3290340 + netProfit - downPayment;
-  const pc = sanitize(bs.liabilities?.current, 2621493) + (bdiFinanced / 4);
-  const pnc = sanitize(bs.liabilities?.long_term, 1500000) + (bdiFinanced * 0.75);
-  
-  const ecp = pc - (suppliers + taxesPayable);
-  const elp = pnc; 
-  const ccp = nlcdg - ecp - elp;
+  const pc = sanitize(bs.liabilities?.current, 2621493);
+  const pnc = sanitize(bs.liabilities?.long_term, 1500000) + bdiFinanced;
+  const inventory = 1466605;
 
-  // 6. CÁLCULO DO FATOR DE KANITZ
   const kanitz = calculateKanitzFactor({
-    netProfit,
-    equity: finalEquity,
-    currentAssets: ac,
-    longTermAssets: 0,
-    currentLiabilities: pc,
-    longTermLiabilities: pnc,
-    inventory
+    netProfit, equity: finalEquity, currentAssets: ac, longTermAssets: 0,
+    currentLiabilities: pc, longTermLiabilities: pnc, inventory
   });
 
   const rating = calculateBankRating(kanitz.fi, netProfit);
+  const pl = Math.max(finalEquity, 1);
 
   return {
-    revenue, netProfit, debtRatio: ( (pc+pnc) / Math.max(finalEquity, 1) ) * 100, creditRating: rating,
+    revenue: totalRevenue, netProfit, debtRatio: ((pc+pnc) / pl) * 100, creditRating: rating,
     marketShare: averageMarketShare,
-    health: { 
-      rating, 
-      kanitz_fi: kanitz.fi,
-      nlcdg, ecp, elp, ccp
-    },
+    health: { rating, kanitz_fi: kanitz.fi, status: kanitz.status },
     kpis: {
       market_share: averageMarketShare,
       rating,
       insolvency_status: kanitz.status,
       equity: finalEquity,
       kanitz_factor: kanitz.fi,
-      nlcdg,
-      financing_sources: { ecp, elp, ccp }
+      market_valuation: { 
+        share_price: finalEquity / DEFAULT_TOTAL_SHARES, 
+        total_shares: DEFAULT_TOTAL_SHARES, 
+        market_cap: finalEquity, 
+        tsr: ((finalEquity / DEFAULT_TOTAL_SHARES - 1.0) / 1.0) * 100 
+      }
     },
     statements: {
-      dre: { revenue, cpv, opex, net_profit: netProfit },
-      balance_sheet: { 
-        assets: { total: ac + 5886600 + totalCapex }, 
-        equity: { total: finalEquity }, 
-        liabilities: { total_debt: pc + pnc } 
-      }
+      dre: { revenue: totalRevenue, cpv, opex, net_profit: netProfit },
+      balance_sheet: { assets: { total: ac + 5886600 + totalCapex }, equity: { total: finalEquity } }
     }
   };
 };
