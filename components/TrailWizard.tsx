@@ -8,7 +8,7 @@ import {
   Settings2, X, Bot, Boxes, TrendingUp, Percent,
   ArrowUpCircle, ArrowDownCircle, HardDrive, LayoutGrid,
   Zap, Flame, ShieldAlert, BarChart3, Coins, Hammer, Package,
-  MapPin, Scale
+  MapPin, Scale, Eye, EyeOff
 } from 'lucide-react';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +17,7 @@ import { createChampionshipWithTeams } from '../services/supabase';
 import { INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import EmpireParticles from './EmpireParticles';
-import { Branch, SalesMode, ScenarioType, ModalityType, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, RegionConfig } from '../types';
+import { Branch, SalesMode, ScenarioType, ModalityType, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, RegionConfig, TransparencyLevel, GazetaMode } from '../types';
 
 const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
@@ -34,7 +34,9 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     roundTime: 24,
     roundUnit: 'hours' as DeadlineUnit,
     initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE,
-    currency: 'BRL' as CurrencyType
+    currency: 'BRL' as CurrencyType,
+    transparency: 'medium' as TransparencyLevel,
+    gazetaMode: 'anonymous' as GazetaMode
   });
 
   const [baseIndicators, setBaseIndicators] = useState<MacroIndicators>({
@@ -44,8 +46,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
   const [teamNames, setTeamNames] = useState<string[]>(['EQUIPE ALPHA']);
-  
-  // Estrutura expandida de Regiões
   const [regionConfigs, setRegionConfigs] = useState<RegionConfig[]>([]);
 
   useEffect(() => {
@@ -75,7 +75,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         }
       }
       const sliced = next.slice(0, formData.regionsCount);
-      // Ajusta o último peso para fechar 100%
       const currentSum = sliced.reduce((acc, r) => acc + r.demand_weight, 0);
       if (currentSum !== 100 && sliced.length > 0) {
         sliced[sliced.length - 1].demand_weight += (100 - currentSum);
@@ -128,11 +127,11 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         currency: formData.currency,
         sales_mode: formData.marketMode,
         scenario_type: 'simulated' as ScenarioType,
+        transparency_level: formData.transparency,
+        gazeta_mode: formData.gazetaMode,
         is_trial: true,
         market_indicators: baseIndicators,
         round_rules: roundRules,
-        transparency_level: 'medium',
-        gazeta_mode: 'anonymous',
         observers: []
       }, teamsToCreate, true);
       
@@ -179,6 +178,27 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <div className="grid grid-cols-2 gap-4">
                        <WizardField label="TEMPO ROUND" type="number" val={formData.roundTime} onChange={(v:any)=>setFormData({...formData, roundTime: parseInt(v)})} />
                        <WizardSelect label="UNIDADE" val={formData.roundUnit} onChange={(v:any)=>setFormData({...formData, roundUnit: v as DeadlineUnit})} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} />
+                    </div>
+                 </div>
+
+                 <div className="bg-slate-900/60 p-10 rounded-[3rem] border border-white/5 shadow-2xl space-y-8 mt-12">
+                    <h4 className="text-[11px] font-black text-orange-500 uppercase tracking-[0.4em] italic flex items-center gap-3"><Settings size={18}/> Governança Tática</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Nível de Transparência</label>
+                          <div className="grid grid-cols-2 gap-3">
+                             {['low', 'medium', 'high', 'full'].map(lvl => (
+                                <button key={lvl} onClick={() => setFormData({...formData, transparency: lvl as TransparencyLevel})} className={`py-4 rounded-2xl text-[10px] font-black uppercase border transition-all ${formData.transparency === lvl ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}>{lvl}</button>
+                             ))}
+                          </div>
+                       </div>
+                       <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Identidade na Gazeta</label>
+                          <div className="flex gap-4">
+                             <button onClick={() => setFormData({...formData, gazetaMode: 'anonymous'})} className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase border transition-all flex items-center justify-center gap-3 ${formData.gazetaMode === 'anonymous' ? 'bg-orange-600 border-orange-400 text-white shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}><EyeOff size={14}/> Anônimo</button>
+                             <button onClick={() => setFormData({...formData, gazetaMode: 'identified'})} className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase border transition-all flex items-center justify-center gap-3 ${formData.gazetaMode === 'identified' ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-white/5 border-white/10 text-slate-500'}`}><Eye size={14}/> Identificado</button>
+                          </div>
+                       </div>
                     </div>
                  </div>
               </motion.div>
@@ -344,7 +364,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           </tbody>
                        </table>
                     </div>
-                    {/* INDICADOR DE SCAN LATERAL */}
                     <motion.div animate={{ left: ['-1%', '101%'] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="absolute top-0 bottom-0 w-px bg-orange-500/20 shadow-[0_0_15px_#f97316] z-[110] pointer-events-none" />
                  </div>
               </motion.div>

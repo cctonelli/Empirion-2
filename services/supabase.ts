@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan } from '../types';
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode } from '../types';
 import { DEFAULT_MACRO } from '../constants';
 import { calculateProjections, calculateAttractiveness } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';
@@ -46,6 +46,7 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   try {
     const local = localStorage.getItem(LOCAL_CHAMPS_KEY);
     if (local) finalArenas.push(...JSON.parse(local));
+
     const { data: realChamps } = await supabase.from('championships').select('*').order('created_at', { ascending: false });
     if (realChamps) {
       for (const c of realChamps) {
@@ -55,7 +56,23 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
         }
       }
     }
-  } catch (e) { logError(LogContext.DATABASE, "Cloud fetch deferred", e); }
+
+    const { data: { session } } = await (supabase.auth as any).getSession();
+    if (session) {
+      const { data: trialChamps } = await supabase.from('trial_championships').select('*').eq('tutor_id', session.user.id);
+      if (trialChamps) {
+        for (const tc of trialChamps) {
+           if (!finalArenas.find(a => a.id === tc.id)) {
+              const { data: tTeams } = await supabase.from('trial_teams').select('*').eq('championship_id', tc.id);
+              finalArenas.push({ ...tc, teams: tTeams || [], is_trial: true });
+           }
+        }
+      }
+    }
+  } catch (e) { 
+    logError(LogContext.DATABASE, "Cloud fetch deferred", e); 
+  }
+  
   const result = onlyPublic ? finalArenas.filter(a => a.is_public || a.is_trial) : finalArenas;
   return { data: result, error: null };
 };
@@ -64,17 +81,21 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const newId = crypto.randomUUID();
   const timestamp = new Date().toISOString();
+  
+  const { data: { session } } = await (supabase.auth as any).getSession();
+  const currentUserId = session?.user?.id;
 
-  // Share Inicial Proporcional no P00 (Evita Mock)
   const initialShare = 100 / Math.max(teams.length, 1);
 
   const teamsWithIds = teams.map(t => ({
-    ...t,
     id: crypto.randomUUID(),
+    name: t.name,
+    is_bot: !!t.is_bot,
     championship_id: newId,
     equity: 5055447,
     credit_limit: 5000000,
     status: 'active',
+    insolvency_status: 'SAUDAVEL',
     created_at: timestamp,
     kpis: { 
       market_share: initialShare, 
@@ -85,38 +106,97 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     }
   }));
 
-  const fullChamp = { ...champData, id: newId, status: 'active', current_round: 0, created_at: timestamp, teams: teamsWithIds, is_trial: isTrial } as Championship;
+  const fullChamp = { 
+    ...champData, 
+    id: newId, 
+    status: 'active', 
+    current_round: 0, 
+    created_at: timestamp, 
+    is_trial: isTrial,
+    tutor_id: currentUserId,
+    deadline_value: champData.deadline_value || 7,
+    deadline_unit: champData.deadline_unit || 'days',
+    region_names: champData.region_names || [],
+    region_configs: champData.region_configs || [],
+    currency: champData.currency || 'BRL',
+    sales_mode: champData.sales_mode || 'hybrid',
+    scenario_type: champData.scenario_type || 'simulated',
+    transparency_level: champData.transparency_level || 'medium',
+    gazeta_mode: champData.gazeta_mode || 'anonymous'
+  } as Championship;
 
-  localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify([fullChamp, ...JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]')]));
+  if (isTrial && currentUserId) {
+    try {
+      const { error: champErr } = await supabase.from('trial_championships').insert({
+        id: fullChamp.id,
+        name: fullChamp.name,
+        branch: fullChamp.branch,
+        description: fullChamp.description,
+        status: fullChamp.status,
+        current_round: fullChamp.current_round,
+        total_rounds: fullChamp.total_rounds,
+        deadline_value: fullChamp.deadline_value,
+        deadline_unit: fullChamp.deadline_unit,
+        initial_financials: fullChamp.initial_financials,
+        market_indicators: fullChamp.market_indicators,
+        region_names: fullChamp.region_names,
+        region_configs: fullChamp.region_configs,
+        currency: fullChamp.currency,
+        sales_mode: fullChamp.sales_mode,
+        scenario_type: fullChamp.scenario_type,
+        transparency_level: fullChamp.transparency_level,
+        gazeta_mode: fullChamp.gazeta_mode,
+        tutor_id: currentUserId,
+        config: fullChamp.config || {}
+      });
+      
+      if (champErr) throw champErr;
+
+      const { error: teamsErr } = await supabase.from('trial_teams').insert(teamsWithIds.map(t => ({
+        id: t.id,
+        championship_id: t.championship_id,
+        name: t.name,
+        kpis: t.kpis,
+        equity: t.equity,
+        credit_limit: t.credit_limit,
+        status: t.status,
+        insolvency_status: t.insolvency_status
+      })));
+
+      if (teamsErr) throw teamsErr;
+      logInfo(LogContext.SUPABASE, "Absolute Trial Persisted to Cloud Node 08");
+    } catch (err) {
+      logError(LogContext.SUPABASE, "Cloud Persist Fault, local-only mode", err);
+    }
+  }
+
+  const localArenas = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
+  localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify([{ ...fullChamp, teams: teamsWithIds }, ...localArenas]));
   localStorage.setItem('active_champ_id', newId);
 
   return { champ: fullChamp, teams: teamsWithIds };
 };
 
-/**
- * TURNOVER ORACLE v14.9 - ENGINE COMPETITIVA REAL
- */
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
   try {
     const { data: allArenas } = await getChampionships();
     const arena = allArenas?.find(a => a.id === championshipId);
     if (!arena) throw new Error("Arena não localizada.");
 
+    const isTrial = !!arena.is_trial;
     const teams = arena.teams || [];
     const decisions: Record<string, DecisionData> = {};
     const attractions: Record<string, number> = {};
 
-    // PASSO 1: COLETAR DECISÕES E CALCULAR ATRATIVIDADE
     for (const team of teams) {
       let teamDecision;
+      const decisionTable = isTrial ? 'trial_decisions' : 'current_decisions';
       if (team.is_bot) {
         teamDecision = await generateBotDecision(arena.branch, currentRound + 1, arena.regions_count, arena.market_indicators);
       } else {
-        const { data } = await supabase.from('current_decisions').select('data').eq('team_id', team.id).eq('round', currentRound + 1).maybeSingle();
+        const { data } = await supabase.from(decisionTable).select('data').eq('team_id', team.id).eq('round', currentRound + 1).maybeSingle();
         teamDecision = data?.data;
       }
-
-      // Fallback decisório se equipe estiver inativa
       if (!teamDecision) {
         teamDecision = {
           regions: Object.fromEntries(Array.from({ length: arena.regions_count || 4 }, (_, i) => [i + 1, { price: 375, term: 1, marketing: 0 }])),
@@ -132,46 +212,37 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       attractions[team.id] = calculateAttractiveness(teamDecision);
     }
 
-    // PASSO 2: CALCULAR SHARE RELATIVO
     const totalAttraction = Object.values(attractions).reduce((a, b) => a + b, 0);
     const batchResults = [];
 
     for (const team of teams) {
       const relativeShare = totalAttraction > 0 ? (attractions[team.id] / totalAttraction) * 100 : (100 / teams.length);
-      
-      const result = calculateProjections(
-        decisions[team.id], 
-        arena.branch, 
-        arena.ecosystemConfig || {} as any, 
-        arena.market_indicators, 
-        team, 
-        [], 
-        currentRound + 1, 
-        arena.round_rules,
-        relativeShare // Injeta o share competitivo real
-      );
+      const result = calculateProjections(decisions[team.id], arena.branch, arena.ecosystemConfig || {} as any, arena.market_indicators, team, [], currentRound + 1, arena.round_rules, relativeShare, arena);
+      batchResults.push({ team_id: team.id, kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status });
 
-      batchResults.push({
-        team_id: team.id, team_name: team.name, championship_id: championshipId, round: currentRound + 1,
-        kpis: result.kpis, equity: result.kpis.equity, credit_limit: 5000000
-      });
+      if (isTrial) {
+        await supabase.from('trial_teams').update({ kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status }).eq('id', team.id);
+      } else {
+        await supabase.from('teams').update({ kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status }).eq('id', team.id);
+      }
     }
 
-    // Persistência local (Trial)
+    if (isTrial) await supabase.from('trial_championships').update({ current_round: currentRound + 1 }).eq('id', championshipId);
+    else await supabase.from('championships').update({ current_round: currentRound + 1 }).eq('id', championshipId);
+
     const local = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
     const idx = local.findIndex((a: any) => a.id === championshipId);
     if (idx !== -1) {
        local[idx].current_round = currentRound + 1;
        local[idx].teams = local[idx].teams.map((t: any) => {
          const res = batchResults.find(r => r.team_id === t.id);
-         return res ? { ...t, kpis: res.kpis, equity: res.equity } : t;
+         return res ? { ...t, kpis: res.kpis, equity: res.equity, insolvency_status: res.insolvency_status } : t;
        });
        localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify(local));
     }
-
     return { success: true };
   } catch (err: any) {
-    logError(LogContext.TURNOVER, "Turnover Fault", err.message);
+    logError(LogContext.TURNOVER, "Oracle Turnover Fault", err.message);
     return { success: false, error: err.message };
   }
 };
@@ -194,19 +265,26 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
 export const fetchPageContent = async (slug: string, lang: string) => { return null; };
 export const getModalities = async () => { return []; };
 export const subscribeToModalities = (cb: any) => { return { unsubscribe: () => {} }; };
+
 export const deleteChampionship = async (id: string, isTrial: boolean) => {
+  if (isTrial) await supabase.from('trial_championships').delete().eq('id', id);
+  else await supabase.from('championships').delete().eq('id', id);
   const local = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
   localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify(local.filter((a: any) => a.id !== id)));
   return { error: null };
 };
+
 export const provisionDemoEnvironment = () => { localStorage.setItem('is_trial_session', 'true'); };
-export const updateEcosystem = async (id: string, up: any) => { return { error: null }; };
+export const updateEcosystem = async (id: string, updates: any) => {
+  const isTrial = localStorage.getItem('is_trial_session') === 'true';
+  const table = isTrial ? 'trial_championships' : 'championships';
+  const { error } = await supabase.from(table).update(updates).eq('id', id);
+  return { error };
+};
 export const getPublicReports = async (id: string, r: number) => { return { data: [], error: null }; };
 export const submitCommunityVote = async (d: any) => { return { error: null }; };
 export const getActiveBusinessPlan = async (t: string, r: number) => { return { data: null, error: null }; };
 export const saveBusinessPlan = async (p: any) => { return { data: null, error: null }; };
 export const getTeamSimulationHistory = async (t: string) => { return []; };
-// Fix: Added missing getAllUsers export to resolve error in AdminCommandCenter.tsx
 export const getAllUsers = async (): Promise<UserProfile[]> => { return []; };
-// Fix: Added missing subscribeToBusinessPlan export to resolve error in BusinessPlanWizard.tsx
 export const subscribeToBusinessPlan = (t: string, r: number, cb: any) => { return { unsubscribe: () => {} }; };

@@ -44,10 +44,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   
   const [tutorView, setTutorView] = useState<TutorView>('dashboard');
 
-  const [heroTitle, setHeroTitle] = useState('Forje Seu Império');
-  const [accentColor, setAccentColor] = useState('#f97316');
-  const [menus, setMenus] = useState<MenuItemConfig[]>([]);
-
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('mode') === 'new_trial') {
@@ -61,21 +57,21 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     setLoading(true);
     try {
       const { data: { session } } = await (supabase.auth as any).getSession();
-      const isTrial = localStorage.getItem('is_trial_session') === 'true';
+      const isTrialSessionLocal = localStorage.getItem('is_trial_session') === 'true';
       const storedArenaId = localStorage.getItem('active_champ_id');
 
       const userId = session?.user?.id || 'trial_user';
       const prof = await getUserProfile(userId);
       setProfile(prof);
       
-      if ((isTrial || prof?.role === 'tutor') && activeTab === 'system') {
+      if ((isTrialSessionLocal || prof?.role === 'tutor') && activeTab === 'system') {
          setActiveTab('tournaments');
       }
 
       const { data } = await getChampionships();
       if (data) {
          setChampionships(data);
-         if (isTrial && storedArenaId && !selectedArena && !isCreatingTrial) {
+         if (storedArenaId && !selectedArena && !isCreatingTrial) {
             const found = data.find(c => c.id === storedArenaId);
             if (found) setSelectedArena(found);
          }
@@ -85,7 +81,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
         const allUsers = await getAllUsers();
         setUsers(allUsers);
       }
-      setMenus(MENU_STRUCTURE.map((m, i) => ({ id: `m-${i}`, label: m.label, path: m.path, isVisible: true })));
     } catch (err) { console.error("Sync Error:", err); } finally { setLoading(false); }
   };
 
@@ -93,6 +88,23 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
 
   const isAdmin = profile?.role === 'admin';
   const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
+
+  // LÓGICA DE PROPRIEDADE v15.3: Suporte a co-tutoria trial
+  const [isCoTutor, setIsCoTutor] = useState(false);
+  useEffect(() => {
+    const checkCoTutor = async () => {
+      if (selectedArena && profile && selectedArena.is_trial) {
+        const { data } = await supabase.from('trial_tutors').select('*').eq('championship_id', selectedArena.id).eq('user_id', profile.supabase_user_id).maybeSingle();
+        setIsCoTutor(!!data);
+      }
+    };
+    checkCoTutor();
+  }, [selectedArena, profile]);
+
+  const isArenaOwner = useMemo(() => {
+     if (!selectedArena || !profile) return false;
+     return selectedArena.tutor_id === profile.supabase_user_id || isTrialSession || isCoTutor;
+  }, [selectedArena, profile, isTrialSession, isCoTutor]);
 
   const tutorViewOrder: TutorView[] = ['dashboard', 'planning', 'decisions', 'teams', 'gazette'];
   const handleNav = (dir: 'next' | 'prev') => {
@@ -105,7 +117,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     if (!selectedArena?.teams) return { avgShare: 0, insolvencyRate: 0 };
     const teams = selectedArena.teams as Team[];
     const totalShare = teams.reduce((acc, t) => acc + (t.kpis?.market_share || 0), 0);
-    const insolventCount = teams.filter(t => t.kpis?.insolvency_status === 'BANKRUPT' || t.kpis?.insolvency_status === 'RJ').length;
+    const insolventCount = teams.filter(t => t.insolvency_status === 'BANKRUPT' || t.insolvency_status === 'RJ').length;
     
     return {
       avgShare: totalShare / Math.max(teams.length, 1),
@@ -120,7 +132,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     return (
       <div className="flex flex-col h-full bg-[#020617] relative overflow-hidden">
         
-        {/* NAV FLUTUANTE LATERAL */}
         {!isCreatingTrial && (
            <>
               <button onClick={() => handleNav('prev')} disabled={tutorView === tutorViewOrder[0]} className="fixed left-6 top-1/2 -translate-y-1/2 p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-orange-500 hover:bg-white/10 transition-all z-[3000] disabled:opacity-0 active:scale-90 shadow-2xl">
@@ -132,7 +143,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
            </>
         )}
 
-        {/* HEADER ULTRA SLIM - ERGONOMIA MÁXIMA */}
         <header className="shrink-0 z-[2000] bg-slate-900/80 border-b border-white/10 px-8 py-3 backdrop-blur-3xl flex justify-between items-center shadow-xl">
            <div className="flex items-center gap-6">
               <button onClick={() => { 
@@ -202,6 +212,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                             </span>
                          </div>
                          <h4 className="text-3xl font-black text-white uppercase italic relative z-10">{t.name}</h4>
+                         {t.insolvency_status && <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase ${t.insolvency_status === 'SAUDAVEL' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>{t.insolvency_status}</span>}
                       </div>
                    ))}
                 </motion.div>

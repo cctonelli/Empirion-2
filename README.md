@@ -1,60 +1,61 @@
-# 🚀 Empirion – Business Intelligence Arena (v13.2-Oracle Gold)
+# 🚀 Empirion – Business Intelligence Arena (v15.0-Oracle Master)
 
 **Forge Your Empire with AI-Driven Strategic Insight.**
 
-O Empirion é a plataforma definitiva de simulação empresarial multiplayer. No build **v13.2 Oracle Gold**, o sistema consolida a **Separação Estrita de Ambientes**, garantindo ergonomia visual, segurança de dados via Supabase RLS e inteligência tática via Gemini 3 Pro.
+O Empirion é a plataforma definitiva de simulação empresarial multiplayer. No build **v15.0 Oracle Master (International Build)**, o sistema evolui para suportar operações transfronteiriças, moedas regionais independentes e um motor de orquestração tática refinado para Tutores de elite.
 
 ---
 
-## 👥 1. Matriz de Governança e Ambientes (Progresso v13.2)
+## 🌎 1. Expansão Geopolítica e Multi-Moeda (New v15.0)
 
-O sistema identifica o perfil do operador no handshake inicial e direciona para um dos 5 nodos de experiência abaixo:
+A grande inovação desta versão é a capacidade de modelar mercados globais complexos dentro de uma única arena:
 
-### 🏛️ A. Administrador Geral (System Owner)
-*   **Ambiente:** `Command Center (Full Access)`
-*   **Foco:** Saúde do ecossistema SaaS, métricas de cluster e integridade da marca.
-*   **CMS Engine:** Painel de edição de menus, submenus e links globais.
-*   **Branding Node:** Controle de cores, fontes e editor de carrossel da Landing Page.
+### 💱 Multi-Currency Nodes
+*   **Moeda Base:** O Tutor define a moeda de consolidação dos relatórios (BRL, USD ou EUR) no Step 1 do Wizard.
+*   **Moedas Regionais:** Cada região (Nodo de Venda) pode operar em uma moeda distinta. O motor **Oracle Engine v15** aplica taxas de câmbio em tempo real para converter receitas locais em Valor de PL consolidado.
 
-### 🎓 B. Tutor (Arena Orchestrator)
-*   **Ambiente:** `Control Room (Management Access)`
-*   **Foco:** Condução estratégica e competitiva de campeonatos.
-*   **Strategos Wizard:** Parametrização completa (Moeda Base, Regiões, Audit P00).
-*   **Macro Control:** Ajuste de inflação, juros e volatilidade por ciclo.
-
-### 🏢 C. Equipes & Empresas (Strategists)
-*   **Ambiente:** `War Room / Cockpit (Operational Access)`
-*   **Foco:** Gestão de capital, produção, marketing e market share.
-*   **Oracle Cockpit:** Dashboards de alta densidade (DRE, Balanço, TSF).
-*   **Decision Matrix:** Inputs táticos sincronizados via Supabase.
+### ⚖️ Demand Weighting (Balanceamento de Mercado)
+*   **Pesos Relativos:** Diferencie mercados maduros de mercados emergentes. Atribua pesos (ex: Região Sudeste 60%, Região EUA 40%) para distribuir a demanda global proporcionalmente.
+*   **Normalização Inteligente:** O sistema garante que a soma dos pesos regionais feche em 100%, facilitando a criação de cenários de exportação.
 
 ---
 
-## 🧪 2. Modo TRAIL – Sandbox Público (Trial Master)
+## 🎓 2. Orquestração Master (Handshake Protocol)
 
-O ambiente **Trial Master (Industrial Node 08)** é a porta de entrada gratuita para experimentação aberta.
+Eliminamos a redundância de preenchimento para focar na estratégia pura:
 
-### 🕹️ Fluxo do Jogador Solo
-1.  **Acesso Inicial:** Landing CTA "Teste Grátis" → `/test/industrial`.
-2.  **Criação de Unidade:** O usuário define o nome da sua empresa (ex: "Atlas Industrial").
-3.  **Engine Sandbox:** O sistema cria um registro em `trial_teams` vinculado ao Node 08 fixo.
-4.  **Simulação:** Acesso ao Cockpit com capital inicial de $9.1M para testar decisões em tempo real.
-5.  **Conversão:** Sugestão de upgrade para Campeonatos Reais (Multijogador) ao atingir o Ciclo 3.
+### 🪄 Strategos Wizard (The Blueprint)
+O ponto único de verdade. Todos os parâmetros (Inflação, Juros, Preços P00, Balanço Inicial) são definidos aqui antes do lançamento da arena. Uma vez selado, o Wizard gera o **Baseline Auditado**.
 
-### 🎓 Fluxo Tutor Demo
-*   Tutores podem criar instâncias sandbox efêmeras para demonstrações rápidas.
-*   Uso de `trial_championships` para isolamento total de dados de produção.
-
-### 👁️ Fluxo Observador Público
-*   Acesso read-only via `/trial/public` para visualização de rankings agregados e Gazetas anônimas do ambiente sandbox.
+### 🕹️ Control Room (Dynamic Overrides)
+O Cockpit do Tutor foi redesenhado com foco em **ajustes dinâmicos**. 
+*   **Visualização Baseline:** No Round 0, o tutor vê os dados herdados do Wizard como "Auditados".
+*   **Override de Ciclo:** A partir do Round 1, o tutor pode intervir na economia, alterando índices apenas para o ciclo futuro, permitindo simular "choques de oferta" ou "crises cambiais" em tempo real.
 
 ---
 
-## 🛠️ 3. Stack Tecnológica de Isolamento
+## 🏛️ 3. Governança e Ambientes v15.0
 
-*   **Auth Proxy:** Roteamento inteligente em `App.tsx` que impede acesso cruzado.
-*   **Database RLS:** Políticas de Row-Level Security no Supabase isolando arenas reais de instâncias `trial_*`.
-*   **UI Viewports:** Componentes como `AdminCommandCenter` e `ChampionshipWizard` com headers/footers fixos para visão contida.
+### 🏛️ System Owner (Admin)
+*   **Métricas de Cluster:** Monitoramento global da saúde de todas as arenas ativas.
+*   **RLS Management:** Controle total de usuários e permissões via Supabase.
+
+### 🎓 Arena Orchestrator (Tutor)
+*   **ERP Ultra-Slim Header:** Navegação minimalista para foco total nos dados das equipes.
+*   **Navegação Lateral Flutuante:** Gatilhos rápidos para alternar entre Planejamento, Decisões e Gazeta sem perder o contexto.
+
+### 🏢 Strategists (Equipes)
+*   **Decision Matrix Pro:** Interface de alta densidade para inputs táticos.
+*   **Oracle Cockpit:** Dashboards financeiros (DRE/Balanço) sincronizados com o motor de conversão cambial.
 
 ---
-*Empirion v13.2 Oracle Gold – Governança Absoluta, Performance de Elite.*
+
+## 🛠️ 4. Stack Tecnológica Oracle Core
+
+*   **Intelligence:** Gemini 3 Pro (Reasoning) & Gemini 3 Flash (Bot Actions).
+*   **Database:** Supabase Realtime (Handshake & Sync).
+*   **Engine:** TypeScript Oracle Kernel v15.2 (Calculus de Elasticidade e Câmbio).
+*   **UI/UX:** Framer Motion (Transições Fluidas) & Lucide Icons (Semântica).
+
+---
+*Empirion v15.0 Oracle Master – Geopolítica, Performance e Precisão.* 🚀
