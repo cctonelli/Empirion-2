@@ -32,11 +32,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [activeRegion, setActiveRegion] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // V15.6: Valores iniciais zerados para forçar decisão da equipe
   const [decisions, setDecisions] = useState<DecisionData>({
     judicial_recovery: false,
     regions: {}, 
-    hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 2, misc: 0, sales_staff_count: 50 },
-    production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 1, activityLevel: 100, extraProductionPercent: 0, rd_investment: 0 },
+    hr: { hired: 0, fired: 0, salary: 0, trainingPercent: 0, participationPercent: 0, misc: 0, sales_staff_count: 0 },
+    production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 1, activityLevel: 0, extraProductionPercent: 0, rd_investment: 0 },
     machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
     finance: { loanRequest: 0, loanType: 1, application: 0 },
     estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
@@ -51,7 +52,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
           setActiveArena(found);
           const initialRegions: any = {};
           for (let i = 1; i <= (found.regions_count || 9); i++) {
-            initialRegions[i] = { price: 372, term: 1, marketing: 0 };
+            initialRegions[i] = { price: 0, term: 1, marketing: 0 };
           }
           setDecisions(prev => ({ ...prev, regions: initialRegions }));
         }
@@ -109,7 +110,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       nextRegions[Number(key)] = { ...source };
     });
     setDecisions(prev => ({ ...prev, regions: nextRegions }));
-    alert(`CLUSTER SINCRONIZADO: Parâmetros da R0${activeRegion} aplicados.`);
+    alert(`CLUSTER SINCRONIZADO: Parâmetros da ${activeArena?.region_names?.[activeRegion-1] || 'Região'} aplicados.`);
   };
 
   const handleTransmit = async () => {
@@ -156,13 +157,19 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          ))}
       </nav>
 
-      {/* 3. CONTENT VIEWPORT */}
+      {/* 3. CONTENT VIEWPORT WITH INTERNAL SCROLLING */}
       <div ref={scrollContainerRef} className="flex-1 overflow-hidden bg-slate-950/40 relative">
          <AnimatePresence mode="wait">
-            <motion.div key={activeStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto custom-scrollbar p-6 md:p-10">
+            <motion.div 
+               key={activeStep} 
+               initial={{ opacity: 0, x: 20 }} 
+               animate={{ opacity: 1, x: 0 }} 
+               exit={{ opacity: 0 }} 
+               className="h-full overflow-y-auto custom-scrollbar p-6 md:p-10 pb-32"
+            >
                
                {activeStep === 0 && (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-10 max-w-4xl mx-auto">
+                  <div className="flex flex-col items-center justify-center text-center space-y-10 max-w-4xl mx-auto py-10">
                      <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 4, repeat: Infinity }} className={`p-8 rounded-[3rem] border-4 shadow-2xl transition-all ${decisions.judicial_recovery ? 'bg-rose-600 border-rose-400 text-white shadow-rose-600/20' : 'bg-slate-900 border-emerald-500 text-emerald-500 shadow-emerald-500/10'}`}>
                         <Gavel size={64} strokeWidth={2.5} />
                      </motion.div>
@@ -180,17 +187,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 1 && (
-                  <div className="flex h-full gap-8 overflow-hidden">
-                     {/* SIDEBAR DE REGIÕES VISÍVEIS */}
-                     <div className="w-[320px] flex flex-col gap-3 border-r border-white/5 pr-6 overflow-y-auto custom-scrollbar shrink-0">
-                        <div className="sticky top-0 bg-[#020617]/40 backdrop-blur-md z-10 pb-4 border-b border-white/5 mb-4">
+                  <div className="flex flex-col lg:flex-row h-full gap-8">
+                     {/* SIDEBAR DE REGIÕES v15.6 - NOMENCLATURA REAL */}
+                     <div className="w-full lg:w-[320px] flex flex-col gap-3 border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-6 overflow-y-auto custom-scrollbar shrink-0 max-h-[300px] lg:max-h-full">
+                        <div className="sticky top-0 bg-[#020617]/80 backdrop-blur-md z-10 pb-4 border-b border-white/5 mb-4">
                            <h3 className="text-[11px] font-black text-orange-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                              <MapPin size={16} /> Nodos de Venda
+                              <MapPin size={16} /> Regiões de Venda
                            </h3>
                         </div>
                         
                         {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => {
                            const regId = i + 1;
+                           const regName = activeArena?.region_names?.[i] || `Região 0${regId}`;
                            const data = decisions.regions[regId];
                            const isActive = activeRegion === regId;
 
@@ -198,18 +206,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <button 
                                  key={i} 
                                  onClick={() => setActiveRegion(regId)} 
-                                 className={`p-6 rounded-3xl border-2 transition-all text-left flex flex-col gap-2 group relative overflow-hidden ${
+                                 className={`p-6 rounded-3xl border-2 transition-all text-left flex flex-col gap-1 group relative overflow-hidden ${
                                     isActive 
-                                    ? 'bg-orange-600 border-orange-400 shadow-2xl scale-[1.03]' 
+                                    ? 'bg-orange-600 border-orange-400 shadow-2xl scale-[1.02]' 
                                     : 'bg-slate-900 border-white/10 hover:border-white/30 hover:bg-slate-800'
                                  }`}
                               >
                                  <div className="flex justify-between items-center relative z-10">
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-white' : 'text-slate-600'}`}>Nodo 0{regId}</span>
+                                    <span className={`text-[8px] font-black uppercase tracking-widest ${isActive ? 'text-white/60' : 'text-slate-600'}`}>ID 0{regId}</span>
                                     <span className={`text-sm font-mono font-black ${isActive ? 'text-white' : 'text-emerald-500'}`}>$ {data?.price || 0}</span>
                                  </div>
-                                 <h4 className={`text-md font-black uppercase truncate italic ${isActive ? 'text-white' : 'text-slate-300'}`}>
-                                    {activeArena?.region_names?.[i] || `Região ${regId}`}
+                                 <h4 className={`text-md font-black uppercase truncate italic ${isActive ? 'text-white' : 'text-slate-200'}`}>
+                                    {regName}
                                  </h4>
                               </button>
                            );
@@ -217,7 +225,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      </div>
 
                      {/* COMANDO CENTRAL AMPLIPICADO */}
-                     <div className="flex-1 space-y-8 flex flex-col">
+                     <div className="flex-1 space-y-8 flex flex-col overflow-y-auto custom-scrollbar pr-2">
                         <div className="flex justify-between items-center bg-slate-900 p-8 rounded-[3.5rem] border border-white/10 shadow-2xl">
                            <div className="flex items-center gap-6">
                               <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white font-black italic shadow-xl text-3xl">R{activeRegion}</div>
@@ -233,8 +241,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                           <InputCard label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 372} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={24}/>} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-10">
+                           <InputCard label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 0} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={24}/>} />
                            
                            <SelectCard 
                               label="Prazo de Venda" 
@@ -272,7 +280,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 2 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full pb-10">
                      <InputCard label="Matéria-Prima A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={24}/>} />
                      <InputCard label="Matéria-Prima B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={24}/>} />
                      <SelectCard 
@@ -289,7 +297,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 3 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full pb-10">
                      <InputCard label="Novas Admissões" val={decisions.hr.hired} onChange={(v: number) => updateDecision('hr.hired', v)} icon={<Users2 size={24}/>} />
                      <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v: number) => updateDecision('hr.fired', v)} icon={<Users2 size={24}/>} />
                      <InputCard label="Piso Salarial ($)" val={decisions.hr.salary} onChange={(v: number) => updateDecision('hr.salary', v)} icon={<DollarSign size={24}/>} />
@@ -300,7 +308,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 4 && (
-                  <div className="space-y-10 max-w-full">
+                  <div className="space-y-10 max-w-full pb-10">
                      <div className="p-8 bg-blue-600/10 border-2 border-blue-500/30 rounded-[3rem] flex gap-8 items-center shadow-2xl">
                         <Info size={48} className="text-blue-400 shrink-0" />
                         <p className="text-md font-black text-blue-100 italic leading-relaxed uppercase tracking-tight">
@@ -311,7 +319,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-emerald-500/30 shadow-2xl">
                            <h4 className="text-2xl font-black uppercase text-emerald-500 tracking-tighter flex items-center gap-4 italic"><ShoppingCart size={28}/> Expansão CAPEX</h4>
                            <div className="grid grid-cols-1 gap-4">
-                              {/* Fix: Added correct updateDecision call for buying machines */}
                               <PriceInput label="Máquina ALFA" val={decisions.machinery.buy.alfa} price={machinePrices.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
                               <PriceInput label="Máquina BETA" val={decisions.machinery.buy.beta} price={machinePrices.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
                               <PriceInput label="Máquina GAMA" val={decisions.machinery.buy.gama} price={machinePrices.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
@@ -330,7 +337,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 5 && (
-                  <div className="space-y-12 max-w-full">
+                  <div className="space-y-12 max-w-full pb-10">
                      <div className="p-8 bg-orange-600/10 border-2 border-orange-500/30 rounded-[3rem] flex gap-8 items-center shadow-2xl">
                         <Landmark size={48} className="text-orange-400 shrink-0" />
                         <p className="text-md font-black text-orange-100 italic leading-relaxed uppercase tracking-tight">
@@ -346,7 +353,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 6 && (
-                  <div className="space-y-12 h-full flex flex-col justify-center max-w-6xl mx-auto">
+                  <div className="space-y-12 h-full flex flex-col justify-center max-w-6xl mx-auto py-10 pb-20">
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <InputCard label="Target: Receita" val={decisions.estimates.forecasted_revenue} onChange={(v: number) => updateDecision('estimates.forecasted_revenue', v)} />
                         <InputCard label="Target: Custo Un." val={decisions.estimates.forecasted_unit_cost} onChange={(v: number) => updateDecision('estimates.forecasted_unit_cost', v)} />
@@ -365,14 +372,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             </motion.div>
          </AnimatePresence>
 
-         {/* 4. GATILHOS FLUTUANTES v15.5 */}
+         {/* 4. GATILHOS FLUTUANTES v15.6 - POSIÇÃO ABSOLUTE INTERNA */}
          <button 
            onClick={() => setActiveStep(s => Math.max(0, s-1))} 
            disabled={activeStep === 0} 
-           className="floating-nav-btn left-6"
+           className="floating-nav-btn left-8"
            title="Anterior"
          >
-            <ChevronLeft size={32} />
+            <ChevronLeft size={28} strokeWidth={3} />
          </button>
          
          {activeStep === STEPS.length - 1 ? (
@@ -386,15 +393,15 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          ) : (
            <button 
              onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} 
-             className="floating-nav-btn right-6"
+             className="floating-nav-btn right-8"
              title="Próximo"
            >
-             <ChevronRight size={32} />
+             <ChevronRight size={28} strokeWidth={3} />
            </button>
          )}
 
          {/* INDICADOR DE FASE DISCRETO */}
-         <div className="absolute bottom-6 right-1/2 translate-x-1/2 opacity-30 flex flex-col items-center pointer-events-none">
+         <div className="absolute bottom-4 right-1/2 translate-x-1/2 opacity-30 flex flex-col items-center pointer-events-none">
             <span className="text-[7px] font-black text-white uppercase tracking-[0.6em]">Protocolo Gold v13.2</span>
             <span className="text-[9px] font-black text-orange-500 italic uppercase">Etapa {activeStep + 1} de {STEPS.length}</span>
          </div>
@@ -411,8 +418,8 @@ const InputCard = ({ label, desc, val, icon, onChange, placeholder }: any) => (
      </div>
      <input 
         type="number" 
-        value={val} 
-        placeholder={placeholder} 
+        value={val || ''} 
+        placeholder={placeholder || '0'} 
         onChange={e => onChange?.(Number(e.target.value))} 
         className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-4 md:py-5 text-white font-mono font-black text-xl md:text-2xl outline-none focus:border-orange-600 transition-all shadow-inner" 
      />
@@ -436,19 +443,20 @@ const PriceInput = ({ label, val, price, isSell, desagio, onChange }: any) => {
        <div className="flex items-center gap-5">
           <input 
              type="number" 
-             value={val} 
+             value={val || ''} 
+             placeholder="0"
              onChange={e => onChange?.(Number(e.target.value))} 
              className="w-24 bg-slate-900 border-2 border-white/5 rounded-xl px-4 py-4 text-white font-mono font-black text-2xl outline-none focus:border-blue-600 transition-all shadow-inner" 
           />
           <div className="flex-1 space-y-2">
              <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
                 <span className="text-slate-500 flex items-center gap-2"><ArrowUpCircle size={10}/> {isSell ? 'Cash Inflow' : 'Entrada (40%)'}</span>
-                <span className="text-emerald-500 italic">$ {(upfront * val).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                <span className="text-emerald-500 italic">$ {(upfront * (val || 0)).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
              </div>
              {!isSell && (
                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
                   <span className="text-slate-500 flex items-center gap-2"><ArrowDownCircle size={10}/> BDI Fin. (60%)</span>
-                  <span className="text-orange-500 italic">$ {(financed * val).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                  <span className="text-orange-500 italic">$ {(financed * (val || 0)).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
                </div>
              )}
              {isSell && (
