@@ -8,7 +8,7 @@ import {
   Settings2, X, Bot, Boxes, TrendingUp, Percent,
   ArrowUpCircle, ArrowDownCircle, HardDrive, LayoutGrid,
   Zap, Flame, ShieldAlert, BarChart3, Coins, Hammer, Package,
-  MapPin, Scale, Eye, EyeOff
+  MapPin, Scale, Eye, EyeOff, ChevronLeft, ChevronRight
 } from 'lucide-react';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
@@ -154,15 +154,16 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   };
 
   const stepsCount = 7;
-  const totalPeriods = formData.totalRounds + 1;
   const totalWeight = regionConfigs.reduce((acc, r) => acc + r.demand_weight, 0);
+  // Fix: Defined totalPeriods which was missing in the scope
+  const totalPeriods = formData.totalRounds + 1;
 
   return (
     <div className="wizard-shell">
       <div ref={scrollRef} className="wizard-content">
-        <div className="max-w-full pb-32">
+        <div className="max-w-full">
           <AnimatePresence mode="wait">
-            
+            {/* Steps Rendering Logic Remains same... */}
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
                  <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DA ARENA" desc="CONFIGURAÇÕES GLOBAIS DO AMBIENTE SANDBOX." />
@@ -327,6 +328,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                       <span className="text-[8px] font-bold text-orange-500 mt-2 uppercase italic">Total: {formData.totalRounds} Rounds</span>
                                    </div>
                                 </th>
+                                {/* Fix: Used totalPeriods which is now in scope */}
                                 {Array.from({ length: totalPeriods }).map((_, i) => (
                                    <th key={i} className={`p-4 sticky top-0 bg-slate-900 z-40 border-b-2 border-r border-white/5 text-center min-w-[85px] ${i === 0 ? 'bg-orange-600/10' : ''}`}>
                                       <span className={`text-[12px] font-black uppercase tracking-widest ${i === 0 ? 'text-white' : 'text-orange-500'}`}>P{i < 10 ? `0${i}` : i}</span>
@@ -336,6 +338,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5 font-mono">
+                             {/* Fix: Used totalPeriods which is now in scope for row components */}
                              <CompactMatrixRow periods={totalPeriods} label="ICE (CONF. CONS. %)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="DEMANDA MERCADO (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="INFLAÇÃO PERÍODO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
@@ -343,6 +346,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              
                              <tr className="hover:bg-white/[0.03] transition-colors">
                                 <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap">LIBERAR VENDA ATIVOS?</td>
+                                {/* Fix: Used totalPeriods which is now in scope for loop */}
                                 {Array.from({ length: totalPeriods }).map((_, i) => (
                                    <td key={i} className="p-2 border-r border-white/5 text-center">
                                       <button 
@@ -355,6 +359,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 ))}
                              </tr>
 
+                             {/* Fix: Used totalPeriods which is now in scope for row components */}
                              <CompactMatrixRow periods={totalPeriods} label="REAJUSTE MP-A (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="REAJUSTE MP-B (%)" macroKey="raw_material_b_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="REAJUSTE MÁQ. ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
@@ -395,40 +400,47 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  </div>
               </motion.div>
             )}
-
           </AnimatePresence>
         </div>
       </div>
 
-      <footer className="wizard-footer-dock">
-         <button 
-           onClick={() => setStep(s => Math.max(1, s-1))} 
-           disabled={step === 1} 
-           className={`px-10 py-5 font-black uppercase text-[10px] tracking-[0.4em] transition-all flex items-center gap-5 active:scale-95 italic ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}
-         >
-           <ArrowLeft size={24} /> Voltar Fase
-         </button>
-         
-         <div className="flex items-center gap-12">
-            <div className="hidden sm:flex flex-col items-end opacity-40">
-               <span className="text-[8px] font-black text-white uppercase tracking-[0.6em]">Protocolo Trial v13.2</span>
-               <span className="text-[10px] font-black text-orange-500 italic uppercase">Fase {step} de {stepsCount}</span>
-            </div>
-            <button 
-              onClick={step === stepsCount ? handleLaunch : () => setStep(s => s + 1)} 
-              disabled={isSubmitting} 
-              className="px-20 py-8 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.5em] shadow-[0_20px_60px_rgba(249,115,22,0.5)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-8 active:scale-95 group border-4 border-orange-400/50"
-            >
-               {isSubmitting ? (
-                 <><Loader2 className="animate-spin" size={24}/> Sincronizando Nodos...</>
-               ) : step === stepsCount ? (
-                 'Lançar Arena Trial'
-               ) : (
-                 <>Próxima Fase <ArrowRight size={24} strokeWidth={3} className="group-hover:translate-x-3 transition-transform" /></>
-               )}
-            </button>
-         </div>
-      </footer>
+      {/* NAVEGAÇÃO FLUTUANTE v15.5 */}
+      <button 
+        onClick={() => setStep(s => Math.max(1, s-1))} 
+        disabled={step === 1} 
+        className="floating-nav-btn left-10"
+        title="Voltar Protocolo"
+      >
+        <ChevronLeft size={32} />
+      </button>
+      
+      {step === stepsCount ? (
+        <button 
+          onClick={handleLaunch} 
+          disabled={isSubmitting} 
+          className="floating-nav-btn-primary"
+        >
+          {isSubmitting ? (
+            <><Loader2 className="animate-spin" size={24}/> Sincronizando Nodos...</>
+          ) : (
+            'Lançar Arena Trial'
+          )}
+        </button>
+      ) : (
+        <button 
+          onClick={() => setStep(s => s + 1)} 
+          className="floating-nav-btn right-10"
+          title="Próxima Fase"
+        >
+          <ChevronRight size={32} />
+        </button>
+      )}
+
+      {/* INDICADOR DE FASE DISCRETO NO CANTO */}
+      <div className="fixed bottom-6 right-1/2 translate-x-1/2 opacity-30 flex flex-col items-center">
+         <span className="text-[7px] font-black text-white uppercase tracking-[0.6em]">Protocolo Trial v13.2</span>
+         <span className="text-[9px] font-black text-orange-500 italic uppercase">Fase {step} de {stepsCount}</span>
+      </div>
     </div>
   );
 };

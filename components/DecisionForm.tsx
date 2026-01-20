@@ -7,7 +7,7 @@ import {
   TrendingUp, Landmark, Cloud, HardDrive, AlertCircle, 
   ShieldAlert, Gavel, Trash2, ShoppingCart, Info, Award,
   Zap, HelpCircle, ArrowUpCircle, ArrowDownCircle, MapPin,
-  Layers, Copy, CheckCircle2
+  Layers, Copy, CheckCircle2, ChevronLeft
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -124,7 +124,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   if (!teamId || !champId) return <div className="h-full flex items-center justify-center text-slate-500 font-black uppercase text-xs">Node Ready...</div>;
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/10 rounded-[2.5rem] border border-white/5 overflow-hidden">
+    <div className="flex flex-col h-full bg-slate-900/10 rounded-[2.5rem] border border-white/5 overflow-hidden relative">
       
       {/* 1. ULTRA HIGH VISIBILITY STATUS */}
       <div className="bg-slate-950 px-8 py-3 flex items-center justify-between border-b border-orange-500/20 shrink-0">
@@ -157,7 +157,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       </nav>
 
       {/* 3. CONTENT VIEWPORT */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-hidden bg-slate-950/40">
+      <div ref={scrollContainerRef} className="flex-1 overflow-hidden bg-slate-950/40 relative">
          <AnimatePresence mode="wait">
             <motion.div key={activeStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto custom-scrollbar p-6 md:p-10">
                
@@ -311,6 +311,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-emerald-500/30 shadow-2xl">
                            <h4 className="text-2xl font-black uppercase text-emerald-500 tracking-tighter flex items-center gap-4 italic"><ShoppingCart size={28}/> Expansão CAPEX</h4>
                            <div className="grid grid-cols-1 gap-4">
+                              {/* Fix: Added correct updateDecision call for buying machines */}
                               <PriceInput label="Máquina ALFA" val={decisions.machinery.buy.alfa} price={machinePrices.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
                               <PriceInput label="Máquina BETA" val={decisions.machinery.buy.beta} price={machinePrices.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
                               <PriceInput label="Máquina GAMA" val={decisions.machinery.buy.gama} price={machinePrices.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
@@ -363,30 +364,41 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
             </motion.div>
          </AnimatePresence>
-      </div>
 
-      {/* 4. FOOTER CTAS - ULTRA VISIBILITY */}
-      <footer className="shrink-0 bg-slate-950 border-t border-white/10 px-10 py-6 flex justify-between items-center shadow-[0_-30px_60px_rgba(0,0,0,0.5)] z-50">
-         <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className={`text-slate-500 hover:text-white transition-all flex items-center gap-3 active:scale-95 ${activeStep === 0 ? 'opacity-0' : ''}`}>
-            <ArrowLeft size={24} /> <span className="text-[11px] font-black uppercase tracking-widest italic">Anterior</span>
+         {/* 4. GATILHOS FLUTUANTES v15.5 */}
+         <button 
+           onClick={() => setActiveStep(s => Math.max(0, s-1))} 
+           disabled={activeStep === 0} 
+           className="floating-nav-btn left-6"
+           title="Anterior"
+         >
+            <ChevronLeft size={32} />
          </button>
          
-         <div className="flex items-center gap-12">
-            <div className="hidden sm:flex flex-col items-end opacity-60">
-               <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Protocolo Gold v13.2</span>
-               <span className="text-[11px] font-black text-orange-500 uppercase italic">Etapa {activeStep + 1} de {STEPS.length}</span>
-            </div>
-            {activeStep === STEPS.length - 1 ? (
-              <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="px-16 py-6 md:py-8 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-[0_15px_40px_rgba(249,115,22,0.4)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-6 active:scale-95">
-                {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} Transmitir para Oracle
-              </button>
-            ) : (
-              <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="px-16 py-6 md:py-8 bg-white text-slate-950 hover:bg-orange-600 hover:text-white rounded-full font-black text-[12px] uppercase tracking-[0.4em] shadow-2xl transition-all flex items-center gap-6 active:scale-95 group">
-                Avançar Protocolo <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
-              </button>
-            )}
+         {activeStep === STEPS.length - 1 ? (
+           <button 
+             disabled={isReadOnly || isSaving} 
+             onClick={handleTransmit} 
+             className="floating-nav-btn-primary"
+           >
+             {isSaving ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />} Transmitir para Oracle
+           </button>
+         ) : (
+           <button 
+             onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} 
+             className="floating-nav-btn right-6"
+             title="Próximo"
+           >
+             <ChevronRight size={32} />
+           </button>
+         )}
+
+         {/* INDICADOR DE FASE DISCRETO */}
+         <div className="absolute bottom-6 right-1/2 translate-x-1/2 opacity-30 flex flex-col items-center pointer-events-none">
+            <span className="text-[7px] font-black text-white uppercase tracking-[0.6em]">Protocolo Gold v13.2</span>
+            <span className="text-[9px] font-black text-orange-500 italic uppercase">Etapa {activeStep + 1} de {STEPS.length}</span>
          </div>
-      </footer>
+      </div>
     </div>
   );
 };

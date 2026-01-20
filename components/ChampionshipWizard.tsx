@@ -7,7 +7,7 @@ import {
   Hourglass, Scale, Sparkles, X, Settings2,
   TrendingUp, Zap, Users, DollarSign, Package, Cpu,
   Factory, Trash2, ClipboardList, Gauge, Table as TableIcon,
-  Landmark, Info, Settings, MousePointer2
+  Landmark, Info, Settings, MousePointer2, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO } from '../constants';
 import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource } from '../types';
@@ -72,7 +72,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   const stepsCount = 7; 
 
   return (
-    <div className="wizard-shell bg-slate-950/80 border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+    <div className="wizard-shell bg-slate-950/80 border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative">
       <header className="wizard-header-fixed px-12 py-10 flex items-center justify-between border-b border-orange-500/30">
         <div className="flex items-center gap-8">
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-[0_0_30px_rgba(249,115,22,0.4)]"><Sliders size={32} /></div>
@@ -112,8 +112,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
             </motion.div>
           )}
 
-          {/* Outros steps seguem a mesma lógica de visibilidade extrema */}
-          {/* Step Final para Lançamento */}
           {step === 7 && (
             <motion.div key="s7" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="py-32 text-center space-y-16 max-w-4xl mx-auto">
                <div className="w-40 h-40 bg-orange-600 rounded-[4rem] flex items-center justify-center mx-auto shadow-[0_20px_80px_rgba(249,115,22,0.4)] animate-bounce border-4 border-orange-400">
@@ -131,24 +129,43 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         </AnimatePresence>
       </div>
 
-      <footer className="wizard-footer-dock h-32 px-12 bg-slate-950 border-t border-orange-500/20">
-         <button onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1} className={`px-12 py-6 font-black uppercase text-[12px] tracking-[0.4em] transition-all flex items-center gap-6 active:scale-95 italic ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white'}`}><ArrowLeft size={28} /> Voltar Fase</button>
-         <div className="flex items-center gap-16">
-            <button 
-              onClick={step === stepsCount ? handleLaunch : () => setStep(s => s + 1)} 
-              disabled={isSubmitting} 
-              className="px-24 py-8 bg-orange-600 text-white rounded-full font-black text-[14px] uppercase tracking-[0.5em] shadow-[0_20px_60px_rgba(249,115,22,0.5)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-8 active:scale-95 group border-4 border-orange-400/50"
-            >
-               {isSubmitting ? (
-                 <><Loader2 className="animate-spin" size={24}/> Sincronizando Nodos...</>
-               ) : step === stepsCount ? (
-                 'Lançar Protocolo Arena'
-               ) : (
-                 <>Próxima Fase <ArrowRight size={24} strokeWidth={3} className="group-hover:translate-x-3 transition-transform" /></>
-               )}
-            </button>
-         </div>
-      </footer>
+      {/* GATILHOS FLUTUANTES v15.5 */}
+      <button 
+        onClick={() => setStep(s => Math.max(1, s-1))} 
+        disabled={step === 1} 
+        className="floating-nav-btn left-10"
+        title="Voltar"
+      >
+        <ChevronLeft size={32} />
+      </button>
+      
+      {step === stepsCount ? (
+        <button 
+          onClick={handleLaunch} 
+          disabled={isSubmitting} 
+          className="floating-nav-btn-primary"
+        >
+          {isSubmitting ? (
+            <><Loader2 className="animate-spin" size={24}/> Sincronizando Nodos...</>
+          ) : (
+            'Lançar Protocolo Arena'
+          )}
+        </button>
+      ) : (
+        <button 
+          onClick={() => setStep(s => s + 1)} 
+          className="floating-nav-btn right-10"
+          title="Próximo"
+        >
+          <ChevronRight size={32} />
+        </button>
+      )}
+
+      {/* INDICADOR DISCRETO */}
+      <div className="fixed bottom-6 right-1/2 translate-x-1/2 opacity-30 flex flex-col items-center pointer-events-none">
+         <span className="text-[7px] font-black text-white uppercase tracking-[0.6em]">Build Gold v13.2</span>
+         <span className="text-[9px] font-black text-orange-500 italic uppercase">Fase {step} de {stepsCount}</span>
+      </div>
     </div>
   );
 };

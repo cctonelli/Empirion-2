@@ -47,7 +47,6 @@ export const calculateProjections = (
   let totalRevenueBase = 0;
   let totalUnitsSold = 0;
 
-  // Itera sobre as configurações regionais se existirem
   const regions = championshipData?.region_configs || Array.from({ length: indicators.regions_count || 4 }, (_, i) => ({
      id: i + 1,
      currency: 'BRL' as CurrencyType,
@@ -59,7 +58,6 @@ export const calculateProjections = (
      const regionalWeight = reg.demand_weight / 100;
      const regionalDemand = totalMarketDemand * regionalWeight;
      
-     // Cálculo de share simulado por região
      const priceFactor = Math.pow(370 / Math.max(decision.price, 100), 1.5);
      const promoFactor = 1 + (decision.marketing * 0.05);
      const shareMultiplier = priceFactor * promoFactor;
@@ -67,19 +65,13 @@ export const calculateProjections = (
      const unitsSoldReg = Math.min(regionalDemand * (shareMultiplier / 10), regionalDemand);
      totalUnitsSold += unitsSoldReg;
 
-     // Receita na moeda local da região
      const revenueLocal = unitsSoldReg * decision.price;
-
-     // Conversão para moeda base do campeonato
      const exchangeRate = indicators.exchange_rates?.[reg.currency] || 1;
      const baseExchangeRate = indicators.exchange_rates?.[baseCurrency] || 1;
-     
-     // Se a moeda regional for USD e a base for BRL, revenueBase = revenueLocal * (5.2 / 1)
      const conversionFactor = exchangeRate / baseExchangeRate;
      totalRevenueBase += revenueLocal * conversionFactor;
   });
 
-  // Limita vendas pela capacidade produtiva
   const salesAdjustmentFactor = totalUnitsSold > totalCapacity ? totalCapacity / totalUnitsSold : 1;
   const finalRevenue = totalRevenueBase * salesAdjustmentFactor;
   const finalUnitsSold = totalUnitsSold * salesAdjustmentFactor;
@@ -91,10 +83,21 @@ export const calculateProjections = (
   const finalEquity = prevEquity + netProfit;
 
   // 4. BALANÇO & KANITZ
+  const initialCash = sanitize(bs.assets?.current?.cash, 0);
   const ac = sanitize(bs.assets?.current?.total, 3290340) + netProfit - downPayment;
   const pc = sanitize(bs.liabilities?.current, 2621493);
   const pnc = sanitize(bs.liabilities?.long_term, 1500000);
   const inventory = 1466605;
+
+  // 5. CÁLCULO FLEURIET (NLCDG) - NOVA IMPLEMENTAÇÃO
+  // NCG = (Contas a Receber + Estoques) - (Fornecedores + Impostos)
+  // No motor simplificado: NCG é aproximado pelo AC - Disponibilidades - (PC Operacional)
+  const ecp = sanitize(decisions.finance.loanRequest, 0) > 0 ? decisions.finance.loanRequest : pc * 0.7; // ECP: Empréstimos Bancários ST
+  const elp = pnc; // ELP: Empréstimos Bancários LT
+  const ccl = ac - pc; // Capital Circulante Líquido
+  const st = (ac - inventory) - ecp; // Saldo de Tesouraria
+  const ncg = ccl - st; // Necessidade de Capital de Giro
+  const ccp = finalEquity - (5886600 + totalCapex); // Capital Circulante Próprio (Equity - Ativo Fixo)
 
   const kanitz = calculateKanitzFactor({
     netProfit, equity: finalEquity, currentAssets: ac, longTermAssets: 0,
@@ -114,6 +117,12 @@ export const calculateProjections = (
       insolvency_status: kanitz.status,
       equity: finalEquity,
       kanitz_factor: kanitz.fi,
+      nlcdg: ncg,
+      financing_sources: {
+        ecp: ecp,
+        elp: elp,
+        ccp: ccp
+      },
       market_valuation: { 
         share_price: sharePrice, 
         total_shares: DEFAULT_TOTAL_SHARES, 
@@ -129,18 +138,13 @@ export const calculateProjections = (
   };
 };
 
-/**
- * Fix: Added missing calculateAttractiveness export for competitive market share simulation
- */
 export const calculateAttractiveness = (decisions: DecisionData): number => {
   const regions = Object.values(decisions.regions);
   if (regions.length === 0) return 0.5;
 
   let totalAttraction = 0;
   regions.forEach(reg => {
-    // Fator Preço: Mais barato = mais atraente. Base $370.
     const priceFactor = Math.pow(370 / Math.max(reg.price, 100), 1.5);
-    // Fator Marketing: 0 a 9 impactando progressivamente.
     const marketingFactor = 1 + (reg.marketing * 0.08);
     totalAttraction += priceFactor * marketingFactor;
   });

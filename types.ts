@@ -93,9 +93,8 @@ export interface MacroIndicators {
   tax_rate_ir: number;
   late_penalty_rate: number;
   machine_sale_discount: number;
-  exchange_rates: Record<CurrencyType, number>; // Taxa em relação à moeda base
+  exchange_rates: Record<CurrencyType, number>; 
   
-  // Reajustes (Índices)
   raw_material_a_adjust: number;
   raw_material_b_adjust: number;
   marketing_campaign_adjust: number;
@@ -140,7 +139,18 @@ export interface MacroIndicators {
 }
 
 export interface Team { id: string; name: string; championship_id: string; status?: string; invite_code?: string; is_bot?: boolean; master_key_enabled?: boolean; kpis?: KPIs; insolvency_status?: InsolvencyStatus; equity: number; credit_limit: number; }
-export interface KPIs { market_share: number; rating: CreditRating; insolvency_status: InsolvencyStatus; [key: string]: any; }
+export interface KPIs { 
+  market_share: number; 
+  rating: CreditRating; 
+  insolvency_status: InsolvencyStatus; 
+  nlcdg?: number;
+  financing_sources?: {
+    ecp: number;
+    elp: number;
+    ccp: number;
+  };
+  [key: string]: any; 
+}
 export interface ProjectionResult { revenue: number; netProfit: number; debtRatio: number; creditRating: CreditRating; health: any; kpis: KPIs; marketShare?: number; statements: any; }
 export interface AccountNode { id: string; label: string; value: number; type: string; isEditable?: boolean; isReadOnly?: boolean; isTemplateAccount?: boolean; children?: AccountNode[]; }
 export interface BlackSwanEvent { title: string; description: string; impact: string; modifiers: any; }

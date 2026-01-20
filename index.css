@@ -26,7 +26,7 @@
 /* WIZARD STRUCTURAL KERNEL V15.5 - FULL COCKPIT MODE */
 .wizard-shell {
   @apply flex flex-col w-full bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden;
-  height: calc(100vh - 280px); /* Altura calculada para caber entre o menu superior e a base */
+  height: calc(100vh - 120px); /* Ganho de espaço vertical massivo */
   min-height: 500px;
 }
 
@@ -34,17 +34,22 @@
   @apply flex-1 overflow-y-auto p-8 md:p-12 lg:p-16 custom-scrollbar scroll-smooth relative;
 }
 
-/* Garante que o conteúdo não seja cortado por baixo */
+/* Garante que o conteúdo não seja cortado por baixo e dê espaço para os botões flutuantes */
 .wizard-content > div {
-  @apply pb-20; 
+  @apply pb-40; 
 }
 
 .wizard-header-fixed {
   @apply shrink-0 bg-slate-900/95 backdrop-blur-2xl border-b border-white/10 z-[50];
 }
 
-.wizard-footer-dock {
-  @apply shrink-0 bg-slate-950/95 backdrop-blur-3xl border-t border-white/10 p-6 px-10 flex justify-between items-center z-[100] shadow-[0_-20px_50px_rgba(0,0,0,0.5)];
+/* BOTÕES FLUTUANTES ORACLE MASTER */
+.floating-nav-btn {
+  @apply fixed bottom-10 p-6 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-full text-slate-500 hover:text-orange-500 hover:bg-white/10 transition-all shadow-2xl active:scale-90 z-[3000] disabled:opacity-0;
+}
+
+.floating-nav-btn-primary {
+  @apply fixed bottom-10 left-1/2 -translate-x-1/2 px-20 py-8 bg-orange-600 text-white rounded-full font-black text-[12px] uppercase tracking-[0.5em] shadow-[0_20px_60px_rgba(249,115,22,0.5)] hover:bg-white hover:text-orange-950 transition-all flex items-center gap-8 active:scale-95 z-[3000] border-4 border-orange-400/50;
 }
 
 /* TABLE & MATRIX UTILS */
