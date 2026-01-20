@@ -35,6 +35,13 @@ export interface InitialMachine {
   age: number; 
 }
 
+export interface RegionConfig {
+  id: number;
+  name: string;
+  currency: CurrencyType;
+  demand_weight: number; // Percentual da demanda total (0-100)
+}
+
 export interface DecisionData {
   judicial_recovery: boolean;
   regions: Record<number, { 
@@ -86,6 +93,7 @@ export interface MacroIndicators {
   tax_rate_ir: number;
   late_penalty_rate: number;
   machine_sale_discount: number;
+  exchange_rates: Record<CurrencyType, number>; // Taxa em relação à moeda base
   
   // Reajustes (Índices)
   raw_material_a_adjust: number;
@@ -149,6 +157,7 @@ export interface Championship {
   deadline_unit: DeadlineUnit; 
   regions_count: number; 
   region_names?: string[];
+  region_configs?: RegionConfig[];
   team_names?: string[];
   bots_count: number; 
   market_indicators: MacroIndicators; 

@@ -7,7 +7,7 @@ import {
   Plus, Trash2, ArrowLeft, Monitor, Command, Users, Globe, CreditCard, Cpu, Gauge,
   X, Palette, Menu as MenuIcon, Save, AtSign, Phone, FileCode, UserPlus, UserMinus, Shield,
   Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity, LayoutDashboard,
-  PenTool, Newspaper, History, Settings2, Rocket, Lock
+  PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { 
   getChampionships, 
@@ -94,7 +94,13 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const isAdmin = profile?.role === 'admin';
   const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
 
-  // CÁLCULO DE MÉTRICAS DINÂMICAS DO CLUSTER
+  const tutorViewOrder: TutorView[] = ['dashboard', 'planning', 'decisions', 'teams', 'gazette'];
+  const handleNav = (dir: 'next' | 'prev') => {
+    const currentIdx = tutorViewOrder.indexOf(tutorView);
+    if (dir === 'next' && currentIdx < tutorViewOrder.length - 1) setTutorView(tutorViewOrder[currentIdx + 1]);
+    if (dir === 'prev' && currentIdx > 0) setTutorView(tutorViewOrder[currentIdx - 1]);
+  };
+
   const clusterMetrics = useMemo(() => {
     if (!selectedArena?.teams) return { avgShare: 0, insolvencyRate: 0 };
     const teams = selectedArena.teams as Team[];
@@ -112,44 +118,53 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     const currentRound = selectedArena?.current_round || 0;
 
     return (
-      <div className="flex flex-col h-full animate-in fade-in duration-500 font-sans max-w-[1600px] mx-auto p-6 overflow-hidden">
-        <header className="shrink-0 z-[2000] bg-slate-900 border-2 border-white/10 p-6 md:p-8 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.8)] backdrop-blur-3xl space-y-8 mb-10 border-t-orange-500/40">
-           <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
-              <div className="flex items-center gap-6 shrink-0">
-                 <button onClick={() => { 
-                   localStorage.removeItem('active_champ_id'); 
-                   setSelectedArena(null); 
-                   setIsCreatingTrial(false);
-                   navigate('/app/admin');
-                 }} className="p-4 bg-white/5 text-slate-400 hover:text-white rounded-2xl border border-white/10 transition-all active:scale-95"><ArrowLeft size={24} /></button>
-                 <div>
-                    <div className="flex items-center gap-3">
-                       <h1 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter leading-none">Arena <span className="text-orange-500">{arenaName}</span></h1>
-                       <span className="px-3 py-0.5 bg-emerald-600/20 border border-emerald-500/30 text-emerald-500 rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">
-                          {isCreatingTrial ? 'Orquestração Ativa' : 'Sandbox Oracle'}
-                       </span>
-                    </div>
-                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.5em] mt-2 italic opacity-70">
-                       Ciclo: 0{currentRound} • Protocolo Industrial v13.9
-                    </p>
-                 </div>
-              </div>
-              
-              <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 bg-slate-950 rounded-[2rem] border border-white/5 shadow-inner">
-                 <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="COCKPIT" icon={<LayoutDashboard size={14}/>} />
-                 <ArenaNavBtn active={tutorView === 'planning'} onClick={() => setTutorView('planning')} label="PLANEJAMENTO" icon={<PenTool size={14}/>} />
-                 <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="ANÁLISE DAS DECISÕES" icon={<History size={14}/>} />
-                 <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="EQUIPES" icon={<Users size={14}/>} />
-                 <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="GAZETA INDUSTRIAL" icon={<Newspaper size={14}/>} />
-              </div>
+      <div className="flex flex-col h-full bg-[#020617] relative overflow-hidden">
+        
+        {/* NAV FLUTUANTE LATERAL */}
+        {!isCreatingTrial && (
+           <>
+              <button onClick={() => handleNav('prev')} disabled={tutorView === tutorViewOrder[0]} className="fixed left-6 top-1/2 -translate-y-1/2 p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-orange-500 hover:bg-white/10 transition-all z-[3000] disabled:opacity-0 active:scale-90 shadow-2xl">
+                 <ChevronLeft size={32} />
+              </button>
+              <button onClick={() => handleNav('next')} disabled={tutorView === tutorViewOrder[tutorViewOrder.length - 1]} className="fixed right-6 top-1/2 -translate-y-1/2 p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-orange-500 hover:bg-white/10 transition-all z-[3000] disabled:opacity-0 active:scale-90 shadow-2xl">
+                 <ChevronRight size={32} />
+              </button>
+           </>
+        )}
+
+        {/* HEADER ULTRA SLIM - ERGONOMIA MÁXIMA */}
+        <header className="shrink-0 z-[2000] bg-slate-900/80 border-b border-white/10 px-8 py-3 backdrop-blur-3xl flex justify-between items-center shadow-xl">
+           <div className="flex items-center gap-6">
+              <button onClick={() => { 
+                 localStorage.removeItem('active_champ_id'); 
+                 setSelectedArena(null); 
+                 setIsCreatingTrial(false);
+                 navigate('/app/admin');
+              }} className="text-slate-500 hover:text-white transition-all flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><ArrowLeft size={14}/> Sair da Arena</button>
+              <div className="h-4 w-px bg-white/10" />
+              <h1 className="text-xs font-black text-white uppercase italic tracking-widest">
+                 Arena <span className="text-orange-500">{arenaName}</span>
+              </h1>
+           </div>
+           
+           <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-white/5">
+              <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="Cockpit" icon={<LayoutDashboard size={12}/>} />
+              <ArenaNavBtn active={tutorView === 'planning'} onClick={() => setTutorView('planning')} label="Planejamento" icon={<PenTool size={12}/>} />
+              <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="Decisões" icon={<History size={12}/>} />
+              <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="Equipes" icon={<Users size={12}/>} />
+              <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="Gazeta" icon={<Newspaper size={12}/>} />
+           </div>
+
+           <div className="flex items-center gap-4">
+              <span className="px-3 py-1 bg-emerald-600/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase">P0{currentRound} Node</span>
            </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-10">
+        <main className="flex-1 overflow-y-auto custom-scrollbar p-10 max-w-[1600px] mx-auto w-full relative z-10">
            <AnimatePresence mode="wait">
               {tutorView === 'dashboard' && selectedArena && (
-                <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-8">
-                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-12">
+                   <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                       <MetricCard label="Equipes" val={selectedArena.teams?.length?.toString() || '0'} icon={<Users className="text-blue-500"/>} trend="Active" />
                       <MetricCard label="Market Share Médio" val={`${clusterMetrics.avgShare.toFixed(1)}%`} icon={<Activity className="text-emerald-500"/>} trend="Real-time" />
                       <MetricCard label="Insolvência" val={`${clusterMetrics.insolvencyRate.toFixed(0)}%`} icon={<ShieldAlert className="text-rose-500"/>} trend="Critical" />
@@ -158,7 +173,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                    <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
                 </motion.div>
               )}
-              {/* ... Resto do componente mantido ... */}
               {tutorView === 'planning' && (
                 <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="h-full">
                    {isCreatingTrial ? (
@@ -179,15 +193,15 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
               {tutorView === 'teams' && selectedArena && (
                 <motion.div key="teams" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="grid grid-cols-1 md:grid-cols-3 gap-8">
                    {selectedArena.teams?.map(t => (
-                      <div key={t.id} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 shadow-xl relative overflow-hidden group">
+                      <div key={t.id} className="p-10 bg-slate-900 border border-white/5 rounded-[4rem] space-y-6 shadow-xl relative overflow-hidden group">
                          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                          <div className="flex justify-between items-center relative z-10">
-                            <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-orange-500"><Shield size={20}/></div>
-                            <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase ${t.is_bot ? 'bg-indigo-600/20 text-indigo-400' : 'bg-emerald-600/20 text-emerald-400'}`}>
+                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-orange-500"><Shield size={32}/></div>
+                            <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase ${t.is_bot ? 'bg-indigo-600/20 text-indigo-400' : 'bg-emerald-600/20 text-emerald-400'}`}>
                                {t.is_bot ? 'Bot Node' : 'Human Operator'}
                             </span>
                          </div>
-                         <h4 className="text-2xl font-black text-white uppercase italic relative z-10">{t.name}</h4>
+                         <h4 className="text-3xl font-black text-white uppercase italic relative z-10">{t.name}</h4>
                       </div>
                    ))}
                 </motion.div>
@@ -307,21 +321,14 @@ const ArenaNavBtn = ({ active, onClick, label, icon, disabled }: { active: boole
   <button 
     disabled={disabled}
     onClick={onClick} 
-    className={`relative flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all italic active:scale-95 border-2 ${disabled ? 'opacity-30 grayscale cursor-not-allowed border-transparent text-slate-700' : active ? 'bg-orange-600 text-white border-orange-400 shadow-[0_0_40px_rgba(249,115,22,0.6)] scale-105 z-10' : 'text-slate-500 border-transparent hover:text-slate-200 hover:bg-white/5'}`}
+    className={`relative flex items-center gap-2.5 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all italic active:scale-95 border ${disabled ? 'opacity-30 cursor-not-allowed border-transparent text-slate-700' : active ? 'bg-orange-600 text-white border-orange-400 shadow-lg' : 'text-slate-500 border-transparent hover:text-slate-200'}`}
   >
-     {disabled ? <Lock size={12} /> : icon} {label}
-     {active && (
-       <motion.div 
-         layoutId="navPulse" 
-         className="absolute -inset-1 bg-orange-600/20 blur-xl rounded-2xl -z-10"
-         transition={{ type: "spring", bounce: 0.2, duration: 1 }}
-       />
-     )}
+     {disabled ? <Lock size={10} /> : icon} {label}
   </button>
 );
 
 const MetricCard = ({ label, val, icon, trend }: any) => (
-  <div className="bg-slate-900 p-8 rounded-[3rem] border border-white/5 shadow-2xl space-y-4">
+  <div className="bg-slate-900 p-8 rounded-[3.5rem] border border-white/5 shadow-2xl space-y-4">
      <div className="flex justify-between items-center">
         <div className="p-3 bg-white/5 rounded-xl">{icon}</div>
         <span className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">{trend}</span>
