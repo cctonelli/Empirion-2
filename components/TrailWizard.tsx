@@ -9,7 +9,7 @@ import {
   ArrowUpCircle, ArrowDownCircle, HardDrive, LayoutGrid,
   Zap, Flame, ShieldAlert, BarChart3, Coins, Hammer, Package,
   MapPin, Scale, Eye, EyeOff, ChevronLeft, ChevronRight, Truck, Warehouse, Megaphone,
-  BarChart, PieChart, Activity, Award, ClipboardList
+  BarChart, PieChart, Activity, Award, ClipboardList, ShoppingCart
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -298,14 +298,17 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
                  <WizardStepTitle icon={<Award size={32}/>} title="REGRAS E PREMIAÇÕES" desc="DEFINA VALORES BASE E PREMIAÇÕES POR PRECISÃO DE CÁLCULO." />
                  
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+                    {/* 1. INSUMOS E ESTOCAGEM */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Package size={18}/> Insumos & Estocagem</h4>
                        <WizardField label="MP-A ($)" type="number" val={baseIndicators.prices.mp_a} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_a: parseFloat(v)}})} />
                        <WizardField label="MP-B ($)" type="number" val={baseIndicators.prices.mp_b} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_b: parseFloat(v)}})} />
-                       <WizardField label="Distribuição Unit. ($)" type="number" val={baseIndicators.prices.distribution_unit} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, distribution_unit: parseFloat(v)}})} />
+                       <WizardField label="Estocagem MP ($)" type="number" step="0.1" val={baseIndicators.prices.storage_mp} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_mp: parseFloat(v)}})} />
+                       <WizardField label="Estocagem PROD ($)" type="number" val={baseIndicators.prices.storage_finished} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_finished: parseFloat(v)}})} />
                     </div>
 
+                    {/* 2. ATIVOS & CAPEX */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Cpu size={18}/> Ativos & CAPEX</h4>
                        <WizardField label="Máquina ALFA ($)" type="number" val={baseIndicators.machinery_values.alfa} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, alfa: parseFloat(v)}})} />
@@ -313,8 +316,37 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="Máquina GAMA ($)" type="number" val={baseIndicators.machinery_values.gama} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, gama: parseFloat(v)}})} />
                     </div>
 
+                    {/* 3. MERCADO P00 */}
+                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Truck size={18}/> Mercado P00</h4>
+                       <WizardField label="Preço Venda Médio ($)" type="number" val={baseIndicators.avg_selling_price} onChange={(v:any)=>setBaseIndicators({...baseIndicators, avg_selling_price: parseFloat(v)})} />
+                       <WizardField label="Distribuição Unit. ($)" type="number" val={baseIndicators.prices.distribution_unit} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, distribution_unit: parseFloat(v)}})} />
+                       <WizardField label="Base Campanha MKT ($)" type="number" val={baseIndicators.prices.marketing_campaign} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
+                    </div>
+
+                    {/* 4. STAFFING P00 */}
+                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Users size={18}/> Staffing P00</h4>
+                       <WizardField label="Salário Base P00 ($)" type="number" val={baseIndicators.hr_base.salary} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
+                       <div className="pt-4 space-y-3">
+                          <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-500">
+                             <span>Administração</span>
+                             <span className="text-white">{baseIndicators.staffing.admin.count} Units</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-500">
+                             <span>Vendas</span>
+                             <span className="text-white">{baseIndicators.staffing.sales.count} Units</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-500">
+                             <span>Produção</span>
+                             <span className="text-white">{baseIndicators.staffing.production.count} Units</span>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* 5. PREMIAÇÕES */}
                     <div className="space-y-6 bg-orange-600/10 p-8 rounded-[3rem] border border-orange-500/20 shadow-2xl">
-                       <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Award size={18}/> Premiações (Vence o mais próximo)</h4>
+                       <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Award size={18}/> Premiações</h4>
                        <WizardField label="Prêmio: Custo Unitário ($)" type="number" val={baseIndicators.award_values.cost_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, cost_precision: parseFloat(v)}})} />
                        <WizardField label="Prêmio: Faturamento ($)" type="number" val={baseIndicators.award_values.revenue_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, revenue_precision: parseFloat(v)}})} />
                        <WizardField label="Prêmio: Lucro Líquido ($)" type="number" val={baseIndicators.award_values.profit_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, profit_precision: parseFloat(v)}})} />
@@ -529,11 +561,12 @@ const WizardStepTitle = ({ icon, title, desc }: any) => (
   </div>
 );
 
-const WizardField = ({ label, val, onChange, type = 'text', placeholder }: any) => (
+const WizardField = ({ label, val, onChange, type = 'text', placeholder, step = "1" }: any) => (
   <div className="space-y-3 text-left group">
      <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.4em] ml-2 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
      <input 
         type={type} 
+        step={step}
         value={val} 
         onChange={e => onChange(e.target.value)} 
         className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-8 py-5 text-lg font-bold text-white outline-none focus:border-orange-600 transition-all shadow-[inset_0_5px_15px_rgba(0,0,0,0.4)] placeholder:text-slate-800 font-mono" 
