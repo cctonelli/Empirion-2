@@ -90,6 +90,7 @@ export interface MacroIndicators {
   interest_rate_tr: number;
   supplier_interest: number;
   sales_interest_rate: number;
+  avg_selling_price: number; // Novo: Preço Médio de Venda
   tax_rate_ir: number;
   late_penalty_rate: number;
   machine_sale_discount: number;
@@ -181,7 +182,11 @@ export interface Championship {
   market_indicators: MacroIndicators; 
   round_rules?: Record<number, Partial<MacroIndicators>>; 
   kpis?: KPIs; 
-  initial_financials: any; 
+  initial_financials: {
+    balance_sheet: AccountNode[];
+    dre: AccountNode[];
+    cash_flow?: AccountNode[]; // Novo: Aba Fluxo de Caixa
+  }; 
   initial_share_price: number;
   created_at: string; 
   sales_mode: SalesMode; 

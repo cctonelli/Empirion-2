@@ -1,15 +1,17 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, Trash2, ChevronDown, Calculator, 
   CheckCircle2, AlertTriangle, Boxes, X, 
-  TrendingUp, Landmark, ShieldCheck
+  TrendingUp, Landmark, ShieldCheck, Zap, Activity
 } from 'lucide-react';
 import { AccountNode } from '../types';
 
 interface FinancialStructureEditorProps {
-  onChange?: (data: { balance_sheet: AccountNode[], dre: AccountNode[] }) => void;
+  onChange?: (data: { balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }) => void;
   initialBalance?: AccountNode[];
   initialDRE?: AccountNode[];
+  initialCashFlow?: AccountNode[];
 }
 
 const formatInt = (val: number): string => {
@@ -18,18 +20,27 @@ const formatInt = (val: number): string => {
   return val < 0 ? `-${formatted}` : formatted;
 };
 
-const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onChange, initialBalance = [], initialDRE = [] }) => {
-  const [activeTab, setActiveTab] = useState<'balance' | 'dre'>('balance');
+const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onChange, initialBalance = [], initialDRE = [], initialCashFlow = [] }) => {
+  const [activeTab, setActiveTab] = useState<'balance' | 'dre' | 'cashflow'>('balance');
   const [balanceNodes, setBalanceNodes] = useState<AccountNode[]>(Array.isArray(initialBalance) ? initialBalance : []);
   const [dreNodes, setDRENodes] = useState<AccountNode[]>(Array.isArray(initialDRE) ? initialDRE : []);
+  const [cashFlowNodes, setCashFlowNodes] = useState<AccountNode[]>(Array.isArray(initialCashFlow) ? initialCashFlow : []);
 
-  const calculateTotalsRecursive = useCallback((list: AccountNode[], tabType: 'balance' | 'dre'): AccountNode[] => {
+  const calculateTotalsRecursive = useCallback((list: AccountNode[], tabType: 'balance' | 'dre' | 'cashflow'): AccountNode[] => {
     if (!Array.isArray(list)) return [];
     return list.map(node => {
+      // Regra especial para Saldo Final de Caixa
+      if (tabType === 'cashflow' && node.id === 'cf.final') {
+        const start = list.find(n => n.id === 'cf.start')?.value || 0;
+        const inflow = list.find(n => n.id === 'cf.inflow')?.value || 0;
+        const outflow = list.find(n => n.id === 'cf.outflow')?.value || 0;
+        return { ...node, value: start + inflow + outflow };
+      }
+
       if (node.children && node.children.length > 0) {
         const updatedChildren = calculateTotalsRecursive(node.children, tabType);
         const total = updatedChildren.reduce((sum, child) => {
-          if (tabType === 'dre') {
+          if (tabType === 'dre' || tabType === 'cashflow') {
             return child.type === 'expense' ? sum - Math.abs(child.value) : sum + child.value;
           }
           return sum + child.value;
@@ -42,7 +53,8 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
 
   useEffect(() => {
     if (activeTab === 'balance') setBalanceNodes(prev => calculateTotalsRecursive(prev, 'balance'));
-    else setDRENodes(prev => calculateTotalsRecursive(prev, 'dre'));
+    else if (activeTab === 'dre') setDRENodes(prev => calculateTotalsRecursive(prev, 'dre'));
+    else setCashFlowNodes(prev => calculateTotalsRecursive(prev, 'cashflow'));
   }, [activeTab, calculateTotalsRecursive]);
 
   const updateNode = (id: string, updates: Partial<AccountNode>) => {
@@ -59,12 +71,17 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
       const edited = edit(balanceNodes);
       const updated = calculateTotalsRecursive(edited, 'balance');
       setBalanceNodes(updated);
-      onChange?.({ balance_sheet: updated, dre: dreNodes });
-    } else {
+      onChange?.({ balance_sheet: updated, dre: dreNodes, cash_flow: cashFlowNodes });
+    } else if (activeTab === 'dre') {
       const edited = edit(dreNodes);
       const updated = calculateTotalsRecursive(edited, 'dre');
       setDRENodes(updated);
-      onChange?.({ balance_sheet: balanceNodes, dre: updated });
+      onChange?.({ balance_sheet: balanceNodes, dre: updated, cash_flow: cashFlowNodes });
+    } else {
+      const edited = edit(cashFlowNodes);
+      const updated = calculateTotalsRecursive(edited, 'cashflow');
+      setCashFlowNodes(updated);
+      onChange?.({ balance_sheet: balanceNodes, dre: dreNodes, cash_flow: updated });
     }
   };
 
@@ -78,7 +95,9 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
             id: newId,
             label: 'Nova Subconta',
             value: 0,
-            type: activeTab === 'balance' ? n.type : (parentId.includes('exp') ? 'expense' : 'revenue'),
+            type: (activeTab === 'dre' || activeTab === 'cashflow') 
+              ? (parentId.includes('exp') || parentId.includes('out') ? 'expense' : 'revenue')
+              : n.type,
             isEditable: true,
             isTemplateAccount: false 
           };
@@ -89,7 +108,8 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
       });
     };
     if (activeTab === 'balance') setBalanceNodes(calculateTotalsRecursive(add(balanceNodes), 'balance'));
-    else setDRENodes(calculateTotalsRecursive(add(dreNodes), 'dre'));
+    else if (activeTab === 'dre') setDRENodes(calculateTotalsRecursive(add(dreNodes), 'dre'));
+    else setCashFlowNodes(calculateTotalsRecursive(add(cashFlowNodes), 'cashflow'));
   };
 
   const removeNode = (id: string) => {
@@ -101,21 +121,25 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
       }));
     };
     if (activeTab === 'balance') setBalanceNodes(calculateTotalsRecursive(remove(balanceNodes), 'balance'));
-    else setDRENodes(calculateTotalsRecursive(remove(dreNodes), 'dre'));
+    else if (activeTab === 'dre') setDRENodes(calculateTotalsRecursive(remove(dreNodes), 'dre'));
+    else setCashFlowNodes(calculateTotalsRecursive(remove(cashFlowNodes), 'cashflow'));
   };
 
-  const nodes = activeTab === 'balance' ? balanceNodes : dreNodes;
+  const nodes = activeTab === 'balance' ? balanceNodes : activeTab === 'dre' ? dreNodes : cashFlowNodes;
   const assetsNode = Array.isArray(balanceNodes) ? balanceNodes.find(n => n.id === 'assets' || n.label.includes('ATIVO')) : null;
   const assets = assetsNode?.value || 0;
-  const liabPLNode = Array.isArray(balanceNodes) ? balanceNodes.find(n => n.id === 'liabilities' || n.label.includes('PASSIVO')) : null;
+  const liabPLNode = Array.isArray(balanceNodes) ? balanceNodes.find(n => n.id === 'liabilities_pl' || n.label.includes('PASSIVO')) : null;
   const liabPL = liabPLNode?.value || 0;
   const isBalanced = Math.abs(assets - liabPL) < 1; 
+
+  const netProfit = dreNodes.find(n => n.id === 'final_profit')?.value || 0;
+  const finalCash = cashFlowNodes.find(n => n.id === 'cf.final')?.value || 0;
 
   return (
     <div className="space-y-10">
       {/* HEADER LOCAL - TABS E STATUS */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-        <div className="flex gap-2 p-1.5 bg-slate-950 rounded-[1.75rem] w-fit border border-white/5 shadow-inner">
+        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-950 rounded-[1.75rem] w-fit border border-white/5 shadow-inner">
           <button 
             onClick={() => setActiveTab('balance')} 
             className={`px-8 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'balance' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
@@ -128,14 +152,21 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
           >
             <TrendingUp size={14} /> DRE Tático
           </button>
+          <button 
+            onClick={() => setActiveTab('cashflow')} 
+            className={`px-8 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'cashflow' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            <Activity size={14} /> Fluxo de Caixa
+          </button>
         </div>
         
         <div className="flex flex-wrap gap-4 items-center">
-           <StatusBox label="Vulnerabilidade Ativa" val={assets} color="orange" />
+           <StatusBox label="Vulnerabilidade (Ativo)" val={assets} color="orange" />
+           <StatusBox label="Resultado Líquido" val={netProfit} color="blue" />
            <div className={`px-6 py-4 rounded-2xl border flex items-center gap-3 transition-all duration-700 ${isBalanced ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400 animate-pulse'}`}>
               {isBalanced ? <ShieldCheck size={20}/> : <AlertTriangle size={20}/>}
               <span className="text-[9px] font-black uppercase italic tracking-[0.2em]">
-                {isBalanced ? 'Audit Passed' : `Divergência: $ ${formatInt(assets - liabPL)}`}
+                {isBalanced ? 'Audit Balanced' : `Divergência: $ ${formatInt(assets - liabPL)}`}
               </span>
            </div>
         </div>
@@ -151,10 +182,11 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
               onUpdate={updateNode} 
               onAdd={addSubNode} 
               onRemove={removeNode}
+              tabType={activeTab}
             />
           )) : (
             <div className="py-32 text-center bg-slate-900/40 rounded-[3.5rem] border border-dashed border-white/5 text-slate-500 uppercase font-black text-[10px] tracking-[0.5em]">
-              Handshaking with Oracle Master Core...
+              Sincronizando Módulos Oracle Master...
             </div>
           )}
         </div>
@@ -169,7 +201,8 @@ const TreeNode: React.FC<{
   onAdd: (id: string) => void;
   onRemove: (id: string) => void;
   level?: number;
-}> = ({ node, onUpdate, onAdd, onRemove, level = 0 }) => {
+  tabType: string;
+}> = ({ node, onUpdate, onAdd, onRemove, level = 0, tabType }) => {
   const [isOpen, setIsOpen] = useState(true);
   const isParent = Array.isArray(node.children) && node.children.length > 0;
   const canAdd = !node.isReadOnly && (node.type === 'totalizer');
@@ -190,7 +223,7 @@ const TreeNode: React.FC<{
            <div className="flex-1 flex items-center gap-3">
               <input 
                 readOnly={node.isReadOnly || !node.isEditable}
-                className={`bg-transparent outline-none font-black text-sm flex-1 transition-colors ${isParent ? 'text-orange-500 uppercase italic tracking-tight' : 'text-slate-300'}`} 
+                className={`bg-transparent outline-none font-black text-sm flex-1 transition-colors ${isParent ? (tabType === 'dre' ? 'text-blue-400' : tabType === 'cashflow' ? 'text-emerald-400' : 'text-orange-500') + ' uppercase italic tracking-tight' : 'text-slate-300'}`} 
                 value={node.label} 
                 onChange={e => onUpdate(node.id, { label: e.target.value })} 
               />
@@ -199,7 +232,7 @@ const TreeNode: React.FC<{
 
            <div className={`flex items-center gap-4 bg-slate-950 px-6 py-2.5 rounded-xl border border-white/5 shadow-inner transition-all group-hover:border-orange-500/30`}>
              <span className={`text-[10px] font-black ${isNegative ? 'text-rose-500' : 'text-slate-700'}`}>{isNegative ? '(-)' : '$'}</span>
-             {isParent ? (
+             {(isParent || node.isReadOnly) ? (
                <span className={`font-mono font-black text-sm ${isNegative ? 'text-rose-400' : 'text-white'} italic`}>{formatInt(node.value)}</span>
              ) : (
                <input 
@@ -233,7 +266,7 @@ const TreeNode: React.FC<{
         <div className="space-y-3 relative">
           <div className="absolute left-[24px] top-0 bottom-0 w-px bg-white/5" />
           {node.children!.map(child => (
-            <TreeNode key={child.id} node={child} onUpdate={onUpdate} onAdd={onAdd} onRemove={onRemove} level={level + 1} />
+            <TreeNode key={child.id} node={child} onUpdate={onUpdate} onAdd={onAdd} onRemove={onRemove} level={level + 1} tabType={tabType} />
           ))}
         </div>
       )}

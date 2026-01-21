@@ -1,8 +1,8 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine } from './types';
 
-export const APP_VERSION = "v14.0.0-Oracle-Master";
-export const BUILD_DATE = "09/01/2026";
+export const APP_VERSION = "v14.2.0-Oracle-Master";
+export const BUILD_DATE = "10/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
@@ -10,7 +10,7 @@ export const DEFAULT_TOTAL_SHARES = 5000000;
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
     assets: { 
-      current: { cash: 0, receivables: 1823735, inventory_mpa: 628545, inventory_mpb: 838060 }, 
+      current: { cash: 170000, receivables: 1823735, inventory_mpa: 628545, inventory_mpb: 838060 }, 
       total: 9176940 
     },
     equity: { 
@@ -41,11 +41,9 @@ export const INITIAL_FINANCIAL_TREE = {
       id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Caixa', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
-            { id: 'assets.current.banks', label: 'Bancos', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
-            { id: 'assets.current.apps', label: 'Aplicação', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
-            { id: 'assets.current.clients', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true, isTemplateAccount: true },
-            { id: 'assets.current.stock', label: 'ESTOQUE', value: 1466605, type: 'totalizer', children: [
+            { id: 'assets.current.cash', label: 'Caixa e Bancos', value: 170000, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.clients', label: 'Clientes (Contas a Receber)', value: 1823735, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.stock', label: 'ESTOQUES', value: 1466605, type: 'totalizer', children: [
                 { id: 'assets.current.stock.finished', label: 'Estoque Prod. Acabado ALPHA', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
                 { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 628545, type: 'asset', isEditable: true, isTemplateAccount: true },
                 { id: 'assets.current.stock.mpb', label: 'Estoque MP B', value: 838060, type: 'asset', isEditable: true, isTemplateAccount: true }
@@ -54,15 +52,12 @@ export const INITIAL_FINANCIAL_TREE = {
         },
         {
           id: 'assets.noncurrent', label: 'ATIVO NÃO CIRCULANTE', value: 5886600, type: 'totalizer', children: [
-            { id: 'assets.noncurrent.longterm', label: 'REALIZÁVEL À LONGO PRAZO', value: 0, type: 'totalizer', children: [
-                { id: 'assets.noncurrent.longterm.sale', label: 'Venda de ativo imobilizado', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true }
-            ]},
             { id: 'assets.noncurrent.fixed', label: 'IMOBILIZADO', value: 5886600, type: 'totalizer', children: [
                 { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true, isTemplateAccount: true },
-                { id: 'assets.noncurrent.fixed.dep_machines', label: '(-) Depreciação acumulada de equipamentos', value: -811500, type: 'asset', isEditable: true, isTemplateAccount: true },
+                { id: 'assets.noncurrent.fixed.dep_machines', label: '(-) Depreciação acumulada equipamentos', value: -811500, type: 'asset', isEditable: true, isTemplateAccount: true },
                 { id: 'assets.noncurrent.fixed.land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true, isTemplateAccount: true },
                 { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true, isTemplateAccount: true },
-                { id: 'assets.noncurrent.fixed.dep_buildings', label: '(-) Depreciação acumulada de prédios e instalações', value: -2301900, type: 'asset', isEditable: true, isTemplateAccount: true }
+                { id: 'assets.noncurrent.fixed.dep_buildings', label: '(-) Depreciação acumulada prédios', value: -2301900, type: 'asset', isEditable: true, isTemplateAccount: true }
             ]}
           ]
         }
@@ -74,20 +69,19 @@ export const INITIAL_FINANCIAL_TREE = {
           id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2621493, type: 'totalizer', children: [
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true, isTemplateAccount: true },
             { id: 'liabilities.current.taxes', label: 'Imposto de Renda a pagar', value: 13045, type: 'liability', isEditable: true, isTemplateAccount: true },
-            { id: 'liabilities.current.sharing', label: 'Participações a pagar', value: 0, type: 'liability', isEditable: true, isTemplateAccount: true },
             { id: 'liabilities.current.divs', label: 'Dividendos a pagar', value: 18481, type: 'liability', isEditable: true, isTemplateAccount: true },
-            { id: 'liabilities.current.loans_st', label: 'Empréstimos de curto prazo', value: 1872362, type: 'liability', isEditable: true, isTemplateAccount: true }
+            { id: 'liabilities.current.loans_st', label: 'Empréstimos curto prazo', value: 1872362, type: 'liability', isEditable: true, isTemplateAccount: true }
           ] 
         },
         {
           id: 'liabilities.longterm', label: 'PASSIVO NÃO CIRCULANTE', value: 1500000, type: 'totalizer', children: [
-            { id: 'liabilities.longterm.loans_lt', label: 'Empréstimos de longo prazo', value: 1500000, type: 'liability', isEditable: true, isTemplateAccount: true }
+            { id: 'liabilities.longterm.loans_lt', label: 'Empréstimos longo prazo', value: 1500000, type: 'liability', isEditable: true, isTemplateAccount: true }
           ]
         },
         { 
           id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 5055447, type: 'totalizer', children: [
             { id: 'equity.capital', label: 'Capital Social', value: 5000000, type: 'equity', isEditable: true, isTemplateAccount: true },
-            { id: 'equity.profit', label: 'Lucros Acumulados no ano', value: 55447, type: 'equity', isEditable: true, isTemplateAccount: true }
+            { id: 'equity.profit', label: 'Lucros Acumulados', value: 55447, type: 'equity', isEditable: true, isTemplateAccount: true }
           ] 
         }
       ]
@@ -95,24 +89,37 @@ export const INITIAL_FINANCIAL_TREE = {
   ],
   dre: [
     { id: 'rev', label: 'RECEITA DE VENDAS', value: 3322735, type: 'revenue', isEditable: true, isTemplateAccount: true },
-    { id: 'cpv', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: -2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
+    { id: 'cpv', label: '( - ) CPV (CUSTO PROD. VENDIDO)', value: -2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
     { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
-        { id: 'opex.sales', label: 'VENDAS', value: 802702, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true, isTemplateAccount: true }
-    ]},
-    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true, children: [] },
-    { id: 'fin_rev_group', label: '( + ) RECEITAS FINANCEIRAS', value: 0, type: 'totalizer', children: [
-        { id: 'fin_rev.yields', label: 'RENDIMENTOS DE APLICAÇÕES FINANCEIRAS', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true }
+        { id: 'opex.sales', label: 'Marketing e Vendas', value: 275400, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'opex.distribution', label: 'Distribuição', value: 463362, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'opex.adm', label: 'Folha Pagamento & Admin', value: 114880, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'opex.storage', label: 'Gastos Estocagem', value: 70700, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
     { id: 'fin_exp_group', label: '( - ) DESPESAS FINANCEIRAS', value: -40000, type: 'totalizer', children: [
-        { id: 'fin_exp.liquid', label: 'FINANCEIRAS LÍQUIDAS', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
+        { id: 'fin_exp.liquid', label: 'Juros Bancários', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
-    { id: 'lair', label: '(=) LAIR - LUCRO LÍQUIDO ANTES DO IR', value: 86973, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'tax_prov', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true, isTemplateAccount: true },
-    { id: 'net_profit_after_tax', label: '(=) LUCRO LÍQUIDO APÓS O I. R.', value: 73928, type: 'totalizer', isReadOnly: true, children: [] },
-    { id: 'ppr', label: '( - ) PPR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
     { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true, children: [] }
+  ],
+  cash_flow: [
+    { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true, isTemplateAccount: true },
+    { id: 'cf.inflow', label: '(+) ENTRADAS TOTAIS', value: 3264862, type: 'totalizer', children: [
+        { id: 'cf.inflow.cash_sales', label: 'Vendas à Vista', value: 1649000, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.receivables', label: 'Recebimento de Clientes', value: 243500, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.loans', label: 'Empréstimo Compulsório', value: 1372362, type: 'revenue', isEditable: true, isTemplateAccount: true }
+    ]},
+    { id: 'cf.outflow', label: '(-) SAÍDAS TOTAIS', value: -3434862, type: 'totalizer', children: [
+        { id: 'cf.outflow.payroll', label: 'Folha de Pagamento', value: 767000, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.mkt', label: 'Campanhas Marketing', value: 275400, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.distribution', label: 'Distribuição Produtos', value: 463362, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.storage', label: 'Gastos Estocagem', value: 70700, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.suppliers', label: 'Pagamento Fornecedores', value: 1677000, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.maintenance', label: 'Manutenção Máquinas', value: 141400, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.interest', label: 'Juros Bancários', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
+    ]},
+    { id: 'cf.final', label: '(=) SALDO FINAL DO PERÍODO', value: 0, type: 'totalizer', isReadOnly: true, children: [] }
   ]
 };
 
@@ -129,6 +136,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   interest_rate_tr: 2.0,
   supplier_interest: 1.5,
   sales_interest_rate: 0.75, 
+  avg_selling_price: 340.0, // Novo: Padrão v14.2
   tax_rate_ir: 15.0,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
@@ -175,13 +183,13 @@ export const DEFAULT_MACRO: MacroIndicators = {
     sales: { count: 20, salaries: 4 },
     production: { count: 470, salaries: 1 }
   },
-  hr_base: { salary: 1313.00, training: 0, profit_sharing: 0, misc: 0 }
+  hr_base: { salary: 1300.00, training: 0, profit_sharing: 0, misc: 0 } // Ajustado 1313 -> 1300
 };
 
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
   0: { 
     ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, supplier_interest: 1.5, sales_interest_rate: 1.5, allow_machine_sale: false,
-    raw_material_a_adjust: 0, machine_alpha_price_adjust: 0, machine_beta_price_adjust: 0, machine_gamma_price_adjust: 0, marketing_campaign_adjust: 0, distribution_cost_adjust: 0, storage_cost_adjust: 0
+    avg_selling_price: 340, raw_material_a_adjust: 0, machine_alpha_price_adjust: 0, machine_beta_price_adjust: 0, machine_gamma_price_adjust: 0, marketing_campaign_adjust: 0, distribution_cost_adjust: 0, storage_cost_adjust: 0
   },
   1: { 
     ice: 4.0, demand_variation: 6.7, inflation_rate: 2.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 2.0, sales_interest_rate: 2.4, allow_machine_sale: false,
@@ -193,9 +201,6 @@ export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicato
   }
 };
 
-/**
- * Fix: Added MENU_STRUCTURE export to satisfy component requirements.
- */
 export const MENU_STRUCTURE = [
   { label: 'Início', path: '/' },
   { 
@@ -225,9 +230,6 @@ export const MENU_STRUCTURE = [
   { label: 'Contato', path: '/contact' },
 ];
 
-/**
- * Fix: Added DEFAULT_PAGE_CONTENT export to satisfy landing and solution pages.
- */
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   landing: {
     hero: { title: "Forje Seu Império com Insight Estratégico IA", subtitle: "A arena definitiva onde inteligência neural e estratégia empresarial colidem." }
@@ -331,9 +333,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   }
 };
 
-/**
- * Fix: Added getPageContent helper to fix errors in ActivityDetail.
- */
 export const getPageContent = (slug: string) => {
   return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || null;
 };

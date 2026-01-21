@@ -8,7 +8,8 @@ import {
   Settings2, X, Bot, Boxes, TrendingUp, Percent,
   ArrowUpCircle, ArrowDownCircle, HardDrive, LayoutGrid,
   Zap, Flame, ShieldAlert, BarChart3, Coins, Hammer, Package,
-  MapPin, Scale, Eye, EyeOff, ChevronLeft, ChevronRight, Truck, Warehouse, Megaphone
+  MapPin, Scale, Eye, EyeOff, ChevronLeft, ChevronRight, Truck, Warehouse, Megaphone,
+  BarChart, PieChart, Activity
 } from 'lucide-react';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
@@ -97,7 +98,11 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     })));
   };
 
-  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
+  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } | null>({
+    balance_sheet: INITIAL_FINANCIAL_TREE.balance_sheet,
+    dre: INITIAL_FINANCIAL_TREE.dre,
+    cash_flow: INITIAL_FINANCIAL_TREE.cash_flow
+  });
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -158,8 +163,14 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const totalWeight = regionConfigs.reduce((acc, r) => acc + r.demand_weight, 0);
   const totalPeriods = formData.totalRounds + 1;
 
+  // Resumo de Ativo Total para o Card Financeiro
+  const totalAssetsSummary = financials?.balance_sheet.find(n => n.id === 'assets')?.value || 0;
+  const totalProfitSummary = financials?.dre.find(n => n.id === 'final_profit')?.value || 0;
+  const totalEquitySummary = financials?.balance_sheet.find(n => n.id === 'liabilities_pl')?.children?.find(n => n.id === 'equity')?.value || 5055447;
+
   return (
     <div className="wizard-shell">
+      <EmpireParticles />
       <div ref={scrollRef} className="wizard-content">
         <div className="max-w-full">
           <AnimatePresence mode="wait">
@@ -299,23 +310,18 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="Máquina ALFA ($)" type="number" val={baseIndicators.machinery_values.alfa} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, alfa: parseFloat(v)}})} />
                        <WizardField label="Máquina BETA ($)" type="number" val={baseIndicators.machinery_values.beta} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, beta: parseFloat(v)}})} />
                        <WizardField label="Máquina GAMA ($)" type="number" val={baseIndicators.machinery_values.gama} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, gama: parseFloat(v)}})} />
-                       <div className="p-4 bg-white/5 rounded-2xl">
-                          <p className="text-[8px] text-slate-500 font-bold uppercase italic">Depreciação Prédios: R$ 54.400/Round (1%)</p>
-                       </div>
                     </div>
 
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Truck size={18}/> Logística & MKT</h4>
+                       <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Truck size={18}/> Mercado P00</h4>
+                       <WizardField label="PREÇO VENDA MÉDIO ($)" type="number" val={baseIndicators.avg_selling_price} onChange={(v:any)=>setBaseIndicators({...baseIndicators, avg_selling_price: parseFloat(v)})} />
                        <WizardField label="Distribuição Unit. ($)" type="number" val={baseIndicators.prices.distribution_unit} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, distribution_unit: parseFloat(v)}})} />
                        <WizardField label="Base Campanha MKT ($)" type="number" val={baseIndicators.prices.marketing_campaign} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
-                       <div className="p-4 bg-orange-600/5 rounded-2xl border border-orange-500/10">
-                          <p className="text-[9px] text-orange-400 font-black uppercase italic leading-tight">MKT reflete no Round 01 via DRE Operacional.</p>
-                       </div>
                     </div>
 
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Users size={18}/> Staffing P00</h4>
-                       <WizardField label="Salário Base ($)" type="number" val={baseIndicators.hr_base.salary} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
+                       <WizardField label="SALÁRIO BASE P00 ($)" type="number" val={baseIndicators.hr_base.salary} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
                        <div className="grid grid-cols-1 gap-3">
                           <StaffRow label="Administração" count={baseIndicators.staffing.admin.count} />
                           <StaffRow label="Vendas" count={baseIndicators.staffing.sales.count} />
@@ -385,11 +391,19 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 6 && (
               <motion.div key="s6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                 <WizardStepTitle icon={<Calculator size={32}/>} title="ORACLE BASELINE" desc="EDITE OS BALANÇOS E DRES INICIAIS PARA O ROUND ZERO." />
+                 <WizardStepTitle icon={<Calculator size={32}/>} title="ORACLE BASELINE" desc="EDITE OS BALANÇOS, DRES E FLUXO DE CAIXA INICIAIS PARA O ROUND ZERO." />
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <SummaryCard label="ATIVO TOTAL P00" val={totalAssetsSummary} icon={<PieChart size={20}/>} color="orange" />
+                    <SummaryCard label="PATRIMÔNIO LÍQUIDO P00" val={totalEquitySummary} icon={<BarChart size={20}/>} color="blue" />
+                    <SummaryCard label="RESULTADO LÍQUIDO P00" val={totalProfitSummary} icon={<Activity size={20}/>} color="emerald" />
+                 </div>
+
                  <div className="bg-slate-950/90 p-4 rounded-[4rem] border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden">
                     <FinancialStructureEditor 
                        initialBalance={financials?.balance_sheet} 
                        initialDRE={financials?.dre} 
+                       initialCashFlow={financials?.cash_flow}
                        onChange={setFinancials} 
                     />
                  </div>
@@ -451,6 +465,18 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     </div>
   );
 };
+
+const SummaryCard = ({ label, val, icon, color }: any) => (
+  <div className="bg-slate-900/80 p-6 rounded-3xl border border-white/5 flex items-center gap-6 shadow-xl">
+     <div className={`p-4 rounded-2xl ${color === 'orange' ? 'bg-orange-600/20 text-orange-500' : color === 'blue' ? 'bg-blue-600/20 text-blue-500' : 'bg-emerald-600/20 text-emerald-500'}`}>
+        {icon}
+     </div>
+     <div>
+        <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+        <span className="text-2xl font-black text-white font-mono italic">$ {val.toLocaleString()}</span>
+     </div>
+  </div>
+);
 
 const StaffRow = ({ label, count }: any) => (
    <div className="flex justify-between items-center px-4 py-2 bg-slate-950/50 rounded-xl border border-white/5">
