@@ -88,14 +88,14 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
            {activeTab === 'conjuncture' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                  <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <ParamCard label="ICE (Confiança)" val={macro.ice} suffix="%" onChange={v => setMacro({...macro, ice: v})} icon={<Target className="text-blue-400" />} />
-                    <ParamCard label="Inflação" val={macro.inflation_rate} suffix="%" onChange={v => setMacro({...macro, inflation_rate: v})} icon={<Flame className="text-orange-500" />} />
-                    <ParamCard label="Taxa TR" val={macro.interest_rate_tr} suffix="%" onChange={v => setMacro({...macro, interest_rate_tr: v})} icon={<Landmark className="text-emerald-500" />} />
-                    <ParamCard label="Inadimplência" val={macro.customer_default_rate} suffix="%" onChange={v => setMacro({...macro, customer_default_rate: v})} icon={<ShieldAlert className="text-rose-500" />} />
+                    <ParamCard label="ICE (Confiança)" val={macro.ice} suffix="%" onChange={(v: number) => setMacro({...macro, ice: v})} icon={<Target className="text-blue-400" />} />
+                    <ParamCard label="Inflação" val={macro.inflation_rate} suffix="%" onChange={(v: number) => setMacro({...macro, inflation_rate: v})} icon={<Flame className="text-orange-500" />} />
+                    <ParamCard label="Taxa TR" val={macro.interest_rate_tr} suffix="%" onChange={(v: number) => setMacro({...macro, interest_rate_tr: v})} icon={<Landmark className="text-emerald-500" />} />
+                    <ParamCard label="Inadimplência" val={macro.customer_default_rate} suffix="%" onChange={(v: number) => setMacro({...macro, customer_default_rate: v})} icon={<ShieldAlert className="text-rose-500" />} />
                  </div>
                  <div className="lg:col-span-4 bg-slate-900/50 p-10 rounded-[4rem] border border-white/10 shadow-2xl">
                     <h3 className="text-xl font-black text-white uppercase italic mb-8 flex items-center gap-3"><Users size={20} className="text-indigo-400"/> Sensibilidade Humana</h3>
-                    <MacroInput dark label="Produtividade Média" val={macro.labor_productivity} onChange={v => setMacro({...macro, labor_productivity: v})} />
+                    <MacroInput dark label="Produtividade Média" val={macro.labor_productivity} onChange={(v: number) => setMacro({...macro, labor_productivity: v})} />
                     <div className="mt-8 space-y-4">
                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">Disponibilidade</label>
                        <div className="grid grid-cols-3 gap-2">
@@ -113,11 +113,11 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  <div className="lg:col-span-4 space-y-8">
                     <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-10">
                        <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Package className="text-orange-500"/> Insumos & Estocagem</h3>
-                       <MacroInput label="MP-A Base ($)" val={macro.prices.mp_a} onChange={v => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
-                       <MacroInput label="MP-B Base ($)" val={macro.prices.mp_b} onChange={v => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
+                       <MacroInput label="MP-A Base ($)" val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
+                       <MacroInput label="MP-B Base ($)" val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
                        <div className="grid grid-cols-2 gap-4">
-                          <MacroInput label="Estocagem MP ($)" val={macro.prices.storage_mp || 1.40} onChange={v => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
-                          <MacroInput label="Estocagem PROD ($)" val={macro.prices.storage_finished || 20.00} onChange={v => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
+                          <MacroInput label="Estocagem MP ($)" val={macro.prices.storage_mp || 1.40} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
+                          <MacroInput label="Estocagem PROD ($)" val={macro.prices.storage_finished || 20.00} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
                        </div>
                     </div>
                  </div>
@@ -129,9 +129,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                        </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                       <MacroInput label="Preço ALFA" val={macro.machinery_values.alfa} dark onChange={v => setMacro({...macro, machinery_values: {...macro.machinery_values, alfa: v}})} />
-                       <MacroInput label="Preço BETA" val={macro.machinery_values.beta} dark onChange={v => setMacro({...macro, machinery_values: {...macro.machinery_values, beta: v}})} />
-                       <MacroInput label="Preço GAMA" val={macro.machinery_values.gama} dark onChange={v => setMacro({...macro, machinery_values: {...macro.machinery_values, gama: v}})} />
+                       <MacroInput label="Preço ALFA" val={macro.machinery_values.alfa} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, alfa: v}})} />
+                       <MacroInput label="Preço BETA" val={macro.machinery_values.beta} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, beta: v}})} />
+                       <MacroInput label="Preço GAMA" val={macro.machinery_values.gama} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, gama: v}})} />
                     </div>
                  </div>
               </div>
@@ -141,9 +141,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
               <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
                  <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><ShoppingCart className="text-orange-500"/> Mercado P00</h3>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    <MacroInput label="Preço Venda Médio ($)" val={macro.avg_selling_price || 340} onChange={v => setMacro({...macro, avg_selling_price: v})} />
-                    <MacroInput label="Distribuição Unit. ($)" val={macro.prices.distribution_unit || 50} onChange={v => setMacro({...macro, prices: {...macro.prices, distribution_unit: v}})} />
-                    <MacroInput label="Base Campanha MKT ($)" val={macro.prices.marketing_campaign || 10000} onChange={v => setMacro({...macro, prices: {...macro.prices, marketing_campaign: v}})} />
+                    <MacroInput label="Preço Venda Médio ($)" val={macro.avg_selling_price || 340} onChange={(v: number) => setMacro({...macro, avg_selling_price: v})} />
+                    <MacroInput label="Distribuição Unit. ($)" val={macro.prices.distribution_unit || 50} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, distribution_unit: v}})} />
+                    <MacroInput label="Base Campanha MKT ($)" val={macro.prices.marketing_campaign || 10000} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, marketing_campaign: v}})} />
                  </div>
               </div>
            )}
@@ -152,7 +152,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
               <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
                  <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Briefcase className="text-indigo-400"/> Staffing P00</h3>
                  <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <MacroInput label="Salário Base ($)" val={macro.hr_base.salary || 1300} onChange={v => setMacro({...macro, hr_base: {...macro.hr_base, salary: v}})} />
+                    <MacroInput label="Salário Base ($)" val={macro.hr_base.salary || 1300} onChange={(v: number) => setMacro({...macro, hr_base: {...macro.hr_base, salary: v}})} />
                     <div className="p-8 bg-slate-950/50 rounded-3xl border border-white/5 space-y-2">
                        <span className="block text-[8px] font-black text-slate-600 uppercase">Administração</span>
                        <span className="text-xl font-mono font-black text-white">{macro.staffing.admin.count} Units</span>
@@ -173,9 +173,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
               <div className="bg-orange-600/5 p-10 rounded-[4rem] border border-orange-500/20 shadow-2xl space-y-12">
                  <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Award className="text-orange-500"/> Premiações por Precisão</h3>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <MacroInput label="Prêmio Custo ($)" val={macro.award_values.cost_precision} onChange={v => setMacro({...macro, award_values: {...macro.award_values, cost_precision: v}})} />
-                    <MacroInput label="Prêmio Receita ($)" val={macro.award_values.revenue_precision} onChange={v => setMacro({...macro, award_values: {...macro.award_values, revenue_precision: v}})} />
-                    <MacroInput label="Prêmio Lucro ($)" val={macro.award_values.profit_precision} onChange={v => setMacro({...macro, award_values: {...macro.award_values, profit_precision: v}})} />
+                    <MacroInput label="Prêmio Custo ($)" val={macro.award_values.cost_precision} onChange={(v: number) => setMacro({...macro, award_values: {...macro.award_values, cost_precision: v}})} />
+                    <MacroInput label="Prêmio Receita ($)" val={macro.award_values.revenue_precision} onChange={(v: number) => setMacro({...macro, award_values: {...macro.award_values, revenue_precision: v}})} />
+                    <MacroInput label="Prêmio Lucro ($)" val={macro.award_values.profit_precision} onChange={(v: number) => setMacro({...macro, award_values: {...macro.award_values, profit_precision: v}})} />
                  </div>
               </div>
            )}
@@ -190,8 +190,8 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                     </div>
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <ParamCard label="Dólar (USD)" val={macro.exchange_rates?.USD || 5.2} suffix="x" onChange={v => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} icon={<DollarSign className="text-emerald-500" />} />
-                    <ParamCard label="Euro (EUR)" val={macro.exchange_rates?.EUR || 5.5} suffix="x" onChange={v => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} icon={<EuroIcon className="text-blue-500" />} />
+                    <ParamCard label="Dólar (USD)" val={macro.exchange_rates?.USD || 5.2} suffix="x" onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} icon={<DollarSign className="text-emerald-500" />} />
+                    <ParamCard label="Euro (EUR)" val={macro.exchange_rates?.EUR || 5.5} suffix="x" onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} icon={<EuroIcon className="text-blue-500" />} />
                  </div>
               </div>
            )}
@@ -201,7 +201,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
       <div className="flex justify-end pt-12 border-t border-white/5">
          <button onClick={handleSave} disabled={isSaving} className="px-24 py-10 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.5em] hover:bg-white hover:text-orange-950 transition-all shadow-[0_20px_80px_rgba(249,115,22,0.5)] flex items-center gap-10 active:scale-95 group border-4 border-orange-400/50">
-            {isSaving ? <Loader2 className="animate-spin" size={32} /> : <><Save size={32} strokeWidth={2.5} /> Confirmar Intervenção P0{nextRoundIdx}</>}
+            {isSaving ? <Loader2 className="animate-spin" size={32} /> : <><Save size={32} strokeWidth={2.5} /> Confirmar Planejamento P0{nextRoundIdx}</>}
          </button>
       </div>
     </div>

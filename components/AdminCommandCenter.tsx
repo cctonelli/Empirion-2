@@ -49,8 +49,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     if (params.get('mode') === 'new_trial') {
        provisionDemoEnvironment();
        setIsCreatingTrial(true);
-       // No trial, começamos pelo Cockpit
-       setTutorView('dashboard');
+       // CRÍTICO: Inicia diretamente na aba de Intervenção (onde está o Wizard de Planejamento)
+       setTutorView('intervention');
     }
   }, [location.search]);
 
@@ -90,18 +90,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const isAdmin = profile?.role === 'admin';
   const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
 
-  // LÓGICA DE PROPRIEDADE v15.3: Suporte a co-tutoria trial
-  const [isCoTutor, setIsCoTutor] = useState(false);
-  useEffect(() => {
-    const checkCoTutor = async () => {
-      if (selectedArena && profile && selectedArena.is_trial) {
-        const { data } = await supabase.from('trial_tutors').select('*').eq('championship_id', selectedArena.id).eq('user_id', profile.supabase_user_id).maybeSingle();
-        setIsCoTutor(!!data);
-      }
-    };
-    checkCoTutor();
-  }, [selectedArena, profile]);
-
   const tutorViewOrder: TutorView[] = ['dashboard', 'teams', 'decisions', 'intervention', 'gazette'];
   
   const handleNav = (dir: 'next' | 'prev') => {
@@ -139,11 +127,12 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   }, [selectedArena]);
 
   if (selectedArena || isCreatingTrial) {
-    const arenaName = selectedArena?.name || "Nova Arena Trial";
+    const arenaName = selectedArena?.name || "Strategos Trial Engine";
     const currentRound = selectedArena?.current_round || 0;
 
     return (
       <div className="flex flex-col h-full bg-[#020617] relative overflow-hidden">
+        {/* Navegação Flutuante só aparece se não estiver criando trial para evitar confusão */}
         {!isCreatingTrial && (
            <>
               <button onClick={() => handleNav('prev')} disabled={tutorView === tutorViewOrder[0]} className="fixed left-6 top-1/2 -translate-y-1/2 p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-orange-500 hover:bg-white/10 transition-all z-[3000] disabled:opacity-0 active:scale-90 shadow-2xl">
@@ -170,15 +159,15 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
            </div>
            
            <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-white/5">
-              <ArenaNavBtn active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="Cockpit" icon={<LayoutDashboard size={12}/>} />
-              <ArenaNavBtn active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="Equipes" icon={<Users size={12}/>} />
-              <ArenaNavBtn active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="Decisões" icon={<History size={12}/>} />
-              <ArenaNavBtn active={tutorView === 'intervention'} onClick={() => setTutorView('intervention')} label="Intervenção Macro" icon={<Zap size={12}/>} />
-              <ArenaNavBtn active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="Gazeta" icon={<Newspaper size={12}/>} />
+              <ArenaNavBtn active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="Cockpit" icon={<LayoutDashboard size={12}/>} disabled={isCreatingTrial} />
+              <ArenaNavBtn active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="Equipes" icon={<Users size={12}/>} disabled={isCreatingTrial} />
+              <ArenaNavBtn active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="Decisões" icon={<History size={12}/>} disabled={isCreatingTrial} />
+              <ArenaNavBtn active={tutorView === 'intervention'} onClick={() => setTutorView('intervention')} label="Planejamento" icon={<Zap size={12}/>} />
+              <ArenaNavBtn active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="Gazeta" icon={<Newspaper size={12}/>} disabled={isCreatingTrial} />
            </div>
 
            <div className="flex items-center gap-4">
-              <span className="px-3 py-1 bg-emerald-600/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase">P0{currentRound} Node</span>
+              <span className="px-3 py-1 bg-emerald-600/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase">Orquestração v14.2</span>
            </div>
         </header>
 
@@ -207,7 +196,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                             </span>
                          </div>
                          <h4 className="text-3xl font-black text-white uppercase italic relative z-10">{t.name}</h4>
-                         {t.insolvency_status && <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase ${t.insolvency_status === 'SAUDAVEL' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>{t.insolvency_status}</span>}
                       </div>
                    ))}
                 </motion.div>
@@ -223,6 +211,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                       <TrailWizard onComplete={() => {
                         setIsCreatingTrial(false);
                         fetchData();
+                        setTutorView('dashboard');
                       }} />
                    ) : selectedArena && (
                       <TutorArenaControl championship={selectedArena} onUpdate={(u) => setSelectedArena({...selectedArena, ...u})} />
@@ -251,28 +240,11 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
             </h1>
           </div>
         </div>
-        
-        <div className="flex items-center gap-6 bg-slate-900 border border-white/5 rounded-[2.5rem] p-6 shadow-2xl">
-           <div className="flex items-center gap-4">
-              <div className={`w-3.5 h-3.5 rounded-full animate-pulse shadow-[0_0_15px] ${isAdmin ? 'bg-blue-500 shadow-blue-500' : 'bg-emerald-500 shadow-emerald-500'}`} />
-              <div className="flex flex-col">
-                 <span className="text-lg font-black text-white uppercase italic tracking-tight">{profile?.nickname || 'ARENA_MASTER'}</span>
-                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{isAdmin ? 'SYSTEM OWNER' : isTrialSession ? 'ARENA ORCHESTRATOR' : 'ARENA TUTOR'}</span>
-              </div>
-           </div>
-        </div>
       </div>
 
       <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 sticky top-0 z-[200] bg-[#020617]/80 backdrop-blur-xl py-4 border-b border-white/5">
-         {isAdmin && <NavTab active={activeTab === 'system'} onClick={() => setActiveTab('system')} label="Cluster Metrics" color="indigo" />}
          <NavTab active={activeTab === 'tournaments'} onClick={() => setActiveTab('tournaments')} label="Arenas & Campeonatos" color="orange" />
-         {isAdmin && (
-           <>
-             <NavTab active={activeTab === 'uidesign'} onClick={() => setActiveTab('uidesign')} label="CMS & Branding" color="indigo" />
-             <NavTab active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Usuários & RLS" color="emerald" />
-             <NavTab active={activeTab === 'templates'} onClick={() => setActiveTab('templates')} label="Templates Blueprints" color="emerald" />
-           </>
-         )}
+         {isAdmin && <NavTab active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Usuários & RLS" color="emerald" />}
       </div>
 
       <div className="relative">
@@ -316,7 +288,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                   <h2 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tight">Strategos Orchestration Wizard</h2>
                   <button onClick={() => setShowWizard(false)} className="p-4 md:p-6 bg-rose-600/10 hover:bg-rose-600 text-rose-500 hover:text-white rounded-2xl flex items-center gap-3 font-black text-xs uppercase tracking-[0.2em] transition-all"><X size={20} /> Abortar Protocolo</button>
                 </div>
-                <ChampionshipWizard isTrial={isTrialSession} onComplete={() => { setShowWizard(false); fetchData(); }} />
+                <ChampionshipWizard onComplete={() => { setShowWizard(false); fetchData(); }} />
               </motion.div>
             )
           )}
