@@ -181,7 +181,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   <div className="flex items-center justify-between">
                      <span className={`text-4xl font-black font-mono italic drop-shadow-lg ${kanitzColor}`}>{kanitz.toFixed(2)}</span>
                      <div className="text-right">
-                        <span className={`block text-[8px] font-black uppercase tracking-widest ${kanitzColor}`}>{kanitzLabel}</span>
+                        <span className={`block text-[8px] font-black uppercase tracking-widest ${kanitzLabel === 'INSOLVENTE' ? 'text-rose-500 animate-pulse' : kanitzColor}`}>{kanitzLabel}</span>
                         <span className="block text-[7px] text-slate-600 font-bold uppercase italic mt-1">Status Oracle</span>
                      </div>
                   </div>
@@ -218,8 +218,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
       <AnimatePresence>
         {showGazette && (
-          <div className="fixed inset-0 z-[5000] p-6 md:p-12 bg-slate-950/95 backdrop-blur-3xl flex items-center justify-center">
-             <GazetteViewer arena={activeArena!} aiNews="" round={activeArena?.current_round || 0} userRole={userRole} onClose={() => setShowGazette(false)} />
+          <div className="fixed inset-0 z-[5000] p-4 md:p-10 bg-slate-950/95 backdrop-blur-3xl flex items-center justify-center">
+             <GazetteViewer 
+                arena={activeArena!} 
+                aiNews="" 
+                round={activeArena?.current_round || 0} 
+                userRole={userRole} 
+                activeTeam={activeTeam}
+                onClose={() => setShowGazette(false)} 
+             />
           </div>
         )}
       </AnimatePresence>
