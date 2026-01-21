@@ -9,7 +9,7 @@ import {
   ArrowUpCircle, ArrowDownCircle, HardDrive, LayoutGrid,
   Zap, Flame, ShieldAlert, BarChart3, Coins, Hammer, Package,
   MapPin, Scale, Eye, EyeOff, ChevronLeft, ChevronRight, Truck, Warehouse, Megaphone,
-  BarChart, PieChart, Activity, Award
+  BarChart, PieChart, Activity, Award, ClipboardList
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -164,7 +164,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   const totalAssetsSummary = financials?.balance_sheet.find(n => n.id === 'assets')?.value || 0;
   const totalProfitSummary = financials?.dre.find(n => n.id === 'final_profit')?.value || 0;
-  const totalEquitySummary = financials?.balance_sheet.find(n => n.id === 'liabilities_pl')?.children?.find(n => n.id === 'equity')?.value || 4885447;
+  const totalEquitySummary = financials?.balance_sheet.find(n => n.id === 'liabilities_pl')?.children?.find(n => n.id === 'equity')?.value || 5055447;
 
   return (
     <div className="wizard-shell">
@@ -182,6 +182,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <WizardSelect label="MOEDA BASE (RELATÓRIOS)" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'}]} />
                     
                     <WizardField label="TOTAL DE ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
+                    <WizardField label="PREÇO AÇÃO P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
                     <WizardField label="PREÇO AÇÃO P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
                     <WizardField label="% DIVIDENDOS" type="number" val={formData.dividend_percent} onChange={(v:any)=>setFormData({...formData, dividend_percent: parseFloat(v)})} />
                     
@@ -326,15 +327,15 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[620px] flex flex-col relative group">
                     <div className="overflow-auto custom-scrollbar flex-1 relative">
                        <table className="w-full text-left border-separate border-spacing-0">
-                          <thead>
+                          <thead className="sticky top-0 z-[100] bg-slate-900 shadow-xl">
                              <tr>
-                                <th className="p-4 sticky top-0 left-0 bg-slate-900 z-[100] border-b-2 border-r-2 border-white/10 w-[280px] min-w-[280px]">
+                                <th className="p-4 bg-slate-900 border-b-2 border-r-2 border-white/10 w-[280px] min-w-[280px]">
                                    <div className="flex flex-col">
                                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] leading-none">Variações / Período</span>
                                    </div>
                                 </th>
                                 {Array.from({ length: totalPeriods }).map((_, i) => (
-                                   <th key={i} className={`p-4 sticky top-0 bg-slate-900 z-40 border-b-2 border-r border-white/5 text-center min-w-[95px] ${i === 0 ? 'bg-orange-600/10' : ''}`}>
+                                   <th key={i} className={`p-4 bg-slate-900 border-b-2 border-r border-white/5 text-center min-w-[95px] ${i === 0 ? 'bg-orange-600/10' : ''}`}>
                                       <span className={`text-[12px] font-black uppercase tracking-widest ${i === 0 ? 'text-white' : 'text-orange-500'}`}>P{i < 10 ? `0${i}` : i}</span>
                                       {i === 0 && <span className="block text-[7px] font-black text-orange-500/60 leading-none mt-1 uppercase italic">Base</span>}
                                    </th>
@@ -352,6 +353,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="IMPOSTO DE RENDA (%)" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="DESÁGIO VENDA MÁQ. (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             
                              <CompactMatrixRow periods={totalPeriods} label="REAJUSTE MATÉRIAS-PRIMAS" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="REAJUSTE MÁQUINA ALFA" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="REAJUSTE MÁQUINA BETA" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
@@ -361,19 +363,33 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="REAJUSTE GASTOS ESTOCAG." macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
                              
                              <tr className="hover:bg-white/[0.03] transition-colors">
-                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap">LIBERAR VENDA ATIVOS</td>
+                                {/* Fix: Corrected component name from 'hard-drive' to 'HardDrive' and added a comment. */}
+                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR VENDA ATIVOS?</td>
                                 {Array.from({ length: totalPeriods }).map((_, i) => (
                                    <td key={i} className="p-2 border-r border-white/5 text-center">
                                       <button 
-                                        onClick={() => updateRoundMacro(i, 'allow_machine_sale', !(roundRules[i]?.allow_machine_sale ?? false))}
-                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${roundRules[i]?.allow_machine_sale ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500 opacity-40'}`}
+                                        onClick={() => updateRoundMacro(i, 'allow_machine_sale', !(roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)))}
+                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500 opacity-40'}`}
                                       >
-                                         {roundRules[i]?.allow_machine_sale ? 'SIM' : 'NÃO'}
+                                         {(roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'SIM' : 'NÃO'}
                                       </button>
                                    </td>
                                 ))}
                              </tr>
 
+                             <tr className="hover:bg-white/[0.03] transition-colors">
+                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-blue-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><ClipboardList size={10}/> APRESENTAR BUSINESS PLAN</td>
+                                {Array.from({ length: totalPeriods }).map((_, i) => (
+                                   <td key={i} className="p-2 border-r border-white/5 text-center">
+                                      <button 
+                                        onClick={() => updateRoundMacro(i, 'require_business_plan', !(roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)))}
+                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-white/10 text-slate-700 opacity-40'}`}
+                                      >
+                                         {(roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'SIM' : 'NÃO'}
+                                      </button>
+                                   </td>
+                                ))}
+                             </tr>
                           </tbody>
                        </table>
                     </div>
@@ -471,13 +487,6 @@ const SummaryCard = ({ label, val, icon, color }: any) => (
   </div>
 );
 
-const StaffRow = ({ label, count }: any) => (
-   <div className="flex justify-between items-center px-4 py-2 bg-slate-950/50 rounded-xl border border-white/5">
-      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
-      <span className="text-[10px] font-mono font-black text-white">{count} Units</span>
-   </div>
-);
-
 const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods }: any) => (
    <tr className="hover:bg-white/[0.04] transition-colors group">
       <td className="p-3 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[280px] min-w-[280px]">
@@ -487,14 +496,18 @@ const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods }: any
          </div>
       </td>
       {Array.from({ length: periods }).map((_, i) => {
-         const defaultVal = DEFAULT_MACRO[macroKey] ?? 0;
+         // LÓGICA DE REPLICAÇÃO: Se i > 12, usa o valor de P12. Se i <= 12, tenta pegar da regra do round ou cronograma industrial padrão.
+         const lookupRound = Math.min(i, 12);
+         const val = rules[i]?.[macroKey] ?? (rules[lookupRound]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound]?.[macroKey] ?? (DEFAULT_MACRO[macroKey] ?? 0)));
+         const isNegative = val < 0;
+
          return (
             <td key={i} className={`p-1 border-r border-white/5 ${i === 0 ? 'bg-orange-600/5' : ''}`}>
                <input 
                   type="number" step="0.1"
-                  value={rules[i]?.[macroKey] ?? defaultVal}
+                  value={val}
                   onChange={e => update(i, macroKey, parseFloat(e.target.value))}
-                  className={`w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-2.5 text-center text-[10px] font-black text-white outline-none focus:border-orange-500 transition-all shadow-inner ${i === 0 ? 'border-orange-500/40 text-white' : ''}`}
+                  className={`w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-2.5 text-center text-[10px] font-black outline-none focus:border-orange-500 transition-all shadow-inner ${i === 0 ? 'border-orange-500/40 text-white' : isNegative ? 'text-rose-500 border-rose-500/20' : 'text-white'}`}
                />
             </td>
          );

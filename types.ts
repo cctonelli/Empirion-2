@@ -21,9 +21,6 @@ export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 export type LaborAvailability = 'BAIXA' | 'MEDIA' | 'ALTA';
 export type MachineModel = 'alfa' | 'beta' | 'gama';
 
-/**
- * Fix: Added missing EcosystemConfig interface
- */
 export interface EcosystemConfig {
   inflation_rate: number;
   demand_multiplier: number;
@@ -33,9 +30,6 @@ export interface EcosystemConfig {
   modality_type: ModalityType;
 }
 
-/**
- * Fix: Added missing UserProfile interface
- */
 export interface UserProfile {
   id: string;
   supabase_user_id: string;
@@ -48,9 +42,6 @@ export interface UserProfile {
   created_at: string;
 }
 
-/**
- * Fix: Added missing RegionalData interface
- */
 export interface RegionalData {
   regionId: number;
   price: number;
@@ -58,9 +49,6 @@ export interface RegionalData {
   marketing: number;
 }
 
-/**
- * Fix: Added missing Modality interface
- */
 export interface Modality {
   id: string;
   name: string;
@@ -75,9 +63,6 @@ export interface Modality {
   };
 }
 
-/**
- * Fix: Added missing BusinessPlan interface
- */
 export interface BusinessPlan {
   id?: string;
   championship_id: string;
@@ -88,18 +73,12 @@ export interface BusinessPlan {
   status: 'draft' | 'final';
 }
 
-/**
- * Fix: Added missing CommunityCriteria interface
- */
 export interface CommunityCriteria {
   id: string;
   label: string;
   weight: number;
 }
 
-/**
- * Fix: Added missing MenuItemConfig interface
- */
 export interface MenuItemConfig {
   label: string;
   path: string;
@@ -107,9 +86,6 @@ export interface MenuItemConfig {
   sub?: any[];
 }
 
-/**
- * Fix: Added missing AuditLog interface
- */
 export interface AuditLog {
   user_id: string;
   changed_at: string;
@@ -117,9 +93,6 @@ export interface AuditLog {
   new_value: any;
 }
 
-/**
- * Fix: Added missing TeamProgress interface
- */
 export interface TeamProgress {
   team_id: string;
   team_name: string;
@@ -131,9 +104,6 @@ export interface TeamProgress {
   auditLogs: AuditLog[];
 }
 
-/**
- * Fix: Added missing ChampionshipTemplate interface
- */
 export interface ChampionshipTemplate {
   id: string;
   name: string;
@@ -228,10 +198,10 @@ export interface MacroIndicators {
   salary_adjust: number;
   
   allow_machine_sale: boolean;
+  require_business_plan: boolean;
   labor_productivity: number;
   labor_availability: LaborAvailability;
   
-  // Premiações
   award_values: {
     cost_precision: number;
     revenue_precision: number;
