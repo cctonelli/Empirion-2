@@ -181,8 +181,11 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     </div>
                     <WizardSelect label="MOEDA BASE (RELATÓRIOS)" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'}]} />
                     
-                    <WizardField label="TOTAL DE ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
-                    <WizardField label="PREÇO AÇÃO P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
+                    <div className="space-y-2">
+                       <WizardField label="TOTAL DE ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
+                       {formData.totalRounds >= 12 && <p className="text-[10px] font-black text-rose-500 uppercase italic ml-4 animate-pulse">MÁXIMO DE 12 PERÍODOS</p>}
+                    </div>
+                    
                     <WizardField label="PREÇO AÇÃO P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
                     <WizardField label="% DIVIDENDOS" type="number" val={formData.dividend_percent} onChange={(v:any)=>setFormData({...formData, dividend_percent: parseFloat(v)})} />
                     
@@ -363,7 +366,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="REAJUSTE GASTOS ESTOCAG." macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
                              
                              <tr className="hover:bg-white/[0.03] transition-colors">
-                                {/* Fix: Corrected component name from 'hard-drive' to 'HardDrive' and added a comment. */}
                                 <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR VENDA ATIVOS?</td>
                                 {Array.from({ length: totalPeriods }).map((_, i) => (
                                    <td key={i} className="p-2 border-r border-white/5 text-center">

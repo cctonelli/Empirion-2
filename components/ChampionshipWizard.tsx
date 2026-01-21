@@ -97,7 +97,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   <WizardField label="Nome da Arena" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="EX: TORNEIO NACIONAL ALPHA" />
                   <div className="grid grid-cols-2 gap-8">
-                     <WizardField label="Total de Ciclos" type="number" val={formData.total_rounds} onChange={(v:any)=>setFormData({...formData, total_rounds: parseInt(v)})} />
+                     <div className="space-y-2">
+                        <WizardField label="Total de Ciclos" type="number" val={formData.total_rounds} onChange={(v:any)=>setFormData({...formData, total_rounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
+                        {formData.total_rounds >= 12 && <p className="text-[10px] font-black text-rose-500 uppercase italic ml-4 animate-pulse">MÁXIMO DE 12 PERÍODOS</p>}
+                     </div>
                      <WizardField label="Regiões (1 a 15)" type="number" val={formData.regions_count} onChange={(v:any)=>setFormData({...formData, regions_count: parseInt(v)})} />
                   </div>
                   <div className="grid grid-cols-2 gap-8">

@@ -26,7 +26,7 @@ import TrailWizard from './TrailWizard';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
-import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES } from '../constants';
+import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
 type TutorView = 'dashboard' | 'planning' | 'decisions' | 'teams' | 'gazette';
 
@@ -125,6 +125,27 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     };
   }, [selectedArena]);
 
+  // ORACLE INTELLIGENCE: Calcula notícias dinâmicas incluindo alertas de Business Plan (Aviso no Round Anterior)
+  const computedAiNews = useMemo(() => {
+     if (!selectedArena) return "";
+     const currentRound = selectedArena.current_round;
+     const nextRound = currentRound + 1;
+     
+     // Verifica se o próximo round exige Business Plan
+     const nextRoundRules = selectedArena.round_rules?.[nextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound];
+     const requiresBP = nextRoundRules?.require_business_plan === true;
+     
+     let news = "O Oráculo Strategos está processando o briefing deste ciclo...\n\n";
+     
+     if (requiresBP) {
+        news += "⚠️ [ALERTA DE PROTOCOLO]: Apresentação de BUSINESS PLAN exigida para o próximo Ciclo (P0" + (nextRound < 10 ? '0' + nextRound : nextRound) + "). As unidades devem preparar seus balanços e justificativas estratégicas imediatamente.";
+     } else {
+        news += "O mercado industrial apresenta estabilidade nos indicadores de demanda. Monitore os custos MP-A para otimização de margem bruta.";
+     }
+     
+     return news;
+  }, [selectedArena]);
+
   if (selectedArena || isCreatingTrial) {
     const arenaName = selectedArena?.name || "Nova Arena Trial";
     const currentRound = selectedArena?.current_round || 0;
@@ -219,7 +240,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
               )}
               {tutorView === 'gazette' && selectedArena && (
                 <motion.div key="gaz" initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}} exit={{opacity:0}} className="flex justify-center">
-                   <GazetteViewer arena={selectedArena} aiNews="O Oráculo Strategos está processando o briefing deste ciclo..." round={selectedArena.current_round} userRole="tutor" onClose={() => setTutorView('dashboard')} />
+                   <GazetteViewer arena={selectedArena} aiNews={computedAiNews} round={selectedArena.current_round} userRole="tutor" onClose={() => setTutorView('dashboard')} />
                 </motion.div>
               )}
            </AnimatePresence>
