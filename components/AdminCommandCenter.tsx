@@ -7,7 +7,7 @@ import {
   Plus, Trash2, ArrowLeft, Monitor, Command, Users, Globe, CreditCard, Cpu, Gauge,
   X, Palette, Menu as MenuIcon, Save, AtSign, Phone, FileCode, UserPlus, UserMinus, Shield,
   Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity, LayoutDashboard,
-  PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight
+  PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight, Zap
 } from 'lucide-react';
 import { 
   getChampionships, 
@@ -28,7 +28,7 @@ import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
-type TutorView = 'dashboard' | 'planning' | 'decisions' | 'teams' | 'gazette';
+type TutorView = 'dashboard' | 'teams' | 'decisions' | 'intervention' | 'gazette';
 
 const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }) => {
   const location = useLocation();
@@ -49,7 +49,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     if (params.get('mode') === 'new_trial') {
        provisionDemoEnvironment();
        setIsCreatingTrial(true);
-       setTutorView('planning');
+       // No trial, começamos pelo Cockpit
+       setTutorView('dashboard');
     }
   }, [location.search]);
 
@@ -101,12 +102,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     checkCoTutor();
   }, [selectedArena, profile]);
 
-  const isArenaOwner = useMemo(() => {
-     if (!selectedArena || !profile) return false;
-     return selectedArena.tutor_id === profile.supabase_user_id || isTrialSession || isCoTutor;
-  }, [selectedArena, profile, isTrialSession, isCoTutor]);
-
-  const tutorViewOrder: TutorView[] = ['dashboard', 'planning', 'decisions', 'teams', 'gazette'];
+  const tutorViewOrder: TutorView[] = ['dashboard', 'teams', 'decisions', 'intervention', 'gazette'];
+  
   const handleNav = (dir: 'next' | 'prev') => {
     const currentIdx = tutorViewOrder.indexOf(tutorView);
     if (dir === 'next' && currentIdx < tutorViewOrder.length - 1) setTutorView(tutorViewOrder[currentIdx + 1]);
@@ -125,24 +122,19 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     };
   }, [selectedArena]);
 
-  // ORACLE INTELLIGENCE: Calcula notícias dinâmicas incluindo alertas de Business Plan (Aviso no Round Anterior)
   const computedAiNews = useMemo(() => {
      if (!selectedArena) return "";
      const currentRound = selectedArena.current_round;
      const nextRound = currentRound + 1;
-     
-     // Verifica se o próximo round exige Business Plan
      const nextRoundRules = selectedArena.round_rules?.[nextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound];
      const requiresBP = nextRoundRules?.require_business_plan === true;
      
      let news = "O Oráculo Strategos está processando o briefing deste ciclo...\n\n";
-     
      if (requiresBP) {
-        news += "⚠️ [ALERTA DE PROTOCOLO]: Apresentação de BUSINESS PLAN exigida para o próximo Ciclo (P0" + (nextRound < 10 ? '0' + nextRound : nextRound) + "). As unidades devem preparar seus balanços e justificativas estratégicas imediatamente.";
+        news += "⚠️ [ALERTA DE PROTOCOLO]: Apresentação de BUSINESS PLAN exigida para o próximo Ciclo (P0" + (nextRound < 10 ? '0' + nextRound : nextRound) + ").";
      } else {
-        news += "O mercado industrial apresenta estabilidade nos indicadores de demanda. Monitore os custos MP-A para otimização de margem bruta.";
+        news += "O mercado industrial apresenta estabilidade nos indicadores de demanda.";
      }
-     
      return news;
   }, [selectedArena]);
 
@@ -152,7 +144,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
 
     return (
       <div className="flex flex-col h-full bg-[#020617] relative overflow-hidden">
-        
         {!isCreatingTrial && (
            <>
               <button onClick={() => handleNav('prev')} disabled={tutorView === tutorViewOrder[0]} className="fixed left-6 top-1/2 -translate-y-1/2 p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-orange-500 hover:bg-white/10 transition-all z-[3000] disabled:opacity-0 active:scale-90 shadow-2xl">
@@ -171,7 +162,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                  setSelectedArena(null); 
                  setIsCreatingTrial(false);
                  navigate('/app/admin');
-              }} className="text-slate-500 hover:text-white transition-all flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><ArrowLeft size={14}/> Sair da Arena</button>
+              }} className="text-slate-500 hover:text-white transition-all flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><ArrowLeft size={14}/> Sair</button>
               <div className="h-4 w-px bg-white/10" />
               <h1 className="text-xs font-black text-white uppercase italic tracking-widest">
                  Arena <span className="text-orange-500">{arenaName}</span>
@@ -179,11 +170,11 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
            </div>
            
            <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-white/5">
-              <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="Cockpit" icon={<LayoutDashboard size={12}/>} />
-              <ArenaNavBtn active={tutorView === 'planning'} onClick={() => setTutorView('planning')} label="Planejamento" icon={<PenTool size={12}/>} />
-              <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="Decisões" icon={<History size={12}/>} />
-              <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="Equipes" icon={<Users size={12}/>} />
-              <ArenaNavBtn disabled={isCreatingTrial} active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="Gazeta" icon={<Newspaper size={12}/>} />
+              <ArenaNavBtn active={tutorView === 'dashboard'} onClick={() => setTutorView('dashboard')} label="Cockpit" icon={<LayoutDashboard size={12}/>} />
+              <ArenaNavBtn active={tutorView === 'teams'} onClick={() => setTutorView('teams')} label="Equipes" icon={<Users size={12}/>} />
+              <ArenaNavBtn active={tutorView === 'decisions'} onClick={() => setTutorView('decisions')} label="Decisões" icon={<History size={12}/>} />
+              <ArenaNavBtn active={tutorView === 'intervention'} onClick={() => setTutorView('intervention')} label="Intervenção Macro" icon={<Zap size={12}/>} />
+              <ArenaNavBtn active={tutorView === 'gazette'} onClick={() => setTutorView('gazette')} label="Gazeta" icon={<Newspaper size={12}/>} />
            </div>
 
            <div className="flex items-center gap-4">
@@ -204,23 +195,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                    <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
                 </motion.div>
               )}
-              {tutorView === 'planning' && (
-                <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="h-full">
-                   {isCreatingTrial ? (
-                      <TrailWizard onComplete={() => {
-                        setIsCreatingTrial(false);
-                        fetchData();
-                      }} />
-                   ) : selectedArena && (
-                      <TutorArenaControl championship={selectedArena} onUpdate={(u) => setSelectedArena({...selectedArena, ...u})} />
-                   )}
-                </motion.div>
-              )}
-              {tutorView === 'decisions' && selectedArena && (
-                <motion.div key="dec" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
-                   <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
-                </motion.div>
-              )}
               {tutorView === 'teams' && selectedArena && (
                 <motion.div key="teams" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="grid grid-cols-1 md:grid-cols-3 gap-8">
                    {selectedArena.teams?.map(t => (
@@ -236,6 +210,23 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                          {t.insolvency_status && <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase ${t.insolvency_status === 'SAUDAVEL' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>{t.insolvency_status}</span>}
                       </div>
                    ))}
+                </motion.div>
+              )}
+              {tutorView === 'decisions' && selectedArena && (
+                <motion.div key="dec" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
+                   <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
+                </motion.div>
+              )}
+              {tutorView === 'intervention' && (
+                <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}} className="h-full">
+                   {isCreatingTrial ? (
+                      <TrailWizard onComplete={() => {
+                        setIsCreatingTrial(false);
+                        fetchData();
+                      }} />
+                   ) : selectedArena && (
+                      <TutorArenaControl championship={selectedArena} onUpdate={(u) => setSelectedArena({...selectedArena, ...u})} />
+                   )}
                 </motion.div>
               )}
               {tutorView === 'gazette' && selectedArena && (
