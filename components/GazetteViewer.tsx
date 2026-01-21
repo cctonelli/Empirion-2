@@ -34,7 +34,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       animate={{ opacity: 1, scale: 1, y: 0 }}
       className="bg-[#020617] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[92vh] max-w-7xl w-full relative"
     >
-      {/* HEADER DE COMANDO v16.0 */}
+      {/* HEADER DE COMANDO v16.1 ORACLE MASTER */}
       <header className="bg-slate-950 p-6 md:p-8 border-b border-white/5 shrink-0 shadow-xl relative z-10">
          <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-5">
@@ -49,7 +49,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
             <div className="flex items-center gap-6">
                <div className="hidden lg:flex items-center gap-3 px-5 py-2 bg-white/5 rounded-full border border-white/5">
                   <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                  <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest italic">Sincronização Nodal Ativa</span>
+                  <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest italic">Node 08-STREET Online</span>
                </div>
                <button onClick={onClose} className="p-3 bg-white/5 hover:bg-rose-600 text-slate-500 hover:text-white rounded-full transition-all active:scale-90">
                   <X size={24} />
@@ -58,10 +58,10 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
          </div>
          
          <nav className="flex flex-wrap gap-2">
-            <TabBtn active={activeTab === 'individual'} onClick={() => setActiveTab('individual')} label="Relatório Individual" icon={<User size={14}/>} />
-            <TabBtn active={activeTab === 'collective_fin'} onClick={() => setActiveTab('collective_fin')} label="Benchmarking Financeiro" icon={<Landmark size={14}/>} />
-            <TabBtn active={activeTab === 'collective_market'} onClick={() => setActiveTab('collective_market')} label="Visão de Mercado" icon={<Globe size={14}/>} />
-            <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} label="Indicadores Macro" icon={<Zap size={14}/>} />
+            <TabBtn active={activeTab === 'individual'} onClick={() => setActiveTab('individual')} label="Individual (Unidade)" icon={<User size={14}/>} />
+            <TabBtn active={activeTab === 'collective_fin'} onClick={() => setActiveTab('collective_fin')} label="Coletivo: Financeiro" icon={<Landmark size={14}/>} />
+            <TabBtn active={activeTab === 'collective_market'} onClick={() => setActiveTab('collective_market')} label="Coletivo: Mercado" icon={<Globe size={14}/>} />
+            <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} label="Conjuntura Macro" icon={<Zap size={14}/>} />
          </nav>
       </header>
 
@@ -77,37 +77,37 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                      <div className="flex items-center gap-6 relative z-10">
                         <div className="p-5 bg-orange-600 rounded-2xl text-white shadow-xl"><ShieldAlert size={32}/></div>
                         <div>
-                           <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Relatório da Unidade de Operação</span>
-                           <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">{activeTeam?.name || 'NODE_OPERATOR'}</h3>
+                           <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Relatório Individual Auditado</span>
+                           <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">{activeTeam?.name || 'OPERADOR_ALPHA'}</h3>
                         </div>
                      </div>
                      <div className="text-right relative z-10">
-                        <span className="block text-[8px] font-black text-slate-500 uppercase mb-1 tracking-widest">Status da Planta</span>
-                        <span className="text-3xl font-black text-emerald-500 italic font-mono uppercase tracking-tighter">Operacional</span>
+                        <span className="block text-[8px] font-black text-slate-500 uppercase mb-1 tracking-widest">Oracle Health Score</span>
+                        <span className="text-3xl font-black text-white italic font-mono uppercase tracking-tighter">AAA</span>
                      </div>
                   </div>
 
-                  {/* MATRIZ DE ESTOQUE (INSPIRADO NO PDF) */}
+                  {/* MATRIZ DE ESTOQUE (SYNC COM PDF v16.1) */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                      <div className="lg:col-span-8 bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 shadow-2xl">
-                        <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-3 italic"><Package size={18}/> Audit: Movimentação de Estoque (Unidades)</h3>
+                        <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-3 italic"><Package size={18}/> Gestão de Estoque (Unidades) - Ciclo P00</h3>
                         <div className="overflow-x-auto">
                            <table className="w-full text-xs font-bold text-slate-400 border-separate border-spacing-y-2">
                               <thead className="text-slate-600 border-b border-white/5">
                                  <tr className="text-[9px] font-black uppercase tracking-widest italic">
-                                    <th className="pb-4 text-left">DESCRIÇÃO DO ATIVO</th>
+                                    <th className="pb-4 text-left">ESTOQUE (UNIDADES)</th>
                                     <th className="pb-4 text-right">MATÉRIA-PRIMA A</th>
                                     <th className="pb-4 text-right">MATÉRIA-PRIMA B</th>
-                                    <th className="pb-4 text-right">PRODUTO ACABADO</th>
+                                    <th className="pb-4 text-right">PROD. ACABADO</th>
                                  </tr>
                               </thead>
                               <tbody className="divide-y divide-white/5">
-                                 <tr className="bg-white/5 rounded-xl"><td className="p-4 rounded-l-xl uppercase italic">(=) ESTOQUE INICIAL</td><td className="text-right p-4 text-white font-mono">30.000</td><td className="text-right p-4 text-white font-mono">30.000</td><td className="text-right p-4 text-white font-mono rounded-r-xl">0</td></tr>
-                                 <tr className="hover:bg-white/[0.02]"><td className="p-4 uppercase italic">(+) COMPRAS PROGRAMADAS</td><td className="text-right p-4 text-emerald-500 font-mono">30.000</td><td className="text-right p-4 text-emerald-500 font-mono">30.000</td><td className="text-right p-4">--</td></tr>
+                                 <tr className="bg-white/5 rounded-xl"><td className="p-4 rounded-l-xl uppercase italic">(=) ESTOQUE INICIAL</td><td className="text-right p-4 text-white font-mono">30.000</td><td className="text-right p-4 text-white font-mono">20.000</td><td className="text-right p-4 text-white font-mono rounded-r-xl">0</td></tr>
+                                 <tr className="hover:bg-white/[0.02]"><td className="p-4 uppercase italic">(+) COMPRAS PROGRAMADAS</td><td className="text-right p-4 text-emerald-500 font-mono">30.000</td><td className="text-right p-4 text-emerald-500 font-mono">20.000</td><td className="text-right p-4">--</td></tr>
                                  <tr className="hover:bg-white/[0.02]"><td className="p-4 uppercase italic">(+) COMPRAS ESPECIAIS</td><td className="text-right p-4 text-orange-500 font-mono">0</td><td className="text-right p-4 text-orange-500 font-mono">0</td><td className="text-right p-4">--</td></tr>
-                                 <tr className="hover:bg-white/[0.02]"><td className="p-4 uppercase italic">(-) CONSUMO / PRODUÇÃO</td><td className="text-right p-4 text-rose-500 font-mono">29.100</td><td className="text-right p-4 text-rose-500 font-mono">19.400</td><td className="text-right p-4 text-emerald-500 font-mono">9.700</td></tr>
-                                 <tr className="hover:bg-white/[0.02]"><td className="p-4 uppercase italic">(-) VENDAS E EXPEDIÇÃO</td><td className="text-right p-4">--</td><td className="text-right p-4">--</td><td className="text-right p-4 text-rose-500 font-mono">9.700</td></tr>
-                                 <tr className="bg-orange-600/10 font-black"><td className="p-4 rounded-l-xl text-orange-500 uppercase italic">(=) ESTOQUE FINAL</td><td className="text-right p-4 text-orange-500 font-mono">30.900</td><td className="text-right p-4 text-orange-500 font-mono">40.600</td><td className="text-right p-4 text-orange-500 font-mono rounded-r-xl">0</td></tr>
+                                 <tr className="hover:bg-white/[0.02]"><td className="p-4 uppercase italic">(-) CONSUMO/PRODUÇÃO</td><td className="text-right p-4 text-rose-500 font-mono">29.100</td><td className="text-right p-4 text-rose-500 font-mono">19.400</td><td className="text-right p-4 text-emerald-500 font-mono">9.700</td></tr>
+                                 <tr className="hover:bg-white/[0.02]"><td className="p-4 uppercase italic">(-) VENDAS</td><td className="text-right p-4">--</td><td className="text-right p-4">--</td><td className="text-right p-4 text-rose-500 font-mono">9.700</td></tr>
+                                 <tr className="bg-orange-600/10 font-black"><td className="p-4 rounded-l-xl text-orange-500 uppercase italic">(=) ESTOQUE FINAL</td><td className="text-right p-4 text-orange-500 font-mono">30.900</td><td className="text-right p-4 text-orange-500 font-mono">20.600</td><td className="text-right p-4 text-orange-500 font-mono rounded-r-xl">0</td></tr>
                               </tbody>
                            </table>
                         </div>
@@ -119,10 +119,9 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.3em] flex items-center gap-3 italic"><DollarSign size={18}/> Finanças Ativas</h3>
                            <div className="space-y-4">
                               <StatRow label="Limite Crédito P01" val={`${currencySymbol} 1.155.791`} />
-                              <StatRow label="Atrasos Bancários" val={`${currencySymbol} 0,00`} />
                               <StatRow label="Inadimplência Real" val={`${currencySymbol} 6.500`} color="text-rose-500" />
                               <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                                 <span className="text-[10px] font-black uppercase text-slate-500 italic">Audit Status</span>
+                                 <span className="text-[10px] font-black uppercase text-slate-500 italic">Situação Auditada</span>
                                  <div className="px-4 py-1 bg-emerald-600/20 text-emerald-500 border border-emerald-500/30 rounded-lg text-[9px] font-black uppercase">SEM ATRASOS</div>
                               </div>
                            </div>
@@ -142,15 +141,15 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                   <div className="bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 shadow-2xl relative overflow-hidden">
                      <div className="flex justify-between items-center mb-10">
                         <div className="space-y-1">
-                           <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-4"><MapPin size={24} className="text-orange-500"/> Performance Regional de Unidade</h3>
-                           <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.4em] italic">Análise de Demanda Nodal vs Venda Efetiva do Ciclo</p>
+                           <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-4"><MapPin size={24} className="text-orange-500"/> Performance Geopolítica - P00</h3>
+                           <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.4em] italic">Análise de Demanda Nodal vs Venda Efetiva</p>
                         </div>
                      </div>
                      <div className="overflow-x-auto custom-scrollbar pb-6">
                         <table className="w-full text-[10px] font-black uppercase tracking-widest text-center border-separate border-spacing-2">
                            <thead>
                               <tr className="text-slate-600">
-                                 <th className="bg-slate-950 p-5 rounded-2xl border border-white/5 min-w-[140px]">DATA NODE</th>
+                                 <th className="bg-slate-950 p-5 rounded-2xl border border-white/5 min-w-[140px]">INDICADOR</th>
                                  {Array.from({ length: 9 }).map((_, i) => (
                                     <th key={i} className="bg-slate-950 p-5 rounded-2xl border border-white/5 text-orange-500 min-w-[100px]">Região 0{i+1}</th>
                                  ))}
@@ -158,7 +157,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            </thead>
                            <tbody className="font-mono text-xs">
                               <tr className="group">
-                                 <td className="bg-white/5 p-5 rounded-2xl text-slate-400 border border-white/5 group-hover:bg-white/10 transition-colors italic">DEMANDA BASE</td>
+                                 <td className="bg-white/5 p-5 rounded-2xl text-slate-400 border border-white/5 group-hover:bg-white/10 transition-colors italic">DEMANDA</td>
                                  {Array.from({ length: 8 }).map((_, i) => <td key={i} className="bg-white/5 p-5 rounded-2xl text-white border border-white/5 group-hover:bg-white/10">1.049</td>)}
                                  <td className="bg-white/5 p-5 rounded-2xl text-white border border-white/5 group-hover:bg-white/10">1.574</td>
                               </tr>
@@ -176,7 +175,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
 
                   {/* PARQUE DE MÁQUINAS */}
                   <div className="bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 shadow-2xl space-y-10">
-                     <h3 className="text-xl font-black text-blue-400 uppercase tracking-[0.3em] flex items-center gap-4 italic"><Cpu size={24}/> Auditoria de Ativos de Capital (Máquinas)</h3>
+                     <h3 className="text-xl font-black text-blue-400 uppercase tracking-[0.3em] flex items-center gap-4 italic"><Cpu size={24}/> Ativos Imobilizados (Máquinas)</h3>
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <MachineCard model="ALFA" qtde={5} age={14.0} icon={<Factory className="text-orange-500"/>} />
                         <MachineCard model="BETA" qtde={0} age={0} icon={<Zap className="text-blue-500"/>} />
@@ -194,16 +193,16 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                         <div className="p-6 bg-indigo-600 rounded-3xl text-white shadow-2xl shadow-indigo-600/30"><BarChart3 size={32} strokeWidth={2.5}/></div>
                         <div>
                            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Benchmarking Master</h3>
-                           <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Comparativo Consolidado de Saúde Patrimonial e Financeira</p>
+                           <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Comparativo de Saúde Patrimonial e Financeira Coletiva</p>
                         </div>
                      </div>
                   </div>
 
                   <div className="overflow-x-auto custom-scrollbar bg-slate-900/40 rounded-[4rem] border border-white/10 shadow-inner">
-                     <table className="w-full text-left border-collapse border-separate border-spacing-0">
+                     <table className="w-full text-left border-separate border-spacing-0">
                         <thead className="bg-slate-900 sticky top-0 z-20">
                            <tr className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
-                              <th className="p-10 border-b border-r border-white/10 min-w-[320px] bg-slate-900 italic">CONTAS CONSOLIDADAS ($)</th>
+                              <th className="p-10 border-b border-r border-white/10 min-w-[320px] bg-slate-900 italic">CONTA AUDITADA ($)</th>
                               {teams.map((t, i) => (
                                  <th key={t.id} className={`p-10 border-b border-r border-white/10 text-center min-w-[180px] ${i % 2 === 0 ? 'bg-slate-950/20' : 'bg-slate-900'}`}>
                                     <span className="text-orange-500 block mb-2 font-mono text-lg">E0{i+1}</span>
@@ -218,19 +217,19 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                               {teams.map(t => <td key={t.id} className="p-8 border-b border-r border-white/10 text-center text-lg">9.176.940</td>)}
                            </tr>
                            <tr className="hover:bg-white/[0.02]"><td className="p-6 pl-16 border-b border-r border-white/10 opacity-50 uppercase">Ativo Circulante</td>{teams.map(t => <td key={t.id} className="p-6 border-b border-r border-white/10 text-center">3.290.340</td>)}</tr>
-                           <tr className="hover:bg-white/[0.02]"><td className="p-6 pl-16 border-b border-r border-white/10 opacity-50 uppercase">Ativo Imobilizado (Líquido)</td>{teams.map(t => <td key={t.id} className="p-6 border-b border-r border-white/10 text-center">5.886.600</td>)}</tr>
+                           <tr className="hover:bg-white/[0.02]"><td className="p-6 pl-16 border-b border-r border-white/10 opacity-50 uppercase">Ativo Imobilizado</td>{teams.map(t => <td key={t.id} className="p-6 border-b border-r border-white/10 text-center">5.886.600</td>)}</tr>
                            
                            <tr className="bg-white/[0.02] font-black text-white uppercase italic hover:bg-white/5 transition-colors">
                               <td className="p-8 border-b border-r border-white/10 border-t border-white/10"><div className="flex items-center gap-3"><Scale size={14}/> PATRIMÔNIO LÍQUIDO</div></td>
                               {teams.map(t => <td key={t.id} className="p-8 border-b border-r border-white/10 text-center text-lg font-black text-blue-400">5.055.447</td>)}
                            </tr>
 
-                           <tr className="bg-slate-950 font-black text-white uppercase italic text-center"><td className="p-6 border-b border-r border-white/10" colSpan={teams.length + 1}>DEMONSTRATIVO DE RESULTADOS (DRE P00)</td></tr>
+                           <tr className="bg-slate-950 font-black text-white uppercase italic text-center"><td className="p-6 border-b border-r border-white/10" colSpan={teams.length + 1}>DEMONSTRATIVO DE RESULTADOS (P00)</td></tr>
                            <tr className="hover:bg-white/[0.02]"><td className="p-8 font-black text-emerald-400 uppercase italic border-b border-r border-white/10"><div className="flex items-center gap-3"><Target size={14}/> RECEITA DE VENDAS</div></td>{teams.map(t => <td key={t.id} className="p-8 border-b border-r border-white/10 text-center text-lg font-black text-emerald-400">3.322.735</td>)}</tr>
                            <tr className="hover:bg-white/[0.02]"><td className="p-6 pl-16 border-b border-r border-white/10 opacity-60">(-) Custo Produção (CPV)</td>{teams.map(t => <td key={t.id} className="p-6 border-b border-r border-white/10 text-center text-rose-500/80">2.278.180</td>)}</tr>
                            <tr className="bg-emerald-600/10 font-black text-emerald-400 italic hover:bg-emerald-600/20 transition-colors">
-                              <td className="p-10 border-b border-r border-white/10 text-xl tracking-tighter"><div className="flex items-center gap-3"><CheckCircle2 size={24}/> LUCRO LÍQUIDO DO CICLO</div></td>
-                              {teams.map(t => <td key={t.id} className="p-10 border-b border-r border-white/10 text-center text-3xl">73.928</td>)}
+                              <td className="p-10 border-b border-r border-white/10 text-xl tracking-tighter"><div className="flex items-center gap-3"><CheckCircle2 size={24}/> LUCRO LÍQUIDO</div></td>
+                              {teams.map(t => <td key={t.id} className="p-10 border-b border-r border-white/10 text-center text-3xl">74.988</td>)}
                            </tr>
                         </tbody>
                      </table>
@@ -244,13 +243,13 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                   <div className="p-12 bg-slate-900 border border-white/10 rounded-[4rem] shadow-2xl relative overflow-hidden">
                      <div className="absolute top-0 right-0 p-10 opacity-[0.01] rotate-6"><Globe size={280} /></div>
                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-10 flex items-center gap-4 relative z-10">
-                        <PieChart className="text-orange-500" size={32} /> Market Share Relativo (%) por Nodo Regional
+                        <PieChart className="text-orange-500" size={32} /> Market Share Relativo (%) por Região
                      </h3>
                      <div className="overflow-x-auto custom-scrollbar relative z-10">
                         <table className="w-full text-[10px] font-black uppercase text-center border-separate border-spacing-2">
                            <thead className="bg-slate-950 text-slate-600 italic">
                               <tr>
-                                 <th className="p-5 text-left rounded-xl border border-white/5">NODO DE MERCADO</th>
+                                 <th className="p-5 text-left rounded-xl border border-white/5">NODO REGIONAL</th>
                                  {teams.map((_, i) => <th key={i} className="p-5 rounded-xl border border-white/5 text-orange-500">Unidade 0{i+1}</th>)}
                               </tr>
                            </thead>
@@ -298,7 +297,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                      </div>
                   </div>
 
-                  {/* MONITORAMENTO BOLSA (EMPIRE SHARES) */}
+                  {/* BOLSA EMPIRION */}
                   <div className="bg-white/5 p-12 rounded-[4rem] border border-white/10 shadow-2xl">
                      <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.5em] mb-10 text-center italic">Cotação Global Empirion Shares ($)</h3>
                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
@@ -325,7 +324,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                         <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse shadow-[0_0_15px_#f97316]" /> Strategos Intelligence Feed
                      </h3>
                      <div className="text-4xl text-white font-medium italic leading-[1.3] whitespace-pre-wrap max-w-5xl relative z-10 drop-shadow-2xl">
-                        {aiNews || "O Oráculo Strategos está processando os dados de mercado. Sincronização em tempo real via rede neural Oracle Master v16.0..."}
+                        {aiNews || "O Oráculo Strategos está processando os dados de mercado. Sincronização em tempo real via rede neural Oracle Master v16.1..."}
                      </div>
                   </div>
 
@@ -341,7 +340,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <MacroVal label="ÍNDICE DE INFLAÇÃO" val="1,00%" icon={<Flame size={16} className="text-rose-500"/>} />
                            <MacroVal label="JUROS BANCÁRIOS (TR)" val="2,00%" icon={<Landmark size={16} className="text-blue-500"/>} />
                            <MacroVal label="JUROS MÉDIOS DE VENDAS" val="1,50%" icon={<DollarSign size={16} className="text-emerald-400"/>} />
-                           <MacroVal label="PRODUÇÃO MÉDIA POR OPERADOR" val="20,64 Units" icon={<Users size={16} className="text-indigo-400"/>} />
+                           <MacroVal label="PRODUÇÃO MÉDIA / OPERADOR" val="20,64 Units" icon={<Users size={16} className="text-indigo-400"/>} />
                         </div>
                      </div>
                      <div className="p-12 bg-slate-900 border border-white/10 rounded-[4.5rem] shadow-2xl space-y-12 group">
@@ -353,9 +352,9 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <MacroVal label="MATÉRIA-PRIMA A (Base)" val={`${currencySymbol} 20,20`} icon={<Package size={16}/>} />
                            <MacroVal label="MATÉRIA-PRIMA B (Base)" val={`${currencySymbol} 40,40`} icon={<Package size={16}/>} />
                            <MacroVal label="LOGÍSTICA E DISTRIBUIÇÃO" val={`${currencySymbol} 50,50`} icon={<Truck size={16}/>} />
-                           <MacroVal label="MÁQUINA ALFA (Base Unit.)" val={`${currencySymbol} 505.000,00`} icon={<Cpu size={16}/>} />
-                           <MacroVal label="MÁQUINA GAMA (Base Unit.)" val={`${currencySymbol} 3.030.000,00`} icon={<Cpu size={16}/>} />
-                           <MacroVal label="SALÁRIO MÉDIO DO SETOR" val={`${currencySymbol} 1.300,00`} icon={<Users size={16}/>} />
+                           <MacroVal label="MÁQUINA ALFA (Unit.)" val={`${currencySymbol} 505.000`} icon={<Cpu size={16}/>} />
+                           <MacroVal label="MÁQUINA GAMA (Unit.)" val={`${currencySymbol} 3.030.000`} icon={<Cpu size={16}/>} />
+                           <MacroVal label="SALÁRIO MÉDIO DO SETOR" val={`${currencySymbol} 1.300`} icon={<Users size={16}/>} />
                         </div>
                      </div>
                   </div>
@@ -366,7 +365,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       
       {/* FOOTER DE GOVERNANÇA */}
       <footer className="p-6 bg-slate-950 border-t border-white/5 flex justify-between items-center opacity-60 shrink-0 relative z-10">
-         <span className="text-[8px] font-black uppercase text-slate-500 tracking-[0.6em] italic">Build v16.0 Oracle Master • Node 08-STREET-INDUSTRIAL-MASTER</span>
+         <span className="text-[8px] font-black uppercase text-slate-500 tracking-[0.6em] italic">Build v16.1 Oracle Master • Node 08-STREET-INDUSTRIAL</span>
          <div className="flex gap-4 items-center">
             <div className="flex gap-2">
                <div className="w-2 h-2 rounded-full bg-orange-600 animate-pulse" />
