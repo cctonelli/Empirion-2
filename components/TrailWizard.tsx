@@ -214,6 +214,82 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
+            {step === 2 && (
+              <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
+                 <WizardStepTitle icon={<Users size={32}/>} title="EQUIPES E BOTS" desc="DEFINA QUEM PARTICIPARÁ DA COMPETIÇÃO NO CLUSTER." />
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div className="space-y-8 bg-white/5 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Configuração do Cluster</h4>
+                       <div className="grid grid-cols-2 gap-8">
+                          <WizardField label="Unidades Humanas" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
+                          <WizardField label="Synthetic Nodes (IA)" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
+                       </div>
+                    </div>
+                    <div className="space-y-4">
+                       <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em] italic flex items-center gap-3"><CheckCircle2 size={16}/> Nomenclatura Operacional</h4>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar">
+                          {teamNames.map((n, i) => (
+                             <div key={i} className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600">ID 0{i+1}</span>
+                                <input value={n} onChange={e => { const next = [...teamNames]; next[i] = e.target.value; setTeamNames(next); }} className="w-full bg-slate-900 border border-white/10 pl-14 pr-4 py-4 rounded-2xl text-[10px] font-black text-white uppercase outline-none focus:border-blue-500 transition-all" />
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+                 </div>
+              </motion.div>
+            )}
+
+            {step === 3 && (
+              <motion.div key="s3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
+                 <WizardStepTitle icon={<Globe size={32}/>} title="GEOPOLÍTICA REGIONAL" desc="CONFIGURE MOEDAS E BALANCEAMENTO DE DEMANDA INTERNACIONAL." />
+                 
+                 <div className="bg-slate-950/60 p-8 rounded-[3rem] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+                    <div className="flex items-center gap-6">
+                       <div className="p-4 bg-orange-600 rounded-2xl text-white shadow-xl shadow-orange-600/20"><Scale size={24}/></div>
+                       <div>
+                          <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Total Alocado</span>
+                          <h4 className={`text-3xl font-black italic ${totalWeight === 100 ? 'text-emerald-500' : 'text-rose-500'}`}>{totalWeight}% / 100%</h4>
+                       </div>
+                    </div>
+                    <div className="flex gap-4">
+                       <WizardField label="Total de Regiões" type="number" val={formData.regionsCount} onChange={(v:any)=>setFormData({...formData, regionsCount: Math.min(15, Math.max(1, parseInt(v)))})} />
+                       <button onClick={normalizeWeights} className="px-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all self-end mb-1">Auto-Balancear</button>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
+                    {regionConfigs.map((r, i) => (
+                       <div key={i} className="bg-slate-900/60 p-6 rounded-[2rem] border border-white/5 flex flex-wrap items-center gap-6 group hover:border-orange-500/30 transition-all shadow-xl">
+                          <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-orange-500 font-black italic">R{r.id}</div>
+                          
+                          <div className="flex-1 min-w-[200px]">
+                             <label className="text-[8px] font-black uppercase text-slate-600 tracking-widest ml-2 mb-1 block italic">Identificador Regional</label>
+                             <input value={r.name} onChange={e => updateRegion(i, { name: e.target.value.toUpperCase() })} className="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-xs font-black text-white uppercase outline-none focus:border-orange-500" />
+                          </div>
+
+                          <div className="w-32">
+                             <label className="text-[8px] font-black uppercase text-slate-600 tracking-widest ml-2 mb-1 block italic">Moeda Local</label>
+                             <select value={r.currency} onChange={e => updateRegion(i, { currency: e.target.value as CurrencyType })} className="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-[10px] font-black text-white outline-none cursor-pointer">
+                                <option value="BRL">R$ - REAL</option>
+                                <option value="USD">$ - DÓLAR</option>
+                                <option value="EUR">€ - EURO</option>
+                             </select>
+                          </div>
+
+                          <div className="w-32">
+                             <label className="text-[8px] font-black uppercase text-slate-600 tracking-widest ml-2 mb-1 block italic">Demanda %</label>
+                             <div className="relative">
+                                <input type="number" value={r.demand_weight} onChange={e => updateRegion(i, { demand_weight: parseInt(e.target.value) || 0 })} className="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-xs font-black text-orange-500 outline-none focus:border-orange-500 text-center" />
+                                <Percent size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-700" />
+                             </div>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </motion.div>
+            )}
+
             {step === 4 && (
               <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
                  <WizardStepTitle icon={<Award size={32}/>} title="REGRAS E PREMIAÇÕES" desc="DEFINA VALORES BASE E PREMIAÇÕES POR PRECISÃO DE CÁLCULO." />

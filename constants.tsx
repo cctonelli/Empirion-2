@@ -7,14 +7,8 @@ export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
 
-/**
- * Fix: Added missing CHAMPIONSHIP_TEMPLATES
- */
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [];
 
-/**
- * Fix: Added missing MENU_STRUCTURE
- */
 export const MENU_STRUCTURE: MenuItemConfig[] = [
   { label: 'Início', path: '/' },
   { label: 'Ramos', path: '/branches', sub: [
@@ -35,9 +29,6 @@ export const MENU_STRUCTURE: MenuItemConfig[] = [
   { label: 'Contato', path: '/contact' },
 ];
 
-/**
- * Fix: Added missing DEFAULT_PAGE_CONTENT
- */
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
     title: "Empirion",
@@ -94,9 +85,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   },
 };
 
-/**
- * Fix: Added missing getPageContent helper
- */
 export const getPageContent = (slug: string) => {
   return DEFAULT_PAGE_CONTENT[slug] || DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || null;
 };
@@ -186,10 +174,8 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'cpv', label: '( - ) CPV (CUSTO PROD. VENDIDO)', value: -2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
     { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
-        { id: 'opex.sales', label: 'Marketing e Vendas', value: 275400, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'opex.distribution', label: 'Distribuição', value: 463362, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'opex.adm', label: 'Folha Pagamento & Admin', value: 114880, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'opex.storage', label: 'Gastos Estocagem', value: 70700, type: 'expense', isEditable: true, isTemplateAccount: true }
+        { id: 'opex.sales', label: 'Marketing e Vendas (VENDAS)', value: 802702, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'opex.adm', label: 'Administrativas', value: 114880, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
     { id: 'fin_exp_group', label: '( - ) DESPESAS FINANCEIRAS', value: -40000, type: 'totalizer', children: [
         { id: 'fin_exp.liquid', label: 'Juros Bancários', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
@@ -299,5 +285,13 @@ export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicato
   1: { 
     ice: 4.0, demand_variation: 6.7, inflation_rate: 2.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 2.0, sales_interest_rate: 2.4, allow_machine_sale: true,
     raw_material_a_adjust: 2.0, machine_alpha_price_adjust: 2.0, machine_beta_price_adjust: 2.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 2.0
+  },
+  2: { 
+    ice: 5.0, demand_variation: -6.3, inflation_rate: 3.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 3.0, sales_interest_rate: 3.0, allow_machine_sale: true,
+    raw_material_a_adjust: 3.0, machine_alpha_price_adjust: 2.0, machine_beta_price_adjust: 2.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 3.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 2.0
+  },
+  3: { 
+    ice: 5.0, demand_variation: 55.0, inflation_rate: 3.0, customer_default_rate: 2.8, interest_rate_tr: 4.0, supplier_interest: 3.0, sales_interest_rate: 3.2, allow_machine_sale: false,
+    raw_material_a_adjust: 3.0, machine_alpha_price_adjust: 3.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 3.0, marketing_campaign_adjust: 3.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 3.0
   }
 };
