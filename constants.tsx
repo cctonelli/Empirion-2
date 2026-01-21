@@ -89,16 +89,19 @@ export const getPageContent = (slug: string) => {
   return DEFAULT_PAGE_CONTENT[slug] || DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || null;
 };
 
+/**
+ * INITIAL_INDUSTRIAL_FINANCIALS - FIDELIDADE P00 (MODELO ANEXO)
+ */
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
     assets: { 
-      current: { cash: 0, receivables: 1823735, inventory_mpa: 628545, inventory_mpb: 838060 }, 
-      total: 9006940 
+      current: { cash: 0, receivables: 1823735, inventory: 1466605 }, 
+      total: 9176940 
     },
     equity: { 
-      total: 4885447, 
+      total: 5055447, 
       capital_social: 5000000, 
-      accumulated_profit: -114553 
+      accumulated_profit: 55447 
     },
     liabilities: { 
       current: 2621493, 
@@ -109,23 +112,31 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
   dre: {
     revenue: 3322735,
     cpv: 2278180,
+    gross_profit: 1044555,
     opex: 917582,
+    operating_profit: 126973,
     financial_revenue: 0,
     financial_expense: 40000,
+    lair: 86973,
     tax: 13045,
+    ppr: 0,
     net_profit: 73928
   }
 };
 
+/**
+ * INITIAL_FINANCIAL_TREE - ARQUITETURA DE CONTAS P00
+ */
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
-      id: 'assets', label: 'ATIVO', value: 9006940, type: 'totalizer', isReadOnly: true, children: [
+      id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
-          id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3120340, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Caixa e Bancos', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
-            { id: 'assets.current.clients', label: 'Clientes (Contas a Receber)', value: 1823735, type: 'asset', isEditable: true, isTemplateAccount: true },
-            { id: 'assets.current.stock', label: 'ESTOQUES', value: 1466605, type: 'totalizer', children: [
+          id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
+            { id: 'assets.current.cash', label: 'Caixa', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.app', label: 'Aplicação', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.clients', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true, isTemplateAccount: true },
+            { id: 'assets.current.stock', label: 'ESTOQUE', value: 1466605, type: 'totalizer', children: [
                 { id: 'assets.current.stock.finished', label: 'Estoque Prod. Acabado ALPHA', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
                 { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 628545, type: 'asset', isEditable: true, isTemplateAccount: true },
                 { id: 'assets.current.stock.mpb', label: 'Estoque MP B', value: 838060, type: 'asset', isEditable: true, isTemplateAccount: true }
@@ -136,34 +147,35 @@ export const INITIAL_FINANCIAL_TREE = {
           id: 'assets.noncurrent', label: 'ATIVO NÃO CIRCULANTE', value: 5886600, type: 'totalizer', children: [
             { id: 'assets.noncurrent.fixed', label: 'IMOBILIZADO', value: 5886600, type: 'totalizer', children: [
                 { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true, isTemplateAccount: true },
-                { id: 'assets.noncurrent.fixed.dep_machines', label: '(-) Depreciação acumulada equipamentos', value: -811500, type: 'asset', isEditable: true, isTemplateAccount: true },
+                { id: 'assets.noncurrent.fixed.dep_machines', label: '(-) Depreciação acumulada de equipamentos', value: -811500, type: 'asset', isEditable: true, isTemplateAccount: true },
                 { id: 'assets.noncurrent.fixed.land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true, isTemplateAccount: true },
                 { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true, isTemplateAccount: true },
-                { id: 'assets.noncurrent.fixed.dep_buildings', label: '(-) Depreciação acumulada prédios', value: -2301900, type: 'asset', isEditable: true, isTemplateAccount: true }
+                { id: 'assets.noncurrent.fixed.dep_buildings', label: '(-) Depreciação acumulada de prédios e instalações', value: -2301900, type: 'asset', isEditable: true, isTemplateAccount: true }
             ]}
           ]
         }
       ]
     },
     { 
-      id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9006940, type: 'totalizer', isReadOnly: true, children: [
+      id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
           id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2621493, type: 'totalizer', children: [
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true, isTemplateAccount: true },
             { id: 'liabilities.current.taxes', label: 'Imposto de Renda a pagar', value: 13045, type: 'liability', isEditable: true, isTemplateAccount: true },
+            { id: 'liabilities.current.ppr', label: 'Participações a pagar', value: 0, type: 'liability', isEditable: true, isTemplateAccount: true },
             { id: 'liabilities.current.divs', label: 'Dividendos a pagar', value: 18481, type: 'liability', isEditable: true, isTemplateAccount: true },
-            { id: 'liabilities.current.loans_st', label: 'Empréstimos curto prazo', value: 1872362, type: 'liability', isEditable: true, isTemplateAccount: true }
+            { id: 'liabilities.current.loans_st', label: 'Empréstimos de curto prazo', value: 1872362, type: 'liability', isEditable: true, isTemplateAccount: true }
           ] 
         },
         {
           id: 'liabilities.longterm', label: 'PASSIVO NÃO CIRCULANTE', value: 1500000, type: 'totalizer', children: [
-            { id: 'liabilities.longterm.loans_lt', label: 'Empréstimos longo prazo', value: 1500000, type: 'liability', isEditable: true, isTemplateAccount: true }
+            { id: 'liabilities.longterm.loans_lt', label: 'Empréstimos de longo prazo', value: 1500000, type: 'liability', isEditable: true, isTemplateAccount: true }
           ]
         },
         { 
-          id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 4885447, type: 'totalizer', children: [
+          id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 5055447, type: 'totalizer', children: [
             { id: 'equity.capital', label: 'Capital Social', value: 5000000, type: 'equity', isEditable: true, isTemplateAccount: true },
-            { id: 'equity.profit', label: 'Lucros Acumulados', value: -114553, type: 'equity', isEditable: true, isTemplateAccount: true }
+            { id: 'equity.profit', label: 'Lucros Acumulados no ano', value: 55447, type: 'equity', isEditable: true, isTemplateAccount: true }
           ] 
         }
       ]
@@ -171,43 +183,50 @@ export const INITIAL_FINANCIAL_TREE = {
   ],
   dre: [
     { id: 'rev', label: 'RECEITA DE VENDAS', value: 3322735, type: 'revenue', isEditable: true, isTemplateAccount: true },
-    { id: 'cpv', label: '( - ) CPV (CUSTO PROD. VENDIDO)', value: -2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
+    { id: 'cpv', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: -2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
     { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
-        { id: 'opex.sales', label: 'Marketing e Vendas (VENDAS)', value: 802702, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'opex.adm', label: 'Administrativas', value: 114880, type: 'expense', isEditable: true, isTemplateAccount: true }
+        { id: 'opex.sales', label: 'VENDAS', value: 802702, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true, isTemplateAccount: true }
+    ]},
+    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true, children: [] },
+    { id: 'fin_rev_group', label: '( + ) RECEITAS FINANCEIRAS', value: 0, type: 'totalizer', children: [
+        { id: 'fin_rev.apps', label: 'RENDIMENTOS DE APLICAÇÕES FINANCEIRAS', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true }
     ]},
     { id: 'fin_exp_group', label: '( - ) DESPESAS FINANCEIRAS', value: -40000, type: 'totalizer', children: [
-        { id: 'fin_exp.liquid', label: 'Juros Bancários', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
+        { id: 'fin_exp.liquid', label: 'FINANCEIRAS LÍQUIDAS', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
+    { id: 'lair', label: '(=) LAIR - LUCRO LÍQUIDO ANTES DO IR', value: 86973, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'tax_prov', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true, isTemplateAccount: true },
+    { id: 'profit_after_tax', label: '(=) LUCRO LÍQUIDO APÓS O I. R.', value: 73928, type: 'totalizer', isReadOnly: true, children: [] },
+    { id: 'ppr', label: '( - ) PPR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
     { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true, children: [] }
   ],
   cash_flow: [
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true, isTemplateAccount: true },
     { id: 'cf.inflow', label: '(+) ENTRADAS', value: 3264862, type: 'totalizer', children: [
-        { id: 'cf.inflow.cash_sales', label: 'Vendas à Vista', value: 1649000, type: 'revenue', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.inflow.receivables', label: 'Vendas à Prazo', value: 243500, type: 'revenue', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.inflow.asset_resgate', label: 'Resgate de Aplicação', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.inflow.machine_sale', label: 'Venda de Máquinas', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.inflow.loans_normal', label: 'Empréstimos Normais', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.inflow.loans_compulsory', label: 'Empréstimo Compulsório', value: 1372362, type: 'revenue', isEditable: true, isTemplateAccount: true }
+        { id: 'cf.inflow.cash_sales', label: 'VENDAS À VISTA', value: 1649000, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.receivables', label: 'VENDAS À PRAZO', value: 243500, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.asset_resgate', label: 'RESGATE DA APLICAÇÃO', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.machine_sale', label: 'VENDA DE MÁQUINAS', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.loans_normal', label: 'EMPRÉSTIMOS NORMAIS', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.loans_compulsory', label: 'EMPRÉSTIMO COMPULSÓRIO', value: 1372362, type: 'revenue', isEditable: true, isTemplateAccount: true }
     ]},
     { id: 'cf.outflow', label: '(-) SAÍDAS', value: -3434862, type: 'totalizer', children: [
-        { id: 'cf.outflow.payroll', label: 'Folha de Pagamento', value: 767000, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.mkt', label: 'Campanhas de Marketing', value: 275400, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.distribution', label: 'Distribuição de Produtos', value: 463362, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.misc', label: 'Diversos e Atrasos Gerais', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.storage', label: 'Gastos com Estocagem', value: 70700, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.suppliers', label: 'Pagamento a Fornecedores', value: 1677000, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.machine_buy', label: 'Compra de Máquinas', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.maintenance', label: 'Manutenção de Máquinas', value: 141400, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.amortization', label: 'Amortização de Empréstimos', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.interest', label: 'Juros Bancários', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.training', label: 'Treinamento', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.taxes', label: 'Imposto de Renda', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.dividends', label: 'Dividendos e Participações', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.application', label: 'Aplicação', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true }
+        { id: 'cf.outflow.payroll', label: 'FOLHA DE PAGAMENTO', value: 767000, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.mkt', label: 'CAMPANHAS DE MARKETING', value: 275400, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 463362, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.misc', label: 'DIVERSOS E ATRASOS GERAIS', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 70700, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.suppliers', label: 'PAGAMENTO A FORNECEDORES', value: 1677000, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.machine_buy', label: 'COMPRA DE MÁQUINAS', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO DE MÁQUINAS', value: 141400, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.interest', label: 'JUROS BANCÁRIOS', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.training', label: 'TREINAMENTO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.dividends', label: 'DIVIDENDOS E PARTICIPAÇÕES', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.application', label: 'APLICAÇÃO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
     { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0, type: 'totalizer', isReadOnly: true, children: [] }
   ]
