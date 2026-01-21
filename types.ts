@@ -184,6 +184,7 @@ export interface MacroIndicators {
   tax_rate_ir: number;
   late_penalty_rate: number;
   machine_sale_discount: number;
+  special_purchase_premium: number;
   exchange_rates: Record<CurrencyType, number>; 
   dividend_percent: number;
   

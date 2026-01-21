@@ -115,6 +115,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                        <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Package className="text-orange-500"/> Insumos & Estocagem</h3>
                        <MacroInput label="MP-A Base ($)" val={macro.prices.mp_a} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
                        <MacroInput label="MP-B Base ($)" val={macro.prices.mp_b} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
+                       <MacroInput label="Ágio Compras Esp. (%)" val={macro.special_purchase_premium} onChange={(v: number) => setMacro({...macro, special_purchase_premium: v})} />
                        <div className="grid grid-cols-2 gap-4">
                           <MacroInput label="Estocagem MP ($)" val={macro.prices.storage_mp || 1.40} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
                           <MacroInput label="Estocagem PROD ($)" val={macro.prices.storage_finished || 20.00} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />

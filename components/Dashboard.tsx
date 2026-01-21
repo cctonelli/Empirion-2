@@ -8,14 +8,11 @@ import {
   Thermometer, EyeOff, Globe, Map, PieChart, Users,
   ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon, Info,
   Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon,
-  ChevronDown, Maximize2, Zap, ShieldAlert, ThermometerSun, Layers3
+  ChevronDown, Maximize2, Zap, ShieldAlert, ThermometerSun, Layers3,
+  Factory, ShoppingCart
 } from 'lucide-react';
-/**
- * Fix: Used motion as any to bypass internal library type resolution issues in this environment
- */
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
-// Fix: Use any to bypass react-router-dom type resolution issues in this environment
 import * as ReactRouterDOM from 'react-router-dom';
 const { useNavigate } = ReactRouterDOM as any;
 import ChampionshipTimer from './ChampionshipTimer';
@@ -39,18 +36,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       try {
         const champId = localStorage.getItem('active_champ_id');
         const teamId = localStorage.getItem('active_team_id');
-        
-        if (!champId || !teamId) {
-           navigate('/app/championships');
-           return;
-        }
-
+        if (!champId || !teamId) { navigate('/app/championships'); return; }
         const { data: { session } } = await (supabase.auth as any).getSession();
         if (session) {
           const profile = await getUserProfile(session.user.id);
           if (profile) setUserRole(profile.role);
         }
-
         const { data } = await getChampionships();
         const arena = data?.find(a => a.id === champId);
         if (arena) {
@@ -58,9 +49,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           const team = arena.teams?.find((t: any) => t.id === teamId);
           if (team) setActiveTeam(team);
         }
-      } catch (err: any) {
-        logError(LogContext.DASHBOARD, "Cockpit Init Fault", err.message);
-      } finally { setLoading(false); }
+      } catch (err: any) { logError(LogContext.DASHBOARD, "Cockpit Init Fault", err.message); }
+      finally { setLoading(false); }
     };
     fetchAll();
   }, [navigate]);
@@ -86,7 +76,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   }, [activeArena, activeTeam]);
 
   const currencySymbol = activeArena?.currency === 'BRL' ? 'R$' : activeArena?.currency === 'EUR' ? '€' : '$';
-
   const fmt = (val: number) => {
     if (Math.abs(val) >= 1000000) return `${(val / 1000000).toFixed(2)}M`;
     if (Math.abs(val) >= 1000) return `${(val / 1000).toFixed(1)}K`;
@@ -121,8 +110,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
          <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend={`${currentKpis.market_valuation?.tsr.toFixed(1)}%`} pos={currentKpis.market_valuation?.tsr >= 0} icon={<TrendingUp size={16}/>} />
          <CockpitStat label="Receita Bruta" val={`${currencySymbol} ${fmt(currentKpis.statements?.dre?.revenue || 0)}`} trend="Real" pos icon={<DollarSign size={16}/>} />
-         <CockpitStat label="Lucro Líquido" val={`${currencySymbol} ${fmt(currentKpis.statements?.dre?.net_profit || 0)}`} trend="Net" pos={ (currentKpis.statements?.dre?.net_profit || 0) >= 0 } icon={<ActivityIcon size={16}/>} />
-         <CockpitStat label="Market Share" val={`${(currentKpis.market_share || 0).toFixed(1)}%`} trend="MKT" pos icon={<PieChart size={16}/>} />
+         <CockpitStat label="Mkt Share" val={`${(currentKpis.market_share || 0).toFixed(1)}%`} trend="Comp." pos icon={<PieChart size={16}/>} />
+         <CockpitStat label="Produtividade" val={`${((activeArena?.market_indicators?.labor_productivity || 1) * 100).toFixed(0)}%`} trend="Eficiência" pos icon={<Cpu size={16}/>} />
          <CockpitStat label="Rating" val={currentKpis.rating} trend="Kanitz" pos icon={<ShieldCheck size={16}/>} />
          <div className="px-8 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
             <div className="flex flex-col">
@@ -144,6 +133,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   <span className="text-[10px] font-black text-slate-600 uppercase">Cycle 0{activeArena?.current_round}</span>
                </header>
                
+               {/* FLEURIET BOX */}
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-4 shadow-inner">
                   <div className="flex justify-between items-center mb-1">
                      <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Fontes de Giro (Fleuriet)</h4>
@@ -151,30 +141,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                   
                   <div className="flex h-12 w-full rounded-xl overflow-hidden border border-white/5 shadow-2xl bg-slate-900">
-                     <motion.div 
-                        initial={{width:0}} 
-                        animate={{width: `${(Math.abs(sources.elp) / totalAbs) * 100}%`}} 
-                        className="h-full bg-blue-600 relative group"
-                        title="ELP: Empréstimos LP"
-                     />
-                     <motion.div 
-                        initial={{width:0}} 
-                        animate={{width: `${(Math.max(0, sources.ccp) / totalAbs) * 100}%`}} 
-                        className={`h-full bg-slate-400 relative group ${sources.ccp < 0 ? 'opacity-0' : ''}`}
-                        title="CCP: Capital Circulante Próprio"
-                     />
-                     <motion.div 
-                        initial={{width:0}} 
-                        animate={{width: `${(Math.abs(sources.ecp) / totalAbs) * 100}%`}} 
-                        className="h-full bg-orange-600 relative group"
-                        title="ECP: Empréstimos CP"
-                     />
+                     <motion.div initial={{width:0}} animate={{width: `${(Math.abs(sources.elp) / totalAbs) * 100}%`}} className="h-full bg-blue-600 relative group" />
+                     <motion.div initial={{width:0}} animate={{width: `${(Math.max(0, sources.ccp) / totalAbs) * 100}%`}} className={`h-full bg-slate-400 relative group ${sources.ccp < 0 ? 'opacity-0' : ''}`} />
+                     <motion.div initial={{width:0}} animate={{width: `${(Math.abs(sources.ecp) / totalAbs) * 100}%`}} className="h-full bg-orange-600 relative group" />
                   </div>
 
                   <div className="space-y-2">
                      <SourceRow label="ECP (Curto Prazo)" val={fmt(sources.ecp)} color="bg-orange-600" />
                      <SourceRow label="ELP (Longo Prazo)" val={fmt(sources.elp)} color="bg-blue-600" />
-                     <SourceRow label="CCP (Proprio/CCL)" val={fmt(sources.ccp)} color="bg-slate-400" />
+                     <SourceRow label="CCP (Próprio)" val={fmt(sources.ccp)} color="bg-slate-400" />
                      <div className="pt-2 border-t border-white/5 flex justify-between items-center">
                         <span className="text-[9px] font-black text-white uppercase italic">NLCDG TOTAL</span>
                         <span className="text-sm font-mono font-black text-orange-500">$ {fmt(currentKpis.nlcdg || 0)}</span>
@@ -182,34 +157,35 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
+               {/* SPECIAL PURCHASES ALERT BOX */}
+               <div className="bg-indigo-600/10 border border-indigo-500/20 p-5 rounded-[2.5rem] space-y-3">
+                  <div className="flex items-center gap-3 text-indigo-400">
+                     <ShoppingCart size={16} />
+                     <span className="text-[10px] font-black uppercase tracking-widest">Oracle Purchasing</span>
+                  </div>
+                  <p className="text-[10px] text-indigo-100 font-medium italic leading-relaxed">
+                     { (currentKpis.special_purchases_impact && currentKpis.special_purchases_impact > 0) 
+                       ? `ALERTA: Compras Especiais executadas ($ ${fmt(currentKpis.special_purchases_impact)}). Seu estoque não supriu a produção decidida.`
+                       : "Protocolo Just-in-time ativo. Nenhuma compra especial necessária para o próximo fechamento." }
+                  </p>
+               </div>
+
+               {/* SOLVENCY THERMOMETER */}
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-3 shadow-inner group">
                   <div className="flex justify-between items-center mb-1">
-                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Termômetro de Insolvência</h4>
+                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Insolvência (Kanitz)</h4>
                      <ThermometerSun size={12} className={kanitzColor} />
                   </div>
                   <div className="flex items-center justify-between">
                      <span className={`text-4xl font-black font-mono italic drop-shadow-lg ${kanitzColor}`}>{kanitz.toFixed(2)}</span>
                      <div className="text-right">
                         <span className={`block text-[8px] font-black uppercase tracking-widest ${kanitzColor}`}>{kanitzLabel}</span>
-                        <span className="block text-[7px] text-slate-600 font-bold uppercase italic mt-1">Status de Solvência</span>
+                        <span className="block text-[7px] text-slate-600 font-bold uppercase italic mt-1">Status Oracle</span>
                      </div>
                   </div>
                   <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mt-4">
-                     <div 
-                        className={`h-full transition-all duration-1000 ${kanitzColor.replace('text', 'bg')}`} 
-                        style={{ width: `${Math.min(100, Math.max(5, ((kanitz + 7) / 14) * 100))}%` }} 
-                     />
+                     <div className={`h-full transition-all duration-1000 ${kanitzColor.replace('text', 'bg')}`} style={{ width: `${Math.min(100, Math.max(5, ((kanitz + 7) / 14) * 100))}%` }} />
                   </div>
-               </div>
-
-               <div className="p-5 bg-indigo-600/10 border border-indigo-500/20 rounded-[2.5rem] space-y-3 shadow-lg">
-                  <div className="flex items-center gap-3 text-indigo-400">
-                     <Sparkles size={16} />
-                     <span className="text-[10px] font-black uppercase tracking-widest">Oracle Advice</span>
-                  </div>
-                  <p className="text-[10px] text-indigo-100 font-medium italic leading-relaxed">
-                     { (sources.ccp < 0) ? "Crítico: Seu CCP está negativo. Você está usando dívida bancária para financiar ativos fixos." : "Equilíbrio Fleuriet detectado. FI de " + kanitz.toFixed(2) + " indica operação saudável." }
-                  </p>
                </div>
             </div>
          </aside>

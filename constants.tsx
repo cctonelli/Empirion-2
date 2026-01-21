@@ -238,6 +238,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   tax_rate_ir: 15.0,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
+  special_purchase_premium: 15.0,
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
   dividend_percent: 10.0,
   
