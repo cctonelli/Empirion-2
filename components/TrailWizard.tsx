@@ -149,13 +149,27 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   };
 
   const updateRoundMacro = (round: number, key: string, val: any) => {
-    setRoundRules(prev => ({
-      ...prev,
-      [round]: {
-        ...(prev[round] || {}),
-        [key]: val
-      }
-    }));
+    // Caso especial para exchange_rates que é um objeto aninhado
+    if (key === 'USD' || key === 'EUR') {
+       setRoundRules(prev => ({
+         ...prev,
+         [round]: {
+           ...(prev[round] || {}),
+           exchange_rates: {
+             ...(prev[round]?.exchange_rates || baseIndicators.exchange_rates),
+             [key]: val
+           }
+         }
+       }));
+    } else {
+       setRoundRules(prev => ({
+         ...prev,
+         [round]: {
+           ...(prev[round] || {}),
+           [key]: val
+         }
+       }));
+    }
   };
 
   const stepsCount = 7;
@@ -395,6 +409,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="JUROS BANCÁRIOS (TR)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="JUROS DE FORNECEDORES" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="JUROS MÉDIOS DE VENDAS" macroKey="sales_interest_rate" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="IMPOSTO DE RENDA (%)" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="DESÁGIO VENDA MÁQ. (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
@@ -542,7 +558,15 @@ const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods }: any
       {Array.from({ length: periods }).map((_, i) => {
          // LÓGICA DE REPLICAÇÃO: Se i > 12, usa o valor de P12. Se i <= 12, tenta pegar da regra do round ou cronograma industrial padrão.
          const lookupRound = Math.min(i, 12);
-         const val = rules[i]?.[macroKey] ?? (rules[lookupRound]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound]?.[macroKey] ?? (DEFAULT_MACRO[macroKey] ?? 0)));
+         
+         // Se for um indicador de câmbio (USD/EUR), busca dentro do objeto exchange_rates
+         let val = 0;
+         if (macroKey === 'USD' || macroKey === 'EUR') {
+            val = rules[i]?.exchange_rates?.[macroKey] ?? (DEFAULT_MACRO.exchange_rates[macroKey as CurrencyType] || 0);
+         } else {
+            val = rules[i]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound]?.[macroKey] ?? (DEFAULT_MACRO[macroKey] ?? 0));
+         }
+
          const isNegative = val < 0;
 
          return (

@@ -110,13 +110,15 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
            {activeTab === 'suppliers' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                 <div className="lg:col-span-4 bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-10">
-                    <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Package className="text-orange-500"/> Insumos & Estocagem</h3>
-                    <MacroInput label="MP-A Base ($)" val={macro.prices.mp_a} onChange={v => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
-                    <MacroInput label="MP-B Base ($)" val={macro.prices.mp_b} onChange={v => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
-                    <div className="grid grid-cols-2 gap-4">
-                       <MacroInput label="Estocagem MP ($)" val={macro.prices.storage_mp || 1.40} onChange={v => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
-                       <MacroInput label="Estocagem PROD ($)" val={macro.prices.storage_finished || 20.00} onChange={v => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
+                 <div className="lg:col-span-4 space-y-8">
+                    <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-10">
+                       <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Package className="text-orange-500"/> Insumos & Estocagem</h3>
+                       <MacroInput label="MP-A Base ($)" val={macro.prices.mp_a} onChange={v => setMacro({...macro, prices: {...macro.prices, mp_a: v}})} />
+                       <MacroInput label="MP-B Base ($)" val={macro.prices.mp_b} onChange={v => setMacro({...macro, prices: {...macro.prices, mp_b: v}})} />
+                       <div className="grid grid-cols-2 gap-4">
+                          <MacroInput label="Estocagem MP ($)" val={macro.prices.storage_mp || 1.40} onChange={v => setMacro({...macro, prices: {...macro.prices, storage_mp: v}})} />
+                          <MacroInput label="Estocagem PROD ($)" val={macro.prices.storage_finished || 20.00} onChange={v => setMacro({...macro, prices: {...macro.prices, storage_finished: v}})} />
+                       </div>
                     </div>
                  </div>
                  <div className="lg:col-span-8 bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
@@ -172,7 +174,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Award className="text-orange-500"/> Premiações por Precisão</h3>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <MacroInput label="Prêmio Custo ($)" val={macro.award_values.cost_precision} onChange={v => setMacro({...macro, award_values: {...macro.award_values, cost_precision: v}})} />
-                    <MacroInput label="Prêmio Receita ($)" val={macro.award_values.revenue_precision} onChange={v => setMacro({...macro, award_values: {...macro.award_values, revenue_precision: v})} } />
+                    <MacroInput label="Prêmio Receita ($)" val={macro.award_values.revenue_precision} onChange={v => setMacro({...macro, award_values: {...macro.award_values, revenue_precision: v}})} />
                     <MacroInput label="Prêmio Lucro ($)" val={macro.award_values.profit_precision} onChange={v => setMacro({...macro, award_values: {...macro.award_values, profit_precision: v}})} />
                  </div>
               </div>
@@ -206,7 +208,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   );
 };
 
-const ParamCard = ({ label, val, suffix, onChange, desc, icon }: any) => (
+const ParamCard = ({ label, val, suffix, onChange, icon }: any) => (
   <div className="bg-slate-900/80 p-8 rounded-[3rem] border border-white/10 flex flex-col gap-6 shadow-xl group hover:border-orange-500/30 transition-all">
      <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-orange-600 group-hover:text-white transition-all w-fit">{icon}</div>
      <div>
@@ -225,7 +227,7 @@ const TabBtn = ({ active, onClick, label, icon }: any) => (
   </button>
 );
 
-const MacroInput = ({ label, val, onChange, dark, icon }: any) => (
+const MacroInput = ({ label, val, onChange, dark }: any) => (
   <div className="space-y-4 group">
      <label className={`text-[10px] font-black uppercase tracking-[0.2em] italic group-focus-within:text-orange-500 transition-colors ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{label}</label>
      <input type="number" step="0.1" value={val} onChange={e => onChange(Number(e.target.value))} className={`w-full border-2 rounded-[1.5rem] px-8 py-6 font-mono font-black text-3xl outline-none transition-all ${dark ? 'bg-slate-950 border-white/5 text-white focus:border-blue-600' : 'bg-slate-950 border-white/10 text-white focus:border-orange-600 shadow-inner'}`} />
