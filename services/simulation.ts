@@ -109,7 +109,7 @@ export const calculateProjections = (
   const mpbCost = decidedMPB * indicators.prices.mp_b;
   const cpv = (finalUnitsSold * (indicators.prices.mp_a * 3 + indicators.prices.mp_b * 2)) + 32000;
   
-  const baseOpex = 917582 * (1 + (indicators.inflation_rate / 100));
+  const baseOpex = 916522 * (1 + (indicators.inflation_rate / 100));
   const storageCost = (Math.max(0, unitsToProduce - finalUnitsSold) * indicators.prices.storage_finished) +
                       (Math.max(0, (decidedMPA + deficitMPA) * 0.1) * indicators.prices.storage_mp);
   

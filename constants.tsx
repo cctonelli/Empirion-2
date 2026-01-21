@@ -110,14 +110,14 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
     revenue: 3322735,
     cpv: 2278180,
     gross_profit: 1044555,
-    opex: 917582,
-    operating_profit: 126973,
+    opex: 916522,
+    operating_profit: 128033,
     financial_revenue: 0,
     financial_expense: 40000,
-    lair: 86973,
+    lair: 88033,
     tax: 13045,
     ppr: 0,
-    net_profit: 73928
+    net_profit: 74988
   }
 };
 
@@ -179,22 +179,22 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'rev', label: 'RECEITA DE VENDAS', value: 3322735, type: 'revenue', isEditable: true, isTemplateAccount: true },
     { id: 'cpv', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: -2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
     { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true, children: [] },
-    { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
-        { id: 'opex.sales', label: 'VENDAS', value: 802702, type: 'expense', isEditable: true, isTemplateAccount: true },
+    { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -916522, type: 'totalizer', children: [
+        { id: 'opex.sales', label: 'VENDAS', value: 801642, type: 'expense', isEditable: true, isTemplateAccount: true },
         { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
-    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true, children: [] },
+    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 128033, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'fin_rev_group', label: '( + ) RECEITAS FINANCEIRAS', value: 0, type: 'totalizer', children: [
         { id: 'fin_rev.apps', label: 'RENDIMENTOS DE APLICAÇÕES FINANCEIRAS', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true }
     ]},
     { id: 'fin_exp_group', label: '( - ) DESPESAS FINANCEIRAS', value: -40000, type: 'totalizer', children: [
         { id: 'fin_exp.liquid', label: 'FINANCEIRAS LÍQUIDAS', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
-    { id: 'lair', label: '(=) LAIR - LUCRO LÍQUIDO ANTES DO IR', value: 86973, type: 'totalizer', isReadOnly: true, children: [] },
+    { id: 'lair', label: '(=) LAIR - LUCRO LÍQUIDO ANTES DO IR', value: 88033, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'tax_prov', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true, isTemplateAccount: true },
-    { id: 'profit_after_tax', label: '(=) LUCRO LÍQUIDO APÓS O I. R.', value: 73928, type: 'totalizer', isReadOnly: true, children: [] },
+    { id: 'profit_after_tax', label: '(=) LUCRO LÍQUIDO APÓS O I. R.', value: 74988, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'ppr', label: '( - ) PPR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
-    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true, children: [] }
+    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 74988, type: 'totalizer', isReadOnly: true, children: [] }
   ],
   cash_flow: [
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true, isTemplateAccount: true },
