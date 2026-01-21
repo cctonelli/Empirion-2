@@ -9,7 +9,7 @@ import {
   ArrowUpCircle, ArrowDownCircle, HardDrive, LayoutGrid,
   Zap, Flame, ShieldAlert, BarChart3, Coins, Hammer, Package,
   MapPin, Scale, Eye, EyeOff, ChevronLeft, ChevronRight, Truck, Warehouse, Megaphone,
-  BarChart, PieChart, Activity, Award, ClipboardList, ShoppingCart
+  BarChart, PieChart, Activity, Award, ClipboardList, ShoppingCart, UserPlus, Briefcase
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -304,8 +304,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <h4 className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Package size={18}/> Insumos & Estocagem</h4>
                        <WizardField label="MP-A ($)" type="number" val={baseIndicators.prices.mp_a} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_a: parseFloat(v)}})} />
                        <WizardField label="MP-B ($)" type="number" val={baseIndicators.prices.mp_b} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_b: parseFloat(v)}})} />
-                       <WizardField label="Estocagem MP ($)" type="number" step="0.1" val={baseIndicators.prices.storage_mp} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_mp: parseFloat(v)}})} />
-                       <WizardField label="Estocagem PROD ($)" type="number" val={baseIndicators.prices.storage_finished} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_finished: parseFloat(v)}})} />
+                       <WizardField label="Estocagem MP ($)" type="number" step="0.1" val={baseIndicators.prices.storage_mp || 1.40} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_mp: parseFloat(v)}})} />
+                       <WizardField label="Estocagem PROD ($)" type="number" val={baseIndicators.prices.storage_finished || 20.00} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_finished: parseFloat(v)}})} />
                     </div>
 
                     {/* 2. ATIVOS & CAPEX */}
@@ -316,30 +316,40 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="Máquina GAMA ($)" type="number" val={baseIndicators.machinery_values.gama} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, gama: parseFloat(v)}})} />
                     </div>
 
-                    {/* 3. MERCADO P00 */}
+                    {/* 3. MERCADO */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Truck size={18}/> Mercado P00</h4>
-                       <WizardField label="Preço Venda Médio ($)" type="number" val={baseIndicators.avg_selling_price} onChange={(v:any)=>setBaseIndicators({...baseIndicators, avg_selling_price: parseFloat(v)})} />
-                       <WizardField label="Distribuição Unit. ($)" type="number" val={baseIndicators.prices.distribution_unit} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, distribution_unit: parseFloat(v)}})} />
-                       <WizardField label="Base Campanha MKT ($)" type="number" val={baseIndicators.prices.marketing_campaign} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
+                       <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><ShoppingCart size={18}/> Mercado</h4>
+                       <WizardField label="Preço Venda Médio ($)" type="number" val={baseIndicators.avg_selling_price || 340} onChange={(v:any)=>setBaseIndicators({...baseIndicators, avg_selling_price: parseFloat(v)})} />
+                       <WizardField label="Distribuição Unit. ($)" type="number" val={baseIndicators.prices.distribution_unit || 50} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, distribution_unit: parseFloat(v)}})} />
+                       <WizardField label="Base Campanha MKT ($)" type="number" val={baseIndicators.prices.marketing_campaign || 10000} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
                     </div>
 
-                    {/* 4. STAFFING P00 */}
+                    {/* 4. STAFFING */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Users size={18}/> Staffing P00</h4>
-                       <WizardField label="Salário Base P00 ($)" type="number" val={baseIndicators.hr_base.salary} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
-                       <div className="pt-4 space-y-3">
-                          <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-500">
-                             <span>Administração</span>
-                             <span className="text-white">{baseIndicators.staffing.admin.count} Units</span>
+                       <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Briefcase size={18}/> Staffing</h4>
+                       <WizardField label="Salário Base P00 ($)" type="number" val={baseIndicators.hr_base.salary || 1300} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
+                       
+                       <div className="space-y-4 pt-2">
+                          <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                             <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-slate-500 uppercase">Administração</span>
+                                <span className="text-[7px] font-bold text-indigo-400 uppercase">Salário x 4</span>
+                             </div>
+                             <span className="text-xs font-mono font-black text-white">10 Units</span>
                           </div>
-                          <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-500">
-                             <span>Vendas</span>
-                             <span className="text-white">{baseIndicators.staffing.sales.count} Units</span>
+                          <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                             <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-slate-500 uppercase">Vendas</span>
+                                <span className="text-[7px] font-bold text-indigo-400 uppercase">Salário x 4</span>
+                             </div>
+                             <span className="text-xs font-mono font-black text-white">20 Units</span>
                           </div>
-                          <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-500">
-                             <span>Produção</span>
-                             <span className="text-white">{baseIndicators.staffing.production.count} Units</span>
+                          <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                             <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-slate-500 uppercase">Produção</span>
+                                <span className="text-[7px] font-bold text-emerald-400 uppercase">Salário x 1</span>
+                             </div>
+                             <span className="text-xs font-mono font-black text-white">470 Units</span>
                           </div>
                        </div>
                     </div>
