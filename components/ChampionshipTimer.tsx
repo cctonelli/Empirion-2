@@ -8,25 +8,27 @@ interface ChampionshipTimerProps {
   deadlineValue?: number;
   deadlineUnit?: DeadlineUnit;
   onExpire?: () => void;
+  createdAt?: string; // Fallback absoluto para arenas recém-criadas sem turnover
 }
 
-const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, deadlineValue = 7, deadlineUnit = 'days', onExpire }) => {
-  const [timeLeft, setTimeLeft] = useState<string>('Calculando...');
+const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, deadlineValue = 7, deadlineUnit = 'days', onExpire, createdAt }) => {
+  const [timeLeft, setTimeLeft] = useState<string>('Sincronizando...');
   const [isCritical, setIsCritical] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
   
-  // Ref para garantir que o início do tempo não mude se o componente remontar sem novos dados
   const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // FIX: Se não vier roundStartedAt, não podemos usar Date.now() pois isso causa o "reset" ao atualizar a página.
-    // Usamos o valor que veio do banco. Se não houver, o timer fica em "Calculando" até os dados chegarem.
-    if (!roundStartedAt) {
-       setTimeLeft('Sincronizando...');
+    // FIX: Se não houver round_started_at, tenta usar a data de criação da arena. 
+    // Isso evita o reset visual se o turnover ainda não ocorreu no ciclo 0.
+    const effectiveStart = roundStartedAt || createdAt;
+    
+    if (!effectiveStart) {
+       setTimeLeft('Aguardando...');
        return;
     }
 
-    startTimeRef.current = new Date(roundStartedAt).getTime();
+    startTimeRef.current = new Date(effectiveStart).getTime();
     let durationMs = 0;
 
     switch(deadlineUnit) {
@@ -44,7 +46,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, d
       const diff = targetDate - now;
 
       if (diff <= 0) {
-        setTimeLeft('PERÍODO ENCERRADO');
+        setTimeLeft('ENCERRADO');
         setIsCritical(true);
         setIsUrgent(true);
         clearInterval(timer);
@@ -62,12 +64,12 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, d
       formatted += `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       
       setTimeLeft(formatted);
-      setIsCritical(diff < 24 * 60 * 60 * 1000); // Alerta laranja < 24h
-      setIsUrgent(diff < 1 * 60 * 60 * 1000);   // Alerta pulsante < 1h
+      setIsCritical(diff < 12 * 60 * 60 * 1000); // 12h para alerta crítico
+      setIsUrgent(diff < 2 * 60 * 60 * 1000);    // 2h para pulsante
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [roundStartedAt, deadlineValue, deadlineUnit, onExpire]);
+  }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit, onExpire]);
 
   return (
     <div className={`px-8 py-4 rounded-[2rem] shadow-2xl border transition-all duration-700 flex items-center gap-6 ${
@@ -79,7 +81,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, d
         <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-1 ${
           isUrgent || isCritical ? 'text-white' : 'text-orange-500'
         }`}>
-          {isUrgent ? 'Transmissão Crítica' : isCritical ? 'Prazo Próximo' : 'Tempo para Decisão'}
+          {isUrgent ? 'URGENTE: TRANSMITA' : isCritical ? 'PRAZO FINAL' : 'RESTA PARA DECIDIR'}
         </span>
         <span className="text-2xl font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
       </div>

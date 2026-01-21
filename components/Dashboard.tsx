@@ -115,9 +115,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          <CockpitStat label="Rating" val={currentKpis.rating} trend="Kanitz" pos icon={<ShieldCheck size={16}/>} />
          <div className="px-8 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
             <div className="flex flex-col">
-               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Time Remaining</span>
+               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Tempo Restante</span>
                <div className="scale-[0.8] origin-left -ml-1">
-                  <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
+                  <ChampionshipTimer 
+                    roundStartedAt={activeArena?.round_started_at} 
+                    createdAt={activeArena?.created_at}
+                    deadlineValue={activeArena?.deadline_value} 
+                    deadlineUnit={activeArena?.deadline_unit} 
+                  />
                </div>
             </div>
          </div>
@@ -130,10 +135,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
                      <Landmark size={14}/> Auditoria Interna
                   </h3>
-                  <span className="text-[10px] font-black text-slate-600 uppercase">Cycle 0{activeArena?.current_round}</span>
+                  <span className="text-[10px] font-black text-slate-600 uppercase">Ciclo 0{activeArena?.current_round}</span>
                </header>
                
-               {/* FLEURIET BOX */}
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-4 shadow-inner">
                   <div className="flex justify-between items-center mb-1">
                      <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Fontes de Giro (Fleuriet)</h4>
@@ -157,7 +161,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* SPECIAL PURCHASES ALERT BOX */}
                <div className="bg-indigo-600/10 border border-indigo-500/20 p-5 rounded-[2.5rem] space-y-3">
                   <div className="flex items-center gap-3 text-indigo-400">
                      <ShoppingCart size={16} />
@@ -170,7 +173,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </p>
                </div>
 
-               {/* SOLVENCY THERMOMETER */}
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-3 shadow-inner group">
                   <div className="flex justify-between items-center mb-1">
                      <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Insolvência (Kanitz)</h4>
@@ -194,7 +196,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             <div className="flex-1 flex flex-col overflow-hidden max-w-[1400px] mx-auto w-full">
                <div className="flex justify-between items-end border-b border-white/5 pb-4 mb-4 shrink-0">
                   <div>
-                     <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Decision <span className="text-orange-600">Matrix</span></h2>
+                     <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Matriz de <span className="text-orange-600">Decisão</span></h2>
                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">Nodo {activeTeam?.name || 'ALPHA'}</p>
                   </div>
                   <button onClick={() => setShowGazette(true)} className="px-5 py-2.5 bg-slate-900 border border-white/10 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2">

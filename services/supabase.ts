@@ -112,7 +112,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     status: 'active', 
     current_round: 0, 
     created_at: timestamp,
-    round_started_at: timestamp, // FIX: O Timer começa no momento da criação
+    round_started_at: timestamp,
     is_trial: isTrial,
     tutor_id: currentUserId,
     deadline_value: champData.deadline_value || 7,
@@ -179,6 +179,47 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   return { champ: fullChamp, teams: teamsWithIds };
 };
 
+export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
+  // CRÍTICO: Sincronização de contexto trial/real a cada tentativa de salvamento
+  const localArenas = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
+  const arena = localArenas.find((a: any) => a.id === champId);
+  const isTrial = arena ? !!arena.is_trial : (localStorage.getItem('is_trial_session') === 'true');
+  
+  const table = isTrial ? 'trial_decisions' : 'current_decisions';
+  
+  try {
+    const payload = { 
+      team_id: teamId, 
+      championship_id: champId, 
+      round, 
+      data: decisions, 
+      updated_at: new Date().toISOString() 
+    };
+
+    // Upsert real no Banco com tentativa de resolução de conflito para evitar duplicação em Trial
+    const { error } = await supabase.from(table).upsert(payload, { 
+      onConflict: isTrial ? 'team_id, championship_id, round' : 'team_id, championship_id, round' 
+    });
+    
+    if (error) throw error;
+    
+    // Sincroniza Buffer Local para o monitor do tutor (Realtime manual fallback)
+    const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
+    local[`${champId}_${teamId}_${round}`] = decisions;
+    localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
+    
+    logInfo(LogContext.SUPABASE, `Decision Sealed: ${teamId} | Round ${round}`);
+    return { success: true, error: undefined as string | undefined };
+  } catch (err: any) {
+    logError(LogContext.DATABASE, "Cloud Save Fault, backup mode active", err.message);
+    // Em caso de falha no banco (ex: RLS ou timeout), mantemos no localStorage e retornamos "sucesso local"
+    const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
+    local[`${champId}_${teamId}_${round}`] = decisions;
+    localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
+    return { success: true, source: 'local', error: undefined as string | undefined };
+  }
+};
+
 export const processRoundTurnover = async (championshipId: string, currentRound: number) => {
   try {
     const { data: allArenas } = await getChampionships();
@@ -230,7 +271,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       }
     }
 
-    // FIX: Atualiza round_started_at para o novo ciclo começar do zero
     if (isTrial) {
        await supabase.from('trial_championships').update({ current_round: currentRound + 1, round_started_at: now }).eq('id', championshipId);
     } else {
@@ -252,50 +292,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
   } catch (err: any) {
     logError(LogContext.TURNOVER, "Oracle Turnover Fault", err.message);
     return { success: false, error: err.message };
-  }
-};
-
-export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
-  // FIX: Determina se é trial consultando a arena local ou global para evitar erros de cache de sessão
-  const localArenas = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
-  const arena = localArenas.find((a: any) => a.id === champId);
-  const isTrial = arena ? !!arena.is_trial : (localStorage.getItem('is_trial_session') === 'true');
-  
-  const table = isTrial ? 'trial_decisions' : 'current_decisions';
-  try {
-    const payload = { 
-      team_id: teamId, 
-      championship_id: champId, 
-      round, 
-      data: decisions, 
-      updated_at: new Date().toISOString() 
-    };
-
-    // Upsert real no Banco
-    const { error } = await supabase.from(table).upsert(payload, { onConflict: 'team_id, championship_id, round' });
-    
-    if (error) throw error;
-    
-    // Sincroniza Localmente para garantir que o monitor do tutor veja imediatamente
-    const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
-    local[`${champId}_${teamId}_${round}`] = decisions;
-    localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
-    
-    logInfo(LogContext.SUPABASE, `Decision Sealed: Team ${teamId} | Round ${round}`);
-    // Fix: Explicitly return error: undefined to fix union type inference issues in handleTransmit
-    return { success: true, error: undefined as string | undefined };
-  } catch (err: any) {
-    logError(LogContext.DATABASE, "Cloud Save Fault, using local buffer", err.message);
-    try {
-      const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
-      local[`${champId}_${teamId}_${round}`] = decisions;
-      localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
-      // Fix: Explicitly return error: undefined to fix union type inference issues in handleTransmit
-      return { success: true, source: 'local', error: undefined as string | undefined };
-    } catch (localErr: any) {
-      // Fix: Return failure if even local storage fails, providing the error property required by the consumer
-      return { success: false, error: localErr.message || "Falha crítica no salvamento local." };
-    }
   }
 };
 
