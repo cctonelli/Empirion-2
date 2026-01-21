@@ -39,7 +39,7 @@ export interface RegionConfig {
   id: number;
   name: string;
   currency: CurrencyType;
-  demand_weight: number; // Percentual da demanda total (0-100)
+  demand_weight: number; 
 }
 
 export interface DecisionData {
@@ -94,6 +94,7 @@ export interface MacroIndicators {
   late_penalty_rate: number;
   machine_sale_discount: number;
   exchange_rates: Record<CurrencyType, number>; 
+  dividend_percent: number;
   
   raw_material_a_adjust: number;
   raw_material_b_adjust: number;
@@ -122,11 +123,18 @@ export interface MacroIndicators {
     mp_b: number;
     distribution_unit: number;
     marketing_campaign: number;
+    storage_mp: number;
+    storage_finished: number;
   };
   machinery_values: {
     alfa: number;
     beta: number;
     gama: number;
+  };
+  staffing: {
+    admin: { count: number; salaries: number };
+    sales: { count: number; salaries: number };
+    production: { count: number; salaries: number };
   };
   hr_base: {
     salary: number;
@@ -191,6 +199,7 @@ export interface Championship {
   ecosystemConfig?: EcosystemConfig;
   round_started_at?: string;
   tutor_id?: string;
+  dividend_percent?: number;
 }
 
 export interface ChampionshipTemplate {
