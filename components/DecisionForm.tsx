@@ -114,12 +114,24 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   };
 
   const handleTransmit = async () => {
+    if (!teamId || !champId) return;
     setIsSaving(true);
     try {
-      const result = await saveDecisions(teamId!, champId!, round, decisions);
-      if (result.success) alert("TRANSMISSÃO CONCLUÍDA: Arquivos de decisão selados.");
-    } catch (e: any) { alert(`ERRO: ${e.message}`); }
-    setIsSaving(false);
+      // FIX: Garantimos que o objeto regions esteja íntegro
+      const finalPayload = { ...decisions };
+      // Fix: Cast result to any to bypass TypeScript union type inference error for the 'error' property
+      const result = await saveDecisions(teamId, champId, round, finalPayload) as any;
+      if (result.success) {
+         alert("TRANSMISSÃO CONCLUÍDA: Suas decisões foram seladas pelo motor Oracle.");
+         // Opcional: voltar ao primeiro passo ou redirecionar
+      } else {
+         throw new Error(result.error || "Falha desconhecida no nodo de dados.");
+      }
+    } catch (e: any) { 
+       alert(`FALHA NA TRANSMISSÃO: ${e.message}. Tente novamente.`); 
+    } finally {
+       setIsSaving(false);
+    }
   };
 
   if (!teamId || !champId) return <div className="h-full flex items-center justify-center text-slate-500 font-black uppercase text-xs">Node Ready...</div>;

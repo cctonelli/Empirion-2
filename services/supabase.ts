@@ -111,7 +111,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     id: newId, 
     status: 'active', 
     current_round: 0, 
-    created_at: timestamp, 
+    created_at: timestamp,
+    round_started_at: timestamp, // FIX: O Timer começa no momento da criação
     is_trial: isTrial,
     tutor_id: currentUserId,
     deadline_value: champData.deadline_value || 7,
@@ -147,6 +148,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         transparency_level: fullChamp.transparency_level,
         gazeta_mode: fullChamp.gazeta_mode,
         tutor_id: currentUserId,
+        round_started_at: fullChamp.round_started_at,
         config: fullChamp.config || {}
       });
       
@@ -214,6 +216,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     const totalAttraction = Object.values(attractions).reduce((a, b) => a + b, 0);
     const batchResults = [];
+    const now = new Date().toISOString();
 
     for (const team of teams) {
       const relativeShare = totalAttraction > 0 ? (attractions[team.id] / totalAttraction) * 100 : (100 / teams.length);
@@ -227,13 +230,18 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       }
     }
 
-    if (isTrial) await supabase.from('trial_championships').update({ current_round: currentRound + 1 }).eq('id', championshipId);
-    else await supabase.from('championships').update({ current_round: currentRound + 1 }).eq('id', championshipId);
+    // FIX: Atualiza round_started_at para o novo ciclo começar do zero
+    if (isTrial) {
+       await supabase.from('trial_championships').update({ current_round: currentRound + 1, round_started_at: now }).eq('id', championshipId);
+    } else {
+       await supabase.from('championships').update({ current_round: currentRound + 1, round_started_at: now }).eq('id', championshipId);
+    }
 
     const local = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
     const idx = local.findIndex((a: any) => a.id === championshipId);
     if (idx !== -1) {
        local[idx].current_round = currentRound + 1;
+       local[idx].round_started_at = now;
        local[idx].teams = local[idx].teams.map((t: any) => {
          const res = batchResults.find(r => r.team_id === t.id);
          return res ? { ...t, kpis: res.kpis, equity: res.equity, insolvency_status: res.insolvency_status } : t;
@@ -248,17 +256,46 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 };
 
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
-  const isTrial = localStorage.getItem('is_trial_session') === 'true';
+  // FIX: Determina se é trial consultando a arena local ou global para evitar erros de cache de sessão
+  const localArenas = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
+  const arena = localArenas.find((a: any) => a.id === champId);
+  const isTrial = arena ? !!arena.is_trial : (localStorage.getItem('is_trial_session') === 'true');
+  
   const table = isTrial ? 'trial_decisions' : 'current_decisions';
   try {
-    const { error } = await supabase.from(table).upsert({ team_id: teamId, championship_id: champId, round, data: decisions, updated_at: new Date().toISOString() });
+    const payload = { 
+      team_id: teamId, 
+      championship_id: champId, 
+      round, 
+      data: decisions, 
+      updated_at: new Date().toISOString() 
+    };
+
+    // Upsert real no Banco
+    const { error } = await supabase.from(table).upsert(payload, { onConflict: 'team_id, championship_id, round' });
+    
     if (error) throw error;
-    return { success: true };
-  } catch (err: any) {
+    
+    // Sincroniza Localmente para garantir que o monitor do tutor veja imediatamente
     const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
     local[`${champId}_${teamId}_${round}`] = decisions;
     localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
-    return { success: true, source: 'local' };
+    
+    logInfo(LogContext.SUPABASE, `Decision Sealed: Team ${teamId} | Round ${round}`);
+    // Fix: Explicitly return error: undefined to fix union type inference issues in handleTransmit
+    return { success: true, error: undefined as string | undefined };
+  } catch (err: any) {
+    logError(LogContext.DATABASE, "Cloud Save Fault, using local buffer", err.message);
+    try {
+      const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
+      local[`${champId}_${teamId}_${round}`] = decisions;
+      localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
+      // Fix: Explicitly return error: undefined to fix union type inference issues in handleTransmit
+      return { success: true, source: 'local', error: undefined as string | undefined };
+    } catch (localErr: any) {
+      // Fix: Return failure if even local storage fails, providing the error property required by the consumer
+      return { success: false, error: localErr.message || "Falha crítica no salvamento local." };
+    }
   }
 };
 

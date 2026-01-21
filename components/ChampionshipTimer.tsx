@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Clock, AlertCircle, Hourglass } from 'lucide-react';
 import { DeadlineUnit } from '../types';
 
@@ -14,10 +14,19 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, d
   const [timeLeft, setTimeLeft] = useState<string>('Calculando...');
   const [isCritical, setIsCritical] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
+  
+  // Ref para garantir que o início do tempo não mude se o componente remontar sem novos dados
+  const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Cálculo do Timestamp Final
-    const startTime = roundStartedAt ? new Date(roundStartedAt).getTime() : Date.now();
+    // FIX: Se não vier roundStartedAt, não podemos usar Date.now() pois isso causa o "reset" ao atualizar a página.
+    // Usamos o valor que veio do banco. Se não houver, o timer fica em "Calculando" até os dados chegarem.
+    if (!roundStartedAt) {
+       setTimeLeft('Sincronizando...');
+       return;
+    }
+
+    startTimeRef.current = new Date(roundStartedAt).getTime();
     let durationMs = 0;
 
     switch(deadlineUnit) {
@@ -28,7 +37,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, d
       default: durationMs = 7 * 24 * 60 * 60 * 1000;
     }
 
-    const targetDate = startTime + durationMs;
+    const targetDate = startTimeRef.current + durationMs;
 
     const timer = setInterval(() => {
       const now = Date.now();
