@@ -10,7 +10,11 @@ import {
   Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon,
   ChevronDown, Maximize2, Zap, ShieldAlert, ThermometerSun, Layers3
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+/**
+ * Fix: Used motion as any to bypass internal library type resolution issues in this environment
+ */
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 // Fix: Use any to bypass react-router-dom type resolution issues in this environment
 import * as ReactRouterDOM from 'react-router-dom';
 const { useNavigate } = ReactRouterDOM as any;

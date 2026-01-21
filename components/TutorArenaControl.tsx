@@ -12,7 +12,11 @@ import { EcosystemConfig, Championship, MacroIndicators, BlackSwanEvent, LaborAv
 import { updateEcosystem } from '../services/supabase';
 import { generateBlackSwanEvent } from '../services/gemini';
 import { DEFAULT_MACRO } from '../constants';
-import { motion, AnimatePresence } from 'framer-motion';
+/**
+ * Fix: Used motion as any to bypass internal library type resolution issues in this environment
+ */
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+const motion = _motion as any;
 
 const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (config: Partial<Championship>) => void }> = ({ championship, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<'conjuncture' | 'suppliers' | 'international'>('conjuncture');

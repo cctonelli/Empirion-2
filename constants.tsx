@@ -1,5 +1,5 @@
 
-import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine } from './types';
+import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
 export const APP_VERSION = "v14.2.0-Oracle-Master";
 export const BUILD_DATE = "10/01/2026";
@@ -7,16 +7,110 @@ export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
 
+/**
+ * Fix: Added missing CHAMPIONSHIP_TEMPLATES
+ */
+export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [];
+
+/**
+ * Fix: Added missing MENU_STRUCTURE
+ */
+export const MENU_STRUCTURE: MenuItemConfig[] = [
+  { label: 'Início', path: '/' },
+  { label: 'Ramos', path: '/branches', sub: [
+    { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory' },
+    { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart' },
+    { id: 'svc', label: 'Serviços', path: '/branches/services', icon: 'Briefcase' },
+    { id: 'agr', label: 'Agronegócio', path: '/branches/agribusiness', icon: 'Tractor' },
+    { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign' },
+    { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer' },
+  ]},
+  { label: 'Soluções', path: '/solutions', sub: [
+    { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu' },
+    { id: 'trn', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy' },
+    { id: 'bpn', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool' },
+  ]},
+  { label: 'Funcionalidades', path: '/features' },
+  { label: 'Conteúdos', path: '/blog' },
+  { label: 'Contato', path: '/contact' },
+];
+
+/**
+ * Fix: Added missing DEFAULT_PAGE_CONTENT
+ */
+export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
+  'landing': {
+    title: "Empirion",
+    subtitle: "Strategic Simulation",
+    hero: { title: "Forje Seu Império", subtitle: "Strategos IA" }
+  },
+  'solutions-bp': { 
+    title: "Business Plan", 
+    subtitle: "Estratégia Guiada",
+    steps: [
+      { id: 0, label: "Visão Geral" },
+      { id: 1, label: "Mercado" },
+      { id: 2, label: "Operações" },
+      { id: 3, label: "RH" },
+      { id: 4, label: "Financeiro" }
+    ]
+  },
+  'solutions-simulators': { 
+    title: "Simuladores", 
+    subtitle: "Nodos de Elite",
+    items: [
+      { id: 'ind', label: "Industrial", desc: "Produção $9M Assets", slug: 'industrial', icon: 'Factory' },
+      { id: 'com', label: "Comercial", desc: "Varejo Híbrido", slug: 'commercial', icon: 'ShoppingCart' }
+    ]
+  },
+  'solutions-training': { 
+    tracks: [
+      { id: 'online', label: "Online", body: "Treinamento remoto" },
+      { id: 'corp', label: "Corporativo", body: "Treinamento in-company" }
+    ] 
+  },
+  'features': { 
+    items: [
+      { id: 'f1', title: "Motor Realtime", body: "Sincronização instantânea" },
+      { id: 'f2', title: "IA Strategos", body: "Mentoria via Gemini" }
+    ] 
+  },
+  'blog': { 
+    items: [
+      { id: 'b1', title: "Lançamento v14", date: "01/01/2026", author: "Strategos" }
+    ] 
+  },
+  'rewards': { 
+    tiers: [
+      { name: "Bronze", pts: 0, color: "text-orange-500" },
+      { name: "Prata", pts: 1000, color: "text-slate-400" },
+      { name: "Ouro", pts: 5000, color: "text-amber-500" },
+      { name: "Elite", pts: 10000, color: "text-blue-500" }
+    ], 
+    accumulation: [
+      { action: "Vitória", val: "500 pts" },
+      { action: "Decisão", val: "10 pts" }
+    ] 
+  },
+};
+
+/**
+ * Fix: Added missing getPageContent helper
+ */
+export const getPageContent = (slug: string) => {
+  return DEFAULT_PAGE_CONTENT[slug] || DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || null;
+};
+
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
     assets: { 
-      current: { cash: 170000, receivables: 1823735, inventory_mpa: 628545, inventory_mpb: 838060 }, 
-      total: 9176940 
+      current: { cash: 0, receivables: 1823735, inventory_mpa: 628545, inventory_mpb: 838060 }, 
+      total: 9006940 
     },
     equity: { 
-      total: 5055447, 
+      total: 4885447, 
       capital_social: 5000000, 
-      accumulated_profit: 55447 
+      accumulated_profit: -114553 
     },
     liabilities: { 
       current: 2621493, 
@@ -38,10 +132,10 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
-      id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
+      id: 'assets', label: 'ATIVO', value: 9006940, type: 'totalizer', isReadOnly: true, children: [
         { 
-          id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Caixa e Bancos', value: 170000, type: 'asset', isEditable: true, isTemplateAccount: true },
+          id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3120340, type: 'totalizer', children: [
+            { id: 'assets.current.cash', label: 'Caixa e Bancos', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
             { id: 'assets.current.clients', label: 'Clientes (Contas a Receber)', value: 1823735, type: 'asset', isEditable: true, isTemplateAccount: true },
             { id: 'assets.current.stock', label: 'ESTOQUES', value: 1466605, type: 'totalizer', children: [
                 { id: 'assets.current.stock.finished', label: 'Estoque Prod. Acabado ALPHA', value: 0, type: 'asset', isEditable: true, isTemplateAccount: true },
@@ -64,7 +158,7 @@ export const INITIAL_FINANCIAL_TREE = {
       ]
     },
     { 
-      id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
+      id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9006940, type: 'totalizer', isReadOnly: true, children: [
         { 
           id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2621493, type: 'totalizer', children: [
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true, isTemplateAccount: true },
@@ -79,9 +173,9 @@ export const INITIAL_FINANCIAL_TREE = {
           ]
         },
         { 
-          id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 5055447, type: 'totalizer', children: [
+          id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 4885447, type: 'totalizer', children: [
             { id: 'equity.capital', label: 'Capital Social', value: 5000000, type: 'equity', isEditable: true, isTemplateAccount: true },
-            { id: 'equity.profit', label: 'Lucros Acumulados', value: 55447, type: 'equity', isEditable: true, isTemplateAccount: true }
+            { id: 'equity.profit', label: 'Lucros Acumulados', value: -114553, type: 'equity', isEditable: true, isTemplateAccount: true }
           ] 
         }
       ]
@@ -105,28 +199,33 @@ export const INITIAL_FINANCIAL_TREE = {
   ],
   cash_flow: [
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true, isTemplateAccount: true },
-    { id: 'cf.inflow', label: '(+) ENTRADAS TOTAIS', value: 3264862, type: 'totalizer', children: [
+    { id: 'cf.inflow', label: '(+) ENTRADAS', value: 3264862, type: 'totalizer', children: [
         { id: 'cf.inflow.cash_sales', label: 'Vendas à Vista', value: 1649000, type: 'revenue', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.inflow.receivables', label: 'Recebimento de Clientes', value: 243500, type: 'revenue', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.inflow.loans', label: 'Empréstimo Compulsório', value: 1372362, type: 'revenue', isEditable: true, isTemplateAccount: true }
+        { id: 'cf.inflow.receivables', label: 'Vendas à Prazo', value: 243500, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.asset_resgate', label: 'Resgate de Aplicação', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.machine_sale', label: 'Venda de Máquinas', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.loans_normal', label: 'Empréstimos Normais', value: 0, type: 'revenue', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.inflow.loans_compulsory', label: 'Empréstimo Compulsório', value: 1372362, type: 'revenue', isEditable: true, isTemplateAccount: true }
     ]},
-    { id: 'cf.outflow', label: '(-) SAÍDAS TOTAIS', value: -3434862, type: 'totalizer', children: [
+    { id: 'cf.outflow', label: '(-) SAÍDAS', value: -3434862, type: 'totalizer', children: [
         { id: 'cf.outflow.payroll', label: 'Folha de Pagamento', value: 767000, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.mkt', label: 'Campanhas Marketing', value: 275400, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.distribution', label: 'Distribuição Produtos', value: 463362, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.storage', label: 'Gastos Estocagem', value: 70700, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.suppliers', label: 'Pagamento Fornecedores', value: 1677000, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.maintenance', label: 'Manutenção Máquinas', value: 141400, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.interest', label: 'Juros Bancários', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true }
+        { id: 'cf.outflow.mkt', label: 'Campanhas de Marketing', value: 275400, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.distribution', label: 'Distribuição de Produtos', value: 463362, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.misc', label: 'Diversos e Atrasos Gerais', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.storage', label: 'Gastos com Estocagem', value: 70700, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.suppliers', label: 'Pagamento a Fornecedores', value: 1677000, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.machine_buy', label: 'Compra de Máquinas', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.maintenance', label: 'Manutenção de Máquinas', value: 141400, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.amortization', label: 'Amortização de Empréstimos', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.interest', label: 'Juros Bancários', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.training', label: 'Treinamento', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.taxes', label: 'Imposto de Renda', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.dividends', label: 'Dividendos e Participações', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.application', label: 'Aplicação', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
-    { id: 'cf.final', label: '(=) SALDO FINAL DO PERÍODO', value: 0, type: 'totalizer', isReadOnly: true, children: [] }
+    { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0, type: 'totalizer', isReadOnly: true, children: [] }
   ]
 };
-
-export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
-  { id: 'tpl-industrial', name: 'Industrial Master', description: 'Simulação completa de manufatura e CapEx.', branch: 'industrial' },
-  { id: 'tpl-commercial', name: 'Global Retail', description: 'Foco em logística e marketing de varejo.', branch: 'commercial' }
-];
 
 export const DEFAULT_MACRO: MacroIndicators = {
   ice: 3.0,
@@ -135,8 +234,8 @@ export const DEFAULT_MACRO: MacroIndicators = {
   customer_default_rate: 2.6,
   interest_rate_tr: 2.0,
   supplier_interest: 1.5,
-  sales_interest_rate: 0.75, 
-  avg_selling_price: 340.0, // Novo: Padrão v14.2
+  sales_interest_rate: 1.5, 
+  avg_selling_price: 340.0,
   tax_rate_ir: 15.0,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
@@ -152,6 +251,12 @@ export const DEFAULT_MACRO: MacroIndicators = {
   machine_beta_price_adjust: 1.0,
   machine_gamma_price_adjust: 1.0,
   salary_adjust: 1.0,
+
+  award_values: {
+    cost_precision: 100000,
+    revenue_precision: 100000,
+    profit_precision: 100000
+  },
   
   allow_machine_sale: false,
   labor_productivity: 1.0,
@@ -183,156 +288,16 @@ export const DEFAULT_MACRO: MacroIndicators = {
     sales: { count: 20, salaries: 4 },
     production: { count: 470, salaries: 1 }
   },
-  hr_base: { salary: 1300.00, training: 0, profit_sharing: 0, misc: 0 } // Ajustado 1313 -> 1300
+  hr_base: { salary: 1300.00, training: 0, profit_sharing: 0, misc: 0 }
 };
 
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
   0: { 
     ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, supplier_interest: 1.5, sales_interest_rate: 1.5, allow_machine_sale: false,
-    avg_selling_price: 340, raw_material_a_adjust: 0, machine_alpha_price_adjust: 0, machine_beta_price_adjust: 0, machine_gamma_price_adjust: 0, marketing_campaign_adjust: 0, distribution_cost_adjust: 0, storage_cost_adjust: 0
-  },
-  1: { 
-    ice: 4.0, demand_variation: 6.7, inflation_rate: 2.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 2.0, sales_interest_rate: 2.4, allow_machine_sale: false,
     raw_material_a_adjust: 1.0, machine_alpha_price_adjust: 1.0, machine_beta_price_adjust: 1.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 1.0, storage_cost_adjust: 2.0
   },
-  2: { 
-    ice: 5.0, demand_variation: -6.3, inflation_rate: 3.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 3.0, sales_interest_rate: 3.0, allow_machine_sale: true,
+  1: { 
+    ice: 4.0, demand_variation: 6.7, inflation_rate: 2.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 2.0, sales_interest_rate: 2.4, allow_machine_sale: true,
     raw_material_a_adjust: 2.0, machine_alpha_price_adjust: 2.0, machine_beta_price_adjust: 2.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 2.0
   }
-};
-
-export const MENU_STRUCTURE = [
-  { label: 'Início', path: '/' },
-  { 
-    label: 'Ramos', 
-    path: '/solutions/simulators',
-    sub: [
-      { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory', desc: 'Manufatura e CapEx' },
-      { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart', desc: 'Varejo e Logística' },
-      { id: 'srv', label: 'Serviços', path: '/branches/services', icon: 'Briefcase', desc: 'Capital Intelectual' },
-      { id: 'agr', label: 'Agronegócio', path: '/branches/agribusiness', icon: 'Tractor', desc: 'Cadeia Produtiva' },
-      { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign', desc: 'Bancos e Fintechs' },
-      { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer', desc: 'Obras e Infra' },
-    ]
-  },
-  {
-    label: 'Soluções',
-    path: '#',
-    sub: [
-      { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu', desc: 'Nodos de Treinamento' },
-      { id: 'trn', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy', desc: 'Arena Global' },
-      { id: 'bpw', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool', desc: 'Wizard Estratégico' },
-      { id: 'edu', label: 'Educação / IES', path: '/solutions/university', icon: 'GraduationCap', desc: 'Portal Acadêmico' },
-    ]
-  },
-  { label: 'Funcionalidades', path: '/features' },
-  { label: 'Conteúdos', path: '/blog' },
-  { label: 'Contato', path: '/contact' },
-];
-
-export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
-  landing: {
-    hero: { title: "Forje Seu Império com Insight Estratégico IA", subtitle: "A arena definitiva onde inteligência neural e estratégia empresarial colidem." }
-  },
-  'solutions-bp': {
-    title: "Strategos Business Architect",
-    subtitle: "Estruture sua visão empresarial com assistência neural de alta fidelidade.",
-    steps: [
-      { id: 0, label: "Sumário Executivo" },
-      { id: 1, label: "Análise de Mercado" },
-      { id: 2, label: "Plano de Marketing" },
-      { id: 3, label: "Plano Operacional" },
-      { id: 4, label: "Plano Financeiro" }
-    ]
-  },
-  rewards: {
-    subtitle: "Sua excelência estratégica é convertida em ativos reais de plataforma.",
-    tiers: [
-      { name: 'BRONZE', pts: '0', color: 'text-orange-400' },
-      { name: 'SILVER', pts: '5.000', color: 'text-slate-300' },
-      { name: 'GOLD', pts: '15.000', color: 'text-amber-400' },
-      { name: 'DIAMOND', pts: '50.000', color: 'text-blue-300' },
-    ],
-    accumulation: [
-      { action: 'Participação Arena', val: '+100 pts' },
-      { action: 'Vitória Ciclo', val: '+500 pts' },
-      { action: 'Rating AAA', val: '+1.000 pts' },
-      { action: 'Indicação Tutor', val: '+200 pts' },
-    ]
-  },
-  features: {
-    items: [
-      { id: 'f1', title: 'Motor Oracle v6.0', body: 'Processamento de elasticidade-preço com precisão militar.' },
-      { id: 'f2', title: 'IA Gemini 3 Pro', body: 'Raciocínio profundo para auditoria de planos e decisões.' },
-      { id: 'f3', title: 'Real-time Sync', body: 'Sincronização instantânea via Supabase para simulações multiplayer.' },
-      { id: 'f4', title: 'Global Grounding', body: 'Conectividade com dados reais do Google Search para cenários dinâmicos.' },
-      { id: 'f5', title: 'Arquitetura Nodal', body: 'Suporte a múltiplas regiões e moedas em uma única arena.' },
-      { id: 'f6', title: 'Audit Log Full', body: 'Rastreabilidade total de cada alteração feita pelas equipes.' }
-    ]
-  },
-  blog: {
-    subtitle: "Insights técnicos e táticos do Strategos Command Center.",
-    items: [
-      { id: 1, title: "O Impacto da Inflação no CAPEX Industrial", date: "02/01/2026", author: "Strategos Core" },
-      { id: 2, title: "Maximizando o TSR em Mercados Voláteis", date: "01/01/2026", author: "Oracle Node 08" }
-    ]
-  },
-  'solutions-simulators': {
-    title: "Nodos de Simulação",
-    subtitle: "Escolha seu setor e inicie a orquestração do seu império.",
-    items: [
-      { id: 'ind', label: 'Industrial', slug: 'industrial', icon: 'Factory', desc: 'Foco em Manufatura, CapEx e Escala.' },
-      { id: 'com', label: 'Comercial', slug: 'commercial', icon: 'ShoppingCart', desc: 'Gestão de Varejo, Logística e Prazos.' },
-      { id: 'srv', label: 'Serviços', slug: 'services', icon: 'Briefcase', desc: 'Foco em Capital Humano e Qualidade.' },
-      { id: 'agr', label: 'Agribusiness', slug: 'agribusiness', icon: 'Tractor', desc: 'Gestão de Commodities e Clima.' },
-      { id: 'fin', label: 'Financeiro', slug: 'finance', icon: 'DollarSign', desc: 'Spread, Risco e Liquidez Bancária.' },
-      { id: 'con', label: 'Construção', slug: 'construction', icon: 'Hammer', desc: 'Grandes Obras e Fluxo de Insumos.' }
-    ]
-  },
-  'solutions-training': {
-    tracks: [
-      { id: 'online', label: 'Online Academy', body: 'Treinamento remoto com mentor IA 24/7.' },
-      { id: 'corp', label: 'Corporate Elite', body: 'Workshops intensivos para liderança executiva.' }
-    ]
-  },
-  'branch-industrial': {
-    name: "Industrial",
-    heroImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2000",
-    body: "Domine a cadeia de produção e ativos fixos.",
-    description: "O modo industrial desafia a gestão de máquinas (CapEx), mão de obra e eficiência de transformação.",
-    features: ["Gestão de Depreciação", "Manutenção Preventiva", "Turnos de Trabalho"],
-    kpis: ["ROE", "Giro de Ativos", "Margem de Contribuição"],
-    accent: "orange"
-  },
-  'branch-commercial': {
-    name: "Comercial",
-    heroImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2000",
-    body: "Varejo global e logística de alta performance.",
-    description: "Foco total em canais de distribuição, marketing regional e gestão de estoques de revenda.",
-    features: ["Mix de Produtos", "Elasticidade de Preço", "Logística Regional"],
-    kpis: ["Market Share", "Prazos Médios", "Giro de Estoque"],
-    accent: "blue"
-  },
-  'solution-university': {
-    title: "Portal Acadêmico",
-    icon: 'Users',
-    body: "Ambiente gamificado para instituições de ensino superior.",
-    accent: "blue"
-  },
-  'solution-corporate': {
-    title: "Arena Corporativa",
-    icon: 'Shield',
-    body: "Simulações customizadas para treinamento de liderança e seleção.",
-    accent: "indigo"
-  },
-  'solution-individual': {
-    title: "Individual Strategos",
-    icon: 'Brain',
-    body: "Desenvolva sua visão estratégica competindo contra bots de elite.",
-    accent: "emerald"
-  }
-};
-
-export const getPageContent = (slug: string) => {
-  return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || null;
 };

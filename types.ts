@@ -21,6 +21,126 @@ export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 export type LaborAvailability = 'BAIXA' | 'MEDIA' | 'ALTA';
 export type MachineModel = 'alfa' | 'beta' | 'gama';
 
+/**
+ * Fix: Added missing EcosystemConfig interface
+ */
+export interface EcosystemConfig {
+  inflation_rate: number;
+  demand_multiplier: number;
+  interest_rate: number;
+  market_volatility: number;
+  scenario_type: ScenarioType;
+  modality_type: ModalityType;
+}
+
+/**
+ * Fix: Added missing UserProfile interface
+ */
+export interface UserProfile {
+  id: string;
+  supabase_user_id: string;
+  name: string;
+  nickname: string;
+  phone: string;
+  email: string;
+  role: UserRole;
+  is_opal_premium: boolean;
+  created_at: string;
+}
+
+/**
+ * Fix: Added missing RegionalData interface
+ */
+export interface RegionalData {
+  regionId: number;
+  price: number;
+  term: number;
+  marketing: number;
+}
+
+/**
+ * Fix: Added missing Modality interface
+ */
+export interface Modality {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  page_content: {
+    hero: { title: string; subtitle: string };
+    features: string[];
+    kpis: string[];
+    accent_color?: string;
+  };
+}
+
+/**
+ * Fix: Added missing BusinessPlan interface
+ */
+export interface BusinessPlan {
+  id?: string;
+  championship_id: string;
+  team_id: string;
+  round: number;
+  version: number;
+  data: Record<number, string>;
+  status: 'draft' | 'final';
+}
+
+/**
+ * Fix: Added missing CommunityCriteria interface
+ */
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
+/**
+ * Fix: Added missing MenuItemConfig interface
+ */
+export interface MenuItemConfig {
+  label: string;
+  path: string;
+  icon?: string;
+  sub?: any[];
+}
+
+/**
+ * Fix: Added missing AuditLog interface
+ */
+export interface AuditLog {
+  user_id: string;
+  changed_at: string;
+  field_path: string;
+  new_value: any;
+}
+
+/**
+ * Fix: Added missing TeamProgress interface
+ */
+export interface TeamProgress {
+  team_id: string;
+  team_name: string;
+  status: string;
+  rating: CreditRating;
+  risk: number;
+  insolvent: boolean;
+  master_key_enabled?: boolean;
+  auditLogs: AuditLog[];
+}
+
+/**
+ * Fix: Added missing ChampionshipTemplate interface
+ */
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  branch: Branch;
+  config?: any;
+}
+
 export interface MachineSpec {
   model: MachineModel;
   initial_value: number;
@@ -90,7 +210,7 @@ export interface MacroIndicators {
   interest_rate_tr: number;
   supplier_interest: number;
   sales_interest_rate: number;
-  avg_selling_price: number; // Novo: Preço Médio de Venda
+  avg_selling_price: number;
   tax_rate_ir: number;
   late_penalty_rate: number;
   machine_sale_discount: number;
@@ -111,6 +231,13 @@ export interface MacroIndicators {
   labor_productivity: number;
   labor_availability: LaborAvailability;
   
+  // Premiações
+  award_values: {
+    cost_precision: number;
+    revenue_precision: number;
+    profit_precision: number;
+  };
+
   machine_specs: Record<MachineModel, MachineSpec>;
   initial_machinery_mix: InitialMachine[];
   maintenance_physics: {
@@ -185,7 +312,7 @@ export interface Championship {
   initial_financials: {
     balance_sheet: AccountNode[];
     dre: AccountNode[];
-    cash_flow?: AccountNode[]; // Novo: Aba Fluxo de Caixa
+    cash_flow?: AccountNode[];
   }; 
   initial_share_price: number;
   created_at: string; 
@@ -205,99 +332,4 @@ export interface Championship {
   round_started_at?: string;
   tutor_id?: string;
   dividend_percent?: number;
-}
-
-export interface ChampionshipTemplate {
-  id: string;
-  name: string;
-  description: string;
-  branch: Branch;
-}
-
-export interface UserProfile {
-  id: string;
-  supabase_user_id: string;
-  name: string;
-  nickname: string;
-  phone: string;
-  email: string;
-  role: UserRole;
-  is_opal_premium: boolean;
-  created_at: string;
-}
-
-export interface RegionalData {
-  region_id: number;
-  region_name: string;
-  demand: number;
-  units_sold: number;
-  market_share: number;
-  avg_price: number;
-  competitors_count: number;
-}
-
-export interface EcosystemConfig {
-  scenario_type: ScenarioType;
-  modality_type: ModalityType;
-  inflation_rate: number;
-  demand_multiplier: number;
-  interest_rate: number;
-  market_volatility: number;
-}
-
-export interface MenuItemConfig {
-  id: string;
-  label: string;
-  path: string;
-  isVisible: boolean;
-}
-
-export interface BusinessPlan {
-  id: string;
-  championship_id: string;
-  team_id: string;
-  round: number;
-  version: number;
-  data: Record<number, string>;
-  status: 'draft' | 'final';
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
-export interface Modality {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url?: string;
-  page_content: {
-    hero: { title: string; subtitle: string };
-    features: string[];
-    kpis: string[];
-    accent_color?: 'orange' | 'blue' | 'emerald';
-  };
-}
-
-export interface TeamProgress {
-  team_id: string;
-  team_name: string;
-  status: 'pending' | 'sealed';
-  rating: CreditRating;
-  risk: number;
-  insolvent: boolean;
-  master_key_enabled?: boolean;
-  auditLogs: AuditLog[];
-}
-
-export interface AuditLog {
-  user_id: string;
-  changed_at: string;
-  field_path: string;
-  new_value: any;
 }
