@@ -8,7 +8,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v15.4 - FIXED MACHINE INDEXING
+ * CORE ORACLE ENGINE v16.4 - CUMULATIVE MACHINE PRICING & DYNAMIC CLUSTER DEMAND
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -24,23 +24,31 @@ export const calculateProjections = (
 ): ProjectionResult => {
   const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(bs.equity?.total, 5055447);
+  
+  // Mescla indicadores globais com as regras do round atual
   const indicators = { ...baseIndicators, ...(roundRules?.[currentRound] || {}) };
   const baseCurrency = championshipData?.currency || 'BRL';
 
-  // 1. PRODUTIVIDADE E CAPACIDADE EFETIVA
+  // 1. CAPACIDADE E PREÇOS DE ATIVOS (CÁLCULO CUMULATIVO)
   const productivityFactor = sanitize(indicators.labor_productivity, 1.0);
   const baseCapacity = 10000; 
   
-  const getAdjustedPrice = (model: MachineModel, base: number) => {
-    let adj = 1.0;
-    // Map model name to indicator key name (alfa -> alpha, gama -> gamma)
+  const getAdjustedPrice = (model: MachineModel) => {
+    const base = baseIndicators.machinery_values[model];
     const keyPart = model === 'alfa' ? 'alpha' : model === 'gama' ? 'gamma' : 'beta';
-    const rate = indicators[`machine_${keyPart}_price_adjust`] || 0;
-    
-    // O reajuste é aplicado de forma composta até o round atual
-    for (let i = 0; i < currentRound; i++) adj *= (1 + rate / 100);
-    return base * adj;
+    let adjPrice = base;
+
+    // Itera pelos rounds anteriores para aplicar reajustes cumulativos (P00 até Round Atual - 1)
+    for (let r = 0; r < currentRound; r++) {
+      const roundRate = roundRules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? baseIndicators[`machine_${keyPart}_price_adjust`] ?? 0;
+      adjPrice *= (1 + roundRate / 100);
+    }
+    return adjPrice;
   };
+
+  const currentAlfaPrice = getAdjustedPrice('alfa');
+  const currentBetaPrice = getAdjustedPrice('beta');
+  const currentGamaPrice = getAdjustedPrice('gama');
 
   const newMachinesCapacity = (decisions.machinery.buy.alfa * (indicators.machine_specs?.alfa.production_capacity || 2000)) +
                              (decisions.machinery.buy.beta * (indicators.machine_specs?.beta.production_capacity || 6000)) +
@@ -62,10 +70,11 @@ export const calculateProjections = (
   const specialPurchaseCost = (deficitMPA * indicators.prices.mp_a * premium) + 
                                (deficitMPB * indicators.prices.mp_b * premium);
 
-  // 3. MERCADO GLOBAL
+  // 3. MERCADO DINÂMICO
   const iceFactor = 1 + (indicators.ice / 100);
   const demandVarFactor = 1 + (indicators.demand_variation / 100);
-  const totalMarketDemand = (2500 * (indicators.regions_count || 4) * 4) * iceFactor * demandVarFactor;
+  const teamsCount = Math.max(championshipData?.teams?.length || 1, 1);
+  const totalMarketDemand = (baseCapacity * teamsCount) * iceFactor * demandVarFactor;
   
   let totalRevenueBase = 0;
   let totalUnitsSold = 0;
@@ -77,12 +86,13 @@ export const calculateProjections = (
 
   regions.forEach(reg => {
      const decision = decisions.regions[reg.id] || { price: 375, term: 1, marketing: 0 };
-     const regionalWeight = reg.demand_weight / 100;
+     const regionalWeight = (reg.demand_weight || (100 / regions.length)) / 100;
      const regionalDemand = totalMarketDemand * regionalWeight;
      const priceFactor = Math.pow(indicators.avg_selling_price / Math.max(decision.price, 100), 1.6);
      const promoFactor = 1 + (decision.marketing * 0.06);
      const shareMultiplier = priceFactor * promoFactor;
-     const unitsSoldReg = Math.min(regionalDemand * (shareMultiplier / 10), regionalDemand);
+     
+     const unitsSoldReg = Math.min(regionalDemand * (shareMultiplier / teamsCount), regionalDemand);
      totalUnitsSold += unitsSoldReg;
      const revenueLocal = unitsSoldReg * decision.price;
      const exchangeRate = indicators.exchange_rates?.[reg.currency] || 1;
@@ -103,19 +113,21 @@ export const calculateProjections = (
   const netProfit = finalRevenue - cpv - totalOpex;
   const finalEquity = prevEquity + netProfit;
 
-  // 5. BALANÇO & FLEURIET (NLCDG)
-  const totalCapex = (decisions.machinery.buy.alfa * getAdjustedPrice('alfa', indicators.machinery_values.alfa));
+  // 5. BALANÇO & KPIs
+  const totalCapex = (decisions.machinery.buy.alfa * currentAlfaPrice) +
+                     (decisions.machinery.buy.beta * currentBetaPrice) +
+                     (decisions.machinery.buy.gama * currentGamaPrice);
+
   const ac_financial = sanitize(bs.assets?.current?.cash, 0) + sanitize(bs.assets?.current?.app, 0);
-  const receivables = finalRevenue * 0.6; // Simplificação para PMRV
+  const receivables = finalRevenue * 0.6;
   const inventoryValue = (Math.max(0, unitsToProduce - finalUnitsSold) * 235) + (requiredMPA * indicators.prices.mp_a) + (requiredMPB * indicators.prices.mp_b);
   
   const ac_total = ac_financial + receivables + inventoryValue;
-  const pc_suppliers = finalRevenue * 0.2; // Simplificação PMPC
+  const pc_suppliers = finalRevenue * 0.2;
   const pc_loans = sanitize(bs.liabilities?.current_loans, 1872362) + (decisions.finance.loanRequest * 0.3);
-  const pc_total = pc_suppliers + pc_loans + 13045; // IR fallback
+  const pc_total = pc_suppliers + pc_loans + 13045;
   const pnc = sanitize(bs.liabilities?.long_term, 1500000);
 
-  // NLCDG = Ativo Circulante Operacional - Passivo Circulante Operacional
   const nlcdg = (receivables + inventoryValue) - pc_suppliers;
 
   const kanitz = calculateKanitzFactor({
