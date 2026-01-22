@@ -217,20 +217,20 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <div className="relative z-10 space-y-6">
                               <h4 className="text-2xl font-black text-blue-400 uppercase italic flex items-center gap-4 italic"><Info size={24}/> Oracle Intelligence Hub</h4>
                               <p className="text-lg text-blue-100 font-medium leading-relaxed italic border-l-2 border-blue-500/30 pl-8">
-                                "Atenção Operador: Os indicadores auditados refletem a realidade nodal do Ciclo 0{round}. Monitore as taxas de câmbio para otimizar suas vendas transfronteiriças."
+                                "Atenção Operador: Os indicadores auditados refletem a realidade do PERÍODO 0{round}. Monitore as taxas de câmbio para otimizar suas vendas transfronteiriças."
                               </p>
                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-8">
                            {/* INDICADORES ECONÔMICOS COMPLETOS (EXCETO VAR. DEMANDA) */}
-                           <MacroSummaryBox label="ICE (Confiança)" val={`${currentMacro.ice}%`} icon={<Activity size={20} className="text-emerald-500"/>} />
+                           <MacroSummaryBox label="Crescimento Econômico (ICE)" val={`${currentMacro.ice}%`} icon={<Activity size={20} className="text-emerald-500"/>} />
                            <MacroSummaryBox label="Inflação Período" val={`${currentMacro.inflation_rate}%`} icon={<Flame size={20} className="text-rose-500"/>} />
-                           <MacroSummaryBox label="Taxa TR (Risk Free)" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark size={20} className="text-blue-500"/>} />
-                           <MacroSummaryBox label="Default Rate" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert size={20} className="text-orange-500"/>} />
+                           <MacroSummaryBox label="Juros Bancários (TR)" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark size={20} className="text-blue-500"/>} />
+                           <MacroSummaryBox label="Inadimplência Clientes" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert size={20} className="text-orange-500"/>} />
                            
                            <MacroSummaryBox label="Juros Fornecedores" val={`${currentMacro.supplier_interest}%`} icon={<Truck size={20} className="text-amber-500"/>} />
-                           <MacroSummaryBox label="Juros de Vendas" val={`${currentMacro.sales_interest_rate}%`} icon={<DollarSign size={20} className="text-emerald-400"/>} />
+                           <MacroSummaryBox label="Juros Médios Vendas" val={`${currentMacro.sales_interest_rate}%`} icon={<DollarSign size={20} className="text-emerald-400"/>} />
                            
                            <MacroSummaryBox label="Câmbio: Dólar (USD)" val={`${currentMacro.exchange_rates?.USD || 5.2}x`} icon={<DollarSign size={20} className="text-blue-400"/>} />
                            <MacroSummaryBox label="Câmbio: Euro (EUR)" val={`${currentMacro.exchange_rates?.EUR || 5.5}x`} icon={<Landmark size={20} className="text-indigo-400"/>} />
