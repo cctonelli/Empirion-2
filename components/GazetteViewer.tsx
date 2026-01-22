@@ -6,7 +6,7 @@ import {
   BarChart3, PieChart, Info, DollarSign, Activity, Target, Newspaper, 
   ChevronRight, MapPin, Truck, Warehouse, TrendingDown,
   Factory, CheckCircle2, ArrowUpCircle, ArrowDownCircle, Settings2, Flame,
-  Briefcase, BarChart, ShoppingCart, Coins, Sparkles, Monitor
+  Briefcase, BarChart, ShoppingCart, Coins, Sparkles, Monitor, Percent, AlertOctagon
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -28,16 +28,18 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   const teams = arena.teams || [];
   const isAnonymous = arena.gazeta_mode === 'anonymous' && userRole !== 'tutor' && userRole !== 'admin';
   const currencySymbol = arena.currency === 'BRL' ? 'R$' : '$';
-  const macro = arena.market_indicators;
+  
+  // Sincroniza os indicadores com base no Round Auditado
+  const currentMacro = useMemo(() => {
+    return { ...arena.market_indicators, ...(arena.round_rules?.[round] || {}) };
+  }, [arena, round]);
 
   /**
-   * ORACLE COST ENGINE v16.6 - PRIORIDADE DESKTOP
-   * Implementa o reajuste cumulativo obrigatório iniciando no Ciclo 00.
+   * ORACLE COST ENGINE v16.7 - CÁLCULO CUMULATIVO
    */
   const supplierCosts = useMemo(() => {
     const getAdjusted = (base: number, adjustKey: string) => {
       let currentVal = base;
-      // Regra de Ouro: O reajuste deve considerar o Round 00 (P00) e acumular até o round atual de auditoria.
       for (let r = 0; r <= round; r++) {
         const roundRate = arena.round_rules?.[r]?.[adjustKey] ?? arena.market_indicators[adjustKey] ?? 0;
         currentVal *= (1 + roundRate / 100);
@@ -45,28 +47,25 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       return currentVal;
     };
 
-    // Média Salarial viva do Cluster (Decisões de Equipes + Bots)
-    const salaries = teams.map(t => t.kpis?.last_decision?.hr?.salary || macro.hr_base.salary);
+    const salaries = teams.map(t => t.kpis?.last_decision?.hr?.salary || arena.market_indicators.hr_base.salary);
     const avgSalary = salaries.reduce((a, b) => a + b, 0) / Math.max(teams.length, 1);
 
     return {
-      mp_a: getAdjusted(macro.prices.mp_a, 'raw_material_a_adjust'),
-      mp_b: getAdjusted(macro.prices.mp_b, 'raw_material_b_adjust'),
-      distribution: getAdjusted(macro.prices.distribution_unit, 'distribution_cost_adjust'),
-      marketing: getAdjusted(macro.prices.marketing_campaign, 'marketing_campaign_adjust'),
-      alfa: getAdjusted(macro.machinery_values.alfa, 'machine_alpha_price_adjust'),
-      beta: getAdjusted(macro.machinery_values.beta, 'machine_beta_price_adjust'),
-      gama: getAdjusted(macro.machinery_values.gama, 'machine_gamma_price_adjust'),
+      mp_a: getAdjusted(arena.market_indicators.prices.mp_a, 'raw_material_a_adjust'),
+      mp_b: getAdjusted(arena.market_indicators.prices.mp_b, 'raw_material_b_adjust'),
+      distribution: getAdjusted(arena.market_indicators.prices.distribution_unit, 'distribution_cost_adjust'),
+      marketing: getAdjusted(arena.market_indicators.prices.marketing_campaign, 'marketing_campaign_adjust'),
+      alfa: getAdjusted(arena.market_indicators.machinery_values.alfa, 'machine_alpha_price_adjust'),
+      beta: getAdjusted(arena.market_indicators.machinery_values.beta, 'machine_beta_price_adjust'),
+      gama: getAdjusted(arena.market_indicators.machinery_values.gama, 'machine_gamma_price_adjust'),
       avg_salary: avgSalary
     };
   }, [arena, round, teams]);
 
-  // Telemetria Geopolítica Desktop-First
   const geopoliticalStats = useMemo(() => {
-    const currentIndicators = arena.round_rules?.[round] || arena.market_indicators;
     const regionsCount = arena.regions_count || 1;
-    const demandVar = (currentIndicators.demand_variation || 0) / 100;
-    const iceFactor = 1 + ((currentIndicators.ice || 0) / 100);
+    const demandVar = (currentMacro.demand_variation || 0) / 100;
+    const iceFactor = 1 + ((currentMacro.ice || 0) / 100);
     const teamsCount = Math.max(arena.teams?.length || 1, 1);
     const globalBaseDemand = (10000 * teamsCount) * iceFactor * (1 + demandVar);
     
@@ -75,16 +74,14 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       const weight = (config?.demand_weight || (100 / regionsCount)) / 100;
       const regionalDemand = globalBaseDemand * weight;
       const regionalMarketShare = 1 / teamsCount;
-      const realSales = (regionalDemand * regionalMarketShare) * 0.9742; 
-      
       return {
         id: i + 1,
         name: arena.region_names?.[i] || `Nodo Regional 0${i + 1}`,
         demand: regionalDemand,
-        sales: realSales
+        sales: (regionalDemand * regionalMarketShare) * 0.9742
       };
     });
-  }, [arena, round]);
+  }, [arena, round, currentMacro]);
 
   return (
     <motion.div 
@@ -92,7 +89,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       animate={{ opacity: 1, scale: 1, y: 0 }}
       className="bg-[#020617] border border-white/10 rounded-[4rem] shadow-[0_40px_120px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col h-[90vh] max-w-[1400px] w-full relative"
     >
-      {/* Header Gazette Desktop - h-24 */}
       <header className="bg-slate-950 px-12 py-8 border-b border-white/5 shrink-0 shadow-2xl relative z-10 flex items-center justify-between">
          <div className="flex items-center gap-8">
             <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-[0_0_50px_rgba(249,115,22,0.4)] border border-orange-400/30">
@@ -150,7 +146,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                      <div className="flex justify-between items-end mb-12">
                         <div className="space-y-2">
                            <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter flex items-center gap-6"><MapPin size={32} className="text-orange-500"/> Performance Geopolítica Ativa</h3>
-                           <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.6em] italic">Análise de Fluxo Nodal v16.6 • Cluster Node 08</p>
+                           <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.6em] italic">Análise de Fluxo Nodal v16.7 • Cluster Node 08</p>
                         </div>
                      </div>
                      <div className="matrix-container shadow-inner border border-white/10 bg-slate-950/60 p-2">
@@ -186,14 +182,13 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
             {activeTab === 'macro' && (
                <motion.div key="macro" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-12">
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                     {/* TABELA DE CUSTOS PRIORIDADE DESKTOP */}
                      <div className="lg:col-span-7 bg-slate-900/60 p-12 rounded-[5rem] border border-white/10 shadow-3xl relative overflow-hidden group">
                         <div className="absolute -top-10 -left-10 p-10 opacity-[0.02] -rotate-12"><Coins size={300}/></div>
                         <div className="flex items-center gap-6 mb-12 relative z-10">
                            <div className="p-5 bg-orange-600 rounded-3xl text-white shadow-xl"><Coins size={32} strokeWidth={2.5}/></div>
                            <div>
                               <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Custos de Fornecedores Oracle</h3>
-                              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mt-2 italic">Reajuste Cumulativo P00 Auditado</p>
+                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Reajuste Cumulativo P00 Auditado</p>
                            </div>
                         </div>
                         <div className="space-y-5 relative z-10 pr-4">
@@ -222,16 +217,29 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <div className="relative z-10 space-y-6">
                               <h4 className="text-2xl font-black text-blue-400 uppercase italic flex items-center gap-4 italic"><Info size={24}/> Oracle Intelligence Hub</h4>
                               <p className="text-lg text-blue-100 font-medium leading-relaxed italic border-l-2 border-blue-500/30 pl-8">
-                                "Atenção Operador: Os custos auditados refletem a pressão inflacionária cumulativa iniciada no Ciclo 00. Estruture seu Capex para absorver o reajuste das máquinas Beta e Gama antes do Ciclo P04."
+                                "Atenção Operador: Os indicadores auditados refletem a realidade nodal do Ciclo 0{round}. Monitore as taxas de câmbio para otimizar suas vendas transfronteiriças."
                               </p>
                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-8">
-                           <MacroSummaryBox label="ICE (Confiança)" val={`${macro.ice}%`} icon={<Activity size={20} className="text-emerald-500"/>} />
-                           <MacroSummaryBox label="Inflação Período" val={`${macro.inflation_rate}%`} icon={<Flame size={20} className="text-rose-500"/>} />
-                           <MacroSummaryBox label="Taxa TR (Risk Free)" val={`${macro.interest_rate_tr}%`} icon={<Landmark size={20} className="text-blue-500"/>} />
-                           <MacroSummaryBox label="Default Rate" val={`${macro.customer_default_rate}%`} icon={<ShieldAlert size={20} className="text-orange-500"/>} />
+                           {/* INDICADORES ECONÔMICOS COMPLETOS (EXCETO VAR. DEMANDA) */}
+                           <MacroSummaryBox label="ICE (Confiança)" val={`${currentMacro.ice}%`} icon={<Activity size={20} className="text-emerald-500"/>} />
+                           <MacroSummaryBox label="Inflação Período" val={`${currentMacro.inflation_rate}%`} icon={<Flame size={20} className="text-rose-500"/>} />
+                           <MacroSummaryBox label="Taxa TR (Risk Free)" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark size={20} className="text-blue-500"/>} />
+                           <MacroSummaryBox label="Default Rate" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert size={20} className="text-orange-500"/>} />
+                           
+                           <MacroSummaryBox label="Juros Fornecedores" val={`${currentMacro.supplier_interest}%`} icon={<Truck size={20} className="text-amber-500"/>} />
+                           <MacroSummaryBox label="Juros de Vendas" val={`${currentMacro.sales_interest_rate}%`} icon={<DollarSign size={20} className="text-emerald-400"/>} />
+                           
+                           <MacroSummaryBox label="Câmbio: Dólar (USD)" val={`${currentMacro.exchange_rates?.USD || 5.2}x`} icon={<DollarSign size={20} className="text-blue-400"/>} />
+                           <MacroSummaryBox label="Câmbio: Euro (EUR)" val={`${currentMacro.exchange_rates?.EUR || 5.5}x`} icon={<Landmark size={20} className="text-indigo-400"/>} />
+                           
+                           <MacroSummaryBox label="Imposto de Renda" val={`${currentMacro.tax_rate_ir}%`} icon={<Scale size={20} className="text-slate-400"/>} />
+                           <MacroSummaryBox label="Multa Atrasos" val={`${currentMacro.late_penalty_rate}%`} icon={<AlertOctagon size={20} className="text-rose-600"/>} />
+                           
+                           <MacroSummaryBox label="Deságio Máquinas" val={`${currentMacro.machine_sale_discount}%`} icon={<TrendingDown size={20} className="text-orange-600"/>} />
+                           <MacroSummaryBox label="Venda Ativos" val={currentMacro.allow_machine_sale ? "LIBERADA" : "BLOQUEADA"} icon={<CheckCircle2 size={20} className={currentMacro.allow_machine_sale ? "text-emerald-500" : "text-rose-500"}/>} />
                         </div>
                      </div>
                   </div>
@@ -241,7 +249,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       </main>
 
       <footer className="px-12 py-6 bg-slate-950 border-t border-white/5 flex justify-between items-center opacity-60 shrink-0 relative z-10">
-         <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.8em] italic leading-none">Build v16.6 Master Protocol • Ultra-High Fidelity Desktop Build</span>
+         <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.8em] italic leading-none">Build v16.7 Master Protocol • Ultra-High Fidelity Desktop Build</span>
          <div className="flex gap-8 items-center">
             <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest">Node 08-Industrial-Cluster-A</span>
             <div className="flex items-center gap-3 px-4 py-1.5 bg-white/5 rounded-full border border-white/5">
@@ -273,7 +281,7 @@ const MacroSummaryBox = ({ label, val, icon }: any) => (
       <div className="p-3 bg-white/5 rounded-2xl w-fit group-hover:bg-slate-950 group-hover:shadow-lg transition-all">{icon}</div>
       <div>
          <span className="block text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1 italic">{label}</span>
-         <span className="text-3xl font-black text-white italic tracking-tighter">{val}</span>
+         <span className="text-3xl font-black text-white italic tracking-tighter truncate leading-none">{val}</span>
       </div>
    </div>
 );
