@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
@@ -58,7 +57,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const isObserver = userRole === 'observer';
 
   const currentKpis = useMemo((): KPIs => {
-    return activeTeam?.kpis || activeArena?.kpis || {
+    // Deep merge fallback para Round 00 se o objeto kpis estiver parcial no banco
+    const baseFallback = {
       ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
       market_valuation: { share_price: 1.01, total_shares: 5000000, market_cap: 5055447, tsr: 1.1 },
       rating: 'AAA' as CreditRating,
@@ -66,19 +66,30 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       equity: 5055447,
       market_share: 12.5,
       kanitz_factor: 2.19, 
-      nlcdg: 2559690,
-      financing_sources: { ecp: 2205716, elp: 1000000, ccp: -604097 },
+      nlcdg: 2572735,
+      financing_sources: { ecp: 1872362, elp: 1500000, ccp: 5055447 },
       statements: { 
-        dre: { revenue: 3322735, net_profit: 73928, cpv: 2278180, opex: 917582 },
+        dre: { revenue: 3322735, net_profit: 74988, cpv: 2278180, opex: 916522 },
         balance_sheet: { assets: { total: 9176940 } }
       }
+    };
+
+    if (!activeTeam?.kpis) return baseFallback as KPIs;
+    
+    return {
+      ...baseFallback,
+      ...activeTeam.kpis,
+      financing_sources: activeTeam.kpis.financing_sources || baseFallback.financing_sources,
+      market_valuation: activeTeam.kpis.market_valuation || baseFallback.market_valuation,
+      statements: activeTeam.kpis.statements || baseFallback.statements
     } as KPIs;
-  }, [activeArena, activeTeam]);
+  }, [activeTeam]);
 
   const currencySymbol = activeArena?.currency === 'BRL' ? 'R$' : activeArena?.currency === 'EUR' ? '€' : '$';
   const fmt = (val: number) => {
-    if (Math.abs(val) >= 1000000) return `${(val / 1000000).toFixed(2)}M`;
-    if (Math.abs(val) >= 1000) return `${(val / 1000).toFixed(1)}K`;
+    const abs = Math.abs(val);
+    if (abs >= 1000000) return `${(val / 1000000).toFixed(2)}M`;
+    if (abs >= 1000) return `${(val / 1000).toFixed(1)}K`;
     return val.toFixed(0);
   };
 
@@ -96,7 +107,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const kanitzColor = kanitz > 0 ? 'text-emerald-500' : kanitz > -3 ? 'text-orange-500' : 'text-rose-500';
   
   const sources = currentKpis.financing_sources || { ecp: 0, elp: 0, ccp: 0 };
-  const totalAbs = Math.abs(sources.ecp) + Math.abs(sources.elp) + Math.max(0, sources.ccp);
+  const totalAbs = Math.max(1, Math.abs(sources.ecp) + Math.abs(sources.elp) + Math.abs(sources.ccp));
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
@@ -146,7 +157,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   
                   <div className="flex h-12 w-full rounded-xl overflow-hidden border border-white/5 shadow-2xl bg-slate-900">
                      <motion.div initial={{width:0}} animate={{width: `${(Math.abs(sources.elp) / totalAbs) * 100}%`}} className="h-full bg-blue-600 relative group" />
-                     <motion.div initial={{width:0}} animate={{width: `${(Math.max(0, sources.ccp) / totalAbs) * 100}%`}} className={`h-full bg-slate-400 relative group ${sources.ccp < 0 ? 'opacity-0' : ''}`} />
+                     <motion.div initial={{width:0}} animate={{width: `${(Math.abs(sources.ccp) / totalAbs) * 100}%`}} className="h-full bg-slate-400 relative group" />
                      <motion.div initial={{width:0}} animate={{width: `${(Math.abs(sources.ecp) / totalAbs) * 100}%`}} className="h-full bg-orange-600 relative group" />
                   </div>
 

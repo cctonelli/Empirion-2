@@ -102,9 +102,16 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
     },
     liabilities: { 
       current: 2621493, 
+      current_loans: 1872362,
       long_term: 1500000,
       total_debt: 4121493 
     }
+  },
+  nlcdg: 2572735,
+  financing_sources: {
+    ecp: 1872362,
+    elp: 1500000,
+    ccp: 5055447
   },
   dre: {
     revenue: 3322735,

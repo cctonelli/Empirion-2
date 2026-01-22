@@ -8,7 +8,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v15.2 - SPECIAL PURCHASES & PRODUCTIVITY DYNAMICS
+ * CORE ORACLE ENGINE v15.3 - FLEURIET & NLCDG DYNAMICS
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -29,7 +29,7 @@ export const calculateProjections = (
 
   // 1. PRODUTIVIDADE E CAPACIDADE EFETIVA
   const productivityFactor = sanitize(indicators.labor_productivity, 1.0);
-  const baseCapacity = 10000; // Capacidade padrão das 5 máquinas iniciais
+  const baseCapacity = 10000; 
   
   const getAdjustedPrice = (model: MachineModel, base: number) => {
     let adj = 1.0;
@@ -42,37 +42,29 @@ export const calculateProjections = (
                              (decisions.machinery.buy.beta * (indicators.machine_specs?.beta.production_capacity || 6000)) +
                              (decisions.machinery.buy.gama * (indicators.machine_specs?.gama.production_capacity || 12000));
 
-  // Capacidade Real ajustada pela Produtividade do Round
   const effectiveCapacity = (baseCapacity + newMachinesCapacity) * productivityFactor;
   const unitsToProduce = effectiveCapacity * (decisions.production.activityLevel / 100);
 
-  // 2. LÓGICA DE COMPRAS ESPECIAIS (NÃO PENALIZAR PRODUÇÃO)
-  // Requisito: 3 unidades de MP-A e 2 unidades de MP-B por Produto Acabado
+  // 2. COMPRAS ESPECIAIS
   const requiredMPA = unitsToProduce * 3;
   const requiredMPB = unitsToProduce * 2;
-  
-  const currentMPAStock = sanitize(previousState?.inventory?.mpa, 0);
-  const currentMPBStock = sanitize(previousState?.inventory?.mpb, 0);
-  
+  const currentMPAStock = sanitize(previousState?.inventory?.mpa, 628545 / 20.20);
+  const currentMPBStock = sanitize(previousState?.inventory?.mpb, 838060 / 40.40);
   const decidedMPA = sanitize(decisions.production.purchaseMPA, 0);
   const decidedMPB = sanitize(decisions.production.purchaseMPB, 0);
-  
   const deficitMPA = Math.max(0, requiredMPA - (currentMPAStock + decidedMPA));
   const deficitMPB = Math.max(0, requiredMPB - (currentMPBStock + decidedMPB));
-  
-  // Compras Especiais Automáticas (Preço Spot + ágio parametrizado)
   const premium = 1 + (sanitize(indicators.special_purchase_premium, 15) / 100);
   const specialPurchaseCost = (deficitMPA * indicators.prices.mp_a * premium) + 
                                (deficitMPB * indicators.prices.mp_b * premium);
 
-  // 3. MERCADO GLOBAL (PULO DO GATO: ICE + VARIAÇÃO DE DEMANDA)
+  // 3. MERCADO GLOBAL
   const iceFactor = 1 + (indicators.ice / 100);
   const demandVarFactor = 1 + (indicators.demand_variation / 100);
   const totalMarketDemand = (2500 * (indicators.regions_count || 4) * 4) * iceFactor * demandVarFactor;
   
   let totalRevenueBase = 0;
   let totalUnitsSold = 0;
-
   const regions = championshipData?.region_configs || Array.from({ length: indicators.regions_count || 4 }, (_, i) => ({
      id: i + 1,
      currency: 'BRL' as CurrencyType,
@@ -83,71 +75,81 @@ export const calculateProjections = (
      const decision = decisions.regions[reg.id] || { price: 375, term: 1, marketing: 0 };
      const regionalWeight = reg.demand_weight / 100;
      const regionalDemand = totalMarketDemand * regionalWeight;
-     
-     // Elasticidade Preço e Marketing
      const priceFactor = Math.pow(indicators.avg_selling_price / Math.max(decision.price, 100), 1.6);
      const promoFactor = 1 + (decision.marketing * 0.06);
      const shareMultiplier = priceFactor * promoFactor;
-     
      const unitsSoldReg = Math.min(regionalDemand * (shareMultiplier / 10), regionalDemand);
      totalUnitsSold += unitsSoldReg;
-
      const revenueLocal = unitsSoldReg * decision.price;
      const exchangeRate = indicators.exchange_rates?.[reg.currency] || 1;
      const baseExchangeRate = indicators.exchange_rates?.[baseCurrency] || 1;
-     const conversionFactor = exchangeRate / baseExchangeRate;
-     totalRevenueBase += revenueLocal * conversionFactor;
+     totalRevenueBase += revenueLocal * (exchangeRate / baseExchangeRate);
   });
 
-  // Ajuste de Vendas pela Produção Disponível
   const salesAdjustmentFactor = totalUnitsSold > unitsToProduce ? unitsToProduce / totalUnitsSold : 1;
   const finalRevenue = totalRevenueBase * salesAdjustmentFactor;
   const finalUnitsSold = totalUnitsSold * salesAdjustmentFactor;
 
-  // 4. DRE & FLUXO OPERACIONAL
-  const mpaCost = decidedMPA * indicators.prices.mp_a;
-  const mpbCost = decidedMPB * indicators.prices.mp_b;
+  // 4. DRE & FLUXO
   const cpv = (finalUnitsSold * (indicators.prices.mp_a * 3 + indicators.prices.mp_b * 2)) + 32000;
-  
   const baseOpex = 916522 * (1 + (indicators.inflation_rate / 100));
   const storageCost = (Math.max(0, unitsToProduce - finalUnitsSold) * indicators.prices.storage_finished) +
                       (Math.max(0, (decidedMPA + deficitMPA) * 0.1) * indicators.prices.storage_mp);
-  
   const totalOpex = baseOpex + storageCost + specialPurchaseCost;
-  
   const netProfit = finalRevenue - cpv - totalOpex;
   const finalEquity = prevEquity + netProfit;
 
-  // 5. BALANÇO & STATUS DE SAÚDE
+  // 5. BALANÇO & FLEURIET (NLCDG)
   const totalCapex = (decisions.machinery.buy.alfa * getAdjustedPrice('alfa', indicators.machinery_values.alfa));
-  const ac = sanitize(bs.assets?.current?.total, 3290340) + netProfit - (totalCapex * 0.4);
-  const pc = sanitize(bs.liabilities?.current, 2621493);
+  const ac_financial = sanitize(bs.assets?.current?.cash, 0) + sanitize(bs.assets?.current?.app, 0);
+  const receivables = finalRevenue * 0.6; // Simplificação para PMRV
+  const inventoryValue = (Math.max(0, unitsToProduce - finalUnitsSold) * 235) + (requiredMPA * indicators.prices.mp_a) + (requiredMPB * indicators.prices.mp_b);
+  
+  const ac_total = ac_financial + receivables + inventoryValue;
+  const pc_suppliers = finalRevenue * 0.2; // Simplificação PMPC
+  const pc_loans = sanitize(bs.liabilities?.current_loans, 1872362) + (decisions.finance.loanRequest * 0.3);
+  const pc_total = pc_suppliers + pc_loans + 13045; // IR fallback
   const pnc = sanitize(bs.liabilities?.long_term, 1500000);
 
+  // NLCDG = Ativo Circulante Operacional - Passivo Circulante Operacional
+  const nlcdg = (receivables + inventoryValue) - pc_suppliers;
+
   const kanitz = calculateKanitzFactor({
-    netProfit, equity: finalEquity, currentAssets: ac, longTermAssets: 0,
-    currentLiabilities: pc, longTermLiabilities: pnc, inventory: 1466605
+    netProfit, equity: finalEquity, currentAssets: ac_total, longTermAssets: 0,
+    currentLiabilities: pc_total, longTermLiabilities: pnc, inventory: inventoryValue
   });
 
   const rating = calculateBankRating(kanitz.fi, netProfit);
 
-  return {
-    revenue: finalRevenue, netProfit, debtRatio: ((pc + pnc) / finalEquity) * 100, creditRating: rating,
-    marketShare: (finalUnitsSold / totalMarketDemand) * 100,
-    health: { rating, kanitz_fi: kanitz.fi, status: kanitz.status, productivity: productivityFactor },
-    kpis: {
-      market_share: (finalUnitsSold / totalMarketDemand) * 100,
-      rating,
-      insolvency_status: kanitz.status,
-      equity: finalEquity,
-      special_purchases_impact: specialPurchaseCost,
-      capacity_utilization: (unitsToProduce / effectiveCapacity) * 100,
-      statements: { 
-        dre: { revenue: finalRevenue, cpv, opex: totalOpex, net_profit: netProfit },
-        balance_sheet: { assets: { total: ac + 5886600 + totalCapex }, equity: { total: finalEquity } }
-      }
+  const kpis: KPIs = {
+    market_share: (finalUnitsSold / totalMarketDemand) * 100,
+    rating,
+    insolvency_status: kanitz.status,
+    equity: finalEquity,
+    nlcdg: nlcdg,
+    financing_sources: {
+      ecp: pc_loans,
+      elp: pnc,
+      ccp: finalEquity
     },
-    statements: { dre: { revenue: finalRevenue, cpv, opex: totalOpex, net_profit: netProfit }, balance_sheet: { assets: { total: ac + 5886600 + totalCapex } } }
+    special_purchases_impact: specialPurchaseCost,
+    capacity_utilization: (unitsToProduce / effectiveCapacity) * 100,
+    market_valuation: {
+      share_price: (finalEquity / DEFAULT_TOTAL_SHARES) * 60,
+      total_shares: DEFAULT_TOTAL_SHARES,
+      market_cap: finalEquity,
+      tsr: (netProfit / prevEquity) * 100
+    },
+    statements: { 
+      dre: { revenue: finalRevenue, cpv, opex: totalOpex, net_profit: netProfit },
+      balance_sheet: { assets: { total: ac_total + 5886600 + totalCapex }, equity: { total: finalEquity } }
+    }
+  };
+
+  return {
+    revenue: finalRevenue, netProfit, debtRatio: ((pc_total + pnc) / finalEquity) * 100, creditRating: rating,
+    marketShare: kpis.market_share, health: { rating, kanitz_fi: kanitz.fi, status: kanitz.status, productivity: productivityFactor },
+    kpis, statements: kpis.statements
   };
 };
 
