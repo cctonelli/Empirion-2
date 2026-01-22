@@ -8,7 +8,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v15.3 - FLEURIET & NLCDG DYNAMICS
+ * CORE ORACLE ENGINE v15.4 - FIXED MACHINE INDEXING
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -33,7 +33,11 @@ export const calculateProjections = (
   
   const getAdjustedPrice = (model: MachineModel, base: number) => {
     let adj = 1.0;
-    const rate = indicators[`machine_${model}_price_adjust`] || 0;
+    // Map model name to indicator key name (alfa -> alpha, gama -> gamma)
+    const keyPart = model === 'alfa' ? 'alpha' : model === 'gama' ? 'gamma' : 'beta';
+    const rate = indicators[`machine_${keyPart}_price_adjust`] || 0;
+    
+    // O reajuste é aplicado de forma composta até o round atual
     for (let i = 0; i < currentRound; i++) adj *= (1 + rate / 100);
     return base * adj;
   };

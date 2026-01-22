@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
-import { DecisionData, Branch, Championship, ProjectionResult, EcosystemConfig, MachineModel } from '../types';
+import { DecisionData, Branch, Championship, ProjectionResult, EcosystemConfig, MachineModel, MacroIndicators } from '../types';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 
@@ -67,13 +67,22 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
   const machinePrices = useMemo(() => {
     if (!activeArena) return { alfa: 0, beta: 0, gama: 0, desagio: 0 };
-    const macro = activeArena.market_indicators;
+    
+    // Mescla indicadores globais com as regras específicas do round atual
+    const roundRules = activeArena.round_rules?.[activeArena.current_round] || {};
+    const macro = { ...activeArena.market_indicators, ...roundRules };
+    
     const getAdjusted = (model: MachineModel, base: number) => {
       let adj = 1.0;
-      const rate = macro[`machine_${model}_price_adjust`] || 0;
+      // Correção de mapeamento: alfa -> alpha, gama -> gamma
+      const keyPart = model === 'alfa' ? 'alpha' : model === 'gama' ? 'gamma' : 'beta';
+      const rate = macro[`machine_${keyPart}_price_adjust`] || 0;
+      
+      // Aplica o reajuste cumulativo
       for (let i = 0; i < round; i++) adj *= (1 + rate / 100);
       return base * adj;
     };
+
     return {
       alfa: getAdjusted('alfa', macro.machinery_values.alfa),
       beta: getAdjusted('beta', macro.machinery_values.beta),
@@ -117,13 +126,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     if (!teamId || !champId) return;
     setIsSaving(true);
     try {
-      // FIX: Garantimos que o objeto regions esteja íntegro
       const finalPayload = { ...decisions };
-      // Fix: Cast result to any to bypass TypeScript union type inference error for the 'error' property
       const result = await saveDecisions(teamId, champId, round, finalPayload) as any;
       if (result.success) {
          alert("TRANSMISSÃO CONCLUÍDA: Suas decisões foram seladas pelo motor Oracle.");
-         // Opcional: voltar ao primeiro passo ou redirecionar
       } else {
          throw new Error(result.error || "Falha desconhecida no nodo de dados.");
       }
@@ -200,7 +206,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                {activeStep === 1 && (
                   <div className="flex flex-col lg:flex-row h-full gap-8">
-                     {/* SIDEBAR DE REGIÕES v15.6 - NOMENCLATURA REAL */}
                      <div className="w-full lg:w-[320px] flex flex-col gap-3 border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-6 overflow-y-auto custom-scrollbar shrink-0 max-h-[300px] lg:max-h-full">
                         <div className="sticky top-0 bg-[#020617]/80 backdrop-blur-md z-10 pb-4 border-b border-white/5 mb-4">
                            <h3 className="text-[11px] font-black text-orange-500 uppercase tracking-[0.4em] flex items-center gap-3">
@@ -236,7 +241,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         })}
                      </div>
 
-                     {/* COMANDO CENTRAL AMPLIPICADO */}
                      <div className="flex-1 space-y-8 flex flex-col overflow-y-auto custom-scrollbar pr-2">
                         <div className="flex justify-between items-center bg-slate-900 p-8 rounded-[3.5rem] border border-white/10 shadow-2xl">
                            <div className="flex items-center gap-6">
@@ -384,7 +388,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             </motion.div>
          </AnimatePresence>
 
-         {/* 4. GATILHOS FLUTUANTES v15.6 - POSIÇÃO ABSOLUTE INTERNA */}
          <button 
            onClick={() => setActiveStep(s => Math.max(0, s-1))} 
            disabled={activeStep === 0} 
@@ -412,7 +415,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
            </button>
          )}
 
-         {/* INDICADOR DE FASE DISCRETO */}
          <div className="absolute bottom-4 right-1/2 translate-x-1/2 opacity-30 flex flex-col items-center pointer-events-none">
             <span className="text-[7px] font-black text-white uppercase tracking-[0.6em]">Protocolo Gold v13.2</span>
             <span className="text-[9px] font-black text-orange-500 italic uppercase">Etapa {activeStep + 1} de {STEPS.length}</span>
