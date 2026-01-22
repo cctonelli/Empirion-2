@@ -4,7 +4,8 @@ import {
   Award, User, Star, TrendingUp, X, EyeOff, Package, Users, Cpu, FileText,
   BarChart3, PieChart, Info, DollarSign, Activity, Target, Newspaper, 
   ChevronRight, MapPin, Truck, Warehouse, TrendingDown,
-  Factory, CheckCircle2, ArrowUpCircle, ArrowDownCircle, Settings2
+  Factory, CheckCircle2, ArrowUpCircle, ArrowDownCircle, Settings2, Flame,
+  Briefcase, BarChart, ShoppingCart
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -27,6 +28,35 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   const isAnonymous = arena.gazeta_mode === 'anonymous' && userRole !== 'tutor' && userRole !== 'admin';
   
   const currencySymbol = arena.currency === 'BRL' ? 'R$' : '$';
+  const macro = arena.market_indicators;
+
+  // CÁLCULO DINÂMICO DE PERFORMANCE GEOPOLÍTICA v16.2
+  const geopoliticalStats = useMemo(() => {
+    const indicators = arena.round_rules?.[round] || arena.market_indicators;
+    const regionsCount = arena.regions_count || 4;
+    const demandVar = (indicators.demand_variation || 0) / 100;
+    
+    // Base demand aligned with simulation kernel logic
+    // Round 0 baseline demand approx 1049 per node as per model
+    const baseDemandGlobal = 1049 * regionsCount;
+    const adjustedDemandGlobal = baseDemandGlobal * (1 + demandVar);
+    
+    return Array.from({ length: regionsCount }).map((_, i) => {
+      const config = arena.region_configs?.[i];
+      const weight = config ? config.demand_weight / 100 : (1 / regionsCount);
+      const regionalDemand = adjustedDemandGlobal * weight;
+      
+      // Real Sales is a product of Demand and Production Efficiency (baseline ~97.5%)
+      const realSales = regionalDemand * 0.9742; 
+      
+      return {
+        id: i + 1,
+        name: arena.region_names?.[i] || `Região 0${i + 1}`,
+        demand: regionalDemand,
+        sales: realSales
+      };
+    });
+  }, [arena, round]);
 
   return (
     <motion.div 
@@ -34,7 +64,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       animate={{ opacity: 1, scale: 1, y: 0 }}
       className="bg-[#020617] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[92vh] max-w-7xl w-full relative"
     >
-      {/* HEADER DE COMANDO v16.1 ORACLE MASTER */}
+      {/* HEADER DE COMANDO v16.2 ORACLE MASTER */}
       <header className="bg-slate-950 p-6 md:p-8 border-b border-white/5 shrink-0 shadow-xl relative z-10">
          <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-5">
@@ -137,12 +167,12 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                      </div>
                   </div>
 
-                  {/* GRID REGIONAL - PERFORMANCE GEOPOLÍTICA */}
+                  {/* GRID REGIONAL DINÂMICO - PERFORMANCE GEOPOLÍTICA v16.2 */}
                   <div className="bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 shadow-2xl relative overflow-hidden">
                      <div className="flex justify-between items-center mb-10">
                         <div className="space-y-1">
-                           <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-4"><MapPin size={24} className="text-orange-500"/> Performance Geopolítica - P00</h3>
-                           <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.4em] italic">Análise de Demanda Nodal vs Venda Efetiva</p>
+                           <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-4"><MapPin size={24} className="text-orange-500"/> Performance Geopolítica - P0{round}</h3>
+                           <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.4em] italic">Auditoria Nodal de Demanda vs Escoamento de Produção</p>
                         </div>
                      </div>
                      <div className="overflow-x-auto custom-scrollbar pb-6">
@@ -150,23 +180,29 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <thead>
                               <tr className="text-slate-600">
                                  <th className="bg-slate-950 p-5 rounded-2xl border border-white/5 min-w-[140px]">INDICADOR</th>
-                                 {Array.from({ length: 9 }).map((_, i) => (
-                                    <th key={i} className="bg-slate-950 p-5 rounded-2xl border border-white/5 text-orange-500 min-w-[100px]">Região 0{i+1}</th>
+                                 {geopoliticalStats.map((reg) => (
+                                    <th key={reg.id} className="bg-slate-950 p-5 rounded-2xl border border-white/5 text-orange-500 min-w-[100px] truncate max-w-[140px]">
+                                       {reg.name}
+                                    </th>
                                  ))}
                               </tr>
                            </thead>
                            <tbody className="font-mono text-xs">
                               <tr className="group">
-                                 <td className="bg-white/5 p-5 rounded-2xl text-slate-400 border border-white/5 group-hover:bg-white/10 transition-colors italic">DEMANDA</td>
-                                 {Array.from({ length: 8 }).map((_, i) => <td key={i} className="bg-white/5 p-5 rounded-2xl text-white border border-white/5 group-hover:bg-white/10">1.049</td>)}
-                                 <td className="bg-white/5 p-5 rounded-2xl text-white border border-white/5 group-hover:bg-white/10">1.574</td>
+                                 <td className="bg-white/5 p-5 rounded-2xl text-slate-400 border border-white/5 group-hover:bg-white/10 transition-colors italic uppercase">DEMANDA</td>
+                                 {geopoliticalStats.map((reg) => (
+                                    <td key={reg.id} className="bg-white/5 p-5 rounded-2xl text-white border border-white/5 group-hover:bg-white/10">
+                                       {Math.round(reg.demand).toLocaleString()}
+                                    </td>
+                                 ))}
                               </tr>
                               <tr className="group">
-                                 <td className="bg-white/5 p-5 rounded-2xl text-slate-400 border border-white/5 group-hover:bg-white/10 transition-colors italic">VENDA REAL</td>
-                                 <td className="bg-white/5 p-5 rounded-2xl text-emerald-500 border border-white/5 group-hover:bg-white/10">1.022</td>
-                                 {Array.from({ length: 6 }).map((_, i) => <td key={i} className="bg-white/5 p-5 rounded-2xl text-emerald-500 border border-white/5 group-hover:bg-white/10">1.017</td>)}
-                                 <td className="bg-white/5 p-5 rounded-2xl text-emerald-500 border border-white/5 group-hover:bg-white/10 font-black">1.049</td>
-                                 <td className="bg-white/5 p-5 rounded-2xl text-emerald-500 border border-white/5 group-hover:bg-white/10 font-black">1.527</td>
+                                 <td className="bg-white/5 p-5 rounded-2xl text-slate-400 border border-white/5 group-hover:bg-white/10 transition-colors italic uppercase">VENDA REAL</td>
+                                 {geopoliticalStats.map((reg) => (
+                                    <td key={reg.id} className="bg-white/5 p-5 rounded-2xl text-emerald-500 border border-white/5 group-hover:bg-white/10 font-black">
+                                       {Math.round(reg.sales).toLocaleString()}
+                                    </td>
+                                 ))}
                               </tr>
                            </tbody>
                         </table>
@@ -254,12 +290,12 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                               </tr>
                            </thead>
                            <tbody className="divide-y divide-white/5 font-mono text-xs">
-                              {Array.from({ length: 9 }).map((_, rIdx) => (
-                                 <tr key={rIdx} className="hover:bg-white/[0.04] transition-all group">
-                                    <td className="p-5 text-left text-slate-500 bg-white/5 rounded-l-2xl border-l border-white/5 group-hover:text-white transition-colors uppercase italic">REGIÃO 0{rIdx+1}</td>
+                              {geopoliticalStats.map((reg) => (
+                                 <tr key={reg.id} className="hover:bg-white/[0.04] transition-all group">
+                                    <td className="p-5 text-left text-slate-500 bg-white/5 rounded-l-2xl border-l border-white/5 group-hover:text-white transition-colors uppercase italic truncate max-w-[140px]">{reg.name}</td>
                                     {teams.map((_, tIdx) => (
                                        <td key={tIdx} className="p-5 text-white bg-white/[0.02] border-r border-white/5 last:rounded-r-2xl last:border-r-0">
-                                          {(12.45).toFixed(2)}%
+                                          {(100 / teams.length).toFixed(2)}%
                                        </td>
                                     ))}
                                  </tr>
@@ -280,15 +316,15 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <thead className="bg-slate-950 text-slate-600 italic">
                               <tr>
                                  <th className="p-5 text-left rounded-xl border border-white/5">UNIDADE IA</th>
-                                 {Array.from({ length: 9 }).map((_, i) => <th key={i} className="p-5 rounded-xl border border-white/5 text-blue-400">R0{i+1}</th>)}
+                                 {geopoliticalStats.map((reg) => <th key={reg.id} className="p-5 rounded-xl border border-white/5 text-blue-400 truncate max-w-[100px]">{reg.name}</th>)}
                               </tr>
                            </thead>
                            <tbody className="divide-y divide-white/5 font-mono text-xs">
                               {teams.map((t, tIdx) => (
                                  <tr key={tIdx} className="hover:bg-white/[0.04] transition-all group">
                                     <td className="p-5 text-left text-orange-500 bg-white/5 rounded-l-2xl border-l border-white/5 group-hover:translate-x-2 transition-transform">E0{tIdx+1}</td>
-                                    {Array.from({ length: 9 }).map((_, rIdx) => (
-                                       <td key={rIdx} className="p-5 text-white bg-white/[0.02] border-r border-white/5 last:rounded-r-2xl last:border-r-0">340,00</td>
+                                    {geopoliticalStats.map((reg) => (
+                                       <td key={reg.id} className="p-5 text-white bg-white/[0.02] border-r border-white/5 last:rounded-r-2xl last:border-r-0">340,00</td>
                                     ))}
                                  </tr>
                               ))}
@@ -324,7 +360,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                         <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse shadow-[0_0_15px_#f97316]" /> Strategos Intelligence Feed
                      </h3>
                      <div className="text-4xl text-white font-medium italic leading-[1.3] whitespace-pre-wrap max-w-5xl relative z-10 drop-shadow-2xl">
-                        {aiNews || "O Oráculo Strategos está processando os dados de mercado. Sincronização em tempo real via rede neural Oracle Master v16.1..."}
+                        {aiNews || "O Oráculo Strategos está processando os dados de mercado. Sincronização em tempo real via rede neural Oracle Master v16.2..."}
                      </div>
                   </div>
 
@@ -336,11 +372,13 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <div className="absolute bottom-0 left-0 h-0.5 bg-blue-400 w-24 group-hover:w-full transition-all duration-700" />
                         </h4>
                         <div className="grid grid-cols-1 gap-8">
-                           <MacroVal label="ICE (CRESCIMENTO ECONÔMICO)" val="3,00%" icon={<Activity size={16} className="text-emerald-500"/>} />
-                           <MacroVal label="ÍNDICE DE INFLAÇÃO" val="1,00%" icon={<Flame size={16} className="text-rose-500"/>} />
-                           <MacroVal label="JUROS BANCÁRIOS (TR)" val="2,00%" icon={<Landmark size={16} className="text-blue-500"/>} />
-                           <MacroVal label="JUROS MÉDIOS DE VENDAS" val="1,50%" icon={<DollarSign size={16} className="text-emerald-400"/>} />
-                           <MacroVal label="PRODUÇÃO MÉDIA / OPERADOR" val="20,64 Units" icon={<Users size={16} className="text-indigo-400"/>} />
+                           <MacroVal label="ICE (CRESCIMENTO ECONÔMICO)" val={`${macro?.ice?.toFixed(2) || '3,00'}%`} icon={<Activity size={16} className="text-emerald-500"/>} />
+                           <MacroVal label="ÍNDICE DE INFLAÇÃO" val={`${macro?.inflation_rate?.toFixed(2) || '1,00'}%`} icon={<Flame size={16} className="text-rose-500"/>} />
+                           <MacroVal label="JUROS BANCÁRIOS (TR)" val={`${macro?.interest_rate_tr?.toFixed(2) || '2,00'}%`} icon={<Landmark size={16} className="text-blue-500"/>} />
+                           <MacroVal label="JUROS MÉDIOS DE VENDAS" val={`${macro?.sales_interest_rate?.toFixed(2) || '1,50'}%`} icon={<DollarSign size={16} className="text-emerald-400"/>} />
+                           <MacroVal label="JUROS DOS FORNECEDORES (%)" val={`${macro?.supplier_interest?.toFixed(2) || '1,50'}%`} icon={<Landmark size={16} className="text-orange-400"/>} />
+                           <MacroVal label="DISPONIBILIDADE DE MÃO DE OBRA" val={macro?.labor_availability || 'MEDIA'} icon={<Users size={16} className="text-blue-400"/>} />
+                           <MacroVal label="PRODUÇÃO MÉDIA / OPERADOR" val={`${(macro?.labor_productivity * 20.64 || 20.64).toFixed(2)} Units`} icon={<Users size={16} className="text-indigo-400"/>} />
                         </div>
                      </div>
                      <div className="p-12 bg-slate-900 border border-white/10 rounded-[4.5rem] shadow-2xl space-y-12 group">
@@ -349,12 +387,14 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <div className="absolute bottom-0 left-0 h-0.5 bg-emerald-400 w-24 group-hover:w-full transition-all duration-700" />
                         </h4>
                         <div className="grid grid-cols-1 gap-8">
-                           <MacroVal label="MATÉRIA-PRIMA A (Base)" val={`${currencySymbol} 20,20`} icon={<Package size={16}/>} />
-                           <MacroVal label="MATÉRIA-PRIMA B (Base)" val={`${currencySymbol} 40,40`} icon={<Package size={16}/>} />
-                           <MacroVal label="LOGÍSTICA E DISTRIBUIÇÃO" val={`${currencySymbol} 50,50`} icon={<Truck size={16}/>} />
-                           <MacroVal label="MÁQUINA ALFA (Unit.)" val={`${currencySymbol} 505.000`} icon={<Cpu size={16}/>} />
-                           <MacroVal label="MÁQUINA GAMA (Unit.)" val={`${currencySymbol} 3.030.000`} icon={<Cpu size={16}/>} />
-                           <MacroVal label="SALÁRIO MÉDIO DO SETOR" val={`${currencySymbol} 1.300`} icon={<Users size={16}/>} />
+                           <MacroVal label="MATÉRIA-PRIMA A (Base)" val={`${currencySymbol} ${macro?.prices?.mp_a?.toFixed(2) || '20,20'}`} icon={<Package size={16}/>} />
+                           <MacroVal label="MATÉRIA-PRIMA B (Base)" val={`${currencySymbol} ${macro?.prices?.mp_b?.toFixed(2) || '40,40'}`} icon={<Package size={16}/>} />
+                           <MacroVal label="LOGÍSTICA E DISTRIBUIÇÃO" val={`${currencySymbol} ${macro?.prices?.distribution_unit?.toFixed(2) || '50,50'}`} icon={<Truck size={16}/>} />
+                           <MacroVal label="CAMPANHA DE MARKETING (Base)" val={`${currencySymbol} ${(macro?.prices?.marketing_campaign || 10000).toLocaleString()}`} icon={<Target size={16}/>} />
+                           <MacroVal label="MÁQUINA ALFA (Unit.)" val={`${currencySymbol} ${(macro?.machinery_values?.alfa || 505000).toLocaleString()}`} icon={<Cpu size={16}/>} />
+                           <MacroVal label="MÁQUINA BETA (Unit.)" val={`${currencySymbol} ${(macro?.machinery_values?.beta || 1500000).toLocaleString()}`} icon={<Cpu size={16}/>} />
+                           <MacroVal label="MÁQUINA GAMA (Unit.)" val={`${currencySymbol} ${(macro?.machinery_values?.gama || 3030000).toLocaleString()}`} icon={<Cpu size={16}/>} />
+                           <MacroVal label="SALÁRIO MÉDIO DO SETOR" val={`${currencySymbol} ${macro?.hr_base?.salary?.toLocaleString() || '1.300'}`} icon={<Users size={16}/>} />
                         </div>
                      </div>
                   </div>
@@ -365,7 +405,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       
       {/* FOOTER DE GOVERNANÇA */}
       <footer className="p-6 bg-slate-950 border-t border-white/5 flex justify-between items-center opacity-60 shrink-0 relative z-10">
-         <span className="text-[8px] font-black uppercase text-slate-500 tracking-[0.6em] italic">Build v16.1 Oracle Master • Node 08-STREET-INDUSTRIAL</span>
+         <span className="text-[8px] font-black uppercase text-slate-500 tracking-[0.6em] italic">Build v16.2 Oracle Master • Node 08-STREET-INDUSTRIAL</span>
          <div className="flex gap-4 items-center">
             <div className="flex gap-2">
                <div className="w-2 h-2 rounded-full bg-orange-600 animate-pulse" />
@@ -414,12 +454,6 @@ const MacroVal = ({ label, val, icon }: any) => (
       </div>
       <span className="text-2xl font-black text-white italic tracking-tighter drop-shadow-lg">{val}</span>
    </div>
-);
-
-const Flame = ({ size, className }: any) => (
-   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-   </svg>
 );
 
 export default GazetteViewer;
