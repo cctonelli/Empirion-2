@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode } from '../types';
 import { DEFAULT_MACRO } from '../constants';
@@ -128,6 +127,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 
   if (isTrial && currentUserId) {
     try {
+      // 1. Grava Torneio Trial com alinhamento de schema (initial_market_data)
       const { error: champErr } = await supabase.from('trial_championships').insert({
         id: fullChamp.id,
         name: fullChamp.name,
@@ -139,6 +139,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         deadline_value: fullChamp.deadline_value,
         deadline_unit: fullChamp.deadline_unit,
         initial_financials: fullChamp.initial_financials,
+        initial_market_data: fullChamp.market_indicators, // Alinhamento com schema
         market_indicators: fullChamp.market_indicators,
         region_names: fullChamp.region_names,
         region_configs: fullChamp.region_configs,
@@ -149,11 +150,23 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         gazeta_mode: fullChamp.gazeta_mode,
         tutor_id: currentUserId,
         round_started_at: fullChamp.round_started_at,
-        config: fullChamp.config || {}
+        config: {
+          ...(fullChamp.config || {}),
+          initial_share_price: fullChamp.initial_share_price,
+          dividend_percent: fullChamp.market_indicators.dividend_percent
+        }
       });
       
       if (champErr) throw champErr;
 
+      // 2. Registra Tutor do Trial para políticas RLS
+      await supabase.from('trial_tutors').insert({
+        championship_id: fullChamp.id,
+        user_id: currentUserId,
+        role: 'owner'
+      });
+
+      // 3. Grava Equipes do Trial
       const { error: teamsErr } = await supabase.from('trial_teams').insert(teamsWithIds.map(t => ({
         id: t.id,
         championship_id: t.championship_id,
@@ -180,7 +193,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 };
 
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
-  // CRÍTICO: Sincronização de contexto trial/real a cada tentativa de salvamento
   const localArenas = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
   const arena = localArenas.find((a: any) => a.id === champId);
   const isTrial = arena ? !!arena.is_trial : (localStorage.getItem('is_trial_session') === 'true');
@@ -196,14 +208,13 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       updated_at: new Date().toISOString() 
     };
 
-    // Upsert real no Banco com tentativa de resolução de conflito para evitar duplicação em Trial
+    // Upsert real no Banco com tratamento de conflito idêntico para Trial
     const { error } = await supabase.from(table).upsert(payload, { 
-      onConflict: isTrial ? 'team_id, championship_id, round' : 'team_id, championship_id, round' 
+      onConflict: 'team_id, championship_id, round' 
     });
     
     if (error) throw error;
     
-    // Sincroniza Buffer Local para o monitor do tutor (Realtime manual fallback)
     const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
     local[`${champId}_${teamId}_${round}`] = decisions;
     localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
@@ -212,7 +223,6 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
     return { success: true, error: undefined as string | undefined };
   } catch (err: any) {
     logError(LogContext.DATABASE, "Cloud Save Fault, backup mode active", err.message);
-    // Em caso de falha no banco (ex: RLS ou timeout), mantemos no localStorage e retornamos "sucesso local"
     const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
     local[`${champId}_${teamId}_${round}`] = decisions;
     localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
