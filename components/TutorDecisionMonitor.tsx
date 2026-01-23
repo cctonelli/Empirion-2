@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Chart from 'react-apexcharts';
 import { 
@@ -11,6 +12,12 @@ const motion = _motion as any;
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { Branch, EcosystemConfig, CreditRating, TeamProgress, AuditLog } from '../types';
+
+interface MonitorProps {
+  championshipId: string;
+  round: number;
+  isTrial?: boolean;
+}
 
 /**
  * ClassCreditHealth: Histograma Memoizado para exibição de Ratings.
@@ -79,7 +86,7 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
   );
 });
 
-const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> = ({ championshipId, round }) => {
+const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, isTrial = false }) => {
   const [teams, setTeams] = useState<TeamProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTeam, setSelectedTeam] = useState<TeamProgress | null>(null);
@@ -89,9 +96,14 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
     try {
       if (isMounted.current) setLoading(true);
       
-      const { data: arenaData } = await supabase.from('championships').select('*').eq('id', championshipId).single();
-      const { data: teamsData } = await supabase.from('teams').select('*').eq('championship_id', championshipId);
-      const { data: decisionsData } = await supabase.from('current_decisions').select('*').eq('championship_id', championshipId).eq('round', round);
+      // Tabelas dinâmicas conforme o tipo da arena
+      const champTable = isTrial ? 'trial_championships' : 'championships';
+      const teamsTable = isTrial ? 'trial_teams' : 'teams';
+      const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
+
+      const { data: arenaData } = await supabase.from(champTable).select('*').eq('id', championshipId).single();
+      const { data: teamsData } = await supabase.from(teamsTable).select('*').eq('championship_id', championshipId);
+      const { data: decisionsData } = await supabase.from(decisionsTable).select('*').eq('championship_id', championshipId).eq('round', round);
 
       if (signal?.aborted) return;
 
@@ -107,15 +119,16 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
           modality_type: 'standard' 
         });
         
-        const proj = decision ? calculateProjections(decision.data, branch, eco, arenaData?.market_indicators, null) : null;
+        // Simulação prévia para o Tutor ver o impacto das decisões atuais
+        const proj = decision ? calculateProjections(decision.data, branch, eco, arenaData?.market_indicators || arenaData?.initial_market_data, null) : null;
 
         return {
           team_id: t.id,
           team_name: t.name,
-          status: decision?.status || 'pending',
+          status: decision ? 'sealed' : 'pending',
           rating: (proj?.health?.rating || 'N/A') as CreditRating,
           risk: proj?.health?.insolvency_risk ?? 0,
-          insolvent: proj?.health?.is_bankrupt ?? false,
+          insolvent: proj?.health?.status === 'BANKRUPT',
           master_key_enabled: t.master_key_enabled,
           auditLogs: (decision?.audit_logs || []) as AuditLog[]
         };
@@ -141,8 +154,9 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
     
     fetchLiveDecisions(controller.signal);
 
+    const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
     const channel = supabase.channel(`monitor-${championshipId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'current_decisions' }, () => fetchLiveDecisions(controller.signal))
+      .on('postgres_changes', { event: '*', schema: 'public', table: decisionsTable, filter: `championship_id=eq.${championshipId}` }, () => fetchLiveDecisions(controller.signal))
       .subscribe();
 
     return () => {
@@ -150,10 +164,11 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
       controller.abort();
       channel.unsubscribe();
     };
-  }, [championshipId, round]);
+  }, [championshipId, round, isTrial]);
 
   const handleToggleMasterKey = async (teamId: string, currentStatus: boolean) => {
-    const { error } = await supabase.from('teams').update({ master_key_enabled: !currentStatus }).eq('id', teamId);
+    const teamsTable = isTrial ? 'trial_teams' : 'teams';
+    const { error } = await supabase.from(teamsTable).update({ master_key_enabled: !currentStatus }).eq('id', teamId);
     if (!error && isMounted.current) fetchLiveDecisions();
   };
 
@@ -182,15 +197,15 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
               <div className="space-y-4">
                  <div className="flex justify-between items-end">
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Equipes Críticas</span>
-                    <span className="text-3xl font-black text-rose-500 italic">{teams.filter(t => t.rating === 'D').length}</span>
+                    <span className="text-3xl font-black text-rose-500 italic">{teams.filter(t => t.rating === 'D' || t.insolvent).length}</span>
                  </div>
                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-rose-600 transition-all duration-1000" style={{ width: `${(teams.filter(t => t.rating === 'D').length / Math.max(teams.length, 1)) * 100}%` }} />
+                    <div className="h-full bg-rose-600 transition-all duration-1000" style={{ width: `${(teams.filter(t => t.rating === 'D' || t.insolvent).length / Math.max(teams.length, 1)) * 100}%` }} />
                  </div>
               </div>
            </div>
            <p className="text-[9px] text-slate-500 font-bold uppercase italic mt-6 leading-relaxed relative z-10">
-              "Use o Oracle Master para reajustar taxas se o risco sistêmico ultrapassar 50% das equipes."
+              "Use o Arena Control para reajustar taxas se o risco sistêmico ultrapassar 50% das equipes."
            </p>
         </div>
       </div>
@@ -212,7 +227,7 @@ const TutorDecisionMonitor: React.FC<{ championshipId: string; round: number }> 
                 <span className={`font-black text-[11px] uppercase tracking-widest ${team.rating === 'D' ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`}>{team.rating}</span>
              </div>
              <h4 className="text-xl font-black text-white uppercase italic leading-none truncate">{team.team_name}</h4>
-             <p className="text-[8px] font-bold text-slate-500 uppercase mt-2">{team.rating === 'D' ? 'INSOLVÊNCIA CRÍTICA' : 'EQUIPE STATUS ACTIVE'}</p>
+             <p className="text-[8px] font-bold text-slate-500 uppercase mt-2">{team.status === 'sealed' ? 'PROTOCOLO ENVIADO' : 'AGUARDANDO DECISÃO'}</p>
           </button>
         ))}
       </div>

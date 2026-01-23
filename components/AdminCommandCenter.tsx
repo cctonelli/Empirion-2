@@ -7,7 +7,7 @@ import {
   Plus, Trash2, ArrowLeft, Monitor, Command, Users, Globe, CreditCard, Cpu, Gauge,
   X, Palette, Menu as MenuIcon, Save, AtSign, Phone, FileCode, UserPlus, UserMinus, Shield,
   Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity, LayoutDashboard,
-  PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight, Zap
+  PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight, Zap, CheckCircle2
 } from 'lucide-react';
 import { 
   getChampionships, 
@@ -43,16 +43,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const [isCreatingTrial, setIsCreatingTrial] = useState(false);
   
   const [tutorView, setTutorView] = useState<TutorView>('dashboard');
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('mode') === 'new_trial') {
-       provisionDemoEnvironment();
-       setIsCreatingTrial(true);
-       // CRÍTICO: Inicia diretamente na aba de Intervenção (onde está o Wizard de Planejamento)
-       setTutorView('intervention');
-    }
-  }, [location.search]);
+  const [decisionStats, setDecisionStats] = useState<Record<string, boolean>>({});
 
   const fetchData = async () => {
     setLoading(true);
@@ -87,8 +78,33 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
 
   useEffect(() => { fetchData(); }, [activeTab, isCreatingTrial]);
 
+  // Busca status das decisões para a aba de Equipes
+  useEffect(() => {
+    if (!selectedArena) return;
+    const fetchStatus = async () => {
+       const table = selectedArena.is_trial ? 'trial_decisions' : 'current_decisions';
+       const { data } = await supabase.from(table)
+         .select('team_id')
+         .eq('championship_id', selectedArena.id)
+         .eq('round', selectedArena.current_round + 1);
+       
+       const stats: Record<string, boolean> = {};
+       data?.forEach(d => stats[d.team_id] = true);
+       setDecisionStats(stats);
+    };
+    fetchStatus();
+  }, [selectedArena, tutorView]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'new_trial') {
+       provisionDemoEnvironment();
+       setIsCreatingTrial(true);
+       setTutorView('intervention');
+    }
+  }, [location.search]);
+
   const isAdmin = profile?.role === 'admin';
-  const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
 
   const tutorViewOrder: TutorView[] = ['dashboard', 'teams', 'decisions', 'intervention', 'gazette'];
   
@@ -132,7 +148,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
 
     return (
       <div className="flex flex-col h-full bg-[#020617] relative overflow-hidden">
-        {/* Navegação Flutuante só aparece se não estiver criando trial para evitar confusão */}
         {!isCreatingTrial && (
            <>
               <button onClick={() => handleNav('prev')} disabled={tutorView === tutorViewOrder[0]} className="fixed left-6 top-1/2 -translate-y-1/2 p-6 bg-white/5 border border-white/10 rounded-full text-slate-500 hover:text-orange-500 hover:bg-white/10 transition-all z-[3000] disabled:opacity-0 active:scale-90 shadow-2xl">
@@ -181,7 +196,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                       <MetricCard label="Insolvência" val={`${clusterMetrics.insolvencyRate.toFixed(0)}%`} icon={<ShieldAlert className="text-rose-500"/>} trend="Critical" />
                       <MetricCard label="Ciclos Restantes" val={(selectedArena.total_rounds - selectedArena.current_round).toString()} icon={<Trophy className="text-amber-500"/>} trend="Live" />
                    </div>
-                   <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
+                   <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} isTrial={!!selectedArena.is_trial} />
                 </motion.div>
               )}
               {tutorView === 'teams' && selectedArena && (
@@ -191,18 +206,35 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                          <div className="flex justify-between items-center relative z-10">
                             <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-orange-500"><Shield size={32}/></div>
-                            <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase ${t.is_bot ? 'bg-indigo-600/20 text-indigo-400' : 'bg-emerald-600/20 text-emerald-400'}`}>
-                               {t.is_bot ? 'Bot Node' : 'Human Operator'}
-                            </span>
+                            <div className="flex flex-col items-end gap-2">
+                               <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase ${t.is_bot ? 'bg-indigo-600/20 text-indigo-400' : 'bg-emerald-600/20 text-emerald-400'}`}>
+                                  {t.is_bot ? 'Bot Node' : 'Human Operator'}
+                               </span>
+                               {decisionStats[t.id] ? (
+                                  <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg animate-pulse">
+                                     <CheckCircle2 size={10} />
+                                     <span className="text-[7px] font-black uppercase">Decisão Recebida</span>
+                                  </div>
+                               ) : (
+                                  <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 text-slate-500 rounded-lg">
+                                     <Activity size={10} />
+                                     <span className="text-[7px] font-black uppercase">Pendente</span>
+                                  </div>
+                               )}
+                            </div>
                          </div>
                          <h4 className="text-3xl font-black text-white uppercase italic relative z-10">{t.name}</h4>
+                         <div className="pt-4 border-t border-white/5 flex justify-between items-center relative z-10 opacity-60">
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Rating Round Zero: AAA</span>
+                            <span className="text-[8px] font-mono text-slate-600 uppercase">ID: {t.id.split('-')[0]}</span>
+                         </div>
                       </div>
                    ))}
                 </motion.div>
               )}
               {tutorView === 'decisions' && selectedArena && (
                 <motion.div key="dec" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
-                   <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} />
+                   <TutorDecisionMonitor championshipId={selectedArena.id} round={selectedArena.current_round + 1} isTrial={!!selectedArena.is_trial} />
                 </motion.div>
               )}
               {tutorView === 'intervention' && (
