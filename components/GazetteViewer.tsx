@@ -217,7 +217,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            <div className="relative z-10 space-y-6">
                               <h4 className="text-2xl font-black text-blue-400 uppercase italic flex items-center gap-4 italic"><Info size={24}/> Oracle Intelligence Hub</h4>
                               <p className="text-lg text-blue-100 font-medium leading-relaxed italic border-l-2 border-blue-500/30 pl-8">
-                                "Atenção Operador: Os indicadores auditados refletem a realidade do PERÍODO 0{round}. Monitore as taxas de câmbio para otimizar suas vendas transfronteiriças."
+                                "Atenção Operador: Os indicadores auditados refletem os passos que deve seguir para o próximo round. Use-os com inteligência!"
                               </p>
                            </div>
                         </div>

@@ -7,7 +7,7 @@ import {
   TrendingUp, Landmark, Cloud, HardDrive, AlertCircle, 
   ShieldAlert, Gavel, Trash2, ShoppingCart, Info, Award,
   Zap, HelpCircle, ArrowUpCircle, ArrowDownCircle, MapPin,
-  Layers, Copy, CheckCircle2, ChevronLeft
+  Layers, Copy, CheckCircle2, ChevronLeft, Wallet, PieChart, TrendingDown
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
@@ -66,14 +66,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
   const machinePrices = useMemo(() => {
     if (!activeArena) return { alfa: 0, beta: 0, gama: 0, desagio: 0 };
-    
-    // Motor de Cálculo de Preços Cumulativos v16.4
     const getAdjusted = (model: MachineModel) => {
       const base = activeArena.market_indicators.machinery_values[model];
       const keyPart = model === 'alfa' ? 'alpha' : model === 'gama' ? 'gamma' : 'beta';
       let adj = base;
-
-      // Percorre todos os rounds desde o início (P00) até o round da decisão atual (round - 1)
       for (let r = 0; r < round; r++) {
         const rate = activeArena.round_rules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? 
                      activeArena.market_indicators[`machine_${keyPart}_price_adjust`] ?? 0;
@@ -81,7 +77,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       }
       return adj;
     };
-
     return {
       alfa: getAdjusted('alfa'),
       beta: getAdjusted('beta'),
@@ -186,33 +181,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                   </div>
                )}
 
-               {activeStep === 4 && (
-                  <div className="space-y-10 max-w-full pb-10">
-                     <div className="p-8 bg-blue-600/10 border-2 border-blue-500/30 rounded-[3rem] flex gap-8 items-center shadow-2xl">
-                        <Info size={48} className="text-blue-400 shrink-0" />
-                        <p className="text-md font-black text-blue-100 italic leading-relaxed uppercase tracking-tight">"Protocolo BDI: 60% Financiado / 40% À Vista. 4 Rounds de carência (juros TR). Depreciação inicia no Ciclo P+1."</p>
-                     </div>
-                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                        <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-emerald-500/30 shadow-2xl">
-                           <h4 className="text-2xl font-black uppercase text-emerald-500 tracking-tighter flex items-center gap-4 italic"><ShoppingCart size={28}/> Expansão CAPEX</h4>
-                           <div className="grid grid-cols-1 gap-4">
-                              <PriceInput label="Máquina ALFA" val={decisions.machinery.buy.alfa} price={machinePrices.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
-                              <PriceInput label="Máquina BETA" val={decisions.machinery.buy.beta} price={machinePrices.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
-                              <PriceInput label="Máquina GAMA" val={decisions.machinery.buy.gama} price={machinePrices.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
-                           </div>
-                        </div>
-                        <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-rose-500/30 shadow-2xl">
-                           <h4 className="text-2xl font-black uppercase text-rose-500 tracking-tighter flex items-center gap-4 italic"><Trash2 size={28}/> Desinvestimento</h4>
-                           <div className="grid grid-cols-1 gap-4">
-                              <PriceInput label="Venda ALFA" val={decisions.machinery.sell.alfa} price={machinePrices.alfa * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.alfa', v)} />
-                              <PriceInput label="Venda BETA" val={decisions.machinery.sell.beta} price={machinePrices.beta * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.beta', v)} />
-                              <PriceInput label="Venda GAMA" val={decisions.machinery.sell.gama} price={machinePrices.gama * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.gama', v)} />
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               )}
-
                {activeStep === 1 && (
                   <div className="flex flex-col lg:flex-row h-full gap-8">
                      <div className="w-full lg:w-[320px] flex flex-col gap-3 border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-6 overflow-y-auto custom-scrollbar shrink-0 max-h-[300px] lg:max-h-full">
@@ -285,6 +253,109 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      <InputCard label="Benefícios Extras ($)" val={decisions.hr.misc} onChange={(v: number) => updateDecision('hr.misc', v)} icon={<Info size={24}/>} />
                   </div>
                )}
+
+               {activeStep === 4 && (
+                  <div className="space-y-10 max-w-full pb-10">
+                     <div className="p-8 bg-blue-600/10 border-2 border-blue-500/30 rounded-[3rem] flex gap-8 items-center shadow-2xl">
+                        <Info size={48} className="text-blue-400 shrink-0" />
+                        <p className="text-md font-black text-blue-100 italic leading-relaxed uppercase tracking-tight">"Protocolo BDI: 60% Financiado / 40% À Vista. 4 Rounds de carência (juros TR). Depreciação inicia no Ciclo P+1."</p>
+                     </div>
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-emerald-500/30 shadow-2xl">
+                           <h4 className="text-2xl font-black uppercase text-emerald-500 tracking-tighter flex items-center gap-4 italic"><ShoppingCart size={28}/> Expansão CAPEX</h4>
+                           <div className="grid grid-cols-1 gap-4">
+                              <PriceInput label="Máquina ALFA" val={decisions.machinery.buy.alfa} price={machinePrices.alfa} onChange={(v: number) => updateDecision('machinery.buy.alfa', v)} />
+                              <PriceInput label="Máquina BETA" val={decisions.machinery.buy.beta} price={machinePrices.beta} onChange={(v: number) => updateDecision('machinery.buy.beta', v)} />
+                              <PriceInput label="Máquina GAMA" val={decisions.machinery.buy.gama} price={machinePrices.gama} onChange={(v: number) => updateDecision('machinery.buy.gama', v)} />
+                           </div>
+                        </div>
+                        <div className="space-y-6 bg-slate-900 p-10 rounded-[4rem] border-2 border-rose-500/30 shadow-2xl">
+                           <h4 className="text-2xl font-black uppercase text-rose-500 tracking-tighter flex items-center gap-4 italic"><Trash2 size={28}/> Desinvestimento</h4>
+                           <div className="grid grid-cols-1 gap-4">
+                              <PriceInput label="Venda ALFA" val={decisions.machinery.sell.alfa} price={machinePrices.alfa * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.alfa', v)} />
+                              <PriceInput label="Venda BETA" val={decisions.machinery.sell.beta} price={machinePrices.beta * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.beta', v)} />
+                              <PriceInput label="Venda GAMA" val={decisions.machinery.sell.gama} price={machinePrices.gama * (1 - machinePrices.desagio/100)} isSell desagio={machinePrices.desagio} onChange={(v: number) => updateDecision('machinery.sell.gama', v)} />
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               )}
+
+               {activeStep === 5 && (
+                  <div className="space-y-10 max-w-full pb-10">
+                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-2 space-y-8">
+                           <div className="bg-slate-900 border border-white/5 p-10 rounded-[4rem] shadow-2xl space-y-10">
+                              <h3 className="text-3xl font-black text-white uppercase italic tracking-tight flex items-center gap-5">
+                                 <Landmark size={32} className="text-blue-500"/> Alocação de Capital
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                 <InputCard label="Requisição de Empréstimo ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<DollarSign size={24}/>} />
+                                 <SelectCard label="Tipo de Crédito" val={decisions.finance.loanType} onChange={(v: number) => updateDecision('finance.loanType', v)} options={[{v:1,l:'CURTO PRAZO (15%)'},{v:2,l:'LONGO PRAZO (8%)'}]} icon={<ShieldAlert size={24}/>} />
+                                 <div className="md:col-span-2">
+                                    <InputCard label="Aplicação Financeira ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={24}/>} placeholder="Investir excedente de caixa..." />
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+
+                        <aside className="space-y-6">
+                           <div className="bg-blue-600/10 border border-blue-500/20 p-8 rounded-[3rem] space-y-6">
+                              <h4 className="text-xs font-black uppercase text-blue-400 tracking-widest flex items-center gap-3"><Wallet size={16}/> Resumo de Tesouraria</h4>
+                              <div className="space-y-4">
+                                 <div className="flex justify-between items-end border-b border-white/5 pb-3">
+                                    <span className="text-[9px] font-black text-slate-500 uppercase">Custo de Capital (WACC)</span>
+                                    <span className="text-lg font-mono font-black text-white">12.4%</span>
+                                 </div>
+                                 <div className="flex justify-between items-end border-b border-white/5 pb-3">
+                                    <span className="text-[9px] font-black text-slate-500 uppercase">Liquidez Imediata</span>
+                                    <span className="text-lg font-mono font-black text-emerald-500">1.82</span>
+                                 </div>
+                              </div>
+                           </div>
+                           <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] shadow-xl relative overflow-hidden group">
+                              <Sparkles className="absolute -top-10 -right-10 opacity-5 group-hover:scale-125 transition-transform" size={150} />
+                              <h4 className="text-xs font-black uppercase text-orange-500 tracking-widest mb-4 italic">Oracle Hint</h4>
+                              <p className="text-[11px] text-slate-400 font-medium italic leading-relaxed">"O empréstimo compulsório é ativado automaticamente se o seu caixa ficar negativo. Ele custa 25% ao período. Planeje seu capital antecipadamente."</p>
+                           </div>
+                        </aside>
+                     </div>
+                  </div>
+               )}
+
+               {activeStep === 6 && (
+                  <div className="flex flex-col items-center justify-center text-center space-y-12 max-w-5xl mx-auto py-10">
+                     <div className="space-y-4">
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-32 h-32 bg-orange-600 rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl border-4 border-orange-400 mb-8">
+                           <ShieldCheck size={64} className="text-white" />
+                        </motion.div>
+                        <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Review Estratégico</h2>
+                        <p className="text-slate-400 text-lg font-medium italic">"Revise seu protocolo tático antes de selar o ciclo."</p>
+                     </div>
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+                        <ReviewBox label="Preço Médio" val={`$ ${Object.values(decisions.regions).reduce((acc, r) => acc + r.price, 0) / Math.max(1, Object.keys(decisions.regions).length)}`} icon={<DollarSign size={16}/>} />
+                        <ReviewBox label="Capacidade" val={`${decisions.production.activityLevel}%`} icon={<Activity size={16}/>} />
+                        <ReviewBox label="Contratações" val={decisions.hr.hired} icon={<Users2 size={16}/>} />
+                        <ReviewBox label="Empréstimo" val={`$ ${decisions.finance.loanRequest.toLocaleString()}`} icon={<Landmark size={16}/>} />
+                     </div>
+
+                     {rating === 'D' && (
+                        <div className="w-full p-8 bg-rose-600/10 border-2 border-rose-500/30 rounded-[3rem] flex items-center gap-8 text-left animate-pulse">
+                           <ShieldAlert size={48} className="text-rose-500 shrink-0" />
+                           <div>
+                              <h4 className="text-2xl font-black text-rose-500 uppercase italic">Insolvência Crítica Projetada</h4>
+                              <p className="text-sm font-medium text-rose-200 opacity-80 leading-relaxed italic">Suas decisões atuais levarão a unidade ao status de falência técnica. Revise custos operacionais e marketing.</p>
+                           </div>
+                        </div>
+                     )}
+
+                     <div className="flex items-center gap-4 text-slate-500 font-black text-[10px] uppercase tracking-[0.4em] italic opacity-40">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                        Aguardando confirmação de transmissão...
+                     </div>
+                  </div>
+               )}
             </motion.div>
          </AnimatePresence>
 
@@ -298,6 +369,16 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     </div>
   );
 };
+
+const ReviewBox = ({ label, val, icon }: any) => (
+   <div className="bg-slate-900 border border-white/5 p-8 rounded-[3rem] flex flex-col items-center gap-4 hover:border-orange-500/30 transition-all shadow-xl">
+      <div className="p-3 bg-white/5 rounded-2xl text-orange-500">{icon}</div>
+      <div>
+         <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1 italic">{label}</span>
+         <span className="text-xl font-black text-white italic">{val}</span>
+      </div>
+   </div>
+);
 
 const InputCard = ({ label, val, icon, onChange, placeholder }: any) => (
   <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-4 hover:border-orange-500/30 transition-all">
