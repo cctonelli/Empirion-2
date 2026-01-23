@@ -38,7 +38,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     hr: { hired: 0, fired: 0, salary: 0, trainingPercent: 0, participationPercent: 0, misc: 0, sales_staff_count: 0 },
     production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 1, activityLevel: 0, extraProductionPercent: 0, rd_investment: 0 },
     machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
-    finance: { loanRequest: 0, loanType: 1, application: 0 },
+    finance: { loanRequest: 0, loanTerm: 1, application: 0 },
     estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
   });
 
@@ -92,6 +92,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   }, [decisions, activeArena, round]);
 
   const rating = projections?.health?.rating || 'AAA';
+  const trRate = activeArena?.market_indicators?.interest_rate_tr || 2.0;
 
   const updateDecision = (path: string, val: any) => {
     const keys = path.split('.');
@@ -291,7 +292,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </h3>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                  <InputCard label="Requisição de Empréstimo ($)" val={decisions.finance.loanRequest} onChange={(v: number) => updateDecision('finance.loanRequest', v)} icon={<DollarSign size={24}/>} />
-                                 <SelectCard label="Tipo de Crédito" val={decisions.finance.loanType} onChange={(v: number) => updateDecision('finance.loanType', v)} options={[{v:1,l:'CURTO PRAZO (15%)'},{v:2,l:'LONGO PRAZO (8%)'}]} icon={<ShieldAlert size={24}/>} />
+                                 <SelectCard label="Fluxo de Pagamento (Amortização)" val={decisions.finance.loanTerm} onChange={(v: number) => updateDecision('finance.loanTerm', v)} options={[{v:0,l:'À VISTA (ROUND ATUAL)'},{v:1,l:'50/50 (CURTO PRAZO)'},{v:2,l:'33/33/33 (LONGO PRAZO)'}]} icon={<Activity size={24}/>} />
                                  <div className="md:col-span-2">
                                     <InputCard label="Aplicação Financeira ($)" val={decisions.finance.application} onChange={(v: number) => updateDecision('finance.application', v)} icon={<TrendingUp size={24}/>} placeholder="Investir excedente de caixa..." />
                                  </div>
@@ -301,22 +302,22 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                         <aside className="space-y-6">
                            <div className="bg-blue-600/10 border border-blue-500/20 p-8 rounded-[3rem] space-y-6">
-                              <h4 className="text-xs font-black uppercase text-blue-400 tracking-widest flex items-center gap-3"><Wallet size={16}/> Resumo de Tesouraria</h4>
+                              <h4 className="text-xs font-black uppercase text-blue-400 tracking-widest flex items-center gap-3"><Wallet size={16}/> Condições de Crédito</h4>
                               <div className="space-y-4">
                                  <div className="flex justify-between items-end border-b border-white/5 pb-3">
-                                    <span className="text-[9px] font-black text-slate-500 uppercase">Custo de Capital (WACC)</span>
-                                    <span className="text-lg font-mono font-black text-white">12.4%</span>
+                                    <span className="text-[9px] font-black text-slate-500 uppercase">Taxa de Juros (TR)</span>
+                                    <span className="text-lg font-mono font-black text-white">{trRate}%</span>
                                  </div>
                                  <div className="flex justify-between items-end border-b border-white/5 pb-3">
-                                    <span className="text-[9px] font-black text-slate-500 uppercase">Liquidez Imediata</span>
-                                    <span className="text-lg font-mono font-black text-emerald-500">1.82</span>
+                                    <span className="text-[9px] font-black text-slate-500 uppercase">Multa Compulsório</span>
+                                    <span className="text-lg font-mono font-black text-rose-500">25.0%</span>
                                  </div>
                               </div>
                            </div>
                            <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] shadow-xl relative overflow-hidden group">
                               <Sparkles className="absolute -top-10 -right-10 opacity-5 group-hover:scale-125 transition-transform" size={150} />
                               <h4 className="text-xs font-black uppercase text-orange-500 tracking-widest mb-4 italic">Oracle Hint</h4>
-                              <p className="text-[11px] text-slate-400 font-medium italic leading-relaxed">"O empréstimo compulsório é ativado automaticamente se o seu caixa ficar negativo. Ele custa 25% ao período. Planeje seu capital antecipadamente."</p>
+                              <p className="text-[11px] text-slate-400 font-medium italic leading-relaxed">"O empréstimo compulsório é ativado automaticamente se o seu caixa ficar negativo. Planeje seu capital via requisição manual para evitar a taxa de 25%."</p>
                            </div>
                         </aside>
                      </div>

@@ -119,6 +119,8 @@ export const generateBotDecision = async (
               type: Type.OBJECT,
               properties: {
                 loanRequest: { type: Type.NUMBER },
+                // Fix: Added loanTerm to schema to match DecisionData requirements
+                loanTerm: { type: Type.NUMBER, description: "Prazo de amortização: 0, 1 ou 2" },
                 application: { type: Type.NUMBER },
                 buyMachines: {
                   type: Type.OBJECT,
@@ -188,7 +190,8 @@ export const generateBotDecision = async (
       },
       finance: {
         loanRequest: parsed.finance?.loanRequest || 0,
-        loanType: 1,
+        // Fix: Changed loanType to loanTerm (line 191 error)
+        loanTerm: parsed.finance?.loanTerm || 1,
         application: parsed.finance?.application || 0
       },
       estimates: {
@@ -206,7 +209,8 @@ export const generateBotDecision = async (
       hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50, misc: 0 },
       production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0, extraProductionPercent: 0 },
       machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
-      finance: { loanRequest: 0, loanType: 1, application: 0 },
+      // Fix: Changed loanType to loanTerm (line 209 error)
+      finance: { loanRequest: 0, loanTerm: 1, application: 0 },
       estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
     };
   }

@@ -162,7 +162,7 @@ export interface DecisionData {
   };
   finance: {
     loanRequest: number;
-    loanType: number; 
+    loanTerm: number; 
     application: number;
   };
   estimates: {
