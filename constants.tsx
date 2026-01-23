@@ -243,9 +243,9 @@ export const DEFAULT_MACRO: MacroIndicators = {
   sales_interest_rate: 1.5, 
   avg_selling_price: 340.0,
   tax_rate_ir: 15.0,
-  late_penalty_rate: 5.0,
+  late_penalty_rate: 15.0, // Default 15% para Empréstimo Compulsório
   machine_sale_discount: 10.0,
-  special_purchase_premium: 15.0,
+  special_purchase_premium: 15.0, // Default 15% para Ágio MPs
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
   dividend_percent: 10.0,
   

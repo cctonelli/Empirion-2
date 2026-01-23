@@ -92,7 +92,15 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   }, [decisions, activeArena, round]);
 
   const rating = projections?.health?.rating || 'AAA';
-  const trRate = activeArena?.market_indicators?.interest_rate_tr || 2.0;
+  const currentIndicators = useMemo(() => {
+    if (!activeArena) return { tr: 2.0, late: 15.0, premium: 15.0 };
+    const rules = activeArena.round_rules?.[round] || {};
+    return {
+      tr: rules.interest_rate_tr ?? activeArena.market_indicators.interest_rate_tr,
+      late: rules.late_penalty_rate ?? activeArena.market_indicators.late_penalty_rate,
+      premium: rules.special_purchase_premium ?? activeArena.market_indicators.special_purchase_premium
+    };
+  }, [activeArena, round]);
 
   const updateDecision = (path: string, val: any) => {
     const keys = path.split('.');
@@ -306,18 +314,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <div className="space-y-4">
                                  <div className="flex justify-between items-end border-b border-white/5 pb-3">
                                     <span className="text-[9px] font-black text-slate-500 uppercase">Taxa de Juros (TR)</span>
-                                    <span className="text-lg font-mono font-black text-white">{trRate}%</span>
+                                    <span className="text-lg font-mono font-black text-white">{currentIndicators.tr}%</span>
                                  </div>
                                  <div className="flex justify-between items-end border-b border-white/5 pb-3">
                                     <span className="text-[9px] font-black text-slate-500 uppercase">Multa Compulsório</span>
-                                    <span className="text-lg font-mono font-black text-rose-500">25.0%</span>
+                                    <span className="text-lg font-mono font-black text-rose-500">{currentIndicators.late}%</span>
                                  </div>
                               </div>
                            </div>
                            <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] shadow-xl relative overflow-hidden group">
                               <Sparkles className="absolute -top-10 -right-10 opacity-5 group-hover:scale-125 transition-transform" size={150} />
                               <h4 className="text-xs font-black uppercase text-orange-500 tracking-widest mb-4 italic">Oracle Hint</h4>
-                              <p className="text-[11px] text-slate-400 font-medium italic leading-relaxed">"O empréstimo compulsório é ativado automaticamente se o seu caixa ficar negativo. Planeje seu capital via requisição manual para evitar a taxa de 25%."</p>
+                              <p className="text-[11px] text-slate-400 font-medium italic leading-relaxed">"O empréstimo compulsório é ativado automaticamente se o seu caixa ficar negativo. Planeje seu capital via requisição manual para evitar a taxa de {currentIndicators.late}%."</p>
                            </div>
                         </aside>
                      </div>
