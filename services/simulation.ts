@@ -2,14 +2,18 @@
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType, Championship, MachineModel, MachineSpec, InitialMachine, CurrencyType } from '../types';
 import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
+/**
+ * Sanitizador Alpha Node 08
+ * Bloqueia NaN, Infinity e valores nulos do fluxo de dados.
+ */
 export const sanitize = (val: any, fallback: number = 0): number => {
   if (val === null || val === undefined) return fallback;
   const num = Number(val);
-  return isFinite(num) ? num : fallback;
+  return (isNaN(num) || !isFinite(num)) ? fallback : num;
 };
 
 /**
- * CORE ORACLE ENGINE v17.1 - DYNAMIC STABILIZED
+ * CORE ORACLE ENGINE v17.2 - ABSOLUTE NUMERICAL STABILITY
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -24,9 +28,9 @@ export const calculateProjections = (
   championshipData?: Championship
 ): ProjectionResult => {
   
-  // Limpeza profunda de inputs para evitar propagações de NaN
+  // Limpeza profunda de inputs para evitar propagações de NaN via JSON
   const safeDecisions: DecisionData = JSON.parse(JSON.stringify(decisions, (key, value) => {
-      if (typeof value === 'number') return isFinite(value) ? value : 0;
+      if (typeof value === 'number') return (isNaN(value) || !isFinite(value)) ? 0 : value;
       return value;
   }));
 
@@ -103,13 +107,13 @@ export const calculateProjections = (
      const decision = safeDecisions.regions[reg.id] || { price: 375, term: 1, marketing: 0 };
      const regionalWeight = sanitize(reg.demand_weight || (100 / regions.length)) / 100;
      const regionalDemand = totalMarketDemand * regionalWeight;
-     const priceFactor = Math.pow(sanitize(indicators.avg_selling_price, 340) / Math.max(decision.price, 100), 1.6);
+     const priceFactor = Math.pow(sanitize(indicators.avg_selling_price, 340) / Math.max(sanitize(decision.price, 100), 100), 1.6);
      const promoFactor = 1 + (sanitize(decision.marketing) * 0.06);
      const shareMultiplier = priceFactor * promoFactor;
      
      const unitsSoldReg = Math.min(regionalDemand * (shareMultiplier / teamsCount), regionalDemand);
      totalUnitsSold += unitsSoldReg;
-     const revenueLocal = unitsSoldReg * decision.price;
+     const revenueLocal = unitsSoldReg * sanitize(decision.price, 375);
      const exchangeRate = sanitize(indicators.exchange_rates?.[reg.currency], 1);
      const baseExchangeRate = sanitize(indicators.exchange_rates?.[baseCurrency], 1);
      totalRevenueBase += revenueLocal * (exchangeRate / baseExchangeRate);
@@ -201,7 +205,7 @@ export const calculateAttractiveness = (decisions: DecisionData): number => {
   if (regions.length === 0) return 0.5;
   let totalAttraction = 0;
   regions.forEach(reg => {
-    const priceFactor = Math.pow(370 / Math.max(sanitize(reg.price), 100), 1.6);
+    const priceFactor = Math.pow(370 / Math.max(sanitize(reg.price, 100), 100), 1.6);
     const marketingFactor = 1 + (sanitize(reg.marketing) * 0.07);
     totalAttraction += priceFactor * marketingFactor;
   });

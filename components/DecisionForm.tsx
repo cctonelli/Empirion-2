@@ -10,7 +10,7 @@ import {
   Layers, Copy, CheckCircle2, ChevronLeft, Wallet, PieChart, TrendingDown
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
-import { calculateProjections } from '../services/simulation';
+import { calculateProjections, sanitize } from '../services/simulation';
 import { DecisionData, Branch, Championship, ProjectionResult, EcosystemConfig, MachineModel, MacroIndicators } from '../types';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -50,7 +50,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         if (found) {
           setActiveArena(found);
           const initialRegions: any = {};
-          const defaultPrice = found.market_indicators?.avg_selling_price || 375;
+          const defaultPrice = sanitize(found.market_indicators?.avg_selling_price, 375);
           for (let i = 1; i <= (found.regions_count || 4); i++) {
             initialRegions[i] = { price: defaultPrice, term: 1, marketing: 0 };
           }
@@ -68,12 +68,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const machinePrices = useMemo(() => {
     if (!activeArena) return { alfa: 0, beta: 0, gama: 0, desagio: 0 };
     const getAdjusted = (model: MachineModel) => {
-      const base = activeArena.market_indicators.machinery_values[model];
+      const base = sanitize(activeArena.market_indicators.machinery_values?.[model], 500000);
       const keyPart = model === 'alfa' ? 'alpha' : model === 'gama' ? 'gamma' : 'beta';
       let adj = base;
       for (let r = 0; r < round; r++) {
-        const rate = activeArena.round_rules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? 
-                     activeArena.market_indicators[`machine_${keyPart}_price_adjust`] ?? 0;
+        const rate = sanitize(activeArena.round_rules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? 
+                     activeArena.market_indicators[`machine_${keyPart}_price_adjust`], 0);
         adj *= (1 + rate / 100);
       }
       return adj;
@@ -82,7 +82,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       alfa: getAdjusted('alfa'),
       beta: getAdjusted('beta'),
       gama: getAdjusted('gama'),
-      desagio: activeArena.market_indicators.machine_sale_discount || 10
+      desagio: sanitize(activeArena.market_indicators.machine_sale_discount, 10)
     };
   }, [activeArena, round]);
 
@@ -97,9 +97,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     if (!activeArena) return { tr: 2.0, late: 15.0, premium: 15.0 };
     const rules = activeArena.round_rules?.[round] || {};
     return {
-      tr: rules.interest_rate_tr ?? activeArena.market_indicators.interest_rate_tr,
-      late: rules.late_penalty_rate ?? activeArena.market_indicators.late_penalty_rate,
-      premium: rules.special_purchase_premium ?? activeArena.market_indicators.special_purchase_premium
+      tr: sanitize(rules.interest_rate_tr ?? activeArena.market_indicators.interest_rate_tr, 2.0),
+      late: sanitize(rules.late_penalty_rate ?? activeArena.market_indicators.late_penalty_rate, 15.0),
+      premium: sanitize(rules.special_purchase_premium ?? activeArena.market_indicators.special_purchase_premium, 15.0)
     };
   }, [activeArena, round]);
 
@@ -111,7 +111,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       for (let i = 0; i < keys.length - 1; i++) {
         current = current[keys[i]];
       }
-      current[keys[keys.length - 1]] = val;
+      // Garante sanitização no input
+      const safeVal = (typeof val === 'number') ? sanitize(val) : val;
+      current[keys[keys.length - 1]] = safeVal;
       return next;
     });
   };
@@ -206,7 +208,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <button key={regId} onClick={() => setActiveRegion(regId)} className={`p-6 rounded-3xl border-2 transition-all text-left flex flex-col gap-1 group relative overflow-hidden ${isActive ? 'bg-orange-600 border-orange-400 shadow-2xl scale-[1.02]' : 'bg-slate-900 border-white/10 hover:border-white/30 hover:bg-slate-800'}`}>
                                  <div className="flex justify-between items-center relative z-10">
                                     <span className={`text-[8px] font-black uppercase tracking-widest ${isActive ? 'text-white/60' : 'text-slate-600'}`}>ID 0{regId}</span>
-                                    <span className={`text-sm font-mono font-black ${isActive ? 'text-white' : 'text-emerald-500'}`}>$ {data?.price || 0}</span>
+                                    <span className={`text-sm font-mono font-black ${isActive ? 'text-white' : 'text-emerald-500'}`}>$ {sanitize(data?.price, 375)}</span>
                                  </div>
                                  <h4 className={`text-md font-black uppercase truncate italic ${isActive ? 'text-white' : 'text-slate-200'}`}>{regName}</h4>
                               </button>
@@ -225,7 +227,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            <button onClick={syncAllRegions} className="px-8 py-4 bg-white/5 border border-white/10 hover:bg-white hover:text-slate-950 text-white rounded-3xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 active:scale-95 shadow-xl"><Copy size={16} /> Replicar em Cluster</button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-10">
-                           <InputCard label="Preço Unitário ($)" val={decisions.regions[activeRegion]?.price || 0} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={24}/>} />
+                           <InputCard label="Preço Unitário ($)" val={sanitize(decisions.regions[activeRegion]?.price, 375)} onChange={(v: number) => updateDecision(`regions.${activeRegion}.price`, v)} icon={<DollarSign size={24}/>} />
                            <SelectCard label="Prazo de Venda" val={decisions.regions[activeRegion]?.term || 1} onChange={(v: number) => updateDecision(`regions.${activeRegion}.term`, v)} options={[{v:0,l:'À VISTA'},{v:1,l:'50/50'},{v:2,l:'33/33/33'}]} icon={<Landmark size={24} />} />
                            <div className="md:col-span-2 bg-slate-900 border border-white/10 rounded-[3.5rem] p-10 flex flex-col gap-6 shadow-2xl">
                               <div className="flex items-center justify-between">
@@ -233,9 +235,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     <div className="p-4 bg-orange-600/20 text-orange-500 rounded-2xl shadow-inner"><Sparkles size={32} /></div>
                                     <div><label className="text-[12px] font-black text-white uppercase tracking-widest">Investimento em Marketing Regional</label><p className="text-[10px] text-slate-500 font-bold uppercase italic mt-1">Escala 0 a 9</p></div>
                                  </div>
-                                 <span className="text-6xl font-black text-orange-500 italic">{decisions.regions[activeRegion]?.marketing || 0}</span>
+                                 <span className="text-6xl font-black text-orange-500 italic">{sanitize(decisions.regions[activeRegion]?.marketing, 0)}</span>
                               </div>
-                              <input type="range" min="0" max="9" step="1" value={decisions.regions[activeRegion]?.marketing || 0} onChange={e => updateDecision(`regions.${activeRegion}.marketing`, Number(e.target.value))} className="w-full h-3 bg-slate-950 rounded-full appearance-none cursor-pointer accent-orange-600 border border-white/5" />
+                              <input type="range" min="0" max="9" step="1" value={sanitize(decisions.regions[activeRegion]?.marketing, 0)} onChange={e => updateDecision(`regions.${activeRegion}.marketing`, Number(e.target.value))} className="w-full h-3 bg-slate-950 rounded-full appearance-none cursor-pointer accent-orange-600 border border-white/5" />
                            </div>
                         </div>
                      </div>
@@ -344,10 +346,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      </div>
 
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
-                        <ReviewBox label="Preço Médio" val={`$ ${(Object.values(decisions.regions).reduce((acc, r) => acc + r.price, 0) / Math.max(1, Object.keys(decisions.regions).length)).toFixed(2)}`} icon={<DollarSign size={16}/>} />
-                        <ReviewBox label="Capacidade" val={`${decisions.production.activityLevel}%`} icon={<Activity size={16}/>} />
-                        <ReviewBox label="Contratações" val={decisions.hr.hired} icon={<Users2 size={16}/>} />
-                        <ReviewBox label="Empréstimo" val={`$ ${decisions.finance.loanRequest.toLocaleString()}`} icon={<Landmark size={16}/>} />
+                        <ReviewBox label="Preço Médio" val={`$ ${(Object.values(decisions.regions).reduce((acc, r) => acc + sanitize(r.price, 375), 0) / Math.max(1, Object.keys(decisions.regions).length)).toFixed(2)}`} icon={<DollarSign size={16}/>} />
+                        <ReviewBox label="Capacidade" val={`${sanitize(decisions.production.activityLevel, 80)}%`} icon={<Activity size={16}/>} />
+                        <ReviewBox label="Contratações" val={sanitize(decisions.hr.hired, 0)} icon={<Users2 size={16}/>} />
+                        <ReviewBox label="Empréstimo" val={`$ ${sanitize(decisions.finance.loanRequest, 0).toLocaleString()}`} icon={<Landmark size={16}/>} />
                      </div>
 
                      {rating === 'D' && (
@@ -390,15 +392,19 @@ const ReviewBox = ({ label, val, icon }: any) => (
    </div>
 );
 
-const InputCard = ({ label, val, icon, onChange, placeholder }: any) => (
-  <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-4 hover:border-orange-500/30 transition-all">
-     <div className="flex items-center gap-4"><div className="text-slate-500">{icon}</div><label className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">{label}</label></div>
-     <input type="number" value={val || ''} placeholder={placeholder || '0'} onChange={e => onChange?.(Number(e.target.value))} className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-4 text-white font-mono font-black text-xl outline-none focus:border-orange-600" />
-  </div>
-);
+const InputCard = ({ label, val, icon, onChange, placeholder }: any) => {
+  const displayVal = (isNaN(val) || val === null || val === undefined) ? '' : val;
+  return (
+    <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-4 hover:border-orange-500/30 transition-all">
+       <div className="flex items-center gap-4"><div className="text-slate-500">{icon}</div><label className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">{label}</label></div>
+       <input type="number" value={displayVal} placeholder={placeholder || '0'} onChange={e => onChange?.(Number(e.target.value))} className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-4 text-white font-mono font-black text-xl outline-none focus:border-orange-600" />
+    </div>
+  );
+};
 
 const PriceInput = ({ label, val, price, isSell, desagio, onChange }: any) => {
   const upfront = isSell ? price : price * 0.4;
+  const displayVal = (isNaN(val) || val === null || val === undefined) ? '' : val;
   return (
     <div className="bg-slate-950 border-2 border-white/5 rounded-[2rem] p-6 flex flex-col gap-4 group hover:border-blue-500/30 transition-all">
        <div className="flex justify-between items-start">
@@ -406,7 +412,7 @@ const PriceInput = ({ label, val, price, isSell, desagio, onChange }: any) => {
           <div className="text-right"><span className="block text-[8px] font-black text-slate-600 uppercase italic">P0 {isSell ? 'Deságio' : 'Mercado'}</span><span className="text-sm font-mono font-black text-white">$ {Math.round(price).toLocaleString()}</span></div>
        </div>
        <div className="flex items-center gap-5">
-          <input type="number" value={val || ''} placeholder="0" onChange={e => onChange?.(Number(e.target.value))} className="w-24 bg-slate-900 border-2 border-white/5 rounded-xl px-4 py-4 text-white font-mono font-black text-2xl outline-none focus:border-blue-600" />
+          <input type="number" value={displayVal} placeholder="0" onChange={e => onChange?.(Number(e.target.value))} className="w-24 bg-slate-900 border-2 border-white/5 rounded-xl px-4 py-4 text-white font-mono font-black text-2xl outline-none focus:border-blue-600" />
           <div className="flex-1 space-y-2">
              <div className="flex justify-between text-[8px] font-black uppercase tracking-widest"><span className="text-slate-500">{isSell ? 'Cash Inflow' : 'Entrada (40%)'}</span><span className="text-emerald-500">$ {Math.round(upfront * (val || 0)).toLocaleString()}</span></div>
              {isSell && <div className="flex justify-between text-[9px] font-black uppercase tracking-widest"><span className="text-rose-500 italic">Taxa: {desagio}%</span></div>}

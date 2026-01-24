@@ -6,14 +6,9 @@ import { calculateProjections, calculateAttractiveness, sanitize } from './simul
 import { logError, logInfo, LogContext } from '../utils/logger';
 import { generateBotDecision } from './gemini';
 
-const getSafeEnv = (key: string): string => {
-  const viteKey = `VITE_${key}`;
-  const metaEnv = (import.meta as any).env || {};
-  return metaEnv[viteKey] || metaEnv[key] || '';
-};
-
-const SUPABASE_URL = getSafeEnv('SUPABASE_URL') || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
-const SUPABASE_ANON_KEY = getSafeEnv('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+// Prioridade para variáveis VITE_ conforme padrão Vercel/Vite
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
@@ -36,53 +31,65 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       created_at: new Date().toISOString()
     };
   }
-  const { data } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
+  const { data, error } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
+  if (error) logError(LogContext.DATABASE, "User fetch error", error);
   return data;
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {
   const finalArenas: Championship[] = [];
   try {
+    // 1. Local Cache
     const local = localStorage.getItem(LOCAL_CHAMPS_KEY);
     if (local) finalArenas.push(...JSON.parse(local));
 
-    // Apenas tenta buscar champs reais se o usuário estiver autenticado para evitar 401/500 desnecessários
     const { data: { session } } = await (supabase.auth as any).getSession();
     
-    if (session) {
-      const { data: realChamps } = await supabase.from('championships').select('*').order('created_at', { ascending: false });
-      if (realChamps) {
-        for (const c of realChamps) {
-          if (!finalArenas.find(a => a.id === c.id)) {
-             const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', c.id);
-             finalArenas.push({ ...c, teams: teams || [], is_trial: false });
-          }
+    // 2. Real Championships (Live)
+    // Buscamos com join de equipes para evitar N+1 e erros 500 de loops
+    const { data: realChamps, error: realErr } = await supabase
+      .from('championships')
+      .select('*, teams(*)')
+      .order('created_at', { ascending: false });
+    
+    if (realErr) logError(LogContext.DATABASE, "Live Arenas fetch fail", realErr);
+    if (realChamps) {
+      realChamps.forEach(c => {
+        if (!finalArenas.find(a => a.id === c.id)) {
+          finalArenas.push({ ...c, is_trial: false });
         }
-      }
+      });
+    }
 
-      const { data: trialChamps } = await supabase.from('trial_championships').select('*').eq('tutor_id', session.user.id);
+    // 3. Trial Championships
+    if (session) {
+      const { data: trialChamps, error: trialErr } = await supabase
+        .from('trial_championships')
+        .select('*, trial_teams(*)')
+        .eq('tutor_id', session.user.id);
+      
+      if (trialErr) logError(LogContext.DATABASE, "Trial Arenas fetch fail", trialErr);
       if (trialChamps) {
-        for (const tc of trialChamps) {
-           if (!finalArenas.find(a => a.id === tc.id)) {
-              const { data: tTeams } = await supabase.from('trial_teams').select('*').eq('championship_id', tc.id);
-              finalArenas.push({ ...tc, teams: tTeams || [], is_trial: true });
-           }
-        }
+        trialChamps.forEach(tc => {
+          if (!finalArenas.find(a => a.id === tc.id)) {
+            // Normaliza o nome da chave de equipes trial para 'teams'
+            finalArenas.push({ ...tc, teams: tc.trial_teams || [], is_trial: true });
+          }
+        });
       }
     } else {
-      // Se não houver sessão, busca trial_championships públicas (se houver política de acesso anônimo)
-      const { data: publicTrials } = await supabase.from('trial_championships').select('*').limit(10);
+      // Anonymous Trial Fetch
+      const { data: publicTrials } = await supabase.from('trial_championships').select('*, trial_teams(*)').limit(10);
       if (publicTrials) {
-        for (const tc of publicTrials) {
-           if (!finalArenas.find(a => a.id === tc.id)) {
-              const { data: tTeams } = await supabase.from('trial_teams').select('*').eq('championship_id', tc.id);
-              finalArenas.push({ ...tc, teams: tTeams || [], is_trial: true });
-           }
-        }
+        publicTrials.forEach(tc => {
+          if (!finalArenas.find(a => a.id === tc.id)) {
+            finalArenas.push({ ...tc, teams: tc.trial_teams || [], is_trial: true });
+          }
+        });
       }
     }
   } catch (e) { 
-    logError(LogContext.DATABASE, "Data sync deferred", e); 
+    logError(LogContext.DATABASE, "Global data sync deferred", e); 
   }
   
   const result = onlyPublic ? finalArenas.filter(a => a.is_public || a.is_trial) : finalArenas;
@@ -182,7 +189,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       })));
 
       if (teamsErr) throw teamsErr;
-      logInfo(LogContext.SUPABASE, "Trial persisted to Cloud Node 08");
+      logInfo(LogContext.SUPABASE, "Trial Instance Sincronizada.");
     } catch (err) {
       logError(LogContext.SUPABASE, "Cloud persist fault", err);
     }
@@ -227,48 +234,47 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 };
 
 /**
- * Função de Transmissão Refatorada para Resiliência
- * Resolve erros de ON CONFLICT e NaN no Supabase
+ * Protocolo de Salvamento Blindado v17.5
+ * Substitui UPSERT por Check-then-Act para compatibilidade total de índices.
  */
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
   try {
     const { data: allArenas } = await getChampionships();
     const arena = allArenas?.find(a => a.id === champId);
-    if (!arena) throw new Error("Arena não localizada no cluster.");
+    if (!arena) throw new Error("Link com arena perdido. Re-sincronize seu nodo.");
 
     const isTrial = !!arena.is_trial;
     const table = isTrial ? 'trial_decisions' : 'current_decisions';
 
-    // 1. Sanitização profunda para evitar NaN e erros 500 no Postgres
+    // 1. Sanitização Profunda contra NaN (Error 500 Prevent)
     const cleanPayload = JSON.parse(JSON.stringify(decisions, (key, value) => {
-        if (typeof value === 'number') {
-            return isFinite(value) ? value : 0;
-        }
+        if (typeof value === 'number') return isFinite(value) ? value : 0;
         return value;
     }));
 
-    // 2. Protocolo de Auditoria Interna no JSONB 'data'
-    const { data: existingData } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', round).maybeSingle();
-    const oldLogs = Array.isArray(existingData?.data?.audit_logs) ? existingData.data.audit_logs : [];
-    
+    // 2. Fetch de Auditoria de Existência
+    const { data: existingRow } = await supabase.from(table)
+        .select('id, data')
+        .eq('team_id', teamId)
+        .eq('round', round)
+        .maybeSingle();
+
+    const oldLogs = Array.isArray(existingRow?.data?.audit_logs) ? existingRow.data.audit_logs : [];
     const updatedData = {
       ...cleanPayload,
       audit_logs: [...oldLogs, {
         changed_at: new Date().toISOString(),
-        user_id: 'Protocol_Operator',
+        user_id: 'System_Protocol',
         field_path: 'SEAL_TRANSMISSION',
-        new_value: 'Audit Passed'
+        new_value: 'Sync v17.5 Success'
       }]
     };
 
-    // 3. Estratégia Check-then-Act para evitar erro de índice ausente em ON CONFLICT
-    const { data: existingRow } = await supabase.from(table).select('id').eq('team_id', teamId).eq('round', round).maybeSingle();
-
+    // 3. Operação Manual para evitar conflito de índices (Error 400/409 Prevent)
     if (existingRow) {
-      const { error } = await supabase.from(table).update({
-        data: updatedData,
-        updated_at: new Date().toISOString()
-      }).eq('id', existingRow.id);
+      const { error } = await supabase.from(table)
+        .update({ data: updatedData, updated_at: new Date().toISOString() })
+        .eq('id', existingRow.id);
       if (error) throw error;
     } else {
       const { error } = await supabase.from(table).insert({
@@ -281,7 +287,7 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       if (error) throw error;
     }
 
-    logInfo(LogContext.DATABASE, `Decision Transmitted to Node for Team ${teamId}`);
+    logInfo(LogContext.DATABASE, `Decision Protocol Sealed for Team ${teamId.split('-')[0]}`);
     return { success: true };
   } catch (err: any) {
     logError(LogContext.DATABASE, "Decision transmission fault", err.message);
@@ -309,6 +315,8 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
         const { data } = await supabase.from(decisionTable).select('data').eq('team_id', team.id).eq('round', currentRound + 1).maybeSingle();
         teamDecision = data?.data;
       }
+      
+      // Fallback robusto se nenhuma decisão for encontrada
       if (!teamDecision) {
         teamDecision = {
           regions: Object.fromEntries(Array.from({ length: arena.regions_count || 4 }, (_, i) => [i + 1, { price: 375, term: 1, marketing: 0 }])),
