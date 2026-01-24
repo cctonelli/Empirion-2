@@ -1,7 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode } from '../types';
-import { DEFAULT_MACRO } from '../constants';
+import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { calculateProjections, calculateAttractiveness } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';
 import { generateBotDecision } from './gemini';
@@ -123,12 +123,12 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     sales_mode: champData.sales_mode || 'hybrid',
     scenario_type: champData.scenario_type || 'simulated',
     transparency_level: champData.transparency_level || 'medium',
-    gazeta_mode: champData.gazeta_mode || 'anonymous'
+    gazeta_mode: champData.gazeta_mode || 'anonymous',
+    round_rules: champData.round_rules || {}
   } as Championship;
 
   if (isTrial && currentUserId) {
     try {
-      // 1. Grava Torneio Trial alinhado ao Schema (initial_market_data)
       const { error: champErr } = await supabase.from('trial_championships').insert({
         id: fullChamp.id,
         name: fullChamp.name,
@@ -140,7 +140,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         deadline_value: fullChamp.deadline_value,
         deadline_unit: fullChamp.deadline_unit,
         initial_financials: fullChamp.initial_financials,
-        initial_market_data: fullChamp.market_indicators, 
         market_indicators: fullChamp.market_indicators,
         region_names: fullChamp.region_names,
         region_configs: fullChamp.region_configs,
@@ -151,6 +150,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         gazeta_mode: fullChamp.gazeta_mode,
         tutor_id: currentUserId,
         round_started_at: fullChamp.round_started_at,
+        round_rules: fullChamp.round_rules,
         config: {
           ...(fullChamp.config || {}),
           initial_share_price: fullChamp.initial_share_price,
@@ -160,14 +160,12 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       
       if (champErr) throw champErr;
 
-      // 2. Registra Tutor para posse via RLS
       await supabase.from('trial_tutors').insert({
         championship_id: fullChamp.id,
         user_id: currentUserId,
         role: 'owner'
       });
 
-      // 3. Grava Equipes
       const { error: teamsErr } = await supabase.from('trial_teams').insert(teamsWithIds.map(t => ({
         id: t.id,
         championship_id: t.championship_id,
@@ -184,6 +182,37 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     } catch (err) {
       logError(LogContext.SUPABASE, "Cloud Persist Fault, local-only mode", err);
     }
+  } else if (!isTrial && currentUserId) {
+    try {
+      const { error: champErr } = await supabase.from('championships').insert({
+        id: fullChamp.id,
+        name: fullChamp.name,
+        branch: fullChamp.branch,
+        description: fullChamp.description,
+        status: fullChamp.status,
+        current_round: fullChamp.current_round,
+        total_rounds: fullChamp.total_rounds,
+        deadline_value: fullChamp.deadline_value,
+        deadline_unit: fullChamp.deadline_unit,
+        initial_financials: fullChamp.initial_financials,
+        market_indicators: fullChamp.market_indicators,
+        region_names: fullChamp.region_names,
+        region_configs: fullChamp.region_configs,
+        currency: fullChamp.currency,
+        sales_mode: fullChamp.sales_mode,
+        scenario_type: fullChamp.scenario_type,
+        transparency_level: fullChamp.transparency_level,
+        gazeta_mode: fullChamp.gazeta_mode,
+        tutor_id: currentUserId,
+        round_started_at: fullChamp.round_started_at,
+        round_rules: fullChamp.round_rules
+      });
+      if (champErr) throw champErr;
+      
+      await supabase.from('teams').insert(teamsWithIds);
+    } catch (err) {
+      logError(LogContext.SUPABASE, "Live Arena Persist Fault", err);
+    }
   }
 
   const localArenas = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
@@ -194,39 +223,39 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 };
 
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
-  const localArenas = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
-  const arena = localArenas.find((a: any) => a.id === champId);
-  const isTrial = arena ? !!arena.is_trial : (localStorage.getItem('is_trial_session') === 'true');
-  
-  const table = isTrial ? 'trial_decisions' : 'current_decisions';
-  
   try {
-    const payload = { 
-      team_id: teamId, 
-      championship_id: champId, 
-      round, 
-      data: decisions, 
-      updated_at: new Date().toISOString() 
-    };
+    const { data: allArenas } = await getChampionships();
+    const arena = allArenas?.find(a => a.id === champId);
+    if (!arena) throw new Error("Arena não localizada.");
 
-    const { error } = await supabase.from(table).upsert(payload, { 
-      onConflict: 'team_id, championship_id, round' 
+    const isTrial = !!arena.is_trial;
+    const table = isTrial ? 'trial_decisions' : 'current_decisions';
+
+    // Recupera log existente para anexar nova entrada
+    const { data: existing } = await supabase.from(table).select('audit_logs').eq('team_id', teamId).eq('round', round).maybeSingle();
+    const newLogs = existing?.audit_logs || [];
+    newLogs.push({
+      changed_at: new Date().toISOString(),
+      user_id: 'Operador Unidade',
+      field_path: 'PROTOCOL_TRANSMISSION',
+      new_value: 'Decisões Seladas via Wizard'
     });
-    
+
+    const { error } = await supabase.from(table).upsert({
+      team_id: teamId,
+      championship_id: champId,
+      round: round,
+      data: decisions,
+      audit_logs: newLogs, // Fix: Gravando telemetria de auditoria para o tutor
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'team_id,championship_id,round' });
+
     if (error) throw error;
-    
-    const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
-    local[`${champId}_${teamId}_${round}`] = decisions;
-    localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
-    
-    logInfo(LogContext.SUPABASE, `Decision Sealed: ${teamId} | Round ${round}`);
-    return { success: true, error: undefined as string | undefined };
+    logInfo(LogContext.DATABASE, `Decision Seal Sincronizado: ${teamId}`);
+    return { success: true };
   } catch (err: any) {
-    logError(LogContext.DATABASE, "Cloud Save Fault, backup mode active", err.message);
-    const local = JSON.parse(localStorage.getItem(LOCAL_DECISIONS_KEY) || '{}');
-    local[`${champId}_${teamId}_${round}`] = decisions;
-    localStorage.setItem(LOCAL_DECISIONS_KEY, JSON.stringify(local));
-    return { success: true, source: 'local', error: undefined as string | undefined };
+    logError(LogContext.DATABASE, "Decision transmission fault", err.message);
+    return { success: false, error: err.message };
   }
 };
 
@@ -256,7 +285,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50, misc: 0 },
           production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, rd_investment: 0, extraProductionPercent: 0 },
           machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
-          finance: { loanRequest: 0, loanType: 1, application: 0 },
+          finance: { loanRequest: 0, loanTerm: 1, application: 0 },
           estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 },
           judicial_recovery: false
         };

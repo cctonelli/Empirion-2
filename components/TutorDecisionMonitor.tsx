@@ -4,14 +4,15 @@ import Chart from 'react-apexcharts';
 import { 
   History, User, Key, Landmark, 
   ShieldAlert, Loader2, Monitor, Scale, 
-  Activity, FileText, CheckCircle2, AlertOctagon, ShieldCheck
+  Activity, FileText, CheckCircle2, AlertOctagon, ShieldCheck,
+  ChevronDown, LayoutGrid, Megaphone, Factory, Package, Cpu, Zap, DollarSign, Target, Briefcase
 } from 'lucide-react';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
-import { Branch, EcosystemConfig, CreditRating, TeamProgress, AuditLog } from '../types';
+import { Branch, EcosystemConfig, CreditRating, TeamProgress, AuditLog, DecisionData } from '../types';
 
 interface MonitorProps {
   championshipId: string;
@@ -19,9 +20,6 @@ interface MonitorProps {
   isTrial?: boolean;
 }
 
-/**
- * ClassCreditHealth: Histograma Memoizado para exibição de Ratings.
- */
 const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: TeamProgress[] }) => {
   const ratingsOrder: CreditRating[] = ['AAA', 'AA', 'A', 'B', 'C', 'D'];
   
@@ -40,29 +38,14 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
   const chartOptions: any = {
     chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
     plotOptions: { 
-      bar: { 
-        borderRadius: 12, 
-        columnWidth: '55%', 
-        distributed: true, 
-        dataLabels: { position: 'top' } 
-      } 
+      bar: { borderRadius: 12, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } 
     },
     colors: ratingsOrder.map(r => COLORS_MAP[r as keyof typeof COLORS_MAP]),
     xaxis: { 
       categories: ratingsOrder, 
-      labels: { 
-        style: { 
-          colors: '#94a3b8', 
-          fontSize: '13px', 
-          fontWeight: 800,
-          fontFamily: 'JetBrains Mono'
-        } 
-      } 
+      labels: { style: { colors: '#94a3b8', fontSize: '13px', fontWeight: 800, fontFamily: 'JetBrains Mono' } } 
     },
-    yaxis: { 
-      labels: { style: { colors: '#475569', fontSize: '11px' } }, 
-      tickAmount: 4 
-    },
+    yaxis: { labels: { style: { colors: '#475569', fontSize: '11px' } }, tickAmount: 4 },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
     tooltip: { theme: 'dark' },
     legend: { show: false }
@@ -87,16 +70,16 @@ const ClassCreditHealth = React.memo(({ teamsProjections }: { teamsProjections: 
 });
 
 const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, isTrial = false }) => {
-  const [teams, setTeams] = useState<TeamProgress[]>([]);
+  const [teams, setTeams] = useState<(TeamProgress & { current_decision?: DecisionData })[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTeam, setSelectedTeam] = useState<TeamProgress | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<(TeamProgress & { current_decision?: DecisionData }) | null>(null);
+  const [lastSync, setLastSync] = useState(new Date());
   const isMounted = useRef(true);
 
   const fetchLiveDecisions = async (signal?: AbortSignal) => {
     try {
       if (isMounted.current) setLoading(true);
       
-      // Tabelas dinâmicas conforme o tipo da arena
       const champTable = isTrial ? 'trial_championships' : 'championships';
       const teamsTable = isTrial ? 'trial_teams' : 'teams';
       const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
@@ -107,19 +90,13 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
 
       if (signal?.aborted) return;
 
-      const progress: TeamProgress[] = (teamsData || []).map(t => {
+      const progress: any[] = (teamsData || []).map(t => {
         const decision = decisionsData?.find(d => d.team_id === t.id);
         const branch = (arenaData?.branch || 'industrial') as Branch;
         const eco: EcosystemConfig = (arenaData?.ecosystemConfig || { 
-          inflation_rate: 0.01, 
-          demand_multiplier: 1.0, 
-          interest_rate: 0.03, 
-          market_volatility: 0.05, 
-          scenario_type: 'simulated', 
-          modality_type: 'standard' 
+          inflation_rate: 0.01, demand_multiplier: 1.0, interest_rate: 0.03, market_volatility: 0.05, scenario_type: 'simulated', modality_type: 'standard' 
         });
         
-        // Simulação prévia para o Tutor ver o impacto das decisões atuais
         const proj = decision ? calculateProjections(decision.data, branch, eco, arenaData?.market_indicators || arenaData?.initial_market_data, null) : null;
 
         return {
@@ -130,12 +107,14 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           risk: proj?.health?.insolvency_risk ?? 0,
           insolvent: proj?.health?.status === 'BANKRUPT',
           master_key_enabled: t.master_key_enabled,
-          auditLogs: (decision?.audit_logs || []) as AuditLog[]
+          auditLogs: (decision?.audit_logs || []) as AuditLog[],
+          current_decision: decision?.data // Fix: Armazenando a decisão real para visualização do tutor
         };
       });
 
       if (isMounted.current) {
         setTeams(progress);
+        setLastSync(new Date());
         if (selectedTeam) {
           const updated = progress.find(pt => pt.team_id === selectedTeam.team_id);
           if (updated) setSelectedTeam(updated);
@@ -151,7 +130,6 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
   useEffect(() => {
     isMounted.current = true;
     const controller = new AbortController();
-    
     fetchLiveDecisions(controller.signal);
 
     const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
@@ -183,6 +161,15 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center bg-slate-900/40 p-6 rounded-[2rem] border border-white/5">
+         <div className="flex items-center gap-4">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">
+               Monitor Real-time Ativo • Última Sincronização: {lastSync.toLocaleTimeString()}
+            </span>
+         </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8">
           <ClassCreditHealth teamsProjections={teams} />
@@ -239,27 +226,85 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="grid grid-cols-1 lg:grid-cols-12 gap-10"
           >
-            <div className="lg:col-span-8 bg-slate-900 p-16 rounded-[5rem] border border-white/10 shadow-2xl text-white space-y-12 relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-20 opacity-[0.02] rotate-12"><Scale size={400}/></div>
-               <header className="flex justify-between items-end border-b border-white/5 pb-12 relative z-10">
-                  <div className="space-y-4">
-                     <span className="px-5 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Audit Briefing</span>
-                     <h3 className="text-5xl font-black uppercase italic tracking-tighter leading-none">{selectedTeam.team_name}</h3>
-                  </div>
-                  <button 
-                    onClick={() => handleToggleMasterKey(selectedTeam.team_id, !!selectedTeam.master_key_enabled)}
-                    className={`px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all ${selectedTeam.master_key_enabled ? 'bg-orange-600 text-white shadow-xl' : 'bg-white/5 text-slate-400 hover:text-white'}`}
-                  >
-                     <Key size={14} /> {selectedTeam.master_key_enabled ? 'Master Key Unlocked' : 'Authorize Protocol'}
-                  </button>
-               </header>
-               <div className="space-y-10 relative z-10">
+            <div className="lg:col-span-8 space-y-10">
+               {/* DETALHAMENTO DAS DECISÕES REAIS */}
+               <div className="bg-slate-900 p-12 rounded-[5rem] border border-white/10 shadow-2xl text-white space-y-12">
+                  <header className="flex justify-between items-center border-b border-white/5 pb-10">
+                     <div className="space-y-2">
+                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.5em] italic">Análise de Protocolo Decidido</span>
+                        <h3 className="text-4xl font-black uppercase italic tracking-tighter">{selectedTeam.team_name}</h3>
+                     </div>
+                     <div className="flex gap-4">
+                        <button 
+                          onClick={() => handleToggleMasterKey(selectedTeam.team_id, !!selectedTeam.master_key_enabled)}
+                          className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest flex items-center gap-3 transition-all ${selectedTeam.master_key_enabled ? 'bg-orange-600 text-white' : 'bg-white/5 text-slate-500 hover:text-white'}`}
+                        >
+                           <Key size={14} /> {selectedTeam.master_key_enabled ? 'Oracle Key Ativa' : 'Desbloquear Oracle'}
+                        </button>
+                     </div>
+                  </header>
+
+                  {selectedTeam.current_decision ? (
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-6 bg-slate-950/50 p-8 rounded-[3rem] border border-white/5">
+                           <h4 className="text-[11px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-3 italic"><Megaphone size={16}/> Estratégia Comercial</h4>
+                           <div className="space-y-4">
+                              {Object.entries(selectedTeam.current_decision.regions).map(([id, reg]: [string, any]) => (
+                                 <div key={id} className="flex justify-between items-center text-[10px] font-black uppercase border-b border-white/5 pb-2">
+                                    <span className="text-slate-500">Região {id}</span>
+                                    <div className="flex gap-6 italic">
+                                       <span className="text-white">$ {reg.price}</span>
+                                       <span className="text-orange-500">Mkt: {reg.marketing}</span>
+                                    </div>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+
+                        <div className="space-y-6 bg-slate-950/50 p-8 rounded-[3rem] border border-white/5">
+                           <h4 className="text-[11px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-3 italic"><Factory size={16}/> Operações & Fábrica</h4>
+                           <div className="grid grid-cols-1 gap-4">
+                              <DecisionValue label="Uso de Capacidade" val={`${selectedTeam.current_decision.production.activityLevel}%`} icon={<Target size={12}/>} />
+                              <DecisionValue label="Compra MP-A" val={selectedTeam.current_decision.production.purchaseMPA} icon={<Package size={12}/>} />
+                              <DecisionValue label="Compra MP-B" val={selectedTeam.current_decision.production.purchaseMPB} icon={<Package size={12}/>} />
+                              <DecisionValue label="Investimento P&D" val={`$ ${selectedTeam.current_decision.production.rd_investment}`} icon={<Zap size={12}/>} />
+                           </div>
+                        </div>
+
+                        <div className="space-y-6 bg-slate-950/50 p-8 rounded-[3rem] border border-white/5">
+                           <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-3 italic"><Briefcase size={16}/> Talentos & RH</h4>
+                           <div className="grid grid-cols-1 gap-4">
+                              <DecisionValue label="Piso Salarial Decidido" val={`$ ${selectedTeam.current_decision.hr.salary}`} icon={<DollarSign size={12}/>} />
+                              <DecisionValue label="Contratações" val={selectedTeam.current_decision.hr.hired} icon={<User size={12}/>} />
+                              <DecisionValue label="Demissões" val={selectedTeam.current_decision.hr.fired} icon={<User size={12}/>} />
+                           </div>
+                        </div>
+
+                        <div className="space-y-6 bg-slate-950/50 p-8 rounded-[3rem] border border-white/5">
+                           <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-widest flex items-center gap-3 italic"><Landmark size={16}/> Capital & CAPEX</h4>
+                           <div className="grid grid-cols-1 gap-4">
+                              <DecisionValue label="Requisição Empréstimo" val={`$ ${selectedTeam.current_decision.finance.loanRequest}`} icon={<DollarSign size={12}/>} />
+                              <DecisionValue label="Novas Máquinas (A/B/G)" val={`${selectedTeam.current_decision.machinery.buy.alfa} / ${selectedTeam.current_decision.machinery.buy.beta} / ${selectedTeam.current_decision.machinery.buy.gama}`} icon={<Cpu size={12}/>} />
+                              <DecisionValue label="Status Legal" val={selectedTeam.current_decision.judicial_recovery ? "RECUPERAÇÃO JUDICIAL" : "NORMAL"} icon={<Scale size={12}/>} />
+                           </div>
+                        </div>
+                     </div>
+                  ) : (
+                     <div className="py-20 text-center opacity-30">
+                        <Loader2 className="animate-spin mx-auto mb-4" />
+                        <p className="text-[10px] font-black uppercase">Aguardando telemetria de decisão da equipe...</p>
+                     </div>
+                  )}
+               </div>
+
+               {/* TIMELINE DE AUDITORIA */}
+               <div className="bg-slate-900 p-12 rounded-[5rem] border border-white/10 shadow-2xl text-white space-y-10">
                   <h4 className="text-xl font-black uppercase italic flex items-center gap-3"><History size={24} className="text-blue-400" /> Audit Timeline</h4>
-                  <div className="space-y-6 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                  <div className="space-y-6 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                      {(!selectedTeam.auditLogs || selectedTeam.auditLogs.length === 0) ? (
                        <div className="p-20 bg-white/5 border border-white/5 border-dashed rounded-[3rem] text-center opacity-30">
                           <FileText size={48} className="mx-auto mb-4" />
-                          <p className="text-[10px] font-black uppercase tracking-widest">Aguardando telemetria de alteração...</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma alteração registrada ainda.</p>
                        </div>
                      ) : (
                        selectedTeam.auditLogs.map((log, idx) => (
@@ -273,11 +318,11 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
                             </div>
                             <div className="grid grid-cols-2 gap-6 pt-4 border-t border-white/5">
                                <div className="space-y-2">
-                                  <span className="block text-[8px] font-black text-slate-500 uppercase">Campo Alterado</span>
+                                  <span className="block text-[8px] font-black text-slate-500 uppercase">Ação / Protocolo</span>
                                   <span className="text-xs font-mono text-orange-400">{log.field_path}</span>
                                </div>
                                <div className="text-right">
-                                  <span className="block text-[8px] font-black text-slate-500 uppercase">Novo Valor</span>
+                                  <span className="block text-[8px] font-black text-slate-500 uppercase">Registro</span>
                                   <span className="text-xs font-mono text-white font-black">{JSON.stringify(log.new_value)}</span>
                                </div>
                             </div>
@@ -287,11 +332,30 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
                   </div>
                </div>
             </div>
+
             <aside className="lg:col-span-4 space-y-8">
               <div className="bg-orange-600/10 border border-orange-500/20 p-10 rounded-[3rem] space-y-6">
                  <h4 className="text-xl font-black uppercase italic text-orange-500 flex items-center gap-3"><ShieldCheck size={20}/> Tutor Verdict</h4>
+                 <p className="text-[10px] text-slate-400 italic">"Suas notas e comentários serão visíveis apenas para esta equipe no painel deles."</p>
                  <textarea className="w-full h-40 bg-slate-950/50 border border-white/10 rounded-[2.5rem] p-8 text-sm font-medium focus:border-orange-500 outline-none resize-none transition-all" placeholder="Enter strategic feedback for this team..."></textarea>
                  <button className="w-full py-5 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-white hover:text-orange-600 transition-all active:scale-95">Send Briefing</button>
+              </div>
+
+              <div className="p-10 bg-slate-900 border border-white/5 rounded-[3rem] space-y-4">
+                 <div className="flex items-center gap-3 text-blue-400">
+                    <Monitor size={18} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Master Status</span>
+                 </div>
+                 <div className="space-y-4 pt-4">
+                    <div className="flex justify-between items-center text-[9px] font-black uppercase">
+                       <span className="text-slate-500">Rating Estimado</span>
+                       <span className="text-white">{selectedTeam.rating}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[9px] font-black uppercase">
+                       <span className="text-slate-500">Risco Insolvência</span>
+                       <span className={selectedTeam.insolvent ? 'text-rose-500' : 'text-emerald-500'}>{selectedTeam.insolvent ? 'ALTO' : 'BAIXO'}</span>
+                    </div>
+                 </div>
               </div>
             </aside>
           </motion.div>
@@ -300,5 +364,15 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
     </div>
   );
 };
+
+const DecisionValue = ({ label, val, icon }: any) => (
+   <div className="flex justify-between items-center border-b border-white/5 pb-2">
+      <div className="flex items-center gap-2">
+         <span className="text-slate-500">{icon}</span>
+         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+      </div>
+      <span className="text-[11px] font-black text-white italic">{val}</span>
+   </div>
+);
 
 export default TutorDecisionMonitor;

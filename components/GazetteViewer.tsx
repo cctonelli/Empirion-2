@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
-import { Championship, UserRole, CreditRating, Team, CurrencyType, MachineModel } from '../types';
+import { Championship, UserRole, CreditRating, Team, CurrencyType, MachineModel, MacroIndicators } from '../types';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO } from '../constants';
 
 interface GazetteViewerProps {
   arena: Championship;
@@ -29,20 +30,26 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   const isAnonymous = arena.gazeta_mode === 'anonymous' && userRole !== 'tutor' && userRole !== 'admin';
   const currencySymbol = arena.currency === 'BRL' ? 'R$' : '$';
   
-  // Sincroniza os indicadores com base no Round Auditado
-  const currentMacro = useMemo(() => {
-    return { ...arena.market_indicators, ...(arena.round_rules?.[round] || {}) };
+  // Sincroniza os indicadores com base no Round Auditado, priorizando o round_rules gravado
+  const currentMacro = useMemo((): MacroIndicators => {
+    const rules = arena.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || {};
+    return { 
+      ...DEFAULT_MACRO, 
+      ...arena.market_indicators, 
+      ...rules 
+    } as MacroIndicators;
   }, [arena, round]);
 
   /**
-   * ORACLE COST ENGINE v16.7 - CÁLCULO CUMULATIVO
+   * ORACLE COST ENGINE v16.8 - CÁLCULO CUMULATIVO RESPEITANDO CRONOGRAMA
    */
   const supplierCosts = useMemo(() => {
     const getAdjusted = (base: number, adjustKey: string) => {
       let currentVal = base;
       for (let r = 0; r <= round; r++) {
-        const roundRate = arena.round_rules?.[r]?.[adjustKey] ?? arena.market_indicators[adjustKey] ?? 0;
-        currentVal *= (1 + roundRate / 100);
+        const roundRule = arena.round_rules?.[r] || DEFAULT_INDUSTRIAL_CHRONOGRAM[r] || {};
+        const rate = roundRule[adjustKey] ?? arena.market_indicators[adjustKey] ?? 0;
+        currentVal *= (1 + rate / 100);
       }
       return currentVal;
     };
@@ -223,21 +230,12 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                         </div>
 
                         <div className="grid grid-cols-2 gap-8">
-                           {/* INDICADORES ECONÔMICOS COMPLETOS (EXCETO VAR. DEMANDA) */}
                            <MacroSummaryBox label="Crescimento Econômico (ICE)" val={`${currentMacro.ice}%`} icon={<Activity size={20} className="text-emerald-500"/>} />
                            <MacroSummaryBox label="Inflação Período" val={`${currentMacro.inflation_rate}%`} icon={<Flame size={20} className="text-rose-500"/>} />
-                           <MacroSummaryBox label="Juros Bancários (TR)" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark size={20} className="text-blue-500"/>} />
-                           <MacroSummaryBox label="Inadimplência Clientes" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert size={20} className="text-orange-500"/>} />
-                           
-                           <MacroSummaryBox label="Juros Fornecedores" val={`${currentMacro.supplier_interest}%`} icon={<Truck size={20} className="text-amber-500"/>} />
-                           <MacroSummaryBox label="Juros Médios Vendas" val={`${currentMacro.sales_interest_rate}%`} icon={<DollarSign size={20} className="text-emerald-400"/>} />
-                           
-                           <MacroSummaryBox label="Câmbio: Dólar (USD)" val={`${currentMacro.exchange_rates?.USD || 5.2}x`} icon={<DollarSign size={20} className="text-blue-400"/>} />
-                           <MacroSummaryBox label="Câmbio: Euro (EUR)" val={`${currentMacro.exchange_rates?.EUR || 5.5}x`} icon={<Landmark size={20} className="text-indigo-400"/>} />
-                           
+                           <MacroSummaryBox label="Taxa TR" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark size={20} className="text-blue-500"/>} />
+                           <MacroSummaryBox label="Inadimplência" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert size={20} className="text-orange-500"/>} />
                            <MacroSummaryBox label="Imposto de Renda" val={`${currentMacro.tax_rate_ir}%`} icon={<Scale size={20} className="text-slate-400"/>} />
                            <MacroSummaryBox label="Multa Atrasos" val={`${currentMacro.late_penalty_rate}%`} icon={<AlertOctagon size={20} className="text-rose-600"/>} />
-                           
                            <MacroSummaryBox label="Deságio Máquinas" val={`${currentMacro.machine_sale_discount}%`} icon={<TrendingDown size={20} className="text-orange-600"/>} />
                            <MacroSummaryBox label="Venda Ativos" val={currentMacro.allow_machine_sale ? "LIBERADA" : "BLOQUEADA"} icon={<CheckCircle2 size={20} className={currentMacro.allow_machine_sale ? "text-emerald-500" : "text-rose-500"}/>} />
                         </div>

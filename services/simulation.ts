@@ -1,6 +1,6 @@
 
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType, Championship, MachineModel, MachineSpec, InitialMachine, CurrencyType } from '../types';
-import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO } from '../constants';
+import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
   const num = Number(val);
@@ -8,7 +8,8 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v16.9 - DIVIDEND GOVERNANCE (P/P+1)
+ * CORE ORACLE ENGINE v17.0 - FULL DYNAMIC PARAMETERS
+ * Este motor consome exclusivamente os indicadores salvos no banco de dados.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -26,8 +27,17 @@ export const calculateProjections = (
   const prevEquity = sanitize(bs.equity?.total, 5055447);
   const prevAccumulatedProfit = sanitize(bs.equity?.accumulated_profit, 55447);
   
-  // Mescla indicadores globais com as regras do round atual
-  const indicators = { ...baseIndicators, ...(roundRules?.[currentRound] || {}) };
+  // LOGICA DE RESOLUÇÃO DE INDICADORES:
+  // 1. Regra específica da rodada (Round Rules salva pelo Tutor no Wizard ou Intervenção)
+  // 2. Fallback para indicadores base do torneio
+  // 3. Fallback absoluto para constantes (emergência)
+  const roundOverride = roundRules?.[currentRound] || {};
+  const indicators = { 
+    ...DEFAULT_MACRO, 
+    ...baseIndicators, 
+    ...roundOverride 
+  };
+  
   const baseCurrency = championshipData?.currency || 'BRL';
 
   // 1. CAPACIDADE E PREÇOS DE ATIVOS
@@ -38,9 +48,11 @@ export const calculateProjections = (
     const base = baseIndicators.machinery_values[model];
     const keyPart = model === 'alfa' ? 'alpha' : model === 'gama' ? 'gamma' : 'beta';
     let adjPrice = base;
+
+    // Calcula o preço acumulado respeitando o histórico de reajustes do banco
     for (let r = 0; r < currentRound; r++) {
-      const roundRate = roundRules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? baseIndicators[`machine_${keyPart}_price_adjust`] ?? 0;
-      adjPrice *= (1 + roundRate / 100);
+      const rate = roundRules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? baseIndicators[`machine_${keyPart}_price_adjust`] ?? 0;
+      adjPrice *= (1 + rate / 100);
     }
     return adjPrice;
   };
@@ -56,18 +68,20 @@ export const calculateProjections = (
   const effectiveCapacity = (baseCapacity + newMachinesCapacity) * productivityFactor;
   const unitsToProduce = effectiveCapacity * (decisions.production.activityLevel / 100);
 
-  // 2. COMPRAS ESPECIAIS
+  // 2. COMPRAS ESPECIAIS (Dinamizadas pelo Ágio definido pelo Tutor)
   const requiredMPA = unitsToProduce * 3;
   const requiredMPB = unitsToProduce * 2;
   const currentMPAStock = sanitize(previousState?.inventory?.mpa, 628545 / 20.20);
   const currentMPBStock = sanitize(previousState?.inventory?.mpb, 838060 / 40.40);
   const decidedMPA = sanitize(decisions.production.purchaseMPA, 0);
   const decidedMPB = sanitize(decisions.production.purchaseMPB, 0);
+  
   const deficitMPA = Math.max(0, requiredMPA - (currentMPAStock + decidedMPA));
   const deficitMPB = Math.max(0, requiredMPB - (currentMPBStock + decidedMPB));
-  const premium = 1 + (indicators.special_purchase_premium / 100);
-  const specialPurchaseCost = (deficitMPA * indicators.prices.mp_a * premium) + 
-                               (deficitMPB * indicators.prices.mp_b * premium);
+  
+  const premiumRate = sanitize(indicators.special_purchase_premium, 15) / 100;
+  const specialPurchaseCost = (deficitMPA * indicators.prices.mp_a * (1 + premiumRate)) + 
+                               (deficitMPB * indicators.prices.mp_b * (1 + premiumRate));
 
   // 3. MERCADO DINÂMICO
   const iceFactor = 1 + (indicators.ice / 100);
@@ -111,16 +125,12 @@ export const calculateProjections = (
   const totalOpex = baseOpex + storageCost + specialPurchaseCost;
   const netProfit = finalRevenue - cpv - totalOpex;
 
-  // --- REGRA DE DIVIDENDOS (LAG P/P+1) ---
-  // Dividendos provisionados no round anterior devem ser PAGOS agora (reduzem o caixa)
-  const prevDivsToPay = sanitize(bs.liabilities?.current_divs, 18481);
-  
-  // Dividendos do lucro atual a serem PROVISIONADOS agora (lançados no passivo para pagamento no próximo round)
+  // DIVIDENDOS (REGRA P/P+1)
+  const prevDivsToPay = sanitize(bs.liabilities?.current_divs, 0);
   const dividendRate = sanitize(indicators.dividend_percent, 25) / 100;
   const currentDivProvision = netProfit > 0 ? netProfit * dividendRate : 0;
-  
-  // A diferença entre o Lucro Líquido e a Provisão de Dividendos é incorporada ao Patrimônio Líquido (Lucro Retido)
   const retainedEarnings = netProfit - currentDivProvision;
+
   const finalEquity = prevEquity + retainedEarnings;
   const finalAccumulatedProfit = prevAccumulatedProfit + retainedEarnings;
 
@@ -129,9 +139,7 @@ export const calculateProjections = (
                      (decisions.machinery.buy.beta * currentBetaPrice) +
                      (decisions.machinery.buy.gama * currentGamaPrice);
 
-  // Saída de caixa por dividendos do round anterior
   const ac_financial = Math.max(0, sanitize(bs.assets?.current?.cash, 0) + sanitize(bs.assets?.current?.app, 0) - prevDivsToPay);
-  
   const receivables = finalRevenue * 0.6;
   const inventoryValue = (Math.max(0, unitsToProduce - finalUnitsSold) * 235) + (requiredMPA * indicators.prices.mp_a) + (requiredMPB * indicators.prices.mp_b);
   
@@ -139,8 +147,7 @@ export const calculateProjections = (
   const pc_suppliers = finalRevenue * 0.2;
   const pc_loans = sanitize(bs.liabilities?.current_loans, 1872362) + (decisions.finance.loanRequest * 0.3);
   
-  // O Passivo Circulante agora contém a nova provisão de dividendos
-  const pc_total = pc_suppliers + pc_loans + 13045 + currentDivProvision;
+  const pc_total = pc_suppliers + pc_loans + (netProfit > 0 ? netProfit * (indicators.tax_rate_ir / 100) : 0) + currentDivProvision;
   const pnc = sanitize(bs.liabilities?.long_term, 1500000);
 
   const nlcdg = (receivables + inventoryValue) - pc_suppliers;
