@@ -35,8 +35,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [decisions, setDecisions] = useState<DecisionData>({
     judicial_recovery: false,
     regions: {}, 
-    hr: { hired: 0, fired: 0, salary: 0, trainingPercent: 0, participationPercent: 0, misc: 0, sales_staff_count: 0 },
-    production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 1, activityLevel: 0, extraProductionPercent: 0, rd_investment: 0 },
+    hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, misc: 0, sales_staff_count: 50 },
+    production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, extraProductionPercent: 0, rd_investment: 0 },
     machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
     finance: { loanRequest: 0, loanTerm: 1, application: 0 },
     estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
@@ -50,8 +50,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         if (found) {
           setActiveArena(found);
           const initialRegions: any = {};
-          for (let i = 1; i <= (found.regions_count || 9); i++) {
-            initialRegions[i] = { price: 0, term: 1, marketing: 0 };
+          const defaultPrice = found.market_indicators?.avg_selling_price || 375;
+          for (let i = 1; i <= (found.regions_count || 4); i++) {
+            initialRegions[i] = { price: defaultPrice, term: 1, marketing: 0 };
           }
           setDecisions(prev => ({ ...prev, regions: initialRegions }));
         }
@@ -196,13 +197,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         <div className="sticky top-0 bg-[#020617]/80 backdrop-blur-md z-10 pb-4 border-b border-white/5 mb-4">
                            <h3 className="text-[11px] font-black text-orange-500 uppercase tracking-[0.4em] flex items-center gap-3"><MapPin size={16} /> Regiões de Venda</h3>
                         </div>
-                        {Array.from({ length: activeArena?.regions_count || 9 }).map((_, i) => {
-                           const regId = i + 1;
-                           const regName = activeArena?.region_names?.[i] || `Região 0${regId}`;
+                        {Object.keys(decisions.regions).map((id) => {
+                           const regId = Number(id);
+                           const regName = activeArena?.region_names?.[regId-1] || `Região 0${regId}`;
                            const data = decisions.regions[regId];
                            const isActive = activeRegion === regId;
                            return (
-                              <button key={i} onClick={() => setActiveRegion(regId)} className={`p-6 rounded-3xl border-2 transition-all text-left flex flex-col gap-1 group relative overflow-hidden ${isActive ? 'bg-orange-600 border-orange-400 shadow-2xl scale-[1.02]' : 'bg-slate-900 border-white/10 hover:border-white/30 hover:bg-slate-800'}`}>
+                              <button key={regId} onClick={() => setActiveRegion(regId)} className={`p-6 rounded-3xl border-2 transition-all text-left flex flex-col gap-1 group relative overflow-hidden ${isActive ? 'bg-orange-600 border-orange-400 shadow-2xl scale-[1.02]' : 'bg-slate-900 border-white/10 hover:border-white/30 hover:bg-slate-800'}`}>
                                  <div className="flex justify-between items-center relative z-10">
                                     <span className={`text-[8px] font-black uppercase tracking-widest ${isActive ? 'text-white/60' : 'text-slate-600'}`}>ID 0{regId}</span>
                                     <span className={`text-sm font-mono font-black ${isActive ? 'text-white' : 'text-emerald-500'}`}>$ {data?.price || 0}</span>
@@ -343,7 +344,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      </div>
 
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
-                        <ReviewBox label="Preço Médio" val={`$ ${Object.values(decisions.regions).reduce((acc, r) => acc + r.price, 0) / Math.max(1, Object.keys(decisions.regions).length)}`} icon={<DollarSign size={16}/>} />
+                        <ReviewBox label="Preço Médio" val={`$ ${(Object.values(decisions.regions).reduce((acc, r) => acc + r.price, 0) / Math.max(1, Object.keys(decisions.regions).length)).toFixed(2)}`} icon={<DollarSign size={16}/>} />
                         <ReviewBox label="Capacidade" val={`${decisions.production.activityLevel}%`} icon={<Activity size={16}/>} />
                         <ReviewBox label="Contratações" val={decisions.hr.hired} icon={<Users2 size={16}/>} />
                         <ReviewBox label="Empréstimo" val={`$ ${decisions.finance.loanRequest.toLocaleString()}`} icon={<Landmark size={16}/>} />
@@ -416,7 +417,7 @@ const PriceInput = ({ label, val, price, isSell, desagio, onChange }: any) => {
 };
 
 const SelectCard = ({ label, val, options, icon, onChange }: any) => (
-  <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-4 hover:border-blue-500/30 transition-all">
+  <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-4 hover:border-orange-500/30 transition-all">
      <div className="flex items-center gap-4"><div className="text-slate-500">{icon}</div><label className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">{label}</label></div>
      <div className="relative">
         <select value={val} onChange={e => onChange?.(Number(e.target.value))} className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-4 text-white font-black text-[12px] uppercase outline-none appearance-none cursor-pointer">

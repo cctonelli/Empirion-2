@@ -3,12 +3,13 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRat
 import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
+  if (val === null || val === undefined) return fallback;
   const num = Number(val);
   return isFinite(num) ? num : fallback;
 };
 
 /**
- * CORE ORACLE ENGINE v17.0 - FULL DYNAMIC PARAMETERS
+ * CORE ORACLE ENGINE v17.1 - DYNAMIC STABILIZED
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -22,6 +23,13 @@ export const calculateProjections = (
   forcedShare?: number,
   championshipData?: Championship
 ): ProjectionResult => {
+  
+  // Limpeza profunda de inputs para evitar propagações de NaN
+  const safeDecisions: DecisionData = JSON.parse(JSON.stringify(decisions, (key, value) => {
+      if (typeof value === 'number') return isFinite(value) ? value : 0;
+      return value;
+  }));
+
   const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(bs.equity?.total, 5055447);
   const prevAccumulatedProfit = sanitize(bs.equity?.accumulated_profit, 55447);
@@ -55,20 +63,20 @@ export const calculateProjections = (
   const currentBetaPrice = getAdjustedPrice('beta');
   const currentGamaPrice = getAdjustedPrice('gama');
 
-  const newMachinesCapacity = (sanitize(decisions.machinery.buy.alfa) * sanitize(indicators.machine_specs?.alfa?.production_capacity, 2000)) +
-                             (sanitize(decisions.machinery.buy.beta) * sanitize(indicators.machine_specs?.beta?.production_capacity, 6000)) +
-                             (sanitize(decisions.machinery.buy.gama) * sanitize(indicators.machine_specs?.gama?.production_capacity, 12000));
+  const newMachinesCapacity = (sanitize(safeDecisions.machinery.buy.alfa) * sanitize(indicators.machine_specs?.alfa?.production_capacity, 2000)) +
+                             (sanitize(safeDecisions.machinery.buy.beta) * sanitize(indicators.machine_specs?.beta?.production_capacity, 6000)) +
+                             (sanitize(safeDecisions.machinery.buy.gama) * sanitize(indicators.machine_specs?.gama?.production_capacity, 12000));
 
   const effectiveCapacity = (baseCapacity + newMachinesCapacity) * productivityFactor;
-  const unitsToProduce = effectiveCapacity * (sanitize(decisions.production.activityLevel, 80) / 100);
+  const unitsToProduce = effectiveCapacity * (sanitize(safeDecisions.production.activityLevel, 80) / 100);
 
   // 2. COMPRAS ESPECIAIS
   const requiredMPA = unitsToProduce * 3;
   const requiredMPB = unitsToProduce * 2;
   const currentMPAStock = sanitize(previousState?.inventory?.mpa, 31116);
   const currentMPBStock = sanitize(previousState?.inventory?.mpb, 20744);
-  const decidedMPA = sanitize(decisions.production.purchaseMPA, 0);
-  const decidedMPB = sanitize(decisions.production.purchaseMPB, 0);
+  const decidedMPA = sanitize(safeDecisions.production.purchaseMPA, 0);
+  const decidedMPB = sanitize(safeDecisions.production.purchaseMPB, 0);
   
   const deficitMPA = Math.max(0, requiredMPA - (currentMPAStock + decidedMPA));
   const deficitMPB = Math.max(0, requiredMPB - (currentMPBStock + decidedMPB));
@@ -92,7 +100,7 @@ export const calculateProjections = (
   }));
 
   regions.forEach(reg => {
-     const decision = decisions.regions[reg.id] || { price: 375, term: 1, marketing: 0 };
+     const decision = safeDecisions.regions[reg.id] || { price: 375, term: 1, marketing: 0 };
      const regionalWeight = sanitize(reg.demand_weight || (100 / regions.length)) / 100;
      const regionalDemand = totalMarketDemand * regionalWeight;
      const priceFactor = Math.pow(sanitize(indicators.avg_selling_price, 340) / Math.max(decision.price, 100), 1.6);
@@ -128,9 +136,9 @@ export const calculateProjections = (
   const finalAccumulatedProfit = prevAccumulatedProfit + retainedEarnings;
 
   // 5. BALANÇO & KPIs
-  const totalCapex = (sanitize(decisions.machinery.buy.alfa) * currentAlfaPrice) +
-                     (sanitize(decisions.machinery.buy.beta) * currentBetaPrice) +
-                     (sanitize(decisions.machinery.buy.gama) * currentGamaPrice);
+  const totalCapex = (sanitize(safeDecisions.machinery.buy.alfa) * currentAlfaPrice) +
+                     (sanitize(safeDecisions.machinery.buy.beta) * currentBetaPrice) +
+                     (sanitize(safeDecisions.machinery.buy.gama) * currentGamaPrice);
 
   const ac_financial = Math.max(0, sanitize(bs.assets?.current?.cash, 0) + sanitize(bs.assets?.current?.app, 0) - prevDivsToPay);
   const receivables = finalRevenue * 0.6;
@@ -138,7 +146,7 @@ export const calculateProjections = (
   
   const ac_total = ac_financial + receivables + inventoryValue;
   const pc_suppliers = finalRevenue * 0.2;
-  const pc_loans = sanitize(bs.liabilities?.current_loans, 1872362) + (sanitize(decisions.finance.loanRequest) * 0.3);
+  const pc_loans = sanitize(bs.liabilities?.current_loans, 1872362) + (sanitize(safeDecisions.finance.loanRequest) * 0.3);
   
   const pc_total = pc_suppliers + pc_loans + (netProfit > 0 ? netProfit * (sanitize(indicators.tax_rate_ir, 15) / 100) : 0) + currentDivProvision;
   const pnc = sanitize(bs.liabilities?.long_term, 1500000);

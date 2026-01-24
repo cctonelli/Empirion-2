@@ -46,18 +46,20 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     const local = localStorage.getItem(LOCAL_CHAMPS_KEY);
     if (local) finalArenas.push(...JSON.parse(local));
 
-    const { data: realChamps } = await supabase.from('championships').select('*').order('created_at', { ascending: false });
-    if (realChamps) {
-      for (const c of realChamps) {
-        if (!finalArenas.find(a => a.id === c.id)) {
-           const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', c.id);
-           finalArenas.push({ ...c, teams: teams || [], is_trial: false });
+    // Apenas tenta buscar champs reais se o usuário estiver autenticado para evitar 401/500 desnecessários
+    const { data: { session } } = await (supabase.auth as any).getSession();
+    
+    if (session) {
+      const { data: realChamps } = await supabase.from('championships').select('*').order('created_at', { ascending: false });
+      if (realChamps) {
+        for (const c of realChamps) {
+          if (!finalArenas.find(a => a.id === c.id)) {
+             const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', c.id);
+             finalArenas.push({ ...c, teams: teams || [], is_trial: false });
+          }
         }
       }
-    }
 
-    const { data: { session } } = await (supabase.auth as any).getSession();
-    if (session) {
       const { data: trialChamps } = await supabase.from('trial_championships').select('*').eq('tutor_id', session.user.id);
       if (trialChamps) {
         for (const tc of trialChamps) {
@@ -67,9 +69,20 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
            }
         }
       }
+    } else {
+      // Se não houver sessão, busca trial_championships públicas (se houver política de acesso anônimo)
+      const { data: publicTrials } = await supabase.from('trial_championships').select('*').limit(10);
+      if (publicTrials) {
+        for (const tc of publicTrials) {
+           if (!finalArenas.find(a => a.id === tc.id)) {
+              const { data: tTeams } = await supabase.from('trial_teams').select('*').eq('championship_id', tc.id);
+              finalArenas.push({ ...tc, teams: tTeams || [], is_trial: true });
+           }
+        }
+      }
     }
   } catch (e) { 
-    logError(LogContext.DATABASE, "Cloud fetch deferred", e); 
+    logError(LogContext.DATABASE, "Data sync deferred", e); 
   }
   
   const result = onlyPublic ? finalArenas.filter(a => a.is_public || a.is_trial) : finalArenas;
@@ -157,12 +170,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       
       if (champErr) throw champErr;
 
-      await supabase.from('trial_tutors').insert({
-        championship_id: fullChamp.id,
-        user_id: currentUserId,
-        role: 'owner'
-      });
-
       const { error: teamsErr } = await supabase.from('trial_teams').insert(teamsWithIds.map(t => ({
         id: t.id,
         championship_id: t.championship_id,
@@ -175,9 +182,9 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       })));
 
       if (teamsErr) throw teamsErr;
-      logInfo(LogContext.SUPABASE, "Absolute Trial Persisted to Cloud Node 08");
+      logInfo(LogContext.SUPABASE, "Trial persisted to Cloud Node 08");
     } catch (err) {
-      logError(LogContext.SUPABASE, "Cloud Persist Fault, local-only mode", err);
+      logError(LogContext.SUPABASE, "Cloud persist fault", err);
     }
   } else if (!isTrial && currentUserId) {
     try {
@@ -208,7 +215,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       
       await supabase.from('teams').insert(teamsWithIds);
     } catch (err) {
-      logError(LogContext.SUPABASE, "Live Arena Persist Fault", err);
+      logError(LogContext.SUPABASE, "Live arena persist fault", err);
     }
   }
 
@@ -219,47 +226,62 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   return { champ: fullChamp, teams: teamsWithIds };
 };
 
+/**
+ * Função de Transmissão Refatorada para Resiliência
+ * Resolve erros de ON CONFLICT e NaN no Supabase
+ */
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
   try {
     const { data: allArenas } = await getChampionships();
     const arena = allArenas?.find(a => a.id === champId);
-    if (!arena) throw new Error("Arena não localizada.");
+    if (!arena) throw new Error("Arena não localizada no cluster.");
 
     const isTrial = !!arena.is_trial;
     const table = isTrial ? 'trial_decisions' : 'current_decisions';
 
-    // Recupera dados existentes para anexar log no JSONB 'data'
-    const { data: existing } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', round).maybeSingle();
-    const existingData = existing?.data || {};
-    const oldLogs = Array.isArray(existingData.audit_logs) ? existingData.audit_logs : [];
+    // 1. Sanitização profunda para evitar NaN e erros 500 no Postgres
+    const cleanPayload = JSON.parse(JSON.stringify(decisions, (key, value) => {
+        if (typeof value === 'number') {
+            return isFinite(value) ? value : 0;
+        }
+        return value;
+    }));
+
+    // 2. Protocolo de Auditoria Interna no JSONB 'data'
+    const { data: existingData } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', round).maybeSingle();
+    const oldLogs = Array.isArray(existingData?.data?.audit_logs) ? existingData.data.audit_logs : [];
     
-    const newLogEntry = {
-      changed_at: new Date().toISOString(),
-      user_id: 'Operador Unidade',
-      field_path: 'PROTOCOL_TRANSMISSION',
-      new_value: 'Decisões Seladas via Wizard'
-    };
-
-    // Remove campos nulos/undefined para evitar erro 500 no Postgres
-    const cleanDecisions = JSON.parse(JSON.stringify(decisions));
-
     const updatedData = {
-      ...cleanDecisions,
-      audit_logs: [...oldLogs, newLogEntry]
+      ...cleanPayload,
+      audit_logs: [...oldLogs, {
+        changed_at: new Date().toISOString(),
+        user_id: 'Protocol_Operator',
+        field_path: 'SEAL_TRANSMISSION',
+        new_value: 'Audit Passed'
+      }]
     };
 
-    // Fix: de acordo com o SQL fornecido, o índice único de conflito deve ser exatamente (team_id, round)
-    // championships_id no onConflict estava causando erro 409
-    const { error } = await supabase.from(table).upsert({
-      team_id: teamId,
-      championship_id: champId,
-      round: round,
-      data: updatedData,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'team_id,round' });
+    // 3. Estratégia Check-then-Act para evitar erro de índice ausente em ON CONFLICT
+    const { data: existingRow } = await supabase.from(table).select('id').eq('team_id', teamId).eq('round', round).maybeSingle();
 
-    if (error) throw error;
-    logInfo(LogContext.DATABASE, `Decision Seal Sync: ${teamId}`);
+    if (existingRow) {
+      const { error } = await supabase.from(table).update({
+        data: updatedData,
+        updated_at: new Date().toISOString()
+      }).eq('id', existingRow.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from(table).insert({
+        team_id: teamId,
+        championship_id: champId,
+        round: round,
+        data: updatedData,
+        updated_at: new Date().toISOString()
+      });
+      if (error) throw error;
+    }
+
+    logInfo(LogContext.DATABASE, `Decision Transmitted to Node for Team ${teamId}`);
     return { success: true };
   } catch (err: any) {
     logError(LogContext.DATABASE, "Decision transmission fault", err.message);
@@ -345,10 +367,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
   }
 };
 
-export const fetchPageContent = async (slug: string, lang: string) => { return null; };
-export const getModalities = async () => { return []; };
-export const subscribeToModalities = (cb: any) => { return { unsubscribe: () => {} }; };
-
 export const deleteChampionship = async (id: string, isTrial: boolean) => {
   if (isTrial) await supabase.from('trial_championships').delete().eq('id', id);
   else await supabase.from('championships').delete().eq('id', id);
@@ -364,10 +382,14 @@ export const updateEcosystem = async (id: string, updates: any) => {
   const { error } = await supabase.from(table).update(updates).eq('id', id);
   return { error };
 };
-export const getPublicReports = async (id: string, r: number) => { return { data: [], error: null }; };
-export const submitCommunityVote = async (d: any) => { return { error: null }; };
-export const getActiveBusinessPlan = async (t: string, r: number) => { return { data: null, error: null }; };
-export const saveBusinessPlan = async (p: any) => { return { data: null, error: null }; };
-export const getTeamSimulationHistory = async (t: string) => { return []; };
-export const getAllUsers = async (): Promise<UserProfile[]> => { return []; };
-export const subscribeToBusinessPlan = (t: string, r: number, cb: any) => { return { unsubscribe: () => {} }; };
+
+export const fetchPageContent = async (s: string, l: string) => null;
+export const getModalities = async () => [];
+export const subscribeToModalities = (cb: any) => ({ unsubscribe: () => {} });
+export const getPublicReports = async (id: string, r: number) => ({ data: [], error: null });
+export const submitCommunityVote = async (d: any) => ({ error: null });
+export const getActiveBusinessPlan = async (t: string, r: number) => ({ data: null, error: null });
+export const saveBusinessPlan = async (p: any) => ({ data: null, error: null });
+export const getTeamSimulationHistory = async (t: string) => [];
+export const getAllUsers = async (): Promise<UserProfile[]> => [];
+export const subscribeToBusinessPlan = (t: string, r: number, cb: any) => ({ unsubscribe: () => {} });
