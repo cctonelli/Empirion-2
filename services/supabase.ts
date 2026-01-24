@@ -6,7 +6,6 @@ import { calculateProjections, calculateAttractiveness, sanitize } from './simul
 import { logError, logInfo, LogContext } from '../utils/logger';
 import { generateBotDecision } from './gemini';
 
-// Prioridade para variáveis VITE_ conforme padrão Vercel/Vite
 const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
 
@@ -36,57 +35,49 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   return data;
 };
 
+/**
+ * Busca de Campeonatos Refatorada para evitar Erro de Recursão RLS
+ * Substitui join select('*, teams(*)') por chamadas separadas.
+ */
 export const getChampionships = async (onlyPublic: boolean = false) => {
   const finalArenas: Championship[] = [];
   try {
-    // 1. Local Cache
     const local = localStorage.getItem(LOCAL_CHAMPS_KEY);
     if (local) finalArenas.push(...JSON.parse(local));
 
     const { data: { session } } = await (supabase.auth as any).getSession();
     
-    // 2. Real Championships (Live)
-    // Buscamos com join de equipes para evitar N+1 e erros 500 de loops
-    const { data: realChamps, error: realErr } = await supabase
+    // 1. Fetch Championships (Sem Joins para evitar recursão de política)
+    const { data: rawChamps, error: rawErr } = await supabase
       .from('championships')
-      .select('*, teams(*)')
+      .select('*')
       .order('created_at', { ascending: false });
-    
-    if (realErr) logError(LogContext.DATABASE, "Live Arenas fetch fail", realErr);
-    if (realChamps) {
-      realChamps.forEach(c => {
-        if (!finalArenas.find(a => a.id === c.id)) {
-          finalArenas.push({ ...c, is_trial: false });
-        }
-      });
+
+    if (rawErr) {
+       logError(LogContext.DATABASE, "Live Arenas query fail", rawErr);
+    } else if (rawChamps) {
+       for (const c of rawChamps) {
+          if (!finalArenas.find(a => a.id === c.id)) {
+             // 2. Fetch Teams separately to break RLS loop
+             const { data: teamsData } = await supabase.from('teams').select('*').eq('championship_id', c.id);
+             finalArenas.push({ ...c, teams: teamsData || [], is_trial: false });
+          }
+       }
     }
 
-    // 3. Trial Championships
-    if (session) {
-      const { data: trialChamps, error: trialErr } = await supabase
-        .from('trial_championships')
-        .select('*, trial_teams(*)')
-        .eq('tutor_id', session.user.id);
-      
-      if (trialErr) logError(LogContext.DATABASE, "Trial Arenas fetch fail", trialErr);
-      if (trialChamps) {
-        trialChamps.forEach(tc => {
+    // 3. Fetch Trial Championships (Processo similar)
+    const trialQuery = session 
+      ? supabase.from('trial_championships').select('*').eq('tutor_id', session.user.id)
+      : supabase.from('trial_championships').select('*').limit(5);
+
+    const { data: rawTrials } = await trialQuery;
+    if (rawTrials) {
+       for (const tc of rawTrials) {
           if (!finalArenas.find(a => a.id === tc.id)) {
-            // Normaliza o nome da chave de equipes trial para 'teams'
-            finalArenas.push({ ...tc, teams: tc.trial_teams || [], is_trial: true });
+             const { data: tTeams } = await supabase.from('trial_teams').select('*').eq('championship_id', tc.id);
+             finalArenas.push({ ...tc, teams: tTeams || [], is_trial: true });
           }
-        });
-      }
-    } else {
-      // Anonymous Trial Fetch
-      const { data: publicTrials } = await supabase.from('trial_championships').select('*, trial_teams(*)').limit(10);
-      if (publicTrials) {
-        publicTrials.forEach(tc => {
-          if (!finalArenas.find(a => a.id === tc.id)) {
-            finalArenas.push({ ...tc, teams: tc.trial_teams || [], is_trial: true });
-          }
-        });
-      }
+       }
     }
   } catch (e) { 
     logError(LogContext.DATABASE, "Global data sync deferred", e); 
@@ -114,7 +105,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     equity: 5055447,
     credit_limit: 5000000,
     status: 'active',
-    insolvency_status: 'SAUDAVEL',
+    insolvency_status: 'SAUDAVEL' as any,
     created_at: timestamp,
     kpis: { 
       market_share: initialShare, 
@@ -149,53 +140,13 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     }
   } as Championship;
 
-  if (isTrial && currentUserId) {
+  // Persistência Imediata se autenticado
+  if (currentUserId) {
+    const champTable = isTrial ? 'trial_championships' : 'championships';
+    const teamsTable = isTrial ? 'trial_teams' : 'teams';
+    
     try {
-      const { error: champErr } = await supabase.from('trial_championships').insert({
-        id: fullChamp.id,
-        name: fullChamp.name,
-        branch: fullChamp.branch,
-        description: fullChamp.description,
-        status: fullChamp.status,
-        current_round: fullChamp.current_round,
-        total_rounds: fullChamp.total_rounds,
-        deadline_value: fullChamp.deadline_value,
-        deadline_unit: fullChamp.deadline_unit,
-        initial_financials: fullChamp.initial_financials,
-        market_indicators: fullChamp.market_indicators,
-        region_names: fullChamp.region_names,
-        region_configs: fullChamp.region_configs,
-        currency: fullChamp.currency,
-        sales_mode: fullChamp.sales_mode,
-        scenario_type: fullChamp.scenario_type,
-        transparency_level: fullChamp.transparency_level,
-        gazeta_mode: fullChamp.gazeta_mode,
-        tutor_id: currentUserId,
-        round_started_at: fullChamp.round_started_at,
-        config: fullChamp.config
-      });
-      
-      if (champErr) throw champErr;
-
-      const { error: teamsErr } = await supabase.from('trial_teams').insert(teamsWithIds.map(t => ({
-        id: t.id,
-        championship_id: t.championship_id,
-        name: t.name,
-        kpis: t.kpis,
-        equity: t.equity,
-        credit_limit: t.credit_limit,
-        status: t.status,
-        insolvency_status: t.insolvency_status
-      })));
-
-      if (teamsErr) throw teamsErr;
-      logInfo(LogContext.SUPABASE, "Trial Instance Sincronizada.");
-    } catch (err) {
-      logError(LogContext.SUPABASE, "Cloud persist fault", err);
-    }
-  } else if (!isTrial && currentUserId) {
-    try {
-      const { error: champErr } = await supabase.from('championships').insert({
+      const { error: champErr } = await supabase.from(champTable).insert({
         id: fullChamp.id,
         name: fullChamp.name,
         branch: fullChamp.branch,
@@ -219,10 +170,9 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         config: fullChamp.config
       });
       if (champErr) throw champErr;
-      
-      await supabase.from('teams').insert(teamsWithIds);
+      await supabase.from(teamsTable).insert(teamsWithIds);
     } catch (err) {
-      logError(LogContext.SUPABASE, "Live arena persist fault", err);
+      logError(LogContext.SUPABASE, "Cloud Sync Failed during creation", err);
     }
   }
 
@@ -234,60 +184,63 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 };
 
 /**
- * Protocolo de Salvamento Blindado v17.5
- * Substitui UPSERT por Check-then-Act para compatibilidade total de índices.
+ * Salva Decisões com Auto-Provisionamento de Equipe
+ * Resolve Violação de FK (Chave Estrangeira)
  */
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
   try {
     const { data: allArenas } = await getChampionships();
     const arena = allArenas?.find(a => a.id === champId);
-    if (!arena) throw new Error("Link com arena perdido. Re-sincronize seu nodo.");
+    if (!arena) throw new Error("Arena não localizada no nodo local.");
 
     const isTrial = !!arena.is_trial;
     const table = isTrial ? 'trial_decisions' : 'current_decisions';
+    const teamsTable = isTrial ? 'trial_teams' : 'teams';
 
-    // 1. Sanitização Profunda contra NaN (Error 500 Prevent)
-    const cleanPayload = JSON.parse(JSON.stringify(decisions, (key, value) => {
-        if (typeof value === 'number') return isFinite(value) ? value : 0;
-        return value;
-    }));
+    // 1. Sanitização profunda contra NaN
+    const cleanPayload = JSON.parse(JSON.stringify(decisions, (k, v) => (typeof v === 'number' && !isFinite(v)) ? 0 : v));
 
-    // 2. Fetch de Auditoria de Existência
-    const { data: existingRow } = await supabase.from(table)
-        .select('id, data')
-        .eq('team_id', teamId)
-        .eq('round', round)
-        .maybeSingle();
+    // 2. Garantia de Existência da Equipe (Foreign Key Protection)
+    const { data: teamExists } = await supabase.from(teamsTable).select('id').eq('id', teamId).maybeSingle();
+    
+    if (!teamExists) {
+      logInfo(LogContext.DATABASE, `Equipe ${teamId} órfã. Provisionando no banco Cloud...`);
+      const teamMeta = arena.teams?.find(t => t.id === teamId);
+      if (teamMeta) {
+         await supabase.from(teamsTable).insert({
+           id: teamMeta.id,
+           championship_id: arena.id,
+           name: teamMeta.name,
+           equity: teamMeta.equity || 5055447,
+           credit_limit: teamMeta.credit_limit || 5000000,
+           status: 'active'
+         });
+      } else {
+         throw new Error("Metadados da equipe ausentes para provisionamento.");
+      }
+    }
 
-    const oldLogs = Array.isArray(existingRow?.data?.audit_logs) ? existingRow.data.audit_logs : [];
-    const updatedData = {
-      ...cleanPayload,
-      audit_logs: [...oldLogs, {
-        changed_at: new Date().toISOString(),
-        user_id: 'System_Protocol',
-        field_path: 'SEAL_TRANSMISSION',
-        new_value: 'Sync v17.5 Success'
-      }]
-    };
+    // 3. Operação de Gravação (Check-then-Act)
+    const { data: existingRow } = await supabase.from(table).select('id').eq('team_id', teamId).eq('round', round).maybeSingle();
 
-    // 3. Operação Manual para evitar conflito de índices (Error 400/409 Prevent)
     if (existingRow) {
-      const { error } = await supabase.from(table)
-        .update({ data: updatedData, updated_at: new Date().toISOString() })
-        .eq('id', existingRow.id);
+      const { error } = await supabase.from(table).update({
+        data: cleanPayload,
+        updated_at: new Date().toISOString()
+      }).eq('id', existingRow.id);
       if (error) throw error;
     } else {
       const { error } = await supabase.from(table).insert({
         team_id: teamId,
         championship_id: champId,
         round: round,
-        data: updatedData,
+        data: cleanPayload,
         updated_at: new Date().toISOString()
       });
       if (error) throw error;
     }
 
-    logInfo(LogContext.DATABASE, `Decision Protocol Sealed for Team ${teamId.split('-')[0]}`);
+    logInfo(LogContext.DATABASE, `Sinal de Decisão Selado para Equipe: ${teamId.substring(0,8)}`);
     return { success: true };
   } catch (err: any) {
     logError(LogContext.DATABASE, "Decision transmission fault", err.message);
@@ -316,7 +269,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
         teamDecision = data?.data;
       }
       
-      // Fallback robusto se nenhuma decisão for encontrada
       if (!teamDecision) {
         teamDecision = {
           regions: Object.fromEntries(Array.from({ length: arena.regions_count || 4 }, (_, i) => [i + 1, { price: 375, term: 1, marketing: 0 }])),
@@ -328,9 +280,8 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           judicial_recovery: false
         };
       }
-      const { audit_logs, ...pureDecision } = teamDecision as any;
-      decisions[team.id] = pureDecision as DecisionData;
-      attractions[team.id] = calculateAttractiveness(pureDecision as DecisionData);
+      decisions[team.id] = teamDecision;
+      attractions[team.id] = calculateAttractiveness(teamDecision);
     }
 
     const totalAttraction = Object.values(attractions).reduce((a, b) => a + b, 0);
@@ -344,18 +295,12 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       
       batchResults.push({ team_id: team.id, kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status });
 
-      if (isTrial) {
-        await supabase.from('trial_teams').update({ kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status }).eq('id', team.id);
-      } else {
-        await supabase.from('teams').update({ kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status }).eq('id', team.id);
-      }
+      const teamsTable = isTrial ? 'trial_teams' : 'teams';
+      await supabase.from(teamsTable).update({ kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status }).eq('id', team.id);
     }
 
-    if (isTrial) {
-       await supabase.from('trial_championships').update({ current_round: currentRound + 1, round_started_at: now }).eq('id', championshipId);
-    } else {
-       await supabase.from('championships').update({ current_round: currentRound + 1, round_started_at: now }).eq('id', championshipId);
-    }
+    const champTable = isTrial ? 'trial_championships' : 'championships';
+    await supabase.from(champTable).update({ current_round: currentRound + 1, round_started_at: now }).eq('id', championshipId);
 
     const local = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
     const idx = local.findIndex((a: any) => a.id === championshipId);
@@ -376,8 +321,8 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 };
 
 export const deleteChampionship = async (id: string, isTrial: boolean) => {
-  if (isTrial) await supabase.from('trial_championships').delete().eq('id', id);
-  else await supabase.from('championships').delete().eq('id', id);
+  const table = isTrial ? 'trial_championships' : 'championships';
+  await supabase.from(table).delete().eq('id', id);
   const local = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
   localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify(local.filter((a: any) => a.id !== id)));
   return { error: null };
