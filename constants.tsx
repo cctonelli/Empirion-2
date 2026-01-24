@@ -103,6 +103,7 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
     liabilities: { 
       current: 2621493, 
       current_loans: 1872362,
+      current_divs: 18481,
       long_term: 1500000,
       total_debt: 4121493 
     }
@@ -243,11 +244,11 @@ export const DEFAULT_MACRO: MacroIndicators = {
   sales_interest_rate: 1.5, 
   avg_selling_price: 340.0,
   tax_rate_ir: 15.0,
-  late_penalty_rate: 15.0, // Default 15% para Empréstimo Compulsório
+  late_penalty_rate: 15.0,
   machine_sale_discount: 10.0,
-  special_purchase_premium: 15.0, // Default 15% para Ágio MPs
+  special_purchase_premium: 15.0,
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
-  dividend_percent: 10.0,
+  dividend_percent: 25.0, 
   
   raw_material_a_adjust: 1.0,
   raw_material_b_adjust: 1.0,
@@ -343,7 +344,7 @@ export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicato
   8: { 
     ice: 5.0, demand_variation: -18.0, inflation_rate: 5.0, customer_default_rate: 2.8, interest_rate_tr: 5.0, supplier_interest: 4.5, sales_interest_rate: 4.5, 
     allow_machine_sale: false, require_business_plan: true, machine_sale_discount: 15.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0,
-    machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 3.0, marketing_campaign_adjust: 5.0, distribution_cost_adjust: 4.5, storage_cost_adjust: 4.5
+    machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 3.0, marketing_campaign_adjust: 5.5, distribution_cost_adjust: 4.5, storage_cost_adjust: 4.5
   },
   9: { 
     ice: 6.0, demand_variation: 6.0, inflation_rate: 5.5, customer_default_rate: 2.6, interest_rate_tr: 5.5, supplier_interest: 5.0, sales_interest_rate: 4.5, 

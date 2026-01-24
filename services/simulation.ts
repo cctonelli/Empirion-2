@@ -8,7 +8,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v16.4 - CUMULATIVE MACHINE PRICING & DYNAMIC CLUSTER DEMAND
+ * CORE ORACLE ENGINE v16.9 - DIVIDEND GOVERNANCE (P/P+1)
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -24,12 +24,13 @@ export const calculateProjections = (
 ): ProjectionResult => {
   const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(bs.equity?.total, 5055447);
+  const prevAccumulatedProfit = sanitize(bs.equity?.accumulated_profit, 55447);
   
   // Mescla indicadores globais com as regras do round atual
   const indicators = { ...baseIndicators, ...(roundRules?.[currentRound] || {}) };
   const baseCurrency = championshipData?.currency || 'BRL';
 
-  // 1. CAPACIDADE E PREÇOS DE ATIVOS (CÁLCULO CUMULATIVO)
+  // 1. CAPACIDADE E PREÇOS DE ATIVOS
   const productivityFactor = sanitize(indicators.labor_productivity, 1.0);
   const baseCapacity = 10000; 
   
@@ -37,8 +38,6 @@ export const calculateProjections = (
     const base = baseIndicators.machinery_values[model];
     const keyPart = model === 'alfa' ? 'alpha' : model === 'gama' ? 'gamma' : 'beta';
     let adjPrice = base;
-
-    // Itera pelos rounds anteriores para aplicar reajustes cumulativos (P00 até Round Atual - 1)
     for (let r = 0; r < currentRound; r++) {
       const roundRate = roundRules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? baseIndicators[`machine_${keyPart}_price_adjust`] ?? 0;
       adjPrice *= (1 + roundRate / 100);
@@ -66,7 +65,7 @@ export const calculateProjections = (
   const decidedMPB = sanitize(decisions.production.purchaseMPB, 0);
   const deficitMPA = Math.max(0, requiredMPA - (currentMPAStock + decidedMPA));
   const deficitMPB = Math.max(0, requiredMPB - (currentMPBStock + decidedMPB));
-  const premium = 1 + (sanitize(indicators.special_purchase_premium, 15) / 100);
+  const premium = 1 + (indicators.special_purchase_premium / 100);
   const specialPurchaseCost = (deficitMPA * indicators.prices.mp_a * premium) + 
                                (deficitMPB * indicators.prices.mp_b * premium);
 
@@ -104,28 +103,44 @@ export const calculateProjections = (
   const finalRevenue = totalRevenueBase * salesAdjustmentFactor;
   const finalUnitsSold = totalUnitsSold * salesAdjustmentFactor;
 
-  // 4. DRE & FLUXO
+  // 4. DRE & LÓGICA DE DIVIDENDOS
   const cpv = (finalUnitsSold * (indicators.prices.mp_a * 3 + indicators.prices.mp_b * 2)) + 32000;
   const baseOpex = 916522 * (1 + (indicators.inflation_rate / 100));
   const storageCost = (Math.max(0, unitsToProduce - finalUnitsSold) * indicators.prices.storage_finished) +
                       (Math.max(0, (decidedMPA + deficitMPA) * 0.1) * indicators.prices.storage_mp);
   const totalOpex = baseOpex + storageCost + specialPurchaseCost;
   const netProfit = finalRevenue - cpv - totalOpex;
-  const finalEquity = prevEquity + netProfit;
+
+  // --- REGRA DE DIVIDENDOS (LAG P/P+1) ---
+  // Dividendos provisionados no round anterior devem ser PAGOS agora (reduzem o caixa)
+  const prevDivsToPay = sanitize(bs.liabilities?.current_divs, 18481);
+  
+  // Dividendos do lucro atual a serem PROVISIONADOS agora (lançados no passivo para pagamento no próximo round)
+  const dividendRate = sanitize(indicators.dividend_percent, 25) / 100;
+  const currentDivProvision = netProfit > 0 ? netProfit * dividendRate : 0;
+  
+  // A diferença entre o Lucro Líquido e a Provisão de Dividendos é incorporada ao Patrimônio Líquido (Lucro Retido)
+  const retainedEarnings = netProfit - currentDivProvision;
+  const finalEquity = prevEquity + retainedEarnings;
+  const finalAccumulatedProfit = prevAccumulatedProfit + retainedEarnings;
 
   // 5. BALANÇO & KPIs
   const totalCapex = (decisions.machinery.buy.alfa * currentAlfaPrice) +
                      (decisions.machinery.buy.beta * currentBetaPrice) +
                      (decisions.machinery.buy.gama * currentGamaPrice);
 
-  const ac_financial = sanitize(bs.assets?.current?.cash, 0) + sanitize(bs.assets?.current?.app, 0);
+  // Saída de caixa por dividendos do round anterior
+  const ac_financial = Math.max(0, sanitize(bs.assets?.current?.cash, 0) + sanitize(bs.assets?.current?.app, 0) - prevDivsToPay);
+  
   const receivables = finalRevenue * 0.6;
   const inventoryValue = (Math.max(0, unitsToProduce - finalUnitsSold) * 235) + (requiredMPA * indicators.prices.mp_a) + (requiredMPB * indicators.prices.mp_b);
   
   const ac_total = ac_financial + receivables + inventoryValue;
   const pc_suppliers = finalRevenue * 0.2;
   const pc_loans = sanitize(bs.liabilities?.current_loans, 1872362) + (decisions.finance.loanRequest * 0.3);
-  const pc_total = pc_suppliers + pc_loans + 13045;
+  
+  // O Passivo Circulante agora contém a nova provisão de dividendos
+  const pc_total = pc_suppliers + pc_loans + 13045 + currentDivProvision;
   const pnc = sanitize(bs.liabilities?.long_term, 1500000);
 
   const nlcdg = (receivables + inventoryValue) - pc_suppliers;
@@ -158,7 +173,11 @@ export const calculateProjections = (
     },
     statements: { 
       dre: { revenue: finalRevenue, cpv, opex: totalOpex, net_profit: netProfit },
-      balance_sheet: { assets: { total: ac_total + 5886600 + totalCapex }, equity: { total: finalEquity } }
+      balance_sheet: { 
+        assets: { total: ac_total + 5886600 + totalCapex }, 
+        equity: { total: finalEquity, accumulated_profit: finalAccumulatedProfit },
+        liabilities: { current_divs: currentDivProvision, current_loans: pc_loans }
+      }
     }
   };
 

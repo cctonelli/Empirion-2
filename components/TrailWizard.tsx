@@ -37,7 +37,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     currency: 'BRL' as CurrencyType,
     transparency: 'medium' as TransparencyLevel,
     gazetaMode: 'anonymous' as GazetaMode,
-    dividend_percent: 10.0
+    dividend_percent: 25.0 
   });
 
   const [baseIndicators, setBaseIndicators] = useState<MacroIndicators>({
@@ -149,7 +149,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   };
 
   const updateRoundMacro = (round: number, key: string, val: any) => {
-    // Caso especial para exchange_rates que é um objeto aninhado
     if (key === 'USD' || key === 'EUR') {
        setRoundRules(prev => ({
          ...prev,
@@ -313,7 +312,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <WizardStepTitle icon={<Award size={32}/>} title="REGRAS E PREMIAÇÕES" desc="DEFINA VALORES BASE E PREMIAÇÕES POR PRECISÃO DE CÁLCULO." />
                  
                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
-                    {/* 1. INSUMOS E ESTOCAGEM */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Package size={18}/> Insumos & Estocagem</h4>
                        <WizardField label="MP-A ($)" type="number" val={baseIndicators.prices.mp_a} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_a: parseFloat(v)}})} />
@@ -323,7 +321,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="Estocagem PROD ($)" type="number" val={baseIndicators.prices.storage_finished || 20.00} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_finished: parseFloat(v)}})} />
                     </div>
 
-                    {/* 2. ATIVOS & CAPEX */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[11px] font-black text-blue-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Cpu size={18}/> Ativos & CAPEX</h4>
                        <WizardField label="Máquina ALFA ($)" type="number" val={baseIndicators.machinery_values.alfa} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, alfa: parseFloat(v)}})} />
@@ -331,7 +328,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="Máquina GAMA ($)" type="number" val={baseIndicators.machinery_values.gama} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, gama: parseFloat(v)}})} />
                     </div>
 
-                    {/* 3. MERCADO */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><ShoppingCart size={18}/> Mercado</h4>
                        <WizardField label="Preço Venda Médio ($)" type="number" val={baseIndicators.avg_selling_price || 340} onChange={(v:any)=>setBaseIndicators({...baseIndicators, avg_selling_price: parseFloat(v)})} />
@@ -339,7 +335,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="Base Campanha MKT ($)" type="number" val={baseIndicators.prices.marketing_campaign || 10000} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
                     </div>
 
-                    {/* 4. STAFFING */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Briefcase size={18}/> Staffing</h4>
                        <WizardField label="Salário Base P00 ($)" type="number" val={baseIndicators.hr_base.salary || 1300} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
@@ -369,7 +364,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        </div>
                     </div>
 
-                    {/* 5. PREMIAÇÕES */}
                     <div className="space-y-6 bg-orange-600/10 p-8 rounded-[3rem] border border-orange-500/20 shadow-2xl">
                        <h4 className="text-[11px] font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-white/5 pb-4"><Award size={18}/> Premiações</h4>
                        <WizardField label="Prêmio: Custo Unitário ($)" type="number" val={baseIndicators.award_values.cost_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, cost_precision: parseFloat(v)}})} />
@@ -557,10 +551,8 @@ const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods }: any
          </div>
       </td>
       {Array.from({ length: periods }).map((_, i) => {
-         // LÓGICA DE REPLICAÇÃO: Se i > 12, usa o valor de P12. Se i <= 12, tenta pegar da regra do round ou cronograma industrial padrão.
          const lookupRound = Math.min(i, 12);
          
-         // Se for um indicador de câmbio (USD/EUR), busca dentro do objeto exchange_rates
          let val = 0;
          if (macroKey === 'USD' || macroKey === 'EUR') {
             val = rules[i]?.exchange_rates?.[macroKey] ?? (DEFAULT_MACRO.exchange_rates[macroKey as CurrencyType] || 0);
