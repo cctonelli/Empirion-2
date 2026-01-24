@@ -19,7 +19,6 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
 const LOCAL_CHAMPS_KEY = 'empirion_v12_arenas';
-const LOCAL_DECISIONS_KEY = 'empirion_trial_decisions';
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
@@ -124,7 +123,12 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     scenario_type: champData.scenario_type || 'simulated',
     transparency_level: champData.transparency_level || 'medium',
     gazeta_mode: champData.gazeta_mode || 'anonymous',
-    round_rules: champData.round_rules || {}
+    // Fix: Como 'round_rules' não é uma coluna oficial no SQL fornecido para championships,
+    // guardamos dentro de 'config' para garantir persistência sem erro de esquema.
+    config: { 
+      ...(champData.config || {}), 
+      round_rules: champData.round_rules || {} 
+    }
   } as Championship;
 
   if (isTrial && currentUserId) {
@@ -150,12 +154,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         gazeta_mode: fullChamp.gazeta_mode,
         tutor_id: currentUserId,
         round_started_at: fullChamp.round_started_at,
-        round_rules: fullChamp.round_rules,
-        config: {
-          ...(fullChamp.config || {}),
-          initial_share_price: fullChamp.initial_share_price,
-          dividend_percent: fullChamp.market_indicators.dividend_percent
-        }
+        config: fullChamp.config
       });
       
       if (champErr) throw champErr;
@@ -205,7 +204,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         gazeta_mode: fullChamp.gazeta_mode,
         tutor_id: currentUserId,
         round_started_at: fullChamp.round_started_at,
-        round_rules: fullChamp.round_rules
+        config: fullChamp.config
       });
       if (champErr) throw champErr;
       
@@ -231,27 +230,33 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
     const isTrial = !!arena.is_trial;
     const table = isTrial ? 'trial_decisions' : 'current_decisions';
 
-    // Recupera log existente para anexar nova entrada
-    const { data: existing } = await supabase.from(table).select('audit_logs').eq('team_id', teamId).eq('round', round).maybeSingle();
-    const newLogs = existing?.audit_logs || [];
-    newLogs.push({
+    // Recupera dados existentes para anexar log no JSONB 'data' (compatível com seu SQL)
+    const { data: existing } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', round).maybeSingle();
+    const existingData = existing?.data || {};
+    const oldLogs = Array.isArray(existingData.audit_logs) ? existingData.audit_logs : [];
+    
+    const newLogEntry = {
       changed_at: new Date().toISOString(),
       user_id: 'Operador Unidade',
       field_path: 'PROTOCOL_TRANSMISSION',
       new_value: 'Decisões Seladas via Wizard'
-    });
+    };
+
+    const updatedData = {
+      ...decisions,
+      audit_logs: [...oldLogs, newLogEntry]
+    };
 
     const { error } = await supabase.from(table).upsert({
       team_id: teamId,
       championship_id: champId,
       round: round,
-      data: decisions,
-      audit_logs: newLogs, // Fix: Gravando telemetria de auditoria para o tutor
+      data: updatedData,
       updated_at: new Date().toISOString()
     }, { onConflict: 'team_id,championship_id,round' });
 
     if (error) throw error;
-    logInfo(LogContext.DATABASE, `Decision Seal Sincronizado: ${teamId}`);
+    logInfo(LogContext.DATABASE, `Decision Seal Sync: ${teamId}`);
     return { success: true };
   } catch (err: any) {
     logError(LogContext.DATABASE, "Decision transmission fault", err.message);
@@ -290,8 +295,9 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
           judicial_recovery: false
         };
       }
-      decisions[team.id] = teamDecision;
-      attractions[team.id] = calculateAttractiveness(teamDecision);
+      const { audit_logs, ...pureDecision } = teamDecision as any;
+      decisions[team.id] = pureDecision as DecisionData;
+      attractions[team.id] = calculateAttractiveness(pureDecision as DecisionData);
     }
 
     const totalAttraction = Object.values(attractions).reduce((a, b) => a + b, 0);
@@ -300,7 +306,10 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     for (const team of teams) {
       const relativeShare = totalAttraction > 0 ? (attractions[team.id] / totalAttraction) * 100 : (100 / teams.length);
-      const result = calculateProjections(decisions[team.id], arena.branch, arena.ecosystemConfig || {} as any, arena.market_indicators, team, [], currentRound + 1, arena.round_rules, relativeShare, arena);
+      // Puxa regras de round de dentro do campo 'config' se não houver coluna direta
+      const roundRules = arena.config?.round_rules || {};
+      const result = calculateProjections(decisions[team.id], arena.branch, arena.ecosystemConfig || {} as any, arena.market_indicators, team, [], currentRound + 1, roundRules, relativeShare, arena);
+      
       batchResults.push({ team_id: team.id, kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status });
 
       if (isTrial) {

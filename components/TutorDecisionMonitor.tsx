@@ -107,8 +107,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           risk: proj?.health?.insolvency_risk ?? 0,
           insolvent: proj?.health?.status === 'BANKRUPT',
           master_key_enabled: t.master_key_enabled,
-          auditLogs: (decision?.audit_logs || []) as AuditLog[],
-          current_decision: decision?.data // Fix: Armazenando a decisão real para visualização do tutor
+          auditLogs: (decision?.data?.audit_logs || []) as AuditLog[], // Fix: Extraindo logs de dentro de 'data'
+          current_decision: decision?.data 
         };
       });
 
@@ -276,7 +276,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
                            <div className="grid grid-cols-1 gap-4">
                               <DecisionValue label="Piso Salarial Decidido" val={`$ ${selectedTeam.current_decision.hr.salary}`} icon={<DollarSign size={12}/>} />
                               <DecisionValue label="Contratações" val={selectedTeam.current_decision.hr.hired} icon={<User size={12}/>} />
-                              <DecisionValue label="Demissões" val={selectedTeam.current_decision.hr.fired} icon={<User size={12}/>} />
+                              <DecisionValue label="Desligamentos" val={selectedTeam.current_decision.hr.fired} icon={<User size={12}/>} />
                            </div>
                         </div>
 
