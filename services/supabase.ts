@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode } from '../types';
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
-import { calculateProjections, calculateAttractiveness } from './simulation';
+import { calculateProjections, calculateAttractiveness, sanitize } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';
 import { generateBotDecision } from './gemini';
 
@@ -123,8 +123,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     scenario_type: champData.scenario_type || 'simulated',
     transparency_level: champData.transparency_level || 'medium',
     gazeta_mode: champData.gazeta_mode || 'anonymous',
-    // Fix: Como 'round_rules' não é uma coluna oficial no SQL fornecido para championships,
-    // guardamos dentro de 'config' para garantir persistência sem erro de esquema.
     config: { 
       ...(champData.config || {}), 
       round_rules: champData.round_rules || {} 
@@ -230,7 +228,7 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
     const isTrial = !!arena.is_trial;
     const table = isTrial ? 'trial_decisions' : 'current_decisions';
 
-    // Recupera dados existentes para anexar log no JSONB 'data' (compatível com seu SQL)
+    // Recupera dados existentes para anexar log no JSONB 'data'
     const { data: existing } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', round).maybeSingle();
     const existingData = existing?.data || {};
     const oldLogs = Array.isArray(existingData.audit_logs) ? existingData.audit_logs : [];
@@ -242,18 +240,23 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       new_value: 'Decisões Seladas via Wizard'
     };
 
+    // Remove campos nulos/undefined para evitar erro 500 no Postgres
+    const cleanDecisions = JSON.parse(JSON.stringify(decisions));
+
     const updatedData = {
-      ...decisions,
+      ...cleanDecisions,
       audit_logs: [...oldLogs, newLogEntry]
     };
 
+    // Fix: de acordo com o SQL fornecido, o índice único de conflito deve ser exatamente (team_id, round)
+    // championships_id no onConflict estava causando erro 409
     const { error } = await supabase.from(table).upsert({
       team_id: teamId,
       championship_id: champId,
       round: round,
       data: updatedData,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'team_id,championship_id,round' });
+    }, { onConflict: 'team_id,round' });
 
     if (error) throw error;
     logInfo(LogContext.DATABASE, `Decision Seal Sync: ${teamId}`);
@@ -306,7 +309,6 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     for (const team of teams) {
       const relativeShare = totalAttraction > 0 ? (attractions[team.id] / totalAttraction) * 100 : (100 / teams.length);
-      // Puxa regras de round de dentro do campo 'config' se não houver coluna direta
       const roundRules = arena.config?.round_rules || {};
       const result = calculateProjections(decisions[team.id], arena.branch, arena.ecosystemConfig || {} as any, arena.market_indicators, team, [], currentRound + 1, roundRules, relativeShare, arena);
       

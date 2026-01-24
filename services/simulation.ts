@@ -9,7 +9,6 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 
 /**
  * CORE ORACLE ENGINE v17.0 - FULL DYNAMIC PARAMETERS
- * Este motor consome exclusivamente os indicadores salvos no banco de dados.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -27,10 +26,6 @@ export const calculateProjections = (
   const prevEquity = sanitize(bs.equity?.total, 5055447);
   const prevAccumulatedProfit = sanitize(bs.equity?.accumulated_profit, 55447);
   
-  // LOGICA DE RESOLUÇÃO DE INDICADORES:
-  // 1. Regra específica da rodada (Round Rules salva pelo Tutor no Wizard ou Intervenção)
-  // 2. Fallback para indicadores base do torneio
-  // 3. Fallback absoluto para constantes (emergência)
   const roundOverride = roundRules?.[currentRound] || {};
   const indicators = { 
     ...DEFAULT_MACRO, 
@@ -45,13 +40,12 @@ export const calculateProjections = (
   const baseCapacity = 10000; 
   
   const getAdjustedPrice = (model: MachineModel) => {
-    const base = baseIndicators.machinery_values[model];
+    const base = sanitize(baseIndicators.machinery_values[model], 500000);
     const keyPart = model === 'alfa' ? 'alpha' : model === 'gama' ? 'gamma' : 'beta';
     let adjPrice = base;
 
-    // Calcula o preço acumulado respeitando o histórico de reajustes do banco
     for (let r = 0; r < currentRound; r++) {
-      const rate = roundRules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? baseIndicators[`machine_${keyPart}_price_adjust`] ?? 0;
+      const rate = sanitize(roundRules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? baseIndicators[`machine_${keyPart}_price_adjust`], 0);
       adjPrice *= (1 + rate / 100);
     }
     return adjPrice;
@@ -61,18 +55,18 @@ export const calculateProjections = (
   const currentBetaPrice = getAdjustedPrice('beta');
   const currentGamaPrice = getAdjustedPrice('gama');
 
-  const newMachinesCapacity = (decisions.machinery.buy.alfa * (indicators.machine_specs?.alfa.production_capacity || 2000)) +
-                             (decisions.machinery.buy.beta * (indicators.machine_specs?.beta.production_capacity || 6000)) +
-                             (decisions.machinery.buy.gama * (indicators.machine_specs?.gama.production_capacity || 12000));
+  const newMachinesCapacity = (sanitize(decisions.machinery.buy.alfa) * sanitize(indicators.machine_specs?.alfa?.production_capacity, 2000)) +
+                             (sanitize(decisions.machinery.buy.beta) * sanitize(indicators.machine_specs?.beta?.production_capacity, 6000)) +
+                             (sanitize(decisions.machinery.buy.gama) * sanitize(indicators.machine_specs?.gama?.production_capacity, 12000));
 
   const effectiveCapacity = (baseCapacity + newMachinesCapacity) * productivityFactor;
-  const unitsToProduce = effectiveCapacity * (decisions.production.activityLevel / 100);
+  const unitsToProduce = effectiveCapacity * (sanitize(decisions.production.activityLevel, 80) / 100);
 
-  // 2. COMPRAS ESPECIAIS (Dinamizadas pelo Ágio definido pelo Tutor)
+  // 2. COMPRAS ESPECIAIS
   const requiredMPA = unitsToProduce * 3;
   const requiredMPB = unitsToProduce * 2;
-  const currentMPAStock = sanitize(previousState?.inventory?.mpa, 628545 / 20.20);
-  const currentMPBStock = sanitize(previousState?.inventory?.mpb, 838060 / 40.40);
+  const currentMPAStock = sanitize(previousState?.inventory?.mpa, 31116);
+  const currentMPBStock = sanitize(previousState?.inventory?.mpb, 20744);
   const decidedMPA = sanitize(decisions.production.purchaseMPA, 0);
   const decidedMPB = sanitize(decisions.production.purchaseMPB, 0);
   
@@ -80,36 +74,36 @@ export const calculateProjections = (
   const deficitMPB = Math.max(0, requiredMPB - (currentMPBStock + decidedMPB));
   
   const premiumRate = sanitize(indicators.special_purchase_premium, 15) / 100;
-  const specialPurchaseCost = (deficitMPA * indicators.prices.mp_a * (1 + premiumRate)) + 
-                               (deficitMPB * indicators.prices.mp_b * (1 + premiumRate));
+  const specialPurchaseCost = (deficitMPA * sanitize(indicators.prices.mp_a, 20) * (1 + premiumRate)) + 
+                               (deficitMPB * sanitize(indicators.prices.mp_b, 40) * (1 + premiumRate));
 
   // 3. MERCADO DINÂMICO
-  const iceFactor = 1 + (indicators.ice / 100);
-  const demandVarFactor = 1 + (indicators.demand_variation / 100);
+  const iceFactor = 1 + (sanitize(indicators.ice, 3) / 100);
+  const demandVarFactor = 1 + (sanitize(indicators.demand_variation, 0) / 100);
   const teamsCount = Math.max(championshipData?.teams?.length || 1, 1);
   const totalMarketDemand = (baseCapacity * teamsCount) * iceFactor * demandVarFactor;
   
   let totalRevenueBase = 0;
   let totalUnitsSold = 0;
-  const regions = championshipData?.region_configs || Array.from({ length: indicators.regions_count || 4 }, (_, i) => ({
+  const regions = championshipData?.region_configs || Array.from({ length: sanitize(indicators.regions_count, 4) }, (_, i) => ({
      id: i + 1,
      currency: 'BRL' as CurrencyType,
-     demand_weight: 100 / (indicators.regions_count || 4)
+     demand_weight: 100 / sanitize(indicators.regions_count, 4)
   }));
 
   regions.forEach(reg => {
      const decision = decisions.regions[reg.id] || { price: 375, term: 1, marketing: 0 };
-     const regionalWeight = (reg.demand_weight || (100 / regions.length)) / 100;
+     const regionalWeight = sanitize(reg.demand_weight || (100 / regions.length)) / 100;
      const regionalDemand = totalMarketDemand * regionalWeight;
-     const priceFactor = Math.pow(indicators.avg_selling_price / Math.max(decision.price, 100), 1.6);
-     const promoFactor = 1 + (decision.marketing * 0.06);
+     const priceFactor = Math.pow(sanitize(indicators.avg_selling_price, 340) / Math.max(decision.price, 100), 1.6);
+     const promoFactor = 1 + (sanitize(decision.marketing) * 0.06);
      const shareMultiplier = priceFactor * promoFactor;
      
      const unitsSoldReg = Math.min(regionalDemand * (shareMultiplier / teamsCount), regionalDemand);
      totalUnitsSold += unitsSoldReg;
      const revenueLocal = unitsSoldReg * decision.price;
-     const exchangeRate = indicators.exchange_rates?.[reg.currency] || 1;
-     const baseExchangeRate = indicators.exchange_rates?.[baseCurrency] || 1;
+     const exchangeRate = sanitize(indicators.exchange_rates?.[reg.currency], 1);
+     const baseExchangeRate = sanitize(indicators.exchange_rates?.[baseCurrency], 1);
      totalRevenueBase += revenueLocal * (exchangeRate / baseExchangeRate);
   });
 
@@ -118,14 +112,13 @@ export const calculateProjections = (
   const finalUnitsSold = totalUnitsSold * salesAdjustmentFactor;
 
   // 4. DRE & LÓGICA DE DIVIDENDOS
-  const cpv = (finalUnitsSold * (indicators.prices.mp_a * 3 + indicators.prices.mp_b * 2)) + 32000;
-  const baseOpex = 916522 * (1 + (indicators.inflation_rate / 100));
-  const storageCost = (Math.max(0, unitsToProduce - finalUnitsSold) * indicators.prices.storage_finished) +
-                      (Math.max(0, (decidedMPA + deficitMPA) * 0.1) * indicators.prices.storage_mp);
+  const cpv = (finalUnitsSold * (sanitize(indicators.prices.mp_a, 20) * 3 + sanitize(indicators.prices.mp_b, 40) * 2)) + 32000;
+  const baseOpex = 916522 * (1 + (sanitize(indicators.inflation_rate, 1) / 100));
+  const storageCost = (Math.max(0, unitsToProduce - finalUnitsSold) * sanitize(indicators.prices.storage_finished, 20)) +
+                      (Math.max(0, (decidedMPA + deficitMPA) * 0.1) * sanitize(indicators.prices.storage_mp, 1.4));
   const totalOpex = baseOpex + storageCost + specialPurchaseCost;
   const netProfit = finalRevenue - cpv - totalOpex;
 
-  // DIVIDENDOS (REGRA P/P+1)
   const prevDivsToPay = sanitize(bs.liabilities?.current_divs, 0);
   const dividendRate = sanitize(indicators.dividend_percent, 25) / 100;
   const currentDivProvision = netProfit > 0 ? netProfit * dividendRate : 0;
@@ -135,19 +128,19 @@ export const calculateProjections = (
   const finalAccumulatedProfit = prevAccumulatedProfit + retainedEarnings;
 
   // 5. BALANÇO & KPIs
-  const totalCapex = (decisions.machinery.buy.alfa * currentAlfaPrice) +
-                     (decisions.machinery.buy.beta * currentBetaPrice) +
-                     (decisions.machinery.buy.gama * currentGamaPrice);
+  const totalCapex = (sanitize(decisions.machinery.buy.alfa) * currentAlfaPrice) +
+                     (sanitize(decisions.machinery.buy.beta) * currentBetaPrice) +
+                     (sanitize(decisions.machinery.buy.gama) * currentGamaPrice);
 
   const ac_financial = Math.max(0, sanitize(bs.assets?.current?.cash, 0) + sanitize(bs.assets?.current?.app, 0) - prevDivsToPay);
   const receivables = finalRevenue * 0.6;
-  const inventoryValue = (Math.max(0, unitsToProduce - finalUnitsSold) * 235) + (requiredMPA * indicators.prices.mp_a) + (requiredMPB * indicators.prices.mp_b);
+  const inventoryValue = (Math.max(0, unitsToProduce - finalUnitsSold) * 235) + (requiredMPA * sanitize(indicators.prices.mp_a, 20)) + (requiredMPB * sanitize(indicators.prices.mp_b, 40));
   
   const ac_total = ac_financial + receivables + inventoryValue;
   const pc_suppliers = finalRevenue * 0.2;
-  const pc_loans = sanitize(bs.liabilities?.current_loans, 1872362) + (decisions.finance.loanRequest * 0.3);
+  const pc_loans = sanitize(bs.liabilities?.current_loans, 1872362) + (sanitize(decisions.finance.loanRequest) * 0.3);
   
-  const pc_total = pc_suppliers + pc_loans + (netProfit > 0 ? netProfit * (indicators.tax_rate_ir / 100) : 0) + currentDivProvision;
+  const pc_total = pc_suppliers + pc_loans + (netProfit > 0 ? netProfit * (sanitize(indicators.tax_rate_ir, 15) / 100) : 0) + currentDivProvision;
   const pnc = sanitize(bs.liabilities?.long_term, 1500000);
 
   const nlcdg = (receivables + inventoryValue) - pc_suppliers;
@@ -160,7 +153,7 @@ export const calculateProjections = (
   const rating = calculateBankRating(kanitz.fi, netProfit);
 
   const kpis: KPIs = {
-    market_share: (finalUnitsSold / totalMarketDemand) * 100,
+    market_share: (finalUnitsSold / Math.max(totalMarketDemand, 1)) * 100,
     rating,
     insolvency_status: kanitz.status,
     equity: finalEquity,
@@ -171,12 +164,12 @@ export const calculateProjections = (
       ccp: finalEquity
     },
     special_purchases_impact: specialPurchaseCost,
-    capacity_utilization: (unitsToProduce / effectiveCapacity) * 100,
+    capacity_utilization: (unitsToProduce / Math.max(effectiveCapacity, 1)) * 100,
     market_valuation: {
       share_price: (finalEquity / DEFAULT_TOTAL_SHARES) * 60,
       total_shares: DEFAULT_TOTAL_SHARES,
       market_cap: finalEquity,
-      tsr: (netProfit / prevEquity) * 100
+      tsr: (netProfit / Math.max(prevEquity, 1)) * 100
     },
     statements: { 
       dre: { revenue: finalRevenue, cpv, opex: totalOpex, net_profit: netProfit },
@@ -189,7 +182,7 @@ export const calculateProjections = (
   };
 
   return {
-    revenue: finalRevenue, netProfit, debtRatio: ((pc_total + pnc) / finalEquity) * 100, creditRating: rating,
+    revenue: finalRevenue, netProfit, debtRatio: ((pc_total + pnc) / Math.max(finalEquity, 1)) * 100, creditRating: rating,
     marketShare: kpis.market_share, health: { rating, kanitz_fi: kanitz.fi, status: kanitz.status, productivity: productivityFactor },
     kpis, statements: kpis.statements
   };
@@ -200,8 +193,8 @@ export const calculateAttractiveness = (decisions: DecisionData): number => {
   if (regions.length === 0) return 0.5;
   let totalAttraction = 0;
   regions.forEach(reg => {
-    const priceFactor = Math.pow(370 / Math.max(reg.price, 100), 1.6);
-    const marketingFactor = 1 + (reg.marketing * 0.07);
+    const priceFactor = Math.pow(370 / Math.max(sanitize(reg.price), 100), 1.6);
+    const marketingFactor = 1 + (sanitize(reg.marketing) * 0.07);
     totalAttraction += priceFactor * marketingFactor;
   });
   return totalAttraction / regions.length;
