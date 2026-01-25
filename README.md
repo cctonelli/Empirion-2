@@ -2,60 +2,74 @@
 
 **Forge Your Empire with AI-Driven Strategic Insight.**
 
-O Empirion é a plataforma definitiva de simulação empresarial multiplayer. No build **v15.0 Oracle Master (International Build)**, o sistema evolui para suportar operações transfronteiriças, moedas regionais independentes e um motor de orquestração tática refinado para Tutores de elite.
+O Empirion é a plataforma definitiva de simulação empresarial multiplayer. No build **v15.0 Oracle Master (International Build)**, o sistema utiliza a **Gemini API** para orquestrar um ecossistema cognitivo que transforma dados brutos em inteligência competitiva pura.
 
 ---
 
-## 🌎 1. Expansão Geopolítica e Multi-Moeda (New v15.0)
+## 🧠 1. Arquitetura de Inteligência Artificial (Gemini API)
 
-A grande inovação desta versão é a capacidade de modelar mercados globais complexos dentro de uma única arena:
+Abaixo estão detalhadas as funcionalidades onde a IA atua como motor central da experiência:
 
-### 💱 Multi-Currency Nodes
-*   **Moeda Base:** O Tutor define a moeda de consolidação dos relatórios (BRL, USD ou EUR) no Step 1 do Wizard.
-*   **Moedas Regionais:** Cada região (Nodo de Venda) pode operar em uma moeda distinta. O motor **Oracle Engine v15** aplica taxas de câmbio em tempo real para converter receitas locais em Valor de PL consolidado.
+### 🤖 1.1 Strategos Mentor (Chat de Elite)
+*   **Componente:** `GlobalChat.tsx`
+*   **Modelo:** `gemini-3-pro-preview`
+*   **Uso:** Fornece mentoria estratégica em tempo real utilizando raciocínio profundo (*Thinking Config*). Auxilia na interpretação de Balanços, DREs e conceitos de contabilidade gerencial.
 
-### ⚖️ Demand Weighting (Balanceamento de Mercado)
-*   **Pesos Relativos:** Diferencie mercados maduros de mercados emergentes. Atribua pesos (ex: Região Sudeste 60%, Região EUA 40%) para distribuir a demanda global proporcionalmente.
-*   **Normalização Inteligente:** O sistema garante que a soma dos pesos regionais feche em 100%, facilitando a criação de cenários de exportação.
+### 🦾 1.2 Autonomous Synthetic Nodes (Bots Competidores)
+*   **Serviço:** `services/gemini.ts` -> `generateBotDecision`
+*   **Modelo:** `gemini-3-flash-preview`
+*   **Uso:** Gera decisões táticas complexas (preço, marketing, produção, RH) para as equipes controladas pela IA, garantindo um mercado desafiador e equilibrado mesmo em arenas com poucos jogadores humanos.
+
+### 🌐 1.3 Grounded Market Intelligence
+*   **Componente:** `MarketAnalysis.tsx`
+*   **Modelo:** `gemini-3-flash-preview`
+*   **Uso:** Integra o **Google Search Grounding** para buscar tendências reais da economia global (preços de commodities, taxas de câmbio, notícias do setor industrial) e cruzá-las com os parâmetros da simulação.
+
+### 📝 1.4 Business Plan Architect & Auditor
+*   **Componente:** `BusinessPlanWizard.tsx`
+*   **Modelos:** `gemini-3-flash-preview` (Geração) e `gemini-3-pro-preview` (Auditoria)
+*   **Uso:** 
+    *   **Geração:** Cria sugestões de textos profissionais para seções do plano de negócios.
+    *   **Auditoria:** Analisa a coerência textual do usuário frente aos KPIs financeiros reais da equipe, atribuindo notas e identificando riscos estratégicos.
+
+### 🎙️ 1.5 Oracle Live Briefing (Audio API)
+*   **Componente:** `LiveBriefing.tsx`
+*   **Modelo:** `gemini-2.5-flash-native-audio-preview-12-2025`
+*   **Uso:** Transmite briefings táticos via áudio em tempo real com voz futurista, sintetizando o status da arena para o Operador Master.
+
+### 🗞️ 1.6 Dynamic Gazette Headlines
+*   **Serviço:** `services/gemini.ts` -> `generateGazetaNews`
+*   **Modelo:** `gemini-3-flash-preview`
+*   **Uso:** Redige manchetes e notícias contextuais para a "Oracle Gazette" baseadas nos resultados financeiros pós-fechamento e nos indicadores macroeconômicos do ciclo.
+
+### 🦢 1.7 Black Swan Event Generator
+*   **Serviço:** `services/gemini.ts` -> `generateBlackSwanEvent`
+*   **Modelo:** `gemini-3-flash-preview`
+*   **Uso:** Cria eventos inesperados (choques de oferta, pandemias, saltos tecnológicos) com impacto narrativo e modificadores numéricos que alteram o engine da simulação.
+
+---
+
+## 🌎 2. Expansão Geopolítica e Multi-Moeda
+
+*   **Multi-Currency Nodes:** Suporte a BRL, USD e EUR com conversão cambial em tempo real no motor **Oracle Engine v15.2**.
+*   **Demand Weighting:** Pesos regionais independentes para modelar mercados globais complexos.
 
 ---
 
-## 🎓 2. Orquestração Master (Handshake Protocol)
+## 🏛️ 3. Governança e Ambientes
 
-Eliminamos a redundância de preenchimento para focar na estratégia pura:
-
-### 🪄 Strategos Wizard (The Blueprint)
-O ponto único de verdade. Todos os parâmetros (Inflação, Juros, Preços P00, Balanço Inicial) são definidos aqui antes do lançamento da arena. Uma vez selado, o Wizard gera o **Baseline Auditado**.
-
-### 🕹️ Control Room (Dynamic Overrides)
-O Cockpit do Tutor foi redesenhado com foco em **ajustes dinâmicos**. 
-*   **Visualização Baseline:** No Round 0, o tutor vê os dados herdados do Wizard como "Auditados".
-*   **Override de Ciclo:** A partir do Round 1, o tutor pode intervir na economia, alterando índices apenas para o ciclo futuro, permitindo simular "choques de oferta" ou "crises cambiais" em tempo real.
+*   **Admin Command Center:** Monitoramento de cluster e orquestração de arenas.
+*   **Sandbox Trial:** Ambiente aberto para experimentação tática sem restrições.
+*   **RLS Security:** Proteção de dados via Supabase para garantir a integridade da competição.
 
 ---
 
-## 🏛️ 3. Governança e Ambientes v15.0
+## 🛠️ 4. Stack Tecnológica
 
-### 🏛️ System Owner (Admin)
-*   **Métricas de Cluster:** Monitoramento global da saúde de todas as arenas ativas.
-*   **RLS Management:** Controle total de usuários e permissões via Supabase.
-
-### 🎓 Arena Orchestrator (Tutor)
-*   **ERP Ultra-Slim Header:** Navegação minimalista para foco total nos dados das equipes.
-*   **Navegação Lateral Flutuante:** Gatilhos rápidos para alternar entre Planejamento, Decisões e Gazeta sem perder o contexto.
-
-### 🏢 Strategists (Equipes)
-*   **Decision Matrix Pro:** Interface de alta densidade para inputs táticos.
-*   **Oracle Cockpit:** Dashboards financeiros (DRE/Balanço) sincronizados com o motor de conversão cambial.
+*   **Intelligence:** Gemini API (Pro & Flash).
+*   **Database:** Supabase Realtime.
+*   **Engine:** TypeScript Oracle Kernel v15.2.
+*   **UI/UX:** Framer Motion & Tailwind CSS.
 
 ---
-
-## 🛠️ 4. Stack Tecnológica Oracle Core
-
-*   **Intelligence:** Gemini 3 Pro (Reasoning) & Gemini 3 Flash (Bot Actions).
-*   **Database:** Supabase Realtime (Handshake & Sync).
-*   **Engine:** TypeScript Oracle Kernel v15.2 (Calculus de Elasticidade e Câmbio).
-*   **UI/UX:** Framer Motion (Transições Fluidas) & Lucide Icons (Semântica).
-
----
-*Empirion v15.0 Oracle Master – Geopolítica, Performance e Precisão.* 🚀
+*Empirion v15.0 Oracle Master – Inteligência Nodal, Performance e Precisão.* 🚀
