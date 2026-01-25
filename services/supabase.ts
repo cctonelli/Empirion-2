@@ -12,13 +12,15 @@ const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
-// UUID Reservado para o Sistema em modo No-Auth
+// UUID Reservado para o Sistema em modo No-Auth (Compatível com colunas UUID do Postgres)
 const SYSTEM_TUTOR_ID = '00000000-0000-0000-0000-000000000000';
 const LOCAL_CHAMPS_KEY = 'empirion_v12_arenas';
 
+/**
+ * Retorna o perfil do usuário ou um perfil Mock para sessões de Trial
+ */
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
-  // Se for Trial ou IDs reservados, retorna perfil mock
   if (isTrial || userId === SYSTEM_TUTOR_ID || ['admin', 'tutor', 'alpha'].includes(userId)) {
     const isTutor = isTrial || userId.includes('tutor') || userId === SYSTEM_TUTOR_ID;
     return {
@@ -38,6 +40,9 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   return data;
 };
 
+/**
+ * Busca campeonatos mesclando local e remoto (Trial e Live)
+ */
 export const getChampionships = async (onlyPublic: boolean = false) => {
   const finalArenas: Championship[] = [];
   try {
@@ -46,15 +51,13 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
     const { data: { session } } = await (supabase.auth as any).getSession();
     
-    // Arenas Oficiais (Exige Auth para tutoria própria, mas anons veem públicas)
+    // Busca Arenas Oficiais (Live)
     const { data: rawChamps, error: rawErr } = await supabase
       .from('championships')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (rawErr) {
-       logError(LogContext.DATABASE, "Live Arenas query fail", rawErr);
-    } else if (rawChamps) {
+    if (!rawErr && rawChamps) {
        for (const c of rawChamps) {
           if (!finalArenas.find(a => a.id === c.id)) {
              const { data: teamsData } = await supabase.from('teams').select('*').eq('championship_id', c.id);
@@ -63,14 +66,12 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
        }
     }
 
-    // Arenas Trial (Públicas ou do usuário)
+    // Busca Arenas Trial (Sandbox)
     let trialQuery = supabase.from('trial_championships').select('*');
     if (session) {
-       // Se logado, tenta pegar as dele ou as globais do sistema
-       trialQuery = trialQuery.or(`tutor_id.eq.${session.user.id},tutor_id.eq.${SYSTEM_TUTOR_ID}`);
+       trialQuery = trialQuery.or(`tutor_id.eq.${session.user.id},tutor_id.is.null,tutor_id.eq.${SYSTEM_TUTOR_ID}`);
     } else {
-       // Se deslogado, pega apenas as do sistema (anon)
-       trialQuery = trialQuery.eq('tutor_id', SYSTEM_TUTOR_ID);
+       trialQuery = trialQuery.or(`tutor_id.is.null,tutor_id.eq.${SYSTEM_TUTOR_ID}`);
     }
 
     const { data: rawTrials } = await trialQuery.limit(20);
@@ -90,14 +91,16 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   return { data: result, error: null };
 };
 
+/**
+ * Cria campeonato provisionando na nuvem e no storage local
+ */
 export const createChampionshipWithTeams = async (champData: Partial<Championship>, teams: { name: string, is_bot?: boolean }[], isTrialParam: boolean = false) => {
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const newId = crypto.randomUUID();
   const timestamp = new Date().toISOString();
   
   const { data: { session } } = await (supabase.auth as any).getSession();
-  // Se não houver sessão, usa o UUID de sistema para Trial
-  const currentUserId = session?.user?.id || SYSTEM_TUTOR_ID;
+  const currentUserId = session?.user?.id || (isTrial ? null : SYSTEM_TUTOR_ID);
 
   const initialShare = 100 / Math.max(teams.length, 1);
 
@@ -171,8 +174,11 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       round_started_at: fullChamp.round_started_at,
       config: fullChamp.config
     });
+    
     if (!champErr) {
        await supabase.from(teamsTable).insert(teamsWithIds);
+    } else {
+       throw champErr;
     }
   } catch (err) {
     logError(LogContext.SUPABASE, "Cloud Sync Failed during creation", err);
@@ -185,6 +191,9 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   return { champ: fullChamp, teams: teamsWithIds };
 };
 
+/**
+ * Salva decisões com Provisionamento de Segurança (Anti-FK violation)
+ */
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
   try {
     const { data: allArenas } = await getChampionships();
@@ -196,13 +205,15 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
     const teamsTable = isTrial ? 'trial_teams' : 'teams';
     const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
 
+    // 1. Garante que a Arena existe na nuvem (Pai)
     const { data: arenaExists } = await supabase.from(champTable).select('id').eq('id', champId).maybeSingle();
     if (!arenaExists) {
-      logInfo(LogContext.DATABASE, `Arena ${champId} ausente na Cloud. Sincronizando...`);
+      logInfo(LogContext.DATABASE, `Provisionando Arena ${champId} na Cloud...`);
       const { error: arenaErr } = await supabase.from(champTable).insert({
         id: arena.id,
         name: arena.name,
         branch: arena.branch,
+        description: arena.description,
         status: arena.status,
         current_round: arena.current_round,
         total_rounds: arena.total_rounds,
@@ -210,33 +221,52 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
         deadline_unit: arena.deadline_unit,
         initial_financials: arena.initial_financials,
         market_indicators: arena.market_indicators,
-        tutor_id: arena.tutor_id || SYSTEM_TUTOR_ID,
+        region_names: arena.region_names,
+        region_configs: arena.region_configs,
+        currency: arena.currency,
+        sales_mode: arena.sales_mode,
+        scenario_type: arena.scenario_type,
+        transparency_level: arena.transparency_level,
+        gazeta_mode: arena.gazeta_mode,
+        tutor_id: arena.tutor_id, 
+        round_started_at: arena.round_started_at,
         config: arena.config
       });
-      if (arenaErr) throw new Error(`Falha ao provisionar Arena: ${arenaErr.message}`);
+      if (arenaErr) throw new Error(`Erro ao provisionar Arena: ${arenaErr.message}`);
     }
 
+    // 2. Garante que a Equipe existe na nuvem (Filho)
     const { data: teamExists } = await supabase.from(teamsTable).select('id').eq('id', teamId).maybeSingle();
     if (!teamExists) {
+      logInfo(LogContext.DATABASE, `Provisionando Equipe ${teamId} na Cloud...`);
       const teamMeta = arena.teams?.find(t => t.id === teamId);
       if (teamMeta) {
          const { error: teamErr } = await supabase.from(teamsTable).insert({
            id: teamMeta.id,
            championship_id: arena.id,
            name: teamMeta.name,
+           is_bot: !!teamMeta.is_bot,
            equity: teamMeta.equity || 5055447,
            credit_limit: teamMeta.credit_limit || 5000000,
            status: 'active',
            kpis: teamMeta.kpis
          });
-         if (teamErr) throw new Error(`Falha ao provisionar Equipe: ${teamErr.message}`);
+         if (teamErr) throw new Error(`Erro ao provisionar Equipe: ${teamErr.message}`);
       } else {
-         throw new Error("Metadados da equipe ausentes para provisionamento.");
+         throw new Error("Metadados da equipe indisponíveis.");
       }
     }
 
+    // 3. Persiste a Decisão (Neto)
     const cleanPayload = JSON.parse(JSON.stringify(decisions, (k, v) => (typeof v === 'number' && !isFinite(v)) ? 0 : v));
-    const { data: existingRow } = await supabase.from(decisionsTable).select('id').eq('team_id', teamId).eq('round', round).maybeSingle();
+    
+    // Busca pela tupla única: championship + team + round
+    const { data: existingRow } = await supabase.from(decisionsTable)
+        .select('id')
+        .eq('championship_id', champId)
+        .eq('team_id', teamId)
+        .eq('round', round)
+        .maybeSingle();
 
     if (existingRow) {
       const { error } = await supabase.from(decisionsTable).update({
@@ -255,9 +285,10 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       if (error) throw error;
     }
 
+    logInfo(LogContext.DATABASE, "Decisão sincronizada com sucesso.");
     return { success: true };
   } catch (err: any) {
-    logError(LogContext.DATABASE, "Decision transmission fault", err.message);
+    logError(LogContext.DATABASE, "Falha na Transmissão de Decisão", err.message);
     return { success: false, error: err.message };
   }
 };
@@ -350,13 +381,46 @@ export const updateEcosystem = async (id: string, updates: any) => {
   return { error };
 };
 
-export const fetchPageContent = async (s: string, l: string) => null;
-export const getModalities = async () => [];
-export const subscribeToModalities = (cb: any) => ({ unsubscribe: () => {} });
-export const getPublicReports = async (id: string, r: number) => ({ data: [], error: null });
-export const submitCommunityVote = async (d: any) => ({ error: null });
-export const getActiveBusinessPlan = async (t: string, r: number) => ({ data: null, error: null });
-export const saveBusinessPlan = async (p: any) => ({ data: null, error: null });
-export const getTeamSimulationHistory = async (t: string) => [];
-export const getAllUsers = async (): Promise<UserProfile[]> => [];
-export const subscribeToBusinessPlan = (t: string, r: number, cb: any) => ({ unsubscribe: () => {} });
+export const getModalities = async () => {
+    const { data } = await supabase.from('modalities').select('*').eq('is_public', true);
+    return data || [];
+};
+
+export const subscribeToModalities = (cb: any) => {
+    return supabase.channel('modalities-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'modalities' }, cb).subscribe();
+};
+
+export const fetchPageContent = async (slug: string, locale: string) => {
+  const { data } = await supabase.from('site_content').select('content').eq('page_slug', slug).eq('locale', locale).maybeSingle();
+  return data?.content;
+};
+
+export const getPublicReports = async (id: string, r: number) => {
+  return await supabase.from('public_reports').select('*').eq('championship_id', id).eq('round', r);
+};
+
+export const submitCommunityVote = async (d: any) => {
+  return await supabase.from('community_ratings').insert(d);
+};
+
+export const getActiveBusinessPlan = async (t: string, r: number) => {
+  return await supabase.from('business_plans').select('*').eq('team_id', t).eq('round', r).maybeSingle();
+};
+
+export const saveBusinessPlan = async (p: any) => {
+  return await supabase.from('business_plans').upsert(p);
+};
+
+export const getTeamSimulationHistory = async (teamId: string) => {
+  const { data } = await supabase.from('companies').select('*').eq('team_id', teamId).order('round', { ascending: true });
+  return data || [];
+};
+
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+  const { data } = await supabase.from('users').select('*');
+  return data || [];
+};
+
+export const subscribeToBusinessPlan = (teamId: string, round: number, cb: any) => {
+  return supabase.channel(`bp-${teamId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'business_plans', filter: `team_id=eq.${teamId}` }, cb).subscribe();
+};

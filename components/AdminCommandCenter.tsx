@@ -30,6 +30,9 @@ import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES, DEFAULT_INDUSTRIAL
 
 type TutorView = 'dashboard' | 'teams' | 'decisions' | 'intervention' | 'gazette';
 
+// UUID Reservado para o Sistema em modo No-Auth (Consistente com services/supabase.ts)
+const SYSTEM_TUTOR_ID = '00000000-0000-0000-0000-000000000000';
+
 const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -52,7 +55,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       const isTrialSessionLocal = localStorage.getItem('is_trial_session') === 'true';
       const storedArenaId = localStorage.getItem('active_champ_id');
 
-      const userId = session?.user?.id || 'trial_user';
+      // Crucial: Usa UUID real em vez de string "trial_user" para evitar quebra de query
+      const userId = session?.user?.id || SYSTEM_TUTOR_ID;
       const prof = await getUserProfile(userId);
       setProfile(prof);
       

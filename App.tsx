@@ -26,6 +26,9 @@ import Auth from './components/Auth';
 import { supabase, getUserProfile, isTestMode, provisionDemoEnvironment } from './services/supabase';
 import { UserProfile } from './types';
 
+// UUID de Sistema consistente com services/supabase.ts
+const SYSTEM_TUTOR_ID = '00000000-0000-0000-0000-000000000000';
+
 const AppContent: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -52,8 +55,8 @@ const AppContent: React.FC = () => {
       if (realSession) {
         await fetchProfile(realSession.user.id);
       } else if (isTrial) {
-        // Se for trial mas não logado, ainda sim buscamos um "perfil mock" de tutor
-        await fetchProfile('trial-master-id');
+        // Se for trial mas não logado, usamos o UUID de sistema para o "perfil mock"
+        await fetchProfile(SYSTEM_TUTOR_ID);
       } else {
         setLoading(false);
       }
@@ -102,7 +105,6 @@ const AppContent: React.FC = () => {
       <Route path="/auth" element={<Auth onAuth={() => navigate('/app')} onBack={() => navigate('/')} />} />
       <Route path="/test/industrial" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><TestTerminal /></div></>} />
       
-      {/* NOVO FLUXO TRIAL: Abre diretamente no Command Center em modo Orquestração */}
       <Route path="/trial/new" element={<Navigate to="/app/admin?mode=new_trial" replace />} />
 
       <Route path="/activities/:slug" element={<><PublicHeader onLogin={() => navigate('/auth')}/><div className="pt-20"><ActivityDetail /></div></>} />
