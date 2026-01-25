@@ -119,7 +119,6 @@ export const generateBotDecision = async (
               type: Type.OBJECT,
               properties: {
                 loanRequest: { type: Type.NUMBER },
-                // Fix: Added loanTerm to schema to match DecisionData requirements
                 loanTerm: { type: Type.NUMBER, description: "Prazo de amortização: 0, 1 ou 2" },
                 application: { type: Type.NUMBER },
                 buyMachines: {
@@ -163,7 +162,6 @@ export const generateBotDecision = async (
         }
     }
     
-    // Fix: Explicitly constructed DecisionData return to satisfy TypeScript and include all required properties (misc, extraProductionPercent, etc.)
     return {
       judicial_recovery: parsed.legal?.recovery_mode === 'judicial',
       regions: cleanedRegions,
@@ -190,7 +188,6 @@ export const generateBotDecision = async (
       },
       finance: {
         loanRequest: parsed.finance?.loanRequest || 0,
-        // Fix: Changed loanType to loanTerm (line 191 error)
         loanTerm: parsed.finance?.loanTerm || 1,
         application: parsed.finance?.application || 0
       },
@@ -202,14 +199,12 @@ export const generateBotDecision = async (
     };
   } catch (error) {
     console.error("Bot Decision Error:", error);
-    // Fix: Return valid DecisionData structure in catch block with all required fields
     return {
       judicial_recovery: false,
       regions: Object.fromEntries(Array.from({ length: regionCount }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 0 }])),
       hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50, misc: 0 },
       production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0, extraProductionPercent: 0 },
       machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
-      // Fix: Changed loanType to loanTerm (line 209 error)
       finance: { loanRequest: 0, loanTerm: 1, application: 0 },
       estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
     };
@@ -271,7 +266,7 @@ export const generateMarketAnalysis = async (
   
   const groundingPrompt = isReal 
     ? `Utilize o Google Search para buscar dados REAIS atuais do setor de ${branch}. Foque em preços de insumos, tendências de demanda e cenários macroeconômicos reais que afetariam um gestor hoje. Se o setor for Industrial, fale sobre aço e energia.` 
-    : `Você deve interpretar os seguintes parâmetros de mercado definidos pelo Tutor: ${JSON.stringify(macroIndicators)}. Analise como a Inflação de ${macroIndicators?.inflation_rate}%, o Crescimento de ${macroIndicators?.growth_rate}% e a TR de ${macroIndicators?.interest_rate_tr}% impactarão o custo operacional e a elasticidade-preço neste ciclo.`;
+    : `Você deve interpretar os seguintes parâmetros de mercado definidos pelo Tutor: ${JSON.stringify(macroIndicators)}. Analise como a Inflação de ${macroIndicators?.inflation_rate}%, a Variação de Demanda de ${macroIndicators?.demand_variation}% e a TR de ${macroIndicators?.interest_rate_tr}% impactarão o custo operacional e a elasticidade-preço neste ciclo.`;
 
   try {
     const ai = getClient();
