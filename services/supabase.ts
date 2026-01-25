@@ -12,13 +12,22 @@ const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
-// UUID Reservado para o Sistema em modo No-Auth (Compatível com colunas UUID do Postgres)
+// UUID Reservado para o Sistema em modo No-Auth
 const SYSTEM_TUTOR_ID = '00000000-0000-0000-0000-000000000000';
 const LOCAL_CHAMPS_KEY = 'empirion_v12_arenas';
 
 /**
- * Retorna o perfil do usuário ou um perfil Mock para sessões de Trial
+ * Auxiliar para limpar objetos antes de enviar ao Supabase
+ * Remove campos nulos ou indefinidos que podem quebrar se a coluna não existir no cache
  */
+const preparePayload = (obj: any) => {
+  return JSON.parse(JSON.stringify(obj, (k, v) => {
+    if (v === undefined) return undefined;
+    if (typeof v === 'number' && !isFinite(v)) return 0;
+    return v;
+  }));
+};
+
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   if (isTrial || userId === SYSTEM_TUTOR_ID || ['admin', 'tutor', 'alpha'].includes(userId)) {
@@ -40,9 +49,6 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   return data;
 };
 
-/**
- * Busca campeonatos mesclando local e remoto (Trial e Live)
- */
 export const getChampionships = async (onlyPublic: boolean = false) => {
   const finalArenas: Championship[] = [];
   try {
@@ -51,7 +57,6 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
     const { data: { session } } = await (supabase.auth as any).getSession();
     
-    // Busca Arenas Oficiais (Live)
     const { data: rawChamps, error: rawErr } = await supabase
       .from('championships')
       .select('*')
@@ -66,7 +71,6 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
        }
     }
 
-    // Busca Arenas Trial (Sandbox)
     let trialQuery = supabase.from('trial_championships').select('*');
     if (session) {
        trialQuery = trialQuery.or(`tutor_id.eq.${session.user.id},tutor_id.is.null,tutor_id.eq.${SYSTEM_TUTOR_ID}`);
@@ -91,9 +95,6 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   return { data: result, error: null };
 };
 
-/**
- * Cria campeonato provisionando na nuvem e no storage local
- */
 export const createChampionshipWithTeams = async (champData: Partial<Championship>, teams: { name: string, is_bot?: boolean }[], isTrialParam: boolean = false) => {
   const isTrial = isTrialParam || localStorage.getItem('is_trial_session') === 'true';
   const newId = crypto.randomUUID();
@@ -104,24 +105,29 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 
   const initialShare = 100 / Math.max(teams.length, 1);
 
-  const teamsWithIds = teams.map(t => ({
-    id: crypto.randomUUID(),
-    name: t.name,
-    is_bot: !!t.is_bot,
-    championship_id: newId,
-    equity: 5055447,
-    credit_limit: 5000000,
-    status: 'active',
-    insolvency_status: 'SAUDAVEL' as any,
-    created_at: timestamp,
-    kpis: { 
-      market_share: initialShare, 
-      rating: 'AAA', 
-      insolvency_status: 'SAUDAVEL', 
-      kanitz_factor: 2.19,
-      market_valuation: { share_price: 1.01, total_shares: 5000000, market_cap: 5055447, tsr: 1.1 }
+  const teamsPayload = teams.map(t => {
+    const base: any = {
+      id: crypto.randomUUID(),
+      name: t.name,
+      championship_id: newId,
+      equity: 5055447,
+      credit_limit: 5000000,
+      status: 'active',
+      insolvency_status: 'SAUDAVEL',
+      created_at: timestamp,
+      kpis: { market_share: initialShare, rating: 'AAA' }
+    };
+    
+    // ESTRATÉGIA DE BYPASS DE CACHE: 
+    // Se is_bot for false, não enviamos a coluna no trial. O banco usará o DEFAULT false.
+    // Isso evita o erro "Could not find column is_bot in schema cache".
+    if (!isTrial) {
+      base.is_bot = !!t.is_bot;
+    } else if (t.is_bot) {
+      base.is_bot = true; // Se for bot no trial, tentamos enviar.
     }
-  }));
+    return base;
+  });
 
   const fullChamp = { 
     ...champData, 
@@ -134,8 +140,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     tutor_id: currentUserId,
     deadline_value: champData.deadline_value || 7,
     deadline_unit: champData.deadline_unit || 'days',
-    region_names: champData.region_names || [],
-    region_configs: champData.region_configs || [],
     currency: champData.currency || 'BRL',
     sales_mode: champData.sales_mode || 'hybrid',
     scenario_type: champData.scenario_type || 'simulated',
@@ -143,7 +147,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     gazeta_mode: champData.gazeta_mode || 'anonymous',
     config: { 
       ...(champData.config || {}), 
-      round_rules: champData.round_rules || {} 
+      round_rules: champData.round_rules || {}
     }
   } as Championship;
 
@@ -176,7 +180,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     });
     
     if (!champErr) {
-       await supabase.from(teamsTable).insert(teamsWithIds);
+       await supabase.from(teamsTable).insert(teamsPayload);
     } else {
        throw champErr;
     }
@@ -185,15 +189,12 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   }
 
   const localArenas = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
-  localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify([{ ...fullChamp, teams: teamsWithIds }, ...localArenas]));
+  localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify([{ ...fullChamp, teams: teamsPayload }, ...localArenas]));
   localStorage.setItem('active_champ_id', newId);
 
-  return { champ: fullChamp, teams: teamsWithIds };
+  return { champ: fullChamp, teams: teamsPayload };
 };
 
-/**
- * Salva decisões com Provisionamento de Segurança (Anti-FK violation)
- */
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
   try {
     const { data: allArenas } = await getChampionships();
@@ -241,16 +242,26 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       logInfo(LogContext.DATABASE, `Provisionando Equipe ${teamId} na Cloud...`);
       const teamMeta = arena.teams?.find(t => t.id === teamId);
       if (teamMeta) {
-         const { error: teamErr } = await supabase.from(teamsTable).insert({
+         const dbTeamPayload: any = {
            id: teamMeta.id,
            championship_id: arena.id,
            name: teamMeta.name,
-           is_bot: !!teamMeta.is_bot,
            equity: teamMeta.equity || 5055447,
            credit_limit: teamMeta.credit_limit || 5000000,
            status: 'active',
            kpis: teamMeta.kpis
-         });
+         };
+         
+         // BYPASS DE ERRO DE COLUNA NO TRIAL:
+         // Se for trial, omitimos is_bot se for falso para não forçar a verificação da coluna no cache do Supabase.
+         // Se for oficial, enviamos normalmente.
+         if (!isTrial) {
+            dbTeamPayload.is_bot = !!teamMeta.is_bot;
+         } else if (teamMeta.is_bot) {
+            dbTeamPayload.is_bot = true;
+         }
+
+         const { error: teamErr } = await supabase.from(teamsTable).insert(dbTeamPayload);
          if (teamErr) throw new Error(`Erro ao provisionar Equipe: ${teamErr.message}`);
       } else {
          throw new Error("Metadados da equipe indisponíveis.");
@@ -258,9 +269,7 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
     }
 
     // 3. Persiste a Decisão (Neto)
-    const cleanPayload = JSON.parse(JSON.stringify(decisions, (k, v) => (typeof v === 'number' && !isFinite(v)) ? 0 : v));
-    
-    // Busca pela tupla única: championship + team + round
+    const cleanPayload = preparePayload(decisions);
     const { data: existingRow } = await supabase.from(decisionsTable)
         .select('id')
         .eq('championship_id', champId)
@@ -405,6 +414,10 @@ export const submitCommunityVote = async (d: any) => {
 
 export const getActiveBusinessPlan = async (t: string, r: number) => {
   return await supabase.from('business_plans').select('*').eq('team_id', t).eq('round', r).maybeSingle();
+};
+
+export const submitCommunityRating = async (ratingData: any) => {
+  return await supabase.from('community_ratings').insert(ratingData);
 };
 
 export const saveBusinessPlan = async (p: any) => {

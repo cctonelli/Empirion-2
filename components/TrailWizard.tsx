@@ -238,8 +238,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <div className="space-y-8 bg-white/5 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Configuração do Cluster</h4>
                        <div className="grid grid-cols-2 gap-8">
-                          <WizardField label="Unidades Humanas" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
-                          <WizardField label="Synthetic Nodes (IA)" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
+                          <WizardField label="Nº Equipes Humanas" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
+                          <WizardField label="Nº Equipes Bots)" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
                        </div>
                     </div>
                     <div className="space-y-4">
@@ -340,7 +340,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <div className="grid grid-cols-1 gap-6">
                           <WizardField label="Preço Venda Médio ($)" type="number" val={baseIndicators.avg_selling_price || 340} onChange={(v:any)=>setBaseIndicators({...baseIndicators, avg_selling_price: parseFloat(v)})} />
                           <WizardField label="Distribuição Unit. ($)" type="number" val={baseIndicators.prices.distribution_unit || 50} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, distribution_unit: parseFloat(v)}})} />
-                          <WizardField label="Base Campanha MKT ($)" type="number" val={baseIndicators.prices.marketing_campaign || 10000} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
+                          <WizardField label="Campanha Marketing ($)" type="number" val={baseIndicators.prices.marketing_campaign || 10000} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
                        </div>
                     </div>
                  </div>
@@ -361,14 +361,14 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                    <span className="text-xs font-black text-white uppercase italic">Administração</span>
                                    <span className="text-[9px] font-bold text-indigo-400 uppercase">Salário Base x 4.0</span>
                                 </div>
-                                <span className="text-2xl font-mono font-black text-white">10 Units</span>
+                                <span className="text-2xl font-mono font-black text-white">20 Units</span>
                              </div>
                              <div className="flex justify-between items-center bg-white/5 p-5 rounded-2xl border border-white/5 group hover:bg-white/10 transition-all">
                                 <div className="flex flex-col">
                                    <span className="text-xs font-black text-white uppercase italic">Vendas</span>
                                    <span className="text-[9px] font-bold text-indigo-400 uppercase">Salário Base x 4.0</span>
                                 </div>
-                                <span className="text-2xl font-mono font-black text-white">20 Units</span>
+                                <span className="text-2xl font-mono font-black text-white">10 Units</span>
                              </div>
                              <div className="flex justify-between items-center bg-white/5 p-5 rounded-2xl border border-white/5 group hover:bg-white/10 transition-all">
                                 <div className="flex flex-col">
@@ -474,7 +474,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 6 && (
               <motion.div key="s6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                 <WizardStepTitle icon={<Calculator size={32}/>} title="ORACLE BASELINE" desc="EDITE OS BALANÇOS, DRES E FLUXO DE CAIXA INICIAIS PARA O ROUND ZERO." />
+                 <WizardStepTitle icon={<Calculator size={32}/>} title="CONTÁBIL E FINANCEIRO" desc="EDITE OS BALANÇOS, DRES E FLUXO DE CAIXA INICIAIS PARA O ROUND ZERO." />
                  
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <SummaryCard label="ATIVO TOTAL P00" val={totalAssetsSummary} icon={<PieChart size={20}/>} color="orange" />
