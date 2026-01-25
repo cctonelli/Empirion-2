@@ -187,10 +187,10 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
-                 <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DA ARENA" desc="CONFIGURAÇÕES GLOBAIS DO AMBIENTE SANDBOX." />
+                 <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DO TORNEIO" desc="CONFIGURAÇÕES GLOBAIS DO TORNEIO." />
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2">
-                       <WizardField label="NOME DA INSTÂNCIA TRIAL" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TESTE INDUSTRIAL ALPHA" />
+                       <WizardField label="NOME DO TORNEIO" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TORNEIO DOS CAMPEÕES" />
                     </div>
                     <WizardSelect label="MOEDA BASE (RELATÓRIOS)" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'}]} />
                     
@@ -199,7 +199,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        {formData.totalRounds >= 12 && <p className="text-[10px] font-black text-rose-500 uppercase italic ml-4 animate-pulse">MÁXIMO DE 12 PERÍODOS</p>}
                     </div>
                     
-                    <WizardField label="PREÇO AÇÃO P0 ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
+                    <WizardField label="PREÇO AÇÃO INICIAL ($)" type="number" val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: parseFloat(v)})} />
                     <WizardField label="% DIVIDENDOS" type="number" val={formData.dividend_percent} onChange={(v:any)=>setFormData({...formData, dividend_percent: parseFloat(v)})} />
                     
                     <div className="grid grid-cols-2 gap-4">
