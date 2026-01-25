@@ -111,7 +111,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       for (let i = 0; i < keys.length - 1; i++) {
         current = current[keys[i]];
       }
-      // Garante sanitização no input
       const safeVal = (typeof val === 'number') ? sanitize(val) : val;
       current[keys[keys.length - 1]] = safeVal;
       return next;
@@ -245,13 +244,23 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 2 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full pb-10">
-                     <InputCard label="Matéria-Prima A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={24}/>} />
-                     <InputCard label="Matéria-Prima B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={24}/>} />
-                     <SelectCard label="Fluxo Pagamento Fornecedor" val={decisions.production.paymentType} onChange={(v: number) => updateDecision('production.paymentType', v)} options={[{v:0,l:'À VISTA'},{v:1,l:'50/50'},{v:2,l:'33/33/33'}]} icon={<DollarSign size={24}/>} />
-                     <InputCard label="Uso da Capacidade %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={24}/>} />
-                     <InputCard label="Turno Extra (%)" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={24}/>} />
-                     <InputCard label="Investimento P&D ($)" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Cpu size={24}/>} />
+                  <div className="space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full">
+                       <InputCard label="Matéria-Prima A (QTDE)" val={decisions.production.purchaseMPA} onChange={(v: number) => updateDecision('production.purchaseMPA', v)} icon={<Package size={24}/>} />
+                       <InputCard label="Matéria-Prima B (QTDE)" val={decisions.production.purchaseMPB} onChange={(v: number) => updateDecision('production.purchaseMPB', v)} icon={<Package size={24}/>} />
+                       <SelectCard label="Fluxo Pagamento Fornecedor" val={decisions.production.paymentType} onChange={(v: number) => updateDecision('production.paymentType', v)} options={[{v:0,l:'À VISTA'},{v:1,l:'50/50'},{v:2,l:'33/33/33'}]} icon={<DollarSign size={24}/>} />
+                       <InputCard label="Uso da Capacidade %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={24}/>} />
+                       <InputCard label="Turno Extra (%)" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={24}/>} />
+                       <InputCard label="Investimento P&D ($)" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Cpu size={24}/>} />
+                    </div>
+                    {/* HINT TÁTICO DE P&D */}
+                    <div className="bg-indigo-600/10 border-2 border-indigo-500/30 p-8 rounded-[3rem] flex gap-8 items-center shadow-2xl">
+                       <Sparkles size={48} className="text-indigo-400 shrink-0" />
+                       <div>
+                          <h4 className="text-sm font-black text-indigo-100 uppercase tracking-widest italic">Vantagem Tecnológica Oracle</h4>
+                          <p className="text-xs text-slate-400 font-medium italic leading-relaxed mt-2 uppercase tracking-tight">"O investimento em P&D aumenta a atratividade do seu produto no mercado e reduz o custo unitário por eficiência processual. Unidades sem tecnologia perdem Market Share agressivamente para competidores inovadores."</p>
+                       </div>
+                    </div>
                   </div>
                )}
 

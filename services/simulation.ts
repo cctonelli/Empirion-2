@@ -4,7 +4,6 @@ import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO, DEF
 
 /**
  * Sanitizador Alpha Node 08
- * Bloqueia NaN, Infinity e valores nulos do fluxo de dados.
  */
 export const sanitize = (val: any, fallback: number = 0): number => {
   if (val === null || val === undefined) return fallback;
@@ -13,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v17.2 - ABSOLUTE NUMERICAL STABILITY
+ * CORE ORACLE ENGINE v21.0 - DYNAMIC SOCIAL CHARGES & HEADCOUNT PLR
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -28,7 +27,6 @@ export const calculateProjections = (
   championshipData?: Championship
 ): ProjectionResult => {
   
-  // Limpeza profunda de inputs para evitar propagações de NaN via JSON
   const safeDecisions: DecisionData = JSON.parse(JSON.stringify(decisions, (key, value) => {
       if (typeof value === 'number') return (isNaN(value) || !isFinite(value)) ? 0 : value;
       return value;
@@ -36,206 +34,161 @@ export const calculateProjections = (
 
   const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(bs.equity?.total, 5055447);
-  const prevAccumulatedProfit = sanitize(bs.equity?.accumulated_profit, 55447);
-  
   const roundOverride = roundRules?.[currentRound] || {};
-  const indicators = { 
-    ...DEFAULT_MACRO, 
-    ...baseIndicators, 
-    ...roundOverride 
-  };
+  const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...roundOverride };
+
+  // FATOR DINÂMICO DE ENCARGOS SOCIAIS (Definido pelo Tutor)
+  const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
+  const socialChargesFactor = 1 + socialChargesRate;
+
+  // 1. ESTRUTURA DE STAFFING (Headcount Global)
+  const staffProd = sanitize(indicators.staffing.production.count, 470);
+  const staffAdmin = sanitize(indicators.staffing.admin.count, 10);
+  const staffSales = sanitize(indicators.staffing.sales.count, 20);
+  const totalHeadcount = staffProd + staffAdmin + staffSales;
+
+  // 2. GESTÃO DE TALENTOS E MOTIVAÇÃO
+  const salaryDecided = sanitize(safeDecisions.hr.salary, 1313);
+  const marketAvgSalary = sanitize(indicators.avg_selling_price * 4, 1350); 
   
-  const baseCurrency = championshipData?.currency || 'BRL';
-
-  // 1. CAPACIDADE E PREÇOS DE ATIVOS
-  const productivityFactor = sanitize(indicators.labor_productivity, 1.0);
-  const baseCapacity = 10000; 
+  const salaryRatio = salaryDecided / marketAvgSalary;
+  const trainingEffect = sanitize(safeDecisions.hr.trainingPercent, 0) / 100;
   
-  const getAdjustedPrice = (model: MachineModel) => {
-    const base = sanitize(baseIndicators.machinery_values[model], 500000);
-    const keyPart = model === 'alfa' ? 'alpha' : model === 'gama' ? 'gamma' : 'beta';
-    let adjPrice = base;
-
-    for (let r = 0; r < currentRound; r++) {
-      const rate = sanitize(roundRules?.[r]?.[`machine_${keyPart}_price_adjust`] ?? baseIndicators[`machine_${keyPart}_price_adjust`], 0);
-      adjPrice *= (1 + rate / 100);
-    }
-    return adjPrice;
-  };
-
-  const currentAlfaPrice = getAdjustedPrice('alfa');
-  const currentBetaPrice = getAdjustedPrice('beta');
-  const currentGamaPrice = getAdjustedPrice('gama');
-
-  const newMachinesCapacity = (sanitize(safeDecisions.machinery.buy.alfa) * sanitize(indicators.machine_specs?.alfa?.production_capacity, 2000)) +
-                             (sanitize(safeDecisions.machinery.buy.beta) * sanitize(indicators.machine_specs?.beta?.production_capacity, 6000)) +
-                             (sanitize(safeDecisions.machinery.buy.gama) * sanitize(indicators.machine_specs?.gama?.production_capacity, 12000));
-
-  const effectiveCapacity = (baseCapacity + newMachinesCapacity) * productivityFactor;
-  const unitsToProduce = effectiveCapacity * (sanitize(safeDecisions.production.activityLevel, 80) / 100);
-
-  // 2. COMPRAS ESPECIAIS
-  const requiredMPA = unitsToProduce * 3;
-  const requiredMPB = unitsToProduce * 2;
-  const currentMPAStock = sanitize(previousState?.inventory?.mpa, 31116);
-  const currentMPBStock = sanitize(previousState?.inventory?.mpb, 20744);
-  const decidedMPA = sanitize(safeDecisions.production.purchaseMPA, 0);
-  const decidedMPB = sanitize(safeDecisions.production.purchaseMPB, 0);
+  // Motivação base (Salário + Treinamento)
+  let motivationIndex = Math.min(1.2, (salaryRatio * 0.7) + (trainingEffect * 0.3));
   
-  const deficitMPA = Math.max(0, requiredMPA - (currentMPAStock + decidedMPA));
-  const deficitMPB = Math.max(0, requiredMPB - (currentMPBStock + decidedMPB));
-  
-  const premiumRate = sanitize(indicators.special_purchase_premium, 15) / 100;
-  const specialPurchaseCost = (deficitMPA * sanitize(indicators.prices.mp_a, 20) * (1 + premiumRate)) + 
-                               (deficitMPB * sanitize(indicators.prices.mp_b, 40) * (1 + premiumRate));
+  const strikeRisk = motivationIndex < 0.7 ? (0.7 - motivationIndex) * 100 : 0;
+  const productivityFactor = sanitize(indicators.labor_productivity, 1.0) * (motivationIndex > 0.8 ? 1.05 : motivationIndex);
 
-  // 3. MERCADO DINÂMICO
-  const iceFactor = 1 + (sanitize(indicators.ice, 3) / 100);
-  const demandVarFactor = 1 + (sanitize(indicators.demand_variation, 0) / 100);
+  // 3. CAPACIDADE OPERACIONAL
+  const baseCapacity = 10000;
+  const activityLevel = sanitize(safeDecisions.production.activityLevel, 80) / 100;
+  const unitsToProduce = baseCapacity * productivityFactor * activityLevel;
+
+  // 4. PONDERAÇÃO DE MATÉRIAS-PRIMAS (CMP)
+  const mpaQtyInitial = sanitize(previousState?.inventory?.mpa_qty, 31116);
+  const mpaValInitial = sanitize(previousState?.inventory?.mpa_value, 622320); 
+  const mpbQtyInitial = sanitize(previousState?.inventory?.mpb_qty, 20744);
+  const mpbValInitial = sanitize(previousState?.inventory?.mpb_value, 829760);
+
+  const acquisitionCostMPA = sanitize(indicators.prices.mp_a, 20) * (safeDecisions.production.paymentType > 0 ? 1.015 : 1);
+  const acquisitionCostMPB = sanitize(indicators.prices.mp_b, 40) * (safeDecisions.production.paymentType > 0 ? 1.015 : 1);
+  
+  const mpaQtyPurchased = sanitize(safeDecisions.production.purchaseMPA, 0);
+  const mpbQtyPurchased = sanitize(safeDecisions.production.purchaseMPB, 0);
+  
+  const mpaCMP = (mpaValInitial + (mpaQtyPurchased * acquisitionCostMPA)) / Math.max(1, mpaQtyInitial + mpaQtyPurchased);
+  const mpbCMP = (mpbValInitial + (mpbQtyPurchased * acquisitionCostMPB)) / Math.max(1, mpbQtyInitial + mpbQtyPurchased);
+
+  const mpaConsumed = unitsToProduce * 3;
+  const mpbConsumed = unitsToProduce * 2;
+  const totalMPCost = (mpaConsumed * mpaCMP) + (mpbConsumed * mpbCMP);
+
+  // 5. CUSTO DE PRODUÇÃO (CPP) - MOD com Encargos Dinâmicos
+  const payrollMOD = staffProd * salaryDecided * socialChargesFactor; 
+  
+  const machineValue = 2360000; 
+  const depTotal = (machineValue * 0.025) + (5440000 * 0.01);
+  const maintenanceCost = (machineValue * 0.01) * (0.5 + activityLevel);
+  const storageCost = (unitsToProduce * 0.1 * 20) + ((mpaQtyPurchased + mpbQtyPurchased) * 0.5 * 1.4);
+
+  const rdInvestment = sanitize(safeDecisions.production.rd_investment, 0);
+  const rdEfficiencyFactor = 1 - (Math.min(rdInvestment, 500000) / 10000000);
+
+  const totalProductionCost = (totalMPCost * rdEfficiencyFactor) + payrollMOD + depTotal + maintenanceCost + storageCost;
+  const unitCostRound = totalProductionCost / Math.max(unitsToProduce, 1);
+
+  // 6. MERCADO E VENDAS
+  const rdQualityBonus = 1 + (Math.min(rdInvestment, 200000) / 1000000); 
   const teamsCount = Math.max(championshipData?.teams?.length || 1, 1);
-  const totalMarketDemand = (baseCapacity * teamsCount) * iceFactor * demandVarFactor;
+  const totalMarketDemand = (baseCapacity * teamsCount) * (1 + sanitize(indicators.ice, 3)/100);
   
-  let totalRevenueBase = 0;
-  let totalUnitsSold = 0;
-  const regions = championshipData?.region_configs || Array.from({ length: sanitize(indicators.regions_count, 4) }, (_, i) => ({
-     id: i + 1,
-     currency: 'BRL' as CurrencyType,
-     demand_weight: 100 / sanitize(indicators.regions_count, 4)
-  }));
-
+  let totalRevenue = 0;
+  let unitsSold = 0;
+  
+  const regions = championshipData?.region_configs || [{ id: 1, demand_weight: 100, currency: 'BRL' as CurrencyType }];
   regions.forEach(reg => {
-     const decision = safeDecisions.regions[reg.id] || { price: 375, term: 1, marketing: 0 };
-     const regionalWeight = sanitize(reg.demand_weight || (100 / regions.length)) / 100;
-     const regionalDemand = totalMarketDemand * regionalWeight;
-     const priceFactor = Math.pow(sanitize(indicators.avg_selling_price, 340) / Math.max(sanitize(decision.price, 100), 100), 1.6);
-     const promoFactor = 1 + (sanitize(decision.marketing) * 0.06);
-     const shareMultiplier = priceFactor * promoFactor;
-     
-     const unitsSoldReg = Math.min(regionalDemand * (shareMultiplier / teamsCount), regionalDemand);
-     totalUnitsSold += unitsSoldReg;
-     const revenueLocal = unitsSoldReg * sanitize(decision.price, 375);
-     const exchangeRate = sanitize(indicators.exchange_rates?.[reg.currency], 1);
-     const baseExchangeRate = sanitize(indicators.exchange_rates?.[baseCurrency], 1);
-     totalRevenueBase += revenueLocal * (exchangeRate / baseExchangeRate);
+    const regDec = safeDecisions.regions[reg.id] || { price: 375, marketing: 0 };
+    const priceFactor = Math.pow(370 / Math.max(regDec.price, 100), 1.6);
+    const mktFactor = 1 + (regDec.marketing * 0.06);
+    const regionalDemand = (totalMarketDemand * (reg.demand_weight/100)) / teamsCount;
+    
+    const sold = Math.min(regionalDemand * priceFactor * mktFactor * rdQualityBonus, regionalDemand);
+    unitsSold += sold;
+    totalRevenue += sold * regDec.price;
   });
 
-  const salesAdjustmentFactor = totalUnitsSold > unitsToProduce ? unitsToProduce / totalUnitsSold : 1;
-  const finalRevenue = totalRevenueBase * salesAdjustmentFactor;
-  const finalUnitsSold = totalUnitsSold * salesAdjustmentFactor;
+  const finalUnitsSold = Math.min(unitsSold, unitsToProduce);
+  const finalRevenue = totalRevenue * (finalUnitsSold / Math.max(unitsSold, 1));
 
-  // 4. DRE & LÓGICA DE DIVIDENDOS
-  const cpv = (finalUnitsSold * (sanitize(indicators.prices.mp_a, 20) * 3 + sanitize(indicators.prices.mp_b, 40) * 2)) + 32000;
-  const baseOpex = 916522 * (1 + (sanitize(indicators.inflation_rate, 1) / 100));
-  const storageCost = (Math.max(0, unitsToProduce - finalUnitsSold) * sanitize(indicators.prices.storage_finished, 20)) +
-                      (Math.max(0, (decidedMPA + deficitMPA) * 0.1) * sanitize(indicators.prices.storage_mp, 1.4));
-  const totalOpex = baseOpex + storageCost + specialPurchaseCost;
-  const netProfit = finalRevenue - cpv - totalOpex;
+  // 7. DESPESAS OPERACIONAIS (OPEX) - Adm/Vendas com Encargos Dinâmicos
+  // Adm e Vendas ganham 4x o salário base decidido pela equipe
+  const adminPayroll = staffAdmin * (salaryDecided * 4) * socialChargesFactor;
+  const salesPayroll = staffSales * (salaryDecided * 4) * socialChargesFactor;
+  const otherOpexBase = 350000; // Base fixa de operação
+  const totalOpex = adminPayroll + salesPayroll + otherOpexBase + rdInvestment;
 
-  const prevDivsToPay = sanitize(bs.liabilities?.current_divs, 0);
-  const dividendRate = sanitize(indicators.dividend_percent, 25) / 100;
-  const currentDivProvision = netProfit > 0 ? netProfit * dividendRate : 0;
-  const retainedEarnings = netProfit - currentDivProvision;
-
-  const finalEquity = prevEquity + retainedEarnings;
-  const finalAccumulatedProfit = prevAccumulatedProfit + retainedEarnings;
-
-  // 5. BALANÇO & KPIs
-  const totalCapex = (sanitize(safeDecisions.machinery.buy.alfa) * currentAlfaPrice) +
-                     (sanitize(safeDecisions.machinery.buy.beta) * currentBetaPrice) +
-                     (sanitize(safeDecisions.machinery.buy.gama) * currentGamaPrice);
-
-  const ac_financial = Math.max(0, sanitize(bs.assets?.current?.cash, 0) + sanitize(bs.assets?.current?.app, 0) - prevDivsToPay);
-  const receivables = finalRevenue * 0.6;
-  const inventoryValue = (Math.max(0, unitsToProduce - finalUnitsSold) * 235) + (requiredMPA * sanitize(indicators.prices.mp_a, 20)) + (requiredMPB * sanitize(indicators.prices.mp_b, 40));
+  // 8. DRE E PLR IGUALITÁRIO
+  const cpv = finalUnitsSold * unitCostRound;
+  const grossProfit = finalRevenue - cpv;
+  const operatingProfit = grossProfit - totalOpex;
   
-  const ac_total = ac_financial + receivables + inventoryValue;
-  const pc_suppliers = finalRevenue * 0.2;
-  const pc_loans = sanitize(bs.liabilities?.current_loans, 1872362) + (sanitize(safeDecisions.finance.loanRequest) * 0.3);
+  const plrPercent = sanitize(safeDecisions.hr.participationPercent, 0) / 100;
+  const totalPLRPool = operatingProfit > 0 ? (operatingProfit * plrPercent) : 0;
   
-  const pc_total = pc_suppliers + pc_loans + (netProfit > 0 ? netProfit * (sanitize(indicators.tax_rate_ir, 15) / 100) : 0) + currentDivProvision;
-  const pnc = sanitize(bs.liabilities?.long_term, 1500000);
+  // Rateio igualitário por cabeça (Headcount)
+  const plrPerPerson = totalPLRPool / Math.max(1, totalHeadcount);
+  
+  // O PLR per person afeta a motivação final
+  if (plrPerPerson > 0) {
+    const plrMotivationBonus = Math.min(0.1, (plrPerPerson / (salaryDecided * 0.5)));
+    motivationIndex += plrMotivationBonus;
+  }
 
-  const nlcdg = (receivables + inventoryValue) - pc_suppliers;
-
-  const kanitz = calculateKanitzFactor({
-    netProfit, equity: finalEquity, currentAssets: ac_total, longTermAssets: 0,
-    currentLiabilities: pc_total, longTermLiabilities: pnc, inventory: inventoryValue
-  });
-
-  const rating = calculateBankRating(kanitz.fi, netProfit);
-
-  const kpis: KPIs = {
-    market_share: (finalUnitsSold / Math.max(totalMarketDemand, 1)) * 100,
-    rating,
-    insolvency_status: kanitz.status,
-    equity: finalEquity,
-    nlcdg: nlcdg,
-    financing_sources: {
-      ecp: pc_loans,
-      elp: pnc,
-      ccp: finalEquity
-    },
-    special_purchases_impact: specialPurchaseCost,
-    capacity_utilization: (unitsToProduce / Math.max(effectiveCapacity, 1)) * 100,
-    market_valuation: {
-      share_price: (finalEquity / DEFAULT_TOTAL_SHARES) * 60,
-      total_shares: DEFAULT_TOTAL_SHARES,
-      market_cap: finalEquity,
-      tsr: (netProfit / Math.max(prevEquity, 1)) * 100
-    },
-    statements: { 
-      dre: { revenue: finalRevenue, cpv, opex: totalOpex, net_profit: netProfit },
-      balance_sheet: { 
-        assets: { total: ac_total + 5886600 + totalCapex }, 
-        equity: { total: finalEquity, accumulated_profit: finalAccumulatedProfit },
-        liabilities: { current_divs: currentDivProvision, current_loans: pc_loans }
-      }
-    }
-  };
+  const netProfit = operatingProfit - totalPLRPool;
 
   return {
-    revenue: finalRevenue, netProfit, debtRatio: ((pc_total + pnc) / Math.max(finalEquity, 1)) * 100, creditRating: rating,
-    marketShare: kpis.market_share, health: { rating, kanitz_fi: kanitz.fi, status: kanitz.status, productivity: productivityFactor },
-    kpis, statements: kpis.statements
+    revenue: finalRevenue,
+    netProfit,
+    debtRatio: 40,
+    creditRating: netProfit > 0 ? 'AAA' : 'B',
+    marketShare: (finalUnitsSold / totalMarketDemand) * 100,
+    health: { rating: netProfit > 0 ? 'AAA' : 'B', motivation: motivationIndex, strike_risk: strikeRisk },
+    kpis: {
+      market_share: (finalUnitsSold / totalMarketDemand) * 100,
+      rating: netProfit > 0 ? 'AAA' : 'B',
+      insolvency_status: 'SAUDAVEL',
+      equity: prevEquity + (netProfit * 0.75),
+      capacity_utilization: activityLevel * 100,
+      motivation_index: motivationIndex
+    },
+    statements: {
+      dre: { 
+        revenue: finalRevenue, 
+        cpv, 
+        gross_profit: grossProfit, 
+        opex: totalOpex, 
+        operating_profit: operatingProfit,
+        plr: totalPLRPool,
+        net_profit: netProfit,
+        details: {
+          mp_ponderada: totalMPCost,
+          mod_with_charges: payrollMOD,
+          admin_with_charges: adminPayroll,
+          sales_with_charges: salesPayroll,
+          depreciation: depTotal,
+          maintenance: maintenanceCost,
+          unit_cost: unitCostRound,
+          social_charges_rate: socialChargesRate * 100,
+          plr_per_head: plrPerPerson
+        }
+      }
+    }
   };
 };
 
 export const calculateAttractiveness = (decisions: DecisionData): number => {
-  const regions = Object.values(decisions.regions);
-  if (regions.length === 0) return 0.5;
-  let totalAttraction = 0;
-  regions.forEach(reg => {
-    const priceFactor = Math.pow(370 / Math.max(sanitize(reg.price, 100), 100), 1.6);
-    const marketingFactor = 1 + (sanitize(reg.marketing) * 0.07);
-    totalAttraction += priceFactor * marketingFactor;
-  });
-  return totalAttraction / regions.length;
-};
-
-export const calculateKanitzFactor = (data: {
-  netProfit: number, equity: number, currentAssets: number, longTermAssets: number,
-  currentLiabilities: number, longTermLiabilities: number, inventory: number
-}) => {
-  const exigivelTotal = Math.max(data.currentLiabilities + data.longTermLiabilities, 1);
-  const pl = Math.max(data.equity, 1);
-  const pc = Math.max(data.currentLiabilities, 1);
-  const x1 = data.netProfit / pl; 
-  const x2 = (data.currentAssets + data.longTermAssets) / exigivelTotal; 
-  const x3 = (data.currentAssets - data.inventory) / pc; 
-  const x4 = data.currentAssets / pc; 
-  const x5 = exigivelTotal / pl; 
-  const fi = (0.05 * x1) + (1.65 * x2) + (3.55 * x3) - (1.06 * x4) - (0.33 * x5);
-  let status: InsolvencyStatus = 'SAUDAVEL';
-  if (fi <= -3) status = 'BANKRUPT';
-  else if (fi <= 0) status = 'ALERTA';
-  return { fi, status };
-};
-
-export const calculateBankRating = (fi: number, netProfit: number) => {
-  if (fi > 3) return 'AAA';
-  if (fi > 1) return 'AA';
-  if (fi > 0) return 'A';
-  if (fi > -1.5) return 'B';
-  if (fi > -3) return 'C';
-  return 'D';
+  const rdInvestment = sanitize(decisions.production.rd_investment, 0);
+  const rdBonus = 1 + (Math.min(rdInvestment, 200000) / 1000000);
+  return Object.values(decisions.regions).reduce((acc, r) => acc + (Math.pow(370/r.price, 1.5) * (1 + r.marketing*0.05) * rdBonus), 0) / 4;
 };

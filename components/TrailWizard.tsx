@@ -42,7 +42,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   const [baseIndicators, setBaseIndicators] = useState<MacroIndicators>({
     ...DEFAULT_MACRO,
-    exchange_rates: { BRL: 1, USD: 5.2, EUR: 5.5, GBP: 6.2 }
+    exchange_rates: { BRL: 1, USD: 5.2, EUR: 5.5, GBP: 6.2 },
+    social_charges: 35.0 // Garantindo base 35%
   });
 
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
@@ -429,6 +430,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="DESÁGIO VENDA MÁQ. (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
                              
+                             <CompactMatrixRow periods={totalPeriods} label="ENCARGOS SOCIAIS (%)" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
+
                              <CompactMatrixRow periods={totalPeriods} label="MATÉRIAS-PRIMAS" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="MÁQUINA ALFA" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="MÁQUINA BETA" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />

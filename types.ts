@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V14.0 - ORACLE MASTER BUILD
+ * EMPIRION V14.2 - ORACLE MASTER BUILD (PROD-READY)
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -21,157 +21,6 @@ export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 export type LaborAvailability = 'BAIXA' | 'MEDIA' | 'ALTA';
 export type MachineModel = 'alfa' | 'beta' | 'gama';
 
-export interface EcosystemConfig {
-  inflation_rate: number;
-  demand_multiplier: number;
-  interest_rate: number;
-  market_volatility: number;
-  scenario_type: ScenarioType;
-  modality_type: ModalityType;
-}
-
-export interface UserProfile {
-  id: string;
-  supabase_user_id: string;
-  name: string;
-  nickname: string;
-  phone: string;
-  email: string;
-  role: UserRole;
-  is_opal_premium: boolean;
-  created_at: string;
-}
-
-export interface RegionalData {
-  regionId: number;
-  price: number;
-  term: number;
-  marketing: number;
-}
-
-export interface Modality {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url?: string;
-  page_content: {
-    hero: { title: string; subtitle: string };
-    features: string[];
-    kpis: string[];
-    accent_color?: string;
-  };
-}
-
-export interface BusinessPlan {
-  id?: string;
-  championship_id: string;
-  team_id: string;
-  round: number;
-  version: number;
-  data: Record<number, string>;
-  status: 'draft' | 'final';
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
-export interface MenuItemConfig {
-  label: string;
-  path: string;
-  icon?: string;
-  sub?: any[];
-}
-
-export interface AuditLog {
-  user_id: string;
-  changed_at: string;
-  field_path: string;
-  new_value: any;
-}
-
-export interface TeamProgress {
-  team_id: string;
-  team_name: string;
-  status: string;
-  rating: CreditRating;
-  risk: number;
-  insolvent: boolean;
-  master_key_enabled?: boolean;
-  auditLogs: AuditLog[];
-}
-
-export interface ChampionshipTemplate {
-  id: string;
-  name: string;
-  branch: Branch;
-  config?: any;
-}
-
-export interface MachineSpec {
-  model: MachineModel;
-  initial_value: number;
-  production_capacity: number;
-  operators_required: number;
-  depreciation_rate: number; 
-}
-
-export interface InitialMachine {
-  id: string;
-  model: MachineModel;
-  age: number; 
-}
-
-export interface RegionConfig {
-  id: number;
-  name: string;
-  currency: CurrencyType;
-  demand_weight: number; 
-}
-
-export interface DecisionData {
-  judicial_recovery: boolean;
-  regions: Record<number, { 
-    price: number; 
-    term: number; 
-    marketing: number 
-  }>;
-  hr: {
-    hired: number;
-    fired: number;
-    salary: number;
-    trainingPercent: number;
-    participationPercent: number;
-    misc: number;
-    sales_staff_count: number;
-  };
-  production: {
-    purchaseMPA: number;
-    purchaseMPB: number;
-    paymentType: number; 
-    activityLevel: number;
-    extraProductionPercent: number;
-    rd_investment: number;
-  };
-  machinery: {
-    buy: { alfa: number; beta: number; gama: number };
-    sell: { alfa: number; beta: number; gama: number };
-  };
-  finance: {
-    loanRequest: number;
-    loanTerm: number; 
-    application: number;
-  };
-  estimates: {
-    forecasted_revenue: number;
-    forecasted_unit_cost: number;
-    forecasted_net_profit: number;
-  };
-}
-
 export interface MacroIndicators {
   ice: number;
   demand_variation: number;
@@ -187,6 +36,8 @@ export interface MacroIndicators {
   special_purchase_premium: number;
   exchange_rates: Record<CurrencyType, number>; 
   dividend_percent: number;
+  
+  social_charges: number; // TAXA DINÂMICA DE ENCARGOS SOCIAIS
   
   raw_material_a_adjust: number;
   raw_material_b_adjust: number;
@@ -245,6 +96,78 @@ export interface MacroIndicators {
   [key: string]: any;
 }
 
+export interface EcosystemConfig {
+  inflation_rate: number;
+  demand_multiplier: number;
+  interest_rate: number;
+  market_volatility: number;
+  scenario_type: ScenarioType;
+  modality_type: ModalityType;
+}
+
+export interface UserProfile {
+  id: string;
+  supabase_user_id: string;
+  name: string;
+  nickname: string;
+  phone: string;
+  email: string;
+  role: UserRole;
+  is_opal_premium: boolean;
+  created_at: string;
+}
+
+// Add AuditLog to reflect the structure used in TutorDecisionMonitor and Audit Timeline
+export interface AuditLog {
+  user_id: string;
+  changed_at: string;
+  field_path: string;
+  old_value?: any;
+  new_value: any;
+}
+
+export interface DecisionData {
+  judicial_recovery: boolean;
+  regions: Record<number, { 
+    price: number; 
+    term: number; 
+    marketing: number 
+  }>;
+  hr: {
+    hired: number;
+    fired: number;
+    salary: number;
+    trainingPercent: number;
+    participationPercent: number;
+    misc: number;
+    sales_staff_count: number;
+  };
+  production: {
+    purchaseMPA: number;
+    purchaseMPB: number;
+    paymentType: number; 
+    activityLevel: number;
+    extraProductionPercent: number;
+    rd_investment: number;
+  };
+  machinery: {
+    buy: { alfa: number; beta: number; gama: number };
+    sell: { alfa: number; beta: number; gama: number };
+  };
+  finance: {
+    loanRequest: number;
+    loanTerm: number; 
+    application: number;
+  };
+  estimates: {
+    forecasted_revenue: number;
+    forecasted_unit_cost: number;
+    forecasted_net_profit: number;
+  };
+  // Add audit_logs to DecisionData
+  audit_logs?: AuditLog[];
+}
+
 export interface Team { id: string; name: string; championship_id: string; status?: string; invite_code?: string; is_bot?: boolean; master_key_enabled?: boolean; kpis?: KPIs; insolvency_status?: InsolvencyStatus; equity: number; credit_limit: number; }
 export interface KPIs { 
   market_share: number; 
@@ -261,6 +184,27 @@ export interface KPIs {
 export interface ProjectionResult { revenue: number; netProfit: number; debtRatio: number; creditRating: CreditRating; health: any; kpis: KPIs; marketShare?: number; statements: any; }
 export interface AccountNode { id: string; label: string; value: number; type: string; isEditable?: boolean; isReadOnly?: boolean; isTemplateAccount?: boolean; children?: AccountNode[]; }
 export interface BlackSwanEvent { title: string; description: string; impact: string; modifiers: any; }
+
+export interface MachineSpec {
+  model: MachineModel;
+  initial_value: number;
+  production_capacity: number;
+  operators_required: number;
+  depreciation_rate: number; 
+}
+
+export interface InitialMachine {
+  id: string;
+  model: MachineModel;
+  age: number; 
+}
+
+export interface RegionConfig {
+  id: number;
+  name: string;
+  currency: CurrencyType;
+  demand_weight: number; 
+}
 
 export interface Championship { 
   id: string; 
@@ -303,4 +247,75 @@ export interface Championship {
   round_started_at?: string;
   tutor_id?: string;
   dividend_percent?: number;
+}
+
+// FIX: Added missing exported interfaces used by various components
+
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  branch: Branch;
+  description: string;
+  total_rounds: number;
+  regions_count: number;
+  market_indicators: MacroIndicators;
+}
+
+export interface MenuItemConfig {
+  label: string;
+  path: string;
+  id?: string;
+  icon?: string;
+  desc?: string;
+  sub?: MenuItemConfig[];
+}
+
+export interface RegionalData {
+  regionId: number;
+  price: number;
+  term: number;
+  marketing: number;
+}
+
+export interface BusinessPlan {
+  id?: string;
+  championship_id: string;
+  team_id: string;
+  round: number;
+  version: number;
+  data: Record<number, string>;
+  status: 'draft' | 'submitted';
+  created_at?: string;
+}
+
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
+export interface Modality {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  image_url?: string;
+  is_public: boolean;
+  page_content: {
+    hero: { title: string; subtitle: string };
+    features: string[];
+    kpis: string[];
+    accent_color?: string;
+  };
+}
+
+export interface TeamProgress {
+  team_id: string;
+  team_name: string;
+  status: 'sealed' | 'pending' | string;
+  rating: CreditRating;
+  risk: number;
+  insolvent: boolean;
+  master_key_enabled?: boolean;
+  auditLogs?: AuditLog[];
 }
