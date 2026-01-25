@@ -184,7 +184,7 @@ export const INITIAL_FINANCIAL_TREE = {
     }
   ],
   dre: [
-    { id: 'rev', label: 'RECEITA DE VENDAS', value: 3322735, type: 'revenue', isEditable: true, isTemplateAccount: true },
+    { id: 'rev', label: 'RECEITAS BRUTAS DE VENDAS', value: 3322735, type: 'revenue', isEditable: true, isTemplateAccount: true },
     { id: 'cpv', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: -2278180, type: 'expense', isEditable: true, isTemplateAccount: true },
     { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true, children: [] },
     { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -916522, type: 'totalizer', children: [

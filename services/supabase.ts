@@ -12,15 +12,18 @@ const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
+// UUID Reservado para o Sistema em modo No-Auth
+const SYSTEM_TUTOR_ID = '00000000-0000-0000-0000-000000000000';
 const LOCAL_CHAMPS_KEY = 'empirion_v12_arenas';
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
-  if (isTrial || ['admin', 'tutor', 'alpha'].includes(userId)) {
-    const isTutor = isTrial || userId.includes('tutor');
+  // Se for Trial ou IDs reservados, retorna perfil mock
+  if (isTrial || userId === SYSTEM_TUTOR_ID || ['admin', 'tutor', 'alpha'].includes(userId)) {
+    const isTutor = isTrial || userId.includes('tutor') || userId === SYSTEM_TUTOR_ID;
     return {
-      id: userId || 'trial-master-id', 
-      supabase_user_id: userId || 'trial-master-id', 
+      id: userId || SYSTEM_TUTOR_ID, 
+      supabase_user_id: userId || SYSTEM_TUTOR_ID, 
       name: isTutor ? 'Trial Orchestrator' : 'Capitão Alpha Node 08',
       nickname: isTutor ? 'Tutor_Trial' : 'Alpha_Strategist',
       phone: '+5511999990000',
@@ -35,10 +38,6 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   return data;
 };
 
-/**
- * Busca de Campeonatos Refatorada para evitar Erro de Recursão RLS
- * Substitui join select('*, teams(*)') por chamadas separadas.
- */
 export const getChampionships = async (onlyPublic: boolean = false) => {
   const finalArenas: Championship[] = [];
   try {
@@ -47,7 +46,7 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
     const { data: { session } } = await (supabase.auth as any).getSession();
     
-    // 1. Fetch Championships (Sem Joins para evitar recursão de política)
+    // Arenas Oficiais (Exige Auth para tutoria própria, mas anons veem públicas)
     const { data: rawChamps, error: rawErr } = await supabase
       .from('championships')
       .select('*')
@@ -58,19 +57,23 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
     } else if (rawChamps) {
        for (const c of rawChamps) {
           if (!finalArenas.find(a => a.id === c.id)) {
-             // 2. Fetch Teams separately to break RLS loop
              const { data: teamsData } = await supabase.from('teams').select('*').eq('championship_id', c.id);
              finalArenas.push({ ...c, teams: teamsData || [], is_trial: false });
           }
        }
     }
 
-    // 3. Fetch Trial Championships (Processo similar)
-    const trialQuery = session 
-      ? supabase.from('trial_championships').select('*').eq('tutor_id', session.user.id)
-      : supabase.from('trial_championships').select('*').limit(5);
+    // Arenas Trial (Públicas ou do usuário)
+    let trialQuery = supabase.from('trial_championships').select('*');
+    if (session) {
+       // Se logado, tenta pegar as dele ou as globais do sistema
+       trialQuery = trialQuery.or(`tutor_id.eq.${session.user.id},tutor_id.eq.${SYSTEM_TUTOR_ID}`);
+    } else {
+       // Se deslogado, pega apenas as do sistema (anon)
+       trialQuery = trialQuery.eq('tutor_id', SYSTEM_TUTOR_ID);
+    }
 
-    const { data: rawTrials } = await trialQuery;
+    const { data: rawTrials } = await trialQuery.limit(20);
     if (rawTrials) {
        for (const tc of rawTrials) {
           if (!finalArenas.find(a => a.id === tc.id)) {
@@ -93,7 +96,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   const timestamp = new Date().toISOString();
   
   const { data: { session } } = await (supabase.auth as any).getSession();
-  const currentUserId = session?.user?.id;
+  // Se não houver sessão, usa o UUID de sistema para Trial
+  const currentUserId = session?.user?.id || SYSTEM_TUTOR_ID;
 
   const initialShare = 100 / Math.max(teams.length, 1);
 
@@ -140,40 +144,38 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     }
   } as Championship;
 
-  // Persistência Imediata se autenticado
-  if (currentUserId) {
-    const champTable = isTrial ? 'trial_championships' : 'championships';
-    const teamsTable = isTrial ? 'trial_teams' : 'teams';
-    
-    try {
-      const { error: champErr } = await supabase.from(champTable).insert({
-        id: fullChamp.id,
-        name: fullChamp.name,
-        branch: fullChamp.branch,
-        description: fullChamp.description,
-        status: fullChamp.status,
-        current_round: fullChamp.current_round,
-        total_rounds: fullChamp.total_rounds,
-        deadline_value: fullChamp.deadline_value,
-        deadline_unit: fullChamp.deadline_unit,
-        initial_financials: fullChamp.initial_financials,
-        market_indicators: fullChamp.market_indicators,
-        region_names: fullChamp.region_names,
-        region_configs: fullChamp.region_configs,
-        currency: fullChamp.currency,
-        sales_mode: fullChamp.sales_mode,
-        scenario_type: fullChamp.scenario_type,
-        transparency_level: fullChamp.transparency_level,
-        gazeta_mode: fullChamp.gazeta_mode,
-        tutor_id: currentUserId,
-        round_started_at: fullChamp.round_started_at,
-        config: fullChamp.config
-      });
-      if (champErr) throw champErr;
-      await supabase.from(teamsTable).insert(teamsWithIds);
-    } catch (err) {
-      logError(LogContext.SUPABASE, "Cloud Sync Failed during creation", err);
+  const champTable = isTrial ? 'trial_championships' : 'championships';
+  const teamsTable = isTrial ? 'trial_teams' : 'teams';
+  
+  try {
+    const { error: champErr } = await supabase.from(champTable).insert({
+      id: fullChamp.id,
+      name: fullChamp.name,
+      branch: fullChamp.branch,
+      description: fullChamp.description,
+      status: fullChamp.status,
+      current_round: fullChamp.current_round,
+      total_rounds: fullChamp.total_rounds,
+      deadline_value: fullChamp.deadline_value,
+      deadline_unit: fullChamp.deadline_unit,
+      initial_financials: fullChamp.initial_financials,
+      market_indicators: fullChamp.market_indicators,
+      region_names: fullChamp.region_names,
+      region_configs: fullChamp.region_configs,
+      currency: fullChamp.currency,
+      sales_mode: fullChamp.sales_mode,
+      scenario_type: fullChamp.scenario_type,
+      transparency_level: fullChamp.transparency_level,
+      gazeta_mode: fullChamp.gazeta_mode,
+      tutor_id: currentUserId,
+      round_started_at: fullChamp.round_started_at,
+      config: fullChamp.config
+    });
+    if (!champErr) {
+       await supabase.from(teamsTable).insert(teamsWithIds);
     }
+  } catch (err) {
+    logError(LogContext.SUPABASE, "Cloud Sync Failed during creation", err);
   }
 
   const localArenas = JSON.parse(localStorage.getItem(LOCAL_CHAMPS_KEY) || '[]');
@@ -183,10 +185,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
   return { champ: fullChamp, teams: teamsWithIds };
 };
 
-/**
- * Salva Decisões com Auto-Provisionamento de Equipe
- * Resolve Violação de FK (Chave Estrangeira)
- */
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: DecisionData) => {
   try {
     const { data: allArenas } = await getChampionships();
@@ -194,43 +192,60 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
     if (!arena) throw new Error("Arena não localizada no nodo local.");
 
     const isTrial = !!arena.is_trial;
-    const table = isTrial ? 'trial_decisions' : 'current_decisions';
+    const champTable = isTrial ? 'trial_championships' : 'championships';
     const teamsTable = isTrial ? 'trial_teams' : 'teams';
+    const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
 
-    // 1. Sanitização profunda contra NaN
-    const cleanPayload = JSON.parse(JSON.stringify(decisions, (k, v) => (typeof v === 'number' && !isFinite(v)) ? 0 : v));
+    const { data: arenaExists } = await supabase.from(champTable).select('id').eq('id', champId).maybeSingle();
+    if (!arenaExists) {
+      logInfo(LogContext.DATABASE, `Arena ${champId} ausente na Cloud. Sincronizando...`);
+      const { error: arenaErr } = await supabase.from(champTable).insert({
+        id: arena.id,
+        name: arena.name,
+        branch: arena.branch,
+        status: arena.status,
+        current_round: arena.current_round,
+        total_rounds: arena.total_rounds,
+        deadline_value: arena.deadline_value,
+        deadline_unit: arena.deadline_unit,
+        initial_financials: arena.initial_financials,
+        market_indicators: arena.market_indicators,
+        tutor_id: arena.tutor_id || SYSTEM_TUTOR_ID,
+        config: arena.config
+      });
+      if (arenaErr) throw new Error(`Falha ao provisionar Arena: ${arenaErr.message}`);
+    }
 
-    // 2. Garantia de Existência da Equipe (Foreign Key Protection)
     const { data: teamExists } = await supabase.from(teamsTable).select('id').eq('id', teamId).maybeSingle();
-    
     if (!teamExists) {
-      logInfo(LogContext.DATABASE, `Equipe ${teamId} órfã. Provisionando no banco Cloud...`);
       const teamMeta = arena.teams?.find(t => t.id === teamId);
       if (teamMeta) {
-         await supabase.from(teamsTable).insert({
+         const { error: teamErr } = await supabase.from(teamsTable).insert({
            id: teamMeta.id,
            championship_id: arena.id,
            name: teamMeta.name,
            equity: teamMeta.equity || 5055447,
            credit_limit: teamMeta.credit_limit || 5000000,
-           status: 'active'
+           status: 'active',
+           kpis: teamMeta.kpis
          });
+         if (teamErr) throw new Error(`Falha ao provisionar Equipe: ${teamErr.message}`);
       } else {
          throw new Error("Metadados da equipe ausentes para provisionamento.");
       }
     }
 
-    // 3. Operação de Gravação (Check-then-Act)
-    const { data: existingRow } = await supabase.from(table).select('id').eq('team_id', teamId).eq('round', round).maybeSingle();
+    const cleanPayload = JSON.parse(JSON.stringify(decisions, (k, v) => (typeof v === 'number' && !isFinite(v)) ? 0 : v));
+    const { data: existingRow } = await supabase.from(decisionsTable).select('id').eq('team_id', teamId).eq('round', round).maybeSingle();
 
     if (existingRow) {
-      const { error } = await supabase.from(table).update({
+      const { error } = await supabase.from(decisionsTable).update({
         data: cleanPayload,
         updated_at: new Date().toISOString()
       }).eq('id', existingRow.id);
       if (error) throw error;
     } else {
-      const { error } = await supabase.from(table).insert({
+      const { error } = await supabase.from(decisionsTable).insert({
         team_id: teamId,
         championship_id: champId,
         round: round,
@@ -240,7 +255,6 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
       if (error) throw error;
     }
 
-    logInfo(LogContext.DATABASE, `Sinal de Decisão Selado para Equipe: ${teamId.substring(0,8)}`);
     return { success: true };
   } catch (err: any) {
     logError(LogContext.DATABASE, "Decision transmission fault", err.message);
