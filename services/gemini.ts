@@ -75,6 +75,7 @@ export const generateBotDecision = async (
       Gere um objeto JSON de decisões equilibrado mas competitivo. 
       Foque em preço médio de mercado de $370.
       O marketing regional DEVE estar entre 0 e 9.
+      Defina uma meta de lucro líquido realista entre 5% e 15%.
       Não seja conservador demais.`,
       config: {
         responseMimeType: "application/json",
@@ -112,7 +113,8 @@ export const generateBotDecision = async (
                 purchaseMPB: { type: Type.NUMBER },
                 paymentType: { type: Type.NUMBER },
                 activityLevel: { type: Type.NUMBER },
-                rd_investment: { type: Type.NUMBER }
+                rd_investment: { type: Type.NUMBER },
+                net_profit_target_percent: { type: Type.NUMBER }
               }
             },
             finance: {
@@ -180,7 +182,8 @@ export const generateBotDecision = async (
         paymentType: parsed.production?.paymentType || 1,
         activityLevel: parsed.production?.activityLevel || 80,
         rd_investment: parsed.production?.rd_investment || 5000,
-        extraProductionPercent: 0
+        extraProductionPercent: 0,
+        net_profit_target_percent: parsed.production?.net_profit_target_percent || 10.0
       },
       machinery: {
         buy: parsed.finance?.buyMachines || { alfa: 0, beta: 0, gama: 0 },
@@ -203,7 +206,7 @@ export const generateBotDecision = async (
       judicial_recovery: false,
       regions: Object.fromEntries(Array.from({ length: regionCount }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 0 }])),
       hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50, misc: 0 },
-      production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0, extraProductionPercent: 0 },
+      production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0, extraProductionPercent: 0, net_profit_target_percent: 10.0 },
       machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
       finance: { loanRequest: 0, loanTerm: 1, application: 0 },
       estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }

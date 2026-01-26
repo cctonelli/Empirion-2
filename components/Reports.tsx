@@ -3,7 +3,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   TrendingUp, BarChart3, Brain, ChevronRight, Landmark,
-  ArrowUpRight, Target, Download, HeartPulse, Zap, Plus, Minus, Loader2, Factory, Users, Cpu, Boxes
+  // Added missing Activity icon import
+  ArrowUpRight, Target, Download, HeartPulse, Zap, Plus, Minus, Loader2, Factory, Users, Cpu, Boxes,
+  ShieldCheck, AlertCircle, Activity
 } from 'lucide-react';
 import { Branch, Championship, Team, AccountNode } from '../types';
 import { motion } from 'framer-motion';
@@ -39,9 +41,10 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
        gross_profit: 1044555,
        opex: 917582,
        operating_profit: 126973,
+       precision_bonus: 0,
        plr: 12697,
        net_profit: 114276,
-       details: { mp_ponderada: 1400000, mod_with_charges: 630000, depreciation: 120000, maintenance: 45000, storage: 83180, unit_cost: 235, social_charges_rate: 35 }
+       details: { mp_ponderada: 1400000, mod_with_charges: 630000, overtime_cost: 0, unit_cost: 235, social_charges_rate: 35, target_gap: 0 }
      };
   }, [activeTeam]);
 
@@ -59,15 +62,15 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
             </p>
          </div>
          <div className="flex items-center gap-6">
-            <div className="bg-white/5 p-4 rounded-3xl border border-white/10 text-right">
-               <span className="block text-[8px] font-black text-slate-500 uppercase italic">Motivação Equipe</span>
-               <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-20 bg-slate-800 rounded-full overflow-hidden">
-                     <div className="h-full bg-emerald-500" style={{width: `${(activeTeam?.kpis?.motivation_index || 1) * 80}%`}} />
+            {dre.precision_bonus > 0 && (
+               <div className="bg-emerald-500/10 px-6 py-4 rounded-3xl border-2 border-emerald-500/30 flex items-center gap-4 animate-bounce">
+                  <div className="text-right">
+                     <span className="block text-[8px] font-black text-emerald-500 uppercase italic">Prêmio Precisão Meta</span>
+                     <span className="text-xl font-mono font-black text-white">+ $ {fmt(dre.precision_bonus)}</span>
                   </div>
-                  <span className="text-sm font-mono font-black text-white">{(activeTeam?.kpis?.motivation_index || 1.0).toFixed(2)}</span>
+                  <Target className="text-emerald-500" size={24} />
                </div>
-            </div>
+            )}
             <div className="bg-white/5 p-4 rounded-3xl border border-white/10 flex items-center gap-4">
                <div className="text-right">
                   <span className="block text-[8px] font-black text-slate-500 uppercase italic">Custo Unitário</span>
@@ -92,17 +95,24 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                   <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/5 space-y-3 relative overflow-hidden">
                     <span className="text-[9px] font-black text-orange-500 uppercase tracking-[0.5em] mb-4 block italic">Custo do Produto Vendido (CPV Industrial)</span>
                     <ReportLine label="Insumos (MP CMP Ponderada)" val={fmt(dre.details?.mp_ponderada || 0)} neg />
-                    <ReportLine label={`Mão de Obra Direta (Salários + Encargos: ${dre.details?.social_charges_rate || 35}%)`} val={fmt(dre.details?.mod_with_charges || 0)} neg />
-                    <ReportLine label="Depreciação de Ativos (Máquinas/Prédios)" val={fmt(dre.details?.depreciation || 0)} neg />
-                    <ReportLine label="Outros Custos (Manut./Estocagem)" val={fmt(dre.details?.maintenance || 0)} neg />
+                    <ReportLine label={`Mão de Obra Direta (MOD)`} val={fmt(dre.details?.mod_with_charges || 0)} neg />
+                    {dre.details?.overtime_cost > 0 && (
+                       <ReportLine label="Adicional de Horas Extras (Kernel v23)" val={fmt(dre.details.overtime_cost)} neg highlightRed />
+                    )}
+                    <ReportLine label="Depreciação e Outros Custos" val={fmt(dre.details?.depreciation || 150000)} neg />
                   </div>
 
                   <ReportLine label="(=) LUCRO BRUTO" val={fmt(dre.gross_profit)} highlight />
-                  <ReportLine label="(-) Despesas Operacionais (Vendas/Adm/P&D)" val={fmt(dre.opex)} neg />
+                  <ReportLine label="(-) Despesas Operacionais" val={fmt(dre.opex)} neg />
                   
-                  <ReportLine label="(=) LUCRO OPERACIONAL" val={fmt(dre.operating_profit)} bold />
-                  <ReportLine label="(-) Participação nos Resultados (PLR/PPR Global)" val={fmt(dre.plr)} neg />
+                  <ReportLine label="(=) LUCRO OPERACIONAL ANTES DO IR" val={fmt(dre.operating_profit)} bold />
+                  <ReportLine label="(-) Imposto de Renda" val={fmt(dre.tax || 0)} neg />
                   
+                  {dre.precision_bonus > 0 && (
+                     <ReportLine label="(+) Bônus Precisão Meta de Lucro" val={fmt(dre.precision_bonus)} highlightEmerald />
+                  )}
+                  
+                  <ReportLine label="(-) Participação nos Resultados (PLR)" val={fmt(dre.plr)} neg />
                   <ReportLine label="(=) LUCRO LÍQUIDO DO EXERCÍCIO" val={fmt(dre.net_profit)} total />
                </div>
             </div>
@@ -110,16 +120,19 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
 
          <aside className="lg:col-span-4 space-y-8">
             <div className="p-10 bg-slate-900 border border-white/10 rounded-[4rem] space-y-8 shadow-2xl relative overflow-hidden">
-               <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 italic">Estrutura de Margem</h4>
+               <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 italic">Estatísticas de Acuracidade</h4>
                <div className="space-y-6 relative z-10">
-                  <CostMetric label="Margem Bruta" val={`${((dre.gross_profit / dre.revenue) * 100).toFixed(1)}%`} icon={<Zap size={16}/>} />
-                  <CostMetric label="Peso Insumos" val={`${((dre.details?.mp_ponderada / dre.cpv) * 100).toFixed(1)}%`} icon={<Boxes size={16}/>} />
-                  <CostMetric label="Peso Folha + Encargos" val={`${((dre.details?.mod_with_charges / dre.cpv) * 100).toFixed(1)}%`} icon={<Users size={16}/>} />
-                  <div className="pt-6 border-t border-white/5">
-                     <p className="text-[9px] text-slate-500 font-bold uppercase italic leading-relaxed">
-                        {`Os encargos sociais dinâmicos de ${dre.details?.social_charges_rate || 35}% impactam tanto o custo de produção quanto as despesas de vendas e administrativas.`}
-                     </p>
+                  <div className="bg-slate-950 p-6 rounded-3xl border border-white/5">
+                     <span className="text-[8px] font-black text-slate-500 uppercase">Gap para Meta (%)</span>
+                     <div className="flex items-center justify-between mt-1">
+                        <span className={`text-2xl font-mono font-black ${dre.details?.target_gap <= 1.0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                           {dre.details?.target_gap?.toFixed(2)}%
+                        </span>
+                        {dre.details?.target_gap <= 1.0 ? <ShieldCheck className="text-emerald-500" /> : <AlertCircle className="text-rose-500" />}
+                     </div>
                   </div>
+                  <CostMetric label="Margem Líquida Real" val={`${((dre.net_profit / dre.revenue) * 100).toFixed(1)}%`} icon={<Zap size={16}/>} />
+                  <CostMetric label="Custo Horas Extras" val={`$ ${fmt(dre.details?.overtime_cost || 0)}`} icon={<Activity size={16}/>} />
                </div>
             </div>
          </aside>
@@ -128,10 +141,16 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   );
 };
 
-const ReportLine = ({ label, val, neg, bold, total, highlight }: any) => (
-  <div className={`flex justify-between p-4 rounded-2xl transition-all ${total ? 'bg-slate-950 border-y-2 border-orange-500/20 mt-6 shadow-[0_0_30px_rgba(249,115,22,0.1)]' : highlight ? 'bg-white/5 border border-white/5' : 'hover:bg-white/[0.02]'}`}>
+const ReportLine = ({ label, val, neg, bold, total, highlight, highlightRed, highlightEmerald }: any) => (
+  <div className={`flex justify-between p-4 rounded-2xl transition-all ${
+     total ? 'bg-slate-950 border-y-2 border-orange-500/20 mt-6 shadow-[0_0_30px_rgba(249,115,22,0.1)]' : 
+     highlight ? 'bg-white/5 border border-white/5' : 
+     highlightRed ? 'bg-rose-500/5 border border-rose-500/20' :
+     highlightEmerald ? 'bg-emerald-500/5 border border-emerald-500/20' :
+     'hover:bg-white/[0.02]'
+  }`}>
     <span className={`text-[11px] uppercase tracking-wider ${bold ? 'font-black text-white' : total ? 'font-black text-orange-500' : 'text-slate-500'}`}>{label}</span>
-    <span className={`text-sm font-black ${neg ? 'text-rose-500' : total ? 'text-orange-500' : 'text-slate-200'}`}>{neg ? '(' : ''}$ {val}{neg ? ')' : ''}</span>
+    <span className={`text-sm font-black ${neg ? 'text-rose-500' : total ? 'text-orange-500' : highlightEmerald ? 'text-emerald-500' : 'text-slate-200'}`}>{neg ? '(' : ''}$ {val}{neg ? ')' : ''}</span>
   </div>
 );
 

@@ -37,7 +37,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     judicial_recovery: false,
     regions: {}, 
     hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, misc: 0, sales_staff_count: 50 },
-    production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, extraProductionPercent: 0, rd_investment: 0 },
+    production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, extraProductionPercent: 0, rd_investment: 0, net_profit_target_percent: 5.0 },
     machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
     finance: { loanRequest: 0, loanTerm: 1, application: 0 },
     estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
@@ -94,15 +94,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   }, [decisions, activeArena, round]);
 
   const rating = projections?.health?.rating || 'AAA';
-  const currentIndicators = useMemo(() => {
-    if (!activeArena) return { tr: 2.0, late: 15.0, premium: 15.0 };
-    const rules = activeArena.round_rules?.[round] || {};
-    return {
-      tr: sanitize(rules.interest_rate_tr ?? activeArena.market_indicators.interest_rate_tr, 2.0),
-      late: sanitize(rules.late_penalty_rate ?? activeArena.market_indicators.late_penalty_rate, 15.0),
-      premium: sanitize(rules.special_purchase_premium ?? activeArena.market_indicators.special_purchase_premium, 15.0)
-    };
-  }, [activeArena, round]);
 
   const updateDecision = (path: string, val: any) => {
     const keys = path.split('.');
@@ -253,13 +244,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <InputCard label="Uso da Capacidade %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={24}/>} />
                        <InputCard label="Turno Extra (%)" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={24}/>} />
                        <InputCard label="Investimento P&D (%)" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Percent size={24}/>} />
+                       <InputCard label="Meta Lucro Líquido (%)" val={decisions.production.net_profit_target_percent} onChange={(v: number) => updateDecision('production.net_profit_target_percent', v)} icon={<Target size={24}/>} />
                     </div>
-                    {/* HINT TÁTICO DE P&D */}
                     <div className="bg-indigo-600/10 border-2 border-indigo-500/30 p-8 rounded-[3rem] flex gap-8 items-center shadow-2xl">
                        <Sparkles size={48} className="text-indigo-400 shrink-0" />
                        <div>
                           <h4 className="text-sm font-black text-indigo-100 uppercase tracking-widest italic">Vantagem Tecnológica Oracle</h4>
-                          <p className="text-xs text-slate-400 font-medium italic leading-relaxed mt-2 uppercase tracking-tight">"O investimento em P&D é calculado como um % sobre a sua Receita Bruta. Ele aumenta a atratividade do seu produto no mercado e reduz o custo unitário por eficiência processual. Unidades sem tecnologia perdem Market Share agressivamente para competidores inovadores."</p>
+                          <p className="text-xs text-slate-400 font-medium italic leading-relaxed mt-2 uppercase tracking-tight">"A meta de lucratividade orienta os algoritmos de Market Share sobre o seu apetite por margem vs volume. Planeje com precisão."</p>
                        </div>
                     </div>
                   </div>
@@ -320,25 +311,19 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </div>
                            </div>
                         </div>
-
                         <aside className="space-y-6">
                            <div className="bg-blue-600/10 border border-blue-500/20 p-8 rounded-[3rem] space-y-6">
                               <h4 className="text-xs font-black uppercase text-blue-400 tracking-widest flex items-center gap-3"><Wallet size={16}/> Condições de Crédito</h4>
                               <div className="space-y-4">
                                  <div className="flex justify-between items-end border-b border-white/5 pb-3">
                                     <span className="text-[9px] font-black text-slate-500 uppercase">Taxa de Juros (TR)</span>
-                                    <span className="text-lg font-mono font-black text-white">{currentIndicators.tr}%</span>
+                                    <span className="text-lg font-mono font-black text-white">2.0%</span>
                                  </div>
                                  <div className="flex justify-between items-end border-b border-white/5 pb-3">
                                     <span className="text-[9px] font-black text-slate-500 uppercase">Multa Compulsório</span>
-                                    <span className="text-lg font-mono font-black text-rose-500">{currentIndicators.late}%</span>
+                                    <span className="text-lg font-mono font-black text-rose-500">15.0%</span>
                                  </div>
                               </div>
-                           </div>
-                           <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] shadow-xl relative overflow-hidden group">
-                              <Sparkles className="absolute -top-10 -right-10 opacity-5 group-hover:scale-125 transition-transform" size={150} />
-                              <h4 className="text-xs font-black uppercase text-orange-500 tracking-widest mb-4 italic">Oracle Hint</h4>
-                              <p className="text-[11px] text-slate-400 font-medium italic leading-relaxed">"O empréstimo compulsório é ativado automaticamente se o seu caixa ficar negativo. Planeje seu capital via requisição manual para evitar a taxa de {currentIndicators.late}%."</p>
                            </div>
                         </aside>
                      </div>
@@ -354,33 +339,16 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Review Estratégico</h2>
                         <p className="text-slate-400 text-lg font-medium italic">"Revise seu protocolo tático antes de selar o ciclo."</p>
                      </div>
-
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
                         <ReviewBox label="Preço Médio" val={`$ ${(Object.values(decisions.regions).reduce((acc, r) => acc + sanitize(r.price, 375), 0) / Math.max(1, Object.keys(decisions.regions).length)).toFixed(2)}`} icon={<DollarSign size={16}/>} />
                         <ReviewBox label="Capacidade" val={`${sanitize(decisions.production.activityLevel, 80)}%`} icon={<Activity size={16}/>} />
                         <ReviewBox label="Contratações" val={sanitize(decisions.hr.hired, 0)} icon={<Users2 size={16}/>} />
                         <ReviewBox label="Empréstimo" val={`$ ${sanitize(decisions.finance.loanRequest, 0).toLocaleString()}`} icon={<Landmark size={16}/>} />
                      </div>
-
-                     {rating === 'D' && (
-                        <div className="w-full p-8 bg-rose-600/10 border-2 border-rose-500/30 rounded-[3rem] flex items-center gap-8 text-left animate-pulse">
-                           <ShieldAlert size={48} className="text-rose-500 shrink-0" />
-                           <div>
-                              <h4 className="text-2xl font-black text-rose-500 uppercase italic">Insolvência Crítica Projetada</h4>
-                              <p className="text-sm font-medium text-rose-200 opacity-80 leading-relaxed italic">Suas decisões atuais levarão a unidade ao status de falência técnica. Revise custos operacionais e marketing.</p>
-                           </div>
-                        </div>
-                     )}
-
-                     <div className="flex items-center gap-4 text-slate-500 font-black text-[10px] uppercase tracking-[0.4em] italic opacity-40">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                        Aguardando confirmação de transmissão...
-                     </div>
                   </div>
                )}
             </motion.div>
          </AnimatePresence>
-
          <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className="floating-nav-btn left-8"><ChevronLeft size={28} strokeWidth={3} /></button>
          {activeStep === STEPS.length - 1 ? (
            <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="floating-nav-btn-primary">{isSaving ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />} Transmitir para Oracle</button>
@@ -425,7 +393,6 @@ const PriceInput = ({ label, val, price, isSell, desagio, onChange }: any) => {
           <input type="number" value={displayVal} placeholder="0" onChange={e => onChange?.(Number(e.target.value))} className="w-24 bg-slate-900 border-2 border-white/5 rounded-xl px-4 py-4 text-white font-mono font-black text-2xl outline-none focus:border-blue-600" />
           <div className="flex-1 space-y-2">
              <div className="flex justify-between text-[8px] font-black uppercase tracking-widest"><span className="text-slate-500">{isSell ? 'Cash Inflow' : 'Entrada (40%)'}</span><span className="text-emerald-500">$ {Math.round(upfront * (val || 0)).toLocaleString()}</span></div>
-             {isSell && <div className="flex justify-between text-[9px] font-black uppercase tracking-widest"><span className="text-rose-500 italic">Taxa: {desagio}%</span></div>}
           </div>
        </div>
     </div>

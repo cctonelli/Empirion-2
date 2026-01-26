@@ -6,8 +6,10 @@ import { calculateProjections, calculateAttractiveness, sanitize } from './simul
 import { logError, logInfo, LogContext } from '../utils/logger';
 import { generateBotDecision } from './gemini';
 
-const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
-const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
+// Proteção para ambientes onde import.meta.env pode estar indefinido e fallback para chaves obrigatórias
+const env = (import.meta as any)?.env || {};
+const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
+const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrbWpsZWplcW5kZmR2eHh2dXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODk3MzgsImV4cCI6MjA4Mjc2NTczOH0.QD3HK_ggQJb8sQHBJSIA2ARhh9Vz8v-qTkh2tQyKLis';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;

@@ -199,7 +199,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     
                     <div className="space-y-2">
                        <WizardField label="TOTAL DE ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
-                       {/* Fix: changed total_rounds to totalRounds to match formData state definition */}
                        {formData.totalRounds >= 12 && <p className="text-[10px] font-black text-rose-500 uppercase italic ml-4 animate-pulse">MÁXIMO DE 12 PERÍODOS</p>}
                     </div>
                     

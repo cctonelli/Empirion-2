@@ -37,8 +37,8 @@ export interface MacroIndicators {
   exchange_rates: Record<CurrencyType, number>; 
   dividend_percent: number;
   
-  social_charges: number; // TAXA DINÂMICA DE ENCARGOS SOCIAIS
-  production_hours_period: number; // CARGA HORÁRIA NOMINAL
+  social_charges: number; 
+  production_hours_period: number; // HORAS PRODUÇÃO/HOMEM
   
   raw_material_a_adjust: number;
   raw_material_b_adjust: number;
@@ -118,7 +118,6 @@ export interface UserProfile {
   created_at: string;
 }
 
-// Add AuditLog to reflect the structure used in TutorDecisionMonitor and Audit Timeline
 export interface AuditLog {
   user_id: string;
   changed_at: string;
@@ -150,6 +149,7 @@ export interface DecisionData {
     activityLevel: number;
     extraProductionPercent: number;
     rd_investment: number;
+    net_profit_target_percent: number; // META LUCRO LÍQUIDO (%)
   };
   machinery: {
     buy: { alfa: number; beta: number; gama: number };
@@ -165,7 +165,6 @@ export interface DecisionData {
     forecasted_unit_cost: number;
     forecasted_net_profit: number;
   };
-  // Add audit_logs to DecisionData
   audit_logs?: AuditLog[];
 }
 
@@ -249,8 +248,6 @@ export interface Championship {
   tutor_id?: string;
   dividend_percent?: number;
 }
-
-// FIX: Added missing exported interfaces used by various components
 
 export interface ChampionshipTemplate {
   id: string;
