@@ -43,7 +43,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [baseIndicators, setBaseIndicators] = useState<MacroIndicators>({
     ...DEFAULT_MACRO,
     exchange_rates: { BRL: 1, USD: 5.2, EUR: 5.5, GBP: 6.2 },
-    social_charges: 35.0 // Garantindo base 35%
+    social_charges: 35.0,
+    special_purchase_premium: 15.0 // Garantindo default 15%
   });
 
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
@@ -319,7 +320,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <div className="grid grid-cols-1 gap-6">
                           <WizardField label="MP-A ($)" type="number" val={baseIndicators.prices.mp_a} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_a: parseFloat(v)}})} />
                           <WizardField label="MP-B ($)" type="number" val={baseIndicators.prices.mp_b} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_b: parseFloat(v)}})} />
-                          <WizardField label="Ágio Compras Esp. (%)" type="number" val={baseIndicators.special_purchase_premium} onChange={(v:any)=>setBaseIndicators({...baseIndicators, special_purchase_premium: parseFloat(v)})} />
                           <div className="grid grid-cols-2 gap-6">
                              <WizardField label="Estocagem MP ($)" type="number" step="0.1" val={baseIndicators.prices.storage_mp || 1.40} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_mp: parseFloat(v)}})} />
                              <WizardField label="Estocagem PROD ($)" type="number" val={baseIndicators.prices.storage_finished || 20.00} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_finished: parseFloat(v)}})} />
@@ -429,6 +429,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="IMPOSTO DE RENDA (%)" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="DESÁGIO VENDA MÁQ. (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             
+                             <CompactMatrixRow periods={totalPeriods} label="ÁGIO COMPRAS EXTRAS (%)" macroKey="special_purchase_premium" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
                              
                              <CompactMatrixRow periods={totalPeriods} label="ENCARGOS SOCIAIS (%)" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
 

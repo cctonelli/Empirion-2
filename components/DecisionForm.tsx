@@ -7,7 +7,8 @@ import {
   TrendingUp, Landmark, Cloud, HardDrive, AlertCircle, 
   ShieldAlert, Gavel, Trash2, ShoppingCart, Info, Award,
   Zap, HelpCircle, ArrowUpCircle, ArrowDownCircle, MapPin,
-  Layers, Copy, CheckCircle2, ChevronLeft, Wallet, PieChart, TrendingDown
+  Layers, Copy, CheckCircle2, ChevronLeft, Wallet, PieChart, TrendingDown,
+  Percent
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections, sanitize } from '../services/simulation';
@@ -251,14 +252,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <SelectCard label="Fluxo Pagamento Fornecedor" val={decisions.production.paymentType} onChange={(v: number) => updateDecision('production.paymentType', v)} options={[{v:0,l:'À VISTA'},{v:1,l:'50/50'},{v:2,l:'33/33/33'}]} icon={<DollarSign size={24}/>} />
                        <InputCard label="Uso da Capacidade %" val={decisions.production.activityLevel} onChange={(v: number) => updateDecision('production.activityLevel', v)} icon={<Activity size={24}/>} />
                        <InputCard label="Turno Extra (%)" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={24}/>} />
-                       <InputCard label="Investimento P&D ($)" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Cpu size={24}/>} />
+                       <InputCard label="Investimento P&D (%)" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Percent size={24}/>} />
                     </div>
                     {/* HINT TÁTICO DE P&D */}
                     <div className="bg-indigo-600/10 border-2 border-indigo-500/30 p-8 rounded-[3rem] flex gap-8 items-center shadow-2xl">
                        <Sparkles size={48} className="text-indigo-400 shrink-0" />
                        <div>
                           <h4 className="text-sm font-black text-indigo-100 uppercase tracking-widest italic">Vantagem Tecnológica Oracle</h4>
-                          <p className="text-xs text-slate-400 font-medium italic leading-relaxed mt-2 uppercase tracking-tight">"O investimento em P&D aumenta a atratividade do seu produto no mercado e reduz o custo unitário por eficiência processual. Unidades sem tecnologia perdem Market Share agressivamente para competidores inovadores."</p>
+                          <p className="text-xs text-slate-400 font-medium italic leading-relaxed mt-2 uppercase tracking-tight">"O investimento em P&D é calculado como um % sobre a sua Receita Bruta. Ele aumenta a atratividade do seu produto no mercado e reduz o custo unitário por eficiência processual. Unidades sem tecnologia perdem Market Share agressivamente para competidores inovadores."</p>
                        </div>
                     </div>
                   </div>
