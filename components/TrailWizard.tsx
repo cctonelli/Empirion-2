@@ -44,7 +44,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     ...DEFAULT_MACRO,
     exchange_rates: { BRL: 1, USD: 5.2, EUR: 5.5, GBP: 6.2 },
     social_charges: 35.0,
-    special_purchase_premium: 15.0 // Garantindo default 15%
+    special_purchase_premium: 15.0,
+    production_hours_period: 946
   });
 
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
@@ -198,6 +199,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     
                     <div className="space-y-2">
                        <WizardField label="TOTAL DE ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
+                       {/* Fix: changed total_rounds to totalRounds to match formData state definition */}
                        {formData.totalRounds >= 12 && <p className="text-[10px] font-black text-rose-500 uppercase italic ml-4 animate-pulse">MÁXIMO DE 12 PERÍODOS</p>}
                     </div>
                     
@@ -240,8 +242,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <div className="space-y-8 bg-white/5 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Configuração do Cluster</h4>
                        <div className="grid grid-cols-2 gap-8">
-                          <WizardField label="Nº Equipes Humanas" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
-                          <WizardField label="Nº Equipes Bots)" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
+                          <WizardField label="Nº EQUIPES HUMANAS" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
+                          <WizardField label="Nº EQUIPES BOTS)" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
                        </div>
                     </div>
                     <div className="space-y-4">
@@ -272,7 +274,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        </div>
                     </div>
                     <div className="flex gap-4">
-                       <WizardField label="Total de Regiões" type="number" val={formData.regionsCount} onChange={(v:any)=>setFormData({...formData, regionsCount: Math.min(15, Math.max(1, parseInt(v)))})} />
+                       <WizardField label="TOTAL DE REGIÕES" type="number" val={formData.regionsCount} onChange={(v:any)=>setFormData({...formData, regionsCount: Math.min(15, Math.max(1, parseInt(v)))})} />
                        <button onClick={normalizeWeights} className="px-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all self-end mb-1">Auto-Balancear</button>
                     </div>
                  </div>
@@ -321,8 +323,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <WizardField label="MP-A ($)" type="number" val={baseIndicators.prices.mp_a} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_a: parseFloat(v)}})} />
                           <WizardField label="MP-B ($)" type="number" val={baseIndicators.prices.mp_b} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, mp_b: parseFloat(v)}})} />
                           <div className="grid grid-cols-2 gap-6">
-                             <WizardField label="Estocagem MP ($)" type="number" step="0.1" val={baseIndicators.prices.storage_mp || 1.40} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_mp: parseFloat(v)}})} />
-                             <WizardField label="Estocagem PROD ($)" type="number" val={baseIndicators.prices.storage_finished || 20.00} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_finished: parseFloat(v)}})} />
+                             <WizardField label="ESTOCAGEM MP ($)" type="number" step="0.1" val={baseIndicators.prices.storage_mp || 1.40} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_mp: parseFloat(v)}})} />
+                             <WizardField label="ESTOCAGEM PA ($)" type="number" val={baseIndicators.prices.storage_finished || 20.00} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, storage_finished: parseFloat(v)}})} />
                           </div>
                        </div>
                     </div>
@@ -330,18 +332,18 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <div className="space-y-8 bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/5 shadow-2xl transition-all hover:border-blue-500/20">
                        <h4 className="text-xl font-black text-blue-400 uppercase tracking-[0.4em] flex items-center gap-4 italic border-b border-white/5 pb-6"><Cpu size={28}/> ATIVOS & CAPEX</h4>
                        <div className="grid grid-cols-1 gap-6">
-                          <WizardField label="Máquina ALFA ($)" type="number" val={baseIndicators.machinery_values.alfa} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, alfa: parseFloat(v)}})} />
-                          <WizardField label="Máquina BETA ($)" type="number" val={baseIndicators.machinery_values.beta} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, beta: parseFloat(v)}})} />
-                          <WizardField label="Máquina GAMA ($)" type="number" val={baseIndicators.machinery_values.gama} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, gama: parseFloat(v)}})} />
+                          <WizardField label="MÁQUINA ALFA ($)" type="number" val={baseIndicators.machinery_values.alfa} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, alfa: parseFloat(v)}})} />
+                          <WizardField label="MÁQUINA BETA ($)" type="number" val={baseIndicators.machinery_values.beta} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, beta: parseFloat(v)}})} />
+                          <WizardField label="MÁQUINA GAMA ($)" type="number" val={baseIndicators.machinery_values.gama} onChange={(v:any)=>setBaseIndicators({...baseIndicators, machinery_values: {...baseIndicators.machinery_values, gama: parseFloat(v)}})} />
                        </div>
                     </div>
 
                     <div className="space-y-8 bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/5 shadow-2xl transition-all hover:border-orange-500/20">
                        <h4 className="text-xl font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-4 italic border-b border-white/5 pb-6"><ShoppingCart size={28}/> MERCADO</h4>
                        <div className="grid grid-cols-1 gap-6">
-                          <WizardField label="Preço Venda Médio ($)" type="number" val={baseIndicators.avg_selling_price || 340} onChange={(v:any)=>setBaseIndicators({...baseIndicators, avg_selling_price: parseFloat(v)})} />
-                          <WizardField label="Distribuição Unit. ($)" type="number" val={baseIndicators.prices.distribution_unit || 50} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, distribution_unit: parseFloat(v)}})} />
-                          <WizardField label="Campanha Marketing ($)" type="number" val={baseIndicators.prices.marketing_campaign || 10000} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
+                          <WizardField label="PREÇO MÉDIO VENDAS ($)" type="number" val={baseIndicators.avg_selling_price || 340} onChange={(v:any)=>setBaseIndicators({...baseIndicators, avg_selling_price: parseFloat(v)})} />
+                          <WizardField label="DISTRIBUIÇÃO UNIT. ($)" type="number" val={baseIndicators.prices.distribution_unit || 50} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, distribution_unit: parseFloat(v)}})} />
+                          <WizardField label="CAMPANHA MARKETING ($)" type="number" val={baseIndicators.prices.marketing_campaign || 10000} onChange={(v:any)=>setBaseIndicators({...baseIndicators, prices: {...baseIndicators.prices, marketing_campaign: parseFloat(v)}})} />
                        </div>
                     </div>
                  </div>
@@ -352,8 +354,9 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <h4 className="text-2xl font-black text-indigo-400 uppercase tracking-[0.4em] flex items-center gap-6 italic border-b border-white/5 pb-8"><Briefcase size={32}/> STAFFING & PAYROLL</h4>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                           <div className="space-y-6">
-                             <WizardField label="Salário Base P00 ($)" type="number" val={baseIndicators.hr_base.salary || 1300} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
-                             <p className="text-xs text-slate-500 italic font-medium leading-relaxed">"O salário base afeta todos os níveis operacionais. Reajustes impactam o CPV diretamente."</p>
+                             <WizardField label="SALÁRIO BASE P00 ($)" type="number" val={baseIndicators.hr_base.salary || 1300} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
+                             <WizardField label="HORAS PRODUÇÃO/HOMEM" type="number" val={baseIndicators.production_hours_period} onChange={(v:any)=>setBaseIndicators({...baseIndicators, production_hours_period: parseInt(v)})} />
+                             <p className="text-xs text-slate-500 italic font-medium leading-relaxed">"A carga horária impacta diretamente o cálculo de horas extras caso a produtividade supere 100%."</p>
                           </div>
                           <div className="space-y-4">
                              <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-2 block italic">Distribuição de Headcount</span>
@@ -385,9 +388,9 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <div className="space-y-8 bg-orange-600/10 p-12 rounded-[4rem] border-2 border-orange-500/20 shadow-[0_0_80px_rgba(249,115,22,0.1)] transition-all hover:bg-orange-600/15">
                        <h4 className="text-2xl font-black text-orange-400 uppercase tracking-[0.4em] flex items-center gap-6 italic border-b border-orange-500/10 pb-8"><Award size={32}/> PREMIAÇÕES POR PRECISÃO</h4>
                        <div className="grid grid-cols-1 gap-8">
-                          <WizardField label="Prêmio: Custo Unitário ($)" type="number" val={baseIndicators.award_values.cost_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, cost_precision: parseFloat(v)}})} />
-                          <WizardField label="Prêmio: Faturamento ($)" type="number" val={baseIndicators.award_values.revenue_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, revenue_precision: parseFloat(v)}})} />
-                          <WizardField label="Prêmio: Lucro Líquido ($)" type="number" val={baseIndicators.award_values.profit_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, profit_precision: parseFloat(v)}})} />
+                          <WizardField label="PRÊMIO: Custo Unitário ($)" type="number" val={baseIndicators.award_values.cost_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, cost_precision: parseFloat(v)}})} />
+                          <WizardField label="PRÊMIO: Faturamento ($)" type="number" val={baseIndicators.award_values.revenue_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, revenue_precision: parseFloat(v)}})} />
+                          <WizardField label="PRÊMIO: Lucro Líquido ($)" type="number" val={baseIndicators.award_values.profit_precision} onChange={(v:any)=>setBaseIndicators({...baseIndicators, award_values: {...baseIndicators.award_values, profit_precision: parseFloat(v)}})} />
                        </div>
                     </div>
                  </div>
@@ -426,11 +429,11 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="JUROS MÉDIOS DE VENDAS" macroKey="sales_interest_rate" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="IMPOSTO DE RENDA (%)" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="DESÁGIO VENDA MÁQ. (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="ÁGIO COMPRAS ESPECIAIS (%)" macroKey="special_purchase_premium" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="ENCARGOS SOCIAIS (%)" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="IMPOSTO DE RENDA" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="MULTA POR ATRASOS" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="DESÁGIO VENDA MÁQUINAS" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="ÁGIO COMPRAS ESPECIAIS" macroKey="special_purchase_premium" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="ENCARGOS SOCIAIS" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="MATÉRIAS-PRIMAS" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="MÁQUINA ALFA" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="MÁQUINA BETA" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />

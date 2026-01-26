@@ -38,6 +38,7 @@ export interface MacroIndicators {
   dividend_percent: number;
   
   social_charges: number; // TAXA DINÂMICA DE ENCARGOS SOCIAIS
+  production_hours_period: number; // CARGA HORÁRIA NOMINAL
   
   raw_material_a_adjust: number;
   raw_material_b_adjust: number;
