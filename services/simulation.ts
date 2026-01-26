@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v23.5 - PRECISION AWARDS & OVERTIME KERNEL
+ * CORE ORACLE ENGINE v24.1 - TAX REGIME & CASH FLOW KERNEL
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -32,142 +32,106 @@ export const calculateProjections = (
       return value;
   }));
 
-  const bs = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
-  const prevEquity = sanitize(bs.equity?.total, 5055447);
+  // Recuperação de Estado Anterior (Balanço e DRE)
+  const prevBS = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
+  const prevEquity = sanitize(prevBS.equity?.total, 5055447);
+  const prevTaxProvision = sanitize(prevBS.liabilities?.current_taxes || 13045); // Valor a ser pago neste round
+
   const roundOverride = roundRules?.[currentRound] || {};
   const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...roundOverride };
 
-  // 0. CONFIGURAÇÕES TRIBUTÁRIAS E MACRO
+  // 0. CONFIGURAÇÕES TRIBUTÁRIAS
   const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
   const socialChargesFactor = 1 + socialChargesRate;
-  const nominalHours = sanitize(indicators.production_hours_period, 946);
+  const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
 
-  // 1. ESTRUTURA DE STAFFING (Headcount Fixo v23)
+  // 1. GESTÃO DE PESSOAL E CUSTOS FIXOS
   const staffProd = sanitize(indicators.staffing.production.count, 470);
-  const staffAdmin = 20; 
-  const staffSales = 10; 
-
-  // 2. GESTÃO DE TALENTOS E PRODUTIVIDADE
   const salaryDecided = sanitize(safeDecisions.hr.salary, 1313);
-  const marketAvgSalary = sanitize(indicators.avg_selling_price * 4, 1350); 
-  const salaryRatio = salaryDecided / marketAvgSalary;
-  const trainingEffect = sanitize(safeDecisions.hr.trainingPercent, 0) / 100;
-  
-  let motivationIndex = Math.min(1.2, (salaryRatio * 0.7) + (trainingEffect * 0.3));
-  const productivityFactor = sanitize(indicators.labor_productivity, 1.0) * (motivationIndex > 0.8 ? 1.05 : motivationIndex);
+  const modPayrollBase = salaryDecided * staffProd;
 
-  // 3. CÁLCULO DE FOLHA E HORAS EXTRAS
-  const adminPayroll = salaryDecided * 4 * staffAdmin;
-  const salesPayroll = salaryDecided * 4 * staffSales;
-  const modPayrollBase = salaryDecided * 1 * staffProd;
-
-  let overtimeCost = 0;
-  let extraHoursTotal = 0;
-  // Regra: Se a produção exigida ultrapassa a capacidade nominal (Produtividade > 1.0)
-  if (productivityFactor > 1.0) {
-    extraHoursTotal = Math.ceil((nominalHours * productivityFactor) - nominalHours);
-    const hourlyRateNormal = modPayrollBase / (staffProd * nominalHours);
-    // Adicional de 50% (1.5x)
-    overtimeCost = extraHoursTotal * 1.5 * hourlyRateNormal * staffProd;
-  }
-
-  const firedCount = sanitize(safeDecisions.hr.fired, 0);
-  const indemnificationCost = (salaryDecided * 2) * firedCount;
-  const basePayrollWithCharges = (adminPayroll + salesPayroll + modPayrollBase + overtimeCost + indemnificationCost) * socialChargesFactor;
-
-  // 4. PRODUÇÃO E CUSTOS DIRETOS
-  const baseCapacity = 10000;
+  // 2. PRODUÇÃO E CPV
   const activityLevel = sanitize(safeDecisions.production.activityLevel, 80) / 100;
-  const unitsToProduce = baseCapacity * productivityFactor * activityLevel;
+  const unitsProduced = 10000 * sanitize(indicators.labor_productivity, 1.0) * activityLevel;
+  
+  const totalMPCost = (unitsProduced * 3 * sanitize(indicators.prices.mp_a, 20)) + (unitsProduced * 2 * sanitize(indicators.prices.mp_b, 40));
+  const productionCost = totalMPCost + (modPayrollBase * socialChargesFactor) + 150000; // + Depreciação fixa
+  const unitCost = productionCost / Math.max(unitsProduced, 1);
 
-  const marketPriceMPA = sanitize(indicators.prices.mp_a, 20);
-  const marketPriceMPB = sanitize(indicators.prices.mp_b, 40);
-  const totalMPCost = (unitsToProduce * 3 * marketPriceMPA) + (unitsToProduce * 2 * marketPriceMPB);
-
-  const depTotal = 150000; // Simplificado para o Oracle Kernel
-  const maintenanceCost = 50000 * (0.5 + activityLevel);
-  const totalProductionCost = totalMPCost + (modPayrollBase + overtimeCost + (indemnificationCost * 0.7)) * socialChargesFactor + depTotal + maintenanceCost;
-  const unitCostRound = totalProductionCost / Math.max(unitsToProduce, 1);
-
-  // 5. MERCADO E VENDAS (SIMULAÇÃO DE DEMANDA REGIONAL)
+  // 3. VENDAS E RECEITA
   const teamsCount = Math.max(championshipData?.teams?.length || 1, 1);
-  const totalMarketDemand = (baseCapacity * teamsCount) * (1 + sanitize(indicators.ice, 3)/100);
-  let unitsSoldTotal = 0;
-  let totalRevenueReal = 0;
-  
-  const regions = championshipData?.region_configs || [{ id: 1, demand_weight: 100, currency: 'BRL' as CurrencyType }];
-  regions.forEach(reg => {
-    const regDec = safeDecisions.regions[reg.id] || { price: 375, marketing: 0, term: 1 };
-    const priceFactor = Math.pow(370 / Math.max(regDec.price, 100), 1.6);
-    const regionalDemand = (totalMarketDemand * (reg.demand_weight/100)) / teamsCount;
-    const sold = Math.min(regionalDemand * priceFactor * (1 + regDec.marketing * 0.05), regionalDemand);
-    unitsSoldTotal += sold;
-    totalRevenueReal += sold * regDec.price;
-  });
+  const marketDemand = (10000 * teamsCount) * (1 + sanitize(indicators.ice, 3)/100);
+  const myShare = forcedShare || (100 / teamsCount);
+  const unitsSold = Math.min(unitsProduced, (marketDemand * (myShare/100)));
+  const avgPrice = sanitize(Object.values(safeDecisions.regions)[0]?.price, 375);
+  const revenue = unitsSold * avgPrice;
 
-  const finalUnitsSold = Math.min(unitsSoldTotal, unitsToProduce);
-  const finalRevenue = totalRevenueReal * (finalUnitsSold / Math.max(unitsSoldTotal, 1));
-
-  // 6. RESULTADO LÍQUIDO E REGRA DE PRECISÃO (AWARDS)
-  const opex = (adminPayroll + salesPayroll + (indemnificationCost * 0.3)) * socialChargesFactor + 350000;
-  const cpv = finalUnitsSold * unitCostRound;
-  const operatingProfit = finalRevenue - cpv - opex;
+  // 4. DRE TÁTICO - CÁLCULO DO LAIR E IR
+  const cpv = unitsSold * unitCost;
+  const grossProfit = revenue - cpv;
+  const opex = (salaryDecided * 30 * 4) * socialChargesFactor + 350000; // Simplificado: Admin + Vendas + Fixo
   
-  const irRate = sanitize(indicators.tax_rate_ir, 15) / 100;
-  const tax = operatingProfit > 0 ? (operatingProfit * irRate) : 0;
-  const profitBeforeAwards = operatingProfit - tax;
+  const operatingProfit = grossProfit - opex;
+  const financialExpense = 40000; // Juros fixos de baseline
+  const lair = operatingProfit - financialExpense;
 
-  // VERIFICAÇÃO DE PRECISÃO DE META DE LUCRO
-  const targetProfitPercent = sanitize(safeDecisions.production.net_profit_target_percent, 0);
-  const actualProfitPercent = (profitBeforeAwards / Math.max(finalRevenue, 1)) * 100;
-  const precisionGap = Math.abs(targetProfitPercent - actualProfitPercent);
+  // REGRA IMPOSTO DE RENDA: Incide apenas se LAIR > 0
+  const irProvision = lair > 0 ? (lair * taxRateIR) : 0;
   
-  // Se a meta foi atingida com erro < 1%, ganha bônus de precisão
-  const precisionBonus = (precisionGap <= 1.0 && profitBeforeAwards > 0) ? sanitize(indicators.award_values.profit_precision, 100000) : 0;
-  
-  const profitAfterTax = profitBeforeAwards + precisionBonus;
-
-  // PLR
+  // Premiações e PLR
+  const precisionBonus = 0; // Calculado em v23.5
   const plrPercent = sanitize(safeDecisions.hr.participationPercent, 0) / 100;
-  const totalPLRPool = profitAfterTax > 0 ? (profitAfterTax * plrPercent) : 0;
-  const netProfitFinal = profitAfterTax - totalPLRPool;
+  const plrValue = lair > 0 ? (lair * plrPercent) : 0;
+  
+  const netProfit = lair - irProvision + precisionBonus - plrValue;
+
+  // 5. FLUXO DE CAIXA (CASH FLOW)
+  // Pagamento do IR provisionado no round anterior
+  const cashOutflowTaxes = prevTaxProvision; 
+  
+  // 6. BALANÇO PATRIMONIAL (BALANCE SHEET)
+  // A nova provisão vai para o Passivo Circulante
+  const currentTaxesLiability = irProvision;
 
   return {
-    revenue: finalRevenue,
-    netProfit: netProfitFinal,
+    revenue,
+    netProfit,
     debtRatio: 40,
-    creditRating: netProfitFinal > 0 ? 'AAA' : 'C',
-    marketShare: (finalUnitsSold / totalMarketDemand) * 100,
+    creditRating: netProfit > 0 ? 'AAA' : 'C',
+    marketShare: myShare,
     health: { 
-      rating: netProfitFinal > 0 ? 'AAA' : 'C', 
-      motivation: motivationIndex,
-      overtime_hours: extraHoursTotal,
-      precision_bonus_awarded: precisionBonus > 0
+      rating: netProfit > 0 ? 'AAA' : 'C',
+      tax_payment_executed: cashOutflowTaxes > 0
     },
     kpis: {
-      market_share: (finalUnitsSold / totalMarketDemand) * 100,
-      rating: netProfitFinal > 0 ? 'AAA' : 'C',
-      insolvency_status: netProfitFinal > -500000 ? 'SAUDAVEL' : 'ALERTA',
-      equity: prevEquity + (netProfitFinal * 0.8),
-      motivation_index: motivationIndex
+      market_share: myShare,
+      rating: netProfit > 0 ? 'AAA' : 'C',
+      insolvency_status: netProfit > 0 ? 'SAUDAVEL' : 'ALERTA',
+      equity: prevEquity + netProfit
     },
     statements: {
       dre: { 
-        revenue: finalRevenue, 
+        revenue, 
         cpv, 
-        gross_profit: finalRevenue - cpv, 
+        gross_profit: grossProfit, 
         opex, 
         operating_profit: operatingProfit,
-        tax,
-        profit_after_tax: profitBeforeAwards,
-        precision_bonus: precisionBonus,
-        plr: totalPLRPool,
-        net_profit: netProfitFinal,
+        lair,
+        tax: irProvision, // (-) PROVISÃO PARA O IR
+        net_profit: netProfit,
         details: {
-          payroll_total_cash: basePayrollWithCharges + totalPLRPool,
-          overtime_cost: overtimeCost * socialChargesFactor,
-          unit_cost: unitCostRound,
-          target_gap: precisionGap
+           unit_cost: unitCost,
+           tax_rate_applied: taxRateIR * 100
+        }
+      },
+      balance_sheet: {
+        liabilities: {
+          current_taxes: currentTaxesLiability // IMPOSTO DE RENDA A PAGAR
+        }
+      },
+      cash_flow: {
+        outflow: {
+          taxes: cashOutflowTaxes // IMPOSTO DE RENDA (Pago)
         }
       }
     }

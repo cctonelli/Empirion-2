@@ -104,6 +104,7 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
       current: 2621493, 
       current_loans: 1872362,
       current_divs: 18481,
+      current_taxes: 13045, // Adicionado baseline de IR a pagar
       long_term: 1500000,
       total_debt: 4121493 
     }
@@ -226,7 +227,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
         { id: 'cf.outflow.interest', label: 'JUROS BANCÁRIOS', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true },
         { id: 'cf.outflow.training', label: 'TREINAMENTO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
+        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 13045, type: 'expense', isEditable: true, isTemplateAccount: true }, // Saída de caixa referente ao IR anterior
         { id: 'cf.outflow.dividends', label: 'DIVIDENDOS E PARTICIPAÇÕES', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
         { id: 'cf.outflow.application', label: 'APLICAÇÃO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
