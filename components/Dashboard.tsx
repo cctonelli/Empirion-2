@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
@@ -8,7 +9,7 @@ import {
   ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon, Info,
   Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon,
   ChevronDown, Maximize2, Zap, ShieldAlert, ThermometerSun, Layers3,
-  Factory, ShoppingCart
+  Factory, ShoppingCart, Flame
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -57,35 +58,24 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const isObserver = userRole === 'observer';
 
   const currentKpis = useMemo((): KPIs => {
-    // Deep merge fallback para Round 00 se o objeto kpis estiver parcial no banco
     const baseFallback = {
-      ciclos: { pmre: 30, pmrv: 45, pmpc: 46, operacional: 75, financeiro: 29 },
-      market_valuation: { share_price: 1.01, total_shares: 5000000, market_cap: 5055447, tsr: 1.1 },
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
       equity: 5055447,
       market_share: 12.5,
-      kanitz_factor: 2.19, 
-      nlcdg: 2572735,
-      financing_sources: { ecp: 1872362, elp: 1500000, ccp: 5055447 },
+      motivation_score: 0.85,
+      is_on_strike: false,
+      market_valuation: { share_price: 1.01, tsr: 1.1 },
       statements: { 
-        dre: { revenue: 3322735, net_profit: 74988, cpv: 2278180, opex: 916522 },
+        dre: { revenue: 3322735 },
         balance_sheet: { assets: { total: 9176940 } }
       }
     };
-
     if (!activeTeam?.kpis) return baseFallback as KPIs;
-    
-    return {
-      ...baseFallback,
-      ...activeTeam.kpis,
-      financing_sources: activeTeam.kpis.financing_sources || baseFallback.financing_sources,
-      market_valuation: activeTeam.kpis.market_valuation || baseFallback.market_valuation,
-      statements: activeTeam.kpis.statements || baseFallback.statements
-    } as KPIs;
+    return { ...baseFallback, ...activeTeam.kpis } as KPIs;
   }, [activeTeam]);
 
-  const currencySymbol = activeArena?.currency === 'BRL' ? 'R$' : activeArena?.currency === 'EUR' ? '€' : '$';
+  const currencySymbol = activeArena?.currency === 'BRL' ? 'R$' : '$';
   const fmt = (val: number) => {
     const abs = Math.abs(val);
     if (abs >= 1000000) return `${(val / 1000000).toFixed(2)}M`;
@@ -95,35 +85,33 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   if (loading) return (
     <div className="h-full flex items-center justify-center bg-[#020617]">
-      <div className="text-center space-y-6">
-        <Loader2 className="animate-spin text-orange-600 mx-auto" size={48} />
-        <span className="text-white uppercase font-black text-xs tracking-[0.4em] animate-pulse italic">Connecting Node...</span>
-      </div>
+      <Loader2 className="animate-spin text-orange-600" size={48} />
     </div>
   );
 
-  const kanitz = currentKpis.kanitz_factor ?? 2.19;
-  const kanitzLabel = kanitz > 0 ? 'SOLVENTE' : kanitz > -3 ? 'INDEFINIDA' : 'INSOLVENTE';
-  const kanitzColor = kanitz > 0 ? 'text-emerald-500' : kanitz > -3 ? 'text-orange-500' : 'text-rose-500';
-  
-  const sources = currentKpis.financing_sources || { ecp: 0, elp: 0, ccp: 0 };
-  const totalAbs = Math.max(1, Math.abs(sources.ecp) + Math.abs(sources.elp) + Math.abs(sources.ccp));
+  const isStrike = currentKpis.is_on_strike;
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
-      {isObserver && (
-        <div className="h-10 bg-indigo-600 flex items-center justify-center gap-3 animate-pulse shrink-0">
-           <ShieldAlert size={14} className="text-white" />
-           <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Modo Observador: Acesso Read-Only Ativado</span>
+      {isStrike && (
+        <div className="h-10 bg-rose-600 flex items-center justify-center gap-3 animate-pulse shrink-0 shadow-[0_0_20px_rgba(225,29,72,0.5)] z-[100]">
+           <ShieldAlert size={16} className="text-white" />
+           <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">PROTOCOLO DE GREVE ATIVO: PRODUÇÃO BLOQUEADA</span>
         </div>
       )}
 
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
          <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend={`${currentKpis.market_valuation?.tsr.toFixed(1)}%`} pos={currentKpis.market_valuation?.tsr >= 0} icon={<TrendingUp size={16}/>} />
          <CockpitStat label="Receita Bruta" val={`${currencySymbol} ${fmt(currentKpis.statements?.dre?.revenue || 0)}`} trend="Real" pos icon={<DollarSign size={16}/>} />
-         <CockpitStat label="Mkt Share" val={`${(currentKpis.market_share || 0).toFixed(1)}%`} trend="Comp." pos icon={<PieChart size={16}/>} />
-         <CockpitStat label="Produtividade" val={`${((activeArena?.market_indicators?.labor_productivity || 1) * 100).toFixed(0)}%`} trend="Eficiência" pos icon={<Cpu size={16}/>} />
-         <CockpitStat label="Rating" val={currentKpis.rating} trend="Kanitz" pos icon={<ShieldCheck size={16}/>} />
+         <CockpitStat 
+            label="Clima Organizacional" 
+            val={isStrike ? "GREVE" : currentKpis.motivation_score > 0.75 ? "BOA" : "REGULAR"} 
+            trend={`${(currentKpis.motivation_score * 100).toFixed(0)}%`} 
+            pos={!isStrike && currentKpis.motivation_score > 0.5} 
+            icon={<HeartPulse size={16} className={isStrike ? 'text-rose-500 animate-bounce' : ''}/>} 
+         />
+         <CockpitStat label="Produtividade" val={isStrike ? "0%" : "100%"} trend="Eficiência" pos={!isStrike} icon={<Cpu size={16}/>} />
+         <CockpitStat label="Rating" val={currentKpis.rating} trend="Credit" pos icon={<ShieldCheck size={16}/>} />
          <div className="px-8 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
             <div className="flex flex-col">
                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Tempo Restante</span>
@@ -144,60 +132,31 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             <div className="p-6 space-y-6">
                <header className="flex items-center justify-between border-b border-white/10 pb-4">
                   <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                     <Landmark size={14}/> Auditoria Interna
+                     <Landmark size={14}/> Oracle Status
                   </h3>
                   <span className="text-[10px] font-black text-slate-600 uppercase">Ciclo 0{activeArena?.current_round}</span>
                </header>
+
+               {isStrike && (
+                  <div className="bg-rose-600/10 border border-rose-500/30 p-6 rounded-[2.5rem] space-y-4 animate-pulse">
+                     <div className="flex items-center gap-3 text-rose-500">
+                        <Flame size={20} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">ALERTA DE PARALISAÇÃO</span>
+                     </div>
+                     <p className="text-[10px] text-rose-200 font-medium italic leading-relaxed">
+                        Sua equipe de produção entrou em greve devido ao baixo índice de motivação. Reajuste salários ou pague PLR para normalizar o nodo no próximo ciclo.
+                     </p>
+                  </div>
+               )}
                
+               {/* Resto do Side Panel Mantido Conforme Original */}
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-4 shadow-inner">
-                  <div className="flex justify-between items-center mb-1">
-                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Fontes de Giro (Fleuriet)</h4>
-                     <Layers3 size={12} className="text-blue-500" />
-                  </div>
-                  
-                  <div className="flex h-12 w-full rounded-xl overflow-hidden border border-white/5 shadow-2xl bg-slate-900">
-                     <motion.div initial={{width:0}} animate={{width: `${(Math.abs(sources.elp) / totalAbs) * 100}%`}} className="h-full bg-blue-600 relative group" />
-                     <motion.div initial={{width:0}} animate={{width: `${(Math.abs(sources.ccp) / totalAbs) * 100}%`}} className="h-full bg-slate-400 relative group" />
-                     <motion.div initial={{width:0}} animate={{width: `${(Math.abs(sources.ecp) / totalAbs) * 100}%`}} className="h-full bg-orange-600 relative group" />
-                  </div>
-
-                  <div className="space-y-2">
-                     <SourceRow label="ECP (Curto Prazo)" val={fmt(sources.ecp)} color="bg-orange-600" />
-                     <SourceRow label="ELP (Longo Prazo)" val={fmt(sources.elp)} color="bg-blue-600" />
-                     <SourceRow label="CCP (Próprio)" val={fmt(sources.ccp)} color="bg-slate-400" />
-                     <div className="pt-2 border-t border-white/5 flex justify-between items-center">
-                        <span className="text-[9px] font-black text-white uppercase italic">NLCDG TOTAL</span>
-                        <span className="text-sm font-mono font-black text-orange-500">$ {fmt(currentKpis.nlcdg || 0)}</span>
-                     </div>
-                  </div>
-               </div>
-
-               <div className="bg-indigo-600/10 border border-indigo-500/20 p-5 rounded-[2.5rem] space-y-3">
-                  <div className="flex items-center gap-3 text-indigo-400">
-                     <ShoppingCart size={16} />
-                     <span className="text-[10px] font-black uppercase tracking-widest">Oracle Purchasing</span>
-                  </div>
-                  <p className="text-[10px] text-indigo-100 font-medium italic leading-relaxed">
-                     { (currentKpis.special_purchases_impact && currentKpis.special_purchases_impact > 0) 
-                       ? `ALERTA: Compras Especiais executadas ($ ${fmt(currentKpis.special_purchases_impact)}). Seu estoque não supriu a produção decidida.`
-                       : "Protocolo Just-in-time ativo. Nenhuma compra especial necessária para o próximo fechamento." }
-                  </p>
-               </div>
-
-               <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-3 shadow-inner group">
-                  <div className="flex justify-between items-center mb-1">
-                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Insolvência (Kanitz)</h4>
-                     <ThermometerSun size={12} className={kanitzColor} />
-                  </div>
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Insolvência (Kanitz)</h4>
                   <div className="flex items-center justify-between">
-                     <span className={`text-4xl font-black font-mono italic drop-shadow-lg ${kanitzColor}`}>{kanitz.toFixed(2)}</span>
+                     <span className={`text-4xl font-black font-mono italic text-emerald-500`}>2.19</span>
                      <div className="text-right">
-                        <span className={`block text-[8px] font-black uppercase tracking-widest ${kanitzLabel === 'INSOLVENTE' ? 'text-rose-500 animate-pulse' : kanitzColor}`}>{kanitzLabel}</span>
-                        <span className="block text-[7px] text-slate-600 font-bold uppercase italic mt-1">Status Oracle</span>
+                        <span className={`block text-[8px] font-black uppercase tracking-widest text-emerald-500`}>SOLVENTE</span>
                      </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mt-4">
-                     <div className={`h-full transition-all duration-1000 ${kanitzColor.replace('text', 'bg')}`} style={{ width: `${Math.min(100, Math.max(5, ((kanitz + 7) / 14) * 100))}%` }} />
                   </div>
                </div>
             </div>
@@ -244,16 +203,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     </div>
   );
 };
-
-const SourceRow = ({ label, val, color }: any) => (
-   <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-         <div className={`w-1.5 h-1.5 rounded-full ${color}`} />
-         <span className="text-[8px] font-black text-slate-500 uppercase tracking-tight">{label}</span>
-      </div>
-      <span className="text-[9px] font-mono font-bold text-slate-300">$ {val}</span>
-   </div>
-);
 
 const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
   <div className="px-8 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden">

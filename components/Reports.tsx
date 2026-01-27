@@ -3,9 +3,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   TrendingUp, BarChart3, Brain, ChevronRight, Landmark,
-  // Added ShieldAlert to the imports from lucide-react
   ArrowUpRight, Target, Download, HeartPulse, Zap, Plus, Minus, Loader2, Factory, Users, Cpu, Boxes,
-  ShieldCheck, AlertCircle, Activity, Heart, ShieldAlert
+  ShieldCheck, AlertCircle, Activity, Heart, ShieldAlert, Flame
 } from 'lucide-react';
 import { Branch, Championship, Team, AccountNode } from '../types';
 import { motion } from 'framer-motion';
@@ -36,23 +35,16 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
 
   const dre = useMemo(() => {
      return activeTeam?.kpis?.statements?.dre || {
-       revenue: 3322735,
-       cpv: 2278180,
-       gross_profit: 1044555,
-       opex: 917582,
-       operating_profit: 126973,
-       lair: 88033,
-       tax: 13045,
-       profit_after_tax: 74988,
-       plr: 0,
-       net_profit: 74988,
-       details: { unit_cost: 235, plr_per_employee: 0, total_staff: 500, motivation_index: 0.8 }
+       revenue: 0, cpv: 0, gross_profit: 0, opex: 0, operating_profit: 0, lair: 0, tax: 0, profit_after_tax: 0, plr: 0, net_profit: 0,
+       details: { unit_cost: 0, plr_per_employee: 0, total_staff: 500, motivation_index: 0.8 }
      };
   }, [activeTeam]);
 
   const motivation = activeTeam?.kpis?.motivation_score || dre.details?.motivation_index || 0.8;
-  const motivationColor = motivation > 0.8 ? 'text-emerald-500' : motivation > 0.5 ? 'text-orange-500' : 'text-rose-500';
-  const motivationLabel = motivation > 0.8 ? 'BOA' : motivation > 0.5 ? 'REGULAR' : 'RUIM';
+  const isOnStrike = activeTeam?.kpis?.is_on_strike || false;
+  
+  const motivationColor = isOnStrike ? 'text-rose-600' : motivation > 0.8 ? 'text-emerald-500' : motivation > 0.5 ? 'text-orange-500' : 'text-rose-500';
+  const motivationLabel = isOnStrike ? 'GREVE' : (motivation > 0.8 ? 'BOA' : motivation > 0.5 ? 'REGULAR' : 'RUIM');
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(v);
 
@@ -68,12 +60,12 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
             </p>
          </div>
          <div className="flex items-center gap-6">
-            <div className="bg-white/5 p-4 rounded-3xl border border-white/10 flex items-center gap-4 group">
+            <div className={`bg-white/5 p-4 rounded-3xl border border-white/10 flex items-center gap-4 group ${isOnStrike ? 'border-rose-500 animate-pulse' : ''}`}>
                <div className="text-right">
-                  <span className="block text-[8px] font-black text-slate-500 uppercase italic">Motivação Equipe</span>
+                  <span className="block text-[8px] font-black text-slate-500 uppercase italic">Clima Organizacional</span>
                   <span className={`text-xl font-mono font-black ${motivationColor}`}>{motivationLabel}</span>
                </div>
-               <Heart className={`${motivationColor} group-hover:scale-110 transition-transform`} size={24} fill="currentColor" />
+               {isOnStrike ? <Flame className="text-rose-500" size={24} /> : <Heart className={`${motivationColor} group-hover:scale-110 transition-transform`} size={24} fill="currentColor" />}
             </div>
             <div className="bg-white/5 p-4 rounded-3xl border border-white/10 flex items-center gap-4">
                <div className="text-right">
@@ -124,9 +116,13 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                   <CostMetric label="Total Colaboradores" val={dre.details?.total_staff || 500} icon={<Users size={16}/>} />
                   <CostMetric label="Estabilidade do Nodo" val={`${(motivation * 100).toFixed(0)}%`} icon={<Activity size={16}/>} />
                   
-                  {motivation < 0.3 && (
+                  {isOnStrike ? (
+                    <div className="p-6 bg-rose-600 border border-rose-400 rounded-3xl flex items-center gap-4 animate-bounce">
+                       <ShieldAlert className="text-white" />
+                       <span className="text-[10px] font-black text-white uppercase tracking-widest">GREVE ATIVA: PRODUÇÃO ZERO</span>
+                    </div>
+                  ) : motivation < 0.35 && (
                     <div className="p-6 bg-rose-600/20 border border-rose-500/40 rounded-3xl flex items-center gap-4 animate-pulse">
-                       {/* ShieldAlert is now correctly imported and available for use here */}
                        <ShieldAlert className="text-rose-500" />
                        <span className="text-[10px] font-black text-rose-200 uppercase tracking-widest">ALERTA: RISCO DE GREVE IMINENTE</span>
                     </div>
