@@ -112,7 +112,7 @@ export const INITIAL_FINANCIAL_TREE = {
       id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Caixa/Banco', value: 0, type: 'asset', isEditable: true },
+            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 0, type: 'asset', isEditable: true },
             { id: 'assets.current.clients', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true },
             { id: 'assets.current.stock', label: 'ESTOQUE', value: 1466605, type: 'totalizer', children: [
                 { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 628545, type: 'asset', isEditable: true },
