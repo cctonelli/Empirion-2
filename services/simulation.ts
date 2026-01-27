@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v24.1 - TAX REGIME & CASH FLOW KERNEL
+ * CORE ORACLE ENGINE v24.2 - PLR & CASH FLOW INTEGRATION
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -32,30 +32,34 @@ export const calculateProjections = (
       return value;
   }));
 
-  // Recuperação de Estado Anterior (Balanço e DRE)
+  // Recuperação de Estado Anterior
   const prevBS = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(prevBS.equity?.total, 5055447);
-  const prevTaxProvision = sanitize(prevBS.liabilities?.current_taxes || 13045); // Valor a ser pago neste round
+  const prevTaxProvision = sanitize(prevBS.liabilities?.current_taxes || 13045);
 
   const roundOverride = roundRules?.[currentRound] || {};
   const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...roundOverride };
 
-  // 0. CONFIGURAÇÕES TRIBUTÁRIAS
-  const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
-  const socialChargesFactor = 1 + socialChargesRate;
-  const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
+  // 0. STAFFING CONTEXT
+  const staffAdmin = sanitize(indicators.staffing.admin.count, 20);
+  const staffSales = sanitize(indicators.staffing.sales.count, 10);
+  const staffProd = sanitize(indicators.staffing.production.count, 470);
+  const totalStaff = staffAdmin + staffSales + staffProd;
 
   // 1. GESTÃO DE PESSOAL E CUSTOS FIXOS
-  const staffProd = sanitize(indicators.staffing.production.count, 470);
   const salaryDecided = sanitize(safeDecisions.hr.salary, 1313);
-  const modPayrollBase = salaryDecided * staffProd;
+  const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
+  const socialChargesFactor = 1 + socialChargesRate;
+  const basePayrollOutflow = (totalStaff * salaryDecided) * socialChargesFactor;
 
-  // 2. PRODUÇÃO E CPV
+  // 2. PRODUÇÃO E CPV (PLR não entra aqui conforme regra)
   const activityLevel = sanitize(safeDecisions.production.activityLevel, 80) / 100;
   const unitsProduced = 10000 * sanitize(indicators.labor_productivity, 1.0) * activityLevel;
-  
   const totalMPCost = (unitsProduced * 3 * sanitize(indicators.prices.mp_a, 20)) + (unitsProduced * 2 * sanitize(indicators.prices.mp_b, 40));
-  const productionCost = totalMPCost + (modPayrollBase * socialChargesFactor) + 150000; // + Depreciação fixa
+  
+  // MOD Direta (apenas produção)
+  const modDirect = (staffProd * salaryDecided) * socialChargesFactor;
+  const productionCost = totalMPCost + modDirect + 150000; // + Depreciação fixa
   const unitCost = productionCost / Math.max(unitsProduced, 1);
 
   // 3. VENDAS E RECEITA
@@ -66,31 +70,34 @@ export const calculateProjections = (
   const avgPrice = sanitize(Object.values(safeDecisions.regions)[0]?.price, 375);
   const revenue = unitsSold * avgPrice;
 
-  // 4. DRE TÁTICO - CÁLCULO DO LAIR E IR
+  // 4. DRE TÁTICO
   const cpv = unitsSold * unitCost;
   const grossProfit = revenue - cpv;
-  const opex = (salaryDecided * 30 * 4) * socialChargesFactor + 350000; // Simplificado: Admin + Vendas + Fixo
+  const opex = ((staffAdmin + staffSales) * salaryDecided) * socialChargesFactor + 350000;
   
   const operatingProfit = grossProfit - opex;
-  const financialExpense = 40000; // Juros fixos de baseline
+  const financialExpense = 40000;
   const lair = operatingProfit - financialExpense;
 
-  // REGRA IMPOSTO DE RENDA: Incide apenas se LAIR > 0
+  // IR
+  const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
   const irProvision = lair > 0 ? (lair * taxRateIR) : 0;
   
-  // Premiações e PLR
-  const precisionBonus = 0; // Calculado em v23.5
+  const profitAfterTax = lair - irProvision;
+
+  // REGRA PLR: Calculado após lucro pós-IR e pago no mesmo período
   const plrPercent = sanitize(safeDecisions.hr.participationPercent, 0) / 100;
-  const plrValue = lair > 0 ? (lair * plrPercent) : 0;
-  
-  const netProfit = lair - irProvision + precisionBonus - plrValue;
+  const plrValue = profitAfterTax > 0 ? (profitAfterTax * plrPercent) : 0;
+  const plrPerEmployee = plrValue / Math.max(totalStaff, 1);
+
+  const netProfit = profitAfterTax - plrValue;
 
   // 5. FLUXO DE CAIXA (CASH FLOW)
-  // Pagamento do IR provisionado no round anterior
+  // O PLR é debitado diretamente da conta "FOLHA DE PAGAMENTO" no mesmo período
+  const totalPayrollOutflow = basePayrollOutflow + plrValue;
   const cashOutflowTaxes = prevTaxProvision; 
   
-  // 6. BALANÇO PATRIMONIAL (BALANCE SHEET)
-  // A nova provisão vai para o Passivo Circulante
+  // 6. BALANÇO PATRIMONIAL
   const currentTaxesLiability = irProvision;
 
   return {
@@ -101,7 +108,9 @@ export const calculateProjections = (
     marketShare: myShare,
     health: { 
       rating: netProfit > 0 ? 'AAA' : 'C',
-      tax_payment_executed: cashOutflowTaxes > 0
+      plr_distributed: plrValue > 0,
+      plr_per_capita: plrPerEmployee,
+      motivation_index: 0.7 + (plrPercent * 2) // Simulação de impacto motivacional
     },
     kpis: {
       market_share: myShare,
@@ -117,21 +126,25 @@ export const calculateProjections = (
         opex, 
         operating_profit: operatingProfit,
         lair,
-        tax: irProvision, // (-) PROVISÃO PARA O IR
+        tax: irProvision, 
+        profit_after_tax: profitAfterTax,
+        plr: plrValue, // (-) PPR - PARTICIPAÇÃO NO LUCRO
         net_profit: netProfit,
         details: {
            unit_cost: unitCost,
-           tax_rate_applied: taxRateIR * 100
+           plr_per_employee: plrPerEmployee,
+           total_staff: totalStaff
         }
       },
       balance_sheet: {
         liabilities: {
-          current_taxes: currentTaxesLiability // IMPOSTO DE RENDA A PAGAR
+          current_taxes: currentTaxesLiability
         }
       },
       cash_flow: {
         outflow: {
-          taxes: cashOutflowTaxes // IMPOSTO DE RENDA (Pago)
+          payroll: totalPayrollOutflow, // Folha + PLR
+          taxes: cashOutflowTaxes 
         }
       }
     }

@@ -1,7 +1,7 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v14.2.0-Oracle-Master";
+export const APP_VERSION = "v14.2.1-Oracle-Master";
 export const BUILD_DATE = "10/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
@@ -104,7 +104,7 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
       current: 2621493, 
       current_loans: 1872362,
       current_divs: 18481,
-      current_taxes: 13045, // Adicionado baseline de IR a pagar
+      current_taxes: 13045, 
       long_term: 1500000,
       total_debt: 4121493 
     }
@@ -125,6 +125,7 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
     financial_expense: 40000,
     lair: 88033,
     tax: 13045,
+    profit_after_tax: 74988,
     ppr: 0,
     net_profit: 74988
   }
@@ -227,7 +228,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
         { id: 'cf.outflow.interest', label: 'JUROS BANCÁRIOS', value: 40000, type: 'expense', isEditable: true, isTemplateAccount: true },
         { id: 'cf.outflow.training', label: 'TREINAMENTO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
-        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 13045, type: 'expense', isEditable: true, isTemplateAccount: true }, // Saída de caixa referente ao IR anterior
+        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 13045, type: 'expense', isEditable: true, isTemplateAccount: true }, 
         { id: 'cf.outflow.dividends', label: 'DIVIDENDOS E PARTICIPAÇÕES', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true },
         { id: 'cf.outflow.application', label: 'APLICAÇÃO', value: 0, type: 'expense', isEditable: true, isTemplateAccount: true }
     ]},
@@ -250,8 +251,8 @@ export const DEFAULT_MACRO: MacroIndicators = {
   special_purchase_premium: 15.0,
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
   dividend_percent: 25.0, 
-  social_charges: 35.0, // BASE DEFAULT 35%
-  production_hours_period: 946, // DEFAULT 946h
+  social_charges: 35.0, 
+  production_hours_period: 946, 
   
   raw_material_a_adjust: 1.0,
   raw_material_b_adjust: 1.0,
