@@ -57,11 +57,6 @@
   @apply overflow-x-auto custom-scrollbar whitespace-nowrap border border-white/5 rounded-[3rem] bg-slate-950/40 shadow-inner;
 }
 
-.fluid-title {
-  font-size: clamp(4rem, 15vw, 12rem);
-  line-height: 0.8;
-}
-
 .glass-panel {
   @apply bg-slate-900/80 backdrop-blur-3xl border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.7)];
 }
