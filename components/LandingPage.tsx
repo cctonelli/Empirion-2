@@ -91,7 +91,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               </div>
            </div>
            <h1 className="text-[50px] sm:text-[70px] md:text-[90px] lg:text-[110px] font-black text-white leading-[0.9] tracking-tighter uppercase italic">
-              Crie Sua Arena <br/>
+              Forge Campeões em Estratégia <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-white to-orange-400">Com Empirion</span>
            </h1>
            <p className="text-xl md:text-3xl text-slate-300 font-medium max-w-4xl mx-auto italic opacity-90 leading-relaxed">
