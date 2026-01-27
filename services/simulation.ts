@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v24.2 - PLR & CASH FLOW INTEGRATION
+ * CORE ORACLE ENGINE v24.3 - MOTIVATION & PLR KERNEL
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -32,7 +32,7 @@ export const calculateProjections = (
       return value;
   }));
 
-  // Recuperação de Estado Anterior
+  // 0. CONTEXTO MACRO E STAFFING
   const prevBS = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(prevBS.equity?.total, 5055447);
   const prevTaxProvision = sanitize(prevBS.liabilities?.current_taxes || 13045);
@@ -40,7 +40,6 @@ export const calculateProjections = (
   const roundOverride = roundRules?.[currentRound] || {};
   const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...roundOverride };
 
-  // 0. STAFFING CONTEXT
   const staffAdmin = sanitize(indicators.staffing.admin.count, 20);
   const staffSales = sanitize(indicators.staffing.sales.count, 10);
   const staffProd = sanitize(indicators.staffing.production.count, 470);
@@ -50,16 +49,14 @@ export const calculateProjections = (
   const salaryDecided = sanitize(safeDecisions.hr.salary, 1313);
   const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
   const socialChargesFactor = 1 + socialChargesRate;
-  const basePayrollOutflow = (totalStaff * salaryDecided) * socialChargesFactor;
-
-  // 2. PRODUÇÃO E CPV (PLR não entra aqui conforme regra)
-  const activityLevel = sanitize(safeDecisions.production.activityLevel, 80) / 100;
-  const unitsProduced = 10000 * sanitize(indicators.labor_productivity, 1.0) * activityLevel;
+  
+  // 2. PRODUÇÃO E CPV
+  const activityLevel = sanitize(safeDecisions.production.activityLevel, 80);
+  const unitsProduced = 10000 * sanitize(indicators.labor_productivity, 1.0) * (activityLevel / 100);
   const totalMPCost = (unitsProduced * 3 * sanitize(indicators.prices.mp_a, 20)) + (unitsProduced * 2 * sanitize(indicators.prices.mp_b, 40));
   
-  // MOD Direta (apenas produção)
   const modDirect = (staffProd * salaryDecided) * socialChargesFactor;
-  const productionCost = totalMPCost + modDirect + 150000; // + Depreciação fixa
+  const productionCost = totalMPCost + modDirect + 150000; 
   const unitCost = productionCost / Math.max(unitsProduced, 1);
 
   // 3. VENDAS E RECEITA
@@ -74,31 +71,44 @@ export const calculateProjections = (
   const cpv = unitsSold * unitCost;
   const grossProfit = revenue - cpv;
   const opex = ((staffAdmin + staffSales) * salaryDecided) * socialChargesFactor + 350000;
-  
   const operatingProfit = grossProfit - opex;
-  const financialExpense = 40000;
-  const lair = operatingProfit - financialExpense;
+  const lair = operatingProfit - 40000; // Financeiro fixo baseline
 
-  // IR
+  // IR (Provisionado para o passivo, pago no próximo)
   const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
   const irProvision = lair > 0 ? (lair * taxRateIR) : 0;
-  
   const profitAfterTax = lair - irProvision;
 
-  // REGRA PLR: Calculado após lucro pós-IR e pago no mesmo período
+  // REGRA PLR (PPR): Calculado após lucro pós-IR e pago no mesmo período
   const plrPercent = sanitize(safeDecisions.hr.participationPercent, 0) / 100;
   const plrValue = profitAfterTax > 0 ? (profitAfterTax * plrPercent) : 0;
   const plrPerEmployee = plrValue / Math.max(totalStaff, 1);
 
   const netProfit = profitAfterTax - plrValue;
 
-  // 5. FLUXO DE CAIXA (CASH FLOW)
-  // O PLR é debitado diretamente da conta "FOLHA DE PAGAMENTO" no mesmo período
-  const totalPayrollOutflow = basePayrollOutflow + plrValue;
-  const cashOutflowTaxes = prevTaxProvision; 
+  // 5. ALGORITMO DE MOTIVAÇÃO (Metadata para Greve)
+  // Vetor Salário vs Inflação
+  const inflationImpact = 1 + (sanitize(indicators.inflation_rate, 1) / 100);
+  const salaryHealth = Math.min(1.2, salaryDecided / (sanitize(indicators.hr_base.salary, 1300) * inflationImpact));
   
-  // 6. BALANÇO PATRIMONIAL
-  const currentTaxesLiability = irProvision;
+  // Vetor Stress (Acima de 100% penaliza)
+  const stressFactor = activityLevel > 100 ? 1 - ((activityLevel - 100) / 100) : 1.0;
+  
+  // Vetor Treinamento vs Novos Ativos
+  const hasNewMachines = (safeDecisions.machinery.buy.alfa + safeDecisions.machinery.buy.beta + safeDecisions.machinery.buy.gama) > 0;
+  const trainingReadiness = hasNewMachines ? (sanitize(safeDecisions.hr.trainingPercent, 0) / 10) : 1.0;
+
+  const motivationIndex = (
+    (salaryHealth * 0.4) + 
+    (stressFactor * 0.3) + 
+    (trainingReadiness * 0.1) + 
+    (Math.min(1.5, (plrPerEmployee / 100)) * 0.2)
+  );
+
+  const motivationLabel = motivationIndex > 0.8 ? 'BOA' : motivationIndex > 0.5 ? 'REGULAR' : 'RUIM';
+
+  // 6. FINANCEIRO (Fluxo e Balanço)
+  const totalPayrollOutflow = (totalStaff * salaryDecided * socialChargesFactor) + plrValue;
 
   return {
     revenue,
@@ -108,15 +118,19 @@ export const calculateProjections = (
     marketShare: myShare,
     health: { 
       rating: netProfit > 0 ? 'AAA' : 'C',
-      plr_distributed: plrValue > 0,
-      plr_per_capita: plrPerEmployee,
-      motivation_index: 0.7 + (plrPercent * 2) // Simulação de impacto motivacional
+      motivation: {
+        index: motivationIndex,
+        label: motivationLabel,
+        is_strike_imminent: motivationIndex < 0.3,
+        plr_per_capita: plrPerEmployee
+      }
     },
     kpis: {
       market_share: myShare,
       rating: netProfit > 0 ? 'AAA' : 'C',
       insolvency_status: netProfit > 0 ? 'SAUDAVEL' : 'ALERTA',
-      equity: prevEquity + netProfit
+      equity: prevEquity + netProfit,
+      motivation_score: motivationIndex
     },
     statements: {
       dre: { 
@@ -128,23 +142,24 @@ export const calculateProjections = (
         lair,
         tax: irProvision, 
         profit_after_tax: profitAfterTax,
-        plr: plrValue, // (-) PPR - PARTICIPAÇÃO NO LUCRO
+        plr: plrValue,
         net_profit: netProfit,
         details: {
            unit_cost: unitCost,
            plr_per_employee: plrPerEmployee,
-           total_staff: totalStaff
+           total_staff: totalStaff,
+           motivation_index: motivationIndex
         }
       },
       balance_sheet: {
         liabilities: {
-          current_taxes: currentTaxesLiability
+          current_taxes: irProvision
         }
       },
       cash_flow: {
         outflow: {
-          payroll: totalPayrollOutflow, // Folha + PLR
-          taxes: cashOutflowTaxes 
+          payroll: totalPayrollOutflow,
+          taxes: prevTaxProvision 
         }
       }
     }
