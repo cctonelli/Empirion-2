@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v27.0 - FISCAL INTEGRITY & R&D POWER
+ * CORE ORACLE ENGINE v28.0 - FISCAL GATING & EQUITY PROTECTION
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -48,7 +48,7 @@ export const calculateProjections = (
   const purchaseMPB_Val = purchaseMPB_Qty * indicators.prices.mp_b;
   const wacMPB = (stockMPB_Initial_Val + purchaseMPB_Val) / Math.max(1, (5000 + purchaseMPB_Qty));
 
-  // 2. GESTÃO DE ATIVOS E EFEITO P&D v27.0
+  // 2. GESTÃO DE ATIVOS E EFEITO P&D
   const machineSpecs = indicators.machine_specs;
   const mPhysics = indicators.maintenance_physics;
   const structuralDepreciation = 54400; // 1% de 5.44M
@@ -56,10 +56,8 @@ export const calculateProjections = (
   let totalMaintenanceCost = 0;
 
   const fleet = previousState?.fleet || indicators.initial_machinery_mix;
-  
-  // MOTOR P&D: Investimento (%) melhora produtividade e reduz custos variáveis indiretos
   const rd_percent = sanitize(safeDecisions.production.rd_investment, 0);
-  const rd_productivity_bonus = Math.min(0.20, (rd_percent / 100) * 2.0); // Até 20% de ganho
+  const rd_productivity_bonus = Math.min(0.20, (rd_percent / 100) * 2.0); 
   const effectiveProductivity = sanitize(indicators.labor_productivity, 1.0) * (1 + rd_productivity_bonus);
 
   fleet.forEach((m: InitialMachine) => {
@@ -122,24 +120,26 @@ export const calculateProjections = (
 
   const lair = operatingProfit + financialResult;
 
-  // 7. GATILHOS FISCAIS v27.0
+  // 7. GATILHOS FISCAIS v28.0 (PROTOCOLOS CONDICIONAIS)
   const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
-  // Regra IR: Só se LAIR > 0
+  
+  // REGRA IR: Só debita IR a pagar se LAIR > 0
   const irProvision = lair > 0 ? (lair * taxRateIR) : 0;
   const profitAfterIR = lair - irProvision;
 
-  // Regra PLR: Só se Lucro Após IR > 0
+  // REGRA PLR: Só paga PLR se Lucro Após IR > 0
   const plr_pct = sanitize(safeDecisions.hr.participationPercent, 0) / 100;
   const plrAmount = profitAfterIR > 0 ? (profitAfterIR * plr_pct) : 0;
   const netIncome = profitAfterIR - plrAmount;
 
-  // Regra Dividendos: Só se Lucro Líquido > 0
+  // REGRA DIVIDENDOS: Só calcula se Lucro Líquido > 0
   const div_pct = sanitize(championshipData?.dividend_percent ?? indicators.dividend_percent, 25) / 100;
   const dividends = netIncome > 0 ? (netIncome * div_pct) : 0;
+  
+  // IMPACTO FINAL NO PATRIMÔNIO LÍQUIDO
   const retainedProfit = netIncome - dividends;
 
   // 8. CONSOLIDAÇÃO FLUXO DE CAIXA
-  // Folha Líquida = Salários Puros + HE + Indenização + PLR (Se houver)
   const payrollNet = salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost + plrAmount;
   const totalSocialCharges = (salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
 
@@ -153,13 +153,14 @@ export const calculateProjections = (
       rating: netIncome > 0 ? 'AAA' : 'C',
       cpp: currentCPP,
       rd_boost: rd_productivity_bonus,
-      ir_applied: irProvision > 0
+      ir_applied: irProvision > 0,
+      retained_profit: retainedProfit
     },
     kpis: {
       market_share: 12.5 * rd_market_bonus,
       rating: netIncome > 0 ? 'AAA' : 'C',
       insolvency_status: netIncome > 0 ? 'SAUDAVEL' : 'ALERTA',
-      equity: prevEquity + retainedProfit,
+      equity: prevEquity + retainedProfit, // PROTOCOLO v28: Soma Lucro Retido (já descontado dividendos)
       last_decision: safeDecisions 
     },
     statements: {

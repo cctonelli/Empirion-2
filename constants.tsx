@@ -1,7 +1,7 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.0.0-Oracle-Elite";
+export const APP_VERSION = "v15.2.0-Oracle-Gated";
 export const BUILD_DATE = "12/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
@@ -35,7 +35,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     subtitle: "Strategic Simulation",
     hero: { title: "Forje Seu Império", subtitle: "Strategos IA" }
   },
-  // Adding default branch content to support ActivityDetail and BranchDetail fallbacks
   'branch-industrial': {
     name: "Industrial",
     heroImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200",
@@ -56,7 +55,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   }
 };
 
-// FIX: Added missing exported function required by ActivityDetail.tsx to resolve module resolution conflict
 export const getPageContent = (slug: string) => {
   return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || DEFAULT_PAGE_CONTENT[slug];
 };
@@ -133,13 +131,13 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 40000, type: 'expense', isEditable: true }
     ]},
-    { id: 'lair', label: '( = ) LUCRO LÍQUIDO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer', isReadOnly: true },
+    { id: 'lair', label: '( = ) LUCRO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer', isReadOnly: true },
     { id: 'tax_prov', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
-    { id: 'profit_after_tax', label: '( = ) LUCRO LÍQUIDO APÓS O IR', value: 73928, type: 'totalizer', isReadOnly: true },
+    { id: 'profit_after_tax', label: '( = ) LUCRO APÓS O IR', value: 73928, type: 'totalizer', isReadOnly: true },
     { id: 'ppr', label: '( - ) PLR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true },
     { id: 'final_profit', label: '( = ) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true },
     { id: 'dividends', label: '( - ) DIVIDENDOS PROPOSTOS', value: 0, type: 'expense', isEditable: true },
-    { id: 'retained_profit', label: '( = ) LUCRO RETIDO NO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true }
+    { id: 'retained_profit', label: '( = ) LUCRO RETIDO / ACUMULADO', value: 73928, type: 'totalizer', isReadOnly: true }
   ],
   cash_flow: [
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true },

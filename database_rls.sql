@@ -1,66 +1,36 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE SECURITY PATCH v23.0 - ORACLE KERNEL EVOLUTION
--- Objetivo: Suporte a lógicas complexas de folha, metas de lucro e KPIs dinâmicos.
--- Data: 10/01/2026
+-- EMPIRION DATABASE SECURITY PATCH v27.1 - FISCAL & STAFFING EVOLUTION
+-- Objetivo: Suporte a Dividendos, Master Key e Headcount 20/10.
+-- Data: 12/01/2026
 -- ==============================================================================
 
--- 1. AJUSTES DE ESQUEMA: AMBIENTE TRIAL (SANDBOX)
--- Permite que campeonatos trial sejam criados sem tutor_id (modo no-auth)
-ALTER TABLE public.trial_championships ALTER COLUMN tutor_id DROP NOT NULL;
-ALTER TABLE public.trial_championships ADD COLUMN IF NOT EXISTS is_public boolean DEFAULT true;
+-- 1. AJUSTES ESTRUTURAIS: CHAMPIONSHIPS (Live e Trial)
+-- Adiciona percentual de dividendos definido pelo tutor
+ALTER TABLE public.championships ADD COLUMN IF NOT EXISTS dividend_percent numeric DEFAULT 25.0;
+ALTER TABLE public.trial_championships ADD COLUMN IF NOT EXISTS dividend_percent numeric DEFAULT 25.0;
+
+-- 2. AJUSTES ESTRUTURAIS: TEAMS (Live e Trial)
+-- Suporte a Master Key do Tutor e identificação de Bots
+ALTER TABLE public.teams ADD COLUMN IF NOT EXISTS master_key_enabled boolean DEFAULT false;
+ALTER TABLE public.teams ADD COLUMN IF NOT EXISTS is_bot boolean DEFAULT false;
+
+ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS master_key_enabled boolean DEFAULT false;
 ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS is_bot boolean DEFAULT false;
 
--- 2. POLÍTICAS DE ACESSO: TABELAS TRIAL (MODO ANÔNIMO)
--- Garante leitura e escrita total para usuários trial (filtros feitos na aplicação)
+-- 3. REFORÇO DE POLÍTICAS RLS PARA TUTORES
+-- Garante que o tutor possa gerenciar indicadores macro sem restrições
+DROP POLICY IF EXISTS "Tutors manage their own championships" ON public.championships;
+CREATE POLICY "Tutors manage their own championships" ON public.championships
+FOR ALL TO authenticated USING (auth.uid() = tutor_id) WITH CHECK (auth.uid() = tutor_id);
 
-DROP POLICY IF EXISTS "Trial_Championships_Anonymous_Access" ON public.trial_championships;
-CREATE POLICY "Trial_Championships_Anonymous_Access"
-ON public.trial_championships FOR ALL TO authenticated, anon USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Trial_Teams_Anonymous_Access" ON public.trial_teams;
-CREATE POLICY "Trial_Teams_Anonymous_Access"
-ON public.trial_teams FOR ALL TO authenticated, anon USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Trial_Decisions_Anonymous_Access" ON public.trial_decisions;
-CREATE POLICY "Trial_Decisions_Anonymous_Access"
-ON public.trial_decisions FOR ALL TO authenticated, anon USING (true) WITH CHECK (true);
-
--- 3. POLÍTICAS DE ACESSO: TABELAS LIVE (MODO AUTENTICADO)
--- Tabelas oficiais do motor Empirion
-
-ALTER TABLE public.championships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.current_decisions ENABLE ROW LEVEL SECURITY;
-
--- Championships: Públicos para todos, privados para o dono
-DROP POLICY IF EXISTS "Championships_Security_Policy" ON public.championships;
-CREATE POLICY "Championships_Security_Policy" ON public.championships
-FOR ALL TO authenticated, anon USING (is_public = true OR tutor_id = auth.uid()) WITH CHECK (tutor_id = auth.uid());
-
--- Teams: Visibilidade total para competição, edição protegida
-DROP POLICY IF EXISTS "Teams_Security_Policy" ON public.teams;
-CREATE POLICY "Teams_Security_Policy" ON public.teams
-FOR ALL TO authenticated, anon USING (true) WITH CHECK (true);
-
--- Decisions: Leitura permitida para auditoria, escrita para membros
-DROP POLICY IF EXISTS "Decisions_Security_Policy" ON public.current_decisions;
-CREATE POLICY "Decisions_Security_Policy" ON public.current_decisions
-FOR ALL TO authenticated, anon USING (true) WITH CHECK (true);
-
--- 4. GRANTS DE ACESSO (CRÍTICO PARA MODO TRIAL)
--- Garante que as roles anon e authenticated possam manipular os objetos JSONB
-
+-- 4. GRANTS DE ACESSO PARA MODO TRIAL (NO-AUTH)
+-- Essencial para que as operações de simulação não falhem por falta de privilégios em colunas novas
 GRANT ALL ON public.trial_championships TO anon, authenticated;
 GRANT ALL ON public.trial_teams TO anon, authenticated;
-GRANT ALL ON public.trial_decisions TO anon, authenticated;
 
-GRANT ALL ON public.championships TO anon, authenticated;
-GRANT ALL ON public.teams TO anon, authenticated;
-GRANT ALL ON public.current_decisions TO anon, authenticated;
-
--- NOTA TÉCNICA ORACLE v23.0:
--- As regras de 'production_hours_period' (Card 4 Tutor) e 'net_profit_target_percent' (Card 3 Equipe)
--- são incorporadas como propriedades nativas dos objetos JSONB de 'market_indicators' e 'data',
--- não exigindo migrações de coluna física (Alter Table Add Column).
--- O motor de simulação (simulation.ts) está validado para processar estes caminhos de dados.
+-- 5. VALIDAÇÃO DE INTEGRIDADE JSONB
+-- Nota: O motor simulation.ts v27.0 agora espera as seguintes chaves dentro de current_decisions.data:
+-- { "production": { "rd_investment": numeric, "net_profit_target_percent": numeric, "term_interest_rate": numeric } }
+-- E dentro de market_indicators:
+-- { "production_hours_period": integer, "social_charges": numeric }

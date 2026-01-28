@@ -6,7 +6,6 @@ import { calculateProjections, calculateAttractiveness, sanitize } from './simul
 import { logError, logInfo, LogContext } from '../utils/logger';
 import { generateBotDecision } from './gemini';
 
-// Proteção para ambientes onde import.meta.env pode estar indefinido e fallback para chaves obrigatórias
 const env = (import.meta as any)?.env || {};
 const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://gkmjlejeqndfdvxxvuxa.supabase.co';
 const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrbWpsZWplcW5kZmR2eHh2dXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODk3MzgsImV4cCI6MjA4Mjc2NTczOH0.QD3HK_ggQJb8sQHBJSIA2ARhh9Vz8v-qTkh2tQyKLis';
@@ -14,14 +13,9 @@ const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const isTestMode = true;
 
-// UUID Reservado para o Sistema em modo No-Auth
 const SYSTEM_TUTOR_ID = '00000000-0000-0000-0000-000000000000';
 const LOCAL_CHAMPS_KEY = 'empirion_v12_arenas';
 
-/**
- * Auxiliar para limpar objetos antes de enviar ao Supabase
- * Remove campos nulos ou indefinidos que podem quebrar se a coluna não existir no cache
- */
 const preparePayload = (obj: any) => {
   return JSON.parse(JSON.stringify(obj, (k, v) => {
     if (v === undefined) return undefined;
@@ -107,29 +101,19 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 
   const initialShare = 100 / Math.max(teams.length, 1);
 
-  const teamsPayload = teams.map(t => {
-    const base: any = {
-      id: crypto.randomUUID(),
-      name: t.name,
-      championship_id: newId,
-      equity: 5055447,
-      credit_limit: 5000000,
-      status: 'active',
-      insolvency_status: 'SAUDAVEL',
-      created_at: timestamp,
-      kpis: { market_share: initialShare, rating: 'AAA' }
-    };
-    
-    // ESTRATÉGIA DE BYPASS DE CACHE: 
-    // Se is_bot for false, não enviamos a coluna no trial. O banco usará o DEFAULT false.
-    // Isso evita o erro "Could not find column is_bot in schema cache".
-    if (!isTrial) {
-      base.is_bot = !!t.is_bot;
-    } else if (t.is_bot) {
-      base.is_bot = true; // Se for bot no trial, tentamos enviar.
-    }
-    return base;
-  });
+  const teamsPayload = teams.map(t => ({
+    id: crypto.randomUUID(),
+    name: t.name,
+    championship_id: newId,
+    equity: 5055447,
+    credit_limit: 5000000,
+    status: 'active',
+    insolvency_status: 'SAUDAVEL',
+    is_bot: !!t.is_bot,
+    master_key_enabled: false,
+    created_at: timestamp,
+    kpis: { market_share: initialShare, rating: 'AAA' }
+  }));
 
   const fullChamp = { 
     ...champData, 
@@ -140,6 +124,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     round_started_at: timestamp,
     is_trial: isTrial,
     tutor_id: currentUserId,
+    dividend_percent: champData.dividend_percent || 25.0,
     deadline_value: champData.deadline_value || 7,
     deadline_unit: champData.deadline_unit || 'days',
     currency: champData.currency || 'BRL',
@@ -178,6 +163,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       gazeta_mode: fullChamp.gazeta_mode,
       tutor_id: currentUserId,
       round_started_at: fullChamp.round_started_at,
+      dividend_percent: fullChamp.dividend_percent,
       config: fullChamp.config
     });
     
@@ -204,73 +190,8 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
     if (!arena) throw new Error("Arena não localizada no nodo local.");
 
     const isTrial = !!arena.is_trial;
-    const champTable = isTrial ? 'trial_championships' : 'championships';
-    const teamsTable = isTrial ? 'trial_teams' : 'teams';
     const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
 
-    // 1. Garante que a Arena existe na nuvem (Pai)
-    const { data: arenaExists } = await supabase.from(champTable).select('id').eq('id', champId).maybeSingle();
-    if (!arenaExists) {
-      logInfo(LogContext.DATABASE, `Provisionando Arena ${champId} na Cloud...`);
-      const { error: arenaErr } = await supabase.from(champTable).insert({
-        id: arena.id,
-        name: arena.name,
-        branch: arena.branch,
-        description: arena.description,
-        status: arena.status,
-        current_round: arena.current_round,
-        total_rounds: arena.total_rounds,
-        deadline_value: arena.deadline_value,
-        deadline_unit: arena.deadline_unit,
-        initial_financials: arena.initial_financials,
-        market_indicators: arena.market_indicators,
-        region_names: arena.region_names,
-        region_configs: arena.region_configs,
-        currency: arena.currency,
-        sales_mode: arena.sales_mode,
-        scenario_type: arena.scenario_type,
-        transparency_level: arena.transparency_level,
-        gazeta_mode: arena.gazeta_mode,
-        tutor_id: arena.tutor_id, 
-        round_started_at: arena.round_started_at,
-        config: arena.config
-      });
-      if (arenaErr) throw new Error(`Erro ao provisionar Arena: ${arenaErr.message}`);
-    }
-
-    // 2. Garante que a Equipe existe na nuvem (Filho)
-    const { data: teamExists } = await supabase.from(teamsTable).select('id').eq('id', teamId).maybeSingle();
-    if (!teamExists) {
-      logInfo(LogContext.DATABASE, `Provisionando Equipe ${teamId} na Cloud...`);
-      const teamMeta = arena.teams?.find(t => t.id === teamId);
-      if (teamMeta) {
-         const dbTeamPayload: any = {
-           id: teamMeta.id,
-           championship_id: arena.id,
-           name: teamMeta.name,
-           equity: teamMeta.equity || 5055447,
-           credit_limit: teamMeta.credit_limit || 5000000,
-           status: 'active',
-           kpis: teamMeta.kpis
-         };
-         
-         // BYPASS DE ERRO DE COLUNA NO TRIAL:
-         // Se for trial, omitimos is_bot se for falso para não forçar a verificação da coluna no cache do Supabase.
-         // Se for oficial, enviamos normalmente.
-         if (!isTrial) {
-            dbTeamPayload.is_bot = !!teamMeta.is_bot;
-         } else if (teamMeta.is_bot) {
-            dbTeamPayload.is_bot = true;
-         }
-
-         const { error: teamErr } = await supabase.from(teamsTable).insert(dbTeamPayload);
-         if (teamErr) throw new Error(`Erro ao provisionar Equipe: ${teamErr.message}`);
-      } else {
-         throw new Error("Metadados da equipe indisponíveis.");
-      }
-    }
-
-    // 3. Persiste a Decisão (Neto)
     const cleanPayload = preparePayload(decisions);
     const { data: existingRow } = await supabase.from(decisionsTable)
         .select('id')
@@ -329,7 +250,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
         teamDecision = {
           regions: Object.fromEntries(Array.from({ length: arena.regions_count || 4 }, (_, i) => [i + 1, { price: 375, term: 1, marketing: 0 }])),
           hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50, misc: 0 },
-          production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, rd_investment: 0, extraProductionPercent: 0 },
+          production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, rd_investment: 0, extraProductionPercent: 0, net_profit_target_percent: 5.0, term_interest_rate: 1.5 },
           machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
           finance: { loanRequest: 0, loanTerm: 1, application: 0 },
           estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 },
