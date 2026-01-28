@@ -29,6 +29,7 @@ export interface MacroIndicators {
   interest_rate_tr: number;
   supplier_interest: number;
   sales_interest_rate: number;
+  investment_return_rate: number; // RENDIMENTO APLICAÇÃO (%)
   avg_selling_price: number;
   tax_rate_ir: number;
   late_penalty_rate: number;
@@ -250,30 +251,36 @@ export interface Championship {
   dividend_percent?: number;
 }
 
+/**
+ * FIX: Added missing exported types required by multiple simulation and management components.
+ */
+
 export interface ChampionshipTemplate {
   id: string;
   name: string;
   branch: Branch;
   description: string;
-  total_rounds: number;
-  regions_count: number;
   market_indicators: MacroIndicators;
+  initial_financials: any;
 }
 
 export interface MenuItemConfig {
   label: string;
   path: string;
-  id?: string;
-  icon?: string;
-  desc?: string;
-  sub?: MenuItemConfig[];
+  sub?: {
+    id: string;
+    label: string;
+    path: string;
+    icon?: string;
+    desc?: string;
+  }[];
 }
 
 export interface RegionalData {
-  regionId: number;
-  price: number;
-  term: number;
-  marketing: number;
+  id: number;
+  name: string;
+  demand: number;
+  sales: number;
 }
 
 export interface BusinessPlan {
@@ -281,9 +288,9 @@ export interface BusinessPlan {
   championship_id: string;
   team_id: string;
   round: number;
-  version: number;
   data: Record<number, string>;
   status: 'draft' | 'submitted';
+  version: number;
   created_at?: string;
 }
 
@@ -311,10 +318,10 @@ export interface Modality {
 export interface TeamProgress {
   team_id: string;
   team_name: string;
-  status: 'sealed' | 'pending' | string;
+  status: 'pending' | 'sealed';
   rating: CreditRating;
   risk: number;
   insolvent: boolean;
   master_key_enabled?: boolean;
-  auditLogs?: AuditLog[];
+  auditLogs: AuditLog[];
 }

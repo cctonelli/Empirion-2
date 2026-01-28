@@ -91,7 +91,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                     <ParamCard label="ICE (Confiança)" val={macro.ice} suffix="%" onChange={(v: number) => setMacro({...macro, ice: v})} icon={<Target className="text-blue-400" />} />
                     <ParamCard label="Inflação" val={macro.inflation_rate} suffix="%" onChange={(v: number) => setMacro({...macro, inflation_rate: v})} icon={<Flame className="text-orange-500" />} />
                     <ParamCard label="Taxa TR" val={macro.interest_rate_tr} suffix="%" onChange={(v: number) => setMacro({...macro, interest_rate_tr: v})} icon={<Landmark className="text-emerald-500" />} />
-                    <ParamCard label="Inadimplência" val={macro.customer_default_rate} suffix="%" onChange={(v: number) => setMacro({...macro, customer_default_rate: v})} icon={<ShieldAlert className="text-rose-500" />} />
+                    <ParamCard label="Rendimento Aplicação" val={macro.investment_return_rate} suffix="%" onChange={(v: number) => setMacro({...macro, investment_return_rate: v})} icon={<TrendingUp className="text-amber-500" />} />
                  </div>
                  <div className="lg:col-span-4 bg-slate-900/50 p-10 rounded-[4rem] border border-white/10 shadow-2xl">
                     <h3 className="text-xl font-black text-white uppercase italic mb-8 flex items-center gap-3"><Users size={20} className="text-indigo-400"/> Sensibilidade Humana</h3>

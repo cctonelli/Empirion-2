@@ -1,8 +1,8 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v14.2.2-Oracle-Master";
-export const BUILD_DATE = "10/01/2026";
+export const APP_VERSION = "v15.0.0-Oracle-Elite";
+export const BUILD_DATE = "12/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
@@ -35,74 +35,37 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     subtitle: "Strategic Simulation",
     hero: { title: "Forje Seu Império", subtitle: "Strategos IA" }
   },
-  'solutions-bp': { 
-    title: "Business Plan", 
-    subtitle: "Estratégia Guiada",
-    steps: [
-      { id: 0, label: "Visão Geral" },
-      { id: 1, label: "Mercado" },
-      { id: 2, label: "Operações" },
-      { id: 3, label: "RH" },
-      { id: 4, label: "Financeiro" }
-    ]
+  // Adding default branch content to support ActivityDetail and BranchDetail fallbacks
+  'branch-industrial': {
+    name: "Industrial",
+    heroImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200",
+    body: "Produção $9M Assets. Gerencie cadeias de suprimento complexas.",
+    description: "O motor industrial do Empirion simula operações de manufatura pesada com foco em CapEx e eficiência de produção.",
+    features: ["CapEx Management", "Supply Chain Optimization", "Real-time Production Analytics"],
+    kpis: ["TSR", "EBITDA Margin", "Capacity Utilization"],
+    accent: "orange"
   },
-  'solutions-simulators': { 
-    title: "Simuladores", 
-    subtitle: "Nodos de Elite",
-    items: [
-      { id: 'ind', label: "Industrial", desc: "Produção $9M Assets", slug: 'industrial', icon: 'Factory' },
-      { id: 'com', label: "Comercial", desc: "Varejo Híbrido", slug: 'commercial', icon: 'ShoppingCart' }
-    ]
-  },
-  'rewards': { 
-    tiers: [
-      { name: "Bronze", pts: 0, color: "text-orange-500" },
-      { name: "Prata", pts: 1000, color: "text-slate-400" },
-      { name: "Ouro", pts: 5000, color: "text-amber-500" },
-      { name: "Elite", pts: 10000, color: "text-blue-500" }
-    ], 
-    accumulation: [
-      { action: "Vitória", val: "500 pts" },
-      { action: "Decisão", val: "10 pts" }
-    ] 
-  },
+  'branch-commercial': {
+    name: "Comercial",
+    heroImage: "https://images.unsplash.com/photo-1556740734-7f9a2b77d59a?q=80&w=1200",
+    body: "Varejo Híbrido e Distribuição Omnichannel.",
+    description: "Simulação focada em giro de estoque, pricing dinâmico e logística de última milha.",
+    features: ["Inventory Management", "Dynamic Pricing", "Logistics Control"],
+    kpis: ["Gross Margin", "Inventory Turnover", "Customer Acquisition Cost"],
+    accent: "blue"
+  }
 };
 
+// FIX: Added missing exported function required by ActivityDetail.tsx to resolve module resolution conflict
 export const getPageContent = (slug: string) => {
-  return DEFAULT_PAGE_CONTENT[slug] || DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || null;
+  return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || DEFAULT_PAGE_CONTENT[slug];
 };
 
 export const INITIAL_INDUSTRIAL_FINANCIALS = {
   balance_sheet: {
-    assets: { 
-      current: { cash: 0, receivables: 1823735, inventory: 1466605 }, 
-      total: 9176940 
-    },
-    equity: { 
-      total: 5055447, 
-      capital_social: 5000000, 
-      accumulated_profit: 55447 
-    },
-    liabilities: { 
-      current: 2621493, 
-      current_loans: 1872362,
-      current_divs: 18481,
-      current_taxes: 13045, 
-      long_term: 1500000,
-      total_debt: 4121493 
-    }
-  },
-  dre: {
-    revenue: 3322735,
-    cpv: 2278180,
-    gross_profit: 1044555,
-    opex: 916522,
-    operating_profit: 128033,
-    lair: 88033,
-    tax: 13045,
-    profit_after_tax: 74988,
-    ppr: 0,
-    net_profit: 74988
+    assets: { total: 9176940 },
+    liabilities: { total: 4121493 },
+    equity: { total: 5055447 }
   }
 };
 
@@ -123,9 +86,11 @@ export const INITIAL_FINANCIAL_TREE = {
         {
           id: 'assets.noncurrent', label: 'ATIVO NÃO CIRCULANTE', value: 5886600, type: 'totalizer', children: [
             { id: 'assets.noncurrent.fixed', label: 'IMOBILIZADO', value: 5886600, type: 'totalizer', children: [
-                { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true },
                 { id: 'assets.noncurrent.fixed.land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true },
-                { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true }
+                { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true },
+                { id: 'assets.noncurrent.fixed.buildings_deprec', label: '(-) Deprec. Acum. Prédios/Inst.', value: -2176000, type: 'asset', isEditable: true },
+                { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true },
+                { id: 'assets.noncurrent.fixed.machines_deprec', label: '(-) Deprec. Acum. Máquinas', value: -811500, type: 'asset', isEditable: true }
             ]}
           ]
         }
@@ -148,26 +113,33 @@ export const INITIAL_FINANCIAL_TREE = {
         { 
           id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 5055447, type: 'totalizer', children: [
             { id: 'equity.capital', label: 'Capital Social', value: 5000000, type: 'equity', isEditable: true },
-            { id: 'equity.profit', label: 'Lucros Acumulados no ano', value: 55447, type: 'equity', isEditable: true }
+            { id: 'equity.profit', label: 'Lucro/Prejuízo Acumulados', value: 55447, type: 'equity', isEditable: true }
           ] 
         }
       ]
     }
   ],
   dre: [
-    { id: 'rev', label: 'RECEITAS BRUTAS DE VENDAS', value: 3322735, type: 'revenue', isEditable: true },
+    { id: 'rev', label: '(+) RECEITAS BRUTAS DE VENDAS', value: 3322735, type: 'revenue', isEditable: true },
     { id: 'cpv', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: -2278180, type: 'expense', isEditable: true },
     { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true },
-    { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -916522, type: 'totalizer', children: [
-        { id: 'opex.sales', label: 'VENDAS', value: 801642, type: 'expense', isEditable: true },
-        { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true }
+    { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
+        { id: 'opex.sales', label: 'DE VENDAS', value: 802702, type: 'expense', isEditable: true },
+        { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true },
+        { id: 'opex.rd', label: 'P&D - PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true }
     ]},
-    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 128033, type: 'totalizer', isReadOnly: true },
-    { id: 'lair', label: '(=) LAIR - LUCRO LÍQUIDO ANTES DO IR', value: 88033, type: 'totalizer', isReadOnly: true },
+    { id: 'operating_profit', label: '( = ) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true },
+    { id: 'fin_res', label: '(+/-) RESULTADO FINANCEIRO', value: -40000, type: 'totalizer', children: [
+        { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
+        { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 40000, type: 'expense', isEditable: true }
+    ]},
+    { id: 'lair', label: '( = ) LUCRO LÍQUIDO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer', isReadOnly: true },
     { id: 'tax_prov', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
-    { id: 'profit_after_tax', label: '(=) LUCRO LÍQUIDO APÓS O I. R.', value: 74988, type: 'totalizer', isReadOnly: true },
-    { id: 'ppr', label: '( - ) PPR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true },
-    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 74988, type: 'totalizer', isReadOnly: true }
+    { id: 'profit_after_tax', label: '( = ) LUCRO LÍQUIDO APÓS O IR', value: 73928, type: 'totalizer', isReadOnly: true },
+    { id: 'ppr', label: '( - ) PLR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true },
+    { id: 'final_profit', label: '( = ) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true },
+    { id: 'dividends', label: '( - ) DIVIDENDOS PROPOSTOS', value: 0, type: 'expense', isEditable: true },
+    { id: 'retained_profit', label: '( = ) LUCRO RETIDO NO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true }
   ],
   cash_flow: [
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true },
@@ -176,9 +148,12 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.inflow.compulsory', label: 'EMPRÉSTIMO COMPULSÓRIO', value: 1372362, type: 'revenue', isEditable: true }
     ]},
     { id: 'cf.outflow', label: '(-) SAÍDAS', value: -3434862, type: 'totalizer', children: [
-        { id: 'cf.outflow.payroll', label: 'FOLHA DE PAGAMENTO (INC. PLR)', value: 767000, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.payroll', label: 'FOLHA DE PAGAMENTO', value: 767000, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.social_charges', label: 'ENCARGOS SOCIAIS', value: 268450, type: 'expense', isEditable: true },
         { id: 'cf.outflow.suppliers', label: 'PAGAMENTO A FORNECEDORES', value: 1677000, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 13045, type: 'expense', isEditable: true }
+        { id: 'cf.outflow.rd', label: 'P&D - PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 13045, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0, type: 'expense', isEditable: true }
     ]},
     { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0, type: 'totalizer', isReadOnly: true }
   ]
@@ -192,6 +167,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   interest_rate_tr: 2.0,
   supplier_interest: 1.5,
   sales_interest_rate: 1.5, 
+  investment_return_rate: 1.0,
   avg_selling_price: 340.0,
   tax_rate_ir: 15.0,
   late_penalty_rate: 15.0,
@@ -224,8 +200,8 @@ export const DEFAULT_MACRO: MacroIndicators = {
   labor_availability: 'MEDIA',
   machine_specs: {
     alfa: { model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025 },
-    beta: { model: 'beta', initial_value: 1500000, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025 },
-    gama: { model: 'gama', initial_value: 3000000, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025 }
+    beta: { model: 'beta', initial_value: 1576206, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025 },
+    gama: { model: 'gama', initial_value: 3310975, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025 }
   },
   initial_machinery_mix: [
     { id: 'm1', model: 'alfa', age: 6 },
@@ -234,7 +210,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
     { id: 'm4', model: 'alfa', age: 21 },
     { id: 'm5', model: 'alfa', age: 21 }
   ],
-  maintenance_physics: { alpha: 0.05, beta: 1.2, gamma: 0.5 },
+  maintenance_physics: { alpha: 0.05, beta: 0.03, gamma: 0.02 },
   prices: { 
     mp_a: 20.00, 
     mp_b: 40.00, 
@@ -243,7 +219,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
     storage_mp: 1.40,
     storage_finished: 20.00
   },
-  machinery_values: { alfa: 500000, beta: 1500000, gama: 3000000 },
+  machinery_values: { alfa: 500000, beta: 1576206, gama: 3310975 },
   staffing: {
     admin: { count: 20, salaries: 4 },
     sales: { count: 10, salaries: 4 },
@@ -253,17 +229,17 @@ export const DEFAULT_MACRO: MacroIndicators = {
 };
 
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
-  0: { ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0 },
-  1: { ice: 4.0, demand_variation: 6.7, inflation_rate: 2.0, customer_default_rate: 2.7, interest_rate_tr: 3.0 },
-  2: { ice: 5.0, demand_variation: -6.3, inflation_rate: 3.0, customer_default_rate: 2.7, interest_rate_tr: 3.0 },
-  3: { ice: 5.0, demand_variation: 55.0, inflation_rate: 3.0, customer_default_rate: 2.8, interest_rate_tr: 4.0 },
-  4: { ice: 5.0, demand_variation: -25.0, inflation_rate: 4.0, customer_default_rate: 2.6, interest_rate_tr: 4.0 },
-  5: { ice: 5.0, demand_variation: 18.2, inflation_rate: 4.5, customer_default_rate: 2.8, interest_rate_tr: 4.5 },
-  6: { ice: 3.0, demand_variation: 9.2, inflation_rate: 4.5, customer_default_rate: 2.6, interest_rate_tr: 5.0 },
-  7: { ice: 4.0, demand_variation: 56.2, inflation_rate: 4.5, customer_default_rate: 2.8, interest_rate_tr: 5.0 },
-  8: { ice: 5.0, demand_variation: -18.0, inflation_rate: 5.0, customer_default_rate: 2.8, interest_rate_tr: 5.0 },
-  9: { ice: 6.0, demand_variation: 6.0, inflation_rate: 5.5, customer_default_rate: 2.6, interest_rate_tr: 5.5 },
-  10: { ice: 4.0, demand_variation: 7.5, inflation_rate: 4.0, customer_default_rate: 2.6, interest_rate_tr: 5.5 },
-  11: { ice: 4.0, demand_variation: 52.5, inflation_rate: 4.5, customer_default_rate: 3.0, interest_rate_tr: 6.0 },
-  12: { ice: 6.0, demand_variation: -24.0, inflation_rate: 5.0, customer_default_rate: 2.8, interest_rate_tr: 6.0 }
+  0: { ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, investment_return_rate: 1.0 },
+  1: { ice: 4.0, demand_variation: 6.7, inflation_rate: 2.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, investment_return_rate: 2.0 },
+  2: { ice: 5.0, demand_variation: -6.3, inflation_rate: 3.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, investment_return_rate: 2.0 },
+  3: { ice: 5.0, demand_variation: 55.0, inflation_rate: 3.0, customer_default_rate: 2.8, interest_rate_tr: 4.0, investment_return_rate: 2.5 },
+  4: { ice: 5.0, demand_variation: -25.0, inflation_rate: 4.0, customer_default_rate: 2.6, interest_rate_tr: 4.0, investment_return_rate: 3.0 },
+  5: { ice: 5.0, demand_variation: 18.2, inflation_rate: 4.5, customer_default_rate: 2.8, interest_rate_tr: 4.5, investment_return_rate: 3.5 },
+  6: { ice: 3.0, demand_variation: 9.2, inflation_rate: 4.5, customer_default_rate: 2.6, interest_rate_tr: 5.0, investment_return_rate: 4.0 },
+  7: { ice: 4.0, demand_variation: 56.2, inflation_rate: 4.5, customer_default_rate: 2.8, interest_rate_tr: 5.0, investment_return_rate: 4.0 },
+  8: { ice: 5.0, demand_variation: -18.0, inflation_rate: 5.0, customer_default_rate: 2.8, interest_rate_tr: 5.0, investment_return_rate: 4.0 },
+  9: { ice: 6.0, demand_variation: 6.0, inflation_rate: 5.5, customer_default_rate: 2.6, interest_rate_tr: 5.5, investment_return_rate: 4.5 },
+  10: { ice: 4.0, demand_variation: 7.5, inflation_rate: 4.0, customer_default_rate: 2.6, interest_rate_tr: 5.5, investment_return_rate: 4.0 },
+  11: { ice: 4.0, demand_variation: 52.5, inflation_rate: 4.5, customer_default_rate: 3.0, interest_rate_tr: 6.0, investment_return_rate: 4.5 },
+  12: { ice: 6.0, demand_variation: -24.0, inflation_rate: 5.0, customer_default_rate: 2.8, interest_rate_tr: 6.0, investment_return_rate: 4.5 }
 };

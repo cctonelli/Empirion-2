@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, Wrench, Clock, UserMinus, ShieldAlert, Heart, Flame, Factory, Database
+  TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, Wrench, Clock, UserMinus, ShieldAlert, Heart, Flame, Factory, Database, Coins, Award, Zap, Sparkles, PieChart, Landmark as BankIcon
 } from 'lucide-react';
 import { Branch, Championship, Team } from '../types';
 import { getChampionships } from '../services/supabase';
@@ -31,9 +31,9 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
 
   const dre = useMemo(() => {
      return activeTeam?.kpis?.statements?.dre || {
-       revenue: 0, cpv: 0, gross_profit: 0, opex: 0, lair: 0, tax: 0, net_profit: 0,
+       revenue: 0, cpv: 0, gross_profit: 0, opex: 0, operating_profit: 0, lair: 0, tax: 0, profit_after_ir: 0, plr: 0, net_profit: 0, dividends: 0, retained_profit: 0,
        details: { 
-         cpp: 0, wac_pa: 0, mp_consumption: 0, mod_total: 0, maintenance: 0, depreciation_total: 0, overtime_cost: 0 
+         cpp: 0, wac_pa: 0, rd_investment: 0, social_charges: 0, payroll_net: 0
        }
      };
   }, [activeTeam]);
@@ -47,40 +47,60 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       <header className="flex justify-between items-end px-6">
          <div>
             <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Oracle <span className="text-orange-500">Audit Node</span></h1>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Ciclo de Auditoria</p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Ciclo DRE v27.0</p>
          </div>
          <div className="flex gap-6">
-            <MetricSummary label="CPP do Ciclo" val={`$ ${dre.details?.cpp?.toFixed(2)}`} icon={<Factory size={20}/>} />
-            <MetricSummary label="WAC PA (Estoque)" val={`$ ${dre.details?.wac_pa?.toFixed(2)}`} icon={<Database size={20}/>} />
+            <MetricSummary label="IR Provisionado" val={`$ ${fmt(dre.tax || 0)}`} icon={<BankIcon size={20}/>} />
+            <MetricSummary label="Dividendos" val={`$ ${fmt(dre.dividends || 0)}`} icon={<Award size={20}/>} />
          </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-6">
          <div className="lg:col-span-8 bg-slate-900 border border-white/5 rounded-[4rem] p-12 shadow-2xl space-y-8">
             <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Demonstrativo de Resultados (DRE)</h3>
-            <div className="space-y-4 font-mono">
-               <ReportLine label="RECEITA LÍQUIDA" val={fmt(dre.revenue)} bold />
-               <ReportLine label="(-) CPV (BASE WAC PA)" val={fmt(dre.cpv)} neg />
-               <ReportLine label="(=) LUCRO BRUTO" val={fmt(dre.gross_profit)} highlight />
-               <ReportLine label="(-) DESPESAS OPERACIONAIS" val={fmt(dre.opex)} neg />
-               <ReportLine label="(=) LAIR" val={fmt(dre.lair)} bold />
-               <ReportLine label="(-) IMPOSTO DE RENDA" val={fmt(dre.tax)} neg />
-               <ReportLine label="(=) LUCRO LÍQUIDO" val={fmt(dre.net_profit)} total />
+            <div className="space-y-2 font-mono">
+               <ReportLine label="(+) RECEITAS BRUTAS DE VENDAS" val={fmt(dre.revenue)} bold />
+               <ReportLine label="( - ) CUSTO PROD. VENDIDO - CPV" val={fmt(dre.cpv)} neg />
+               <ReportLine label="( = ) LUCRO BRUTO" val={fmt(dre.gross_profit)} highlight />
+               
+               <div className="py-2 space-y-1">
+                  <ReportLine label="( - ) DESPESAS OPERACIONAIS" val={fmt(dre.opex)} neg />
+                  <ReportLine label="P&D - INOVAÇÃO" val={fmt(dre.details?.rd_investment || 0)} indent color="text-blue-400" />
+               </div>
+
+               <ReportLine label="( = ) LUCRO OPERACIONAL" val={fmt(dre.operating_profit)} bold />
+               <ReportLine label="(+/-) RESULTADO FINANCEIRO" val={fmt(dre.financial_result || 0)} />
+
+               <ReportLine label="( = ) LUCRO ANTES DO IR (LAIR)" val={fmt(dre.lair)} bold highlight />
+               <ReportLine label="( - ) PROVISÃO PARA O IR" val={fmt(dre.tax)} neg color={dre.tax > 0 ? "text-rose-400" : "text-slate-600"} />
+               
+               <ReportLine label="( = ) LUCRO APÓS O IR" val={fmt(dre.profit_after_ir)} bold />
+               <ReportLine label="( - ) PLR - PARTICIPAÇÃO LUCROS" val={fmt(dre.plr)} neg color={dre.plr > 0 ? "text-amber-400" : "text-slate-600"} />
+
+               <ReportLine label="( = ) LUCRO LÍQUIDO DO EXERCÍCIO" val={fmt(dre.net_profit)} total />
+               
+               <div className="pt-4 border-t border-white/5">
+                  <ReportLine label="( - ) DIVIDENDOS PROPOSTOS" val={fmt(dre.dividends)} neg color="text-indigo-400" />
+                  <ReportLine label="( = ) LUCRO RETIDO / ACUMULADO" val={fmt(dre.retained_profit)} highlight bold />
+               </div>
             </div>
          </div>
 
          <aside className="lg:col-span-4 space-y-8">
             <div className="bg-slate-900 border border-white/10 rounded-[4rem] p-10 shadow-2xl space-y-8">
-               <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 italic">Composição do CPP</h4>
+               <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 italic">Desembolso Ciclo (Fluxo de Caixa)</h4>
                <div className="space-y-6">
-                  <CostDetail label="Matéria-Prima (WAC)" val={fmt(dre.details?.mp_consumption)} />
-                  <CostDetail label="Mão de Obra Direta" val={fmt(dre.details?.mod_total)} />
-                  <CostDetail label="Manutenção de Ativos" val={fmt(dre.details?.maintenance)} />
-                  <CostDetail label="Depreciação" val={fmt(dre.details?.depreciação_total)} />
+                  <CostDetail label="Folha Líquida + PLR" val={fmt(dre.details?.payroll_net || 0)} />
+                  <CostDetail label="Encargos Sociais" val={fmt(dre.details?.social_charges || 0)} />
+                  <CostDetail label="Investimento P&D" val={fmt(dre.details?.rd_investment || 0)} />
+                  <CostDetail label="Pagamento Dividendos" val={fmt(dre.dividends || 0)} />
                   
-                  <div className="pt-6 border-t border-white/5 flex justify-between items-center">
-                     <span className="text-[8px] font-black text-slate-500 uppercase">Horas Extras Pagas</span>
-                     <span className="text-sm font-mono font-black text-amber-500">$ {fmt(dre.details?.overtime_cost)}</span>
+                  <div className="pt-6 border-t border-white/5 flex flex-col gap-4">
+                     <span className="text-[8px] font-black text-slate-500 uppercase">Vantagem Tecnológica P&D</span>
+                     <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-600/10 text-blue-500 rounded-xl"><Sparkles size={20}/></div>
+                        <span className="text-2xl font-black text-white italic font-mono">+{(dre.details?.rd_investment > 0 ? 20 : 0)}% Eficiência</span>
+                     </div>
                   </div>
                </div>
             </div>
@@ -90,10 +110,12 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   );
 };
 
-const ReportLine = ({ label, val, neg, bold, total, highlight }: any) => (
-  <div className={`flex justify-between p-4 rounded-2xl ${total ? 'bg-orange-600/10 border border-orange-500/20 mt-4' : highlight ? 'bg-white/5' : ''}`}>
-    <span className={`text-[10px] uppercase tracking-wider ${bold || total ? 'font-black text-white' : 'text-slate-500'}`}>{label}</span>
-    <span className={`text-sm font-black ${neg ? 'text-rose-500' : total ? 'text-orange-500' : 'text-slate-200'}`}>{neg ? '(' : ''}$ {val}{neg ? ')' : ''}</span>
+const ReportLine = ({ label, val, neg, bold, total, highlight, subtotal, indent, color }: any) => (
+  <div className={`flex justify-between p-2 rounded-xl transition-all ${total ? 'bg-orange-600/10 border border-orange-500/20 mt-4' : highlight ? 'bg-white/5' : ''} ${indent ? 'pl-10 opacity-60' : ''}`}>
+    <span className={`text-[9px] uppercase tracking-wider ${bold || total ? 'font-black' : 'text-slate-500'} ${color || ''}`}>{label}</span>
+    <span className={`text-sm font-black ${neg ? 'text-rose-500' : total ? 'text-orange-500' : color || 'text-slate-200'}`}>
+      {neg ? '(' : ''}$ {val}{neg ? ')' : ''}
+    </span>
   </div>
 );
 
@@ -109,7 +131,7 @@ const MetricSummary = ({ label, val, icon }: any) => (
 
 const CostDetail = ({ label, val }: any) => (
   <div className="flex justify-between items-center group">
-    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-300 transition-colors">{label}</span>
+    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-300 transition-colors">{label}</span>
     <span className="text-sm font-mono font-black text-white">$ {val}</span>
   </div>
 );

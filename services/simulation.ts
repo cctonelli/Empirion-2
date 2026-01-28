@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v25.5 - MARKET-DRIVEN INTEREST PROTOCOL
+ * CORE ORACLE ENGINE v27.0 - FISCAL INTEGRITY & R&D POWER
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -37,125 +37,142 @@ export const calculateProjections = (
   const prevBS = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(prevBS.equity?.total, 5055447);
 
-  // 1. WAC - MATÉRIAS-PRIMAS
-  const stockMPA_Initial_Qty = 10000;
+  // 1. MATÉRIAS-PRIMAS
   const stockMPA_Initial_Val = 200000;
   const purchaseMPA_Qty = sanitize(safeDecisions.production.purchaseMPA, 0);
   const purchaseMPA_Val = purchaseMPA_Qty * indicators.prices.mp_a;
-  const wacMPA = (stockMPA_Initial_Val + purchaseMPA_Val) / Math.max(1, (stockMPA_Initial_Qty + purchaseMPA_Qty));
+  const wacMPA = (stockMPA_Initial_Val + purchaseMPA_Val) / Math.max(1, (10000 + purchaseMPA_Qty));
 
-  const stockMPB_Initial_Qty = 5000; 
   const stockMPB_Initial_Val = 200000;
   const purchaseMPB_Qty = sanitize(safeDecisions.production.purchaseMPB, 0);
   const purchaseMPB_Val = purchaseMPB_Qty * indicators.prices.mp_b;
-  const wacMPB = (stockMPB_Initial_Val + purchaseMPB_Val) / Math.max(1, (stockMPB_Initial_Qty + purchaseMPB_Qty));
+  const wacMPB = (stockMPB_Initial_Val + purchaseMPB_Val) / Math.max(1, (5000 + purchaseMPB_Qty));
 
-  // 2. GESTÃO DE ATIVOS E MANUTENÇÃO (CPP)
+  // 2. GESTÃO DE ATIVOS E EFEITO P&D v27.0
   const machineSpecs = indicators.machine_specs;
   const mPhysics = indicators.maintenance_physics;
-  let totalMaintenanceBase = 0;
-  let totalDepreciation = 40000; 
+  const structuralDepreciation = 54400; // 1% de 5.44M
+  let totalDepreciationMachines = 0;
+  let totalMaintenanceCost = 0;
 
-  indicators.initial_machinery_mix.forEach(m => {
-    const age = m.age + currentRound;
+  const fleet = previousState?.fleet || indicators.initial_machinery_mix;
+  
+  // MOTOR P&D: Investimento (%) melhora produtividade e reduz custos variáveis indiretos
+  const rd_percent = sanitize(safeDecisions.production.rd_investment, 0);
+  const rd_productivity_bonus = Math.min(0.20, (rd_percent / 100) * 2.0); // Até 20% de ganho
+  const effectiveProductivity = sanitize(indicators.labor_productivity, 1.0) * (1 + rd_productivity_bonus);
+
+  fleet.forEach((m: InitialMachine) => {
     const spec = machineSpecs[m.model];
-    const baseRate = m.model === 'alfa' ? mPhysics.alpha : m.model === 'beta' ? mPhysics.beta : mPhysics.gamma;
-    const ageMultiplier = age > 10 ? Math.pow(1.05, age - 10) : 1.0;
-    totalMaintenanceBase += (spec.initial_value * baseRate) * ageMultiplier;
-    totalDepreciation += (spec.initial_value * spec.depreciation_rate);
+    totalDepreciationMachines += (spec.initial_value * spec.depreciation_rate);
+    const baseMaintRate = m.model === 'alfa' ? mPhysics.alpha : m.model === 'beta' ? mPhysics.beta : mPhysics.gamma;
+    totalMaintenanceCost += (spec.initial_value * baseMaintRate);
   });
 
-  const newBuy = safeDecisions.machinery.buy;
-  totalMaintenanceBase += (newBuy.alfa * machineSpecs.alfa.initial_value * mPhysics.alpha);
-
-  // 3. CAPACIDADE E STAFFING (MOD)
+  // 3. STAFFING E ENCARGOS SOCIAIS (20 ADM / 10 VENDAS)
   const activityLevel = sanitize(safeDecisions.production.activityLevel, 80);
-  const currentMachines = {
-    alfa: 5 + (newBuy.alfa || 0) - (safeDecisions.machinery.sell.alfa || 0),
-    beta: 0 + (newBuy.beta || 0) - (safeDecisions.machinery.sell.beta || 0),
-    gama: 0 + (newBuy.gama || 0) - (safeDecisions.machinery.sell.gama || 0),
-  };
+  const buy = safeDecisions.machinery.buy;
+  const nominalCapacity = (fleet.length * machineSpecs.alfa.production_capacity) + (buy.alfa * machineSpecs.alfa.production_capacity); 
+  const requiredProdStaff = (fleet.length * machineSpecs.alfa.operators_required);
 
-  const nominalCapacity = (currentMachines.alfa * machineSpecs.alfa.production_capacity) + (currentMachines.beta * machineSpecs.beta.production_capacity) + (currentMachines.gama * machineSpecs.gama.production_capacity);
-  const requiredProdStaff = (currentMachines.alfa * machineSpecs.alfa.operators_required) + (currentMachines.beta * machineSpecs.beta.operators_required) + (currentMachines.gama * machineSpecs.gama.operators_required);
-
-  const salaryDecided = sanitize(safeDecisions.hr.salary, 1313);
+  const salaryBase = sanitize(safeDecisions.hr.salary, 1313);
   const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
+
+  const salAdmin = (20 * salaryBase * 4);
+  const salSales = (10 * salaryBase * 4);
+  const salMOD_Base = (requiredProdStaff * salaryBase);
+  
   const baseHours = sanitize(indicators.production_hours_period, 946);
   const extraHoursPerMan = Math.max(0, Math.ceil(((activityLevel / 100) * baseHours) - baseHours));
-  const overtimeCost = extraHoursPerMan * requiredProdStaff * ((salaryDecided / baseHours) * 1.5);
-  const indemnityCost = sanitize(safeDecisions.hr.fired, 0) * (salaryDecided * 2);
-  const finalMOD = ((requiredProdStaff * salaryDecided) + overtimeCost + indemnityCost) * (1 + socialChargesRate);
+  const overtimeCost = extraHoursPerMan * requiredProdStaff * ((salaryBase / baseHours) * 1.5);
+  const indemnityCost = sanitize(safeDecisions.hr.fired, 0) * (salaryBase * 2);
 
-  // 4. FORMAÇÃO DO CPP E WAC PA
-  const unitsProduced = nominalCapacity * (activityLevel / 100);
+  // 4. CPP E CPV
+  const unitsProduced = nominalCapacity * (activityLevel / 100) * effectiveProductivity;
   const mpConsumptionVal = (unitsProduced * 3 * wacMPA) + (unitsProduced * 2 * wacMPB);
-  const maintenanceStress = activityLevel > 100 ? Math.pow(activityLevel/100, 1.8) : activityLevel/100;
-  const finalMaintenanceCost = totalMaintenanceBase * maintenanceStress;
-  const storageCostMP = purchaseMPA_Qty * indicators.prices.storage_mp; 
+  const productionSocialCharges = (salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
   
-  const totalProductionCost = mpConsumptionVal + finalMOD + finalMaintenanceCost + totalDepreciation + storageCostMP;
+  const totalProductionCost = mpConsumptionVal + salMOD_Base + overtimeCost + indemnityCost + productionSocialCharges + totalMaintenanceCost + totalDepreciationMachines + structuralDepreciation;
   const currentCPP = unitsProduced > 0 ? totalProductionCost / unitsProduced : 0;
+  const wacPA = ( (2000 * 227) + (unitsProduced * currentCPP) ) / Math.max(1, (2000 + unitsProduced));
 
-  const stockPA_Initial_Qty = 2000;
-  const stockPA_Initial_Val = stockPA_Initial_Qty * 227; 
-  const totalPA_Qty = stockPA_Initial_Qty + unitsProduced;
-  const wacPA = (stockPA_Initial_Val + (unitsProduced * currentCPP)) / Math.max(1, totalPA_Qty);
-
-  // 5. RECEITA E JUROS DE VENDA A PRAZO
-  const teamsCount = Math.max(championshipData?.teams?.length || 1, 1);
-  const marketDemand = (nominalCapacity * teamsCount) * (1 + sanitize(indicators.ice, 3)/100);
-  const myShare = forcedShare || (100 / teamsCount);
-  const unitsSold = Math.min(totalPA_Qty, (marketDemand * (myShare/100)));
+  // 5. RECEITA E OPEX
+  const rd_market_bonus = 1 + (rd_percent / 40); 
+  const unitsSold = (nominalCapacity * 0.125) * (activityLevel/100) * rd_market_bonus;
   const avgPrice = sanitize(Object.values(safeDecisions.regions)[0]?.price, 375);
   const grossRevenue = unitsSold * avgPrice;
-
-  // Cálculo de Receita Financeira por Juros de Venda
-  const termInterestRate = sanitize(safeDecisions.production.term_interest_rate, 0) / 100;
-  // Simplificação: Consideramos que 70% das vendas são a prazo no modelo Oracle industrial se term > 0
-  const avgTerm = Object.values(safeDecisions.regions).reduce((acc, r) => acc + sanitize(r.term, 1), 0) / Math.max(1, Object.keys(safeDecisions.regions).length);
-  const financialRevenueFromSales = avgTerm > 0 ? (grossRevenue * 0.7 * termInterestRate) : 0;
-  
-  const totalRevenue = grossRevenue + financialRevenueFromSales;
-
-  // 6. DRE FINAL
   const cpv = unitsSold * wacPA;
-  const grossProfit = totalRevenue - cpv;
-  const staffAdmin = sanitize(indicators.staffing.admin.count, 20);
-  const staffSales = sanitize(indicators.staffing.sales.count, 10);
-  const opex = ((staffAdmin + staffSales) * salaryDecided) * (1 + socialChargesRate) + 350000;
-  const lair = grossProfit - opex;
+  const grossProfit = grossRevenue - cpv;
 
+  const marketingTotal = sanitize(Object.values(safeDecisions.regions).reduce((acc, r) => acc + (r.marketing || 0), 0), 0) * indicators.prices.marketing_campaign;
+  const distributionTotal = unitsSold * indicators.prices.distribution_unit;
+  const rd_expense = grossRevenue * (rd_percent / 100);
+
+  const opexSales = salSales + (salSales * socialChargesRate) + marketingTotal + distributionTotal;
+  const opexAdm = salAdmin + (salAdmin * socialChargesRate);
+  const totalOpex = opexSales + opexAdm + rd_expense;
+  const operatingProfit = grossProfit - totalOpex;
+
+  // 6. RESULTADO FINANCEIRO E LAIR
+  const investmentReturnRate = sanitize(indicators.investment_return_rate, 1.0) / 100;
+  const applicationRevenue = sanitize(safeDecisions.finance.application, 0) * investmentReturnRate;
+  const bankInterestRate = sanitize(indicators.interest_rate_tr, 2.0) / 100;
+  const financialExpenses = (sanitize(safeDecisions.finance.loanRequest, 0) * bankInterestRate) + 15000; 
+  const financialResult = applicationRevenue - financialExpenses;
+
+  const lair = operatingProfit + financialResult;
+
+  // 7. GATILHOS FISCAIS v27.0
   const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
+  // Regra IR: Só se LAIR > 0
   const irProvision = lair > 0 ? (lair * taxRateIR) : 0;
-  const netProfit = lair - irProvision;
+  const profitAfterIR = lair - irProvision;
+
+  // Regra PLR: Só se Lucro Após IR > 0
+  const plr_pct = sanitize(safeDecisions.hr.participationPercent, 0) / 100;
+  const plrAmount = profitAfterIR > 0 ? (profitAfterIR * plr_pct) : 0;
+  const netIncome = profitAfterIR - plrAmount;
+
+  // Regra Dividendos: Só se Lucro Líquido > 0
+  const div_pct = sanitize(championshipData?.dividend_percent ?? indicators.dividend_percent, 25) / 100;
+  const dividends = netIncome > 0 ? (netIncome * div_pct) : 0;
+  const retainedProfit = netIncome - dividends;
+
+  // 8. CONSOLIDAÇÃO FLUXO DE CAIXA
+  // Folha Líquida = Salários Puros + HE + Indenização + PLR (Se houver)
+  const payrollNet = salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost + plrAmount;
+  const totalSocialCharges = (salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
 
   return {
-    revenue: totalRevenue,
-    netProfit,
+    revenue: grossRevenue,
+    netProfit: netIncome,
     debtRatio: 40,
-    creditRating: netProfit > 0 ? 'AAA' : 'C',
-    marketShare: myShare,
+    creditRating: netIncome > 0 ? 'AAA' : 'C',
+    marketShare: 12.5 * rd_market_bonus,
     health: { 
-      rating: netProfit > 0 ? 'AAA' : 'C',
+      rating: netIncome > 0 ? 'AAA' : 'C',
       cpp: currentCPP,
-      wac_pa: wacPA,
-      sales_interest_revenue: financialRevenueFromSales
+      rd_boost: rd_productivity_bonus,
+      ir_applied: irProvision > 0
     },
     kpis: {
-      market_share: myShare,
-      rating: netProfit > 0 ? 'AAA' : 'C',
-      insolvency_status: netProfit > 0 ? 'SAUDAVEL' : 'ALERTA',
-      equity: prevEquity + netProfit,
-      last_decision: safeDecisions // Essencial para a média da Gazeta
+      market_share: 12.5 * rd_market_bonus,
+      rating: netIncome > 0 ? 'AAA' : 'C',
+      insolvency_status: netIncome > 0 ? 'SAUDAVEL' : 'ALERTA',
+      equity: prevEquity + retainedProfit,
+      last_decision: safeDecisions 
     },
     statements: {
       dre: { 
-        revenue: totalRevenue, cpv, gross_profit: grossProfit, opex, lair, tax: irProvision, net_profit: netProfit,
+        revenue: grossRevenue, cpv, gross_profit: grossProfit, opex: totalOpex, operating_profit: operatingProfit,
+        financial_result: financialResult, lair, tax: irProvision, profit_after_ir: profitAfterIR,
+        plr: plrAmount, net_profit: netIncome, dividends, retained_profit: retainedProfit,
         details: { 
-          cpp: currentCPP, wac_pa: wacPA, mp_consumption: mpConsumptionVal, mod_total: finalMOD,
-          maintenance: finalMaintenanceCost, depreciation_total: totalDepreciation, 
-          overtime_cost: overtimeCost, sales_interest: financialRevenueFromSales
+          rd_investment: rd_expense,
+          social_charges: totalSocialCharges,
+          payroll_net: payrollNet,
+          cpp: currentCPP,
+          wac_pa: wacPA
         }
       }
     }
@@ -163,5 +180,6 @@ export const calculateProjections = (
 };
 
 export const calculateAttractiveness = (decisions: DecisionData): number => {
-  return Object.values(decisions.regions).reduce((acc, r) => acc + (Math.pow(370/Math.max(r.price, 1), 1.5) * (1 + (r.marketing || 0)*0.05)), 0) / 4;
+  const rd_bonus = 1 + (sanitize(decisions.production.rd_investment, 0) / 30);
+  return (Object.values(decisions.regions).reduce((acc, r) => acc + (Math.pow(370/Math.max(r.price, 1), 1.5) * (1 + (r.marketing || 0)*0.06)), 0) / 4) * rd_bonus;
 };
