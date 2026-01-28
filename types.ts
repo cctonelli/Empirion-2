@@ -150,6 +150,7 @@ export interface DecisionData {
     extraProductionPercent: number;
     rd_investment: number;
     net_profit_target_percent: number; // META LUCRO LÍQUIDO (%)
+    term_interest_rate: number; // JUROS VENDA A PRAZO (%)
   };
   machinery: {
     buy: { alfa: number; beta: number; gama: number };

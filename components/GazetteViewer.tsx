@@ -30,7 +30,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   const isAnonymous = arena.gazeta_mode === 'anonymous' && userRole !== 'tutor' && userRole !== 'admin';
   const currencySymbol = arena.currency === 'BRL' ? 'R$' : '$';
   
-  // Sincroniza os indicadores com base no Round Auditado, priorizando o round_rules gravado
   const currentMacro = useMemo((): MacroIndicators => {
     const rules = arena.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || {};
     return { 
@@ -40,9 +39,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
     } as MacroIndicators;
   }, [arena, round]);
 
-  /**
-   * ORACLE COST ENGINE v16.8 - CÁLCULO CUMULATIVO RESPEITANDO CRONOGRAMA
-   */
   const supplierCosts = useMemo(() => {
     const getAdjusted = (base: number, adjustKey: string) => {
       let currentVal = base;
@@ -57,6 +53,10 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
     const salaries = teams.map(t => t.kpis?.last_decision?.hr?.salary || arena.market_indicators.hr_base.salary);
     const avgSalary = salaries.reduce((a, b) => a + b, 0) / Math.max(teams.length, 1);
 
+    // CÁLCULO DINÂMICO DOS JUROS MÉDIOS DE VENDA
+    const interestRates = teams.map(t => t.kpis?.last_decision?.production?.term_interest_rate || 0);
+    const avgSalesInterest = interestRates.reduce((a, b) => a + b, 0) / Math.max(teams.length, 1);
+
     return {
       mp_a: getAdjusted(arena.market_indicators.prices.mp_a, 'raw_material_a_adjust'),
       mp_b: getAdjusted(arena.market_indicators.prices.mp_b, 'raw_material_b_adjust'),
@@ -65,7 +65,8 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       alfa: getAdjusted(arena.market_indicators.machinery_values.alfa, 'machine_alpha_price_adjust'),
       beta: getAdjusted(arena.market_indicators.machinery_values.beta, 'machine_beta_price_adjust'),
       gama: getAdjusted(arena.market_indicators.machinery_values.gama, 'machine_gamma_price_adjust'),
-      avg_salary: avgSalary
+      avg_salary: avgSalary,
+      avg_sales_interest: avgSalesInterest
     };
   }, [arena, round, teams]);
 
@@ -208,12 +209,19 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                               <CompactCostBox label="MÁQUINA BETA" val={supplierCosts.beta} color="text-indigo-400" />
                               <CompactCostBox label="MÁQUINA GAMA" val={supplierCosts.gama} color="text-orange-400" />
                            </div>
-                           <div className="mt-10 pt-10 border-t border-white/10 flex justify-between items-center group/sal">
-                              <div>
-                                 <span className="text-[11px] font-black text-blue-500 uppercase tracking-[0.3em] italic">Salário Médio do Setor</span>
-                                 <p className="text-[9px] text-slate-600 font-bold uppercase mt-1">Média Ponderada das Equipes Ativas</p>
+                           
+                           {/* BENCHMARK DE JUROS MÉDIOS */}
+                           <div className="mt-10 pt-10 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-10">
+                              <div className="group/sal">
+                                 <span className="text-[11px] font-black text-blue-500 uppercase tracking-[0.3em] italic">Salário Médio</span>
+                                 <p className="text-[9px] text-slate-600 font-bold uppercase mt-1">Média do Cluster</p>
+                                 <span className="text-4xl font-black text-white font-mono italic block mt-2 group-hover/sal:text-blue-400 transition-all">$ {supplierCosts.avg_salary.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                               </div>
-                              <span className="text-5xl font-black text-white font-mono italic group-hover/sal:text-blue-400 transition-all duration-500">$ {supplierCosts.avg_salary.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                              <div className="group/int">
+                                 <span className="text-[11px] font-black text-orange-500 uppercase tracking-[0.3em] italic">Juros Médios de Venda</span>
+                                 <p className="text-[9px] text-slate-600 font-bold uppercase mt-1">Média Ponderada Global</p>
+                                 <span className="text-4xl font-black text-white font-mono italic block mt-2 group-hover/int:text-orange-400 transition-all">{supplierCosts.avg_sales_interest.toFixed(2)} %</span>
+                              </div>
                            </div>
                         </div>
                      </div>

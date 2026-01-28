@@ -106,6 +106,7 @@ export const generateBotDecision = async (
                 sales_staff_count: { type: Type.NUMBER }
               }
             },
+            // Fix: Added term_interest_rate to the responseSchema for bot decision consistency
             production: {
               type: Type.OBJECT,
               properties: {
@@ -114,7 +115,8 @@ export const generateBotDecision = async (
                 paymentType: { type: Type.NUMBER },
                 activityLevel: { type: Type.NUMBER },
                 rd_investment: { type: Type.NUMBER },
-                net_profit_target_percent: { type: Type.NUMBER }
+                net_profit_target_percent: { type: Type.NUMBER },
+                term_interest_rate: { type: Type.NUMBER }
               }
             },
             finance: {
@@ -176,6 +178,7 @@ export const generateBotDecision = async (
         sales_staff_count: parsed.hr?.sales_staff_count || 50,
         misc: 0
       },
+      // Fix: Added missing term_interest_rate property to successful return to satisfy production interface
       production: {
         purchaseMPA: parsed.production?.purchaseMPA || 15000,
         purchaseMPB: parsed.production?.purchaseMPB || 10000,
@@ -183,7 +186,8 @@ export const generateBotDecision = async (
         activityLevel: parsed.production?.activityLevel || 80,
         rd_investment: parsed.production?.rd_investment || 5000,
         extraProductionPercent: 0,
-        net_profit_target_percent: parsed.production?.net_profit_target_percent || 10.0
+        net_profit_target_percent: parsed.production?.net_profit_target_percent || 10.0,
+        term_interest_rate: parsed.production?.term_interest_rate || 1.5
       },
       machinery: {
         buy: parsed.finance?.buyMachines || { alfa: 0, beta: 0, gama: 0 },
@@ -202,11 +206,12 @@ export const generateBotDecision = async (
     };
   } catch (error) {
     console.error("Bot Decision Error:", error);
+    // Fix: Added missing term_interest_rate property to fallback return in catch block
     return {
       judicial_recovery: false,
       regions: Object.fromEntries(Array.from({ length: regionCount }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 0 }])),
       hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50, misc: 0 },
-      production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0, extraProductionPercent: 0, net_profit_target_percent: 10.0 },
+      production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 50, rd_investment: 0, extraProductionPercent: 0, net_profit_target_percent: 10.0, term_interest_rate: 1.5 },
       machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
       finance: { loanRequest: 0, loanTerm: 1, application: 0 },
       estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }

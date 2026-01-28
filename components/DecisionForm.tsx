@@ -37,7 +37,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     judicial_recovery: false,
     regions: {}, 
     hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, misc: 0, sales_staff_count: 50 },
-    production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, extraProductionPercent: 0, rd_investment: 0, net_profit_target_percent: 5.0 },
+    production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, extraProductionPercent: 0, rd_investment: 0, net_profit_target_percent: 5.0, term_interest_rate: 1.5 },
     machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
     finance: { loanRequest: 0, loanTerm: 1, application: 0 },
     estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
@@ -245,6 +245,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <InputCard label="Turno Extra (%)" val={decisions.production.extraProductionPercent} onChange={(v: number) => updateDecision('production.extraProductionPercent', v)} icon={<Zap size={24}/>} />
                        <InputCard label="Investimento P&D (%)" val={decisions.production.rd_investment} onChange={(v: number) => updateDecision('production.rd_investment', v)} icon={<Percent size={24}/>} />
                        <InputCard label="Meta Lucro Líquido (%)" val={decisions.production.net_profit_target_percent} onChange={(v: number) => updateDecision('production.net_profit_target_percent', v)} icon={<Target size={24}/>} />
+                       <InputCard label="Juros Venda a Prazo (%)" val={decisions.production.term_interest_rate} onChange={(v: number) => updateDecision('production.term_interest_rate', v)} icon={<Percent size={24}/>} />
                     </div>
                     <div className="bg-indigo-600/10 border-2 border-indigo-500/30 p-8 rounded-[3rem] flex gap-8 items-center shadow-2xl">
                        <Sparkles size={48} className="text-indigo-400 shrink-0" />

@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v24.5 - FULL MOTIVATION & STRIKE SYSTEM
+ * CORE ORACLE ENGINE v25.5 - MARKET-DRIVEN INTEREST PROTOCOL
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -32,139 +32,130 @@ export const calculateProjections = (
       return value;
   }));
 
-  // 0. CONTEXTO MACRO E STAFFING
+  // 0. CONTEXTO E INDICADORES
+  const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...(roundRules?.[currentRound] || {}) };
   const prevBS = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(prevBS.equity?.total, 5055447);
-  const prevTaxProvision = sanitize(prevBS.liabilities?.current_taxes || 13045);
 
-  const roundOverride = roundRules?.[currentRound] || {};
-  const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...roundOverride };
+  // 1. WAC - MATÉRIAS-PRIMAS
+  const stockMPA_Initial_Qty = 10000;
+  const stockMPA_Initial_Val = 200000;
+  const purchaseMPA_Qty = sanitize(safeDecisions.production.purchaseMPA, 0);
+  const purchaseMPA_Val = purchaseMPA_Qty * indicators.prices.mp_a;
+  const wacMPA = (stockMPA_Initial_Val + purchaseMPA_Val) / Math.max(1, (stockMPA_Initial_Qty + purchaseMPA_Qty));
 
-  const staffAdmin = sanitize(indicators.staffing.admin.count, 20);
-  const staffSales = sanitize(indicators.staffing.sales.count, 10);
-  const staffProd = sanitize(indicators.staffing.production.count, 470);
-  const totalStaff = staffAdmin + staffSales + staffProd;
+  const stockMPB_Initial_Qty = 5000; 
+  const stockMPB_Initial_Val = 200000;
+  const purchaseMPB_Qty = sanitize(safeDecisions.production.purchaseMPB, 0);
+  const purchaseMPB_Val = purchaseMPB_Qty * indicators.prices.mp_b;
+  const wacMPB = (stockMPB_Initial_Val + purchaseMPB_Val) / Math.max(1, (stockMPB_Initial_Qty + purchaseMPB_Qty));
 
-  // 1. GESTÃO DE PESSOAL E CUSTOS FIXOS
+  // 2. GESTÃO DE ATIVOS E MANUTENÇÃO (CPP)
+  const machineSpecs = indicators.machine_specs;
+  const mPhysics = indicators.maintenance_physics;
+  let totalMaintenanceBase = 0;
+  let totalDepreciation = 40000; 
+
+  indicators.initial_machinery_mix.forEach(m => {
+    const age = m.age + currentRound;
+    const spec = machineSpecs[m.model];
+    const baseRate = m.model === 'alfa' ? mPhysics.alpha : m.model === 'beta' ? mPhysics.beta : mPhysics.gamma;
+    const ageMultiplier = age > 10 ? Math.pow(1.05, age - 10) : 1.0;
+    totalMaintenanceBase += (spec.initial_value * baseRate) * ageMultiplier;
+    totalDepreciation += (spec.initial_value * spec.depreciation_rate);
+  });
+
+  const newBuy = safeDecisions.machinery.buy;
+  totalMaintenanceBase += (newBuy.alfa * machineSpecs.alfa.initial_value * mPhysics.alpha);
+
+  // 3. CAPACIDADE E STAFFING (MOD)
+  const activityLevel = sanitize(safeDecisions.production.activityLevel, 80);
+  const currentMachines = {
+    alfa: 5 + (newBuy.alfa || 0) - (safeDecisions.machinery.sell.alfa || 0),
+    beta: 0 + (newBuy.beta || 0) - (safeDecisions.machinery.sell.beta || 0),
+    gama: 0 + (newBuy.gama || 0) - (safeDecisions.machinery.sell.gama || 0),
+  };
+
+  const nominalCapacity = (currentMachines.alfa * machineSpecs.alfa.production_capacity) + (currentMachines.beta * machineSpecs.beta.production_capacity) + (currentMachines.gama * machineSpecs.gama.production_capacity);
+  const requiredProdStaff = (currentMachines.alfa * machineSpecs.alfa.operators_required) + (currentMachines.beta * machineSpecs.beta.operators_required) + (currentMachines.gama * machineSpecs.gama.operators_required);
+
   const salaryDecided = sanitize(safeDecisions.hr.salary, 1313);
   const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
-  const socialChargesFactor = 1 + socialChargesRate;
+  const baseHours = sanitize(indicators.production_hours_period, 946);
+  const extraHoursPerMan = Math.max(0, Math.ceil(((activityLevel / 100) * baseHours) - baseHours));
+  const overtimeCost = extraHoursPerMan * requiredProdStaff * ((salaryDecided / baseHours) * 1.5);
+  const indemnityCost = sanitize(safeDecisions.hr.fired, 0) * (salaryDecided * 2);
+  const finalMOD = ((requiredProdStaff * salaryDecided) + overtimeCost + indemnityCost) * (1 + socialChargesRate);
+
+  // 4. FORMAÇÃO DO CPP E WAC PA
+  const unitsProduced = nominalCapacity * (activityLevel / 100);
+  const mpConsumptionVal = (unitsProduced * 3 * wacMPA) + (unitsProduced * 2 * wacMPB);
+  const maintenanceStress = activityLevel > 100 ? Math.pow(activityLevel/100, 1.8) : activityLevel/100;
+  const finalMaintenanceCost = totalMaintenanceBase * maintenanceStress;
+  const storageCostMP = purchaseMPA_Qty * indicators.prices.storage_mp; 
   
-  // 2. ALGORITMO DE MOTIVAÇÃO (6 VETORES)
-  
-  // Vetor 1: Salário vs Inflação (25%)
-  const inflationImpact = 1 + (sanitize(indicators.inflation_rate, 1) / 100);
-  const targetSalary = sanitize(indicators.hr_base.salary, 1300) * inflationImpact;
-  const salaryScore = Math.min(1.2, salaryDecided / targetSalary);
+  const totalProductionCost = mpConsumptionVal + finalMOD + finalMaintenanceCost + totalDepreciation + storageCostMP;
+  const currentCPP = unitsProduced > 0 ? totalProductionCost / unitsProduced : 0;
 
-  // Vetor 2: PLR (20%) - Proxy de intenção (%)
-  const plrIntentScore = Math.min(1.2, (sanitize(safeDecisions.hr.participationPercent, 0) / 10));
+  const stockPA_Initial_Qty = 2000;
+  const stockPA_Initial_Val = stockPA_Initial_Qty * 227; 
+  const totalPA_Qty = stockPA_Initial_Qty + unitsProduced;
+  const wacPA = (stockPA_Initial_Val + (unitsProduced * currentCPP)) / Math.max(1, totalPA_Qty);
 
-  // Vetor 3: Stress Produtivo (20%) - Penaliza acima de 100%
-  const activityLevel = sanitize(safeDecisions.production.activityLevel, 80);
-  const stressPenalty = activityLevel > 100 ? (activityLevel - 100) / 50 : 0;
-  const stressScore = Math.max(0, 1.0 - stressPenalty);
-
-  // Vetor 4: Solvência (15%) - Baseado no Rating anterior
-  const lastRating = previousState?.kpis?.rating || 'AAA';
-  const solvencyScore = lastRating === 'D' ? 0.3 : lastRating === 'C' ? 0.6 : lastRating === 'B' ? 0.8 : 1.0;
-
-  // Vetor 5: Estabilidade / Desligamentos (10%) - NOVO
-  const firedCount = sanitize(safeDecisions.hr.fired, 0);
-  const firedRate = firedCount / Math.max(totalStaff, 1);
-  // Taxas de demissão > 15% em um round são consideradas agressivas e destroem a moral
-  const stabilityScore = Math.max(0, 1.0 - (firedRate / 0.15));
-
-  // Vetor 6: Competência / Treinamento (10%)
-  const hasNewMachines = (safeDecisions.machinery.buy.alfa + safeDecisions.machinery.buy.beta + safeDecisions.machinery.buy.gama) > 0;
-  const trainingScore = hasNewMachines 
-    ? Math.min(1.0, (sanitize(safeDecisions.hr.trainingPercent, 0) / 10))
-    : 1.0;
-
-  // CÁLCULO FINAL DO ÍNDICE (0.0 a 1.0)
-  const motivationIndex = (
-    (salaryScore * 0.25) + 
-    (plrIntentScore * 0.20) + 
-    (stressScore * 0.20) + 
-    (solvencyScore * 0.15) + 
-    (stabilityScore * 0.10) + 
-    (trainingScore * 0.10)
-  );
-
-  // 3. PROTOCOLO DE GREVE (STRIKE)
-  const isOnStrike = motivationIndex < 0.15;
-  const strikeRisk = motivationIndex < 0.35;
-
-  // 4. PRODUÇÃO E CPV
-  // SE EM GREVE: PRODUÇÃO REAL = 0.
-  const effectiveActivity = isOnStrike ? 0 : activityLevel;
-  const unitsProduced = 10000 * sanitize(indicators.labor_productivity, 1.0) * (effectiveActivity / 100);
-  
-  const totalMPCost = (unitsProduced * 3 * sanitize(indicators.prices.mp_a, 20)) + (unitsProduced * 2 * sanitize(indicators.prices.mp_b, 40));
-  const modDirect = (staffProd * salaryDecided) * socialChargesFactor;
-  const productionCost = totalMPCost + modDirect + 150000; 
-  const unitCost = unitsProduced > 0 ? productionCost / unitsProduced : 0;
-
-  // 5. VENDAS E RECEITA
+  // 5. RECEITA E JUROS DE VENDA A PRAZO
   const teamsCount = Math.max(championshipData?.teams?.length || 1, 1);
-  const marketDemand = (10000 * teamsCount) * (1 + sanitize(indicators.ice, 3)/100);
+  const marketDemand = (nominalCapacity * teamsCount) * (1 + sanitize(indicators.ice, 3)/100);
   const myShare = forcedShare || (100 / teamsCount);
-  const unitsSold = Math.min(unitsProduced, (marketDemand * (myShare/100)));
+  const unitsSold = Math.min(totalPA_Qty, (marketDemand * (myShare/100)));
   const avgPrice = sanitize(Object.values(safeDecisions.regions)[0]?.price, 375);
-  const revenue = unitsSold * avgPrice;
+  const grossRevenue = unitsSold * avgPrice;
 
-  // 6. DRE TÁTICO
-  const cpv = unitsSold * unitCost;
-  const grossProfit = revenue - cpv;
-  const opex = ((staffAdmin + staffSales) * salaryDecided) * socialChargesFactor + 350000;
-  const lair = grossProfit - opex - 40000;
+  // Cálculo de Receita Financeira por Juros de Venda
+  const termInterestRate = sanitize(safeDecisions.production.term_interest_rate, 0) / 100;
+  // Simplificação: Consideramos que 70% das vendas são a prazo no modelo Oracle industrial se term > 0
+  const avgTerm = Object.values(safeDecisions.regions).reduce((acc, r) => acc + sanitize(r.term, 1), 0) / Math.max(1, Object.keys(safeDecisions.regions).length);
+  const financialRevenueFromSales = avgTerm > 0 ? (grossRevenue * 0.7 * termInterestRate) : 0;
+  
+  const totalRevenue = grossRevenue + financialRevenueFromSales;
+
+  // 6. DRE FINAL
+  const cpv = unitsSold * wacPA;
+  const grossProfit = totalRevenue - cpv;
+  const staffAdmin = sanitize(indicators.staffing.admin.count, 20);
+  const staffSales = sanitize(indicators.staffing.sales.count, 10);
+  const opex = ((staffAdmin + staffSales) * salaryDecided) * (1 + socialChargesRate) + 350000;
+  const lair = grossProfit - opex;
 
   const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
   const irProvision = lair > 0 ? (lair * taxRateIR) : 0;
-  const profitAfterTax = lair - irProvision;
-
-  // PPR/PLR FINAL (Impacto financeiro)
-  const plrPercent = sanitize(safeDecisions.hr.participationPercent, 0) / 100;
-  const plrValue = profitAfterTax > 0 ? (profitAfterTax * plrPercent) : 0;
-  const plrPerEmployee = plrValue / Math.max(totalStaff, 1);
-
-  const netProfit = profitAfterTax - plrValue;
+  const netProfit = lair - irProvision;
 
   return {
-    revenue,
+    revenue: totalRevenue,
     netProfit,
     debtRatio: 40,
     creditRating: netProfit > 0 ? 'AAA' : 'C',
     marketShare: myShare,
     health: { 
       rating: netProfit > 0 ? 'AAA' : 'C',
-      motivation: {
-        index: motivationIndex,
-        label: isOnStrike ? 'GREVE' : (motivationIndex > 0.8 ? 'BOA' : (motivationIndex > 0.45 ? 'REGULAR' : 'RUIM')),
-        is_strike_active: isOnStrike,
-        is_strike_imminent: strikeRisk && !isOnStrike,
-        plr_per_capita: plrPerEmployee
-      }
+      cpp: currentCPP,
+      wac_pa: wacPA,
+      sales_interest_revenue: financialRevenueFromSales
     },
     kpis: {
       market_share: myShare,
       rating: netProfit > 0 ? 'AAA' : 'C',
       insolvency_status: netProfit > 0 ? 'SAUDAVEL' : 'ALERTA',
       equity: prevEquity + netProfit,
-      motivation_score: motivationIndex,
-      is_on_strike: isOnStrike
+      last_decision: safeDecisions // Essencial para a média da Gazeta
     },
     statements: {
       dre: { 
-        revenue, cpv, gross_profit: grossProfit, opex, operating_profit: grossProfit - opex,
-        lair, tax: irProvision, profit_after_tax: profitAfterTax,
-        plr: plrValue, net_profit: netProfit,
-        details: { unit_cost: unitCost, total_staff: totalStaff, plr_per_employee: plrPerEmployee }
-      },
-      cash_flow: {
-        outflow: {
-          payroll: (totalStaff * salaryDecided * socialChargesFactor) + plrValue,
-          taxes: prevTaxProvision 
+        revenue: totalRevenue, cpv, gross_profit: grossProfit, opex, lair, tax: irProvision, net_profit: netProfit,
+        details: { 
+          cpp: currentCPP, wac_pa: wacPA, mp_consumption: mpConsumptionVal, mod_total: finalMOD,
+          maintenance: finalMaintenanceCost, depreciation_total: totalDepreciation, 
+          overtime_cost: overtimeCost, sales_interest: financialRevenueFromSales
         }
       }
     }
