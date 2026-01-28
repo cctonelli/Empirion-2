@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v24.4 - MOTIVATION & STRIKE PROTOCOL
+ * CORE ORACLE ENGINE v24.5 - FULL MOTIVATION & STRIKE SYSTEM
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -50,37 +50,45 @@ export const calculateProjections = (
   const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
   const socialChargesFactor = 1 + socialChargesRate;
   
-  // 2. ALGORITMO DE MOTIVAÇÃO (VETORES)
-  // Vetor 1: Salário vs Inflação (Peso 30%)
+  // 2. ALGORITMO DE MOTIVAÇÃO (6 VETORES)
+  
+  // Vetor 1: Salário vs Inflação (25%)
   const inflationImpact = 1 + (sanitize(indicators.inflation_rate, 1) / 100);
   const targetSalary = sanitize(indicators.hr_base.salary, 1300) * inflationImpact;
   const salaryScore = Math.min(1.2, salaryDecided / targetSalary);
 
-  // Vetor 2: Stress Produtivo (Peso 25%)
+  // Vetor 2: PLR (20%) - Proxy de intenção (%)
+  const plrIntentScore = Math.min(1.2, (sanitize(safeDecisions.hr.participationPercent, 0) / 10));
+
+  // Vetor 3: Stress Produtivo (20%) - Penaliza acima de 100%
   const activityLevel = sanitize(safeDecisions.production.activityLevel, 80);
-  const stressPenalty = activityLevel > 100 ? (activityLevel - 100) / 100 : 0;
-  const stressScore = 1.0 - stressPenalty;
+  const stressPenalty = activityLevel > 100 ? (activityLevel - 100) / 50 : 0;
+  const stressScore = Math.max(0, 1.0 - stressPenalty);
 
-  // Vetor 3: Competência/Treinamento (Peso 10%)
+  // Vetor 4: Solvência (15%) - Baseado no Rating anterior
+  const lastRating = previousState?.kpis?.rating || 'AAA';
+  const solvencyScore = lastRating === 'D' ? 0.3 : lastRating === 'C' ? 0.6 : lastRating === 'B' ? 0.8 : 1.0;
+
+  // Vetor 5: Estabilidade / Desligamentos (10%) - NOVO
+  const firedCount = sanitize(safeDecisions.hr.fired, 0);
+  const firedRate = firedCount / Math.max(totalStaff, 1);
+  // Taxas de demissão > 15% em um round são consideradas agressivas e destroem a moral
+  const stabilityScore = Math.max(0, 1.0 - (firedRate / 0.15));
+
+  // Vetor 6: Competência / Treinamento (10%)
   const hasNewMachines = (safeDecisions.machinery.buy.alfa + safeDecisions.machinery.buy.beta + safeDecisions.machinery.buy.gama) > 0;
-  const trainingReadiness = hasNewMachines 
-    ? (sanitize(safeDecisions.hr.trainingPercent, 0) / 10) // Exige 10% para score full
+  const trainingScore = hasNewMachines 
+    ? Math.min(1.0, (sanitize(safeDecisions.hr.trainingPercent, 0) / 10))
     : 1.0;
-  const trainingScore = Math.min(1.0, trainingReadiness);
 
-  // Vetor 4: Solvência (Peso 15%)
-  // Simulado com base no histórico de rating (ou neutro se round 1)
-  const solvencyScore = previousState?.kpis?.rating === 'D' ? 0.4 : previousState?.kpis?.rating === 'C' ? 0.7 : 1.0;
-
-  // Vetor 5: PLR (Será refinado após cálculo do lucro, mas usamos a decisão de % como proxy de intenção)
-  const plrIntentScore = Math.min(1.0, (sanitize(safeDecisions.hr.participationPercent, 0) / 5));
-
+  // CÁLCULO FINAL DO ÍNDICE (0.0 a 1.0)
   const motivationIndex = (
-    (salaryScore * 0.35) + 
-    (stressScore * 0.25) + 
-    (trainingScore * 0.15) + 
+    (salaryScore * 0.25) + 
+    (plrIntentScore * 0.20) + 
+    (stressScore * 0.20) + 
     (solvencyScore * 0.15) + 
-    (plrIntentScore * 0.10)
+    (stabilityScore * 0.10) + 
+    (trainingScore * 0.10)
   );
 
   // 3. PROTOCOLO DE GREVE (STRIKE)
@@ -88,7 +96,7 @@ export const calculateProjections = (
   const strikeRisk = motivationIndex < 0.35;
 
   // 4. PRODUÇÃO E CPV
-  // Se em GREVE, produção = 0.
+  // SE EM GREVE: PRODUÇÃO REAL = 0.
   const effectiveActivity = isOnStrike ? 0 : activityLevel;
   const unitsProduced = 10000 * sanitize(indicators.labor_productivity, 1.0) * (effectiveActivity / 100);
   
@@ -109,14 +117,13 @@ export const calculateProjections = (
   const cpv = unitsSold * unitCost;
   const grossProfit = revenue - cpv;
   const opex = ((staffAdmin + staffSales) * salaryDecided) * socialChargesFactor + 350000;
-  const operatingProfit = grossProfit - opex;
-  const lair = operatingProfit - 40000;
+  const lair = grossProfit - opex - 40000;
 
   const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
   const irProvision = lair > 0 ? (lair * taxRateIR) : 0;
   const profitAfterTax = lair - irProvision;
 
-  // PPR/PLR FINAL
+  // PPR/PLR FINAL (Impacto financeiro)
   const plrPercent = sanitize(safeDecisions.hr.participationPercent, 0) / 100;
   const plrValue = profitAfterTax > 0 ? (profitAfterTax * plrPercent) : 0;
   const plrPerEmployee = plrValue / Math.max(totalStaff, 1);
@@ -133,16 +140,10 @@ export const calculateProjections = (
       rating: netProfit > 0 ? 'AAA' : 'C',
       motivation: {
         index: motivationIndex,
-        label: isOnStrike ? 'GREVE' : (motivationIndex > 0.75 ? 'BOA' : (motivationIndex > 0.4 ? 'REGULAR' : 'RUIM')),
+        label: isOnStrike ? 'GREVE' : (motivationIndex > 0.8 ? 'BOA' : (motivationIndex > 0.45 ? 'REGULAR' : 'RUIM')),
         is_strike_active: isOnStrike,
         is_strike_imminent: strikeRisk && !isOnStrike,
-        plr_per_capita: plrPerEmployee,
-        factors: {
-          salary: salaryScore,
-          stress: stressScore,
-          training: trainingScore,
-          solvency: solvencyScore
-        }
+        plr_per_capita: plrPerEmployee
       }
     },
     kpis: {
@@ -155,7 +156,7 @@ export const calculateProjections = (
     },
     statements: {
       dre: { 
-        revenue, cpv, gross_profit: grossProfit, opex, operating_profit: operatingProfit,
+        revenue, cpv, gross_profit: grossProfit, opex, operating_profit: grossProfit - opex,
         lair, tax: irProvision, profit_after_tax: profitAfterTax,
         plr: plrValue, net_profit: netProfit,
         details: { unit_cost: unitCost, total_staff: totalStaff, plr_per_employee: plrPerEmployee }
