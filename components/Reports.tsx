@@ -38,7 +38,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
        revenue: 0, cpv: 0, gross_profit: 0, opex: 0, operating_profit: 0, lair: 0, tax: 0, profit_after_ir: 0, plr: 0, net_profit: 0, dividends: 0, retained_profit: 0,
        financial_result: 0, non_operational_result: 0,
        details: { 
-         cpp: 0, wac_pa: 0, rd_investment: 0, social_charges: 0, payroll_net: 0, non_op_rev: 0, non_op_exp: 0, productivity_bonus: 0
+         cpp: 0, wac_pa: 0, rd_investment: 0, social_charges: 0, payroll_net: 0, non_op_rev: 0, non_op_exp: 0, productivity_bonus: 0, fin_rev: 0
        }
      };
   }, [activeTeam]);
@@ -64,7 +64,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       <header className="flex flex-col lg:flex-row justify-between lg:items-end px-6 gap-6">
          <div>
             <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Oracle <span className="text-orange-500">Audit Node</span></h1>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Ciclo v28.8 MASTER</p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Ciclo v28.9 MASTER</p>
          </div>
          <div className="flex gap-4 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
             <button 
@@ -87,7 +87,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
             <AnimatePresence mode="wait">
                {activeReport === 'dre' ? (
                   <motion.div key="dre" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">DRE Tático v28.8</h3>
+                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">DRE Tático v28.9</h3>
                      <div className="space-y-1 font-mono">
                         <ReportLine label="(+) RECEITAS BRUTAS DE VENDAS" val={fmt(dre.revenue)} bold />
                         <ReportLine label="( - ) CUSTO PROD. VENDIDO - CPV" val={fmt(dre.cpv)} neg />
@@ -102,7 +102,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         
                         <div className="py-2 space-y-1 opacity-90 border-l-2 border-indigo-500/20 ml-2 pl-4">
                            <ReportLine label="(+/-) RESULTADO FINANCEIRO" val={fmt(dre.financial_result || 0)} />
-                           <ReportLine label="(+/-) RESULTADO NÃO OPERACIONAL" val={fmt(dre.non_operational_result || 0)} />
+                           {dre.details?.fin_rev > 0 && <ReportLine label="(+) RENDIMENTOS DE APLICAÇÕES" val={fmt(dre.details.fin_rev)} indent color="text-emerald-400" />}
                         </div>
 
                         <ReportLine label="( = ) LUCRO ANTES DO IR (LAIR)" val={fmt(dre.lair)} bold highlight />
@@ -131,7 +131,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                ) : (
                   <motion.div key="cf" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                      <div className="flex justify-between items-center border-b border-white/5 pb-6">
-                        <h3 className="text-xl font-black text-white uppercase italic">Fluxo de Caixa v28.8</h3>
+                        <h3 className="text-xl font-black text-white uppercase italic">Fluxo de Caixa v28.9</h3>
                         <div className="flex items-center gap-3 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-500 text-[9px] font-black uppercase">
                            <Coins size={12} /> Auditado Real-time
                         </div>
@@ -143,35 +143,22 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                            <ReportLine label="(+) ENTRADAS TOTAIS" val={fmt(cashFlow.inflow.total)} color="text-emerald-400" bold />
                            <ReportLine label="VENDAS À VISTA" val={fmt(cashFlow.inflow.cash_sales)} indent icon={<ShoppingCart size={10}/>} />
                            <ReportLine label="VENDAS A PRAZO (LÍQUIDO)" val={fmt(cashFlow.inflow.term_sales)} indent icon={<Clock size={10}/>} color="text-blue-400" />
-                           <ReportLine label="RESGATE DE APLICAÇÕES" val={fmt(cashFlow.inflow.investment_withdrawal)} indent />
+                           <ReportLine label="RESGATE DE APLICAÇÕES (CAPITAL+JUROS)" val={fmt(cashFlow.inflow.investment_withdrawal)} indent icon={<Landmark size={10}/>} color="text-emerald-400" />
                            <ReportLine label="VENDA DE MÁQUINAS" val={fmt(cashFlow.inflow.machine_sales)} indent />
-                           <ReportLine label="PREMIAÇÕES RECEBIDAS" val={fmt(cashFlow.inflow.awards)} indent />
-                           <ReportLine label="EMPRÉSTIMOS NORMAIS" val={fmt(cashFlow.inflow.loans_normal)} indent />
-                           <ReportLine label="EMPRÉSTIMO COMPULSÓRIO" val={fmt(cashFlow.inflow.compulsory)} indent />
+                           <ReportLine label="EMPRÉSTIMOS" val={fmt(cashFlow.inflow.loans_normal + cashFlow.inflow.compulsory)} indent />
                         </div>
 
                         <div className="py-4 space-y-2 bg-white/[0.01] rounded-3xl border border-white/5 px-6">
                            <ReportLine label="(-) SAÍDAS TOTAIS" val={fmt(cashFlow.outflow.total)} neg color="text-rose-400" bold />
                            <ReportLine label="FOLHA DE PAGAMENTO" val={fmt(cashFlow.outflow.payroll)} indent neg icon={<Users size={10}/>} />
-                           <ReportLine label="ENCARGOS SOCIAIS" val={fmt(cashFlow.outflow.social_charges)} indent neg />
-                           <ReportLine label="P&D-PESQUISA E DESENVOLVIMENTO" val={fmt(cashFlow.outflow.rd)} indent neg />
-                           <ReportLine label="CAMPANHAS DE MARKETING" val={fmt(cashFlow.outflow.marketing)} indent neg />
-                           <ReportLine label="DISTRIBUIÇÃO DE PRODUTOS" val={fmt(cashFlow.outflow.distribution)} indent neg icon={<Truck size={10}/>} />
-                           <ReportLine label="GASTOS COM ESTOCAGEM" val={fmt(cashFlow.outflow.storage)} indent neg icon={<Warehouse size={10}/>} />
-                           <ReportLine label="PAGAMENTO A FORNECEDORES" val={fmt(cashFlow.outflow.suppliers)} indent neg />
-                           <ReportLine label="DIVERSOS E ATRASOS GERAIS" val={fmt(cashFlow.outflow.misc)} indent neg />
-                           <ReportLine label="COMPRA DE MÁQUINAS" val={fmt(cashFlow.outflow.machine_buy)} indent neg />
-                           <ReportLine label="MANUTENÇÃO DE MÁQUINAS" val={fmt(cashFlow.outflow.maintenance)} indent neg />
-                           <ReportLine label="AMORTIZAÇÃO DE EMPRÉSTIMOS" val={fmt(cashFlow.outflow.amortization)} indent neg />
-                           <ReportLine label="MULTAS POR ATRASO" val={fmt(cashFlow.outflow.late_penalties)} indent neg />
-                           <ReportLine label="JUROS BANCÁRIOS" val={fmt(cashFlow.outflow.interest)} indent neg />
-                           <ReportLine label="TREINAMENTO" val={fmt(cashFlow.outflow.training)} indent neg />
-                           <ReportLine label="IMPOSTO DE RENDA" val={fmt(cashFlow.outflow.taxes)} indent neg />
-                           <ReportLine label="DISTRIBUIÇÃO DE DIVIDENDOS" val={fmt(cashFlow.outflow.dividends)} indent neg />
+                           <ReportLine label="FORNECEDORES" val={fmt(cashFlow.outflow.suppliers)} indent neg />
+                           <ReportLine label="MARKETING & DISTRIBUIÇÃO" val={fmt(cashFlow.outflow.marketing + cashFlow.outflow.distribution)} indent neg icon={<Truck size={10}/>} />
+                           <ReportLine label="CAPEX (MÁQUINAS)" val={fmt(cashFlow.outflow.machine_buy)} indent neg />
+                           <ReportLine label="JUROS & IMPOSTOS" val={fmt(cashFlow.outflow.interest + cashFlow.outflow.taxes)} indent neg />
                         </div>
 
                         <div className="py-4">
-                           <ReportLine label="(-) APLICAÇÃO FINANCEIRA" val={fmt(cashFlow.investment_apply)} neg color="text-blue-400" />
+                           <ReportLine label="(-) NOVA APLICAÇÃO FINANCEIRA" val={fmt(cashFlow.investment_apply)} neg color="text-blue-400" />
                         </div>
 
                         <div className="mt-8 pt-8 border-t-4 border-white/10">

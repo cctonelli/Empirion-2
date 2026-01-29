@@ -1,8 +1,8 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.8.0-Oracle-Master";
-export const BUILD_DATE = "20/01/2026";
+export const APP_VERSION = "v15.9.0-Oracle-Master";
+export const BUILD_DATE = "22/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
@@ -55,7 +55,8 @@ export const INITIAL_FINANCIAL_TREE = {
       id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 0, type: 'asset', isEditable: true },
+            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 170000, type: 'asset', isEditable: true },
+            { id: 'assets.current.investments', label: 'Aplicação Financeira', value: 0, type: 'asset', isEditable: true },
             { id: 'assets.current.clients', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true },
             { id: 'assets.current.stock', label: 'ESTOQUE', value: 1466605, type: 'totalizer', children: [
                 { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 628545, type: 'asset', isEditable: true },
@@ -65,7 +66,7 @@ export const INITIAL_FINANCIAL_TREE = {
         },
         {
           id: 'assets.noncurrent', label: 'ATIVO NÃO CIRCULANTE', value: 5886600, type: 'totalizer', children: [
-            { id: 'assets.noncurrent.fixed', label: 'IMOBILIZADO', value: 5886600, type: 'totalizer', children: [
+            { id: 'assets.noncurrent.fixed', label: 'ATIVO IMOBILIZADO', value: 5886600, type: 'totalizer', children: [
                 { id: 'assets.noncurrent.fixed.land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true },
                 { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true },
                 { id: 'assets.noncurrent.fixed.buildings_deprec', label: '(-) Deprec. Acum. Prédios/Inst.', value: -2176000, type: 'asset', isEditable: true },
@@ -79,7 +80,6 @@ export const INITIAL_FINANCIAL_TREE = {
     { 
       id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
-          // FIX: Added missing opening quote for 'liabilities.current' ID
           id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2621493, type: 'totalizer', children: [
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true },
             { id: 'liabilities.current.taxes', label: 'Imposto de Renda a pagar', value: 13045, type: 'liability', isEditable: true },
