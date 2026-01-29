@@ -110,14 +110,14 @@ export const INITIAL_FINANCIAL_TREE = {
   ],
   dre: [
     { id: 'rev', label: '(+) RECEITAS BRUTAS DE VENDAS', value: 3322735, type: 'revenue', isEditable: true },
-    { id: 'cpv', label: '( - ) CUSTO PROD. VENDIDO - CPV', value: -2278180, type: 'expense', isEditable: true },
-    { id: 'gross_profit', label: '( = ) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true },
-    { id: 'opex', label: '( - ) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
+    { id: 'cpv', label: '(-) CPV-CUSTO PROD. VENDIDO', value: -2278180, type: 'expense', isEditable: true },
+    { id: 'gross_profit', label: '(=) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true },
+    { id: 'opex', label: '(-) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
         { id: 'opex.sales', label: 'DE VENDAS', value: 802702, type: 'expense', isEditable: true },
         { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true },
-        { id: 'opex.rd', label: 'P&D - PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true }
+        { id: 'opex.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true }
     ]},
-    { id: 'operating_profit', label: '( = ) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true },
+    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true },
     { id: 'fin_res', label: '(+/-) RESULTADO FINANCEIRO', value: -40000, type: 'totalizer', children: [
         { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 40000, type: 'expense', isEditable: true }
@@ -126,13 +126,13 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0, type: 'revenue', isEditable: true },
         { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0, type: 'expense', isEditable: true }
     ]},
-    { id: 'lair', label: '( = ) LUCRO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer', isReadOnly: true },
-    { id: 'tax_prov', label: '( - ) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
-    { id: 'profit_after_tax', label: '( = ) LUCRO APÓS O IR', value: 73928, type: 'totalizer', isReadOnly: true },
-    { id: 'ppr', label: '( - ) PLR - PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true },
-    { id: 'final_profit', label: '( = ) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true },
-    { id: 'dividends', label: '( - ) DIVIDENDOS PROPOSTOS', value: 0, type: 'expense', isEditable: true },
-    { id: 'retained_profit', label: '( = ) LUCRO RETIDO / ACUMULADO', value: 73928, type: 'totalizer', isReadOnly: true }
+    { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer', isReadOnly: true },
+    { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
+    { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 73928, type: 'totalizer', isReadOnly: true },
+    { id: 'ppr', label: '(-) PPR-PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true },
+    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true },
+    { id: 'dividends', label: '(-) DIVIDENDOS PROPOSTOS', value: 0, type: 'expense', isEditable: true },
+    { id: 'retained_profit', label: '(=) LUCRO/PREJUÍZO LÍQUIDO', value: 73928, type: 'totalizer', isReadOnly: true }
   ],
   cash_flow: [
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true },
@@ -147,7 +147,7 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'cf.outflow', label: '(-) SAÍDAS', value: -3192895, type: 'totalizer', children: [
         { id: 'cf.outflow.payroll', label: 'FOLHA DE PAGAMENTO', value: 767000, type: 'expense', isEditable: true },
         { id: 'cf.outflow.social_charges', label: 'ENCARGOS SOCIAIS', value: 268450, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.rd', label: 'P&D - PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true },
         { id: 'cf.outflow.marketing', label: 'CAMPANHAS DE MARKETING', value: 120000, type: 'expense', isEditable: true },
         { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 150000, type: 'expense', isEditable: true },
         { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 15000, type: 'expense', isEditable: true },
@@ -208,8 +208,8 @@ export const DEFAULT_MACRO: MacroIndicators = {
   labor_availability: 'MEDIA',
   machine_specs: {
     alfa: { model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025 },
-    beta: { model: 'beta', initial_value: 1576206, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025 },
-    gama: { model: 'gama', initial_value: 3310975, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025 }
+    beta: { model: 'beta', initial_value: 1500000, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025 },
+    gama: { model: 'gama', initial_value: 3000000, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025 }
   },
   initial_machinery_mix: [
     { id: 'm1', model: 'alfa', age: 6 },
@@ -227,7 +227,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
     storage_mp: 1.40,
     storage_finished: 20.00
   },
-  machinery_values: { alfa: 500000, beta: 1576206, gama: 3310975 },
+  machinery_values: { alfa: 500000, beta: 1500000, gama: 3000000 },
   staffing: {
     admin: { count: 20, salaries: 4 },
     sales: { count: 10, salaries: 4 },
