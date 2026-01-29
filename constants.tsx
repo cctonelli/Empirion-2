@@ -1,8 +1,8 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.6.0-Oracle-Master";
-export const BUILD_DATE = "18/01/2026";
+export const APP_VERSION = "v15.8.0-Oracle-Master";
+export const BUILD_DATE = "20/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
@@ -34,15 +34,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     title: "Empirion",
     subtitle: "Strategic Simulation",
     hero: { title: "Forje Seu Império", subtitle: "Strategos IA" }
-  },
-  'branch-industrial': {
-    name: "Industrial",
-    heroImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200",
-    body: "Produção $9M Assets. Gerencie cadeias de suprimento complexas.",
-    description: "O motor industrial do Empirion simula operações de manufatura pesada com foco em CapEx e eficiência de produção.",
-    features: ["CapEx Management", "Supply Chain Optimization", "Real-time Production Analytics"],
-    kpis: ["TSR", "EBITDA Margin", "Capacity Utilization"],
-    accent: "orange"
   }
 };
 
@@ -88,6 +79,7 @@ export const INITIAL_FINANCIAL_TREE = {
     { 
       id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
+          // FIX: Added missing opening quote for 'liabilities.current' ID
           id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2621493, type: 'totalizer', children: [
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true },
             { id: 'liabilities.current.taxes', label: 'Imposto de Renda a pagar', value: 13045, type: 'liability', isEditable: true },
@@ -138,6 +130,7 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true },
     { id: 'cf.inflow', label: '(+) ENTRADAS', value: 3021362, type: 'totalizer', children: [
         { id: 'cf.inflow.cash_sales', label: 'VENDAS À VISTA', value: 1649000, type: 'revenue', isEditable: true },
+        { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO', value: 0, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.investment_withdrawal', label: 'RESGATE DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.machine_sales', label: 'VENDA DE MÁQUINAS', value: 0, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.awards', label: 'PREMIAÇÕES RECEBIDAS', value: 0, type: 'revenue', isEditable: true },
@@ -148,9 +141,9 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.payroll', label: 'FOLHA DE PAGAMENTO', value: 767000, type: 'expense', isEditable: true },
         { id: 'cf.outflow.social_charges', label: 'ENCARGOS SOCIAIS', value: 268450, type: 'expense', isEditable: true },
         { id: 'cf.outflow.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.marketing', label: 'CAMPANHAS DE MARKETING', value: 120000, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 150000, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 15000, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.marketing', label: 'CAMPANHAS DE MARKETING', value: 0, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 0, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 0, type: 'expense', isEditable: true },
         { id: 'cf.outflow.suppliers', label: 'PAGAMENTO A FORNECEDORES', value: 1677000, type: 'expense', isEditable: true },
         { id: 'cf.outflow.misc', label: 'DIVERSOS E ATRASOS GERAIS', value: 0, type: 'expense', isEditable: true },
         { id: 'cf.outflow.machine_buy', label: 'COMPRA DE MÁQUINAS', value: 0, type: 'expense', isEditable: true },
@@ -163,7 +156,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0, type: 'expense', isEditable: true }
     ]},
     { id: 'cf.investment_apply', label: '(-) APLICAÇÃO FINANCEIRA', value: 0, type: 'expense', isEditable: true },
-    { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: -171533, type: 'totalizer', isReadOnly: true }
+    { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0, type: 'totalizer', isReadOnly: true }
   ]
 };
 

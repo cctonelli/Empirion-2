@@ -36,7 +36,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   const [teamNames, setTeamNames] = useState<string[]>([]);
   const [marketIndicators, setMarketIndicators] = useState<MacroIndicators>(DEFAULT_MACRO);
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>({});
-  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
+  // FIX: Updated state type to match INITIAL_FINANCIAL_TREE including cash_flow
+  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
 
   useEffect(() => {
     setRegionNames(prev => Array.from({ length: formData.regions_count }, (_, i) => prev[i] || `Região ${i+1}`));

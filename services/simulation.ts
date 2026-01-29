@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v28.6 - GRANULAR FINANCE SYNC
+ * CORE ORACLE ENGINE v28.8 - MASTER REVENUE & BAD DEBT PROTOCOL
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -36,6 +36,7 @@ export const calculateProjections = (
   const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...(roundRules?.[currentRound] || {}) };
   const prevBS = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(prevBS.equity?.total, 5055447);
+  const prevClientsBalance = sanitize(previousState?.statements?.balance_sheet?.current?.clients, 1823735);
 
   // 1. MATÉRIAS-PRIMAS
   const stockMPA_Initial_Val = 200000;
@@ -102,9 +103,12 @@ export const calculateProjections = (
   // 4. CPP E CPV
   const unitsProduced = nominalCapacity * actualEffortResult;
   const mpConsumptionVal = (unitsProduced * 3 * wacMPA) + (unitsProduced * 2 * wacMPB);
-  const productionSocialCharges = (salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
   
-  const totalProductionCost = mpConsumptionVal + salMOD_Base + overtimeCost + indemnityCost + productionSocialCharges + productivityBonusTotal + totalMaintenanceCost + totalDepreciationMachines + structuralDepreciation;
+  // Encargos Sociais sobre Base MOD (Indenização + HE + Base)
+  const socialChargesOnProduction = (salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
+  
+  // CPP inclui Prêmio Produtividade conforme alinhamento estratégico
+  const totalProductionCost = mpConsumptionVal + salMOD_Base + overtimeCost + indemnityCost + socialChargesOnProduction + productivityBonusTotal + totalMaintenanceCost + totalDepreciationMachines + structuralDepreciation;
   const currentCPP = unitsProduced > 0 ? totalProductionCost / unitsProduced : 0;
   const wacPA = ( (2000 * 227) + (unitsProduced * currentCPP) ) / Math.max(1, (2000 + unitsProduced));
 
@@ -120,8 +124,8 @@ export const calculateProjections = (
   const distributionTotal = unitsSold * indicators.prices.distribution_unit;
   const rd_expense = grossRevenue * (rd_percent / 100);
 
-  const opexSales = salSales + (salSales * socialChargesRate) + marketingTotal + distributionTotal;
-  const opexAdm = salAdmin + (salAdmin * socialChargesRate);
+  const opexSales = salSales + (socialChargesRate * salSales) + marketingTotal + distributionTotal;
+  const opexAdm = salAdmin + (socialChargesRate * salAdmin);
   const totalOpex = opexSales + opexAdm + rd_expense;
   const operatingProfit = grossProfit - totalOpex;
 
@@ -132,11 +136,7 @@ export const calculateProjections = (
   const financialExpenses = (sanitize(safeDecisions.finance.loanRequest, 0) * bankInterestRate) + 15000; 
   const financialResult = applicationRevenue - financialExpenses;
 
-  const nonOperationalRevenue = 0;
-  const nonOperationalExpense = 0;
-  const nonOperationalResult = nonOperationalRevenue - nonOperationalExpense;
-
-  const lair = operatingProfit + financialResult + nonOperationalResult;
+  const lair = operatingProfit + financialResult;
 
   // 7. GATILHOS FISCAIS
   const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
@@ -151,28 +151,33 @@ export const calculateProjections = (
   const dividends = netIncome > 0 ? (netIncome * div_pct) : 0;
   const retainedProfit = netIncome - dividends;
 
-  // 8. FLUXO DE CAIXA CONSOLIDADO v28.6
+  // 8. FLUXO DE CAIXA E INADIMPLÊNCIA v28.8
   const initialCash = sanitize(previousState?.cash, 170000);
   const cashSales = grossRevenue * 0.5; // Exemplo: 50% à vista
-  const loanEntry = sanitize(safeDecisions.finance.loanRequest, 0);
   
-  const totalInflow = cashSales + applicationRevenue + loanEntry; // Simplificado
-  
-  const totalPayroll = salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost + plrAmount + productivityBonusTotal;
-  const totalCharges = (salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
-  
-  // Detalhamento de Saídas (conforme IDs do Fluxo de Caixa)
-  const supplierPayment = cpv * 0.7; // Exemplo de prazo
-  const maintenanceOut = totalMaintenanceCost;
-  const rdOut = rd_expense;
-  const marketingOut = marketingTotal;
-  const distributionOut = distributionTotal;
-  const storageOut = 0; // Mock
+  // Vendas a Prazo que vencem no período (baseado no saldo anterior)
+  const termSalesDueTotal = prevClientsBalance * 0.4; 
+  const badDebtRate = sanitize(indicators.customer_default_rate, 2.6) / 100;
+  const badDebtAmount = termSalesDueTotal * badDebtRate;
+  const netTermSalesReceipt = termSalesDueTotal - badDebtAmount;
 
-  const totalOutflow = totalPayroll + totalCharges + rdOut + marketingOut + distributionOut + storageOut + supplierPayment + maintenanceOut + financialExpenses + irProvision + dividends;
+  const loanEntry = sanitize(safeDecisions.finance.loanRequest, 0);
+  const totalInflow = cashSales + netTermSalesReceipt + applicationRevenue + loanEntry;
+  
+  // Folha de Pagamento inclui salários fixos, HE, indenizações, PPR e Prêmio Produtividade
+  const payrollTotalCash = salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost + plrAmount + productivityBonusTotal;
+  const chargesTotalCash = (salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
+  
+  const supplierPayment = cpv * 0.7; 
+  const totalOutflow = payrollTotalCash + chargesTotalCash + rd_expense + marketingTotal + distributionTotal + supplierPayment + totalMaintenanceCost + financialExpenses + irProvision + dividends;
 
   const investmentApply = sanitize(safeDecisions.finance.application, 0);
   const finalCash = initialCash + totalInflow - totalOutflow - investmentApply;
+
+  // BALANÇO: Inadimplência acumulada na conta CLIENTES
+  // New = Old + New Sales - Real Cash Receipts (which excludes bad debt)
+  const newTermSalesCreated = grossRevenue * 0.5;
+  const newClientsBalance = prevClientsBalance + newTermSalesCreated - netTermSalesReceipt;
 
   return {
     revenue: grossRevenue,
@@ -183,37 +188,25 @@ export const calculateProjections = (
     health: { 
       rating: netIncome > 0 ? 'AAA' : 'C',
       cpp: currentCPP,
-      motivation_score: baseMotivation,
-      is_on_strike: isStriking,
-      productivity_bonus_paid: productivityBonusTotal,
-      non_op_result: nonOperationalResult,
-      cash: finalCash
+      cash: finalCash,
+      bad_debt: badDebtAmount,
+      motivation: baseMotivation
     },
     kpis: {
       market_share: 12.5 * rd_market_bonus,
       rating: netIncome > 0 ? 'AAA' : 'C',
       insolvency_status: netIncome > 0 ? 'SAUDAVEL' : 'ALERTA',
       equity: prevEquity + retainedProfit,
-      motivation_score: baseMotivation,
-      is_on_strike: isStriking,
       last_decision: safeDecisions 
     },
     statements: {
       dre: { 
         revenue: grossRevenue, cpv, gross_profit: grossProfit, opex: totalOpex, operating_profit: operatingProfit,
-        financial_result: financialResult, 
-        non_operational_result: nonOperationalResult,
-        lair, tax: irProvision, profit_after_ir: profitAfterIR,
+        financial_result: financialResult, lair, tax: irProvision, profit_after_ir: profitAfterIR,
         plr: plrAmount, net_profit: netIncome, dividends, retained_profit: retainedProfit,
         details: { 
-          rd_investment: rd_expense,
-          social_charges: totalCharges,
-          payroll_net: totalPayroll,
-          cpp: currentCPP,
-          wac_pa: wacPA,
-          productivity_bonus: productivityBonusTotal,
-          non_op_rev: nonOperationalRevenue,
-          non_op_exp: nonOperationalExpense
+          rd_investment: rd_expense, social_charges: chargesTotalCash, payroll_net: payrollTotalCash,
+          cpp: currentCPP, wac_pa: wacPA, productivity_bonus: productivityBonusTotal
         }
       },
       cash_flow: {
@@ -221,6 +214,7 @@ export const calculateProjections = (
         inflow: {
           total: totalInflow,
           cash_sales: cashSales,
+          term_sales: netTermSalesReceipt,
           investment_withdrawal: applicationRevenue,
           machine_sales: 0,
           awards: 0,
@@ -229,16 +223,16 @@ export const calculateProjections = (
         },
         outflow: {
           total: totalOutflow,
-          payroll: totalPayroll,
-          social_charges: totalCharges,
-          rd: rdOut,
-          marketing: marketingOut,
-          distribution: distributionOut,
-          storage: storageOut,
+          payroll: payrollTotalCash,
+          social_charges: chargesTotalCash,
+          rd: rd_expense,
+          marketing: marketingTotal,
+          distribution: distributionTotal,
+          storage: 0,
           suppliers: supplierPayment,
           misc: 0,
           machine_buy: 0,
-          maintenance: maintenanceOut,
+          maintenance: totalMaintenanceCost,
           amortization: 0,
           late_penalties: 0,
           interest: financialExpenses,
@@ -248,6 +242,9 @@ export const calculateProjections = (
         },
         investment_apply: investmentApply,
         final: finalCash
+      },
+      balance_sheet: {
+        current: { clients: newClientsBalance, cash: finalCash }
       }
     }
   };

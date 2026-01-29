@@ -120,7 +120,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
       await createChampionshipWithTeams({
         name: formData.name || `TRIAL ARENA ${new Date().toLocaleDateString()}`,
-        description: "Sandbox de experimentação estratégica Empirion.",
+        description: "Experimente o melhor simulador de estratégia empresarial do mercado.",
         branch: 'industrial',
         status: 'active',
         current_round: 0,
@@ -239,7 +239,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <WizardStepTitle icon={<Users size={32}/>} title="EQUIPES E BOTS" desc="DEFINA QUEM PARTICIPARÁ DA COMPETIÇÃO NO CLUSTER." />
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     <div className="space-y-8 bg-white/5 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Configuração do Cluster</h4>
+                       <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Defina as equipes</h4>
                        <div className="grid grid-cols-2 gap-8">
                           <WizardField label="Nº EQUIPES HUMANAS" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
                           <WizardField label="Nº EQUIPES BOTS)" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
@@ -262,7 +262,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 3 && (
               <motion.div key="s3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
-                 <WizardStepTitle icon={<Globe size={32}/>} title="GEOPOLÍTICA REGIONAL" desc="CONFIGURE MOEDAS E BALANCEAMENTO DE DEMANDA INTERNACIONAL." />
+                 <WizardStepTitle icon={<Globe size={32}/>} title="MERCADOS DE ATUAÇÃO" desc="CONFIGURE REGIÕES, MOEDAS E BALANCEAMENTO DE DEMANDA" />
                  
                  <div className="bg-slate-950/60 p-8 rounded-[3rem] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
                     <div className="flex items-center gap-6">
