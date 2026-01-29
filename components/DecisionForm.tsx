@@ -8,7 +8,7 @@ import {
   ShieldAlert, Gavel, Trash2, ShoppingCart, Info, Award,
   Zap, HelpCircle, ArrowUpCircle, ArrowDownCircle, MapPin,
   Layers, Copy, CheckCircle2, ChevronLeft, Wallet, PieChart, TrendingDown,
-  Percent
+  Percent, HeartPulse
 } from 'lucide-react';
 import { saveDecisions, getChampionships } from '../services/supabase';
 import { calculateProjections, sanitize } from '../services/simulation';
@@ -258,13 +258,29 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                )}
 
                {activeStep === 3 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full pb-10">
-                     <InputCard label="Novas Admissões" val={decisions.hr.hired} onChange={(v: number) => updateDecision('hr.hired', v)} icon={<Users2 size={24}/>} />
-                     <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v: number) => updateDecision('hr.fired', v)} icon={<Users2 size={24}/>} />
-                     <InputCard label="Piso Salarial ($)" val={decisions.hr.salary} onChange={(v: number) => updateDecision('hr.salary', v)} icon={<DollarSign size={24}/>} />
-                     <InputCard label="Treinamento %" val={decisions.hr.trainingPercent} onChange={(v: number) => updateDecision('hr.trainingPercent', v)} icon={<Target size={24}/>} />
-                     <InputCard label="Participação Lucros %" val={decisions.hr.participationPercent} onChange={(v: number) => updateDecision('hr.participationPercent', v)} icon={<Award size={24}/>} />
-                     <InputCard label="Benefícios Extras ($)" val={decisions.hr.misc} onChange={(v: number) => updateDecision('hr.misc', v)} icon={<Info size={24}/>} />
+                  <div className="space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-full pb-10">
+                       <InputCard label="Novas Admissões" val={decisions.hr.hired} onChange={(v: number) => updateDecision('hr.hired', v)} icon={<Users2 size={24}/>} />
+                       <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v: number) => updateDecision('hr.fired', v)} icon={<Users2 size={24}/>} />
+                       <InputCard label="Piso Salarial ($)" val={decisions.hr.salary} onChange={(v: number) => updateDecision('hr.salary', v)} icon={<DollarSign size={24}/>} />
+                       <InputCard label="Treinamento %" val={decisions.hr.trainingPercent} onChange={(v: number) => updateDecision('hr.trainingPercent', v)} icon={<Target size={24}/>} />
+                       <InputCard label="Participação Lucros %" val={decisions.hr.participationPercent} onChange={(v: number) => updateDecision('hr.participationPercent', v)} icon={<Award size={24}/>} />
+                       <div className="relative group">
+                          <InputCard label="Prêmio Produtividade (%)" val={decisions.hr.misc} onChange={(v: number) => updateDecision('hr.misc', v)} icon={<Zap size={24} className="text-blue-500" />} />
+                          <div className="absolute -top-2 -right-2 p-2 bg-slate-900 border border-white/10 rounded-full text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-help z-50">
+                             <HelpCircle size={14} />
+                             <div className="absolute bottom-full right-0 mb-4 w-64 p-4 bg-slate-900 border border-blue-500/30 rounded-2xl text-[10px] font-medium text-slate-300 shadow-2xl pointer-events-none italic">
+                                "Protocolo Strike Goal: Bônus binário sobre o salário base. Só é pago se a meta de produção (Uso da Capacidade + Turno Extra) for atingida. Isento de encargos sociais."
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="bg-blue-600/10 border-2 border-blue-500/20 p-8 rounded-[3rem] flex gap-6 items-center">
+                       <Zap size={32} className="text-blue-400" />
+                       <p className="text-[10px] font-black uppercase text-blue-200 tracking-widest leading-relaxed">
+                          Dica do Oráculo: O prêmio produtividade estimula a MOD a atingir as metas operacionais. Se a produção real falhar em relação à meta (Card 3), nada é pago.
+                       </p>
+                    </div>
                   </div>
                )}
 
