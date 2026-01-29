@@ -55,7 +55,7 @@ export const INITIAL_FINANCIAL_TREE = {
       id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
         { 
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 170000, type: 'asset', isEditable: true },
+            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 0, type: 'asset', isEditable: true },
             { id: 'assets.current.clients', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true },
             { id: 'assets.current.stock', label: 'ESTOQUE', value: 1466605, type: 'totalizer', children: [
                 { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 628545, type: 'asset', isEditable: true },
@@ -169,7 +169,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   supplier_interest: 1.5,
   sales_interest_rate: 1.5, 
   investment_return_rate: 1.0,
-  avg_selling_price: 340.0,
+  avg_selling_price: 370.0,
   tax_rate_ir: 15.0,
   late_penalty_rate: 15.0,
   machine_sale_discount: 10.0,
