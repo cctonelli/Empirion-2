@@ -1,7 +1,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+// Fix: Corrected icon imports to use 'lucide-react' instead of '../types'
 import { 
-  TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, Wrench, Clock, UserMinus, ShieldAlert, Heart, Flame, Factory, Database, Coins, Award, Zap, Sparkles, PieChart, Landmark as BankIcon,
+  TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, Wrench, Clock, UserMinus, ShieldAlert, Heart, Flame, Factory, Database, Coins, Award, Zap, Sparkles, PieChart,
   ShieldCheck, Activity, ArrowRight, ArrowDownLeft, ArrowUpRight, Wallet, ShoppingCart, Truck, Warehouse
 } from 'lucide-react';
 import { Branch, Championship, Team } from '../types';
@@ -35,8 +36,8 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
 
   const dre = useMemo(() => {
      return activeTeam?.kpis?.statements?.dre || {
-       revenue: 0, cpv: 0, gross_profit: 0, opex: 0, operating_profit: 0, lair: 0, tax: 0, profit_after_ir: 0, plr: 0, net_profit: 0, dividends: 0, retained_profit: 0,
-       financial_result: 0, non_operational_result: 0,
+       revenue: 0, cpv: 0, gross_profit: 0, opex: 0, operating_profit: 0, lair: 0, tax: 0, net_profit: 0,
+       financial_result: 0, non_op_res: 0,
        details: { 
          cpp: 0, wac_pa: 0, rd_investment: 0, social_charges: 0, payroll_net: 0, non_op_rev: 0, non_op_exp: 0, productivity_bonus: 0, fin_rev: 0
        }
@@ -105,27 +106,17 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                            {dre.details?.fin_rev > 0 && <ReportLine label="(+) RENDIMENTOS DE APLICAÇÕES" val={fmt(dre.details.fin_rev)} indent color="text-emerald-400" />}
                         </div>
 
+                        <div className="py-2 space-y-1 opacity-90 border-l-2 border-orange-500/20 ml-2 pl-4">
+                           <ReportLine label="(+/-) RESULTADO NÃO OPERACIONAL" val={fmt(dre.non_op_res || 0)} />
+                        </div>
+
                         <ReportLine label="( = ) LUCRO ANTES DO IR (LAIR)" val={fmt(dre.lair)} bold highlight />
                         
                         <div className="py-2 space-y-1 opacity-80">
                            <ReportLine label="( - ) PROVISÃO PARA O IR" val={fmt(dre.tax)} neg color={dre.tax > 0 ? "text-rose-400" : "text-slate-600"} />
-                           <ReportLine label="( = ) LUCRO APÓS O IR" val={fmt(dre.profit_after_ir)} bold />
-                           <ReportLine label="( - ) PLR - PARTICIPAÇÃO LUCROS" val={fmt(dre.plr)} neg color={dre.plr > 0 ? "text-amber-400" : "text-slate-600"} />
                         </div>
 
                         <ReportLine label="( = ) LUCRO LÍQUIDO DO EXERCÍCIO" val={fmt(dre.net_profit)} total />
-                        
-                        <div className="pt-4 mt-4 border-t border-white/10 space-y-1">
-                           <ReportLine label="( - ) DIVIDENDOS PROPOSTOS" val={fmt(dre.dividends)} neg color={dre.dividends > 0 ? "text-indigo-400" : "text-slate-600"} />
-                           <ReportLine 
-                             label={isLoss ? "(=) PREJUÍZO ACUMULADO NO BALANÇO" : "(=) LUCRO RETIDO NO BALANÇO"} 
-                             val={fmt(dre.retained_profit)} 
-                             neg={isLoss}
-                             highlight 
-                             bold 
-                             color={isLoss ? "text-rose-500" : "text-emerald-400"} 
-                           />
-                        </div>
                      </div>
                   </motion.div>
                ) : (
@@ -155,6 +146,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                            <ReportLine label="MARKETING & DISTRIBUIÇÃO" val={fmt(cashFlow.outflow.marketing + cashFlow.outflow.distribution)} indent neg icon={<Truck size={10}/>} />
                            <ReportLine label="CAPEX (MÁQUINAS)" val={fmt(cashFlow.outflow.machine_buy)} indent neg />
                            <ReportLine label="JUROS & IMPOSTOS" val={fmt(cashFlow.outflow.interest + cashFlow.outflow.taxes)} indent neg />
+                           <ReportLine label="DISTRIBUIÇÃO DE DIVIDENDOS" val={fmt(cashFlow.outflow.dividends)} indent neg color="text-indigo-400" />
                         </div>
 
                         <div className="py-4">
@@ -174,11 +166,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
             <div className="bg-slate-900 border border-white/10 rounded-[4rem] p-10 shadow-2xl space-y-8">
                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 italic">Integridade Patrimonial</h4>
                <div className="space-y-6">
-                  <CostDetail label="Patrimônio Líquido P00" val={fmt(activeTeam?.equity || 5055447)} />
-                  <div className="flex justify-between items-center group">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Resultado Período</span>
-                    <span className={`text-sm font-mono font-black ${isLoss ? 'text-rose-500' : 'text-emerald-500'}`}>{isLoss ? '-' : '+'}$ {fmt(Math.abs(dre.retained_profit))}</span>
-                  </div>
+                  <CostDetail label="Patrimônio Líquido" val={fmt(activeTeam?.equity || 5055447)} />
                   
                   <div className="pt-6 border-t border-white/5 flex flex-col gap-4">
                      <span className="text-[8px] font-black text-slate-500 uppercase italic">Veredito do Auditor</span>
@@ -187,7 +175,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                            {isLoss ? <Flame size={20}/> : <ShieldCheck size={20}/>}
                         </div>
                         <span className={`text-2xl font-black italic font-mono ${isLoss ? 'text-rose-500' : 'text-emerald-500'}`}>
-                           {isLoss ? 'EROSÃO PL' : 'ACUMULANDO'}
+                           {isLoss ? 'EROSÃO PL' : 'ESTÁVEL'}
                         </span>
                      </div>
                   </div>

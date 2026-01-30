@@ -1,8 +1,8 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.17.0-Oracle-Annuity";
-export const BUILD_DATE = "24/01/2026";
+export const APP_VERSION = "v15.19.0-Oracle-Accounting-Fidelity";
+export const BUILD_DATE = "26/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
@@ -71,6 +71,7 @@ export const INITIAL_FINANCIAL_TREE = {
           id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2621493, type: 'totalizer', children: [
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true },
             { id: 'liabilities.current.taxes', label: 'Imposto de Renda a pagar', value: 13045, type: 'liability', isEditable: true },
+            { id: 'liabilities.current.dividends', label: 'Dividendos a Pagar', value: 18481, type: 'liability', isEditable: true },
             { id: 'liabilities.current.loans_st', label: 'Empréstimos de curto prazo', value: 1872362, type: 'liability', isEditable: true }
           ] 
         },
@@ -82,7 +83,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { 
           id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 5055447, type: 'totalizer', children: [
             { id: 'equity.capital', label: 'Capital Social', value: 5000000, type: 'equity', isEditable: true },
-            { id: 'equity.profit', label: 'Lucro/Prejuízo Acumulados', value: 55447, type: 'equity', isEditable: true }
+            { id: 'equity.profit', label: 'Lucro/Prejuízo Acumulado', value: 55447, type: 'equity', isEditable: true }
           ] 
         }
       ]
@@ -91,24 +92,26 @@ export const INITIAL_FINANCIAL_TREE = {
   dre: [
     { id: 'rev', label: '(+) RECEITAS BRUTAS DE VENDAS', value: 3322735, type: 'revenue', isEditable: true },
     { id: 'cpv', label: '(-) CPV-CUSTO PROD. VENDIDO', value: -2278180, type: 'expense', isEditable: true },
-    { id: 'gross_profit', label: '(=) LUCRO BRUTO', value: 1044555, type: 'totalizer' },
+    { id: 'gross_profit', label: '(=) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true },
     { id: 'opex', label: '(-) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
         { id: 'opex.sales', label: 'DE VENDAS', value: 802702, type: 'expense', isEditable: true },
         { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true },
         { id: 'opex.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true }
     ]},
-    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer' },
+    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true },
     { id: 'fin_res', label: '(+/-) RESULTADO FINANCEIRO', value: -40000, type: 'totalizer', children: [
         { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 40000, type: 'expense', isEditable: true }
     ]},
-    { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer' },
+    { id: 'non_op_res', label: '(+/-) RESULTADO NÃO OPERACIONAL', value: 0, type: 'totalizer', children: [
+        { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0, type: 'revenue', isEditable: true },
+        { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0, type: 'expense', isEditable: true }
+    ]},
+    { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer', isReadOnly: true },
     { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
-    { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 73928, type: 'totalizer' },
+    { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 73928, type: 'totalizer', isReadOnly: true },
     { id: 'ppr', label: '(-) PPR-PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true },
-    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer' },
-    { id: 'dividends', label: '(-) DIVIDENDOS PROPOSTOS', value: 0, type: 'expense', isEditable: true },
-    { id: 'retained_profit', label: '(=) LUCRO/PREJUÍZO LÍQUIDO', value: 73928, type: 'totalizer' }
+    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true }
   ],
   cash_flow: [
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true },
@@ -139,7 +142,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 13045, type: 'expense', isEditable: true },
         { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0, type: 'expense', isEditable: true }
     ]},
-    { id: 'cf.investment_apply', label: '(-) APLICAÇÃO FINANCEIRA', value: 0, type: 'expense', isEditable: true },
+    { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0, type: 'expense', isEditable: true },
     { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0, type: 'totalizer' }
   ]
 };

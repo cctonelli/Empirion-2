@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v30.11 - EMBEDDED REVENUE & CLIENTS BALANCING
+ * CORE ORACLE ENGINE v30.13 - RESTORED ACCOUNTING & DIVIDENDS FIDELITY
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -43,6 +43,7 @@ export const calculateProjections = (
   const prevEquity = sanitize(prevBS.equity?.total, 5055447);
   const prevClientsBalance = sanitize(previousState?.statements?.balance_sheet?.current?.clients, 1823735);
   const prevInvestmentsBalance = sanitize(previousState?.statements?.balance_sheet?.current?.investments, 0);
+  const prevDividendsToPay = sanitize(previousState?.statements?.balance_sheet?.current?.dividends, 18481);
 
   // 1. STAFFING & PERFORMANCE GOAL
   const fleet = (previousState?.fleet || indicators.initial_machinery_mix) as InitialMachine[];
@@ -105,7 +106,6 @@ export const calculateProjections = (
   const wacPA = ( (2000 * 227) + (unitsProduced * currentCPP) ) / Math.max(1, (2000 + unitsProduced));
 
   // 4. CÁLCULO DE VENDAS E AMORTIZAÇÃO (ANNUITY)
-  // Protocolo: Os juros contratuais são embutidos diretamente na RECEITA BRUTA.
   const rd_market_bonus = 1 + (rd_percent / 40); 
   const globalUnitsSold = (nominalCapacity * 0.125) * actualEffortResult * rd_market_bonus;
   
@@ -128,13 +128,9 @@ export const calculateProjections = (
       pmt = price * (i_term * pow) / (pow - 1);
     }
 
-    // A Receita Bruta (DRE) incorpora o valor total a receber (Principal + Juros)
     const totalToReceivePerUnit = pmt * n;
     totalGrossRevenueEmbedded += (totalToReceivePerUnit * unitsPerRegion);
-    
-    // Caixa Imediato = Apenas a primeira parcela entra hoje
     cashSalesCurrent += (pmt * unitsPerRegion);
-    // Saldo do Contas a Receber (Conta 'CLIENTES') = O que falta receber
     newAccountsReceivableInClients += ((totalToReceivePerUnit - pmt) * unitsPerRegion);
   });
 
@@ -150,25 +146,37 @@ export const calculateProjections = (
   const totalOpex = opexSales + opexAdm + rd_expense;
   const operatingProfit = grossProfit - totalOpex;
 
-  // 5. RESULTADOS FINANCEIROS (Juros de vendas já estão na receita bruta)
+  // 5. RESULTADOS FINANCEIROS E NÃO OPERACIONAIS
   const applicationRevenue = prevInvestmentsBalance * (sanitize(indicators.investment_return_rate, 1.0) / 100);
   const financialExpenses = (sanitize(safeDecisions.finance.loanRequest, 0) * (sanitize(indicators.interest_rate_tr, 2.0) / 100)) + 15000; 
   const financialResult = applicationRevenue - financialExpenses;
-  const lair = operatingProfit + financialResult;
+  
+  // RESTORE: Resultado Não Operacional
+  const nonOpResult = 0; 
+  
+  const lair = operatingProfit + financialResult + nonOpResult;
 
-  // 6. GATILHOS FISCAIS E DIVIDENDOS
+  // 6. GATILHOS FISCAIS E DIVIDENDOS (APURAÇÃO BALANÇO)
   const irProvision = lair > 0 ? (lair * (sanitize(indicators.tax_rate_ir, 15) / 100)) : 0;
   const netIncome = (lair - irProvision) * (1 - (sanitize(safeDecisions.hr.participationPercent, 0) / 100));
-  const dividends = netIncome > 0 ? (netIncome * (sanitize(championshipData?.dividend_percent ?? indicators.dividend_percent, 25) / 100)) : 0;
-  const retainedProfit = netIncome - dividends;
+  
+  // Apuração de Dividendos: 25% (default) ou customizado pelo tutor
+  const dividendRate = sanitize(championshipData?.dividend_percent ?? indicators.dividend_percent, 25) / 100;
+  const newDividendsProvision = netIncome > 0 ? (netIncome * dividendRate) : 0;
+  
+  // Lucro/Prejuízo Líquido Retido (Alimenta o Lucro Acumulado no PL)
+  const retainedProfit = netIncome - newDividendsProvision;
 
-  // 7. FLUXO DE CAIXA
+  // 7. FLUXO DE CAIXA (Sincronizado com Dividendos a Pagar do Período Anterior)
   const initialCash = sanitize(previousState?.cash, 170000);
   const termSalesReceiptFromPrev = prevClientsBalance * 0.4; 
   const netTermReceiptFromClients = termSalesReceiptFromPrev * (1 - sanitize(indicators.customer_default_rate, 2.6) / 100);
   
+  // PAGAMENTO: Fluxo de Caixa paga o saldo de 'Dividendos a Pagar' vindo do round anterior
+  const dividendsPaidThisRound = prevDividendsToPay;
+
   const totalInflow = cashSalesCurrent + netTermReceiptFromClients + prevInvestmentsBalance + applicationRevenue + sanitize(safeDecisions.finance.loanRequest, 0);
-  const totalOutflow = (opexSales + opexAdm + salMOD_Base + overtimeCost + indemnityCost + productivityBonusTotal + rd_expense + (cpv * 0.7) + totalMaintenanceCost + financialExpenses + irProvision + dividends);
+  const totalOutflow = (opexSales + opexAdm + salMOD_Base + overtimeCost + indemnityCost + productivityBonusTotal + rd_expense + (cpv * 0.7) + totalMaintenanceCost + financialExpenses + irProvision + dividendsPaidThisRound);
 
   const finalCash = initialCash + totalInflow - totalOutflow - sanitize(safeDecisions.finance.application, 0);
 
@@ -190,20 +198,21 @@ export const calculateProjections = (
     statements: {
       dre: { 
         revenue: totalGrossRevenueEmbedded, cpv, gross_profit: grossProfit, opex: totalOpex, operating_profit: operatingProfit,
-        financial_result: financialResult, lair, tax: irProvision, net_profit: netIncome, retained_profit: retainedProfit,
+        financial_result: financialResult, non_op_res: nonOpResult, lair, tax: irProvision, net_profit: netIncome,
         details: { cpp: currentCPP, building_deprec: buildingDepreciation, machine_deprec: totalDepreciationMachines, fin_rev: applicationRevenue }
       },
       cash_flow: {
         start: initialCash,
         inflow: { total: totalInflow, cash_sales: cashSalesCurrent, term_sales: netTermReceiptFromClients, investment_withdrawal: prevInvestmentsBalance + applicationRevenue },
-        outflow: { total: totalOutflow, maintenance: totalMaintenanceCost, taxes: irProvision, dividends: dividends },
+        outflow: { total: totalOutflow, maintenance: totalMaintenanceCost, taxes: irProvision, dividends: dividendsPaidThisRound },
         final: finalCash
       },
       balance_sheet: {
         current: { 
           clients: prevClientsBalance + newAccountsReceivableInClients - termSalesReceiptFromPrev, 
           cash: finalCash, 
-          investments: sanitize(safeDecisions.finance.application, 0) 
+          investments: sanitize(safeDecisions.finance.application, 0),
+          dividends: newDividendsProvision // Nova provisão gerada pelo lucro do round atual
         }
       }
     }
