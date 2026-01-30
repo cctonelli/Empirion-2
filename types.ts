@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V14.2 - ORACLE MASTER BUILD (PROD-READY)
+ * EMPIRION V14.6 - ORACLE MASTER BUILD (UNIFIED DEPRECIATION)
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -22,10 +22,10 @@ export type LaborAvailability = 'BAIXA' | 'MEDIA' | 'ALTA';
 export type MachineModel = 'alfa' | 'beta' | 'gama';
 
 export interface MachineMaintenanceConfig {
-  overload_coef: number;       // Fator de escala para esforço > 100%
-  aging_coef: number;          // Impacto da idade no custo base
+  overload_coef: number;       
+  aging_coef: number;          
   useful_life_years: Record<MachineModel, number>; 
-  overload_extra_rate: number; // Penalidade > 130%
+  overload_extra_rate: number; 
   advanced_physics_enabled: boolean;
 }
 
@@ -204,10 +204,10 @@ export interface MachineSpec {
   production_capacity: number;
   operators_required: number;
   depreciation_rate: number; 
-  overload_coef?: number;      // NOVO: Sensibilidade ao esforço extra
-  aging_coef?: number;         // NOVO: Sensibilidade à idade
-  useful_life_years?: number;  // NOVO: Vida útil nominal
-  overload_extra_rate?: number;// NOVO: Taxa crítica > 130%
+  overload_coef?: number;      
+  aging_coef?: number;         
+  useful_life_years?: number;  
+  overload_extra_rate?: number;
 }
 
 export interface InitialMachine {
@@ -215,6 +215,7 @@ export interface InitialMachine {
   model: MachineModel;
   age: number; 
   purchase_value?: number; 
+  book_value?: number; // Valor contábil residual
 }
 
 export interface RegionConfig {
@@ -272,27 +273,26 @@ export interface ChampionshipTemplate {
   name: string;
   branch: Branch;
   description: string;
-  market_indicators: MacroIndicators;
-  initial_financials: any;
+  config: any;
 }
 
 export interface MenuItemConfig {
   label: string;
   path: string;
+  icon?: string;
   sub?: {
     id: string;
     label: string;
     path: string;
     icon?: string;
-    desc?: string;
   }[];
 }
 
 export interface RegionalData {
-  id: number;
-  name: string;
-  demand: number;
-  sales: number;
+  regionId: number;
+  price: number;
+  term: number;
+  marketing: number;
 }
 
 export interface BusinessPlan {
@@ -300,9 +300,9 @@ export interface BusinessPlan {
   championship_id: string;
   team_id: string;
   round: number;
-  data: Record<number, string>;
-  status: 'draft' | 'submitted';
   version: number;
+  data: Record<number, string>;
+  status: 'draft' | 'final';
   created_at?: string;
 }
 
@@ -314,8 +314,8 @@ export interface CommunityCriteria {
 
 export interface Modality {
   id: string;
-  slug: string;
   name: string;
+  slug: string;
   description: string;
   image_url?: string;
   is_public: boolean;
@@ -330,10 +330,10 @@ export interface Modality {
 export interface TeamProgress {
   team_id: string;
   team_name: string;
-  status: 'pending' | 'sealed';
+  status: 'sealed' | 'pending';
   rating: CreditRating;
   risk: number;
   insolvent: boolean;
   master_key_enabled?: boolean;
-  auditLogs: AuditLog[];
+  auditLogs?: AuditLog[];
 }

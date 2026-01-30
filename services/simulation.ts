@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v30.0 - ADVANCED PHYSICS UPDATE
+ * CORE ORACLE ENGINE v30.2 - ADVANCED PHYSICS & BOOK VALUE UPDATE
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -37,9 +37,9 @@ export const calculateProjections = (
   const maintenanceConfig: MachineMaintenanceConfig = championshipData?.config?.maintenance || {
     overload_coef: 1.2,
     aging_coef: 0.7,
-    useful_life_years: { alfa: 25, beta: 30, gama: 35 },
+    useful_life_years: { alfa: 40, beta: 40, gama: 40 }, // VIDA ÚTIL HOMOGÊNEA
     overload_extra_rate: 0.0008,
-    advanced_physics_enabled: true, // Default ON para novas arenas v30
+    advanced_physics_enabled: true, 
   };
 
   const prevBS = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
@@ -47,22 +47,11 @@ export const calculateProjections = (
   const prevClientsBalance = sanitize(previousState?.statements?.balance_sheet?.current?.clients, 1823735);
   const prevInvestmentsBalance = sanitize(previousState?.statements?.balance_sheet?.current?.investments, 0);
 
-  // 1. MATÉRIAS-PRIMAS
-  const stockMPA_Initial_Val = 200000;
-  const purchaseMPA_Qty = sanitize(safeDecisions.production.purchaseMPA, 0);
-  const purchaseMPA_Val = purchaseMPA_Qty * indicators.prices.mp_a;
-  const wacMPA = (stockMPA_Initial_Val + purchaseMPA_Val) / Math.max(1, (10000 + purchaseMPA_Qty));
-
-  const stockMPB_Initial_Val = 200000;
-  const purchaseMPB_Qty = sanitize(safeDecisions.production.purchaseMPB, 0);
-  const purchaseMPB_Val = purchaseMPB_Qty * indicators.prices.mp_b;
-  const wacMPB = (stockMPB_Initial_Val + purchaseMPB_Val) / Math.max(1, (5000 + purchaseMPB_Qty));
-
-  // 2. STAFFING & PERFORMANCE GOAL
+  // 1. STAFFING & PERFORMANCE GOAL
   const fleet = (previousState?.fleet || indicators.initial_machinery_mix) as InitialMachine[];
   const activityLevel = sanitize(safeDecisions.production.activityLevel, 80);
   const extraProdPercent = sanitize(safeDecisions.production.extraProductionPercent, 0);
-  const targetEffortLevel = (activityLevel + extraProdPercent) / 100;
+  const productionPercent = (activityLevel + extraProdPercent) / 100;
 
   const machineSpecs = indicators.machine_specs;
   const rd_percent = sanitize(safeDecisions.production.rd_investment, 0);
@@ -82,49 +71,50 @@ export const calculateProjections = (
   const isStriking = baseMotivation < 0.4;
 
   const effectiveProductivityBonus = (isStriking ? 0 : sanitize(indicators.labor_productivity, 1.0)) * (1 + rd_productivity_bonus);
-  const actualEffortResult = targetEffortLevel * effectiveProductivityBonus;
-  const goalReached = actualEffortResult >= targetEffortLevel && !isStriking;
+  const actualEffortResult = productionPercent * effectiveProductivityBonus;
+  const goalReached = actualEffortResult >= productionPercent && !isStriking;
 
-  // 3. GESTÃO DE ATIVOS & MANUTENÇÃO AVANÇADA v30.0
+  // 2. GESTÃO DE ATIVOS & MANUTENÇÃO AVANÇADA v30.5 (UNIFIED DEPRECIATION)
   const structuralDepreciation = 54400; 
   let totalDepreciationMachines = 0;
   let totalMaintenanceCost = 0;
   const machineMaintenanceBreakdown: any[] = [];
 
-  // Fator Produtividade: Desgaste cresce com o esforço
-  const productionPercent = targetEffortLevel;
-
   fleet.forEach((m: InitialMachine) => {
     const spec = machineSpecs[m.model];
     if (!spec) return;
 
-    totalDepreciationMachines += (spec.initial_value * spec.depreciation_rate);
+    // BASE DE CÁLCULO: Valor residual contábil (book_value)
+    const baseValue = m.book_value ?? spec.initial_value;
     
-    // Custo Base de Manutenção (Taxa base do round)
+    // a) Depreciação: 2,5% Fixos em Linha Reta
+    const depRate = spec.depreciation_rate || 0.025;
+    totalDepreciationMachines += (baseValue * depRate);
+    
+    // b) Custo Base de Manutenção
     const baseRate = indicators.maintenance_physics[m.model === 'alfa' ? 'alpha' : m.model === 'beta' ? 'beta' : 'gamma'] || 0.05;
-    const purchaseVal = m.purchase_value || spec.initial_value;
-    const baseCost = purchaseVal * baseRate;
+    const baseCost = baseValue * baseRate;
 
     let machineCost = baseCost;
 
     if (maintenanceConfig.advanced_physics_enabled) {
-      // a) Fator Produtividade (Linear com coeficiente de sobrecarga)
+      // I) Fator Produtividade
       const overloadCoef = spec.overload_coef ?? maintenanceConfig.overload_coef;
       const fatorProd = 1 + Math.max(0, (productionPercent - 1) * overloadCoef);
 
-      // b) Fator Idade (Frequência de quebras aumenta com o tempo)
+      // II) Fator Idade (Referenciado à vida útil de 40 períodos)
       const age = m.age || 0;
-      const usefulLife = spec.useful_life_years ?? maintenanceConfig.useful_life_years[m.model] ?? 25;
+      const usefulLife = 40; // Vida útil fixa conforme nova diretriz
       const agingCoef = spec.aging_coef ?? maintenanceConfig.aging_coef;
       const fatorIdade = 1 + (age / usefulLife) * agingCoef;
 
       machineCost = baseCost * fatorProd * fatorIdade;
 
-      // c) Penalidade de Sobrecarga Crítica (>130%)
+      // III) Penalidade de Sobrecarga Crítica (>130%)
       if (productionPercent > 1.3) {
         const overloadExcess = productionPercent - 1.3;
         const extraRate = spec.overload_extra_rate ?? maintenanceConfig.overload_extra_rate;
-        machineCost += spec.initial_value * overloadExcess * extraRate;
+        machineCost += baseValue * overloadExcess * extraRate;
       }
     }
 
@@ -133,17 +123,28 @@ export const calculateProjections = (
       id: m.id,
       model: m.model,
       age: m.age,
-      cost: machineCost
+      cost: Math.round(machineCost),
+      base_value: baseValue
     });
   });
 
-  // 4. CPP E CPV
+  // 3. CPP E CPV
+  const stockMPA_Initial_Val = 200000;
+  const purchaseMPA_Qty = sanitize(safeDecisions.production.purchaseMPA, 0);
+  const purchaseMPA_Val = purchaseMPA_Qty * indicators.prices.mp_a;
+  const wacMPA = (stockMPA_Initial_Val + purchaseMPA_Val) / Math.max(1, (10000 + purchaseMPA_Qty));
+
+  const stockMPB_Initial_Val = 200000;
+  const purchaseMPB_Qty = sanitize(safeDecisions.production.purchaseMPB, 0);
+  const purchaseMPB_Val = purchaseMPB_Qty * indicators.prices.mp_b;
+  const wacMPB = (stockMPB_Initial_Val + purchaseMPB_Val) / Math.max(1, (5000 + purchaseMPB_Qty));
+
   const salMOD_Base = (requiredProdStaff * salaryBase);
   const productivityBonusTotal = goalReached ? (salMOD_Base * prodBonusPercentInput) : 0;
   const salAdmin = (20 * salaryBase * 4);
   const salSales = (10 * salaryBase * 4);
   const baseHours = sanitize(indicators.production_hours_period, 946);
-  const extraHoursPerMan = Math.max(0, Math.ceil(((activityLevel / 100) * baseHours) - baseHours));
+  const extraHoursPerMan = Math.max(0, Math.ceil((productionPercent * baseHours) - baseHours));
   const overtimeCost = extraHoursPerMan * requiredProdStaff * ((salaryBase / baseHours) * 1.5);
   const indemnityCost = sanitize(safeDecisions.hr.fired, 0) * (salaryBase * 2);
 
@@ -155,7 +156,7 @@ export const calculateProjections = (
   const currentCPP = unitsProduced > 0 ? totalProductionCost / unitsProduced : 0;
   const wacPA = ( (2000 * 227) + (unitsProduced * currentCPP) ) / Math.max(1, (2000 + unitsProduced));
 
-  // 5. RECEITA E OPEX
+  // 4. RECEITA E OPEX
   const rd_market_bonus = 1 + (rd_percent / 40); 
   const unitsSold = (nominalCapacity * 0.125) * actualEffortResult * rd_market_bonus;
   const avgPrice = sanitize(Object.values(safeDecisions.regions)[0]?.price, 375);
@@ -172,7 +173,7 @@ export const calculateProjections = (
   const totalOpex = opexSales + opexAdm + rd_expense;
   const operatingProfit = grossProfit - totalOpex;
 
-  // 6. RESULTADOS FINANCEIROS
+  // 5. RESULTADOS FINANCEIROS
   const investmentReturnRate = sanitize(indicators.investment_return_rate, 1.0) / 100;
   const applicationRevenue = prevInvestmentsBalance * investmentReturnRate;
   
@@ -181,7 +182,7 @@ export const calculateProjections = (
   const financialResult = applicationRevenue - financialExpenses;
   const lair = operatingProfit + financialResult;
 
-  // 7. GATILHOS FISCAIS
+  // 6. GATILHOS FISCAIS
   const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
   const irProvision = lair > 0 ? (lair * taxRateIR) : 0;
   const profitAfterIR = lair - irProvision;
@@ -192,7 +193,7 @@ export const calculateProjections = (
   const dividends = netIncome > 0 ? (netIncome * div_pct) : 0;
   const retainedProfit = netIncome - dividends;
 
-  // 8. FLUXO DE CAIXA
+  // 7. FLUXO DE CAIXA
   const initialCash = sanitize(previousState?.cash, 170000);
   const cashSales = grossRevenue * 0.5; 
   const termSalesDueTotal = prevClientsBalance * 0.4; 
@@ -212,7 +213,7 @@ export const calculateProjections = (
   const investmentApply = sanitize(safeDecisions.finance.application, 0);
   const finalCash = initialCash + totalInflow - totalOutflow - investmentApply;
 
-  // 9. PROJEÇÃO PATRIMONIAL
+  // 8. PROJEÇÃO PATRIMONIAL
   const newTermSalesCreated = grossRevenue * 0.5;
   const newClientsBalance = prevClientsBalance + newTermSalesCreated - netTermSalesReceipt;
   const newInvestmentsBalance = investmentApply;
@@ -227,9 +228,7 @@ export const calculateProjections = (
       rating: netIncome > 0 ? 'AAA' : 'C',
       cpp: currentCPP,
       cash: finalCash,
-      bad_debt: badDebtAmount,
       motivation: baseMotivation,
-      investment_yield: applicationRevenue,
       maint_cost: totalMaintenanceCost,
       breakdown: machineMaintenanceBreakdown
     },
@@ -238,8 +237,8 @@ export const calculateProjections = (
       rating: netIncome > 0 ? 'AAA' : 'C',
       insolvency_status: netIncome > 0 ? 'SAUDAVEL' : 'ALERTA',
       equity: prevEquity + retainedProfit,
-      last_decision: safeDecisions,
-      machine_maintenance_breakdown: machineMaintenanceBreakdown
+      machine_maintenance_breakdown: machineMaintenanceBreakdown,
+      fleet: fleet 
     },
     statements: {
       dre: { 
@@ -254,44 +253,13 @@ export const calculateProjections = (
       },
       cash_flow: {
         start: initialCash,
-        inflow: {
-          total: totalInflow,
-          cash_sales: cashSales,
-          term_sales: netTermSalesReceipt,
-          investment_withdrawal: totalInvestmentResgate,
-          machine_sales: 0,
-          awards: 0,
-          loans_normal: loanEntry,
-          compulsory: 0
-        },
-        outflow: {
-          total: totalOutflow,
-          payroll: payrollTotalCash,
-          social_charges: chargesTotalCash,
-          rd: rd_expense,
-          marketing: marketingTotal,
-          distribution: distributionTotal,
-          storage: 0,
-          suppliers: supplierPayment,
-          misc: 0,
-          machine_buy: 0,
-          maintenance: totalMaintenanceCost,
-          amortization: 0,
-          late_penalties: 0,
-          interest: financialExpenses,
-          training: 0,
-          taxes: irProvision,
-          dividends: dividends
-        },
+        inflow: { total: totalInflow, cash_sales: cashSales, term_sales: netTermSalesReceipt, investment_withdrawal: totalInvestmentResgate, machine_sales: 0, awards: 0, loans_normal: loanEntry, compulsory: 0 },
+        outflow: { total: totalOutflow, payroll: payrollTotalCash, social_charges: chargesTotalCash, rd: rd_expense, marketing: marketingTotal, distribution: distributionTotal, storage: 0, suppliers: supplierPayment, misc: 0, machine_buy: 0, maintenance: totalMaintenanceCost, amortization: 0, late_penalties: 0, interest: financialExpenses, training: 0, taxes: irProvision, dividends: dividends },
         investment_apply: investmentApply,
         final: finalCash
       },
       balance_sheet: {
-        current: { 
-          clients: newClientsBalance, 
-          cash: finalCash,
-          investments: newInvestmentsBalance
-        }
+        current: { clients: newClientsBalance, cash: finalCash, investments: newInvestmentsBalance }
       }
     }
   };

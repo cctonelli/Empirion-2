@@ -1,7 +1,7 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.11.0-Oracle-Master";
+export const APP_VERSION = "v15.14.0-Oracle-Master";
 export const BUILD_DATE = "24/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
@@ -37,18 +37,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   }
 };
 
-export const getPageContent = (slug: string) => {
-  return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || DEFAULT_PAGE_CONTENT[slug];
-};
-
-export const INITIAL_INDUSTRIAL_FINANCIALS = {
-  balance_sheet: {
-    assets: { total: 9176940 },
-    liabilities: { total: 4121493 },
-    equity: { total: 5055447 }
-  }
-};
-
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
@@ -70,7 +58,7 @@ export const INITIAL_FINANCIAL_TREE = {
                 { id: 'assets.noncurrent.fixed.land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true },
                 { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true },
                 { id: 'assets.noncurrent.fixed.buildings_deprec', label: '(-) Deprec. Acum. Prédios/Inst.', value: -2176000, type: 'asset', isEditable: true },
-                { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true },
+                { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true, isReadOnly: true }, // $ 2.360.000,00 sincronizado
                 { id: 'assets.noncurrent.fixed.machines_deprec', label: '(-) Deprec. Acum. Máquinas', value: -811500, type: 'asset', isEditable: true }
             ]}
           ]
@@ -113,10 +101,6 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'fin_res', label: '(+/-) RESULTADO FINANCEIRO', value: -40000, type: 'totalizer', children: [
         { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 40000, type: 'expense', isEditable: true }
-    ]},
-    { id: 'non_op_res', label: '(+/-) RESULTADO NÃO OPERACIONAL', value: 0, type: 'totalizer', children: [
-        { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0, type: 'revenue', isEditable: true },
-        { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0, type: 'expense', isEditable: true }
     ]},
     { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer' },
     { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
@@ -200,27 +184,28 @@ export const DEFAULT_MACRO: MacroIndicators = {
   labor_productivity: 1.0,
   labor_availability: 'MEDIA',
 
-  // CALIBRAÇÃO AVANÇADA v30.0
+  // REGRAS DE CAPITAL FIXO UNIFICADAS (2,5% - 40 Períodos)
   machine_specs: {
     alfa: { 
       model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025,
-      overload_coef: 1.4, aging_coef: 0.8, useful_life_years: 25, overload_extra_rate: 0.001 
+      overload_coef: 1.4, aging_coef: 0.8, useful_life_years: 40, overload_extra_rate: 0.001 
     },
     beta: { 
       model: 'beta', initial_value: 1500000, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025,
-      overload_coef: 1.2, aging_coef: 0.6, useful_life_years: 30, overload_extra_rate: 0.0007 
+      overload_coef: 1.2, aging_coef: 0.6, useful_life_years: 40, overload_extra_rate: 0.0007 
     },
     gama: { 
       model: 'gama', initial_value: 3000000, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025,
-      overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 35, overload_extra_rate: 0.0005 
+      overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 40, overload_extra_rate: 0.0005 
     }
   },
+  
   initial_machinery_mix: [
-    { id: 'm1', model: 'alfa', age: 6, purchase_value: 500000 },
-    { id: 'm2', model: 'alfa', age: 11, purchase_value: 480000 },
-    { id: 'm3', model: 'alfa', age: 11, purchase_value: 480000 },
-    { id: 'm4', model: 'alfa', age: 21, purchase_value: 450000 },
-    { id: 'm5', model: 'alfa', age: 21, purchase_value: 450000 }
+    { id: 'm1', model: 'alfa', age: 6, book_value: 500000 },
+    { id: 'm2', model: 'alfa', age: 11, book_value: 480000 },
+    { id: 'm3', model: 'alfa', age: 11, book_value: 480000 },
+    { id: 'm4', model: 'alfa', age: 21, book_value: 450000 },
+    { id: 'm5', model: 'alfa', age: 21, book_value: 450000 }
   ],
   maintenance_physics: { alpha: 0.05, beta: 0.05, gamma: 0.05 },
   prices: { 
@@ -241,6 +226,12 @@ export const DEFAULT_MACRO: MacroIndicators = {
 };
 
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
-  0: { ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, investment_return_rate: 1.0 },
-  1: { ice: 4.0, demand_variation: 6.7, inflation_rate: 2.0, customer_default_rate: 2.7, interest_rate_tr: 3.0, investment_return_rate: 2.0 }
+  0: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0 },
+  1: { ice: 3.2, inflation_rate: 1.2, demand_variation: 2 }
+};
+
+export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;
+
+export const getPageContent = (slug: string): any => {
+  return DEFAULT_PAGE_CONTENT[slug] || null;
 };
