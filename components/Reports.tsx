@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, Wrench, Clock, UserMinus, ShieldAlert, Heart, Flame, Factory, Database, Coins, Award, Zap, Sparkles, PieChart,
-  ShieldCheck, Activity, ArrowRight, ArrowDownLeft, ArrowUpRight, Wallet, ShoppingCart, Truck, Warehouse
+  ShieldCheck, Activity, ArrowRight, ArrowDownLeft, ArrowUpRight, Wallet, ShoppingCart, Truck, Warehouse, AlertTriangle, Scale, Target
 } from 'lucide-react';
 import { Branch, Championship, Team } from '../types';
 import { getChampionships } from '../services/supabase';
@@ -55,6 +55,22 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(v);
 
+  // Inteligência de Risco de Crédito (Markup Compensatório)
+  const creditRiskMetrics = useMemo(() => {
+    const loss = Math.abs(dre.details?.bad_debt || 0);
+    const revenue = Math.max(1, dre.revenue);
+    const lossRatio = (loss / revenue) * 100;
+    // Sugestão: Aumentar o markup para cobrir a perda + margem de segurança de 0.5%
+    const suggestedMarkupIncrease = lossRatio > 0 ? lossRatio + 0.5 : 0;
+    
+    return {
+      loss,
+      lossRatio,
+      suggestedMarkupIncrease,
+      isCritical: lossRatio > 2.0 // Alerta crítico acima de 2% da receita bruta
+    };
+  }, [dre]);
+
   if (loading) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto text-orange-500" /></div>;
 
   const isLoss = dre.net_profit < 0;
@@ -95,7 +111,19 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         
                         <div className="py-2 space-y-1 bg-white/[0.01] rounded-2xl border border-white/5 px-4 my-2">
                            <ReportLine label="( - ) DESPESAS OPERACIONAIS" val={fmt(dre.opex)} neg />
-                           <ReportLine label="INADIMPLÊNCIA (VENCIMENTO)" val={fmt(dre.details?.bad_debt || 0)} indent neg color="text-rose-400" />
+                           <div className="space-y-2">
+                              <ReportLine label="INADIMPLÊNCIA (VENCIMENTO)" val={fmt(dre.details?.bad_debt || 0)} indent neg color="text-rose-400" />
+                              
+                              {/* ALERTA DE EROSÃO POR INADIMPLÊNCIA */}
+                              {creditRiskMetrics.loss > 0 && (
+                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`ml-12 p-3 rounded-xl border flex items-center gap-3 ${creditRiskMetrics.isCritical ? 'bg-rose-900/20 border-rose-500/30 text-rose-300' : 'bg-orange-900/20 border-orange-500/30 text-orange-300'}`}>
+                                  <Flame size={14} className={creditRiskMetrics.isCritical ? 'animate-pulse' : ''} />
+                                  <span className="text-[9px] font-black uppercase tracking-tight">
+                                    Erosão de Margem: Perda de {creditRiskMetrics.lossRatio.toFixed(1)}% da receita por falha de recebimento.
+                                  </span>
+                                </motion.div>
+                              )}
+                           </div>
                            <ReportLine label="P&D - INOVAÇÃO" val={fmt(dre.details?.rd_investment || 0)} indent color="text-blue-400" />
                         </div>
 
@@ -178,6 +206,36 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                            {isLoss ? 'EROSÃO PL' : 'ESTÁVEL'}
                         </span>
                      </div>
+                  </div>
+               </div>
+            </div>
+
+            {/* NOVO CARD: RISCO DE CRÉDITO E ORIENTAÇÃO DE MARKUP (CARD 5) */}
+            <div className={`bg-slate-900 border rounded-[4rem] p-10 shadow-2xl space-y-6 transition-all ${creditRiskMetrics.loss > 0 ? 'border-rose-500/30' : 'border-white/10'}`}>
+               <div className="flex justify-between items-center">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-rose-400 italic">Risco de Crédito</h4>
+                  {creditRiskMetrics.loss > 0 && <ShieldAlert size={16} className="text-rose-500 animate-pulse" />}
+               </div>
+               
+               <div className="space-y-4">
+                  <div className="flex justify-between items-end">
+                     <span className="text-[9px] font-black text-slate-500 uppercase">Perda Definitiva</span>
+                     <span className="text-2xl font-mono font-black text-white">$ {fmt(creditRiskMetrics.loss)}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                     <div className="h-full bg-rose-600 transition-all duration-1000" style={{ width: `${Math.min(100, creditRiskMetrics.lossRatio * 10)}%` }} />
+                  </div>
+               </div>
+
+               <div className="pt-6 border-t border-white/5 space-y-4">
+                  <div className="flex items-center gap-3">
+                     <div className="p-2 bg-blue-600/20 text-blue-400 rounded-lg"><Target size={14}/></div>
+                     <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Ajuste Sugerido (CARD 5)</span>
+                  </div>
+                  <div className="p-4 bg-slate-950/80 rounded-2xl border border-white/5">
+                     <p className="text-[10px] text-slate-400 font-bold leading-relaxed italic">
+                        "Para neutralizar a inadimplência de {creditRiskMetrics.lossRatio.toFixed(1)}%, recomendamos elevar seu Markup de precificação em <span className="text-emerald-400">+{creditRiskMetrics.suggestedMarkupIncrease.toFixed(1)}%</span>."
+                     </p>
                   </div>
                </div>
             </div>
