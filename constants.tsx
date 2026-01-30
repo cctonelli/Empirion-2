@@ -1,7 +1,7 @@
 
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.14.0-Oracle-Master";
+export const APP_VERSION = "v15.17.0-Oracle-Annuity";
 export const BUILD_DATE = "24/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
@@ -58,7 +58,7 @@ export const INITIAL_FINANCIAL_TREE = {
                 { id: 'assets.noncurrent.fixed.land', label: 'Terrenos', value: 1200000, type: 'asset', isEditable: true },
                 { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios e Instalações', value: 5440000, type: 'asset', isEditable: true },
                 { id: 'assets.noncurrent.fixed.buildings_deprec', label: '(-) Deprec. Acum. Prédios/Inst.', value: -2176000, type: 'asset', isEditable: true },
-                { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true, isReadOnly: true }, // $ 2.360.000,00 sincronizado
+                { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas', value: 2360000, type: 'asset', isEditable: true, isReadOnly: true }, 
                 { id: 'assets.noncurrent.fixed.machines_deprec', label: '(-) Deprec. Acum. Máquinas', value: -811500, type: 'asset', isEditable: true }
             ]}
           ]
@@ -184,7 +184,16 @@ export const DEFAULT_MACRO: MacroIndicators = {
   labor_productivity: 1.0,
   labor_availability: 'MEDIA',
 
-  // REGRAS DE CAPITAL FIXO UNIFICADAS (2,5% - 40 Períodos)
+  building_spec: { 
+    initial_value: 5440000, 
+    depreciation_rate: 0.01, 
+    useful_life_periods: 100 
+  },
+  initial_building: { 
+    age: 40, 
+    purchase_value: 5440000 
+  },
+
   machine_specs: {
     alfa: { 
       model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025,

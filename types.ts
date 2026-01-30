@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V14.6 - ORACLE MASTER BUILD (UNIFIED DEPRECIATION)
+ * EMPIRION V14.7 - ORACLE MASTER BUILD (INFRASTRUCTURE UPDATE)
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -20,6 +20,17 @@ export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'E' | 'N/A';
 export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 export type LaborAvailability = 'BAIXA' | 'MEDIA' | 'ALTA';
 export type MachineModel = 'alfa' | 'beta' | 'gama';
+
+export interface BuildingSpec {
+  initial_value: number;
+  depreciation_rate: number;
+  useful_life_periods: number;
+}
+
+export interface InitialBuilding {
+  age: number;
+  purchase_value: number;
+}
 
 export interface MachineMaintenanceConfig {
   overload_coef: number;       
@@ -72,6 +83,9 @@ export interface MacroIndicators {
 
   machine_specs: Record<MachineModel, MachineSpec>;
   initial_machinery_mix: InitialMachine[];
+  building_spec: BuildingSpec;
+  initial_building: InitialBuilding;
+
   maintenance_physics: {
     alpha: number; 
     beta: number;  
@@ -186,6 +200,7 @@ export interface KPIs {
   insolvency_status: InsolvencyStatus; 
   nlcdg?: number;
   fleet?: InitialMachine[];
+  building?: InitialBuilding;
   machine_maintenance_breakdown?: any[];
   financing_sources?: {
     ecp: number;
