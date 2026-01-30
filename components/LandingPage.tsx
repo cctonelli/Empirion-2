@@ -5,9 +5,11 @@ import * as ReactRouterDOM from 'react-router-dom';
 const { Link } = ReactRouterDOM as any;
 import { 
   ArrowRight, ChevronLeft, ChevronRight, Factory, BrainCircuit, Globe,
-  Rocket, Terminal, ShoppingCart, Briefcase, Tractor, DollarSign, Hammer
+  Rocket, Terminal, ShoppingCart, Briefcase, Tractor, DollarSign, Hammer,
+  Trophy, Award, Calendar, CheckCircle2, Zap, TrendingUp, ShieldCheck,
+  Star, Target, Cpu, Activity
 } from 'lucide-react';
-import { motion as _motion } from 'framer-motion';
+import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import Slider from 'react-slick';
 import { DEFAULT_PAGE_CONTENT, APP_VERSION } from '../constants';
@@ -154,6 +156,79 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
+      {/* PLACAR CAMPEONATOS - IMUTÁVEL v1.1 */}
+      <section className="landing-section bg-[#020617]">
+         <div className="max-w-7xl mx-auto space-y-24">
+            <div className="flex flex-col md:flex-row justify-between items-end gap-10">
+               <div className="space-y-4">
+                  <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.8em] italic">Live Standings</span>
+                  <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none">Arenas em Andamento</h2>
+               </div>
+               <Link to="/solutions/open-tournaments" className="px-10 py-4 bg-white/5 border border-white/10 text-white rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all">Ver Todas as Arenas</Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               <LeaderboardCard 
+                  name="Torneio Nacional Alpha" 
+                  branch="Industrial" 
+                  cycle="08/12"
+                  teams={[
+                     { name: 'Equipe Sigma', tsr: 142.5, pos: 1 },
+                     { name: 'Node Delta', tsr: 128.2, pos: 2 },
+                     { name: 'Atlas Corp', tsr: 115.8, pos: 3 }
+                  ]}
+               />
+               <LeaderboardCard 
+                  name="Grand Prix Comercial" 
+                  branch="Comercial" 
+                  cycle="03/06"
+                  teams={[
+                     { name: 'Varejo Pro', tsr: 98.4, pos: 1 },
+                     { name: 'Mega Store', tsr: 92.1, pos: 2 },
+                     { name: 'Nexus Trade', tsr: 85.5, pos: 3 }
+                  ]}
+               />
+            </div>
+         </div>
+      </section>
+
+      {/* EMPIRE BADGES - IMUTÁVEL v1.1 */}
+      <section className="landing-section bg-slate-900/20">
+         <div className="max-w-7xl mx-auto space-y-24">
+            <div className="text-center space-y-6">
+               <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.8em] italic">Empire Gamification</span>
+               <h2 className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none">Empire Badges</h2>
+               <p className="text-xl text-slate-500 font-medium italic max-w-2xl mx-auto">"Conquiste honrarias auditadas pelo oráculo e valide sua senioridade estratégica."</p>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-12">
+               <BadgeIcon icon={<ShieldCheck size={40}/>} label="Strategos Master" color="text-amber-500" />
+               <BadgeIcon icon={<Zap size={40}/>} label="Efficiency Lord" color="text-emerald-500" />
+               <BadgeIcon icon={<Target size={40}/>} label="Market Sniper" color="text-rose-500" />
+               <BadgeIcon icon={<Activity size={40}/>} label="Oracle Verified" color="text-blue-500" />
+               <BadgeIcon icon={<Cpu size={40}/>} label="Asset Architect" color="text-indigo-500" />
+            </div>
+         </div>
+      </section>
+
+      {/* ROADMAP TIMELINE - IMUTÁVEL v1.1 */}
+      <section className="landing-section bg-[#020617]">
+         <div className="max-w-5xl mx-auto space-y-24">
+            <div className="text-center space-y-4">
+               <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.8em] italic">Protocol Evolution</span>
+               <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none">Roadmap Estratégico</h2>
+            </div>
+            
+            <div className="relative space-y-16">
+               <div className="absolute left-8 top-0 bottom-0 w-px bg-white/5" />
+               <RoadmapNode phase="Fase 1" title="Core Engine v15.0" desc="Lançamento do motor industrial com fidelidade 99.8% e IA Gemini integrada." status="COMPLETO" active />
+               <RoadmapNode phase="Fase 2" title="Multi-Branch Node" desc="Expansão para Comercial, Agro e Serviços com mecânicas específicas." status="LIVE" active />
+               <RoadmapNode phase="Fase 3" title="Intelligence Hub Opal" desc="Terminal premium com Google Search Grounding e Workflows avançados." status="LIVE" active />
+               <RoadmapNode phase="Fase 4" title="Global Tournaments" desc="Arenas patrocinadas com premiações em ativos reais e NFTs de honra." status="Q2 2026" />
+            </div>
+         </div>
+      </section>
+
       <footer className="py-24 border-t border-white/5 text-center bg-[#020617] relative z-20">
          <div className="container mx-auto px-8 opacity-40">
             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500 italic">CONSTRUINDO IMPÉRIOS EMPRESARIAIS DO FUTURO • EMPIRION 2026</p>
@@ -163,6 +238,57 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     </div>
   );
 };
+
+const LeaderboardCard = ({ name, branch, cycle, teams }: any) => (
+  <div className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl space-y-8 group hover:border-orange-500/30 transition-all">
+     <div className="flex justify-between items-start">
+        <div className="space-y-1">
+           <h3 className="text-2xl font-black text-white uppercase italic leading-none">{name}</h3>
+           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{branch} Node</p>
+        </div>
+        <div className="px-4 py-1 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-lg text-[9px] font-black uppercase">Ciclo {cycle}</div>
+     </div>
+     <div className="space-y-4">
+        {teams.map((t: any) => (
+           <div key={t.pos} className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5 group-hover:bg-white/10 transition-all">
+              <div className="flex items-center gap-6">
+                 <span className="text-lg font-black text-slate-600 italic">#0{t.pos}</span>
+                 <span className="text-sm font-black text-white uppercase tracking-tight">{t.name}</span>
+              </div>
+              <div className="text-right">
+                 <span className="block text-[8px] font-black text-slate-500 uppercase">TSR Final</span>
+                 <span className="text-lg font-mono font-black text-emerald-500">{t.tsr.toFixed(1)}%</span>
+              </div>
+           </div>
+        ))}
+     </div>
+  </div>
+);
+
+const BadgeIcon = ({ icon, label, color }: any) => (
+   <div className="flex flex-col items-center gap-4 group">
+      <motion.div whileHover={{ scale: 1.2, rotate: 12 }} className={`w-24 h-24 bg-white/5 rounded-full flex items-center justify-center ${color} border border-white/10 shadow-2xl group-hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all relative overflow-hidden`}>
+         <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent" />
+         {icon}
+      </motion.div>
+      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-white transition-colors">{label}</span>
+   </div>
+);
+
+const RoadmapNode = ({ phase, title, desc, status, active }: any) => (
+   <div className="relative pl-24 group">
+      <div className={`absolute left-0 top-0 w-16 h-16 rounded-3xl border-2 flex items-center justify-center transition-all ${active ? 'bg-orange-600 border-orange-400 text-white shadow-2xl' : 'bg-slate-900 border-white/10 text-slate-700'}`}>
+         <span className="text-[10px] font-black uppercase italic">{phase}</span>
+      </div>
+      <div className="space-y-2">
+         <div className="flex items-center gap-6">
+            <h4 className={`text-3xl font-black uppercase italic tracking-tighter ${active ? 'text-white' : 'text-slate-700'}`}>{title}</h4>
+            <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${active ? 'bg-emerald-600/10 text-emerald-500 border border-emerald-500/20' : 'bg-white/5 text-slate-800'}`}>{status}</span>
+         </div>
+         <p className="text-slate-500 font-medium italic max-w-xl">{desc}</p>
+      </div>
+   </div>
+);
 
 const CarouselSlide = ({ icon, badge, title, desc, img }: any) => (
    <div className="px-4 outline-none">
