@@ -93,6 +93,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
+      {/* BANNER DE STATUS DO PAPEL (v1.1 RULES) */}
+      {isObserver && (
+        <div className="h-10 bg-indigo-600 flex items-center justify-center gap-3 shrink-0 shadow-lg z-[100] border-b border-indigo-400/30">
+           <Eye size={16} className="text-white animate-pulse" />
+           <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">MODO OBSERVADOR: ACESSO DE LEITURA APENAS</span>
+        </div>
+      )}
+
       {isStrike && (
         <div className="h-10 bg-rose-600 flex items-center justify-center gap-3 animate-pulse shrink-0 shadow-[0_0_20px_rgba(225,29,72,0.5)] z-[100]">
            <ShieldAlert size={16} className="text-white" />
@@ -149,7 +157,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                )}
                
-               {/* Resto do Side Panel Mantido Conforme Original */}
                <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-4 shadow-inner">
                   <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Insolvência (Kanitz)</h4>
                   <div className="flex items-center justify-between">

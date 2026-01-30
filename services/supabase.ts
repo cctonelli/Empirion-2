@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode } from '../types';
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine } from '../types';
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { calculateProjections, calculateAttractiveness, sanitize } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';
@@ -112,7 +112,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     is_bot: !!t.is_bot,
     master_key_enabled: false,
     created_at: timestamp,
-    kpis: { market_share: initialShare, rating: 'AAA' }
+    kpis: { market_share: initialShare, rating: 'AAA', fleet: champData.market_indicators?.initial_machinery_mix || DEFAULT_MACRO.initial_machinery_mix }
   }));
 
   const fullChamp = { 
@@ -270,10 +270,21 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       const roundRules = arena.config?.round_rules || {};
       const result = calculateProjections(decisions[team.id], arena.branch, arena.ecosystemConfig || {} as any, arena.market_indicators, team, [], currentRound + 1, roundRules, relativeShare, arena);
       
-      batchResults.push({ team_id: team.id, kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status });
+      // Evolução da Frota v28.10: Incrementar Idade Cronológica
+      const currentFleet = (team.kpis?.fleet || arena.market_indicators.initial_machinery_mix) as InitialMachine[];
+      const nextFleet = currentFleet.map(m => ({ ...m, age: m.age + 1 }));
+
+      // Adicionar novas compras à frota
+      const buy = decisions[team.id].machinery.buy;
+      if (buy.alfa > 0) {
+        for (let i = 0; i < buy.alfa; i++) nextFleet.push({ id: `buy-alfa-${Date.now()}-${i}`, model: 'alfa', age: 0, purchase_value: arena.market_indicators.machinery_values.alfa });
+      }
+      // Repetir para Beta/Gama conforme necessário...
+
+      batchResults.push({ team_id: team.id, kpis: { ...result.kpis, fleet: nextFleet }, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status });
 
       const teamsTable = isTrial ? 'trial_teams' : 'teams';
-      await supabase.from(teamsTable).update({ kpis: result.kpis, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status }).eq('id', team.id);
+      await supabase.from(teamsTable).update({ kpis: { ...result.kpis, fleet: nextFleet }, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status }).eq('id', team.id);
     }
 
     const champTable = isTrial ? 'trial_championships' : 'championships';

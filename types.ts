@@ -199,6 +199,7 @@ export interface InitialMachine {
   id: string;
   model: MachineModel;
   age: number; 
+  purchase_value?: number; // VALOR CONTÁBIL DE COMPRA
 }
 
 export interface RegionConfig {
@@ -250,10 +251,6 @@ export interface Championship {
   tutor_id?: string;
   dividend_percent?: number;
 }
-
-/**
- * FIX: Added missing exported types required by multiple simulation and management components.
- */
 
 export interface ChampionshipTemplate {
   id: string;

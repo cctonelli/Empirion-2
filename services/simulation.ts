@@ -1,4 +1,3 @@
-
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, InsolvencyStatus, RegionType, Championship, MachineModel, MachineSpec, InitialMachine, CurrencyType } from '../types';
 import { INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_TOTAL_SHARES, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
@@ -12,7 +11,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v28.9 - MASTER REVENUE, BAD DEBT & INVESTMENTS
+ * CORE ORACLE ENGINE v29.0 - MASTER REVENUE, BAD DEBT, INVESTMENTS & MAINTENANCE
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -37,7 +36,6 @@ export const calculateProjections = (
   const prevBS = previousState?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   const prevEquity = sanitize(prevBS.equity?.total, 5055447);
   
-  // Saldos Anteriores para Lógica de Resgate e Prazo
   const prevClientsBalance = sanitize(previousState?.statements?.balance_sheet?.current?.clients, 1823735);
   const prevInvestmentsBalance = sanitize(previousState?.statements?.balance_sheet?.current?.investments, 0);
 
@@ -52,28 +50,15 @@ export const calculateProjections = (
   const purchaseMPB_Val = purchaseMPB_Qty * indicators.prices.mp_b;
   const wacMPB = (stockMPB_Initial_Val + purchaseMPB_Val) / Math.max(1, (5000 + purchaseMPB_Qty));
 
-  // 2. GESTÃO DE ATIVOS E EFEITO P&D
-  const machineSpecs = indicators.machine_specs;
-  const mPhysics = indicators.maintenance_physics;
-  const structuralDepreciation = 54400; 
-  let totalDepreciationMachines = 0;
-  let totalMaintenanceCost = 0;
-
-  const fleet = previousState?.fleet || indicators.initial_machinery_mix;
-  const rd_percent = sanitize(safeDecisions.production.rd_investment, 0);
-  const rd_productivity_bonus = Math.min(0.20, (rd_percent / 100) * 2.0); 
-
-  fleet.forEach((m: InitialMachine) => {
-    const spec = machineSpecs[m.model];
-    totalDepreciationMachines += (spec.initial_value * spec.depreciation_rate);
-    const baseMaintRate = m.model === 'alfa' ? mPhysics.alpha : m.model === 'beta' ? mPhysics.beta : mPhysics.gamma;
-    totalMaintenanceCost += (spec.initial_value * baseMaintRate);
-  });
-
-  // 3. STAFFING & PERFORMANCE STRIKE GOAL
+  // 2. STAFFING & PERFORMANCE GOAL
+  const fleet = (previousState?.fleet || indicators.initial_machinery_mix) as InitialMachine[];
   const activityLevel = sanitize(safeDecisions.production.activityLevel, 80);
   const extraProdPercent = sanitize(safeDecisions.production.extraProductionPercent, 0);
   const targetEffortLevel = (activityLevel + extraProdPercent) / 100;
+
+  const machineSpecs = indicators.machine_specs;
+  const rd_percent = sanitize(safeDecisions.production.rd_investment, 0);
+  const rd_productivity_bonus = Math.min(0.20, (rd_percent / 100) * 2.0); 
 
   const buy = safeDecisions.machinery.buy;
   const nominalCapacity = (fleet.length * machineSpecs.alfa.production_capacity) + (buy.alfa * machineSpecs.alfa.production_capacity); 
@@ -82,7 +67,7 @@ export const calculateProjections = (
   const salaryBase = sanitize(safeDecisions.hr.salary, 1313);
   const prodBonusPercentInput = sanitize(safeDecisions.hr.misc, 0) / 100;
   const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
-
+  
   const marketAvgSalary = indicators.hr_base.salary || 1300;
   const salaryRatio = salaryBase / marketAvgSalary;
   const baseMotivation = Math.min(1.0, (salaryRatio * 0.5) + (Math.min(prodBonusPercentInput * 5, 1.0) * 0.5));
@@ -92,18 +77,40 @@ export const calculateProjections = (
   const actualEffortResult = targetEffortLevel * effectiveProductivityBonus;
   const goalReached = actualEffortResult >= targetEffortLevel && !isStriking;
 
+  // 3. GESTÃO DE ATIVOS & MANUTENÇÃO v29.0
+  const structuralDepreciation = 54400; 
+  let totalDepreciationMachines = 0;
+  let totalMaintenanceCost = 0;
+
+  // Fator Produtividade: Desgaste dobrado acima de 100%
+  const prodFactor = targetEffortLevel > 1.0 ? 1 + (targetEffortLevel - 1.0) * 2 : 1.0;
+
+  fleet.forEach((m: InitialMachine) => {
+    const spec = machineSpecs[m.model];
+    totalDepreciationMachines += (spec.initial_value * spec.depreciation_rate);
+    
+    // REGRA v29.0: Custo Base (5% do Valor Contábil de Compra)
+    const purchaseVal = m.purchase_value || spec.initial_value;
+    const baseMaintCost = purchaseVal * 0.05;
+    
+    // REGRA v29.0: Fator Idade -> 1 + (Age * 0,0175)
+    const ageFactor = 1 + (m.age * 0.0175);
+    
+    // Total por máquina = Base * Fator Idade * Fator Produtividade
+    const machineMaint = baseMaintCost * ageFactor * prodFactor;
+    totalMaintenanceCost += machineMaint;
+  });
+
+  // 4. CPP E CPV
   const salMOD_Base = (requiredProdStaff * salaryBase);
   const productivityBonusTotal = goalReached ? (salMOD_Base * prodBonusPercentInput) : 0;
-
   const salAdmin = (20 * salaryBase * 4);
   const salSales = (10 * salaryBase * 4);
-  
   const baseHours = sanitize(indicators.production_hours_period, 946);
   const extraHoursPerMan = Math.max(0, Math.ceil(((activityLevel / 100) * baseHours) - baseHours));
   const overtimeCost = extraHoursPerMan * requiredProdStaff * ((salaryBase / baseHours) * 1.5);
   const indemnityCost = sanitize(safeDecisions.hr.fired, 0) * (salaryBase * 2);
 
-  // 4. CPP E CPV
   const unitsProduced = nominalCapacity * actualEffortResult;
   const mpConsumptionVal = (unitsProduced * 3 * wacMPA) + (unitsProduced * 2 * wacMPB);
   const socialChargesOnProduction = (salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
@@ -129,63 +136,52 @@ export const calculateProjections = (
   const totalOpex = opexSales + opexAdm + rd_expense;
   const operatingProfit = grossProfit - totalOpex;
 
-  // 6. RESULTADOS FINANCEIROS v28.9
-  // Juros sobre Aplicações (Resgate do saldo anterior)
+  // 6. RESULTADOS FINANCEIROS v29.0
   const investmentReturnRate = sanitize(indicators.investment_return_rate, 1.0) / 100;
   const applicationRevenue = prevInvestmentsBalance * investmentReturnRate;
   
-  // Despesas Financeiras (Empréstimos)
   const bankInterestRate = sanitize(indicators.interest_rate_tr, 2.0) / 100;
   const financialExpenses = (sanitize(safeDecisions.finance.loanRequest, 0) * bankInterestRate) + 15000; 
   const financialResult = applicationRevenue - financialExpenses;
-
   const lair = operatingProfit + financialResult;
 
   // 7. GATILHOS FISCAIS
   const taxRateIR = sanitize(indicators.tax_rate_ir, 15) / 100;
   const irProvision = lair > 0 ? (lair * taxRateIR) : 0;
   const profitAfterIR = lair - irProvision;
-
   const plr_pct = sanitize(safeDecisions.hr.participationPercent, 0) / 100;
   const plrAmount = profitAfterIR > 0 ? (profitAfterIR * plr_pct) : 0;
   const netIncome = profitAfterIR - plrAmount;
-
   const div_pct = sanitize(championshipData?.dividend_percent ?? indicators.dividend_percent, 25) / 100;
   const dividends = netIncome > 0 ? (netIncome * div_pct) : 0;
   const retainedProfit = netIncome - dividends;
 
-  // 8. FLUXO DE CAIXA v28.9
+  // 8. FLUXO DE CAIXA v29.0
   const initialCash = sanitize(previousState?.cash, 170000);
   const cashSales = grossRevenue * 0.5; 
-  
-  // Inadimplência e Vendas a Prazo
   const termSalesDueTotal = prevClientsBalance * 0.4; 
   const badDebtRate = sanitize(indicators.customer_default_rate, 2.6) / 100;
   const badDebtAmount = termSalesDueTotal * badDebtRate;
   const netTermSalesReceipt = termSalesDueTotal - badDebtAmount;
-
-  // Resgate Total da Aplicação Anterior + Juros
+  
+  // Resgate Total (Principal + Juros)
   const totalInvestmentResgate = prevInvestmentsBalance + applicationRevenue;
-
+  
   const loanEntry = sanitize(safeDecisions.finance.loanRequest, 0);
   const totalInflow = cashSales + netTermSalesReceipt + totalInvestmentResgate + loanEntry;
   
   const payrollTotalCash = salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost + plrAmount + productivityBonusTotal;
   const chargesTotalCash = (salAdmin + salSales + salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
-  
   const supplierPayment = cpv * 0.7; 
   const totalOutflow = payrollTotalCash + chargesTotalCash + rd_expense + marketingTotal + distributionTotal + supplierPayment + totalMaintenanceCost + financialExpenses + irProvision + dividends;
 
-  // Nova Aplicação decidida para este round (Saída de Caixa)
   const investmentApply = sanitize(safeDecisions.finance.application, 0);
   const finalCash = initialCash + totalInflow - totalOutflow - investmentApply;
 
-  // 9. PROJEÇÃO PATRIMONIAL v28.9
-  // Clientes: Retém inadimplência
+  // 9. PROJEÇÃO PATRIMONIAL
   const newTermSalesCreated = grossRevenue * 0.5;
   const newClientsBalance = prevClientsBalance + newTermSalesCreated - netTermSalesReceipt;
-  
-  // Aplicação Financeira: Reflete o novo aporte (o anterior foi resgatado 100%)
+  // Nova aplicação para o próximo round
   const newInvestmentsBalance = investmentApply;
 
   return {
@@ -200,7 +196,8 @@ export const calculateProjections = (
       cash: finalCash,
       bad_debt: badDebtAmount,
       motivation: baseMotivation,
-      investment_yield: applicationRevenue
+      investment_yield: applicationRevenue,
+      maint_cost: totalMaintenanceCost
     },
     kpis: {
       market_share: 12.5 * rd_market_bonus,
