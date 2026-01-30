@@ -21,6 +21,14 @@ export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 export type LaborAvailability = 'BAIXA' | 'MEDIA' | 'ALTA';
 export type MachineModel = 'alfa' | 'beta' | 'gama';
 
+export interface MachineMaintenanceConfig {
+  overload_coef: number;       // Fator de escala para esforço > 100%
+  aging_coef: number;          // Impacto da idade no custo base
+  useful_life_years: Record<MachineModel, number>; 
+  overload_extra_rate: number; // Penalidade > 130%
+  advanced_physics_enabled: boolean;
+}
+
 export interface MacroIndicators {
   ice: number;
   demand_variation: number;
@@ -29,7 +37,7 @@ export interface MacroIndicators {
   interest_rate_tr: number;
   supplier_interest: number;
   sales_interest_rate: number;
-  investment_return_rate: number; // RENDIMENTO APLICAÇÃO (%)
+  investment_return_rate: number; 
   avg_selling_price: number;
   tax_rate_ir: number;
   late_penalty_rate: number;
@@ -39,7 +47,7 @@ export interface MacroIndicators {
   dividend_percent: number;
   
   social_charges: number; 
-  production_hours_period: number; // HORAS PRODUÇÃO/HOMEM
+  production_hours_period: number; 
   
   raw_material_a_adjust: number;
   raw_material_b_adjust: number;
@@ -105,6 +113,7 @@ export interface EcosystemConfig {
   market_volatility: number;
   scenario_type: ScenarioType;
   modality_type: ModalityType;
+  maintenance?: MachineMaintenanceConfig;
 }
 
 export interface UserProfile {
@@ -150,8 +159,8 @@ export interface DecisionData {
     activityLevel: number;
     extraProductionPercent: number;
     rd_investment: number;
-    net_profit_target_percent: number; // META LUCRO LÍQUIDO (%)
-    term_interest_rate: number; // JUROS VENDA A PRAZO (%)
+    net_profit_target_percent: number; 
+    term_interest_rate: number; 
   };
   machinery: {
     buy: { alfa: number; beta: number; gama: number };
@@ -176,6 +185,8 @@ export interface KPIs {
   rating: CreditRating; 
   insolvency_status: InsolvencyStatus; 
   nlcdg?: number;
+  fleet?: InitialMachine[];
+  machine_maintenance_breakdown?: any[];
   financing_sources?: {
     ecp: number;
     elp: number;
@@ -193,13 +204,17 @@ export interface MachineSpec {
   production_capacity: number;
   operators_required: number;
   depreciation_rate: number; 
+  overload_coef?: number;      // NOVO: Sensibilidade ao esforço extra
+  aging_coef?: number;         // NOVO: Sensibilidade à idade
+  useful_life_years?: number;  // NOVO: Vida útil nominal
+  overload_extra_rate?: number;// NOVO: Taxa crítica > 130%
 }
 
 export interface InitialMachine {
   id: string;
   model: MachineModel;
   age: number; 
-  purchase_value?: number; // VALOR CONTÁBIL DE COMPRA
+  purchase_value?: number; 
 }
 
 export interface RegionConfig {

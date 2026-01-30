@@ -1,3 +1,4 @@
+
 import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
 
 export const APP_VERSION = "v15.11.0-Oracle-Master";
@@ -51,7 +52,7 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = {
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
-      id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
+      id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', children: [
         { 
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
             { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 170000, type: 'asset', isEditable: true },
@@ -77,7 +78,7 @@ export const INITIAL_FINANCIAL_TREE = {
       ]
     },
     { 
-      id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9176940, type: 'totalizer', isReadOnly: true, children: [
+      id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9176940, type: 'totalizer', children: [
         { 
           id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2621493, type: 'totalizer', children: [
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605, type: 'liability', isEditable: true },
@@ -102,13 +103,13 @@ export const INITIAL_FINANCIAL_TREE = {
   dre: [
     { id: 'rev', label: '(+) RECEITAS BRUTAS DE VENDAS', value: 3322735, type: 'revenue', isEditable: true },
     { id: 'cpv', label: '(-) CPV-CUSTO PROD. VENDIDO', value: -2278180, type: 'expense', isEditable: true },
-    { id: 'gross_profit', label: '(=) LUCRO BRUTO', value: 1044555, type: 'totalizer', isReadOnly: true },
+    { id: 'gross_profit', label: '(=) LUCRO BRUTO', value: 1044555, type: 'totalizer' },
     { id: 'opex', label: '(-) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
         { id: 'opex.sales', label: 'DE VENDAS', value: 802702, type: 'expense', isEditable: true },
         { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true },
         { id: 'opex.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true }
     ]},
-    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true },
+    { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer' },
     { id: 'fin_res', label: '(+/-) RESULTADO FINANCEIRO', value: -40000, type: 'totalizer', children: [
         { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 40000, type: 'expense', isEditable: true }
@@ -117,13 +118,13 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0, type: 'revenue', isEditable: true },
         { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0, type: 'expense', isEditable: true }
     ]},
-    { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer', isReadOnly: true },
+    { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 86973, type: 'totalizer' },
     { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -13045, type: 'expense', isEditable: true },
-    { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 73928, type: 'totalizer', isReadOnly: true },
+    { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 73928, type: 'totalizer' },
     { id: 'ppr', label: '(-) PPR-PARTICIPAÇÃO NO LUCRO', value: 0, type: 'expense', isEditable: true },
-    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer', isReadOnly: true },
+    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 73928, type: 'totalizer' },
     { id: 'dividends', label: '(-) DIVIDENDOS PROPOSTOS', value: 0, type: 'expense', isEditable: true },
-    { id: 'retained_profit', label: '(=) LUCRO/PREJUÍZO LÍQUIDO', value: 73928, type: 'totalizer', isReadOnly: true }
+    { id: 'retained_profit', label: '(=) LUCRO/PREJUÍZO LÍQUIDO', value: 73928, type: 'totalizer' }
   ],
   cash_flow: [
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true },
@@ -155,7 +156,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0, type: 'expense', isEditable: true }
     ]},
     { id: 'cf.investment_apply', label: '(-) APLICAÇÃO FINANCEIRA', value: 0, type: 'expense', isEditable: true },
-    { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0, type: 'totalizer', isReadOnly: true }
+    { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0, type: 'totalizer' }
   ]
 };
 
@@ -198,10 +199,21 @@ export const DEFAULT_MACRO: MacroIndicators = {
   require_business_plan: false,
   labor_productivity: 1.0,
   labor_availability: 'MEDIA',
+
+  // CALIBRAÇÃO AVANÇADA v30.0
   machine_specs: {
-    alfa: { model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025 },
-    beta: { model: 'beta', initial_value: 1500000, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025 },
-    gama: { model: 'gama', initial_value: 3000000, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025 }
+    alfa: { 
+      model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025,
+      overload_coef: 1.4, aging_coef: 0.8, useful_life_years: 25, overload_extra_rate: 0.001 
+    },
+    beta: { 
+      model: 'beta', initial_value: 1500000, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025,
+      overload_coef: 1.2, aging_coef: 0.6, useful_life_years: 30, overload_extra_rate: 0.0007 
+    },
+    gama: { 
+      model: 'gama', initial_value: 3000000, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025,
+      overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 35, overload_extra_rate: 0.0005 
+    }
   },
   initial_machinery_mix: [
     { id: 'm1', model: 'alfa', age: 6, purchase_value: 500000 },
