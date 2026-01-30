@@ -1,6 +1,5 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-// Fix: Corrected icon imports to use 'lucide-react' instead of '../types'
 import { 
   TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, Wrench, Clock, UserMinus, ShieldAlert, Heart, Flame, Factory, Database, Coins, Award, Zap, Sparkles, PieChart,
   ShieldCheck, Activity, ArrowRight, ArrowDownLeft, ArrowUpRight, Wallet, ShoppingCart, Truck, Warehouse
@@ -39,7 +38,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
        revenue: 0, cpv: 0, gross_profit: 0, opex: 0, operating_profit: 0, lair: 0, tax: 0, net_profit: 0,
        financial_result: 0, non_op_res: 0,
        details: { 
-         cpp: 0, wac_pa: 0, rd_investment: 0, social_charges: 0, payroll_net: 0, non_op_rev: 0, non_op_exp: 0, productivity_bonus: 0, fin_rev: 0
+         cpp: 0, wac_pa: 0, rd_investment: 0, social_charges: 0, payroll_net: 0, non_op_rev: 0, non_op_exp: 0, productivity_bonus: 0, fin_rev: 0, bad_debt: 0
        }
      };
   }, [activeTeam]);
@@ -96,6 +95,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         
                         <div className="py-2 space-y-1 bg-white/[0.01] rounded-2xl border border-white/5 px-4 my-2">
                            <ReportLine label="( - ) DESPESAS OPERACIONAIS" val={fmt(dre.opex)} neg />
+                           <ReportLine label="INADIMPLÊNCIA (VENCIMENTO)" val={fmt(dre.details?.bad_debt || 0)} indent neg color="text-rose-400" />
                            <ReportLine label="P&D - INOVAÇÃO" val={fmt(dre.details?.rd_investment || 0)} indent color="text-blue-400" />
                         </div>
 
@@ -120,7 +120,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                      </div>
                   </motion.div>
                ) : (
-                  <motion.div key="cf" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                  <motion.div key="cf" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                      <div className="flex justify-between items-center border-b border-white/5 pb-6">
                         <h3 className="text-xl font-black text-white uppercase italic">Fluxo de Caixa v28.9</h3>
                         <div className="flex items-center gap-3 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-500 text-[9px] font-black uppercase">

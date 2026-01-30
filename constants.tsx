@@ -1,8 +1,8 @@
 
-import { Branch, ChampionshipTemplate, MacroIndicators, SalesMode, ScenarioType, TransparencyLevel, ModalityType, DeadlineUnit, GazetaMode, AccountNode, RegionType, AnalysisSource, MachineSpec, InitialMachine, MenuItemConfig } from './types';
+import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.19.0-Oracle-Accounting-Fidelity";
-export const BUILD_DATE = "26/01/2026";
+export const APP_VERSION = "v15.22.0-Oracle-AssetBased-Default";
+export const BUILD_DATE = "29/01/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
@@ -45,7 +45,10 @@ export const INITIAL_FINANCIAL_TREE = {
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340, type: 'totalizer', children: [
             { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 170000, type: 'asset', isEditable: true },
             { id: 'assets.current.investments', label: 'Aplicação Financeira', value: 0, type: 'asset', isEditable: true },
-            { id: 'assets.current.clients', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true },
+            { id: 'assets.current.clients_group', label: 'CONTAS A RECEBER', value: 1776318, type: 'totalizer', children: [
+                { id: 'assets.current.clients', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true },
+                { id: 'assets.current.pecld', label: '(-) PECLD (Inadimplência)', value: -47417, type: 'asset', isEditable: true }
+            ]},
             { id: 'assets.current.stock', label: 'ESTOQUE', value: 1466605, type: 'totalizer', children: [
                 { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 628545, type: 'asset', isEditable: true },
                 { id: 'assets.current.stock.mpb', label: 'Estoque MP B', value: 838060, type: 'asset', isEditable: true }
@@ -96,6 +99,7 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'opex', label: '(-) DESPESAS OPERACIONAIS', value: -917582, type: 'totalizer', children: [
         { id: 'opex.sales', label: 'DE VENDAS', value: 802702, type: 'expense', isEditable: true },
         { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 114880, type: 'expense', isEditable: true },
+        { id: 'opex.bad_debt', label: 'INADIMPLÊNCIA S/ SALDO CLIENTES', value: 0, type: 'expense', isEditable: true },
         { id: 'opex.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 0, type: 'expense', isEditable: true }
     ]},
     { id: 'operating_profit', label: '(=) LUCRO OPERACIONAL', value: 126973, type: 'totalizer', isReadOnly: true },
@@ -117,7 +121,7 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000, type: 'revenue', isEditable: true },
     { id: 'cf.inflow', label: '(+) ENTRADAS', value: 3021362, type: 'totalizer', children: [
         { id: 'cf.inflow.cash_sales', label: 'VENDAS À VISTA', value: 1649000, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO', value: 0, type: 'revenue', isEditable: true },
+        { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO (-) PERDAS)', value: 0, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.investment_withdrawal', label: 'RESGATE DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.machine_sales', label: 'VENDA DE MÁQUINAS', value: 0, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.awards', label: 'PREMIAÇÕES RECEBIDAS', value: 0, type: 'revenue', isEditable: true },
