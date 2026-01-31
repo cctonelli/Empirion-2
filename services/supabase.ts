@@ -112,7 +112,16 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     is_bot: !!t.is_bot,
     master_key_enabled: false,
     created_at: timestamp,
-    kpis: { market_share: initialShare, rating: 'AAA', fleet: champData.market_indicators?.initial_machinery_mix || DEFAULT_MACRO.initial_machinery_mix }
+    kpis: { 
+        market_share: initialShare, 
+        rating: 'AAA', 
+        fleet: champData.market_indicators?.initial_machinery_mix || DEFAULT_MACRO.initial_machinery_mix,
+        statements: {
+            balance_sheet: champData.initial_financials?.balance_sheet || [],
+            dre: champData.initial_financials?.dre || [],
+            cash_flow: champData.initial_financials?.cash_flow || []
+        }
+    }
   }));
 
   const fullChamp = { 
@@ -270,21 +279,42 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       const roundRules = arena.config?.round_rules || {};
       const result = calculateProjections(decisions[team.id], arena.branch, arena.ecosystemConfig || {} as any, arena.market_indicators, team, [], currentRound + 1, roundRules, relativeShare, arena);
       
-      // Evolução da Frota v28.10: Incrementar Idade Cronológica
       const currentFleet = (team.kpis?.fleet || arena.market_indicators.initial_machinery_mix) as InitialMachine[];
       const nextFleet = currentFleet.map(m => ({ ...m, age: m.age + 1 }));
 
-      // Adicionar novas compras à frota
       const buy = decisions[team.id].machinery.buy;
       if (buy.alfa > 0) {
         for (let i = 0; i < buy.alfa; i++) nextFleet.push({ id: `buy-alfa-${Date.now()}-${i}`, model: 'alfa', age: 0, purchase_value: arena.market_indicators.machinery_values.alfa });
       }
-      // Repetir para Beta/Gama conforme necessário...
 
-      batchResults.push({ team_id: team.id, kpis: { ...result.kpis, fleet: nextFleet }, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status });
+      batchResults.push({ 
+        team_id: team.id, 
+        kpis: { ...result.kpis, fleet: nextFleet, statements: result.statements }, 
+        equity: result.kpis.equity, 
+        insolvency_status: result.kpis.insolvency_status 
+      });
 
       const teamsTable = isTrial ? 'trial_teams' : 'teams';
-      await supabase.from(teamsTable).update({ kpis: { ...result.kpis, fleet: nextFleet }, equity: result.kpis.equity, insolvency_status: result.kpis.insolvency_status }).eq('id', team.id);
+      await supabase.from(teamsTable).update({ 
+        kpis: { ...result.kpis, fleet: nextFleet, statements: result.statements }, 
+        equity: result.kpis.equity, 
+        insolvency_status: result.kpis.insolvency_status 
+      }).eq('id', team.id);
+
+      // Persistência no histórico (companies) para Auditoria Oracle
+      if (!isTrial) {
+        await supabase.from('companies').insert({
+          team_id: team.id,
+          championship_id: championshipId,
+          round: currentRound + 1,
+          state: result.kpis,
+          dre: result.statements.dre,
+          balance_sheet: result.statements.balance_sheet,
+          cash_flow: result.statements.cash_flow,
+          equity: result.kpis.equity,
+          credit_rating: result.creditRating
+        });
+      }
     }
 
     const champTable = isTrial ? 'trial_championships' : 'championships';

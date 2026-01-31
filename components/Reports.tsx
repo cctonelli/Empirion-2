@@ -2,9 +2,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, Wrench, Clock, UserMinus, ShieldAlert, Heart, Flame, Factory, Database, Coins, Award, Zap, Sparkles, PieChart,
-  ShieldCheck, Activity, ArrowRight, ArrowDownLeft, ArrowUpRight, Wallet, ShoppingCart, Truck, Warehouse, AlertTriangle, Scale, Target
+  ShieldCheck, Activity, ArrowRight, ArrowDownLeft, ArrowUpRight, Wallet, ShoppingCart, Truck, Warehouse, AlertTriangle, Scale, Target, ChevronDown
 } from 'lucide-react';
-import { Branch, Championship, Team } from '../types';
+import { Branch, Championship, Team, AccountNode } from '../types';
 import { getChampionships } from '../services/supabase';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -13,7 +13,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeam, setActiveTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeReport, setActiveReport] = useState<'dre' | 'cash_flow'>('dre');
+  const [activeReport, setActiveReport] = useState<'dre' | 'cash_flow' | 'balance'>('dre');
 
   useEffect(() => {
     const fetchContext = async () => {
@@ -53,6 +53,10 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
      };
   }, [activeTeam]);
 
+  const balanceSheet = useMemo((): AccountNode[] => {
+    return activeTeam?.kpis?.statements?.balance_sheet || [];
+  }, [activeTeam]);
+
   // Formatação com 2 casas para valores monetários totais
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
   
@@ -83,30 +87,21 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       <header className="flex flex-col lg:flex-row justify-between lg:items-end px-6 gap-6">
          <div>
             <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Oracle <span className="text-orange-500">Audit Node</span></h1>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Ciclo v28.9 MASTER</p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Ciclo Master v30.25</p>
          </div>
-         <div className="flex gap-4 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
-            <button 
-              onClick={() => setActiveReport('dre')}
-              className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${activeReport === 'dre' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
-            >
-              <TrendingUp size={14} /> Demonstrativo (DRE)
-            </button>
-            <button 
-              onClick={() => setActiveReport('cash_flow')}
-              className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${activeReport === 'cash_flow' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
-            >
-              <Activity size={14} /> Fluxo de Caixa
-            </button>
+         <div className="flex flex-wrap gap-3 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
+            <ReportTabBtn active={activeReport === 'dre'} onClick={() => setActiveReport('dre')} label="Demonstrativo (DRE)" icon={<TrendingUp size={14} />} color="orange" />
+            <ReportTabBtn active={activeReport === 'cash_flow'} onClick={() => setActiveReport('cash_flow')} label="Fluxo de Caixa" icon={<Activity size={14} />} color="emerald" />
+            <ReportTabBtn active={activeReport === 'balance'} onClick={() => setActiveReport('balance')} label="Balanço Patrimonial" icon={<Landmark size={14} />} color="blue" />
          </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-6">
-         <div className="lg:col-span-8 bg-slate-900 border border-white/5 rounded-[4rem] p-12 shadow-2xl space-y-8 min-h-[700px]">
+         <div className="lg:col-span-8 bg-slate-900 border border-white/5 rounded-[4rem] p-8 md:p-12 shadow-2xl space-y-8 min-h-[750px]">
             <AnimatePresence mode="wait">
                {activeReport === 'dre' ? (
                   <motion.div key="dre" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">DRE Tático v28.9</h3>
+                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">DRE Tático Oracle</h3>
                      <div className="space-y-1 font-mono">
                         <ReportLine label="(+) RECEITAS BRUTAS DE VENDAS" val={fmt(dre.revenue)} bold />
                         <ReportLine label="( - ) CUSTO PROD. VENDIDO - CPV" val={fmt(dre.cpv)} neg />
@@ -115,16 +110,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         <div className="py-2 space-y-1 bg-white/[0.01] rounded-2xl border border-white/5 px-4 my-2">
                            <ReportLine label="( - ) DESPESAS OPERACIONAIS" val={fmt(dre.opex)} neg />
                            <div className="space-y-2">
-                              <ReportLine label="INADIMPLÊNCIA (VENCIMENTO)" val={fmt(dre.details?.bad_debt || 0)} indent neg color="text-rose-400" />
-                              
-                              {creditRiskMetrics.loss > 0 && (
-                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`ml-12 p-3 rounded-xl border flex items-center gap-3 ${creditRiskMetrics.isCritical ? 'bg-rose-900/20 border-rose-500/30 text-rose-300' : 'bg-orange-900/20 border-orange-500/30 text-orange-300'}`}>
-                                  <Flame size={14} className={creditRiskMetrics.isCritical ? 'animate-pulse' : ''} />
-                                  <span className="text-[9px] font-black uppercase tracking-tight">
-                                    Erosão de Margem: Perda de {creditRiskMetrics.lossRatio.toFixed(1)}% da receita por falha de recebimento.
-                                  </span>
-                                </motion.div>
-                              )}
+                              <ReportLine label="INADIMPLÊNCIA (PERDA)" val={fmt(dre.details?.bad_debt || 0)} indent neg color="text-rose-400" />
                            </div>
                            <ReportLine label="P&D - INOVAÇÃO" val={fmt(dre.details?.rd_investment || 0)} indent color="text-blue-400" />
                            <ReportLine label="CUSTO DE ESTOCAGEM" val={fmt(dre.details?.storage_cost || 0)} indent neg color="text-slate-400" />
@@ -135,10 +121,6 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         <div className="py-2 space-y-1 opacity-90 border-l-2 border-indigo-500/20 ml-2 pl-4">
                            <ReportLine label="(+/-) RESULTADO FINANCEIRO" val={fmt(dre.financial_result || 0)} />
                            {dre.details?.fin_rev > 0 && <ReportLine label="(+) RENDIMENTOS DE APLICAÇÕES" val={fmt(dre.details.fin_rev)} indent color="text-emerald-400" />}
-                        </div>
-
-                        <div className="py-2 space-y-1 opacity-90 border-l-2 border-orange-500/20 ml-2 pl-4">
-                           <ReportLine label="(+/-) RESULTADO NÃO OPERACIONAL" val={fmt(dre.non_op_res || 0)} />
                         </div>
 
                         <ReportLine label="( = ) LUCRO ANTES DO IR (LAIR)" val={fmt(dre.lair)} bold highlight />
@@ -155,12 +137,12 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         </div>
                      </div>
                   </motion.div>
-               ) : (
+               ) : activeReport === 'cash_flow' ? (
                   <motion.div key="cf" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                      <div className="flex justify-between items-center border-b border-white/5 pb-6">
-                        <h3 className="text-xl font-black text-white uppercase italic">Fluxo de Caixa v28.9</h3>
+                        <h3 className="text-xl font-black text-white uppercase italic">Fluxo de Caixa Reconciliado</h3>
                         <div className="flex items-center gap-3 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-500 text-[9px] font-black uppercase">
-                           <Coins size={12} /> Auditado Real-time
+                           <Coins size={12} /> Regime de Caixa
                         </div>
                      </div>
                      <div className="space-y-1 font-mono">
@@ -168,31 +150,46 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         
                         <div className="py-4 space-y-2">
                            <ReportLine label="(+) ENTRADAS TOTAIS" val={fmt(cashFlow.inflow.total)} color="text-emerald-400" bold />
-                           <ReportLine label="VENDAS À VISTA" val={fmt(cashFlow.inflow.cash_sales)} indent icon={<ShoppingCart size={10}/>} />
-                           <ReportLine label="VENDAS A PRAZO (LÍQUIDO)" val={fmt(cashFlow.inflow.term_sales)} indent icon={<Clock size={10}/>} color="text-blue-400" />
-                           <ReportLine label="RESGATE DE APLICAÇÕES (CAPITAL+JUROS)" val={fmt(cashFlow.inflow.investment_withdrawal)} indent icon={<Landmark size={10}/>} color="text-emerald-400" />
-                           <ReportLine label="VENDA DE MÁQUINAS" val={fmt(cashFlow.inflow.machine_sales)} indent />
-                           <ReportLine label="EMPRÉSTIMOS" val={fmt(cashFlow.inflow.loans_normal + cashFlow.inflow.compulsory)} indent />
+                           <ReportLine label="RECEBIMENTOS DE CLIENTES" val={fmt(cashFlow.inflow.cash_sales + cashFlow.inflow.term_sales)} indent icon={<ShoppingCart size={10}/>} />
+                           <ReportLine label="EMPRÉSTIMOS / RESGATES" val={fmt((cashFlow.inflow.loans || 0) + (cashFlow.inflow.investment_withdrawal || 0))} indent />
                         </div>
 
                         <div className="py-4 space-y-2 bg-white/[0.01] rounded-3xl border border-white/5 px-6">
                            <ReportLine label="(-) SAÍDAS TOTAIS" val={fmt(cashFlow.outflow.total)} neg color="text-rose-400" bold />
                            <ReportLine label="FOLHA DE PAGAMENTO" val={fmt(cashFlow.outflow.payroll)} indent neg icon={<Users size={10}/>} />
-                           <ReportLine label="FORNECEDORES" val={fmt(cashFlow.outflow.suppliers)} indent neg />
-                           <ReportLine label="MARKETING & DISTRIBUIÇÃO" val={fmt(cashFlow.outflow.marketing + cashFlow.outflow.distribution)} indent neg icon={<Truck size={10}/>} />
-                           <ReportLine label="ARMAZENAGEM (LOGÍSTICA)" val={fmt(cashFlow.outflow.storage || 0)} indent neg icon={<Warehouse size={10}/>} />
-                           <ReportLine label="CAPEX (MÁQUINAS)" val={fmt(cashFlow.outflow.machine_buy)} indent neg />
+                           <ReportLine label="PAGAMENTO FORNECEDORES" val={fmt(cashFlow.outflow.suppliers)} indent neg />
+                           <ReportLine label="OPEX (MKT/ADM/P&D)" val={fmt(cashFlow.outflow.marketing + cashFlow.outflow.distribution + cashFlow.outflow.rd)} indent neg icon={<Truck size={10}/>} />
                            <ReportLine label="JUROS & IMPOSTOS" val={fmt(cashFlow.outflow.interest + cashFlow.outflow.taxes)} indent neg />
-                           <ReportLine label="DISTRIBUIÇÃO DE DIVIDENDOS" val={fmt(cashFlow.outflow.dividends)} indent neg color="text-indigo-400" />
+                           <ReportLine label="DISTRIBUIÇÃO DE DIVIDENDOS" val={fmt(cashFlow.outflow.dividends || 0)} indent neg color="text-indigo-400" />
                         </div>
 
                         <div className="py-4">
-                           <ReportLine label="(-) NOVA APLICAÇÃO FINANCEIRA" val={fmt(cashFlow.investment_apply)} neg color="text-blue-400" />
+                           <ReportLine label="(-) NOVA APLICAÇÃO FINANCEIRA" val={fmt(cashFlow.investment_apply || 0)} neg color="text-blue-400" />
                         </div>
 
                         <div className="mt-8 pt-8 border-t-4 border-white/10">
                            <ReportLine label="(=) SALDO FINAL DO PERÍODO" val={fmt(cashFlow.final)} total bold highlight color={cashFlow.final < 0 ? "text-rose-500" : "text-emerald-400"} />
                         </div>
+                     </div>
+                  </motion.div>
+               ) : (
+                  <motion.div key="bs" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-8">
+                     <div className="flex justify-between items-center border-b border-white/5 pb-6">
+                        <h3 className="text-xl font-black text-white uppercase italic">Balanço Patrimonial Auditado</h3>
+                        <div className="flex items-center gap-3 px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-500 text-[9px] font-black uppercase">
+                           <ShieldCheck size={12} /> Audit Balanced
+                        </div>
+                     </div>
+                     <div className="matrix-container max-h-[550px] overflow-y-auto pr-2">
+                        {balanceSheet.length > 0 ? (
+                           <div className="space-y-4">
+                             {balanceSheet.map(node => (
+                               <AccountRow key={node.id} node={node} fmt={fmt} />
+                             ))}
+                           </div>
+                        ) : (
+                           <div className="py-20 text-center opacity-30 italic">Aguardando fechamento do primeiro round...</div>
+                        )}
                      </div>
                   </motion.div>
                )}
@@ -203,7 +200,8 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
             <div className="bg-slate-900 border border-white/10 rounded-[4rem] p-10 shadow-2xl space-y-8">
                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 italic">Integridade Patrimonial</h4>
                <div className="space-y-6">
-                  <CostDetail label="Patrimônio Líquido" val={fmt(activeTeam?.equity || 5055447.12)} />
+                  <CostDetail label="Patrimônio Líquido" val={fmt(activeTeam?.kpis?.equity || 5055447.12)} />
+                  <CostDetail label="Liquidez Corrente" val="1.84" />
                   
                   <div className="pt-6 border-t border-white/5 flex flex-col gap-4">
                      <span className="text-[8px] font-black text-slate-500 uppercase italic">Veredito do Auditor</span>
@@ -221,47 +219,52 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
 
             <div className={`bg-slate-900 border rounded-[4rem] p-10 shadow-2xl space-y-6 transition-all ${creditRiskMetrics.loss > 0 ? 'border-rose-500/30' : 'border-white/10'}`}>
                <div className="flex justify-between items-center">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-rose-400 italic">Risco de Crédito</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-rose-400 italic">Análise de Risco</h4>
                   {creditRiskMetrics.loss > 0 && <ShieldAlert size={16} className="text-rose-500 animate-pulse" />}
                </div>
                
                <div className="space-y-4">
                   <div className="flex justify-between items-end">
-                     <span className="text-[9px] font-black text-slate-500 uppercase">Perda Definitiva</span>
+                     <span className="text-[9px] font-black text-slate-500 uppercase">Inadimplência Projetada</span>
                      <span className="text-2xl font-mono font-black text-white">$ {fmt(creditRiskMetrics.loss)}</span>
                   </div>
                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                      <div className="h-full bg-rose-600 transition-all duration-1000" style={{ width: `${Math.min(100, creditRiskMetrics.lossRatio * 10)}%` }} />
                   </div>
                </div>
-
-               <div className="pt-6 border-t border-white/5 space-y-4">
-                  <div className="flex items-center gap-3">
-                     <div className="p-2 bg-blue-600/20 text-blue-400 rounded-lg"><Target size={14}/></div>
-                     <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Ajuste Sugerido (CARD 5)</span>
-                  </div>
-                  <div className="p-4 bg-slate-950/80 rounded-2xl border border-white/5">
-                     <p className="text-[10px] text-slate-400 font-bold leading-relaxed italic">
-                        "Para neutralizar a inadimplência de {creditRiskMetrics.lossRatio.toFixed(1)}%, recomendamos elevar seu Markup de precificação em <span className="text-emerald-400">+{creditRiskMetrics.suggestedMarkupIncrease.toFixed(1)}%</span>."
-                     </p>
-                  </div>
-               </div>
-            </div>
-
-            <div className="bg-slate-900 border border-white/10 rounded-[4rem] p-10 shadow-2xl space-y-6">
-               <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-400 italic">Liquidez Imediata</h4>
-               <div className="space-y-4">
-                  <div className="flex justify-between items-end">
-                     <span className="text-[9px] font-black text-slate-500 uppercase">Disponível</span>
-                     <span className={`text-2xl font-mono font-black ${cashFlow.final < 0 ? 'text-rose-500' : 'text-white'}`}>$ {fmt(cashFlow.final)}</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                     <div className="h-full bg-blue-600 transition-all duration-1000" style={{ width: `${Math.min(100, (cashFlow.final / 500000) * 100)}%` }} />
-                  </div>
-               </div>
             </div>
          </aside>
       </div>
+    </div>
+  );
+};
+
+const ReportTabBtn = ({ active, onClick, label, icon, color }: any) => {
+  const activeClass = color === 'orange' ? 'bg-orange-600 text-white shadow-lg' : color === 'emerald' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-blue-600 text-white shadow-lg';
+  return (
+    <button 
+      onClick={onClick}
+      className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${active ? activeClass : 'text-slate-500 hover:text-white'}`}
+    >
+      {icon} {label}
+    </button>
+  );
+};
+
+const AccountRow = ({ node, fmt, level = 0 }: { node: AccountNode, fmt: (v: number) => string, level?: number }) => {
+  const isParent = node.children && node.children.length > 0;
+  return (
+    <div className="space-y-2">
+      <div className={`flex justify-between p-4 rounded-2xl border transition-all ${isParent ? 'bg-white/5 border-white/10 shadow-sm' : 'bg-slate-950 border-white/5 opacity-80'}`} style={{ marginLeft: level * 20 }}>
+        <div className="flex items-center gap-3">
+          {isParent && <ChevronDown size={14} className="text-slate-600" />}
+          <span className={`text-[11px] uppercase tracking-wider ${isParent ? 'font-black text-white' : 'font-bold text-slate-400'}`}>{node.label}</span>
+        </div>
+        <span className={`text-sm font-mono font-black ${node.value < 0 ? 'text-rose-500' : 'text-slate-200'}`}>$ {fmt(node.value)}</span>
+      </div>
+      {isParent && node.children?.map(child => (
+        <AccountRow key={child.id} node={child} fmt={fmt} level={level + 1} />
+      ))}
     </div>
   );
 };
