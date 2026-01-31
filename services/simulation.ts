@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v30.26 - EFICÁCIA CONTÁBIL TOTAL (CPP EXCELLENCE)
+ * CORE ORACLE ENGINE v30.27 - EFICÁCIA CONTÁBIL TOTAL (STORAGE-DRIVEN CPP)
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -53,7 +53,7 @@ export const calculateProjections = (
   const prevMPA_Val = getVal('assets.current.stock.mpa', prevBS) || 628545;
   const prevMPB_Val = getVal('assets.current.stock.mpb', prevBS) || 838060;
   const prevPA_Val = getVal('assets.current.stock.pa', prevBS) || 454000;
-  const prevPA_Qty = 2000; // Baseline fixa no MVP v15
+  const prevPA_Qty = 2000; // Baseline fixa no MVP
   
   const prevEquity = sanitize(previousState?.equity || 5055447);
   const prevInvestments = getVal('assets.current.investments', prevBS) || 0;
@@ -73,7 +73,6 @@ export const calculateProjections = (
   // --- 2. CICLO COMERCIAL (ANTECIPADO PARA CÁLCULO DE ESTOQUE FINAL PA) ---
   const rd_percent = sanitize(safeDecisions.production.rd_investment, 0);
   const rd_market_bonus = 1 + (rd_percent / 40);
-  // Cálculo de demanda real antes do CPP para determinar o custo de manutenção do pátio
   const unitsSold = Math.min(prevPA_Qty + unitsProduced, (nominalCapacity * 0.125) * rd_market_bonus * (forcedShare ? forcedShare/12.5 : 1));
   const qtyPA_End = Math.max(0, prevPA_Qty + unitsProduced - unitsSold);
 
@@ -95,11 +94,9 @@ export const calculateProjections = (
   const purchaseMPB_Qty = sanitize(safeDecisions.production.purchaseMPB, 0);
   const totalPurchaseValue = (purchaseMPA_Qty * purchasePriceMPA) + (purchaseMPB_Qty * purchasePriceMPB);
 
-  // Saída de Caixa Fornecedores
   const cashOutflowSuppliers = (totalPurchaseValue / n_supp) + (prevSuppliers * 0.5); 
   const newSuppliersLiability = (prevSuppliers * 0.5) + (totalPurchaseValue * (n_supp - 1) / n_supp);
 
-  // Transformação e Depreciação
   const salaryBase = sanitize(safeDecisions.hr.salary, 1313);
   const socialChargesRate = sanitize(indicators.social_charges, 35) / 100;
   const payrollProduction = (requiredProdStaff * salaryBase) * (1 + socialChargesRate);
@@ -110,19 +107,25 @@ export const calculateProjections = (
 
   // Consumo MP e Gestão de Estoques
   const totalMP_Consumed = (unitsProduced * 3 * purchasePriceMPA) + (unitsProduced * 2 * purchasePriceMPB);
-  const qtyMPA_End = Math.max(0, (prevMPA_Val / indicators.prices.mp_a) + purchaseMPA_Qty - (unitsProduced * 3));
-  const qtyMPB_End = Math.max(0, (prevMPB_Val / indicators.prices.mp_b) + purchaseMPB_Qty - (unitsProduced * 2));
+  
+  const qtyMPA_Start = prevMPA_Val / indicators.prices.mp_a;
+  const qtyMPB_Start = prevMPB_Val / indicators.prices.mp_b;
+  const qtyMPA_End = Math.max(0, qtyMPA_Start + purchaseMPA_Qty - (unitsProduced * 3));
+  const qtyMPB_End = Math.max(0, qtyMPB_Start + purchaseMPB_Qty - (unitsProduced * 2));
 
-  // GASTOS COM ESTOCAGEM (MASTER UPDATE: MP + PA)
-  const storageCostMP = (qtyMPA_End + qtyMPB_End) * indicators.prices.storage_mp;
-  const storageCostPA = qtyPA_End * indicators.prices.storage_finished;
+  // --- CUSTO DE ESTOCAGEM REFINADO (MÉDIA INICIAL/FINAL) ---
+  const avgMPA = (qtyMPA_Start + qtyMPA_End) / 2;
+  const avgMPB = (qtyMPB_Start + qtyMPB_End) / 2;
+  const avgPA = (prevPA_Qty + qtyPA_End) / 2;
+
+  const storageCostMP = (avgMPA + avgMPB) * indicators.prices.storage_mp;
+  const storageCostPA = avgPA * indicators.prices.storage_finished;
   const totalStorageCost = storageCostMP + storageCostPA;
 
-  // CONSOLIDAÇÃO CPP MASTER
+  // CONSOLIDAÇÃO CPP MASTER COM ESTOCAGEM
   const currentCPP_Total = totalMP_Consumed + payrollProduction + totalDeprec + totalMaint + totalStorageCost;
   const unitCPP = unitsProduced > 0 ? currentCPP_Total / unitsProduced : 0;
   
-  // WAC (Custo Médio Ponderado) absorvendo custos de estocagem
   const wacPA = unitsProduced > 0 
     ? (prevPA_Val + currentCPP_Total) / (prevPA_Qty + unitsProduced)
     : (prevPA_Val / Math.max(1, prevPA_Qty));
