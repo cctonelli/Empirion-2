@@ -12,7 +12,7 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v30.16 - INADIMPLÊNCIA SOBRE VENCIMENTO DE CLIENTES
+ * CORE ORACLE ENGINE v30.18 - INTEGRAÇÃO DE GASTOS COM ESTOCAGEM NO CPP
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -44,6 +44,11 @@ export const calculateProjections = (
   const prevClientsBalance = sanitize(previousState?.statements?.balance_sheet?.current?.clients, 1823735);
   const prevInvestmentsBalance = sanitize(previousState?.statements?.balance_sheet?.current?.investments, 0);
   const prevDividendsToPay = sanitize(previousState?.statements?.balance_sheet?.current?.dividends, 18481);
+  
+  // Saldos Iniciais de Estoque (Valores)
+  const prevStockMPA = sanitize(previousState?.statements?.balance_sheet?.current?.stock?.mpa, 628545);
+  const prevStockMPB = sanitize(previousState?.statements?.balance_sheet?.current?.stock?.mpb, 838060);
+  const prevStockPA_Qty = 2000; // Baseline fixo para o MVP
 
   // 1. STAFFING & PERFORMANCE GOAL
   const fleet = (previousState?.fleet || indicators.initial_machinery_mix) as InitialMachine[];
@@ -91,24 +96,56 @@ export const calculateProjections = (
     totalMaintenanceCost += machineCost;
   });
 
-  // 3. CPP E CPV
+  // 3. CPP E CUSTO DE COMPRA A PRAZO (SUPPLIER INTEREST)
+  const unitsProduced = nominalCapacity * actualEffortResult;
+  
+  // Lógica de Preço de Compra a Prazo
+  const i_supp = sanitize(indicators.supplier_interest, 1.5) / 100;
+  const payType = safeDecisions.production.paymentType || 0; 
+  const n_supp = payType + 1;
+  
+  let effectivePriceMPA = indicators.prices.mp_a;
+  let effectivePriceMPB = indicators.prices.mp_b;
+
+  if (i_supp > 0 && n_supp > 1) {
+    const pmtFactor = (i_supp * Math.pow(1 + i_supp, n_supp)) / (Math.pow(1 + i_supp, n_supp) - 1);
+    effectivePriceMPA = (indicators.prices.mp_a * pmtFactor) * n_supp;
+    effectivePriceMPB = (indicators.prices.mp_b * pmtFactor) * n_supp;
+  }
+
+  // Consumo e Gastos de Matéria-Prima
+  const mpaNeeded = unitsProduced * 3;
+  const mpbNeeded = unitsProduced * 2;
+  const mpConsumptionVal = (mpaNeeded * effectivePriceMPA) + (mpbNeeded * effectivePriceMPB);
+  
+  // CÁLCULO DE GASTOS COM ESTOCAGEM (Novo v30.18)
+  const qtyMPA_End = Math.max(0, (prevStockMPA / indicators.prices.mp_a) + sanitize(safeDecisions.production.purchaseMPA, 0) - mpaNeeded);
+  const qtyMPB_End = Math.max(0, (prevStockMPB / indicators.prices.mp_b) + sanitize(safeDecisions.production.purchaseMPB, 0) - mpbNeeded);
+  
+  // A venda global estimada precisa ser calculada antes para saber o estoque final de PA
+  const rd_market_bonus = 1 + (rd_percent / 40); 
+  const globalUnitsSold = (nominalCapacity * 0.125) * actualEffortResult * rd_market_bonus;
+  const qtyPA_End = Math.max(0, prevStockPA_Qty + unitsProduced - globalUnitsSold);
+
+  const storageCostMP = (qtyMPA_End + qtyMPB_End) * indicators.prices.storage_mp;
+  const storageCostPA = qtyPA_End * indicators.prices.storage_finished;
+  const totalStorageCost = storageCostMP + storageCostPA;
+
   const salMOD_Base = (requiredProdStaff * salaryBase);
   const productivityBonusTotal = goalReached ? (salMOD_Base * prodBonusPercentInput) : 0;
   const baseHours = sanitize(indicators.production_hours_period, 946);
   const overtimeCost = Math.max(0, Math.ceil((productionPercent * baseHours) - baseHours)) * requiredProdStaff * ((salaryBase / baseHours) * 1.5);
   const indemnityCost = sanitize(safeDecisions.hr.fired, 0) * (salaryBase * 2);
-
-  const unitsProduced = nominalCapacity * actualEffortResult;
-  const mpConsumptionVal = (unitsProduced * 3 * indicators.prices.mp_a) + (unitsProduced * 2 * indicators.prices.mp_b);
   const socialChargesOnProduction = (salMOD_Base + overtimeCost + indemnityCost) * socialChargesRate;
-  const totalProductionCost = mpConsumptionVal + salMOD_Base + overtimeCost + indemnityCost + socialChargesOnProduction + productivityBonusTotal + totalMaintenanceCost + totalDepreciationMachines + buildingDepreciation;
+  
+  // Somatória Final do CPP incluindo Estocagem
+  const totalProductionCost = mpConsumptionVal + salMOD_Base + overtimeCost + indemnityCost + socialChargesOnProduction + productivityBonusTotal + totalMaintenanceCost + totalDepreciationMachines + buildingDepreciation + totalStorageCost;
   const currentCPP = unitsProduced > 0 ? totalProductionCost / unitsProduced : 0;
-  const wacPA = ( (2000 * 227) + (unitsProduced * currentCPP) ) / Math.max(1, (2000 + unitsProduced));
+  
+  // Giro de Estoque (WAC)
+  const wacPA = ( (prevStockPA_Qty * 227) + (unitsProduced * currentCPP) ) / Math.max(1, (prevStockPA_Qty + unitsProduced));
 
   // 4. CÁLCULO DE VENDAS E AMORTIZAÇÃO (ANNUITY)
-  const rd_market_bonus = 1 + (rd_percent / 40); 
-  const globalUnitsSold = (nominalCapacity * 0.125) * actualEffortResult * rd_market_bonus;
-  
   let totalGrossRevenueEmbedded = 0;
   let cashSalesCurrent = 0;
   let newAccountsReceivableInClients = 0;
@@ -119,7 +156,7 @@ export const calculateProjections = (
 
   regions.forEach(([id, reg]: [string, any]) => {
     const price = sanitize(reg.price, 375);
-    const termType = reg.term || 0; // 0=A Vista, 1=50/50, 2=33/33/33
+    const termType = reg.term || 0; 
     const n = termType + 1; 
     
     let pmt = price;
@@ -145,13 +182,10 @@ export const calculateProjections = (
   const opexAdm = (20 * salaryBase * 4) * (1 + socialChargesRate);
 
   // 5. INADIMPLÊNCIA: CÁLCULO BASEADO NO VENCIMENTO DO SALDO DE CLIENTES
-  // Determinamos quanto do saldo de 'Clientes' (Ativo Circulante) está vencendo neste ciclo (ex: 40%)
   const collectionTurnoverRate = 0.40; 
   const grossMaturingAmount = prevClientsBalance * collectionTurnoverRate;
-  
-  // A inadimplência é calculada sobre o montante que deveria ser recebido (Vencimento)
   const currentDefaultRate = sanitize(indicators.customer_default_rate, 2.6) / 100;
-  const badDebtLoss = grossMaturingAmount * currentDefaultRate; // Perda definitiva reconhecida no DRE
+  const badDebtLoss = grossMaturingAmount * currentDefaultRate; 
   
   const totalOpex = opexSales + opexAdm + rd_expense + badDebtLoss;
   const operatingProfit = grossProfit - totalOpex;
@@ -160,8 +194,7 @@ export const calculateProjections = (
   const applicationRevenue = prevInvestmentsBalance * (sanitize(indicators.investment_return_rate, 1.0) / 100);
   const financialExpenses = (sanitize(safeDecisions.finance.loanRequest, 0) * (sanitize(indicators.interest_rate_tr, 2.0) / 100)) + 15000; 
   const financialResult = applicationRevenue - financialExpenses;
-  const nonOpResult = 0; 
-  const lair = operatingProfit + financialResult + nonOpResult;
+  const lair = operatingProfit + financialResult;
 
   // 7. GATILHOS FISCAIS E DIVIDENDOS
   const irProvision = lair > 0 ? (lair * (sanitize(indicators.tax_rate_ir, 15) / 100)) : 0;
@@ -172,16 +205,15 @@ export const calculateProjections = (
 
   // 8. FLUXO DE CAIXA: ENTRADA LÍQUIDA DE INADIMPLÊNCIA
   const initialCash = sanitize(previousState?.cash, 170000);
-  const netCashFromClients = grossMaturingAmount - badDebtLoss; // Entrada real após perda de inadimplência
+  const netCashFromClients = grossMaturingAmount - badDebtLoss; 
   
   const dividendsPaidThisRound = prevDividendsToPay;
   const totalInflow = cashSalesCurrent + netCashFromClients + prevInvestmentsBalance + applicationRevenue + sanitize(safeDecisions.finance.loanRequest, 0);
-  const totalOutflow = (opexSales + opexAdm + salMOD_Base + overtimeCost + indemnityCost + productivityBonusTotal + rd_expense + (cpv * 0.7) + totalMaintenanceCost + financialExpenses + irProvision + dividendsPaidThisRound);
+  const totalOutflow = (opexSales + opexAdm + salMOD_Base + overtimeCost + indemnityCost + productivityBonusTotal + rd_expense + (cpv * 0.7) + totalMaintenanceCost + financialExpenses + irProvision + dividendsPaidThisRound + totalStorageCost);
 
   const finalCash = initialCash + totalInflow - totalOutflow - sanitize(safeDecisions.finance.application, 0);
 
   // 9. FECHAMENTO PATRIMONIAL: BAIXA BRUTA DA CONTA CLIENTES
-  // Baixamos do ativo o valor total que saiu da carteira (Recebido + Perdido)
   const newClientsBalance = prevClientsBalance + newAccountsReceivableInClients - grossMaturingAmount;
 
   return {
@@ -202,13 +234,13 @@ export const calculateProjections = (
     statements: {
       dre: { 
         revenue: totalGrossRevenueEmbedded, cpv, gross_profit: grossProfit, opex: totalOpex, operating_profit: operatingProfit,
-        financial_result: financialResult, non_op_res: nonOpResult, lair, tax: irProvision, net_profit: netIncome,
-        details: { cpp: currentCPP, building_deprec: buildingDepreciation, machine_deprec: totalDepreciationMachines, fin_rev: applicationRevenue, bad_debt: badDebtLoss }
+        financial_result: financialResult, non_op_res: 0, lair, tax: irProvision, net_profit: netIncome,
+        details: { cpp: currentCPP, building_deprec: buildingDepreciation, machine_deprec: totalDepreciationMachines, fin_rev: applicationRevenue, bad_debt: badDebtLoss, storage_cost: totalStorageCost }
       },
       cash_flow: {
         start: initialCash,
         inflow: { total: totalInflow, cash_sales: cashSalesCurrent, term_sales: netCashFromClients, investment_withdrawal: prevInvestmentsBalance + applicationRevenue },
-        outflow: { total: totalOutflow, maintenance: totalMaintenanceCost, taxes: irProvision, dividends: dividendsPaidThisRound },
+        outflow: { total: totalOutflow, maintenance: totalMaintenanceCost, taxes: irProvision, dividends: dividendsPaidThisRound, storage: totalStorageCost },
         final: finalCash
       },
       balance_sheet: {
@@ -217,7 +249,8 @@ export const calculateProjections = (
           pecld: badDebtLoss * -1, 
           cash: finalCash, 
           investments: sanitize(safeDecisions.finance.application, 0),
-          dividends: newDividendsProvision 
+          dividends: newDividendsProvision,
+          stock: { mpa: qtyMPA_End * indicators.prices.mp_a, mpb: qtyMPB_End * indicators.prices.mp_b, pa: qtyPA_End * wacPA }
         }
       }
     }

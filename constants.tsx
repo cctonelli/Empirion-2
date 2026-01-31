@@ -43,7 +43,7 @@ export const INITIAL_FINANCIAL_TREE = {
       id: 'assets', label: 'ATIVO', value: 9176940, type: 'totalizer', children: [
         { 
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3290340.00, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 170000, type: 'asset', isEditable: true },
+            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 0, type: 'asset', isEditable: true },
             { id: 'assets.current.investments', label: 'Aplicação Financeira', value: 0, type: 'asset', isEditable: true },
             { id: 'assets.current.clients_group', label: 'CONTAS A RECEBER', value: 1776318, type: 'totalizer', children: [
                 { id: 'assets.current.clients', label: 'Clientes', value: 1823735, type: 'asset', isEditable: true },
