@@ -52,8 +52,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
 
     const salaries = teams.map(t => t.kpis?.last_decision?.hr?.salary || arena.market_indicators.hr_base.salary);
     const avgSalary = salaries.reduce((a, b) => a + b, 0) / Math.max(teams.length, 1);
-
-    // CÁLCULO DINÂMICO DOS JUROS MÉDIOS DE VENDA
     const interestRates = teams.map(t => t.kpis?.last_decision?.production?.term_interest_rate || 0);
     const avgSalesInterest = interestRates.reduce((a, b) => a + b, 0) / Math.max(teams.length, 1);
 
@@ -109,7 +107,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                   <div className="h-3 w-px bg-white/10" />
                   <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
                      <Monitor size={12} className="text-slate-500" />
-                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Optimized for Ultra-Wide Desktop</span>
+                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">High Precision Dashboard</span>
                   </div>
                </div>
             </div>
@@ -200,8 +198,8 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                            </div>
                         </div>
                         <div className="space-y-5 relative z-10 pr-4">
-                           <CostRow label="Matéria-Prima A (Insumo Base)" val={supplierCosts.mp_a} />
-                           <CostRow label="Matéria-Prima B (Componente Alpha)" val={supplierCosts.mp_b} />
+                           <CostRow label="Matéria-Prima A (Insumo Base)" val={supplierCosts.mp_a} unit />
+                           <CostRow label="Matéria-Prima B (Componente Alpha)" val={supplierCosts.mp_b} unit />
                            <CostRow label="Distribuição Nodal Unitária" val={supplierCosts.distribution} />
                            <CostRow label="Campanha Marketing (Protocolo Base)" val={supplierCosts.marketing} />
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
@@ -210,17 +208,16 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
                               <CompactCostBox label="MÁQUINA GAMA" val={supplierCosts.gama} color="text-orange-400" />
                            </div>
                            
-                           {/* BENCHMARK DE JUROS MÉDIOS */}
                            <div className="mt-10 pt-10 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-10">
                               <div className="group/sal">
                                  <span className="text-[11px] font-black text-blue-500 uppercase tracking-[0.3em] italic">Salário Médio</span>
                                  <p className="text-[9px] text-slate-600 font-bold uppercase mt-1">Média do Cluster</p>
-                                 <span className="text-4xl font-black text-white font-mono italic block mt-2 group-hover/sal:text-blue-400 transition-all">$ {supplierCosts.avg_salary.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                 <span className="text-4xl font-black text-white font-mono italic block mt-2 group-hover/sal:text-blue-400 transition-all">$ {supplierCosts.avg_salary.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}</span>
                               </div>
                               <div className="group/int">
                                  <span className="text-[11px] font-black text-orange-500 uppercase tracking-[0.3em] italic">Juros Médios de Venda</span>
                                  <p className="text-[9px] text-slate-600 font-bold uppercase mt-1">Média Ponderada Global</p>
-                                 <span className="text-4xl font-black text-white font-mono italic block mt-2 group-hover/int:text-orange-400 transition-all">{supplierCosts.avg_sales_interest.toFixed(2)} %</span>
+                                 <span className="text-4xl font-black text-white font-mono italic block mt-2 group-hover/int:text-orange-400 transition-all">{supplierCosts.avg_sales_interest.toFixed(4)} %</span>
                               </div>
                            </div>
                         </div>
@@ -255,7 +252,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
       </main>
 
       <footer className="px-12 py-6 bg-slate-950 border-t border-white/5 flex justify-between items-center opacity-60 shrink-0 relative z-10">
-         <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.8em] italic leading-none">Build v16.7 Master Protocol • Ultra-High Fidelity Desktop Build</span>
+         <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.8em] italic leading-none">Build v16.7 Master Protocol • High Fidelity Financial Precision</span>
          <div className="flex gap-8 items-center">
             <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest">Node 08-Industrial-Cluster-A</span>
             <div className="flex items-center gap-3 px-4 py-1.5 bg-white/5 rounded-full border border-white/5">
@@ -268,17 +265,17 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
   );
 };
 
-const CostRow = ({ label, val }: { label: string, val: number }) => (
+const CostRow = ({ label, val, unit }: { label: string, val: number, unit?: boolean }) => (
    <div className="flex justify-between items-end border-b border-white/5 pb-4 group hover:translate-x-3 transition-all duration-300">
       <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.25em] italic group-hover:text-slate-200 transition-colors">{label}</span>
-      <span className="text-2xl font-black text-white font-mono italic group-hover:text-orange-500 transition-colors">$ {val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+      <span className="text-2xl font-black text-white font-mono italic group-hover:text-orange-500 transition-colors">$ {val.toLocaleString('pt-BR', { minimumFractionDigits: unit ? 4 : 2, maximumFractionDigits: unit ? 4 : 2 })}</span>
    </div>
 );
 
 const CompactCostBox = ({ label, val, color }: { label: string, val: number, color: string }) => (
    <div className="bg-slate-950 p-6 rounded-[2rem] border border-white/5 hover:border-white/20 transition-all flex flex-col items-center gap-3">
       <span className={`text-[9px] font-black uppercase tracking-widest ${color}`}>{label}</span>
-      <span className="text-xl font-black text-white font-mono italic">$ {Math.round(val).toLocaleString()}</span>
+      <span className="text-xl font-black text-white font-mono italic">$ {val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
    </div>
 );
 

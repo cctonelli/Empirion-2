@@ -38,7 +38,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
        revenue: 0, cpv: 0, gross_profit: 0, opex: 0, operating_profit: 0, lair: 0, tax: 0, net_profit: 0,
        financial_result: 0, non_op_res: 0,
        details: { 
-         cpp: 0, wac_pa: 0, rd_investment: 0, social_charges: 0, payroll_net: 0, non_op_rev: 0, non_op_exp: 0, productivity_bonus: 0, fin_rev: 0, bad_debt: 0
+         cpp: 0, wac_pa: 0, rd_investment: 0, social_charges: 0, payroll_net: 0, non_op_rev: 0, non_op_exp: 0, productivity_bonus: 0, fin_rev: 0, bad_debt: 0, storage_cost: 0
        }
      };
   }, [activeTeam]);
@@ -53,21 +53,24 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
      };
   }, [activeTeam]);
 
-  const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(v);
+  // Formatação com 2 casas para valores monetários totais
+  const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+  
+  // Formatação com 4 casas para custos unitários sensíveis
+  const fmt4 = (v: number) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(v);
 
   // Inteligência de Risco de Crédito (Markup Compensatório)
   const creditRiskMetrics = useMemo(() => {
     const loss = Math.abs(dre.details?.bad_debt || 0);
     const revenue = Math.max(1, dre.revenue);
     const lossRatio = (loss / revenue) * 100;
-    // Sugestão: Aumentar o markup para cobrir a perda + margem de segurança de 0.5%
     const suggestedMarkupIncrease = lossRatio > 0 ? lossRatio + 0.5 : 0;
     
     return {
       loss,
       lossRatio,
       suggestedMarkupIncrease,
-      isCritical: lossRatio > 2.0 // Alerta crítico acima de 2% da receita bruta
+      isCritical: lossRatio > 2.0 
     };
   }, [dre]);
 
@@ -114,7 +117,6 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                            <div className="space-y-2">
                               <ReportLine label="INADIMPLÊNCIA (VENCIMENTO)" val={fmt(dre.details?.bad_debt || 0)} indent neg color="text-rose-400" />
                               
-                              {/* ALERTA DE EROSÃO POR INADIMPLÊNCIA */}
                               {creditRiskMetrics.loss > 0 && (
                                 <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`ml-12 p-3 rounded-xl border flex items-center gap-3 ${creditRiskMetrics.isCritical ? 'bg-rose-900/20 border-rose-500/30 text-rose-300' : 'bg-orange-900/20 border-orange-500/30 text-orange-300'}`}>
                                   <Flame size={14} className={creditRiskMetrics.isCritical ? 'animate-pulse' : ''} />
@@ -125,6 +127,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                               )}
                            </div>
                            <ReportLine label="P&D - INOVAÇÃO" val={fmt(dre.details?.rd_investment || 0)} indent color="text-blue-400" />
+                           <ReportLine label="CUSTO DE ESTOCAGEM" val={fmt(dre.details?.storage_cost || 0)} indent neg color="text-slate-400" />
                         </div>
 
                         <ReportLine label="( = ) LUCRO OPERACIONAL" val={fmt(dre.operating_profit)} bold />
@@ -145,6 +148,11 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         </div>
 
                         <ReportLine label="( = ) LUCRO LÍQUIDO DO EXERCÍCIO" val={fmt(dre.net_profit)} total />
+                        
+                        <div className="mt-8 pt-4 border-t border-white/5 opacity-40">
+                           <ReportLine label="DETALHE: CPP (CUSTO PROD. PERÍODO)" val={fmt4(dre.details?.cpp || 0)} color="text-slate-500" />
+                           <ReportLine label="DETALHE: WAC (CUSTO MÉDIO PA)" val={fmt4(dre.details?.wac_pa || 0)} color="text-slate-500" />
+                        </div>
                      </div>
                   </motion.div>
                ) : (
@@ -172,6 +180,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                            <ReportLine label="FOLHA DE PAGAMENTO" val={fmt(cashFlow.outflow.payroll)} indent neg icon={<Users size={10}/>} />
                            <ReportLine label="FORNECEDORES" val={fmt(cashFlow.outflow.suppliers)} indent neg />
                            <ReportLine label="MARKETING & DISTRIBUIÇÃO" val={fmt(cashFlow.outflow.marketing + cashFlow.outflow.distribution)} indent neg icon={<Truck size={10}/>} />
+                           <ReportLine label="ARMAZENAGEM (LOGÍSTICA)" val={fmt(cashFlow.outflow.storage || 0)} indent neg icon={<Warehouse size={10}/>} />
                            <ReportLine label="CAPEX (MÁQUINAS)" val={fmt(cashFlow.outflow.machine_buy)} indent neg />
                            <ReportLine label="JUROS & IMPOSTOS" val={fmt(cashFlow.outflow.interest + cashFlow.outflow.taxes)} indent neg />
                            <ReportLine label="DISTRIBUIÇÃO DE DIVIDENDOS" val={fmt(cashFlow.outflow.dividends)} indent neg color="text-indigo-400" />
@@ -194,7 +203,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
             <div className="bg-slate-900 border border-white/10 rounded-[4rem] p-10 shadow-2xl space-y-8">
                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 italic">Integridade Patrimonial</h4>
                <div className="space-y-6">
-                  <CostDetail label="Patrimônio Líquido" val={fmt(activeTeam?.equity || 5055447)} />
+                  <CostDetail label="Patrimônio Líquido" val={fmt(activeTeam?.equity || 5055447.12)} />
                   
                   <div className="pt-6 border-t border-white/5 flex flex-col gap-4">
                      <span className="text-[8px] font-black text-slate-500 uppercase italic">Veredito do Auditor</span>
@@ -210,7 +219,6 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                </div>
             </div>
 
-            {/* NOVO CARD: RISCO DE CRÉDITO E ORIENTAÇÃO DE MARKUP (CARD 5) */}
             <div className={`bg-slate-900 border rounded-[4rem] p-10 shadow-2xl space-y-6 transition-all ${creditRiskMetrics.loss > 0 ? 'border-rose-500/30' : 'border-white/10'}`}>
                <div className="flex justify-between items-center">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-rose-400 italic">Risco de Crédito</h4>
