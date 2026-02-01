@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine } from '../types';
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators } from '../types';
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { calculateProjections, calculateAttractiveness, sanitize } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';
@@ -27,7 +27,6 @@ const preparePayload = (obj: any) => {
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   
-  // Em modo Trial ou para o sistema, retornamos um perfil mock premium
   if (isTrial || userId === SYSTEM_TUTOR_ID || ['admin', 'tutor', 'alpha'].includes(userId)) {
     const isTutor = isTrial || userId.includes('tutor') || userId === SYSTEM_TUTOR_ID;
     return {
@@ -38,12 +37,11 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       phone: '+5511999990000',
       email: `${userId || 'trial'}@empirion.ia`, 
       role: isTutor ? 'tutor' : 'player', 
-      is_opal_premium: true, // Trial é sempre premium para demonstração
+      is_opal_premium: true, 
       created_at: new Date().toISOString()
     };
   }
 
-  // Busca real no banco de dados
   const { data, error } = await supabase
     .from('users')
     .select('id, supabase_user_id, name, nickname, phone, email, role, is_opal_premium, created_at')
@@ -66,7 +64,6 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
     const { data: { session } } = await (supabase.auth as any).getSession();
     
-    // Busca campeonatos reais
     const { data: rawChamps, error: rawErr } = await supabase
       .from('championships')
       .select('*')
@@ -81,7 +78,6 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
        }
     }
 
-    // Busca campeonatos Trial/Sandbox
     let trialQuery = supabase.from('trial_championships').select('*');
     if (session) {
        trialQuery = trialQuery.or(`tutor_id.eq.${session.user.id},tutor_id.is.null,tutor_id.eq.${SYSTEM_TUTOR_ID}`);
@@ -122,6 +118,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     championship_id: newId,
     equity: 5055447,
     credit_limit: 5000000,
+    current_cash: 170000,
+    current_rating: 'AAA',
     status: 'active',
     insolvency_status: 'SAUDAVEL',
     is_bot: !!t.is_bot,
@@ -138,6 +136,8 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         }
     }
   }));
+
+  const mkt = champData.market_indicators || DEFAULT_MACRO;
 
   const fullChamp = { 
     ...champData, 
@@ -157,11 +157,19 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     transparency_level: champData.transparency_level || 'medium',
     gazeta_mode: champData.gazeta_mode || 'anonymous',
     regions_count: champData.regions_count || 1,
+    social_charges: mkt.social_charges || 35.0,
+    compulsory_loan_agio: mkt.compulsory_loan_agio || 3.0,
+    production_hours_period: mkt.production_hours_period || 946,
+    award_values: mkt.award_values || DEFAULT_MACRO.award_values,
+    exchange_rates: mkt.exchange_rates || DEFAULT_MACRO.exchange_rates,
+    staffing: mkt.staffing || DEFAULT_MACRO.staffing,
+    prices: mkt.prices || DEFAULT_MACRO.prices,
+    machinery_values: mkt.machinery_values || DEFAULT_MACRO.machinery_values,
     config: { 
       ...(champData.config || {}), 
       round_rules: champData.round_rules || {}
     }
-  } as Championship;
+  } as any;
 
   const champTable = isTrial ? 'trial_championships' : 'championships';
   const teamsTable = isTrial ? 'trial_teams' : 'teams';
@@ -190,6 +198,14 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       tutor_id: currentUserId,
       round_started_at: fullChamp.round_started_at,
       dividend_percent: fullChamp.dividend_percent,
+      social_charges: fullChamp.social_charges,
+      compulsory_loan_agio: fullChamp.compulsory_loan_agio,
+      production_hours_period: fullChamp.production_hours_period,
+      award_values: fullChamp.award_values,
+      exchange_rates: fullChamp.exchange_rates,
+      staffing: fullChamp.staffing,
+      prices: fullChamp.prices,
+      machinery_values: fullChamp.machinery_values,
       config: fullChamp.config
     });
     
@@ -259,14 +275,28 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
 
     const isTrial = !!arena.is_trial;
     const teams = arena.teams || [];
-    const decisions: Record<string, DecisionData> = {};
-    const attractions: Record<string, number> = {};
+    
+    const { data: roundMacroData } = await supabase
+      .from('championship_macro_rules')
+      .select('*')
+      .eq('championship_id', championshipId)
+      .eq('round', currentRound + 1)
+      .maybeSingle();
+
+    const effectiveMacro: MacroIndicators = {
+      ...DEFAULT_MACRO,
+      ...arena.market_indicators,
+      ...(roundMacroData || {})
+    };
+
+    const batchResults = [];
+    const now = new Date().toISOString();
 
     for (const team of teams) {
       let teamDecision;
       const decisionTable = isTrial ? 'trial_decisions' : 'current_decisions';
       if (team.is_bot) {
-        teamDecision = await generateBotDecision(arena.branch, currentRound + 1, arena.regions_count, arena.market_indicators);
+        teamDecision = await generateBotDecision(arena.branch, currentRound + 1, arena.regions_count, effectiveMacro);
       } else {
         const { data } = await supabase.from(decisionTable).select('data').eq('team_id', team.id).eq('round', currentRound + 1).maybeSingle();
         teamDecision = data?.data;
@@ -274,40 +304,32 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       
       if (!teamDecision) {
         teamDecision = {
-          regions: Object.fromEntries(Array.from({ length: arena.regions_count || 4 }, (_, i) => [i + 1, { price: 375, term: 1, marketing: 0 }])),
-          hr: { hired: 0, fired: 0, salary: 1313, trainingPercent: 0, participationPercent: 0, sales_staff_count: 50, misc: 0 },
-          production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, rd_investment: 0, extraProductionPercent: 0, net_profit_target_percent: 5.0, term_interest_rate: 1.5 },
+          regions: Object.fromEntries(Array.from({ length: arena.regions_count || 4 }, (_, i) => [i + 1, { price: effectiveMacro.avg_selling_price || 375, term: 1, marketing: 0 }])),
+          hr: { hired: 0, fired: 0, salary: effectiveMacro.hr_base.salary, trainingPercent: 0, participationPercent: 0, sales_staff_count: effectiveMacro.staffing.sales.count, misc: 0 },
+          production: { purchaseMPA: 10000, purchaseMPB: 5000, paymentType: 1, activityLevel: 80, rd_investment: 0, extraProductionPercent: 0, net_profit_target_percent: 5.0, term_interest_rate: effectiveMacro.sales_interest_rate || 1.5 },
           machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
           finance: { loanRequest: 0, loanTerm: 1, application: 0 },
           estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 },
           judicial_recovery: false
         };
       }
-      decisions[team.id] = teamDecision;
-      attractions[team.id] = calculateAttractiveness(teamDecision);
-    }
 
-    const totalAttraction = Object.values(attractions).reduce((a, b) => a + b, 0);
-    const batchResults = [];
-    const now = new Date().toISOString();
-
-    for (const team of teams) {
-      const relativeShare = totalAttraction > 0 ? (attractions[team.id] / totalAttraction) * 100 : (100 / teams.length);
-      const roundRules = arena.config?.round_rules || {};
-      const result = calculateProjections(decisions[team.id], arena.branch, arena.ecosystemConfig || {} as any, arena.market_indicators, team, [], currentRound + 1, roundRules, relativeShare, arena);
+      const result = calculateProjections(teamDecision, arena.branch, arena.ecosystemConfig || {} as any, effectiveMacro, team, [], currentRound + 1, arena.round_rules, undefined, arena);
       
-      const currentFleet = (team.kpis?.fleet || arena.market_indicators.initial_machinery_mix) as InitialMachine[];
+      const currentFleet = (team.kpis?.fleet || effectiveMacro.initial_machinery_mix) as InitialMachine[];
       const nextFleet = currentFleet.map(m => ({ ...m, age: m.age + 1 }));
 
-      const buy = decisions[team.id].machinery.buy;
+      const buy = teamDecision.machinery.buy;
       if (buy.alfa > 0) {
-        for (let i = 0; i < buy.alfa; i++) nextFleet.push({ id: `buy-alfa-${Date.now()}-${i}`, model: 'alfa', age: 0, purchase_value: arena.market_indicators.machinery_values.alfa });
+        for (let i = 0; i < buy.alfa; i++) nextFleet.push({ id: `buy-alfa-${Date.now()}-${i}`, model: 'alfa', age: 0, purchase_value: effectiveMacro.machinery_values.alfa });
       }
 
       batchResults.push({ 
         team_id: team.id, 
         kpis: { ...result.kpis, fleet: nextFleet, statements: result.statements }, 
         equity: result.kpis.equity, 
+        current_cash: result.health.cash,
+        current_rating: result.health.rating,
         insolvency_status: result.kpis.insolvency_status 
       });
 
@@ -315,10 +337,11 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
       await supabase.from(teamsTable).update({ 
         kpis: { ...result.kpis, fleet: nextFleet, statements: result.statements }, 
         equity: result.kpis.equity, 
+        current_cash: result.health.cash,
+        current_rating: result.health.rating,
         insolvency_status: result.kpis.insolvency_status 
       }).eq('id', team.id);
 
-      // Persistência no histórico (companies) para Auditoria Oracle
       if (!isTrial) {
         await supabase.from('companies').insert({
           team_id: team.id,
@@ -344,7 +367,7 @@ export const processRoundTurnover = async (championshipId: string, currentRound:
        local[idx].round_started_at = now;
        local[idx].teams = local[idx].teams.map((t: any) => {
          const res = batchResults.find(r => r.team_id === t.id);
-         return res ? { ...t, kpis: res.kpis, equity: res.equity, insolvency_status: res.insolvency_status } : t;
+         return res ? { ...t, ...res } : t;
        });
        localStorage.setItem(LOCAL_CHAMPS_KEY, JSON.stringify(local));
     }
@@ -368,6 +391,19 @@ export const updateEcosystem = async (id: string, updates: any) => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_championships' : 'championships';
   const { error } = await supabase.from(table).update(updates).eq('id', id);
+  if (updates.round_rules) {
+    const rounds = Object.keys(updates.round_rules);
+    for (const r of rounds) {
+       const roundNum = parseInt(r);
+       const ruleData = updates.round_rules[roundNum];
+       await supabase.from('championship_macro_rules').upsert({
+          championship_id: id,
+          round: roundNum,
+          ...ruleData,
+          updated_at: new Date().toISOString()
+       }, { onConflict: 'championship_id, round' });
+    }
+  }
   return { error };
 };
 
@@ -401,20 +437,9 @@ export const submitCommunityRating = async (ratingData: any) => {
   return await supabase.from('community_ratings').insert(ratingData);
 };
 
-export const prev_plan_saveBusinessPlan = async (p: any) => {
-  return await supabase.from('business_plans').upsert(p);
-};
-
-// Fix: Redefined saveBusinessPlan to use upsert for existing record stability
 export const saveBusinessPlan = async (p: any) => {
   const { championship_id, team_id, round, data, status, version } = p;
-  
-  const { data: existing } = await supabase.from('business_plans')
-    .select('id')
-    .eq('team_id', team_id)
-    .eq('round', round)
-    .maybeSingle();
-
+  const { data: existing } = await supabase.from('business_plans').select('id').eq('team_id', team_id).eq('round', round).maybeSingle();
   if (existing) {
     return await supabase.from('business_plans').update({ data, status, version, updated_at: new Date().toISOString() }).eq('id', existing.id);
   } else {

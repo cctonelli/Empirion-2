@@ -112,8 +112,8 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0, type: 'revenue', isEditable: true },
         { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0, type: 'expense', isEditable: true }
     ]},
-    { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 59485.27, type: 'totalizer', isReadOnly: true },
-    { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.32, type: 'expense', isEditable: true },
+    { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 59485.26, type: 'totalizer', isReadOnly: true },
+    { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.31, type: 'expense', isEditable: true },
     { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 44613.95, type: 'totalizer', isReadOnly: true },
     { id: 'ppr', label: '(-) PPR-PARTICIPAÇÃO NO LUCRO', value: 0.00, type: 'expense', isEditable: true },
     { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 44613.95, type: 'totalizer', isReadOnly: true }
@@ -165,7 +165,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   tax_rate_ir: 25.0,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
-  special_purchase_premium: 5.0,
+  special_purchase_premium: 15.0,
   compulsory_loan_agio: 3.0,
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
   dividend_percent: 25.0, 
@@ -263,4 +263,4 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;
 
 export const getPageContent = (slug: string): any => {
   return DEFAULT_PAGE_CONTENT[slug] || null;
-};
+}; 

@@ -58,7 +58,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const isObserver = userRole === 'observer';
 
   const currentKpis = useMemo((): KPIs => {
-    // Fix: Added missing 'loans' property to satisfy KPIs interface (Line 74 in original error)
     const baseFallback = {
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
@@ -70,7 +69,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       market_valuation: { share_price: 1.01, tsr: 1.1 },
       statements: { 
         dre: { revenue: 3322735 },
-        balance_sheet: { assets: { total: 9176940 } }
+        balance_sheet: { assets: { total: 9176940 } },
+        cash_flow: { outflow: { total: 1200000, payroll: 450000, interest: 25000 } }
       }
     };
     if (!activeTeam?.kpis) return baseFallback as KPIs;
@@ -92,10 +92,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   );
 
   const isStrike = currentKpis.is_on_strike;
+  const burnRate = currentKpis.statements?.cash_flow?.outflow?.total || 0;
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
-      {/* BANNER DE STATUS DO PAPEL (v1.1 RULES) */}
+      {/* BANNER DE STATUS DO PAPEL */}
       {isObserver && (
         <div className="h-10 bg-indigo-600 flex items-center justify-center gap-3 shrink-0 shadow-lg z-[100] border-b border-indigo-400/30">
            <Eye size={16} className="text-white animate-pulse" />
@@ -103,28 +104,21 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         </div>
       )}
 
-      {isStrike && (
-        <div className="h-10 bg-rose-600 flex items-center justify-center gap-3 animate-pulse shrink-0 shadow-[0_0_20px_rgba(225,29,72,0.5)] z-[100]">
-           <ShieldAlert size={16} className="text-white" />
-           <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">PROTOCOLO DE GREVE ATIVO: PRODUÇÃO BLOQUEADA</span>
-        </div>
-      )}
-
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
          <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend={`${currentKpis.market_valuation?.tsr.toFixed(1)}%`} pos={currentKpis.market_valuation?.tsr >= 0} icon={<TrendingUp size={16}/>} />
-         <CockpitStat label="Receita Bruta" val={`${currencySymbol} ${fmt(currentKpis.statements?.dre?.revenue || 0)}`} trend="Real" pos icon={<DollarSign size={16}/>} />
+         <CockpitStat label="Equity" val={`${currencySymbol} ${fmt(currentKpis.equity || 0)}`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
          <CockpitStat 
-            label="Clima Organizacional" 
-            val={isStrike ? "GREVE" : currentKpis.motivation_score > 0.75 ? "BOA" : "REGULAR"} 
-            trend={`${(currentKpis.motivation_score * 100).toFixed(0)}%`} 
-            pos={!isStrike && currentKpis.motivation_score > 0.5} 
-            icon={<HeartPulse size={16} className={isStrike ? 'text-rose-500 animate-bounce' : ''}/>} 
+            label="Capital Burn" 
+            val={`${currencySymbol} ${fmt(burnRate)}`} 
+            trend="Período" 
+            pos={false} 
+            icon={<Flame size={16} className="text-rose-500" />} 
          />
-         <CockpitStat label="Produtividade" val={isStrike ? "0%" : "100%"} trend="Eficiência" pos={!isStrike} icon={<Cpu size={16}/>} />
-         <CockpitStat label="Rating" val={currentKpis.rating} trend="Credit" pos icon={<ShieldCheck size={16}/>} />
+         <CockpitStat label="Market Share" val={`${currentKpis.market_share?.toFixed(1)}%`} trend="Global" pos icon={<PieChart size={16}/>} />
+         <CockpitStat label="Rating" val={currentKpis.rating} trend="Oracle" pos icon={<Shield size={16}/>} />
          <div className="px-8 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
             <div className="flex flex-col">
-               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Tempo Restante</span>
+               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Tempo de Round</span>
                <div className="scale-[0.8] origin-left -ml-1">
                   <ChampionshipTimer 
                     roundStartedAt={activeArena?.round_started_at} 
@@ -142,30 +136,41 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             <div className="p-6 space-y-6">
                <header className="flex items-center justify-between border-b border-white/10 pb-4">
                   <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                     <Landmark size={14}/> Oracle Status
+                     <Landmark size={14}/> Node Telemetry
                   </h3>
-                  <span className="text-[10px] font-black text-slate-600 uppercase">Ciclo 0{activeArena?.current_round}</span>
+                  <span className="text-[10px] font-black text-slate-600 uppercase italic">v15.25 Gold</span>
                </header>
 
-               {isStrike && (
-                  <div className="bg-rose-600/10 border border-rose-500/30 p-6 rounded-[2.5rem] space-y-4 animate-pulse">
-                     <div className="flex items-center gap-3 text-rose-500">
-                        <Flame size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">ALERTA DE PARALISAÇÃO</span>
+               {/* TELEMETRIA DE FLUXO (NOVO v15.25) */}
+               <div className="bg-slate-950/80 p-6 rounded-[2.5rem] border border-white/5 space-y-6 shadow-inner">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
+                     <Zap size={12} className="text-blue-500" /> Dreno de Capital
+                  </h4>
+                  <div className="space-y-4">
+                     <TelemetryLine label="Folha + Encargos" val={currentKpis.statements?.cash_flow?.outflow?.payroll || 0} color="text-indigo-400" />
+                     <TelemetryLine label="Juros & Ágios" val={currentKpis.statements?.cash_flow?.outflow?.interest || 0} color="text-rose-400" />
+                     <div className="pt-2 border-t border-white/5 flex justify-between items-end">
+                        <span className="text-[8px] font-black text-slate-600 uppercase">Cash at Hand</span>
+                        <span className="text-xl font-mono font-black text-emerald-500">{currencySymbol} {fmt(currentKpis.current_cash || 0)}</span>
                      </div>
-                     <p className="text-[10px] text-rose-200 font-medium italic leading-relaxed">
-                        Sua equipe de produção entrou em greve devido ao baixo índice de motivação. Reajuste salários ou pague PLR para normalizar o nodo no próximo ciclo.
-                     </p>
                   </div>
-               )}
-               
-               <div className="bg-slate-950/80 p-5 rounded-[2.5rem] border border-white/5 space-y-4 shadow-inner">
-                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Insolvência (Kanitz)</h4>
-                  <div className="flex items-center justify-between">
-                     <span className={`text-4xl font-black font-mono italic text-emerald-500`}>2.19</span>
-                     <div className="text-right">
-                        <span className={`block text-[8px] font-black uppercase tracking-widest text-emerald-500`}>SOLVENTE</span>
-                     </div>
+               </div>
+
+               {/* GAUGE DE CARGA SISTÊMICA (NOVO v15.25) */}
+               <div className="bg-slate-950/80 p-6 rounded-[2.5rem] border border-white/5 space-y-4 shadow-inner">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
+                     <Cpu size={12} className="text-orange-500" /> Carga da Fábrica
+                  </h4>
+                  <div className="relative h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                     <motion.div 
+                        initial={{ width: 0 }} 
+                        animate={{ width: `${currentKpis.last_decision?.production?.activityLevel || 80}%` }}
+                        className="absolute h-full bg-gradient-to-r from-orange-600 to-orange-400 shadow-[0_0_10px_rgba(249,115,22,0.5)]" 
+                     />
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
+                     <span>Ocupação Real</span>
+                     <span className="text-white">{currentKpis.last_decision?.production?.activityLevel || 80}%</span>
                   </div>
                </div>
             </div>
@@ -176,10 +181,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                <div className="flex justify-between items-end border-b border-white/5 pb-4 mb-4 shrink-0">
                   <div>
                      <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Matriz de <span className="text-orange-600">Decisão</span></h2>
-                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">Nodo {activeTeam?.name || 'ALPHA'}</p>
+                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">Nodo Operacional: {activeTeam?.name}</p>
                   </div>
-                  <button onClick={() => setShowGazette(true)} className="px-5 py-2.5 bg-slate-900 border border-white/10 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2">
-                     <Newspaper size={14} /> Oracle Gazette
+                  <button onClick={() => setShowGazette(true)} className="px-5 py-2.5 bg-slate-900 border border-white/10 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2 active:scale-95">
+                     <Newspaper size={14} /> Abrir Oracle Gazette
                   </button>
                </div>
                <div className="flex-1 overflow-hidden relative">
@@ -212,6 +217,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     </div>
   );
 };
+
+const TelemetryLine = ({ label, val, color }: any) => (
+   <div className="flex justify-between items-end">
+      <span className="text-[8px] font-black text-slate-600 uppercase">{label}</span>
+      <span className={`text-xs font-mono font-black ${color}`}>$ {val.toLocaleString()}</span>
+   </div>
+);
 
 const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
   <div className="px-8 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden">

@@ -1,49 +1,62 @@
 
 -- ==============================================================================
--- EMPIRION SCHEMA REFINE v31.8 - BRANCH & COMPLIANCE UPDATE
+-- EMPIRION SCHEMA EVOLUTION v31.12.3 - CONSOLIDATED SECURITY PROTOCOL
 -- ==============================================================================
 
--- 1. EXPANSÃO DE RAMOS (Suporte para Finance e Construction)
-ALTER TABLE public.championships 
-DROP CONSTRAINT IF EXISTS championships_branch_check;
-
-ALTER TABLE public.championships 
-ADD CONSTRAINT championships_branch_check 
-CHECK (branch = ANY (ARRAY['industrial'::text, 'commercial'::text, 'services'::text, 'agribusiness'::text, 'finance'::text, 'construction'::text]));
-
--- 2. EXPANSÃO DE STATUS DE BUSINESS PLAN (Suporte para 'approved')
-ALTER TABLE public.business_plans 
-DROP CONSTRAINT IF EXISTS business_plans_status_check;
-
-ALTER TABLE public.business_plans 
-ADD CONSTRAINT business_plans_status_check 
-CHECK (status = ANY (ARRAY['draft'::text, 'submitted'::text, 'approved'::text]));
-
--- 3. ADIÇÃO DE COLUNA DE PERFORMANCE (regions_count)
-ALTER TABLE public.championships 
-ADD COLUMN IF NOT EXISTS regions_count INTEGER DEFAULT 1;
-
-ALTER TABLE public.trial_championships 
-ADD COLUMN IF NOT EXISTS regions_count INTEGER DEFAULT 1;
-
--- 4. REFORÇO DE ÍNDICES PARA BUSCA RÁPIDA DE DECISÕES
-CREATE INDEX IF NOT EXISTS idx_decisions_team_round_champ 
-ON public.current_decisions (team_id, round, championship_id);
-
-CREATE INDEX IF NOT EXISTS idx_trial_decisions_team_round_champ 
-ON public.trial_decisions (team_id, round, championship_id);
-
--- 5. POLÍTICAS DE AUDITORIA (TUTOR READ ALL DECISIONS)
--- Garante que o Tutor possa ver todas as decisões da sua Arena para auditoria
+-- 1. LIMPEZA E ATIVAÇÃO GLOBAL
 DO $$ 
+DECLARE
+    t text;
+    p record;
 BEGIN
-    DROP POLICY IF EXISTS "Tutors_Read_All_Decisions" ON public.current_decisions;
-    CREATE POLICY "Tutors_Read_All_Decisions" ON public.current_decisions
-    FOR SELECT TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = current_decisions.championship_id AND c.tutor_id = auth.uid()));
-
-    DROP POLICY IF EXISTS "Tutors_Read_All_Audit" ON public.decision_audit_log;
-    CREATE POLICY "Tutors_Read_All_Audit" ON public.decision_audit_log
-    FOR SELECT TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = decision_audit_log.championship_id AND c.tutor_id = auth.uid()));
+    -- Lista de tabelas sob governança Empirion
+    FOR t IN 
+        SELECT tablename FROM pg_tables WHERE schemaname = 'public' 
+        AND tablename IN ('championships', 'teams', 'team_members', 'companies', 'current_decisions', 'decision_audit_log', 'public_reports', 'users', 'championship_macro_rules', 'business_plans', 'point_transactions', 'empire_points', 'championship_tutors')
+    LOOP
+        -- Remove todas as políticas existentes para garantir uma instalação limpa
+        FOR p IN SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = t LOOP
+            EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', p.policyname, t);
+        END LOOP;
+        
+        -- Ativa e força RLS
+        EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+        EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', t);
+    END LOOP;
 END $$;
+
+-- 2. CAMADA DE USUÁRIOS (USERS)
+CREATE POLICY "Users_Read_Self" ON public.users FOR SELECT TO authenticated USING (supabase_user_id = auth.uid());
+CREATE POLICY "Users_Update_Self" ON public.users FOR UPDATE TO authenticated USING (supabase_user_id = auth.uid());
+CREATE POLICY "Admin_Full_Users" ON public.users FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.users u WHERE u.supabase_user_id = auth.uid() AND u.role = 'admin'));
+
+-- 3. CAMADA DE CAMPEONATOS (CHAMPIONSHIPS)
+CREATE POLICY "Champs_Select_Access" ON public.championships FOR SELECT TO authenticated, anon 
+USING (is_public = true OR tutor_id = auth.uid() OR observers @> jsonb_build_array(auth.uid()::text) OR EXISTS (SELECT 1 FROM public.team_members tm JOIN public.teams t ON tm.team_id = t.id WHERE t.championship_id = public.championships.id AND tm.user_id = auth.uid()));
+CREATE POLICY "Tutor_Manage_Champs" ON public.championships FOR ALL TO authenticated USING (tutor_id = auth.uid());
+
+-- 4. CAMADA DE EMPRESAS E HISTÓRICO (COMPANIES)
+CREATE POLICY "Team_Read_Own_Company" ON public.companies FOR SELECT TO authenticated USING (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()));
+CREATE POLICY "Tutor_Read_Arena_Companies" ON public.companies FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = companies.championship_id AND c.tutor_id = auth.uid()));
+CREATE POLICY "Observer_Read_Arena_Companies" ON public.companies FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = companies.championship_id AND c.observers @> jsonb_build_array(auth.uid()::text)));
+
+-- 5. CAMADA DE DECISÕES TÁTICAS (CURRENT_DECISIONS)
+CREATE POLICY "Team_Manage_Own_Decisions" ON public.current_decisions FOR ALL TO authenticated 
+USING (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()))
+WITH CHECK (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()));
+CREATE POLICY "Tutor_Read_Arena_Decisions" ON public.current_decisions FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = current_decisions.championship_id AND c.tutor_id = auth.uid()));
+
+-- 6. CAMADA DE RELATÓRIOS PÚBLICOS (GAZETA)
+CREATE POLICY "Public_Reports_Visibility" ON public.public_reports FOR SELECT TO authenticated, anon 
+USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = public_reports.championship_id AND (c.is_public OR c.transparency_level = 'full' OR (c.transparency_level IN ('high','medium')))));
+
+-- 7. AUDITORIA (DECISION_AUDIT_LOG)
+CREATE POLICY "Audit_Read_Authorized" ON public.decision_audit_log FOR SELECT TO authenticated 
+USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM public.championships c WHERE c.id = decision_audit_log.championship_id AND (c.tutor_id = auth.uid() OR c.observers @> jsonb_build_array(auth.uid()::text))));
+
+-- 8. PONTOS E GAMIFICAÇÃO (EMPIRE_POINTS)
+CREATE POLICY "Points_Read_Own" ON public.empire_points FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "Transactions_Read_Own" ON public.point_transactions FOR SELECT TO authenticated USING (user_id = auth.uid());
+
+-- 9. GESTÃO DE ARENAS (CHAMPIONSHIP_TUTORS)
+CREATE POLICY "Owner_Manage_Auxiliary" ON public.championship_tutors FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = championship_tutors.championship_id AND c.tutor_id = auth.uid()));

@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V15.3 - ORACLE MASTER BUILD (STABILITY UPDATE)
+ * EMPIRION V15.25 - ORACLE CONSOLIDATED MVP
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -17,11 +17,7 @@ export type LaborAvailability = 'BAIXA' | 'MEDIA' | 'ALTA';
 export type TransparencyLevel = 'low' | 'medium' | 'high' | 'full';
 export type GazetaMode = 'anonymous' | 'identified';
 export type ModalityType = 'standard' | 'blitz' | 'marathon';
-
-// Fix: Added missing exported member 'AnalysisSource' (Error in services/gemini.ts:3, constants.tsx:2, components/ChampionshipWizard.tsx:13)
 export type AnalysisSource = 'parameterized' | 'ai_real_world';
-
-// Fix: Added missing exported member 'RegionType' (Error in services/gemini.ts:3, constants.tsx:2, components/ChampionshipWizard.tsx:13)
 export type RegionType = 'domestic' | 'international';
 
 export interface UserProfile {
@@ -121,11 +117,27 @@ export interface Loan {
 }
 
 export interface MacroIndicators {
+  ice: number;
+  demand_variation: number;
+  inflation_rate: number;
+  customer_default_rate: number;
   interest_rate_tr: number;
-  compulsory_loan_agio: number;
-  late_penalty_rate: number;
+  supplier_interest: number;
+  investment_return_rate: number;
+  avg_selling_price: number;
   tax_rate_ir: number;
-  dividend_percent: number;
+  late_penalty_rate: number;
+  machine_sale_discount: number;
+  special_purchase_premium: number;
+  compulsory_loan_agio: number;
+  social_charges: number;
+  production_hours_period: number;
+  exchange_rates: Record<CurrencyType, number>;
+  award_values: {
+    cost_precision: number;
+    revenue_precision: number;
+    profit_precision: number;
+  };
   prices: {
     mp_a: number;
     mp_b: number;
@@ -137,6 +149,11 @@ export interface MacroIndicators {
   machinery_values: Record<MachineModel, number>;
   initial_machinery_mix: InitialMachine[];
   hr_base: { salary: number; [key: string]: any };
+  staffing: {
+    admin: { count: number; salaries: number };
+    sales: { count: number; salaries: number };
+    production: { count: number; salaries: number };
+  };
   [key: string]: any;
 }
 
@@ -172,6 +189,7 @@ export interface KPIs {
   motivation_score?: number;
   is_on_strike?: boolean;
   market_valuation?: { share_price: number; tsr: number };
+  current_cash?: number;
   [key: string]: any;
 }
 
@@ -184,6 +202,8 @@ export interface Team {
   is_bot?: boolean;
   insolvency_status?: InsolvencyStatus;
   master_key_enabled?: boolean;
+  current_cash?: number;
+  current_rating?: CreditRating;
 }
 
 export interface ProjectionResult {
@@ -228,7 +248,6 @@ export interface Championship {
   [key: string]: any;
 }
 
-// Fix: Added missing exported member 'BlackSwanEvent' (Error in components/TutorArenaControl.tsx:11)
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -241,29 +260,6 @@ export interface BlackSwanEvent {
   };
 }
 
-// Fix: Added missing exported member 'CommunityCriteria' (Error in components/CommunityView.tsx:16)
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
-// Fix: Added missing exported member 'Modality' (Error in components/LandingPage.tsx:17, pages/ModalityDetail.tsx:13, hooks/useModalities.ts:4)
-export interface Modality {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  image_url?: string;
-  page_content: {
-    hero: { title: string; subtitle: string };
-    features: string[];
-    kpis: string[];
-    accent_color?: 'orange' | 'blue' | 'emerald';
-  };
-}
-
-// Fix: Added missing exported member 'TeamProgress' (Error in components/TutorDecisionMonitor.tsx:15)
 export interface TeamProgress {
   team_id: string;
   team_name: string;
@@ -273,4 +269,27 @@ export interface TeamProgress {
   insolvent: boolean;
   master_key_enabled?: boolean;
   auditLogs: AuditLog[];
+}
+
+// Fix: Added Modality interface to define simulation variants and their associated page content
+export interface Modality {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  is_public: boolean;
+  page_content: {
+    hero: { title: string; subtitle: string };
+    features: string[];
+    kpis: string[];
+    accent_color?: string;
+  };
+}
+
+// Fix: Added CommunityCriteria interface for community voting and evaluation criteria
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
 }

@@ -11,7 +11,6 @@ import {
 import { EcosystemConfig, Championship, MacroIndicators, BlackSwanEvent, LaborAvailability, CurrencyType } from '../types';
 import { updateEcosystem, supabase } from '../services/supabase';
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
-// Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 
@@ -30,7 +29,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
   useEffect(() => {
     setMacro(inheritedRules);
-    // Verifica se já existem decisões para o round atual para contextualizar a intervenção
     const checkDecisions = async () => {
        const table = championship.is_trial ? 'trial_decisions' : 'current_decisions';
        const { count } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('championship_id', championship.id).eq('round', nextRoundIdx);
@@ -51,13 +49,12 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     await updateEcosystem(championship.id, payload);
     onUpdate(payload);
     setIsSaving(false);
-    alert(`INTERVENÇÃO EXECUTADA: Cenário para P0${nextRoundIdx} selado.`);
+    alert(`INTERVENÇÃO EXECUTADA: Cenário para P0${nextRoundIdx} selado no motor Oracle.`);
   };
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20 relative z-10">
       
-      {/* HEADER DE STATUS DE CONTEXTO */}
       <div className={`p-8 rounded-[3rem] border flex flex-col md:flex-row items-center justify-between shadow-2xl transition-all gap-6 ${hasDecisions ? 'bg-indigo-600/10 border-indigo-500/30' : 'bg-slate-900/40 border-white/5'}`}>
          <div className="flex items-center gap-6">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${hasDecisions ? 'bg-indigo-600 text-white animate-pulse' : 'bg-slate-800 text-slate-500'}`}>
@@ -104,6 +101,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                           ))}
                        </div>
                     </div>
+                    <div className="mt-8">
+                       <MacroInput dark label="Encargos Sociais (%)" val={macro.social_charges || 35.0} onChange={(v: number) => setMacro({...macro, social_charges: v})} />
+                    </div>
                  </div>
               </div>
            )}
@@ -140,31 +140,43 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
            {activeTab === 'market' && (
               <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
-                 <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><ShoppingCart className="text-orange-500"/> Mercado P00</h3>
+                 <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><ShoppingCart className="text-orange-500"/> Mercado e Operações</h3>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                     <MacroInput label="Preço Venda Médio ($)" val={macro.avg_selling_price || 340} onChange={(v: number) => setMacro({...macro, avg_selling_price: v})} />
                     <MacroInput label="Distribuição Unit. ($)" val={macro.prices.distribution_unit || 50} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, distribution_unit: v}})} />
                     <MacroInput label="Base Campanha MKT ($)" val={macro.prices.marketing_campaign || 10000} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, marketing_campaign: v}})} />
+                    <MacroInput label="Juros Fornecedor (%)" val={macro.supplier_interest || 1.5} onChange={(v: number) => setMacro({...macro, supplier_interest: v})} />
+                    <MacroInput label="Ágio Compulsório (%)" val={macro.compulsory_loan_agio || 3.0} onChange={(v: number) => setMacro({...macro, compulsory_loan_agio: v})} />
+                    <MacroInput label="Variação Demanda (%)" val={macro.demand_variation || 0} onChange={(v: number) => setMacro({...macro, demand_variation: v})} />
                  </div>
               </div>
            )}
 
            {activeTab === 'staffing' && (
               <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
-                 <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Briefcase className="text-indigo-400"/> Staffing P00</h3>
+                 <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-4"><Briefcase className="text-indigo-400"/> Staffing v15.22</h3>
                  <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <MacroInput label="Salário Base ($)" val={macro.hr_base.salary || 1300} onChange={(v: number) => setMacro({...macro, hr_base: {...macro.hr_base, salary: v}})} />
                     <div className="p-8 bg-slate-950/50 rounded-3xl border border-white/5 space-y-2">
                        <span className="block text-[8px] font-black text-slate-600 uppercase">Administração</span>
-                       <span className="text-xl font-mono font-black text-white">{macro.staffing.admin.count} Units</span>
+                       <div className="flex items-center gap-3">
+                          <input type="number" value={macro.staffing.admin.count} onChange={e => setMacro({...macro, staffing: {...macro.staffing, admin: {...macro.staffing.admin, count: parseInt(e.target.value) || 0}}})} className="bg-transparent border-b border-white/10 text-xl font-mono font-black text-white outline-none w-20" />
+                          <span className="text-xs text-slate-500">Units</span>
+                       </div>
                     </div>
                     <div className="p-8 bg-slate-950/50 rounded-3xl border border-white/5 space-y-2">
                        <span className="block text-[8px] font-black text-slate-600 uppercase">Vendas</span>
-                       <span className="text-xl font-mono font-black text-white">{macro.staffing.sales.count} Units</span>
+                       <div className="flex items-center gap-3">
+                          <input type="number" value={macro.staffing.sales.count} onChange={e => setMacro({...macro, staffing: {...macro.staffing, sales: {...macro.staffing.sales, count: parseInt(e.target.value) || 0}}})} className="bg-transparent border-b border-white/10 text-xl font-mono font-black text-white outline-none w-20" />
+                          <span className="text-xs text-slate-500">Units</span>
+                       </div>
                     </div>
                     <div className="p-8 bg-slate-950/50 rounded-3xl border border-white/5 space-y-2">
                        <span className="block text-[8px] font-black text-slate-600 uppercase">Produção</span>
-                       <span className="text-xl font-mono font-black text-white">{macro.staffing.production.count} Units</span>
+                       <div className="flex items-center gap-3">
+                          <input type="number" value={macro.staffing.production.count} onChange={e => setMacro({...macro, staffing: {...macro.staffing, production: {...macro.staffing.production, count: parseInt(e.target.value) || 0}}})} className="bg-transparent border-b border-white/10 text-xl font-mono font-black text-white outline-none w-20" />
+                          <span className="text-xs text-slate-500">Units</span>
+                       </div>
                     </div>
                  </div>
               </div>
@@ -192,7 +204,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <ParamCard label="Dólar (USD)" val={macro.exchange_rates?.USD || 5.2} suffix="x" onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} icon={<DollarSign className="text-emerald-500" />} />
-                    <ParamCard label="Euro (EUR)" val={macro.exchange_rates?.EUR || 5.5} suffix="x" onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} icon={<EuroIcon className="text-blue-500" />} />
+                    <ParamCard label="Euro (EUR)" val={macro.exchange_rates?.EUR || 5.5} suffix="x" onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} icon={<Landmark className="text-blue-500" />} />
                  </div>
               </div>
            )}
@@ -234,7 +246,5 @@ const MacroInput = ({ label, val, onChange, dark }: any) => (
      <input type="number" step="0.1" value={val} onChange={e => onChange(Number(e.target.value))} className={`w-full border-2 rounded-[1.5rem] px-8 py-6 font-mono font-black text-3xl outline-none transition-all ${dark ? 'bg-slate-950 border-white/5 text-white focus:border-blue-600' : 'bg-slate-950 border-white/10 text-white focus:border-orange-600 shadow-inner'}`} />
   </div>
 );
-
-const EuroIcon = ({ className, size }: any) => <span className={`${className} font-black`} style={{fontSize: size}}>€</span>;
 
 export default TutorArenaControl;
