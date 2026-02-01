@@ -41,7 +41,7 @@ export const calculateProjections = (
         if (item.id === id) return item.value;
         if (item.children) {
             const res = getVal(id, item.children);
-            if (res !== 0) return res;
+            if (res !== 0) res; // No effect line, just logic placeholder
         }
     }
     return 0;
@@ -165,12 +165,11 @@ export const calculateProjections = (
   
   const finRev = prevInvestments * (sanitize(indicators.investment_return_rate, 1.0) / 100);
 
-  // REFINAMENTO DESPESAS FINANCEIRAS COM ÁGIO COMPULSÓRIO
+  // REFINAMENTO DESPESAS FINANCEIRAS COM ÁGIO COMPULSÓRIO (PROXÍMO PERÍODO)
   const tr_rate = sanitize(indicators.interest_rate_tr, 2.0) / 100;
   const agio_rate = sanitize(indicators.compulsory_loan_agio, 3.0) / 100;
   
-  // Identifica compulsório baseado em saldo negativo do período anterior (se houver reconciliação automática)
-  // Ou usa o saldo direto de Cash Flow do round anterior se disponível
+  // Identifica compulsório baseado em saldo negativo do período anterior
   const prevCompulsory = Math.abs(Math.min(0, previousState?.statements?.cash_flow?.final || previousState?.cash || 0));
   const normalST = Math.max(0, prevLoansST - prevCompulsory);
 
