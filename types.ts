@@ -114,6 +114,7 @@ export interface Loan {
   remaining_installments: number;
   interest_rate: number;
   created_at_round: number;
+  agio_rate_at_creation?: number; // Taxa de ágio aplicada (apenas para compulsório)
 }
 
 export interface MacroIndicators {
@@ -271,7 +272,6 @@ export interface TeamProgress {
   auditLogs: AuditLog[];
 }
 
-// Fix: Added Modality interface to define simulation variants and their associated page content
 export interface Modality {
   id: string;
   name: string;
@@ -287,7 +287,6 @@ export interface Modality {
   };
 }
 
-// Fix: Added CommunityCriteria interface for community voting and evaluation criteria
 export interface CommunityCriteria {
   id: string;
   label: string;

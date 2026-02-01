@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators } from '../types';
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators, Loan } from '../types';
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { calculateProjections, calculateAttractiveness, sanitize } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';
@@ -112,6 +112,32 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 
   const initialShare = 100 / Math.max(teams.length, 1);
 
+  // Inicialização do Array de Empréstimos Baseline (BDI 8ª Parcela + Compulsório P00)
+  const baselineLoans: Loan[] = [
+    { 
+      id: `bdi-start-${newId}`, 
+      type: 'normal', 
+      principal: 1000000, 
+      remaining_principal: 125000, 
+      grace_periods: 0, 
+      total_installments: 8, 
+      remaining_installments: 1, 
+      interest_rate: 2.0, 
+      created_at_round: -1 
+    },
+    { 
+      id: `compulsory-p00-${newId}`, 
+      type: 'compulsory', 
+      principal: 1372362, 
+      remaining_principal: 1372362, 
+      grace_periods: 0, 
+      total_installments: 1, 
+      remaining_installments: 1, 
+      interest_rate: 5.0, 
+      created_at_round: 0 
+    }
+  ];
+
   const teamsPayload = teams.map(t => ({
     id: crypto.randomUUID(),
     name: t.name,
@@ -129,6 +155,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         market_share: initialShare, 
         rating: 'AAA', 
         fleet: champData.market_indicators?.initial_machinery_mix || DEFAULT_MACRO.initial_machinery_mix,
+        loans: baselineLoans, // Sincronização da pendência BDI + Compulsório
         statements: {
             balance_sheet: champData.initial_financials?.balance_sheet || [],
             dre: champData.initial_financials?.dre || [],

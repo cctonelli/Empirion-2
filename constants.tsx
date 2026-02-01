@@ -47,7 +47,7 @@ export const INITIAL_FINANCIAL_TREE = {
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605.00, type: 'liability', isEditable: true },
             { id: 'liabilities.current.taxes', label: 'Imposto de Renda a pagar', value: 14871.31, type: 'liability', isEditable: true },
             { id: 'liabilities.current.dividends', label: 'Dividendos a Pagar', value: 11153.49, type: 'liability', isEditable: true },
-            { id: 'liabilities.current.loans_st', label: 'Empréstimos de curto prazo', value: 1497362.00, type: 'liability', isEditable: true }
+            { id: 'liabilities.current.loans_st', label: 'Empréstimos de curto prazo (ECP)', value: 1497362.00, type: 'liability', isEditable: true }
           ] 
         },
         {
@@ -90,6 +90,10 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'cf.inflow', label: '(+) ENTRADAS', value: 4158696.90, type: 'totalizer', children: [
         { id: 'cf.inflow.cash_sales', label: 'VENDAS À VISTA', value: 2092193.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO (-) PERDAS)', value: 694141.90, type: 'revenue', isEditable: true },
+        { id: 'cf.inflow.investment_withdrawal', label: 'RESGATE DE APLICAÇÕES', value: 0.00, type: 'revenue', isEditable: true },
+        { id: 'cf.inflow.machine_sales', label: 'VENDA DE MÁQUINAS', value: 0.00, type: 'revenue', isEditable: true },
+        { id: 'cf.inflow.awards', label: 'PREMIAÇÕES RECEBIDAS', value: 0.00, type: 'revenue', isEditable: true },
+        { id: 'cf.inflow.loans_normal', label: 'EMPRÉSTIMOS NORMAIS', value: 0.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.compulsory', label: 'EMPRÉSTIMO COMPULSÓRIO', value: 1372362.00, type: 'revenue', isEditable: true }
     ]},
     { id: 'cf.outflow', label: '(-) SAÍDAS', value: -4158696.90, type: 'totalizer', children: [
@@ -98,19 +102,25 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 41844.40, type: 'expense', isEditable: true },
         { id: 'cf.outflow.marketing', label: 'CAMPANHAS DE MARKETING', value: 275400.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 489850.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 70700.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.suppliers', label: 'PAGAMENTO A FORNECEDORES', value: 1414000.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.misc', label: 'DIVERSOS E ATRASOS GERAIS', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.machine_buy', label: 'COMPRA DE MÁQUINAS', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO DE MÁQUINAS', value: 146402.50, type: 'expense', isEditable: true },
         { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 125000.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true }
+        { id: 'cf.outflow.late_penalties', label: 'MULTAS POR ATRASO', value: 0, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.training', label: 'TREINAMENTO', value: 0, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true }
     ]},
+    { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true },
     { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 170000.00, type: 'totalizer' }
   ]
 };
 
-// Fix: Exported INITIAL_INDUSTRIAL_FINANCIALS as requested by simulation.ts
 export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;
 
-// Fix: Added award_values to DEFAULT_MACRO to match MacroIndicators interface
 export const DEFAULT_MACRO: MacroIndicators = {
   ice: 3.0,
   demand_variation: 0.0,
@@ -159,10 +169,10 @@ export const DEFAULT_MACRO: MacroIndicators = {
   },
   initial_machinery_mix: [
     { id: 'm1', model: 'alfa', age: 6, purchase_value: 500000 },
-    { id: 'm2', model: 'alfa', age: 11, purchase_value: 500000 },
-    { id: 'm3', model: 'alfa', age: 11, purchase_value: 500000 },
-    { id: 'm4', model: 'alfa', age: 21, purchase_value: 500000 },
-    { id: 'm5', model: 'alfa', age: 21, purchase_value: 500000 }
+    { id: 'm2', model: 'alfa', age: 11, purchase_value: 480000 },
+    { id: 'm3', model: 'alfa', age: 11, purchase_value: 480000 },
+    { id: 'm4', model: 'alfa', age: 21, purchase_value: 450000 },
+    { id: 'm5', model: 'alfa', age: 21, purchase_value: 450000 }
   ],
   staffing: {
     admin: { count: 20, salaries: 4 },
@@ -208,13 +218,11 @@ export const MENU_STRUCTURE: MenuItemConfig[] = [
   { label: 'Contato', path: '/contact' },
 ];
 
-// Fix: Added CHAMPIONSHIP_TEMPLATES as requested by AdminCommandCenter.tsx and ChampionshipWizard.tsx
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   { id: 'ind-master', name: 'Mastery Industrial', branch: 'industrial' },
   { id: 'com-master', name: 'Comercial Excellence', branch: 'commercial' },
 ];
 
-// Fix: Added DEFAULT_PAGE_CONTENT with required keys for multiple pages
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
      title: "Forje Seu Império",
@@ -278,7 +286,6 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'solution-individual': { title: 'Individual', body: 'Desafie-se', icon: 'Brain' }
 };
 
-// Fix: Added getPageContent function as requested by ActivityDetail.tsx
 export const getPageContent = (slug: string) => {
   return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`];
 };
