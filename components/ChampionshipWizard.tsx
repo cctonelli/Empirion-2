@@ -7,9 +7,9 @@ import {
   Hourglass, Scale, Sparkles, X, Settings2,
   TrendingUp, Zap, Users, DollarSign, Package, Cpu,
   Factory, Trash2, ClipboardList, Gauge, Table as TableIcon,
-  Landmark, Info, Settings, MousePointer2, ChevronLeft, ChevronRight
+  Landmark, Info, Settings, MousePointer2, ChevronLeft, ChevronRight, FileJson
 } from 'lucide-react';
-import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO } from '../constants';
+import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource } from '../types';
 import { createChampionshipWithTeams } from '../services/supabase';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
@@ -35,14 +35,27 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   const [regionNames, setRegionNames] = useState<string[]>([]);
   const [teamNames, setTeamNames] = useState<string[]>([]);
   const [marketIndicators, setMarketIndicators] = useState<MacroIndicators>(DEFAULT_MACRO);
-  const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>({});
-  // FIX: Updated state type to match INITIAL_FINANCIAL_TREE including cash_flow
+  const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
 
   useEffect(() => {
     setRegionNames(prev => Array.from({ length: formData.regions_count }, (_, i) => prev[i] || `Região ${i+1}`));
     setTeamNames(prev => Array.from({ length: formData.teams_count }, (_, i) => prev[i] || `Equipe ${i+1}`));
   }, [formData.regions_count, formData.teams_count]);
+
+  const loadIndustrialTemplate = () => {
+    setFormData({
+      ...formData,
+      name: `ARENA INDUSTRIAL ORACLE - ${new Date().toLocaleDateString()}`,
+      branch: 'industrial',
+      regions_count: 9,
+      total_rounds: 12
+    });
+    setMarketIndicators(DEFAULT_MACRO);
+    setRoundRules(DEFAULT_INDUSTRIAL_CHRONOGRAM);
+    setFinancials(INITIAL_FINANCIAL_TREE);
+    alert("DNA INDUSTRIAL CARREGADO: Indicadores macro e balanços de $9.5M sincronizados.");
+  };
 
   const handleLaunch = async () => {
     setIsSubmitting(true);
@@ -79,13 +92,21 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-[0_0_30px_rgba(249,115,22,0.4)]"><Sliders size={32} /></div>
            <div>
               <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Strategos Creator</h2>
-              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Nova Arena Nodal • Build Gold v13.2</p>
+              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Nova Arena Nodal • Build Gold v15.25</p>
            </div>
         </div>
-        <div className="flex gap-4">
-           {Array.from({ length: stepsCount }).map((_, i) => (
-             <div key={i} className={`h-2 rounded-full transition-all duration-700 ${step === i+1 ? 'w-20 bg-orange-600 shadow-[0_0_20px_#f97316]' : step > i+1 ? 'w-10 bg-emerald-500' : 'w-10 bg-white/5'}`} />
-           ))}
+        <div className="flex items-center gap-10">
+           <button 
+             onClick={loadIndustrialTemplate}
+             className="px-6 py-3 bg-white/5 border border-orange-500/30 text-orange-500 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all flex items-center gap-3 active:scale-95"
+           >
+              <FileJson size={14} /> Carregar Template Industrial
+           </button>
+           <div className="flex gap-4">
+              {Array.from({ length: stepsCount }).map((_, i) => (
+                <div key={i} className={`h-2 rounded-full transition-all duration-700 ${step === i+1 ? 'w-20 bg-orange-600 shadow-[0_0_20px_#f97316]' : step > i+1 ? 'w-10 bg-emerald-500' : 'w-10 bg-white/5'}`} />
+              ))}
+           </div>
         </div>
       </header>
 
@@ -133,7 +154,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         </AnimatePresence>
       </div>
 
-      {/* GATILHOS FLUTUANTES v15.5 */}
       <button 
         onClick={() => setStep(s => Math.max(1, s-1))} 
         disabled={step === 1} 
@@ -165,9 +185,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         </button>
       )}
 
-      {/* INDICADOR DISCRETO */}
       <div className="fixed bottom-6 right-1/2 translate-x-1/2 opacity-30 flex flex-col items-center pointer-events-none">
-         <span className="text-[7px] font-black text-white uppercase tracking-[0.6em]">Build Gold v13.2</span>
+         <span className="text-[7px] font-black text-white uppercase tracking-[0.6em]">Build Gold v15.25</span>
          <span className="text-[9px] font-black text-orange-500 italic uppercase">Fase {step} de {stepsCount}</span>
       </div>
     </div>

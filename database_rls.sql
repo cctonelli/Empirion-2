@@ -1,25 +1,31 @@
 
 -- ==============================================================================
--- EMPIRION SCHEMA EVOLUTION v31.12.3 - CONSOLIDATED SECURITY PROTOCOL
+-- EMPIRION SCHEMA EVOLUTION v31.12.3.1 - TOTAL BLINDAGE PROTOCOL
 -- ==============================================================================
 
--- 1. LIMPEZA E ATIVAÇÃO GLOBAL
+-- 1. LIMPEZA E ATIVAÇÃO GLOBAL (15 TABELAS CRÍTICAS)
 DO $$ 
 DECLARE
     t text;
     p record;
 BEGIN
-    -- Lista de tabelas sob governança Empirion
+    -- Lista COMPLETA de tabelas sob governança Empirion (incluindo pendentes do relatório Grok)
     FOR t IN 
         SELECT tablename FROM pg_tables WHERE schemaname = 'public' 
-        AND tablename IN ('championships', 'teams', 'team_members', 'companies', 'current_decisions', 'decision_audit_log', 'public_reports', 'users', 'championship_macro_rules', 'business_plans', 'point_transactions', 'empire_points', 'championship_tutors')
+        AND tablename IN (
+            'championships', 'teams', 'team_members', 'companies', 
+            'current_decisions', 'decision_audit_log', 'public_reports', 
+            'users', 'championship_macro_rules', 'business_plans', 
+            'point_transactions', 'empire_points', 'championship_tutors',
+            'championship_templates', 'modalities'
+        )
     LOOP
         -- Remove todas as políticas existentes para garantir uma instalação limpa
         FOR p IN SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = t LOOP
             EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', p.policyname, t);
         END LOOP;
         
-        -- Ativa e força RLS
+        -- Ativa e força RLS (FORCE garante que até os donos sigam as regras)
         EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
         EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', t);
     END LOOP;
@@ -58,5 +64,10 @@ USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM public.championships c WHER
 CREATE POLICY "Points_Read_Own" ON public.empire_points FOR SELECT TO authenticated USING (user_id = auth.uid());
 CREATE POLICY "Transactions_Read_Own" ON public.point_transactions FOR SELECT TO authenticated USING (user_id = auth.uid());
 
--- 9. GESTÃO DE ARENAS (CHAMPIONSHIP_TUTORS)
-CREATE POLICY "Owner_Manage_Auxiliary" ON public.championship_tutors FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = championship_tutors.championship_id AND c.tutor_id = auth.uid()));
+-- 9. GESTÃO DE ARENAS E TEMPLATES (CHAMPIONSHIP_TEMPLATES)
+CREATE POLICY "Public_Read_Templates" ON public.championship_templates FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Admin_Manage_Templates" ON public.championship_templates FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.users u WHERE u.supabase_user_id = auth.uid() AND u.role = 'admin'));
+
+-- 10. MODALIDADES (MODALITIES)
+CREATE POLICY "Public_Read_Modalities" ON public.modalities FOR SELECT TO authenticated, anon USING (is_public = true);
+CREATE POLICY "Admin_Manage_Modalities" ON public.modalities FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.users u WHERE u.supabase_user_id = auth.uid() AND u.role = 'admin'));

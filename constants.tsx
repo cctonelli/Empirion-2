@@ -1,49 +1,20 @@
 
 import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.22.0-Oracle-AssetBased-Default";
-export const BUILD_DATE = "29/01/2026";
+export const APP_VERSION = "v15.25.0-Oracle-Industrial-Gold";
+export const BUILD_DATE = "01/02/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
 
-export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [];
-
-export const MENU_STRUCTURE: MenuItemConfig[] = [
-  { label: 'Início', path: '/' },
-  { label: 'Ramos', path: '/branches', sub: [
-    { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory' },
-    { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart' },
-    { id: 'svc', label: 'Serviços', path: '/branches/services', icon: 'Briefcase' },
-    { id: 'agr', label: 'Agronegócio', path: '/branches/agribusiness', icon: 'Tractor' },
-    { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign' },
-    { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer' },
-  ]},
-  { label: 'Soluções', path: '/solutions', sub: [
-    { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu' },
-    { id: 'trn', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy' },
-    { id: 'bpn', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool' },
-  ]},
-  { label: 'Funcionalidades', path: '/features' },
-  { label: 'Conteúdos', path: '/blog' },
-  { label: 'Contato', path: '/contact' },
-];
-
-export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
-  'landing': {
-    title: "Empirion",
-    subtitle: "Strategic Simulation",
-    hero: { title: "Forge Equipes Vencedoras", subtitle: "Com Empirion" }
-  }
-};
-
+// ESTRUTURA FINANCEIRA INDUSTRIAL REALÍSTICA ( डीएनए EMPIRION )
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
       id: 'assets', label: 'ATIVO', value: 9544440.12, type: 'totalizer', children: [
         { 
           id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3531940.12, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 0.00, type: 'asset', isEditable: true },
+            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 170000.00, type: 'asset', isEditable: true },
             { id: 'assets.current.investments', label: 'Aplicação Financeira', value: 0.00, type: 'asset', isEditable: true },
             { id: 'assets.current.clients_group', label: 'CONTAS A RECEBER', value: 2073663.54, type: 'totalizer', children: [
                 { id: 'assets.current.clients', label: 'Clientes', value: 2092193.00, type: 'asset', isEditable: true },
@@ -119,7 +90,7 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 44613.95, type: 'totalizer', isReadOnly: true }
   ],
   cash_flow: [
-    { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 0.00, type: 'revenue', isEditable: true },
+    { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 170000.00, type: 'revenue', isEditable: true },
     { id: 'cf.inflow', label: '(+) ENTRADAS', value: 4158696.90, type: 'totalizer', children: [
         { id: 'cf.inflow.cash_sales', label: 'VENDAS À VISTA', value: 2092193.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO (-) PERDAS)', value: 694141.90, type: 'revenue', isEditable: true },
@@ -148,7 +119,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true }
     ]},
     { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true },
-    { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0.00, type: 'totalizer' }
+    { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 170000.00, type: 'totalizer' }
   ]
 };
 
@@ -161,7 +132,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   supplier_interest: 1.5,
   sales_interest_rate: 1.5, 
   investment_return_rate: 1.0,
-  avg_selling_price: 425.0,
+  avg_selling_price: 375.0,
   tax_rate_ir: 25.0,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
@@ -193,16 +164,6 @@ export const DEFAULT_MACRO: MacroIndicators = {
   labor_productivity: 1.0,
   labor_availability: 'MEDIA',
 
-  building_spec: { 
-    initial_value: 5440000, 
-    depreciation_rate: 0.01, 
-    useful_life_periods: 100 
-  },
-  initial_building: { 
-    age: 40, 
-    purchase_value: 5440000 
-  },
-
   machine_specs: {
     alfa: { 
       model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025,
@@ -219,11 +180,11 @@ export const DEFAULT_MACRO: MacroIndicators = {
   },
   
   initial_machinery_mix: [
-    { id: 'm1', model: 'alfa', age: 6, book_value: 500000 },
-    { id: 'm2', model: 'alfa', age: 11, book_value: 480000 },
-    { id: 'm3', model: 'alfa', age: 11, book_value: 480000 },
-    { id: 'm4', model: 'alfa', age: 21, book_value: 450000 },
-    { id: 'm5', model: 'alfa', age: 21, book_value: 450000 }
+    { id: 'm1', model: 'alfa', age: 6, purchase_value: 500000 },
+    { id: 'm2', model: 'alfa', age: 11, purchase_value: 500000 },
+    { id: 'm3', model: 'alfa', age: 11, purchase_value: 500000 },
+    { id: 'm4', model: 'alfa', age: 21, purchase_value: 500000 },
+    { id: 'm5', model: 'alfa', age: 21, purchase_value: 500000 }
   ],
   maintenance_physics: { alpha: 0.05, beta: 0.05, gamma: 0.05 },
   prices: { 
@@ -240,7 +201,43 @@ export const DEFAULT_MACRO: MacroIndicators = {
     sales: { count: 10, salaries: 4 },
     production: { count: 470, salaries: 1 }
   },
-  hr_base: { salary: 2000.00, training: 0, profit_sharing: 0, misc: 0 }
+  hr_base: { salary: 1313.00, training: 0, profit_sharing: 0, misc: 0 }
+};
+
+export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
+  {
+    id: 'industrial-master-v1',
+    name: 'Industrial Master Oracle (Padrão)',
+    branch: 'industrial'
+  }
+];
+
+export const MENU_STRUCTURE: MenuItemConfig[] = [
+  { label: 'Início', path: '/' },
+  { label: 'Ramos', path: '/branches', sub: [
+    { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory' },
+    { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart' },
+    { id: 'svc', label: 'Serviços', path: '/branches/services', icon: 'Briefcase' },
+    { id: 'agr', label: 'Agronegócio', path: '/branches/agribusiness', icon: 'Tractor' },
+    { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign' },
+    { id: 'con', label: 'Construção', path: '/branches/construction', icon: 'Hammer' },
+  ]},
+  { label: 'Soluções', path: '/solutions', sub: [
+    { id: 'sim', label: 'Simuladores', path: '/solutions/simulators', icon: 'Cpu' },
+    { id: 'trn', label: 'Torneios Abertos', path: '/solutions/open-tournaments', icon: 'Trophy' },
+    { id: 'bpn', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool' },
+  ]},
+  { label: 'Funcionalidades', path: '/features' },
+  { label: 'Conteúdos', path: '/blog' },
+  { label: 'Contato', path: '/contact' },
+];
+
+export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
+  'landing': {
+    title: "Empirion",
+    subtitle: "Strategic Simulation",
+    hero: { title: "Forge Equipes Vencedoras", subtitle: "Com Empirion" }
+  }
 };
 
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
@@ -263,4 +260,4 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;
 
 export const getPageContent = (slug: string): any => {
   return DEFAULT_PAGE_CONTENT[slug] || null;
-}; 
+};
