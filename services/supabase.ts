@@ -156,6 +156,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     scenario_type: champData.scenario_type || 'simulated',
     transparency_level: champData.transparency_level || 'medium',
     gazeta_mode: champData.gazeta_mode || 'anonymous',
+    regions_count: champData.regions_count || 1,
     config: { 
       ...(champData.config || {}), 
       round_rules: champData.round_rules || {}
@@ -180,6 +181,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       market_indicators: fullChamp.market_indicators,
       region_names: fullChamp.region_names,
       region_configs: fullChamp.region_configs,
+      regions_count: fullChamp.regions_count,
       currency: fullChamp.currency,
       sales_mode: fullChamp.sales_mode,
       scenario_type: fullChamp.scenario_type,
@@ -399,8 +401,25 @@ export const submitCommunityRating = async (ratingData: any) => {
   return await supabase.from('community_ratings').insert(ratingData);
 };
 
-export const saveBusinessPlan = async (p: any) => {
+export const prev_plan_saveBusinessPlan = async (p: any) => {
   return await supabase.from('business_plans').upsert(p);
+};
+
+// Fix: Redefined saveBusinessPlan to use upsert for existing record stability
+export const saveBusinessPlan = async (p: any) => {
+  const { championship_id, team_id, round, data, status, version } = p;
+  
+  const { data: existing } = await supabase.from('business_plans')
+    .select('id')
+    .eq('team_id', team_id)
+    .eq('round', round)
+    .maybeSingle();
+
+  if (existing) {
+    return await supabase.from('business_plans').update({ data, status, version, updated_at: new Date().toISOString() }).eq('id', existing.id);
+  } else {
+    return await supabase.from('business_plans').insert(p);
+  }
 };
 
 export const getTeamSimulationHistory = async (teamId: string) => {

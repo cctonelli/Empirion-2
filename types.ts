@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V15.2 - ORACLE MASTER BUILD (STABILITY UPDATE)
+ * EMPIRION V15.3 - ORACLE MASTER BUILD (STABILITY UPDATE)
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -208,6 +208,7 @@ export interface Championship {
   current_round: number;
   total_rounds: number;
   branch: Branch;
+  regions_count: number;
   market_indicators: MacroIndicators;
   round_rules?: Record<number, Partial<MacroIndicators>>;
   teams?: Team[];
