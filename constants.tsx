@@ -2,7 +2,7 @@
 import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource, MenuItemConfig } from './types';
 
 export const APP_VERSION = "v15.25.0-Oracle-Industrial-Gold";
-export const BUILD_DATE = "01/02/2026";
+export const BUILD_DATE = "02/02/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
@@ -79,10 +79,6 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 2500.00, type: 'expense', isEditable: true }
     ]},
-    { id: 'non_op_res', label: '(+/-) RESULTADO NÃO OPERACIONAL', value: 0, type: 'totalizer', children: [
-        { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0, type: 'revenue', isEditable: true },
-        { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0, type: 'expense', isEditable: true }
-    ]},
     { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 59485.26, type: 'totalizer', isReadOnly: true },
     { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.31, type: 'expense', isEditable: true },
     { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 44613.95, type: 'totalizer', isReadOnly: true },
@@ -94,10 +90,6 @@ export const INITIAL_FINANCIAL_TREE = {
     { id: 'cf.inflow', label: '(+) ENTRADAS', value: 4158696.90, type: 'totalizer', children: [
         { id: 'cf.inflow.cash_sales', label: 'VENDAS À VISTA', value: 2092193.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO (-) PERDAS)', value: 694141.90, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.investment_withdrawal', label: 'RESGATE DE APLICAÇÕES', value: 0.00, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.machine_sales', label: 'VENDA DE MÁQUINAS', value: 0.00, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.awards', label: 'PREMIAÇÕES RECEBIDAS', value: 0.00, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.loans_normal', label: 'EMPRÉSTIMOS NORMAIS', value: 0.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.compulsory', label: 'EMPRÉSTIMO COMPULSÓRIO', value: 1372362.00, type: 'revenue', isEditable: true }
     ]},
     { id: 'cf.outflow', label: '(-) SAÍDAS', value: -4158696.90, type: 'totalizer', children: [
@@ -106,23 +98,19 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 41844.40, type: 'expense', isEditable: true },
         { id: 'cf.outflow.marketing', label: 'CAMPANHAS DE MARKETING', value: 275400.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 489850.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 70700.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.suppliers', label: 'PAGAMENTO A FORNECEDORES', value: 1414000.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.misc', label: 'DIVERSOS E ATRASOS GERAIS', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.machine_buy', label: 'COMPRA DE MÁQUINAS', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO DE MÁQUINAS', value: 146402.50, type: 'expense', isEditable: true },
         { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 125000.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.late_penalties', label: 'MULTAS POR ATRASO', value: 0, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.training', label: 'TREINAMENTO', value: 0, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true }
+        { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true }
     ]},
-    { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true },
     { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 170000.00, type: 'totalizer' }
   ]
 };
 
+// Fix: Exported INITIAL_INDUSTRIAL_FINANCIALS as requested by simulation.ts
+export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;
+
+// Fix: Added award_values to DEFAULT_MACRO to match MacroIndicators interface
 export const DEFAULT_MACRO: MacroIndicators = {
   ice: 3.0,
   demand_variation: 0.0,
@@ -130,7 +118,6 @@ export const DEFAULT_MACRO: MacroIndicators = {
   customer_default_rate: 2.6,
   interest_rate_tr: 2.0,
   supplier_interest: 1.5,
-  sales_interest_rate: 1.5, 
   investment_return_rate: 1.0,
   avg_selling_price: 375.0,
   tax_rate_ir: 25.0,
@@ -142,28 +129,20 @@ export const DEFAULT_MACRO: MacroIndicators = {
   dividend_percent: 25.0, 
   social_charges: 35.0, 
   production_hours_period: 946, 
-  
-  raw_material_a_adjust: 1.0,
-  raw_material_b_adjust: 1.0,
-  marketing_campaign_adjust: 2.0,
-  distribution_cost_adjust: 1.0,
-  storage_cost_adjust: 2.0,
-  machine_alpha_price_adjust: 1.0,
-  machine_beta_price_adjust: 1.0,
-  machine_gamma_price_adjust: 1.0,
-  salary_adjust: 1.0,
-
   award_values: {
-    cost_precision: 100000,
+    cost_precision: 50000,
     revenue_precision: 100000,
-    profit_precision: 100000
+    profit_precision: 150000,
   },
-  
-  allow_machine_sale: false,
-  require_business_plan: false,
-  labor_productivity: 1.0,
-  labor_availability: 'MEDIA',
-
+  prices: { 
+    mp_a: 20.00, 
+    mp_b: 40.00, 
+    distribution_unit: 50.00, 
+    marketing_campaign: 10000.00,
+    storage_mp: 1.40,
+    storage_finished: 20.00
+  },
+  machinery_values: { alfa: 500000, beta: 1500000, gama: 3000000 },
   machine_specs: {
     alfa: { 
       model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025,
@@ -178,7 +157,6 @@ export const DEFAULT_MACRO: MacroIndicators = {
       overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 40, overload_extra_rate: 0.0005 
     }
   },
-  
   initial_machinery_mix: [
     { id: 'm1', model: 'alfa', age: 6, purchase_value: 500000 },
     { id: 'm2', model: 'alfa', age: 11, purchase_value: 500000 },
@@ -186,31 +164,29 @@ export const DEFAULT_MACRO: MacroIndicators = {
     { id: 'm4', model: 'alfa', age: 21, purchase_value: 500000 },
     { id: 'm5', model: 'alfa', age: 21, purchase_value: 500000 }
   ],
-  maintenance_physics: { alpha: 0.05, beta: 0.05, gamma: 0.05 },
-  prices: { 
-    mp_a: 20.00, 
-    mp_b: 40.00, 
-    distribution_unit: 50.00, 
-    marketing_campaign: 10000.00,
-    storage_mp: 1.40,
-    storage_finished: 20.00
-  },
-  machinery_values: { alfa: 500000, beta: 1500000, gama: 3000000 },
   staffing: {
     admin: { count: 20, salaries: 4 },
     sales: { count: 10, salaries: 4 },
     production: { count: 470, salaries: 1 }
   },
-  hr_base: { salary: 1313.00, training: 0, profit_sharing: 0, misc: 0 }
+  hr_base: { salary: 1313.00 }
 };
 
-export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
-  {
-    id: 'industrial-master-v1',
-    name: 'Industrial Master Oracle (Padrão)',
-    branch: 'industrial'
-  }
-];
+export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
+  0: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0 },
+  1: { ice: 3.2, inflation_rate: 1.2, demand_variation: 2 },
+  2: { ice: 2.8, inflation_rate: 1.5, demand_variation: -1 },
+  3: { ice: 2.5, inflation_rate: 1.8, demand_variation: -5 },
+  4: { ice: 2.2, inflation_rate: 2.1, demand_variation: -10 },
+  5: { ice: 2.8, inflation_rate: 1.6, demand_variation: 0 },
+  6: { ice: 3.5, inflation_rate: 1.2, demand_variation: 5 },
+  7: { ice: 4.0, inflation_rate: 1.0, demand_variation: 10 },
+  8: { ice: 4.2, inflation_rate: 0.9, demand_variation: 15 },
+  9: { ice: 3.8, inflation_rate: 1.1, demand_variation: 8 },
+  10: { ice: 3.2, inflation_rate: 1.3, demand_variation: 2 },
+  11: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0 },
+  12: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0 }
+};
 
 export const MENU_STRUCTURE: MenuItemConfig[] = [
   { label: 'Início', path: '/' },
@@ -232,32 +208,77 @@ export const MENU_STRUCTURE: MenuItemConfig[] = [
   { label: 'Contato', path: '/contact' },
 ];
 
+// Fix: Added CHAMPIONSHIP_TEMPLATES as requested by AdminCommandCenter.tsx and ChampionshipWizard.tsx
+export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
+  { id: 'ind-master', name: 'Mastery Industrial', branch: 'industrial' },
+  { id: 'com-master', name: 'Comercial Excellence', branch: 'commercial' },
+];
+
+// Fix: Added DEFAULT_PAGE_CONTENT with required keys for multiple pages
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
-    title: "Empirion",
-    subtitle: "Strategic Simulation",
-    hero: { title: "Forge Equipes Vencedoras", subtitle: "Com Empirion" }
-  }
+     title: "Forje Seu Império",
+     subtitle: "A arena definitiva onde inteligência neural Gemini e estratégia humana colidem.",
+     hero: { title: "Forje Seu Império", subtitle: "Com Insight Estratégico IA" }
+  },
+  'solutions-bp': {
+    title: "Plano de Negócios",
+    subtitle: "Estruture sua visão estratégica",
+    steps: [
+      { id: 0, label: 'MISSÃO' },
+      { id: 1, label: 'MERCADO' },
+      { id: 2, label: 'OBJETIVOS' },
+      { id: 3, label: 'OPERAÇÕES' },
+      { id: 4, label: 'FINANÇAS' }
+    ]
+  },
+  'rewards': {
+    subtitle: "Conquiste honrarias auditadas pelo oráculo.",
+    tiers: [
+      { name: 'Bronze Node', pts: 1000, color: 'text-orange-400' },
+      { name: 'Silver Hub', pts: 5000, color: 'text-slate-300' },
+      { name: 'Gold Center', pts: 15000, color: 'text-amber-400' },
+      { name: 'Platinum Elite', pts: 50000, color: 'text-indigo-400' }
+    ],
+    accumulation: [
+      { action: 'Participação', val: '50 pts' },
+      { action: 'Vitória', val: '500 pts' }
+    ]
+  },
+  'branch-industrial': { name: 'Industrial', body: 'Fidelidade em CapEx e Produção', features: ['Gestão de Insumos', 'Eficiência Operacional'], kpis: ['OEE', 'ROI', 'Share'] },
+  'branch-commercial': { name: 'Comercial', body: 'Varejo e Escala', features: ['Marketing Mix', 'Giro de Estoque'], kpis: ['Margem', 'Ticket Médio', 'Churn'] },
+  'solutions-simulators': {
+    title: "Simuladores de Elite",
+    subtitle: "Escolha seu campo de batalha",
+    items: [
+      { id: 'ind', label: 'Industrial', slug: 'industrial', icon: 'Factory', desc: 'Produção massiva' },
+      { id: 'com', label: 'Comercial', slug: 'commercial', icon: 'ShoppingCart', desc: 'Varejo global' }
+    ]
+  },
+  'solutions-training': {
+    tracks: [
+      { id: 'online', label: 'Online Academy', body: 'Aprenda no seu ritmo' },
+      { id: 'corp', label: 'Corporate Training', body: 'Simulações in-company' }
+    ]
+  },
+  'features': {
+    items: [
+      { id: 'f1', title: 'Real-time', body: 'Sincronização via Supabase' },
+      { id: 'f2', title: 'IA Powered', body: 'Motor Gemini 3 Pro' }
+    ]
+  },
+  'blog': {
+    subtitle: "Briefings táticos e novidades do motor.",
+    items: [
+      { id: 'p1', title: 'O Futuro das Simulações', date: '01/01/2026', author: 'Oracle' }
+    ]
+  },
+  'solution-university': { title: 'Acadêmico', body: 'Para instituições de ensino', icon: 'Users' },
+  'solution-corporate': { title: 'Corporativo', body: 'Treinamento de elite', icon: 'Shield' },
+  'solution-individual': { title: 'Individual', body: 'Desafie-se', icon: 'Brain' }
 };
 
-export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
-  0: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0, compulsory_loan_agio: 3.0 },
-  1: { ice: 3.2, inflation_rate: 1.2, demand_variation: 2, compulsory_loan_agio: 3.0 },
-  2: { compulsory_loan_agio: 3.0 },
-  3: { compulsory_loan_agio: 3.0 },
-  4: { compulsory_loan_agio: 3.5 },
-  5: { compulsory_loan_agio: 3.5 },
-  6: { compulsory_loan_agio: 3.5 },
-  7: { compulsory_loan_agio: 3.5 },
-  8: { compulsory_loan_agio: 4.0 },
-  9: { compulsory_loan_agio: 4.0 },
-  10: { compulsory_loan_agio: 4.0 },
-  11: { compulsory_loan_agio: 4.0 },
-  12: { compulsory_loan_agio: 4.0 }
-};
-
-export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;
-
-export const getPageContent = (slug: string): any => {
-  return DEFAULT_PAGE_CONTENT[slug] || null;
+// Fix: Added getPageContent function as requested by ActivityDetail.tsx
+export const getPageContent = (slug: string) => {
+  return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`];
 };

@@ -1,6 +1,6 @@
 
 -- ==============================================================================
--- EMPIRION SCHEMA EVOLUTION v31.12.3.1 - TOTAL BLINDAGE PROTOCOL
+-- EMPIRION SCHEMA EVOLUTION v31.12.3.5 - TOTAL BLINDAGE CONSOLIDATION
 -- ==============================================================================
 
 -- 1. LIMPEZA E ATIVAÇÃO GLOBAL (15 TABELAS CRÍTICAS)
@@ -9,7 +9,6 @@ DECLARE
     t text;
     p record;
 BEGIN
-    -- Lista COMPLETA de tabelas sob governança Empirion (incluindo pendentes do relatório Grok)
     FOR t IN 
         SELECT tablename FROM pg_tables WHERE schemaname = 'public' 
         AND tablename IN (
@@ -31,43 +30,52 @@ BEGIN
     END LOOP;
 END $$;
 
--- 2. CAMADA DE USUÁRIOS (USERS)
+-- 2. POLÍTICA DE RELATÓRIOS PÚBLICOS (REFORÇADA COM GAZETA_MODE)
+CREATE POLICY "Public_Reports_Visibility" ON public.public_reports FOR SELECT TO authenticated, anon
+USING (
+    EXISTS (
+        SELECT 1 FROM public.championships c
+        WHERE c.id = public_reports.championship_id
+        AND (
+            c.is_public
+            OR c.transparency_level = 'full'
+            OR (c.transparency_level IN ('high','medium') AND c.gazeta_mode = 'identified')
+        )
+    )
+);
+
+-- 3. GESTÃO DE REGRAS MACRO (TUTOR E PARTICIPANTES)
+CREATE POLICY "Macro_Rules_Tutor_Manage" ON public.championship_macro_rules FOR ALL TO authenticated
+USING (EXISTS (SELECT 1 FROM championships c WHERE c.id = championship_macro_rules.championship_id AND c.tutor_id = auth.uid()));
+
+CREATE POLICY "Macro_Rules_Participant_Read" ON public.championship_macro_rules FOR SELECT TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM team_members tm
+        JOIN teams t ON tm.team_id = t.id
+        WHERE t.championship_id = championship_macro_rules.championship_id
+          AND tm.user_id = auth.uid()
+    )
+    OR EXISTS (SELECT 1 FROM championships c WHERE c.id = championship_macro_rules.championship_id AND c.tutor_id = auth.uid())
+);
+
+-- 4. PLANOS DE NEGÓCIOS (BUSINESS PLANS)
+CREATE POLICY "BusinessPlan_Team_Manage" ON public.business_plans FOR ALL TO authenticated
+USING (team_id IN (SELECT team_id FROM team_members WHERE user_id = auth.uid()))
+WITH CHECK (team_id IN (SELECT team_id FROM team_members WHERE user_id = auth.uid()));
+
+CREATE POLICY "BusinessPlan_Tutor_Read" ON public.business_plans FOR SELECT TO authenticated
+USING (EXISTS (SELECT 1 FROM championships c WHERE c.id = business_plans.championship_id AND c.tutor_id = auth.uid()));
+
+-- 5. POLÍTICAS DE USUÁRIOS E PERFIS
 CREATE POLICY "Users_Read_Self" ON public.users FOR SELECT TO authenticated USING (supabase_user_id = auth.uid());
 CREATE POLICY "Users_Update_Self" ON public.users FOR UPDATE TO authenticated USING (supabase_user_id = auth.uid());
 CREATE POLICY "Admin_Full_Users" ON public.users FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.users u WHERE u.supabase_user_id = auth.uid() AND u.role = 'admin'));
 
--- 3. CAMADA DE CAMPEONATOS (CHAMPIONSHIPS)
-CREATE POLICY "Champs_Select_Access" ON public.championships FOR SELECT TO authenticated, anon 
-USING (is_public = true OR tutor_id = auth.uid() OR observers @> jsonb_build_array(auth.uid()::text) OR EXISTS (SELECT 1 FROM public.team_members tm JOIN public.teams t ON tm.team_id = t.id WHERE t.championship_id = public.championships.id AND tm.user_id = auth.uid()));
-CREATE POLICY "Tutor_Manage_Champs" ON public.championships FOR ALL TO authenticated USING (tutor_id = auth.uid());
-
--- 4. CAMADA DE EMPRESAS E HISTÓRICO (COMPANIES)
-CREATE POLICY "Team_Read_Own_Company" ON public.companies FOR SELECT TO authenticated USING (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()));
-CREATE POLICY "Tutor_Read_Arena_Companies" ON public.companies FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = companies.championship_id AND c.tutor_id = auth.uid()));
-CREATE POLICY "Observer_Read_Arena_Companies" ON public.companies FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = companies.championship_id AND c.observers @> jsonb_build_array(auth.uid()::text)));
-
--- 5. CAMADA DE DECISÕES TÁTICAS (CURRENT_DECISIONS)
-CREATE POLICY "Team_Manage_Own_Decisions" ON public.current_decisions FOR ALL TO authenticated 
-USING (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()))
-WITH CHECK (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()));
-CREATE POLICY "Tutor_Read_Arena_Decisions" ON public.current_decisions FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = current_decisions.championship_id AND c.tutor_id = auth.uid()));
-
--- 6. CAMADA DE RELATÓRIOS PÚBLICOS (GAZETA)
-CREATE POLICY "Public_Reports_Visibility" ON public.public_reports FOR SELECT TO authenticated, anon 
-USING (EXISTS (SELECT 1 FROM public.championships c WHERE c.id = public_reports.championship_id AND (c.is_public OR c.transparency_level = 'full' OR (c.transparency_level IN ('high','medium')))));
+-- 6. POLÍTICAS DE TEMPLATES E MODALIDADES (SISTEMA)
+CREATE POLICY "Public_Read_Templates" ON public.championship_templates FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Public_Read_Modalities" ON public.modalities FOR SELECT TO authenticated, anon USING (is_public = true);
 
 -- 7. AUDITORIA (DECISION_AUDIT_LOG)
 CREATE POLICY "Audit_Read_Authorized" ON public.decision_audit_log FOR SELECT TO authenticated 
 USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM public.championships c WHERE c.id = decision_audit_log.championship_id AND (c.tutor_id = auth.uid() OR c.observers @> jsonb_build_array(auth.uid()::text))));
-
--- 8. PONTOS E GAMIFICAÇÃO (EMPIRE_POINTS)
-CREATE POLICY "Points_Read_Own" ON public.empire_points FOR SELECT TO authenticated USING (user_id = auth.uid());
-CREATE POLICY "Transactions_Read_Own" ON public.point_transactions FOR SELECT TO authenticated USING (user_id = auth.uid());
-
--- 9. GESTÃO DE ARENAS E TEMPLATES (CHAMPIONSHIP_TEMPLATES)
-CREATE POLICY "Public_Read_Templates" ON public.championship_templates FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "Admin_Manage_Templates" ON public.championship_templates FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.users u WHERE u.supabase_user_id = auth.uid() AND u.role = 'admin'));
-
--- 10. MODALIDADES (MODALITIES)
-CREATE POLICY "Public_Read_Modalities" ON public.modalities FOR SELECT TO authenticated, anon USING (is_public = true);
-CREATE POLICY "Admin_Manage_Modalities" ON public.modalities FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.users u WHERE u.supabase_user_id = auth.uid() AND u.role = 'admin'));
