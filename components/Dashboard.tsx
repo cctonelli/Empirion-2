@@ -58,6 +58,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const isObserver = userRole === 'observer';
 
   const currentKpis = useMemo((): KPIs => {
+    // Fix: Added missing 'loans' property to satisfy KPIs interface (Line 74 in original error)
     const baseFallback = {
       rating: 'AAA' as CreditRating,
       insolvency_status: 'SAUDAVEL' as InsolvencyStatus,
@@ -65,6 +66,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       market_share: 12.5,
       motivation_score: 0.85,
       is_on_strike: false,
+      loans: [],
       market_valuation: { share_price: 1.01, tsr: 1.1 },
       statements: { 
         dre: { revenue: 3322735 },

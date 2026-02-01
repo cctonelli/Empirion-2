@@ -26,6 +26,8 @@ const preparePayload = (obj: any) => {
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
+  
+  // Em modo Trial ou para o sistema, retornamos um perfil mock premium
   if (isTrial || userId === SYSTEM_TUTOR_ID || ['admin', 'tutor', 'alpha'].includes(userId)) {
     const isTutor = isTrial || userId.includes('tutor') || userId === SYSTEM_TUTOR_ID;
     return {
@@ -36,12 +38,23 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       phone: '+5511999990000',
       email: `${userId || 'trial'}@empirion.ia`, 
       role: isTutor ? 'tutor' : 'player', 
-      is_opal_premium: true, 
+      is_opal_premium: true, // Trial é sempre premium para demonstração
       created_at: new Date().toISOString()
     };
   }
-  const { data, error } = await supabase.from('users').select('*').eq('supabase_user_id', userId).maybeSingle();
-  if (error) logError(LogContext.DATABASE, "User fetch error", error);
+
+  // Busca real no banco de dados
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, supabase_user_id, name, nickname, phone, email, role, is_opal_premium, created_at')
+    .eq('supabase_user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    logError(LogContext.DATABASE, "User fetch error", error);
+    return null;
+  }
+  
   return data;
 };
 
@@ -53,6 +66,7 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
     const { data: { session } } = await (supabase.auth as any).getSession();
     
+    // Busca campeonatos reais
     const { data: rawChamps, error: rawErr } = await supabase
       .from('championships')
       .select('*')
@@ -67,6 +81,7 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
        }
     }
 
+    // Busca campeonatos Trial/Sandbox
     let trialQuery = supabase.from('trial_championships').select('*');
     if (session) {
        trialQuery = trialQuery.or(`tutor_id.eq.${session.user.id},tutor_id.is.null,tutor_id.eq.${SYSTEM_TUTOR_ID}`);

@@ -7,7 +7,8 @@ import {
   Plus, Trash2, ArrowLeft, Monitor, Command, Users, Globe, CreditCard, Cpu, Gauge,
   X, Palette, Menu as MenuIcon, Save, AtSign, Phone, FileCode, UserPlus, UserMinus, Shield,
   Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity, LayoutDashboard,
-  PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight, Zap, CheckCircle2
+  PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight, Zap, CheckCircle2,
+  RefreshCw, Loader2, User
 } from 'lucide-react';
 import { 
   getChampionships, 
@@ -15,7 +16,8 @@ import {
   supabase,
   getUserProfile,
   getAllUsers,
-  provisionDemoEnvironment
+  provisionDemoEnvironment,
+  processRoundTurnover
 } from '../services/supabase';
 import { Championship, UserProfile, MenuItemConfig, Team } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
@@ -30,7 +32,6 @@ import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES, DEFAULT_INDUSTRIAL
 
 type TutorView = 'dashboard' | 'teams' | 'decisions' | 'intervention' | 'gazette';
 
-// UUID Reservado para o Sistema em modo No-Auth (Consistente com services/supabase.ts)
 const SYSTEM_TUTOR_ID = '00000000-0000-0000-0000-000000000000';
 
 const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }) => {
@@ -41,6 +42,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
   const [showWizard, setShowWizard] = useState(false);
   const [isCreatingTrial, setIsCreatingTrial] = useState(false);
@@ -55,7 +57,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       const isTrialSessionLocal = localStorage.getItem('is_trial_session') === 'true';
       const storedArenaId = localStorage.getItem('active_champ_id');
 
-      // Crucial: Usa UUID real em vez de string "trial_user" para evitar quebra de query
       const userId = session?.user?.id || SYSTEM_TUTOR_ID;
       const prof = await getUserProfile(userId);
       setProfile(prof);
@@ -82,7 +83,6 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
 
   useEffect(() => { fetchData(); }, [activeTab, isCreatingTrial]);
 
-  // Busca status das decisões para a aba de Equipes
   useEffect(() => {
     if (!selectedArena) return;
     const fetchStatus = async () => {
@@ -107,6 +107,26 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
        setTutorView('intervention');
     }
   }, [location.search]);
+
+  const handleTurnover = async () => {
+    if (!selectedArena || isProcessing) return;
+    if (!confirm(`CONFIRMAR TURNOVER: Processar fechamento do Ciclo 0${selectedArena.current_round}?`)) return;
+
+    setIsProcessing(true);
+    try {
+      const res = await processRoundTurnover(selectedArena.id, selectedArena.current_round);
+      if (res.success) {
+        alert("TURNOVER CONCLUÍDO: Todos os nodos industriais foram sincronizados.");
+        fetchData();
+      } else {
+        throw new Error(res.error);
+      }
+    } catch (err: any) {
+      alert(`ERRO CRÍTICO NO MOTOR: ${err.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const isAdmin = profile?.role === 'admin';
 
@@ -186,7 +206,16 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
            </div>
 
            <div className="flex items-center gap-4">
-              <span className="px-3 py-1 bg-emerald-600/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase">Orquestração v14.2</span>
+              {selectedArena && (
+                <button 
+                  onClick={handleTurnover}
+                  disabled={isProcessing}
+                  className="px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                >
+                  {isProcessing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>} 
+                  Processar Turnover P0{selectedArena.current_round}
+                </button>
+              )}
            </div>
         </header>
 
@@ -327,6 +356,50 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                 <ChampionshipWizard onComplete={() => { setShowWizard(false); fetchData(); }} />
               </motion.div>
             )
+          )}
+
+          {activeTab === 'users' && isAdmin && (
+            <motion.div key="users" initial={{opacity:0}} animate={{opacity:1}} className="space-y-8">
+               <div className="bg-slate-900/60 p-10 rounded-[3rem] border border-white/5 shadow-xl">
+                  <table className="w-full text-left">
+                     <thead>
+                        <tr className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] border-b border-white/5">
+                           <th className="pb-6 px-4">Identidade</th>
+                           <th className="pb-6 px-4 text-center">Papel</th>
+                           <th className="pb-6 px-4 text-center">Plano IA</th>
+                           <th className="pb-6 px-4 text-right">Ações</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        {users.map(u => (
+                          <tr key={u.id} className="group hover:bg-white/5 transition-all">
+                             <td className="py-6 px-4">
+                                <div className="flex items-center gap-4">
+                                   {/* Fix: Added missing User icon to lucide-react imports to fix 'Cannot find name User' error. */}
+                                   <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-orange-500"><User size={20}/></div>
+                                   <div>
+                                      <p className="text-sm font-black text-white uppercase italic">{u.name}</p>
+                                      <p className="text-[9px] text-slate-500 font-mono">{u.email}</p>
+                                   </div>
+                                </div>
+                             </td>
+                             <td className="py-6 px-4 text-center">
+                                <span className={`px-4 py-1 rounded-lg text-[9px] font-black uppercase ${u.role === 'admin' ? 'bg-rose-600 text-white' : 'bg-blue-600/20 text-blue-400'}`}>{u.role}</span>
+                             </td>
+                             <td className="py-6 px-4 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                   {u.is_opal_premium ? <span className="flex items-center gap-2 text-amber-500 font-black text-[9px] uppercase"><Sparkles size={12}/> Opal Elite</span> : <span className="text-slate-600 font-black text-[9px] uppercase tracking-widest">Base Standard</span>}
+                                </div>
+                             </td>
+                             <td className="py-6 px-4 text-right">
+                                <button className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-colors border border-white/10 hover:border-blue-500/50"><Settings size={16}/></button>
+                             </td>
+                          </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               </div>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

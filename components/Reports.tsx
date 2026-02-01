@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, ShieldAlert, Factory, Coins, Zap, PieChart,
-  ShieldCheck, Activity, Landmark as BankIcon, ShoppingCart, Truck, Scale, ChevronDown
+  ShieldCheck, Activity, Landmark as BankIcon, ShoppingCart, Truck, Scale, ChevronDown, AlertCircle
 } from 'lucide-react';
 import { Branch, Championship, Team, AccountNode } from '../types';
 import { getChampionships } from '../services/supabase';
@@ -33,11 +33,11 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
     fetchContext();
   }, []);
 
-  const dre = useMemo(() => activeTeam?.kpis?.statements?.dre || { revenue: 0, cpv: 0, gross_profit: 0, opex: 0, operating_profit: 0, lair: 0, tax: 0, net_profit: 0, financial_result: 0 }, [activeTeam]);
-  const cashFlow = useMemo(() => activeTeam?.kpis?.statements?.cash_flow || { start: 170000, inflow: { total: 0, compulsory: 0 }, outflow: { total: 0, interest: 0, amortization: 0 }, final: 0 }, [activeTeam]);
+  const dre = useMemo(() => activeTeam?.kpis?.statements?.dre || {}, [activeTeam]);
+  const cashFlow = useMemo(() => activeTeam?.kpis?.statements?.cash_flow || { inflow: {}, outflow: {} }, [activeTeam]);
   const balanceSheet = useMemo((): AccountNode[] => activeTeam?.kpis?.statements?.balance_sheet || [], [activeTeam]);
 
-  const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: activeArena?.currency || 'BRL' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: activeArena?.currency || 'BRL' }).format(v || 0);
 
   if (loading) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto text-orange-500" /></div>;
 
@@ -46,7 +46,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       <header className="flex flex-col lg:flex-row justify-between lg:items-end px-6 gap-6">
          <div>
             <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Oracle <span className="text-orange-500">Audit Node</span></h1>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Ciclo Master v30.30</p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Engine v30.35 Gold</p>
          </div>
          <div className="flex flex-wrap gap-3 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
             <ReportTabBtn active={activeReport === 'dre'} onClick={() => setActiveReport('dre')} label="DRE" icon={<TrendingUp size={14} />} color="orange" />
@@ -63,29 +63,27 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                      <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Demonstrativo de Resultados</h3>
                      <div className="space-y-1 font-mono">
                         <ReportLine label="(+) RECEITAS BRUTAS" val={fmt(dre.revenue)} bold />
-                        <ReportLine label="( - ) CPV" val={fmt(dre.cpv)} neg />
+                        <ReportLine label="( - ) CUSTO PRODUTO VENDIDO (CPV)" val={fmt(dre.cpv)} neg />
                         <ReportLine label="( = ) LUCRO BRUTO" val={fmt(dre.gross_profit)} highlight />
                         <ReportLine label="( - ) DESPESAS OPERACIONAIS (OPEX)" val={fmt(dre.opex)} neg />
-                        <ReportLine label="( = ) LUCRO OPERACIONAL (EBITDA)" val={fmt(dre.operating_profit)} bold />
-                        <ReportLine label="(+/-) RESULTADO FINANCEIRO (JUROS)" val={fmt(dre.financial_result)} neg={dre.financial_result < 0} color="text-indigo-400" />
-                        <ReportLine label="( = ) LUCRO ANTES DO IR (LAIR)" val={fmt(dre.lair)} bold highlight />
-                        <ReportLine label="( - ) PROVISÃO PARA O IR" val={fmt(dre.tax)} neg />
+                        <ReportLine label="(+/-) RESULTADO FINANCEIRO" val={fmt(dre.financial_result)} color="text-indigo-400" />
                         <ReportLine label="( = ) LUCRO LÍQUIDO" val={fmt(dre.net_profit)} total />
                      </div>
                   </motion.div>
                ) : activeReport === 'cash_flow' ? (
-                  <motion.div key="cf" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                  <motion.div key="cf" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                      <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Fluxo de Caixa Reconciliado</h3>
                      <div className="space-y-1 font-mono">
                         <ReportLine label="(=) SALDO INICIAL" val={fmt(cashFlow.start)} bold />
                         <div className="py-4 space-y-2 border-l-2 border-emerald-500/30 pl-6 my-4 bg-emerald-500/5 rounded-r-3xl">
-                           <ReportLine label="(+) ENTRADAS TOTAIS" val={fmt(cashFlow.inflow.total)} color="text-emerald-400" />
-                           {cashFlow.inflow.compulsory > 0 && <ReportLine label="EMPRÉSTIMO COMPULSÓRIO (GATILHO)" val={fmt(cashFlow.inflow.compulsory)} indent color="text-rose-400" icon={<Zap size={10}/>} />}
+                           <ReportLine label="(+) ENTRADAS" val={fmt(cashFlow.inflow?.total)} color="text-emerald-400" />
+                           {cashFlow.inflow?.compulsory > 0 && <ReportLine label="EMPRÉSTIMO COMPULSÓRIO (GATILHO)" val={fmt(cashFlow.inflow?.compulsory)} indent color="text-rose-400" icon={<Zap size={10}/>} />}
                         </div>
                         <div className="py-4 space-y-2 border-l-2 border-rose-500/30 pl-6 my-4 bg-rose-500/5 rounded-r-3xl">
-                           <ReportLine label="(-) SAÍDAS TOTAIS" val={fmt(cashFlow.outflow.total)} neg color="text-rose-400" />
-                           <ReportLine label="AMORTIZAÇÃO DO PRINCIPAL (ECP)" val={fmt(cashFlow.outflow.amortization)} indent neg icon={<Scale size={10}/>} />
-                           <ReportLine label="JUROS E ÁGIOS BANCÁRIOS" val={fmt(cashFlow.outflow.interest)} indent neg />
+                           <ReportLine label="(-) SAÍDAS" val={fmt(cashFlow.outflow?.total)} neg color="text-rose-400" />
+                           <ReportLine label="AMORTIZAÇÃO DO PRINCIPAL" val={fmt(cashFlow.outflow?.amortization)} indent neg icon={<Scale size={10}/>} />
+                           <ReportLine label="JUROS E ÁGIOS BANCÁRIOS" val={fmt(cashFlow.outflow?.interest)} indent neg />
+                           {cashFlow.outflow?.penalties > 0 && <ReportLine label="MULTAS POR ATRASO (15%)" val={fmt(cashFlow.outflow?.penalties)} indent neg icon={<AlertCircle size={10}/>} />}
                         </div>
                         <ReportLine label="(=) SALDO FINAL" val={fmt(cashFlow.final)} total bold highlight color={cashFlow.final <= 0 ? 'text-rose-500' : 'text-emerald-400'} />
                      </div>
