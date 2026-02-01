@@ -164,7 +164,21 @@ export const calculateProjections = (
   const operatingProfit = grossProfit - totalOpex;
   
   const finRev = prevInvestments * (sanitize(indicators.investment_return_rate, 1.0) / 100);
-  const finExp = (prevLoansST * 0.02) + (prevLoansLT * 0.015) + (sanitize(safeDecisions.finance.loanRequest, 0) * 0.03);
+
+  // REFINAMENTO DESPESAS FINANCEIRAS COM ÁGIO COMPULSÓRIO
+  const tr_rate = sanitize(indicators.interest_rate_tr, 2.0) / 100;
+  const agio_rate = sanitize(indicators.compulsory_loan_agio, 3.0) / 100;
+  
+  // Identifica compulsório baseado em saldo negativo do período anterior (se houver reconciliação automática)
+  // Ou usa o saldo direto de Cash Flow do round anterior se disponível
+  const prevCompulsory = Math.abs(Math.min(0, previousState?.statements?.cash_flow?.final || previousState?.cash || 0));
+  const normalST = Math.max(0, prevLoansST - prevCompulsory);
+
+  const finExp = (normalST * tr_rate) + 
+                 (prevCompulsory * (tr_rate + agio_rate)) + 
+                 (prevLoansLT * (tr_rate * 0.75)) + 
+                 (sanitize(safeDecisions.finance.loanRequest, 0) * (tr_rate * 1.5));
+
   const finResult = finRev - finExp;
   
   const lair = operatingProfit + finResult;

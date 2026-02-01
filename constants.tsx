@@ -141,7 +141,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO DE MÁQUINAS', value: 146402, type: 'expense', isEditable: true },
         { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 0, type: 'expense', isEditable: true },
         { id: 'cf.outflow.late_penalties', label: 'MULTAS POR ATRASO', value: 0, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.interest', label: 'JUROS BANCÁRIOS', value: 40000, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 40000, type: 'expense', isEditable: true },
         { id: 'cf.outflow.training', label: 'TREINAMENTO', value: 0, type: 'expense', isEditable: true },
         { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 13045, type: 'expense', isEditable: true },
         { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0, type: 'expense', isEditable: true }
@@ -165,6 +165,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   late_penalty_rate: 15.0,
   machine_sale_discount: 10.0,
   special_purchase_premium: 15.0,
+  compulsory_loan_agio: 3.0,
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
   dividend_percent: 25.0, 
   social_charges: 35.0, 
@@ -242,8 +243,19 @@ export const DEFAULT_MACRO: MacroIndicators = {
 };
 
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
-  0: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0 },
-  1: { ice: 3.2, inflation_rate: 1.2, demand_variation: 2 }
+  0: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0, compulsory_loan_agio: 3.0 },
+  1: { ice: 3.2, inflation_rate: 1.2, demand_variation: 2, compulsory_loan_agio: 3.0 },
+  2: { compulsory_loan_agio: 3.0 },
+  3: { compulsory_loan_agio: 3.0 },
+  4: { compulsory_loan_agio: 3.5 },
+  5: { compulsory_loan_agio: 3.5 },
+  6: { compulsory_loan_agio: 3.5 },
+  7: { compulsory_loan_agio: 3.5 },
+  8: { compulsory_loan_agio: 4.0 },
+  9: { compulsory_loan_agio: 4.0 },
+  10: { compulsory_loan_agio: 4.0 },
+  11: { compulsory_loan_agio: 4.0 },
+  12: { compulsory_loan_agio: 4.0 }
 };
 
 export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;

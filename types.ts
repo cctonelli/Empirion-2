@@ -54,6 +54,7 @@ export interface MacroIndicators {
   late_penalty_rate: number;
   machine_sale_discount: number;
   special_purchase_premium: number;
+  compulsory_loan_agio: number;
   exchange_rates: Record<CurrencyType, number>; 
   dividend_percent: number;
   
