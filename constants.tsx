@@ -160,11 +160,11 @@ export const DEFAULT_MACRO: MacroIndicators = {
   supplier_interest: 1.5,
   sales_interest_rate: 1.5, 
   investment_return_rate: 1.0,
-  avg_selling_price: 370.0,
-  tax_rate_ir: 15.0,
-  late_penalty_rate: 15.0,
+  avg_selling_price: 425.0,
+  tax_rate_ir: 25.0,
+  late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
-  special_purchase_premium: 15.0,
+  special_purchase_premium: 5.0,
   compulsory_loan_agio: 3.0,
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
   dividend_percent: 25.0, 
@@ -239,7 +239,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
     sales: { count: 10, salaries: 4 },
     production: { count: 470, salaries: 1 }
   },
-  hr_base: { salary: 1300.00, training: 0, profit_sharing: 0, misc: 0 }
+  hr_base: { salary: 2000.00, training: 0, profit_sharing: 0, misc: 0 }
 };
 
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
