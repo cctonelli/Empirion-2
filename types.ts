@@ -114,7 +114,7 @@ export interface Loan {
   remaining_installments: number;
   interest_rate: number;
   created_at_round: number;
-  agio_rate_at_creation?: number; // Taxa de ágio aplicada (apenas para compulsório)
+  agio_rate_at_creation?: number; 
 }
 
 export interface MacroIndicators {
@@ -133,6 +133,8 @@ export interface MacroIndicators {
   compulsory_loan_agio: number;
   social_charges: number;
   production_hours_period: number;
+  allow_machine_sale: boolean; // Flag de controle de mercado de ativos
+  require_business_plan: boolean; // Flag de obrigatoriedade de BP
   exchange_rates: Record<CurrencyType, number>;
   award_values: {
     cost_precision: number;

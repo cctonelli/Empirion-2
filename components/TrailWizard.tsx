@@ -315,7 +315,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
                  <WizardStepTitle icon={<Award size={32}/>} title="REGRAS E PREMIAÇÕES" desc="DEFINA VALORES BASE E PREMIAÇÕES POR PRECISÃO DE CÁLCULO." />
                  
-                 {/* PRIMEIRA LINHA: 3 COLUNAS EXPANDIDAS */}
                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                     <div className="space-y-8 bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/5 shadow-2xl transition-all hover:border-emerald-500/20">
                        <h4 className="text-xl font-black text-emerald-400 uppercase tracking-[0.4em] flex items-center gap-4 italic border-b border-white/5 pb-6"><Package size={28}/> INSUMOS & ESTOCAGEM</h4>
@@ -348,7 +347,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     </div>
                  </div>
 
-                 {/* SEGUNDA LINHA: 2 COLUNAS EXPANDIDAS */}
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                     <div className="space-y-8 bg-slate-900/60 p-12 rounded-[4rem] border border-white/5 shadow-2xl transition-all hover:border-indigo-500/20">
                        <h4 className="text-2xl font-black text-indigo-400 uppercase tracking-[0.4em] flex items-center gap-6 italic border-b border-white/5 pb-8"><Briefcase size={32}/> STAFFING & PAYROLL</h4>
@@ -356,7 +354,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <div className="space-y-6">
                              <WizardField label="SALÁRIO BASE P00 ($)" type="number" val={baseIndicators.hr_base.salary || 1300} onChange={(v:any)=>setBaseIndicators({...baseIndicators, hr_base: {...baseIndicators.hr_base, salary: parseFloat(v)}})} />
                              <WizardField label="HORAS PRODUÇÃO/HOMEM" type="number" val={baseIndicators.production_hours_period} onChange={(v:any)=>setBaseIndicators({...baseIndicators, production_hours_period: parseInt(v)})} />
-                             <p className="text-xs text-slate-500 italic font-medium leading-relaxed">"A carga horária impacta diretamente o cálculo de horas extras caso a produtividade supere 100%."</p>
                           </div>
                           <div className="space-y-4">
                              <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-2 block italic">Distribuição de Headcount</span>

@@ -9,8 +9,8 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 };
 
 /**
- * CORE ORACLE ENGINE v15.35 - FIDELITY CASH FLOW KERNEL
- * Processamento de decisões com liquidação de saldos legados (AR/AP) e dívidas punitivas.
+ * CORE ORACLE ENGINE v15.36 - FIDELITY CASH FLOW KERNEL
+ * Processamento de decisões com liquidação de saldos legados e compras especiais por produção extra.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -27,7 +27,7 @@ export const calculateProjections = (
   
   const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...(roundRules?.[currentRound] || {}) };
   
-  // 1. Extração de Dados do Balanço Anterior (Baseline para Round 1)
+  // 1. Extração de Dados do Balanço Anterior
   const prevBS = previousState?.kpis?.statements?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   
   const getVal = (id: string, list: any[]): number => {
@@ -42,16 +42,16 @@ export const calculateProjections = (
     return 0;
   };
 
-  const prevCash = sanitize(previousState?.current_cash ?? getVal('assets.current.cash', prevBS), 170000);
-  const prevEquity = sanitize(previousState?.equity || 5055447);
+  const prevCash = sanitize(previousState?.current_cash ?? getVal('assets.current.cash', prevBS), 0);
+  const prevEquity = sanitize(previousState?.equity || 7303448.32);
   
-  // Saldos de Ciclos Anteriores (Ex: Clientes $2M e Fornecedores $717k do P00)
+  // Saldos de Ciclos Anteriores (Legado)
   const legacyReceivables = sanitize(getVal('assets.current.clients', prevBS));
   const legacyPayables = sanitize(getVal('liabilities.current.suppliers', prevBS));
 
-  // --- 2. FOLHA DE PAGAMENTO (STAFFING) ---
+  // --- 2. FOLHA DE PAGAMENTO ---
   const staffing = indicators.staffing || DEFAULT_MACRO.staffing;
-  const baseSalary = sanitize(decisions.hr.salary, 1313);
+  const baseSalary = sanitize(decisions.hr.salary, 2000);
   const payrollBase = (staffing.admin.count * baseSalary * staffing.admin.salaries) +
                       (staffing.sales.count * baseSalary * staffing.sales.salaries) +
                       (staffing.production.count * baseSalary * staffing.production.salaries);
@@ -66,18 +66,36 @@ export const calculateProjections = (
     return acc + (val * spec.depreciation_rate);
   }, 0);
 
-  // --- 4. DRE TÁTICO ---
-  const totalPurchaseValue = (sanitize(decisions.production.purchaseMPA) * indicators.prices.mp_a) + 
-                             (sanitize(decisions.production.purchaseMPB) * indicators.prices.mp_b);
+  // --- 4. DRE TÁTICO & PRODUÇÃO EXTRA ---
+  // Compra Normal de MP baseada na decisão da equipe
+  const normalPurchaseValue = (sanitize(decisions.production.purchaseMPA) * indicators.prices.mp_a) + 
+                               (sanitize(decisions.production.purchaseMPB) * indicators.prices.mp_b);
   
   const avgPrice = Object.values(decisions.regions).reduce((a, b) => a + b.price, 0) / Math.max(1, Object.keys(decisions.regions).length);
+  // Elasticidade-preço baseada no preço de mercado de $425
   const demandFactor = Math.pow(indicators.avg_selling_price / Math.max(1, avgPrice), 1.2) * (1 + indicators.demand_variation/100);
-  const revenue = 3322735 * demandFactor * (decisions.production.activityLevel / 100);
+  
+  // Produção Planejada
+  const baseRevenue = 4184440 * demandFactor * (decisions.production.activityLevel / 100);
+  
+  // Lógica de Produção Extra (Sistema supre até 20% acima se houver demanda e market share positivo)
+  let extraRevenue = 0;
+  let specialPurchaseValue = 0;
+  
+  // Simulação de gatilho automático de produção extra se demanda > produção planejada
+  if (demandFactor > (decisions.production.activityLevel / 100)) {
+     const extraFactor = Math.min(0.2, demandFactor - (decisions.production.activityLevel / 100));
+     extraRevenue = 4184440 * extraFactor;
+     // Custo da MP Extra com Ágio de 5% (ou o valor definido pelo tutor)
+     const premium = sanitize(indicators.special_purchase_premium, 5.0) / 100;
+     specialPurchaseValue = (extraRevenue * 0.35) * (1 + premium); 
+  }
 
-  const cpv = (totalPurchaseValue * 0.7) + (totalLaborCost * 0.4); 
+  const revenue = baseRevenue + extraRevenue;
+  const cpv = (normalPurchaseValue * 0.7) + (specialPurchaseValue) + (totalLaborCost * 0.4); 
   const opex = (totalLaborCost * 0.6) + (revenue * 0.08) + depreciationTotal;
 
-  // --- 5. GESTÃO DE DÍVIDA (AMORTIZAÇÃO E JUROS) ---
+  // --- 5. GESTÃO DE DÍVIDA ---
   let activeLoans: Loan[] = previousState?.kpis?.loans ? JSON.parse(JSON.stringify(previousState.kpis.loans)) : [];
   let currentInterestTotal = 0;
   let currentAmortizationTotal = 0;
@@ -111,25 +129,21 @@ export const calculateProjections = (
   // --- 6. FLUXO DE CAIXA (DFC FIDELIDADE) ---
   const manualLoanRequest = sanitize(decisions.finance.loanRequest);
   
-  // Inflow = Vendas à vista do ciclo (60%) + Recebimento total do ciclo anterior (Legado) + Premiações
+  // Inflow = 60% à vista do ciclo + Legado
   const currentCashSales = revenue * 0.6;
   const totalInflow = currentCashSales + legacyReceivables + manualLoanRequest;
 
-  // Outflow = Compras à vista (50%) + Pagamento total do ciclo anterior (Legado) + Folha + Dívida
-  const currentCashPurchases = totalPurchaseValue * 0.5;
+  // Outflow = 50% compra normal + 100% compra especial (Ágio) + Legado + Folha + Dívida
+  const currentCashPurchases = (normalPurchaseValue * 0.5) + specialPurchaseValue;
   const totalOutflow = currentCashPurchases + legacyPayables + totalLaborCost + currentInterestTotal + currentAmortizationTotal;
   
   let projectedCash = prevCash + totalInflow - totalOutflow - sanitize(decisions.finance.application);
   
-  // --- 7. GERAÇÃO DE EMPRÉSTIMO COMPULSÓRIO (SISTÊMICO) ---
+  // --- 7. EMPRÉSTIMO COMPULSÓRIO ---
   let compulsoryAmount = 0;
   if (projectedCash < 0) {
     compulsoryAmount = Math.abs(projectedCash);
     projectedCash = 0; 
-
-    const currentTR = sanitize(indicators.interest_rate_tr, 2.0);
-    const currentAgio = sanitize(indicators.compulsory_loan_agio, 3.0);
-
     activeLoans.push({
       id: `compulsory-round${currentRound}-${Date.now()}`,
       type: 'compulsory',
@@ -138,8 +152,8 @@ export const calculateProjections = (
       grace_periods: 0,
       total_installments: 1,
       remaining_installments: 1,
-      interest_rate: currentTR, 
-      agio_rate_at_creation: currentAgio, 
+      interest_rate: indicators.interest_rate_tr, 
+      agio_rate_at_creation: indicators.compulsory_loan_agio, 
       created_at_round: currentRound
     });
   }
@@ -154,11 +168,11 @@ export const calculateProjections = (
 
   // --- 9. KPIs & STATEMENTS ---
   const kpis: KPIs = {
-    rating: netProfit > 0 ? (finalEquity > 2000000 ? 'AAA' : 'AA') : 'B',
+    rating: netProfit > 0 ? (finalEquity > 5000000 ? 'AAA' : 'AA') : 'B',
     loans: activeLoans,
     equity: finalEquity,
     current_cash: projectedCash,
-    market_share: demandFactor * 10,
+    market_share: demandFactor * 11.1, // 1/9 regiões base
     motivation_score: decisions.hr.salary > indicators.hr_base.salary ? 0.9 : 0.6,
     statements: {
       dre: { 
@@ -191,12 +205,12 @@ export const calculateProjections = (
         { 
           id: 'assets', label: 'ATIVO', value: finalEquity + activeLoans.reduce((a,b)=>a+b.remaining_principal,0), type: 'totalizer', children: [
             { id: 'assets.current.cash', label: 'Caixa/Bancos', value: projectedCash, type: 'asset' },
-            { id: 'assets.current.clients', label: 'Contas a Receber (Próximo Ciclo)', value: revenue * 0.4, type: 'asset' }
+            { id: 'assets.current.clients', label: 'Contas a Receber (Legado)', value: revenue * 0.4, type: 'asset' }
           ]
         },
         { 
           id: 'liabilities_pl', label: 'PASSIVO + PL', value: finalEquity + activeLoans.reduce((a,b)=>a+b.remaining_principal,0), type: 'totalizer', children: [
-            { id: 'liabilities.suppliers', label: 'Fornecedores (Próximo Ciclo)', value: totalPurchaseValue * 0.5, type: 'liability' },
+            { id: 'liabilities.suppliers', label: 'Fornecedores (Legado)', value: normalPurchaseValue * 0.5, type: 'liability' },
             { id: 'liabilities.loans', label: 'Empréstimos (ECP)', value: activeLoans.reduce((a,b)=>a+b.remaining_principal,0), type: 'liability' },
             { id: 'equity.total', label: 'Patrimônio Líquido', value: finalEquity, type: 'equity' }
           ]
