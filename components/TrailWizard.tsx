@@ -153,26 +153,14 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   };
 
   const updateRoundMacro = (round: number, key: string, val: any) => {
-    if (key === 'USD' || key === 'EUR') {
-       setRoundRules(prev => ({
-         ...prev,
-         [round]: {
-           ...(prev[round] || {}),
-           exchange_rates: {
-             ...(prev[round]?.exchange_rates || baseIndicators.exchange_rates),
-             [key]: val
-           }
-         }
-       }));
-    } else {
-       setRoundRules(prev => ({
-         ...prev,
-         [round]: {
-           ...(prev[round] || {}),
-           [key]: val
-         }
-       }));
-    }
+    // Sincroniza com a nova estrutura de chaves na raiz do objeto de round
+    setRoundRules(prev => ({
+       ...prev,
+       [round]: {
+         ...(prev[round] || {}),
+         [key]: val
+       }
+    }));
   };
 
   const stepsCount = 7;
@@ -437,8 +425,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="CAMPANHAS MARKETING (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="DISTRIBUIÇÃO DE PRODUTOS (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="GASTOS COM ESTOCAGEM (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
 
                              <tr className="hover:bg-white/[0.03] transition-colors">
                                 <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR COMPRA/VENDA MÁQUINAS</td>
@@ -564,7 +552,7 @@ const SummaryCard = ({ label, val, icon, color }: any) => (
   </div>
 );
 
-const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods }: any) => (
+const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods, isExchange }: any) => (
    <tr className="hover:bg-white/[0.04] transition-colors group">
       <td className="p-3 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[280px] min-w-[280px]">
          <div className="flex items-center gap-3">
@@ -575,20 +563,16 @@ const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods }: any
       {Array.from({ length: periods }).map((_, i) => {
          const lookupRound = Math.min(i, 12);
          
-         let val = 0;
-         if (macroKey === 'USD' || macroKey === 'EUR') {
-            val = rules[i]?.exchange_rates?.[macroKey] ?? (DEFAULT_MACRO.exchange_rates[macroKey as CurrencyType] || 0);
-         } else {
-            val = rules[i]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound]?.[macroKey] ?? (DEFAULT_MACRO[macroKey] ?? 0));
-         }
-
+         // Fix: Unificação do lookup para ler da raiz do objeto de round rule
+         const val = rules[i]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound]?.[macroKey] ?? (DEFAULT_MACRO[macroKey] ?? 0));
+         
          const isNegative = val < 0;
 
          return (
             <td key={i} className={`p-1 border-r border-white/5 ${i === 0 ? 'bg-orange-600/5' : ''}`}>
                <input 
-                  type="number" step="0.1"
-                  value={val}
+                  type="number" step={isExchange ? "0.01" : "0.1"}
+                  value={isExchange ? val.toFixed(2) : val}
                   onChange={e => update(i, macroKey, parseFloat(e.target.value))}
                   className={`w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-2.5 text-center text-[10px] font-black outline-none focus:border-orange-500 transition-all shadow-inner ${i === 0 ? 'border-orange-500/40 text-white' : isNegative ? 'text-rose-500 border-rose-500/20' : 'text-white'}`}
                />

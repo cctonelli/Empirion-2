@@ -103,7 +103,13 @@ export const calculateProjections = (
   // --- 3. COMPRA DE MATÉRIA-PRIMA (LÓGICA JUROS COMPOSTOS EXCEL) ---
   const qtyA = sanitize(decisions.production.purchaseMPA);
   const qtyB = sanitize(decisions.production.purchaseMPB);
-  const totalNominalPurchase = (qtyA * indicators.prices.mp_a) + (qtyB * indicators.prices.mp_b);
+  
+  // Aplicação dos índices de ajuste dinâmico (Protocolo Oracle v15.36)
+  const mpAAdjust = sanitize(indicators.raw_material_a_adjust, 0) / 100;
+  const effectiveMPA = indicators.prices.mp_a * (1 + mpAAdjust);
+  const effectiveMPB = indicators.prices.mp_b * (1 + mpAAdjust); // Usando A como base se não houver B específico
+  
+  const totalNominalPurchase = (qtyA * effectiveMPA) + (qtyB * effectiveMPB);
   
   const purchasePaymentType = decisions.production.paymentType || 1; // Padrão 50/50
   const supplierInterestRate = sanitize(indicators.supplier_interest, 1.0) / 100;
@@ -138,7 +144,7 @@ export const calculateProjections = (
      extraRevenue = round2(extraQty * (totalRevenue / totalQuantitySold));
      const premium = sanitize(indicators.special_purchase_premium, 5.0) / 100;
      // Custo estimado de produção extra pago 100% à vista
-     specialPurchaseValue = round2((extraQty * indicators.prices.mp_a * 1.5) * (1 + premium)); 
+     specialPurchaseValue = round2((extraQty * effectiveMPA * 1.5) * (1 + premium)); 
   }
 
   // --- 5. FOLHA DE PAGAMENTO ---
@@ -149,8 +155,18 @@ export const calculateProjections = (
                       (staffing.production.count * baseSalary * staffing.production.salaries);
   const totalLaborCost = round2(payrollBase * (1 + (sanitize(indicators.social_charges, 35.0) / 100)));
 
+  // Ajustes de OPEX e CPV baseados em cronograma
+  const mktAdjust = 1 + sanitize(indicators.marketing_campaign_adjust, 0)/100;
+  const distAdjust = 1 + sanitize(indicators.distribution_cost_adjust, 0)/100;
+  const storageAdjust = 1 + sanitize(indicators.storage_cost_adjust, 0)/100;
+
   const cpv = round2((totalNominalPurchase * 0.7) + specialPurchaseValue + (totalLaborCost * 0.4));
-  const opex = round2((totalLaborCost * 0.6) + (totalRevenue * 0.08) + badDebtExpense + 146402);
+  const opex = round2(
+    (totalLaborCost * 0.6) + 
+    (totalRevenue * 0.08 * mktAdjust) + 
+    badDebtExpense + 
+    (146402 * storageAdjust * distAdjust)
+  );
 
   // --- 6. GESTÃO DE DÍVIDA ---
   let activeLoans: Loan[] = previousState?.kpis?.loans ? JSON.parse(JSON.stringify(previousState.kpis.loans)) : [];
@@ -175,10 +191,20 @@ export const calculateProjections = (
     return loan;
   }).filter(l => l.remaining_principal > 0.01);
 
-  // --- 7. FLUXO DE CAIXA (DFC) ---
+  // --- 7. INVESTIMENTO CAPEX ---
+  const machineAlphaPrice = indicators.machinery_values.alfa * (1 + sanitize(indicators.machine_alpha_price_adjust, 0)/100);
+  const machineBetaPrice = indicators.machinery_values.beta * (1 + sanitize(indicators.machine_beta_price_adjust, 0)/100);
+  const machineGamaPrice = indicators.machinery_values.gama * (1 + sanitize(indicators.machine_gamma_price_adjust, 0)/100);
+  
+  const machineBuyCost = 
+    (sanitize(decisions.machinery.buy.alfa) * machineAlphaPrice) +
+    (sanitize(decisions.machinery.buy.beta) * machineBetaPrice) +
+    (sanitize(decisions.machinery.buy.gama) * machineGamaPrice);
+
+  // --- 8. FLUXO DE CAIXA (DFC) ---
   const manualLoanRequest = sanitize(decisions.finance.loanRequest);
   const totalInflow = round2(totalCurrentCashInflow + legacyReceivables + manualLoanRequest);
-  const currentCashPurchases = round2(mpCashOut + specialPurchaseValue);
+  const currentCashPurchases = round2(mpCashOut + specialPurchaseValue + machineBuyCost);
   const totalOutflow = round2(currentCashPurchases + legacyPayables + totalLaborCost + currentInterestLoans + currentAmortizationTotal);
   
   let projectedCash = round2(prevCash + totalInflow - totalOutflow - sanitize(decisions.finance.application));
@@ -198,7 +224,7 @@ export const calculateProjections = (
   const netProfit = round2(totalRevenue - cpv - opex - currentInterestLoans - totalFinancialExpenseMP);
   const finalEquity = round2(prevEquity + netProfit);
 
-  // --- 8. KPIs & BALANÇO ---
+  // --- 9. KPIs & BALANÇO ---
   const kpis: KPIs = {
     rating: netProfit > 0 ? 'AAA' : 'B',
     loans: activeLoans,

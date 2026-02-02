@@ -131,8 +131,8 @@ export const DEFAULT_MACRO: MacroIndicators = {
   inflation_rate: 1.0,
   customer_default_rate: 2.6,
   interest_rate_tr: 2.0,
-  supplier_interest: 1.0, // Alinhado ao exemplo Excel do usuário
-  sales_interest_rate: 1.0, // Juros Vendas a Prazo P00
+  supplier_interest: 1.0, 
+  sales_interest_rate: 1.0, 
   investment_return_rate: 1.0,
   avg_selling_price: 425.00, 
   tax_rate_ir: 25.0,
