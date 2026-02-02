@@ -2,12 +2,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as Router from 'react-router-dom';
 const { useLocation, useNavigate } = Router as any;
+// Fix: Added LayoutGrid to the lucide-react imports to resolve "Cannot find name 'LayoutGrid'" error
 import { 
   Plus, Trash2, ArrowLeft, Command, Users, Globe, 
   X, Palette, Menu as MenuIcon, Save, AtSign, Phone, FileCode, UserPlus, UserMinus, Shield,
   Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity, LayoutDashboard,
   PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight, Zap, CheckCircle2,
-  RefreshCw, Loader2, User, AlertOctagon, Flame
+  RefreshCw, Loader2, User, AlertOctagon, Flame, Factory, ShoppingCart, Briefcase, Tractor, DollarSign, Hammer,
+  LayoutGrid
 } from 'lucide-react';
 import { 
   getChampionships, 
@@ -20,7 +22,7 @@ import {
   updateEcosystem
 } from '../services/supabase';
 import { generateBlackSwanEvent } from '../services/gemini';
-import { Championship, UserProfile, MenuItemConfig, Team, BlackSwanEvent } from '../types';
+import { Championship, UserProfile, MenuItemConfig, Team, BlackSwanEvent, Branch } from '../types';
 import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
 import TutorDecisionMonitor from './TutorDecisionMonitor';
@@ -45,13 +47,14 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   const [isProcessing, setIsProcessing] = useState(false);
   const [isGeneratingEvent, setIsGeneratingEvent] = useState(false);
   const [selectedArena, setSelectedArena] = useState<Championship | null>(null);
+  
+  // Estados de Fluxo do Wizard
   const [showWizard, setShowWizard] = useState(false);
+  const [isPickingTemplate, setIsPickingTemplate] = useState(false);
   const [isCreatingTrial, setIsCreatingTrial] = useState(false);
   
   const [tutorView, setTutorView] = useState<TutorView>('dashboard');
-  const [decisionStats, setDecisionStats] = useState<Record<string, boolean>>({});
 
-  // Fix: Added isAdmin helper variable to determine if the user has administrative privileges
   const isAdmin = profile?.role === 'admin';
 
   const fetchData = async () => {
@@ -80,6 +83,13 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   };
 
   useEffect(() => { fetchData(); }, [activeTab]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'new_trial') {
+      setIsPickingTemplate(true);
+    }
+  }, [location]);
 
   const handleBlackSwan = async () => {
     if (!selectedArena || isGeneratingEvent) return;
@@ -133,6 +143,15 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     }
   };
 
+  const selectBranchTemplate = (branch: Branch) => {
+    if (branch === 'industrial') {
+      setIsPickingTemplate(false);
+      setShowWizard(true);
+    } else {
+      alert(`PROTOCOLO ${branch.toUpperCase()} BLOQUEADO: Este ramo está em fase de mapeamento neural. Utilize o Template Industrial no momento.`);
+    }
+  };
+
   if (selectedArena || isCreatingTrial) {
     const arenaName = selectedArena?.name || "Strategos Trial Engine";
 
@@ -180,11 +199,10 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                 </motion.div>
               )}
               {tutorView === 'intervention' && selectedArena && (
-                <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0}}>
+                <motion.div key="plan" initial={{opacity:0, x:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}>
                    <TutorArenaControl championship={selectedArena} onUpdate={(u) => setSelectedArena({...selectedArena, ...u})} />
                 </motion.div>
               )}
-              {/* Adicionar outras views conforme necessário */}
            </AnimatePresence>
         </main>
       </div>
@@ -220,16 +238,78 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
              <button onClick={() => setSelectedArena(champ)} className="w-full py-5 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95">Acessar Control Room</button>
           </div>
         ))}
-        <button onClick={() => setShowWizard(true)} className="bg-white/5 p-12 rounded-[4rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-6 group hover:bg-white/10 transition-all">
+        <button onClick={() => setIsPickingTemplate(true)} className="bg-white/5 p-12 rounded-[4rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-6 group hover:bg-white/10 transition-all">
            <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center text-slate-500 group-hover:bg-orange-600 group-hover:text-white transition-all"><Plus size={40}/></div>
            <span className="text-xs font-black uppercase tracking-widest text-slate-500 group-hover:text-white">Implantar Nova Arena</span>
         </button>
       </div>
 
       <AnimatePresence>
+        {isPickingTemplate && (
+          <div className="fixed inset-0 z-[6000] bg-slate-950/95 backdrop-blur-3xl flex items-center justify-center p-10 overflow-hidden">
+             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-6xl w-full space-y-12">
+                <div className="text-center space-y-4">
+                   <div className="w-20 h-20 bg-orange-600 rounded-[2rem] flex items-center justify-center mx-auto text-white shadow-2xl mb-6">
+                      <LayoutGrid size={40} />
+                   </div>
+                   <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">Escolha a <span className="text-orange-500">Matriz de Ramo</span></h2>
+                   <p className="text-slate-500 font-medium text-lg italic">Selecione um template de setor para inicializar os nodos da arena.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                   <TemplateCard 
+                      branch="industrial" 
+                      label="Mastery Industrial" 
+                      icon={<Factory size={40} />} 
+                      desc="CapEx massivo, máquinas Alfa/Beta/Gama e depreciação técnica." 
+                      active 
+                      onSelect={() => selectBranchTemplate('industrial')} 
+                   />
+                   <TemplateCard 
+                      branch="commercial" 
+                      label="Varejo Elite" 
+                      icon={<ShoppingCart size={40} />} 
+                      desc="Giro de estoque, marketing mix e algoritmos de CSAT." 
+                      onSelect={() => selectBranchTemplate('commercial')} 
+                   />
+                   <TemplateCard 
+                      branch="services" 
+                      label="Intellect Matrix" 
+                      icon={<Briefcase size={40} />} 
+                      desc="Capital intelectual, horas-homem e contratos de prestação." 
+                      onSelect={() => selectBranchTemplate('services')} 
+                   />
+                   <TemplateCard 
+                      branch="agribusiness" 
+                      label="Global Agro" 
+                      icon={<Tractor size={40} />} 
+                      desc="Ativos biológicos, ciclos de fazenda e riscos climáticos." 
+                      onSelect={() => selectBranchTemplate('agribusiness')} 
+                   />
+                   <TemplateCard 
+                      branch="finance" 
+                      label="Sinvest Bank" 
+                      icon={<DollarSign size={40} />} 
+                      desc="Spread bancário, risco de crédito e hedge financeiro." 
+                      onSelect={() => selectBranchTemplate('finance')} 
+                   />
+                   <TemplateCard 
+                      branch="construction" 
+                      label="Build Heavy" 
+                      icon={<Hammer size={40} />} 
+                      desc="Longo prazo, licitações e gestão de canteiros de obras." 
+                      onSelect={() => selectBranchTemplate('construction')} 
+                   />
+                </div>
+
+                <button onClick={() => setIsPickingTemplate(false)} className="mx-auto block text-slate-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">Cancelar Operação</button>
+             </motion.div>
+          </div>
+        )}
+
         {showWizard && (
           <div className="fixed inset-0 z-[5000] bg-slate-950 p-4 md:p-10 flex items-center justify-center overflow-hidden">
-             <ChampionshipWizard onComplete={() => { setShowWizard(false); fetchData(); }} />
+             <TrailWizard onComplete={() => { setShowWizard(false); fetchData(); }} />
           </div>
         )}
       </AnimatePresence>
@@ -237,27 +317,49 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
   );
 };
 
+const TemplateCard = ({ label, icon, desc, active, onSelect }: any) => (
+  <button 
+    onClick={onSelect}
+    className={`p-10 rounded-[3.5rem] border-2 text-left transition-all relative overflow-hidden group h-full flex flex-col justify-between ${
+      active 
+      ? 'bg-slate-900 border-orange-500 shadow-[0_20px_60px_rgba(249,115,22,0.2)] scale-100 hover:scale-[1.03]' 
+      : 'bg-slate-950 border-white/5 opacity-40 grayscale cursor-not-allowed'
+    }`}
+  >
+     <div className="space-y-6 relative z-10">
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${active ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-600'}`}>
+           {icon}
+        </div>
+        <div className="space-y-2">
+           <h3 className={`text-2xl font-black uppercase italic ${active ? 'text-white' : 'text-slate-500'}`}>{label}</h3>
+           <p className={`text-sm font-medium leading-relaxed ${active ? 'text-slate-400' : 'text-slate-700'}`}>{desc}</p>
+        </div>
+     </div>
+     
+     <div className="pt-8 flex justify-between items-center relative z-10">
+        {active ? (
+          <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">Selecionar Protocolo <ArrowRight size={14}/></span>
+        ) : (
+          <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-2"><Lock size={12}/> Nodo Indisponível</span>
+        )}
+     </div>
+
+     {active && (
+       <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-10 transition-opacity">
+          <Sparkles size={120} className="text-white" />
+       </div>
+     )}
+  </button>
+);
+
 const NavTab = ({ active, onClick, label, color }: any) => (
     <button onClick={onClick} className={`px-10 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] transition-all border italic active:scale-95 whitespace-nowrap ${active ? 'bg-orange-600 text-white border-orange-500 shadow-lg' : 'bg-slate-950 border-white/5 text-slate-600 hover:text-slate-300'}`}>{label}</button>
 );
 
 const ArenaNavBtn = ({ active, onClick, label, icon }: any) => (
-  <button onClick={onClick} className={`flex items-center gap-2.5 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all italic active:scale-95 border ${active ? 'bg-orange-600 text-white border-orange-400 shadow-lg' : 'text-slate-500 border-transparent hover:text-slate-200'}`}>
+  <button onClick={onClick} className={`flex items-center gap-2.5 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all italic active:scale-95 border ${active ? 'bg-orange-600 text-white border-orange-400 shadow-lg' : 'text-slate-50 border-transparent hover:text-slate-200'}`}>
      {icon} {label}
   </button>
-);
-
-const MetricCard = ({ label, val, icon, trend }: any) => (
-  <div className="bg-slate-900 p-8 rounded-[3.5rem] border border-white/5 shadow-2xl space-y-4">
-     <div className="flex justify-between items-center">
-        <div className="p-3 bg-white/5 rounded-xl">{icon}</div>
-        <span className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">{trend}</span>
-     </div>
-     <div>
-        <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
-        <span className="text-3xl font-black text-white font-mono">{val}</span>
-     </div>
-  </div>
 );
 
 export default AdminCommandCenter;
