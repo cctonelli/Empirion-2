@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
@@ -9,7 +8,9 @@ import {
   ArrowUpRight, ArrowDownRight, Layers, Table as TableIcon, Info,
   Trophy, AlertTriangle, Scale, Gauge, Activity as ActivityIcon,
   ChevronDown, Maximize2, Zap, ShieldAlert, ThermometerSun, Layers3,
-  Factory, ShoppingCart, Flame
+  Factory, ShoppingCart, Flame, AlertOctagon, FileWarning,
+  // Fix: Added missing imports to resolve "Cannot find name" and JSX attribute errors for built-in types
+  CheckCircle2, Lock, X
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -18,7 +19,8 @@ const { useNavigate } = ReactRouterDOM as any;
 import ChampionshipTimer from './ChampionshipTimer';
 import DecisionForm from './DecisionForm';
 import GazetteViewer from './GazetteViewer';
-import { supabase, getChampionships, getUserProfile } from '../services/supabase';
+import BusinessPlanWizard from './BusinessPlanWizard';
+import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan } from '../services/supabase';
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs, RegionalData } from '../types';
 import { logError, LogContext } from '../utils/logger';
 
@@ -27,8 +29,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeam, setActiveTeam] = useState<Team | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('player');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showGazette, setShowGazette] = useState(false);
+  const [showBP, setShowBP] = useState(false);
+  const [bpStatus, setBpStatus] = useState<'pending' | 'draft' | 'submitted'>('pending');
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -37,17 +42,25 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         const champId = localStorage.getItem('active_champ_id');
         const teamId = localStorage.getItem('active_team_id');
         if (!champId || !teamId) { navigate('/app/championships'); return; }
+        
         const { data: { session } } = await (supabase.auth as any).getSession();
         if (session) {
+          setCurrentUserId(session.user.id);
           const profile = await getUserProfile(session.user.id);
           if (profile) setUserRole(profile.role);
         }
+
         const { data } = await getChampionships();
         const arena = data?.find(a => a.id === champId);
         if (arena) {
           setActiveArena(arena);
           const team = arena.teams?.find((t: any) => t.id === teamId);
           if (team) setActiveTeam(team);
+
+          // Verifica se há BP exigido e qual o status
+          const round = (arena.current_round || 0) + 1;
+          const { data: bp } = await getActiveBusinessPlan(teamId, round);
+          if (bp) setBpStatus(bp.status);
         }
       } catch (err: any) { logError(LogContext.DASHBOARD, "Cockpit Init Fault", err.message); }
       finally { setLoading(false); }
@@ -55,7 +68,18 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     fetchAll();
   }, [navigate]);
 
-  const isObserver = userRole === 'observer';
+  const isObserver = useMemo(() => {
+    if (userRole === 'observer') return true;
+    if (activeArena?.observers && Array.isArray(activeArena.observers) && currentUserId) {
+        return activeArena.observers.includes(currentUserId);
+    }
+    return false;
+  }, [userRole, activeArena?.observers, currentUserId]);
+
+  const isBPRequired = useMemo(() => {
+    const round = (activeArena?.current_round || 0) + 1;
+    return activeArena?.round_rules?.[round]?.require_business_plan ?? activeArena?.market_indicators?.require_business_plan ?? false;
+  }, [activeArena]);
 
   const currentKpis = useMemo((): KPIs => {
     const baseFallback = {
@@ -91,29 +115,36 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     </div>
   );
 
-  const isStrike = currentKpis.is_on_strike;
   const burnRate = currentKpis.statements?.cash_flow?.outflow?.total || 0;
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
-      {/* BANNER DE STATUS DO PAPEL */}
+      
+      {/* BANNER DE OBSERVAÇÃO NOMINADA */}
       {isObserver && (
         <div className="h-10 bg-indigo-600 flex items-center justify-center gap-3 shrink-0 shadow-lg z-[100] border-b border-indigo-400/30">
            <Eye size={16} className="text-white animate-pulse" />
-           <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">MODO OBSERVADOR: ACESSO DE LEITURA APENAS</span>
+           <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">MODO OBSERVADOR NOMINADO: ACESSO DE LEITURA APENAS</span>
+        </div>
+      )}
+
+      {/* BANNER DE ALERTA DE BUSINESS PLAN (Obrigatório por Round) */}
+      {isBPRequired && bpStatus !== 'submitted' && (
+        <div className="h-12 bg-rose-600 flex items-center justify-between px-10 shrink-0 shadow-2xl z-[101] border-b border-rose-400/30 animate-in slide-in-from-top duration-700">
+           <div className="flex items-center gap-4">
+              <FileWarning size={20} className="text-white animate-bounce" />
+              <span className="text-[11px] font-black uppercase tracking-[0.3em] text-white italic">BLOQUEIO ESTRATÉGICO: Business Plan Necessário para o Ciclo P0{(activeArena?.current_round || 0) + 1}</span>
+           </div>
+           <button onClick={() => setShowBP(true)} className="px-8 py-2 bg-white text-rose-600 rounded-full font-black text-[9px] uppercase tracking-widest hover:bg-slate-100 transition-all shadow-lg active:scale-95">
+              Elaborar Agora
+           </button>
         </div>
       )}
 
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20">
          <CockpitStat label="Valuation" val={`${currencySymbol} ${currentKpis.market_valuation?.share_price.toFixed(2)}`} trend={`${currentKpis.market_valuation?.tsr.toFixed(1)}%`} pos={currentKpis.market_valuation?.tsr >= 0} icon={<TrendingUp size={16}/>} />
          <CockpitStat label="Equity" val={`${currencySymbol} ${fmt(currentKpis.equity || 0)}`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
-         <CockpitStat 
-            label="Capital Burn" 
-            val={`${currencySymbol} ${fmt(burnRate)}`} 
-            trend="Período" 
-            pos={false} 
-            icon={<Flame size={16} className="text-rose-500" />} 
-         />
+         <CockpitStat label="Capital Burn" val={`${currencySymbol} ${fmt(burnRate)}`} trend="Período" pos={false} icon={<Flame size={16} className="text-rose-500" />} />
          <CockpitStat label="Market Share" val={`${currentKpis.market_share?.toFixed(1)}%`} trend="Global" pos icon={<PieChart size={16}/>} />
          <CockpitStat label="Rating" val={currentKpis.rating} trend="Oracle" pos icon={<Shield size={16}/>} />
          <div className="px-8 flex items-center justify-between border-l border-white/5 bg-slate-950/40">
@@ -138,10 +169,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2">
                      <Landmark size={14}/> Node Telemetry
                   </h3>
-                  <span className="text-[10px] font-black text-slate-600 uppercase italic">v15.25 Gold</span>
+                  <span className="text-[10px] font-black text-slate-600 uppercase italic">v15.36 Gold</span>
                </header>
 
-               {/* TELEMETRIA DE FLUXO (NOVO v15.25) */}
                <div className="bg-slate-950/80 p-6 rounded-[2.5rem] border border-white/5 space-y-6 shadow-inner">
                   <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
                      <Zap size={12} className="text-blue-500" /> Dreno de Capital
@@ -156,7 +186,21 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* GAUGE DE CARGA SISTÊMICA (NOVO v15.25) */}
+               {/* BOTÃO DE ACESSO AO BP NO MENU LATERAL */}
+               <button 
+                 onClick={() => setShowBP(true)}
+                 className={`w-full p-6 rounded-[2.5rem] border-2 flex flex-col gap-3 group transition-all ${bpStatus === 'submitted' ? 'bg-emerald-600/10 border-emerald-500/20' : 'bg-indigo-600/10 border-indigo-500/20 hover:bg-indigo-600/20'}`}
+               >
+                  <div className="flex justify-between items-center">
+                     <PenTool size={20} className={bpStatus === 'submitted' ? 'text-emerald-400' : 'text-indigo-400'} />
+                     {bpStatus === 'submitted' && <CheckCircle2 size={14} className="text-emerald-400" />}
+                  </div>
+                  <div className="text-left">
+                     <span className={`text-[11px] font-black uppercase italic ${bpStatus === 'submitted' ? 'text-emerald-500' : 'text-indigo-500'}`}>Business Plan</span>
+                     <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest mt-1">Status: {bpStatus.toUpperCase()}</p>
+                  </div>
+               </button>
+
                <div className="bg-slate-950/80 p-6 rounded-[2.5rem] border border-white/5 space-y-4 shadow-inner">
                   <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
                      <Cpu size={12} className="text-orange-500" /> Carga da Fábrica
@@ -183,9 +227,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Matriz de <span className="text-orange-600">Decisão</span></h2>
                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">Nodo Operacional: {activeTeam?.name}</p>
                   </div>
-                  <button onClick={() => setShowGazette(true)} className="px-5 py-2.5 bg-slate-900 border border-white/10 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2 active:scale-95">
-                     <Newspaper size={14} /> Abrir Oracle Gazette
-                  </button>
+                  <div className="flex gap-4">
+                      <button onClick={() => setShowGazette(true)} className="px-5 py-2.5 bg-slate-900 border border-white/10 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2 active:scale-95">
+                         <Newspaper size={14} /> Oracle Gazette
+                      </button>
+                  </div>
                </div>
                <div className="flex-1 overflow-hidden relative">
                   <DecisionForm 
@@ -193,8 +239,25 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                      champId={activeArena?.id} 
                      round={(activeArena?.current_round || 0) + 1} 
                      branch={activeArena?.branch}
-                     isReadOnly={isObserver}
+                     isReadOnly={isObserver || (isBPRequired && bpStatus !== 'submitted')}
                   />
+                  
+                  {isBPRequired && bpStatus !== 'submitted' && (
+                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-10 text-center">
+                        <div className="max-w-md space-y-8 animate-in zoom-in-95 duration-500">
+                           <div className="w-20 h-20 bg-rose-600 rounded-[2rem] flex items-center justify-center mx-auto text-white shadow-2xl shadow-rose-500/20">
+                              <Lock size={40} />
+                           </div>
+                           <div className="space-y-4">
+                              <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Matriz Bloqueada</h3>
+                              <p className="text-slate-400 font-medium italic">"A apresentação do Business Plan é obrigatória para liberar as decisões deste ciclo."</p>
+                           </div>
+                           <button onClick={() => setShowBP(true)} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-white hover:text-indigo-950 transition-all">
+                              Iniciar Business Plan
+                           </button>
+                        </div>
+                     </div>
+                  )}
                </div>
             </div>
          </main>
@@ -212,6 +275,24 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                 onClose={() => setShowGazette(false)} 
              />
           </div>
+        )}
+        {showBP && (
+           <div className="fixed inset-0 z-[6000] bg-slate-950/95 backdrop-blur-3xl overflow-y-auto">
+              <div className="min-h-screen">
+                 <button 
+                   onClick={() => setShowBP(false)} 
+                   className="fixed top-10 right-10 p-4 bg-white/5 hover:bg-rose-600 text-white rounded-full z-[7000] transition-all print:hidden"
+                 >
+                    <X size={24} />
+                 </button>
+                 <BusinessPlanWizard 
+                   championshipId={activeArena?.id} 
+                   teamId={activeTeam?.id} 
+                   currentRound={(activeArena?.current_round || 0) + 1} 
+                   onClose={() => setShowBP(false)}
+                 />
+              </div>
+           </div>
         )}
       </AnimatePresence>
     </div>

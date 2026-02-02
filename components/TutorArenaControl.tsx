@@ -6,7 +6,9 @@ import {
   Sparkles, Cpu, Package, Boxes, BrainCircuit, Target, Bird,
   UserPlus, UserMinus, ShoppingCart, Info, HardDrive,
   BarChart3, Landmark, Percent, Settings2, DollarSign,
-  ShieldAlert, Users, CheckCircle2, ChevronRight, Scale, AlertCircle, Briefcase, Award, Eye
+  ShieldAlert, Users, CheckCircle2, ChevronRight, Scale, AlertCircle, Briefcase, Award, Eye, X,
+  // Fix: Added missing User import from lucide-react
+  User
 } from 'lucide-react';
 import { EcosystemConfig, Championship, MacroIndicators, BlackSwanEvent, LaborAvailability, CurrencyType } from '../types';
 import { updateEcosystem, supabase } from '../services/supabase';
@@ -15,9 +17,11 @@ import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 
 const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (config: Partial<Championship>) => void }> = ({ championship, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState<'conjuncture' | 'suppliers' | 'market' | 'staffing' | 'international' | 'awards'>('conjuncture');
+  const [activeTab, setActiveTab] = useState<'conjuncture' | 'suppliers' | 'market' | 'staffing' | 'international' | 'awards' | 'observers'>('conjuncture');
   const [isSaving, setIsSaving] = useState(false);
   const [hasDecisions, setHasDecisions] = useState(false);
+  const [newObserverId, setNewObserverId] = useState('');
+  const [observersList, setObserversList] = useState<string[]>(championship.observers || []);
   
   const nextRoundIdx = championship.current_round + 1;
   const inheritedRules = useMemo(() => {
@@ -29,18 +33,20 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
 
   useEffect(() => {
     setMacro(inheritedRules);
+    setObserversList(championship.observers || []);
     const checkDecisions = async () => {
        const table = championship.is_trial ? 'trial_decisions' : 'current_decisions';
        const { count } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('championship_id', championship.id).eq('round', nextRoundIdx);
        setHasDecisions((count || 0) > 0);
     };
     checkDecisions();
-  }, [inheritedRules, championship.id, nextRoundIdx]);
+  }, [inheritedRules, championship.id, nextRoundIdx, championship.observers]);
 
   const handleSave = async () => {
     setIsSaving(true);
     const payload = { 
       market_indicators: macro,
+      observers: observersList,
       round_rules: {
         ...(championship.round_rules || {}),
         [nextRoundIdx]: macro
@@ -49,7 +55,18 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     await updateEcosystem(championship.id, payload);
     onUpdate(payload);
     setIsSaving(false);
-    alert(`INTERVENÇÃO EXECUTADA: Cenário para P0${nextRoundIdx} selado no motor Oracle.`);
+    alert(`INTERVENÇÃO EXECUTADA: Cenário e Acessos P0${nextRoundIdx} selados.`);
+  };
+
+  const addObserver = () => {
+    if (!newObserverId.trim()) return;
+    if (observersList.includes(newObserverId.trim())) return;
+    setObserversList([...observersList, newObserverId.trim()]);
+    setNewObserverId('');
+  };
+
+  const removeObserver = (id: string) => {
+    setObserversList(observersList.filter(o => o !== id));
   };
 
   return (
@@ -76,6 +93,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
             <TabBtn active={activeTab === 'staffing'} onClick={() => setActiveTab('staffing')} label="Staffing" icon={<Briefcase size={14}/>} />
             <TabBtn active={activeTab === 'awards'} onClick={() => setActiveTab('awards')} label="Premiações" icon={<Award size={14}/>} />
             <TabBtn active={activeTab === 'international'} onClick={() => setActiveTab('international')} label="Câmbio" icon={<Globe size={14}/>} />
+            <TabBtn active={activeTab === 'observers'} onClick={() => setActiveTab('observers')} label="Observadores" icon={<Eye size={14}/>} />
          </div>
       </div>
 
@@ -108,6 +126,49 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
               </div>
            )}
 
+           {activeTab === 'observers' && (
+              <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
+                 <div className="flex items-center gap-6">
+                    <div className="p-4 bg-indigo-600 rounded-2xl text-white shadow-xl shadow-indigo-500/20"><Eye size={32}/></div>
+                    <div>
+                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Observadores Nominados</h3>
+                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic">Conceda acesso de leitura (Audit-Only) a usuários específicos via UUID.</p>
+                    </div>
+                 </div>
+
+                 <div className="flex gap-4">
+                    <input 
+                      value={newObserverId}
+                      onChange={e => setNewObserverId(e.target.value)}
+                      placeholder="Insira o UUID do usuário..."
+                      className="flex-1 bg-slate-950 border-2 border-white/10 rounded-2xl px-8 py-4 text-white font-mono text-sm outline-none focus:border-indigo-500"
+                    />
+                    <button onClick={addObserver} className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-indigo-900 transition-all flex items-center gap-3">
+                       <Plus size={18}/> Adicionar
+                    </button>
+                 </div>
+
+                 <div className="grid grid-cols-1 gap-4 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
+                    {observersList.length === 0 ? (
+                       <div className="py-12 text-center bg-white/5 border border-dashed border-white/10 rounded-3xl opacity-40">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">Nenhum observador nominado.</p>
+                       </div>
+                    ) : (
+                       observersList.map(id => (
+                          <div key={id} className="flex justify-between items-center p-6 bg-slate-950/50 border border-white/5 rounded-2xl group hover:border-indigo-500/30 transition-all">
+                             <div className="flex items-center gap-4">
+                                <div className="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center"><User size={16}/></div>
+                                <span className="text-xs font-mono text-slate-300">{id}</span>
+                             </div>
+                             <button onClick={() => removeObserver(id)} className="p-2 text-slate-600 hover:text-rose-500 transition-colors"><X size={18}/></button>
+                          </div>
+                       ))
+                    )}
+                 </div>
+              </div>
+           )}
+
+           {/* Mantém as outras abas conforme original */}
            {activeTab === 'suppliers' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                  <div className="lg:col-span-4 space-y-8">
