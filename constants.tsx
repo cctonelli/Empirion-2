@@ -7,7 +7,7 @@ export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
 
-// ESTRUTURA FINANCEIRA INDUSTRIAL REALÍSTICA ( डीएनए EMPIRION ) - BASAL P00
+// ESTRUTURA FINANCEIRA INDUSTRIAL REALÍSTICA ( डीएनए EMPIRION ) - BASAL P00 (Sincronizada Excel)
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
@@ -28,7 +28,7 @@ export const INITIAL_FINANCIAL_TREE = {
           ]
         },
         {
-          id: 'assets.noncurrent', label: 'ATIVO NÃO CIRCULANTE', value: 833300.90, type: 'totalizer', children: [
+          id: 'assets.noncurrent', label: 'ATIVO NÃO CIRCULANTE', value: 6012500.00, type: 'totalizer', children: [
             { id: 'assets.noncurrent.fixed', label: 'ATIVO IMOBILIZADO', value: 6012500.00, type: 'totalizer', children: [
                 { id: 'assets.noncurrent.fixed.land', label: 'Terrenos', value: 1200000.00, type: 'asset', isEditable: true },
                 { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios e Instalações', value: 5440000.00, type: 'asset', isEditable: true },
@@ -79,10 +79,6 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 2500.00, type: 'expense', isEditable: true }
     ]},
-    { id: 'non_op_res', label: '(+/-) RESULTADO NÃO OPERACIONAL', value: 0, type: 'totalizer', children: [
-        { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0, type: 'revenue', isEditable: true },
-        { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0, type: 'expense', isEditable: true }
-    ]},
     { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 59485.26, type: 'totalizer', isReadOnly: true },
     { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.31, type: 'expense', isEditable: true },
     { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 44613.95, type: 'totalizer', isReadOnly: true },
@@ -95,9 +91,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.inflow.cash_sales', label: 'VENDAS À VISTA', value: 2092193.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO (-) PERDAS)', value: 694141.90, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.investment_withdrawal', label: 'RESGATE DE APLICAÇÕES', value: 0.00, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.machine_sales', label: 'VENDA DE MÁQUINAS', value: 0.00, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.awards', label: 'PREMIAÇÕES RECEBIDAS', value: 0.00, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.loans_normal', label: 'EMPRÉSTIMOS NORMAIS', value: 0.00, type: 'revenue', isEditable: true },
+        { id: 'cf.inflow.manual_loan', label: 'EMPRÉSTIMOS NORMAIS', value: 0.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.compulsory', label: 'EMPRÉSTIMO COMPULSÓRIO', value: 1372362.00, type: 'revenue', isEditable: true }
     ]},
     { id: 'cf.outflow', label: '(-) SAÍDAS', value: -4158696.90, type: 'totalizer', children: [
@@ -108,17 +102,10 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 489850.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 70700.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.suppliers', label: 'PAGAMENTO A FORNECEDORES', value: 1414000.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.misc', label: 'DIVERSOS E ATRASOS GERAIS', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.machine_buy', label: 'COMPRA DE MÁQUINAS', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO DE MÁQUINAS', value: 146402.50, type: 'expense', isEditable: true },
         { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 125000.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.late_penalties', label: 'MULTAS POR ATRASO', value: 0, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.training', label: 'TREINAMENTO', value: 0, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true }
+        { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true }
     ]},
-    { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true },
     { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0.00, type: 'totalizer' }
   ]
 };
@@ -132,12 +119,13 @@ export const DEFAULT_MACRO: MacroIndicators = {
   customer_default_rate: 2.6,
   interest_rate_tr: 2.0,
   supplier_interest: 1.5,
+  sales_interest_rate: 1.0, // Taxa de 1% para vendas a prazo (PGTO)
   investment_return_rate: 1.0,
   avg_selling_price: 425.00, 
   tax_rate_ir: 25.0,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
-  special_purchase_premium: 5.0, // Ágio padrão de 5% conforme nova diretriz
+  special_purchase_premium: 5.0, 
   compulsory_loan_agio: 3.0,
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
   dividend_percent: 25.0, 
@@ -189,19 +177,19 @@ export const DEFAULT_MACRO: MacroIndicators = {
 };
 
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
-  0: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0, allow_machine_sale: false, require_business_plan: false, special_purchase_premium: 5.0 },
-  1: { ice: 3.2, inflation_rate: 1.2, demand_variation: 2, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  2: { ice: 2.8, inflation_rate: 1.5, demand_variation: -1, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  3: { ice: 2.5, inflation_rate: 1.8, demand_variation: -5, allow_machine_sale: true, require_business_plan: true, special_purchase_premium: 5.0 },
-  4: { ice: 2.2, inflation_rate: 2.1, demand_variation: -10, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  5: { ice: 2.8, inflation_rate: 1.6, demand_variation: 0, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  6: { ice: 3.5, inflation_rate: 1.2, demand_variation: 5, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  7: { ice: 4.0, inflation_rate: 1.0, demand_variation: 10, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  8: { ice: 4.2, inflation_rate: 0.9, demand_variation: 15, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  9: { ice: 3.8, inflation_rate: 1.1, demand_variation: 8, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  10: { ice: 3.2, inflation_rate: 1.3, demand_variation: 2, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  11: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 },
-  12: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0 }
+  0: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0, allow_machine_sale: false, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  1: { ice: 3.2, inflation_rate: 1.2, demand_variation: 2, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  2: { ice: 2.8, inflation_rate: 1.5, demand_variation: -1, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  3: { ice: 2.5, inflation_rate: 1.8, demand_variation: -5, allow_machine_sale: true, require_business_plan: true, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  4: { ice: 2.2, inflation_rate: 2.1, demand_variation: -10, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  5: { ice: 2.8, inflation_rate: 1.6, demand_variation: 0, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  6: { ice: 3.5, inflation_rate: 1.2, demand_variation: 5, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  7: { ice: 4.0, inflation_rate: 1.0, demand_variation: 10, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  8: { ice: 4.2, inflation_rate: 0.9, demand_variation: 15, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  9: { ice: 3.8, inflation_rate: 1.1, demand_variation: 8, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  10: { ice: 3.2, inflation_rate: 1.3, demand_variation: 2, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  11: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 },
+  12: { ice: 3.0, inflation_rate: 1.0, demand_variation: 0, allow_machine_sale: true, require_business_plan: false, special_purchase_premium: 5.0, sales_interest_rate: 1.0 }
 };
 
 export const MENU_STRUCTURE: MenuItemConfig[] = [
