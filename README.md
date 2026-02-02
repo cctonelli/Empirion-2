@@ -1,4 +1,3 @@
-
 # 🚀 Empirion – Business Intelligence Arena (v15.25-Oracle Master)
 
 **Forge Your Empire with AI-Driven Strategic Insight.**
@@ -6,7 +5,7 @@
 ---
 
 ## 🧠 1. Arquitetura de Inteligência Artificial (Gemini API)
-... (conteúdo anterior mantido) ...
+O Empirion utiliza o motor neural **Gemini 3 Pro** para orquestrar o Oráculo Strategos, fornecendo raciocínio profundo sobre balanços e planos de negócios. A versão **Gemini 3 Flash** é utilizada para processamento de baixa latência em bots competitivos e geração de notícias da Gazeta.
 
 ---
 
@@ -20,17 +19,25 @@ O Empirion utiliza **Row Level Security (RLS)** avançado no Supabase para garan
 
 ### 2.2 Arena Tutor (Orquestrador)
 *   **Permissões:** Controle total sobre os campeonatos que criou (`tutor_id`). Pode ler todas as decisões, balanços e logs de auditoria de qualquer equipe dentro de sua arena.
-*   **Mecânica:** Responsável por disparar o *Turnover* e gerenciar *Black Swans*.
 
 ### 2.3 Team Member (Estrategista)
-*   **Permissões:** Leitura e escrita exclusivas nos dados de sua própria equipe. Pode visualizar relatórios públicos e a Gazeta conforme configurado pelo Tutor.
-*   **Isolamento:** Membros da Equipe A não podem acessar o balanço detalhado ou o histórico de auditoria da Equipe B.
+*   **Permissões:** Leitura e escrita exclusivas nos dados de sua própria equipe.
 
 ### 2.4 Market Observer
 *   **Permissões:** Acesso de leitura (*Read-Only*) a dados consolidados da arena onde foram nomeados.
-*   **Mecânica:** Identificados pelo campo `observers` (array de UUIDs) na tabela de campeonatos. Ideal para patrocinadores, professores ou juízes de banca.
 
 ---
 
-## 🌎 3. Expansão Geopolítica e Multi-Moeda
-... (conteúdo anterior mantido) ...
+## 📊 3. Protocolo de Integridade Contábil (Imutabilidade de Contas)
+
+**REGRA CRÍTICA DE DESENVOLVIMENTO:**
+Todas as contas listadas na `INITIAL_FINANCIAL_TREE` dentro de `constants.tsx` (Balanço Patrimonial, DRE e Fluxo de Caixa) são **imutáveis em sua existência**. 
+
+*   **Contas com Valor 0:** É estritamente proibido remover contas que possuam valor zero no P00 (Baseline). 
+*   **Motivo:** Estas contas servem como "espaços de memória" (placeholder) para o motor Oracle. Elas serão populadas e calculadas nos rounds subsequentes (P01-P12). 
+*   **Impacto:** A remoção de qualquer conta, mesmo zerada, quebra a lógica de consolidação do motor de simulação e impede que as equipes tomem decisões relacionadas àquelas rubricas no futuro.
+
+---
+
+## 🌎 4. Expansão Geopolítica e Multi-Moeda
+O simulador suporta até 15 regiões simultâneas com taxas de câmbio dinâmicas e balanceamento de demanda ponderado, permitindo cenários de globalização e hedge cambial.

@@ -25,7 +25,7 @@ const calculatePMT = (rate: number, nper: number, pv: number): number => {
 
 /**
  * CORE ORACLE ENGINE v15.36 - FIDELITY CASH FLOW KERNEL
- * Processamento de vendas com lógica PGTO (Excel Match)
+ * Processamento tático com fidelidade contábil Excel Match.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -72,7 +72,6 @@ export const calculateProjections = (
 
   // Cálculo por região para fidelidade de market share
   Object.entries(decisions.regions).forEach(([id, reg]) => {
-    const regionId = parseInt(id);
     const price = sanitize(reg.price, 425);
     const termType = sanitize(reg.term, 1); // 0: à vista, 1: 50/50, 2: 33/33/33
     
@@ -82,17 +81,15 @@ export const calculateProjections = (
     totalQuantitySold += qty;
 
     if (termType === 0) {
-      // À VISTA
-      const rev = price * qty;
+      const rev = round2(price * qty);
       totalRevenue += rev;
       totalCurrentCashInflow += rev;
     } else {
-      // 50/50 (2 parcelas) ou 33/33/33 (3 parcelas)
       const nper = termType === 1 ? 2 : 3;
       const pmt = calculatePMT(salesInterest, nper, price);
       
-      const regionTotalRevenue = (pmt * nper) * qty;
-      const regionCashInflow = pmt * qty; // Apenas a primeira parcela entra no caixa
+      const regionTotalRevenue = round2((pmt * nper) * qty);
+      const regionCashInflow = round2(pmt * qty); // Apenas a primeira parcela entra no caixa
       
       totalRevenue += regionTotalRevenue;
       totalCurrentCashInflow += regionCashInflow;
@@ -101,35 +98,61 @@ export const calculateProjections = (
 
   const accountsReceivable = totalRevenue - totalCurrentCashInflow;
   const badDebtRate = sanitize(indicators.customer_default_rate, 2.6) / 100;
-  const badDebtExpense = accountsReceivable * badDebtRate;
+  const badDebtExpense = round2(accountsReceivable * badDebtRate);
 
-  // --- 3. CUSTOS E DESPESAS ---
+  // --- 3. COMPRA DE MATÉRIA-PRIMA (LÓGICA JUROS COMPOSTOS EXCEL) ---
   const qtyA = sanitize(decisions.production.purchaseMPA);
   const qtyB = sanitize(decisions.production.purchaseMPB);
   const totalNominalPurchase = (qtyA * indicators.prices.mp_a) + (qtyB * indicators.prices.mp_b);
   
-  // Produção Extra (Ágio 5%)
+  const purchasePaymentType = decisions.production.paymentType || 1; // Padrão 50/50
+  const supplierInterestRate = sanitize(indicators.supplier_interest, 1.0) / 100;
+  
+  let mpCashOut = 0;
+  let mpFutureLiability = 0;
+  let totalFinancialExpenseMP = 0;
+
+  if (purchasePaymentType === 0) {
+    mpCashOut = round2(totalNominalPurchase);
+    mpFutureLiability = 0;
+  } else {
+    const divisor = purchasePaymentType === 1 ? 2 : 3;
+    const baseParcel = totalNominalPurchase / divisor;
+    
+    // Parcela à Vista (Parcela 0)
+    mpCashOut = round2(baseParcel);
+    
+    // Cálculo das parcelas a prazo com juros compostos: ARRED((Base)*(1+i)^n;2)
+    for (let n = 1; n < divisor; n++) {
+      const parcelWithInterest = round2(baseParcel * Math.pow(1 + supplierInterestRate, n));
+      mpFutureLiability += parcelWithInterest;
+      totalFinancialExpenseMP += (parcelWithInterest - baseParcel);
+    }
+  }
+
+  // --- 4. PRODUÇÃO EXTRA (ÁGIO 5% À VISTA) ---
   let extraRevenue = 0;
   let specialPurchaseValue = 0;
   if (totalQuantitySold > (9700 * (decisions.production.activityLevel / 100))) {
      const extraQty = totalQuantitySold - (9700 * (decisions.production.activityLevel / 100));
-     extraRevenue = extraQty * (totalRevenue / totalQuantitySold);
+     extraRevenue = round2(extraQty * (totalRevenue / totalQuantitySold));
      const premium = sanitize(indicators.special_purchase_premium, 5.0) / 100;
-     specialPurchaseValue = (extraQty * indicators.prices.mp_a * 1.5) * (1 + premium); 
+     // Custo estimado de produção extra pago 100% à vista
+     specialPurchaseValue = round2((extraQty * indicators.prices.mp_a * 1.5) * (1 + premium)); 
   }
 
-  // Folha de Pagamento
+  // --- 5. FOLHA DE PAGAMENTO ---
   const staffing = indicators.staffing || DEFAULT_MACRO.staffing;
   const baseSalary = sanitize(decisions.hr.salary, 2000);
   const payrollBase = (staffing.admin.count * baseSalary * staffing.admin.salaries) +
                       (staffing.sales.count * baseSalary * staffing.sales.salaries) +
                       (staffing.production.count * baseSalary * staffing.production.salaries);
-  const totalLaborCost = payrollBase * (1 + (sanitize(indicators.social_charges, 35.0) / 100));
+  const totalLaborCost = round2(payrollBase * (1 + (sanitize(indicators.social_charges, 35.0) / 100)));
 
-  const cpv = (totalNominalPurchase * 0.7) + specialPurchaseValue + (totalLaborCost * 0.4);
-  const opex = (totalLaborCost * 0.6) + (totalRevenue * 0.08) + badDebtExpense + 146402; // Manutenção + Inadimplência
+  const cpv = round2((totalNominalPurchase * 0.7) + specialPurchaseValue + (totalLaborCost * 0.4));
+  const opex = round2((totalLaborCost * 0.6) + (totalRevenue * 0.08) + badDebtExpense + 146402);
 
-  // --- 4. GESTÃO DE DÍVIDA ---
+  // --- 6. GESTÃO DE DÍVIDA ---
   let activeLoans: Loan[] = previousState?.kpis?.loans ? JSON.parse(JSON.stringify(previousState.kpis.loans)) : [];
   let currentInterestLoans = 0;
   let currentAmortizationTotal = 0;
@@ -137,14 +160,14 @@ export const calculateProjections = (
   activeLoans = activeLoans.map(loan => {
     let periodicInterest = 0;
     if (loan.type === 'compulsory') {
-        periodicInterest = loan.principal * ((sanitize(loan.agio_rate_at_creation, 3.0) + loan.interest_rate) / 100);
+        periodicInterest = round2(loan.principal * ((sanitize(loan.agio_rate_at_creation, 3.0) + loan.interest_rate) / 100));
     } else {
-        periodicInterest = loan.remaining_principal * (loan.interest_rate / 100);
+        periodicInterest = round2(loan.remaining_principal * (loan.interest_rate / 100));
     }
     currentInterestLoans += periodicInterest;
     if (loan.grace_periods > 0) loan.grace_periods -= 1;
     else {
-      const amort = loan.type === 'compulsory' ? loan.remaining_principal : loan.remaining_principal / Math.max(1, loan.remaining_installments);
+      const amort = loan.type === 'compulsory' ? loan.remaining_principal : round2(loan.remaining_principal / Math.max(1, loan.remaining_installments));
       currentAmortizationTotal += amort;
       loan.remaining_principal -= amort;
       loan.remaining_installments -= 1;
@@ -152,15 +175,14 @@ export const calculateProjections = (
     return loan;
   }).filter(l => l.remaining_principal > 0.01);
 
-  // --- 5. FLUXO DE CAIXA (DFC) ---
+  // --- 7. FLUXO DE CAIXA (DFC) ---
   const manualLoanRequest = sanitize(decisions.finance.loanRequest);
-  const totalInflow = totalCurrentCashInflow + legacyReceivables + manualLoanRequest;
-  const currentCashPurchases = (totalNominalPurchase * 0.5) + specialPurchaseValue;
-  const totalOutflow = currentCashPurchases + legacyPayables + totalLaborCost + currentInterestLoans + currentAmortizationTotal;
+  const totalInflow = round2(totalCurrentCashInflow + legacyReceivables + manualLoanRequest);
+  const currentCashPurchases = round2(mpCashOut + specialPurchaseValue);
+  const totalOutflow = round2(currentCashPurchases + legacyPayables + totalLaborCost + currentInterestLoans + currentAmortizationTotal);
   
-  let projectedCash = prevCash + totalInflow - totalOutflow - sanitize(decisions.finance.application);
+  let projectedCash = round2(prevCash + totalInflow - totalOutflow - sanitize(decisions.finance.application));
   
-  // Empréstimo Compulsório
   let compulsoryAmount = 0;
   if (projectedCash < 0) {
     compulsoryAmount = Math.abs(projectedCash);
@@ -173,11 +195,10 @@ export const calculateProjections = (
     });
   }
 
-  // --- 6. RESULTADO LÍQUIDO ---
-  const netProfit = totalRevenue - cpv - opex - currentInterestLoans;
-  const finalEquity = prevEquity + netProfit;
+  const netProfit = round2(totalRevenue - cpv - opex - currentInterestLoans - totalFinancialExpenseMP);
+  const finalEquity = round2(prevEquity + netProfit);
 
-  // --- 7. KPIs & BALANÇO ---
+  // --- 8. KPIs & BALANÇO ---
   const kpis: KPIs = {
     rating: netProfit > 0 ? 'AAA' : 'B',
     loans: activeLoans,
@@ -185,16 +206,16 @@ export const calculateProjections = (
     current_cash: projectedCash,
     market_share: (totalQuantitySold / 9700) * 11.1,
     statements: {
-      dre: { revenue: totalRevenue, cpv, opex, interest: currentInterestLoans, net_profit: netProfit },
+      dre: { revenue: totalRevenue, cpv, opex, interest: currentInterestLoans + totalFinancialExpenseMP, net_profit: netProfit },
       cash_flow: { 
         start: prevCash, 
-        inflow: { total: totalInflow, cash_sales: totalCurrentCashInflow, legacy_receivables: legacyReceivables, manual_loan: manualLoanRequest, compulsory_trigger: compulsoryAmount }, 
-        outflow: { total: totalOutflow, cash_purchases: currentCashPurchases, legacy_payables: legacyPayables, payroll: totalLaborCost, interest: currentInterestLoans, amortization: currentAmortizationTotal }, 
+        inflow: { total: totalInflow + compulsoryAmount, cash_sales: totalCurrentCashInflow, legacy_receivables: legacyReceivables, manual_loan: manualLoanRequest, compulsory_trigger: compulsoryAmount }, 
+        outflow: { total: totalOutflow, cash_purchases: currentCashPurchases, legacy_payables: legacyPayables, payroll: totalLaborCost, interest: currentInterestLoans + totalFinancialExpenseMP, amortization: currentAmortizationTotal }, 
         final: projectedCash 
       },
       balance_sheet: [
         { 
-          id: 'assets', label: 'ATIVO', value: finalEquity + activeLoans.reduce((a,b)=>a+b.remaining_principal,0), type: 'totalizer', children: [
+          id: 'assets', label: 'ATIVO', value: finalEquity + activeLoans.reduce((a,b)=>a+b.remaining_principal,0) + mpFutureLiability, type: 'totalizer', children: [
             { id: 'assets.current.cash', label: 'Caixa/Bancos', value: projectedCash, type: 'asset' },
             { id: 'assets.current.clients_group', label: 'CONTAS A RECEBER', value: accountsReceivable - badDebtExpense, type: 'totalizer', children: [
                 { id: 'assets.current.clients', label: 'Clientes', value: accountsReceivable, type: 'asset' },
@@ -203,8 +224,8 @@ export const calculateProjections = (
           ]
         },
         { 
-          id: 'liabilities_pl', label: 'PASSIVO + PL', value: finalEquity + activeLoans.reduce((a,b)=>a+b.remaining_principal,0), type: 'totalizer', children: [
-            { id: 'liabilities.suppliers', label: 'Fornecedores', value: totalNominalPurchase * 0.5, type: 'liability' },
+          id: 'liabilities_pl', label: 'PASSIVO + PL', value: finalEquity + activeLoans.reduce((a,b)=>a+b.remaining_principal,0) + mpFutureLiability, type: 'totalizer', children: [
+            { id: 'liabilities.suppliers', label: 'Fornecedores', value: mpFutureLiability, type: 'liability' },
             { id: 'liabilities.loans', label: 'Empréstimos', value: activeLoans.reduce((a,b)=>a+b.remaining_principal,0), type: 'liability' },
             { id: 'equity.total', label: 'Patrimônio Líquido', value: finalEquity, type: 'equity' }
           ]
@@ -215,7 +236,7 @@ export const calculateProjections = (
 
   return {
     revenue: totalRevenue, netProfit, 
-    debtRatio: (activeLoans.reduce((a,b)=>a+b.remaining_principal,0) / Math.max(1, finalEquity)) * 100,
+    debtRatio: ((activeLoans.reduce((a,b)=>a+b.remaining_principal,0) + mpFutureLiability) / Math.max(1, finalEquity)) * 100,
     creditRating: kpis.rating, 
     health: { cash: projectedCash, rating: kpis.rating },
     kpis, statements: kpis.statements, marketShare: kpis.market_share
