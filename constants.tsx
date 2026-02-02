@@ -118,7 +118,7 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true }
     ]},
-    { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true },
     { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0.00, type: 'totalizer' }
   ]
 };
