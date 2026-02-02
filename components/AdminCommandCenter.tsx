@@ -68,10 +68,17 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
       const { data } = await getChampionships();
       if (data) {
          setChampionships(data);
-         const storedArenaId = localStorage.getItem('active_champ_id');
-         if (storedArenaId && !selectedArena) {
-            const found = data.find(c => c.id === storedArenaId);
-            if (found) setSelectedArena(found);
+         
+         // Fix: Only auto-select arena if we are NOT in creation flow
+         const params = new URLSearchParams(location.search);
+         const isCreatingNew = params.get('mode') === 'new_trial' || isPickingTemplate || showWizard;
+         
+         if (!isCreatingNew) {
+           const storedArenaId = localStorage.getItem('active_champ_id');
+           if (storedArenaId && !selectedArena) {
+              const found = data.find(c => c.id === storedArenaId);
+              if (found) setSelectedArena(found);
+           }
          }
       }
       
@@ -82,14 +89,15 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     } catch (err) { console.error("Sync Error:", err); } finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, [activeTab]);
+  useEffect(() => { fetchData(); }, [activeTab, location.search]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('mode') === 'new_trial') {
+      setSelectedArena(null); // Reset selection when forcing new trial mode
       setIsPickingTemplate(true);
     }
-  }, [location]);
+  }, [location.search]);
 
   const handleBlackSwan = async () => {
     if (!selectedArena || isGeneratingEvent) return;
@@ -152,7 +160,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
     }
   };
 
-  if (selectedArena || isCreatingTrial) {
+  // Condition fix: Ensure Wizard and Picker take priority over selectedArena view
+  if ((selectedArena || isCreatingTrial) && !showWizard && !isPickingTemplate) {
     const arenaName = selectedArena?.name || "Strategos Trial Engine";
 
     return (
@@ -235,10 +244,10 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'system' }
                 </div>
                 <h5 className="text-3xl font-black text-white uppercase italic group-hover:text-orange-500 transition-colors">{champ.name}</h5>
              </div>
-             <button onClick={() => setSelectedArena(champ)} className="w-full py-5 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95">Acessar Control Room</button>
+             <button onClick={() => { setSelectedArena(null); setSelectedArena(champ); }} className="w-full py-5 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all active:scale-95">Acessar Control Room</button>
           </div>
         ))}
-        <button onClick={() => setIsPickingTemplate(true)} className="bg-white/5 p-12 rounded-[4rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-6 group hover:bg-white/10 transition-all">
+        <button onClick={() => { setSelectedArena(null); setIsPickingTemplate(true); }} className="bg-white/5 p-12 rounded-[4rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-6 group hover:bg-white/10 transition-all">
            <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center text-slate-500 group-hover:bg-orange-600 group-hover:text-white transition-all"><Plus size={40}/></div>
            <span className="text-xs font-black uppercase tracking-widest text-slate-500 group-hover:text-white">Implantar Nova Arena</span>
         </button>
