@@ -67,7 +67,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     <div className="min-h-screen bg-[#020617] font-sans text-slate-100 relative overflow-x-hidden select-none">
       <EmpireParticles />
       
-      {/* SEBRAE ORANGE CLOUDS - CAMADA DE FUNDO DINÂMICA */}
+      {/* EMPIRION ORANGE CLOUDS - CAMADA DE FUNDO DINÂMICA */}
       <div className="fixed inset-0 pointer-events-none z-0">
          <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.3, 0.2], rotate: [0, 45, 0] }} transition={{ duration: 25, repeat: Infinity }} className="absolute -top-[20%] -left-[10%] w-[1000px] h-[1000px] bg-orange-600/30 blur-[250px] rounded-full" />
          <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1], x: [0, 100, 0] }} transition={{ duration: 20, repeat: Infinity, delay: 2 }} className="absolute top-[30%] -right-[10%] w-[800px] h-[800px] bg-orange-400/20 blur-[200px] rounded-full" />

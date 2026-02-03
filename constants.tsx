@@ -240,7 +240,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
      title: "Forge equipes vencedoras",
-     subtitle: "A arena definitiva onde inteligência neural Gemini e estratégia humana colidem.",
+     subtitle: "O simulador empresarial definitivo onde inteligência neural de IA e estratégia humana se juntam para a melhor experiência e aprendizado.",
      hero: { title: "Forge equipes vencedoras", subtitle: "Com EMPIRION!" }
   },
   'solutions-bp': {
