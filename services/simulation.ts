@@ -1,6 +1,6 @@
 
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, Loan, AccountNode, Championship, InitialMachine } from '../types';
-import { DEFAULT_MACRO, INITIAL_INDUSTRIAL_FINANCIALS } from '../constants';
+import { DEFAULT_MACRO, INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
   if (val === null || val === undefined) return fallback;
@@ -32,7 +32,14 @@ export const calculateProjections = (
   championshipData?: Championship
 ): ProjectionResult => {
   
-  const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...(roundRules?.[currentRound] || {}) };
+  // MERGE LOGIC: Prioriza Round Atual -> Round 0 (Chronogram) -> Baseline Estático
+  const indicators = { 
+    ...DEFAULT_MACRO, 
+    ...DEFAULT_INDUSTRIAL_CHRONOGRAM[0], 
+    ...baseIndicators, 
+    ...(roundRules?.[currentRound] || {}) 
+  };
+
   const prevBS = previousState?.kpis?.statements?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   
   const getVal = (id: string, list: any[]): number => {
@@ -52,11 +59,10 @@ export const calculateProjections = (
   const legacyReceivables = sanitize(getVal('assets.current.clients', prevBS));
   const legacyPayables = sanitize(getVal('liabilities.current.suppliers', prevBS));
 
-  // --- 1. FOLHA DE PAGAMENTO E TREINAMENTO (PROTOCOLO v15.36) ---
+  // --- 1. FOLHA DE PAGAMENTO E TREINAMENTO ---
   const staffing = indicators.staffing || DEFAULT_MACRO.staffing;
   const baseSalary = sanitize(decisions.hr.salary, 2000);
   
-  // Mão de Obra Direta (MOD) - Base para Treinamento
   const modCount = staffing.production.count + sanitize(decisions.hr.hired) - sanitize(decisions.hr.fired);
   const modPayrollBase = modCount * baseSalary;
   
@@ -69,13 +75,12 @@ export const calculateProjections = (
                            
   const totalLaborCost = round2(payrollTotalBase * (1 + (sanitize(indicators.social_charges, 35.0) / 100)));
 
-  // Verificação de Penalidade de Produtividade (Novas máquinas ou contratações sem treino)
   const isExpanding = (sanitize(decisions.hr.hired) > 0) || 
                       (decisions.machinery.buy.alfa + decisions.machinery.buy.beta + decisions.machinery.buy.gama > 0);
   
   let productivityModifier = 1.0;
   if (isExpanding && trainingRate < 0.15) {
-     productivityModifier = 0.90; // Queda de 10% por falta de preparo
+     productivityModifier = 0.90; 
   }
 
   // --- 2. VENDAS E VARIAÇÃO CAMBIAL ---
@@ -86,7 +91,7 @@ export const calculateProjections = (
   let totalFxGain = 0;
   let totalFxLoss = 0;
 
-  const prevIndicators = currentRound > 0 ? { ...DEFAULT_MACRO, ...baseIndicators, ...(roundRules?.[currentRound - 1] || {}) } : indicators;
+  const prevIndicators = currentRound > 0 ? { ...DEFAULT_MACRO, ...DEFAULT_INDUSTRIAL_CHRONOGRAM[0], ...baseIndicators, ...(roundRules?.[currentRound - 1] || {}) } : indicators;
 
   Object.entries(decisions.regions).forEach(([id, reg]) => {
     const regConfig = championshipData?.region_configs?.find(rc => rc.id === Number(id));
@@ -94,7 +99,6 @@ export const calculateProjections = (
     const price = sanitize(reg.price, 425);
     const termType = sanitize(reg.term, 1);
     
-    // Impacto da Produtividade no Teto de Produção (Capacidade Real)
     const effectiveActivityLevel = (decisions.production.activityLevel / 100) * productivityModifier;
     const demandFactor = Math.pow(indicators.avg_selling_price / Math.max(1, price), 1.2) * (1 + indicators.demand_variation/100);
     const qty = 9700 * demandFactor * effectiveActivityLevel / (Object.keys(decisions.regions).length || 1);
@@ -124,7 +128,7 @@ export const calculateProjections = (
     }
   });
 
-  // --- 3. CUSTOS E CPP (Inclusão de Treinamento no CPP) ---
+  // --- 3. CUSTOS E CPP ---
   const totalNominalPurchase = (sanitize(decisions.production.purchaseMPA) * indicators.prices.mp_a) + 
                                (sanitize(decisions.production.purchaseMPB) * indicators.prices.mp_b);
   
@@ -134,13 +138,12 @@ export const calculateProjections = (
      specialPurchaseValue = round2((extraQty * indicators.prices.mp_a * 1.5) * 1.15); 
   }
 
-  // CPP (Custo de Produção do Período) = MP + MO + Depreciação + Treinamento
   const cpv = round2((totalNominalPurchase * 0.7) + specialPurchaseValue + (totalLaborCost * 0.4) + trainingExpense);
   
   const opex = round2(
     (totalLaborCost * 0.6) + 
     (totalRevenue * 0.08) + 
-    (totalRevenue * 0.02) + // Bad debt fallback
+    (totalRevenue * 0.02) + 
     (146402)
   );
 
@@ -166,7 +169,7 @@ export const calculateProjections = (
                          (sanitize(decisions.machinery.buy.beta) * indicators.machinery_values.beta) + 
                          (sanitize(decisions.machinery.buy.gama) * indicators.machinery_values.gama);
 
-  // --- 5. FLUXO DE CAIXA (DFC) COM TREINAMENTO ---
+  // --- 5. FLUXO DE CAIXA (DFC) ---
   const totalInflow = round2(totalCurrentCashInflow + legacyReceivables + totalFxGain + sanitize(decisions.finance.loanRequest));
   const totalOutflow = round2(totalNominalPurchase + machineBuyCost + legacyPayables + totalFxLoss + totalLaborCost + currentInterestLoans + currentAmortizationTotal + trainingExpense);
   

@@ -40,13 +40,10 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     dividend_percent: 25.0 
   });
 
+  // Inicializa baseIndicators mesclando o estático com o cronograma P00
   const [baseIndicators, setBaseIndicators] = useState<MacroIndicators>({
     ...DEFAULT_MACRO,
-    exchange_rates: { BRL: 1, USD: 5.2, EUR: 5.5, GBP: 6.2 },
-    social_charges: 35.0,
-    special_purchase_premium: 15.0,
-    compulsory_loan_agio: 3.0,
-    production_hours_period: 976
+    ...DEFAULT_INDUSTRIAL_CHRONOGRAM[0] as MacroIndicators
   });
 
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
@@ -153,7 +150,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   };
 
   const updateRoundMacro = (round: number, key: string, val: any) => {
-    // Sincroniza com a nova estrutura de chaves na raiz do objeto de round
     setRoundRules(prev => ({
        ...prev,
        [round]: {
@@ -562,10 +558,7 @@ const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods, isExc
       </td>
       {Array.from({ length: periods }).map((_, i) => {
          const lookupRound = Math.min(i, 12);
-         
-         // Fix: Unificação do lookup para ler da raiz do objeto de round rule
-         const val = rules[i]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound]?.[macroKey] ?? (DEFAULT_MACRO[macroKey] ?? 0));
-         
+         const val = rules[i]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound]?.[macroKey] ?? 0);
          const isNegative = val < 0;
 
          return (
