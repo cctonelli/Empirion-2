@@ -239,9 +239,9 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
 
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
-     title: "Equipes Campeãs em Estratégia",
-     subtitle: "Com o EMPIRION Simulator!",
-     hero: { title: "Forje Seu Império", subtitle: "Com Insight IA" }
+     title: "Forge sua Equipe",
+     subtitle: "Com EMPIRION!",
+     hero: { title: "Seja Campeão em Estratégia", subtitle: "com EMPIRION SIMULATOR!" }
   },
   'solutions-bp': {
     title: "Plano de Negócios",
