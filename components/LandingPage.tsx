@@ -7,7 +7,7 @@ import {
   ArrowRight, ChevronLeft, ChevronRight, Factory, BrainCircuit, Globe,
   Rocket, Terminal, ShoppingCart, Briefcase, Tractor, DollarSign, Hammer,
   Trophy, Award, Calendar, CheckCircle2, Zap, TrendingUp, ShieldCheck,
-  Star, Target, Cpu, Activity
+  Star, Target, Cpu, Activity, BarChart3
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -104,40 +104,33 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       <section className="relative z-30 -mt-20 md:-mt-32 px-6 md:px-24 mb-40">
          <div className="max-w-[1600px] mx-auto">
             <Slider {...carouselSettings}>
-               {/* Slide 1 - Produção Massiva (original revisado com imagem mais industrial) */}
                <CarouselSlide 
                   icon={<Factory size={48}/>}
                   badge="Modo Industrial"
                   title="Produção Massiva"
                   desc="Gerencie cadeias de suprimento e ativos de capital em múltiplas regiões regionais e globais."
-                  img="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200&auto=format&fit=crop" // fábrica moderna com linhas de produção
+                  img="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200"
                />
-
-               {/* Slide 2 - Mentoria via Gemini (original revisado com dashboard IA) */}
                <CarouselSlide 
                   icon={<BrainCircuit size={48}/>}
                   badge="IA Agregada"
                   title="Mentoria via Gemini 3"
                   desc="Feedbacks táticos em tempo real baseados no seu Balanço e DRE tático."
-                  img="https://images.unsplash.com/photo-1551288049-b1f9d0e66599?q=80&w=1200&auto=format&fit=crop" // dashboard analítico futurista dark theme
+                  img="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1200"
                />
-
-               {/* Novo Slide 3 - Geopolítica Regional */}
                <CarouselSlide 
                   icon={<Globe size={48}/>}
                   badge="Expansão Global"
                   title="Geopolítica Regional"
                   desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e rotas logísticas reais."
-                  img="https://images.unsplash.com/photo-1523474253046-8c12902e5ab8?q=80&w=1200&auto=format&fit=crop" // mapa mundial com linhas de conexão / rotas globais
+                  img="https://images.unsplash.com/photo-1523474253046-8c12902e5ab8?q=80&w=1200&auto=format&fit=crop"
                />
-
-               {/* Novo Slide 4 - Análise Financeira Avançada */}
                <CarouselSlide 
                   icon={<BarChart3 size={48}/>}
                   badge="Visão Estratégica"
                   title="Análise Financeira Avançada"
                   desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos."
-                  img="https://images.unsplash.com/photo-1551288049-b1f9d0e66599?q=80&w=1200&auto=format&fit=crop" // gráficos financeiros dark theme (mesma base do slide 2, mas reforça consistência)
+                  img="https://images.unsplash.com/photo-1551288049-b1f9d0e66599?q=80&w=1200&auto=format&fit=crop"
                />
             </Slider>
          </div>
