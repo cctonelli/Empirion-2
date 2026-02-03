@@ -7,7 +7,13 @@ export const PROTOCOL_NODE = "Node 08-STREET-INDUSTRIAL-MASTER";
 export const DEFAULT_INITIAL_SHARE_PRICE = 60.09; 
 export const DEFAULT_TOTAL_SHARES = 5000000; 
 
-// ESTRUTURA FINANCEIRA INDUSTRIAL REALÍSTICA ( EMPIRION ) - BASAL P00
+/**
+ * ==============================================================================
+ * EMPIRION CORE FINANCIAL GENOME - INITIAL_FINANCIAL_TREE
+ * ATENÇÃO: NUNCA REMOVA CONTAS DESTA ESTRUTURA, MESMO QUE O VALOR INICIAL SEJA 0.
+ * Elas são fundamentais para o processamento de Rounds P01-P12 pelo motor Oracle.
+ * ==============================================================================
+ */
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
@@ -79,6 +85,10 @@ export const INITIAL_FINANCIAL_TREE = {
         { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 2500.00, type: 'expense', isEditable: true }
     ]},
+    { id: 'non_operating_res', label: '(+/-) RESULTADO NÃO OPERACIONAL', value: 0, type: 'totalizer', children: [
+        { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0, type: 'revenue', isEditable: true },
+        { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0, type: 'expense', isEditable: true }
+    ]},
     { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 59485.26, type: 'totalizer', isReadOnly: true },
     { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.31, type: 'expense', isEditable: true },
     { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 44613.95, type: 'totalizer', isReadOnly: true },
@@ -123,12 +133,7 @@ export const INITIAL_FINANCIAL_TREE = {
 
 export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;
 
-/**
- * DEFAULT_MACRO: REPOSITÓRIO DE CONFIGURAÇÕES ESTÁTICAS E ESTRUTURAIS
- * Removidos indicadores estratégicos periódicos para evitar duplicidade com o Chronogram.
- */
 export const DEFAULT_MACRO: MacroIndicators = {
-  // Fix: Added missing required properties to fix TypeScript error in line 130
   ice: 3.0,
   demand_variation: 0.0,
   inflation_rate: 1.0,
@@ -188,13 +193,9 @@ export const DEFAULT_MACRO: MacroIndicators = {
     production: { count: 470, salaries: 1 }
   },
   hr_base: { salary: 2000.00 },
-  exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 }, // Fallback global
+  exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
 };
 
-/**
- * DEFAULT_INDUSTRIAL_CHRONOGRAM: FONTE DE VERDADE PARA INDICADORES ESTRATÉGICOS (CARD 5)
- * Define o comportamento dinâmico da economia em cada round (P00 a P12).
- */
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
   0: {ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, supplier_interest: 1.5, sales_interest_rate: 1.0, investment_return_rate: 1.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 1.0, machine_alpha_price_adjust: 1.0, machine_beta_price_adjust: 1.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 1.0, storage_cost_adjust: 2.0, USD: 5.20, EUR: 6.20, allow_machine_sale: false, require_business_plan: false},
   1: {ice: 3.2, demand_variation: 6.7, inflation_rate: 1.2, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 2.0, sales_interest_rate: 1.1, investment_return_rate: 2.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 2.0, machine_alpha_price_adjust: 2.0, machine_beta_price_adjust: 2.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 2.0, USD: 5.26, EUR: 6.27, allow_machine_sale: true, require_business_plan: false},
