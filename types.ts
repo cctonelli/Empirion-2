@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V15.25 - ORACLE CONSOLIDATED MVP
+ * EMPIRION V15.40 - ORACLE CONSOLIDATED MVP (VAT UPDATE)
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -127,14 +127,16 @@ export interface MacroIndicators {
   investment_return_rate: number;
   avg_selling_price: number;
   tax_rate_ir: number;
+  vat_purchases_rate: number; // IVA sobre Compras
+  vat_sales_rate: number;     // IVA sobre Vendas
   late_penalty_rate: number;
   machine_sale_discount: number;
   special_purchase_premium: number;
   compulsory_loan_agio: number;
   social_charges: number;
   production_hours_period: number;
-  allow_machine_sale: boolean; // Flag de controle de mercado de ativos
-  require_business_plan: boolean; // Flag de obrigatoriedade de BP
+  allow_machine_sale: boolean;
+  require_business_plan: boolean;
   exchange_rates: Record<CurrencyType, number>;
   award_values: {
     cost_precision: number;
