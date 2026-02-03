@@ -108,6 +108,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
   };
 
   const saveCms = async () => {
+     if (!cmsData.trim()) return;
      setIsCmsSaving(true);
      try {
         const parsed = JSON.parse(cmsData);
@@ -115,7 +116,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
         if (error) throw error;
         alert("PROTOCOLO CMS SALVO: Alterações de UI propagadas para a nuvem.");
      } catch (err: any) {
-        alert(`FALHA NA EDIÇÃO: ${err.message}`);
+        alert(`FALHA NA EDIÇÃO: JSON Inválido ou Erro de Rede. ${err.message}`);
      } finally {
         setIsCmsSaving(false);
      }
@@ -130,6 +131,8 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
         }
         alert("SITE CONTENT POPULADO COM SUCESSO.");
         loadCmsData(cmsPage, cmsLang);
+     } catch (err: any) {
+        alert(`FALHA NO SEED: ${err.message}`);
      } finally {
         setIsCmsSaving(false);
      }

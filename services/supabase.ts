@@ -191,6 +191,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
     staffing: mkt.staffing || DEFAULT_MACRO.staffing,
     prices: mkt.prices || DEFAULT_MACRO.prices,
     machinery_values: mkt.machinery_values || DEFAULT_MACRO.machinery_values,
+    observers: champData.observers || [],
     config: { 
       ...(champData.config || {}), 
       round_rules: champData.round_rules || {}
@@ -232,6 +233,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
       staffing: fullChamp.staffing,
       prices: fullChamp.prices,
       machinery_values: fullChamp.machinery_values,
+      observers: fullChamp.observers,
       config: fullChamp.config
     });
     
