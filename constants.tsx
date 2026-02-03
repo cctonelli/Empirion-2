@@ -239,9 +239,9 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
 
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
-     title: "Forje Seu Império",
+     title: "Forge equipes vencedoras",
      subtitle: "A arena definitiva onde inteligência neural Gemini e estratégia humana colidem.",
-     hero: { title: "Forje Seu Império", subtitle: "Com Insight Estratégico IA" }
+     hero: { title: "Forge equipes vencedoras", subtitle: "Com EMPIRION!" }
   },
   'solutions-bp': {
     title: "Plano de Negócios",
