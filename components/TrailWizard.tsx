@@ -46,7 +46,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     social_charges: 35.0,
     special_purchase_premium: 15.0,
     compulsory_loan_agio: 3.0,
-    production_hours_period: 946
+    production_hours_period: 976
   });
 
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
