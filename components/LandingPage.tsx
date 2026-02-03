@@ -109,14 +109,14 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   badge="Modo Industrial"
                   title="Produção Massiva"
                   desc="Gerencie cadeias de suprimento e ativos de capital em múltiplas regiões regionais e globais."
-                  img="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200?q=80&w=1200&auto=format&fit=crop"
+                  img="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<BrainCircuit size={40}/>}
                   badge="IA Agregada"
                   title="Mentoria via Gemini"
                   desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço e DRE tático."
-                  img="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1200?q=80&w=1200&auto=format&fit=crop"
+                  img="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<Globe size={40}/>}
