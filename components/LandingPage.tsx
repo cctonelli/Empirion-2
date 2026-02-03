@@ -109,28 +109,28 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   badge="Modo Industrial"
                   title="Produção Massiva"
                   desc="Gerencie cadeias de suprimento e ativos de capital em múltiplas regiões regionais e globais."
-                  img="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200"
+                  img="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<BrainCircuit size={40}/>}
                   badge="IA Agregada"
                   title="Mentoria via Gemini 3"
                   desc="Feedbacks táticos em tempo real baseados no seu Balanço e DRE tático."
-                  img="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1200"
+                  img="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1200?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<Globe size={40}/>}
                   badge="Expansão Global"
                   title="Geopolítica Regional"
                   desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e rotas logísticas reais."
-                  img="https://www.pexels.com/pt-br/foto/mao-segure-bitcoin-moeda-ouro-moeda-mercado-de-cambio-grafico-fundo-30572214"
+                  img="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<BarChart3 size={40}/>}
                   badge="Visão Estratégica"
                   title="Análise Financeira Avançada"
                   desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos."
-                  img="https://www.pexels.com/pt-br/foto/trabalhando-encontro-reuniao-congresso-6476254"
+                  img="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop"
                />
             </Slider>
          </div>
