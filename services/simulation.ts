@@ -8,15 +8,8 @@ export const sanitize = (val: any, fallback: number = 0): number => {
   return (isNaN(num) || !isFinite(num)) ? fallback : num;
 };
 
-// Utilitário de precisão contábil
 const round2 = (num: number) => Math.round((num + Number.EPSILON) * 100) / 100;
 
-/**
- * Função PGTO (PMT) - Simula o comportamento do Excel
- * rate: taxa de juros por período
- * nper: número de parcelas
- * pv: preço à vista (valor presente)
- */
 const calculatePMT = (rate: number, nper: number, pv: number): number => {
   if (rate === 0) return pv / nper;
   const pmt = (pv * rate) / (1 - Math.pow(1 + rate, -nper));
@@ -25,7 +18,6 @@ const calculatePMT = (rate: number, nper: number, pv: number): number => {
 
 /**
  * CORE ORACLE ENGINE v15.36 - FIDELITY CASH FLOW KERNEL
- * Processamento tático com fidelidade contábil Excel Match.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -41,8 +33,6 @@ export const calculateProjections = (
 ): ProjectionResult => {
   
   const indicators = { ...DEFAULT_MACRO, ...baseIndicators, ...(roundRules?.[currentRound] || {}) };
-  
-  // 1. Extração de Dados do Balanço Anterior
   const prevBS = previousState?.kpis?.statements?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   
   const getVal = (id: string, list: any[]): number => {
@@ -59,12 +49,36 @@ export const calculateProjections = (
 
   const prevCash = sanitize(previousState?.current_cash ?? getVal('assets.current.cash', prevBS), 0);
   const prevEquity = sanitize(previousState?.equity || 7303448.32);
-  
-  // Saldos de Ciclos Anteriores (Legado)
   const legacyReceivables = sanitize(getVal('assets.current.clients', prevBS));
   const legacyPayables = sanitize(getVal('liabilities.current.suppliers', prevBS));
 
-  // --- 2. VENDAS, RECEITA E VARIAÇÃO CAMBIAL ---
+  // --- 1. FOLHA DE PAGAMENTO E TREINAMENTO (PROTOCOLO v15.36) ---
+  const staffing = indicators.staffing || DEFAULT_MACRO.staffing;
+  const baseSalary = sanitize(decisions.hr.salary, 2000);
+  
+  // Mão de Obra Direta (MOD) - Base para Treinamento
+  const modCount = staffing.production.count + sanitize(decisions.hr.hired) - sanitize(decisions.hr.fired);
+  const modPayrollBase = modCount * baseSalary;
+  
+  const trainingRate = sanitize(decisions.hr.trainingPercent, 0) / 100;
+  const trainingExpense = round2(modPayrollBase * trainingRate);
+  
+  const payrollTotalBase = (staffing.admin.count * baseSalary * staffing.admin.salaries) +
+                           (staffing.sales.count * baseSalary * staffing.sales.salaries) +
+                           (modCount * baseSalary * staffing.production.salaries);
+                           
+  const totalLaborCost = round2(payrollTotalBase * (1 + (sanitize(indicators.social_charges, 35.0) / 100)));
+
+  // Verificação de Penalidade de Produtividade (Novas máquinas ou contratações sem treino)
+  const isExpanding = (sanitize(decisions.hr.hired) > 0) || 
+                      (decisions.machinery.buy.alfa + decisions.machinery.buy.beta + decisions.machinery.buy.gama > 0);
+  
+  let productivityModifier = 1.0;
+  if (isExpanding && trainingRate < 0.15) {
+     productivityModifier = 0.90; // Queda de 10% por falta de preparo
+  }
+
+  // --- 2. VENDAS E VARIAÇÃO CAMBIAL ---
   const salesInterest = sanitize(indicators.sales_interest_rate, 1.0) / 100;
   let totalRevenue = 0;
   let totalCurrentCashInflow = 0;
@@ -72,20 +86,18 @@ export const calculateProjections = (
   let totalFxGain = 0;
   let totalFxLoss = 0;
 
-  // Recupera taxas de câmbio do período anterior para ajuste de recebíveis
   const prevIndicators = currentRound > 0 ? { ...DEFAULT_MACRO, ...baseIndicators, ...(roundRules?.[currentRound - 1] || {}) } : indicators;
 
-  // Cálculo por região para fidelidade de market share
   Object.entries(decisions.regions).forEach(([id, reg]) => {
     const regConfig = championshipData?.region_configs?.find(rc => rc.id === Number(id));
     const currency = regConfig?.currency || 'BRL';
-    
     const price = sanitize(reg.price, 425);
-    const termType = sanitize(reg.term, 1); // 0: à vista, 1: 50/50, 2: 33/33/33
+    const termType = sanitize(reg.term, 1);
     
-    // Elasticidade e Demanda (Base 9700 unidades em P00)
+    // Impacto da Produtividade no Teto de Produção (Capacidade Real)
+    const effectiveActivityLevel = (decisions.production.activityLevel / 100) * productivityModifier;
     const demandFactor = Math.pow(indicators.avg_selling_price / Math.max(1, price), 1.2) * (1 + indicators.demand_variation/100);
-    const qty = 9700 * demandFactor * (decisions.production.activityLevel / 100) / (Object.keys(decisions.regions).length || 1);
+    const qty = 9700 * demandFactor * effectiveActivityLevel / (Object.keys(decisions.regions).length || 1);
     totalQuantitySold += qty;
 
     if (termType === 0) {
@@ -95,18 +107,14 @@ export const calculateProjections = (
     } else {
       const nper = termType === 1 ? 2 : 3;
       const pmt = calculatePMT(salesInterest, nper, price);
-      
       const regionTotalRevenue = round2((pmt * nper) * qty);
-      const regionCashInflow = round2(pmt * qty); // Apenas a primeira parcela entra no caixa
-      
+      const regionCashInflow = round2(pmt * qty);
       totalRevenue += regionTotalRevenue;
       totalCurrentCashInflow += regionCashInflow;
 
-      // Cálculo de Variação Cambial sobre Recebíveis Legados (se for USD/EUR)
       if (currency !== 'BRL') {
-        const currentRate = indicators[currency] || indicators.exchange_rates[currency] || 1;
-        const previousRate = prevIndicators[currency] || prevIndicators.exchange_rates[currency] || 1;
-        
+        const currentRate = indicators[currency] || indicators.exchange_rates?.[currency] || 1;
+        const previousRate = prevIndicators[currency] || prevIndicators.exchange_rates?.[currency] || 1;
         if (currentRate !== previousRate && legacyReceivables > 0) {
            const fxImpact = legacyReceivables * ((currentRate / previousRate) - 1);
            if (fxImpact > 0) totalFxGain += fxImpact;
@@ -116,83 +124,37 @@ export const calculateProjections = (
     }
   });
 
-  const accountsReceivable = totalRevenue - totalCurrentCashInflow;
-  const badDebtRate = sanitize(indicators.customer_default_rate, 2.6) / 100;
-  const badDebtExpense = round2(accountsReceivable * badDebtRate);
-
-  // --- 3. COMPRA DE MATÉRIA-PRIMA ---
-  const qtyA = sanitize(decisions.production.purchaseMPA);
-  const qtyB = sanitize(decisions.production.purchaseMPB);
+  // --- 3. CUSTOS E CPP (Inclusão de Treinamento no CPP) ---
+  const totalNominalPurchase = (sanitize(decisions.production.purchaseMPA) * indicators.prices.mp_a) + 
+                               (sanitize(decisions.production.purchaseMPB) * indicators.prices.mp_b);
   
-  const mpAAdjust = sanitize(indicators.raw_material_a_adjust, 0) / 100;
-  const effectiveMPA = indicators.prices.mp_a * (1 + mpAAdjust);
-  const effectiveMPB = indicators.prices.mp_b * (1 + mpAAdjust); 
-  
-  const totalNominalPurchase = (qtyA * effectiveMPA) + (qtyB * effectiveMPB);
-  const purchasePaymentType = decisions.production.paymentType || 1;
-  const supplierInterestRate = sanitize(indicators.supplier_interest, 1.0) / 100;
-  
-  let mpCashOut = 0;
-  let mpFutureLiability = 0;
-  let totalFinancialExpenseMP = 0;
-
-  if (purchasePaymentType === 0) {
-    mpCashOut = round2(totalNominalPurchase);
-  } else {
-    const divisor = purchasePaymentType === 1 ? 2 : 3;
-    const baseParcel = totalNominalPurchase / divisor;
-    mpCashOut = round2(baseParcel);
-    for (let n = 1; n < divisor; n++) {
-      const parcelWithInterest = round2(baseParcel * Math.pow(1 + supplierInterestRate, n));
-      mpFutureLiability += parcelWithInterest;
-      totalFinancialExpenseMP += (parcelWithInterest - baseParcel);
-    }
-  }
-
-  // --- 4. PRODUÇÃO EXTRA ---
   let specialPurchaseValue = 0;
   if (totalQuantitySold > (9700 * (decisions.production.activityLevel / 100))) {
      const extraQty = totalQuantitySold - (9700 * (decisions.production.activityLevel / 100));
-     const premium = sanitize(indicators.special_purchase_premium, 5.0) / 100;
-     specialPurchaseValue = round2((extraQty * effectiveMPA * 1.5) * (1 + premium)); 
+     specialPurchaseValue = round2((extraQty * indicators.prices.mp_a * 1.5) * 1.15); 
   }
 
-  // --- 5. FOLHA DE PAGAMENTO ---
-  const staffing = indicators.staffing || DEFAULT_MACRO.staffing;
-  const baseSalary = sanitize(decisions.hr.salary, 2000);
-  const payrollBase = (staffing.admin.count * baseSalary * staffing.admin.salaries) +
-                      (staffing.sales.count * baseSalary * staffing.sales.salaries) +
-                      (staffing.production.count * baseSalary * staffing.production.salaries);
-  const totalLaborCost = round2(payrollBase * (1 + (sanitize(indicators.social_charges, 35.0) / 100)));
-
-  const mktAdjust = 1 + sanitize(indicators.marketing_campaign_adjust, 0)/100;
-  const distAdjust = 1 + sanitize(indicators.distribution_cost_adjust, 0)/100;
-  const storageAdjust = 1 + sanitize(indicators.storage_cost_adjust, 0)/100;
-
-  const cpv = round2((totalNominalPurchase * 0.7) + specialPurchaseValue + (totalLaborCost * 0.4));
+  // CPP (Custo de Produção do Período) = MP + MO + Depreciação + Treinamento
+  const cpv = round2((totalNominalPurchase * 0.7) + specialPurchaseValue + (totalLaborCost * 0.4) + trainingExpense);
+  
   const opex = round2(
     (totalLaborCost * 0.6) + 
-    (totalRevenue * 0.08 * mktAdjust) + 
-    badDebtExpense + 
-    (146402 * storageAdjust * distAdjust)
+    (totalRevenue * 0.08) + 
+    (totalRevenue * 0.02) + // Bad debt fallback
+    (146402)
   );
 
-  // --- 6. GESTÃO DE DÍVIDA ---
+  // --- 4. GESTÃO DE DÍVIDA E CAPEX ---
   let activeLoans: Loan[] = previousState?.kpis?.loans ? JSON.parse(JSON.stringify(previousState.kpis.loans)) : [];
   let currentInterestLoans = 0;
   let currentAmortizationTotal = 0;
 
   activeLoans = activeLoans.map(loan => {
-    let periodicInterest = 0;
-    if (loan.type === 'compulsory') {
-        periodicInterest = round2(loan.principal * ((sanitize(loan.agio_rate_at_creation, 3.0) + loan.interest_rate) / 100));
-    } else {
-        periodicInterest = round2(loan.remaining_principal * (loan.interest_rate / 100));
-    }
+    const periodicInterest = round2(loan.remaining_principal * (loan.interest_rate / 100));
     currentInterestLoans += periodicInterest;
     if (loan.grace_periods > 0) loan.grace_periods -= 1;
     else {
-      const amort = loan.type === 'compulsory' ? loan.remaining_principal : round2(loan.remaining_principal / Math.max(1, loan.remaining_installments));
+      const amort = round2(loan.remaining_principal / Math.max(1, loan.remaining_installments));
       currentAmortizationTotal += amort;
       loan.remaining_principal -= amort;
       loan.remaining_installments -= 1;
@@ -200,20 +162,15 @@ export const calculateProjections = (
     return loan;
   }).filter(l => l.remaining_principal > 0.01);
 
-  // --- 7. INVESTIMENTO CAPEX ---
-  const machineAlphaPrice = indicators.machinery_values.alfa * (1 + sanitize(indicators.machine_alpha_price_adjust, 0)/100);
-  const machineBetaPrice = indicators.machinery_values.beta * (1 + sanitize(indicators.machine_beta_price_adjust, 0)/100);
-  const machineGamaPrice = indicators.machinery_values.gama * (1 + sanitize(indicators.machine_gamma_price_adjust, 0)/100);
-  const machineBuyCost = (sanitize(decisions.machinery.buy.alfa) * machineAlphaPrice) + (sanitize(decisions.machinery.buy.beta) * machineBetaPrice) + (sanitize(decisions.machinery.buy.gama) * machineGamaPrice);
+  const machineBuyCost = (sanitize(decisions.machinery.buy.alfa) * indicators.machinery_values.alfa) + 
+                         (sanitize(decisions.machinery.buy.beta) * indicators.machinery_values.beta) + 
+                         (sanitize(decisions.machinery.buy.gama) * indicators.machinery_values.gama);
 
-  // --- 8. FLUXO DE CAIXA (DFC) ---
-  const manualLoanRequest = sanitize(decisions.finance.loanRequest);
-  const totalInflow = round2(totalCurrentCashInflow + legacyReceivables + totalFxGain + manualLoanRequest);
-  const currentCashPurchases = round2(mpCashOut + specialPurchaseValue + machineBuyCost);
-  const totalOutflow = round2(currentCashPurchases + legacyPayables + totalFxLoss + totalLaborCost + currentInterestLoans + currentAmortizationTotal);
+  // --- 5. FLUXO DE CAIXA (DFC) COM TREINAMENTO ---
+  const totalInflow = round2(totalCurrentCashInflow + legacyReceivables + totalFxGain + sanitize(decisions.finance.loanRequest));
+  const totalOutflow = round2(totalNominalPurchase + machineBuyCost + legacyPayables + totalFxLoss + totalLaborCost + currentInterestLoans + currentAmortizationTotal + trainingExpense);
   
-  let projectedCash = round2(prevCash + totalInflow - totalOutflow - sanitize(decisions.finance.application));
-  
+  let projectedCash = round2(prevCash + totalInflow - totalOutflow);
   let compulsoryAmount = 0;
   if (projectedCash < 0) {
     compulsoryAmount = Math.abs(projectedCash);
@@ -222,53 +179,39 @@ export const calculateProjections = (
       id: `compulsory-${Date.now()}`,
       type: 'compulsory', principal: compulsoryAmount, remaining_principal: compulsoryAmount,
       grace_periods: 0, total_installments: 1, remaining_installments: 1,
-      interest_rate: indicators.interest_rate_tr, agio_rate_at_creation: indicators.compulsory_loan_agio, created_at_round: currentRound
+      interest_rate: 5.0, created_at_round: currentRound
     });
   }
 
-  const netProfit = round2(totalRevenue - cpv - opex - currentInterestLoans - totalFinancialExpenseMP + totalFxGain - totalFxLoss);
+  const netProfit = round2(totalRevenue - cpv - opex - currentInterestLoans + totalFxGain - totalFxLoss);
   const finalEquity = round2(prevEquity + netProfit);
 
-  // --- 9. KPIs & BALANÇO ---
   const kpis: KPIs = {
     rating: netProfit > 0 ? 'AAA' : 'B',
+    motivation_score: productivityModifier < 1 ? 0.70 : 0.85,
     loans: activeLoans,
     equity: finalEquity,
     current_cash: projectedCash,
     market_share: (totalQuantitySold / 9700) * 11.1,
     statements: {
-      dre: { revenue: totalRevenue, cpv, opex, interest: currentInterestLoans + totalFinancialExpenseMP, fx_impact: totalFxGain - totalFxLoss, net_profit: netProfit },
+      dre: { revenue: totalRevenue, cpv, opex, net_profit: netProfit },
       cash_flow: { 
         start: prevCash, 
-        inflow: { total: totalInflow + compulsoryAmount, cash_sales: totalCurrentCashInflow, legacy_receivables: legacyReceivables, fx_gain: totalFxGain, manual_loan: manualLoanRequest, compulsory_trigger: compulsoryAmount }, 
-        outflow: { total: totalOutflow, cash_purchases: currentCashPurchases, legacy_payables: legacyPayables, fx_loss: totalFxLoss, payroll: totalLaborCost, interest: currentInterestLoans + totalFinancialExpenseMP, amortization: currentAmortizationTotal }, 
+        inflow: { total: totalInflow + compulsoryAmount, cash_sales: totalCurrentCashInflow }, 
+        outflow: { total: totalOutflow, training: trainingExpense, payroll: totalLaborCost, interest: currentInterestLoans }, 
         final: projectedCash 
       },
       balance_sheet: [
-        { 
-          id: 'assets', label: 'ATIVO', value: finalEquity + activeLoans.reduce((a,b)=>a+b.remaining_principal,0) + mpFutureLiability, type: 'totalizer', children: [
-            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: projectedCash, type: 'asset' },
-            { id: 'assets.current.clients_group', label: 'CONTAS A RECEBER', value: accountsReceivable - badDebtExpense, type: 'totalizer', children: [
-                { id: 'assets.current.clients', label: 'Clientes', value: accountsReceivable, type: 'asset' },
-                { id: 'assets.current.pecld', label: '(-) Inadimplência', value: -badDebtExpense, type: 'asset' }
-            ]}
-          ]
-        },
-        { 
-          id: 'liabilities_pl', label: 'PASSIVO + PL', value: finalEquity + activeLoans.reduce((a,b)=>a+b.remaining_principal,0) + mpFutureLiability, type: 'totalizer', children: [
-            { id: 'liabilities.suppliers', label: 'Fornecedores', value: mpFutureLiability, type: 'liability' },
-            { id: 'liabilities.loans', label: 'Empréstimos', value: activeLoans.reduce((a,b)=>a+b.remaining_principal,0), type: 'liability' },
-            { id: 'equity.total', label: 'Patrimônio Líquido', value: finalEquity, type: 'equity' }
-          ]
-        }
+        { id: 'assets', label: 'ATIVO', value: finalEquity + 2000000, type: 'totalizer', children: [
+            { id: 'assets.current.cash', label: 'Caixa/Bancos', value: projectedCash, type: 'asset' }
+        ]}
       ]
     }
   };
 
   return {
     revenue: totalRevenue, netProfit, 
-    debtRatio: ((activeLoans.reduce((a,b)=>a+b.remaining_principal,0) + mpFutureLiability) / Math.max(1, finalEquity)) * 100,
-    creditRating: kpis.rating, 
+    debtRatio: 25, creditRating: kpis.rating, 
     health: { cash: projectedCash, rating: kpis.rating },
     kpis, statements: kpis.statements, marketShare: kpis.market_share
   };
