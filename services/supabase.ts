@@ -112,7 +112,6 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
 
   const initialShare = 100 / Math.max(teams.length, 1);
 
-  // Inicialização do Array de Empréstimos Baseline (BDI 8ª Parcela + Compulsório P00)
   const baselineLoans: Loan[] = [
     { 
       id: `bdi-start-${newId}`, 
@@ -155,7 +154,7 @@ export const createChampionshipWithTeams = async (champData: Partial<Championshi
         market_share: initialShare, 
         rating: 'AAA', 
         fleet: champData.market_indicators?.initial_machinery_mix || DEFAULT_MACRO.initial_machinery_mix,
-        loans: baselineLoans, // Sincronização da pendência BDI + Compulsório
+        loans: baselineLoans,
         statements: {
             balance_sheet: champData.initial_financials?.balance_sheet || [],
             dre: champData.initial_financials?.dre || [],
@@ -446,6 +445,16 @@ export const subscribeToModalities = (cb: any) => {
 export const fetchPageContent = async (slug: string, locale: string) => {
   const { data } = await supabase.from('site_content').select('content').eq('page_slug', slug).eq('locale', locale).maybeSingle();
   return data?.content;
+};
+
+// Nova função para o CMS do Administrador
+export const updatePageContent = async (slug: string, locale: string, content: any) => {
+  return await supabase.from('site_content').upsert({
+    page_slug: slug,
+    locale: locale,
+    content: content,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'page_slug, locale' });
 };
 
 export const getPublicReports = async (id: string, r: number) => {
