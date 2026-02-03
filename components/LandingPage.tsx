@@ -305,7 +305,7 @@ const RoadmapNode = ({ phase, title, desc, status, active }: any) => (
 );
 
 const CarouselSlide = ({ icon, badge, title, desc, img }: any) => (
-   <div className="h-[calc(100vh-80px)]">
+   <div className="aspect-[16/9] w-full">
       <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[5rem] overflow-hidden min-h-[500px] flex flex-col md:flex-row shadow-3xl relative group border-t-orange-600/30 border-t-4">
          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
          <div className="flex-1 p-12 md:p-24 flex flex-col justify-center items-start text-left relative z-20 space-y-8">
