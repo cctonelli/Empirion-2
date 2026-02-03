@@ -105,28 +105,28 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          <div className="max-w-[1600px] mx-auto">
             <Slider {...carouselSettings}>
                <CarouselSlide 
-                  icon={<Factory size={48}/>}
+                  icon={<Factory size={40}/>}
                   badge="Modo Industrial"
                   title="Produção Massiva"
                   desc="Gerencie cadeias de suprimento e ativos de capital em múltiplas regiões regionais e globais."
                   img="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200"
                />
                <CarouselSlide 
-                  icon={<BrainCircuit size={48}/>}
+                  icon={<BrainCircuit size={40}/>}
                   badge="IA Agregada"
                   title="Mentoria via Gemini 3"
                   desc="Feedbacks táticos em tempo real baseados no seu Balanço e DRE tático."
                   img="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1200"
                />
                <CarouselSlide 
-                  icon={<Globe size={48}/>}
+                  icon={<Globe size={40}/>}
                   badge="Expansão Global"
                   title="Geopolítica Regional"
                   desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e rotas logísticas reais."
                   img="https://images.unsplash.com/photo-1523474253046-8c12902e5ab8?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
-                  icon={<BarChart3 size={48}/>}
+                  icon={<BarChart3 size={40}/>}
                   badge="Visão Estratégica"
                   title="Análise Financeira Avançada"
                   desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos."
@@ -305,17 +305,17 @@ const RoadmapNode = ({ phase, title, desc, status, active }: any) => (
 );
 
 const CarouselSlide = ({ icon, badge, title, desc, img }: any) => (
-   <div className="aspect-[16/9] w-full">
-      <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[5rem] overflow-hidden min-h-[500px] flex flex-col md:flex-row shadow-3xl relative group border-t-orange-600/30 border-t-4">
+   <div className="px-4 outline-none">
+      <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[5rem] overflow-hidden min-h-[450px] flex flex-col md:flex-row shadow-3xl relative group border-t-orange-600/30 border-t-4">
          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
-         <div className="flex-1 p-12 md:p-24 flex flex-col justify-center items-start text-left relative z-20 space-y-8">
+         <div className="flex-1 p-10 md:p-16 flex flex-col justify-center items-start text-left relative z-20 space-y-5">
             <div className="flex items-center gap-5">
-               <div className="p-4 bg-orange-600 rounded-3xl text-white shadow-2xl">{icon}</div>
+               <div className="p-3.5 bg-orange-600 rounded-3xl text-white shadow-2xl">{icon}</div>
                <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.6em] italic">{badge}</span>
             </div>
-            <h3 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-[0.9]">{title}</h3>
-            <p className="text-xl md:text-2xl text-slate-400 font-medium italic max-w-xl">{desc}</p>
-            <button className="px-12 py-5 bg-white/5 border border-white/10 text-white rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-orange-600 hover:border-orange-400 transition-all flex items-center gap-4 group/btn shadow-xl active:scale-95">
+            <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter leading-[0.9]">{title}</h3>
+            <p className="text-lg md:text-xl text-slate-400 font-medium italic max-w-xl">{desc}</p>
+            <button className="px-10 py-4 bg-white/5 border border-white/10 text-white rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-orange-600 hover:border-orange-400 transition-all flex items-center gap-4 group/btn shadow-xl active:scale-95">
                Ativar Módulo <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
             </button>
          </div>
