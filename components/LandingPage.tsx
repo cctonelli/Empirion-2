@@ -19,14 +19,22 @@ import EmpireParticles from './EmpireParticles';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const NextArrow = (props: any) => (
-  <button onClick={props.onClick} className="absolute -right-4 md:right-10 top-1/2 -translate-y-1/2 z-50 p-5 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-orange-600 transition-all shadow-2xl active:scale-90">
-    <ChevronRight size={32} />
+  <button 
+    onClick={props.onClick} 
+    className="absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 z-50 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-orange-600 hover:scale-110 transition-all shadow-[0_0_40px_rgba(0,0,0,0.5)] active:scale-90 group"
+    aria-label="Próximo Slide"
+  >
+    <ChevronRight size={32} className="group-hover:translate-x-0.5 transition-transform" />
   </button>
 );
 
 const PrevArrow = (props: any) => (
-  <button onClick={props.onClick} className="absolute -left-4 md:left-10 top-1/2 -translate-y-1/2 z-50 p-5 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-orange-600 transition-all shadow-2xl active:scale-90">
-    <ChevronLeft size={32} />
+  <button 
+    onClick={props.onClick} 
+    className="absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 z-50 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-orange-600 hover:scale-110 transition-all shadow-[0_0_40px_rgba(0,0,0,0.5)] active:scale-90 group"
+    aria-label="Slide Anterior"
+  >
+    <ChevronLeft size={32} className="group-hover:-translate-x-0.5 transition-transform" />
   </button>
 );
 
@@ -102,7 +110,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
       {/* DYNAMIC CAROUSEL - OBRIGATÓRIO DIRETRIZES IMUTÁVEIS */}
       <section className="relative z-30 -mt-20 md:-mt-32 px-6 md:px-24 mb-40">
-         <div className="max-w-[1600px] mx-auto">
+         <div className="max-w-[1600px] mx-auto relative">
             <Slider {...carouselSettings}>
                <CarouselSlide 
                   icon={<Factory size={40}/>}
