@@ -69,7 +69,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         for (let i = next.length; i < formData.regionsCount; i++) {
           next.push({
             id: i + 1,
-            name: i === 1 ? 'ESTADOS UNIDOS' : i === 2 ? 'EUROPA' : i === 0 ? 'REGIÃO 1' : `REGIÃO 0${i + 1}`,
+            name: i === 1 ? 'ESTADOS UNIDOS' : i === 2 ? 'EUROPA' : i === 0 ? 'REGIÃO 03' : `REGIÃO 0${i + 1}`,
             currency: i === 0 ? 'BRL' : i === 1 ? 'USD' : i === 2 ? 'EUR' : 'BRL',
             demand_weight: defaultWeight
           });
@@ -268,7 +268,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-orange-500 font-black italic">R{r.id}</div>
                           
                           <div className="flex-1 min-w-[200px]">
-                             <label className="text-[8px] font-black uppercase text-slate-600 tracking-widest ml-2 mb-1 block italic">Identificador Regional</label>
+                             <label className="text-[8px] font-black uppercase text-slate-600 tracking-widest ml-2 mb-1 block italic">Descrição da Região</label>
                              <input value={r.name} onChange={e => updateRegion(i, { name: e.target.value.toUpperCase() })} className="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-xs font-black text-white uppercase outline-none focus:border-orange-500" />
                           </div>
 
