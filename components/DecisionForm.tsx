@@ -9,7 +9,7 @@ import {
   Timer, Settings2, UserPlus, Rocket, Info, HelpCircle,
   HardDrive, Lock, Zap, Scale, Eye, BarChart3, PieChart,
   Activity, Receipt, Coins, Trash2, Box, AlertOctagon,
-  Award
+  Award, Check
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase, getUserProfile } from '../services/supabase';
 import { DecisionData, Branch, Championship, MachineModel, MacroIndicators, Team } from '../types';
@@ -100,13 +100,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     return { ...DEFAULT_MACRO, ...activeArena.market_indicators, ...rules } as MacroIndicators;
   }, [activeArena, round]);
 
+  // Preço auditado baseado no Chronograma do Round Anterior com Inflação aplicada
   const getAdjustedMachinePrice = (model: MachineModel) => {
     const specs = currentMacro.machine_specs?.[model] || DEFAULT_MACRO.machine_specs[model];
     const base = specs.initial_value;
     const lookupRound = Math.max(0, round - 1);
     const rules = activeArena?.round_rules?.[lookupRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound] || {};
+    
     const adjust = rules[`machine_${model === 'alfa' ? 'alpha' : model === 'beta' ? 'beta' : 'gamma'}_price_adjust`] || 1.0;
-    return base * adjust;
+    const inflation = (rules.inflation_rate || 0) / 100;
+    
+    // Fórmula: Preço Base * Ajuste do Round Anterior * (1 + Inflação Round Anterior)
+    return base * adjust * (1 + inflation);
   };
 
   const updateDecision = (path: string, val: any) => {
@@ -121,6 +126,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       current[keys[keys.length - 1]] = val;
       return next;
     });
+  };
+
+  const toggleMachineForSale = (model: MachineModel, indexInModelFleet: number, isSelected: boolean) => {
+    const currentCount = decisions.machinery.sell[model] || 0;
+    const nextCount = isSelected ? currentCount + 1 : Math.max(0, currentCount - 1);
+    updateDecision(`machinery.sell.${model}`, nextCount);
   };
 
   const replicateRegion = () => {
@@ -330,6 +341,23 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v:any)=>updateDecision('hr.fired', v)} icon={<MinusCircle size={20}/>} />
                         <InputCard label="Piso Salarial ($)" val={decisions.hr.salary} onChange={(v:any)=>updateDecision('hr.salary', v)} icon={<Wallet size={20}/>} />
                      </div>
+                     
+                     <div className="bg-slate-900/60 p-10 rounded-[4rem] border border-white/5 shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <RangeInput 
+                          label="Participação nos Lucros (PPR %)" 
+                          val={decisions.hr.participationPercent} 
+                          color="indigo" 
+                          onChange={(v:any)=>updateDecision('hr.participationPercent', v)} 
+                          info="Percentual do lucro líquido destinado à equipe."
+                        />
+                        <RangeInput 
+                          label="Prêmio de Produtividade (%)" 
+                          val={decisions.hr.productivityBonusPercent || 0} 
+                          color="emerald" 
+                          onChange={(v:any)=>updateDecision('hr.productivityBonusPercent', v)} 
+                          info="Bônus variável baseado no alcance de metas operacionais."
+                        />
+                     </div>
                   </div>
                )}
 
@@ -364,12 +392,15 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            </div>
                         </div>
 
+                        {/* LISTAGEM DE MÁQUINAS REAIS DA EQUIPE COM SELEÇÃO INDIVIDUAL */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                            {activeTeam?.kpis?.fleet && activeTeam.kpis.fleet.length > 0 ? (
                               ['alfa', 'beta', 'gama'].map(model => {
                                  const modelFleet = activeTeam.kpis.fleet.filter((m:any) => m.model === model);
                                  if (modelFleet.length === 0) return null;
                                  
+                                 const countForSale = decisions.machinery.sell[model as MachineModel] || 0;
+
                                  return (
                                     <div key={model} className="space-y-6 bg-slate-900 p-8 rounded-[3.5rem] border border-white/5 shadow-xl relative group">
                                        <div className="flex justify-between items-center border-b border-white/5 pb-4">
@@ -380,33 +411,42 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                           <div className="relative group/help">
                                              <HelpCircle size={18} className="text-slate-700 hover:text-rose-500 cursor-help transition-all" />
                                              <div className="absolute bottom-full right-0 mb-4 w-64 p-6 bg-slate-950 border border-white/10 rounded-2xl text-[10px] text-slate-300 font-bold uppercase tracking-widest leading-relaxed opacity-0 group-hover/help:opacity-100 transition-all pointer-events-none z-50 shadow-3xl">
-                                                Insira a quantidade deste lote que deseja liquidar. A venda ocorre pelo VNR (Valor Depreciado) com {currentMacro.machine_sale_discount}% de deságio.
+                                                Selecione cada máquina que deseja vender. O totalizador abaixo será atualizado automaticamente.
                                              </div>
                                           </div>
                                        </div>
                                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
-                                          {modelFleet.map((m: any, idx: number) => (
-                                             <div key={idx} className="p-4 bg-slate-950/50 rounded-2xl border border-white/5 flex justify-between items-center group-hover:border-rose-500/20 transition-all">
-                                                <div className="flex flex-col">
-                                                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ID: {m.id?.split('-').pop() || `M${idx}`}</span>
-                                                   <span className="text-[9px] font-bold text-blue-400 uppercase">Idade: {m.age} Ciclos</span>
-                                                </div>
-                                                <div className="text-right">
-                                                   <span className="block text-[8px] font-black text-slate-600 uppercase">VNR (Estimado)</span>
-                                                   <span className="text-xs font-mono font-black text-emerald-500">$ {(m.depreciated_value || 0).toLocaleString()}</span>
-                                                </div>
-                                             </div>
-                                          ))}
+                                          {modelFleet.map((m: any, idx: number) => {
+                                             // Verifica se esta máquina específica está "marcada" baseada no count global (para persistência simulada)
+                                             const isChecked = idx < countForSale;
+                                             return (
+                                                <button 
+                                                   key={idx} 
+                                                   onClick={() => toggleMachineForSale(model as MachineModel, idx, !isChecked)}
+                                                   className={`w-full p-4 rounded-2xl border transition-all flex justify-between items-center group/btn ${isChecked ? 'bg-rose-600/10 border-rose-500 shadow-lg' : 'bg-slate-950/50 border-white/5 hover:border-rose-500/30'}`}
+                                                >
+                                                   <div className="flex items-center gap-4">
+                                                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isChecked ? 'bg-rose-600 border-rose-500' : 'bg-slate-950 border-white/10'}`}>
+                                                         {isChecked && <Check size={14} className="text-white" strokeWidth={4} />}
+                                                      </div>
+                                                      <div className="flex flex-col text-left">
+                                                         <span className={`text-[10px] font-black uppercase tracking-widest ${isChecked ? 'text-rose-400' : 'text-slate-500'}`}>ID: {m.id?.split('-').pop() || `M${idx}`}</span>
+                                                         <span className="text-[9px] font-bold text-blue-400 uppercase">Idade: {m.age} Ciclos</span>
+                                                      </div>
+                                                   </div>
+                                                   <div className="text-right">
+                                                      <span className="block text-[8px] font-black text-slate-600 uppercase">VNR</span>
+                                                      <span className="text-xs font-mono font-black text-emerald-500">$ {(m.depreciated_value || 0).toLocaleString()}</span>
+                                                   </div>
+                                                </button>
+                                             );
+                                          })}
                                        </div>
                                        <div className="pt-6 border-t border-white/5">
-                                          <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-2 block text-center italic">Quantidade a Vender</label>
-                                          <input 
-                                             type="number" 
-                                             value={decisions.machinery.sell[model as MachineModel] || 0} 
-                                             onChange={e => updateDecision(`machinery.sell.${model}`, Math.max(0, Math.min(modelFleet.length, parseInt(e.target.value) || 0)))}
-                                             className="w-full bg-slate-950 border-2 border-white/10 rounded-[1.5rem] p-6 text-2xl font-black text-white text-center outline-none focus:border-rose-500 shadow-inner" 
-                                             placeholder="0" 
-                                          />
+                                          <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-2 block text-center italic">Totalizador a Vender</label>
+                                          <div className="w-full bg-slate-950 border-2 border-white/10 rounded-[1.5rem] p-6 text-2xl font-black text-white text-center shadow-inner">
+                                             {countForSale}
+                                          </div>
                                        </div>
                                     </div>
                                  );
