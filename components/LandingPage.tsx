@@ -116,28 +116,28 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   icon={<Factory size={40}/>}
                   badge="Modo Industrial"
                   title="Produção Massiva"
-                  desc="Gerencie cadeias de suprimento e ativos de capital em múltiplos mercados regionais e globais."
+                  desc="Gerencie cadeias de suprimento e ativos de capital em múltiplos mercados regionais e globais"
                   img="https://images.unsplash.com/photo-1675176785803-bffbbb0cd2f4?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<BrainCircuit size={40}/>}
                   badge="IA Agregada"
                   title="Mentoria via Gemini"
-                  desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço e DRE tático."
+                  desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço, DRE e CashFlow"
                   img="https://images.unsplash.com/photo-1677442135703-1787eea5ce01?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<Globe size={40}/>}
                   badge="Expansão Global"
                   title="Geopolítica Regional"
-                  desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e ."
+                  desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e variações cambiais"
                   img="https://images.unsplash.com/photo-1670121180583-39ab653a071c?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<BarChart3 size={40}/>}
                   badge="Visão Estratégica"
                   title="Financeiro Avançado"
-                  desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos."
+                  desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos"
                   img="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop"
                />
             </Slider>
