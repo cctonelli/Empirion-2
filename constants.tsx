@@ -255,7 +255,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
      title: "Forge sua Equipe",
      subtitle: "Com EMPIRION!",
-     hero: { title: "Seja Campeão em Estratégia", subtitle: "com EMPIRION..." }
+     hero: { title: "Seja Campeão em Estratégia com", subtitle: "EMPIRION..." }
   },
   'solutions-bp': {
     title: "Plano de Negócios",
