@@ -1,7 +1,7 @@
 
 import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.50.0-Oracle-DoubleEntry-Verified";
+export const APP_VERSION = "v15.55.0-Oracle-DoubleEntry-Verified";
 export const BUILD_DATE = "04/02/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-ACCOUNTING-CORE";
 
@@ -11,15 +11,17 @@ export const DEFAULT_INITIAL_SHARE_PRICE = 1.00;
 /**
  * ==============================================================================
  * EMPIRION CORE FINANCIAL GENOME - INITIAL_FINANCIAL_TREE
- * Ajustado para o cenário P00: MP A ($603k) + MP B ($804k)
+ * Ajustado para o cenário P00 Exato: MP A ($603k) + MP B ($804k)
+ * Ativo Total: 9.493.163,54 | Passivo+PL: 9.493.163,54
+ * CONTAS DE BALANÇO, DRE E FLUXO DE CAIXA COM SALDO 0.00 DEVEM SER MANTIDAS POR SERÃO USADAS DURANTE AS JOGADAS
  * ==============================================================================
  */
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
-      id: 'assets', label: 'ATIVO', value: 9544440.12, type: 'totalizer', children: [
+      id: 'assets', label: 'ATIVO', value: 9493163.54, type: 'totalizer', children: [
         { 
-          id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3531940.12, type: 'totalizer', children: [
+          id: 'assets.current', label: 'ATIVO CIRCULANTE', value: 3480663.54, type: 'totalizer', children: [
             { id: 'assets.current.cash', label: 'Caixa/Bancos', value: 0.00, type: 'asset', isEditable: true },
             { id: 'assets.current.investments', label: 'Aplicação Financeira', value: 0.00, type: 'asset', isEditable: true },
             { id: 'assets.current.clients_group', label: 'CONTAS A RECEBER', value: 2073663.54, type: 'totalizer', children: [
@@ -27,10 +29,10 @@ export const INITIAL_FINANCIAL_TREE = {
                 { id: 'assets.current.pecld', label: '(-) PECLD Inadimplência Clientes', value: -18529.46, type: 'asset', isEditable: true },
                 { id: 'assets.current.vat_recoverable', label: 'Crédito de IVA a recuperar', value: 0.00, type: 'asset', isEditable: true }
             ]},
-            { id: 'assets.current.stock', label: 'ESTOQUE', value: 1458276.58, type: 'totalizer', children: [
+            { id: 'assets.current.stock', label: 'ESTOQUE', value: 1407000.00, type: 'totalizer', children: [
 				        { id: 'assets.current.stock.pa', label: 'Estoque Produto Acabado', value: 0.00, type: 'asset', isEditable: true },
-                { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 624975.68, type: 'asset', isEditable: true },
-                { id: 'assets.current.stock.mpb', label: 'Estoque MP B', value: 833300.90, type: 'asset', isEditable: true }
+                { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 603000.00, type: 'asset', isEditable: true },
+                { id: 'assets.current.stock.mpb', label: 'Estoque MP B', value: 804000.00, type: 'asset', isEditable: true }
             ]}
           ]
         },
@@ -48,7 +50,7 @@ export const INITIAL_FINANCIAL_TREE = {
       ]
     },
     { 
-      id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9544440.12, type: 'totalizer', children: [
+      id: 'liabilities_pl', label: 'PASSIVO + PL', value: 9493163.54, type: 'totalizer', children: [
         { 
           id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2240991.80, type: 'totalizer', children: [
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605.00, type: 'liability', isEditable: true },
@@ -64,9 +66,9 @@ export const INITIAL_FINANCIAL_TREE = {
           ]
         },
         { 
-          id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 7303448.32, type: 'totalizer', children: [
+          id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: 7252171.74, type: 'totalizer', children: [
             { id: 'equity.capital', label: 'Capital Social', value: 7200000.00, type: 'equity', isEditable: true },
-            { id: 'equity.profit', label: 'Lucro/Prejuízo Acumulado', value: 103448.32, type: 'equity', isEditable: true }
+            { id: 'equity.profit', label: 'Lucro/Prejuízo Acumulado', value: 52171.74, type: 'equity', isEditable: true }
           ] 
         }
       ]
@@ -142,7 +144,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   inflation_rate: 1.0,
   customer_default_rate: 2.6,
   interest_rate_tr: 2.0,
-  supplier_interest: 1.0, // Juros do fornecedor baseline 1%
+  supplier_interest: 1.5, // Juros do fornecedor baseline 1.5% sincronizado com P00
   investment_return_rate: 1.0,
   avg_selling_price: 370.0,
   late_penalty_rate: 5.0,
@@ -201,12 +203,26 @@ export const DEFAULT_MACRO: MacroIndicators = {
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
 };
 
+/**
+ * ==============================================================================
+ * DEFAULT_INDUSTRIAL_CHRONOGRAM - MATRIZ ECONÔMICA DE 12 CICLOS
+ * AVISO CRÍTICO: Não remover nenhum período (0-12) nem indicadores da lista abaixo.
+ * Cada entrada representa um snapshot de mercado auditado pelo Oráculo.
+ * ==============================================================================
+ */
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
-  0: {ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, supplier_interest: 1.0, sales_interest_rate: 1.0, investment_return_rate: 1.0, vat_purchases_rate: 0.0, vat_sales_rate: 0.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 1.0, machine_alpha_price_adjust: 1.0, machine_beta_price_adjust: 1.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 1.0, storage_cost_adjust: 2.0, USD: 5.20, EUR: 6.20, allow_machine_sale: false, require_business_plan: false},
+  0: {ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, supplier_interest: 1.5, sales_interest_rate: 1.0, investment_return_rate: 1.0, vat_purchases_rate: 0.0, vat_sales_rate: 0.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 1.0, machine_alpha_price_adjust: 1.0, machine_beta_price_adjust: 1.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 1.0, storage_cost_adjust: 2.0, USD: 5.20, EUR: 6.20, allow_machine_sale: false, require_business_plan: false},
   1: {ice: 3.2, demand_variation: 6.7, inflation_rate: 1.2, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 2.0, sales_interest_rate: 1.1, investment_return_rate: 2.0, vat_purchases_rate: 0.0, vat_sales_rate: 0.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 2.0, machine_alpha_price_adjust: 2.0, machine_beta_price_adjust: 2.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 2.0, USD: 5.26, EUR: 6.27, allow_machine_sale: true, require_business_plan: false},
   2: {ice: 2.8, demand_variation: -6.3, inflation_rate: 1.5, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 3.0, sales_interest_rate: 1.2, investment_return_rate: 2.0, vat_purchases_rate: 0.0, vat_sales_rate: 0.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 5.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 3.0, machine_alpha_price_adjust: 2.0, machine_beta_price_adjust: 2.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 3.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 2.0, USD: 5.52, EUR: 6.53, allow_machine_sale: true, require_business_plan: false},
   3: {ice: 5.0, demand_variation: 55.0, inflation_rate: 1.8, customer_default_rate: 2.8, interest_rate_tr: 4.0, supplier_interest: 3.0, sales_interest_rate: 1.3, investment_return_rate: 2.5, vat_purchases_rate: 15.0, vat_sales_rate: 15.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 3.0, machine_alpha_price_adjust: 3.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 3.0, marketing_campaign_adjust: 3.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 3.0, USD: 5.77, EUR: 6.69, allow_machine_sale: true, require_business_plan: false},
   4: {ice: 5.0, demand_variation: -25.0, inflation_rate: 2.1, customer_default_rate: 2.6, interest_rate_tr: 4.0, supplier_interest: 4.0, sales_interest_rate: 1.4, investment_return_rate: 3.0, vat_purchases_rate: 15.0, vat_sales_rate: 15.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 15.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.5,social_charges: 35.0, raw_material_a_adjust: 4.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 4.0, machine_gamma_price_adjust: 4.0, marketing_campaign_adjust: 4.0,distribution_cost_adjust: 4.0, storage_cost_adjust: 4.0, USD: 5.51, EUR: 6.55, allow_machine_sale: true, require_business_plan: true},
+  5: {ice: 5.0, demand_variation: 18.2, inflation_rate: 1.6, customer_default_rate: 2.8, interest_rate_tr: 4.5, supplier_interest: 4.5, sales_interest_rate: 1.5, investment_return_rate: 3.5, vat_purchases_rate: 15.0, vat_sales_rate: 15.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 20.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.5, social_charges: 35.0, raw_material_a_adjust: 4.3, machine_alpha_price_adjust: 5.0, machine_beta_price_adjust: 4.5, machine_gamma_price_adjust: 4.0, marketing_campaign_adjust: 5.0, distribution_cost_adjust: 5.0, storage_cost_adjust: 4.0, USD: 5.32, EUR: 6.35, allow_machine_sale: true, require_business_plan: false},
+  6: {ice: 3.0, demand_variation: 9.2, inflation_rate: 4.5, customer_default_rate: 2.6, interest_rate_tr: 5.0, supplier_interest: 4.5, sales_interest_rate: 1.6, investment_return_rate: 4.0, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.5, social_charges: 35.0, raw_material_a_adjust: 4.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 2.0, marketing_campaign_adjust: 4.0, distribution_cost_adjust: 4.0, storage_cost_adjust: 4.0, USD: 5.24, EUR: 6.25, allow_machine_sale: true, require_business_plan: false},
+  7: {ice: 4.0, demand_variation: 56.2, inflation_rate: 4.5, customer_default_rate: 2.8, interest_rate_tr: 5.0, supplier_interest: 4.5, sales_interest_rate: 1.6, investment_return_rate: 4.0, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.5, social_charges: 35.0, raw_material_a_adjust: 4.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 2.0, marketing_campaign_adjust: 4.0, distribution_cost_adjust: 4.0, storage_cost_adjust: 4.0, USD: 5.44, EUR: 6.38, allow_machine_sale: true, require_business_plan: false},
+  8: {ice: 5.0, demand_variation: -18.0, inflation_rate: 5.0, customer_default_rate: 2.8, interest_rate_tr: 5.0, supplier_interest: 4.5, sales_interest_rate: 1.7, investment_return_rate: 4.0, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 15.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 3.0, marketing_campaign_adjust: 5.0, distribution_cost_adjust: 4.5, storage_cost_adjust: 4.5, USD: 5.33, EUR: 6.27, allow_machine_sale: true, require_business_plan: true},
+  9: {ice: 6.0, demand_variation: 6.0, inflation_rate: 5.5, customer_default_rate: 2.6, interest_rate_tr: 5.5, supplier_interest: 5.0, sales_interest_rate: 1.8, investment_return_rate: 4.5, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 20.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 3.0, marketing_campaign_adjust: 5.5, distribution_cost_adjust: 5.0, storage_cost_adjust: 4.5, USD: 5.26, EUR: 6.31, allow_machine_sale: true, require_business_plan: false},
+  10: {ice: 4.0, demand_variation: 7.5, inflation_rate: 4.0, customer_default_rate: 2.6, interest_rate_tr: 5.5, supplier_interest: 5.0, sales_interest_rate: 1.8, investment_return_rate: 4.0, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 4.0, machine_gamma_price_adjust: 5.0, marketing_campaign_adjust: 4.5, distribution_cost_adjust: 5.0, storage_cost_adjust: 4.5, USD: 5.38, EUR: 6.28, allow_machine_sale: true, require_business_plan: false},
+  11: {ice: 4.0, demand_variation: 52.5, inflation_rate: 4.5, customer_default_rate: 3.0, interest_rate_tr: 6.0, supplier_interest: 5.0, sales_interest_rate: 1.9, investment_return_rate: 4.5, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 4.0, machine_gamma_price_adjust: 5.0, marketing_campaign_adjust: 5.0, distribution_cost_adjust: 5.0, storage_cost_adjust: 5.0, USD: 5.27, EUR: 6.29, allow_machine_sale: true, require_business_plan: false},
   12: {ice: 6.0, demand_variation: -24.0, inflation_rate: 5.0, customer_default_rate: 2.8, interest_rate_tr: 6.0, supplier_interest: 5.0, sales_interest_rate: 2.0, investment_return_rate: 4.5, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 5.0, machine_gamma_price_adjust: 6.0, marketing_campaign_adjust: 5.0, distribution_cost_adjust: 5.0, storage_cost_adjust: 5.0, USD: 5.32, EUR: 6.29, allow_machine_sale: true, require_business_plan: true}
 };
 
