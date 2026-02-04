@@ -6,7 +6,7 @@ export const BUILD_DATE = "04/02/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-ACCOUNTING-CORE";
 
 // Added missing constant for initial share price baseline required by wizard components
-export const DEFAULT_INITIAL_SHARE_PRICE = 1.00;
+export const DEFAULT_INITIAL_SHARE_PRICE = 100.00;
 
 /**
  * ==============================================================================
@@ -143,7 +143,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   interest_rate_tr: 2.0,
   supplier_interest: 1.5,
   investment_return_rate: 1.0,
-  avg_selling_price: 370.0,
+  avg_selling_price: 425.0,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
   special_purchase_premium: 5.0,
@@ -254,7 +254,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   // BRANCH: INDUSTRIAL LANDING
   'branch-industrial': {
     name: "Industrial",
-    badge: "Template Industrial – Fidelidade 99.8%",
+    badge: "Template Industrial – Fidelidade 100%",
     titlePrefix: "SIMULADOR",
     titleHighlight: "INDUSTRIAL",
     body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda oscilante até ±56%, IA preditiva Gemini 3 e contabilidade 100% integrada. Enquanto outros oferecem planilhas estáticas, o Empirion entrega um mundo industrial vivo onde cada decisão pesa.",

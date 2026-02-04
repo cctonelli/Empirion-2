@@ -157,7 +157,7 @@ const ActivityDetail: React.FC = () => {
                   )}
                </div>
                <p className={`mt-20 text-center text-2xl italic ${accentColor} font-black uppercase tracking-widest`}>
-                  Nenhum outro simulador combina tamanha profundidade.
+                  Nenhum outro simulador combina tamanha profundidade
                </p>
             </div>
          </div>
@@ -219,7 +219,7 @@ const ActivityDetail: React.FC = () => {
                <div className="flex justify-center gap-8 opacity-40 grayscale">
                   <div className="flex items-center gap-2"><ShieldCheck size={16}/> <span>Fidelidade 99.8%</span></div>
                   <div className="flex items-center gap-2"><Zap size={16}/> <span>Real-time Sync</span></div>
-                  <div className="flex items-center gap-2"><Award size={16}/> <span>Certificação Oracle</span></div>
+                  <div className="flex items-center gap-2"><Award size={16}/> <span>Certificação EMPIRION</span></div>
                </div>
             </div>
          </div>
