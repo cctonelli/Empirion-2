@@ -116,7 +116,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   icon={<Factory size={40}/>}
                   badge="Modo Industrial"
                   title="Produção Massiva"
-                  desc="Gerencie cadeias de suprimento e ativos de capital em múltiplas regiões regionais e globais."
+                  desc="Gerencie cadeias de suprimento e ativos de capital em múltiplos mercados regionais e globais."
                   img="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
@@ -131,12 +131,12 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   badge="Expansão Global"
                   title="Geopolítica Regional"
                   desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e ."
-                  img="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop"
+                  img="https://images.unsplash.com/photo-1718778449026-fc05939d7650?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<BarChart3 size={40}/>}
                   badge="Visão Estratégica"
-                  title="Análise Financeira Avançada"
+                  title="Financeiro Avançado"
                   desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos."
                   img="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop"
                />
