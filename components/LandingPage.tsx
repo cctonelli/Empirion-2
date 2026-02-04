@@ -149,7 +149,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
                <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.8em] italic">Simulation Matrix</span>
-               <h2 className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none">Nodos Disponíveis</h2>
+               <h2 className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none">Simulações Disponíveis</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
                {[
