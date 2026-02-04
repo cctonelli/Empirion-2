@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, ShieldAlert, Factory, Coins, Zap, PieChart,
   ShieldCheck, Activity, Landmark as BankIcon, ShoppingCart, Truck, Scale, ChevronDown, AlertCircle,
-  ArrowDownLeft, ArrowUpRight
+  ArrowDownLeft, ArrowUpRight, Receipt
 } from 'lucide-react';
 import { Branch, Championship, Team, AccountNode } from '../types';
 import { getChampionships } from '../services/supabase';
@@ -47,7 +47,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       <header className="flex flex-col lg:flex-row justify-between lg:items-end px-6 gap-6">
          <div>
             <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Oracle <span className="text-orange-500">Audit Node</span></h1>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Engine v15.35 Gold</p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Engine v15.60 Fidelity</p>
          </div>
          <div className="flex flex-wrap gap-3 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
             <ReportTabBtn active={activeReport === 'dre'} onClick={() => setActiveReport('dre')} label="DRE" icon={<TrendingUp size={14} />} color="orange" />
@@ -61,40 +61,47 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
             <AnimatePresence mode="wait">
                {activeReport === 'dre' ? (
                   <motion.div key="dre" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Demonstrativo de Resultados</h3>
+                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Demonstrativo de Resultados (Competência)</h3>
                      <div className="space-y-1 font-mono">
                         <ReportLine label="(+) RECEITAS BRUTAS" val={fmt(dre.revenue)} bold />
+                        <ReportLine label="( - ) IVA SOBRE VENDAS" val={fmt(dre.vat_sales)} indent neg />
+                        <ReportLine label="( = ) RECEITA LÍQUIDA" val={fmt(dre.net_sales)} highlight />
                         <ReportLine label="( - ) CUSTO PRODUTO VENDIDO (CPV)" val={fmt(dre.cpv)} neg />
-                        <ReportLine label="( = ) LUCRO BRUTO" val={fmt(dre.gross_profit)} highlight />
-                        <ReportLine label="( - ) DESPESAS OPERACIONAIS (OPEX)" val={fmt(dre.opex)} neg />
-                        <ReportLine label="(+/-) RESULTADO FINANCEIRO (JUROS)" val={fmt(dre.interest)} color="text-indigo-400" />
-                        <ReportLine label="( = ) LUCRO LÍQUIDO" val={fmt(dre.net_profit)} total />
+                        <ReportLine label="( = ) LUCRO BRUTO" val={fmt(dre.gross_profit)} />
+                        <ReportLine label="( - ) OPEX + MKT + DIST" val={fmt(dre.opex)} neg />
+                        <ReportLine label="( = ) RESULTADO OPERACIONAL" val={fmt(dre.operating_profit)} />
+                        <ReportLine label="( - ) PROVISÃO DE IMPOSTO RENDA" val={fmt(dre.taxes)} indent neg />
+                        <ReportLine label="( - ) PARTICIPAÇÃO LUCROS (PPR)" val={fmt(dre.ppr)} indent neg />
+                        <ReportLine label="( = ) LUCRO LÍQUIDO DO CICLO" val={fmt(dre.net_profit)} total />
                      </div>
                   </motion.div>
                ) : activeReport === 'cash_flow' ? (
                   <motion.div key="cf" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Fluxo de Caixa Reconciliado (DFC)</h3>
+                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Fluxo de Caixa (Regime de Caixa)</h3>
                      <div className="space-y-1 font-mono">
                         <ReportLine label="(=) SALDO INICIAL" val={fmt(cf.start)} bold />
                         
                         <div className="py-4 space-y-2 border-l-2 border-emerald-500/30 pl-6 my-4 bg-emerald-500/5 rounded-r-3xl">
                            <ReportLine label="(+) ENTRADAS TOTAIS" val={fmt(cf.inflow?.total)} color="text-emerald-400" />
-                           <ReportLine label="VENDAS À VISTA (CICLO ATUAL)" val={fmt(cf.inflow?.cash_sales)} indent />
-                           <ReportLine label="RECEBIMENTOS DE CICLOS ANTERIORES" val={fmt(cf.inflow?.legacy_receivables)} indent color="text-emerald-500" icon={<ArrowUpRight size={10}/>} />
-                           {cf.inflow?.manual_loan > 0 && <ReportLine label="EMPRÉSTIMOS SOLICITADOS" val={fmt(cf.inflow?.manual_loan)} indent />}
-                           {cf.inflow?.compulsory_trigger > 0 && <ReportLine label="EMPRÉSTIMO COMPULSÓRIO (GATILHO)" val={fmt(cf.inflow?.compulsory_trigger)} indent color="text-rose-400" icon={<Zap size={10}/>} />}
+                           <ReportLine label="VENDAS À VISTA (CORRENTE)" val={fmt(cf.inflow?.current_sales)} indent />
+                           <ReportLine label="RECEBIMENTOS DE CICLOS ANTERIORES (T+1)" val={fmt(cf.inflow?.legacy_receivables)} indent color="text-emerald-500" icon={<ArrowUpRight size={10}/>} />
                         </div>
 
                         <div className="py-4 space-y-2 border-l-2 border-rose-500/30 pl-6 my-4 bg-rose-500/5 rounded-r-3xl">
                            <ReportLine label="(-) SAÍDAS TOTAIS" val={fmt(cf.outflow?.total)} neg color="text-rose-400" />
-                           <ReportLine label="COMPRAS À VISTA (CICLO ATUAL)" val={fmt(cf.outflow?.cash_purchases)} indent neg />
-                           <ReportLine label="PAGAMENTO A FORNECEDORES (LEGADO)" val={fmt(cf.outflow?.legacy_payables)} indent neg color="text-rose-500" icon={<ArrowDownLeft size={10}/>} />
-                           <ReportLine label="FOLHA DE PAGAMENTO + ENCARGOS" val={fmt(cf.outflow?.payroll)} indent neg />
-                           <ReportLine label="AMORTIZAÇÃO DO PRINCIPAL" val={fmt(cf.outflow?.amortization)} indent neg icon={<Scale size={10}/>} />
-                           <ReportLine label="JUROS E ÁGIOS BANCÁRIOS" val={fmt(cf.outflow?.interest)} indent neg />
+                           <ReportLine label="FOLHA + ENCARGOS + PPR" val={fmt(cf.outflow?.current_payroll)} indent neg />
+                           <ReportLine label="FORNECEDORES À VISTA (CORRENTE)" val={fmt(cf.outflow?.current_suppliers)} indent neg />
+                           
+                           {/* LIQUIDAÇÕES FISCAIS E LEGADO */}
+                           <div className="mt-4 pt-4 border-t border-rose-500/10 space-y-2">
+                              <ReportLine label="LIQUIDAÇÃO IVA (T+1)" val={fmt(cf.outflow?.legacy_vat)} indent neg icon={<Receipt size={10}/>} />
+                              <ReportLine label="LIQUIDAÇÃO IMPOSTO RENDA (T+1)" val={fmt(cf.outflow?.legacy_taxes)} indent neg icon={<Receipt size={10}/>} />
+                              <ReportLine label="LIQUIDAÇÃO FORNECEDORES (T+1)" val={fmt(cf.outflow?.legacy_suppliers)} indent neg icon={<ArrowDownLeft size={10}/>} />
+                              <ReportLine label="LIQUIDAÇÃO DIVIDENDOS" val={fmt(cf.outflow?.legacy_dividends)} indent neg icon={<Coins size={10}/>} />
+                           </div>
                         </div>
 
-                        <ReportLine label="(=) SALDO FINAL" val={fmt(cf.final)} total bold highlight color={cf.final <= 0 ? 'text-rose-500' : 'text-emerald-400'} />
+                        <ReportLine label="(=) SALDO FINAL PROJETADO" val={fmt(cf.final)} total bold highlight color={cf.final <= 0 ? 'text-rose-500' : 'text-emerald-400'} />
                      </div>
                   </motion.div>
                ) : (
