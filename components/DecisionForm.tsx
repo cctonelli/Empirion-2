@@ -100,7 +100,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     return { ...DEFAULT_MACRO, ...activeArena.market_indicators, ...rules } as MacroIndicators;
   }, [activeArena, round]);
 
-  // Preço auditado baseado no Chronograma do Round Anterior (P00 para Decisão P01)
   const getAdjustedMachinePrice = (model: MachineModel) => {
     const specs = currentMacro.machine_specs?.[model] || DEFAULT_MACRO.machine_specs[model];
     const base = specs.initial_value;
@@ -231,7 +230,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                        type="number" 
                                        value={reg.price || 0} 
                                        onChange={e => updateDecision(`regions.${id}.price`, parseFloat(e.target.value))}
-                                       className="w-full bg-slate-950 border-2 border-white/5 rounded-[1.5rem] p-6 text-3xl font-mono font-black text-white outline-none focus:border-orange-600 transition-all"
+                                       className="w-full bg-slate-950 border-2 border-white/5 rounded-[1.5rem] p-8 text-4xl font-mono font-black text-white outline-none focus:border-orange-600 transition-all tracking-tighter shadow-inner"
                                     />
                                  </div>
                                  <div className="space-y-3">
@@ -246,12 +245,21 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                        <option value={2}>33% / 33% / 33%</option>
                                     </select>
                                  </div>
-                                 <InputCard 
-                                    label="Unidades de Marketing (0-9)" 
-                                    val={reg.marketing || 0} 
-                                    onChange={(v:any)=>updateDecision(`regions.${id}.marketing`, Math.min(9, Math.max(0, v)))} 
-                                    icon={<Megaphone size={14}/>} 
-                                 />
+                                 <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-4 hover:border-orange-500/30 transition-all group shadow-inner">
+                                    <div className="flex items-center justify-between">
+                                       <div className="flex items-center gap-3">
+                                          <div className="p-2 bg-white/5 rounded-xl text-slate-500 group-hover:text-orange-500 transition-colors"><Megaphone size={14}/></div>
+                                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Marketing (Unidades 0-9)</label>
+                                       </div>
+                                    </div>
+                                    <input 
+                                       type="number" 
+                                       min="0" max="9"
+                                       value={reg.marketing || 0} 
+                                       onChange={e => updateDecision(`regions.${id}.marketing`, Math.min(9, Math.max(0, parseInt(e.target.value) || 0)))} 
+                                       className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-4 text-white font-mono font-black text-xl outline-none focus:border-orange-600 shadow-inner" 
+                                    />
+                                 </div>
                               </div>
                            );
                         })}
@@ -301,7 +309,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               type="number" step="0.01"
                               value={decisions.production.term_interest_rate || 0.00} 
                               onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value))}
-                              className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-6 text-3xl font-mono font-black text-orange-500 outline-none focus:border-orange-600 transition-all"
+                              className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-6 text-3xl font-mono font-black text-orange-500 outline-none focus:border-orange-600 transition-all shadow-inner"
                            />
                            <p className="text-[8px] text-slate-600 uppercase font-black tracking-widest italic">Aplica-se ao saldo financiado aos clientes por período.</p>
                         </div>
@@ -356,7 +364,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            </div>
                         </div>
 
-                        {/* LISTAGEM DE MÁQUINAS REAIS DA EQUIPE */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                            {activeTeam?.kpis?.fleet && activeTeam.kpis.fleet.length > 0 ? (
                               ['alfa', 'beta', 'gama'].map(model => {

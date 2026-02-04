@@ -1,6 +1,6 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE SCHEMA & RLS v31.12.3.7 - CMS & OBSERVER PROTOCOL
+-- EMPIRION DATABASE SCHEMA & RLS v31.12.3.8 - SANDBOX PERMISSIVE PROTOCOL
 -- ==============================================================================
 
 -- 1. GARANTIA DE ESTRUTURA (Colunas e Tabelas Core)
@@ -51,7 +51,7 @@ BEGIN
     END LOOP;
 END $$;
 
--- 3. POLÍTICAS DE ACESSO (CHAMPIONSHIPS)
+-- 3. POLÍTICAS DE ACESSO (CHAMPIONSHIPS OFICIAIS)
 CREATE POLICY "Championship_Select_v15" ON public.championships FOR SELECT TO authenticated
 USING (
     tutor_id = auth.uid() 
@@ -75,7 +75,7 @@ CREATE POLICY "Site_Content_Admin_Manage" ON public.site_content FOR ALL TO auth
 USING (EXISTS (SELECT 1 FROM public.users WHERE supabase_user_id = auth.uid() AND role = 'admin'))
 WITH CHECK (EXISTS (SELECT 1 FROM public.users WHERE supabase_user_id = auth.uid() AND role = 'admin'));
 
--- 5. DECISÕES E AUDITORIA
+-- 5. DECISÕES E AUDITORIA (OFICIAIS)
 CREATE POLICY "Decisions_Select_Auth" ON public.current_decisions FOR SELECT TO authenticated
 USING (
     team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid())
@@ -86,15 +86,15 @@ CREATE POLICY "Decisions_Write_Own_Team" ON public.current_decisions FOR ALL TO 
 USING (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()))
 WITH CHECK (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()));
 
--- 6. SANDBOX (TRIAL TABLES)
-CREATE POLICY "Trial_Champs_Manage" ON public.trial_championships FOR ALL TO authenticated
-USING (tutor_id = auth.uid() OR tutor_id IS NULL)
-WITH CHECK (tutor_id = auth.uid() OR tutor_id IS NULL);
+-- 6. SANDBOX (TRIAL TABLES - ACESSO TOTAL ANON + AUTH)
+-- Fundamental para o modo MVP sem login obrigatório.
+CREATE POLICY "Trial_Champs_Permissive" ON public.trial_championships FOR ALL TO anon, authenticated
+USING (true) WITH CHECK (true);
 
-CREATE POLICY "Trial_Teams_Read" ON public.trial_teams FOR SELECT TO authenticated, anon
-USING (true);
+CREATE POLICY "Trial_Teams_Permissive" ON public.trial_teams FOR ALL TO anon, authenticated
+USING (true) WITH CHECK (true);
 
-CREATE POLICY "Trial_Decisions_Manage" ON public.trial_decisions FOR ALL TO authenticated
+CREATE POLICY "Trial_Decisions_Permissive" ON public.trial_decisions FOR ALL TO anon, authenticated
 USING (true) WITH CHECK (true);
 
 -- 7. USUÁRIOS E PERFIS
