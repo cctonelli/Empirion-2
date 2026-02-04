@@ -69,7 +69,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         for (let i = next.length; i < formData.regionsCount; i++) {
           next.push({
             id: i + 1,
-            name: i === 0 ? 'SUDESTE' : i === 1 ? 'ESTADOS UNIDOS' : i === 2 ? 'EUROPA' : `REGIÃO 0${i + 1}`,
+            name: i === 1 ? 'ESTADOS UNIDOS' : i === 2 ? 'EUROPA' : i === 0 ? 'REGIÃO 1' : `REGIÃO 0${i + 1}`,
             currency: i === 0 ? 'BRL' : i === 1 ? 'USD' : i === 2 ? 'EUR' : 'BRL',
             demand_weight: defaultWeight
           });
