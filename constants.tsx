@@ -255,8 +255,8 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'branch-industrial': {
     name: "Industrial",
     badge: "Template Industrial – Fidelidade 99.8%",
-    titlePrefix: "Forje o Império Industrial",
-    titleHighlight: "Que Nenhum Outro Simulador Consegue",
+    titlePrefix: "SIMULADOR",
+    titleHighlight: "INDUSTRIAL",
     body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda oscilante até ±56%, IA preditiva Gemini 3 e contabilidade 100% integrada. Enquanto outros oferecem planilhas estáticas, o Empirion entrega um mundo industrial vivo onde cada decisão pesa.",
     accent: "orange",
     heroImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2000",
