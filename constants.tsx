@@ -1,18 +1,12 @@
 
 import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource, MenuItemConfig } from './types';
 
-export const APP_VERSION = "v15.55.0-Oracle-DoubleEntry-Verified";
-export const BUILD_DATE = "04/02/2026";
+export const APP_VERSION = "v15.60.0-Oracle-Gold-Verified";
+export const BUILD_DATE = "05/02/2026";
 export const PROTOCOL_NODE = "Node 08-STREET-ACCOUNTING-CORE";
 
-// Added missing constant for initial share price baseline required by wizard components
 export const DEFAULT_INITIAL_SHARE_PRICE = 100.00;
 
-/**
- * ==============================================================================
- * EMPIRION CORE FINANCIAL GENOME - INITIAL_FINANCIAL_TREE
- * ==============================================================================
- */
 export const INITIAL_FINANCIAL_TREE = {
   balance_sheet: [
     { 
@@ -185,11 +179,11 @@ export const DEFAULT_MACRO: MacroIndicators = {
     }
   },
   initial_machinery_mix: [
-    { id: 'm1', model: 'alfa', age: 6, purchase_value: 500000 },
-    { id: 'm2', model: 'alfa', age: 11, purchase_value: 480000 },
-    { id: 'm3', model: 'alfa', age: 11, purchase_value: 480000 },
-    { id: 'm4', model: 'alfa', age: 21, purchase_value: 450000 },
-    { id: 'm5', model: 'alfa', age: 21, purchase_value: 450000 }
+    { id: 'm1', model: 'alfa', age: 6, purchase_value: 500000, depreciated_value: 425000 },
+    { id: 'm2', model: 'alfa', age: 11, purchase_value: 480000, depreciated_value: 348000 },
+    { id: 'm3', model: 'alfa', age: 11, purchase_value: 480000, depreciated_value: 348000 },
+    { id: 'm4', model: 'alfa', age: 21, purchase_value: 450000, depreciated_value: 213750 },
+    { id: 'm5', model: 'alfa', age: 21, purchase_value: 450000, depreciated_value: 213750 }
   ],
   staffing: {
     admin: { count: 20, salaries: 4 },

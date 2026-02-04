@@ -62,6 +62,8 @@ export interface InitialMachine {
   age: number;
   book_value?: number;
   purchase_value?: number;
+  // Fix: Added depreciated_value property to match InitialMachine objects in constants.tsx
+  depreciated_value?: number;
 }
 
 export interface RegionConfig {

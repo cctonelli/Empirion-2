@@ -11,8 +11,8 @@ import {
   Activity, Receipt, Coins, Trash2, Box, AlertOctagon,
   Award
 } from 'lucide-react';
-import { saveDecisions, getChampionships, supabase } from '../services/supabase';
-import { DecisionData, Branch, Championship, MachineModel, MacroIndicators } from '../types';
+import { saveDecisions, getChampionships, supabase, getUserProfile } from '../services/supabase';
+import { DecisionData, Branch, Championship, MachineModel, MacroIndicators, Team } from '../types';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
@@ -31,6 +31,7 @@ const STEPS = [
 const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
+  const [activeTeam, setActiveTeam] = useState<Team | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
 
@@ -38,7 +39,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     judicial_recovery: false,
     regions: {}, 
     hr: { hired: 0, fired: 0, salary: 0, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0, sales_staff_count: 50 },
-    production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 0, extraProductionPercent: 0, rd_investment: 0, net_profit_target_percent: 0, term_interest_rate: 0 },
+    production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 0, extraProductionPercent: 0, rd_investment: 0, net_profit_target_percent: 0, term_interest_rate: 0.00 },
     machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
     finance: { loanRequest: 0, loanTerm: 0, application: 0 },
     estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
@@ -56,6 +57,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         if (!found) return;
         setActiveArena(found);
 
+        const team = found.teams?.find(t => t.id === teamId);
+        if (team) setActiveTeam(team);
+
         const table = found.is_trial ? 'trial_decisions' : 'current_decisions';
         const { data: draft } = await supabase.from(table)
           .select('data')
@@ -66,7 +70,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
         const initialRegions: any = {};
         for (let i = 1; i <= (found.regions_count || 1); i++) {
-          initialRegions[i] = draft?.data?.regions?.[i] || { price: 0, term: 0, marketing: 1 };
+          initialRegions[i] = draft?.data?.regions?.[i] || { price: 0, term: 0, marketing: 0 };
         }
 
         if (draft?.data) {
@@ -75,7 +79,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             regions: initialRegions 
           });
         } else {
-          setDecisions(prev => ({ ...prev, regions: initialRegions }));
+          setDecisions(prev => ({ 
+            ...prev, 
+            regions: initialRegions,
+            production: { ...prev.production, term_interest_rate: 0.00 } // Default Juros Venda
+          }));
         }
       } catch (err) {
         console.error("Hydration Error:", err);
@@ -92,6 +100,16 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     return { ...DEFAULT_MACRO, ...activeArena.market_indicators, ...rules } as MacroIndicators;
   }, [activeArena, round]);
 
+  // Preço auditado baseado no Chronograma do Round Anterior (P00 para Decisão P01)
+  const getAdjustedMachinePrice = (model: MachineModel) => {
+    const specs = currentMacro.machine_specs?.[model] || DEFAULT_MACRO.machine_specs[model];
+    const base = specs.initial_value;
+    const lookupRound = Math.max(0, round - 1);
+    const rules = activeArena?.round_rules?.[lookupRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound] || {};
+    const adjust = rules[`machine_${model === 'alfa' ? 'alpha' : model === 'beta' ? 'beta' : 'gamma'}_price_adjust`] || 1.0;
+    return base * adjust;
+  };
+
   const updateDecision = (path: string, val: any) => {
     if (isReadOnly) return;
     const keys = path.split('.');
@@ -104,12 +122,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       current[keys[keys.length - 1]] = val;
       return next;
     });
-  };
-
-  const getAdjustedMachinePrice = (model: MachineModel) => {
-    const base = currentMacro.machinery_values?.[model] || 500000;
-    const adjust = currentMacro[`machine_${model === 'alfa' ? 'alpha' : model === 'beta' ? 'beta' : 'gamma'}_price_adjust`] || 1.0;
-    return base * adjust;
   };
 
   const replicateRegion = () => {
@@ -188,13 +200,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            </div>
                         </button>
                      </div>
-                     <div className="p-8 bg-white/5 rounded-[2.5rem] flex items-center gap-6 border border-white/10 shadow-inner">
-                        <HelpCircle size={32} className="text-blue-400 shrink-0" />
-                        <div className="space-y-1">
-                           <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Orientação Oracle</span>
-                           <p className="text-xs text-slate-400 leading-relaxed font-medium italic">"O Protocolo RJ protege a empresa contra execuções imediatas, mas o Oráculo Oracle impõe um spread de risco severo e bloqueia expansões massivas de Capex."</p>
-                        </div>
-                     </div>
                   </div>
                )}
 
@@ -204,36 +209,52 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      <div className="flex justify-between items-end bg-slate-900/60 p-10 rounded-[4rem] border border-white/5 shadow-2xl">
                         <div className="space-y-2">
                            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter flex items-center gap-4"><Megaphone className="text-orange-500" /> Regiões de Vendas</h3>
-                           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Configure preço, prazo e marketing para as {Object.keys(decisions.regions).length} regiões.</p>
+                           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Configure preço, prazo e campanhas de marketing.</p>
                         </div>
                         <button onClick={replicateRegion} className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-3 shadow-lg active:scale-95">
                            <RefreshCw size={14} /> Replicar em Cluster
                         </button>
                      </div>
 
-                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-                        {Object.entries(decisions.regions).map(([id, reg]: [any, any]) => (
-                           <div key={id} className="bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 space-y-8 hover:border-orange-500/30 transition-all group shadow-xl">
-                              <div className="flex justify-between items-center">
-                                 <span className="text-xs font-black text-orange-500 uppercase italic">Região 0{id}</span>
-                                 <HelpCircle size={14} className="text-slate-700 cursor-help hover:text-orange-500" />
+                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                        {Object.entries(decisions.regions).map(([id, reg]: [any, any]) => {
+                           const regionName = activeArena?.region_names?.[id - 1] || activeArena?.region_configs?.[id-1]?.name || `Região ${id}`;
+                           return (
+                              <div key={id} className="bg-slate-900/40 p-10 rounded-[3rem] border border-white/5 space-y-10 hover:border-orange-500/30 transition-all group shadow-xl">
+                                 <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                    <span className="text-xs font-black text-orange-500 uppercase italic">{regionName}</span>
+                                    <HelpCircle size={14} className="text-slate-700 cursor-help hover:text-orange-500" />
+                                 </div>
+                                 <div className="space-y-4">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Preço Unitário ($)</label>
+                                    <input 
+                                       type="number" 
+                                       value={reg.price || 0} 
+                                       onChange={e => updateDecision(`regions.${id}.price`, parseFloat(e.target.value))}
+                                       className="w-full bg-slate-950 border-2 border-white/5 rounded-[1.5rem] p-6 text-3xl font-mono font-black text-white outline-none focus:border-orange-600 transition-all"
+                                    />
+                                 </div>
+                                 <div className="space-y-3">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Fluxo de Recebimento</label>
+                                    <select 
+                                       value={reg.term || 0} 
+                                       onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
+                                       className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-4 text-[10px] font-black text-white uppercase outline-none focus:border-orange-600"
+                                    >
+                                       <option value={0}>A VISTA</option>
+                                       <option value={1}>50% / 50%</option>
+                                       <option value={2}>33% / 33% / 33%</option>
+                                    </select>
+                                 </div>
+                                 <InputCard 
+                                    label="Unidades de Marketing (0-9)" 
+                                    val={reg.marketing || 0} 
+                                    onChange={(v:any)=>updateDecision(`regions.${id}.marketing`, Math.min(9, Math.max(0, v)))} 
+                                    icon={<Megaphone size={14}/>} 
+                                 />
                               </div>
-                              <InputCard label="Preço Unit. ($)" val={reg.price} onChange={(v:any)=>updateDecision(`regions.${id}.price`, v)} icon={<DollarSign size={14}/>} />
-                              <div className="space-y-3">
-                                 <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Fluxo de Recebimento</label>
-                                 <select 
-                                    value={reg.term || 0} 
-                                    onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
-                                    className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-4 text-xs font-black text-white uppercase outline-none focus:border-orange-600"
-                                 >
-                                    <option value={0}>A VISTA</option>
-                                    <option value={1}>50% / 50%</option>
-                                    <option value={2}>33% / 33% / 33%</option>
-                                 </select>
-                              </div>
-                              <RangeInput label="Investimento Marketing (0-9)" val={reg.marketing || 1} min={0} max={9} color="blue" onChange={(v:any)=>updateDecision(`regions.${id}.marketing`, v)} />
-                           </div>
-                        ))}
+                           );
+                        })}
                      </div>
                   </div>
                )}
@@ -274,12 +295,15 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <InputCard label="Meta Lucro Líquido (%)" val={decisions.production.net_profit_target_percent} onChange={(v:any)=>updateDecision('production.net_profit_target_percent', v)} icon={<Target size={16}/>} />
-                        <div className="bg-slate-900 p-8 rounded-[3.5rem] border border-white/5 flex items-center justify-between shadow-xl">
-                           <div className="space-y-1">
-                              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">Juros Venda a Prazo <HelpCircle size={10}/></span>
-                              <h4 className="text-3xl font-black text-orange-500 italic">{currentMacro.sales_interest_rate || 1.5}% <span className="text-xs text-slate-600 uppercase font-bold not-italic ml-2">por período</span></h4>
-                           </div>
-                           <TrendingUp size={40} className="text-slate-800 opacity-50" />
+                        <div className="bg-slate-900 p-10 rounded-[3.5rem] border border-white/5 space-y-4 shadow-xl">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic ml-2 flex items-center gap-2">Juros Venda a Prazo (%) <HelpCircle size={10}/></label>
+                           <input 
+                              type="number" step="0.01"
+                              value={decisions.production.term_interest_rate || 0.00} 
+                              onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value))}
+                              className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-6 text-3xl font-mono font-black text-orange-500 outline-none focus:border-orange-600 transition-all"
+                           />
+                           <p className="text-[8px] text-slate-600 uppercase font-black tracking-widest italic">Aplica-se ao saldo financiado aos clientes por período.</p>
                         </div>
                      </div>
                   </div>
@@ -298,70 +322,94 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         <InputCard label="Desligamentos" val={decisions.hr.fired} onChange={(v:any)=>updateDecision('hr.fired', v)} icon={<MinusCircle size={20}/>} />
                         <InputCard label="Piso Salarial ($)" val={decisions.hr.salary} onChange={(v:any)=>updateDecision('hr.salary', v)} icon={<Wallet size={20}/>} />
                      </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                           <RangeInput label="Treinamento (%)" val={decisions.hr.trainingPercent} onChange={(v:any)=>updateDecision('hr.trainingPercent', v)} color="indigo" />
-                        </div>
-                        <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                           <RangeInput label="Participação Lucros (%)" val={decisions.hr.participationPercent} onChange={(v:any)=>updateDecision('hr.participationPercent', v)} color="emerald" />
-                        </div>
-                        <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                           <RangeInput label="Prêmio Produtividade (%)" val={decisions.hr.productivityBonusPercent} onChange={(v:any)=>updateDecision('hr.productivityBonusPercent', v)} color="blue" />
-                        </div>
-                     </div>
                   </div>
                )}
 
                {/* CARD 5: ATIVOS (CAPEX & DESINVESTIMENTO) */}
                {activeStep === 4 && (
-                  <div className="space-y-16">
-                     <div className="bg-slate-900/60 p-12 rounded-[4rem] border border-white/5 space-y-10 shadow-2xl">
-                        <div className="flex justify-between items-center border-b border-white/5 pb-8">
+                  <div className="space-y-20">
+                     <div className="bg-slate-900/60 p-12 rounded-[5rem] border border-white/5 space-y-12 shadow-2xl">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-10">
                            <div className="space-y-1">
-                              <h3 className="text-3xl font-black text-white uppercase italic flex items-center gap-6"><TrendingUp className="text-emerald-500" /> Expansão CAPEX</h3>
-                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Aquisição de novos ativos de produção.</p>
+                              <h3 className="text-4xl font-black text-white uppercase italic flex items-center gap-6"><TrendingUp className="text-emerald-500" /> Expansão CAPEX</h3>
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Aquisição de novos ativos para o ciclo P0{round}.</p>
                            </div>
-                           <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest italic flex items-center gap-2 bg-orange-600/10 px-6 py-2 rounded-full border border-orange-500/20"><Info size={12}/> Reajustes aplicados para P0{round}</span>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                           <MachineBuyCard model="ALFA" icon={<Cpu/>} cap="2.000" ops="94" price={getAdjustedMachinePrice('alfa')} val={decisions.machinery.buy.alfa} onChange={(v:any)=>updateDecision('machinery.buy.alfa', v)} />
-                           <MachineBuyCard model="BETA" icon={<Cpu/>} cap="6.000" ops="235" price={getAdjustedMachinePrice('beta')} val={decisions.machinery.buy.beta} onChange={(v:any)=>updateDecision('machinery.buy.beta', v)} />
-                           <MachineBuyCard model="GAMA" icon={<Cpu/>} cap="12.000" ops="445" price={getAdjustedMachinePrice('gama')} val={decisions.machinery.buy.gama} onChange={(v:any)=>updateDecision('machinery.buy.gama', v)} />
-                        </div>
-                     </div>
-
-                     <div className="bg-slate-950/80 p-12 rounded-[4rem] border border-white/10 space-y-10 shadow-inner">
-                        <div className="flex justify-between items-center border-b border-white/5 pb-8">
-                           <div className="space-y-1">
-                              <h3 className="text-3xl font-black text-white uppercase italic flex items-center gap-6"><TrendingDown className="text-rose-500" /> Desinvestimento</h3>
-                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Venda de ativos da frota atual.</p>
-                           </div>
-                           <div className="px-6 py-2 bg-rose-600/10 border border-rose-500/30 text-rose-500 rounded-full font-black text-[9px] uppercase tracking-widest italic flex items-center gap-2">
-                              <AlertOctagon size={12}/> Deságio Venda: {currentMacro.machine_sale_discount || 10}%
+                           <div className="px-6 py-3 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-full font-black text-[10px] uppercase tracking-widest italic flex items-center gap-2">
+                              <Info size={14}/> Preços Auditados P0{round}
                            </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                           <div className="space-y-4 bg-slate-900 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                              <div className="flex justify-between items-end mb-4">
-                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Vender ALFA</label>
-                                 <Trash2 size={16} className="text-slate-700" />
-                              </div>
-                              <input type="number" value={decisions.machinery.sell.alfa} onChange={e=>updateDecision('machinery.sell.alfa', Math.max(0, parseInt(e.target.value)||0))} className="w-full bg-slate-950 border-2 border-white/5 rounded-[2rem] p-6 text-white font-black text-center text-2xl outline-none focus:border-rose-500" placeholder="0" />
+                           <MachineBuyCard model="ALFA" icon={<Cpu/>} cap="2.000" ops="94" price={getAdjustedMachinePrice('alfa')} val={decisions.machinery.buy.alfa} onChange={(v:any)=>updateDecision('machinery.buy.alfa', v)} round={round} />
+                           <MachineBuyCard model="BETA" icon={<Cpu/>} cap="6.000" ops="235" price={getAdjustedMachinePrice('beta')} val={decisions.machinery.buy.beta} onChange={(v:any)=>updateDecision('machinery.buy.beta', v)} round={round} />
+                           <MachineBuyCard model="GAMA" icon={<Cpu/>} cap="12.000" ops="445" price={getAdjustedMachinePrice('gama')} val={decisions.machinery.buy.gama} onChange={(v:any)=>updateDecision('machinery.buy.gama', v)} round={round} />
+                        </div>
+                     </div>
+
+                     <div className="bg-slate-950/80 p-12 rounded-[5rem] border border-white/10 space-y-12 shadow-inner">
+                        <div className="flex justify-between items-center border-b border-white/10 pb-10">
+                           <div className="space-y-1">
+                              <h3 className="text-4xl font-black text-white uppercase italic flex items-center gap-6"><TrendingDown className="text-rose-500" /> Desinvestimento</h3>
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Venda de ativos da frota atual da Unidade.</p>
                            </div>
-                           <div className="space-y-4 bg-slate-900 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                              <div className="flex justify-between items-end mb-4">
-                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Vender BETA</label>
-                                 <Trash2 size={16} className="text-slate-700" />
-                              </div>
-                              <input type="number" value={decisions.machinery.sell.beta} onChange={e=>updateDecision('machinery.sell.beta', Math.max(0, parseInt(e.target.value)||0))} className="w-full bg-slate-950 border-2 border-white/5 rounded-[2rem] p-6 text-white font-black text-center text-2xl outline-none focus:border-rose-500" placeholder="0" />
+                           <div className="px-6 py-3 bg-rose-600/10 border border-rose-500/30 text-rose-500 rounded-full font-black text-[10px] uppercase tracking-widest italic flex items-center gap-2 shadow-lg">
+                              <AlertOctagon size={16}/> Deságio Venda: {currentMacro.machine_sale_discount || 10}%
                            </div>
-                           <div className="space-y-4 bg-slate-900 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                              <div className="flex justify-between items-end mb-4">
-                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Vender GAMA</label>
-                                 <Trash2 size={16} className="text-slate-700" />
+                        </div>
+
+                        {/* LISTAGEM DE MÁQUINAS REAIS DA EQUIPE */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                           {activeTeam?.kpis?.fleet && activeTeam.kpis.fleet.length > 0 ? (
+                              ['alfa', 'beta', 'gama'].map(model => {
+                                 const modelFleet = activeTeam.kpis.fleet.filter((m:any) => m.model === model);
+                                 if (modelFleet.length === 0) return null;
+                                 
+                                 return (
+                                    <div key={model} className="space-y-6 bg-slate-900 p-8 rounded-[3.5rem] border border-white/5 shadow-xl relative group">
+                                       <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                          <div className="flex items-center gap-4">
+                                             <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 font-black italic">{model[0].toUpperCase()}</div>
+                                             <h4 className="text-xl font-black text-white uppercase italic">Máquinas {model}</h4>
+                                          </div>
+                                          <div className="relative group/help">
+                                             <HelpCircle size={18} className="text-slate-700 hover:text-rose-500 cursor-help transition-all" />
+                                             <div className="absolute bottom-full right-0 mb-4 w-64 p-6 bg-slate-950 border border-white/10 rounded-2xl text-[10px] text-slate-300 font-bold uppercase tracking-widest leading-relaxed opacity-0 group-hover/help:opacity-100 transition-all pointer-events-none z-50 shadow-3xl">
+                                                Insira a quantidade deste lote que deseja liquidar. A venda ocorre pelo VNR (Valor Depreciado) com {currentMacro.machine_sale_discount}% de deságio.
+                                             </div>
+                                          </div>
+                                       </div>
+                                       <div className="space-y-4 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
+                                          {modelFleet.map((m: any, idx: number) => (
+                                             <div key={idx} className="p-4 bg-slate-950/50 rounded-2xl border border-white/5 flex justify-between items-center group-hover:border-rose-500/20 transition-all">
+                                                <div className="flex flex-col">
+                                                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ID: {m.id?.split('-').pop() || `M${idx}`}</span>
+                                                   <span className="text-[9px] font-bold text-blue-400 uppercase">Idade: {m.age} Ciclos</span>
+                                                </div>
+                                                <div className="text-right">
+                                                   <span className="block text-[8px] font-black text-slate-600 uppercase">VNR (Estimado)</span>
+                                                   <span className="text-xs font-mono font-black text-emerald-500">$ {(m.depreciated_value || 0).toLocaleString()}</span>
+                                                </div>
+                                             </div>
+                                          ))}
+                                       </div>
+                                       <div className="pt-6 border-t border-white/5">
+                                          <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-2 block text-center italic">Quantidade a Vender</label>
+                                          <input 
+                                             type="number" 
+                                             value={decisions.machinery.sell[model as MachineModel] || 0} 
+                                             onChange={e => updateDecision(`machinery.sell.${model}`, Math.max(0, Math.min(modelFleet.length, parseInt(e.target.value) || 0)))}
+                                             className="w-full bg-slate-950 border-2 border-white/10 rounded-[1.5rem] p-6 text-2xl font-black text-white text-center outline-none focus:border-rose-500 shadow-inner" 
+                                             placeholder="0" 
+                                          />
+                                       </div>
+                                    </div>
+                                 );
+                              })
+                           ) : (
+                              <div className="col-span-full py-20 text-center opacity-40">
+                                 <Package size={48} className="mx-auto mb-4" />
+                                 <p className="text-[10px] font-black uppercase tracking-widest italic">Nenhum ativo imobilizado registrado nesta unidade.</p>
                               </div>
-                              <input type="number" value={decisions.machinery.sell.gama} onChange={e=>updateDecision('machinery.sell.gama', Math.max(0, parseInt(e.target.value)||0))} className="w-full bg-slate-950 border-2 border-white/5 rounded-[2rem] p-6 text-white font-black text-center text-2xl outline-none focus:border-rose-500" placeholder="0" />
-                           </div>
+                           )}
                         </div>
                      </div>
                   </div>
@@ -380,7 +428,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <select 
                                     value={decisions.finance.loanTerm} 
                                     onChange={e => updateDecision('finance.loanTerm', parseInt(e.target.value))}
-                                    className="w-full bg-slate-900 border-2 border-white/5 rounded-2xl p-4 text-xs font-black text-white uppercase outline-none focus:border-blue-600"
+                                    className="w-full bg-slate-900 border-2 border-white/5 rounded-2xl p-4 text-[10px] font-black text-white uppercase outline-none focus:border-blue-600"
                                  >
                                     <option value={0}>A VISTA (CURTO PRAZO)</option>
                                     <option value={1}>50/50 (MÉDIO PRAZO)</option>
@@ -518,7 +566,7 @@ const RangeInput = ({ label, val, color, onChange, info, min = 0, max = 100 }: a
    </div>
 );
 
-const MachineBuyCard = ({ model, cap, ops, price, val, onChange, icon }: any) => (
+const MachineBuyCard = ({ model, cap, ops, price, val, onChange, icon, round }: any) => (
    <div className="bg-slate-950/80 p-8 rounded-[3rem] border border-white/5 space-y-6 group hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
       <div className="absolute top-0 right-0 p-4 opacity-5 rotate-12 group-hover:scale-110 transition-transform"><Cpu size={60}/></div>
       <div className="flex justify-between items-start relative z-10">
@@ -529,9 +577,9 @@ const MachineBuyCard = ({ model, cap, ops, price, val, onChange, icon }: any) =>
          </div>
       </div>
       <div className="space-y-3 pt-4 border-t border-white/5 relative z-10">
-         <div className="flex justify-between text-[9px] text-slate-500 font-bold uppercase tracking-tighter"><span>Capacidade</span><span className="text-white">{cap} UN/Round</span></div>
+         <div className="flex justify-between text-[9px] text-slate-500 font-bold uppercase tracking-tighter"><span>Capacidade</span><span className="text-white">{cap} UN a 100%</span></div>
          <div className="flex justify-between text-[9px] text-slate-500 font-bold uppercase tracking-tighter"><span>Operadores</span><span className="text-white">{ops} Units</span></div>
-         <div className="flex justify-between text-[9px] text-slate-600 font-black uppercase tracking-tighter pt-2 border-t border-white/5"><span>Preço Unit. P0{model.length}</span><span className="text-emerald-500 font-black italic">$ {price.toLocaleString()}</span></div>
+         <div className="flex justify-between text-[9px] text-slate-600 font-black uppercase tracking-tighter pt-2 border-t border-white/5"><span>Preço Unit. P0{round}</span><span className="text-emerald-500 font-black italic">$ {price.toLocaleString()}</span></div>
       </div>
       <div className="relative group/input z-10">
          <input type="number" value={val || 0} onChange={e => onChange(Math.max(0, parseInt(e.target.value) || 0))} className="w-full bg-slate-900 border-2 border-white/10 rounded-2xl p-4 text-center text-white font-black text-xl outline-none focus:border-orange-500 focus:bg-slate-950 transition-all" placeholder="0" />
