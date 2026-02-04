@@ -88,9 +88,9 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               <Terminal size={14} className="animate-pulse" /> {APP_VERSION} CORE SYNCED
            </div>
            
-           <h1 className="text-[55px] md:text-[90px] lg:text-[120px] font-black text-white leading-[0.85] tracking-tighter uppercase italic">
+           <h1 className="text-[55px] md:text-[90px] lg:text-[120px] font-black text-white leading-[0.85] tracking-tighter uppercase italic pr-4">
               {content?.hero?.title || 'Forje Seu Império'} <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-white to-orange-400"> {content?.hero?.subtitle || 'Com Insight IA'} </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-white to-orange-400 pr-2"> {content?.hero?.subtitle || 'Com Insight IA'} </span>
            </h1>
 
            <p className="text-xl md:text-3xl text-slate-300 font-medium max-w-4xl mx-auto italic leading-relaxed opacity-90">
