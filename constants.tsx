@@ -11,9 +11,6 @@ export const DEFAULT_INITIAL_SHARE_PRICE = 1.00;
 /**
  * ==============================================================================
  * EMPIRION CORE FINANCIAL GENOME - INITIAL_FINANCIAL_TREE
- * Ajustado para o cenário P00 Exato: MP A ($603k) + MP B ($804k)
- * Ativo Total: 9.493.163,54 | Passivo+PL: 9.493.163,54
- * CONTAS DE BALANÇO, DRE E FLUXO DE CAIXA COM SALDO 0.00 DEVEM SER MANTIDAS POR SERÃO USADAS DURANTE AS JOGADAS
  * ==============================================================================
  */
 export const INITIAL_FINANCIAL_TREE = {
@@ -144,7 +141,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   inflation_rate: 1.0,
   customer_default_rate: 2.6,
   interest_rate_tr: 2.0,
-  supplier_interest: 1.5, // Juros do fornecedor baseline 1.5% sincronizado com P00
+  supplier_interest: 1.5,
   investment_return_rate: 1.0,
   avg_selling_price: 370.0,
   late_penalty_rate: 5.0,
@@ -203,13 +200,6 @@ export const DEFAULT_MACRO: MacroIndicators = {
   exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50 },
 };
 
-/**
- * ==============================================================================
- * DEFAULT_INDUSTRIAL_CHRONOGRAM - MATRIZ ECONÔMICA DE 12 CICLOS
- * AVISO CRÍTICO: Não remover nenhum período (0-12) nem indicadores da lista abaixo.
- * Cada entrada representa um snapshot de mercado auditado pelo Oráculo.
- * ==============================================================================
- */
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
   0: {ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, supplier_interest: 1.5, sales_interest_rate: 1.0, investment_return_rate: 1.0, vat_purchases_rate: 0.0, vat_sales_rate: 0.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 1.0, machine_alpha_price_adjust: 1.0, machine_beta_price_adjust: 1.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 1.0, storage_cost_adjust: 2.0, USD: 5.20, EUR: 6.20, allow_machine_sale: false, require_business_plan: false},
   1: {ice: 3.2, demand_variation: 6.7, inflation_rate: 1.2, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 2.0, sales_interest_rate: 1.1, investment_return_rate: 2.0, vat_purchases_rate: 0.0, vat_sales_rate: 0.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 2.0, machine_alpha_price_adjust: 2.0, machine_beta_price_adjust: 2.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 2.0, USD: 5.26, EUR: 6.27, allow_machine_sale: true, require_business_plan: false},
@@ -251,12 +241,80 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   { id: 'com-master', name: 'Comercial Excellence', branch: 'commercial' },
 ];
 
+/**
+ * RICH BRANCH CONTENT - Blueprints para Landing Pages de Setor
+ */
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
      title: "Forge sua Equipe",
      subtitle: "Com EMPIRION!",
      hero: { title: "Seja Campeão em Estratégia com", subtitle: "EMPIRION..." }
   },
+  
+  // BRANCH: INDUSTRIAL LANDING
+  'branch-industrial': {
+    name: "Industrial",
+    badge: "Template Industrial – Fidelidade 99.8%",
+    titlePrefix: "Forje o Império Industrial",
+    titleHighlight: "Que Nenhum Outro Simulador Consegue",
+    body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda oscilante até ±56%, IA preditiva Gemini 3 e contabilidade 100% integrada. Enquanto outros oferecem planilhas estáticas, o Empirion entrega um mundo industrial vivo onde cada decisão pesa.",
+    accent: "orange",
+    heroImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2000",
+    advantages: [
+      "Cenários macroeconômicos programáveis por rodada – inflação, câmbio, demanda e crises sob controle do tutor.",
+      "IVA/VAT realista e parametrizável – impacto direto no custo final, margem e competitividade.",
+      "Mercado compartilhado multi-região – até 15 regiões com moedas locais e câmbio dinâmico.",
+      "IA Gemini 3 embarcada – mentoria tática, análise de risco e alertas de insolvência.",
+      "Audit trail completo – toda decisão registrada com impacto financeiro imediato.",
+      "Ranking por TSR realista + Empire Points e badges auditados."
+    ],
+    themes: [
+      {
+        title: "Macroeconomia Realista",
+        icon: "TrendingUp",
+        color: "orange",
+        points: ["Chronograma econômico 0-12", "Demanda regional ±56%", "Câmbio flutuante USD/EUR", "IVA/VAT parametrizável"]
+      },
+      {
+        title: "Contabilidade Avançada",
+        icon: "BarChart3",
+        color: "blue",
+        points: ["Balanço e DRE 100% integrados", "Depreciação e Impairment", "Relatório Inicial via IA", "Audit log por transação"]
+      },
+      {
+        title: "Mercado Global",
+        icon: "Globe",
+        color: "emerald",
+        points: ["Até 15 regiões configuráveis", "Modo híbrido de precificação", "Logística regionalizada", "Fluxos de importação"]
+      },
+      {
+        title: "Chão de Fábrica",
+        icon: "Factory",
+        color: "amber",
+        points: ["Máquinas Alfa/Beta/Gama", "Gestão de manutenção", "Lead time de suprimentos", "Capacidade finita real"]
+      },
+      {
+        title: "Gestão Financeira",
+        icon: "DollarSign",
+        color: "indigo",
+        points: ["Capital de giro dinâmico", "Rating de crédito AAA-E", "Dividendos e TSR", "Emissões de debêntures"]
+      },
+      {
+        title: "IA Strategos",
+        icon: "BrainCircuit",
+        color: "purple",
+        points: ["Gazeta IA automática", "Eventos Black Swan", "Alertas de erosão de margem", "Hedge preditivo"]
+      }
+    ]
+  },
+
+  // BRANCH SKELETONS - Prontos para preenchimento posterior
+  'branch-commercial': { name: "Comercial", accent: "blue", heroImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2000" },
+  'branch-services': { name: "Serviços", accent: "indigo", heroImage: "https://images.unsplash.com/photo-1454165833762-0204b303598e?q=80&w=2000" },
+  'branch-agribusiness': { name: "Agronegócio", accent: "emerald", heroImage: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000" },
+  'branch-finance': { name: "Financeiro", accent: "cyan", heroImage: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=2000" },
+  'branch-construction': { name: "Construção", accent: "amber", heroImage: "https://images.unsplash.com/photo-1503387762-592fdb58f45a?q=80&w=2000" },
+
   'solutions-bp': {
     title: "Plano de Negócios",
     subtitle: "Estruture sua visão estratégica",
@@ -267,29 +325,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       { id: 3, label: 'OPERAÇÕES' },
       { id: 4, label: 'FINANÇAS' }
     ]
-  },
-  'rewards': {
-    subtitle: "Conquiste honrarias auditadas pelo oráculo.",
-    tiers: [
-      { name: 'Bronze Node', pts: 1000, color: 'text-orange-400' },
-      { name: 'Silver Hub', pts: 5000, color: 'text-slate-300' },
-      { name: 'Gold Center', pts: 15000, color: 'text-amber-400' },
-      { name: 'Platinum Elite', pts: 50000, color: 'text-indigo-400' }
-    ],
-    accumulation: [
-      { action: 'Participação', val: '50 pts' },
-      { action: 'Vitória', val: '500 pts' }
-    ]
-  },
-  'blog': {
-    subtitle: "Briefings táticos e novidades do motor.",
-    items: [
-      { id: 'p1', title: 'O Futuro das Simulações', date: '01/01/2026', author: 'Oracle' }
-    ]
-  },
-  'solution-university': { title: 'Acadêmico', body: 'Para instituições de ensino', icon: 'Users' },
-  'solution-corporate': { title: 'Corporativo', body: 'Treinamento de elite', icon: 'Shield' },
-  'solution-individual': { title: 'Individual', body: 'Desafie-se', icon: 'Brain' }
+  }
 };
 
 export const getPageContent = (slug: string) => {

@@ -42,10 +42,10 @@ const ContactPage: React.FC = () => {
                  </div>
 
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <ContactDetail icon={<Mail />} label="Sinal Primário" value="command@empirion.ia" />
-                    <ContactDetail icon={<Globe />} label="Arena Global" value="São Paulo, BR" />
-                    <ContactDetail icon={<Phone />} label="Comunicação" value="+55 (11) 4004-EMP" />
-                    <ContactDetail icon={<MapPin />} label="Node Local" value="Strategic Hub 08" />
+                    <ContactDetail icon={<Mail />} label="Email" value="cctonelli@gmail.com" />
+                    <ContactDetail icon={<Globe />} label="Localização" value="Paraná, BR" />
+                    <ContactDetail icon={<Phone />} label="WhatsApp" value="+55 44 997328888" />
+                    <ContactDetail icon={<MapPin />} label="Atendimento" value="Das 08:00 às 18:00" />
                  </div>
               </motion.div>
            </div>
