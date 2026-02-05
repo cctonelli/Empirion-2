@@ -233,7 +233,7 @@ export const MENU_STRUCTURE: MenuItemConfig[] = [
 
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   { id: 'ind-master', name: 'Mastery Industrial', branch: 'industrial' },
-  { id: 'com-master', name: 'Comercial Excellence', branch: 'commercial' },
+  { id: 'com-master', name: 'Retail Excellence', branch: 'commercial' },
 ];
 
 /**

@@ -1,68 +1,64 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE SCHEMA & RLS v31.12.3.9 - BUSINESS PLAN EXPANSION
+-- EMPIRION DATABASE SCHEMA & RLS v31.12.3.9.5 - TRIAL & CMS PROTOCOL
 -- ==============================================================================
 
--- 1. EXPANSÃO DA TABELA BUSINESS_PLANS
+-- 1. EXPANSÃO DA TABELA CHAMPIONSHIPS
+-- Suporte para flags de Trial, Observadores Nominados e Configurações de Região
 DO $$ 
 BEGIN
-    -- Adição de campos para o Modo Independente e Colaboração
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='user_id') THEN
-        ALTER TABLE public.business_plans ADD COLUMN user_id UUID REFERENCES public.users(id) ON DELETE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championships' AND column_name='is_trial') THEN
+        ALTER TABLE public.championships ADD COLUMN is_trial BOOLEAN DEFAULT false;
     END IF;
 
-    -- Garantir que championship_id e team_id sejam opcionais para modo independente
-    ALTER TABLE public.business_plans ALTER COLUMN championship_id DROP NOT NULL;
-    ALTER TABLE public.business_plans ALTER COLUMN team_id DROP NOT NULL;
-
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='is_template') THEN
-        ALTER TABLE public.business_plans ADD COLUMN is_template BOOLEAN DEFAULT false;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championships' AND column_name='observers') THEN
+        ALTER TABLE public.championships ADD COLUMN observers JSONB DEFAULT '[]'::jsonb;
     END IF;
 
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='visibility') THEN
-        ALTER TABLE public.business_plans ADD COLUMN visibility TEXT DEFAULT 'private' CHECK (visibility IN ('private', 'shared', 'public'));
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='shared_with') THEN
-        ALTER TABLE public.business_plans ADD COLUMN shared_with JSONB DEFAULT '[]'::jsonb;
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='exported_formats') THEN
-        ALTER TABLE public.business_plans ADD COLUMN exported_formats JSONB DEFAULT '{}'::jsonb;
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='constraints') THEN
-        ALTER TABLE public.business_plans ADD COLUMN constraints JSONB DEFAULT '{}'::jsonb;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championships' AND column_name='region_configs') THEN
+        ALTER TABLE public.championships ADD COLUMN region_configs JSONB DEFAULT '[]'::jsonb;
     END IF;
 END $$;
 
--- 2. REVISÃO DE POLÍTICAS RLS PARA BUSINESS PLAN
-ALTER TABLE public.business_plans ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "BP_Owner_Access" ON public.business_plans;
-DROP POLICY IF EXISTS "BP_Team_Access" ON public.business_plans;
-DROP POLICY IF EXISTS "BP_Tutor_Access" ON public.business_plans;
+-- 2. CRIAÇÃO DA TABELA DE CONTEÚDO DINÂMICO (CMS)
+-- Permite edição de landings, badges e ramos via painel Admin
+CREATE TABLE IF NOT EXISTS public.site_content (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    page_slug TEXT NOT NULL,
+    locale TEXT NOT NULL DEFAULT 'pt',
+    content JSONB NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+    updated_by UUID REFERENCES public.users(id),
+    UNIQUE(page_slug, locale)
+);
 
--- Política de Dono (Acesso Total)
-CREATE POLICY "BP_Owner_Access" ON public.business_plans FOR ALL TO authenticated
-USING (user_id = auth.uid())
-WITH CHECK (user_id = auth.uid());
+-- RLS para Site Content
+ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
 
--- Política de Membros de Equipe (Se for modo Simulação)
-CREATE POLICY "BP_Team_Access" ON public.business_plans FOR SELECT TO authenticated
+CREATE POLICY "Public_Read_Content" ON public.site_content 
+FOR SELECT TO public USING (true);
+
+CREATE POLICY "Admin_Update_Content" ON public.site_content 
+FOR ALL TO authenticated 
+USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'))
+WITH CHECK (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+
+-- 3. REVISÃO DE POLÍTICA DE ACESSO A ARENAS (SELECT)
+-- Agora permite acesso a: Tutores, Membros de Equipe e Observadores Nominados
+DROP POLICY IF EXISTS "Arenas_Visibility" ON public.championships;
+
+CREATE POLICY "Arenas_Visibility" ON public.championships 
+FOR SELECT TO authenticated
 USING (
-    team_id IN (
-        SELECT team_id FROM public.team_members WHERE user_id = auth.uid()
+    is_public = true OR
+    tutor_id = auth.uid() OR
+    observers ? auth.uid()::text OR
+    id IN (
+        SELECT championship_id FROM public.teams 
+        WHERE id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid())
     )
 );
 
--- Política de Tutor (Se for modo Simulação)
-CREATE POLICY "BP_Tutor_Access" ON public.business_plans FOR SELECT TO authenticated
-USING (
-    championship_id IN (
-        SELECT id FROM public.championships WHERE tutor_id = auth.uid()
-    )
-);
-
--- Política de Compartilhamento Manual
-CREATE POLICY "BP_Shared_Access" ON public.business_plans FOR SELECT TO authenticated
-USING (shared_with ? auth.uid()::text);
+-- 4. LOGS DE AUDITORIA DE DECISÕES
+-- Garante que o frontend possa extrair logs de auditoria salvos no jsonb de decisões
+COMMENT ON COLUMN public.current_decisions.data IS 'Payload de decisões incluindo audit_logs array para rastreabilidade do tutor.';
