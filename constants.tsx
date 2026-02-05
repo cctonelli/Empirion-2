@@ -214,7 +214,7 @@ export const MENU_STRUCTURE: MenuItemConfig[] = [
   { label: 'Início', path: '/' },
   { label: 'Ramos', path: '/branches', sub: [
     { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory' },
-    { id: 'com', label: 'Comercial', path: '/branches/commercial', icon: 'ShoppingCart' },
+    { id: 'com', label: 'Varejo', path: '/branches/commercial', icon: 'ShoppingCart' },
     { id: 'svc', label: 'Serviços', path: '/branches/services', icon: 'Briefcase' },
     { id: 'agr', label: 'Agronegócio', path: '/branches/agribusiness', icon: 'Tractor' },
     { id: 'fin', label: 'Financeiro', path: '/branches/finance', icon: 'DollarSign' },
@@ -267,13 +267,13 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
         title: "Macroeconomia Realista",
         icon: "TrendingUp",
         color: "orange",
-        points: ["Chronograma econômico 0-12", "Demanda regional ±56%", "Câmbio flutuante USD/EUR", "IVA/VAT parametrizável"]
+        points: ["Chronograma econômico 1-12", "Demanda regional ±56%", "Câmbio flutuante USD/EUR", "IVA/VAT parametrizável"]
       },
       {
         title: "Contabilidade Avançada",
         icon: "BarChart3",
         color: "blue",
-        points: ["Balanço Patrimonial, DRE e CashFlow 100% integrados", "Regime de Competência e de Caixa", "Depreciação e Impairment", "Relatório Inicial via IA", "Audit log por transação"]
+        points: ["Balanço Patrimonial, DRE e CashFlow 100% integrados", "Regime de Competência e regime de Caixa", "Depreciação e Impairment", "Relatório Inicial via IA", "Audit log por transação"]
       },
       {
         title: "Mercado Global",
@@ -303,11 +303,11 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   },
 
   // BRANCH SKELETONS - Prontos para preenchimento posterior
-  'branch-commercial': { name: "Comercial", accent: "blue", heroImage: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1200&auto=format&fit=crop" },
-  'branch-services': { name: "Serviços", accent: "indigo", heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop" },
+  'branch-commercial': { name: "Varejo", accent: "blue", heroImage: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1200&auto=format&fit=crop" },
+  'branch-services': { name: "Prestação de Serviços", accent: "indigo", heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop" },
   'branch-agribusiness': { name: "Agronegócio", accent: "emerald", heroImage: "https://images.unsplash.com/photo-1627920768905-575535d6dd2e?q=80&w=1200&auto=format&fit=crop" },
-  'branch-finance': { name: "Financeiro", accent: "cyan", heroImage: "https://images.unsplash.com/flagged/photo-1579225818168-858da8667fae?q=80&w=1200&auto=format&fit=crop" },
-  'branch-construction': { name: "Construção", accent: "amber", heroImage: "https://images.unsplash.com/photo-1684497404598-6e844dff9cdeq=80&w=1200&auto=format&fit=crop" },
+  'branch-finance': { name: "Mercado Financeiro", accent: "cyan", heroImage: "https://images.unsplash.com/flagged/photo-1579225818168-858da8667fae?q=80&w=1200&auto=format&fit=crop" },
+  'branch-construction': { name: "Construção Civil", accent: "amber", heroImage: "https://plus.unsplash.com/premium_photo-1682724602925-f0264b85953f?=80&w=1200&auto=format&fit=crop" },
 
   'solutions-bp': {
     title: "Plano de Negócios",
