@@ -211,7 +211,7 @@ export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicato
 };
 
 export const MENU_STRUCTURE: MenuItemConfig[] = [
-  { label: 'Início', path: '/' },
+
   { label: 'Ramos', path: '/branches', sub: [
     { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory' },
     { id: 'com', label: 'Varejo', path: '/branches/commercial', icon: 'ShoppingCart' },
@@ -285,19 +285,25 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
         title: "Chão de Fábrica",
         icon: "Factory",
         color: "amber",
-        points: ["Máquinas Alfa/Beta/Gama", "Gestão de manutenção", "Lead time de suprimentos", "Capacidade finita real"]
+        points: ["Multimodelos de Máquinas", "Gestão de manutenção","Cálculo de CPP automático" , "Lead time de suprimentos", "Capacidade finita real", "Premiação por Produtividade"]
+      },
+      {
+        title: "Recursos Humanos",
+        icon: "Factory",
+        color: "yellow",
+        points: ["Contratações e Demissões", "Participação nos Resulstados (PPR)", "Cálculo de CPP automático" , "Lead time de suprimentos", "Capacidade finita real", "Premiação por Produtividade"]
       },
       {
         title: "Gestão Financeira",
         icon: "DollarSign",
         color: "indigo",
-        points: ["Capital de giro dinâmico", "Rating de crédito AAA-E", "Dividendos e TSR", "Emissões de debêntures"]
+        points: ["Capital de giro dinâmico", "Rating de crédito AAA-E", "Dividendos e TSR", "Emissões de debêntures", "Valoração dinâmica de ações"]
       },
       {
         title: "IA Strategos",
         icon: "BrainCircuit",
         color: "purple",
-        points: ["Gazeta IA automática", "Eventos Black Swan", "Alertas de erosão de margem", "Hedge preditivo"]
+        points: ["Gazeta IA automática", "Eventos Black Swan", "Alertas de comprometimento de margem", "Hedge preditivo"]
       }
     ]
   },
