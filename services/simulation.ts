@@ -1,5 +1,5 @@
 
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, Loan, AccountNode, Championship, InitialMachine } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, KPIs, CreditRating, ProjectionResult, Loan, AccountNode, Championship, InitialMachine, RegionalData } from '../types';
 import { DEFAULT_MACRO, INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
 export const sanitize = (val: any, fallback: number = 0): number => {
@@ -11,8 +11,8 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 const round2 = (num: number) => Math.round((num + Number.EPSILON) * 100) / 100;
 
 /**
- * CORE ORACLE ENGINE v15.60 - FISCAL FIDELITY UPGRADE
- * Sincronização: IVA e IR pagos em T+1. Segregação total de Fluxo de Caixa Legado vs Corrente.
+ * CORE ORACLE ENGINE v15.75 - EXPORT PROTOCOL UPGRADE
+ * Protocolo: Isenção de IVA para Exportação (EUA/EURO).
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -52,15 +52,11 @@ export const calculateProjections = (
   const prevCash = sanitize(previousState?.current_cash ?? getVal('assets.current.cash', prevBS), 0);
   const prevEquity = sanitize(previousState?.equity || 7252171.74);
   
-  // O que entra no caixa hoje (Vendas a prazo do round passado)
   const legacyReceivables = sanitize(getVal('assets.current.clients', prevBS));
-  
-  // O que sai do caixa hoje (Obrigações do round passado)
   const legacyPayables = sanitize(getVal('liabilities.current.suppliers', prevBS));
   const legacyVatPayable = sanitize(getVal('liabilities.current.vat_payable', prevBS));
   const legacyTaxPayable = sanitize(getVal('liabilities.current.taxes', prevBS));
   const legacyDividends = sanitize(getVal('liabilities.current.dividends', prevBS));
-  
   const legacyVatRecoverable = sanitize(getVal('assets.current.vat_recoverable', prevBS));
 
   // --- 2. COMPRAS E CUSTO MÉDIO (WAC) ---
@@ -85,7 +81,6 @@ export const calculateProjections = (
   const stockQtyB_Start = currentRound === 1 ? 20000 : sanitize(previousState?.kpis?.stock_quantities?.mpb, 20000);
   const wacB = (stockValueB_Start + purchB_NetIVA) / Math.max(1, stockQtyB_Start + qtyPurchB);
 
-  // Consumo
   const activityLevel = sanitize(decisions.production.activityLevel, 80) / 100;
   const unitsToProduce = 10000 * activityLevel;
   const consumeA = unitsToProduce * 1;
@@ -105,23 +100,33 @@ export const calculateProjections = (
   const totalPayrollWithCharges = payrollBase * (1 + sanitize(indicators.social_charges, 35.0)/100);
   const trainingExpense = round2(payrollBase * (sanitize(decisions.hr.trainingPercent, 0) / 100));
 
-  // --- 4. VENDAS E APURAÇÃO FISCAL ---
+  // --- 4. VENDAS E APURAÇÃO FISCAL (COM ISENÇÃO EXPORTAÇÃO) ---
   const vatRateSales = sanitize(indicators.vat_sales_rate, 0) / 100;
   let totalRevenueGross = 0;
+  let totalVatOnSales = 0;
   let currentCashInflowFromSales = 0;
   let totalQuantitySold = 0;
 
-  Object.entries(decisions.regions).forEach(([id, reg]) => {
+  Object.entries(decisions.regions).forEach(([id, reg]: [string, RegionalData]) => {
+    const regionId = Number(id);
     const price = sanitize(reg.price, 425);
     const demandFactor = Math.pow(indicators.avg_selling_price / Math.max(1, price), 1.2) * (1 + (indicators.demand_variation || 0)/100);
     const qty = (9700 / (Object.keys(decisions.regions).length || 1)) * demandFactor * activityLevel;
+    
     totalQuantitySold += qty;
     const grossVal = round2(price * qty);
     totalRevenueGross += grossVal;
-    currentCashInflowFromSales += grossVal * 0.5; // 50% à vista
+    currentCashInflowFromSales += grossVal * 0.5;
+
+    // Lógica de Isenção de IVA para Exportação
+    const rName = championshipData?.region_names?.[regionId - 1] || championshipData?.region_configs?.[regionId - 1]?.name || "";
+    const isExportExempt = rName.toUpperCase().includes("ESTADOS UNIDOS") || rName.toUpperCase().includes("EUROPA");
+
+    if (!isExportExempt) {
+        totalVatOnSales += round2(grossVal - (grossVal / (1 + vatRateSales)));
+    }
   });
 
-  const totalVatOnSales = round2(totalRevenueGross - (totalRevenueGross / (1 + vatRateSales)));
   const netSalesRevenue = round2(totalRevenueGross - totalVatOnSales);
 
   // --- 5. DRE (COMPETÊNCIA) ---
@@ -136,13 +141,9 @@ export const calculateProjections = (
 
   // --- 6. FLUXO DE CAIXA PROJETADO (CAIXA) ---
   const totalInflow = round2(currentCashInflowFromSales + legacyReceivables);
-  
-  // Saídas de Legado (Round Anterior)
   const legacyOutflowTotal = round2(legacyPayables + legacyVatPayable + legacyTaxPayable + legacyDividends);
-  
-  // Saídas Correntes
   const totalGrossPurchasesCurrent = round2(purchA_GrossTotal + purchB_GrossTotal);
-  const currentSuppliersOutflow = round2(totalGrossPurchasesCurrent * 0.5); // 50% à vista
+  const currentSuppliersOutflow = round2(totalGrossPurchasesCurrent * 0.5); 
   const currentPayrollOutflow = round2(totalPayrollWithCharges + trainingExpense);
 
   const totalOutflow = round2(legacyOutflowTotal + currentSuppliersOutflow + currentPayrollOutflow);

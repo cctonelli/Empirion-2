@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V15.40 - ORACLE CONSOLIDATED MVP (VAT UPDATE)
+ * EMPIRION V15.80 - HYBRID BUSINESS PLAN PROTOCOL
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -19,6 +19,7 @@ export type GazetaMode = 'anonymous' | 'identified';
 export type ModalityType = 'standard' | 'blitz' | 'marathon';
 export type AnalysisSource = 'parameterized' | 'ai_real_world';
 export type RegionType = 'domestic' | 'international';
+export type BPVisibility = 'private' | 'shared' | 'public';
 
 export interface UserProfile {
   id: string;
@@ -32,18 +33,76 @@ export interface UserProfile {
   created_at: string;
 }
 
-export interface MenuItemConfig {
-  label: string;
-  path: string;
-  sub?: { id: string; label: string; path: string; icon?: string }[];
+export interface BusinessPlan {
+  id: string;
+  user_id: string;
+  championship_id?: string;
+  team_id?: string;
+  round: number;
+  version: number;
+  data: Record<number, string>;
+  status: 'draft' | 'submitted' | 'approved' | 'finalized';
+  is_template: boolean;
+  visibility: BPVisibility;
+  shared_with: string[];
+  exported_formats: Record<string, string>;
+  constraints: Record<string, any>;
+  updated_at?: string;
 }
 
-export interface ChampionshipTemplate {
+export interface AuditLog {
+  user_id: string;
+  changed_at: string;
+  field_path: string;
+  old_value: any;
+  new_value: any;
+}
+
+export interface EcosystemConfig {
+  inflation_rate: number;
+  demand_multiplier: number;
+  interest_rate: number;
+  market_volatility: number;
+  scenario_type: ScenarioType;
+  modality_type: ModalityType;
+}
+
+export interface KPIs {
+  rating: CreditRating;
+  loans: any[];
+  statements: any;
+  current_cash?: number;
+  equity?: number;
+  market_share?: number;
+  stock_quantities?: any;
+  fleet?: any[];
+  [key: string]: any;
+}
+
+export interface Team {
   id: string;
   name: string;
-  branch: Branch;
+  championship_id: string;
+  kpis: KPIs;
+  equity: number;
+  is_bot?: boolean;
+  insolvency_status?: InsolvencyStatus;
+  master_key_enabled?: boolean;
 }
 
+// Added missing AccountNode type
+export interface AccountNode {
+  id: string;
+  label: string;
+  value: number;
+  type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+  children?: AccountNode[];
+  isEditable?: boolean;
+  isReadOnly?: boolean;
+  isTemplateAccount?: boolean;
+}
+
+// Added missing MachineSpec type
 export interface MachineSpec {
   model: MachineModel;
   initial_value: number;
@@ -56,69 +115,16 @@ export interface MachineSpec {
   overload_extra_rate: number;
 }
 
+// Added missing InitialMachine type
 export interface InitialMachine {
   id: string;
   model: MachineModel;
   age: number;
-  book_value?: number;
-  purchase_value?: number;
-  // Fix: Added depreciated_value property to match InitialMachine objects in constants.tsx
-  depreciated_value?: number;
+  purchase_value: number;
+  depreciated_value: number;
 }
 
-export interface RegionConfig {
-  id: number;
-  name: string;
-  currency: CurrencyType;
-  demand_weight: number;
-}
-
-export interface RegionalData {
-  price: number;
-  term: number;
-  marketing: number;
-}
-
-export interface AuditLog {
-  user_id: string;
-  changed_at: string;
-  field_path: string;
-  old_value: any;
-  new_value: any;
-}
-
-export interface BusinessPlan {
-  id: string;
-  championship_id: string;
-  team_id: string;
-  round: number;
-  version: number;
-  data: Record<number, string>;
-  status: 'draft' | 'submitted' | 'approved';
-}
-
-export interface EcosystemConfig {
-  inflation_rate: number;
-  demand_multiplier: number;
-  interest_rate: number;
-  market_volatility: number;
-  scenario_type: ScenarioType;
-  modality_type: ModalityType;
-}
-
-export interface Loan {
-  id: string;
-  type: 'bdi' | 'normal' | 'compulsory';
-  principal: number;
-  remaining_principal: number;
-  grace_periods: number;
-  total_installments: number;
-  remaining_installments: number;
-  interest_rate: number;
-  created_at_round: number;
-  agio_rate_at_creation?: number; 
-}
-
+// Added missing MacroIndicators type
 export interface MacroIndicators {
   ice: number;
   demand_variation: number;
@@ -128,18 +134,18 @@ export interface MacroIndicators {
   supplier_interest: number;
   investment_return_rate: number;
   avg_selling_price: number;
-  tax_rate_ir: number;
-  vat_purchases_rate: number; // IVA sobre Compras
-  vat_sales_rate: number;     // IVA sobre Vendas
   late_penalty_rate: number;
   machine_sale_discount: number;
   special_purchase_premium: number;
   compulsory_loan_agio: number;
   social_charges: number;
-  production_hours_period: number;
   allow_machine_sale: boolean;
   require_business_plan: boolean;
-  exchange_rates: Record<CurrencyType, number>;
+  tax_rate_ir: number;
+  vat_purchases_rate: number;
+  vat_sales_rate: number;
+  dividend_percent: number;
+  production_hours_period: number;
   award_values: {
     cost_precision: number;
     revenue_precision: number;
@@ -154,107 +160,86 @@ export interface MacroIndicators {
     storage_finished: number;
   };
   machinery_values: Record<MachineModel, number>;
+  machine_specs: Record<MachineModel, MachineSpec>;
   initial_machinery_mix: InitialMachine[];
-  hr_base: { salary: number; [key: string]: any };
   staffing: {
     admin: { count: number; salaries: number };
     sales: { count: number; salaries: number };
     production: { count: number; salaries: number };
   };
+  hr_base: { salary: number };
+  exchange_rates: Record<string, number>;
   [key: string]: any;
 }
 
+// Added missing RegionalData type
+export interface RegionalData {
+  price: number;
+  term: number;
+  marketing: number;
+}
+
+// Added missing DecisionData type
 export interface DecisionData {
   judicial_recovery: boolean;
   regions: Record<number, RegionalData>;
-  hr: { salary: number; hired: number; fired: number; [key: string]: any };
-  production: { purchaseMPA: number; purchaseMPB: number; activityLevel: number; rd_investment: number; [key: string]: any };
-  machinery: { buy: Record<MachineModel, number>; sell: Record<MachineModel, number> };
-  finance: { loanRequest: number; loanTerm: number; application: number };
-  estimates?: any;
+  hr: {
+    hired: number;
+    fired: number;
+    salary: number;
+    trainingPercent: number;
+    participationPercent: number;
+    sales_staff_count: number;
+    productivityBonusPercent?: number;
+    misc: number;
+  };
+  production: {
+    purchaseMPA: number;
+    purchaseMPB: number;
+    paymentType: number;
+    activityLevel: number;
+    rd_investment: number;
+    net_profit_target_percent: number;
+    term_interest_rate: number;
+    extraProductionPercent: number;
+  };
+  machinery: {
+    buy: Record<MachineModel, number>;
+    sell: Record<MachineModel, number>;
+  };
+  finance: {
+    loanRequest: number;
+    loanTerm: number;
+    application: number;
+  };
+  estimates: {
+    forecasted_revenue: number;
+    forecasted_unit_cost: number;
+    forecasted_net_profit: number;
+  };
   audit_logs?: AuditLog[];
 }
 
-export interface AccountNode { 
-  id: string; 
-  label: string; 
-  value: number; 
-  type: string; 
-  children?: AccountNode[]; 
-  isEditable?: boolean;
-  isReadOnly?: boolean;
-  isTemplateAccount?: boolean;
+// Added missing MenuItemConfig type
+export interface MenuItemConfig {
+  label: string;
+  path: string;
+  sub?: {
+    id: string;
+    label: string;
+    path: string;
+    icon: string;
+  }[];
 }
 
-export interface KPIs {
-  rating: CreditRating;
-  loans: Loan[];
-  statements: any;
-  insolvency_status?: InsolvencyStatus;
-  equity?: number;
-  market_share?: number;
-  motivation_score?: number;
-  is_on_strike?: boolean;
-  market_valuation?: { share_price: number; tsr: number };
-  current_cash?: number;
-  [key: string]: any;
-}
-
-export interface Team {
+// Added missing ChampionshipTemplate type
+export interface ChampionshipTemplate {
   id: string;
   name: string;
-  championship_id: string;
-  kpis: KPIs;
-  equity: number;
-  is_bot?: boolean;
-  insolvency_status?: InsolvencyStatus;
-  master_key_enabled?: boolean;
-  current_cash?: number;
-  current_rating?: CreditRating;
-}
-
-export interface ProjectionResult {
-  revenue: number;
-  netProfit: number;
-  debtRatio: number;
-  creditRating: CreditRating;
-  health: {
-    cash: number;
-    rating: CreditRating;
-    status?: string;
-    insolvency_risk?: number;
-  };
-  kpis: KPIs;
-  statements: any;
-  marketShare?: number;
-}
-
-export interface Championship {
-  id: string;
-  name: string;
-  current_round: number;
-  total_rounds: number;
   branch: Branch;
-  regions_count: number;
-  market_indicators: MacroIndicators;
-  round_rules?: Record<number, Partial<MacroIndicators>>;
-  teams?: Team[];
-  is_trial?: boolean;
-  is_public?: boolean;
-  currency?: CurrencyType;
-  deadline_value?: number;
-  deadline_unit?: DeadlineUnit;
-  created_at?: string;
-  round_started_at?: string;
-  region_names?: string[];
-  region_configs?: RegionConfig[];
-  gazeta_mode?: GazetaMode;
-  transparency_level?: TransparencyLevel;
-  config?: any;
-  ecosystemConfig?: EcosystemConfig;
-  [key: string]: any;
 }
 
+// Added missing BlackSwanEvent type
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -267,24 +252,52 @@ export interface BlackSwanEvent {
   };
 }
 
-export interface TeamProgress {
-  team_id: string;
-  team_name: string;
-  status: 'pending' | 'sealed';
-  rating: CreditRating;
-  risk: number;
-  insolvent: boolean;
-  master_key_enabled?: boolean;
-  auditLogs: AuditLog[];
+// Added missing RegionConfig type
+export interface RegionConfig {
+  id: number;
+  name: string;
+  currency: CurrencyType;
+  demand_weight: number;
 }
 
+// Added missing ProjectionResult type
+export interface ProjectionResult {
+  revenue: number;
+  netProfit: number;
+  debtRatio: number;
+  creditRating: CreditRating;
+  health: {
+    cash: number;
+    rating: CreditRating;
+    insolvency_risk?: number;
+    status?: string;
+  };
+  kpis: KPIs;
+  statements: any;
+  marketShare: number;
+}
+
+// Added missing Loan type
+export interface Loan {
+  id: string;
+  amount: number;
+  term: number;
+  remaining_terms: number;
+  interest_rate: number;
+}
+
+// Added missing CommunityCriteria type
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
+// Added missing Modality type
 export interface Modality {
   id: string;
-  name: string;
   slug: string;
-  description: string;
-  image_url?: string;
-  is_public: boolean;
+  name: string;
   page_content: {
     hero: { title: string; subtitle: string };
     features: string[];
@@ -293,8 +306,38 @@ export interface Modality {
   };
 }
 
-export interface CommunityCriteria {
+// Added missing TeamProgress type
+export interface TeamProgress {
+  team_id: string;
+  team_name: string;
+  status: 'pending' | 'sealed';
+  rating: CreditRating;
+  risk: number;
+  insolvent: boolean;
+  master_key_enabled?: boolean;
+  auditLogs?: AuditLog[];
+}
+
+export interface Championship {
   id: string;
-  label: string;
-  weight: number;
+  name: string;
+  current_round: number;
+  total_rounds: number;
+  branch: Branch;
+  regions_count: number;
+  market_indicators: any;
+  round_rules?: Record<number, any>;
+  teams?: Team[];
+  is_trial?: boolean;
+  is_public?: boolean;
+  currency?: CurrencyType;
+  deadline_value?: number;
+  deadline_unit?: DeadlineUnit;
+  created_at?: string;
+  region_names?: string[];
+  region_configs?: any[];
+  // Added missing properties to Championship interface
+  round_started_at?: string;
+  observers?: string[];
+  config?: any;
 }

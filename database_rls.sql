@@ -1,104 +1,68 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE SCHEMA & RLS v31.12.3.8 - SANDBOX PERMISSIVE PROTOCOL
+-- EMPIRION DATABASE SCHEMA & RLS v31.12.3.9 - BUSINESS PLAN EXPANSION
 -- ==============================================================================
 
--- 1. GARANTIA DE ESTRUTURA (Colunas e Tabelas Core)
+-- 1. EXPANSÃO DA TABELA BUSINESS_PLANS
 DO $$ 
 BEGIN
-    -- Suporte a Observadores Nominados
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championships' AND column_name='observers') THEN
-        ALTER TABLE public.championships ADD COLUMN observers JSONB DEFAULT '[]'::jsonb;
+    -- Adição de campos para o Modo Independente e Colaboração
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='user_id') THEN
+        ALTER TABLE public.business_plans ADD COLUMN user_id UUID REFERENCES public.users(id) ON DELETE CASCADE;
     END IF;
 
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='trial_championships' AND column_name='observers') THEN
-        ALTER TABLE public.trial_championships ADD COLUMN observers JSONB DEFAULT '[]'::jsonb;
+    -- Garantir que championship_id e team_id sejam opcionais para modo independente
+    ALTER TABLE public.business_plans ALTER COLUMN championship_id DROP NOT NULL;
+    ALTER TABLE public.business_plans ALTER COLUMN team_id DROP NOT NULL;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='is_template') THEN
+        ALTER TABLE public.business_plans ADD COLUMN is_template BOOLEAN DEFAULT false;
     END IF;
 
-    -- Tabela de Conteúdo Dinâmico (CMS)
-    IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'site_content') THEN
-        CREATE TABLE public.site_content (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            page_slug TEXT NOT NULL,
-            locale TEXT NOT NULL,
-            content JSONB NOT NULL,
-            updated_at TIMESTAMPTZ DEFAULT now(),
-            UNIQUE(page_slug, locale)
-        );
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='visibility') THEN
+        ALTER TABLE public.business_plans ADD COLUMN visibility TEXT DEFAULT 'private' CHECK (visibility IN ('private', 'shared', 'public'));
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='shared_with') THEN
+        ALTER TABLE public.business_plans ADD COLUMN shared_with JSONB DEFAULT '[]'::jsonb;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='exported_formats') THEN
+        ALTER TABLE public.business_plans ADD COLUMN exported_formats JSONB DEFAULT '{}'::jsonb;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='business_plans' AND column_name='constraints') THEN
+        ALTER TABLE public.business_plans ADD COLUMN constraints JSONB DEFAULT '{}'::jsonb;
     END IF;
 END $$;
 
--- 2. LIMPEZA E ATIVAÇÃO DE RLS
-DO $$ 
-DECLARE
-    t text;
-    p record;
-BEGIN
-    FOR t IN 
-        SELECT tablename FROM pg_tables WHERE schemaname = 'public' 
-        AND tablename IN (
-            'championships', 'teams', 'team_members', 'companies', 
-            'current_decisions', 'decision_audit_log', 'public_reports', 
-            'users', 'championship_macro_rules', 'business_plans', 
-            'site_content', 'modalities', 'trial_championships', 'trial_teams', 'trial_decisions'
-        )
-    LOOP
-        EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
-        EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', t);
-        FOR p IN SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = t LOOP
-            EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', p.policyname, t);
-        END LOOP;
-    END LOOP;
-END $$;
+-- 2. REVISÃO DE POLÍTICAS RLS PARA BUSINESS PLAN
+ALTER TABLE public.business_plans ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "BP_Owner_Access" ON public.business_plans;
+DROP POLICY IF EXISTS "BP_Team_Access" ON public.business_plans;
+DROP POLICY IF EXISTS "BP_Tutor_Access" ON public.business_plans;
 
--- 3. POLÍTICAS DE ACESSO (CHAMPIONSHIPS OFICIAIS)
-CREATE POLICY "Championship_Select_v15" ON public.championships FOR SELECT TO authenticated
+-- Política de Dono (Acesso Total)
+CREATE POLICY "BP_Owner_Access" ON public.business_plans FOR ALL TO authenticated
+USING (user_id = auth.uid())
+WITH CHECK (user_id = auth.uid());
+
+-- Política de Membros de Equipe (Se for modo Simulação)
+CREATE POLICY "BP_Team_Access" ON public.business_plans FOR SELECT TO authenticated
 USING (
-    tutor_id = auth.uid() 
-    OR is_public = true 
-    OR id IN (
-        SELECT championship_id FROM public.teams 
-        WHERE id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid())
+    team_id IN (
+        SELECT team_id FROM public.team_members WHERE user_id = auth.uid()
     )
-    OR (observers ? auth.uid()::text)
 );
 
-CREATE POLICY "Championship_Tutor_All" ON public.championships FOR ALL TO authenticated
-USING (tutor_id = auth.uid())
-WITH CHECK (tutor_id = auth.uid());
-
--- 4. POLÍTICAS DE CONTEÚDO (SITE_CONTENT / CMS)
-CREATE POLICY "Site_Content_Public_Read" ON public.site_content FOR SELECT TO anon, authenticated
-USING (true);
-
-CREATE POLICY "Site_Content_Admin_Manage" ON public.site_content FOR ALL TO authenticated
-USING (EXISTS (SELECT 1 FROM public.users WHERE supabase_user_id = auth.uid() AND role = 'admin'))
-WITH CHECK (EXISTS (SELECT 1 FROM public.users WHERE supabase_user_id = auth.uid() AND role = 'admin'));
-
--- 5. DECISÕES E AUDITORIA (OFICIAIS)
-CREATE POLICY "Decisions_Select_Auth" ON public.current_decisions FOR SELECT TO authenticated
+-- Política de Tutor (Se for modo Simulação)
+CREATE POLICY "BP_Tutor_Access" ON public.business_plans FOR SELECT TO authenticated
 USING (
-    team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid())
-    OR EXISTS (SELECT 1 FROM public.championships c WHERE c.id = current_decisions.championship_id AND c.tutor_id = auth.uid())
+    championship_id IN (
+        SELECT id FROM public.championships WHERE tutor_id = auth.uid()
+    )
 );
 
-CREATE POLICY "Decisions_Write_Own_Team" ON public.current_decisions FOR ALL TO authenticated
-USING (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()))
-WITH CHECK (team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid()));
-
--- 6. SANDBOX (TRIAL TABLES - ACESSO TOTAL ANON + AUTH)
--- Fundamental para o modo MVP sem login obrigatório.
-CREATE POLICY "Trial_Champs_Permissive" ON public.trial_championships FOR ALL TO anon, authenticated
-USING (true) WITH CHECK (true);
-
-CREATE POLICY "Trial_Teams_Permissive" ON public.trial_teams FOR ALL TO anon, authenticated
-USING (true) WITH CHECK (true);
-
-CREATE POLICY "Trial_Decisions_Permissive" ON public.trial_decisions FOR ALL TO anon, authenticated
-USING (true) WITH CHECK (true);
-
--- 7. USUÁRIOS E PERFIS
-CREATE POLICY "Users_Self_Access" ON public.users FOR SELECT TO authenticated USING (supabase_user_id = auth.uid());
-CREATE POLICY "Users_Self_Update" ON public.users FOR UPDATE TO authenticated USING (supabase_user_id = auth.uid());
-CREATE POLICY "Users_Admin_Read" ON public.users FOR SELECT TO authenticated 
-USING (EXISTS (SELECT 1 FROM public.users WHERE supabase_user_id = auth.uid() AND role = 'admin'));
+-- Política de Compartilhamento Manual
+CREATE POLICY "BP_Shared_Access" ON public.business_plans FOR SELECT TO authenticated
+USING (shared_with ? auth.uid()::text);

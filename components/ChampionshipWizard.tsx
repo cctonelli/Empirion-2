@@ -36,7 +36,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   const [teamNames, setTeamNames] = useState<string[]>([]);
   const [marketIndicators, setMarketIndicators] = useState<MacroIndicators>(DEFAULT_MACRO);
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
-  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE);
+  // Fix: Added type assertion to INITIAL_FINANCIAL_TREE to satisfy AccountNode[] requirements for nested literal unions
+  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE as any);
 
   useEffect(() => {
     setRegionNames(prev => Array.from({ length: formData.regions_count }, (_, i) => prev[i] || `Região ${i+1}`));
@@ -53,7 +54,8 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     });
     setMarketIndicators(DEFAULT_MACRO);
     setRoundRules(DEFAULT_INDUSTRIAL_CHRONOGRAM);
-    setFinancials(INITIAL_FINANCIAL_TREE);
+    // Fix: Casting to any to bypass complex nested literal union inference issues for state update
+    setFinancials(INITIAL_FINANCIAL_TREE as any);
     alert("DNA INDUSTRIAL CARREGADO: Indicadores macro e balanços de $9.5M sincronizados.");
   };
 
