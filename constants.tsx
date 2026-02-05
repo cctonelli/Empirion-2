@@ -303,11 +303,11 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   },
 
   // BRANCH SKELETONS - Prontos para preenchimento posterior
-  'branch-commercial': { name: "Comercial", accent: "blue", heroImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2000" },
-  'branch-services': { name: "Serviços", accent: "indigo", heroImage: "https://images.unsplash.com/photo-1454165833762-0204b303598e?q=80&w=2000" },
-  'branch-agribusiness': { name: "Agronegócio", accent: "emerald", heroImage: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000" },
-  'branch-finance': { name: "Financeiro", accent: "cyan", heroImage: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=2000" },
-  'branch-construction': { name: "Construção", accent: "amber", heroImage: "https://images.unsplash.com/photo-1503387762-592fdb58f45a?q=80&w=2000" },
+  'branch-commercial': { name: "Comercial", accent: "blue", heroImage: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1200&auto=format&fit=crop" },
+  'branch-services': { name: "Serviços", accent: "indigo", heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop" },
+  'branch-agribusiness': { name: "Agronegócio", accent: "emerald", heroImage: "https://images.unsplash.com/photo-1627920768905-575535d6dd2e?q=80&w=1200&auto=format&fit=crop" },
+  'branch-finance': { name: "Financeiro", accent: "cyan", heroImage: "https://images.unsplash.com/flagged/photo-1579225818168-858da8667fae?q=80&w=1200&auto=format&fit=crop" },
+  'branch-construction': { name: "Construção", accent: "amber", heroImage: "https://images.unsplash.com/photo-1684497404598-6e844dff9cdeq=80&w=1200&auto=format&fit=crop" },
 
   'solutions-bp': {
     title: "Plano de Negócios",
