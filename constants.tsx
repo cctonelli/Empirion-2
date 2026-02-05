@@ -273,7 +273,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
         title: "Contabilidade Avançada",
         icon: "BarChart3",
         color: "blue",
-        points: ["Balanço e DRE 100% integrados", "Depreciação e Impairment", "Relatório Inicial via IA", "Audit log por transação"]
+        points: ["Balanço Patrimonial, DRE e CashFlow 100% integrados", "Regime de Competência e de Caixa", "Depreciação e Impairment", "Relatório Inicial via IA", "Audit log por transação"]
       },
       {
         title: "Mercado Global",
