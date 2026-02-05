@@ -253,7 +253,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     titleHighlight: "INDUSTRIAL",
     body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda oscilante até ±56%, IA preditiva Gemini 3 e contabilidade 100% integrada. Enquanto outros oferecem planilhas estáticas, o Empirion entrega um mundo industrial vivo onde cada decisão pesa.",
     accent: "orange",
-    heroImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2000",
+    heroImage: "https://images.unsplash.com/photo-1570269691511-2a0007f5fe6f?q=80&w=774q=80&w=774q=80&w=1200&auto=format&fit=crop",
     advantages: [
       "Cenários macroeconômicos programáveis por rodada – inflação, câmbio, demanda e crises sob controle do tutor.",
       "IVA/VAT realista e parametrizável – impacto direto no custo final, margem e competitividade.",

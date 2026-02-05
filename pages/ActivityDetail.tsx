@@ -41,7 +41,7 @@ const ActivityDetail: React.FC = () => {
           // 3. MINIMAL FALLBACK
           setContent({
             name: slug?.toUpperCase() || 'ARENA',
-            heroImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000",
+            heroImage: "https://images.unsplash.com/photo-1570269691511-2a0007f5fe6f?q=80&w=774q=80&w=1200&auto=format&fit=crop",
             titlePrefix: "Inicie o Comando",
             titleHighlight: "Master Node Arena",
             body: "Aguardando sincronização de briefing regional...",
