@@ -171,7 +171,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     
                     <div className="grid grid-cols-2 gap-4">
                       <WizardField label="TEMPO ROUND" type="number" val={formData.roundTime} onChange={()=>{}} isLocked />
-                      <WizardSelect label="UNIDADE" val={formData.roundUnit} onChange={()=>{}} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} isLocked />
+                      <WizardSelect label="Horas/Dias" val={formData.roundUnit} onChange={()=>{}} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} isLocked />
                     </div>
 
                     <WizardSelect label="GOVERNANÇA TÁTICA" val={formData.transparency} onChange={(v:any)=>setFormData({...formData, transparency: v as TransparencyLevel})} options={[{v:'low',l:'BAIXA (SIGILOSA)'},{v:'medium',l:'MÉDIA (PADRÃO)'},{v:'high',l:'ALTA (TRANSPARENTE)'},{v:'full',l:'TOTAL (OPEN DATA)'}]} />
