@@ -258,7 +258,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     advantages: [
       "Cenários macroeconômicos programáveis por rodada – inflação, câmbio, demanda e crises sob controle do tutor.",
       "IVA/VAT realista e parametrizável – impacto direto no custo final, margem e competitividade.",
-      "Mercado compartilhado multi-região – até 15 regiões com moedas locais e câmbio dinâmico.",
+      "Market Share multiregional com moedas locais e câmbio dinâmico em USD e EUR",
       "Black Swan Events por IA",
       "Business Plan orientado e integrado às simulações",
       "IA Gemini 3 embarcada – mentoria tática, análise de risco e alertas de insolvência.",
@@ -314,7 +314,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   // BRANCH SKELETONS - Prontos para preenchimento posterior
   'branch-commercial': { name: "Varejo", accent: "blue", heroImage: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1200&auto=format&fit=crop" },
   'branch-services': { name: "Prestação de Serviços", accent: "indigo", heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop" },
-  'branch-agribusiness': { name: "Agronegócio", accent: "emerald", heroImage: "https://images.unsplash.com/photo-1627920768905-575535d6dd2e?q=80&w=1200&auto=format&fit=crop" },
+  'branch-agribusiness': { name: "Agronegócio", accent: "emerald", heroImage: "https://images.unsplash.com/photo-1634433545797-c18dd170e75e?q=80&w=1200&auto=format&fit=crop" },
   'branch-finance': { name: "Mercado Financeiro", accent: "cyan", heroImage: "https://images.unsplash.com/flagged/photo-1579225818168-858da8667fae?q=80&w=1200&auto=format&fit=crop" },
   'branch-construction': { name: "Construção Civil", accent: "amber", heroImage: "https://plus.unsplash.com/premium_photo-1682724602925-f0264b85953f?=80&w=1200&auto=format&fit=crop" },
 
