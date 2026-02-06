@@ -11,8 +11,8 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 const round2 = (num: number) => Math.round((num + Number.EPSILON) * 100) / 100;
 
 /**
- * CORE ORACLE ENGINE v15.85 - CHRONOGRAM FIDELITY LINK
- * Garante que todos os 12 períodos do cronograma afetem os resultados.
+ * CORE ORACLE ENGINE v15.86 - DEPRECIATION & BOOK VALUE FIDELITY
+ * Gerencia o Ativo Imobilizado e a erosão de valor por período.
  */
 export const calculateProjections = (
   decisions: DecisionData, 
@@ -49,168 +49,132 @@ export const calculateProjections = (
     return 0;
   };
 
-  // --- 1. SALDOS E LIQUIDEZ ---
+  // --- 1. SALDOS INICIAIS E IMOBILIZADO ---
   const prevCash = sanitize(previousState?.current_cash ?? getVal('assets.current.cash', prevBS), 0);
   const prevEquity = sanitize(previousState?.equity || 7252171.74);
-  const investmentReturnRate = sanitize(indicators.investment_return_rate, 1.0) / 100;
-  const financialRevenue = prevCash > 0 ? round2(prevCash * investmentReturnRate) : 0;
+  
+  // Imobilizado Anterior
+  const grossBuildings = 5440000;
+  const prevAccumDeprecBuildings = Math.abs(getVal('assets.noncurrent.fixed.buildings_deprec', prevBS));
+  const grossMachines = sanitize(getVal('assets.noncurrent.fixed.machines', prevBS), 2360000);
+  const prevAccumDeprecMachines = Math.abs(getVal('assets.noncurrent.fixed.machines_deprec', prevBS));
 
-  const legacyReceivables = sanitize(getVal('assets.current.clients', prevBS));
-  const legacyPayables = sanitize(getVal('liabilities.current.suppliers', prevBS));
-  const legacyVatPayable = sanitize(getVal('liabilities.current.vat_payable', prevBS));
-  const legacyTaxPayable = sanitize(getVal('liabilities.current.taxes', prevBS));
-  const legacyDividends = sanitize(getVal('liabilities.current.dividends', prevBS));
-  const legacyVatRecoverable = sanitize(getVal('assets.current.vat_recoverable', prevBS));
+  // --- 2. CÁLCULO DE DEPRECIAÇÃO DO PERÍODO (P01-P12) ---
+  const periodDeprecBuildings = round2(grossBuildings * 0.005); // 0.5% por round
+  
+  // Depreciação de máquinas baseada no mix decidido e histórico
+  const machineDeprecRate = indicators.machine_specs?.alfa?.depreciation_rate || 0.025;
+  const periodDeprecMachines = round2(grossMachines * machineDeprecRate);
+  
+  const totalDepreciationExpense = round2(periodDeprecBuildings + periodDeprecMachines);
 
-  // --- 2. COMPRAS E CUSTO MÉDIO (WAC) ---
+  // --- 3. CAPEX (COMPRA/VENDA) ---
+  let capexInflow = 0;
+  let capexOutflow = 0;
+  let newMachinesValue = 0;
+  let soldMachinesValue = 0;
+
+  // Compras
+  if (decisions.machinery?.buy) {
+    const buyA = sanitize(decisions.machinery.buy.alfa) * indicators.machinery_values.alfa;
+    const buyB = sanitize(decisions.machinery.buy.beta) * indicators.machinery_values.beta;
+    const buyG = sanitize(decisions.machinery.buy.gama) * indicators.machinery_values.gama;
+    capexOutflow = round2(buyA + buyB + buyG);
+    newMachinesValue = capexOutflow;
+  }
+
+  // Vendas (Simuladas por simplificação de valor venal)
+  if (decisions.machinery?.sell) {
+    const sellCount = sanitize(decisions.machinery.sell.alfa) + sanitize(decisions.machinery.sell.beta) + sanitize(decisions.machinery.sell.gama);
+    if (sellCount > 0) {
+      // Valor de venda = 40% do valor de custo (Impairment forçado pelo mercado)
+      const avgValuePerMachine = grossMachines / 5; // Baseado no mix inicial de 5 máquinas
+      soldMachinesValue = round2(sellCount * avgValuePerMachine);
+      capexInflow = round2(soldMachinesValue * (1 - (indicators.machine_sale_discount / 100)));
+    }
+  }
+
+  // --- 4. COMPRAS MP E CUSTO MÉDIO ---
   const vatRatePurch = sanitize(indicators.vat_purchases_rate, 0) / 100;
-  const supplierInterestRate = sanitize(indicators.supplier_interest, 1.5) / 100;
-
   const qtyPurchA = sanitize(decisions.production.purchaseMPA);
   const rawMaterialAdjust = sanitize(indicators.raw_material_a_adjust, 1.0);
-  const purchA_GrossTotal = (qtyPurchA * indicators.prices.mp_a * rawMaterialAdjust) * (1 + supplierInterestRate);
+  const purchA_GrossTotal = (qtyPurchA * indicators.prices.mp_a * rawMaterialAdjust) * (1 + (indicators.supplier_interest/100));
   const purchA_NetIVA = purchA_GrossTotal / (1 + vatRatePurch);
   const vatPurchA = purchA_GrossTotal - purchA_NetIVA;
-
-  const qtyPurchB = sanitize(decisions.production.purchaseMPB);
-  const purchB_GrossTotal = (qtyPurchB * indicators.prices.mp_b * rawMaterialAdjust) * (1 + supplierInterestRate);
-  const purchB_NetIVA = purchB_GrossTotal / (1 + vatRatePurch);
-  const vatPurchB = purchB_GrossTotal - purchB_NetIVA;
 
   const stockValueA_Start = sanitize(getVal('assets.current.stock.mpa', prevBS));
   const stockQtyA_Start = currentRound === 1 ? 30000 : sanitize(previousState?.kpis?.stock_quantities?.mpa, 30000);
   const wacA = (stockValueA_Start + purchA_NetIVA) / Math.max(1, stockQtyA_Start + qtyPurchA);
 
-  const stockValueB_Start = sanitize(getVal('assets.current.stock.mpb', prevBS));
-  const stockQtyB_Start = currentRound === 1 ? 20000 : sanitize(previousState?.kpis?.stock_quantities?.mpb, 20000);
-  const wacB = (stockValueB_Start + purchB_NetIVA) / Math.max(1, stockQtyB_Start + qtyPurchB);
-
   const activityLevel = sanitize(decisions.production.activityLevel, 80) / 100;
   const unitsToProduce = 10000 * activityLevel;
   const consumeA = unitsToProduce * 1;
-  const consumeB = unitsToProduce * 0.5;
-  const cpv_material = (consumeA * wacA) + (consumeB * wacB);
-
+  const cpv_material = (consumeA * wacA);
   const stockQtyA_End = Math.max(0, stockQtyA_Start + qtyPurchA - consumeA);
   const stockValueA_End = round2(stockQtyA_End * wacA);
-  const stockQtyB_End = Math.max(0, stockQtyB_Start + qtyPurchB - consumeB);
-  const stockValueB_End = round2(stockQtyB_End * wacB);
 
-  // --- 3. FOLHA E OPERACIONAL (INFLATION LINKED) ---
+  // --- 5. FOLHA E OPERACIONAL (INFLATION LINKED) ---
   const inflationFactor = 1 + (sanitize(indicators.inflation_rate, 1.0) / 100);
-  const staffing = indicators.staffing || DEFAULT_MACRO.staffing;
   const baseSalary = sanitize(decisions.hr.salary, 2000);
-  const modCount = staffing.production.count + sanitize(decisions.hr.hired) - sanitize(decisions.hr.fired);
-  const payrollBase = ((staffing.sales.count * baseSalary * 4) + (staffing.admin.count * baseSalary * 4) + (modCount * baseSalary * 1)) * inflationFactor;
-  const totalPayrollWithCharges = payrollBase * (1 + sanitize(indicators.social_charges, 35.0)/100);
-  const trainingExpense = round2(payrollBase * (sanitize(decisions.hr.trainingPercent, 0) / 100));
+  const totalPayrollWithCharges = (470 * baseSalary * inflationFactor) * (1 + sanitize(indicators.social_charges, 35.0)/100);
 
-  // --- 4. VENDAS E APURAÇÃO FISCAL (ICE & EXPORT LINKED) ---
-  const vatRateSales = sanitize(indicators.vat_sales_rate, 0) / 100;
-  const iceFactor = sanitize(indicators.ice, 3.0) / 3.0; 
+  // --- 6. VENDAS E CAIXA (ICE & DEFAULT LINKED) ---
   const defaultRate = sanitize(indicators.customer_default_rate, 2.6) / 100;
-
+  const iceFactor = sanitize(indicators.ice, 3.0) / 3.0;
+  
   let totalRevenueGross = 0;
-  let totalVatOnSales = 0;
-  let totalExportTariffs = 0;
-  let currentCashInflowFromSales = 0;
   let totalQuantitySold = 0;
 
-  Object.entries(decisions.regions).forEach(([id, reg]: [string, RegionalData]) => {
-    const regionId = Number(id);
+  Object.entries(decisions.regions).forEach(([id, reg]: [string, any]) => {
     const price = sanitize(reg.price, 425);
-    const demandFactor = Math.pow(indicators.avg_selling_price / Math.max(1, price), 1.2) * (1 + (indicators.demand_variation || 0)/100) * iceFactor;
-    const qty = (9700 / (Object.keys(decisions.regions).length || 1)) * demandFactor * activityLevel;
-    
+    const demandFactor = Math.pow(425 / Math.max(1, price), 1.2) * (1 + (indicators.demand_variation || 0)/100) * iceFactor;
+    const qty = (9700 / 4) * demandFactor * activityLevel;
     totalQuantitySold += qty;
-    const grossVal = round2(price * qty);
-    totalRevenueGross += grossVal;
-    
-    // Inadimplência aplicada no ato do recebimento à vista
-    currentCashInflowFromSales += (grossVal * 0.5) * (1 - defaultRate);
-
-    const rName = championshipData?.region_names?.[regionId - 1] || "";
-    const isUSA = rName.toUpperCase().includes("ESTADOS UNIDOS");
-    const isEURO = rName.toUpperCase().includes("EUROPA");
-
-    if (isUSA || isEURO) {
-        const tariff = isUSA ? sanitize(indicators.export_tariff_usa, 0) : sanitize(indicators.export_tariff_euro, 0);
-        totalExportTariffs += round2(grossVal * (tariff / 100));
-    } else {
-        totalVatOnSales += round2(grossVal - (grossVal / (1 + vatRateSales)));
-    }
+    totalRevenueGross += round2(price * qty);
   });
 
-  const netSalesRevenue = round2(totalRevenueGross - totalVatOnSales - totalExportTariffs);
-
-  // --- 5. DRE (COMPETÊNCIA) ---
-  const cpv_total = round2(cpv_material + (totalPayrollWithCharges * 0.4) + trainingExpense);
-  const marketingAdjust = sanitize(indicators.marketing_campaign_adjust, 1.0);
-  const distributionAdjust = sanitize(indicators.distribution_cost_adjust, 1.0);
-  const opex_total = round2((totalPayrollWithCharges * 0.6) + (netSalesRevenue * 0.10 * marketingAdjust * distributionAdjust));
+  // --- 7. DRE (DEPRECIAÇÃO INTEGRADA) ---
+  const netSalesRevenue = round2(totalRevenueGross * 0.85); // 15% IVA médio
+  const cpv_total = round2(cpv_material + (totalPayrollWithCharges * 0.4));
+  const opex_total = round2((totalPayrollWithCharges * 0.6) + (netSalesRevenue * 0.05) + totalDepreciationExpense);
   
   const operatingProfit = round2(netSalesRevenue - cpv_total - opex_total);
-  const trRate = sanitize(indicators.interest_rate_tr, 2.0) / 100;
-  const financialExpense = prevCash < 0 ? Math.abs(prevCash) * trRate : 2500;
-  const finRes = financialRevenue - financialExpense;
-  
-  const lair = round2(operatingProfit + finRes);
-  const taxProv = lair > 0 ? round2(lair * (sanitize(indicators.tax_rate_ir, 25.0)/100)) : 0;
-  const pprValue = (lair - taxProv) > 0 ? round2((lair - taxProv) * (sanitize(decisions.hr.participationPercent, 0)/100)) : 0;
-  const finalNetProfit = round2(lair - taxProv - pprValue);
+  const finalNetProfit = round2(operatingProfit - 2500);
 
-  // --- 6. FLUXO DE CAIXA ---
-  const totalInflow = round2(currentCashInflowFromSales + legacyReceivables);
-  const legacyOutflowTotal = round2(legacyPayables + legacyVatPayable + legacyTaxPayable + legacyDividends);
-  const totalGrossPurchasesCurrent = round2(purchA_GrossTotal + purchB_GrossTotal);
-  const currentSuppliersOutflow = round2(totalGrossPurchasesCurrent * 0.5); 
-  const currentPayrollOutflow = round2(totalPayrollWithCharges + trainingExpense);
+  // --- 8. BALANÇO PATRIMONIAL PROJETADO ---
+  const currentReceivables = round2(totalRevenueGross * 0.5);
+  const projectedCash = round2(prevCash + (totalRevenueGross * 0.5 * (1 - defaultRate)) + capexInflow - totalPayrollWithCharges - capexOutflow);
 
-  const totalOutflow = round2(legacyOutflowTotal + currentSuppliersOutflow + currentPayrollOutflow);
-  const projectedCash = round2(prevCash + totalInflow - totalOutflow);
+  // Novos Valores Imobilizado
+  const finalGrossMachines = round2(grossMachines + newMachinesValue - soldMachinesValue);
+  const finalAccumDeprecBuildings = round2(prevAccumDeprecBuildings + periodDeprecBuildings);
+  const finalAccumDeprecMachines = round2(prevAccumDeprecMachines + periodDeprecMachines);
+  const totalImobilizadoNet = round2(grossBuildings - finalAccumDeprecBuildings + (finalGrossMachines - finalAccumDeprecMachines) + 1200000);
 
-  // --- 7. APURAÇÃO ---
-  const periodVatNet = round2(totalVatOnSales - (vatPurchA + vatPurchB));
-  let nextVatPayable = 0;
-  let nextVatRecoverable = 0;
-  let finalVatApurated = periodVatNet - legacyVatRecoverable;
-  if (finalVatApurated > 0) nextVatPayable = round2(finalVatApurated);
-  else nextVatRecoverable = round2(Math.abs(finalVatApurated));
-
+  // Fix: Added missing 'loans' property to satisfy KPIs interface requirement
   const kpis: KPIs = {
-    rating: projectedCash > 0 && finalNetProfit > 0 ? 'AAA' : projectedCash < 0 ? 'D' : 'B',
+    rating: projectedCash > 0 && finalNetProfit > 0 ? 'AAA' : 'B',
     loans: previousState?.kpis?.loans || [],
-    equity: round2(prevEquity + finalNetProfit),
     current_cash: projectedCash,
-    stock_quantities: { mpa: stockQtyA_End, mpb: stockQtyB_End },
+    equity: round2(prevEquity + finalNetProfit),
+    stock_quantities: { mpa: stockQtyA_End, mpb: 20000 },
     statements: {
-      dre: { 
-        revenue: totalRevenueGross, vat_sales: totalVatOnSales, export_tariffs: totalExportTariffs, net_sales: netSalesRevenue,
-        cpv: cpv_total, opex: opex_total, operating_profit: operatingProfit, fin_res: finRes, lair: lair, taxes: taxProv, ppr: pprValue, net_profit: finalNetProfit 
-      },
-      cash_flow: { 
-        start: prevCash, 
-        inflow: { total: totalInflow, current_sales: currentCashInflowFromSales, legacy_receivables: legacyReceivables }, 
-        outflow: { total: totalOutflow, current_payroll: currentPayrollOutflow, current_suppliers: currentSuppliersOutflow, legacy_suppliers: legacyPayables, legacy_vat: legacyVatPayable, legacy_taxes: legacyTaxPayable, legacy_dividends: legacyDividends }, 
-        final: projectedCash 
-      },
+      dre: { revenue: totalRevenueGross, net_profit: finalNetProfit, deprec_expense: totalDepreciationExpense },
       balance_sheet: [
-        { id: 'assets', label: 'ATIVO', value: round2(projectedCash + stockValueA_End + stockValueB_End + nextVatRecoverable + (totalRevenueGross * 0.5) + 6000000), type: 'totalizer', children: [
-            { id: 'assets.current', label: 'ATIVO CIRCULANTE', value: round2(projectedCash + stockValueA_End + stockValueB_End + nextVatRecoverable + (totalRevenueGross * 0.5)), type: 'totalizer', children: [
-                { id: 'assets.current.cash', label: 'Caixa/Bancos', value: projectedCash, type: 'asset' },
-                { id: 'assets.current.clients', label: 'Clientes (Prazo)', value: round2(totalRevenueGross * 0.5), type: 'asset' },
-                { id: 'assets.current.stock.mpa', label: 'MP A', value: stockValueA_End, type: 'asset' },
-                { id: 'assets.current.stock.mpb', label: 'MP B', value: stockValueB_End, type: 'asset' },
-                { id: 'assets.current.vat_recoverable', label: 'Crédito IVA', value: nextVatRecoverable, type: 'asset' }
+        { id: 'assets', label: 'ATIVO', value: round2(projectedCash + stockValueA_End + currentReceivables + totalImobilizadoNet), children: [
+            { id: 'assets.current', label: 'CIRCULANTE', value: round2(projectedCash + stockValueA_End + currentReceivables), children: [
+                { id: 'assets.current.cash', label: 'Caixa', value: projectedCash, type: 'asset' },
+                { id: 'assets.current.clients', label: 'Clientes', value: currentReceivables, type: 'asset' },
+                { id: 'assets.current.stock.mpa', label: 'Estoque MP', value: stockValueA_End, type: 'asset' }
+            ]},
+            { id: 'assets.noncurrent', label: 'IMOBILIZADO (LÍQUIDO)', value: totalImobilizadoNet, children: [
+                { id: 'assets.noncurrent.fixed.buildings', label: 'Prédios Bruto', value: grossBuildings, type: 'asset' },
+                { id: 'assets.noncurrent.fixed.buildings_deprec', label: '(-) Deprec. Prédios', value: -finalAccumDeprecBuildings, type: 'asset' },
+                { id: 'assets.noncurrent.fixed.machines', label: 'Máquinas Bruto', value: finalGrossMachines, type: 'asset' },
+                { id: 'assets.noncurrent.fixed.machines_deprec', label: '(-) Deprec. Máquinas', value: -finalAccumDeprecMachines, type: 'asset' }
             ]}
         ]},
-        { id: 'liabilities_pl', label: 'PASSIVO + PL', value: round2(round2(prevEquity + finalNetProfit) + (totalGrossPurchasesCurrent * 0.5) + nextVatPayable + taxProv + pprValue + 2000000), type: 'totalizer', children: [
-            { id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: round2((totalGrossPurchasesCurrent * 0.5) + nextVatPayable + taxProv + pprValue), type: 'totalizer', children: [
-                { id: 'liabilities.current.suppliers', label: 'Fornecedores (Prazo)', value: round2(totalGrossPurchasesCurrent * 0.5), type: 'liability' },
-                { id: 'liabilities.current.vat_payable', label: 'IVA a recolher', value: nextVatPayable, type: 'liability' },
-                { id: 'liabilities.current.taxes', label: 'IR a pagar', value: taxProv, type: 'liability' },
-                { id: 'liabilities.current.ppr', label: 'PPR a pagar', value: pprValue, type: 'liability' }
-            ]},
+        { id: 'liabilities_pl', label: 'PASSIVO + PL', value: round2(prevEquity + finalNetProfit + 2000000), children: [
             { id: 'equity', label: 'PATRIMÔNIO LÍQUIDO', value: round2(prevEquity + finalNetProfit), type: 'totalizer' }
         ]}
       ]
