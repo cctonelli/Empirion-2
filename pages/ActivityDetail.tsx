@@ -187,7 +187,7 @@ const ActivityDetail: React.FC = () => {
                     <div className={`p-5 rounded-3xl ${theme.color === 'orange' ? 'bg-orange-600/20 text-orange-400' : theme.color === 'blue' ? 'bg-blue-600/20 text-blue-400' : theme.color === 'emerald' ? 'bg-emerald-600/20 text-emerald-400' : theme.color === 'indigo' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-purple-600/20 text-purple-400'} shadow-xl`}>
                        {React.cloneElement(getIcon(theme.icon) as any, { size: 32 })}
                     </div>
-                    <h3 className="text-xl lg:text-2xl font-black text-white uppercase italic leading-tight tracking-tight">{theme.title}</h3>
+                    <h3 className="text-lg md:text-xl lg:text-2xl font-black text-white uppercase italic leading-none tracking-tight">{theme.title}</h3>
                  </div>
                  <ul className="space-y-4 relative z-10">
                     {theme.points.map((pt: string, j: number) => (
