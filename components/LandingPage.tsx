@@ -154,7 +154,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
                {[
                  { label: 'Industrial', icon: <Factory />, slug: 'industrial', desc: 'CapEx $9M Fidelity' },
-                 { label: 'Comercial', icon: <ShoppingCart />, slug: 'commercial', desc: 'Varejo Híbrido' },
+                 { label: 'Varejo', icon: <ShoppingCart />, slug: 'commercial', desc: 'Varejo Híbrido' },
                  { label: 'Serviços', icon: <Briefcase />, slug: 'services', desc: 'Capital Intelectual' },
                  { label: 'Agronegócio', icon: <Tractor />, slug: 'agribusiness', desc: 'Ativos Biológicos' },
                  { label: 'Financeiro', icon: <DollarSign />, slug: 'finance', desc: 'Spread & Risco' },
@@ -201,8 +201,8 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   ]}
                />
                <LeaderboardCard 
-                  name="Grand Prix Comercial" 
-                  branch="Comercial" 
+                  name="Grand Prix Varejo" 
+                  branch="Varejo" 
                   cycle="03/06"
                   teams={[
                      { name: 'Varejo Pro', tsr: 98.4, pos: 1 },
@@ -243,8 +243,8 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             
             <div className="relative space-y-16">
                <div className="absolute left-8 top-0 bottom-0 w-px bg-white/5" />
-               <RoadmapNode phase="Fase 1" title="Core Engine v15.0" desc="Lançamento do motor industrial com fidelidade 99.8% e IA Gemini integrada." status="COMPLETO" active />
-               <RoadmapNode phase="Fase 2" title="Multi-Branch Node" desc="Expansão para Comercial, Agro e Serviços com mecânicas específicas." status="LIVE" active />
+               <RoadmapNode phase="Fase 1" title="Core Engine v15.0" desc="Lançamento do motor industrial com fidelidade 100% e IA Gemini integrada." status="COMPLETO" active />
+               <RoadmapNode phase="Fase 2" title="Multi-Branch Node" desc="Expansão para Varejo, Agro e Serviços com mecânicas específicas." status="LIVE" active />
                <RoadmapNode phase="Fase 3" title="Intelligence Hub Opal" desc="Terminal premium com Google Search Grounding e Workflows avançados." status="LIVE" active />
                <RoadmapNode phase="Fase 4" title="Global Tournaments" desc="Arenas patrocinadas com premiações em ativos reais e NFTs de honra." status="Q2 2026" />
             </div>
