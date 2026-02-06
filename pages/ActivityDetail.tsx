@@ -178,7 +178,7 @@ const ActivityDetail: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }} 
                 viewport={{ once: true }} 
                 transition={{ delay: i * 0.1 }}
-                className="bg-slate-900/50 p-8 rounded-[4rem] border border-white/5 hover:border-white/20 transition-all group shadow-2xl relative overflow-hidden"
+                className="bg-slate-900/50 p-6 rounded-[4rem] border border-white/5 hover:border-white/20 transition-all group shadow-2xl relative overflow-hidden"
               >
                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform rotate-12">
                     {getIcon(theme.icon)}
