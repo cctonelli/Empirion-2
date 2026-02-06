@@ -292,7 +292,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
       },
       {
         title: "Recursos Humanos",
-        icon: "Factory",
+        icon: "Users",
         color: "yellow",
         points: ["Contratações e Demissões", "Participação nos Resulstados (PPR)", "Cálculo de CPP automático" , "Lead time de suprimentos", "Capacidade finita real"]
       },
