@@ -12,7 +12,7 @@ import {
   Hammer, ChevronRight, Zap, Target, BarChart3, Users, Box,
   Gavel, Cpu, Sparkles, ShieldCheck, Globe, Trophy, Play,
   Landmark, TrendingUp, BrainCircuit, Rocket, ShieldAlert,
-  ArrowRight, CheckCircle2, Flame, Award
+  ArrowRight, CheckCircle2, Flame, Award, UsersRound
 } from 'lucide-react';
 import { getPageContent } from '../constants';
 import { fetchPageContent, getModalities } from '../services/supabase';
