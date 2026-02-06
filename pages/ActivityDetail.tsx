@@ -178,7 +178,7 @@ const ActivityDetail: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }} 
                 viewport={{ once: true }} 
                 transition={{ delay: i * 0.1 }}
-                className="bg-slate-900/50 p-3 rounded-[4rem] border border-white/5 hover:border-white/20 transition-all group shadow-2xl relative overflow-hidden"
+                className="bg-slate-900/50 p-5 rounded-[4rem] border border-white/5 hover:border-white/20 transition-all group shadow-2xl relative overflow-hidden"
               >
                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-125 transition-transform rotate-12">
                     {getIcon(theme.icon)}
@@ -187,7 +187,7 @@ const ActivityDetail: React.FC = () => {
                     <div className={`p-5 rounded-3xl ${theme.color === 'orange' ? 'bg-orange-600/20 text-orange-400' : theme.color === 'blue' ? 'bg-blue-600/20 text-blue-400' : theme.color === 'emerald' ? 'bg-emerald-600/20 text-emerald-400' : theme.color === 'indigo' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-purple-600/20 text-purple-400'} shadow-xl`}>
                        {React.cloneElement(getIcon(theme.icon) as any, { size: 32 })}
                     </div>
-                    <h3 className="text-lg md:text-xl lg:text-2xl font-black text-white uppercase italic leading-none tracking-tight">{theme.title}</h3>
+                    <h3 className="text-xl lg:text-2xl font-black text-white uppercase italic leading-tight tracking-tight">
                  </div>
                  <ul className="space-y-4 relative z-10">
                     {theme.points.map((pt: string, j: number) => (
