@@ -41,7 +41,7 @@ const ActivityDetail: React.FC = () => {
           // 3. MINIMAL FALLBACK
           setContent({
             name: slug?.toUpperCase() || 'ARENA',
-            heroImage: "https://images.unsplash.com/photo-1570269691511-2a0007f5fe6f?q=80&w=774q=80&w=1200&auto=format&fit=crop",
+            heroImage: "https://images.unsplash.com/photo-1558419358-1d40b2a5d5ed?q=80&w=774q=80&w=1200&auto=format&fit=crop",
             titlePrefix: "Inicie o Comando",
             titleHighlight: "Master Node Arena",
             body: "Aguardando sincronização de briefing regional...",
@@ -187,7 +187,7 @@ const ActivityDetail: React.FC = () => {
                     <div className={`p-5 rounded-3xl ${theme.color === 'orange' ? 'bg-orange-600/20 text-orange-400' : theme.color === 'blue' ? 'bg-blue-600/20 text-blue-400' : theme.color === 'emerald' ? 'bg-emerald-600/20 text-emerald-400' : theme.color === 'indigo' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-purple-600/20 text-purple-400'} shadow-xl`}>
                        {React.cloneElement(getIcon(theme.icon) as any, { size: 32 })}
                     </div>
-                    <h3 className="text-xl lg:text-2xl font-black text-white uppercase italic leading-tight tracking-tight">
+                    <h3 className="text-lg md:text-xl lg:text-2xl font-black text-white uppercase italic leading-none tracking-tight">{theme.title}</h3>
                  </div>
                  <ul className="space-y-4 relative z-10">
                     {theme.points.map((pt: string, j: number) => (
