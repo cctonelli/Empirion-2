@@ -249,6 +249,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   // BRANCH: INDUSTRIAL LANDING
   'branch-industrial': {
     name: "Industrial",
+    isActive: true, // Único nodo ativo inicialmente
     badge: "Template Industrial – Fidelidade 100%",
     titlePrefix: "SIMULADOR",
     titleHighlight: "INDUSTRIAL",
@@ -311,12 +312,12 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     ]
   },
 
-  // BRANCH SKELETONS - Prontos para preenchimento posterior
-  'branch-commercial': { name: "Varejo", accent: "blue", heroImage: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1200&auto=format&fit=crop" },
-  'branch-services': { name: "Prestação de Serviços", accent: "indigo", heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop" },
-  'branch-agribusiness': { name: "Agronegócio", accent: "emerald", heroImage: "https://images.unsplash.com/photo-1634433545797-c18dd170e75e?q=80&w=1200&auto=format&fit=crop" },
-  'branch-finance': { name: "Mercado Financeiro", accent: "cyan", heroImage: "https://images.unsplash.com/flagged/photo-1579225818168-858da8667fae?q=80&w=1200&auto=format&fit=crop" },
-  'branch-construction': { name: "Construção Civil", accent: "amber", heroImage: "https://plus.unsplash.com/premium_photo-1682724602925-f0264b85953f?=80&w=1200&auto=format&fit=crop" },
+  // BRANCH SKELETONS - Inativos por padrão
+  'branch-commercial': { isActive: false, name: "Varejo", accent: "blue", heroImage: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1200&auto=format&fit=crop" },
+  'branch-services': { isActive: false, name: "Prestação de Serviços", accent: "indigo", heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop" },
+  'branch-agribusiness': { isActive: false, name: "Agronegócio", accent: "emerald", heroImage: "https://images.unsplash.com/photo-1634433545797-c18dd170e75e?q=80&w=1200&auto=format&fit=crop" },
+  'branch-finance': { isActive: false, name: "Mercado Financeiro", accent: "cyan", heroImage: "https://images.unsplash.com/flagged/photo-1579225818168-858da8667fae?q=80&w=1200&auto=format&fit=crop" },
+  'branch-construction': { isActive: false, name: "Construção Civil", accent: "amber", heroImage: "https://plus.unsplash.com/premium_photo-1682724602925-f0264b85953f?=80&w=1200&auto=format&fit=crop" },
 
   'solutions-bp': {
     title: "Plano de Negócios",

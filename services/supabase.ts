@@ -36,7 +36,6 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 };
 
 export const getChampionships = async (onlyPublic: boolean = false) => {
-  // Busca em ambas as tabelas para garantir que Trials apareçam
   const fetchMain = async () => {
     let query = supabase.from('championships').select('*').order('created_at', { ascending: false });
     if (onlyPublic) query = query.eq('is_public', true);
@@ -96,20 +95,31 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
     const { data: { session } } = await (supabase.auth as any).getSession();
     const tutorId = session?.user?.id || SYSTEM_TUTOR_ID;
 
-    // Roteamento de tabela baseado no modo
     const champTable = isTrial ? 'trial_championships' : 'championships';
     const teamsTable = isTrial ? 'trial_teams' : 'teams';
 
     const finalFinancials = isTrial ? INITIAL_INDUSTRIAL_FINANCIALS : champData.initial_financials;
 
-    const { data: champ, error: cErr } = await supabase.from(champTable).insert({
+    // Limpeza de campos para evitar erro 42703 (coluna inexistente em trial_championships)
+    const { is_trial, round_rules, initial_share_price, ...cleanedData } = champData;
+
+    const insertPayload = isTrial ? {
+        ...cleanedData,
+        tutor_id: tutorId,
+        initial_financials: finalFinancials
+    } : {
         ...champData,
         tutor_id: tutorId,
         is_trial: isTrial,
         initial_financials: finalFinancials
-    }).select().single();
+    };
 
-    if (cErr) return { success: false, error: cErr.message };
+    const { data: champ, error: cErr } = await supabase.from(champTable).insert(insertPayload).select().single();
+
+    if (cErr) {
+        logError(LogContext.SUPABASE, "Erro ao criar campeonato", cErr);
+        return { success: false, error: cErr.message };
+    }
 
     const teamsToInsert = teams.map(t => ({
         ...t,
@@ -119,7 +129,10 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
     }));
 
     const { error: tErr } = await supabase.from(teamsTable).insert(teamsToInsert);
-    if (tErr) return { success: false, error: tErr.message };
+    if (tErr) {
+        logError(LogContext.SUPABASE, "Erro ao criar equipes", tErr);
+        return { success: false, error: tErr.message };
+    }
 
     return { success: true, data: champ };
 };
