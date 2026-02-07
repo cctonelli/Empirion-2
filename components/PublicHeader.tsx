@@ -91,7 +91,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                            <Link 
                              key={sub.id} 
                              to={sub.path} 
-                             className="flex items-center gap-4 px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-orange-600/10 rounded-2xl transition-all group/sub"
+                             className="flex items-center gap-4 px-5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-orange-600/10 rounded-2xl transition-all group/sub"
                            >
                              <div className="p-3 bg-white/5 rounded-xl text-orange-500 group-hover/sub:bg-orange-600 group-hover/sub:text-white transition-all border border-white/5">
                                 {getIcon(sub.icon)}
