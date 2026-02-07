@@ -252,7 +252,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     badge: "Template Industrial – Fidelidade 100%",
     titlePrefix: "SIMULADOR",
     titleHighlight: "INDUSTRIAL",
-    body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda oscilante até ±56%, IA preditiva Gemini 3 e contabilidade 100% integrada. Enquanto outros oferecem planilhas estáticas, o Empirion entrega um mundo industrial vivo onde cada decisão pesa.",
+    body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda parametrizável, IA preditiva Gemini 3 e contabilidade 100% integrada. Enquanto outros oferecem planilhas estáticas, o Empirion entrega um mundo industrial vivo onde cada decisão pesa.",
     accent: "orange",
     heroImage: "https://images.unsplash.com/photo-1558419358-1d40b2a5d5ed?q=80&w=774q=80&w=774q=80&w=1200&auto=format&fit=crop",
     advantages: [
@@ -270,7 +270,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
         title: "Macroeconomia Realista",
         icon: "TrendingUp",
         color: "orange",
-        points: ["Cronograma econômico de 0 a 12 rounds", "Demanda regional ±56%", "Câmbio flutuante USD/EUR", "IVA/VAT parametrizável", "Cenários Black Swan"]
+        points: ["Cronograma econômico de 0 a 12 rounds", "Demanda regional ±56%", "Câmbio flutuante USD/EUR", "IVA/VAT parametrizável"]
       },
       {
         title: "Contabilidade Avançada",
@@ -300,7 +300,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
         title: "Gestão Financeira",
         icon: "DollarSign",
         color: "indigo",
-        points: ["Capital de giro dinâmico", "Rating de crédito AAA-E", "Dividendos e TSR", "Emissões de debêntures", "Valoração dinâmica de ações"]
+        points: ["Capital de giro dinâmico", "Rating de crédito AAA-E", "Dividendos e TSR", "Emissões de debêntures", "Mercado de ações", "Recuperação Judicial"]
       },
       {
         title: "IA Strategos",

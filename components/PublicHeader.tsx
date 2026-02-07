@@ -63,7 +63,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               >
                 <Link 
                   to={item.path} 
-                  className={`relative z-10 px-5 py-2.5 font-black uppercase text-[9px] tracking-[0.15em] transition-all flex items-center gap-2 rounded-full ${isActive || isHovered ? 'text-white' : 'text-slate-500'}`}
+                  className={`relative z-10 px-5 py-2.5 font-black uppercase text-[11px] tracking-[0.15em] transition-all flex items-center gap-2 rounded-full ${isActive || isHovered ? 'text-white' : 'text-slate-500'}`}
                 >
                   {item.label}
                   {item.sub && <ChevronDown size={10} className={`transition-transform duration-300 ${isHovered ? 'rotate-180 text-orange-500' : ''}`} />}
