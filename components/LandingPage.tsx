@@ -140,6 +140,14 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos"
                   img="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop"
                />
+               />
+               <CarouselSlide 
+                  icon={<BarChart3 size={40}/>}
+                  badge="Forme Lideres"
+                  title="Tutoria Assistida"
+                  desc="Tutores traçando estrategias quase infinitas, com auxílio da IA para cenários caóticos 'Black Swan'"
+                  img="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=1200&auto=format&fit=crop"
+               />
             </Slider>
          </div>
       </section>
