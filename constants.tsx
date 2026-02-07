@@ -254,7 +254,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     titleHighlight: "INDUSTRIAL",
     body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda oscilante até ±56%, IA preditiva Gemini 3 e contabilidade 100% integrada. Enquanto outros oferecem planilhas estáticas, o Empirion entrega um mundo industrial vivo onde cada decisão pesa.",
     accent: "orange",
-    heroImage: "https://images.unsplash.com/photo-1570269691511-2a0007f5fe6f?q=80&w=774q=80&w=774q=80&w=1200&auto=format&fit=crop",
+    heroImage: "https://images.unsplash.com/photo-1558419358-1d40b2a5d5ed?q=80&w=774q=80&w=774q=80&w=1200&auto=format&fit=crop",
     advantages: [
       "Cenários macroeconômicos programáveis por rodada – inflação, câmbio, demanda e crises sob controle do tutor.",
       "IVA/VAT realista e parametrizável – impacto direto no custo final, margem e competitividade.",
@@ -270,7 +270,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
         title: "Macroeconomia Realista",
         icon: "TrendingUp",
         color: "orange",
-        points: ["Cronograma econômico de 1 a 12 rounds", "Demanda regional ±56%", "Câmbio flutuante USD/EUR", "Tarifas Alfandegárias", "IVA/VAT parametrizável"]
+        points: ["Cronograma econômico de 0 a 12 rounds", "Demanda regional ±56%", "Câmbio flutuante USD/EUR", "IVA/VAT parametrizável", "Cenários Black Swan"]
       },
       {
         title: "Contabilidade Avançada",
@@ -282,19 +282,19 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
         title: "Mercado Global",
         icon: "Globe",
         color: "emerald",
-        points: ["Até 15 regiões configuráveis", "Modo híbrido de precificação", "Logística regionalizada", "Market Share flexível"]
+        points: ["Até 15 regiões configuráveis", "Modo híbrido de precificação", "Logística regionalizada", "Market Share flexível", "Conversão em Real, USD e EUR"]
       },
       {
         title: "Chão de Fábrica",
         icon: "Factory",
         color: "amber",
-        points: ["Multimodelos de Máquinas", "Gestão de manutenção", "Cálculo de WAT e CPP automáticos" , "Lead time de suprimentos", "Capacidade finita real", "Premiação por Produtividade"]
+        points: ["Multimodelos de Máquinas", "Gestão de manutenção", "Cálculo de WAT e CPP automáticos", "Lead time de suprimentos", "Capacidade finita real", "Premiação por Produtividade"]
       },
       {
         title: "Recursos Humanos",
         icon: "UsersRound",
         color: "esmerald",
-        points: ["Contratações e Demissões", "Participação nos Resulstados (PPR)", "Cálculo de CPP automático" , "Lead time de suprimentos", "Capacidade finita real"]
+        points: ["Contratações e Demissões", "Participação nos Resultados (PPR)", "Cálculo de CPP automático" , "Lead time de suprimentos", "Nível de Motivação e Greves"]
       },
       {
         title: "Gestão Financeira",

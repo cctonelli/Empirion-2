@@ -139,7 +139,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         <div className="flex items-center gap-8">
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-[0_0_30px_rgba(249,115,22,0.4)]"><Rocket size={32} /></div>
            <div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Trial Strategos</h2>
+              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">CONFIGURE O TORNEIO</h2>
               <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Ambiente Sandbox • Oracle Master v13.2</p>
            </div>
         </div>
