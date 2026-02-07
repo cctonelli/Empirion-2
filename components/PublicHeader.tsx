@@ -63,7 +63,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               >
                 <Link 
                   to={item.path} 
-                  className={`relative z-10 px-5 py-2.5 font-black uppercase text-[11px] tracking-[0.15em] transition-all flex items-center gap-2 rounded-full ${isActive || isHovered ? 'text-white' : 'text-slate-500'}`}
+                  className={`relative z-10 px-5 py-2.5 font-black uppercase text-[10px] tracking-[0.15em] transition-all flex items-center gap-2 rounded-full ${isActive || isHovered ? 'text-white' : 'text-slate-500'}`}
                 >
                   {item.label}
                   {item.sub && <ChevronDown size={10} className={`transition-transform duration-300 ${isHovered ? 'rotate-180 text-orange-500' : ''}`} />}
@@ -84,9 +84,9 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                       initial={{ opacity: 0, y: 15, scale: 0.95 }} 
                       animate={{ opacity: 1, y: 0, scale: 1 }} 
                       exit={{ opacity: 0, y: 15, scale: 0.95 }} 
-                      className="absolute top-full left-0 min-w-[280px] bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-3 mt-2 backdrop-blur-3xl z-[1050]"
+                      className="absolute top-full left-0 min-w-[280px] bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-1.5 mt-2 backdrop-blur-3xl z-[1050]"
                     >
-                      <div className="grid grid-cols-1 gap-1">
+                      <div className="grid grid-cols-1 gap-0.5">
                         {item.sub.map((sub: any) => (
                            <Link 
                              key={sub.id} 
