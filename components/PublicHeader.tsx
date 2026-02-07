@@ -41,11 +41,11 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         
         <Link to="/" className="flex items-center gap-3 group shrink-0">
           <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all duration-500 border border-white/10">
-            <span className="text-white font-black text-lg italic">E</span>
+            <span className="text-white font-black text-2xl italic">E</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-black tracking-tighter uppercase text-white italic leading-none group-hover:text-orange-500 transition-colors">EMPIRION</span>
-            <span className="text-[7px] font-black text-slate-500 uppercase tracking-[0.4em] leading-none mt-1">Strategic Command</span>
+            <span className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tighter uppercase text-white italic leading-none group-hover:text-orange-500 transition-colors">EMPIRION</span>
+            <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em] leading-none mt-1">Strategic Command</span>
           </div>
         </Link>
 
