@@ -84,7 +84,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                       initial={{ opacity: 0, y: 15, scale: 0.95 }} 
                       animate={{ opacity: 1, y: 0, scale: 1 }} 
                       exit={{ opacity: 0, y: 15, scale: 0.95 }} 
-                      className="absolute top-full left-0 min-w-[280px] bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-1.5 mt-2 backdrop-blur-3xl z-[1050]"
+                      className="absolute top-full left-0 min-w-[280px] bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-0 mt-2 backdrop-blur-3xl z-[1050]"
                     >
                       <div className="grid grid-cols-1 gap-0.5">
                         {item.sub.map((sub: any) => (
