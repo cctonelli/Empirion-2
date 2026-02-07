@@ -7,7 +7,7 @@ import {
   ArrowRight, ChevronLeft, ChevronRight, Factory, BrainCircuit, Globe,
   Rocket, Terminal, ShoppingCart, Briefcase, Tractor, DollarSign, Hammer,
   Trophy, Award, Calendar, CheckCircle2, Zap, TrendingUp, ShieldCheck,
-  Star, Target, Cpu, Activity, BarChart3
+  Star, Target, Cpu, Activity, BarChart3, Users
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -142,10 +142,10 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                />
                />
                <CarouselSlide 
-                  icon={<BarChart3 size={40}/>}
+                  icon={<Users size={40}/>}
                   badge="Forme Lideres"
                   title="Tutoria Assistida"
-                  desc="Tutores traçando estrategias quase infinitas, com auxílio da IA para cenários caóticos 'Black Swan'"
+                  desc="Tutores traçando estrategias quase infinitas, com auxílio da IA para cenários caóticos Black Swan"
                   img="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=1200&auto=format&fit=crop"
                />
             </Slider>
