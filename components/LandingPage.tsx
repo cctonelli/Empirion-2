@@ -331,7 +331,7 @@ const CarouselSlide = ({ icon, badge, title, desc, img }: any) => (
             <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter leading-[0.9]">{title}</h3>
             <p className="text-lg md:text-xl text-slate-400 font-medium italic max-w-xl">{desc}</p>
             <button className="px-10 py-4 bg-white/5 border border-white/10 text-white rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-orange-600 hover:border-orange-400 transition-all flex items-center gap-4 group/btn shadow-xl active:scale-95">
-               Ativar Módulo <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
+               Saiba Mais  <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
             </button>
          </div>
          <div className="hidden md:block w-1/2 relative overflow-hidden">
