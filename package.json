@@ -3,6 +3,7 @@
   "name": "empirion-oracle-v13",
   "version": "13.2.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --skipLibCheck && vite build",
