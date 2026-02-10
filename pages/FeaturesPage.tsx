@@ -166,8 +166,8 @@ const FeaturesPage: React.FC = () => {
 
               <FeatureBlock 
                 id="multi"
-                title="Simulador Multi-Ramos"
-                desc="Cenários específicos para Indústria, Comércio, Agronegócio, Financeiro e Construção Civil."
+                title="Simulador Multisetorial"
+                desc="Cenários específicos para Indústria, Varejo, Agronegócio, Mercado Financeiro e Construção Civil."
                 icon={
                   <div className="grid grid-cols-2 gap-1 scale-[0.6]">
                     <Factory size={24}/> <ShoppingCart size={24}/> <Tractor size={24}/> <Hammer size={24}/>
