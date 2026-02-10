@@ -255,7 +255,7 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
     titleHighlight: "INDUSTRIAL",
     body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda parametrizável, IA preditiva Gemini 3 e contabilidade 100% integrada. Enquanto outros oferecem planilhas estáticas, o Empirion entrega um mundo industrial vivo onde cada decisão pesa.",
     accent: "orange",
-    heroImage: "https://images.unsplash.com/photo-1558419358-1d40b2a5d5ed?q=80&w=774q=80&w=774q=80&w=1200&auto=format&fit=crop",
+    heroImage: "/images/sectors/industrial-hero.jpg",
     advantages: [
       "Cenários macroeconômicos programáveis por rodada – inflação, câmbio, demanda e crises sob controle do tutor.",
       "IVA/VAT realista e parametrizável – impacto direto no custo final, margem e competitividade.",
@@ -313,11 +313,11 @@ export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   },
 
   // BRANCH SKELETONS - Inativos por padrão
-  'branch-commercial': { isActive: false, name: "Varejo", accent: "blue", heroImage: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1200&auto=format&fit=crop" },
-  'branch-services': { isActive: false, name: "Prestação de Serviços", accent: "indigo", heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop" },
-  'branch-agribusiness': { isActive: false, name: "Agronegócio", accent: "emerald", heroImage: "https://images.unsplash.com/photo-1634433545797-c18dd170e75e?q=80&w=1200&auto=format&fit=crop" },
-  'branch-finance': { isActive: false, name: "Mercado Financeiro", accent: "cyan", heroImage: "https://images.unsplash.com/flagged/photo-1579225818168-858da8667fae?q=80&w=1200&auto=format&fit=crop" },
-  'branch-construction': { isActive: false, name: "Construção Civil", accent: "amber", heroImage: "https://plus.unsplash.com/premium_photo-1682724602925-f0264b85953f?=80&w=1200&auto=format&fit=crop" },
+  'branch-commercial': { isActive: false, name: "Varejo", accent: "blue", heroImage: "/images/sectors/commercial-hero.jpg" },
+  'branch-services': { isActive: false, name: "Prestação de Serviços", accent: "indigo", heroImage: "/images/sectors/services-hero.jpg" },
+  'branch-agribusiness': { isActive: false, name: "Agronegócio", accent: "emerald", heroImage: "/images/sectors/agribusiness-hero.jpg" },
+  'branch-finance': { isActive: false, name: "Mercado Financeiro", accent: "cyan", heroImage: "/images/sectors/finance-hero.jpg" },
+  'branch-construction': { isActive: false, name: "Construção Civil", accent: "amber", heroImage: "/images/sectors/construction-hero.jpg" },
 
   'solutions-bp': {
     title: "Plano de Negócios",

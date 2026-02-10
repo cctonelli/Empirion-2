@@ -38,10 +38,10 @@ const ActivityDetail: React.FC = () => {
         if (localContent) {
           setContent(localContent);
         } else {
-          // 3. MINIMAL FALLBACK
+          // 3. MINIMAL FALLBACK - LOCAL ASSETS
           setContent({
             name: slug?.toUpperCase() || 'ARENA',
-            heroImage: "https://images.unsplash.com/photo-1558419358-1d40b2a5d5ed?q=80&w=774q=80&w=1200&auto=format&fit=crop",
+            heroImage: "/images/hero/generic-hero-fallback.jpg",
             titlePrefix: "Inicie o Comando",
             titleHighlight: "Master Node Arena",
             body: "Aguardando sincronização de briefing regional...",
@@ -96,7 +96,12 @@ const ActivityDetail: React.FC = () => {
       <section className="relative min-h-[90vh] flex items-center pt-20">
          <div className="absolute inset-0 z-0">
            <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/80 via-[#020617]/60 to-[#020617] z-10" />
-           <img src={content.heroImage} className="w-full h-full object-cover opacity-40 grayscale-[0.5] contrast-125" alt={content.name} />
+           <img 
+              src={content.heroImage} 
+              className="w-full h-full object-cover opacity-40 grayscale-[0.5] contrast-125" 
+              alt={content.name} 
+              onError={(e: any) => { e.target.style.display = 'none'; }}
+           />
          </div>
 
          <div className="container mx-auto px-8 lg:px-24 relative z-20 text-center space-y-12">

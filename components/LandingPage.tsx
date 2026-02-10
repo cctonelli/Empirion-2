@@ -108,7 +108,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </motion.div>
       </section>
 
-      {/* DYNAMIC CAROUSEL - OBRIGATÓRIO DIRETRIZES IMUTÁVEIS */}
+      {/* DYNAMIC CAROUSEL - LOCAL IMAGES PATHS */}
       <section className="relative z-30 -mt-20 md:-mt-32 px-6 md:px-24 mb-40">
          <div className="max-w-[1600px] mx-auto relative">
             <Slider {...carouselSettings}>
@@ -117,35 +117,35 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   badge="Modo Industrial"
                   title="Produção Massiva"
                   desc="Gerencie cadeias de suprimento e ativos de capital em múltiplos mercados regionais e globais"
-                  img="https://images.unsplash.com/photo-1675176785803-bffbbb0cd2f4?q=80&w=1200&auto=format&fit=crop"
+                  img="/images/carousel/slide-industrial.jpg"
                />
                <CarouselSlide 
                   icon={<BrainCircuit size={40}/>}
                   badge="IA Agregada"
                   title="Mentoria via Gemini"
                   desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço, DRE e CashFlow"
-                  img="https://drive.google.com/file/d/14FufcuQYTBbjvKRjTvE1kBqAYK2jLTrc/view?usp=sharing?q=80&w=1200&auto=format&fit=crop"
+                  img="/images/carousel/slide-ai-mentor.jpg"
                />
                <CarouselSlide 
                   icon={<Globe size={40}/>}
                   badge="Expansão Global"
                   title="Geopolítica Regional"
                   desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e variações cambiais"
-                  img="https://images.unsplash.com/photo-1670121180583-39ab653a071c?q=80&w=1200&auto=format&fit=crop"
+                  img="/images/carousel/slide-global-geopolitics.jpg"
                />
                <CarouselSlide 
                   icon={<BarChart3 size={40}/>}
                   badge="Visão Estratégica"
                   title="Financeiro Avançado"
                   desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos"
-                  img="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop"
+                  img="/images/carousel/slide-financial-dash.jpg"
                />
                <CarouselSlide 
                   icon={<Users size={40}/>}
                   badge="Formando Lideranças"
                   title="Tutoria Assistida"
                   desc="Tutores traçando estrategias quase infinitas, com auxílio da IA para cenários caóticos Black Swan"
-                  img="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=1200&auto=format&fit=crop"
+                  img="/images/carousel/slide-tutor-intelligence.jpg"
                />
             </Slider>
          </div>
@@ -335,7 +335,14 @@ const CarouselSlide = ({ icon, badge, title, desc, img }: any) => (
             </button>
          </div>
          <div className="hidden md:block w-1/2 relative overflow-hidden">
-            <img src={img} className="w-full h-full object-cover grayscale opacity-30 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-1000" alt={title} />
+            <img 
+               src={img} 
+               className="w-full h-full object-cover grayscale opacity-30 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-1000" 
+               alt={title} 
+               onError={(e: any) => {
+                  e.target.style.display = 'none';
+               }}
+            />
          </div>
       </div>
    </div>

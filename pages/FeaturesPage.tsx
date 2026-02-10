@@ -23,9 +23,19 @@ const FeaturesPage: React.FC = () => {
 
   return (
     <div className="min-h-screen relative bg-[#F1F5F9] text-slate-900 font-sans overflow-x-hidden selection:bg-orange-500/30">
-      {/* Opcional: Manter partículas sutis no fundo ou usar um gradiente limpo como na imagem */}
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-40">
-         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(249,115,22,0.05)_0%,transparent_70%)]" />
+      
+      {/* BACKGROUND IMAGE OVERLAY - LOCAL PATH */}
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
+         <img 
+            src="/images/background/neural-overlay-bg.jpg" 
+            className="w-full h-full object-cover grayscale brightness-50" 
+            alt="Neural Network Background" 
+            onError={(e: any) => {
+               // Fallback silencioso se a imagem ainda não existir
+               e.target.style.display = 'none';
+            }}
+         />
+         <div className="absolute inset-0 bg-gradient-to-b from-[#F1F5F9] via-transparent to-[#F1F5F9]" />
       </div>
 
       <div className="container mx-auto px-4 md:px-10 relative z-10 pt-32 pb-24">
