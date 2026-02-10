@@ -131,7 +131,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   badge="Expansão Global"
                   title="Geopolítica Regional"
                   desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e variações cambiais"
-                  img="/images/carousel/global_market.jpg"
+                  img="/images/carousel/slide-global-geopolitics.jpg"
                />
                <CarouselSlide 
                   icon={<BarChart3 size={40}/>}
