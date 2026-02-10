@@ -12,7 +12,8 @@ import {
   Hammer, ChevronRight, Zap, Target, BarChart3, Users, Box,
   Gavel, Cpu, Sparkles, ShieldCheck, Globe, Trophy, Play,
   Landmark, TrendingUp, BrainCircuit, Rocket, ShieldAlert,
-  ArrowRight, CheckCircle2, Flame, Award, UsersRound, Lock
+  ArrowRight, CheckCircle2, Flame, Award, UsersRound, Lock,
+  Activity
 } from 'lucide-react';
 import { getPageContent } from '../constants';
 import { fetchPageContent, getModalities } from '../services/supabase';
@@ -23,6 +24,7 @@ const ActivityDetail: React.FC = () => {
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const [content, setContent] = useState<any>(null);
+  const [heroError, setHeroError] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -94,14 +96,26 @@ const ActivityDetail: React.FC = () => {
       <EmpireParticles />
       
       <section className="relative min-h-[90vh] flex items-center pt-20">
-         <div className="absolute inset-0 z-0">
-           <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/80 via-[#020617]/60 to-[#020617] z-10" />
-           <img 
-              src={content.heroImage} 
-              className="w-full h-full object-cover opacity-40 grayscale-[0.5] contrast-125" 
-              alt={content.name} 
-              onError={(e: any) => { e.target.style.display = 'none'; }}
-           />
+         <div className="absolute inset-0 z-0 bg-slate-950">
+           <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/90 via-[#020617]/70 to-[#020617] z-10" />
+           {!heroError ? (
+              <img 
+                 src={content.heroImage} 
+                 className="w-full h-full object-cover opacity-30 grayscale-[0.5] contrast-125 transition-opacity duration-1000" 
+                 alt={content.name} 
+                 onError={() => {
+                    console.warn(`[Empirion Hero Alert] Path failed: ${content.heroImage}`);
+                    setHeroError(true);
+                 }}
+              />
+           ) : (
+              <div className="w-full h-full bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.05)_0%,transparent_70%)] flex items-center justify-center">
+                 <div className="text-center opacity-10 space-y-4">
+                    <Activity size={120} className="mx-auto text-orange-500 animate-pulse" />
+                    <span className="block text-2xl font-black uppercase tracking-[0.5em]">Neural Mesh Active</span>
+                 </div>
+              </div>
+           )}
          </div>
 
          <div className="container mx-auto px-8 lg:px-24 relative z-20 text-center space-y-12">

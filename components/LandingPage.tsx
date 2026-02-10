@@ -75,13 +75,11 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     <div className="min-h-screen bg-[#020617] font-sans text-slate-100 relative overflow-x-hidden select-none">
       <EmpireParticles />
       
-      {/* EMPIRION ORANGE CLOUDS - CAMADA DE FUNDO DINÂMICA */}
       <div className="fixed inset-0 pointer-events-none z-0">
          <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.3, 0.2], rotate: [0, 45, 0] }} transition={{ duration: 25, repeat: Infinity }} className="absolute -top-[20%] -left-[10%] w-[1000px] h-[1000px] bg-orange-600/30 blur-[250px] rounded-full" />
          <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1], x: [0, 100, 0] }} transition={{ duration: 20, repeat: Infinity, delay: 2 }} className="absolute top-[30%] -right-[10%] w-[800px] h-[800px] bg-orange-400/20 blur-[200px] rounded-full" />
       </div>
 
-      {/* HERO SECTION - RECONSOLIDADO v1.1 */}
       <section className="min-h-screen flex flex-col items-center justify-center pt-24 px-8 relative z-20 text-center">
         <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="max-w-7xl mx-auto space-y-12">
            <div className="inline-flex items-center gap-4 px-6 py-2.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-mono font-black text-orange-500 uppercase tracking-[0.6em] backdrop-blur-xl shadow-2xl">
@@ -108,7 +106,6 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </motion.div>
       </section>
 
-      {/* DYNAMIC CAROUSEL - LOCAL IMAGES PATHS */}
       <section className="relative z-30 -mt-20 md:-mt-32 px-6 md:px-24 mb-40">
          <div className="max-w-[1600px] mx-auto relative">
             <Slider {...carouselSettings}>
@@ -151,7 +148,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* RAMOS CARDS */}
+      {/* RESTO DO COMPONENTE IGUAL */}
       <section className="landing-section bg-slate-950/40">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
@@ -185,7 +182,6 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* PLACAR CAMPEONATOS - IMUTÁVEL v1.1 */}
       <section className="landing-section bg-[#020617]">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="flex flex-col md:flex-row justify-between items-end gap-10">
@@ -221,7 +217,6 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* EMPIRE BADGES - IMUTÁVEL v1.1 */}
       <section className="landing-section bg-slate-900/20">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
@@ -240,7 +235,6 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
          </div>
       </section>
 
-      {/* ROADMAP TIMELINE - IMUTÁVEL v1.1 */}
       <section className="landing-section bg-[#020617]">
          <div className="max-w-5xl mx-auto space-y-24">
             <div className="text-center space-y-4">
@@ -319,33 +313,51 @@ const RoadmapNode = ({ phase, title, desc, status, active }: any) => (
    </div>
 );
 
-const CarouselSlide = ({ icon, badge, title, desc, img }: any) => (
-   <div className="px-4 outline-none">
-      <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[5rem] overflow-hidden min-h-[400px] flex flex-col md:flex-row shadow-3xl relative group border-t-orange-600/30 border-t-4">
-         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
-         <div className="flex-1 p-10 md:p-16 flex flex-col justify-center items-start text-left relative z-20 space-y-5">
-            <div className="flex items-center gap-5">
-               <div className="p-3.5 bg-orange-600 rounded-3xl text-white shadow-2xl">{icon}</div>
-               <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.6em] italic">{badge}</span>
+const CarouselSlide = ({ icon, badge, title, desc, img }: any) => {
+   const [imgError, setImgError] = useState(false);
+
+   return (
+      <div className="px-4 outline-none">
+         <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[5rem] overflow-hidden min-h-[400px] flex flex-col md:flex-row shadow-3xl relative group border-t-orange-600/30 border-t-4">
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
+            <div className="flex-1 p-10 md:p-16 flex flex-col justify-center items-start text-left relative z-20 space-y-5">
+               <div className="flex items-center gap-5">
+                  <div className="p-3.5 bg-orange-600 rounded-3xl text-white shadow-2xl">{icon}</div>
+                  <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.6em] italic">{badge}</span>
+               </div>
+               <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter leading-[0.9]">{title}</h3>
+               <p className="text-lg md:text-xl text-slate-400 font-medium italic max-w-xl">{desc}</p>
+               <button className="px-10 py-4 bg-white/5 border border-white/10 text-white rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-orange-600 hover:border-orange-400 transition-all flex items-center gap-4 group/btn shadow-xl active:scale-95">
+                  Saiba Mais  <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
+               </button>
             </div>
-            <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter leading-[0.9]">{title}</h3>
-            <p className="text-lg md:text-xl text-slate-400 font-medium italic max-w-xl">{desc}</p>
-            <button className="px-10 py-4 bg-white/5 border border-white/10 text-white rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-orange-600 hover:border-orange-400 transition-all flex items-center gap-4 group/btn shadow-xl active:scale-95">
-               Saiba Mais  <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
-            </button>
-         </div>
-         <div className="hidden md:block w-1/2 relative overflow-hidden">
-            <img 
-               src={img} 
-               className="w-full h-full object-cover grayscale opacity-30 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-1000" 
-               alt={title} 
-               onError={(e: any) => {
-                  e.target.style.display = 'none';
-               }}
-            />
+            
+            <div className="hidden md:block w-1/2 relative overflow-hidden bg-slate-950">
+               {/* FALLBACK GRADIENT IF IMAGE FAILS */}
+               <div className="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-blue-600/5 opacity-50" />
+               {!imgError ? (
+                  <img 
+                     src={img} 
+                     className="w-full h-full object-cover grayscale opacity-40 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-1000" 
+                     alt={title} 
+                     loading="eager"
+                     onError={(e: any) => {
+                        console.warn(`[Empirion Asset Check] Failed to load: ${img}`);
+                        setImgError(true);
+                     }}
+                  />
+               ) : (
+                  <div className="w-full h-full flex items-center justify-center border-l border-white/5">
+                     <div className="text-center space-y-2 opacity-20">
+                        <Activity size={48} className="mx-auto text-orange-500 animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 italic">Neural Visual Offline</span>
+                     </div>
+                  </div>
+               )}
+            </div>
          </div>
       </div>
-   </div>
-);
+   );
+};
 
 export default LandingPage;
