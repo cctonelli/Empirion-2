@@ -124,7 +124,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   badge="IA Agregada"
                   title="Mentoria via Gemini"
                   desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço, DRE e CashFlow"
-                  img="https://drive.google.com/file/d/14FufcuQYTBbjvKRjTvE1kBqAYK2jLTrc?q=80&w=1200&auto=format&fit=crop"
+                  img="https://drive.google.com/file/d/14FufcuQYTBbjvKRjTvE1kBqAYK2jLTrc/view?usp=sharing?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<Globe size={40}/>}
