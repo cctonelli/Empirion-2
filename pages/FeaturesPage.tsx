@@ -191,7 +191,7 @@ const FeaturesPage: React.FC = () => {
               <FeatureBlock 
                 id="geo"
                 title="Expansão Geopolítica de 15+ Regiões"
-                desc="Suporte multi-moeda com taxas de câmbio dinâmicas e demanda oscilante de até 56%."
+                desc="Suporte multi-moeda com taxas de câmbio dinâmicas e demanda oscilante parametrizável por round."
                 icon={<Globe size={32} />}
                 color="blue"
                 align="left"

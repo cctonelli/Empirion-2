@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType } from "../types";
+import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType, BlackSwanEvent } from "../types";
 
 const getClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -9,19 +9,23 @@ export const auditBusinessPlan = async (section: string, text: string, financial
     const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: `Você é o Auditor Master do Empirion. Analise a coerência desta seção do Plano de Negócios.
-      Seção: ${section}
-      Texto do Usuário: "${text}"
-      Contexto Financeiro (Round Atual): ${JSON.stringify(financialContext)}
+      contents: `Você é o Auditor Master do Empirion, com expertise em Venture Capital e Consultoria Estratégica. 
+      Analise a viabilidade comercial desta seção do Plano de Negócios.
+      
+      Seção Atual: ${section}
+      Conteúdo Fornecido: "${text}"
+      Contexto da Unidade (Simulação): ${JSON.stringify(financialContext)}
       
       Sua tarefa:
-      1. Dê uma nota de 1 a 10 para a viabilidade técnica.
-      2. Aponte 2 riscos baseados nos números reais da empresa.
-      3. Sugira 1 ajuste imediato.
-      Idioma: Português (Brasil). Tom: Executivo e direto.`,
+      1. Critique de forma construtiva a lógica estratégica (Tom: Direto, Executivo).
+      2. Se houver dados financeiros (como ROI ou Break-Even), valide se fazem sentido para o setor.
+      3. Aponte 2 falhas críticas que poderiam afastar investidores.
+      4. Dê uma nota de 1 a 10 para o "Market Fit" desta seção.
+      
+      Idioma: Português (Brasil). Máximo 150 palavras.`,
       config: { 
-        thinkingConfig: { thinkingBudget: 2048 },
-        temperature: 0.4
+        thinkingConfig: { thinkingBudget: 4096 },
+        temperature: 0.5
       }
     });
 
@@ -54,8 +58,6 @@ export const getLiveDecisionAdvice = async (decisions: DecisionData, branch: str
 
 /**
  * Geração de Decisão Tática para Competidores Sintéticos (Bots)
- * Utiliza o modelo flash para velocidade e custo.
- * Suporta 1 a N regiões.
  */
 export const generateBotDecision = async (
   branch: Branch, 
@@ -106,7 +108,6 @@ export const generateBotDecision = async (
                 sales_staff_count: { type: Type.NUMBER }
               }
             },
-            // Fix: Added term_interest_rate to the responseSchema for bot decision consistency
             production: {
               type: Type.OBJECT,
               properties: {
@@ -159,7 +160,6 @@ export const generateBotDecision = async (
             }
         });
     }
-    // Garante preenchimento de 1 a N regiões
     for (let i = 1; i <= regionCount; i++) {
         if (!cleanedRegions[i]) {
             cleanedRegions[i] = { price: 375, term: 1, marketing: 0 };
@@ -178,7 +178,6 @@ export const generateBotDecision = async (
         sales_staff_count: parsed.hr?.sales_staff_count || 50,
         misc: 0
       },
-      // Fix: Added missing term_interest_rate property to successful return to satisfy production interface
       production: {
         purchaseMPA: parsed.production?.purchaseMPA || 15000,
         purchaseMPB: parsed.production?.purchaseMPB || 10000,
@@ -206,7 +205,6 @@ export const generateBotDecision = async (
     };
   } catch (error) {
     console.error("Bot Decision Error:", error);
-    // Fix: Added missing term_interest_rate property to fallback return in catch block
     return {
       judicial_recovery: false,
       regions: Object.fromEntries(Array.from({ length: regionCount }, (_, i) => [i + 1, { price: 372, term: 1, marketing: 0 }])),
@@ -215,6 +213,60 @@ export const generateBotDecision = async (
       machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
       finance: { loanRequest: 0, loanTerm: 1, application: 0 },
       estimates: { forecasted_revenue: 0, forecasted_unit_cost: 0, forecasted_net_profit: 0 }
+    };
+  }
+};
+
+/**
+ * Geração de Evento "Cisne Negro" para instabilidade de arena
+ * Fix: Implemented missing exported member required by AdminCommandCenter
+ */
+export const generateBlackSwanEvent = async (branch: Branch): Promise<BlackSwanEvent> => {
+  try {
+    const ai = getClient();
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Gere um evento tático do tipo "Cisne Negro" (inesperado e de alto impacto) para uma simulação empresarial de ${branch}.
+      O evento deve impactar variáveis macroeconômicas como inflação, demanda ou taxas de juros.
+      Retorne obrigatoriamente um JSON.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING, description: "Título curto do evento" },
+            description: { type: Type.STRING, description: "O que aconteceu no mundo simulado" },
+            impact: { type: Type.STRING, description: "Consequência para as empresas" },
+            modifiers: {
+              type: Type.OBJECT,
+              properties: {
+                inflation: { type: Type.NUMBER, description: "Ajuste na inflação (ex: 0.8 para +0.8%)" },
+                demand: { type: Type.NUMBER, description: "Ajuste na demanda (ex: -15 para -15%)" },
+                interest: { type: Type.NUMBER, description: "Ajuste na taxa TR (ex: 1.5 para +1.5%)" },
+                productivity: { type: Type.NUMBER, description: "Ajuste na produtividade (ex: -0.05 para -5%)" }
+              },
+              required: ["inflation", "demand", "interest", "productivity"]
+            }
+          },
+          required: ["title", "description", "impact", "modifiers"]
+        }
+      }
+    });
+
+    const text = response.text || '{}';
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Black Swan Generation error:", error);
+    return {
+      title: "Instabilidade Logística Global",
+      description: "Um bloqueio imprevisto em rotas comerciais principais causou atrasos massivos.",
+      impact: "Aumento de custos e redução temporária de demanda.",
+      modifiers: {
+        inflation: 0.5,
+        demand: -10,
+        interest: 0,
+        productivity: -0.02
+      }
     };
   }
 };
@@ -303,82 +355,6 @@ export const generateMarketAnalysis = async (
   } catch (error) { 
     console.error("Market error:", error);
     return "Link tático interrompido."; 
-  }
-};
-
-export const generateGazetaNews = async (context: { 
-  period: number, 
-  leader?: string, 
-  inflation?: string,
-  focus?: string[],
-  style?: 'sensationalist' | 'analytical' | 'neutral',
-  analysisSource?: AnalysisSource
-}) => {
-  const focusAreas = context.focus?.join(", ") || "reajuste de insumos, liderança do setor, novos mercados";
-  const newsStyle = context.style || "analytical";
-  const isReal = context.analysisSource === 'ai_real_world';
-  
-  const groundingContext = isReal 
-    ? "BASE REAL: Pesquise notícias REAIS da última semana sobre economia global e o setor de atuação para mesclar com os nomes das equipes vencedoras."
-    : "MODO MOTOR: Crie notícias puramente baseadas na interpretação dos indicadores do simulador e na performance das empresas fictícias.";
-
-  try {
-    const ai = getClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Gere 3 manchetes para a "Gazeta Empirion". 
-      Contexto: Ciclo ${context.period}. Líder: ${context.leader || 'Equipe Alpha'}. Inflação: ${context.inflation || '1.0%'}.
-      Áreas de Foco: ${focusAreas}.
-      ${groundingContext}
-      Idioma: Português (Brasil).`,
-      config: { 
-        temperature: 0.8,
-        tools: isReal ? [{ googleSearch: {} }] : []
-      }
-    });
-
-    return response.text || "Gazeta em manutenção.";
-  } catch (error) { 
-    console.error("Gazeta error:", error);
-    return "Gazeta offline."; 
-  }
-};
-
-export const generateBlackSwanEvent = async (branch: string) => {
-  try {
-    const ai = getClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Gere um evento 'Cisne Negro' (Black Swan) para uma simulação empresarial do setor ${branch}. 
-      Forneça Título, Descrição, Impacto Narrativo e Modificadores numéricos.
-      Idioma: Português (Brasil).`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            description: { type: Type.STRING },
-            impact: { type: Type.STRING },
-            modifiers: {
-              type: Type.OBJECT,
-              properties: {
-                inflation: { type: Type.NUMBER },
-                demand: { type: Type.NUMBER },
-                interest: { type: Type.NUMBER },
-                productivity: { type: Type.NUMBER }
-              },
-              required: ["inflation", "demand", "interest", "productivity"]
-            }
-          },
-          required: ["title", "description", "impact", "modifiers"]
-        }
-      }
-    });
-    return JSON.parse(response.text.trim());
-  } catch (error) { 
-    console.error("Event error:", error);
-    return null; 
   }
 };
 

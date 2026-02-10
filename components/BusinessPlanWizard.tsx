@@ -8,7 +8,8 @@ import {
   TrendingUp, Activity, PieChart, Info, ShieldAlert, Star,
   Printer, FileText, History, TrendingDown, ArrowUpRight,
   LayoutGrid, Users, Rocket, ExternalLink, HelpCircle,
-  AlertOctagon, BadgeCheck, FileWarning
+  AlertOctagon, BadgeCheck, FileWarning, Scale, 
+  Calculator, Plus, Trash2, ArrowRight
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -25,14 +26,20 @@ interface IntegratedWizardProps {
   onClose?: () => void;
 }
 
+/**
+ * Fix: Declarations moved before use in BP_STEPS to avoid reference error
+ */
+const Megaphone = ({ size }: { size: number }) => <Target size={size} />; // Fallback icon
+const Settings2 = ({ size }: { size: number }) => <Activity size={size} />; // Fallback icon
+
 const BP_STEPS = [
   { id: 0, label: 'SUMÁRIO EXECUTIVO', icon: <Sparkles size={18}/>, desc: 'A visão panorâmica gerada por IA.' },
-  { id: 1, label: 'ANÁLISE DE MERCADO', icon: <Globe size={18}/>, desc: 'Matriz SWOT, TAM/SAM/SOM e concorrentes.' },
-  { id: 2, label: 'PRODUTOS & SERVIÇOS', icon: <LayoutGrid size={18}/>, desc: 'Diferenciais, USP e ciclo de vida.' },
-  { id: 3, label: 'ESTRATÉGIA MKT/VENDAS', icon: <Target size={18}/>, desc: '4Ps, canais e pricing regional.' },
-  { id: 4, label: 'ORGANIZAÇÃO & GESTÃO', icon: <Users size={18}/>, desc: 'Organograma, headcount e cultura.' },
-  { id: 5, label: 'PLANO FINANCEIRO', icon: <DollarSign size={18}/>, desc: 'Necessidade de capital e projeções.' },
-  { id: 6, label: 'PLANO CONTINGÊNCIA', icon: <AlertOctagon size={18}/>, desc: 'Resposta a eventos Black Swan.' },
+  { id: 1, label: 'MERCADO & SWOT', icon: <Globe size={18}/>, desc: 'Análise setorial e matriz de competitividade.' },
+  { id: 2, label: 'PROPOSTA DE VALOR', icon: <Target size={18}/>, desc: 'Value Proposition e diferenciação Lean.' },
+  { id: 3, label: 'MARKETING & TRAÇÃO', icon: <Megaphone size={18}/>, desc: '4Ps, canais e aquisição de clientes.' },
+  { id: 4, label: 'OPERAÇÕES & RISCOS', icon: <Settings2 size={18}/>, desc: 'Processos e matriz de mitigação de falhas.' },
+  { id: 5, label: 'PLANO FINANCEIRO', icon: <Calculator size={18}/>, desc: 'Cálculo de ROI, Break-Even e Capital.' },
+  { id: 6, label: 'FUNDING & ROADMAP', icon: <TrendingUp size={18}/>, desc: 'Investimento e marcos de evolução.' },
 ];
 
 const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, teamId, currentRound = 1, onClose }) => {
@@ -43,10 +50,29 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
   const [isSaving, setIsSaving] = useState(false);
   
   const [activePlan, setActivePlan] = useState<BusinessPlan | null>(null);
-  const [formData, setFormData] = useState<Record<number, string>>({});
+  const [formData, setFormData] = useState<Record<number, any>>({});
   const [simHistory, setSimHistory] = useState<any[]>([]);
   const [auditResult, setAuditResult] = useState<string | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
+
+  // Financial Auto-Calculations
+  const financialMetrics = useMemo(() => {
+    const data = formData[5] || {};
+    const revenue = parseFloat(data.projected_revenue) || 0;
+    const fixedCosts = parseFloat(data.fixed_costs) || 0;
+    const varCosts = parseFloat(data.variable_costs_unit) || 0;
+    const price = parseFloat(data.avg_price) || 1;
+    const investment = parseFloat(data.total_investment) || 1;
+
+    const breakEven = fixedCosts / Math.max(0.01, (price - varCosts));
+    const roi = ((revenue - (fixedCosts + (breakEven * varCosts)) - investment) / investment) * 100;
+
+    return {
+      breakEven: Math.ceil(breakEven),
+      roi: roi.toFixed(1),
+      margin: (((price - varCosts) / price) * 100).toFixed(1)
+    };
+  }, [formData]);
 
   const isIntegrated = !!(championshipId && teamId);
 
@@ -80,11 +106,10 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
           is_template: false,
           shared_with: []
         };
-        const { data, error } = await saveBusinessPlan(payload) as any;
-        if (error) throw error;
-        alert(status === 'submitted' ? "PLANO ESTRATÉGICO SUBMETIDO PARA AUDITORIA DO TUTOR." : "RASCUNHO SINCRONIZADO.");
+        await saveBusinessPlan(payload);
+        alert(status === 'submitted' ? "PLANO ESTRATÉGICO SUBMETIDO PARA AUDITORIA." : "RASCUNHO SINCRONIZADO.");
     } catch (err: any) {
-        alert(`FALHA NA SINCRONIZAÇÃO: ${err.message}`);
+        alert(`FALHA: ${err.message}`);
     } finally {
         setIsSaving(false);
     }
@@ -95,22 +120,29 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
     const lastKPIs = simHistory.length > 0 ? simHistory[simHistory.length - 1] : null;
     const suggestion = await generateBusinessPlanField(
       BP_STEPS[stepIdx].label, 
-      "Plano Estratégico", 
-      (formData[stepIdx] || ''), 
-      `Elabore a seção ${BP_STEPS[stepIdx].label} para uma empresa de ${branch}. Use tom executivo. Se for Simulação, considere KPIs: ${JSON.stringify(lastKPIs)}`, 
+      "Plano Estratégico Detalhado", 
+      JSON.stringify(formData[stepIdx] || {}), 
+      `Gere um texto profissional para a seção ${BP_STEPS[stepIdx].label}. Branch: ${branch}. KPIs Atuais: ${JSON.stringify(lastKPIs)}. Seja específico e use terminologia de mercado (EBITDA, ROI, Market Fit).`, 
       branch
     );
-    setFormData(prev => ({ ...prev, [stepIdx]: suggestion }));
+    setFormData(prev => ({ ...prev, [stepIdx]: { ...prev[stepIdx], text: suggestion } }));
     setIsAiLoading(null);
   };
 
   const handleAudit = async () => {
-    const currentText = formData[step];
+    const currentText = JSON.stringify(formData[step]);
     if (!currentText) return;
     setIsAuditing(true);
     const result = await auditBusinessPlan(BP_STEPS[step].label, currentText, simHistory[simHistory.length - 1]);
     setAuditResult(result);
     setIsAuditing(false);
+  };
+
+  const updateNestedField = (stepIdx: number, field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [stepIdx]: { ...(prev[stepIdx] || {}), [field]: value }
+    }));
   };
 
   return (
@@ -125,21 +157,14 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
               <PenTool size={40} />
            </motion.div>
            <h1 className="text-6xl md:text-7xl font-black text-white uppercase tracking-tighter italic leading-none">
-             {isIntegrated ? 'Simulation Business Plan' : 'Independent Business Builder'}
+             {isIntegrated ? 'Simulation Business Plan' : 'Independent Strategos Builder'}
            </h1>
            <p className="text-2xl text-slate-400 font-medium italic">
-             {isIntegrated ? `Unidade Tática • Ciclo 0${currentRound}` : 'Crie sua estratégia para o mercado real'}
+             {isIntegrated ? `Unidade Tática • Ciclo 0${currentRound}` : 'Arquitete sua empresa com IA nível Oracle'}
            </p>
         </header>
 
-        {/* INDICADOR DE MODO */}
-        <div className="flex justify-center print:hidden">
-           <div className={`px-6 py-2 rounded-full border flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.3em] ${isIntegrated ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400' : 'bg-orange-600/10 border-orange-500/30 text-orange-400'}`}>
-              {isIntegrated ? <><Rocket size={14}/> Sincronizado com Arena</> : <><ExternalLink size={14}/> Modo Independente Standalone</>}
-           </div>
-        </div>
-
-        {/* STEPS SELECTOR */}
+        {/* PROGRESS TRACKER */}
         <div className="max-w-7xl mx-auto flex items-center justify-between relative px-4 overflow-x-auto pb-10 no-scrollbar print:hidden">
            <div className="absolute top-[32px] left-0 right-0 h-0.5 bg-white/5 -z-0 hidden lg:block"></div>
            {BP_STEPS.map((s, idx) => (
@@ -154,13 +179,8 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 max-w-7xl mx-auto">
           {/* EDITOR PRINCIPAL */}
-          <main className="lg:col-span-8 bg-slate-900/50 backdrop-blur-3xl p-12 md:p-16 rounded-[4rem] border border-white/10 shadow-2xl min-h-[700px] flex flex-col relative overflow-hidden print:col-span-12 print:bg-white print:border-0 print:shadow-none print:p-0">
+          <main className="lg:col-span-8 bg-slate-900/50 backdrop-blur-3xl p-12 md:p-16 rounded-[4rem] border border-white/10 shadow-2xl min-h-[800px] flex flex-col relative overflow-hidden print:col-span-12 print:bg-white print:border-0 print:shadow-none print:p-0">
              
-             <div className="hidden print:block border-b-4 border-slate-950 pb-10 mb-10">
-                <h1 className="text-4xl font-black uppercase italic tracking-tighter">Plano de Negócios Consolidado</h1>
-                <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">Empirion Strategos • Node Alpha v15.80</p>
-             </div>
-
              <AnimatePresence mode="wait">
                <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 space-y-10 relative z-10 print:hidden">
                   <div className="flex items-center justify-between pb-8 border-b border-white/5">
@@ -169,44 +189,62 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest italic">{BP_STEPS[step].desc}</p>
                      </div>
                      <button onClick={() => handleAISuggest(step)} disabled={isAiLoading !== null} className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all shadow-2xl ${isIntegrated ? 'bg-indigo-600' : 'bg-orange-600'} text-white`}>
-                        {isAiLoading === step ? <Loader2 size={16} className="animate-spin" /> : <Brain size={16} />} Sugestão Oráculo
+                        {isAiLoading === step ? <Loader2 size={16} className="animate-spin" /> : <Brain size={16} />} Consultar Strategos
                      </button>
                   </div>
-                  <textarea 
-                    value={formData[step] || ''}
-                    onChange={e => setFormData(prev => ({ ...prev, [step]: e.target.value }))}
-                    className="w-full min-h-[450px] p-12 bg-white/5 border border-white/10 rounded-[3.5rem] font-medium text-slate-100 outline-none focus:border-indigo-500/50 transition-all resize-none text-lg shadow-inner custom-scrollbar"
-                    placeholder={`Redija o conteúdo para ${BP_STEPS[step].label}...`}
-                  />
+
+                  {/* DINAMIC CONTENT BY STEP */}
+                  <div className="space-y-8">
+                     {step === 1 && (
+                        <div className="grid grid-cols-2 gap-4">
+                           <SwotField label="FORÇAS" color="text-emerald-500" value={formData[1]?.strengths} onChange={v => updateNestedField(1, 'strengths', v)} />
+                           <SwotField label="FRAQUEZAS" color="text-rose-500" value={formData[1]?.weaknesses} onChange={v => updateNestedField(1, 'weaknesses', v)} />
+                           <SwotField label="OPORTUNIDADES" color="text-blue-500" value={formData[1]?.opportunities} onChange={v => updateNestedField(1, 'opportunities', v)} />
+                           <SwotField label="AMEAÇAS" color="text-orange-500" value={formData[1]?.threats} onChange={v => updateNestedField(1, 'threats', v)} />
+                        </div>
+                     )}
+
+                     {step === 5 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-950/40 p-10 rounded-[3rem] border border-white/5">
+                           <FinancialInput label="Faturamento Projetado ($)" value={formData[5]?.projected_revenue} onChange={v => updateNestedField(5, 'projected_revenue', v)} />
+                           <FinancialInput label="Custos Fixos Totais ($)" value={formData[5]?.fixed_costs} onChange={v => updateNestedField(5, 'fixed_costs', v)} />
+                           <FinancialInput label="Custo Variável Unitário ($)" value={formData[5]?.variable_costs_unit} onChange={v => updateNestedField(5, 'variable_costs_unit', v)} />
+                           <FinancialInput label="Preço Médio de Venda ($)" value={formData[5]?.avg_price} onChange={v => updateNestedField(5, 'avg_price', v)} />
+                           <FinancialInput label="Investimento Inicial ($)" value={formData[5]?.total_investment} onChange={v => updateNestedField(5, 'total_investment', v)} />
+                           
+                           <div className="md:col-span-2 grid grid-cols-3 gap-4 pt-8 border-t border-white/10">
+                              <MetricResult label="Break-Even" val={`${financialMetrics.breakEven} unid`} />
+                              <MetricResult label="ROI Projetado" val={`${financialMetrics.roi}%`} />
+                              <MetricResult label="Margem de Contrib." val={`${financialMetrics.margin}%`} />
+                           </div>
+                        </div>
+                     )}
+
+                     <textarea 
+                        value={formData[step]?.text || ''}
+                        onChange={e => updateNestedField(step, 'text', e.target.value)}
+                        className="w-full min-h-[300px] p-12 bg-white/5 border border-white/10 rounded-[3.5rem] font-medium text-slate-100 outline-none focus:border-indigo-500/50 transition-all resize-none text-lg shadow-inner custom-scrollbar"
+                        placeholder={`Justificativa estratégica para ${BP_STEPS[step].label}...`}
+                     />
+                  </div>
                </motion.div>
              </AnimatePresence>
 
-             {/* INTERFACE DE PRINT */}
-             <div className="hidden print:block space-y-20">
-                {BP_STEPS.map((s, idx) => (
-                   <div key={idx} className="space-y-6 break-inside-avoid">
-                      <h3 className="text-3xl font-black uppercase italic border-b-2 border-slate-200 pb-4 text-slate-900">{s.label}</h3>
-                      <div className="text-xl text-slate-800 leading-relaxed whitespace-pre-wrap font-medium">
-                         {formData[idx] || "Seção não preenchida pelo estrategista."}
-                      </div>
-                   </div>
-                ))}
-             </div>
-
+             {/* ACTIONS */}
              <div className="pt-12 mt-12 border-t border-white/5 flex items-center justify-between relative z-10 print:hidden">
                 <button onClick={() => setStep(s => Math.max(0, s-1))} disabled={step === 0} className="px-10 py-5 text-slate-500 font-black text-[10px] uppercase tracking-widest hover:text-white disabled:opacity-0 flex items-center gap-3">
                   <ChevronLeft size={16} /> Voltar
                 </button>
                 <div className="flex gap-4">
                    <button onClick={() => window.print()} className="px-10 py-5 bg-white/5 border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-white hover:text-slate-950 transition-all flex items-center gap-3">
-                      <Printer size={16} /> Print Protocol
+                      <Printer size={16} /> Export PDF
                    </button>
                    <button onClick={() => handleSave('draft')} disabled={isSaving} className="px-10 py-5 bg-white/5 border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-3">
-                      {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Sincronizar Rascunho
+                      {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Trial
                    </button>
                    {step === BP_STEPS.length - 1 ? (
-                      <button onClick={() => handleSave(isIntegrated ? 'submitted' : 'finalized')} className="px-16 py-6 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-4 hover:scale-105 shadow-xl shadow-orange-500/20">
-                         Selar e Finalizar <ChevronRight size={16} />
+                      <button onClick={() => handleSave(isIntegrated ? 'submitted' : 'finalized')} className="px-16 py-6 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-4 hover:scale-105 shadow-xl">
+                         Finalizar Plano <ChevronRight size={16} />
                       </button>
                    ) : (
                       <button onClick={() => setStep(s => s + 1)} className={`px-16 py-6 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-4 ${isIntegrated ? 'bg-indigo-600 shadow-indigo-600/20' : 'bg-white text-slate-950 hover:bg-orange-600 hover:text-white'}`}>
@@ -217,51 +255,33 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
              </div>
           </main>
 
-          {/* ASIDE - ANALYTICS & AUDIT */}
+          {/* ASIDE - INSIGHTS & AUDIT */}
           <aside className="lg:col-span-4 space-y-8 print:hidden">
-             
-             {isIntegrated && simHistory.length > 0 && (
-                <div className="bg-slate-900 border border-white/10 p-10 rounded-[3.5rem] space-y-8 shadow-2xl">
-                   <div className="flex items-center gap-4">
-                      <div className="p-3 bg-emerald-600 rounded-xl text-white shadow-lg"><Activity size={24}/></div>
-                      <h3 className="text-xl font-black text-white uppercase italic">Contexto Simulado</h3>
-                   </div>
-                   <div className="space-y-4">
-                      <HistoryStat label="Equity Atual" val={`$ ${simHistory[simHistory.length-1]?.equity?.toLocaleString()}`} trend="Real-time" pos />
-                      <HistoryStat label="Market Share" val={`${(simHistory[simHistory.length-1]?.state?.market_share || 0).toFixed(1)}%`} trend="Market" pos />
-                      <HistoryStat label="Rating" val={simHistory[simHistory.length-1]?.state?.rating || 'N/A'} trend="Oracle" pos />
-                   </div>
-                   <p className="text-[9px] text-slate-500 font-bold uppercase italic leading-relaxed">
-                      "Utilize estes números do motor industrial para validar suas justificativas operacionais."
-                   </p>
-                </div>
-             )}
-
              <div className="bg-slate-900 border border-white/10 p-10 rounded-[3.5rem] space-y-8 shadow-2xl">
                 <div className="flex items-center gap-4">
                    <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-lg"><BadgeCheck size={24}/></div>
-                   <h3 className="text-xl font-black text-white uppercase italic">Auditoria Master</h3>
+                   <h3 className="text-xl font-black text-white uppercase italic">Auditoria de Viabilidade</h3>
                 </div>
 
-                <div className="p-8 bg-slate-950 rounded-3xl border border-white/5 min-h-[250px] relative overflow-hidden group">
+                <div className="p-8 bg-slate-950 rounded-3xl border border-white/5 min-h-[300px] relative overflow-hidden group">
                    <div className="absolute top-0 right-0 p-4 opacity-5 rotate-12 group-hover:scale-125 transition-transform"><ShieldCheck size={100}/></div>
                    {isAuditing ? (
                      <div className="flex flex-col items-center justify-center py-20 gap-4">
                         <Loader2 className="animate-spin text-indigo-400" size={40} />
-                        <span className="text-[10px] font-black uppercase text-slate-600 tracking-[0.3em]">Validando Coerência...</span>
+                        <span className="text-[10px] font-black uppercase text-slate-600 tracking-[0.3em]">Deep Reasoning...</span>
                      </div>
                    ) : auditResult ? (
                      <div className="space-y-6 relative z-10">
-                        <p className="text-sm font-medium text-slate-300 leading-relaxed italic">"{auditResult}"</p>
                         <div className="flex items-center gap-2 text-indigo-400">
-                           <Star size={12} fill="currentColor"/> <span className="text-[10px] font-black uppercase">Fidelidade Oracle v5.8</span>
+                           <Star size={12} fill="currentColor"/> <span className="text-[10px] font-black uppercase tracking-widest">Oracle Verdict v6.0</span>
                         </div>
+                        <p className="text-sm font-medium text-slate-300 leading-relaxed italic">"{auditResult}"</p>
                      </div>
                    ) : (
                      <div className="space-y-4 text-center py-10 relative z-10">
                         <HelpCircle size={40} className="text-slate-700 mx-auto" />
                         <p className="text-[11px] text-slate-500 font-bold uppercase italic leading-relaxed">
-                           Seu rascunho atual para "{BP_STEPS[step].label}" ainda não foi auditado pela IA.
+                           Sua estratégia para "{BP_STEPS[step].label}" ainda não foi validada pela IA.
                         </p>
                      </div>
                    )}
@@ -269,11 +289,24 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
 
                 <button 
                   onClick={handleAudit} 
-                  disabled={!formData[step] || isAuditing}
+                  disabled={!formData[step]?.text || isAuditing}
                   className="w-full py-7 bg-white/5 border border-white/10 hover:bg-white hover:text-slate-950 text-white rounded-3xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-4 shadow-xl disabled:opacity-30 active:scale-95"
                 >
-                   <Zap size={18} fill="currentColor" /> Analisar Pilar Estratégico
+                   <Zap size={18} fill="currentColor" /> Auditar Pilar Estratégico
                 </button>
+             </div>
+
+             <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-white/5 p-10 rounded-[3rem] space-y-6">
+                <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em]">Status do Projeto</h4>
+                <div className="flex items-center gap-4">
+                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                   <span className="text-xs font-bold text-white uppercase">Trial Oracle Ativo</span>
+                </div>
+                <div className="pt-4 border-t border-white/5">
+                   <p className="text-[9px] text-slate-600 uppercase font-black leading-relaxed italic">
+                      "Utilize os módulos da Escola de Negócios para aprofundar seu conhecimento em ROI e SWOT antes da submissão final."
+                   </p>
+                </div>
              </div>
           </aside>
         </div>
@@ -282,15 +315,34 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
   );
 };
 
-const HistoryStat = ({ label, val, trend, pos }: any) => (
-   <div className="flex justify-between items-center p-5 bg-slate-950/80 rounded-2xl border border-white/5">
-      <div>
-         <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">{label}</span>
-         <span className="text-xl font-black text-white font-mono">{val}</span>
-      </div>
-      <div className={`flex items-center gap-1 text-[9px] font-black uppercase ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>
-         {pos ? <TrendingUp size={10}/> : <TrendingDown size={10}/>} {trend}
-      </div>
+const SwotField = ({ label, color, value, onChange }: any) => (
+   <div className="space-y-2">
+      <label className={`text-[10px] font-black uppercase tracking-widest ${color} italic ml-2`}>{label}</label>
+      <textarea 
+         value={value || ''}
+         onChange={e => onChange(e.target.value)}
+         placeholder="..."
+         className="w-full h-32 p-6 bg-slate-950 border border-white/5 rounded-2xl text-xs font-bold text-white outline-none focus:border-white/20 transition-all resize-none shadow-inner"
+      />
+   </div>
+);
+
+const FinancialInput = ({ label, value, onChange }: any) => (
+   <div className="space-y-2">
+      <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-2">{label}</label>
+      <input 
+         type="number" 
+         value={value || ''}
+         onChange={e => onChange(e.target.value)}
+         className="w-full p-4 bg-slate-900 border border-white/5 rounded-xl text-lg font-mono font-black text-white outline-none focus:border-indigo-500 transition-all shadow-inner"
+      />
+   </div>
+);
+
+const MetricResult = ({ label, val }: any) => (
+   <div className="text-center p-4 bg-white/5 rounded-2xl border border-white/5">
+      <span className="block text-[8px] font-black uppercase text-slate-500 mb-1">{label}</span>
+      <span className="text-sm font-black text-white italic">{val}</span>
    </div>
 );
 
