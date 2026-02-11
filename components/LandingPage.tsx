@@ -114,28 +114,28 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   badge="Modo Industrial"
                   title="Produção Massiva"
                   desc="Gerencie cadeias de suprimento e ativos de capital em múltiplos mercados regionais e globais"
-                  img="/images/carousel/slide-industrial.jpg"
+                  img="/images/carousel/public_slide_0.webp"
                />
                <CarouselSlide 
                   icon={<BrainCircuit size={40}/>}
                   badge="IA Agregada"
                   title="Mentoria via Gemini"
                   desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço, DRE e CashFlow"
-                  img="/images/carousel/slide-ai-mentor.jpg"
+                  img="/images/carousel/public_slide_1.webp"
                />
                <CarouselSlide 
                   icon={<Globe size={40}/>}
                   badge="Expansão Global"
                   title="Geopolítica Regional"
                   desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e variações cambiais"
-                  img src="/images/carousel/slide-global-geopolitics.webp"
+                  img="/images/carousel/public_slide_2.webp"
                />
                <CarouselSlide 
                   icon={<BarChart3 size={40}/>}
                   badge="Visão Estratégica"
                   title="Financeiro Avançado"
                   desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos"
-                  img="/images/carousel/slide-financial-dash.jpg"
+                  img="/images/carousel/public_slide_4.webp"
                />
                <CarouselSlide 
                   icon={<Users size={40}/>}
