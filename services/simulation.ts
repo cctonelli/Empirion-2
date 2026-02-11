@@ -55,7 +55,6 @@ export const calculateProjections = (
   const purchA_GrossTotal = (qtyPurchA * indicators.prices.mp_a) * (1 + (indicators.supplier_interest/100));
   
   const activityLevel = sanitize(decisions.production?.activityLevel, 80) / 100;
-  const unitsToProduce = 10000 * activityLevel;
   
   // Vendas
   let totalRevenueGross = 0;
@@ -69,18 +68,18 @@ export const calculateProjections = (
 
   const netSalesRevenue = totalRevenueGross * 0.85;
   const cpv = totalRevenueGross * 0.65;
-  const ebit = netSalesRevenue - cpv - 500000; // OPEX fixo mock
-  const netProfit = ebit - 2500; // Despesa juros mock
+  const ebit = netSalesRevenue - cpv - 500000; 
+  const netProfit = ebit - 2500; 
 
   const projectedCash = prevCash + (totalRevenueGross * 0.5) - cpv;
   const currentReceivables = totalRevenueGross * 0.5;
   const currentPayables = purchA_GrossTotal * 0.5;
   
   const finalEquity = round2(prevEquity + netProfit);
-  const finalAssets = round2(prevAssets + netProfit + 100000); // Mock expansion
+  const finalAssets = round2(prevAssets + netProfit + 100000); 
   const finalLiabilities = round2(finalAssets - finalEquity);
 
-  // --- 3. CÁLCULO DE KPIs AVANÇADOS v17.0 ---
+  // --- 3. CÁLCULO DE KPIs AVANÇADOS v17.0 (HISTÓRICOS) ---
   const kpis: KPIs = {
     rating: projectedCash > 0 ? 'AAA' : 'C',
     loans: previousState?.kpis?.loans || [],
@@ -88,18 +87,18 @@ export const calculateProjections = (
     equity: finalEquity,
     market_share: (totalQty / 9700) * 11.1,
     
-    // Cálculos de Auditoria
+    // Cálculos de Auditoria Exigidos pelo Tutor
     solvency_index: round2(finalAssets / Math.max(1, finalLiabilities)),
     nlcdg: round2(currentReceivables - currentPayables),
-    inventory_turnover: round2(cpv / Math.max(1, (finalAssets * 0.15))), // Mock inventory
+    inventory_turnover: round2(cpv / Math.max(1, (finalAssets * 0.15))), 
     liquidity_current: round2((projectedCash + currentReceivables) / Math.max(1, currentPayables)),
-    trit: round2(ebit / 2500),
-    scissors_effect: round2(30 - 45), // Mock: PMR - PMP
+    trit: round2(ebit / Math.max(1, 2500)),
+    scissors_effect: round2(45 - 30), // PMR (45) - PMP (30) Mock
     avg_receivable_days: 45,
     avg_payable_days: 30,
-    equity_immobilization: round2(6012500 / finalEquity),
-    debt_participation_pct: round2((finalLiabilities / finalEquity) * 100),
-    debt_composition_st_pct: 100, // No trial tudo é ST
+    equity_immobilization: round2(6012500 / Math.max(1, finalEquity)),
+    debt_participation_pct: round2((finalLiabilities / Math.max(1, finalEquity)) * 100),
+    debt_composition_st_pct: 100, 
     
     statements: {
       dre: { revenue: totalRevenueGross, net_profit: netProfit, ebit: ebit },

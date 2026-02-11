@@ -67,7 +67,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
     loadBaseData();
   }, [teamId, championshipId, currentRound]);
 
-  const handleSave = async (status: 'draft' | 'submitted' | 'finalized' = 'draft') => {
+  const handleSave = async (status: 'draft' | 'submitted' | 'approved' | 'finalized' = 'draft') => {
     setIsSaving(true);
     try {
         const payload: Partial<BusinessPlan> = {
@@ -83,6 +83,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
           shared_with: []
         };
         await saveBusinessPlan(payload);
+        if (status === 'submitted') onClose?.();
         alert(status === 'submitted' ? "PLANO DE NEGÓCIOS HISTÓRICO TRANSMITIDO." : "RASCUNHO ATUALIZADO.");
     } catch (err: any) {
         alert(`FALHA: ${err.message}`);
@@ -97,7 +98,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
       BP_STEPS[stepIdx].label, 
       "Plano com Análise Histórica", 
       JSON.stringify(formData[stepIdx] || {}), 
-      `Gere um texto para ${BP_STEPS[stepIdx].label}. Branch: ${branch}. Histórico P00-P${currentRound-1}: ${JSON.stringify(simHistory.map(h => h.kpis))}. Analise tendências e justifique o round ${currentRound}.`, 
+      `Gere um texto para ${BP_STEPS[stepIdx].label}. Branch: ${branch}. Histórico P00-P${currentRound-1}: ${JSON.stringify(simHistory.map(h => ({ round: h.round, kpis: h.kpis })))}. Analise tendências e justifique o round ${currentRound}.`, 
       branch
     );
     setFormData(prev => ({ ...prev, [stepIdx]: { ...prev[stepIdx], text: suggestion } }));
@@ -106,7 +107,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
 
   const handleAudit = async () => {
     setIsAuditing(true);
-    const result = await auditBusinessPlan(BP_STEPS[step].label, JSON.stringify(formData[step]), simHistory);
+    const result = await auditBusinessPlan(BP_STEPS[step].label, formData[step]?.text || '', simHistory);
     setAuditResult(result);
     setIsAuditing(false);
   };
@@ -121,7 +122,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
               <PenTool size={40} />
            </motion.div>
            <h1 className="text-6xl md:text-7xl font-black text-white uppercase tracking-tighter italic">Strategos Business Plan</h1>
-           <p className="text-2xl text-slate-400 font-medium italic">Fidelidade v17.0 Master Oracle • Histórico Consolidado</p>
+           <p className="text-2xl text-slate-400 font-medium italic">Fidelidade v17.0 Master Oracle • Histórico Consolidado P00-P{currentRound-1}</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 max-w-[1600px] mx-auto">
@@ -139,34 +140,37 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                      </button>
                   </div>
 
-                  {/* MATRIZ DE HISTÓRICOS - VISÍVEL NO STEP 5 (FINANCEIRO) */}
+                  {/* MATRIZ MASTER DE HISTÓRICOS - VISÍVEL NO STEP 5 (FINANCEIRO) */}
                   {step === 5 && (
                      <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
                         <div className="flex items-center gap-4 text-orange-500">
                            <TableIcon size={24} />
-                           <h3 className="text-xl font-black uppercase tracking-tight">Telemetria Histórica de KPIs P00-P{currentRound-1}</h3>
+                           <h3 className="text-xl font-black uppercase tracking-tight">Matriz Master de KPIs: P00 até P{currentRound-1}</h3>
                         </div>
-                        <div className="matrix-container h-[500px] overflow-auto border-2 border-white/10 rounded-[3rem] bg-slate-950/80">
+                        <div className="matrix-container h-[550px] overflow-auto border-2 border-white/10 rounded-[3rem] bg-slate-950/80">
                            <table className="w-full text-left border-collapse">
                               <thead className="sticky top-0 bg-slate-900 z-50 shadow-xl">
                                  <tr className="text-[10px] font-black uppercase text-slate-400 border-b border-white/10">
-                                    <th className="p-6 border-r border-white/5 bg-slate-900 sticky left-0 min-w-[220px]">Indicador / Round</th>
+                                    <th className="p-6 border-r border-white/5 bg-slate-900 sticky left-0 min-w-[240px]">KPI / Período Histórico</th>
                                     {simHistory.map((h, i) => (
-                                       <th key={i} className={`p-6 border-r border-white/5 text-center min-w-[100px] ${i === 0 ? 'bg-orange-600/10' : ''}`}>
+                                       <th key={i} className={`p-6 border-r border-white/5 text-center min-w-[110px] ${i === 0 ? 'bg-orange-600/10' : ''}`}>
                                           <span className="text-orange-500">P{h.round < 10 ? `0${h.round}` : h.round}</span>
                                        </th>
                                     ))}
                                  </tr>
                               </thead>
                               <tbody className="divide-y divide-white/5 font-mono text-xs">
-                                 <HistoryRow label="Solvência (Indice)" kpi="solvency_index" history={simHistory} />
+                                 <HistoryRow label="Índice de Solvência" kpi="solvency_index" history={simHistory} />
                                  <HistoryRow label="NLCDG ($)" kpi="nlcdg" history={simHistory} />
                                  <HistoryRow label="Giro de Estoque" kpi="inventory_turnover" history={simHistory} />
                                  <HistoryRow label="Liquidez Corrente" kpi="liquidity_current" history={simHistory} />
                                  <HistoryRow label="Cobertura Juros (TRIT)" kpi="trit" history={simHistory} />
-                                 <HistoryRow label="Efeito Tesoura (PMR-PMP)" kpi="scissors_effect" history={simHistory} />
-                                 <HistoryRow label="Imobilização do PL" kpi="equity_immobilization" history={simHistory} />
+                                 <HistoryRow label="Efeito Tesoura (Gap Dias)" kpi="scissors_effect" history={simHistory} />
+                                 <HistoryRow label="PMR (Dias Venda)" kpi="avg_receivable_days" history={simHistory} />
+                                 <HistoryRow label="PMP (Dias Compra)" kpi="avg_payable_days" history={simHistory} />
+                                 <HistoryRow label="Imobilização do PL (%)" kpi="equity_immobilization" history={simHistory} suffix="%" />
                                  <HistoryRow label="Cap. Terceiros (%)" kpi="debt_participation_pct" history={simHistory} suffix="%" />
+                                 <HistoryRow label="Composição Dívida ST (%)" kpi="debt_composition_st_pct" history={simHistory} suffix="%" />
                                  <HistoryRow label="Equity Total ($)" kpi="equity" history={simHistory} />
                                  <HistoryRow label="Lucro Líquido ($)" kpi="net_profit" history={simHistory} isStatement />
                               </tbody>
@@ -181,7 +185,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                         value={formData[step]?.text || ''}
                         onChange={e => setFormData(prev => ({ ...prev, [step]: { ...prev[step], text: e.target.value } }))}
                         className="w-full min-h-[400px] p-12 bg-white/5 border-2 border-white/10 rounded-[4rem] text-lg font-medium text-slate-100 outline-none focus:border-orange-500 transition-all custom-scrollbar resize-none"
-                        placeholder="Insira as justificativas baseadas na performance histórica..."
+                        placeholder="Insira as justificativas baseadas na performance histórica e tendências de mercado..."
                      />
                   </div>
                </motion.div>
@@ -193,15 +197,15 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                 </button>
                 <div className="flex gap-4">
                    <button onClick={() => window.print()} className="px-10 py-5 bg-white/5 border border-white/10 text-slate-400 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-slate-950 transition-all flex items-center gap-3 shadow-inner">
-                      <Printer size={16} /> PDF Report
+                      <Printer size={16} /> Exportar PDF
                    </button>
                    {step === BP_STEPS.length - 1 ? (
-                      <button onClick={() => handleSave('submitted')} className="px-20 py-6 bg-orange-600 text-white rounded-full font-black uppercase text-sm tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all">
-                         Finalizar Protocolo
+                      <button onClick={() => handleSave('submitted')} className="px-20 py-6 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.4em] shadow-xl hover:scale-105 active:scale-95 transition-all">
+                         Transmitir Protocolo
                       </button>
                    ) : (
                       <button onClick={() => setStep(s => s + 1)} className="px-16 py-6 bg-white text-slate-950 rounded-full font-black uppercase text-[10px] tracking-[0.2em] shadow-xl hover:bg-orange-600 hover:text-white transition-all">
-                         Avançar <ChevronRight />
+                         Próximo Pilar <ChevronRight />
                       </button>
                    )}
                 </div>
@@ -214,7 +218,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                    <div className="p-3 bg-indigo-600 rounded-xl text-white"><BadgeCheck size={24}/></div>
                    <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Oracle Audit</h3>
                 </div>
-                <div className="p-8 bg-slate-950 rounded-3xl border border-white/5 relative overflow-hidden min-h-[300px]">
+                <div className="p-8 bg-slate-950 rounded-3xl border border-white/5 relative overflow-hidden min-h-[350px]">
                    <div className="absolute top-0 right-0 p-4 opacity-5 rotate-12"><History size={80}/></div>
                    {isAuditing ? (
                       <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -229,12 +233,12 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                    ) : (
                       <div className="text-center py-10 opacity-30 space-y-4">
                          <FileWarning size={40} className="mx-auto" />
-                         <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Aguardando auditoria do pilar estratégico atual.</p>
+                         <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Aguardando auditoria do pilar estratégico atual baseado no histórico.</p>
                       </div>
                    )}
                 </div>
                 <button onClick={handleAudit} disabled={!formData[step]?.text || isAuditing} className="w-full py-6 bg-white/5 border border-white/10 hover:bg-white hover:text-slate-950 text-white rounded-3xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl active:scale-95">
-                   <Zap size={18} fill="currentColor" /> Auditar Pilar
+                   <Zap size={18} fill="currentColor" /> Auditar Tendências
                 </button>
              </div>
           </aside>

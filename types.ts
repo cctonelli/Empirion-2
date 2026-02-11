@@ -141,7 +141,6 @@ export interface Championship {
   config?: any;
 }
 
-// Added missing exports based on project errors
 export interface ChampionshipTemplate {
   id: string;
   name: string;

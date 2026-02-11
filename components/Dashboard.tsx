@@ -89,7 +89,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05 } },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
     xaxis: { 
-      categories: history.map(h => `P${h.round}`), 
+      categories: history.map(h => `P${h.round < 10 ? '0' : ''}${h.round}`), 
       labels: { style: { colors: '#64748b', fontSize: '10px', fontWeight: 800 } } 
     },
     yaxis: { labels: { style: { colors: '#64748b', fontSize: '10px' } } },
@@ -109,7 +109,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
       
-      {/* COCKPIT STATS BAR */}
+      {/* COCKPIT STATS BAR - v17.0 Advanced Indicators */}
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20 shadow-2xl">
          <CockpitStat label="Equity" val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
          <CockpitStat label="Solvência" val={(currentKpis.solvency_index || 1.0).toFixed(2)} trend="Oracle" pos icon={<Landmark size={16}/>} />
@@ -128,7 +128,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                <span className="text-[10px] font-black text-slate-600 uppercase">v17.0 Gold</span>
             </header>
 
-            {/* STATUS DO BUSINESS PLAN */}
+            {/* STATUS DO BUSINESS PLAN COM ALERTA DE EXIGÊNCIA */}
             <div className={`p-6 rounded-[2.5rem] border-2 space-y-4 shadow-2xl transition-all ${requireBP && bpStatus !== 'submitted' ? 'bg-orange-600/20 border-orange-500/50 animate-pulse' : 'bg-slate-950 border-white/5'}`}>
                <div className="flex justify-between items-center">
                   <PenTool size={24} className={requireBP ? 'text-orange-500' : 'text-slate-600'} />
@@ -137,13 +137,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                <div>
                   <h4 className="text-sm font-black uppercase text-white">Business Plan</h4>
                   <p className={`text-[9px] font-bold uppercase mt-1 ${requireBP && bpStatus !== 'submitted' ? 'text-orange-400' : 'text-slate-500'}`}>
-                     {requireBP ? 'Exigência do Tutor P04' : 'Opcional este ciclo'}
+                     {requireBP ? `Exigência Round ${activeArena?.current_round + 1}` : 'Opcional este ciclo'}
                   </p>
                </div>
                <button onClick={() => setShowBP(true)} className="w-full py-3 bg-white/5 hover:bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Editar Strategos Plan</button>
             </div>
 
-            {/* GRÁFICO DE TENDÊNCIA MINI */}
+            {/* GRÁFICO DE TENDÊNCIA HISTÓRICA */}
             <div className="bg-slate-950/80 p-6 rounded-[2.5rem] border border-white/5 space-y-6 shadow-inner">
                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2"><TrendingUp size={12} className="text-blue-500" /> Histórico Equity</h4>
                <div className="h-40">
@@ -151,14 +151,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                </div>
             </div>
 
+            {/* ANALISE DE CICLO FINANCEIRO (PMR vs PMP) */}
             <div className="bg-slate-950 p-6 rounded-[2.5rem] border border-white/5 space-y-4">
                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2"><Scale size={12} className="text-emerald-500" /> PMR vs PMP</h4>
                <div className="space-y-3">
-                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">Recebimento (PMR)</span><span className="text-white">45 dias</span></div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">Pagamento (PMP)</span><span className="text-white">30 dias</span></div>
+                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">Recebimento (PMR)</span><span className="text-white">{currentKpis.avg_receivable_days || 45} dias</span></div>
+                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">Pagamento (PMP)</span><span className="text-white">{currentKpis.avg_payable_days || 30} dias</span></div>
                   <div className="pt-2 border-t border-white/5 flex justify-between items-end">
-                     <span className="text-[8px] font-black text-rose-500 uppercase">Tesoura</span>
-                     <span className="text-lg font-black text-rose-500">-15 dias</span>
+                     <span className="text-[8px] font-black text-rose-500 uppercase">Gap Tesoura</span>
+                     <span className="text-lg font-black text-rose-500">{(currentKpis.scissors_effect || -15)} dias</span>
                   </div>
                </div>
             </div>
@@ -168,7 +169,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             <div className="max-w-[1400px] mx-auto w-full flex-1 flex flex-col overflow-hidden">
                <header className="flex justify-between items-end border-b border-white/5 pb-6 mb-6">
                   <div>
-                     <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Matriz <span className="text-orange-600">Decisória</span></h2>
+                     <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Cockpit <span className="text-orange-600">Operacional</span></h2>
                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Protocolo v17.0 • Ciclo 0{(activeArena?.current_round || 0) + 1}</p>
                   </div>
                   <div className="flex gap-4">
