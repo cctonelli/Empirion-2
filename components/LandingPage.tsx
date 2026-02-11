@@ -121,28 +121,28 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   badge="IA Agregada"
                   title="Mentoria via Gemini"
                   desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço, DRE e CashFlow"
-                  img="/images/carousel/public_slide_1.webp"
+                  img src="/images/carousel/public_slide_1.webp"
                />
                <CarouselSlide 
                   icon={<Globe size={40}/>}
                   badge="Expansão Global"
                   title="Geopolítica Regional"
                   desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e variações cambiais"
-                  img="/images/carousel/public_slide_2.webp"
+                  img src="/images/carousel/public_slide_2.webp"
                />
                <CarouselSlide 
                   icon={<BarChart3 size={40}/>}
                   badge="Visão Estratégica"
                   title="Financeiro Avançado"
                   desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos"
-                  img="/images/carousel/public_slide_4.webp"
+                  img src="/images/carousel/public_slide_3.webp"
                />
                <CarouselSlide 
                   icon={<Users size={40}/>}
                   badge="Formando Lideranças"
                   title="Tutoria Assistida"
                   desc="Tutores traçando estrategias quase infinitas, com auxílio da IA para cenários caóticos Black Swan"
-                  img="/images/carousel/slide-tutor-intelligence.jpg"
+                  img src="/images/carousel/public_slide_4.webp"
                />
             </Slider>
          </div>
