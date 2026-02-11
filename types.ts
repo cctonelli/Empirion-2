@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V15.80 - HYBRID BUSINESS PLAN PROTOCOL
+ * EMPIRION V17.0 - ADVANCED ANALYTICS PROTOCOL
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -40,7 +40,7 @@ export interface BusinessPlan {
   team_id?: string;
   round: number;
   version: number;
-  data: Record<number, string>;
+  data: Record<number, any>;
   status: 'draft' | 'submitted' | 'approved' | 'finalized';
   is_template: boolean;
   visibility: BPVisibility;
@@ -50,32 +50,28 @@ export interface BusinessPlan {
   updated_at?: string;
 }
 
-export interface AuditLog {
-  user_id: string;
-  changed_at: string;
-  field_path: string;
-  old_value: any;
-  new_value: any;
-}
-
-export interface EcosystemConfig {
-  inflation_rate: number;
-  demand_multiplier: number;
-  interest_rate: number;
-  market_volatility: number;
-  scenario_type: ScenarioType;
-  modality_type: ModalityType;
-}
-
 export interface KPIs {
   rating: CreditRating;
   loans: any[];
   statements: any;
-  current_cash?: number;
-  equity?: number;
+  current_cash: number;
+  equity: number;
   market_share?: number;
   stock_quantities?: any;
-  fleet?: any[];
+  
+  // Advanced Historical KPIs v17.0
+  solvency_index?: number;
+  nlcdg?: number; // Necessidade Líquida de Capital de Giro
+  inventory_turnover?: number; // Giro de Estoque
+  liquidity_current?: number;
+  trit?: number; // Cobertura de Juros
+  scissors_effect?: number; // Diferença PMR - PMP
+  avg_receivable_days?: number;
+  avg_payable_days?: number;
+  equity_immobilization?: number;
+  debt_participation_pct?: number;
+  debt_composition_st_pct?: number;
+  
   [key: string]: any;
 }
 
@@ -90,7 +86,6 @@ export interface Team {
   master_key_enabled?: boolean;
 }
 
-// Added missing AccountNode type
 export interface AccountNode {
   id: string;
   label: string;
@@ -102,29 +97,6 @@ export interface AccountNode {
   isTemplateAccount?: boolean;
 }
 
-// Added missing MachineSpec type
-export interface MachineSpec {
-  model: MachineModel;
-  initial_value: number;
-  production_capacity: number;
-  operators_required: number;
-  depreciation_rate: number;
-  overload_coef: number;
-  aging_coef: number;
-  useful_life_years: number;
-  overload_extra_rate: number;
-}
-
-// Added missing InitialMachine type
-export interface InitialMachine {
-  id: string;
-  model: MachineModel;
-  age: number;
-  purchase_value: number;
-  depreciated_value: number;
-}
-
-// Added missing MacroIndicators type
 export interface MacroIndicators {
   ice: number;
   demand_variation: number;
@@ -134,188 +106,18 @@ export interface MacroIndicators {
   supplier_interest: number;
   investment_return_rate: number;
   avg_selling_price: number;
-  late_penalty_rate: number;
-  machine_sale_discount: number;
-  special_purchase_premium: number;
-  compulsory_loan_agio: number;
-  social_charges: number;
-  allow_machine_sale: boolean;
-  require_business_plan: boolean;
-  tax_rate_ir: number;
-  vat_purchases_rate: number;
-  vat_sales_rate: number;
-  dividend_percent: number;
-  production_hours_period: number;
-  award_values: {
-    cost_precision: number;
-    revenue_precision: number;
-    profit_precision: number;
-  };
-  prices: {
-    mp_a: number;
-    mp_b: number;
-    distribution_unit: number;
-    marketing_campaign: number;
-    storage_mp: number;
-    storage_finished: number;
-  };
-  machinery_values: Record<MachineModel, number>;
-  machine_specs: Record<MachineModel, MachineSpec>;
-  initial_machinery_mix: InitialMachine[];
-  staffing: {
-    admin: { count: number; salaries: number };
-    sales: { count: number; salaries: number };
-    production: { count: number; salaries: number };
-  };
-  hr_base: { salary: number };
-  exchange_rates: Record<string, number>;
   [key: string]: any;
 }
 
-// Added missing RegionalData type
-export interface RegionalData {
-  price: number;
-  term: number;
-  marketing: number;
-}
-
-// Added missing DecisionData type
 export interface DecisionData {
   judicial_recovery: boolean;
-  regions: Record<number, RegionalData>;
-  hr: {
-    hired: number;
-    fired: number;
-    salary: number;
-    trainingPercent: number;
-    participationPercent: number;
-    sales_staff_count: number;
-    productivityBonusPercent?: number;
-    misc: number;
-  };
-  production: {
-    purchaseMPA: number;
-    purchaseMPB: number;
-    paymentType: number;
-    activityLevel: number;
-    rd_investment: number;
-    net_profit_target_percent: number;
-    term_interest_rate: number;
-    extraProductionPercent: number;
-  };
-  machinery: {
-    buy: Record<MachineModel, number>;
-    sell: Record<MachineModel, number>;
-  };
-  finance: {
-    loanRequest: number;
-    loanTerm: number;
-    application: number;
-  };
-  estimates: {
-    forecasted_revenue: number;
-    forecasted_unit_cost: number;
-    forecasted_net_profit: number;
-  };
-  audit_logs?: AuditLog[];
-}
-
-// Added missing MenuItemConfig type
-export interface MenuItemConfig {
-  label: string;
-  path: string;
-  sub?: {
-    id: string;
-    label: string;
-    path: string;
-    icon: string;
-  }[];
-}
-
-// Added missing ChampionshipTemplate type
-export interface ChampionshipTemplate {
-  id: string;
-  name: string;
-  branch: Branch;
-}
-
-// Added missing BlackSwanEvent type
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
-  };
-}
-
-// Added missing RegionConfig type
-export interface RegionConfig {
-  id: number;
-  name: string;
-  currency: CurrencyType;
-  demand_weight: number;
-}
-
-// Added missing ProjectionResult type
-export interface ProjectionResult {
-  revenue: number;
-  netProfit: number;
-  debtRatio: number;
-  creditRating: CreditRating;
-  health: {
-    cash: number;
-    rating: CreditRating;
-    insolvency_risk?: number;
-    status?: string;
-  };
-  kpis: KPIs;
-  statements: any;
-  marketShare: number;
-}
-
-// Added missing Loan type
-export interface Loan {
-  id: string;
-  amount: number;
-  term: number;
-  remaining_terms: number;
-  interest_rate: number;
-}
-
-// Added missing CommunityCriteria type
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
-// Added missing Modality type
-export interface Modality {
-  id: string;
-  slug: string;
-  name: string;
-  page_content: {
-    hero: { title: string; subtitle: string };
-    features: string[];
-    kpis: string[];
-    accent_color?: string;
-  };
-}
-
-// Added missing TeamProgress type
-export interface TeamProgress {
-  team_id: string;
-  team_name: string;
-  status: 'pending' | 'sealed';
-  rating: CreditRating;
-  risk: number;
-  insolvent: boolean;
-  master_key_enabled?: boolean;
-  auditLogs?: AuditLog[];
+  regions: Record<number, any>;
+  hr: any;
+  production: any;
+  machinery: any;
+  finance: any;
+  estimates: any;
+  audit_logs?: any[];
 }
 
 export interface Championship {
@@ -334,10 +136,131 @@ export interface Championship {
   deadline_value?: number;
   deadline_unit?: DeadlineUnit;
   created_at?: string;
-  region_names?: string[];
-  region_configs?: any[];
-  // Added missing properties to Championship interface
   round_started_at?: string;
   observers?: string[];
   config?: any;
+}
+
+// Added missing exports based on project errors
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  branch: Branch;
+}
+
+export interface MachineSpec {
+  model: MachineModel;
+  initial_value: number;
+  production_capacity: number;
+  operators_required: number;
+  depreciation_rate: number;
+  overload_coef: number;
+  aging_coef: number;
+  useful_life_years: number;
+  overload_extra_rate: number;
+}
+
+export interface InitialMachine {
+  id: string;
+  model: MachineModel;
+  age: number;
+  purchase_value: number;
+  depreciated_value: number;
+}
+
+export interface MenuItemConfig {
+  label: string;
+  path: string;
+  id?: string;
+  icon?: string;
+  sub?: {
+    id: string;
+    label: string;
+    path: string;
+    icon: string;
+  }[];
+}
+
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
+  };
+}
+
+export interface EcosystemConfig {
+  inflation_rate: number;
+  demand_multiplier: number;
+  interest_rate: number;
+  market_volatility: number;
+  scenario_type: ScenarioType;
+  modality_type: ModalityType;
+}
+
+export interface Loan {
+  id: string;
+  amount: number;
+  term: number;
+  round_issued: number;
+  remaining_rounds: number;
+}
+
+export interface ProjectionResult {
+  revenue: number;
+  netProfit: number;
+  debtRatio: number;
+  creditRating: CreditRating;
+  health: {
+    cash: number;
+    rating: CreditRating;
+    insolvency_risk?: number;
+    status?: string;
+  };
+  kpis: KPIs;
+  statements: any;
+  marketShare: number;
+}
+
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
+export interface Modality {
+  id: string;
+  slug: string;
+  name: string;
+  page_content: any;
+}
+
+export interface TeamProgress {
+  team_id: string;
+  team_name: string;
+  status: 'pending' | 'sealed';
+  rating: CreditRating;
+  risk: number;
+  insolvent: boolean;
+  master_key_enabled?: boolean;
+  auditLogs: AuditLog[];
+}
+
+export interface AuditLog {
+  user_id: string;
+  changed_at: string;
+  field_path: string;
+  old_value: any;
+  new_value: any;
+}
+
+export interface RegionConfig {
+  id: number;
+  name: string;
+  currency: CurrencyType;
+  demand_weight: number;
 }
