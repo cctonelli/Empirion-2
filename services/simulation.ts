@@ -59,15 +59,21 @@ export const calculateProjections = (
   // Vendas
   let totalRevenueGross = 0;
   let totalQty = 0;
+  let avgPrice = 0;
+  const regionsCount = Object.keys(decisions.regions || {}).length || 1;
+  
   Object.values(decisions.regions || {}).forEach((reg: any) => {
     const price = sanitize(reg.price, 425);
     const qty = (9700 / 4) * Math.pow(425/Math.max(1, price), 1.1) * activityLevel;
     totalQty += qty;
     totalRevenueGross += round2(price * qty);
+    avgPrice += price / regionsCount;
   });
 
   const netSalesRevenue = totalRevenueGross * 0.85;
+  const fixedCosts = 502500; // OPEX + Juros Mock
   const cpv = totalRevenueGross * 0.65;
+  const variableCostPerUnit = cpv / Math.max(1, totalQty);
   const ebit = netSalesRevenue - cpv - 500000; 
   const netProfit = ebit - 2500; 
 
@@ -79,7 +85,7 @@ export const calculateProjections = (
   const finalAssets = round2(prevAssets + netProfit + 100000); 
   const finalLiabilities = round2(finalAssets - finalEquity);
 
-  // --- 3. CÁLCULO DE KPIs AVANÇADOS v17.0 (HISTÓRICOS) ---
+  // --- 3. CÁLCULO DE KPIs AVANÇADOS v17.5 (ROI & BEP INCLUSOS) ---
   const kpis: KPIs = {
     rating: projectedCash > 0 ? 'AAA' : 'C',
     loans: previousState?.kpis?.loans || [],
@@ -87,13 +93,17 @@ export const calculateProjections = (
     equity: finalEquity,
     market_share: (totalQty / 9700) * 11.1,
     
-    // Cálculos de Auditoria Exigidos pelo Tutor
+    // ROI e BEP solicitados
+    roi: round2((netProfit / Math.max(1, finalEquity)) * 100),
+    bep: round2(fixedCosts / Math.max(0.1, (avgPrice - variableCostPerUnit))),
+
+    // Auditoria Adicional
     solvency_index: round2(finalAssets / Math.max(1, finalLiabilities)),
     nlcdg: round2(currentReceivables - currentPayables),
     inventory_turnover: round2(cpv / Math.max(1, (finalAssets * 0.15))), 
     liquidity_current: round2((projectedCash + currentReceivables) / Math.max(1, currentPayables)),
     trit: round2(ebit / Math.max(1, 2500)),
-    scissors_effect: round2(45 - 30), // PMR (45) - PMP (30) Mock
+    scissors_effect: round2(45 - 30), // PMR - PMP Mock
     avg_receivable_days: 45,
     avg_payable_days: 30,
     equity_immobilization: round2(6012500 / Math.max(1, finalEquity)),

@@ -1,6 +1,6 @@
 
 /**
- * EMPIRION V17.0 - ADVANCED ANALYTICS PROTOCOL
+ * EMPIRION V18.0 - BUSINESS MODEL GENERATION EDITION
  */
 
 export type UserRole = 'admin' | 'tutor' | 'player' | 'observer';
@@ -21,6 +21,28 @@ export type AnalysisSource = 'parameterized' | 'ai_real_world';
 export type RegionType = 'domestic' | 'international';
 export type BPVisibility = 'private' | 'shared' | 'public';
 
+// Novos tipos para alinhamento com Business Model Generation
+export interface EmpathyMap {
+  think_feel: string;
+  hear: string;
+  see: string;
+  say_do: string;
+  pains: string;
+  gains: string;
+}
+
+export interface BMCBlocks {
+  customer_segments: string;
+  value_propositions: string;
+  channels: string;
+  customer_relationships: string;
+  revenue_streams: string;
+  key_resources: string;
+  key_activities: string;
+  key_partnerships: string;
+  cost_structure: string;
+}
+
 export interface UserProfile {
   id: string;
   supabase_user_id: string;
@@ -40,7 +62,12 @@ export interface BusinessPlan {
   team_id?: string;
   round: number;
   version: number;
-  data: Record<number, any>;
+  data: {
+    steps: Record<number, any>;
+    canvas: BMCBlocks;
+    empathy: EmpathyMap;
+    epicenter: 'resource' | 'offer' | 'customer' | 'finance';
+  };
   status: 'draft' | 'submitted' | 'approved' | 'finalized';
   is_template: boolean;
   visibility: BPVisibility;
@@ -59,13 +86,14 @@ export interface KPIs {
   market_share?: number;
   stock_quantities?: any;
   
-  // Advanced Historical KPIs v17.0
+  roi?: number; 
+  bep?: number; 
   solvency_index?: number;
-  nlcdg?: number; // Necessidade Líquida de Capital de Giro
-  inventory_turnover?: number; // Giro de Estoque
+  nlcdg?: number; 
+  inventory_turnover?: number;
   liquidity_current?: number;
-  trit?: number; // Cobertura de Juros
-  scissors_effect?: number; // Diferença PMR - PMP
+  trit?: number; 
+  scissors_effect?: number; 
   avg_receivable_days?: number;
   avg_payable_days?: number;
   equity_immobilization?: number;

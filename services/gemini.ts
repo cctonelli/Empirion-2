@@ -4,57 +4,61 @@ import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, Re
 
 const getClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export const auditBusinessPlan = async (section: string, text: string, history: any[]) => {
+export const auditBusinessPlan = async (section: string, contextJson: string, history: any[]) => {
   try {
     const ai = getClient();
+    const context = JSON.parse(contextJson);
+    
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: `Você é o Auditor Temporal do Empirion. Analise a coerência desta seção do Business Plan.
+      contents: `Você é o Auditor Master do Empirion, especialista em Business Model Generation (metodologia Osterwalder).
       
-      Seção: ${section}
-      Conteúdo Atual: "${text}"
-      Histórico da Empresa (P00 até Round Anterior): ${JSON.stringify(history.map(h => h.kpis))}
+      Seção Atual: ${section}
+      Epicentro Declarado: ${context.epicenter}
+      Canvas Completo: ${JSON.stringify(context.canvas)}
+      Histórico de KPIs: ${JSON.stringify(history.map(h => ({ round: h.round, kpis: h.kpis })))}
       
-      Sua Tarefa (Fidelidade v17.0):
-      1. Verifique se a estratégia declarada condiz com a tendência dos KPIs históricos (ex: se o usuário diz que vai crescer, mas a Liquidez está caindo, aponte a falha).
-      2. Detecte especificamente o "Efeito Tesoura" (NLCDG crescendo acima do Working Capital).
-      3. Analise o Giro de Estoque e a Imobilização do PL.
-      4. Dê um parecer tático de "Go" ou "No-Go" para investidores.
+      Sua Tarefa (Fidelidade v18.0):
+      1. Verifique se existe COERÊNCIA entre a Proposta de Valor e os Segmentos de Clientes no Canvas.
+      2. Critique se as Atividades Chave justificam a Estrutura de Custos.
+      3. Analise se o KPI histórico (ex: ROI, Liquidez) reflete a eficiência do modelo desenhado.
+      4. Identifique contradições lógicas (ex: Modelo de baixo custo com marketing agressivo ou parceiros de luxo).
       
-      Idioma: Português (Brasil). Máximo 180 palavras. Tom: Analítico e Crítico.`,
+      Idioma: Português (Brasil). Máximo 150 palavras. Tom: Direto, Construtivo e Altamente Técnico.`,
       config: { 
         thinkingConfig: { thinkingBudget: 8192 },
         temperature: 0.4
       }
     });
 
-    // Fix: Access .text property directly
     return response.text || "Auditoria neural interrompida.";
   } catch (error) {
     console.error("Audit error:", error);
-    return "Falha no canal de análise histórica.";
+    return "Falha no canal de análise estratégica.";
   }
 };
 
 export const generateBusinessPlanField = async (
   sectionTitle: string, 
   fieldLabel: string, 
-  userContext: string, 
+  contextJson: string, 
   prompt: string, 
   branch: string
 ) => {
   try {
     const ai = getClient();
+    const context = JSON.parse(contextJson);
+    
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Você é o Strategos Business Architect. 
-      Estou no setor ${branch}. Seção: ${sectionTitle}.
+      Estou usando o framework de Business Model Generation.
+      Setor: ${branch}. Seção: ${sectionTitle}.
       Prompt: ${prompt}
-      Contexto Usuário: "${userContext}"
-      Gere uma análise baseada em dados, usando termos como EBITDA, NLCDG, ROI e Market Fit. Seja direto.`,
+      Contexto dos Blocos: ${JSON.stringify(context.canvas)}
+      Gere um insight estratégico que conecte a Proposta de Valor aos Recursos Chave. Seja técnico.`,
       config: { temperature: 0.7 }
     });
-    // Fix: Access .text property directly
     return response.text || "Insight indisponível.";
   } catch (error) { 
     console.error("Generator error:", error);
@@ -62,7 +66,7 @@ export const generateBusinessPlanField = async (
   }
 };
 
-// Added missing export generateMarketAnalysis
+// ... Restante do arquivo mantido ...
 export const generateMarketAnalysis = async (arenaName: string, round: number, branch: string) => {
   try {
     const ai = getClient();
@@ -71,7 +75,6 @@ export const generateMarketAnalysis = async (arenaName: string, round: number, b
       contents: `Gere uma análise estratégica curta para a arena ${arenaName}, ciclo 0${round}, ramo ${branch}. Foque em competitividade e saúde financeira das unidades operantes.`,
       config: { temperature: 0.6 }
     });
-    // Fix: Access .text property directly
     return response.text || "Insight indisponível.";
   } catch (err) {
     console.error("Analysis Error:", err);
@@ -79,7 +82,6 @@ export const generateMarketAnalysis = async (arenaName: string, round: number, b
   }
 };
 
-// Added missing export performGroundedSearch
 export const performGroundedSearch = async (query: string) => {
   try {
     const ai = getClient();
@@ -92,7 +94,6 @@ export const performGroundedSearch = async (query: string) => {
       },
     });
 
-    // Fix: Access .text property directly and extract grounding sources
     const text = response.text || "Nenhum resultado processado.";
     const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
       title: chunk.web?.title || "Fonte de Inteligência",
@@ -114,7 +115,6 @@ export const getLiveDecisionAdvice = async (decisions: DecisionData, branch: str
       contents: `Analise estas decisões de simulação empresarial (${branch}): ${JSON.stringify(decisions)}. Identifique erros fatais.`,
       config: { temperature: 0.5 }
     });
-    // Fix: Access .text property directly
     return response.text;
   } catch (err) { return null; }
 };
@@ -127,7 +127,6 @@ export const generateBotDecision = async (branch: Branch, round: number, regionC
       contents: `Gere decisões competitivas para round ${round} em ${branch}. Considere o cenário macro: ${JSON.stringify(macro)}. Retorne apenas JSON puro.`,
       config: { responseMimeType: "application/json" }
     });
-    // Fix: Access .text property directly
     return JSON.parse(response.text || '{}');
   } catch (error) {
     return { judicial_recovery: false, regions: {}, hr: {}, production: {}, machinery: {}, finance: {}, estimates: {} } as any;
@@ -142,7 +141,6 @@ export const generateBlackSwanEvent = async (branch: Branch): Promise<BlackSwanE
       contents: `Gere um Cisne Negro para ${branch}. Deve ser um evento econômico inesperado com modificadores para inflação, demanda, juros e produtividade. Retorne apenas JSON puro.`,
       config: { responseMimeType: "application/json" }
     });
-    // Fix: Access .text property directly
     return JSON.parse(response.text || '{}');
   } catch (error) {
     return { title: "Crise", description: "...", impact: "...", modifiers: { inflation: 1, demand: -10, interest: 1, productivity: -0.1 } };
