@@ -1,36 +1,68 @@
 
 import React, { useState, useEffect } from 'react';
-// Fix: Use motion as any to bypass internal library type resolution issues in this environment
-import { motion as _motion } from 'framer-motion';
+import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { useTranslation } from 'react-i18next';
 import { 
-  Newspaper, Calendar, User, ArrowRight, 
-  Newspaper as GazetteIcon, Sparkles, 
-  MessageSquare, Share2, Tag, Clock,
-  TrendingUp, Newspaper as NewsIcon
+  Newspaper as GazetteIcon, 
+  Search, 
+  ChevronDown, 
+  Loader2, 
+  Sparkles,
+  HelpCircle,
+  BookOpen,
+  History,
+  Terminal,
+  ArrowRight
 } from 'lucide-react';
-import { DEFAULT_PAGE_CONTENT } from '../constants';
-import { fetchPageContent } from '../services/supabase';
+import { fetchBlogPosts } from '../services/supabase';
 import EmpireParticles from '../components/EmpireParticles';
+
+interface BlogPost {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  created_at: string;
+}
 
 const BlogPage: React.FC = () => {
   const { i18n } = useTranslation();
-  const [content, setContent] = useState<any>(DEFAULT_PAGE_CONTENT['blog']);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const loadPosts = async (query?: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await fetchBlogPosts(query);
+      if (error) throw error;
+      setPosts(data || []);
+    } catch (err) {
+      console.error("Falha ao carregar posts:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      const db = await fetchPageContent('blog', i18n.language);
-      if (db) setContent(db);
-    };
-    loadData();
-  }, [i18n.language]);
+    const timer = setTimeout(() => {
+      loadPosts(searchQuery);
+    }, 400); // Debounce de 400ms para evitar spam no Supabase
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-transparent pt-40 pb-32">
+    <div className="min-h-screen relative overflow-hidden bg-[#020617] pt-40 pb-32">
       <EmpireParticles />
-      <div className="container mx-auto px-6 md:px-24 relative z-10 space-y-24">
-        {/* HEADER - GAZETTE TITLE */}
+      
+      <div className="container mx-auto px-6 md:px-24 relative z-10 space-y-20">
+        {/* HEADER - GAZZETTE TITLE */}
         <header className="flex flex-col md:flex-row justify-between items-end gap-10 border-b border-white/10 pb-16">
            <div className="space-y-6">
               <div className="inline-flex items-center gap-3 px-6 py-2 bg-orange-600/10 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-[0.4em] border border-orange-500/20">
@@ -41,98 +73,153 @@ const BlogPage: React.FC = () => {
                  <span className="text-orange-500">Empirion</span>
               </h1>
               <p className="text-xl md:text-3xl text-slate-400 font-medium italic leading-relaxed max-w-3xl">
-                 "{content.subtitle}"
+                 "O núcleo de conhecimento tático onde a filosofia core encontra a execução estratégica."
               </p>
            </div>
            <div className="hidden lg:block text-right space-y-2">
               <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Status do Nodo</span>
               <div className="flex items-center gap-2 text-emerald-500 font-black uppercase text-xs">
-                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Sincronizado v6.0
+                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Sincronizado v13.3
               </div>
            </div>
         </header>
 
-        {/* FEATURED POST (DYNAMIC LOOK) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-           <div className="lg:col-span-8">
-              <div className="grid grid-cols-1 gap-12">
-                 {content.items.map((post: any, i: number) => (
-                   <motion.article 
-                     key={post.id}
-                     initial={{ opacity: 0, y: 30 }}
-                     whileInView={{ opacity: 1, y: 0 }}
-                     viewport={{ once: true }}
-                     className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[4rem] overflow-hidden group hover:bg-white/[0.04] transition-all border-l-4 hover:border-l-orange-600 shadow-2xl"
-                   >
-                      <div className="p-10 md:p-16 space-y-8">
-                         <div className="flex flex-wrap items-center gap-8 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                            <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/5"><Calendar size={14} className="text-orange-500" /> {post.date}</div>
-                            <div className="flex items-center gap-2"><User size={14} className="text-blue-500" /> {post.author}</div>
-                            <div className="flex items-center gap-2"><Clock size={14} /> 5 min read</div>
-                         </div>
-                         <h3 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight leading-[0.95] group-hover:text-orange-500 transition-colors italic">
-                            {post.title}
-                         </h3>
-                         <p className="text-lg text-slate-400 font-medium leading-relaxed italic line-clamp-3">
-                            Análise profunda sobre os novos protocolos de processamento neural e seu impacto na simulação de cenários industriais de alta volatilidade.
-                         </p>
-                         <div className="pt-8 border-t border-white/5 flex items-center justify-between">
-                            <button className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 group-hover:translate-x-3 transition-transform">
-                               Acessar Briefing <ArrowRight size={18} />
-                            </button>
-                            <div className="flex gap-4">
-                               <button className="p-3 text-slate-600 hover:text-white transition-colors"><Share2 size={18}/></button>
-                               <button className="p-3 text-slate-600 hover:text-white transition-colors"><MessageSquare size={18}/></button>
-                            </div>
-                         </div>
-                      </div>
-                   </motion.article>
-                 ))}
+        {/* SEARCH BOX TACTICAL */}
+        <div className="max-w-4xl mx-auto">
+           <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-orange-400 rounded-[2.5rem] opacity-20 blur-xl group-focus-within:opacity-40 transition-opacity" />
+              <div className="relative flex items-center bg-slate-900 border-2 border-white/10 rounded-[2rem] overflow-hidden focus-within:border-orange-500 transition-all shadow-2xl">
+                 <div className="pl-8 text-slate-500">
+                    <Search size={24} />
+                 </div>
+                 <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Pesquise por termos técnicos, filosofia ou mecânicas (ex: O que é Empirion?)..."
+                    className="w-full px-8 py-8 bg-transparent text-white text-lg font-bold outline-none placeholder:text-slate-700"
+                 />
+                 {loading && (
+                    <div className="pr-8">
+                       <Loader2 size={24} className="animate-spin text-orange-500" />
+                    </div>
+                 )}
               </div>
            </div>
+        </div>
 
-           {/* SIDEBAR - INTELLIGENCE DASHBOARD */}
-           <aside className="lg:col-span-4 space-y-10">
-              <div className="p-10 bg-slate-900/60 backdrop-blur-2xl border border-white/5 rounded-[3.5rem] space-y-8">
-                 <h4 className="text-xs font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
-                    <TrendingUp size={16} /> Tópicos em Alta
-                 </h4>
-                 <div className="flex wrap gap-3">
-                    {['Estratégia IA', 'Industrial', 'Market Share', 'Empirion Legacy', 'CVM', 'Strategos'].map(tag => (
-                      <span key={tag} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-orange-600 hover:text-white transition-all cursor-pointer">
-                        #{tag}
-                      </span>
-                    ))}
-                 </div>
-              </div>
+        {/* QUESTIONS LIST - ACCORDION STYLE */}
+        <div className="max-w-5xl mx-auto space-y-6">
+           {posts.length > 0 ? (
+             posts.map((post) => (
+               <motion.div 
+                 key={post.id}
+                 layout
+                 className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[2.5rem] overflow-hidden group hover:bg-white/[0.04] transition-all"
+               >
+                  <button 
+                    onClick={() => toggleExpand(post.id)}
+                    className="w-full text-left p-8 md:p-10 flex items-center justify-between gap-6"
+                  >
+                     <div className="flex items-center gap-6">
+                        <div className={`p-4 rounded-2xl bg-white/5 transition-colors ${expandedId === post.id ? 'bg-orange-600 text-white' : 'text-orange-500'}`}>
+                           <HelpCircle size={24} />
+                        </div>
+                        <h3 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tight group-hover:text-orange-500 transition-colors">
+                           {post.question}
+                        </h3>
+                     </div>
+                     <motion.div 
+                        animate={{ rotate: expandedId === post.id ? 180 : 0 }}
+                        className="text-slate-600"
+                     >
+                        <ChevronDown size={28} />
+                     </motion.div>
+                  </button>
 
-              <div className="p-10 bg-gradient-to-br from-orange-600 to-red-700 rounded-[3.5rem] text-white shadow-2xl space-y-6 relative overflow-hidden group">
-                 <Sparkles className="absolute -top-10 -right-10 opacity-10 group-hover:scale-150 transition-transform duration-1000" size={150} />
-                 <h4 className="text-xl font-black uppercase italic leading-none">Strategos Insight</h4>
-                 <p className="text-xs font-medium text-orange-50 leading-relaxed opacity-90">
-                    "O sucesso não é um destino, é um algoritmo otimizado continuamente pelo processamento de falhas passadas."
-                 </p>
-                 <div className="pt-6 border-t border-white/20 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><UserIcon size={16}/></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Strategos Core Alpha</span>
-                 </div>
-              </div>
+                  <AnimatePresence>
+                     {expandedId === post.id && (
+                       <motion.div 
+                         initial={{ height: 0, opacity: 0 }}
+                         animate={{ height: 'auto', opacity: 1 }}
+                         exit={{ height: 0, opacity: 0 }}
+                         transition={{ duration: 0.4, ease: "circOut" }}
+                       >
+                          <div className="px-10 md:px-24 pb-12 border-t border-white/5 pt-10">
+                             <div className="space-y-6">
+                                <div className="flex items-center gap-3 mb-6">
+                                   <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                                   <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.4em]">Resposta do Oráculo v13.3</span>
+                                </div>
+                                <div className="text-slate-300 text-lg md:text-xl font-medium leading-relaxed italic whitespace-pre-line">
+                                   {post.answer}
+                                </div>
+                                <div className="pt-8 flex items-center justify-between border-t border-white/5">
+                                   <div className="flex gap-3">
+                                      <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">{post.category}</span>
+                                      <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">{new Date(post.created_at).toLocaleDateString()}</span>
+                                   </div>
+                                   <button className="flex items-center gap-2 text-[9px] font-black uppercase text-orange-500 hover:translate-x-2 transition-transform">
+                                      Referência Técnica <ArrowRight size={14} />
+                                   </button>
+                                </div>
+                             </div>
+                          </div>
+                       </motion.div>
+                     )}
+                  </AnimatePresence>
+               </motion.div>
+             ))
+           ) : !loading && (
+             <div className="py-32 text-center space-y-8 bg-white/5 border-2 border-dashed border-white/5 rounded-[4rem]">
+                <History size={64} className="mx-auto text-slate-700" />
+                <div className="space-y-2">
+                   <h3 className="text-2xl font-black text-white uppercase italic">Nenhum Registro Encontrado</h3>
+                   <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tente buscar por termos mais genéricos ou verifique a conexão com o nodo.</p>
+                </div>
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="px-8 py-4 bg-orange-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all"
+                >
+                   Limpar Filtros
+                </button>
+             </div>
+           )}
+        </div>
 
-              <div className="p-10 bg-blue-600/10 border border-blue-500/20 rounded-[3.5rem] space-y-6">
-                 <h4 className="text-xs font-black uppercase tracking-widest text-blue-400">Newsletter do Terminal</h4>
-                 <p className="text-xs text-slate-500 font-medium leading-relaxed">Receba atualizações de arena diretamente no seu feed neural.</p>
-                 <div className="flex gap-2">
-                    <input className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-blue-500" placeholder="E-mail de Operador" />
-                    <button className="p-3 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-500 transition-all"><ArrowRight size={18}/></button>
-                 </div>
-              </div>
-           </aside>
+        {/* SIDEBAR TACTICAL INSIGHTS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+           <InsightCard 
+              icon={<BookOpen className="text-blue-400"/>} 
+              title="Filosofia Core" 
+              desc="Construa impérios, não apenas planilhas. O foco é a fidelidade real."
+           />
+           <InsightCard 
+              icon={<Terminal className="text-emerald-400"/>} 
+              title="Comando Strategos" 
+              desc="Sua unidade de resposta tática operada por inteligência neural Gemini 3."
+           />
+           <InsightCard 
+              icon={<Sparkles className="text-orange-400"/>} 
+              title="Gamificação Elite" 
+              desc="Medalhas e rankings auditados para validar sua senioridade executiva."
+           />
         </div>
       </div>
+
+      <footer className="py-24 border-t border-white/5 text-center opacity-40">
+         <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500 italic">EMPIRION INTELLIGENCE REPOSITORY • COPYRIGHT 2026</p>
+      </footer>
     </div>
   );
 };
 
-const UserIcon = ({ size }: { size: number }) => <User size={size} />;
+const InsightCard = ({ icon, title, desc }: any) => (
+   <div className="p-8 bg-slate-900/50 border border-white/5 rounded-[3rem] space-y-4 hover:border-orange-500/20 transition-all group">
+      <div className="p-4 bg-white/5 rounded-2xl w-fit group-hover:scale-110 transition-transform">{icon}</div>
+      <h4 className="text-lg font-black text-white uppercase italic tracking-tight">{title}</h4>
+      <p className="text-xs text-slate-500 font-bold leading-relaxed">{desc}</p>
+   </div>
+);
 
 export default BlogPage;

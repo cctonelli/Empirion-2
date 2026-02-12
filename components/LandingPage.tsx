@@ -114,7 +114,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   badge="Modo Industrial"
                   title="Produção Massiva"
                   desc="Gerencie cadeias de suprimento e ativos de capital em múltiplos mercados regionais e globais"
-                  img="https://images.unsplash.com/photo-1770904750729-7ea0916066f2?q=80&w=1200&auto=format&fit=crop"
+                  img="https://images.unsplash.com/photo-1675176785803-bffbbb0cd2f4?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<BrainCircuit size={40}/>}

@@ -100,7 +100,6 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
 
     const finalFinancials = isTrial ? INITIAL_INDUSTRIAL_FINANCIALS : champData.initial_financials;
 
-    // Limpeza de campos para evitar erro 42703 (coluna inexistente em trial_championships)
     const { is_trial, round_rules, initial_share_price, ...cleanedData } = champData;
 
     const insertPayload = isTrial ? {
@@ -203,4 +202,19 @@ export const submitCommunityVote = async (d: any) => {
 
 export const provisionDemoEnvironment = () => {
     localStorage.setItem('is_trial_session', 'true');
+};
+
+/**
+ * BUSCA DE POSTS DO BLOG (FAQ)
+ * Implementa pesquisa LIKE (%) e Case Insensitive via ilike
+ */
+export const fetchBlogPosts = async (searchQuery?: string) => {
+  let query = supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
+  
+  if (searchQuery && searchQuery.trim() !== '') {
+    // Busca em pergunta OU resposta
+    query = query.or(`question.ilike.%${searchQuery}%,answer.ilike.%${searchQuery}%`);
+  }
+  
+  return await query;
 };
