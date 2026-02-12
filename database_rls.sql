@@ -101,5 +101,21 @@ ALTER TABLE public.community_ratings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Community_Read_All" ON public.community_ratings;
 CREATE POLICY "Community_Read_All" ON public.community_ratings FOR SELECT TO authenticated USING (true);
 
+-- 10. SEED DATA - BLOG POSTS (FAQ)
+-- Inserção de conteúdos iniciais para BlogPage.tsx
+INSERT INTO public.blog_posts (question, answer, category)
+VALUES 
+(
+  'O que é o EMPIRION?', 
+  'O EMPIRION é uma plataforma de simulação empresarial multiplayer com fidelidade contábil 100%. Integra IA Gemini 3 para mentoria e cenários dinâmicos. Focado em cursos de Administração, Economia, Comércio Exterior, MBA e treinamentos online ou in company, oferece mecânicas de mercado global, multissetoriais e gamificação para gestão estratégica real.',
+  'Sobre'
+),
+(
+  'Qual é a filosofia core do projeto EMPIRION?', 
+  'A filosofia core do projeto EMPIRION, sintetizada no lema "Forge Your Empire" (Forje seu Império), reflete o compromisso em oferecer uma experiência de aprendizado que é, ao mesmo tempo, envolvente e rigorosamente técnica.',
+  'Filosofia'
+)
+ON CONFLICT DO NOTHING;
+
 COMMENT ON TABLE public.blog_posts IS 'Tabela v13.3.0 - FAQ e Conteúdos técnicos com busca LIKE.';
 COMMENT ON TABLE public.modalities IS 'Tabela v13.3.0 - Definições dinâmicas de ramos (Ind, Com, Agro, etc).';
