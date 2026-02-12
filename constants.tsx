@@ -227,7 +227,7 @@ export const MENU_STRUCTURE: MenuItemConfig[] = [
     { id: 'bpn', label: 'Plano de Negócios', path: '/solutions/business-plan', icon: 'PenTool' },
   ]},
   { label: 'Funcionalidades', path: '/features' },
-  { label: 'Conteúdos', path: '/blog' },
+  { label: 'FAQ', path: '/blog' },
   { label: 'Contato', path: '/contact' },
 ];
 
