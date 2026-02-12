@@ -213,7 +213,7 @@ export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicato
 
 export const MENU_STRUCTURE: MenuItemConfig[] = [
 
-  { label: 'Ramos', path: '/branches', sub: [
+  { label: 'Setores', path: '/branches', sub: [
     { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory' },
     { id: 'com', label: 'Varejo', path: '/branches/commercial', icon: 'ShoppingCart' },
     { id: 'svc', label: 'Serviços', path: '/branches/services', icon: 'Briefcase' },
