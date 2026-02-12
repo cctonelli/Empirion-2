@@ -43,7 +43,7 @@ const FeaturesPage: React.FC = () => {
         {/* HEADER PRINCIPAL (Fiel à imagem) */}
         <header className="text-center mb-20 space-y-4">
            <h1 className="text-4xl md:text-6xl font-black text-slate-900 uppercase tracking-tighter leading-none">
-              Empirion: A Nova Era da <span className="text-orange-600">Simulação Empresarial com IA</span>
+              Empirion: A Nova Era da <span className="text-orange-600">Simulação Empresarial com Inteligência Artificial</span>
            </h1>
            <p className="text-lg md:text-xl text-slate-600 font-medium max-w-4xl mx-auto leading-relaxed">
               O Empirion é um ecossistema de simulação multiplayer onde equipes gerenciam impérios empresariais em cenários econômicos dinâmicos.
@@ -127,8 +127,8 @@ const FeaturesPage: React.FC = () => {
                     </div>
 
                     {/* Rótulos Flutuantes ao Redor do Núcleo */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 bg-white px-5 py-2 rounded-xl shadow-lg border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-800">Ecossistema de Simulação Multiplayer</div>
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-4 bg-white px-5 py-2 rounded-xl shadow-lg border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-800">Cenários Econômicos Dinâmicos</div>
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 bg-white/95 backdrop-blur-md px-6 py-2.5 rounded-xl shadow-lg border border-slate-100/80 text-[10px] md:text-[11px] lg:text-[12px] font-black uppercase tracking-widest text-slate-800 whitespace-nowramin-w-[240px] max-w-[320px] md:max-w-[380px] lg:max-w-[420px] text-center">Ecossistema de Simulação Multiplayer</div>>
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-4 bg-white/95 backdrop-blur-md px-6 py-2.5 rounded-xl shadow-lg border border-slate-100/80 text-[10px] md:text-[11px] lg:text-[12px] font-black uppercase tracking-widest text-slate-800 whitespace-nowrap min-w-[240px] max-w-[320px] md:max-w-[380px] lg:max-w-[420px]text-center">Cenários Econômicos Dinâmicos</div>
                  </div>
               </div>
 
