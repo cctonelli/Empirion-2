@@ -62,27 +62,7 @@ const BlogPage: React.FC = () => {
       <EmpireParticles />
       
       <div className="container mx-auto px-6 md:px-24 relative z-10 space-y-20">
-        {/* HEADER - GAZZETTE TITLE */}
-        <header className="flex flex-col md:flex-row justify-between items-end gap-10 border-b border-white/10 pb-16">
-           <div className="space-y-6">
-              <div className="inline-flex items-center gap-3 px-6 py-2 bg-orange-600/10 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-[0.4em] border border-orange-500/20">
-                 <GazetteIcon size={14} /> Official Intelligence Feed
-              </div>
-              <h1 className="text-7xl md:text-9xl font-black text-white uppercase tracking-tighter italic leading-[0.8] drop-shadow-2xl">
-                 Gazeta <br/>
-                 <span className="text-orange-500">Empirion</span>
-              </h1>
-              <p className="text-xl md:text-3xl text-slate-400 font-medium italic leading-relaxed max-w-3xl">
-                 "O núcleo de conhecimento tático onde a filosofia core encontra a execução estratégica."
-              </p>
-           </div>
-           <div className="hidden lg:block text-right space-y-2">
-              <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Status do Nodo</span>
-              <div className="flex items-center gap-2 text-emerald-500 font-black uppercase text-xs">
-                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Sincronizado v13.3
-              </div>
-           </div>
-        </header>
+
 
         {/* SEARCH BOX TACTICAL */}
         <div className="max-w-4xl mx-auto">
