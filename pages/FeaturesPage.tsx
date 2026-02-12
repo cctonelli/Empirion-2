@@ -127,7 +127,7 @@ const FeaturesPage: React.FC = () => {
                     </div>
 
                     {/* Rótulos Flutuantes ao Redor do Núcleo */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 bg-white/95 backdrop-blur-md px-6 py-2.5 rounded-xl shadow-lg border border-slate-100/80 text-[10px] md:text-[11px] lg:text-[12px] font-black uppercase tracking-widest text-slate-800 whitespace-nowramin-w-[240px] max-w-[320px] md:max-w-[380px] lg:max-w-[420px] text-center">Ecossistema de Simulação Multiplayer</div>>
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 bg-white/95 backdrop-blur-md px-6 py-2.5 rounded-xl shadow-lg border border-slate-100/80 text-[10px] md:text-[11px] lg:text-[12px] font-black uppercase tracking-widest text-slate-800 whitespace-nowramin-w-[240px] max-w-[320px] md:max-w-[380px] lg:max-w-[420px] text-center">Ecossistema de Simulação Multiplayer</div>
                     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-4 bg-white/95 backdrop-blur-md px-6 py-2.5 rounded-xl shadow-lg border border-slate-100/80 text-[10px] md:text-[11px] lg:text-[12px] font-black uppercase tracking-widest text-slate-800 whitespace-nowrap min-w-[240px] max-w-[320px] md:max-w-[380px] lg:max-w-[420px]text-center">Cenários Econômicos Dinâmicos</div>
                  </div>
               </div>
@@ -157,15 +157,6 @@ const FeaturesPage: React.FC = () => {
                  </div>
               </div>
 
-              {/* RODAPÉ DO CENTRO: CONCORRENTES */}
-              <div className="mt-12 flex items-center justify-between w-full max-w-lg opacity-40">
-                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Concorrentes</span>
-                 <div className="flex gap-4">
-                    <Cpu size={24} />
-                    {/* Fixed missing Settings icon error */}
-                    <Settings size={24} />
-                 </div>
-              </div>
            </div>
 
            {/* COLUNA DIREITA: VERSATILIDADE E MERCADO */}
