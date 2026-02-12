@@ -193,17 +193,12 @@ const FeaturesPage: React.FC = () => {
                 id="concurrence"
                 title="Vantagem Sobre Concorrentes"
                 desc="Supera simuladores como Capsim e BSG ao incluir IA preditiva e eventos Black Swan."
-                icon={
-                  <div className="relative">
-                    {/* Fixed missing Bird icon error */}
-                    <Bird size={32} className="text-slate-800" />
-                    <div className="absolute -top-1 -right-1"><Zap size={14} className="text-orange-500 fill-current" /></div>
-                  </div>
-                }
+                icon={<Bird size={32} />}
                 color="slate"
                 align="left"
                 onHover={setHoveredNode}
               />
+
            </div>
 
         </div>
