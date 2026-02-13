@@ -133,7 +133,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-[0_0_30px_rgba(249,115,22,0.4)]"><Rocket size={32} /></div>
            <div>
               <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">CONFIGURE O TORNEIO</h2>
-              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Ambiente Sandbox • Oracle Master v13.4</p>
+              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Ambiente Sandbox • Oracle Master v18.0</p>
            </div>
         </div>
         <div className="flex items-center gap-10">
@@ -193,58 +193,9 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
-            {step === 3 && (
-              <motion.div key="s3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                 <WizardStepTitle icon={<Globe size={32}/>} title="GEOPOLÍTICA REGIONAL" desc="NOMINAÇÃO E PARÂMETROS DE MERCADO POR REGIÃO." />
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {regionConfigs.map((reg, idx) => (
-                      <div key={idx} className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 space-y-6 hover:border-orange-500/30 transition-all group">
-                         <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-black text-orange-500 uppercase italic">Região 0{idx+1}</span>
-                            <MapPin size={14} className="text-slate-600 group-hover:text-orange-500 transition-colors" />
-                         </div>
-                         <input 
-                           value={reg.name} 
-                           onChange={e => updateRegion(idx, { name: e.target.value.toUpperCase() })} 
-                           className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-xs font-black text-white uppercase outline-none focus:border-orange-500" 
-                         />
-                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                               <label className="text-[8px] font-black text-slate-600 uppercase">Moeda Regional</label>
-                               <select 
-                                 value={reg.currency} 
-                                 onChange={e => updateRegion(idx, { currency: e.target.value as CurrencyType })}
-                                 className="w-full bg-slate-950 border border-white/10 rounded-xl px-2 py-2 text-[10px] font-black text-white outline-none"
-                               >
-                                  <option value="BRL">REAL (BRL)</option>
-                                  <option value="USD">DÓLAR (USD)</option>
-                                  <option value="EUR">EURO (EUR)</option>
-                                  <option value="CNY">YUAN (CNY)</option>
-                                  <option value="BTC">BITCOIN (BTC)</option>
-                               </select>
-                            </div>
-                            <div className="space-y-2">
-                               <label className="text-[8px] font-black text-slate-600 uppercase">Demanda %</label>
-                               <input 
-                                 type="number" 
-                                 value={reg.demand_weight} 
-                                 onChange={e => updateRegion(idx, { demand_weight: parseInt(e.target.value) || 0 })}
-                                 className="w-full bg-slate-950 border border-white/10 rounded-xl px-2 py-2 text-[10px] font-black text-white outline-none"
-                               />
-                            </div>
-                         </div>
-                      </div>
-                    ))}
-                 </div>
-                 <div className="flex justify-center">
-                    <button onClick={() => setFormData({...formData, regionsCount: Math.min(15, formData.regionsCount + 1)})} className="p-4 bg-white/5 border border-dashed border-white/20 rounded-full text-slate-500 hover:text-white hover:bg-orange-600 hover:border-orange-500 transition-all active:scale-90"><Plus size={24}/></button>
-                 </div>
-              </motion.div>
-            )}
-
             {step === 5 && (
               <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10">
-                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="INDICADORES ESTRATÉGICOS" desc="CONFIGURAÇÃO COMPLETA DA MATRIZ ECONÔMICA POR PERÍODO." />
+                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="INDICADORES ESTRATÉGICOS" desc="MATRIZ ECONÔMICA COMPLETA v18.0 ORACLE." />
                  
                  <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[620px] flex flex-col relative group">
                     <div className="overflow-auto custom-scrollbar flex-1 relative">
@@ -252,7 +203,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <thead className="sticky top-0 z-[100] bg-slate-900 shadow-xl">
                              <tr>
                                 <th className="p-4 bg-slate-900 border-b-2 border-r-2 border-white/10 w-[280px] min-w-[280px]">
-                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Variações / Período</span>
+                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Indicadores e Ajustes</span>
                                 </th>
                                 {Array.from({ length: totalPeriods }).map((_, i) => (
                                    <th key={i} className={`p-4 bg-slate-900 border-b-2 border-r border-white/5 text-center min-w-[95px] ${i === 0 ? 'bg-orange-600/10' : ''}`}>
@@ -263,6 +214,26 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           </thead>
                           <tbody className="divide-y divide-white/5 font-mono">
                              <CompactMatrixRow readOnly periods={totalPeriods} label="ICE CRESC. ECONÔMICO (%)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<Activity size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="VARIAÇÃO DE DEMANDA (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TAXA TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             
+                             {/* AJUSTADORES DE PREÇO (RECONSTITUÍDOS) */}
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MATÉRIA-PRIMA A" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MÁQUINA ALFA" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MÁQUINA BETA" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MÁQUINA GAMA" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MARKETING" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} icon={<Megaphone size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE LOGÍSTICA" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE ESTOCAGEM" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} icon={<Warehouse size={10}/>} />
+
+                             {/* TARIFAS DE EXPORTAÇÃO */}
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT EUA" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT EURO" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT CHINA" macroKey="export_tariff_china" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT BTC" macroKey="export_tariff_btc" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} />
+
+                             {/* CÂMBIO (RECONSTITUÍDOS) */}
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
@@ -290,7 +261,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               <motion.div key="s7" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-24 text-center space-y-12">
                  <div className="w-40 h-40 bg-orange-600 rounded-[4rem] flex items-center justify-center mx-auto shadow-[0_20px_80px_rgba(249,115,22,0.4)] animate-bounce border-4 border-orange-400/50"><ShieldCheck size={80} className="text-white" strokeWidth={3} /></div>
                  <h1 className="text-7xl font-black text-white uppercase italic tracking-tighter">Arena Pronta</h1>
-                 <p className="text-2xl text-slate-400 font-medium italic">Sincronizando Cluster Sandbox com Oracle Engine...</p>
+                 <p className="text-2xl text-slate-400 font-medium italic">Sincronizando Cluster Sandbox com Oracle Engine v18.0 GOLD...</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -322,7 +293,7 @@ const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods, isExc
          const val = rules[i]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound]?.[macroKey] ?? 0);
          return (
             <td key={i} className={`p-1 border-r border-white/5 ${i === 0 ? 'bg-orange-600/5' : ''}`}>
-              <input type="number" step={isExchange ? "0.01" : "0.1"} value={isExchange ? val.toFixed(2) : val} onChange={e => !readOnly && update(i, macroKey, parseFloat(e.target.value))} readOnly={readOnly} className={`w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-2.5 text-center text-[10px] font-black outline-none transition-all shadow-inner ${readOnly ? 'cursor-not-allowed opacity-60 text-slate-400' : 'focus:border-orange-500 text-white'}`} />
+              <input type="number" step={isExchange ? "0.000001" : "0.1"} value={isExchange ? (typeof val === 'number' ? val : 0) : val} onChange={e => !readOnly && update(i, macroKey, parseFloat(e.target.value))} readOnly={readOnly} className={`w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-2.5 text-center text-[10px] font-black outline-none transition-all shadow-inner ${readOnly ? 'cursor-not-allowed opacity-60 text-slate-400' : 'focus:border-orange-500 text-white'}`} />
             </td>
          );
       })}

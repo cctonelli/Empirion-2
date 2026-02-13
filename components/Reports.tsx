@@ -47,7 +47,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       <header className="flex flex-col lg:flex-row justify-between lg:items-end px-6 gap-6">
          <div>
             <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Oracle <span className="text-orange-500">Audit Node</span></h1>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Engine v15.60 Fidelity</p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Engine v18.0 Oracle Master</p>
          </div>
          <div className="flex flex-wrap gap-3 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
             <ReportTabBtn active={activeReport === 'dre'} onClick={() => setActiveReport('dre')} label="DRE" icon={<TrendingUp size={14} />} color="orange" />
@@ -68,37 +68,33 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         <ReportLine label="( = ) RECEITA LÍQUIDA" val={fmt(dre.net_sales)} highlight />
                         <ReportLine label="( - ) CUSTO PRODUTO VENDIDO (CPV)" val={fmt(dre.cpv)} neg />
                         <ReportLine label="( = ) LUCRO BRUTO" val={fmt(dre.gross_profit)} />
-                        <ReportLine label="( - ) OPEX + MKT + DIST" val={fmt(dre.opex)} neg />
-                        <ReportLine label="( = ) RESULTADO OPERACIONAL" val={fmt(dre.operating_profit)} />
+                        <ReportLine label="( - ) DESPESAS OPERACIONAIS" val={fmt(dre.opex)} neg />
+                        <ReportLine label="( = ) RESULTADO OPERACIONAL" val={fmt(dre.operating_profit)} highlight />
+                        <ReportLine label="(+/-) RESULTADO FINANCEIRO" val={fmt(dre.fin_res)} indent />
+                        <ReportLine label="(+/-) RESULTADO NÃO OPERACIONAL" val={fmt(dre.non_op_res)} indent />
+                        <ReportLine label="( = ) LUCRO ANTES DO IR (LAIR)" val={fmt(dre.lair)} />
                         <ReportLine label="( - ) PROVISÃO DE IMPOSTO RENDA" val={fmt(dre.taxes)} indent neg />
-                        <ReportLine label="( - ) PARTICIPAÇÃO LUCROS (PPR)" val={fmt(dre.ppr)} indent neg />
+                        <ReportLine label="( = ) LUCRO APÓS O IR" val={fmt(dre.profit_after_tax)} />
+                        <ReportLine label="( - ) PPR-PARTICIPAÇÃO NO LUCRO" val={fmt(dre.ppr)} indent neg />
                         <ReportLine label="( = ) LUCRO LÍQUIDO DO CICLO" val={fmt(dre.net_profit)} total />
                      </div>
                   </motion.div>
                ) : activeReport === 'cash_flow' ? (
-                  <motion.div key="cf" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                  <motion.div key="cf" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                      <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Fluxo de Caixa (Regime de Caixa)</h3>
                      <div className="space-y-1 font-mono">
                         <ReportLine label="(=) SALDO INICIAL" val={fmt(cf.start)} bold />
                         
                         <div className="py-4 space-y-2 border-l-2 border-emerald-500/30 pl-6 my-4 bg-emerald-500/5 rounded-r-3xl">
                            <ReportLine label="(+) ENTRADAS TOTAIS" val={fmt(cf.inflow?.total)} color="text-emerald-400" />
-                           <ReportLine label="VENDAS À VISTA (CORRENTE)" val={fmt(cf.inflow?.current_sales)} indent />
-                           <ReportLine label="RECEBIMENTOS DE CICLOS ANTERIORES (T+1)" val={fmt(cf.inflow?.legacy_receivables)} indent color="text-emerald-500" icon={<ArrowUpRight size={10}/>} />
+                           <ReportLine label="VENDAS À VISTA" val={fmt(cf.inflow?.current_sales)} indent />
+                           <ReportLine label="PREMIAÇÕES/NÃO-OPERACIONAIS" val={fmt(cf.inflow?.awards)} indent icon={<Zap size={10}/>} />
                         </div>
 
                         <div className="py-4 space-y-2 border-l-2 border-rose-500/30 pl-6 my-4 bg-rose-500/5 rounded-r-3xl">
                            <ReportLine label="(-) SAÍDAS TOTAIS" val={fmt(cf.outflow?.total)} neg color="text-rose-400" />
-                           <ReportLine label="FOLHA + ENCARGOS + PPR" val={fmt(cf.outflow?.current_payroll)} indent neg />
-                           <ReportLine label="FORNECEDORES À VISTA (CORRENTE)" val={fmt(cf.outflow?.current_suppliers)} indent neg />
-                           
-                           {/* LIQUIDAÇÕES FISCAIS E LEGADO */}
-                           <div className="mt-4 pt-4 border-t border-rose-500/10 space-y-2">
-                              <ReportLine label="LIQUIDAÇÃO IVA (T+1)" val={fmt(cf.outflow?.legacy_vat)} indent neg icon={<Receipt size={10}/>} />
-                              <ReportLine label="LIQUIDAÇÃO IMPOSTO RENDA (T+1)" val={fmt(cf.outflow?.legacy_taxes)} indent neg icon={<Receipt size={10}/>} />
-                              <ReportLine label="LIQUIDAÇÃO FORNECEDORES (T+1)" val={fmt(cf.outflow?.legacy_suppliers)} indent neg icon={<ArrowDownLeft size={10}/>} />
-                              <ReportLine label="LIQUIDAÇÃO DIVIDENDOS" val={fmt(cf.outflow?.legacy_dividends)} indent neg icon={<Coins size={10}/>} />
-                           </div>
+                           <ReportLine label="PAGAMENTO PPR" val={fmt(cf.outflow?.ppr)} indent neg icon={<Users size={10}/>} />
+                           <ReportLine label="INVESTIMENTOS CAPEX" val={fmt(cf.outflow?.capex)} indent neg icon={<Cpu size={10}/>} />
                         </div>
 
                         <ReportLine label="(=) SALDO FINAL PROJETADO" val={fmt(cf.final)} total bold highlight color={cf.final <= 0 ? 'text-rose-500' : 'text-emerald-400'} />

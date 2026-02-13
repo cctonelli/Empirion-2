@@ -25,9 +25,11 @@ export const calculateProjections = (
   const reg1 = regions[Number(firstRegionId)] || {};
   const price = sanitize(reg1.price, indicators.avg_selling_price || 425);
   
-  // 1. Modelagem de Demanda Baseada em Preço e Macro (ICE)
+  // 1. Modelagem de Demanda (Oracle High Fidelity)
   const ice = sanitize(indicators.ice, 3.0);
-  const baseDemand = 10000 * (ice / 3) * (ecosystem.demand_multiplier || 1);
+  const demandVariation = sanitize(indicators.demand_variation, 0);
+  const baseDemand = 10000 * (ice / 3) * (ecosystem.demand_multiplier || 1) * (1 + (demandVariation / 100));
+  
   const priceRatio = price / (indicators.avg_selling_price || 425);
   const priceEffect = Math.pow(1 / Math.max(0.1, priceRatio), 1.2);
   const marketingEffect = 1 + (Object.values(regions).reduce((acc, r) => acc + sanitize(r.marketing, 0), 0) * 0.05);
@@ -35,7 +37,7 @@ export const calculateProjections = (
   const totalUnitsSold = Math.floor(baseDemand * priceEffect * marketingEffect);
   const revenue = totalUnitsSold * price;
   
-  // 2. Custos e OPEX
+  // 2. Estrutura de Custos e OPEX
   const unitCost = (indicators.prices?.mp_a || 20) + (indicators.prices?.mp_b || 40) + ((indicators.prices?.distribution_unit || 50) / 2);
   const cogs = totalUnitsSold * unitCost;
   const grossProfit = revenue - cogs;
@@ -44,24 +46,30 @@ export const calculateProjections = (
   const adminOpex = (indicators.staffing?.admin?.count || 20) * (indicators.staffing?.admin?.salaries || 4) * (indicators.hr_base?.salary || 2000);
   const totalOpex = adminOpex + marketingSpend;
   
-  const ebitda = grossProfit - totalOpex;
+  const operatingProfit = grossProfit - totalOpex;
+  
+  // 3. Resultado Financeiro e Não Operacional (Fidelidade v18.0)
+  const finRes = -2500; // Proxy de juros bancários P00
+  const nonOpRes = 0;   // Injetado via eventos/premiações/deságios
+  
+  const lair = operatingProfit + finRes + nonOpRes;
+  const taxProv = lair > 0 ? lair * 0.25 : 0;
+  const profitAfterTax = lair - taxProv;
+  
+  // PPR (Participação no Lucro) - Injetado se houver política ativa
+  const ppr = sanitize(decision.hr?.participationPercent, 0) > 0 ? profitAfterTax * (sanitize(decision.hr?.participationPercent, 0) / 100) : 0;
+  
+  const netProfit = profitAfterTax - ppr;
+
+  // 4. Métricas de Comando (War Room Telemetry)
   const baseEquity = 7252171.74;
   const currentEquity = team.equity || baseEquity;
-  const depreciation = currentEquity * 0.025;
-  const netProfit = (ebitda - depreciation) * 0.75; // 25% Tax proxy
-
-  // 3. Métricas Avançadas (War Room Telemetry)
   const finalEquity = currentEquity + netProfit;
   const tsr = round2(((finalEquity - baseEquity) / baseEquity) * 100);
   const marketShare = round2((totalUnitsSold / (baseDemand * 8)) * 100);
   
-  // NLCDG: Necessidade de Capital de Giro (proxy baseada em ciclo financeiro)
   const nlcdg = round2((revenue / 360) * (sanitize(reg1.term, 1) * 30));
-  
-  // Termômetro de Kanitz (Solvência) - Simplificado para simulador
-  const kanitz = round2((netProfit / currentEquity) * 10 + (ebitda / revenue) * 5);
-  
-  // DCF Valuation (Fluxo de Caixa Descontado Simplificado)
+  const kanitz = round2((netProfit / currentEquity) * 10 + (operatingProfit / revenue) * 5);
   const dcf = round2(finalEquity * (1 + (tsr / 100)));
 
   let rating: CreditRating = 'AAA';
@@ -80,13 +88,18 @@ export const calculateProjections = (
     },
     marketShare,
     statements: {
-      dre: { revenue, net_sales: revenue, cpv: cogs, gross_profit: grossProfit, opex: totalOpex, operating_profit: ebitda, net_profit: netProfit },
+      dre: { 
+        revenue, net_sales: revenue, cpv: cogs, gross_profit: grossProfit, 
+        opex: totalOpex, operating_profit: operatingProfit, fin_res: finRes,
+        non_op_res: nonOpRes, lair, taxes: taxProv, profit_after_tax: profitAfterTax,
+        ppr, net_profit: netProfit 
+      },
       cash_flow: { final: sanitize(team.kpis?.current_cash, 0) + netProfit },
       balance_sheet: team.kpis?.statements?.balance_sheet || []
     },
     kpis: {
       ...team.kpis,
-      rating, tsr, ebitda, equity: finalEquity, market_share: marketShare,
+      rating, tsr, ebitda: operatingProfit, equity: finalEquity, market_share: marketShare,
       nlcdg, solvency_score_kanitz: kanitz, dcf_valuation: dcf
     }
   };

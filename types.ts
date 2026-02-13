@@ -187,6 +187,22 @@ export interface MacroIndicators {
   vat_sales_rate: number;
   dividend_percent: number;
   production_hours_period: number;
+  
+  // Ajustadores de Custo/Preço v18.0
+  raw_material_a_adjust?: number;
+  machine_alpha_price_adjust?: number;
+  machine_beta_price_adjust?: number;
+  machine_gamma_price_adjust?: number;
+  marketing_campaign_adjust?: number;
+  distribution_cost_adjust?: number;
+  storage_cost_adjust?: number;
+  
+  // Tarifas de Exportação
+  export_tariff_usa?: number;
+  export_tariff_euro?: number;
+  export_tariff_china?: number;
+  export_tariff_btc?: number;
+
   award_values: {
     cost_precision: number;
     revenue_precision: number;
