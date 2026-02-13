@@ -7,7 +7,7 @@ import {
   Hourglass, Scale, Sparkles, X, Settings2,
   TrendingUp, Zap, Users, DollarSign, Package, Cpu,
   Factory, Trash2, ClipboardList, Gauge, Table as TableIcon,
-  Landmark, Info, Settings, MousePointer2, ChevronLeft, ChevronRight, FileJson
+  Landmark, Info, Settings, MousePointer2, ChevronLeft, ChevronRight, FileJson, Coins
 } from 'lucide-react';
 import { CHAMPIONSHIP_TEMPLATES, INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource } from '../types';
@@ -36,7 +36,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   const [teamNames, setTeamNames] = useState<string[]>([]);
   const [marketIndicators, setMarketIndicators] = useState<MacroIndicators>(DEFAULT_MACRO);
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
-  // Fix: Added type assertion to INITIAL_FINANCIAL_TREE to satisfy AccountNode[] requirements for nested literal unions
+  // Fix: Explicitly typing financials to match the state requirements
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE as any);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     });
     setMarketIndicators(DEFAULT_MACRO);
     setRoundRules(DEFAULT_INDUSTRIAL_CHRONOGRAM);
-    // Fix: Casting to any to bypass complex nested literal union inference issues for state update
+    // Fix: Casting to any to avoid complex union type inference issues
     setFinancials(INITIAL_FINANCIAL_TREE as any);
     alert("DNA INDUSTRIAL CARREGADO: Indicadores macro e balanços de $9.5M sincronizados.");
   };
@@ -63,6 +63,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     setIsSubmitting(true);
     const teamsToCreate = [
       ...teamNames.map(n => ({ name: n, is_bot: false })),
+      // Fix: Changed formData.botsCount to formData.bots_count to match state definition
       ...Array.from({ length: formData.bots_count }, (_, i) => ({ name: `BOT Oracle 0${i+1}`, is_bot: true }))
     ];
     try {
@@ -121,19 +122,19 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   <WizardField label="Nome da Arena" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="EX: TORNEIO NACIONAL ALPHA" />
                   <div className="grid grid-cols-2 gap-8">
+                     <WizardSelect label="Moeda de Reporte" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (BRL)'},{v:'USD',l:'DÓLAR (USD)'},{v:'EUR',l:'EURO (EUR)'},{v:'CNY',l:'YUAN (CNY)'},{v:'BTC',l:'BITCOIN (BTC)'}]} />
+                     <WizardField label="Regiões (1 a 15)" type="number" val={formData.regions_count} onChange={(v:any)=>setFormData({...formData, regions_count: parseInt(v)})} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-8">
                      <div className="space-y-2">
                         <WizardField label="Total de Ciclos" type="number" val={formData.total_rounds} onChange={(v:any)=>setFormData({...formData, total_rounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
                         {formData.total_rounds >= 12 && <p className="text-[10px] font-black text-rose-500 uppercase italic ml-4 animate-pulse">MÁXIMO DE 12 PERÍODOS</p>}
                      </div>
-                     <WizardField label="Regiões (1 a 15)" type="number" val={formData.regions_count} onChange={(v:any)=>setFormData({...formData, regions_count: parseInt(v)})} />
+                     <WizardField label="Prazo Decisão" type="number" val={formData.deadline_value} onChange={(v:any)=>setFormData({...formData, deadline_value: parseInt(v)})} />
                   </div>
                   <div className="grid grid-cols-2 gap-8">
                      <WizardField label="Equipes Humanas" type="number" val={formData.teams_count} onChange={(v:any)=>setFormData({...formData, teams_count: parseInt(v)})} />
                      <WizardField label="Bots (IA Gemini)" type="number" val={formData.bots_count} onChange={(v:any)=>setFormData({...formData, bots_count: parseInt(v)})} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-8">
-                     <WizardField label="Prazo Decisão" type="number" val={formData.deadline_value} onChange={(v:any)=>setFormData({...formData, deadline_value: parseInt(v)})} />
-                     <WizardSelect label="Unidade Temporal" val={formData.deadline_unit} onChange={(v:any)=>setFormData({...formData, deadline_unit: v as DeadlineUnit})} options={[{v:'days',l:'DIAS'},{v:'hours',l:'HORAS'}]} />
                   </div>
                </div>
             </motion.div>

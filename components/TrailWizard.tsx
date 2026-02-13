@@ -70,8 +70,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         for (let i = next.length; i < formData.regionsCount; i++) {
           next.push({
             id: i + 1,
-            name: i === 0 ? 'REGIÃO SUL' : i === 1 ? 'ESTADOS UNIDOS' : i === 2 ? 'EUROPA' : `REGIÃO 0${i + 1}`,
-            currency: i === 0 ? 'BRL' : i === 1 ? 'USD' : i === 2 ? 'EUR' : 'BRL',
+            name: i === 0 ? 'REGIÃO SUL' : i === 1 ? 'ESTADOS UNIDOS' : i === 2 ? 'EUROPA' : i === 3 ? 'ÁSIA PACÍFICO' : `REGIÃO 0${i + 1}`,
+            currency: i === 0 ? 'BRL' : i === 1 ? 'USD' : i === 2 ? 'EUR' : i === 3 ? 'CNY' : 'BRL',
             demand_weight: defaultWeight
           });
         }
@@ -120,7 +120,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   };
 
   const updateRoundMacro = (round: number, key: string, val: any) => {
-    // Read only check if needed, but here it's purely UI based on user request for READONLY visualization
     setRoundRules(prev => ({ ...prev, [round]: { ...(prev[round] || {}), [key]: val } }));
   };
 
@@ -167,7 +166,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DO TORNEIO" desc="CONFIGURAÇÕES GLOBAIS DA ARENA SANDBOX." />
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2"><WizardField label="NOME DO TORNEIO" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TORNEIO TRIAL MASTER" /></div>
-                    <WizardSelect label="MOEDA BASE" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'}]} />
+                    <WizardSelect label="MOEDA BASE" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
                     
                     <div className="grid grid-cols-2 gap-4">
                       <WizardField label="TEMPO ROUND" type="number" val={formData.roundTime} onChange={()=>{}} isLocked />
@@ -230,6 +229,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                   <option value="BRL">REAL</option>
                                   <option value="USD">DOLAR</option>
                                   <option value="EUR">EURO</option>
+                                  <option value="CNY">YUAN</option>
+                                  <option value="BTC">BITCOIN</option>
                                </select>
                             </div>
                             <div className="space-y-2">
@@ -246,7 +247,6 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     ))}
                  </div>
                  <div className="flex justify-center">
-                    {/* Added missing Plus icon import to fix the error */}
                     <button onClick={() => setFormData({...formData, regionsCount: Math.min(15, formData.regionsCount + 1)})} className="p-4 bg-white/5 border border-dashed border-white/20 rounded-full text-slate-500 hover:text-white hover:bg-orange-600 hover:border-orange-500 transition-all active:scale-90"><Plus size={24}/></button>
                  </div>
               </motion.div>
@@ -362,6 +362,8 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORTAÇÃO EURO (%)" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} />							 
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} isExchange />
 
                              <tr className="hover:bg-white/[0.03] transition-colors">
                                 <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR COMPRA/VENDA MÁQUINAS</td>

@@ -10,6 +10,15 @@ export const sanitize = (val: any, fallback: number = 0): number => {
 
 const round2 = (num: number) => Math.round((num + Number.EPSILON) * 100) / 100;
 
+/**
+ * Utilitário de Conversão Cambial Relativa
+ */
+export const convertValue = (value: number, fromCurrency: string, toCurrency: string, rates: Record<string, number>) => {
+  if (!rates[fromCurrency] || !rates[toCurrency]) return value;
+  // A taxa é baseada na relação entre a moeda de origem e a de destino em relação à base (BRL)
+  return value * (rates[fromCurrency] / rates[toCurrency]);
+};
+
 export const calculateProjections = (
   decisions: DecisionData, 
   branch: Branch, 
@@ -29,6 +38,9 @@ export const calculateProjections = (
     ...baseIndicators, 
     ...(roundRules?.[lookupRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound] || {}) 
   };
+
+  // Moeda padrão do campeonato para reporte consolidado
+  const defaultCurrency = championshipData?.currency || 'BRL';
 
   const prevBS = previousState?.kpis?.statements?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
   
@@ -56,25 +68,42 @@ export const calculateProjections = (
   
   const activityLevel = sanitize(decisions.production?.activityLevel, 80) / 100;
   
-  // Vendas
+  // Vendas Regionalizadas com Conversão Cambial
   let totalRevenueGross = 0;
   let totalQty = 0;
   let avgPrice = 0;
   const regionsCount = Object.keys(decisions.regions || {}).length || 1;
   
-  Object.values(decisions.regions || {}).forEach((reg: any) => {
+  // Mapeamento de moedas por região (se disponível no config do campeonato)
+  const regionConfigs = (championshipData as any)?.region_configs || [];
+
+  Object.entries(decisions.regions || {}).forEach(([id, reg]: [any, any]) => {
+    const regConfig = regionConfigs.find((rc: any) => rc.id === Number(id));
+    const regCurrency = regConfig?.currency || defaultCurrency;
+    
     const price = sanitize(reg.price, 425);
+    // Demanda ajustada por elasticidade e nível de atividade
     const qty = (9700 / 4) * Math.pow(425/Math.max(1, price), 1.1) * activityLevel;
     totalQty += qty;
-    totalRevenueGross += round2(price * qty);
+
+    // Converte a receita da região para a moeda base do campeonato
+    let regionalRev = price * qty;
+    
+    // Simulação de volatilidade Bitcoin se for a moeda da região
+    if (regCurrency === 'BTC') {
+       regionalRev *= (1 + (Math.random() * 0.4 - 0.2)); // Volatilidade randômica ±20%
+    }
+
+    const convertedRev = convertValue(regionalRev, regCurrency, defaultCurrency, indicators.exchange_rates);
+    totalRevenueGross += round2(convertedRev);
     avgPrice += price / regionsCount;
   });
 
   const netSalesRevenue = totalRevenueGross * 0.85;
-  const fixedCosts = 502500; // OPEX + Juros Mock
+  const opexBase = 500000;
   const cpv = totalRevenueGross * 0.65;
   const variableCostPerUnit = cpv / Math.max(1, totalQty);
-  const ebit = netSalesRevenue - cpv - 500000; 
+  const ebit = netSalesRevenue - cpv - opexBase; 
   const netProfit = ebit - 2500; 
 
   const projectedCash = prevCash + (totalRevenueGross * 0.5) - cpv;
@@ -95,7 +124,7 @@ export const calculateProjections = (
     
     // ROI e BEP solicitados
     roi: round2((netProfit / Math.max(1, finalEquity)) * 100),
-    bep: round2(fixedCosts / Math.max(0.1, (avgPrice - variableCostPerUnit))),
+    bep: round2(opexBase / Math.max(0.1, (avgPrice - variableCostPerUnit))),
 
     // Auditoria Adicional
     solvency_index: round2(finalAssets / Math.max(1, finalLiabilities)),
