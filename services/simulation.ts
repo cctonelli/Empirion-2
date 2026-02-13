@@ -21,24 +21,49 @@ export const calculateProjections = (
   team: Team
 ): ProjectionResult => {
   const regions = decision.regions || {};
-  const firstRegionId = Object.keys(regions)[0] || "1";
-  const reg1 = regions[Number(firstRegionId)] || {};
-  const price = sanitize(reg1.price, indicators.avg_selling_price || 425);
   
   // 1. Modelagem de Demanda (Oracle High Fidelity)
-  // Métrica: Unidades Vendidas = Demanda Base * (1 + variação/100)
   const ice = sanitize(indicators.ice, 3.0);
   const demandVariation = sanitize(indicators.demand_variation, 0);
   const baseDemand = 10000 * (ice / 3) * (ecosystem.demand_multiplier || 1) * (1 + (demandVariation / 100));
+
+  let totalRevenueBase = 0;
+  let totalUnitsSoldAllRegions = 0;
+
+  // Processamento multiregional com conversão de moedas
+  Object.entries(regions).forEach(([id, reg]: [any, any]) => {
+    const regionId = parseInt(id);
+    // Busca config da região se existir no indicador de mercado
+    const regionConfig = indicators.region_configs?.find((r: any) => r.id === regionId);
+    const regionCurrency = regionConfig?.currency || indicators.currency || 'BRL';
+    const regionWeight = regionConfig?.demand_weight || (100 / Math.max(1, Object.keys(regions).length));
+    
+    const price = sanitize(reg.price, indicators.avg_selling_price || 425);
+    const priceRatio = price / (indicators.avg_selling_price || 425);
+    const priceEffect = Math.pow(1 / Math.max(0.1, priceRatio), 1.2);
+    const marketingEffect = 1 + (sanitize(reg.marketing, 0) * 0.05);
+
+    const regionalDemand = baseDemand * (regionWeight / 100);
+    const unitsSold = Math.floor(regionalDemand * priceEffect * marketingEffect);
+    
+    // Conversão Cross-Currency para Moeda Base
+    // Regra: ValorBase = ValorLocal * (Cotação_Local_vs_Base)
+    // No cronograma, as taxas são relativas a BRL por padrão, mas o motor aceita cruzamento.
+    const exchangeRate = indicators.exchange_rates?.[regionCurrency] || 1;
+    const baseExchangeRate = indicators.exchange_rates?.[indicators.currency || 'BRL'] || 1;
+    
+    // Se a moeda base do torneio for USD e a região BRL: ValorUSD = ValorBRL / 5.2
+    const crossRate = exchangeRate / baseExchangeRate;
+    const regionalRevenueBase = (unitsSold * price) / crossRate;
+
+    totalRevenueBase += regionalRevenueBase;
+    totalUnitsSoldAllRegions += unitsSold;
+  });
+
+  const revenue = totalRevenueBase;
+  const totalUnitsSold = totalUnitsSoldAllRegions;
   
-  const priceRatio = price / (indicators.avg_selling_price || 425);
-  const priceEffect = Math.pow(1 / Math.max(0.1, priceRatio), 1.2);
-  const marketingEffect = 1 + (Object.values(regions).reduce((acc, r) => acc + sanitize(r.marketing, 0), 0) * 0.05);
-  
-  const totalUnitsSold = Math.floor(baseDemand * priceEffect * marketingEffect);
-  const revenue = totalUnitsSold * price;
-  
-  // 2. Estrutura de Custos e OPEX
+  // 2. Estrutura de Custos e OPEX (Calculados na Moeda Base)
   const unitCost = (indicators.prices?.mp_a || 20) + (indicators.prices?.mp_b || 40) + ((indicators.prices?.distribution_unit || 50) / 2);
   const cogs = totalUnitsSold * unitCost;
   const grossProfit = revenue - cogs;
@@ -51,13 +76,12 @@ export const calculateProjections = (
   
   // 3. Resultado Financeiro e Não Operacional (Fidelidade v18.0)
   const finRes = -2500; // Proxy de juros bancários P00
-  const nonOpRes = 0;   // Injetado via eventos/premiações/deságios (Placeholder Imutável)
+  const nonOpRes = 0;   
   
   const lair = operatingProfit + finRes + nonOpRes;
   const taxProv = lair > 0 ? lair * 0.25 : 0;
   const profitAfterTax = lair - taxProv;
   
-  // PPR (Participação no Lucro) - Injetado se houver política ativa
   const ppr = sanitize(decision.hr?.participationPercent, 0) > 0 ? profitAfterTax * (sanitize(decision.hr?.participationPercent, 0) / 100) : 0;
   
   const netProfit = profitAfterTax - ppr;
@@ -69,7 +93,7 @@ export const calculateProjections = (
   const tsr = round2(((finalEquity - baseEquity) / baseEquity) * 100);
   const marketShare = round2((totalUnitsSold / (baseDemand * 8)) * 100);
   
-  const nlcdg = round2((revenue / 360) * (sanitize(reg1.term, 1) * 30));
+  const nlcdg = round2((revenue / 360) * (sanitize(Object.values(regions)[0]?.term || 1, 1) * 30));
   const kanitz = round2((netProfit / currentEquity) * 10 + (operatingProfit / revenue) * 5);
   const dcf = round2(finalEquity * (1 + (tsr / 100)));
 
