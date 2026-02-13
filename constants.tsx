@@ -7,7 +7,6 @@ export const PROTOCOL_NODE = "Node 08-STREET-ACCOUNTING-CORE";
 
 export const DEFAULT_INITIAL_SHARE_PRICE = 100.00;
 
-// Fix: Explicitly typing INITIAL_FINANCIAL_TREE to satisfy AccountNode structure requirements (literal unions for 'type' property)
 export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } = {
   balance_sheet: [
     { 
@@ -83,14 +82,9 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 2500.00, type: 'expense', isEditable: true }
     ]},
-    { id: 'non_op_res', label: '(+/-) RESULTADO NÃO OPERACIONAL', value: 0, type: 'totalizer', children: [
-        { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0, type: 'revenue', isEditable: true },
-        { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0, type: 'expense', isEditable: true }
-    ]},
     { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 59485.26, type: 'totalizer', isReadOnly: true },
     { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.31, type: 'expense', isEditable: true },
     { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 44613.95, type: 'totalizer', isReadOnly: true },
-    { id: 'ppr', label: '(-) PPR-PARTICIPAÇÃO NO LUCRO', value: 0.00, type: 'expense', isEditable: true },
     { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 44613.95, type: 'totalizer', isReadOnly: true }
   ],
   cash_flow: [
@@ -113,13 +107,11 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 489850.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 70700.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.suppliers', label: 'PAGAMENTO A FORNECEDORES', value: 1414000.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.misc', label: 'DIVERSOS E ATRASOS GERAIS', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.machine_buy', label: 'COMPRA DE MÁQUINAS', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO DE MÁQUINAS', value: 146402.50, type: 'expense', isEditable: true },
         { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 125000.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.late_penalties', label: 'MULTAS POR ATRASO', value: 0, type: 'expense', isEditable: true },
         { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.training', label: 'TREINAMENTO', value: 0, type: 'expense', isEditable: true },
         { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true },
 		    { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true }
@@ -179,40 +171,39 @@ export const DEFAULT_MACRO: MacroIndicators = {
       overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 40, overload_extra_rate: 0.0005 
     }
   },
-  initial_machinery_mix: [
-    { id: 'm1', model: 'alfa', age: 6, purchase_value: 500000, depreciated_value: 425000 },
-    { id: 'm2', model: 'alfa', age: 11, purchase_value: 480000, depreciated_value: 348000 },
-    { id: 'm3', model: 'alfa', age: 11, purchase_value: 480000, depreciated_value: 348000 },
-    { id: 'm4', model: 'alfa', age: 21, purchase_value: 450000, depreciated_value: 213750 },
-    { id: 'm5', model: 'alfa', age: 21, purchase_value: 450000, depreciated_value: 213750 }
-  ],
   staffing: {
     admin: { count: 20, salaries: 4 },
     sales: { count: 10, salaries: 4 },
     production: { count: 470, salaries: 1 }
   },
   hr_base: { salary: 2000.00 },
-  exchange_rates: { BRL: 1.0, USD: 5.25, EUR: 5.60, GBP: 6.50, CNY: 0.72, BTC: 0.00002 },
+  exchange_rates: { 
+    BRL: 1.0, 
+    USD: 5.25, 
+    EUR: 5.60, 
+    GBP: 6.50,
+    CNY: 0.72,  // Yuan adicionado
+    BTC: 0.00002 // Bitcoin adicionado
+  },
 };
 
 export const DEFAULT_INDUSTRIAL_CHRONOGRAM: Record<number, Partial<MacroIndicators>> = {
-  0: {ice: 3.0, demand_variation: 0.0, inflation_rate: 1.0, customer_default_rate: 2.6, interest_rate_tr: 2.0, supplier_interest: 1.5, investment_return_rate: 1.0, vat_purchases_rate: 0.0, vat_sales_rate: 0.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 1.0, machine_alpha_price_adjust: 1.0, machine_beta_price_adjust: 1.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 1.0, storage_cost_adjust: 2.0, export_tariff_usa: 0.0, export_tariff_euro: 0.0, USD: 5.20, EUR: 6.20, CNY: 0.70, BTC: 0.000019, allow_machine_sale: false, require_business_plan: false},
-  1: {ice: 3.2, demand_variation: 6.7, inflation_rate: 1.2, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 2.0, investment_return_rate: 2.0, vat_purchases_rate: 0.0, vat_sales_rate: 0.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 2.0, machine_alpha_price_adjust: 2.0, machine_beta_price_adjust: 2.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 2.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 2.0, export_tariff_usa: 0.0, export_tariff_euro: 0.0, USD: 5.26, EUR: 6.27, CNY: 0.71, BTC: 0.000020, allow_machine_sale: true, require_business_plan: false},
-  2: {ice: 2.8, demand_variation: -6.3, inflation_rate: 1.5, customer_default_rate: 2.7, interest_rate_tr: 3.0, supplier_interest: 3.0, investment_return_rate: 2.0, vat_purchases_rate: 0.0, vat_sales_rate: 0.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 5.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 3.0, machine_alpha_price_adjust: 2.0, machine_beta_price_adjust: 2.0, machine_gamma_price_adjust: 1.0, marketing_campaign_adjust: 3.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 2.0, export_tariff_usa: 0.0, export_tariff_euro: 0.0, USD: 5.52, EUR: 6.53, CNY: 0.75, BTC: 0.000015, allow_machine_sale: true, require_business_plan: false},
-  3: {ice: 5.0, demand_variation: 55.0, inflation_rate: 1.8, customer_default_rate: 2.8, interest_rate_tr: 4.0, supplier_interest: 3.0, investment_return_rate: 2.5, vat_purchases_rate: 15.0, vat_sales_rate: 15.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.0, social_charges: 35.0, raw_material_a_adjust: 3.0, machine_alpha_price_adjust: 3.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 3.0, marketing_campaign_adjust: 3.0, distribution_cost_adjust: 3.0, storage_cost_adjust: 3.0, export_tariff_usa: 0.0, export_tariff_euro: 0.0, USD: 5.77, EUR: 6.69, CNY: 0.78, BTC: 0.000025, allow_machine_sale: true, require_business_plan: false},
-  4: {ice: 5.0, demand_variation: -25.0, inflation_rate: 2.1, customer_default_rate: 2.6, interest_rate_tr: 4.0, supplier_interest: 4.0, investment_return_rate: 3.0, vat_purchases_rate: 15.0, vat_sales_rate: 15.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 15.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.5,social_charges: 35.0, raw_material_a_adjust: 4.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 4.0, machine_gamma_price_adjust: 4.0, marketing_campaign_adjust: 4.0,distribution_cost_adjust: 4.0, storage_cost_adjust: 4.0, export_tariff_usa: 10.0, export_tariff_euro: 10.0, USD: 5.51, EUR: 6.55, CNY: 0.76, BTC: 0.000030, allow_machine_sale: true, require_business_plan: true},
-  5: {ice: 5.0, demand_variation: 18.2, inflation_rate: 1.6, customer_default_rate: 2.8, interest_rate_tr: 4.5, supplier_interest: 4.5, investment_return_rate: 3.5, vat_purchases_rate: 15.0, vat_sales_rate: 15.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 20.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.5, social_charges: 35.0, raw_material_a_adjust: 4.3, machine_alpha_price_adjust: 5.0, machine_beta_price_adjust: 4.5, machine_gamma_price_adjust: 4.0, marketing_campaign_adjust: 5.0, distribution_cost_adjust: 5.0, storage_cost_adjust: 4.0, export_tariff_usa: 10.0, export_tariff_euro: 10.0, USD: 5.32, EUR: 6.35, CNY: 0.74, BTC: 0.000028, allow_machine_sale: true, require_business_plan: false},
-  6: {ice: 3.0, demand_variation: 9.2, inflation_rate: 4.5, customer_default_rate: 2.6, interest_rate_tr: 5.0, supplier_interest: 4.5, investment_return_rate: 4.0, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.5, social_charges: 35.0, raw_material_a_adjust: 4.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 2.0, marketing_campaign_adjust: 4.0, distribution_cost_adjust: 4.0, storage_cost_adjust: 4.0, export_tariff_usa: 10.0, export_tariff_euro: 10.0, USD: 5.24, EUR: 6.25, CNY: 0.73, BTC: 0.000022, allow_machine_sale: true, require_business_plan: false},
-  7: {ice: 4.0, demand_variation: 56.2, inflation_rate: 4.5, customer_default_rate: 2.8, interest_rate_tr: 5.0, supplier_interest: 4.5, investment_return_rate: 4.0, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 3.5, social_charges: 35.0, raw_material_a_adjust: 4.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 2.0, marketing_campaign_adjust: 4.0, distribution_cost_adjust: 4.0, storage_cost_adjust: 4.0, export_tariff_usa: 20.0, export_tariff_euro: 20.0, USD: 5.44, EUR: 6.38, CNY: 0.74, BTC: 0.000024, allow_machine_sale: true, require_business_plan: false},
-  8: {ice: 5.0, demand_variation: -18.0, inflation_rate: 5.0, customer_default_rate: 2.8, interest_rate_tr: 5.0, supplier_interest: 4.5, investment_return_rate: 4.0, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 15.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 3.0, marketing_campaign_adjust: 5.0, distribution_cost_adjust: 4.5, storage_cost_adjust: 4.5, export_tariff_usa: 20.0, export_tariff_euro: 20.0, USD: 5.33, EUR: 6.27, CNY: 0.72, BTC: 0.000035, allow_machine_sale: true, require_business_plan: true},
-  9: {ice: 6.0, demand_variation: 6.0, inflation_rate: 5.5, customer_default_rate: 2.6, interest_rate_tr: 5.5, supplier_interest: 5.0, investment_return_rate: 4.5, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 20.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 3.0, machine_gamma_price_adjust: 3.0, marketing_campaign_adjust: 5.5, distribution_cost_adjust: 5.0, storage_cost_adjust: 4.5, export_tariff_usa: 20.0, export_tariff_euro: 20.0, USD: 5.26, EUR: 6.31, CNY: 0.71, BTC: 0.000042, allow_machine_sale: true, require_business_plan: false},
-  10: {ice: 4.0, demand_variation: 7.5, inflation_rate: 4.0, customer_default_rate: 2.6, interest_rate_tr: 5.5, supplier_interest: 5.0, investment_return_rate: 4.0, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 4.0, machine_gamma_price_adjust: 5.0, marketing_campaign_adjust: 4.5, distribution_cost_adjust: 5.0, storage_cost_adjust: 4.5, export_tariff_usa: 20.0, export_tariff_euro: 20.0, USD: 5.38, EUR: 6.28, CNY: 0.72, BTC: 0.000038, allow_machine_sale: true, require_business_plan: false},
-  11: {ice: 4.0, demand_variation: 52.5, inflation_rate: 4.5, customer_default_rate: 3.0, interest_rate_tr: 6.0, supplier_interest: 5.0, investment_return_rate: 4.5, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 4.0, machine_gamma_price_adjust: 5.0, marketing_campaign_adjust: 5.0, distribution_cost_adjust: 5.0, storage_cost_adjust: 5.0, export_tariff_usa: 20.0, export_tariff_euro: 20.0, USD: 5.27, EUR: 6.29, CNY: 0.71, BTC: 0.000045, allow_machine_sale: true, require_business_plan: false},
-  12: {ice: 6.0, demand_variation: -24.0, inflation_rate: 5.0, customer_default_rate: 2.8, interest_rate_tr: 6.0, supplier_interest: 5.0, investment_return_rate: 4.5, vat_purchases_rate: 25.0, vat_sales_rate: 25.0, tax_rate_ir: 25.0, late_penalty_rate: 5.0, machine_sale_discount: 10.0, special_purchase_premium: 5.0, compulsory_loan_agio: 4.0, social_charges: 35.0, raw_material_a_adjust: 5.0, machine_alpha_price_adjust: 4.0, machine_beta_price_adjust: 5.0, machine_gamma_price_adjust: 6.0, marketing_campaign_adjust: 5.0, distribution_cost_adjust: 5.0, storage_cost_adjust: 5.0, export_tariff_usa: 20.0, export_tariff_euro: 20.0, USD: 5.32, EUR: 6.29, CNY: 0.72, BTC: 0.000055, allow_machine_sale: true, require_business_plan: true}
+  0: {ice: 3.0, USD: 5.20, EUR: 6.20, CNY: 0.70, BTC: 0.000019},
+  1: {ice: 3.2, USD: 5.26, EUR: 6.27, CNY: 0.71, BTC: 0.000020},
+  2: {ice: 2.8, USD: 5.52, EUR: 6.53, CNY: 0.75, BTC: 0.000015},
+  3: {ice: 5.0, USD: 5.77, EUR: 6.69, CNY: 0.78, BTC: 0.000025},
+  4: {ice: 5.0, USD: 5.51, EUR: 6.55, CNY: 0.76, BTC: 0.000030},
+  5: {ice: 5.0, USD: 5.32, EUR: 6.35, CNY: 0.74, BTC: 0.000028},
+  6: {ice: 3.0, USD: 5.24, EUR: 6.25, CNY: 0.73, BTC: 0.000022},
+  7: {ice: 4.0, USD: 5.44, EUR: 6.38, CNY: 0.74, BTC: 0.000024},
+  8: {ice: 5.0, USD: 5.33, EUR: 6.27, CNY: 0.72, BTC: 0.000035},
+  9: {ice: 6.0, USD: 5.26, EUR: 6.31, CNY: 0.71, BTC: 0.000042},
+  10: {ice: 4.0, USD: 5.38, EUR: 6.28, CNY: 0.72, BTC: 0.000038},
+  11: {ice: 4.0, USD: 5.27, EUR: 6.29, CNY: 0.71, BTC: 0.000045},
+  12: {ice: 6.0, USD: 5.32, EUR: 6.29, CNY: 0.72, BTC: 0.000055}
 };
 
 export const MENU_STRUCTURE: MenuItemConfig[] = [
-
   { label: 'Setores', path: '/branches', sub: [
     { id: 'ind', label: 'Industrial', path: '/branches/industrial', icon: 'Factory' },
     { id: 'com', label: 'Varejo', path: '/branches/commercial', icon: 'ShoppingCart' },
@@ -236,99 +227,33 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   { id: 'com-master', name: 'Retail Excellence', branch: 'commercial' },
 ];
 
-/**
- * RICH BRANCH CONTENT - Blueprints para Landing Pages de Setor
- */
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   'landing': {
      title: "Forge sua Equipe",
      subtitle: "Com EMPIRION!",
      hero: { title: "Seja Campeão em Estratégia com", subtitle: "EMPIRION..." }
   },
-  
-  // BRANCH: INDUSTRIAL LANDING
   'branch-industrial': {
     name: "Industrial",
-    isActive: true, // Único nodo ativo inicialmente
+    isActive: true,
     badge: "Template Industrial – Fidelidade 100%",
     titlePrefix: "SIMULADOR",
     titleHighlight: "INDUSTRIAL",
-    body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda parametrizável, IA preditiva Gemini 3 e contabilidade 100% integrada. Enquanto outros oferecem planilhas estáticas, o Empirion entrega um mundo industrial vivo onde cada decisão pesa.",
+    body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda parametrizável, IA preditiva Gemini 3 e contabilidade 100% integrada.",
     accent: "orange",
     heroImage: "/images/sectors/industrial-hero.jpg",
     advantages: [
-      "Cenários macroeconômicos programáveis por rodada – inflação, câmbio, demanda e crises sob controle do tutor.",
-      "IVA/VAT realista e parametrizável – impacto direto no custo final, margem e competitividade.",
-      "CPP e CPV/CMV utilizando WAT (Média Ponderada Móvel) na formação do custo de estoque de Produto Acabado e Mercadorias",
-      "Market Share multiregional com moedas locais e câmbio dinâmico em USD e EUR",
-      "Black Swan Events por IA",
-      "Business Plan orientado e integrado às simulações",
-      "IA Gemini 3 embarcada – mentoria tática, análise de risco e alertas de insolvência.",
-      "Audit trail completo – toda decisão registrada com impacto financeiro imediato.",
-      "Ranking por TSR realista + Empire Points e badges auditados."
+      "Cenários macroeconômicos programáveis por rodada.",
+      "Market Share multiregional com moedas locais e câmbio dinâmico em USD, EUR, CNY e BTC.",
+      "Black Swan Events por IA."
     ],
     themes: [
       {
         title: "Macroeconomia Realista",
         icon: "TrendingUp",
         color: "orange",
-        points: ["Cronograma econômico de 0 a 12 rounds", "Demanda regional ±56%", "Câmbio flutuante USD/EUR", "IVA/VAT parametrizável"]
-      },
-      {
-        title: "Contabilidade Avançada",
-        icon: "BarChart3",
-        color: "blue",
-        points: ["Balanço Patrimonial, DRE e CashFlow 100% integrados", "Regime de Competência e regime de Caixa", "Depreciação e Impairment", "Relatório Inicial via IA", "Audit log por transação"]
-      },
-      {
-        title: "Mercado Global",
-        icon: "Globe",
-        color: "emerald",
-        points: ["Até 15 regiões configuráveis", "Modo híbrido de precificação", "Logística regionalizada", "Market Share flexível", "Conversão em Real, USD e EUR"]
-      },
-      {
-        title: "Chão de Fábrica",
-        icon: "Factory",
-        color: "amber",
-        points: ["Multimodelos de Máquinas", "Gestão de manutenção", "Cálculo de WAT e CPP automáticos", "Lead time de suprimentos", "Capacidade finita real", "Premiação por Produtividade"]
-      },
-      {
-        title: "Recursos Humanos",
-        icon: "UsersRound",
-        color: "esmerald",
-        points: ["Contratações e Demissões", "Participação nos Resultados (PPR)", "Cálculo de CPP automático" , "Lead time de suprimentos", "Nível de Motivação e Greves"]
-      },
-      {
-        title: "Gestão Financeira",
-        icon: "DollarSign",
-        color: "indigo",
-        points: ["Capital de giro dinâmico", "Rating de crédito AAA-E", "Dividendos e TSR", "Emissões de debêntures", "Mercado de ações", "Recuperação Judicial"]
-      },
-      {
-        title: "IA Strategos",
-        icon: "BrainCircuit",
-        color: "purple",
-        points: ["Gazeta IA automática", "Eventos Black Swan", "Alertas de comprometimento de margem", "Hedge preditivo"]
+        points: ["Câmbio flutuante USD/EUR/CNY/BTC", "IVA/VAT parametrizável"]
       }
-    ]
-  },
-
-  // BRANCH SKELETONS - Inativos por padrão
-  'branch-commercial': { isActive: false, name: "Varejo", accent: "blue", heroImage: "/images/sectors/commercial-hero.jpg" },
-  'branch-services': { isActive: false, name: "Prestação de Serviços", accent: "indigo", heroImage: "/images/sectors/services-hero.jpg" },
-  'branch-agribusiness': { isActive: false, name: "Agronegócio", accent: "emerald", heroImage: "/images/sectors/agribusiness-hero.jpg" },
-  'branch-finance': { isActive: false, name: "Mercado Financeiro", accent: "cyan", heroImage: "/images/sectors/finance-hero.jpg" },
-  'branch-construction': { isActive: false, name: "Construção Civil", accent: "amber", heroImage: "/images/sectors/construction-hero.jpg" },
-
-  'solutions-bp': {
-    title: "Plano de Negócios",
-    subtitle: "Estruture sua visão estratégica",
-    steps: [
-      { id: 0, label: 'MISSÃO' },
-      { id: 1, label: 'MERCADO' },
-      { id: 2, label: 'OBJETIVOS' },
-      { id: 3, label: 'OPERAÇÕES' },
-      { id: 4, label: 'FINANÇAS' }
     ]
   }
 };

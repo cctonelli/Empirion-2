@@ -12,6 +12,7 @@ const round2 = (num: number) => Math.round((num + Number.EPSILON) * 100) / 100;
 
 /**
  * Utilitário de Conversão Cambial Relativa
+ * v13.4.0 - Suporte para Moedas Emergentes e Cripto
  */
 export const convertValue = (value: number, fromCurrency: string, toCurrency: string, rates: Record<string, number>) => {
   if (!rates[fromCurrency] || !rates[toCurrency]) return value;
@@ -39,7 +40,7 @@ export const calculateProjections = (
     ...(roundRules?.[lookupRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[lookupRound] || {}) 
   };
 
-  // Moeda padrão do campeonato para reporte consolidado
+  // Moeda padrão do campeonato para reporte consolidado (escolhida pelo Tutor)
   const defaultCurrency = championshipData?.currency || 'BRL';
 
   const prevBS = previousState?.kpis?.statements?.balance_sheet || INITIAL_INDUSTRIAL_FINANCIALS.balance_sheet;
@@ -62,19 +63,16 @@ export const calculateProjections = (
   const prevAssets = sanitize(getVal('assets', prevBS), 9493163.54);
   const prevLiabilities = sanitize(getVal('liabilities.current', prevBS) + getVal('liabilities.longterm', prevBS), 2240991.80);
 
-  // --- 2. OPERACIONAL (SIMPLIFICADO PARA O CONTEXTO) ---
+  // --- 2. OPERACIONAL ---
   const qtyPurchA = sanitize(decisions.production?.purchaseMPA);
   const purchA_GrossTotal = (qtyPurchA * indicators.prices.mp_a) * (1 + (indicators.supplier_interest/100));
-  
   const activityLevel = sanitize(decisions.production?.activityLevel, 80) / 100;
   
-  // Vendas Regionalizadas com Conversão Cambial
+  // Vendas Regionalizadas com Conversão Cambial v13.4
   let totalRevenueGross = 0;
   let totalQty = 0;
   let avgPrice = 0;
   const regionsCount = Object.keys(decisions.regions || {}).length || 1;
-  
-  // Mapeamento de moedas por região (se disponível no config do campeonato)
   const regionConfigs = (championshipData as any)?.region_configs || [];
 
   Object.entries(decisions.regions || {}).forEach(([id, reg]: [any, any]) => {
@@ -89,9 +87,10 @@ export const calculateProjections = (
     // Converte a receita da região para a moeda base do campeonato
     let regionalRev = price * qty;
     
-    // Simulação de volatilidade Bitcoin se for a moeda da região
+    // Simulação de volatilidade Bitcoin se for a moeda da região (v13.4 Extreme Mode)
     if (regCurrency === 'BTC') {
-       regionalRev *= (1 + (Math.random() * 0.4 - 0.2)); // Volatilidade randômica ±20%
+       // Volatilidade randômica ±30% simulada para representar o risco cripto
+       regionalRev *= (1 + (Math.random() * 0.6 - 0.3)); 
     }
 
     const convertedRev = convertValue(regionalRev, regCurrency, defaultCurrency, indicators.exchange_rates);
@@ -114,31 +113,25 @@ export const calculateProjections = (
   const finalAssets = round2(prevAssets + netProfit + 100000); 
   const finalLiabilities = round2(finalAssets - finalEquity);
 
-  // --- 3. CÁLCULO DE KPIs AVANÇADOS v17.5 (ROI & BEP INCLUSOS) ---
   const kpis: KPIs = {
     rating: projectedCash > 0 ? 'AAA' : 'C',
     loans: previousState?.kpis?.loans || [],
     current_cash: projectedCash,
     equity: finalEquity,
     market_share: (totalQty / 9700) * 11.1,
-    
-    // ROI e BEP solicitados
     roi: round2((netProfit / Math.max(1, finalEquity)) * 100),
     bep: round2(opexBase / Math.max(0.1, (avgPrice - variableCostPerUnit))),
-
-    // Auditoria Adicional
     solvency_index: round2(finalAssets / Math.max(1, finalLiabilities)),
     nlcdg: round2(currentReceivables - currentPayables),
     inventory_turnover: round2(cpv / Math.max(1, (finalAssets * 0.15))), 
     liquidity_current: round2((projectedCash + currentReceivables) / Math.max(1, currentPayables)),
     trit: round2(ebit / Math.max(1, 2500)),
-    scissors_effect: round2(45 - 30), // PMR - PMP Mock
+    scissors_effect: round2(45 - 30),
     avg_receivable_days: 45,
     avg_payable_days: 30,
     equity_immobilization: round2(6012500 / Math.max(1, finalEquity)),
     debt_participation_pct: round2((finalLiabilities / Math.max(1, finalEquity)) * 100),
     debt_composition_st_pct: 100, 
-    
     statements: {
       dre: { revenue: totalRevenueGross, net_profit: netProfit, ebit: ebit },
       balance_sheet: [
