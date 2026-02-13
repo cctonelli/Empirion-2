@@ -67,6 +67,26 @@ export interface Team {
   insolvency_status?: InsolvencyStatus;
 }
 
+export interface TutorTeamView {
+  id: string;
+  name: string;
+  rating: CreditRating;
+  tsr: number;
+  market_share: number;
+  nlcdg: number;
+  kanitz: number;
+  ebitda: number;
+  dcf: number;
+  auditLogs: AuditLog[];
+  current_decision?: DecisionData;
+  is_bot?: boolean;
+}
+
+export interface HistoricalRound {
+  round: number;
+  teams: TutorTeamView[];
+}
+
 export interface DecisionData {
   judicial_recovery: boolean;
   regions: Record<number, any>;
