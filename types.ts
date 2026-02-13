@@ -8,7 +8,7 @@ export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' |
 export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
-export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D' | 'E' | 'N/A';
+export type CreditRating = 'AAA' | 'AA' | 'A' | 'BB+' | 'B' | 'C' | 'D' | 'E' | 'N/A';
 export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 export type MachineModel = 'alfa' | 'beta' | 'gama';
 export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
@@ -20,28 +20,6 @@ export type ModalityType = 'standard' | 'blitz' | 'marathon';
 export type AnalysisSource = 'parameterized' | 'ai_real_world';
 export type RegionType = 'domestic' | 'international';
 export type BPVisibility = 'private' | 'shared' | 'public';
-
-// Novos tipos para alinhamento com Business Model Generation
-export interface EmpathyMap {
-  think_feel: string;
-  hear: string;
-  see: string;
-  say_do: string;
-  pains: string;
-  gains: string;
-}
-
-export interface BMCBlocks {
-  customer_segments: string;
-  value_propositions: string;
-  channels: string;
-  customer_relationships: string;
-  revenue_streams: string;
-  key_resources: string;
-  key_activities: string;
-  key_partnerships: string;
-  cost_structure: string;
-}
 
 export interface UserProfile {
   id: string;
@@ -55,28 +33,6 @@ export interface UserProfile {
   created_at: string;
 }
 
-export interface BusinessPlan {
-  id: string;
-  user_id: string;
-  championship_id?: string;
-  team_id?: string;
-  round: number;
-  version: number;
-  data: {
-    steps: Record<number, any>;
-    canvas: BMCBlocks;
-    empathy: EmpathyMap;
-    epicenter: 'resource' | 'offer' | 'customer' | 'finance';
-  };
-  status: 'draft' | 'submitted' | 'approved' | 'finalized';
-  is_template: boolean;
-  visibility: BPVisibility;
-  shared_with: string[];
-  exported_formats: Record<string, string>;
-  constraints: Record<string, any>;
-  updated_at?: string;
-}
-
 export interface KPIs {
   rating: CreditRating;
   loans: any[];
@@ -86,19 +42,17 @@ export interface KPIs {
   market_share?: number;
   stock_quantities?: any;
   
+  // Métricas de Comando Estratégico v16.0+
+  tsr?: number; 
+  nlcdg?: number; 
+  ebitda?: number;
   roi?: number; 
   bep?: number; 
   solvency_index?: number;
-  nlcdg?: number; 
+  solvency_score_kanitz?: number; // Termômetro de Kanitz
+  dcf_valuation?: number; // Discounted Cash Flow
   inventory_turnover?: number;
   liquidity_current?: number;
-  trit?: number; 
-  scissors_effect?: number; 
-  avg_receivable_days?: number;
-  avg_payable_days?: number;
-  equity_immobilization?: number;
-  debt_participation_pct?: number;
-  debt_composition_st_pct?: number;
   
   [key: string]: any;
 }
@@ -111,30 +65,6 @@ export interface Team {
   equity: number;
   is_bot?: boolean;
   insolvency_status?: InsolvencyStatus;
-  master_key_enabled?: boolean;
-}
-
-export interface AccountNode {
-  id: string;
-  label: string;
-  value: number;
-  type: 'totalizer' | 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
-  children?: AccountNode[];
-  isEditable?: boolean;
-  isReadOnly?: boolean;
-  isTemplateAccount?: boolean;
-}
-
-export interface MacroIndicators {
-  ice: number;
-  demand_variation: number;
-  inflation_rate: number;
-  customer_default_rate: number;
-  interest_rate_tr: number;
-  supplier_interest: number;
-  investment_return_rate: number;
-  avg_selling_price: number;
-  [key: string]: any;
 }
 
 export interface DecisionData {
@@ -169,103 +99,6 @@ export interface Championship {
   config?: any;
 }
 
-export interface ChampionshipTemplate {
-  id: string;
-  name: string;
-  branch: Branch;
-}
-
-export interface MachineSpec {
-  model: MachineModel;
-  initial_value: number;
-  production_capacity: number;
-  operators_required: number;
-  depreciation_rate: number;
-  overload_coef: number;
-  aging_coef: number;
-  useful_life_years: number;
-  overload_extra_rate: number;
-}
-
-export interface InitialMachine {
-  id: string;
-  model: MachineModel;
-  age: number;
-  purchase_value: number;
-  depreciated_value: number;
-}
-
-export interface MenuItemConfig {
-  label: string;
-  path: string;
-  id?: string;
-  icon?: string;
-  sub?: {
-    id: string;
-    label: string;
-    path: string;
-    icon: string;
-  }[];
-}
-
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
-  };
-}
-
-export interface EcosystemConfig {
-  inflation_rate: number;
-  demand_multiplier: number;
-  interest_rate: number;
-  market_volatility: number;
-  scenario_type: ScenarioType;
-  modality_type: ModalityType;
-}
-
-export interface Loan {
-  id: string;
-  amount: number;
-  term: number;
-  round_issued: number;
-  remaining_rounds: number;
-}
-
-export interface ProjectionResult {
-  revenue: number;
-  netProfit: number;
-  debtRatio: number;
-  creditRating: CreditRating;
-  health: {
-    cash: number;
-    rating: CreditRating;
-    insolvency_risk?: number;
-    status?: string;
-  };
-  kpis: KPIs;
-  statements: any;
-  marketShare: number;
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
-export interface Modality {
-  id: string;
-  slug: string;
-  name: string;
-  page_content: any;
-}
-
 export interface TeamProgress {
   team_id: string;
   team_name: string;
@@ -273,7 +106,6 @@ export interface TeamProgress {
   rating: CreditRating;
   risk: number;
   insolvent: boolean;
-  master_key_enabled?: boolean;
   auditLogs: AuditLog[];
 }
 
@@ -290,4 +122,190 @@ export interface RegionConfig {
   name: string;
   currency: CurrencyType;
   demand_weight: number;
+}
+
+export interface AccountNode {
+  id: string;
+  label: string;
+  value: number;
+  type?: 'totalizer' | 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+  isEditable?: boolean;
+  isReadOnly?: boolean;
+  children?: AccountNode[];
+}
+
+export interface MachineSpec {
+  model: MachineModel;
+  initial_value: number;
+  production_capacity: number;
+  operators_required: number;
+  depreciation_rate: number;
+  overload_coef: number;
+  aging_coef: number;
+  useful_life_years: number;
+  overload_extra_rate: number;
+}
+
+export interface MacroIndicators {
+  ice: number;
+  demand_variation: number;
+  inflation_rate: number;
+  customer_default_rate: number;
+  interest_rate_tr: number;
+  supplier_interest: number;
+  investment_return_rate: number;
+  avg_selling_price: number;
+  late_penalty_rate: number;
+  machine_sale_discount: number;
+  special_purchase_premium: number;
+  compulsory_loan_agio: number;
+  social_charges: number;
+  allow_machine_sale: boolean;
+  require_business_plan: boolean;
+  tax_rate_ir: number;
+  vat_purchases_rate: number;
+  vat_sales_rate: number;
+  dividend_percent: number;
+  production_hours_period: number;
+  award_values: {
+    cost_precision: number;
+    revenue_precision: number;
+    profit_precision: number;
+  };
+  prices: {
+    mp_a: number;
+    mp_b: number;
+    distribution_unit: number;
+    marketing_campaign: number;
+    storage_mp: number;
+    storage_finished: number;
+  };
+  machinery_values: Record<MachineModel, number>;
+  machine_specs: Record<MachineModel, MachineSpec>;
+  staffing: {
+    admin: { count: number; salaries: number };
+    sales: { count: number; salaries: number };
+    production: { count: number; salaries: number };
+  };
+  hr_base: { salary: number };
+  exchange_rates: Record<string, number>;
+  [key: string]: any;
+}
+
+export interface InitialMachine {
+  model: MachineModel;
+  quantity: number;
+}
+
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  branch: Branch;
+}
+
+export interface MenuItemConfig {
+  label: string;
+  path: string;
+  sub?: { id: string; label: string; path: string; icon: string }[];
+}
+
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
+  };
+}
+
+export interface BusinessPlan {
+  id?: string;
+  championship_id?: string;
+  team_id?: string;
+  user_id?: string;
+  round: number;
+  version: number;
+  data: {
+    steps: Record<number, any>;
+    canvas: BMCBlocks;
+    empathy: EmpathyMap;
+    epicenter: 'resource' | 'offer' | 'customer' | 'finance';
+  };
+  status: 'draft' | 'submitted' | 'approved' | 'finalized';
+  visibility: BPVisibility;
+  is_template: boolean;
+  shared_with: string[];
+  updated_at?: string;
+}
+
+export interface BMCBlocks {
+  customer_segments: string;
+  value_propositions: string;
+  channels: string;
+  customer_relationships: string;
+  revenue_streams: string;
+  key_resources: string;
+  key_activities: string;
+  key_partnerships: string;
+  cost_structure: string;
+}
+
+export interface EmpathyMap {
+  think_feel: string;
+  hear: string;
+  see: string;
+  say_do: string;
+  pains: string;
+  gains: string;
+}
+
+export interface EcosystemConfig {
+  inflation_rate: number;
+  demand_multiplier: number;
+  interest_rate: number;
+  market_volatility: number;
+  scenario_type: ScenarioType;
+  modality_type: ModalityType;
+}
+
+export interface Loan {
+  id: string;
+  amount: number;
+  remaining_rounds: number;
+  interest_rate: number;
+}
+
+export interface ProjectionResult {
+  revenue: number;
+  netProfit: number;
+  debtRatio: number;
+  creditRating: CreditRating;
+  health: {
+    cash: number;
+    rating: CreditRating;
+  };
+  kpis: KPIs;
+  statements: any;
+  marketShare: number;
+}
+
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
+export interface Modality {
+  id: string;
+  slug: string;
+  name: string;
+  page_content: {
+    hero: { title: string; subtitle: string };
+    features: string[];
+    kpis: string[];
+    accent_color?: 'blue' | 'emerald' | 'orange';
+  };
 }
