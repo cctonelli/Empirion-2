@@ -1,114 +1,52 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE CORE RECOVERY v17.7 - RESOLUÇÃO ERRO 42703
+-- EMPIRION DATABASE CORE RECOVERY v18.0 - GEOPOLÍTICA E ESTRATÉGIA GLOBAL
 -- ==============================================================================
 
--- 1. GARANTIR EXTENSÕES E SCHEMAS
+-- 1. GARANTIR EXTENSÕES
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. INJEÇÃO RESILIENTE DE COLUNAS (SOLUÇÃO DEFINITIVA)
--- Este bloco verifica cada tabela e garante a existência da coluna championship_id.
+-- 2. INJEÇÃO DE CAMPOS DE CÂMBIO E TARIFAS (30 RUBRICAS PROTOCOLO)
 DO $$ 
 BEGIN 
-    -- Tabela: public.companies
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='companies' AND column_name='championship_id') THEN
-        ALTER TABLE public.companies ADD COLUMN championship_id UUID;
-        ALTER TABLE public.companies ADD CONSTRAINT companies_championship_id_fkey FOREIGN KEY (championship_id) REFERENCES public.championships(id) ON DELETE CASCADE;
+    -- Tabela: championships
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championships' AND column_name='exchange_rates') THEN
+        ALTER TABLE public.championships ADD COLUMN exchange_rates JSONB DEFAULT '{"BRL": 1.0, "USD": 5.25, "EUR": 5.60, "CNY": 0.72, "BTC": 0.00002}'::jsonb;
     END IF;
 
-    -- Tabela: public.current_decisions
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='current_decisions' AND column_name='championship_id') THEN
-        ALTER TABLE public.current_decisions ADD COLUMN championship_id UUID;
-        ALTER TABLE public.current_decisions ADD CONSTRAINT current_decisions_championship_id_fkey FOREIGN KEY (championship_id) REFERENCES public.championships(id) ON DELETE CASCADE;
+    -- Tabela: trial_championships
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='trial_championships' AND column_name='exchange_rates') THEN
+        ALTER TABLE public.trial_championships ADD COLUMN exchange_rates JSONB DEFAULT '{"BRL": 1.0, "USD": 5.25, "EUR": 5.60, "CNY": 0.72, "BTC": 0.00002}'::jsonb;
     END IF;
 
-    -- Tabela: public.team_members
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='team_members' AND column_name='championship_id') THEN
-        ALTER TABLE public.team_members ADD COLUMN championship_id UUID;
-        ALTER TABLE public.team_members ADD CONSTRAINT team_members_championship_id_fkey FOREIGN KEY (championship_id) REFERENCES public.championships(id) ON DELETE CASCADE;
+    -- Tabela de Regras Macro (Histórico de 30 Rubricas)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championship_macro_rules' AND column_name='vat_purchases_rate') THEN
+        ALTER TABLE public.championship_macro_rules ADD COLUMN vat_purchases_rate NUMERIC DEFAULT 0.0;
     END IF;
-
-    -- Tabela: public.decision_audit_log
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='decision_audit_log' AND column_name='championship_id') THEN
-        ALTER TABLE public.decision_audit_log ADD COLUMN championship_id UUID;
-        ALTER TABLE public.decision_audit_log ADD CONSTRAINT decision_audit_log_championship_id_fkey FOREIGN KEY (championship_id) REFERENCES public.championships(id) ON DELETE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championship_macro_rules' AND column_name='tax_rate_ir') THEN
+        ALTER TABLE public.championship_macro_rules ADD COLUMN tax_rate_ir NUMERIC DEFAULT 25.0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championship_macro_rules' AND column_name='export_tariff_usa') THEN
+        ALTER TABLE public.championship_macro_rules ADD COLUMN export_tariff_usa NUMERIC DEFAULT 0.0;
     END IF;
 END $$;
 
--- 3. CRIAÇÃO DE TABELAS DE SUPORTE SE FALTANTES
-CREATE TABLE IF NOT EXISTS public.trial_companies (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    championship_id UUID REFERENCES public.trial_championships(id) ON DELETE CASCADE,
-    team_id UUID REFERENCES public.trial_teams(id) ON DELETE CASCADE,
-    round INTEGER NOT NULL,
-    equity NUMERIC DEFAULT 0,
-    kpis JSONB DEFAULT '{}'::jsonb,
-    tsr NUMERIC DEFAULT 0,
-    nlcdg NUMERIC DEFAULT 0,
-    ebitda NUMERIC DEFAULT 0,
-    solvency_score_kanitz NUMERIC DEFAULT 0,
-    dcf_valuation NUMERIC DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- 4. LIMPEZA E UNIFICAÇÃO DE POLÍTICAS RLS (EVITA RECURSÃO E LENTIDÃO)
--- Removemos as políticas fragmentadas identificadas no dump JSON para evitar conflitos.
-
-DROP POLICY IF EXISTS "Companies_Access_v3" ON public.companies;
-DROP POLICY IF EXISTS "Companies_Audit_Policy" ON public.companies;
-DROP POLICY IF EXISTS "Command_Center_History_Access" ON public.companies;
-DROP POLICY IF EXISTS "Unified_History_Policy" ON public.companies;
-DROP POLICY IF EXISTS "Team_Members_Access" ON public.team_members;
-DROP POLICY IF EXISTS "Team_Members_Select_v3" ON public.team_members;
-
--- Habilitar RLS
-ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.trial_companies ENABLE ROW LEVEL SECURITY;
-
--- Nova Política Unificada: COMPANIES
--- Permite leitura se for o Tutor, Observador ou se o usuário for membro da equipe dona do registro.
-CREATE POLICY "Companies_Master_Policy" ON public.companies
+-- 3. REFINAMENTO DE SEGURANÇA (RLS PARA OBSERVADORES NOMINADOS)
+DROP POLICY IF EXISTS "Decisions_Select_Auth" ON public.current_decisions;
+CREATE POLICY "Decisions_Select_Auth" ON public.current_decisions
 FOR SELECT TO authenticated
 USING (
-    championship_id IN (
-        SELECT id FROM public.championships 
-        WHERE tutor_id = auth.uid() 
-        OR observers ? auth.uid()::text 
-        OR is_public = true
-    ) 
-    OR 
-    team_id IN (
-        SELECT team_id FROM public.team_members WHERE user_id = auth.uid()
+    team_id IN (SELECT team_id FROM team_members WHERE user_id = auth.uid()) OR 
+    EXISTS (
+        SELECT 1 FROM championships c 
+        WHERE c.id = current_decisions.championship_id 
+        AND (c.tutor_id = auth.uid() OR c.observers ? auth.uid()::text)
     )
 );
 
--- Nova Política Unificada: TEAM_MEMBERS
-CREATE POLICY "Team_Members_Master_Policy" ON public.team_members
-FOR SELECT TO authenticated
-USING (
-    user_id = auth.uid() 
-    OR 
-    championship_id IN (
-        SELECT id FROM public.championships WHERE tutor_id = auth.uid()
-    )
-);
+-- 4. ÍNDICES DE PERFORMANCE (TELEMETRIA DE ALTA VELOCIDADE)
+CREATE INDEX IF NOT EXISTS idx_companies_championship_round ON public.companies(championship_id, round);
+CREATE INDEX IF NOT EXISTS idx_champs_tutor_status ON public.championships(tutor_id, status);
 
--- Nova Política Unificada: TRIAL_COMPANIES
-CREATE POLICY "Trial_Companies_Master_Policy" ON public.trial_companies
-FOR SELECT TO authenticated
-USING (
-    championship_id IN (
-        SELECT id FROM public.trial_championships 
-        WHERE tutor_id = auth.uid() 
-        OR is_public = true
-    )
-);
-
--- 5. ÍNDICES DE PERFORMANCE
-CREATE INDEX IF NOT EXISTS idx_companies_champ_round_v17 ON public.companies(championship_id, round);
-CREATE INDEX IF NOT EXISTS idx_team_members_lookup_v17 ON public.team_members(user_id, championship_id);
-
--- 6. COMENTÁRIOS DE AUDITORIA
-COMMENT ON TABLE public.companies IS 'Histórico de performance. championship_id é obrigatório para RLS v17+.';
-COMMENT ON COLUMN public.team_members.championship_id IS 'Injetado para otimizar isolamento de arenas sem joins complexos.';
+-- 5. COMENTÁRIOS DE PROTOCOLO
+COMMENT ON COLUMN public.championships.region_configs IS 'Armazena nodos geográficos, moedas locais e pesos de demanda elástica v18.0.';

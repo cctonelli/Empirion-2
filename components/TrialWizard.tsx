@@ -64,12 +64,12 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   useEffect(() => {
     if (regionConfigs.length === 0) {
-      setRegionConfigs(Array.from({ length: formData.regionsCount }, (_, i) => ({
-        id: i + 1,
-        name: i === 0 ? 'BRASIL (LOCAL)' : i === 1 ? 'EUA (EXPORT)' : i === 2 ? 'EUROPA (EXPORT)' : i === 3 ? 'CHINA (EXPORT)' : `REGIÃO 0${i + 1}`,
-        currency: (i === 0 ? 'BRL' : i === 1 ? 'USD' : i === 2 ? 'EUR' : i === 3 ? 'CNY' : 'BRL') as CurrencyType,
-        demand_weight: 25
-      })));
+      setRegionConfigs([
+        { id: 1, name: 'BRASIL (LOCAL)', currency: 'BRL', demand_weight: 40 },
+        { id: 2, name: 'EUA (EXPORT)', currency: 'USD', demand_weight: 20 },
+        { id: 3, name: 'EUROPA (EXPORT)', currency: 'EUR', demand_weight: 20 },
+        { id: 4, name: 'CHINA (EXPORT)', currency: 'CNY', demand_weight: 20 },
+      ]);
     }
   }, []);
 
@@ -85,7 +85,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   };
 
   const addRegion = () => {
-    const nextId = regionConfigs.length + 1;
+    const nextId = regionConfigs.length > 0 ? Math.max(...regionConfigs.map(r => r.id)) + 1 : 1;
     setRegionConfigs([...regionConfigs, {
       id: nextId,
       name: `NOVA REGIÃO 0${nextId}`,
@@ -131,6 +131,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const totalAssetsSummary = financials?.balance_sheet.find(n => n.id === 'assets')?.value || 0;
   const totalProfitSummary = financials?.dre.find(n => n.id === 'final_profit')?.value || 0;
   const totalEquitySummary = financials?.balance_sheet.find(n => n.id === 'liabilities_pl')?.children?.find(n => n.id === 'equity')?.value || 7252171.74;
+
+  const totalDemand = regionConfigs.reduce((acc, r) => acc + (r.demand_weight || 0), 0);
 
   return (
     <div className="wizard-shell">
@@ -205,20 +207,26 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                <motion.div key="s3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12 pb-32">
                   <WizardStepTitle icon={<MapPin size={32}/>} title="GEOPOLÍTICA REGIONAL" desc="DEFINA NOMES, MOEDAS E DEMANDA ELÁSTICA POR REGIÃO." />
                   <div className="space-y-10">
-                     <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/5">
+                     <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
                         <div className="space-y-1">
                            <h4 className="text-xl font-black text-white uppercase italic">Configuração de Nodos</h4>
                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest italic">Gerencie os mercados onde as unidades irão operar.</p>
                         </div>
-                        <button onClick={addRegion} className="px-10 py-4 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-3 shadow-xl active:scale-95">
-                           <Plus size={18} strokeWidth={3}/> Adicionar Região
-                        </button>
+                        <div className="flex items-center gap-6">
+                           <div className="text-right">
+                              <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest">Demanda Agregada</span>
+                              <span className={`text-xl font-black italic ${totalDemand > 100 ? 'text-orange-500 animate-pulse' : 'text-emerald-500'}`}>{totalDemand}%</span>
+                           </div>
+                           <button onClick={addRegion} className="px-10 py-4 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-3 shadow-xl active:scale-95">
+                              <Plus size={18} strokeWidth={3}/> Adicionar Nodo
+                           </button>
+                        </div>
                      </div>
 
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {regionConfigs.map((r, i) => (
                            <div key={i} className="p-10 bg-slate-900 border-2 border-white/5 rounded-[4rem] group hover:border-orange-500/30 transition-all relative overflow-hidden shadow-2xl">
-                              <button onClick={() => removeRegion(i)} className="absolute top-8 right-8 p-3 bg-white/5 rounded-xl text-slate-600 hover:bg-rose-600 hover:text-white transition-all">
+                              <button onClick={() => removeRegion(i)} className="absolute top-8 right-8 p-3 bg-white/5 rounded-xl text-slate-600 hover:bg-rose-600 hover:text-white transition-all shadow-lg">
                                  <Trash2 size={16}/>
                               </button>
                               
@@ -249,10 +257,10 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         ))}
                      </div>
 
-                     <div className="p-10 bg-orange-600/10 border-2 border-orange-500/20 rounded-[3.5rem] space-y-4">
-                        <h4 className="text-sm font-black text-orange-500 uppercase italic flex items-center gap-3"><Info size={20}/> Protocolo de Demanda Elástica</h4>
+                     <div className="p-10 bg-orange-600/10 border-2 border-orange-500/20 rounded-[3.5rem] space-y-4 shadow-inner">
+                        <h4 className="text-sm font-black text-orange-500 uppercase italic flex items-center gap-3"><Info size={20}/> Protocolo de Demanda Elástica v18.0</h4>
                         <p className="text-slate-400 font-medium italic leading-relaxed text-sm">
-                           "Diferente de modelos estáticos, o Empirion permite que a soma das demandas exceda 100%. Quando isso ocorre, o mercado sinaliza escassez, permitindo que empresas aumentem preços sem perda proporcional de share ou invistam em novos ativos para suprir o vácuo de oferta."
+                           "O Empirion permite demandas agregadas superiores a 100%. Quando isso ocorre, o mercado sinaliza um cenário de **escassêz de oferta**, permitindo que as empresas maximizem seus ativos de capital (CapEx) para suprir o excedente, resultando em Market Share dinâmico baseado em capacidade instalada vs. pedidos reprimidos."
                         </p>
                      </div>
                   </div>
@@ -264,6 +272,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <WizardStepTitle icon={<Settings size={32}/>} title="REGRAS E PREMIAÇÕES" desc="CONFIGURAÇÃO DE CUSTOS BASE E METAS DE AUDITORIA." />
                  
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {/* INSUMOS E ESTOCAGEM */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Insumos e Estocagem</h4>
                        <WizardField label="MP-A Base ($)" type="number" val={marketIndicators.prices.mp_a} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_a: parseFloat(v)}})} />
@@ -275,6 +284,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        </div>
                     </div>
 
+                    {/* ATIVO & CAPEX */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Ativo & CapEx</h4>
                        <WizardField label="MÁQUINA ALFA ($)" type="number" val={marketIndicators.machinery_values.alfa} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: parseFloat(v)}})} />
@@ -283,6 +293,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="Deságio Venda (%)" type="number" val={marketIndicators.machine_sale_discount} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machine_sale_discount: parseFloat(v)})} />
                     </div>
 
+                    {/* MERCADO E STAFFING */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
                        <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Mercado & Staffing</h4>
                        <WizardField label="Preço Venda Médio ($)" type="number" val={marketIndicators.avg_selling_price} onChange={(v:any)=>setMarketIndicators({...marketIndicators, avg_selling_price: parseFloat(v)})} />
@@ -292,6 +303,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="Horas Produção/Homem" type="number" val={marketIndicators.production_hours_period} onChange={(v:any)=>setMarketIndicators({...marketIndicators, production_hours_period: parseInt(v)})} />
                     </div>
 
+                    {/* PREMIAÇÕES POR PRECISÃO */}
                     <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8 bg-orange-600/5 p-10 rounded-[3rem] border-2 border-orange-500/20 shadow-2xl">
                        <div className="md:col-span-3 mb-4"><h4 className="text-xs font-black text-orange-500 uppercase tracking-[0.4em] italic">Premiações por Precisão (Audit Awards)</h4></div>
                        <WizardField label="Prêmio: Custo Unitário ($)" type="number" val={marketIndicators.award_values.cost_precision} onChange={(v:any)=>setMarketIndicators({...marketIndicators, award_values: {...marketIndicators.award_values, cost_precision: parseFloat(v)}})} />
@@ -304,7 +316,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 5 && (
               <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10">
-                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="INDICADORES ESTRATÉGICOS" desc="MATRIZ ECONÔMICA COMPLETA v18.0 ORACLE." />
+                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="CRONOGRAMA ESTRATÉGICO" desc="MATRIZ ECONÔMICA COMPLETA v18.0 ORACLE." />
                  
                  <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[620px] flex flex-col relative group">
                     <div className="overflow-auto custom-scrollbar flex-1 relative">
@@ -337,6 +349,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow readOnly periods={totalPeriods} label="ÁGIO COMPRAS ESPECIAIS (%)" macroKey="special_purchase_premium" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="ÁGIO EMPRÉSTIMO COMPULSÓRIO (%)" macroKey="compulsory_loan_agio" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="ENCARGOS SOCIAIS (%)" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
+                             
                              <CompactMatrixRow readOnly periods={totalPeriods} label="MATÉRIAS-PRIMAS (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
@@ -344,14 +357,17 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CAMPANHAS MARKETING (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="DISTRIBUIÇÃO DE PRODUTOS (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="GASTOS COM ESTOCAGEM (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+
               							 <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORTAÇÃO EUA (%)" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORTAÇÃO EURO (%)" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} />							 
                              <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT CHINA" macroKey="export_tariff_china" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT BTC" macroKey="export_tariff_btc" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} />
+
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} isExchange />
+
                              <tr className="hover:bg-white/[0.03] transition-colors">
                                 <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR COMPRA/VENDA MÁQUINAS</td>
                                 {Array.from({ length: totalPeriods }).map((_, i) => (
