@@ -1,4 +1,3 @@
-
 import { Branch, ChampionshipTemplate, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, LaborAvailability, MachineModel, MachineSpec, InitialMachine, SalesMode, TransparencyLevel, GazetaMode, ScenarioType, RegionType, AnalysisSource, MenuItemConfig } from './types';
 
 export const APP_VERSION = "v18.0.0-Oracle-Gold-Verified";
@@ -241,42 +240,108 @@ export const MENU_STRUCTURE: MenuItemConfig[] = [
   { label: 'Contato', path: '/contact' },
 ];
 
+/**
+ * Fix: Added missing CHAMPIONSHIP_TEMPLATES constant.
+ */
 export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
   { id: 'ind-master', name: 'Mastery Industrial', branch: 'industrial' },
-  { id: 'com-master', name: 'Retail Excellence', branch: 'commercial' },
+  { id: 'com-elite', name: 'Varejo Elite', branch: 'commercial' },
+  { id: 'svc-matrix', name: 'Intellect Matrix', branch: 'services' },
 ];
 
+/**
+ * Fix: Added missing DEFAULT_PAGE_CONTENT constant with initial state for all pages.
+ */
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
-  'landing': {
-     title: "Forge sua Equipe",
-     subtitle: "Com EMPIRION!",
-     hero: { title: "Seja Campeão em Estratégia com", subtitle: "EMPIRION..." }
+  landing: {
+    hero: { title: 'Forje Seu Império', subtitle: 'Com Insight Estratégico IA' }
   },
-  'branch-industrial': {
-    name: "Industrial",
-    isActive: true,
-    badge: "Template Industrial – Fidelidade 100%",
-    titlePrefix: "SIMULADOR",
-    titleHighlight: "INDUSTRIAL",
-    body: "Cenários macroeconômicos reais, IVA/VAT parametrizável, câmbio flutuante, demanda parametrizável, IA preditiva Gemini 3 e contabilidade 100% integrada.",
-    accent: "orange",
-    heroImage: "/images/sectors/industrial-hero.jpg",
-    advantages: [
-      "Cenários macroeconômicos programáveis por rodada.",
-      "Market Share multiregional com moedas locais e câmbio dinâmico em USD, EUR, CNY e BTC.",
-      "Black Swan Events por IA."
+  rewards: {
+    subtitle: 'O seu desempenho estratégico gera Empire Points e Badges de prestígio.',
+    tiers: [
+      { name: 'Bronze Node', pts: 0, color: 'text-orange-400' },
+      { name: 'Silver Audit', pts: 5000, color: 'text-slate-300' },
+      { name: 'Gold Strategos', pts: 15000, color: 'text-amber-500' },
+      { name: 'Diamond Oracle', pts: 50000, color: 'text-blue-400' }
     ],
+    accumulation: [
+      { action: 'Vitória em Arena', val: '+1000 pts' },
+      { action: 'Decisão Enviada', val: '+50 pts' },
+      { action: 'Audit Grade AAA', val: '+500 pts' },
+      { action: 'Indicação Tutor', val: '+200 pts' }
+    ]
+  },
+  'solutions-simulators': {
+    title: 'Simuladores Master',
+    subtitle: 'Nodos de alta fidelidade para treinamento executivo.',
+    items: [
+      { id: 'ind', label: 'Industrial', slug: 'industrial', icon: 'Factory', desc: 'Gestão de ativos e escala.' },
+      { id: 'com', label: 'Varejo', slug: 'commercial', icon: 'ShoppingCart', desc: 'Giro e mix de marketing.' },
+      { id: 'svc', label: 'Serviços', slug: 'services', icon: 'Briefcase', desc: 'Capital intelectual.' }
+    ]
+  },
+  'solutions-training': {
+    tracks: [
+      { id: 'online', label: 'Online Academy', body: 'Treinamento remoto assistido por IA Strategos.' },
+      { id: 'corp', label: 'Corporate Expertise', body: 'Soluções customizadas para escala empresarial.' }
+    ]
+  },
+  'solution-university': { title: 'University Intelligence', body: 'Protocolo para instituições de ensino.', icon: 'Users' },
+  'solution-corporate': { title: 'Corporate Command', body: 'Desenvolvimento de liderança executiva.', icon: 'Shield' },
+  'solution-individual': { title: 'Individual Strategist', body: 'Aprimoramento de carreira estratégica.', icon: 'Brain' },
+  'branch-industrial': {
+    name: 'Industrial',
+    heroImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1200&auto=format&fit=crop",
+    titlePrefix: "Mastery",
+    titleHighlight: "Industrial",
+    body: "Arena de produção massiva e gestão de ativos fixos.",
+    description: "Gerencie uma unidade fabril completa com máquinas Alfa, Beta e Gama.",
+    features: ["CapEx $9M Fidelity", "Depreciação Técnica", "Gestão de MP-A/B"],
+    kpis: ["ROI", "EBITDA", "Solvência"],
+    accent: "orange",
+    isActive: true,
+    advantages: ["Fidelidade Contábil 100% – Balanço Patrimonial real v18.0.", "IA Mentor Integrado – Consultoria estratégica via Gemini 3 Pro.", "Cenários Black Swan – Eventos randômicos que desafiam a resiliência."],
     themes: [
-      {
-        title: "Macroeconomia Realista",
-        icon: "TrendingUp",
-        color: "orange",
-        points: ["Câmbio flutuante USD/EUR/CNY/BTC", "IVA/VAT parametrizável"]
-      }
+      { title: "Gestão de Ativos", icon: "Cpu", color: "orange", points: ["Depreciação Real", "Capacidade Produtiva", "Turno Extra de MO"] },
+      { title: "Financeiro Oracle", icon: "Landmark", color: "blue", points: ["Rating de Crédito", "Dívida de Curto/Longo Prazo", "TSR Momentum"] },
+      { title: "Supply Chain", icon: "Box", color: "emerald", points: ["Estocagem MP-A/B", "Giro de Produto Acabado", "Custos Logísticos"] }
+    ]
+  },
+  'branch-commercial': {
+    name: 'Varejo',
+    heroImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200&auto=format&fit=crop",
+    titlePrefix: "Varejo",
+    titleHighlight: "Elite",
+    body: "Domine o mix de marketing e o giro de estoque.",
+    isActive: true,
+    accent: "blue",
+    features: ["Giro de Estoque", "Elasticidade Preço", "Marketing Mix"],
+    kpis: ["Markup", "Churn", "CSAT"],
+    advantages: ["Algoritmos de Consumo Reais", "Precipitação Variável", "IA de Recomendação de Mix"],
+    themes: [
+      { title: "Logística", icon: "ShoppingCart", color: "blue", points: ["Lead Time", "Custo Frete", "Estocagem Centralizada"] }
+    ]
+  },
+  'branch-services': {
+    name: 'Serviços',
+    heroImage: "https://images.unsplash.com/photo-1454165833767-027ffea70288?q=80&w=1200&auto=format&fit=crop",
+    titlePrefix: "Intellect",
+    titleHighlight: "Matrix",
+    body: "Gestão de capital intelectual e horas faturáveis.",
+    isActive: true,
+    accent: "indigo",
+    features: ["Capital Humano", "Churn de Clientes", "Produtividade"],
+    kpis: ["Billability", "LTV", "CAC"],
+    advantages: ["Modelagem de Capital Intelectual", "SLA Predictor", "Gestão de Burnout via IA"],
+    themes: [
+      { title: "Talentos", icon: "Briefcase", color: "indigo", points: ["Motivação de Equipe", "Nível de Treinamento", "Retenção de Key-Players"] }
     ]
   }
 };
 
+/**
+ * Fix: Added getPageContent helper function to simplify content retrieval in ActivityDetail.
+ */
 export const getPageContent = (slug: string) => {
-  return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`];
+  return DEFAULT_PAGE_CONTENT[`branch-${slug}`] || DEFAULT_PAGE_CONTENT[`activity-${slug}`] || null;
 };

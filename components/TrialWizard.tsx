@@ -77,13 +77,6 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     setRegionConfigs(prev => prev.map((r, i) => i === idx ? { ...r, ...updates } : r));
   };
 
-  const removeRegion = (idx: number) => {
-    if (regionConfigs.length <= 1) return;
-    const next = regionConfigs.filter((_, i) => i !== idx);
-    setRegionConfigs(next);
-    setFormData(prev => ({ ...prev, regionsCount: next.length }));
-  };
-
   const addRegion = () => {
     const nextId = regionConfigs.length > 0 ? Math.max(...regionConfigs.map(r => r.id)) + 1 : 1;
     setRegionConfigs([...regionConfigs, {
@@ -92,7 +85,6 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       currency: formData.currency,
       demand_weight: 20
     }]);
-    setFormData(prev => ({ ...prev, regionsCount: regionConfigs.length + 1 }));
   };
 
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE as any);
@@ -131,8 +123,6 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const totalAssetsSummary = financials?.balance_sheet.find(n => n.id === 'assets')?.value || 0;
   const totalProfitSummary = financials?.dre.find(n => n.id === 'final_profit')?.value || 0;
   const totalEquitySummary = financials?.balance_sheet.find(n => n.id === 'liabilities_pl')?.children?.find(n => n.id === 'equity')?.value || 7252171.74;
-
-  const totalDemand = regionConfigs.reduce((acc, r) => acc + (r.demand_weight || 0), 0);
 
   return (
     <div className="wizard-shell">
@@ -204,65 +194,40 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             )}
 
             {step === 3 && (
-               <motion.div key="s3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12 pb-32">
-                  <WizardStepTitle icon={<MapPin size={32}/>} title="GEOPOLÍTICA REGIONAL" desc="DEFINA NOMES, MOEDAS E DEMANDA ELÁSTICA POR REGIÃO." />
+               <motion.div key="s3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                  <WizardStepTitle icon={<MapPin size={32}/>} title="MERCADOS E REGIÕES" desc="PESO DA DEMANDA E MOEDAS LOCAIS." />
                   <div className="space-y-10">
-                     <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                        <div className="space-y-1">
-                           <h4 className="text-xl font-black text-white uppercase italic">Configuração de Nodos</h4>
-                           <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest italic">Gerencie os mercados onde as unidades irão operar.</p>
-                        </div>
-                        <div className="flex items-center gap-6">
-                           <div className="text-right">
-                              <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest">Demanda Agregada</span>
-                              <span className={`text-xl font-black italic ${totalDemand > 100 ? 'text-orange-500 animate-pulse' : 'text-emerald-500'}`}>{totalDemand}%</span>
-                           </div>
-                           <button onClick={addRegion} className="px-10 py-4 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-3 shadow-xl active:scale-95">
-                              <Plus size={18} strokeWidth={3}/> Adicionar Nodo
-                           </button>
-                        </div>
-                     </div>
-
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {regionConfigs.map((r, i) => (
-                           <div key={i} className="p-10 bg-slate-900 border-2 border-white/5 rounded-[4rem] group hover:border-orange-500/30 transition-all relative overflow-hidden shadow-2xl">
-                              <button onClick={() => removeRegion(i)} className="absolute top-8 right-8 p-3 bg-white/5 rounded-xl text-slate-600 hover:bg-rose-600 hover:text-white transition-all shadow-lg">
-                                 <Trash2 size={16}/>
-                              </button>
-                              
-                              <div className="space-y-10">
-                                 <div className="space-y-3">
-                                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nomenclatura do Nodo</label>
-                                    <input value={r.name} onChange={e => updateRegion(i, { name: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-6 text-white font-black uppercase italic outline-none focus:border-orange-500 shadow-inner" />
-                                 </div>
-
-                                 <div className="grid grid-cols-2 gap-8">
-                                    <div className="space-y-3">
-                                       <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Moeda Transacional</label>
-                                       <select value={r.currency} onChange={e => updateRegion(i, { currency: e.target.value as CurrencyType })} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-5 text-[10px] font-black text-white uppercase outline-none focus:border-orange-500 appearance-none cursor-pointer">
-                                          <option value="BRL">REAL (BRL)</option>
-                                          <option value="USD">DÓLAR (USD)</option>
-                                          <option value="EUR">EURO (EUR)</option>
-                                          <option value="CNY">YUAN (CNY)</option>
-                                          <option value="BTC">BITCOIN (BTC)</option>
-                                       </select>
-                                    </div>
-                                    <div className="space-y-3">
-                                       <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Demanda Alocada (%)</label>
-                                       <input type="number" value={r.demand_weight} onChange={e => updateRegion(i, { demand_weight: parseInt(e.target.value) || 0 })} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-5 text-center text-xl font-mono font-black text-orange-500 outline-none" />
-                                    </div>
-                                 </div>
-                              </div>
-                           </div>
-                        ))}
-                     </div>
-
-                     <div className="p-10 bg-orange-600/10 border-2 border-orange-500/20 rounded-[3.5rem] space-y-4 shadow-inner">
-                        <h4 className="text-sm font-black text-orange-500 uppercase italic flex items-center gap-3"><Info size={20}/> Protocolo de Demanda Elástica v18.0</h4>
-                        <p className="text-slate-400 font-medium italic leading-relaxed text-sm">
-                           "O Empirion permite demandas agregadas superiores a 100%. Quando isso ocorre, o mercado sinaliza um cenário de **escassêz de oferta**, permitindo que as empresas maximizem seus ativos de capital (CapEx) para suprir o excedente, resultando em Market Share dinâmico baseado em capacidade instalada vs. pedidos reprimidos."
-                        </p>
-                     </div>
+                    <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
+                      <h4 className="text-xl font-black text-white uppercase italic">Configuração de Nodos</h4>
+                      <button onClick={addRegion} className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-xl active:scale-95">
+                        <Plus size={16}/> Adicionar Nodo
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       {regionConfigs.map((r, i) => (
+                          <div key={i} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 group hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                             <div className="space-y-3">
+                                <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nomenclatura do Nodo</label>
+                                <input value={r.name} onChange={e => updateRegion(i, { name: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-white font-black uppercase italic outline-none focus:border-orange-500" />
+                             </div>
+                             <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-3">
+                                   <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Moeda</label>
+                                   <select value={r.currency} onChange={e => updateRegion(i, { currency: e.target.value as CurrencyType })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-[10px] font-black text-white uppercase outline-none">
+                                      <option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="CNY">CNY</option><option value="BTC">BTC</option>
+                                   </select>
+                                </div>
+                                <div className="space-y-3">
+                                   <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Peso Demanda (%)</label>
+                                   <input type="number" value={r.demand_weight} onChange={e => updateRegion(i, { demand_weight: parseInt(e.target.value) || 0 })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-center text-lg font-mono font-black text-orange-500 outline-none" />
+                                </div>
+                             </div>
+                             {regionConfigs.length > 1 && (
+                               <button onClick={() => setRegionConfigs(regionConfigs.filter((_, idx) => idx !== i))} className="absolute top-4 right-4 p-2 text-slate-700 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
+                             )}
+                          </div>
+                       ))}
+                    </div>
                   </div>
                </motion.div>
             )}
@@ -316,7 +281,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 5 && (
               <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10">
-                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="CRONOGRAMA ESTRATÉGICO" desc="MATRIZ ECONÔMICA COMPLETA v18.0 ORACLE." />
+                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="INDICADORES ESTRATÉGICOS" desc="MATRIZ ECONÔMICA COMPLETA v18.0 ORACLE." />
                  
                  <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[620px] flex flex-col relative group">
                     <div className="overflow-auto custom-scrollbar flex-1 relative">
@@ -335,31 +300,20 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           </thead>
                           <tbody className="divide-y divide-white/5 font-mono">
                              <CompactMatrixRow readOnly periods={totalPeriods} label="ICE CRESC. ECONÔMICO (%)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<Activity size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="VARIAÇÕES DE DEMANDA (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÍNDICE DE INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÍNDICE DE INADIMPLÊNCIA (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="JUROS BANCÁRIOS + TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="JUROS DE FORNECEDORES (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="RENDIMENTO APLICAÇÃO (%)" macroKey="investment_return_rate" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="IVA SOBRE COMPRAS (%)" macroKey="vat_purchases_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="IVA SOBRE VENDAS (%)" macroKey="vat_sales_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />							 
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="IMPOSTO DE RENDA (%)" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="DESÁGIO VENDA MÁQUINAS (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÁGIO COMPRAS ESPECIAIS (%)" macroKey="special_purchase_premium" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÁGIO EMPRÉSTIMO COMPULSÓRIO (%)" macroKey="compulsory_loan_agio" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ENCARGOS SOCIAIS (%)" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="VARIAÇÕES DE DEMANDA (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TAXA JUROS + TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
                              
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MATÉRIAS-PRIMAS (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="CAMPANHAS MARKETING (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="DISTRIBUIÇÃO DE PRODUTOS (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="GASTOS COM ESTOCAGEM (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MATÉRIA-PRIMA A" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MÁQUINA ALFA" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MÁQUINA BETA" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MÁQUINA GAMA" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MARKETING" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} icon={<Megaphone size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE LOGÍSTICA" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE ESTOCAGEM" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} icon={<Warehouse size={10}/>} />
 
-              							 <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORTAÇÃO EUA (%)" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORTAÇÃO EURO (%)" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} />							 
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT EUA" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT EURO" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT CHINA" macroKey="export_tariff_china" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT BTC" macroKey="export_tariff_btc" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} />
 
@@ -367,38 +321,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} isExchange />
-
-                             <tr className="hover:bg-white/[0.03] transition-colors">
-                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR COMPRA/VENDA MÁQUINAS</td>
-                                {Array.from({ length: totalPeriods }).map((_, i) => (
-                                   <td key={i} className="p-2 border-r border-white/5 text-center">
-                                      <button 
-                                        disabled
-                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500 opacity-40'}`}
-                                      >
-                                         {(roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'SIM' : 'NÃO'}
-                                      </button>
-                                   </td>
-                                ))}
-                             </tr>
-
-                             <tr className="hover:bg-white/[0.03] transition-colors">
-                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-blue-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><ClipboardList size={10}/> APRESENTAR BUSINESS PLAN</td>
-                                {Array.from({ length: totalPeriods }).map((_, i) => (
-                                   <td key={i} className="p-2 border-r border-white/5 text-center">
-                                      <button 
-                                        disabled
-                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-white/10 text-slate-700 opacity-40'}`}
-                                      >
-                                         {(roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'SIM' : 'NÃO'}
-                                      </button>
-                                   </td>
-                                ))}
-                             </tr>
                           </tbody>
                        </table>
                     </div>
-                    <motion.div animate={{ left: ['-1%', '101%'] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="absolute top-0 bottom-0 w-px bg-orange-500/20 shadow-[0_0_15px_#f97316] z-[110] pointer-events-none" />
                  </div>
               </motion.div>
             )}

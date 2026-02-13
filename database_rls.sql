@@ -1,52 +1,32 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE CORE RECOVERY v18.0 - GEOPOLÍTICA E ESTRATÉGIA GLOBAL
+-- EMPIRION DATABASE CORE RECOVERY v18.0 - ESTRUTURA CONTÁBIL E DEMANDA
 -- ==============================================================================
 
--- 1. GARANTIR EXTENSÕES
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- 2. INJEÇÃO DE CAMPOS DE CÂMBIO E TARIFAS (30 RUBRICAS PROTOCOLO)
+-- 1. ADIÇÃO DE CAMPOS DE DEMANDA E PPR NO HISTÓRICO DAS EMPRESAS
 DO $$ 
 BEGIN 
-    -- Tabela: championships
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championships' AND column_name='exchange_rates') THEN
-        ALTER TABLE public.championships ADD COLUMN exchange_rates JSONB DEFAULT '{"BRL": 1.0, "USD": 5.25, "EUR": 5.60, "CNY": 0.72, "BTC": 0.00002}'::jsonb;
+    -- Tabela: companies (Histórico de rounds)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='demand_variation') THEN
+        ALTER TABLE public.companies ADD COLUMN demand_variation NUMERIC DEFAULT 0.0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='non_op_res') THEN
+        ALTER TABLE public.companies ADD COLUMN non_op_res NUMERIC DEFAULT 0.0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='ppr') THEN
+        ALTER TABLE public.companies ADD COLUMN ppr NUMERIC DEFAULT 0.0;
     END IF;
 
-    -- Tabela: trial_championships
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='trial_championships' AND column_name='exchange_rates') THEN
-        ALTER TABLE public.trial_championships ADD COLUMN exchange_rates JSONB DEFAULT '{"BRL": 1.0, "USD": 5.25, "EUR": 5.60, "CNY": 0.72, "BTC": 0.00002}'::jsonb;
-    END IF;
-
-    -- Tabela de Regras Macro (Histórico de 30 Rubricas)
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championship_macro_rules' AND column_name='vat_purchases_rate') THEN
-        ALTER TABLE public.championship_macro_rules ADD COLUMN vat_purchases_rate NUMERIC DEFAULT 0.0;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championship_macro_rules' AND column_name='tax_rate_ir') THEN
-        ALTER TABLE public.championship_macro_rules ADD COLUMN tax_rate_ir NUMERIC DEFAULT 25.0;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championship_macro_rules' AND column_name='export_tariff_usa') THEN
-        ALTER TABLE public.championship_macro_rules ADD COLUMN export_tariff_usa NUMERIC DEFAULT 0.0;
+    -- Tabela de Regras Macro: Adicionar suporte para demand_variation se ausente
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championship_macro_rules' AND column_name='demand_variation') THEN
+        ALTER TABLE public.championship_macro_rules ADD COLUMN demand_variation NUMERIC DEFAULT 0.0;
     END IF;
 END $$;
 
--- 3. REFINAMENTO DE SEGURANÇA (RLS PARA OBSERVADORES NOMINADOS)
-DROP POLICY IF EXISTS "Decisions_Select_Auth" ON public.current_decisions;
-CREATE POLICY "Decisions_Select_Auth" ON public.current_decisions
-FOR SELECT TO authenticated
-USING (
-    team_id IN (SELECT team_id FROM team_members WHERE user_id = auth.uid()) OR 
-    EXISTS (
-        SELECT 1 FROM championships c 
-        WHERE c.id = current_decisions.championship_id 
-        AND (c.tutor_id = auth.uid() OR c.observers ? auth.uid()::text)
-    )
-);
+-- 2. REFINAMENTO DE ÍNDICES PARA BUSCA DE HISTÓRICO DRE
+CREATE INDEX IF NOT EXISTS idx_companies_team_round ON public.companies(team_id, round);
 
--- 4. ÍNDICES DE PERFORMANCE (TELEMETRIA DE ALTA VELOCIDADE)
-CREATE INDEX IF NOT EXISTS idx_companies_championship_round ON public.companies(championship_id, round);
-CREATE INDEX IF NOT EXISTS idx_champs_tutor_status ON public.championships(tutor_id, status);
-
--- 5. COMENTÁRIOS DE PROTOCOLO
-COMMENT ON COLUMN public.championships.region_configs IS 'Armazena nodos geográficos, moedas locais e pesos de demanda elástica v18.0.';
+-- 3. COMENTÁRIOS DE PROTOCOLO v18.0
+COMMENT ON COLUMN public.companies.non_op_res IS 'Resultado não operacional acumulado no round (premiações e deságios).';
+COMMENT ON COLUMN public.companies.ppr IS 'Participação nos lucros e resultados provisionada no round.';
+COMMENT ON COLUMN public.companies.demand_variation IS 'Ajuste percentual de demanda real aplicado sobre a demanda base do ciclo.';
