@@ -6,14 +6,14 @@ import {
   Zap, Activity, Trophy, ArrowRight,
   ShieldCheck, Loader2, DollarSign,
   Thermometer, ActivitySquare, GripVertical,
-  AlertTriangle, BrainCircuit, MessageSquare, Sparkles
+  AlertTriangle, BrainCircuit, MessageSquare, Sparkles, X
 } from 'lucide-react';
-import { motion as _motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
+import { motion as _motion, AnimatePresence, Reorder } from 'framer-motion';
 const motion = _motion as any;
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { GoogleGenAI } from '@google/genai';
-import { Branch, EcosystemConfig, CreditRating, TutorTeamView, AuditLog, DecisionData, Championship } from '../types';
+import { Branch, EcosystemConfig, CreditRating, TutorTeamView, AuditLog, Championship } from '../types';
 
 interface MonitorProps {
   championshipId: string;
@@ -120,7 +120,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">
                Dashboard do Tutor: <span className="text-orange-500">Comando Estratégico</span>
             </h1>
-            <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Arena Empirion Oracle v17.0 • IA Telemetry Control</p>
+            <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Arena Empirion Oracle v18.0 • IA Telemetry Control</p>
          </div>
          <div className="flex items-center gap-3 px-6 py-2 bg-slate-900 border border-white/10 rounded-2xl">
             <div className={`w-2 h-2 rounded-full ${activeTimelineNode > round ? 'bg-orange-500 animate-pulse' : 'bg-blue-500'}`} />
@@ -165,7 +165,8 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
          const res = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
-            contents: `Como auditor senior, analise estas decisões da equipe ${team.name}: ${JSON.stringify(team.current_decision)}. KPIs Projetados: TSR ${team.tsr}%, Rating ${team.rating}. Forneça um veredito técnico de 20 palavras focando no risco de insolvência ou vantagem competitiva.`
+            contents: `Como auditor senior, analise estas decisões da equipe ${team.name}: ${JSON.stringify(team.current_decision)}. KPIs Projetados: TSR ${team.tsr}%, Rating ${team.rating}. Forneça um veredito técnico de 20 palavras focando no risco de insolvência ou vantagem competitiva.`,
+            config: { thinkingConfig: { thinkingBudget: 0 } }
          });
          setAiVerdict(res.text);
       } catch (err) {
@@ -211,7 +212,10 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
             <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">AI Tactical Audit</span>
                {aiVerdict ? (
-                  <p className="text-[10px] text-indigo-300 font-bold italic leading-relaxed">"{aiVerdict}"</p>
+                  <div className="relative">
+                    <p className="text-[10px] text-indigo-300 font-bold italic leading-relaxed">"{aiVerdict}"</p>
+                    <button onClick={() => setAiVerdict(null)} className="absolute -top-6 -right-2 text-slate-500 hover:text-white"><X size={10}/></button>
+                  </div>
                ) : (
                   <button onClick={performAiAudit} disabled={isAuditing || !isLive} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-indigo-900 transition-all flex items-center justify-center gap-2">
                      {isAuditing ? <Loader2 size={12} className="animate-spin" /> : <BrainCircuit size={14} />} Executar Auditoria
@@ -223,7 +227,7 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
          <div className="grid grid-cols-2 gap-3 pt-6 border-t border-white/5 relative z-10">
             <MetricBox label="Kanitz Solvency" val={team.kanitz.toFixed(1)} icon={<Thermometer size={12} className="text-emerald-400"/>} trend={team.kanitz > 0 ? 'safe' : 'danger'} />
             <MetricBox label="Market Share" val={`${team.market_share.toFixed(1)}%`} icon={<Activity size={12} className="text-orange-500"/>} />
-            <MetricBox label="EBITDA Unit" val={`$ ${team.ebitda.toFixed(1)}M`} icon={<Zap size={12} className="text-orange-500"/>} />
+            <MetricBox label="NLCDG Unit" val={`$ ${team.nlcdg.toFixed(1)}M`} icon={<Zap size={12} className="text-orange-500"/>} />
             <MetricBox label="DCF Valuation" val={`$ ${team.dcf.toFixed(1)}M`} icon={<DollarSign size={12} className="text-indigo-400"/>} highlight />
          </div>
       </div>

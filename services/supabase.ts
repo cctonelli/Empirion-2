@@ -1,6 +1,6 @@
-
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators, Loan } from '../types';
+// Added Branch to the imported types to fix name resolution in processRoundTurnover
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators, Loan, Branch } from '../types';
 import { DEFAULT_MACRO, INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { calculateProjections, sanitize } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';
@@ -160,7 +160,62 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
 };
 
 export const processRoundTurnover = async (id: string, round: number) => {
-    return { success: true, error: null };
+    try {
+        const { data: champ } = await supabase.from('championships').select('*').eq('id', id).single();
+        const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', id);
+        const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', id).eq('round', round + 1);
+
+        if (!champ) throw new Error("Arena não encontrada.");
+
+        for (const team of (teams || [])) {
+            const decision = decisions?.find(d => d.team_id === team.id);
+            const branch = champ.branch as Branch;
+            const eco = champ.ecosystem_config || { inflation_rate: 0.01, demand_multiplier: 1, interest_rate: 0.03, market_volatility: 0.05, scenario_type: 'simulated', modality_type: 'standard' };
+            
+            // Simular decisão do bot se for bot
+            let finalDecision = decision?.data;
+            if (team.is_bot && !finalDecision) {
+                finalDecision = await generateBotDecision(branch, round + 1, champ.regions_count, champ.market_indicators);
+            }
+
+            if (finalDecision) {
+                const results = calculateProjections(finalDecision, branch, eco, champ.market_indicators, team);
+                
+                // Gravar histórico round
+                await supabase.from('companies').insert({
+                    team_id: team.id,
+                    championship_id: id,
+                    round: round + 1,
+                    state: finalDecision,
+                    dre: results.statements.dre,
+                    balance_sheet: results.statements.balance_sheet,
+                    cash_flow: results.statements.cash_flow,
+                    kpis: results.kpis,
+                    equity: results.kpis.equity,
+                    tsr: results.kpis.tsr,
+                    ebitda: results.kpis.ebitda
+                });
+
+                // Atualizar equipe com novos KPIs live
+                await supabase.from('teams').update({
+                    equity: results.kpis.equity,
+                    kpis: results.kpis,
+                    current_rating: results.kpis.rating
+                }).eq('id', team.id);
+            }
+        }
+
+        // Avançar round da arena
+        await supabase.from('championships').update({
+            current_round: round + 1,
+            round_started_at: new Date().toISOString()
+        }).eq('id', id);
+
+        return { success: true, error: null };
+    } catch (err: any) {
+        logError(LogContext.TURNOVER, "Erro no processamento de ciclo", err);
+        return { success: false, error: err.message };
+    }
 };
 
 export const updateEcosystem = async (id: string, u: any) => {
@@ -204,17 +259,10 @@ export const provisionDemoEnvironment = () => {
     localStorage.setItem('is_trial_session', 'true');
 };
 
-/**
- * BUSCA DE POSTS DO BLOG (FAQ)
- * Implementa pesquisa LIKE (%) e Case Insensitive via ilike
- */
 export const fetchBlogPosts = async (searchQuery?: string) => {
   let query = supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
-  
   if (searchQuery && searchQuery.trim() !== '') {
-    // Busca em pergunta OU resposta
     query = query.or(`question.ilike.%${searchQuery}%,answer.ilike.%${searchQuery}%`);
   }
-  
   return await query;
 };
