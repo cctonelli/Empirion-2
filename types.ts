@@ -21,6 +21,83 @@ export type AnalysisSource = 'parameterized' | 'ai_real_world';
 export type RegionType = 'domestic' | 'international';
 export type BPVisibility = 'private' | 'shared' | 'public';
 
+// Add missing MenuItemConfig interface
+export interface MenuItemConfig {
+  label: string;
+  path: string;
+  sub?: {
+    id: string;
+    label: string;
+    path: string;
+    icon?: string;
+  }[];
+}
+
+// Add missing ChampionshipTemplate interface
+export interface ChampionshipTemplate {
+  id: string;
+  name: string;
+  branch: Branch;
+}
+
+// Add missing InitialMachine interface
+export interface InitialMachine {
+  model: MachineModel;
+  count: number;
+}
+
+// Add missing BlackSwanEvent interface
+export interface BlackSwanEvent {
+  title: string;
+  description: string;
+  impact: string;
+  modifiers: {
+    inflation: number;
+    demand: number;
+    interest: number;
+    productivity: number;
+  };
+}
+
+// Add missing Loan interface
+export interface Loan {
+  id?: string;
+  amount: number;
+  remaining_rounds: number;
+  total_rounds: number;
+  interest_rate: number;
+}
+
+// Add missing CommunityCriteria interface
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
+// Add missing BMCBlocks interface
+export interface BMCBlocks {
+  customer_segments: string;
+  value_propositions: string;
+  channels: string;
+  customer_relationships: string;
+  revenue_streams: string;
+  key_resources: string;
+  key_activities: string;
+  key_partnerships: string;
+  cost_structure: string;
+}
+
+// Add missing EmpathyMap interface
+export interface EmpathyMap {
+  think_feel: string;
+  hear: string;
+  see: string;
+  say_do: string;
+  pains: string;
+  gains: string;
+}
+
 export interface UserProfile {
   id: string;
   supabase_user_id: string;
@@ -41,19 +118,16 @@ export interface KPIs {
   equity: number;
   market_share?: number;
   stock_quantities?: any;
-  
-  // Métricas de Comando Estratégico v16.0+
   tsr?: number; 
   nlcdg?: number; 
   ebitda?: number;
   roi?: number; 
   bep?: number; 
   solvency_index?: number;
-  solvency_score_kanitz?: number; // Termômetro de Kanitz
-  dcf_valuation?: number; // Discounted Cash Flow
+  solvency_score_kanitz?: number;
+  dcf_valuation?: number;
   inventory_turnover?: number;
   liquidity_current?: number;
-  
   [key: string]: any;
 }
 
@@ -80,11 +154,6 @@ export interface TutorTeamView {
   auditLogs: AuditLog[];
   current_decision?: DecisionData;
   is_bot?: boolean;
-}
-
-export interface HistoricalRound {
-  round: number;
-  teams: TutorTeamView[];
 }
 
 export interface DecisionData {
@@ -117,16 +186,6 @@ export interface Championship {
   round_started_at?: string;
   observers?: string[];
   config?: any;
-}
-
-export interface TeamProgress {
-  team_id: string;
-  team_name: string;
-  status: 'pending' | 'sealed';
-  rating: CreditRating;
-  risk: number;
-  insolvent: boolean;
-  auditLogs: AuditLog[];
 }
 
 export interface AuditLog {
@@ -225,36 +284,8 @@ export interface MacroIndicators {
   };
   hr_base: { salary: number };
   exchange_rates: Record<string, number>;
+  region_configs?: RegionConfig[];
   [key: string]: any;
-}
-
-export interface InitialMachine {
-  model: MachineModel;
-  quantity: number;
-}
-
-export interface ChampionshipTemplate {
-  id: string;
-  name: string;
-  branch: Branch;
-}
-
-export interface MenuItemConfig {
-  label: string;
-  path: string;
-  sub?: { id: string; label: string; path: string; icon: string }[];
-}
-
-export interface BlackSwanEvent {
-  title: string;
-  description: string;
-  impact: string;
-  modifiers: {
-    inflation: number;
-    demand: number;
-    interest: number;
-    productivity: number;
-  };
 }
 
 export interface BusinessPlan {
@@ -268,34 +299,13 @@ export interface BusinessPlan {
     steps: Record<number, any>;
     canvas: BMCBlocks;
     empathy: EmpathyMap;
-    epicenter: 'resource' | 'offer' | 'customer' | 'finance';
+    epicenter: string;
   };
   status: 'draft' | 'submitted' | 'approved' | 'finalized';
   visibility: BPVisibility;
   is_template: boolean;
   shared_with: string[];
   updated_at?: string;
-}
-
-export interface BMCBlocks {
-  customer_segments: string;
-  value_propositions: string;
-  channels: string;
-  customer_relationships: string;
-  revenue_streams: string;
-  key_resources: string;
-  key_activities: string;
-  key_partnerships: string;
-  cost_structure: string;
-}
-
-export interface EmpathyMap {
-  think_feel: string;
-  hear: string;
-  see: string;
-  say_do: string;
-  pains: string;
-  gains: string;
 }
 
 export interface EcosystemConfig {
@@ -305,13 +315,6 @@ export interface EcosystemConfig {
   market_volatility: number;
   scenario_type: ScenarioType;
   modality_type: ModalityType;
-}
-
-export interface Loan {
-  id: string;
-  amount: number;
-  remaining_rounds: number;
-  interest_rate: number;
 }
 
 export interface ProjectionResult {
@@ -326,12 +329,6 @@ export interface ProjectionResult {
   kpis: KPIs;
   statements: any;
   marketShare: number;
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
 }
 
 export interface Modality {

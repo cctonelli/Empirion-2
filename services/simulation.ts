@@ -33,6 +33,7 @@ export const calculateProjections = (
   // Processamento multiregional com conversão de moedas
   Object.entries(regions).forEach(([id, reg]: [any, any]) => {
     const regionId = parseInt(id);
+    
     // Busca config da região se existir no indicador de mercado
     const regionConfig = indicators.region_configs?.find((r: any) => r.id === regionId);
     const regionCurrency = regionConfig?.currency || indicators.currency || 'BRL';
@@ -43,18 +44,21 @@ export const calculateProjections = (
     const priceEffect = Math.pow(1 / Math.max(0.1, priceRatio), 1.2);
     const marketingEffect = 1 + (sanitize(reg.marketing, 0) * 0.05);
 
+    // Demanda Regional agora permite excedente (Elástica)
     const regionalDemand = baseDemand * (regionWeight / 100);
     const unitsSold = Math.floor(regionalDemand * priceEffect * marketingEffect);
     
-    // Conversão Cross-Currency para Moeda Base
-    // Regra: ValorBase = ValorLocal * (Cotação_Local_vs_Base)
-    // No cronograma, as taxas são relativas a BRL por padrão, mas o motor aceita cruzamento.
-    const exchangeRate = indicators.exchange_rates?.[regionCurrency] || 1;
-    const baseExchangeRate = indicators.exchange_rates?.[indicators.currency || 'BRL'] || 1;
+    /**
+     * CONVERSÃO CROSS-CURRENCY v18.0
+     * Regra: Valor_Base = (Valor_Local * Câmbio_Local) / Câmbio_Base
+     * Pivot: BRL (1.0). Se Moeda Base = USD (5.2) e Local = EUR (6.2):
+     * Receita_Base = (Preço_Local * Unidades * 6.2) / 5.2
+     */
+    const localRate = indicators.exchange_rates?.[regionCurrency] || 1;
+    const baseRate = indicators.exchange_rates?.[indicators.currency || 'BRL'] || 1;
     
-    // Se a moeda base do torneio for USD e a região BRL: ValorUSD = ValorBRL / 5.2
-    const crossRate = exchangeRate / baseExchangeRate;
-    const regionalRevenueBase = (unitsSold * price) / crossRate;
+    const regionalRevenueLocal = unitsSold * price;
+    const regionalRevenueBase = (regionalRevenueLocal * localRate) / baseRate;
 
     totalRevenueBase += regionalRevenueBase;
     totalUnitsSoldAllRegions += unitsSold;
@@ -74,19 +78,18 @@ export const calculateProjections = (
   
   const operatingProfit = grossProfit - totalOpex;
   
-  // 3. Resultado Financeiro e Não Operacional (Fidelidade v18.0)
-  const finRes = -2500; // Proxy de juros bancários P00
+  // 3. Resultado Financeiro e Não Operacional
+  const finRes = -2500; 
   const nonOpRes = 0;   
   
   const lair = operatingProfit + finRes + nonOpRes;
-  const taxProv = lair > 0 ? lair * 0.25 : 0;
+  const taxProv = lair > 0 ? lair * (indicators.tax_rate_ir / 100) : 0;
   const profitAfterTax = lair - taxProv;
   
   const ppr = sanitize(decision.hr?.participationPercent, 0) > 0 ? profitAfterTax * (sanitize(decision.hr?.participationPercent, 0) / 100) : 0;
-  
   const netProfit = profitAfterTax - ppr;
 
-  // 4. Métricas de Comando (War Room Telemetry)
+  // 4. Métricas de Comando
   const baseEquity = 7252171.74;
   const currentEquity = team.equity || baseEquity;
   const finalEquity = currentEquity + netProfit;
