@@ -26,6 +26,7 @@ export const calculateProjections = (
   const price = sanitize(reg1.price, indicators.avg_selling_price || 425);
   
   // 1. Modelagem de Demanda (Oracle High Fidelity)
+  // Métrica: Unidades Vendidas = Demanda Base * (1 + variação/100)
   const ice = sanitize(indicators.ice, 3.0);
   const demandVariation = sanitize(indicators.demand_variation, 0);
   const baseDemand = 10000 * (ice / 3) * (ecosystem.demand_multiplier || 1) * (1 + (demandVariation / 100));
@@ -50,7 +51,7 @@ export const calculateProjections = (
   
   // 3. Resultado Financeiro e Não Operacional (Fidelidade v18.0)
   const finRes = -2500; // Proxy de juros bancários P00
-  const nonOpRes = 0;   // Injetado via eventos/premiações/deságios
+  const nonOpRes = 0;   // Injetado via eventos/premiações/deságios (Placeholder Imutável)
   
   const lair = operatingProfit + finRes + nonOpRes;
   const taxProv = lair > 0 ? lair * 0.25 : 0;
