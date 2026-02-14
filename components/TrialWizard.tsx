@@ -300,30 +300,66 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           </thead>
                           <tbody className="divide-y divide-white/5 font-mono">
                              <CompactMatrixRow readOnly periods={totalPeriods} label="ICE CRESC. ECONÔMICO (%)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<Activity size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="VARIAÇÕES DE DEMANDA (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="TAXA JUROS + TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
-                             
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MATÉRIA-PRIMA A" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MÁQUINA ALFA" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MÁQUINA BETA" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MÁQUINA GAMA" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE MARKETING" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} icon={<Megaphone size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE LOGÍSTICA" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="AJUSTE ESTOCAGEM" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} icon={<Warehouse size={10}/>} />
-
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT EUA" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT EURO" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="VARIAÇÕES DE DEMANDA (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÍNDICE DE INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÍNDICE DE INADIMPLÊNCIA (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="JUROS BANCÁRIOS + TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="JUROS DE FORNECEDORES (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="RENDIMENTO APLICAÇÃO (%)" macroKey="investment_return_rate" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="IVA SOBRE COMPRAS (%)" macroKey="vat_purchases_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="IVA SOBRE VENDAS (%)" macroKey="vat_sales_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />							 
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="IMPOSTO DE RENDA (%)" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="DESÁGIO VENDA MÁQUINAS (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÁGIO COMPRAS ESPECIAIS (%)" macroKey="special_purchase_premium" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÁGIO EMPRÉSTIMO COMPULSÓRIO (%)" macroKey="compulsory_loan_agio" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="ENCARGOS SOCIAIS (%)" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="MATÉRIAS-PRIMAS (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="CAMPANHAS MARKETING (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="DISTRIBUIÇÃO DE PRODUTOS (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="GASTOS COM ESTOCAGEM (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORTAÇÃO EUA (%)" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORTAÇÃO EURO (%)" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} />							 
                              <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT CHINA" macroKey="export_tariff_china" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT BTC" macroKey="export_tariff_btc" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} />
-
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
                              <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} isExchange />
+                             <tr className="hover:bg-white/[0.03] transition-colors">
+                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR COMPRA/VENDA MÁQUINAS</td>
+                                {Array.from({ length: totalPeriods }).map((_, i) => (
+                                   <td key={i} className="p-2 border-r border-white/5 text-center">
+                                      <button 
+                                        disabled
+                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500 opacity-40'}`}
+                                      >
+                                         {(roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'SIM' : 'NÃO'}
+                                      </button>
+                                   </td>
+                                ))}
+                             </tr>
+
+                             <tr className="hover:bg-white/[0.03] transition-colors">
+                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-blue-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><ClipboardList size={10}/> APRESENTAR BUSINESS PLAN</td>
+                                {Array.from({ length: totalPeriods }).map((_, i) => (
+                                   <td key={i} className="p-2 border-r border-white/5 text-center">
+                                      <button 
+                                        disabled
+                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-white/10 text-slate-700 opacity-40'}`}
+                                      >
+                                         {(roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'SIM' : 'NÃO'}
+                                      </button>
+                                   </td>
+                                ))}
+                             </tr>
                           </tbody>
                        </table>
                     </div>
+                    <motion.div animate={{ left: ['-1%', '101%'] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="absolute top-0 bottom-0 w-px bg-orange-500/20 shadow-[0_0_15px_#f97316] z-[110] pointer-events-none" />
                  </div>
               </motion.div>
             )}
