@@ -10,7 +10,7 @@ import {
   Zap, Flame, ShieldAlert, BarChart3, Coins, Hammer, Package,
   MapPin, Scale, Eye, EyeOff, ChevronLeft, ChevronRight, Truck, Warehouse, Megaphone,
   BarChart, PieChart, Activity, Award, ClipboardList, ShoppingCart, UserPlus, Briefcase,
-  Lock, Gavel, Newspaper, FileJson, Plus
+  Lock, Gavel, Newspaper, FileJson, Plus, Trash2
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -63,28 +63,28 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   }, [formData.humanTeamsCount]);
 
   useEffect(() => {
-    setRegionConfigs(prev => {
-      const next = [...prev];
-      const defaultWeight = Math.floor(100 / formData.regionsCount);
-      if (next.length < formData.regionsCount) {
-        for (let i = next.length; i < formData.regionsCount; i++) {
-          next.push({
-            id: i + 1,
-            name: i === 0 ? 'BRASIL (BRL)' : i === 1 ? 'EUA (USD)' : i === 2 ? 'EUROPA (EUR)' : i === 3 ? 'CHINA (CNY)' : `REGIÃO 0${i + 1}`,
-            currency: i === 0 ? 'BRL' : i === 1 ? 'USD' : i === 2 ? 'EUR' : i === 3 ? 'CNY' : 'BRL',
-            demand_weight: defaultWeight
-          });
-        }
-      }
-      const sliced = next.slice(0, formData.regionsCount);
-      const currentSum = sliced.reduce((acc, r) => acc + r.demand_weight, 0);
-      if (currentSum !== 100 && sliced.length > 0) sliced[sliced.length - 1].demand_weight += (100 - currentSum);
-      return sliced;
-    });
-  }, [formData.regionsCount]);
+    if (regionConfigs.length === 0) {
+      setRegionConfigs([
+        { id: 1, name: 'BRASIL (LOCAL)', currency: 'BRL', demand_weight: 40 },
+        { id: 2, name: 'EUA (EXPORT)', currency: 'USD', demand_weight: 20 },
+        { id: 3, name: 'EUROPA (EXPORT)', currency: 'EUR', demand_weight: 20 },
+        { id: 4, name: 'CHINA (EXPORT)', currency: 'CNY', demand_weight: 20 },
+      ]);
+    }
+  }, []);
 
   const updateRegion = (idx: number, updates: Partial<RegionConfig>) => {
     setRegionConfigs(prev => prev.map((r, i) => i === idx ? { ...r, ...updates } : r));
+  };
+
+  const addRegion = () => {
+    const nextId = regionConfigs.length > 0 ? Math.max(...regionConfigs.map(r => r.id)) + 1 : 1;
+    setRegionConfigs([...regionConfigs, {
+      id: nextId,
+      name: `NOVA REGIÃO 0${nextId}`,
+      currency: formData.currency,
+      demand_weight: 20
+    }]);
   };
 
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE as any);
@@ -106,7 +106,7 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         region_configs: regionConfigs, 
         initial_financials: financials,
         is_trial: true, 
-        market_indicators: { ...marketIndicators, dividend_percent: formData.dividend_percent },
+        market_indicators: { ...marketIndicators, dividend_percent: formData.dividend_percent, region_configs: regionConfigs },
         round_rules: roundRules, 
         observers: []
       }, teamsToCreate, true);
@@ -195,31 +195,39 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 3 && (
                <motion.div key="s3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                  <WizardStepTitle icon={<MapPin size={32}/>} title="MERCADOS E REGIÕES" desc="DEFINA O PESO DA DEMANDA POR REGIÃO DE VENDAS." />
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                     <div className="space-y-8">
-                        <WizardField label="QUANTIDADE DE REGIÕES" type="number" val={formData.regionsCount} onChange={(v:any)=>setFormData({...formData, regionsCount: Math.min(15, Math.max(1, parseInt(v)))})} />
-                        <div className="p-8 bg-orange-600/10 border border-orange-500/20 rounded-[3rem] space-y-4">
-                           <h4 className="text-xs font-black text-orange-500 uppercase italic flex items-center gap-2"><Info size={14}/> Nota de Governança</h4>
-                           <p className="text-[10px] text-slate-400 font-bold uppercase leading-relaxed italic">"O peso total da demanda deve somar 100%. O motor Oracle distribui os pedidos baseado nestes coeficientes."</p>
-                        </div>
-                     </div>
-                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
-                        {regionConfigs.map((r, i) => (
-                           <div key={i} className="p-6 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between gap-6 group hover:border-orange-500/30 transition-all">
-                              <div className="flex-1 space-y-3">
-                                 <input value={r.name} onChange={e => updateRegion(i, { name: e.target.value })} className="bg-transparent border-b border-white/10 text-xs font-black text-white uppercase outline-none w-full focus:border-orange-500" />
-                                 <div className="flex gap-4">
-                                    <span className="text-[8px] font-black text-slate-600 uppercase">Moeda: {r.currency}</span>
-                                 </div>
-                              </div>
-                              <div className="w-24">
-                                 <label className="text-[8px] font-black text-slate-500 uppercase block mb-1">Peso (%)</label>
-                                 <input type="number" value={r.demand_weight} onChange={e => updateRegion(i, { demand_weight: parseInt(e.target.value) || 0 })} className="w-full bg-slate-950 border border-white/10 rounded-lg p-2 text-center text-[10px] font-black text-orange-500 outline-none" />
-                              </div>
-                           </div>
-                        ))}
-                     </div>
+                  <WizardStepTitle icon={<MapPin size={32}/>} title="MERCADOS E REGIÕES" desc="PESO DA DEMANDA E MOEDAS LOCAIS." />
+                  <div className="space-y-10">
+                    <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
+                      <h4 className="text-xl font-black text-white uppercase italic">Configuração de Nodos</h4>
+                      <button onClick={addRegion} className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-xl active:scale-95">
+                        <Plus size={16}/> Adicionar Nodo
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       {regionConfigs.map((r, i) => (
+                          <div key={i} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 group hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                             <div className="space-y-3">
+                                <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nomenclatura do Nodo</label>
+                                <input value={r.name} onChange={e => updateRegion(i, { name: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-white font-black uppercase italic outline-none focus:border-orange-500" />
+                             </div>
+                             <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-3">
+                                   <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Moeda</label>
+                                   <select value={r.currency} onChange={e => updateRegion(i, { currency: e.target.value as CurrencyType })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-[10px] font-black text-white uppercase outline-none">
+                                      <option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="CNY">CNY</option><option value="BTC">BTC</option>
+                                   </select>
+                                </div>
+                                <div className="space-y-3">
+                                   <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Peso Demanda (%)</label>
+                                   <input type="number" value={r.demand_weight} onChange={e => updateRegion(i, { demand_weight: parseInt(e.target.value) || 0 })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-center text-lg font-mono font-black text-orange-500 outline-none" />
+                                </div>
+                             </div>
+                             {regionConfigs.length > 1 && (
+                               <button onClick={() => setRegionConfigs(regionConfigs.filter((_, idx) => idx !== i))} className="absolute top-4 right-4 p-2 text-slate-700 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
+                             )}
+                          </div>
+                       ))}
+                    </div>
                   </div>
                </motion.div>
             )}
@@ -291,67 +299,27 @@ const TrailWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5 font-mono">
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ICE CRESC. ECONÔMICO (%)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<Activity size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="VARIAÇÕES DE DEMANDA (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÍNDICE DE INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÍNDICE DE INADIMPLÊNCIA (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="JUROS BANCÁRIOS + TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="JUROS DE FORNECEDORES (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="RENDIMENTO APLICAÇÃO (%)" macroKey="investment_return_rate" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="IVA SOBRE COMPRAS (%)" macroKey="vat_purchases_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="IVA SOBRE VENDAS (%)" macroKey="vat_sales_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />							 
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="IMPOSTO DE RENDA (%)" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="DESÁGIO VENDA MÁQUINAS (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÁGIO COMPRAS ESPECIAIS (%)" macroKey="special_purchase_premium" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ÁGIO EMPRÉSTIMO COMPULSÓRIO (%)" macroKey="compulsory_loan_agio" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="ENCARGOS SOCIAIS (%)" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MATÉRIAS-PRIMAS (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="MÁQUINA GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="CAMPANHAS MARKETING (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="DISTRIBUIÇÃO DE PRODUTOS (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="GASTOS COM ESTOCAGEM (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
-              							 <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORTAÇÃO EUA (%)" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORTAÇÃO EURO (%)" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} />							 
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT CHINA" macroKey="export_tariff_china" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="TARIFA EXPORT BTC" macroKey="export_tariff_btc" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
-                             <CompactMatrixRow readOnly periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} isExchange />
-                             <tr className="hover:bg-white/[0.03] transition-colors">
-                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR COMPRA/VENDA MÁQUINAS</td>
-                                {Array.from({ length: totalPeriods }).map((_, i) => (
-                                   <td key={i} className="p-2 border-r border-white/5 text-center">
-                                      <button 
-                                        disabled
-                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500 opacity-40'}`}
-                                      >
-                                         {(roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'SIM' : 'NÃO'}
-                                      </button>
-                                   </td>
-                                ))}
-                             </tr>
+                             <CompactMatrixRow periods={totalPeriods} label="ICE CRESC. ECONÔMICO (%)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<Activity size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="VARIAÇÕES DE DEMANDA (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="ÍNDICE DE INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="ÍNDICE DE INADIMPLÊNCIA (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="JUROS BANCÁRIOS + TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             
+                             <CompactMatrixRow periods={totalPeriods} label="AJUSTE MATÉRIA-PRIMA A" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="AJUSTE MÁQUINA ALFA" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="AJUSTE MÁQUINA BETA" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="AJUSTE MÁQUINA GAMA" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} icon={<Cpu size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="AJUSTE MARKETING" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} icon={<Megaphone size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="AJUSTE LOGÍSTICA" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="AJUSTE ESTOCAGEM" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} icon={<Warehouse size={10}/>} />
 
-                             <tr className="hover:bg-white/[0.03] transition-colors">
-                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-blue-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><ClipboardList size={10}/> APRESENTAR BUSINESS PLAN</td>
-                                {Array.from({ length: totalPeriods }).map((_, i) => (
-                                   <td key={i} className="p-2 border-r border-white/5 text-center">
-                                      <button 
-                                        disabled
-                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-white/10 text-slate-700 opacity-40'}`}
-                                      >
-                                         {(roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'SIM' : 'NÃO'}
-                                      </button>
-                                   </td>
-                                ))}
-                             </tr>
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} isExchange />
                           </tbody>
                        </table>
                     </div>
-                    <motion.div animate={{ left: ['-1%', '101%'] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="absolute top-0 bottom-0 w-px bg-orange-500/20 shadow-[0_0_15px_#f97316] z-[110] pointer-events-none" />
                  </div>
               </motion.div>
             )}

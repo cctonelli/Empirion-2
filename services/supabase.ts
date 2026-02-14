@@ -1,5 +1,5 @@
+
 import { createClient } from '@supabase/supabase-js';
-// Added Branch to the imported types to fix name resolution in processRoundTurnover
 import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators, Loan, Branch } from '../types';
 import { DEFAULT_MACRO, INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { calculateProjections, sanitize } from './simulation';
@@ -65,32 +65,6 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   return { data: finalArenas, error: mainRes.error || trialRes.error };
 };
 
-export const saveBusinessPlan = async (p: Partial<BusinessPlan>) => {
-  const { data: { session } } = await (supabase.auth as any).getSession();
-  const userId = session?.user?.id;
-
-  const payload = {
-    ...p,
-    user_id: p.user_id || userId,
-    updated_at: new Date().toISOString()
-  };
-
-  if (p.id) {
-    return await supabase.from('business_plans').update(payload).eq('id', p.id);
-  } else {
-    return await supabase.from('business_plans').insert(payload);
-  }
-};
-
-export const getActiveBusinessPlan = async (teamId: string, round: number) => {
-  return await supabase.from('business_plans').select('*').eq('team_id', teamId).eq('round', round).maybeSingle();
-};
-
-export const getTeamSimulationHistory = async (teamId: string) => {
-  const { data } = await supabase.from('companies').select('*').eq('team_id', teamId).order('round', { ascending: true });
-  return data || [];
-};
-
 export const createChampionshipWithTeams = async (champData: any, teams: any[], isTrial: boolean = false) => {
     const { data: { session } } = await (supabase.auth as any).getSession();
     const tutorId = session?.user?.id || SYSTEM_TUTOR_ID;
@@ -100,13 +74,8 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
 
     const finalFinancials = isTrial ? INITIAL_INDUSTRIAL_FINANCIALS : champData.initial_financials;
 
-    const { is_trial, round_rules, initial_share_price, ...cleanedData } = champData;
-
-    const insertPayload = isTrial ? {
-        ...cleanedData,
-        tutor_id: tutorId,
-        initial_financials: finalFinancials
-    } : {
+    // Fix: Garantir que round_rules e initial_share_price sejam persistidos corretamente
+    const insertPayload = {
         ...champData,
         tutor_id: tutorId,
         is_trial: isTrial,
@@ -145,17 +114,13 @@ export const deleteChampionship = async (id: string, isTrial: boolean) => {
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: any) => {
     const isTrial = localStorage.getItem('is_trial_session') === 'true';
     const table = isTrial ? 'trial_decisions' : 'current_decisions';
-
-    const audit_logs = decisions.audit_logs || [];
-
     const { error } = await supabase.from(table).upsert({
         team_id: teamId,
         championship_id: champId,
         round: round,
-        data: { ...decisions, audit_logs },
+        data: { ...decisions },
         updated_at: new Date().toISOString()
     });
-
     return { success: !error, error: error?.message };
 };
 
@@ -172,7 +137,6 @@ export const processRoundTurnover = async (id: string, round: number) => {
             const branch = champ.branch as Branch;
             const eco = champ.ecosystem_config || { inflation_rate: 0.01, demand_multiplier: 1, interest_rate: 0.03, market_volatility: 0.05, scenario_type: 'simulated', modality_type: 'standard' };
             
-            // Simular decisão do bot se for bot
             let finalDecision = decision?.data;
             if (team.is_bot && !finalDecision) {
                 finalDecision = await generateBotDecision(branch, round + 1, champ.regions_count, champ.market_indicators);
@@ -180,8 +144,6 @@ export const processRoundTurnover = async (id: string, round: number) => {
 
             if (finalDecision) {
                 const results = calculateProjections(finalDecision, branch, eco, champ.market_indicators, team);
-                
-                // Gravar histórico round
                 await supabase.from('companies').insert({
                     team_id: team.id,
                     championship_id: id,
@@ -196,7 +158,6 @@ export const processRoundTurnover = async (id: string, round: number) => {
                     ebitda: results.kpis.ebitda
                 });
 
-                // Atualizar equipe com novos KPIs live
                 await supabase.from('teams').update({
                     equity: results.kpis.equity,
                     kpis: results.kpis,
@@ -205,7 +166,6 @@ export const processRoundTurnover = async (id: string, round: number) => {
             }
         }
 
-        // Avançar round da arena
         await supabase.from('championships').update({
             current_round: round + 1,
             round_started_at: new Date().toISOString()
@@ -224,13 +184,25 @@ export const updateEcosystem = async (id: string, u: any) => {
     return await supabase.from(table).update(u).eq('id', id);
 };
 
+export const saveBusinessPlan = async (p: Partial<BusinessPlan>) => {
+  const { data: { session } } = await (supabase.auth as any).getSession();
+  const userId = session?.user?.id;
+  const payload = { ...p, user_id: p.user_id || userId, updated_at: new Date().toISOString() };
+  if (p.id) return await supabase.from('business_plans').update(payload).eq('id', p.id);
+  else return await supabase.from('business_plans').insert(payload);
+};
+
+export const getActiveBusinessPlan = async (teamId: string, round: number) => {
+  return await supabase.from('business_plans').select('*').eq('team_id', teamId).eq('round', round).maybeSingle();
+};
+
+export const getTeamSimulationHistory = async (teamId: string) => {
+  const { data } = await supabase.from('companies').select('*').eq('team_id', teamId).order('round', { ascending: true });
+  return data || [];
+};
+
 export const updatePageContent = async (slug: string, lang: string, content: any) => {
-    return await supabase.from('site_content').upsert({
-        page_slug: slug,
-        locale: lang,
-        content: content,
-        updated_at: new Date().toISOString()
-    });
+    return await supabase.from('site_content').upsert({ page_slug: slug, locale: lang, content: content, updated_at: new Date().toISOString() });
 };
 
 export const fetchPageContent = async (slug: string, lang: string) => {

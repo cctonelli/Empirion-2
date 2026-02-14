@@ -75,6 +75,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     <div className="min-h-screen bg-[#020617] font-sans text-slate-100 relative overflow-x-hidden select-none">
       <EmpireParticles />
       
+      {/* SEBRAE STYLE ORANGE CLOUDS */}
       <div className="fixed inset-0 pointer-events-none z-0">
          <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.3, 0.2], rotate: [0, 45, 0] }} transition={{ duration: 25, repeat: Infinity }} className="absolute -top-[20%] -left-[10%] w-[1000px] h-[1000px] bg-orange-600/30 blur-[250px] rounded-full" />
          <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1], x: [0, 100, 0] }} transition={{ duration: 20, repeat: Infinity, delay: 2 }} className="absolute top-[30%] -right-[10%] w-[800px] h-[800px] bg-orange-400/20 blur-[200px] rounded-full" />
@@ -88,18 +89,18 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
            
            <h1 className="text-[55px] md:text-[90px] lg:text-[120px] font-black text-white leading-[0.85] tracking-tighter uppercase italic pr-4">
               {content?.hero?.title || 'Forje Seu Império'} <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-white to-orange-400 pr-2"> {content?.hero?.subtitle || 'Com Insight IA'} </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-white to-orange-400 pr-2"> {content?.hero?.subtitle || 'Com Insight Estratégico IA'} </span>
            </h1>
 
            <p className="text-xl md:text-3xl text-slate-300 font-medium max-w-4xl mx-auto italic leading-relaxed opacity-90">
-              A arena definitiva onde inteligência neural Gemini e estratégia humana colidem em simulações multiplayer de alta fidelidade.
+              A arena definitiva onde inteligência neural Gemini 3 e estratégia humana colidem em simulações multiplayer de alta performance.
            </p>
 
            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 pt-8">
               <Link to="/auth" className="px-20 py-8 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.4em] shadow-[0_20px_60px_rgba(249,115,22,0.4)] hover:scale-110 hover:bg-white hover:text-orange-950 transition-all flex items-center gap-5 group">
                 Entre na Arena <Rocket size={24} className="group-hover:translate-x-2 transition-transform" />
               </Link>
-              <Link to="/solutions/simulators" className="px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.4em] hover:bg-white hover:text-slate-950 transition-all backdrop-blur-md active:scale-95">
+              <Link to="/branches/industrial" className="px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.4em] hover:bg-white hover:text-slate-950 transition-all backdrop-blur-md active:scale-95">
                 Explorar Ramos
               </Link>
            </div>
@@ -113,42 +114,27 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   icon={<Factory size={40}/>}
                   badge="Modo Industrial"
                   title="Produção Massiva"
-                  desc="Gerencie cadeias de suprimento e ativos de capital em múltiplos mercados regionais e globais"
+                  desc="Gerencie cadeias de suprimento e ativos de capital em múltiplos mercados regionais e globais v18.0 Gold."
                   img="https://images.unsplash.com/photo-1675176785803-bffbbb0cd2f4?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<BrainCircuit size={40}/>}
                   badge="IA Agregada"
                   title="Mentoria via Gemini"
-                  desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço, DRE e CashFlow"
+                  desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço, DRE e CashFlow v18.0."
                   img="https://images.unsplash.com/photo-1677442135703-1787eea5ce01?q=80&w=1200&auto=format&fit=crop"
                />
                <CarouselSlide 
                   icon={<Globe size={40}/>}
                   badge="Expansão Global"
                   title="Geopolítica Regional"
-                  desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e variações cambiais"
+                  desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e variações cambiais dinâmicas."
                   img="https://images.unsplash.com/photo-1670121180583-39ab653a071c?q=80&w=1200&auto=format&fit=crop"
-               />
-               <CarouselSlide 
-                  icon={<BarChart3 size={40}/>}
-                  badge="Visão Estratégica"
-                  title="Financeiro Avançado"
-                  desc="Dashboards completos de Balanço Patrimonial, DRE e Fluxo de Caixa com insights preditivos"
-                  img="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop"
-               />
-               <CarouselSlide 
-                  icon={<Users size={40}/>}
-                  badge="Formando Lideranças"
-                  title="Tutoria Assistida"
-                  desc="Tutores traçando estrategias quase infinitas, com auxílio da IA para cenários caóticos Black Swan"
-                  img="https://plus.unsplash.com/premium_photo-1661763874747-405eb7388c58?q=80&w=1200&auto=format&fit=crop"
                />
             </Slider>
          </div>
       </section>
 
-      {/* RESTO DO COMPONENTE IGUAL */}
       <section className="landing-section bg-slate-950/40">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
@@ -157,12 +143,12 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
                {[
-                 { label: 'Industrial', icon: <Factory />, slug: 'industrial', desc: 'CapEx $9M Fidelity' },
-                 { label: 'Varejo', icon: <ShoppingCart />, slug: 'commercial', desc: 'Varejo Híbrido' },
-                 { label: 'Serviços', icon: <Briefcase />, slug: 'services', desc: 'Capital Intelectual' },
-                 { label: 'Agronegócio', icon: <Tractor />, slug: 'agribusiness', desc: 'Ativos Biológicos' },
-                 { label: 'Financeiro', icon: <DollarSign />, slug: 'finance', desc: 'Spread & Risco' },
-                 { label: 'Construção', icon: <Hammer />, slug: 'construction', desc: 'Obras Pesadas' }
+                 { label: 'Industrial', icon: <Factory />, slug: 'industrial', desc: 'CapEx $9.5M Oracle' },
+                 { label: 'Varejo', icon: <ShoppingCart />, slug: 'commercial', desc: 'Varejo Híbrido Elite' },
+                 { label: 'Serviços', icon: <Briefcase />, slug: 'services', desc: 'Capital Intelectual Matrix' },
+                 { label: 'Agronegócio', icon: <Tractor />, slug: 'agribusiness', desc: 'Ativos Biológicos SIAGRO' },
+                 { label: 'Financeiro', icon: <DollarSign />, slug: 'finance', desc: 'Spread & Risco SINVEST' },
+                 { label: 'Construção', icon: <Hammer />, slug: 'construction', desc: 'Obras Pesadas Master' }
                ].map((r, i) => (
                  <Link key={r.label} to={`/branches/${r.slug}`} className="p-12 bg-slate-900 border border-white/5 rounded-[4rem] hover:border-orange-500/40 transition-all group shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-10 opacity-[0.02] group-hover:scale-125 transition-transform rotate-12">{React.cloneElement(r.icon as any, { size: 180 })}</div>
@@ -187,9 +173,9 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             <div className="flex flex-col md:flex-row justify-between items-end gap-10">
                <div className="space-y-4">
                   <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.8em] italic">Live Standings</span>
-                  <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none">Arenas em Andamento</h2>
+                  <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none">Placar Campeonatos</h2>
                </div>
-               <Link to="/solutions/open-tournaments" className="px-10 py-4 bg-white/5 border border-white/10 text-white rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all">Ver Todas as Arenas</Link>
+               <Link to="/solutions/open-tournaments" className="px-10 py-4 bg-white/5 border border-white/10 text-white rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl">Ver Todas as Arenas</Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -213,41 +199,6 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                      { name: 'Nexus Trade', tsr: 85.5, pos: 3 }
                   ]}
                />
-            </div>
-         </div>
-      </section>
-
-      <section className="landing-section bg-slate-900/20">
-         <div className="max-w-7xl mx-auto space-y-24">
-            <div className="text-center space-y-6">
-               <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.8em] italic">Empire Gamification</span>
-               <h2 className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none">Empire Badges</h2>
-               <p className="text-xl text-slate-500 font-medium italic max-w-2xl mx-auto">"Conquiste honrarias auditadas pelo oráculo e valide sua senioridade estratégica."</p>
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-12">
-               <BadgeIcon icon={<ShieldCheck size={40}/>} label="Strategos Master" color="text-amber-500" />
-               <BadgeIcon icon={<Zap size={40}/>} label="Efficiency Lord" color="text-emerald-500" />
-               <BadgeIcon icon={<Target size={40}/>} label="Market Sniper" color="text-rose-500" />
-               <BadgeIcon icon={<Activity size={40}/>} label="Oracle Verified" color="text-blue-500" />
-               <BadgeIcon icon={<Cpu size={40}/>} label="Asset Architect" color="text-indigo-500" />
-            </div>
-         </div>
-      </section>
-
-      <section className="landing-section bg-[#020617]">
-         <div className="max-w-5xl mx-auto space-y-24">
-            <div className="text-center space-y-4">
-               <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.8em] italic">Protocol Evolution</span>
-               <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none">Roadmap Estratégico</h2>
-            </div>
-            
-            <div className="relative space-y-16">
-               <div className="absolute left-8 top-0 bottom-0 w-px bg-white/5" />
-               <RoadmapNode phase="Fase 1" title="Core Engine v15.0" desc="Lançamento do motor industrial com fidelidade 100% e IA Gemini integrada." status="COMPLETO" active />
-               <RoadmapNode phase="Fase 2" title="Multi-Branch Node" desc="Expansão para Varejo, Agro e Serviços com mecânicas específicas." status="LIVE" active />
-               <RoadmapNode phase="Fase 3" title="Intelligence Hub Opal" desc="Terminal premium com Google Search Grounding e Workflows avançados." status="LIVE" active />
-               <RoadmapNode phase="Fase 4" title="Global Tournaments" desc="Arenas patrocinadas com premiações em ativos reais e NFTs de honra." status="Q2 2026" />
             </div>
          </div>
       </section>
@@ -288,37 +239,11 @@ const LeaderboardCard = ({ name, branch, cycle, teams }: any) => (
   </div>
 );
 
-const BadgeIcon = ({ icon, label, color }: any) => (
-   <div className="flex flex-col items-center gap-4 group">
-      <motion.div whileHover={{ scale: 1.2, rotate: 12 }} className={`w-24 h-24 bg-white/5 rounded-full flex items-center justify-center ${color} border border-white/10 shadow-2xl group-hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all relative overflow-hidden`}>
-         <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent" />
-         {icon}
-      </motion.div>
-      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-white transition-colors">{label}</span>
-   </div>
-);
-
-const RoadmapNode = ({ phase, title, desc, status, active }: any) => (
-   <div className="relative pl-24 group">
-      <div className={`absolute left-0 top-0 w-16 h-16 rounded-3xl border-2 flex items-center justify-center transition-all ${active ? 'bg-orange-600 border-orange-400 text-white shadow-2xl' : 'bg-slate-900 border-white/10 text-slate-700'}`}>
-         <span className="text-[10px] font-black uppercase italic">{phase}</span>
-      </div>
-      <div className="space-y-2">
-         <div className="flex items-center gap-6">
-            <h4 className={`text-3xl font-black uppercase italic tracking-tighter ${active ? 'text-white' : 'text-slate-700'}`}>{title}</h4>
-            <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${active ? 'bg-emerald-600/10 text-emerald-500 border border-emerald-500/20' : 'bg-white/5 text-slate-800'}`}>{status}</span>
-         </div>
-         <p className="text-slate-500 font-medium italic max-w-xl">{desc}</p>
-      </div>
-   </div>
-);
-
 const CarouselSlide = ({ icon, badge, title, desc, img }: any) => {
    const [imgError, setImgError] = useState(false);
-
    return (
       <div className="px-4 outline-none">
-         <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[5rem] overflow-hidden min-h-[400px] flex flex-col md:flex-row shadow-3xl relative group border-t-orange-600/30 border-t-4">
+         <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[5rem] overflow-hidden min-h-[400px] flex flex-col md:flex-row shadow-3xl relative group border-t-orange-600/30 border-t-4 hover:border-orange-500 transition-all">
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
             <div className="flex-1 p-10 md:p-16 flex flex-col justify-center items-start text-left relative z-20 space-y-5">
                <div className="flex items-center gap-5">
@@ -331,27 +256,13 @@ const CarouselSlide = ({ icon, badge, title, desc, img }: any) => {
                   Saiba Mais  <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
                </button>
             </div>
-            
             <div className="hidden md:block w-1/2 relative overflow-hidden bg-slate-950">
-               {/* FALLBACK GRADIENT IF IMAGE FAILS */}
                <div className="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-blue-600/5 opacity-50" />
                {!imgError ? (
-                  <img 
-                     src={img} 
-                     className="w-full h-full object-cover grayscale opacity-40 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-1000" 
-                     alt={title} 
-                     loading="eager"
-                     onError={(e: any) => {
-                        console.warn(`[Empirion Asset Check] Failed to load: ${img}`);
-                        setImgError(true);
-                     }}
-                  />
+                  <img src={img} className="w-full h-full object-cover grayscale opacity-40 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-1000" alt={title} loading="eager" onError={() => setImgError(true)} />
                ) : (
                   <div className="w-full h-full flex items-center justify-center border-l border-white/5">
-                     <div className="text-center space-y-2 opacity-20">
-                        <Activity size={48} className="mx-auto text-orange-500 animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 italic">Neural Visual Offline</span>
-                     </div>
+                     <Activity size={48} className="text-orange-500 opacity-20 animate-pulse" />
                   </div>
                )}
             </div>
