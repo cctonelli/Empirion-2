@@ -21,7 +21,7 @@ import BlogPage from './pages/BlogPage';
 import ContactPage from './pages/ContactPage';
 import PublicRewards from './pages/PublicRewards';
 import TestTerminal from './pages/TestTerminal';
-import TrailWizard from './components/TrailWizard';
+import TrialWizard from './components/TrialWizard';
 import Auth from './components/Auth';
 import { supabase, getUserProfile, isTestMode, provisionDemoEnvironment } from './services/supabase';
 import { UserProfile } from './types';
@@ -86,6 +86,7 @@ const AppContent: React.FC = () => {
   const handleSelectTeam = (champId: string, teamId: string, isTrial: boolean = false) => {
     localStorage.setItem('active_team_id', teamId);
     localStorage.setItem('active_champ_id', champId);
+    // Fix: Changed 'iTrial' to 'isTrial' to match the parameter name
     localStorage.setItem('is_trial_session', isTrial ? 'true' : 'false');
     navigate('/app/dashboard');
   };
