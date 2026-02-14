@@ -27,7 +27,7 @@ import ChampionshipWizard from './ChampionshipWizard';
 import TutorArenaControl from './TutorArenaControl';
 import TutorDecisionMonitor from './TutorDecisionMonitor';
 import GazetteViewer from './GazetteViewer';
-import TrailWizard from './TrailWizard';
+import TrialWizard from './TrialWizard';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES, DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_PAGE_CONTENT } from '../constants';
@@ -75,6 +75,12 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
       if (data) {
          setChampionships(data);
          const params = new URLSearchParams(location.search);
+         
+         // Lógica para abrir o Wizard automaticamente se solicitado via URL
+         if (params.get('mode') === 'new_trial' && !showWizard) {
+            setShowWizard(true);
+         }
+
          const isCreatingNew = params.get('mode') === 'new_trial' || isPickingTemplate || showWizard;
          if (!isCreatingNew) {
            const storedArenaId = localStorage.getItem('active_champ_id');
@@ -369,7 +375,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
         )}
         {showWizard && (
           <div className="fixed inset-0 z-[5000] bg-slate-950 p-4 md:p-10 flex items-center justify-center overflow-hidden">
-             <TrailWizard onComplete={() => { setShowWizard(false); fetchData(); }} />
+             <TrialWizard onComplete={() => { setShowWizard(false); fetchData(); }} />
           </div>
         )}
       </AnimatePresence>
