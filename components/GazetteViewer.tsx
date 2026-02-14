@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Globe, Landmark, Zap, AlertTriangle, LayoutGrid, Bird, Scale, ShieldAlert,
   Award, User, Star, TrendingUp, X, EyeOff, Package, Users, Cpu, FileText,
@@ -7,12 +7,14 @@ import {
   ChevronRight, MapPin, Truck, Warehouse, TrendingDown,
   Factory, CheckCircle2, ArrowUpCircle, ArrowDownCircle, Settings2, Flame,
   Briefcase, BarChart, ShoppingCart, Coins, Sparkles, Monitor, Percent, AlertOctagon,
-  ShieldCheck
+  ShieldCheck, Loader2, Search
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { Championship, UserRole, CreditRating, Team, CurrencyType, MachineModel, MacroIndicators } from '../types';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO } from '../constants';
+import { generateDynamicMarketNews } from '../services/gemini';
+import { supabase } from '../services/supabase';
 
 interface GazetteViewerProps {
   arena: Championship;
@@ -23,10 +25,12 @@ interface GazetteViewerProps {
   onClose: () => void;
 }
 
-type GazetteTab = 'individual' | 'collective_fin' | 'collective_market' | 'macro';
+type GazetteTab = 'individual' | 'collective_fin' | 'collective_market' | 'macro' | 'news';
 
 const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, userRole = 'player', activeTeam, onClose }) => {
-  const [activeTab, setActiveTab] = useState<GazetteTab>('individual');
+  const [activeTab, setActiveTab] = useState<GazetteTab>('news');
+  const [dynamicNews, setDynamicNews] = useState<string>('');
+  const [isGeneratingNews, setIsGeneratingNews] = useState(false);
   const currencySymbol = arena.currency === 'BRL' ? 'R$' : '$';
   
   const currentMacro = useMemo((): MacroIndicators => {
@@ -40,6 +44,56 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
     return Math.abs(currentMacro.inflation_rate - baseInfl) > 5 || Math.abs(currentMacro.demand_variation - baseDem) > 15;
   }, [currentMacro, arena]);
 
+  useEffect(() => {
+    const fetchAndGenerateNews = async () => {
+      if (round === 0) {
+        setDynamicNews("Aguardando o encerramento do Ciclo Base P00 para geração de notícias competitivas.");
+        return;
+      }
+
+      setIsGeneratingNews(true);
+      try {
+        const historyTable = arena.is_trial ? 'trial_companies' : 'companies';
+        const { data: teamsData } = await supabase
+          .from(historyTable)
+          .select('*, team:teams(name)')
+          .eq('championship_id', arena.id)
+          .eq('round', round);
+
+        if (teamsData && teamsData.length > 0) {
+          const news = await generateDynamicMarketNews(
+            arena.name,
+            round,
+            arena.branch,
+            teamsData.map(t => ({
+              name: t.team?.name || 'Equipe',
+              market_share: t.kpis?.market_share || 0,
+              equity: t.equity,
+              rating: t.kpis?.rating || 'N/A',
+              net_profit: t.kpis?.statements?.dre?.net_profit || 0,
+              roi: t.kpis?.roi || 0
+            })),
+            currentMacro,
+            arena.config?.transparency || 'medium',
+            arena.config?.gazetaMode || 'anonymous'
+          );
+          setDynamicNews(news);
+        } else {
+          setDynamicNews("Dados insuficientes para análise cruzada este período.");
+        }
+      } catch (err) {
+        console.error("Gazette Generation Error:", err);
+        setDynamicNews("O canal de notícias via satélite está temporariamente fora do ar.");
+      } finally {
+        setIsGeneratingNews(false);
+      }
+    };
+
+    if (activeTab === 'news' && !dynamicNews) {
+      fetchAndGenerateNews();
+    }
+  }, [activeTab, round, arena]);
+
   return (
     <motion.div initial={{ opacity: 0, scale: 0.98, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="bg-[#020617] border border-white/10 rounded-[4rem] shadow-[0_40px_120px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col h-[90vh] max-w-[1400px] w-full relative">
       <header className="bg-slate-950 px-12 py-8 border-b border-white/5 shrink-0 shadow-2xl relative z-10 flex items-center justify-between">
@@ -52,6 +106,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
          </div>
          <div className="flex items-center gap-6">
             <nav className="flex gap-2 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
+               <TabBtn active={activeTab === 'news'} onClick={() => setActiveTab('news')} label="Notícias" icon={<Sparkles size={14}/>} />
                <TabBtn active={activeTab === 'individual'} onClick={() => setActiveTab('individual')} label="Unidade" icon={<User size={14}/>} />
                <TabBtn active={activeTab === 'collective_fin'} onClick={() => setActiveTab('collective_fin')} label="Mercado" icon={<Landmark size={14}/>} />
                <TabBtn active={activeTab === 'macro'} onClick={() => setActiveTab('macro')} label="Conjuntura" icon={<Zap size={14}/>} />
@@ -62,6 +117,80 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, use
 
       <main className="flex-1 overflow-y-auto p-12 custom-scrollbar bg-slate-950/30">
          <AnimatePresence mode="wait">
+            {activeTab === 'news' && (
+              <motion.div key="news" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-4xl mx-auto space-y-12">
+                 <div className="p-16 bg-white/[0.02] border border-white/5 rounded-[5rem] shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-20 opacity-[0.02] group-hover:scale-110 transition-transform">
+                       <Newspaper size={400} />
+                    </div>
+                    
+                    <div className="relative z-10 space-y-10">
+                       <div className="flex items-center gap-4">
+                          <div className="w-1.5 h-1.5 bg-orange-600 rounded-full animate-pulse" />
+                          <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.6em] italic">Breaking Market Report</span>
+                       </div>
+
+                       {isGeneratingNews ? (
+                          <div className="space-y-8 py-10">
+                             <div className="h-10 bg-white/5 rounded-full w-3/4 animate-pulse" />
+                             <div className="space-y-4">
+                                <div className="h-4 bg-white/5 rounded-full w-full animate-pulse" />
+                                <div className="h-4 bg-white/5 rounded-full w-full animate-pulse" />
+                                <div className="h-4 bg-white/5 rounded-full w-5/6 animate-pulse" />
+                             </div>
+                             <div className="flex flex-col items-center justify-center pt-10 gap-3">
+                                <Loader2 className="animate-spin text-orange-600" size={32} />
+                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Sincronizando dados cruzados entre unidades...</span>
+                             </div>
+                          </div>
+                       ) : (
+                          <div className="space-y-10">
+                             <div className="prose prose-invert prose-orange max-w-none">
+                                <div className="text-slate-100 text-2xl md:text-3xl font-medium leading-relaxed italic whitespace-pre-line border-l-4 border-orange-600 pl-10">
+                                   {dynamicNews}
+                                </div>
+                             </div>
+                             
+                             <div className="pt-10 border-t border-white/5 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                   <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-xl"><ShieldCheck size={20}/></div>
+                                   <div className="flex flex-col">
+                                      <span className="text-[9px] font-black text-white uppercase tracking-widest">Verificação Oracle</span>
+                                      <span className="text-[8px] font-bold text-slate-500 uppercase">Fidelidade v18.0 Gold Sincronizada</span>
+                                   </div>
+                                </div>
+                                <div className="flex gap-2">
+                                   <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-slate-500 uppercase tracking-widest">IA Powered</span>
+                                   <span className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${arena.config?.gazetaMode === 'anonymous' ? 'bg-amber-600/10 text-amber-500 border border-amber-500/20' : 'bg-blue-600/10 text-blue-400 border border-blue-400/20'}`}>
+                                      Modo: {arena.config?.gazetaMode?.toUpperCase() || 'ANONYMOUS'}
+                                   </span>
+                                </div>
+                             </div>
+                          </div>
+                       )}
+                    </div>
+                 </div>
+
+                 {/* Seção de Destaques Rápidos */}
+                 {!isGeneratingNews && dynamicNews && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/5 space-y-6">
+                          <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest italic flex items-center gap-2"><Target size={14}/> Radar de Oportunidade</h4>
+                          <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                             O Oráculo detectou uma ineficiência na alocação de Capex do setor. Unidades que focarem em giro rápido de MP-A podem ganhar 2% de share residual.
+                          </p>
+                       </div>
+                       <div className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/5 space-y-6">
+                          <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-widest italic flex items-center gap-2"><ShieldAlert size={14}/> Alerta de Risco</h4>
+                          <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                             A volatilidade cambial pode penalizar pesadamente quem não possuir reservas em BTC se o ICE cair abaixo de 2.8 no próximo ciclo.
+                          </p>
+                       </div>
+                    </div>
+                 )}
+              </motion.div>
+            )}
+
             {activeTab === 'macro' && (
                <motion.div key="macro" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

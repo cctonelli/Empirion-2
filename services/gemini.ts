@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType, BlackSwanEvent } from "../types";
+import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType, BlackSwanEvent, TransparencyLevel, GazetaMode } from "../types";
 
 const getClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -66,7 +66,60 @@ export const generateBusinessPlanField = async (
   }
 };
 
-// ... Restante do arquivo mantido ...
+export const generateDynamicMarketNews = async (
+  arenaName: string,
+  round: number,
+  branch: Branch,
+  teamsData: any[],
+  macro: MacroIndicators,
+  transparency: TransparencyLevel,
+  gazetaMode: GazetaMode
+) => {
+  try {
+    const ai = getClient();
+    const isAnonymous = gazetaMode === 'anonymous';
+    
+    const contextPrompt = `
+      Você é o Editor-Chefe da Oracle Gazette, o jornal financeiro do ecossistema Empirion.
+      Arena: ${arenaName} | Ciclo: 0${round} | Setor: ${branch}
+      
+      DADOS DO MERCADO (CRUZADOS):
+      ${JSON.stringify(teamsData.map(t => ({
+        alias: t.name,
+        marketShare: t.market_share,
+        equity: t.equity,
+        rating: t.rating,
+        profit: t.net_profit,
+        roi: t.roi
+      })))}
+      
+      CONJUNTURA ECONÔMICA:
+      Inflação: ${macro.inflation_rate}% | Juros: ${macro.interest_rate_tr}% | ICE: ${macro.ice}
+      
+      DIRETRIZES DE PUBLICAÇÃO:
+      1. Anonimato: ${isAnonymous ? "SIM. Use apelidos como 'Líder do Setor', 'Empresa A', 'Player Emergente'. NUNCA revele nomes reais." : "NÃO. Use os nomes reais das equipes."}
+      2. Transparência: ${transparency}. (Low: foco apenas em macro; Medium: destaque para top 3 players; High/Full: análise detalhada de gaps).
+      3. Tom: Profissional, alarmista se houver crise, e focado em métricas (TSR, Market Share).
+      4. Idioma: Português (Brasil).
+      5. Estrutura: Uma manchete impactante + 3 parágrafos curtos cobrindo: Ocorrências de Mercado, Desempenho do Líder e Alerta de Conjuntura.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: contextPrompt,
+      config: { 
+        temperature: 0.8,
+        maxOutputTokens: 500
+      }
+    });
+
+    return response.text || "Os nodos de comunicação estão em manutenção.";
+  } catch (error) {
+    console.error("Gazette AI Error:", error);
+    return "Falha na transmissão da Oracle Gazette.";
+  }
+};
+
 export const generateMarketAnalysis = async (arenaName: string, round: number, branch: string) => {
   try {
     const ai = getClient();
