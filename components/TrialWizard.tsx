@@ -38,7 +38,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     currency: 'BRL' as CurrencyType,
     transparency: 'medium' as TransparencyLevel,
     gazetaMode: 'anonymous' as GazetaMode,
-    dividend_percent: 25.0 
+    dividend_percent: 25.0,
+    branch: 'industrial' as Branch // Importante para filtros
   });
 
   const [marketIndicators, setMarketIndicators] = useState<MacroIndicators>({
@@ -100,6 +101,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         ...teamNames.map(n => ({ name: n, is_bot: false })),
         ...Array.from({ length: formData.botsCount }, (_, i) => ({ name: `SYNTH NODE 0${i+1}`, is_bot: true }))
       ];
+      // Note: O mapeamento de chaves é feito agora no services/supabase.ts v18.9
       await createChampionshipWithTeams({
         ...formData,
         region_names: regionConfigs.map(r => r.name), 

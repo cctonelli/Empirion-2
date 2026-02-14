@@ -134,7 +134,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   interest_rate_tr: 2.0,
   supplier_interest: 1.5,
   investment_return_rate: 1.0,
-  avg_selling_price: 425.0,
+  avg_selling_price: 425.00,
   late_penalty_rate: 5.0,
   machine_sale_discount: 10.0,
   special_purchase_premium: 5.0,
@@ -162,9 +162,9 @@ export const DEFAULT_MACRO: MacroIndicators = {
   export_tariff_btc: 0.0,
 
   award_values: {
-    cost_precision: 50000,
-    revenue_precision: 100000,
-    profit_precision: 150000,
+    cost_precision: 50000.00,
+    revenue_precision: 100000.00,
+    profit_precision: 150000.00,
   },
   prices: { 
     mp_a: 20.00, 
@@ -174,18 +174,18 @@ export const DEFAULT_MACRO: MacroIndicators = {
     storage_mp: 1.40,
     storage_finished: 20.00
   },
-  machinery_values: { alfa: 500000, beta: 1500000, gama: 3000000 },
+  machinery_values: { alfa: 500000.00, beta: 1500000.00, gama: 3000000.00 },
   machine_specs: {
     alfa: { 
-      model: 'alfa', initial_value: 500000, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025,
+      model: 'alfa', initial_value: 500000.00, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.025,
       overload_coef: 1.4, aging_coef: 0.8, useful_life_years: 40, overload_extra_rate: 0.001 
     },
     beta: { 
-      model: 'beta', initial_value: 1500000, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025,
+      model: 'beta', initial_value: 1500000.00, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.025,
       overload_coef: 1.2, aging_coef: 0.6, useful_life_years: 40, overload_extra_rate: 0.0007 
     },
     gama: { 
-      model: 'gama', initial_value: 3000000, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025,
+      model: 'gama', initial_value: 3000000.00, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.025,
       overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 40, overload_extra_rate: 0.0005 
     }
   },

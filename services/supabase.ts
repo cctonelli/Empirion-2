@@ -44,7 +44,7 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
   const fetchTrial = async () => {
     let query = supabase.from('trial_championships').select('*').order('created_at', { ascending: false });
-    if (onlyPublic) query = query.eq('is_public', true);
+    // No modo trial, geralmente queremos ver todos os abertos para sandbox
     return await query;
   };
 
@@ -74,12 +74,26 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
 
     const finalFinancials = isTrial ? INITIAL_INDUSTRIAL_FINANCIALS : champData.initial_financials;
 
-    // Fix: Garantir que round_rules e initial_share_price sejam persistidos corretamente
+    // Normalização de Schema v18.9:
+    // Mapeia chaves vindas do TrialWizard (camelCase) para chaves do Banco (snake_case)
     const insertPayload = {
-        ...champData,
+        name: champData.name,
+        description: champData.description || '',
+        total_rounds: champData.total_rounds || champData.totalRounds,
+        regions_count: champData.regions_count || champData.regionsCount,
+        currency: champData.currency,
+        deadline_value: champData.deadline_value || champData.roundTime,
+        deadline_unit: champData.deadline_unit || champData.roundUnit,
+        branch: champData.branch || 'industrial',
         tutor_id: tutorId,
         is_trial: isTrial,
-        initial_financials: finalFinancials
+        initial_financials: finalFinancials,
+        market_indicators: champData.market_indicators,
+        round_rules: champData.round_rules,
+        // Alinhamento tático:
+        transparency_level: champData.transparency_level || champData.transparency || 'medium',
+        gazeta_mode: champData.gazeta_mode || champData.gazetaMode || 'anonymous',
+        observers: champData.observers || []
     };
 
     const { data: champ, error: cErr } = await supabase.from(champTable).insert(insertPayload).select().single();
@@ -90,7 +104,8 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
     }
 
     const teamsToInsert = teams.map(t => ({
-        ...t,
+        name: t.name,
+        is_bot: t.is_bot || false,
         championship_id: champ.id,
         equity: finalFinancials.balance_sheet.find((n:any) => n.id === 'equity')?.value || 7252171.74,
         kpis: { rating: 'AAA', current_cash: 0, stock_quantities: { mpa: 30000, mpb: 20000 }, statements: finalFinancials }
