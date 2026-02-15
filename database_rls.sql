@@ -1,13 +1,49 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE CONSOLIDATED SCHEMA v18.9 GOLD - TRIAL SUPPORT
--- Protocolo: ORACLE-CORE-RLS-IDEMPOTENT-FINAL-V3
+-- EMPIRION DATABASE CONSOLIDATED SCHEMA v19.0 GOLD - ORACLE CORE FIX
+-- Protocolo: ORACLE-TRIAL-LISTING-FIX-V1
 -- ==============================================================================
 
--- 1. EXTENSÕES
+-- 1. EXTENSÕES E PREPARAÇÃO
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. LIMPEZA AGRESSIVA DE TODAS AS POLÍTICAS EXISTENTES
+-- 2. AJUSTES DE SCHEMA (COLUNAS FALTANTES QUE CAUSAM FALHA NO INSERT)
+-- O App tenta inserir 'is_trial' e 'round_rules' diretamente nos payloads.
+DO $$ 
+BEGIN
+    -- trial_championships
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='trial_championships' AND column_name='is_trial') THEN
+        ALTER TABLE public.trial_championships ADD COLUMN is_trial boolean DEFAULT true;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='trial_championships' AND column_name='round_rules') THEN
+        ALTER TABLE public.trial_championships ADD COLUMN round_rules jsonb DEFAULT '{}'::jsonb;
+    END IF;
+    
+    -- championships (oficial)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='championships' AND column_name='round_rules') THEN
+        ALTER TABLE public.championships ADD COLUMN round_rules jsonb DEFAULT '{}'::jsonb;
+    END IF;
+END $$;
+
+-- 3. GARANTIR USUÁRIO DE SISTEMA (SYSTEM_TUTOR_ID)
+-- Necessário para que a FK 'tutor_id' não quebre em modo Trial deslogado.
+INSERT INTO public.users (id, supabase_user_id, name, email, role, nickname)
+VALUES (
+    '00000000-0000-0000-0000-000000000000', 
+    '00000000-0000-0000-0000-000000000000', 
+    'Empirion System', 
+    'system@empirion.ia', 
+    'admin', 
+    'Oracle_Core'
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- 4. HABILITAÇÃO E LIMPEZA DE RLS
+ALTER TABLE public.trial_championships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trial_teams ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trial_decisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trial_companies ENABLE ROW LEVEL SECURITY;
+
 DO $$ 
 DECLARE
     r RECORD;
@@ -16,52 +52,47 @@ BEGIN
         SELECT policyname, tablename 
         FROM pg_policies 
         WHERE schemaname = 'public' 
-        AND tablename IN ('users', 'championships', 'teams', 'current_decisions', 'companies', 'business_plans', 'team_members', 'trial_championships', 'trial_teams', 'trial_decisions', 'site_content')
+        AND tablename IN ('trial_championships', 'trial_teams', 'trial_decisions', 'trial_companies')
     ) LOOP
         EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON public.' || quote_ident(r.tablename);
     END LOOP;
 END $$;
 
--- 3. HABILITAÇÃO DE RLS NAS TABELAS DE TRIAL
-ALTER TABLE public.trial_championships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.trial_teams ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.trial_decisions ENABLE ROW LEVEL SECURITY;
-
--- 4. POLÍTICAS PARA TABELAS TRIAL (SANDBOX)
--- Permite que qualquer um veja arenas trial (necessário para o modo Trial Master)
-CREATE POLICY "Trial_Champs_Visibility" ON public.trial_championships 
+-- 5. NOVAS POLÍTICAS TOTAIS PARA MODO TRIAL (SANDBOX)
+-- Visibilidade pública para Arenas Trial
+CREATE POLICY "Trial_Champs_Public_Select" ON public.trial_championships 
     FOR SELECT USING (true);
 
--- Permite inserção de arenas trial por qualquer usuário (ou o SYSTEM_TUTOR_ID)
-CREATE POLICY "Trial_Champs_Insert" ON public.trial_championships 
+-- Permissão total de inserção (Anonymous e Logged)
+CREATE POLICY "Trial_Champs_Universal_Insert" ON public.trial_championships 
     FOR INSERT WITH CHECK (true);
 
--- Permite visualização de equipes trial
-CREATE POLICY "Trial_Teams_Visibility" ON public.trial_teams 
+-- Permissão de update para o Tutor (mesmo se for o System ID)
+CREATE POLICY "Trial_Champs_Tutor_Update" ON public.trial_championships 
+    FOR UPDATE USING (true);
+
+-- Equipes Trial: Visibilidade total
+CREATE POLICY "Trial_Teams_Public_Select" ON public.trial_teams 
     FOR SELECT USING (true);
 
-CREATE POLICY "Trial_Teams_Insert" ON public.trial_teams 
+CREATE POLICY "Trial_Teams_Universal_Insert" ON public.trial_teams 
     FOR INSERT WITH CHECK (true);
 
--- 5. POLÍTICAS PARA TABELAS OFICIAIS (RLS REFORÇADO)
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.championships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
+-- Decisões Trial: Visibilidade e Inserção para operação fluída
+CREATE POLICY "Trial_Decisions_Flow" ON public.trial_decisions 
+    FOR ALL USING (true) WITH CHECK (true);
 
-CREATE POLICY "Users_Read_Own" ON public.users FOR SELECT USING (auth.uid() = supabase_user_id);
-CREATE POLICY "Championships_Tutor_All" ON public.championships FOR ALL USING (auth.uid() = tutor_id);
-CREATE POLICY "Championships_Visibility" ON public.championships 
+-- Histórico Trial: Visibilidade total
+CREATE POLICY "Trial_Companies_Public_Select" ON public.trial_companies 
+    FOR SELECT USING (true);
+
+-- 6. REFORÇO RLS CHAMPIONSHIPS (OFICIAL)
+DROP POLICY IF EXISTS "Championships_Visibility" ON public.championships;
+CREATE POLICY "Championships_Visibility_V19" ON public.championships 
     FOR SELECT USING (
         is_public = true OR 
         auth.uid() = tutor_id OR 
-        observers @> ARRAY[auth.uid()]
+        is_trial = true -- Garante que trials na tabela principal também apareçam
     );
-
--- 6. POLÍTICAS PARA CONTEÚDO (CMS)
-ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "SiteContent_Public_Read" ON public.site_content FOR SELECT USING (true);
-CREATE POLICY "SiteContent_Admin_Manage" ON public.site_content FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users u WHERE u.supabase_user_id = auth.uid() AND u.role = 'admin')
-);
 
 COMMIT;

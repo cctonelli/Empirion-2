@@ -44,14 +44,13 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
   const fetchTrial = async () => {
     let query = supabase.from('trial_championships').select('*').order('created_at', { ascending: false });
-    // No modo trial, geralmente queremos ver todos os abertos para sandbox
     return await query;
   };
 
   const [mainRes, trialRes] = await Promise.all([fetchMain(), fetchTrial()]);
   
   const allRaw = [
-    ...(mainRes.data || []).map(c => ({ ...c, is_trial: false })),
+    ...(mainRes.data || []).map(c => ({ ...c, is_trial: !!c.is_trial })),
     ...(trialRes.data || []).map(c => ({ ...c, is_trial: true }))
   ];
 
@@ -67,15 +66,14 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
 
 export const createChampionshipWithTeams = async (champData: any, teams: any[], isTrial: boolean = false) => {
     const { data: { session } } = await (supabase.auth as any).getSession();
+    // Prioriza o Auth UID, senão usa o System ID garantido no DB
     const tutorId = session?.user?.id || SYSTEM_TUTOR_ID;
 
     const champTable = isTrial ? 'trial_championships' : 'championships';
     const teamsTable = isTrial ? 'trial_teams' : 'teams';
 
-    const finalFinancials = isTrial ? INITIAL_INDUSTRIAL_FINANCIALS : champData.initial_financials;
+    const finalFinancials = champData.initial_financials || INITIAL_INDUSTRIAL_FINANCIALS;
 
-    // Normalização de Schema v18.9:
-    // Mapeia chaves vindas do TrialWizard (camelCase) para chaves do Banco (snake_case)
     const insertPayload = {
         name: champData.name,
         description: champData.description || '',
@@ -89,11 +87,11 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
         is_trial: isTrial,
         initial_financials: finalFinancials,
         market_indicators: champData.market_indicators,
-        round_rules: champData.round_rules,
-        // Alinhamento tático:
+        round_rules: champData.round_rules || {},
         transparency_level: champData.transparency_level || champData.transparency || 'medium',
         gazeta_mode: champData.gazeta_mode || champData.gazetaMode || 'anonymous',
-        observers: champData.observers || []
+        observers: champData.observers || [],
+        is_public: champData.is_public !== undefined ? champData.is_public : true
     };
 
     const { data: champ, error: cErr } = await supabase.from(champTable).insert(insertPayload).select().single();
@@ -114,6 +112,8 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
     const { error: tErr } = await supabase.from(teamsTable).insert(teamsToInsert);
     if (tErr) {
         logError(LogContext.SUPABASE, "Erro ao criar equipes", tErr);
+        // Tenta limpar o campeonato se as equipes falharem
+        await supabase.from(champTable).delete().eq('id', champ.id);
         return { success: false, error: tErr.message };
     }
 
@@ -141,9 +141,15 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
 
 export const processRoundTurnover = async (id: string, round: number) => {
     try {
-        const { data: champ } = await supabase.from('championships').select('*').eq('id', id).single();
-        const { data: teams } = await supabase.from('teams').select('*').eq('championship_id', id);
-        const { data: decisions } = await supabase.from('current_decisions').select('*').eq('championship_id', id).eq('round', round + 1);
+        const isTrial = localStorage.getItem('is_trial_session') === 'true';
+        const champTable = isTrial ? 'trial_championships' : 'championships';
+        const teamsTable = isTrial ? 'trial_teams' : 'teams';
+        const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
+        const historyTable = isTrial ? 'trial_companies' : 'companies';
+
+        const { data: champ } = await supabase.from(champTable).select('*').eq('id', id).single();
+        const { data: teams } = await supabase.from(teamsTable).select('*').eq('championship_id', id);
+        const { data: decisions } = await supabase.from(decisionsTable).select('*').eq('championship_id', id).eq('round', round + 1);
 
         if (!champ) throw new Error("Arena não encontrada.");
 
@@ -159,7 +165,7 @@ export const processRoundTurnover = async (id: string, round: number) => {
 
             if (finalDecision) {
                 const results = calculateProjections(finalDecision, branch, eco, champ.market_indicators, team);
-                await supabase.from('companies').insert({
+                await supabase.from(historyTable).insert({
                     team_id: team.id,
                     championship_id: id,
                     round: round + 1,
@@ -173,7 +179,7 @@ export const processRoundTurnover = async (id: string, round: number) => {
                     ebitda: results.kpis.ebitda
                 });
 
-                await supabase.from('teams').update({
+                await supabase.from(teamsTable).update({
                     equity: results.kpis.equity,
                     kpis: results.kpis,
                     current_rating: results.kpis.rating
@@ -181,7 +187,7 @@ export const processRoundTurnover = async (id: string, round: number) => {
             }
         }
 
-        await supabase.from('championships').update({
+        await supabase.from(champTable).update({
             current_round: round + 1,
             round_started_at: new Date().toISOString()
         }).eq('id', id);
@@ -212,7 +218,9 @@ export const getActiveBusinessPlan = async (teamId: string, round: number) => {
 };
 
 export const getTeamSimulationHistory = async (teamId: string) => {
-  const { data } = await supabase.from('companies').select('*').eq('team_id', teamId).order('round', { ascending: true });
+  const isTrial = localStorage.getItem('is_trial_session') === 'true';
+  const table = isTrial ? 'trial_companies' : 'companies';
+  const { data } = await supabase.from(table).select('*').eq('team_id', teamId).order('round', { ascending: true });
   return data || [];
 };
 
@@ -235,7 +243,9 @@ export const subscribeToModalities = (cb: any) => {
 };
 
 export const getPublicReports = async (id: string, r: number) => {
-    return await supabase.from('companies').select('*').eq('championship_id', id).eq('round', r);
+    const isTrial = localStorage.getItem('is_trial_session') === 'true';
+    const table = isTrial ? 'trial_companies' : 'companies';
+    return await supabase.from(table).select('*').eq('championship_id', id).eq('round', r);
 };
 
 export const submitCommunityVote = async (d: any) => {
