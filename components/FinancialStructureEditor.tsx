@@ -5,7 +5,8 @@ import {
   CheckCircle2, AlertTriangle, Boxes, X, 
   TrendingUp, Landmark, ShieldCheck, Zap, Activity
 } from 'lucide-react';
-import { AccountNode } from '../types';
+import { AccountNode, CurrencyType } from '../types';
+import { formatCurrency, getCurrencySymbol } from '../utils/formatters';
 
 interface FinancialStructureEditorProps {
   onChange?: (data: { balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }) => void;
@@ -13,15 +14,17 @@ interface FinancialStructureEditorProps {
   initialDRE?: AccountNode[];
   initialCashFlow?: AccountNode[];
   readOnly?: boolean;
+  currency?: CurrencyType;
 }
 
-const formatMoney = (val: number): string => {
-  const abs = Math.abs(val);
-  const formatted = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(abs);
-  return val < 0 ? `-${formatted}` : formatted;
-};
-
-const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onChange, initialBalance = [], initialDRE = [], initialCashFlow = [], readOnly = false }) => {
+const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ 
+  onChange, 
+  initialBalance = [], 
+  initialDRE = [], 
+  initialCashFlow = [], 
+  readOnly = false,
+  currency = 'BRL'
+}) => {
   const [activeTab, setActiveTab] = useState<'balance' | 'dre' | 'cashflow'>('balance');
   const [balanceNodes, setBalanceNodes] = useState<AccountNode[]>(Array.isArray(initialBalance) ? initialBalance : []);
   const [dreNodes, setDRENodes] = useState<AccountNode[]>(Array.isArray(initialDRE) ? initialDRE : []);
@@ -73,31 +76,6 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
     }
   };
 
-  const addSubNode = (parentId: string) => {
-    if (readOnly) return;
-    const add = (list: AccountNode[]): AccountNode[] => {
-      if (!Array.isArray(list)) return [];
-      return list.map(n => {
-        if (n.id === parentId) {
-          const newNode: AccountNode = { id: `${n.id}.${(n.children?.length || 0) + 1}`, label: 'Nova Subconta', value: 0, type: n.type, isEditable: true };
-          return { ...n, children: [...(n.children || []), newNode] };
-        }
-        if (n.children) return { ...n, children: add(n.children) };
-        return n;
-      });
-    };
-    if (activeTab === 'balance') setBalanceNodes(calculateTotalsRecursive(add(balanceNodes), 'balance'));
-  };
-
-  const removeNode = (id: string) => {
-    if (readOnly) return;
-    const remove = (list: AccountNode[]): AccountNode[] => {
-      if (!Array.isArray(list)) return [];
-      return list.filter(n => n.id !== id).map(n => ({ ...n, children: n.children ? remove(n.children) : undefined }));
-    };
-    if (activeTab === 'balance') setBalanceNodes(calculateTotalsRecursive(remove(balanceNodes), 'balance'));
-  };
-
   const nodes = activeTab === 'balance' ? balanceNodes : activeTab === 'dre' ? dreNodes : cashFlowNodes;
 
   return (
@@ -110,14 +88,22 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({ onC
 
       <div className="matrix-container p-6">
         <div className="space-y-4 min-w-[900px]">
-          {nodes.map(node => <TreeNode key={node.id} node={node} onUpdate={updateNode} onAdd={addSubNode} onRemove={removeNode} readOnly={readOnly} />)}
+          {nodes.map(node => (
+            <TreeNode 
+              key={node.id} 
+              node={node} 
+              onUpdate={updateNode} 
+              readOnly={readOnly} 
+              currency={currency} 
+            />
+          ))}
         </div>
       </div>
     </div>
   );
 };
 
-const TreeNode: React.FC<{ node: AccountNode, onUpdate: any, onAdd: any, onRemove: any, level?: number, readOnly: boolean }> = ({ node, onUpdate, onAdd, onRemove, level = 0, readOnly }) => {
+const TreeNode: React.FC<{ node: AccountNode, onUpdate: any, level?: number, readOnly: boolean, currency: CurrencyType }> = ({ node, onUpdate, level = 0, readOnly, currency }) => {
   const isParent = Array.isArray(node.children) && node.children.length > 0;
   return (
     <div className="space-y-3">
@@ -125,11 +111,28 @@ const TreeNode: React.FC<{ node: AccountNode, onUpdate: any, onAdd: any, onRemov
         <div className="flex-1 flex items-center justify-between gap-10">
            <span className={`font-black text-sm uppercase italic tracking-tight ${isParent ? 'text-orange-500' : 'text-slate-300'}`}>{node.label}</span>
            <div className="flex items-center gap-4 bg-slate-950 px-6 py-2.5 rounded-xl border border-white/5 shadow-inner">
-             {(!node.isEditable || readOnly) ? <span className="font-mono font-black text-sm text-white italic">{formatMoney(node.value)}</span> : <input type="number" className="w-36 bg-transparent outline-none font-mono font-bold text-sm text-white" value={node.value} onChange={e => onUpdate(node.id, { value: parseFloat(e.target.value) || 0 })} />}
+             <span className="text-[10px] font-black text-slate-600">{getCurrencySymbol(currency)}</span>
+             {(!node.isEditable || readOnly) ? (
+               <span className="font-mono font-black text-sm text-white italic">{formatCurrency(node.value, currency, false)}</span>
+             ) : (
+               <input 
+                 type="number" 
+                 step="0.01"
+                 className="w-36 bg-transparent outline-none font-mono font-bold text-sm text-white" 
+                 value={node.value} 
+                 onChange={e => onUpdate(node.id, { value: parseFloat(e.target.value) || 0 })} 
+               />
+             )}
            </div>
         </div>
       </div>
-      {isParent && <div className="space-y-3">{node.children!.map(child => <TreeNode key={child.id} node={child} onUpdate={onUpdate} onAdd={onAdd} onRemove={onRemove} level={level + 1} readOnly={readOnly} />)}</div>}
+      {isParent && (
+        <div className="space-y-3">
+          {node.children!.map(child => (
+            <TreeNode key={child.id} node={child} onUpdate={onUpdate} level={level + 1} readOnly={readOnly} currency={currency} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

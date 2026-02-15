@@ -5,10 +5,11 @@ import {
   ShieldCheck, Activity, Landmark as BankIcon, ShoppingCart, Truck, Scale, ChevronDown, AlertCircle,
   ArrowDownLeft, ArrowUpRight, Receipt
 } from 'lucide-react';
-import { Branch, Championship, Team, AccountNode } from '../types';
+import { Branch, Championship, Team, AccountNode, CurrencyType } from '../types';
 import { getChampionships } from '../services/supabase';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
+import { formatCurrency } from '../utils/formatters';
 
 const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
@@ -38,7 +39,8 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const cf = useMemo(() => activeTeam?.kpis?.statements?.cash_flow || { inflow: {}, outflow: {} }, [activeTeam]);
   const balanceSheet = useMemo((): AccountNode[] => activeTeam?.kpis?.statements?.balance_sheet || [], [activeTeam]);
 
-  const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: activeArena?.currency || 'BRL' }).format(v || 0);
+  const currency = activeArena?.currency || 'BRL';
+  const fmt = (v: number) => formatCurrency(v, currency);
 
   if (loading) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto text-orange-500" /></div>;
 
@@ -47,7 +49,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       <header className="flex flex-col lg:flex-row justify-between lg:items-end px-6 gap-6">
          <div>
             <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Oracle <span className="text-orange-500">Audit Node</span></h1>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Engine v18.0 Oracle Master</p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Arena: {activeArena?.name} • Moeda: {currency}</p>
          </div>
          <div className="flex flex-wrap gap-3 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
             <ReportTabBtn active={activeReport === 'dre'} onClick={() => setActiveReport('dre')} label="DRE" icon={<TrendingUp size={14} />} color="orange" />
@@ -70,12 +72,6 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         <ReportLine label="( = ) LUCRO BRUTO" val={fmt(dre.gross_profit)} />
                         <ReportLine label="( - ) DESPESAS OPERACIONAIS" val={fmt(dre.opex)} neg />
                         <ReportLine label="( = ) RESULTADO OPERACIONAL" val={fmt(dre.operating_profit)} highlight />
-                        <ReportLine label="(+/-) RESULTADO FINANCEIRO" val={fmt(dre.fin_res)} indent />
-                        <ReportLine label="(+/-) RESULTADO NÃO OPERACIONAL" val={fmt(dre.non_op_res)} indent />
-                        <ReportLine label="( = ) LUCRO ANTES DO IR (LAIR)" val={fmt(dre.lair)} />
-                        <ReportLine label="( - ) PROVISÃO DE IMPOSTO RENDA" val={fmt(dre.taxes)} indent neg />
-                        <ReportLine label="( = ) LUCRO APÓS O IR" val={fmt(dre.profit_after_tax)} />
-                        <ReportLine label="( - ) PPR-PARTICIPAÇÃO NO LUCRO" val={fmt(dre.ppr)} indent neg />
                         <ReportLine label="( = ) LUCRO LÍQUIDO DO CICLO" val={fmt(dre.net_profit)} total />
                      </div>
                   </motion.div>
@@ -84,19 +80,12 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                      <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Fluxo de Caixa (Regime de Caixa)</h3>
                      <div className="space-y-1 font-mono">
                         <ReportLine label="(=) SALDO INICIAL" val={fmt(cf.start)} bold />
-                        
                         <div className="py-4 space-y-2 border-l-2 border-emerald-500/30 pl-6 my-4 bg-emerald-500/5 rounded-r-3xl">
                            <ReportLine label="(+) ENTRADAS TOTAIS" val={fmt(cf.inflow?.total)} color="text-emerald-400" />
-                           <ReportLine label="VENDAS À VISTA" val={fmt(cf.inflow?.current_sales)} indent />
-                           <ReportLine label="PREMIAÇÕES/NÃO-OPERACIONAIS" val={fmt(cf.inflow?.awards)} indent icon={<Zap size={10}/>} />
                         </div>
-
                         <div className="py-4 space-y-2 border-l-2 border-rose-500/30 pl-6 my-4 bg-rose-500/5 rounded-r-3xl">
                            <ReportLine label="(-) SAÍDAS TOTAIS" val={fmt(cf.outflow?.total)} neg color="text-rose-400" />
-                           <ReportLine label="PAGAMENTO PPR" val={fmt(cf.outflow?.ppr)} indent neg icon={<Users size={10}/>} />
-                           <ReportLine label="INVESTIMENTOS CAPEX" val={fmt(cf.outflow?.capex)} indent neg icon={<Cpu size={10}/>} />
                         </div>
-
                         <ReportLine label="(=) SALDO FINAL PROJETADO" val={fmt(cf.final)} total bold highlight color={cf.final <= 0 ? 'text-rose-500' : 'text-emerald-400'} />
                      </div>
                   </motion.div>

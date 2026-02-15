@@ -15,6 +15,7 @@ import { createChampionshipWithTeams } from '../services/supabase';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import FinancialStructureEditor from './FinancialStructureEditor';
+import { formatCurrency, getCurrencySymbol } from '../utils/formatters';
 
 const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }> = ({ onComplete, isTrial = false }) => {
   const [step, setStep] = useState(1);
@@ -36,7 +37,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
   const [teamNames, setTeamNames] = useState<string[]>([]);
   const [marketIndicators, setMarketIndicators] = useState<MacroIndicators>(DEFAULT_MACRO);
   const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
-  // Fix: Explicitly typing financials to match the state requirements
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } | null>(INITIAL_FINANCIAL_TREE as any);
 
   useEffect(() => {
@@ -44,26 +44,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
     setTeamNames(prev => Array.from({ length: formData.teams_count }, (_, i) => prev[i] || `Equipe ${i+1}`));
   }, [formData.regions_count, formData.teams_count]);
 
-  const loadIndustrialTemplate = () => {
-    setFormData({
-      ...formData,
-      name: `ARENA INDUSTRIAL ORACLE - ${new Date().toLocaleDateString()}`,
-      branch: 'industrial',
-      regions_count: 9,
-      total_rounds: 12
-    });
-    setMarketIndicators(DEFAULT_MACRO);
-    setRoundRules(DEFAULT_INDUSTRIAL_CHRONOGRAM);
-    // Fix: Casting to any to avoid complex union type inference issues
-    setFinancials(INITIAL_FINANCIAL_TREE as any);
-    alert("DNA INDUSTRIAL CARREGADO: Indicadores macro e balanços de $9.5M sincronizados.");
-  };
-
   const handleLaunch = async () => {
     setIsSubmitting(true);
     const teamsToCreate = [
       ...teamNames.map(n => ({ name: n, is_bot: false })),
-      // Fix: Changed formData.botsCount to formData.bots_count to match state definition
       ...Array.from({ length: formData.bots_count }, (_, i) => ({ name: `BOT Oracle 0${i+1}`, is_bot: true }))
     ];
     try {
@@ -95,103 +79,57 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-[0_0_30px_rgba(249,115,22,0.4)]"><Sliders size={32} /></div>
            <div>
               <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Strategos Creator</h2>
-              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Nova Arena Nodal • Build Gold v15.25</p>
+              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Nova Arena • {formData.currency} Node</p>
            </div>
         </div>
-        <div className="flex items-center gap-10">
-           <button 
-             onClick={loadIndustrialTemplate}
-             className="px-6 py-3 bg-white/5 border border-orange-500/30 text-orange-500 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all flex items-center gap-3 active:scale-95"
-           >
-              <FileJson size={14} /> Carregar Template Industrial
-           </button>
-           <div className="flex gap-4">
-              {Array.from({ length: stepsCount }).map((_, i) => (
-                <div key={i} className={`h-2 rounded-full transition-all duration-700 ${step === i+1 ? 'w-20 bg-orange-600 shadow-[0_0_20px_#f97316]' : step > i+1 ? 'w-10 bg-emerald-500' : 'w-10 bg-white/5'}`} />
-              ))}
-           </div>
+        <div className="flex gap-4">
+           {Array.from({ length: stepsCount }).map((_, i) => (
+             <div key={i} className={`h-2 rounded-full transition-all duration-700 ${step === i+1 ? 'w-20 bg-orange-600 shadow-[0_0_20px_#f97316]' : step > i+1 ? 'w-10 bg-emerald-500' : 'w-10 bg-white/5'}`} />
+           ))}
         </div>
       </header>
 
       <div className="wizard-content custom-scrollbar p-12 md:p-20">
         <AnimatePresence mode="wait">
-          
           {step === 1 && (
             <motion.div key="s1" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-16 max-w-5xl mx-auto pb-20">
                <WizardStepTitle icon={<Globe size={48}/>} title="Identidade Sistêmica" desc="Orquestre a escala global do seu torneio." />
                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   <WizardField label="Nome da Arena" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="EX: TORNEIO NACIONAL ALPHA" />
-                  <div className="grid grid-cols-2 gap-8">
-                     <WizardSelect label="Moeda de Reporte" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (BRL)'},{v:'USD',l:'DÓLAR (USD)'},{v:'EUR',l:'EURO (EUR)'},{v:'CNY',l:'YUAN (CNY)'},{v:'BTC',l:'BITCOIN (BTC)'}]} />
-                     <WizardField label="Regiões (1 a 15)" type="number" val={formData.regions_count} onChange={(v:any)=>setFormData({...formData, regions_count: parseInt(v)})} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-8">
-                     <div className="space-y-2">
-                        <WizardField label="Total de Ciclos" type="number" val={formData.total_rounds} onChange={(v:any)=>setFormData({...formData, total_rounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
-                        {formData.total_rounds >= 12 && <p className="text-[10px] font-black text-rose-500 uppercase italic ml-4 animate-pulse">MÁXIMO DE 12 PERÍODOS</p>}
-                     </div>
-                     <WizardField label="Prazo Decisão" type="number" val={formData.deadline_value} onChange={(v:any)=>setFormData({...formData, deadline_value: parseInt(v)})} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-8">
-                     <WizardField label="Equipes Humanas" type="number" val={formData.teams_count} onChange={(v:any)=>setFormData({...formData, teams_count: parseInt(v)})} />
-                     <WizardField label="Bots (IA Gemini)" type="number" val={formData.bots_count} onChange={(v:any)=>setFormData({...formData, bots_count: parseInt(v)})} />
-                  </div>
+                  <WizardSelect label="Moeda de Reporte" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
                </div>
             </motion.div>
           )}
 
-          {step === 7 && (
-            <motion.div key="s7" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="py-32 text-center space-y-16 max-w-4xl mx-auto">
-               <div className="w-40 h-40 bg-orange-600 rounded-[4rem] flex items-center justify-center mx-auto shadow-[0_20px_80px_rgba(249,115,22,0.4)] animate-bounce border-4 border-orange-400">
-                  <ShieldCheck size={80} className="text-white" strokeWidth={2.5}/>
-               </div>
-               <div className="space-y-6">
-                  <h1 className="text-7xl font-black text-white uppercase italic tracking-tighter leading-none">Baseline Auditado</h1>
-                  <p className="text-2xl text-slate-400 font-medium italic leading-relaxed">
-                     Arena orquestrada com sucesso. Clique em "Lançar Protocolo" para ativar os nodos simulados.
-                  </p>
-               </div>
-            </motion.div>
+          {step === 4 && (
+             <motion.div key="s4" className="space-y-12">
+                <WizardStepTitle icon={<Calculator size={48}/>} title="Baselines Financeiros" desc="Defina a estrutura de contas inicial para a arena." />
+                <div className="bg-slate-900/40 p-10 rounded-[4rem] border border-white/5">
+                   <div className="flex justify-between items-center mb-8">
+                      <h3 className="text-2xl font-black text-white uppercase italic">Configuração em {formData.currency}</h3>
+                      <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest italic">Máscara Ativa: {getCurrencySymbol(formData.currency)} #.###,##</span>
+                   </div>
+                   <FinancialStructureEditor 
+                      initialBalance={financials?.balance_sheet} 
+                      initialDRE={financials?.dre} 
+                      initialCashFlow={financials?.cash_flow} 
+                      onChange={(u) => setFinancials(u)}
+                      currency={formData.currency}
+                   />
+                </div>
+             </motion.div>
           )}
-
         </AnimatePresence>
       </div>
 
-      <button 
-        onClick={() => setStep(s => Math.max(1, s-1))} 
-        disabled={step === 1} 
-        className="floating-nav-btn left-10"
-        title="Voltar"
-      >
-        <ChevronLeft size={32} />
-      </button>
-      
+      <button onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1} className="floating-nav-btn left-10"><ChevronLeft size={32} /></button>
       {step === stepsCount ? (
-        <button 
-          onClick={handleLaunch} 
-          disabled={isSubmitting} 
-          className="floating-nav-btn-primary"
-        >
-          {isSubmitting ? (
-            <><Loader2 className="animate-spin" size={24}/> Sincronizando Nodos...</>
-          ) : (
-            'Lançar Protocolo Arena'
-          )}
+        <button onClick={handleLaunch} disabled={isSubmitting} className="floating-nav-btn-primary">
+          {isSubmitting ? <><Loader2 className="animate-spin" size={24}/> Lançando...</> : 'Lançar Protocolo Arena'}
         </button>
       ) : (
-        <button 
-          onClick={() => setStep(s => s + 1)} 
-          className="floating-nav-btn right-10"
-          title="Próximo"
-        >
-          <ChevronRight size={32} />
-        </button>
+        <button onClick={() => setStep(s => s + 1)} className="floating-nav-btn right-10"><ChevronRight size={32} /></button>
       )}
-
-      <div className="fixed bottom-6 right-1/2 translate-x-1/2 opacity-30 flex flex-col items-center pointer-events-none">
-         <span className="text-[7px] font-black text-white uppercase tracking-[0.6em]">Build Gold v15.25</span>
-         <span className="text-[9px] font-black text-orange-500 italic uppercase">Fase {step} de {stepsCount}</span>
-      </div>
     </div>
   );
 };
@@ -209,13 +147,7 @@ const WizardStepTitle = ({ icon, title, desc }: any) => (
 const WizardField = ({ label, val, onChange, type = 'text', placeholder }: any) => (
   <div className="space-y-4 text-left group">
      <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
-     <input 
-        type={type} 
-        value={val} 
-        onChange={e => onChange(e.target.value)} 
-        className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-white outline-none focus:border-orange-600 transition-all shadow-[inset_0_5px_15px_rgba(0,0,0,0.4)] placeholder:text-slate-800 font-mono" 
-        placeholder={placeholder} 
-     />
+     <input type={type} value={val} onChange={e => onChange(e.target.value)} className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-white outline-none focus:border-orange-600 transition-all shadow-[inset_0_5px_15px_rgba(0,0,0,0.4)] placeholder:text-slate-800 font-mono" placeholder={placeholder} />
   </div>
 );
 
@@ -223,16 +155,10 @@ const WizardSelect = ({ label, val, onChange, options }: any) => (
   <div className="space-y-4 text-left group">
      <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
      <div className="relative">
-        <select 
-          value={val} 
-          onChange={e => onChange(e.target.value)} 
-          className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-[12px] font-black text-white uppercase outline-none focus:border-orange-600 transition-all cursor-pointer appearance-none shadow-[inset_0_5px_15px_rgba(0,0,0,0.4)]"
-        >
+        <select value={val} onChange={e => onChange(e.target.value)} className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-[12px] font-black text-white uppercase outline-none focus:border-orange-600 transition-all cursor-pointer appearance-none shadow-[inset_0_5px_15px_rgba(0,0,0,0.4)]">
           {options.map((o: any) => <option key={o.v} value={o.v} className="bg-slate-900">{o.l}</option>)}
         </select>
-        <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-           <MousePointer2 size={24} />
-        </div>
+        <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500"><MousePointer2 size={24} /></div>
      </div>
   </div>
 );
