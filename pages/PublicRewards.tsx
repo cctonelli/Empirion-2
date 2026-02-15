@@ -8,27 +8,46 @@ import {
   Award, Star, Zap, Gift, TrendingUp, Trophy, 
   Crown, Shield, CheckCircle2, ChevronRight,
   ArrowUpRight, Sparkles, Gem, Target, Layers,
-  ShieldCheck
+  ShieldCheck, Loader2, Info
 } from 'lucide-react';
 import { DEFAULT_PAGE_CONTENT } from '../constants';
-import { fetchPageContent } from '../services/supabase';
+import { fetchPageContent, getAvailableBadges, getUserBadges, supabase } from '../services/supabase';
 import EmpireParticles from '../components/EmpireParticles';
 
 const PublicRewards: React.FC = () => {
   const { i18n } = useTranslation();
   const [content, setContent] = useState<any>(null);
+  const [dbBadges, setDbBadges] = useState<any[]>([]);
+  const [userBadges, setUserBadges] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      const db = await fetchPageContent('rewards', i18n.language);
-      setContent(db || DEFAULT_PAGE_CONTENT['rewards']);
+    const loadAll = async () => {
+      setLoading(true);
+      const [pageDb, badges, { data: { session } }] = await Promise.all([
+         fetchPageContent('rewards', i18n.language),
+         getAvailableBadges(),
+         (supabase.auth as any).getSession()
+      ]);
+      
+      setContent(pageDb || DEFAULT_PAGE_CONTENT['rewards']);
+      setDbBadges(badges);
+
+      if (session) {
+         const earned = await getUserBadges(session.user.id);
+         setUserBadges(new Set(earned.map(b => b.badge_id)));
+      }
+      setLoading(false);
     };
-    load();
+    loadAll();
   }, [i18n.language]);
 
-  if (!content) return (
+  if (!content || loading) return (
     <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
-       <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" />
+       <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 text-orange-600 animate-spin" />
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic animate-pulse">Sincronizando Conquistas...</span>
+       </div>
     </div>
   );
 
@@ -91,6 +110,37 @@ const PublicRewards: React.FC = () => {
              </motion.div>
            ))}
         </div>
+
+        {/* BADGES SECTION - CONSUMINDO TABELA 'BADGES' DO SUPABASE */}
+        <section className="space-y-16">
+           <div className="text-center space-y-4">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.8em] text-orange-500 italic">Conquistas de Prestígio</h2>
+              <h3 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter">Empire Badges</h3>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {dbBadges.map((badge) => {
+                 const isEarned = userBadges.has(badge.id);
+                 return (
+                    <div key={badge.id} className={`p-10 rounded-[3.5rem] border transition-all duration-700 relative overflow-hidden group flex flex-col items-center text-center gap-6 ${isEarned ? 'bg-orange-600/10 border-orange-500/40 shadow-[0_0_50px_rgba(249,115,22,0.15)]' : 'bg-slate-900/40 border-white/5 grayscale opacity-40'}`}>
+                       <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center transition-all ${isEarned ? 'bg-orange-600 text-white shadow-2xl scale-110' : 'bg-white/5 text-slate-700'}`}>
+                          {badge.rarity === 'legendary' ? <Zap size={48} /> : <Award size={48} />}
+                       </div>
+                       <div className="space-y-2">
+                          <span className={`text-[8px] font-black uppercase tracking-[0.3em] ${isEarned ? 'text-orange-500' : 'text-slate-600'}`}>{badge.rarity} node</span>
+                          <h4 className="text-xl font-black text-white uppercase italic">{badge.name}</h4>
+                          <p className="text-xs text-slate-500 font-bold leading-relaxed">{badge.description}</p>
+                       </div>
+                       {isEarned && (
+                          <div className="absolute top-4 right-4 text-emerald-500">
+                             <CheckCircle2 size={16} />
+                          </div>
+                       )}
+                    </div>
+                 );
+              })}
+           </div>
+        </section>
 
         {/* HOW TO EARN & BENEFITS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-stretch">

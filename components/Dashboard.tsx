@@ -21,6 +21,7 @@ import ChampionshipTimer from './ChampionshipTimer';
 import DecisionForm from './DecisionForm';
 import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
+import AuditLogViewer from './AuditLogViewer';
 import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getTeamSimulationHistory } from '../services/supabase';
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
 
@@ -32,6 +33,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [loading, setLoading] = useState(true);
   const [showGazette, setShowGazette] = useState(false);
   const [showBP, setShowBP] = useState(false);
+  const [showAudit, setShowAudit] = useState(false);
   const [bpStatus, setBpStatus] = useState<'pending' | 'draft' | 'submitted'>('pending');
   const [history, setHistory] = useState<any[]>([]);
 
@@ -81,7 +83,6 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     return { ...baseFallback, ...(activeTeam?.kpis || {}) } as KPIs;
   }, [activeTeam]);
 
-  // Gráfico de Tendência Histórica v17.0
   const trendOptions: any = {
     chart: { type: 'area', toolbar: { show: false }, background: 'transparent', sparkline: { enabled: false } },
     colors: ['#f97316', '#3b82f6'],
@@ -125,7 +126,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          <aside className="w-80 bg-slate-900/60 border-r border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar z-10 p-6 space-y-6">
             <header className="flex items-center justify-between border-b border-white/10 pb-4">
                <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2"><History size={14}/> Intel Pulse</h3>
-               <span className="text-[10px] font-black text-slate-600 uppercase">v17.0 Gold</span>
+               <button onClick={() => setShowAudit(true)} className="p-2 bg-white/5 hover:bg-orange-600 rounded-lg transition-all text-slate-500 hover:text-white" title="Histórico de Alterações">
+                  <History size={12} />
+               </button>
             </header>
 
             {/* STATUS DO BUSINESS PLAN COM ALERTA DE EXIGÊNCIA */}
@@ -197,6 +200,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           <div className="fixed inset-0 z-[6000] bg-slate-950/98 backdrop-blur-3xl overflow-y-auto">
              <button onClick={() => setShowBP(false)} className="fixed top-10 right-10 p-5 bg-white/5 hover:bg-rose-600 text-white rounded-full z-[7000] shadow-2xl transition-all"><X size={28}/></button>
              <BusinessPlanWizard championshipId={activeArena?.id} teamId={activeTeam?.id} currentRound={(activeArena?.current_round || 0) + 1} onClose={() => setShowBP(false)} />
+          </div>
+        )}
+        {showAudit && activeTeam && activeArena && (
+          <div className="fixed inset-0 z-[6000] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4">
+             <AuditLogViewer teamId={activeTeam.id} round={(activeArena.current_round || 0) + 1} onClose={() => setShowAudit(false)} />
           </div>
         )}
         {showGazette && (

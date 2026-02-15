@@ -7,13 +7,13 @@ import {
   ArrowRight, ChevronLeft, ChevronRight, Factory, BrainCircuit, Globe,
   Rocket, Terminal, ShoppingCart, Briefcase, Tractor, DollarSign, Hammer,
   Trophy, Award, Calendar, CheckCircle2, Zap, TrendingUp, ShieldCheck,
-  Star, Target, Cpu, Activity, BarChart3, Users
+  Star, Target, Cpu, Activity, BarChart3, Users, Clock, Loader2
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import Slider from 'react-slick';
 import { DEFAULT_PAGE_CONTENT, APP_VERSION } from '../constants';
-import { fetchPageContent, getModalities, subscribeToModalities } from '../services/supabase';
+import { fetchPageContent, getModalities, subscribeToModalities, getGlobalLeaderboard } from '../services/supabase';
 import { Modality } from '../types';
 import EmpireParticles from './EmpireParticles';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -42,13 +42,22 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const { i18n } = useTranslation('landing');
   const [content, setContent] = useState<any>(DEFAULT_PAGE_CONTENT['landing']);
   const [dynamicModalities, setDynamicModalities] = useState<Modality[]>([]);
+  const [leaderboards, setLeaderboards] = useState<any[]>([]);
+  const [loadingBoards, setLoadingBoards] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       const db = await fetchPageContent('landing', i18n.language);
       if (db) setContent({ ...DEFAULT_PAGE_CONTENT['landing'], ...db });
-      const mods = await getModalities();
+      
+      const [mods, boards] = await Promise.all([
+        getModalities(),
+        getGlobalLeaderboard()
+      ]);
+      
       if (Array.isArray(mods)) setDynamicModalities(mods);
+      setLeaderboards(boards);
+      setLoadingBoards(false);
     };
     loadData();
     const channel = subscribeToModalities(loadData);
@@ -179,26 +188,45 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               <LeaderboardCard 
-                  name="Torneio Nacional Alpha" 
-                  branch="Industrial" 
-                  cycle="08/12"
-                  teams={[
-                     { name: 'Equipe Sigma', tsr: 142.5, pos: 1 },
-                     { name: 'Node Delta', tsr: 128.2, pos: 2 },
-                     { name: 'Atlas Corp', tsr: 115.8, pos: 3 }
-                  ]}
-               />
-               <LeaderboardCard 
-                  name="Grand Prix Varejo" 
-                  branch="Varejo" 
-                  cycle="03/06"
-                  teams={[
-                     { name: 'Varejo Pro', tsr: 98.4, pos: 1 },
-                     { name: 'Mega Store', tsr: 92.1, pos: 2 },
-                     { name: 'Nexus Trade', tsr: 85.5, pos: 3 }
-                  ]}
-               />
+               {loadingBoards ? (
+                  <div className="col-span-full py-20 text-center flex flex-col items-center gap-4">
+                     <Loader2 className="animate-spin text-orange-500" size={40} />
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic animate-pulse">Sincronizando Placar Global...</span>
+                  </div>
+               ) : leaderboards.length > 0 ? (
+                 leaderboards.map(board => (
+                  <LeaderboardCard 
+                     key={board.id}
+                     name={board.name} 
+                     branch={board.branch} 
+                     cycle={`${board.round}/${board.total}`}
+                     teams={board.topTeams}
+                  />
+                 ))
+               ) : (
+                 <>
+                   <LeaderboardCard 
+                      name="Torneio Nacional Alpha" 
+                      branch="Industrial" 
+                      cycle="08/12"
+                      teams={[
+                         { name: 'Equipe Sigma', tsr: 142.5, pos: 1 },
+                         { name: 'Node Delta', tsr: 128.2, pos: 2 },
+                         { name: 'Atlas Corp', tsr: 115.8, pos: 3 }
+                      ]}
+                   />
+                   <LeaderboardCard 
+                      name="Grand Prix Varejo" 
+                      branch="Varejo" 
+                      cycle="03/06"
+                      teams={[
+                         { name: 'Varejo Pro', tsr: 98.4, pos: 1 },
+                         { name: 'Mega Store', tsr: 92.1, pos: 2 },
+                         { name: 'Nexus Trade', tsr: 85.5, pos: 3 }
+                      ]}
+                   />
+                 </>
+               )}
             </div>
          </div>
       </section>
@@ -220,7 +248,9 @@ const LeaderboardCard = ({ name, branch, cycle, teams }: any) => (
            <h3 className="text-2xl font-black text-white uppercase italic leading-none">{name}</h3>
            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{branch} Node</p>
         </div>
-        <div className="px-4 py-1 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-lg text-[9px] font-black uppercase">Ciclo {cycle}</div>
+        <div className="px-4 py-1 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-lg text-[9px] font-black uppercase flex items-center gap-2">
+           <Clock size={10} /> Ciclo {cycle}
+        </div>
      </div>
      <div className="space-y-4">
         {teams.map((t: any) => (

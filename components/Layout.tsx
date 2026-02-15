@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 // Fix: Use any to bypass react-router-dom type resolution issues in this environment
@@ -6,12 +7,12 @@ const { Link } = ReactRouterDOM as any;
 import { 
   LayoutDashboard, Trophy, Settings, User, LogOut, 
   Shield, TrendingUp, FileText, BookOpen, 
-  PenTool, Workflow, Bell, Terminal, Cpu, Zap
+  PenTool, Workflow, Bell, Terminal, Cpu, Zap, Coins
 } from 'lucide-react';
 import GlobalChat from './GlobalChat';
 import LanguageSwitcher from './LanguageSwitcher';
 import { APP_VERSION, PROTOCOL_NODE } from '../constants';
-import { getUserProfile, supabase } from '../services/supabase';
+import { getUserProfile, getUserEmpirePoints, supabase } from '../services/supabase';
 import { UserProfile } from '../types';
 
 interface LayoutProps {
@@ -26,17 +27,35 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout, activeView, onNavigate }) => {
   const { t } = useTranslation('common');
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [points, setPoints] = useState(0);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndPoints = async () => {
       // Fix: Casting auth to any to resolve property missing error in this environment
       const { data: { session } } = await (supabase.auth as any).getSession();
       if (session) {
-        const prof = await getUserProfile(session.user.id);
+        const [prof, pts] = await Promise.all([
+           getUserProfile(session.user.id),
+           getUserEmpirePoints(session.user.id)
+        ]);
         setProfile(prof);
+        setPoints(pts);
+
+        // Assinar realtime para mudanças no saldo de pontos
+        const ptsChannel = supabase.channel('realtime_points')
+          .on('postgres_changes', { 
+             event: 'UPDATE', 
+             schema: 'public', 
+             table: 'empire_points', 
+             filter: `user_id=eq.${session.user.id}` 
+          }, (payload) => {
+             setPoints(payload.new.total_points);
+          })
+          .subscribe();
+        return () => { ptsChannel.unsubscribe(); };
       }
     };
-    fetchProfile();
+    fetchProfileAndPoints();
   }, []);
 
   const navItems = [
@@ -48,8 +67,6 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
   ];
 
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(userRole));
-  
-  // Prioriza o Nickname para o display do Header
   const displayName = profile?.nickname || profile?.name || userName;
 
   return (
@@ -81,6 +98,12 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
         </div>
 
         <div className="flex items-center gap-6">
+          {/* EXIBIÇÃO DE EMPIRE POINTS EM TEMPO REAL */}
+          <Link to="/rewards" className="flex items-center gap-2 px-3 py-1 bg-slate-950 border border-amber-500/20 rounded-full hover:border-amber-500/50 transition-all group">
+             <Coins size={12} className="text-amber-500 group-hover:animate-spin" />
+             <span className="text-[9px] font-black text-white font-mono">{points.toLocaleString()} <span className="text-amber-500/60 font-sans ml-0.5">EP</span></span>
+          </Link>
+
           <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-slate-950 border border-white/5 rounded-lg">
              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
              <span className="text-[7px] font-mono text-slate-500 uppercase tracking-tighter">{PROTOCOL_NODE}</span>

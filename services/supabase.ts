@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators, Loan, Branch } from '../types';
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators, Loan, Branch, AuditLog } from '../types';
 import { DEFAULT_MACRO, INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { calculateProjections, sanitize } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';
@@ -30,6 +30,21 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   return data;
 };
 
+export const getUserEmpirePoints = async (userId: string) => {
+  const { data } = await supabase.from('empire_points').select('total_points').eq('user_id', userId).maybeSingle();
+  return data?.total_points || 0;
+};
+
+export const getUserBadges = async (userId: string) => {
+  const { data } = await supabase.from('user_badges').select('badge_id, earned_at, badges(*)').eq('user_id', userId);
+  return data || [];
+};
+
+export const getAvailableBadges = async () => {
+  const { data } = await supabase.from('badges').select('*');
+  return data || [];
+};
+
 export const getAllUsers = async (): Promise<UserProfile[]> => {
   const { data } = await supabase.from('users').select('*');
   return data || [];
@@ -57,21 +72,35 @@ export const getChampionships = async (onlyPublic: boolean = false) => {
   const finalArenas: Championship[] = [];
   for (const c of allRaw) {
     const table = c.is_trial ? 'trial_teams' : 'teams';
-    const { data: teamsData } = await supabase.from(table).select('*').eq('championship_id', c.id);
+    const { data: teamsData } = await supabase.from(table).select('*').eq('championship_id', c.id).order('equity', { ascending: false });
     finalArenas.push({ ...c, teams: teamsData || [] });
   }
 
   return { data: finalArenas, error: mainRes.error || trialRes.error };
 };
 
+export const getGlobalLeaderboard = async () => {
+    const { data } = await getChampionships(true);
+    return (data || []).slice(0, 4).map(c => ({
+        id: c.id,
+        name: c.name,
+        branch: c.branch,
+        round: c.current_round,
+        total: c.total_rounds,
+        topTeams: (c.teams || []).slice(0, 3).map((t, idx) => ({
+            name: t.name,
+            equity: t.equity,
+            tsr: t.kpis?.tsr || 0,
+            pos: idx + 1
+        }))
+    }));
+};
+
 export const createChampionshipWithTeams = async (champData: any, teams: any[], isTrial: boolean = false) => {
     const { data: { session } } = await (supabase.auth as any).getSession();
-    // Prioriza o Auth UID, senão usa o System ID garantido no DB
     const tutorId = session?.user?.id || SYSTEM_TUTOR_ID;
-
     const champTable = isTrial ? 'trial_championships' : 'championships';
     const teamsTable = isTrial ? 'trial_teams' : 'teams';
-
     const finalFinancials = champData.initial_financials || INITIAL_INDUSTRIAL_FINANCIALS;
 
     const insertPayload = {
@@ -95,11 +124,7 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
     };
 
     const { data: champ, error: cErr } = await supabase.from(champTable).insert(insertPayload).select().single();
-
-    if (cErr) {
-        logError(LogContext.SUPABASE, "Erro ao criar campeonato", cErr);
-        return { success: false, error: cErr.message };
-    }
+    if (cErr) return { success: false, error: cErr.message };
 
     const teamsToInsert = teams.map(t => ({
         name: t.name,
@@ -110,12 +135,7 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
     }));
 
     const { error: tErr } = await supabase.from(teamsTable).insert(teamsToInsert);
-    if (tErr) {
-        logError(LogContext.SUPABASE, "Erro ao criar equipes", tErr);
-        // Tenta limpar o campeonato se as equipes falharem
-        await supabase.from(champTable).delete().eq('id', champ.id);
-        return { success: false, error: tErr.message };
-    }
+    if (tErr) return { success: false, error: tErr.message };
 
     return { success: true, data: champ };
 };
@@ -129,88 +149,77 @@ export const deleteChampionship = async (id: string, isTrial: boolean) => {
 export const saveDecisions = async (teamId: string, champId: string, round: number, decisions: any) => {
     const isTrial = localStorage.getItem('is_trial_session') === 'true';
     const table = isTrial ? 'trial_decisions' : 'current_decisions';
+    
+    const { data: { session } } = await (supabase.auth as any).getSession();
+    
+    // Antes de salvar, logamos a auditoria se houver mudança (v18.9)
+    if (session) {
+        const { data: old } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', round).maybeSingle();
+        if (old) {
+           // Logica simplificada de auditoria: salva o snapshot no decision_audit_log
+           await supabase.from('decision_audit_log').insert({
+               championship_id: champId,
+               team_id: teamId,
+               round: round,
+               user_id: session.user.id,
+               field_path: 'root_snapshot',
+               old_value: old.data,
+               new_value: decisions,
+               comment: 'Alteração em massa via formulário'
+           });
+        }
+    }
+
     const { error } = await supabase.from(table).upsert({
-        team_id: teamId,
-        championship_id: champId,
-        round: round,
-        data: { ...decisions },
-        updated_at: new Date().toISOString()
+        team_id: teamId, championship_id: champId, round: round, data: { ...decisions }, updated_at: new Date().toISOString()
     });
     return { success: !error, error: error?.message };
+};
+
+export const getTeamAuditLog = async (teamId: string, round: number): Promise<AuditLog[]> => {
+    const { data } = await supabase.from('decision_audit_log')
+        .select('*')
+        .eq('team_id', teamId)
+        .eq('round', round)
+        .order('changed_at', { ascending: false });
+    return data || [];
 };
 
 export const processRoundTurnover = async (id: string, round: number) => {
     try {
         const isTrial = localStorage.getItem('is_trial_session') === 'true';
-        const champTable = isTrial ? 'trial_championships' : 'championships';
-        const teamsTable = isTrial ? 'trial_teams' : 'teams';
-        const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
-        const historyTable = isTrial ? 'trial_companies' : 'companies';
-
-        const { data: champ } = await supabase.from(champTable).select('*').eq('id', id).single();
-        const { data: teams } = await supabase.from(teamsTable).select('*').eq('championship_id', id);
-        const { data: decisions } = await supabase.from(decisionsTable).select('*').eq('championship_id', id).eq('round', round + 1);
-
+        const { data: champ } = await supabase.from(isTrial ? 'trial_championships' : 'championships').select('*').eq('id', id).single();
+        const { data: teams } = await supabase.from(isTrial ? 'trial_teams' : 'teams').select('*').eq('championship_id', id);
         if (!champ) throw new Error("Arena não encontrada.");
 
         for (const team of (teams || [])) {
-            const decision = decisions?.find(d => d.team_id === team.id);
-            const branch = champ.branch as Branch;
-            const eco = champ.ecosystem_config || { inflation_rate: 0.01, demand_multiplier: 1, interest_rate: 0.03, market_volatility: 0.05, scenario_type: 'simulated', modality_type: 'standard' };
-            
-            let finalDecision = decision?.data;
-            if (team.is_bot && !finalDecision) {
-                finalDecision = await generateBotDecision(branch, round + 1, champ.regions_count, champ.market_indicators);
-            }
+            const { data: dec } = await supabase.from(isTrial ? 'trial_decisions' : 'current_decisions').select('*').eq('team_id', team.id).eq('round', round + 1).maybeSingle();
+            let finalDecision = dec?.data;
+            if (team.is_bot && !finalDecision) finalDecision = await generateBotDecision(champ.branch, round + 1, champ.regions_count, champ.market_indicators);
 
             if (finalDecision) {
-                const results = calculateProjections(finalDecision, branch, eco, champ.market_indicators, team);
-                await supabase.from(historyTable).insert({
-                    team_id: team.id,
-                    championship_id: id,
-                    round: round + 1,
-                    state: finalDecision,
-                    dre: results.statements.dre,
-                    balance_sheet: results.statements.balance_sheet,
-                    cash_flow: results.statements.cash_flow,
-                    kpis: results.kpis,
-                    equity: results.kpis.equity,
-                    tsr: results.kpis.tsr,
-                    ebitda: results.kpis.ebitda
+                const res = calculateProjections(finalDecision, champ.branch, champ.ecosystem_config, champ.market_indicators, team);
+                await supabase.from(isTrial ? 'trial_companies' : 'companies').insert({
+                    team_id: team.id, championship_id: id, round: round + 1, state: finalDecision, kpis: res.kpis, equity: res.kpis.equity
                 });
-
-                await supabase.from(teamsTable).update({
-                    equity: results.kpis.equity,
-                    kpis: results.kpis,
-                    current_rating: results.kpis.rating
-                }).eq('id', team.id);
+                await supabase.from(isTrial ? 'trial_teams' : 'teams').update({ equity: res.kpis.equity, kpis: res.kpis }).eq('id', team.id);
             }
         }
-
-        await supabase.from(champTable).update({
-            current_round: round + 1,
-            round_started_at: new Date().toISOString()
-        }).eq('id', id);
-
-        return { success: true, error: null };
-    } catch (err: any) {
-        logError(LogContext.TURNOVER, "Erro no processamento de ciclo", err);
-        return { success: false, error: err.message };
-    }
+        await supabase.from(isTrial ? 'trial_championships' : 'championships').update({ current_round: round + 1, round_started_at: new Date().toISOString() }).eq('id', id);
+        return { success: true };
+    } catch (err: any) { return { success: false, error: err.message }; }
 };
 
 export const updateEcosystem = async (id: string, u: any) => {
     const isTrial = localStorage.getItem('is_trial_session') === 'true';
-    const table = isTrial ? 'trial_championships' : 'championships';
-    return await supabase.from(table).update(u).eq('id', id);
+    return await supabase.from(isTrial ? 'trial_championships' : 'championships').update(u).eq('id', id);
 };
 
 export const saveBusinessPlan = async (p: Partial<BusinessPlan>) => {
   const { data: { session } } = await (supabase.auth as any).getSession();
-  const userId = session?.user?.id;
-  const payload = { ...p, user_id: p.user_id || userId, updated_at: new Date().toISOString() };
+  const payload = { ...p, user_id: p.user_id || session?.user?.id, updated_at: new Date().toISOString() };
   if (p.id) return await supabase.from('business_plans').update(payload).eq('id', p.id);
-  else return await supabase.from('business_plans').insert(payload);
+  return await supabase.from('business_plans').insert(payload);
 };
 
 export const getActiveBusinessPlan = async (teamId: string, round: number) => {
@@ -219,8 +228,7 @@ export const getActiveBusinessPlan = async (teamId: string, round: number) => {
 
 export const getTeamSimulationHistory = async (teamId: string) => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
-  const table = isTrial ? 'trial_companies' : 'companies';
-  const { data } = await supabase.from(table).select('*').eq('team_id', teamId).order('round', { ascending: true });
+  const { data } = await supabase.from(isTrial ? 'trial_companies' : 'companies').select('*').eq('team_id', teamId).order('round', { ascending: true });
   return data || [];
 };
 
@@ -244,12 +252,11 @@ export const subscribeToModalities = (cb: any) => {
 
 export const getPublicReports = async (id: string, r: number) => {
     const isTrial = localStorage.getItem('is_trial_session') === 'true';
-    const table = isTrial ? 'trial_companies' : 'companies';
-    return await supabase.from(table).select('*').eq('championship_id', id).eq('round', r);
+    return await supabase.from(isTrial ? 'trial_companies' : 'companies').select('*').eq('championship_id', id).eq('round', r);
 };
 
 export const submitCommunityVote = async (d: any) => {
-    return await supabase.from('community_votes').insert(d);
+    return await supabase.from('community_ratings').insert(d);
 };
 
 export const provisionDemoEnvironment = () => {
@@ -258,8 +265,6 @@ export const provisionDemoEnvironment = () => {
 
 export const fetchBlogPosts = async (searchQuery?: string) => {
   let query = supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
-  if (searchQuery && searchQuery.trim() !== '') {
-    query = query.or(`question.ilike.%${searchQuery}%,answer.ilike.%${searchQuery}%`);
-  }
+  if (searchQuery?.trim()) query = query.or(`question.ilike.%${searchQuery}%,answer.ilike.%${searchQuery}%`);
   return await query;
 };
