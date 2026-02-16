@@ -5,7 +5,9 @@ import {
   CheckCircle2, Factory, Users, Globe, Timer, Cpu, Sparkles, 
   Settings, Landmark, DollarSign, Target, Calculator,
   Settings2, X, Bot, Boxes, TrendingUp, Percent, ChevronLeft, ChevronRight,
-  PieChart, BarChart
+  PieChart, BarChart, Activity, Flame, Package, Award, MapPin, Gauge, BarChart3,
+  Scale, Truck, UserPlus, UserMinus, Hammer, ShoppingCart, Briefcase, Tractor,
+  Coins, ClipboardList, HardDrive
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -43,6 +45,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     ...DEFAULT_INDUSTRIAL_CHRONOGRAM[0] as MacroIndicators
   });
 
+  const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
   const [teamNames, setTeamNames] = useState<string[]>(['EQUIPE ALPHA']);
   const [regionConfigs, setRegionConfigs] = useState<RegionConfig[]>([]);
 
@@ -71,6 +74,10 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }>(INITIAL_FINANCIAL_TREE as any);
 
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
   const handleLaunch = async () => {
     setIsSubmitting(true);
     try {
@@ -85,13 +92,17 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         initial_financials: financials,
         is_trial: true, 
         market_indicators: { ...marketIndicators, dividend_percent: formData.dividend_percent, region_configs: regionConfigs },
-        round_rules: DEFAULT_INDUSTRIAL_CHRONOGRAM, 
+        round_rules: roundRules, 
       }, teamsToCreate, true);
       onComplete();
-    } catch (e: any) { alert(`FALHA: ${e.message}`); } finally { setIsSubmitting(false); }
+    } catch (e: any) { alert(`FALHA NA ARENA: ${e.message}`); } finally { setIsSubmitting(false); }
   };
 
-  const stepsCount = 6;
+  const updateRoundMacro = (round: number, key: string, val: any) => {
+    setRoundRules(prev => ({ ...prev, [round]: { ...(prev[round] || {}), [key]: val } }));
+  };
+
+  const stepsCount = 7;
   const totalAssets = financials?.balance_sheet.find(n => n.id === 'assets')?.value || 0;
   const totalEquity = financials?.balance_sheet.find(n => n.id === 'liabilities_pl')?.children?.find(n => n.id === 'equity')?.value || 7252171.74;
 
@@ -102,8 +113,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         <div className="flex items-center gap-8">
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-xl"><Rocket size={32} /></div>
            <div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Sandbox Trial Setup</h2>
-              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Nova Arena • Moeda: {formData.currency}</p>
+              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Sandbox Trial Setup</h2>
+              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Nova Arena • Nodo {formData.currency}</p>
            </div>
         </div>
         <div className="flex gap-4">
@@ -117,47 +128,119 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         <div className="max-w-full">
           <AnimatePresence mode="wait">
             {step === 1 && (
-              <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+              <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-20">
                  <WizardStepTitle icon={<Globe size={32}/>} title="Identidade Sandbox" desc="Defina as configurações globais da arena trial." />
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2"><WizardField label="NOME DO TORNEIO" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TORNEIO TRIAL ALPHA" /></div>
                     <WizardSelect label="MOEDA BASE" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
+                    <WizardField label="ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
+                    <WizardField label="DIVIDENDOS (%)" type="number" val={formData.dividend_percent} onChange={(v:any)=>setFormData({...formData, dividend_percent: parseFloat(v)})} />
+                    <WizardSelect label="GOVERNANÇA" val={formData.transparency} onChange={(v:any)=>setFormData({...formData, transparency: v})} options={[{v:'low',l:'BAIXA'},{v:'medium',l:'MÉDIA'},{v:'high',l:'ALTA'}]} />
                  </div>
               </motion.div>
             )}
 
             {step === 2 && (
-               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12">
-                  <WizardStepTitle icon={<Users size={32}/>} title="Capacidade Humana" desc="Configuração de equipes e bots de IA." />
+               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                  <WizardStepTitle icon={<Users size={32}/>} title="Unidades Strategos" desc="Configuração de equipes e bots de IA." />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                      <WizardField label="EQUIPES HUMANAS" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: parseInt(v)})} />
                      <WizardField label="BOTS ORACLE" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     {teamNames.map((n, i) => (
+                        <WizardField key={i} label={`Equipe ${i+1}`} val={n} onChange={(v:any)=> {
+                           const copy = [...teamNames]; copy[i] = v; setTeamNames(copy);
+                        }} />
+                     ))}
                   </div>
                </motion.div>
             )}
 
             {step === 3 && (
-               <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12">
-                  <WizardStepTitle icon={<Factory size={32}/>} title="Expansão de Mercado" desc="Mapeie o número de regiões da arena." />
-                  <div className="max-w-md mx-auto">
-                     <WizardField label="NÚMERO DE REGIÕES" type="number" val={formData.regionsCount} onChange={(v:any)=>setFormData({...formData, regionsCount: parseInt(v)})} />
+               <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                  <WizardStepTitle icon={<MapPin size={32}/>} title="Nodos Regionais" desc="Mapeie os mercados locais de demanda." />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     {regionConfigs.map((r, i) => (
+                        <div key={i} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 group hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                           <div className="space-y-3">
+                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nomenclatura do Nodo</label>
+                              <input value={r.name} onChange={e => { const next = [...regionConfigs]; next[i].name = e.target.value; setRegionConfigs(next); }} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-white font-black uppercase italic outline-none focus:border-orange-500" />
+                           </div>
+                           <div className="grid grid-cols-2 gap-6">
+                              <div className="space-y-3">
+                                 <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Moeda</label>
+                                 <select value={r.currency} onChange={e => { const next = [...regionConfigs]; next[i].currency = e.target.value as CurrencyType; setRegionConfigs(next); }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-[10px] font-black text-white uppercase outline-none">
+                                    <option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="CNY">CNY</option><option value="BTC">BTC</option>
+                                 </select>
+                              </div>
+                              <div className="space-y-3">
+                                 <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Peso Demanda (%)</label>
+                                 <input type="number" value={r.demand_weight} onChange={e => { const next = [...regionConfigs]; next[i].demand_weight = parseInt(e.target.value) || 0; setRegionConfigs(next); }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-center text-lg font-mono font-black text-orange-500 outline-none" />
+                              </div>
+                           </div>
+                        </div>
+                     ))}
                   </div>
                </motion.div>
             )}
 
             {step === 4 && (
               <motion.div key="s4" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12">
-                 <WizardStepTitle icon={<Settings size={32}/>} title="Custos de Operação" desc="Ajuste os preços base de insumos e ativos." />
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <WizardField label={`Preço MP-A (${getCurrencySymbol(formData.currency)})`} type="number" val={marketIndicators.prices.mp_a} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_a: parseFloat(v)}})} />
-                    <WizardField label={`Preço ALFA (${getCurrencySymbol(formData.currency)})`} type="number" val={marketIndicators.machinery_values.alfa} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: parseFloat(v)}})} />
+                 <WizardStepTitle icon={<Settings size={32}/>} title="Custos Base" desc="Ajuste os preços base de insumos e ativos." />
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[10px] font-black text-orange-500 uppercase italic border-b border-white/5 pb-4">Insumos ({getCurrencySymbol(formData.currency)})</h4>
+                       <WizardField label="MP-A Base" type="number" val={marketIndicators.prices.mp_a} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_a: parseFloat(v)}})} isCurrency currency={formData.currency} />
+                       <WizardField label="MP-B Base" type="number" val={marketIndicators.prices.mp_b} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_b: parseFloat(v)}})} isCurrency currency={formData.currency} />
+                    </div>
+                    <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[10px] font-black text-blue-500 uppercase italic border-b border-white/5 pb-4">CAPEX Base ({getCurrencySymbol(formData.currency)})</h4>
+                       <WizardField label="Máquina Alfa" type="number" val={marketIndicators.machinery_values.alfa} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: parseFloat(v)}})} isCurrency currency={formData.currency} />
+                       <WizardField label="Máquina Beta" type="number" val={marketIndicators.machinery_values.beta} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, beta: parseFloat(v)}})} isCurrency currency={formData.currency} />
+                    </div>
+                    <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[10px] font-black text-emerald-500 uppercase italic border-b border-white/5 pb-4">Metas Oracle ({getCurrencySymbol(formData.currency)})</h4>
+                       <WizardField label="Prêmio Lucro" type="number" val={marketIndicators.award_values.profit_precision} onChange={(v:any)=>setMarketIndicators({...marketIndicators, award_values: {...marketIndicators.award_values, profit_precision: parseFloat(v)}})} isCurrency currency={formData.currency} />
+                    </div>
                  </div>
               </motion.div>
             )}
 
             {step === 5 && (
-              <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
-                 <WizardStepTitle icon={<Calculator size={32}/>} title="Oracle Baselines" desc="Dados contábeis iniciais para o Ciclo Zero." />
+              <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10">
+                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="Matriz Econômica" desc="Chronogram Master v18.0 Oracle (P01-P12)." />
+                 <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[550px] flex flex-col relative group">
+                    <div className="overflow-auto custom-scrollbar flex-1 relative">
+                       <table className="w-full text-left border-separate border-spacing-0">
+                          <thead className="sticky top-0 z-[100] bg-slate-900 shadow-xl">
+                             <tr>
+                                <th className="p-4 bg-slate-900 border-b-2 border-r-2 border-white/10 w-[280px] min-w-[280px]">
+                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Indicadores</span>
+                                </th>
+                                {Array.from({ length: formData.totalRounds + 1 }).map((_, i) => (
+                                   <th key={i} className={`p-4 bg-slate-900 border-b-2 border-r border-white/5 text-center min-w-[95px] ${i === 0 ? 'bg-orange-600/10' : ''}`}>
+                                      <span className={`text-[12px] font-black uppercase tracking-widest ${i === 0 ? 'text-white' : 'text-orange-500'}`}>P{i < 10 ? `0${i}` : i}</span>
+                                   </th>
+                                ))}
+                             </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5 font-mono">
+                             <CompactMatrixRow periods={formData.totalRounds + 1} label="ICE CRESCIMENTO (%)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<Activity size={10}/>} />
+                             <CompactMatrixRow periods={formData.total_rounds + 1} label="INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
+                             <CompactMatrixRow periods={formData.totalRounds + 1} label="DEMANDA VAR. (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
+                             <CompactMatrixRow periods={formData.totalRounds + 1} label="TAXA TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             <CompactMatrixRow periods={formData.totalRounds + 1} label="DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
+                          </tbody>
+                       </table>
+                    </div>
+                 </div>
+              </motion.div>
+            )}
+
+            {step === 6 && (
+              <motion.div key="s6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                 <WizardStepTitle icon={<Calculator size={32}/>} title="Oracle Baselines" desc="Dados contábeis iniciais do Round Zero." />
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                     <SummaryCard label="ATIVO TOTAL" val={totalAssets} currency={formData.currency} icon={<PieChart size={20}/>} color="orange" />
                     <SummaryCard label="PATRIMÔNIO LÍQUIDO" val={totalEquity} currency={formData.currency} icon={<BarChart size={20}/>} color="blue" />
@@ -172,11 +255,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
-            {step === 6 && (
-               <motion.div key="s6" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 text-center py-20">
+            {step === 7 && (
+               <motion.div key="s7" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 text-center py-20">
                   <CheckCircle2 size={120} className="text-emerald-500 mx-auto animate-pulse" />
-                  <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Arena Trial Pronta</h2>
-                  <p className="text-slate-500 text-xl font-medium max-w-2xl mx-auto italic">Clique abaixo para inicializar o cluster industrial temporário.</p>
+                  <h2 className="text-7xl font-black text-white uppercase italic tracking-tighter">Arena Trial Pronta</h2>
+                  <p className="text-slate-500 text-2xl font-medium max-w-2xl mx-auto italic">Protocolo Oracle v18.0 Gold sincronizado com o cluster temporário.</p>
                </motion.div>
             )}
           </AnimatePresence>
@@ -205,6 +288,20 @@ const SummaryCard = ({ label, val, icon, color, currency }: any) => (
   </div>
 );
 
+const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods, isExchange }: any) => (
+   <tr className="hover:bg-white/[0.04] transition-colors group">
+      <td className="p-3 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[280px] min-w-[280px]"><div className="flex items-center gap-3"><div className="text-slate-600 group-hover:text-orange-500 transition-colors shrink-0">{icon || <Settings size={10}/>}</div><span className="text-[9px] font-black text-slate-300 uppercase tracking-widest italic truncate">{label}</span></div></td>
+      {Array.from({ length: periods }).map((_, i) => {
+         const val = rules[i]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[Math.min(i, 12)]?.[macroKey] ?? 0);
+         return (
+            <td key={i} className={`p-1 border-r border-white/5 ${i === 0 ? 'bg-orange-600/5' : ''}`}>
+              <input type="number" step={isExchange ? "0.000001" : "0.1"} value={val} onChange={e => update(i, macroKey, parseFloat(e.target.value))} className={`w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-2.5 text-center text-[10px] font-black outline-none transition-all shadow-inner focus:border-orange-500 text-white`} />
+            </td>
+         );
+      })}
+   </tr>
+);
+
 const WizardStepTitle = ({ icon, title, desc }: any) => (
   <div className="flex items-center gap-8 border-b border-white/5 pb-8">
      <div className="p-6 bg-slate-900 border border-orange-500/30 rounded-[2.5rem] text-orange-500 shadow-2xl flex items-center justify-center">{icon}</div>
@@ -212,11 +309,12 @@ const WizardStepTitle = ({ icon, title, desc }: any) => (
   </div>
 );
 
-const WizardField = ({ label, val, onChange, type = 'text', placeholder }: any) => (
+const WizardField = ({ label, val, onChange, type = 'text', placeholder, isCurrency, currency }: any) => (
   <div className="space-y-4 text-left group">
      <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
      <div className="relative">
        <input type={type} value={val} step="0.01" onChange={e => onChange(e.target.value)} className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-white outline-none focus:border-orange-600 transition-all shadow-inner" placeholder={placeholder} />
+       {isCurrency && <span className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-700">{getCurrencySymbol(currency)}</span>}
      </div>
   </div>
 );
