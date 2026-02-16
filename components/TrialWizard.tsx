@@ -3,11 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowRight, ArrowLeft, ShieldCheck, Rocket, Loader2, Info, 
   CheckCircle2, Factory, Users, Globe, Timer, Cpu, Sparkles, 
-  Settings, Landmark, DollarSign, Target, Calculator,
+  Landmark, DollarSign, Target, Calculator,
   Settings2, X, Bot, Boxes, TrendingUp, Percent, ChevronLeft, ChevronRight,
   PieChart, BarChart, Activity, Flame, Package, Award, MapPin, Gauge, BarChart3,
   Scale, Truck, UserPlus, UserMinus, Hammer, ShoppingCart, Briefcase, Tractor,
-  Coins, ClipboardList, HardDrive, ShieldAlert
+  Coins, ClipboardList, HardDrive, ShieldAlert, Plus, Trash2
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -72,6 +72,17 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     }
   }, []);
 
+  const addRegion = () => {
+    const nextId = regionConfigs.length + 1;
+    setRegionConfigs([...regionConfigs, { id: nextId, name: `Região 0${nextId}`, currency: 'BRL', demand_weight: 10 }]);
+  };
+
+  const updateRegion = (index: number, updates: Partial<RegionConfig>) => {
+    const next = [...regionConfigs];
+    next[index] = { ...next[index], ...updates };
+    setRegionConfigs(next);
+  };
+
   const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }>(INITIAL_FINANCIAL_TREE as any);
 
   useEffect(() => {
@@ -129,80 +140,131 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         <div className="max-w-full">
           <AnimatePresence mode="wait">
             {step === 1 && (
-              <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-20">
-                 <WizardStepTitle icon={<Globe size={32}/>} title="Identidade Sandbox" desc="Defina as configurações globais da arena trial." />
+              <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12 pb-20">
+                 <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DO TORNEIO" desc="CONFIGURAÇÕES GLOBAIS DA ARENA SANDBOX." />
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2"><WizardField label="NOME DO TORNEIO" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TORNEIO TRIAL ALPHA" /></div>
-                    <WizardSelect label="MOEDA BASE" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
-                    <WizardField label="ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: parseInt(v)})} />
+                    <div className="lg:col-span-2"><WizardField label="NOME DO TORNEIO" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TORNEIO TRIAL MASTER" /></div>
+                    <WizardSelect label="MOEDA BASE (REPORTE)" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <WizardField label="TEMPO ROUND" type="number" val={formData.roundTime} onChange={()=>{}} isLocked />
+                      <WizardSelect label="Horas/Dias" val={formData.roundUnit} onChange={()=>{}} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} isLocked />
+                    </div>
+
+                    <WizardSelect label="GOVERNANÇA TÁTICA" val={formData.transparency} onChange={(v:any)=>setFormData({...formData, transparency: v as TransparencyLevel})} options={[{v:'low',l:'BAIXA (SIGILOSA)'},{v:'medium',l:'MÉDIA (PADRÃO)'},{v:'high',l:'ALTA (TRANSPARENTE)'},{v:'full',l:'TOTAL (OPEN DATA)'}]} />
+                    <WizardSelect label="IDENTIDADE GAZETA" val={formData.gazetaMode} onChange={(v:any)=>setFormData({...formData, gazetaMode: v as GazetaMode})} options={[{v:'anonymous',l:'ANÔNIMA'},{v:'identified',l:'IDENTIFICADA'}]} />
+                    
+                    <WizardField label="TOTAL DE ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
+                    <WizardField label="PREÇO AÇÃO INICIAL ($)" type="currency" currency={formData.currency} val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: v})} />
                     <WizardField label="DIVIDENDOS (%)" type="number" val={formData.dividend_percent} onChange={(v:any)=>setFormData({...formData, dividend_percent: parseFloat(v)})} />
-                    <WizardSelect label="GOVERNANÇA" val={formData.transparency} onChange={(v:any)=>setFormData({...formData, transparency: v})} options={[{v:'low',l:'BAIXA'},{v:'medium',l:'MÉDIA'},{v:'high',l:'ALTA'}]} />
                  </div>
               </motion.div>
             )}
 
             {step === 2 && (
-               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-                  <WizardStepTitle icon={<Users size={32}/>} title="Unidades Strategos" desc="Configuração de equipes e bots de IA." />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                     <WizardField label="EQUIPES HUMANAS" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: parseInt(v)})} />
-                     <WizardField label="BOTS ORACLE" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                     {teamNames.map((n, i) => (
-                        <WizardField key={i} label={`Equipe ${i+1}`} val={n} onChange={(v:any)=> {
-                           const copy = [...teamNames]; copy[i] = v; setTeamNames(copy);
-                        }} />
-                     ))}
+               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
+                  <WizardStepTitle icon={<Users size={32}/>} title="EQUIPES E BOTS" desc="DEFINA QUEM PARTICIPARÁ DA COMPETIÇÃO NO CLUSTER." />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                     <div className="space-y-8 bg-white/5 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
+                        <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Participantes</h4>
+                        <div className="grid grid-cols-2 gap-8">
+                           <WizardField label="EQUIPES HUMANAS" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
+                           <WizardField label="EQUIPES BOTS" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
+                        </div>
+                     </div>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar">
+                        {teamNames.map((n, i) => (
+                           <div key={i} className="relative">
+                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600">ID 0{i+1}</span>
+                             <input value={n} onChange={e => { const next = [...teamNames]; next[i] = e.target.value; setTeamNames(next); }} className="w-full bg-slate-900 border border-white/10 pl-14 pr-4 py-4 rounded-2xl text-[10px] font-black text-white uppercase outline-none focus:border-blue-500 transition-all" />
+                           </div>
+                        ))}
+                     </div>
                   </div>
                </motion.div>
             )}
 
             {step === 3 && (
-               <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-                  <WizardStepTitle icon={<MapPin size={32}/>} title="Nodos Regionais" desc="Mapeie os mercados locais de demanda." />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     {regionConfigs.map((r, i) => (
-                        <div key={i} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 group hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
-                           <div className="space-y-3">
-                              <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nomenclatura do Nodo</label>
-                              <input value={r.name} onChange={e => { const next = [...regionConfigs]; next[i].name = e.target.value; setRegionConfigs(next); }} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-white font-black uppercase italic outline-none focus:border-orange-500" />
-                           </div>
-                           <div className="grid grid-cols-2 gap-6">
-                              <div className="space-y-3">
-                                 <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Moeda</label>
-                                 <select value={r.currency} onChange={e => { const next = [...regionConfigs]; next[i].currency = e.target.value as CurrencyType; setRegionConfigs(next); }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-[10px] font-black text-white uppercase outline-none">
-                                    <option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="CNY">CNY</option><option value="BTC">BTC</option>
-                                 </select>
-                              </div>
-                              <div className="space-y-3">
-                                 <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Peso Demanda (%)</label>
-                                 <input type="number" value={r.demand_weight} onChange={e => { const next = [...regionConfigs]; next[i].demand_weight = parseInt(e.target.value) || 0; setRegionConfigs(next); }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-center text-lg font-mono font-black text-orange-500 outline-none" />
-                              </div>
-                           </div>
-                        </div>
-                     ))}
+               <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
+                  <WizardStepTitle icon={<MapPin size={32}/>} title="MERCADOS E REGIÕES" desc="PESO DA DEMANDA E MOEDAS LOCAIS." />
+                  <div className="space-y-10">
+                    <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
+                      <h4 className="text-xl font-black text-white uppercase italic">Configuração de Nodos</h4>
+                      <button onClick={addRegion} className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-xl active:scale-95">
+                        <Plus size={16}/> Adicionar Nodo
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       {regionConfigs.map((r, i) => (
+                          <div key={i} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 group hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                             <div className="space-y-3">
+                                <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nomenclatura do Nodo</label>
+                                <input value={r.name} onChange={e => updateRegion(i, { name: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-white font-black uppercase italic outline-none focus:border-orange-500" />
+                             </div>
+                             <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-3">
+                                   <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Moeda</label>
+                                   <select value={r.currency} onChange={e => updateRegion(i, { currency: e.target.value as CurrencyType })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-[10px] font-black text-white uppercase outline-none">
+                                      <option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="CNY">CNY</option><option value="BTC">BTC</option>
+                                   </select>
+                                </div>
+                                <div className="space-y-3">
+                                   <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Peso Demanda (%)</label>
+                                   <input type="number" value={r.demand_weight} onChange={e => updateRegion(i, { demand_weight: parseInt(e.target.value) || 0 })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-center text-lg font-mono font-black text-orange-500 outline-none" />
+                                </div>
+                             </div>
+                             {regionConfigs.length > 1 && (
+                               <button onClick={() => setRegionConfigs(regionConfigs.filter((_, idx) => idx !== i))} className="absolute top-4 right-4 p-2 text-slate-700 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
+                             )}
+                          </div>
+                       ))}
+                    </div>
                   </div>
                </motion.div>
             )}
 
             {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12">
-                 <WizardStepTitle icon={<Settings size={32}/>} title="Custos Base" desc="Ajuste os preços base de insumos e ativos." />
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[10px] font-black text-orange-500 uppercase italic border-b border-white/5 pb-4">Insumos ({getCurrencySymbol(formData.currency)})</h4>
-                       <WizardField label="MP-A Base" type="number" val={marketIndicators.prices.mp_a} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_a: parseFloat(v)}})} isCurrency currency={formData.currency} />
-                       <WizardField label="MP-B Base" type="number" val={marketIndicators.prices.mp_b} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_b: parseFloat(v)}})} isCurrency currency={formData.currency} />
+              <motion.div key="s4" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="space-y-12 pb-24">
+                 <WizardStepTitle icon={<Settings2 size={32}/>} title="REGRAS E PREMIAÇÕES" desc="CONFIGURAÇÃO DE CUSTOS BASE E METAS DE AUDITORIA." />
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {/* INSUMOS E ESTOCAGEM */}
+                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Insumos e Estocagem</h4>
+                       <WizardField label="MP-A Base ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.mp_a} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_a: v}})} />
+                       <WizardField label="MP-B Base ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.mp_b} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_b: v}})} />
+                       <WizardField label="Ágio Compras Esp. (%)" type="number" val={marketIndicators.special_purchase_premium} onChange={(v:any)=>setMarketIndicators({...marketIndicators, special_purchase_premium: parseFloat(v)})} />
+                       <div className="grid grid-cols-2 gap-4">
+                          <WizardField label="Estocagem MP ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.storage_mp} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, storage_mp: v}})} />
+                          <WizardField label="Estocagem PROD ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.storage_finished} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, storage_finished: v}})} />
+                       </div>
                     </div>
-                    <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[10px] font-black text-blue-500 uppercase italic border-b border-white/5 pb-4">CAPEX Base ({getCurrencySymbol(formData.currency)})</h4>
-                       <WizardField label="Máquina Alfa" type="number" val={marketIndicators.machinery_values.alfa} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: parseFloat(v)}})} isCurrency currency={formData.currency} />
-                       <WizardField label="Máquina Beta" type="number" val={marketIndicators.machinery_values.beta} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, beta: parseFloat(v)}})} isCurrency currency={formData.currency} />
+
+                    {/* ATIVO & CAPEX */}
+                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Ativo & CapEx</h4>
+                       <WizardField label="MÁQUINA ALFA ($)" type="currency" currency={formData.currency} val={marketIndicators.machinery_values.alfa} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: v}})} />
+                       <WizardField label="MÁQUINA BETA ($)" type="currency" currency={formData.currency} val={marketIndicators.machinery_values.beta} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, beta: v}})} />
+                       <WizardField label="MÁQUINA GAMA ($)" type="currency" currency={formData.currency} val={marketIndicators.machinery_values.gama} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, gama: v}})} />
+                       <WizardField label="Deságio Venda (%)" type="number" val={marketIndicators.machine_sale_discount} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machine_sale_discount: parseFloat(v)})} />
                     </div>
-                    <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[10px] font-black text-emerald-500 uppercase italic border-b border-white/5 pb-4">Metas Oracle ({getCurrencySymbol(formData.currency)})</h4>
-                       <WizardField label="Prêmio Lucro" type="number" val={marketIndicators.award_values.profit_precision} onChange={(v:any)=>setMarketIndicators({...marketIndicators, award_values: {...marketIndicators.award_values, profit_precision: parseFloat(v)}})} isCurrency currency={formData.currency} />
+
+                    {/* MERCADO E STAFFING */}
+                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Mercado & Staffing</h4>
+                       <WizardField label="Preço Venda Médio ($)" type="currency" currency={formData.currency} val={marketIndicators.avg_selling_price} onChange={(v:any)=>setMarketIndicators({...marketIndicators, avg_selling_price: v})} />
+                       <WizardField label="Distribuição Unit. ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.distribution_unit} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, distribution_unit: v}})} />
+                       <WizardField label="Campanha Marketing ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.marketing_campaign} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, marketing_campaign: v}})} />
+                       <WizardField label="Salário Base P00 ($)" type="currency" currency={formData.currency} val={marketIndicators.hr_base.salary} onChange={(v:any)=>setMarketIndicators({...marketIndicators, hr_base: {...marketIndicators.hr_base, salary: v}})} />
+                       <WizardField label="Horas Produção/Homem" type="number" val={marketIndicators.production_hours_period} onChange={(v:any)=>setMarketIndicators({...marketIndicators, production_hours_period: parseInt(v)})} />
+                    </div>
+
+                    {/* PREMIAÇÕES POR PRECISÃO */}
+                    <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8 bg-orange-600/5 p-10 rounded-[3rem] border-2 border-orange-500/20 shadow-2xl">
+                       <div className="md:col-span-3 mb-4"><h4 className="text-xs font-black text-orange-500 uppercase tracking-[0.4em] italic">Premiações por Precisão (Audit Awards)</h4></div>
+                       <WizardField label="Prêmio: Custo Unitário ($)" type="currency" currency={formData.currency} val={marketIndicators.award_values.cost_precision} onChange={(v:any)=>setMarketIndicators({...marketIndicators, award_values: {...marketIndicators.award_values, cost_precision: v}})} />
+                       <WizardField label="Prêmio: Faturamento ($)" type="currency" currency={formData.currency} val={marketIndicators.award_values.revenue_precision} onChange={(v:any)=>setMarketIndicators({...marketIndicators, award_values: {...marketIndicators.award_values, revenue_precision: v}})} />
+                       <WizardField label="Prêmio: Lucro Líquido ($)" type="currency" currency={formData.currency} val={marketIndicators.award_values.profit_precision} onChange={(v:any)=>setMarketIndicators({...marketIndicators, award_values: {...marketIndicators.award_values, profit_precision: v}})} />
                     </div>
                  </div>
               </motion.div>
@@ -210,7 +272,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
             {step === 5 && (
               <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10">
-                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="Matriz Econômica" desc="Chronogram Master v18.0 Oracle (P01-P12)." />
+                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="INDICADORES ESTRATÉGICOS" desc="MATRIZ ECONÔMICA COMPLETA v18.0 ORACLE." />
+                 
                  <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[620px] flex flex-col relative group">
                     <div className="overflow-auto custom-scrollbar flex-1 relative">
                        <table className="w-full text-left border-separate border-spacing-0">
@@ -345,7 +408,7 @@ const SummaryCard = ({ label, val, icon, color, currency }: any) => (
 
 const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods, isExchange, readOnly }: any) => (
    <tr className="hover:bg-white/[0.04] transition-colors group">
-      <td className="p-3 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[280px] min-w-[280px]"><div className="flex items-center gap-3"><div className="text-slate-600 group-hover:text-orange-500 transition-colors shrink-0">{icon || <Settings size={10}/>}</div><span className="text-[9px] font-black text-slate-300 uppercase tracking-widest italic truncate">{label}</span></div></td>
+      <td className="p-3 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[280px] min-w-[280px]"><div className="flex items-center gap-3"><div className="text-slate-600 group-hover:text-orange-500 transition-colors shrink-0">{icon || <Settings2 size={10}/>}</div><span className="text-[9px] font-black text-slate-300 uppercase tracking-widest italic truncate">{label}</span></div></td>
       {Array.from({ length: periods }).map((_, i) => {
          const val = rules[i]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[Math.min(i, 12)]?.[macroKey] ?? 0);
          return (
@@ -371,20 +434,57 @@ const WizardStepTitle = ({ icon, title, desc }: any) => (
   </div>
 );
 
-const WizardField = ({ label, val, onChange, type = 'text', placeholder, isCurrency, currency }: any) => (
-  <div className="space-y-4 text-left group">
-     <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
-     <div className="relative">
-       <input type={type} value={val} step="0.01" onChange={e => onChange(e.target.value)} className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-white outline-none focus:border-orange-600 transition-all shadow-inner" placeholder={placeholder} />
-       {isCurrency && <span className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-700">{getCurrencySymbol(currency)}</span>}
-     </div>
-  </div>
-);
+const WizardField = ({ label, val, onChange, type = 'text', placeholder, isCurrency, currency, isLocked }: any) => {
+  const [displayValue, setDisplayValue] = useState('');
 
-const WizardSelect = ({ label, val, onChange, options }: any) => (
+  useEffect(() => {
+    if (type === 'currency' && typeof val === 'number') {
+      setDisplayValue(formatCurrency(val, currency, false));
+    } else {
+      setDisplayValue(String(val));
+    }
+  }, [val, type, currency]);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawText = e.target.value;
+    if (type === 'currency') {
+      // Remove tudo exceto números e vírgulas/pontos decimais dependendo da localidade
+      // Abordagem Oracle: trata como centavos (multiplica/divide por 100)
+      const digits = rawText.replace(/\D/g, '');
+      const numericValue = parseInt(digits || '0') / 100;
+      onChange(numericValue);
+    } else {
+      onChange(rawText);
+    }
+  };
+
+  return (
+    <div className="space-y-4 text-left group">
+       <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
+       <div className="relative">
+         <input 
+          type={type === 'currency' ? 'text' : type} 
+          value={type === 'currency' ? displayValue : val} 
+          readOnly={isLocked}
+          onChange={handleTextChange} 
+          className={`w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-white outline-none transition-all shadow-inner ${isLocked ? 'opacity-40 cursor-not-allowed' : 'focus:border-orange-500'} font-mono`} 
+          placeholder={placeholder} 
+         />
+         {(isCurrency || type === 'currency') && <span className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-700">{getCurrencySymbol(currency)}</span>}
+       </div>
+    </div>
+  );
+};
+
+const WizardSelect = ({ label, val, onChange, options, isLocked }: any) => (
   <div className="space-y-4 text-left group">
      <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 group-focus-within:text-orange-500 transition-colors italic">{label}</label>
-     <select value={val} onChange={e => onChange(e.target.value)} className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-[12px] font-black text-white uppercase outline-none focus:border-orange-600 transition-all cursor-pointer shadow-inner appearance-none">
+     <select 
+      value={val} 
+      disabled={isLocked}
+      onChange={e => onChange(e.target.value)} 
+      className={`w-full bg-slate-950 border-4 border-white/5 rounded-3xl px-10 py-7 text-[12px] font-black text-white uppercase outline-none transition-all shadow-inner appearance-none ${isLocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer focus:border-orange-600'}`}
+     >
        {options.map((o: any) => <option key={o.v} value={o.v} className="bg-slate-900">{o.l}</option>)}
      </select>
   </div>
