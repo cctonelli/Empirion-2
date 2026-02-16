@@ -7,7 +7,7 @@ import {
   Settings2, X, Bot, Boxes, TrendingUp, Percent, ChevronLeft, ChevronRight,
   PieChart, BarChart, Activity, Flame, Package, Award, MapPin, Gauge, BarChart3,
   Scale, Truck, UserPlus, UserMinus, Hammer, ShoppingCart, Briefcase, Tractor,
-  Coins, ClipboardList, HardDrive
+  Coins, ClipboardList, HardDrive, ShieldAlert
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -29,7 +29,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     botsCount: 2,
     marketMode: 'hybrid' as SalesMode,
     regionsCount: 4,
-    totalRounds: 12,
+    totalRounds: 12, 
     roundTime: 1, 
     roundUnit: 'hours' as DeadlineUnit,
     initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE,
@@ -103,6 +103,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   };
 
   const stepsCount = 7;
+  const totalPeriods = formData.totalRounds + 1;
   const totalAssets = financials?.balance_sheet.find(n => n.id === 'assets')?.value || 0;
   const totalEquity = financials?.balance_sheet.find(n => n.id === 'liabilities_pl')?.children?.find(n => n.id === 'equity')?.value || 7252171.74;
 
@@ -210,15 +211,15 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             {step === 5 && (
               <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10">
                  <WizardStepTitle icon={<BarChart3 size={32}/>} title="Matriz Econômica" desc="Chronogram Master v18.0 Oracle (P01-P12)." />
-                 <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[550px] flex flex-col relative group">
+                 <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[620px] flex flex-col relative group">
                     <div className="overflow-auto custom-scrollbar flex-1 relative">
                        <table className="w-full text-left border-separate border-spacing-0">
                           <thead className="sticky top-0 z-[100] bg-slate-900 shadow-xl">
                              <tr>
                                 <th className="p-4 bg-slate-900 border-b-2 border-r-2 border-white/10 w-[280px] min-w-[280px]">
-                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Indicadores</span>
+                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Indicadores e Ajustes</span>
                                 </th>
-                                {Array.from({ length: formData.totalRounds + 1 }).map((_, i) => (
+                                {Array.from({ length: totalPeriods }).map((_, i) => (
                                    <th key={i} className={`p-4 bg-slate-900 border-b-2 border-r border-white/5 text-center min-w-[95px] ${i === 0 ? 'bg-orange-600/10' : ''}`}>
                                       <span className={`text-[12px] font-black uppercase tracking-widest ${i === 0 ? 'text-white' : 'text-orange-500'}`}>P{i < 10 ? `0${i}` : i}</span>
                                    </th>
@@ -226,14 +227,68 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-white/5 font-mono">
-                             <CompactMatrixRow periods={formData.totalRounds + 1} label="ICE CRESCIMENTO (%)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<Activity size={10}/>} />
-                             <CompactMatrixRow periods={formData.total_rounds + 1} label="INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
-                             <CompactMatrixRow periods={formData.totalRounds + 1} label="DEMANDA VAR. (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
-                             <CompactMatrixRow periods={formData.totalRounds + 1} label="TAXA TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
-                             <CompactMatrixRow periods={formData.totalRounds + 1} label="DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="ICE CRESC. ECONÔMICO (%)" macroKey="ice" rules={roundRules} update={updateRoundMacro} icon={<Activity size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="VARIAÇÕES DE DEMANDA (%)" macroKey="demand_variation" rules={roundRules} update={updateRoundMacro} icon={<Target size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="ÍNDICE DE INFLAÇÃO (%)" macroKey="inflation_rate" rules={roundRules} update={updateRoundMacro} icon={<Flame size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="ÍNDICE DE INADIMPLÊNCIA (%)" macroKey="customer_default_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="JUROS BANCÁRIOS + TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="JUROS DE FORNECEDORES (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="RENDIMENTO APLICAÇÃO (%)" macroKey="investment_return_rate" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="IVA SOBRE COMPRAS (%)" macroKey="vat_purchases_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="IVA SOBRE VENDAS (%)" macroKey="vat_sales_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />							 
+                             <CompactMatrixRow periods={totalPeriods} label="IMPOSTO DE RENDA (%)" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="DESÁGIO VENDA MÁQUINAS (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="ÁGIO COMPRAS ESPECIAIS (%)" macroKey="special_purchase_premium" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="ÁGIO EMPRÉSTIMO COMPULSÓRIO (%)" macroKey="compulsory_loan_agio" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="ENCARGOS SOCIAIS (%)" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="MATÉRIAS-PRIMAS (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="MÁQUINA ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="MÁQUINA BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="MÁQUINA GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="CAMPANHAS MARKETING (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="DISTRIBUIÇÃO DE PRODUTOS (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="GASTOS COM ESTOCAGEM (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO EUA (%)" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO EURO (%)" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} />							 
+                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORT CHINA" macroKey="export_tariff_china" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORT BTC" macroKey="export_tariff_btc" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} isExchange />
+                             
+                             <tr className="hover:bg-white/[0.03] transition-colors">
+                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR COMPRA/VENDA MÁQUINAS</td>
+                                {Array.from({ length: totalPeriods }).map((_, i) => (
+                                   <td key={i} className="p-2 border-r border-white/5 text-center">
+                                      <button 
+                                        onClick={() => updateRoundMacro(i, 'allow_machine_sale', !(roundRules[i]?.allow_machine_sale ?? DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale))}
+                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500 opacity-40'}`}
+                                      >
+                                         {(roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'SIM' : 'NÃO'}
+                                      </button>
+                                   </td>
+                                ))}
+                             </tr>
+
+                             <tr className="hover:bg-white/[0.03] transition-colors">
+                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-blue-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><ClipboardList size={10}/> APRESENTAR BUSINESS PLAN</td>
+                                {Array.from({ length: totalPeriods }).map((_, i) => (
+                                   <td key={i} className="p-2 border-r border-white/5 text-center">
+                                      <button 
+                                        onClick={() => updateRoundMacro(i, 'require_business_plan', !(roundRules[i]?.require_business_plan ?? DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan))}
+                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-white/10 text-slate-700 opacity-40'}`}
+                                      >
+                                         {(roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'SIM' : 'NÃO'}
+                                      </button>
+                                   </td>
+                                ))}
+                             </tr>
                           </tbody>
                        </table>
                     </div>
+                    <motion.div animate={{ left: ['-1%', '101%'] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="absolute top-0 bottom-0 w-px bg-orange-500/20 shadow-[0_0_15px_#f97316] z-[110] pointer-events-none" />
                  </div>
               </motion.div>
             )}
@@ -266,13 +321,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         </div>
       </div>
 
-      <button onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1} className="floating-nav-btn left-10"><ChevronLeft size={32} /></button>
+      <button onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1} className="floating-nav-btn left-10"><ChevronLeft size={25} /></button>
       {step === stepsCount ? (
         <button onClick={handleLaunch} disabled={isSubmitting} className="floating-nav-btn-primary">
           {isSubmitting ? <><Loader2 className="animate-spin" size={24}/> Sincronizando...</> : 'LANÇAR SANDBOX'}
         </button>
       ) : (
-        <button onClick={() => setStep(s => s + 1)} className="floating-nav-btn right-10"><ChevronRight size={32} /></button>
+        <button onClick={() => setStep(s => s + 1)} className="floating-nav-btn right-10"><ChevronRight size={25} /></button>
       )}
     </div>
   );
@@ -288,14 +343,21 @@ const SummaryCard = ({ label, val, icon, color, currency }: any) => (
   </div>
 );
 
-const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods, isExchange }: any) => (
+const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods, isExchange, readOnly }: any) => (
    <tr className="hover:bg-white/[0.04] transition-colors group">
       <td className="p-3 sticky left-0 bg-slate-950 z-30 border-r-2 border-white/10 group-hover:bg-slate-900 transition-colors w-[280px] min-w-[280px]"><div className="flex items-center gap-3"><div className="text-slate-600 group-hover:text-orange-500 transition-colors shrink-0">{icon || <Settings size={10}/>}</div><span className="text-[9px] font-black text-slate-300 uppercase tracking-widest italic truncate">{label}</span></div></td>
       {Array.from({ length: periods }).map((_, i) => {
          const val = rules[i]?.[macroKey] ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[Math.min(i, 12)]?.[macroKey] ?? 0);
          return (
             <td key={i} className={`p-1 border-r border-white/5 ${i === 0 ? 'bg-orange-600/5' : ''}`}>
-              <input type="number" step={isExchange ? "0.000001" : "0.1"} value={val} onChange={e => update(i, macroKey, parseFloat(e.target.value))} className={`w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-2.5 text-center text-[10px] font-black outline-none transition-all shadow-inner focus:border-orange-500 text-white`} />
+              <input 
+                type="number" 
+                step={isExchange ? "0.000001" : "0.1"} 
+                value={val} 
+                readOnly={readOnly}
+                onChange={e => !readOnly && update(i, macroKey, parseFloat(e.target.value))} 
+                className={`w-full bg-slate-900 border border-white/5 rounded-xl px-2 py-2.5 text-center text-[10px] font-black outline-none transition-all shadow-inner ${readOnly ? 'cursor-not-allowed opacity-60 text-slate-400' : 'focus:border-orange-500 text-white'}`} 
+              />
             </td>
          );
       })}

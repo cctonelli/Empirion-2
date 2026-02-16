@@ -6,7 +6,9 @@ import {
   Landmark, Gavel, ShieldCheck, ChevronLeft, Wallet, 
   TrendingUp, Activity, Receipt, Coins, Trash2, Box, Award, 
   PlusCircle, MinusCircle, AlertCircle, RefreshCw, UserPlus, UserMinus, Globe,
-  Rocket, BarChart3, Scale, Eye, Info
+  Rocket, BarChart3, Scale, Eye, Info,
+  // Fix: Adding missing icons reported by the build process
+  ShieldAlert, Zap, CheckCircle2
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
 import { DecisionData, Branch, Championship, Team, CurrencyType } from '../types';
@@ -262,7 +264,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                {activeStep === 7 && (
                   <div className="max-w-4xl mx-auto space-y-12 text-center py-10">
                      <div className="w-24 h-24 bg-emerald-500 rounded-[3rem] flex items-center justify-center mx-auto text-white shadow-[0_0_60px_rgba(16,185,129,0.3)] animate-pulse">
-                        <ShieldCheck size={56} />
+                        <CheckCircle2 size={56} />
                      </div>
                      <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Pronto para Sincronizar</h2>
                      <p className="text-slate-400 text-lg font-medium italic">Seus dados foram verificados e estão prontos para transmissão ao motor Oracle v18.0.</p>
