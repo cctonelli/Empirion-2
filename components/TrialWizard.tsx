@@ -321,13 +321,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         </div>
       </div>
 
-      <button onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1} className="floating-nav-btn left-10"><ChevronLeft size={25} /></button>
+      <button onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1} className="floating-nav-btn left-10"><ChevronLeft size={15} /></button>
       {step === stepsCount ? (
         <button onClick={handleLaunch} disabled={isSubmitting} className="floating-nav-btn-primary">
           {isSubmitting ? <><Loader2 className="animate-spin" size={24}/> Sincronizando...</> : 'LANÇAR SANDBOX'}
         </button>
       ) : (
-        <button onClick={() => setStep(s => s + 1)} className="floating-nav-btn right-10"><ChevronRight size={25} /></button>
+        <button onClick={() => setStep(s => s + 1)} className="floating-nav-btn right-10"><ChevronRight size={15} /></button>
       )}
     </div>
   );
