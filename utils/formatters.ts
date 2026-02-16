@@ -2,8 +2,7 @@
 import { CurrencyType } from '../types';
 
 /**
- * EMPIRION FINANCIAL LOCALIZATION PROTOCOL v1.0
- * Mapeia moedas para seus respectivos padrões de separadores decimais e de milhar.
+ * EMPIRION FINANCIAL LOCALIZATION PROTOCOL v1.1
  */
 
 const CURRENCY_LOCALE_MAP: Record<CurrencyType, string> = {
@@ -12,22 +11,35 @@ const CURRENCY_LOCALE_MAP: Record<CurrencyType, string> = {
   'USD': 'en-US',
   'CNY': 'zh-CN',
   'GBP': 'en-GB',
-  'BTC': 'en-US' // Padrão técnico internacional
+  'BTC': 'en-US'
 };
 
 export const formatCurrency = (value: number, currency: CurrencyType = 'BRL', showSymbol: boolean = true): string => {
   const locale = CURRENCY_LOCALE_MAP[currency] || 'pt-BR';
+  
+  if (currency === 'BTC') {
+    const formatter = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 8,
+      maximumFractionDigits: 8,
+    });
+    return showSymbol ? `₿ ${formatter.format(value)}` : formatter.format(value);
+  }
+
   return new Intl.NumberFormat(locale, {
     style: showSymbol ? 'currency' : 'decimal',
-    currency: currency === 'BTC' ? 'USD' : currency, // Fallback para BTC display
+    currency: currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value).replace('US$', showSymbol && currency === 'BTC' ? '₿' : '$');
+  }).format(value);
 };
 
 export const getCurrencySymbol = (currency: CurrencyType = 'BRL'): string => {
+  if (currency === 'BTC') return '₿';
   const locale = CURRENCY_LOCALE_MAP[currency] || 'pt-BR';
-  return (0).toLocaleString(locale, { style: 'currency', currency: currency === 'BTC' ? 'USD' : currency, minimumFractionDigits: 0, maximumFractionDigits: 0 })
-    .replace(/\d/g, '').trim()
-    .replace('US$', currency === 'BTC' ? '₿' : '$');
+  return (0).toLocaleString(locale, { 
+    style: 'currency', 
+    currency: currency, 
+    minimumFractionDigits: 0, 
+    maximumFractionDigits: 0 
+  }).replace(/\d/g, '').trim();
 };
