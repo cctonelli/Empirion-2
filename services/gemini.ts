@@ -104,12 +104,12 @@ export const generateDynamicMarketNews = async (
       5. Estrutura: Uma manchete impactante + 3 parágrafos curtos cobrindo: Ocorrências de Mercado, Desempenho do Líder e Alerta de Conjuntura.
     `;
 
+    // Fix: Removed maxOutputTokens to prevent blocked responses by the thinking engine (as per @google/genai guidelines)
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: contextPrompt,
       config: { 
-        temperature: 0.8,
-        maxOutputTokens: 500
+        temperature: 0.8
       }
     });
 

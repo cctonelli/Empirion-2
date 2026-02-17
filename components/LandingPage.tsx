@@ -21,47 +21,40 @@ import LanguageSwitcher from './LanguageSwitcher';
 const NextArrow = (props: any) => (
   <button 
     onClick={props.onClick} 
-    className="absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 z-50 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-orange-600 hover:scale-110 transition-all shadow-[0_0_40px_rgba(0,0,0,0.5)] active:scale-90 group"
-    aria-label="Próximo Slide"
+    className="absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 z-50 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-orange-600 hover:scale-110 transition-all active:scale-90"
+    aria-label="Next"
   >
-    <ChevronRight size={32} className="group-hover:translate-x-0.5 transition-transform" />
+    <ChevronRight size={32} />
   </button>
 );
 
 const PrevArrow = (props: any) => (
   <button 
     onClick={props.onClick} 
-    className="absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 z-50 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-orange-600 hover:scale-110 transition-all shadow-[0_0_40px_rgba(0,0,0,0.5)] active:scale-90 group"
-    aria-label="Slide Anterior"
+    className="absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 z-50 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full text-white hover:bg-orange-600 hover:scale-110 transition-all active:scale-90"
+    aria-label="Previous"
   >
-    <ChevronLeft size={32} className="group-hover:-translate-x-0.5 transition-transform" />
+    <ChevronLeft size={32} />
   </button>
 );
 
 const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
-  const { i18n } = useTranslation('landing');
+  const { t, i18n } = useTranslation(['landing', 'common']);
   const [content, setContent] = useState<any>(DEFAULT_PAGE_CONTENT['landing']);
-  const [dynamicModalities, setDynamicModalities] = useState<Modality[]>([]);
   const [leaderboards, setLeaderboards] = useState<any[]>([]);
   const [loadingBoards, setLoadingBoards] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
+      // Prioridade: Conteúdo Editável via CMS (Hero etc)
       const db = await fetchPageContent('landing', i18n.language);
       if (db) setContent({ ...DEFAULT_PAGE_CONTENT['landing'], ...db });
       
-      const [mods, boards] = await Promise.all([
-        getModalities(),
-        getGlobalLeaderboard()
-      ]);
-      
-      if (Array.isArray(mods)) setDynamicModalities(mods);
+      const boards = await getGlobalLeaderboard();
       setLeaderboards(boards);
       setLoadingBoards(false);
     };
     loadData();
-    const channel = subscribeToModalities(loadData);
-    return () => { channel.unsubscribe(); };
   }, [i18n.language]);
 
   const carouselSettings = {
@@ -74,103 +67,59 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     autoplaySpeed: 6000,
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
-    customPaging: (i: number) => (
-      <div className="w-2.5 h-2.5 rounded-full bg-white/20 mt-12 hover:bg-orange-500 transition-colors" />
-    ),
-    dotsClass: "slick-dots custom-dots"
   };
 
   return (
     <div className="min-h-screen bg-[#020617] font-sans text-slate-100 relative overflow-x-hidden select-none">
       <EmpireParticles />
       
-      {/* SEBRAE STYLE ORANGE CLOUDS */}
       <div className="fixed inset-0 pointer-events-none z-0">
-         <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.3, 0.2], rotate: [0, 45, 0] }} transition={{ duration: 25, repeat: Infinity }} className="absolute -top-[20%] -left-[10%] w-[1000px] h-[1000px] bg-orange-600/30 blur-[250px] rounded-full" />
-         <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1], x: [0, 100, 0] }} transition={{ duration: 20, repeat: Infinity, delay: 2 }} className="absolute top-[30%] -right-[10%] w-[800px] h-[800px] bg-orange-400/20 blur-[200px] rounded-full" />
+         <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.3, 0.2] }} transition={{ duration: 25, repeat: Infinity }} className="absolute -top-[20%] -left-[10%] w-[1000px] h-[1000px] bg-orange-600/30 blur-[250px] rounded-full" />
       </div>
 
       <section className="min-h-screen flex flex-col items-center justify-center pt-24 px-8 relative z-20 text-center">
-        <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="max-w-7xl mx-auto space-y-12">
-           <div className="inline-flex items-center gap-4 px-6 py-2.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-mono font-black text-orange-500 uppercase tracking-[0.6em] backdrop-blur-xl shadow-2xl">
-              <Terminal size={14} className="animate-pulse" /> {APP_VERSION} CORE SYNCED
+        <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto space-y-12">
+           <div className="inline-flex items-center gap-4 px-6 py-2.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-mono font-black text-orange-500 uppercase tracking-[0.6em] backdrop-blur-xl">
+              <Terminal size={14} /> {APP_VERSION} CORE SYNCED
            </div>
            
-           <h1 className="text-[55px] md:text-[90px] lg:text-[120px] font-black text-white leading-[0.85] tracking-tighter uppercase italic pr-4">
-              {content?.hero?.title || 'Forje Seu Império'} <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-white to-orange-400 pr-2"> {content?.hero?.subtitle || 'Com Insight Estratégico IA'} </span>
+           <h1 className="text-[55px] md:text-[90px] lg:text-[120px] font-black text-white leading-[0.85] tracking-tighter uppercase italic">
+              {content?.hero?.title || t('hero.title')} <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-white to-orange-400"> {content?.hero?.subtitle || t('hero.subtitle')} </span>
            </h1>
 
-           <p className="text-xl md:text-3xl text-slate-300 font-medium max-w-4xl mx-auto italic leading-relaxed opacity-90">
-              A arena definitiva onde inteligência neural Gemini 3 e estratégia humana colidem em simulações multiplayer de alta performance.
+           <p className="text-xl md:text-3xl text-slate-300 font-medium max-w-4xl mx-auto italic opacity-90 leading-relaxed">
+              {t('hero.subtitle_long', 'A arena definitiva onde IA e estratégia humana colidem.')}
            </p>
 
            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 pt-8">
-              <Link to="/auth" className="px-20 py-8 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.4em] shadow-[0_20px_60px_rgba(249,115,22,0.4)] hover:scale-110 hover:bg-white hover:text-orange-950 transition-all flex items-center gap-5 group">
-                Entre na Arena <Rocket size={24} className="group-hover:translate-x-2 transition-transform" />
-              </Link>
-              <Link to="/branches/industrial" className="px-16 py-8 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-[0.4em] hover:bg-white hover:text-slate-950 transition-all backdrop-blur-md active:scale-95">
-                Explorar Ramos
+              <Link to="/auth" className="px-20 py-8 bg-orange-600 text-white rounded-full font-black text-sm uppercase tracking-[0.4em] shadow-2xl hover:scale-110 hover:bg-white hover:text-orange-950 transition-all flex items-center gap-5 group">
+                {t('hero.cta')} <Rocket size={24} className="group-hover:translate-x-2 transition-transform" />
               </Link>
            </div>
         </motion.div>
-      </section>
-
-      <section className="relative z-30 -mt-20 md:-mt-32 px-6 md:px-24 mb-40">
-         <div className="max-w-[1600px] mx-auto relative">
-            <Slider {...carouselSettings}>
-               <CarouselSlide 
-                  icon={<Factory size={40}/>}
-                  badge="Modo Industrial"
-                  title="Produção Massiva"
-                  desc="Gerencie cadeias de suprimento e ativos de capital em múltiplos mercados regionais e globais v18.0 Gold."
-                  img="https://images.unsplash.com/photo-1675176785803-bffbbb0cd2f4?q=80&w=1200&auto=format&fit=crop"
-               />
-               <CarouselSlide 
-                  icon={<BrainCircuit size={40}/>}
-                  badge="IA Agregada"
-                  title="Mentoria via Gemini"
-                  desc="Feedbacks estratégicos e táticos em tempo real baseados no seu Balanço, DRE e CashFlow v18.0."
-                  img="https://images.unsplash.com/photo-1677442135703-1787eea5ce01?q=80&w=1200&auto=format&fit=crop"
-               />
-               <CarouselSlide 
-                  icon={<Globe size={40}/>}
-                  badge="Expansão Global"
-                  title="Geopolítica Regional"
-                  desc="Configure múltiplas regiões com moedas diferentes, demandas balanceadas e variações cambiais dinâmicas."
-                  img="https://images.unsplash.com/photo-1670121180583-39ab653a071c?q=80&w=1200&auto=format&fit=crop"
-               />
-            </Slider>
-         </div>
       </section>
 
       <section className="landing-section bg-slate-950/40">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
                <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.8em] italic">Simulation Matrix</span>
-               <h2 className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none">EXPLORE</h2>
+               <h2 className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter leading-none">{t('common:branches').toUpperCase()}</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
                {[
-                 { label: 'Industrial', icon: <Factory />, slug: 'industrial', desc: 'CapEx $9.5M Oracle' },
-                 { label: 'Varejo', icon: <ShoppingCart />, slug: 'commercial', desc: 'Varejo Híbrido Elite' },
-                 { label: 'Serviços', icon: <Briefcase />, slug: 'services', desc: 'Capital Intelectual Matrix' },
-                 { label: 'Agronegócio', icon: <Tractor />, slug: 'agribusiness', desc: 'Ativos Biológicos SIAGRO' },
-                 { label: 'Financeiro', icon: <DollarSign />, slug: 'finance', desc: 'Spread & Risco SINVEST' },
-                 { label: 'Construção', icon: <Hammer />, slug: 'construction', desc: 'Obras Pesadas Master' }
+                 { label: t('branches:industrial.name'), icon: <Factory />, slug: 'industrial', desc: 'CapEx Oracle' },
+                 { label: t('branches:commercial.name'), icon: <ShoppingCart />, slug: 'commercial', desc: 'Varejo Elite' },
+                 { label: t('branches:services.name'), icon: <Briefcase />, slug: 'services', desc: 'Capital Matrix' },
                ].map((r, i) => (
-                 <Link key={r.label} to={`/branches/${r.slug}`} className="p-12 bg-slate-900 border border-white/5 rounded-[4rem] hover:border-orange-500/40 transition-all group shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-10 opacity-[0.02] group-hover:scale-125 transition-transform rotate-12">{React.cloneElement(r.icon as any, { size: 180 })}</div>
-                    <div className="flex justify-between items-start mb-12 relative z-10">
+                 <Link key={r.slug} to={`/branches/${r.slug}`} className="p-12 bg-slate-900 border border-white/5 rounded-[4rem] hover:border-orange-500/40 transition-all group shadow-2xl">
+                    <div className="flex justify-between items-start mb-12">
                        <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-xl">
-                          {React.cloneElement(r.icon as any, { size: 32 })}
+                          {r.icon}
                        </div>
-                       <ArrowRight className="text-slate-700 group-hover:text-white group-hover:translate-x-2 transition-all" size={24} />
                     </div>
-                    <div className="relative z-10">
-                       <h4 className="text-3xl font-black text-white uppercase italic mb-2 leading-none">{r.label}</h4>
-                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{r.desc}</p>
-                    </div>
+                    <h4 className="text-3xl font-black text-white uppercase italic mb-2">{r.label}</h4>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{r.desc}</p>
                  </Link>
                ))}
             </div>
@@ -179,126 +128,30 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
       <section className="landing-section bg-[#020617]">
          <div className="max-w-7xl mx-auto space-y-24">
-            <div className="flex flex-col md:flex-row justify-between items-end gap-10">
-               <div className="space-y-4">
-                  <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.8em] italic">Live Standings</span>
-                  <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none">Placar Campeonatos</h2>
-               </div>
-               <Link to="/solutions/open-tournaments" className="px-10 py-4 bg-white/5 border border-white/10 text-white rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl">Ver Todas as Arenas</Link>
-            </div>
-
+            <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none">{t('community.title')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               {loadingBoards ? (
-                  <div className="col-span-full py-20 text-center flex flex-col items-center gap-4">
-                     <Loader2 className="animate-spin text-orange-500" size={40} />
-                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic animate-pulse">Sincronizando Placar Global...</span>
-                  </div>
-               ) : leaderboards.length > 0 ? (
-                 leaderboards.map(board => (
-                  <LeaderboardCard 
-                     key={board.id}
-                     name={board.name} 
-                     branch={board.branch} 
-                     cycle={`${board.round}/${board.total}`}
-                     teams={board.topTeams}
-                  />
-                 ))
-               ) : (
-                 <>
-                   <LeaderboardCard 
-                      name="Torneio Nacional Alpha" 
-                      branch="Industrial" 
-                      cycle="08/12"
-                      teams={[
-                         { name: 'Equipe Sigma', tsr: 142.5, pos: 1 },
-                         { name: 'Node Delta', tsr: 128.2, pos: 2 },
-                         { name: 'Atlas Corp', tsr: 115.8, pos: 3 }
-                      ]}
-                   />
-                   <LeaderboardCard 
-                      name="Grand Prix Varejo" 
-                      branch="Varejo" 
-                      cycle="03/06"
-                      teams={[
-                         { name: 'Varejo Pro', tsr: 98.4, pos: 1 },
-                         { name: 'Mega Store', tsr: 92.1, pos: 2 },
-                         { name: 'Nexus Trade', tsr: 85.5, pos: 3 }
-                      ]}
-                   />
-                 </>
-               )}
+               {leaderboards.map(board => (
+                  <LeaderboardCard key={board.id} name={board.name} branch={board.branch} cycle={`${board.round}/${board.total}`} teams={board.topTeams} />
+               ))}
             </div>
          </div>
       </section>
-
-      <footer className="py-24 border-t border-white/5 text-center bg-[#020617] relative z-20">
-         <div className="container mx-auto px-8 opacity-40">
-            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500 italic">CONSTRUINDO IMPÉRIOS EMPRESARIAIS DO FUTURO • EMPIRION 2026</p>
-            <div className="mt-10 flex justify-center scale-75"><LanguageSwitcher light /></div>
-         </div>
-      </footer>
     </div>
   );
 };
 
 const LeaderboardCard = ({ name, branch, cycle, teams }: any) => (
-  <div className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl space-y-8 group hover:border-orange-500/30 transition-all">
-     <div className="flex justify-between items-start">
-        <div className="space-y-1">
-           <h3 className="text-2xl font-black text-white uppercase italic leading-none">{name}</h3>
-           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{branch} Node</p>
-        </div>
-        <div className="px-4 py-1 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-lg text-[9px] font-black uppercase flex items-center gap-2">
-           <Clock size={10} /> Ciclo {cycle}
-        </div>
-     </div>
+  <div className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/10 shadow-2xl space-y-8">
+     <h3 className="text-2xl font-black text-white uppercase italic">{name}</h3>
      <div className="space-y-4">
         {teams.map((t: any) => (
-           <div key={t.pos} className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5 group-hover:bg-white/10 transition-all">
-              <div className="flex items-center gap-6">
-                 <span className="text-lg font-black text-slate-600 italic">#0{t.pos}</span>
-                 <span className="text-sm font-black text-white uppercase tracking-tight">{t.name}</span>
-              </div>
-              <div className="text-right">
-                 <span className="block text-[8px] font-black text-slate-500 uppercase">TSR Final</span>
-                 <span className="text-lg font-mono font-black text-emerald-500">{t.tsr.toFixed(1)}%</span>
-              </div>
+           <div key={t.pos} className="flex items-center justify-between p-5 bg-white/5 rounded-2xl">
+              <span className="text-sm font-black text-white uppercase">{t.name}</span>
+              <span className="text-lg font-mono font-black text-emerald-500">{t.tsr.toFixed(1)}%</span>
            </div>
         ))}
      </div>
   </div>
 );
-
-const CarouselSlide = ({ icon, badge, title, desc, img }: any) => {
-   const [imgError, setImgError] = useState(false);
-   return (
-      <div className="px-4 outline-none">
-         <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[5rem] overflow-hidden min-h-[400px] flex flex-col md:flex-row shadow-3xl relative group border-t-orange-600/30 border-t-4 hover:border-orange-500 transition-all">
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
-            <div className="flex-1 p-10 md:p-16 flex flex-col justify-center items-start text-left relative z-20 space-y-5">
-               <div className="flex items-center gap-5">
-                  <div className="p-3.5 bg-orange-600 rounded-3xl text-white shadow-2xl">{icon}</div>
-                  <span className="text-[11px] font-black uppercase text-orange-500 tracking-[0.6em] italic">{badge}</span>
-               </div>
-               <h3 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter leading-[0.9]">{title}</h3>
-               <p className="text-lg md:text-xl text-slate-400 font-medium italic max-w-xl">{desc}</p>
-               <button className="px-10 py-4 bg-white/5 border border-white/10 text-white rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-orange-600 hover:border-orange-400 transition-all flex items-center gap-4 group/btn shadow-xl active:scale-95">
-                  Saiba Mais  <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
-               </button>
-            </div>
-            <div className="hidden md:block w-1/2 relative overflow-hidden bg-slate-950">
-               <div className="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-blue-600/5 opacity-50" />
-               {!imgError ? (
-                  <img src={img} className="w-full h-full object-cover grayscale opacity-40 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-1000" alt={title} loading="eager" onError={() => setImgError(true)} />
-               ) : (
-                  <div className="w-full h-full flex items-center justify-center border-l border-white/5">
-                     <Activity size={48} className="text-orange-500 opacity-20 animate-pulse" />
-                  </div>
-               )}
-            </div>
-         </div>
-      </div>
-   );
-};
 
 export default LandingPage;

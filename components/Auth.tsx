@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
-// Fix: Use any to bypass react-router-dom type resolution issues in this environment
 import * as ReactRouterDOM from 'react-router-dom';
 const { useNavigate } = ReactRouterDOM as any;
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../services/supabase';
 import { 
   Shield, Mail, Lock, ChevronLeft, 
@@ -17,6 +18,7 @@ interface AuthProps {
 
 const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation('auth');
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,39 +35,29 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
 
     try {
       if (isLogin) {
-        // Fix: Casting auth to any to resolve property missing error in this environment
         const { data: { session }, error: authError } = await (supabase.auth as any).signInWithPassword({ email, password });
         if (authError) throw authError;
         if (session) onAuth();
       } else {
-        // Validação E.164 flexível: + ou número seguido de 7 a 15 dígitos
         if (phone && !/^\+?[1-9]\d{1,14}$/.test(phone)) {
-           throw new Error("Formato de telefone inválido. Use padrão internacional, ex: +5511999998888");
+           throw new Error("Formato de telefone inválido.");
         }
-        
-        // Validação Nickname: Alfanumérico, 3-20 chars
         if (nickname && !/^[a-zA-Z0-9_]{3,20}$/.test(nickname)) {
-           throw new Error("Nickname deve ter de 3 a 20 caracteres (letras, números e underline).");
+           throw new Error("Nickname deve ter de 3 a 20 caracteres.");
         }
-
-        // Fix: Casting auth to any to resolve property missing error in this environment
         const { error: signUpError } = await (supabase.auth as any).signUp({ 
           email, 
           password,
           options: {
-            data: { 
-              full_name: name,
-              nickname: nickname,
-              phone: phone
-            }
+            data: { full_name: name, nickname: nickname, phone: phone }
           }
         });
         if (signUpError) throw signUpError;
-        alert('Cadastro realizado! Se o e-mail de confirmação estiver ativo, verifique sua caixa de entrada.');
+        alert(t('success_msg') || 'Check your email!');
         setIsLogin(true);
       }
     } catch (err: any) {
-      setError({ message: err.message || 'Falha na autenticação.', type: 'standard' });
+      setError({ message: err.message || 'Error', type: 'standard' });
     } finally {
       setLoading(false);
     }
@@ -79,24 +71,20 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
       </div>
 
       {onBack && (
-        <button 
-          onClick={onBack}
-          className="mb-8 flex items-center gap-2 text-slate-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all relative z-10"
-        >
-          <ChevronLeft size={16} /> Voltar para o Portal
+        <button onClick={onBack} className="mb-8 flex items-center gap-2 text-slate-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all relative z-10">
+          <ChevronLeft size={16} /> {t('back')}
         </button>
       )}
       
       <div className="max-w-xl w-full relative z-10">
-        <div className="bg-slate-900/50 backdrop-blur-3xl p-10 rounded-[3rem] shadow-2xl border border-white/5 animate-in fade-in zoom-in-95 duration-500">
+        <div className="bg-slate-900/50 backdrop-blur-3xl p-10 rounded-[3rem] shadow-2xl border border-white/5">
           <div className="text-center mb-10">
             <div className="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
               <Shield className="text-white" size={40} />
             </div>
             <h2 className="text-3xl font-black text-white tracking-tight uppercase italic leading-none">
-              Command Access
+              {isLogin ? t('login_title') : t('signup_title')}
             </h2>
-            <p className="text-slate-400 mt-2 font-bold uppercase text-[10px] tracking-widest italic">Acesso via Protocolo Seguro</p>
           </div>
 
           <form className="space-y-4" onSubmit={handleAuth}>
@@ -104,27 +92,17 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
               <>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                  <input required className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="Nome Completo" value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="relative">
-                    <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                    <input className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="Nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} />
-                  </div>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                    <input className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="+55..." value={phone} onChange={(e) => setPhone(e.target.value)} />
-                  </div>
+                  <input required className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder={t('name')} value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
               </>
             )}
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <input required type="email" className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input required type="email" className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder={t('email')} value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <input required type="password" minLength={6} className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <input required type="password" minLength={6} className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white outline-none focus:border-blue-500 transition-all" placeholder={t('password')} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
 
             {error && (
@@ -134,21 +112,15 @@ const Auth: React.FC<AuthProps> = ({ onAuth, onBack }) => {
               </div>
             )}
 
-            <button type="submit" disabled={loading} className="w-full py-4 bg-blue-600 text-white hover:bg-white hover:text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all disabled:opacity-50 shadow-2xl active:scale-95">
-              {loading ? <Loader2 className="animate-spin mx-auto" /> : isLogin ? 'Transmitir Credenciais' : 'Inicializar Nodo'}
+            <button type="submit" disabled={loading} className="w-full py-4 bg-blue-600 text-white hover:bg-white hover:text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all active:scale-95">
+              {loading ? <Loader2 className="animate-spin mx-auto" /> : isLogin ? t('submit_login') : t('submit_signup')}
             </button>
           </form>
 
           <div className="text-center mt-6">
-            <button onClick={() => setIsLogin(!isLogin)} className="text-slate-500 text-xs font-black uppercase tracking-widest hover:text-white transition-colors">
-              {isLogin ? "Requisitar Novo Acesso" : "Autenticar Existente"}
+            <button onClick={() => setIsLogin(!isLogin)} className="text-slate-500 text-xs font-black uppercase tracking-widest hover:text-white">
+              {isLogin ? t('signup_title') : t('login_title')}
             </button>
-          </div>
-
-          <div className="mt-10 pt-6 border-t border-white/5 text-center opacity-20">
-             <div className="flex items-center justify-center gap-2 text-white font-mono text-[8px] font-black uppercase tracking-widest">
-                <Terminal size={10} /> BUILD ENGINE {APP_VERSION}
-             </div>
           </div>
         </div>
       </div>

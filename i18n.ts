@@ -12,11 +12,9 @@ i18n
     lng: localStorage.getItem('i18nextLng') || 'pt',
     fallbackLng: 'pt',
     supportedLngs: ['pt', 'en', 'es'],
-    ns: ['common', 'landing', 'dashboard', 'branches', 'auth', 'businessPlan', 'decisionsForm'],
+    ns: ['common', 'landing', 'dashboard', 'branches', 'auth', 'businessPlan', 'decisions'],
     defaultNS: 'common',
     backend: {
-      // In this environment, we fallback to relative path. 
-      // Ensure JSON files are placed in public/locales/
       loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
     detection: {
@@ -27,7 +25,7 @@ i18n
       escapeValue: false,
     },
     react: {
-      useSuspense: false, // Set to false to avoid crash if files aren't ready
+      useSuspense: false,
     }
   });
 

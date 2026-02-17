@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
+import { useTranslation } from 'react-i18next';
 import * as ReactRouterDOM from 'react-router-dom';
 const { useNavigate } = ReactRouterDOM as any;
 import ChampionshipTimer from './ChampionshipTimer';
@@ -27,6 +28,7 @@ import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, K
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation('dashboard');
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeam, setActiveTeam] = useState<Team | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('player');
@@ -110,13 +112,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
       
-      {/* COCKPIT STATS BAR - v17.0 Advanced Indicators */}
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20 shadow-2xl">
-         <CockpitStat label="Equity" val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
-         <CockpitStat label="Solvência" val={(currentKpis.solvency_index || 1.0).toFixed(2)} trend="Oracle" pos icon={<Landmark size={16}/>} />
-         <CockpitStat label="Giro Estoque" val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend="Cycle" pos icon={<Box size={16}/>} />
-         <CockpitStat label="Liquidez" val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend="Current" pos icon={<Activity size={16}/>} />
-         <CockpitStat label="Rating" val={currentKpis.rating} trend="Audit" pos icon={<Shield size={16}/>} />
+         <CockpitStat label={t('labels.equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
+         <CockpitStat label={t('labels.solvency')} val={(currentKpis.solvency_index || 1.0).toFixed(2)} trend="Oracle" pos icon={<Landmark size={16}/>} />
+         <CockpitStat label={t('labels.inventory_turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend="Cycle" pos icon={<Box size={16}/>} />
+         <CockpitStat label={t('labels.liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend="Current" pos icon={<Activity size={16}/>} />
+         <CockpitStat label={t('labels.rating')} val={currentKpis.rating} trend="Audit" pos icon={<Shield size={16}/>} />
          <div className="px-8 flex items-center justify-center border-l border-white/5 bg-orange-600/5">
             <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} createdAt={activeArena?.created_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
          </div>
@@ -125,44 +126,41 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <div className="flex flex-1 overflow-hidden">
          <aside className="w-80 bg-slate-900/60 border-r border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar z-10 p-6 space-y-6">
             <header className="flex items-center justify-between border-b border-white/10 pb-4">
-               <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2"><History size={14}/> Intel Pulse</h3>
-               <button onClick={() => setShowAudit(true)} className="p-2 bg-white/5 hover:bg-orange-600 rounded-lg transition-all text-slate-500 hover:text-white" title="Histórico de Alterações">
+               <h3 className="text-xs font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2"><History size={14}/> {t('intel_pulse')}</h3>
+               <button onClick={() => setShowAudit(true)} className="p-2 bg-white/5 hover:bg-orange-600 rounded-lg transition-all text-slate-500 hover:text-white" title={t('audit_history')}>
                   <History size={12} />
                </button>
             </header>
 
-            {/* STATUS DO BUSINESS PLAN COM ALERTA DE EXIGÊNCIA */}
             <div className={`p-6 rounded-[2.5rem] border-2 space-y-4 shadow-2xl transition-all ${requireBP && bpStatus !== 'submitted' ? 'bg-orange-600/20 border-orange-500/50 animate-pulse' : 'bg-slate-950 border-white/5'}`}>
                <div className="flex justify-between items-center">
                   <PenTool size={24} className={requireBP ? 'text-orange-500' : 'text-slate-600'} />
                   {bpStatus === 'submitted' && <CheckCircle2 size={16} className="text-emerald-500" />}
                </div>
                <div>
-                  <h4 className="text-sm font-black uppercase text-white">Business Plan</h4>
+                  <h4 className="text-sm font-black uppercase text-white">{t('business_plan')}</h4>
                   <p className={`text-[9px] font-bold uppercase mt-1 ${requireBP && bpStatus !== 'submitted' ? 'text-orange-400' : 'text-slate-500'}`}>
-                     {requireBP ? `Exigência Round ${activeArena?.current_round + 1}` : 'Opcional este ciclo'}
+                     {requireBP ? `${t('requirement')} P0${(activeArena?.current_round || 0) + 1}` : t('optional_cycle')}
                   </p>
                </div>
-               <button onClick={() => setShowBP(true)} className="w-full py-3 bg-white/5 hover:bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Editar Strategos Plan</button>
+               <button onClick={() => setShowBP(true)} className="w-full py-3 bg-white/5 hover:bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">{t('edit_plan')}</button>
             </div>
 
-            {/* GRÁFICO DE TENDÊNCIA HISTÓRICA */}
             <div className="bg-slate-950/80 p-6 rounded-[2.5rem] border border-white/5 space-y-6 shadow-inner">
-               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2"><TrendingUp size={12} className="text-blue-500" /> Histórico Equity</h4>
+               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2"><TrendingUp size={12} className="text-blue-500" /> {t('equity_history')}</h4>
                <div className="h-40">
                   <Chart options={trendOptions} series={trendSeries} type="area" height="100%" />
                </div>
             </div>
 
-            {/* ANALISE DE CICLO FINANCEIRO (PMR vs PMP) */}
             <div className="bg-slate-950 p-6 rounded-[2.5rem] border border-white/5 space-y-4">
                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2"><Scale size={12} className="text-emerald-500" /> PMR vs PMP</h4>
                <div className="space-y-3">
-                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">Recebimento (PMR)</span><span className="text-white">{currentKpis.avg_receivable_days || 45} dias</span></div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">Pagamento (PMP)</span><span className="text-white">{currentKpis.avg_payable_days || 30} dias</span></div>
+                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">{t('labels.receivable_days')}</span><span className="text-white">{currentKpis.avg_receivable_days || 45} {t('days')}</span></div>
+                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">{t('labels.payable_days')}</span><span className="text-white">{currentKpis.avg_payable_days || 30} {t('days')}</span></div>
                   <div className="pt-2 border-t border-white/5 flex justify-between items-end">
-                     <span className="text-[8px] font-black text-rose-500 uppercase">Gap Tesoura</span>
-                     <span className="text-lg font-black text-rose-500">{(currentKpis.scissors_effect || -15)} dias</span>
+                     <span className="text-[8px] font-black text-rose-500 uppercase">{t('scissors_effect')}</span>
+                     <span className="text-lg font-black text-rose-500">{(currentKpis.scissors_effect || -15)} {t('days')}</span>
                   </div>
                </div>
             </div>
@@ -172,8 +170,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             <div className="max-w-[1400px] mx-auto w-full flex-1 flex flex-col overflow-hidden">
                <header className="flex justify-between items-end border-b border-white/5 pb-6 mb-6">
                   <div>
-                     <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Cockpit <span className="text-orange-600">Operacional</span></h2>
-                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Protocolo v17.0 • Ciclo 0{(activeArena?.current_round || 0) + 1}</p>
+                     <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">{t('cockpit')} <span className="text-orange-600">{t('operational')}</span></h2>
+                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Protocolo v18.0 • {t('cycle')} 0{(activeArena?.current_round || 0) + 1}</p>
                   </div>
                   <div className="flex gap-4">
                      <button onClick={() => setShowGazette(true)} className="px-8 py-3 bg-slate-900 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2 shadow-xl">

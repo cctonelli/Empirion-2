@@ -7,31 +7,32 @@ import {
   TrendingUp, Activity, Receipt, Coins, Trash2, Box, Award, 
   PlusCircle, MinusCircle, AlertCircle, RefreshCw, UserPlus, UserMinus, Globe,
   Rocket, BarChart3, Scale, Eye, Info,
-  // Fix: Adding missing icons reported by the build process
   ShieldAlert, Zap, CheckCircle2
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { saveDecisions, getChampionships, supabase } from '../services/supabase';
 import { DecisionData, Branch, Championship, Team, CurrencyType } from '../types';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { formatCurrency, getCurrencySymbol } from '../utils/formatters';
 
-const STEPS = [
-  { id: 'legal', label: '1. JURÍDICO', icon: Gavel },
-  { id: 'marketing', label: '2. COMERCIAL', icon: Megaphone },
-  { id: 'production', label: '3. OPERAÇÕES', icon: Factory },
-  { id: 'hr', label: '4. TALENTOS', icon: Users2 },
-  { id: 'assets', label: '5. ATIVOS', icon: Cpu },
-  { id: 'finance', label: '6. FINANÇAS', icon: Landmark },
-  { id: 'goals', label: '7. METAS', icon: Target },
-  { id: 'review', label: '8. FINALIZAR', icon: ShieldCheck },
-];
-
 const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false }) => {
+  const { t } = useTranslation('decisions');
   const [activeStep, setActiveStep] = useState(0);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
+
+  const STEPS = [
+    { id: 'legal', label: t('steps.legal'), icon: Gavel },
+    { id: 'marketing', label: t('steps.marketing'), icon: Megaphone },
+    { id: 'production', label: t('steps.production'), icon: Factory },
+    { id: 'hr', label: t('steps.hr'), icon: Users2 },
+    { id: 'assets', label: t('steps.assets'), icon: Cpu },
+    { id: 'finance', label: t('steps.finance'), icon: Landmark },
+    { id: 'goals', label: t('steps.goals'), icon: Target },
+    { id: 'review', label: t('steps.review'), icon: ShieldCheck },
+  ];
 
   const [decisions, setDecisions] = useState<DecisionData>({
     judicial_recovery: false,
@@ -82,7 +83,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     if (isReadOnly) return;
     const keys = path.split('.');
     setDecisions(prev => {
-      const next = JSON.parse(JSON.stringify(prev)); // Deep copy safely
+      const next = JSON.parse(JSON.stringify(prev));
       let current: any = next;
       for (let i = 0; i < keys.length - 1; i++) {
         if (!current[keys[i]]) current[keys[i]] = {};
@@ -98,16 +99,16 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     setIsSaving(true);
     try {
       const res = await saveDecisions(teamId, champId, round, decisions);
-      if (res.success) alert("TRANSMISSÃO CONCLUÍDA AO ORÁCULO.");
+      if (res.success) alert(t('transmit_success'));
       else throw new Error(res.error);
-    } catch (err: any) { alert(`FALHA NA TRANSMISSÃO: ${err.message}`); } 
+    } catch (err: any) { alert(`${t('transmit_error')}: ${err.message}`); } 
     finally { setIsSaving(false); }
   };
 
   if (isLoadingDraft) return (
     <div className="h-full flex flex-col items-center justify-center bg-slate-950/20 py-20">
       <Loader2 className="animate-spin text-orange-600 mb-4" size={48} />
-      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 italic">Estabelecendo Link Tático...</span>
+      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 italic">{t('loading_tactical')}</span>
     </div>
   );
 
@@ -128,18 +129,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                
                {activeStep === 0 && (
                   <div className="max-w-4xl mx-auto space-y-12">
-                     <WizardStepHeader icon={<Gavel />} title="Status Jurídico" desc="Defina o regime legal da operação para o ciclo atual." />
+                     <WizardStepHeader icon={<Gavel />} title={t('legal_status')} desc={t('legal_desc')} />
                      <div className="bg-slate-900/60 p-12 rounded-[4rem] border border-white/5 space-y-8 shadow-2xl">
                         <label className="flex items-center gap-6 cursor-pointer group p-4 bg-white/5 rounded-3xl border border-white/5 hover:border-orange-500/30 transition-all">
                            <input type="checkbox" checked={decisions.judicial_recovery} onChange={e => updateDecision('judicial_recovery', e.target.checked)} className="w-8 h-8 rounded-xl bg-slate-950 border-white/10 text-orange-600 focus:ring-orange-600" />
                            <div>
-                              <span className="text-2xl font-black text-white uppercase italic group-hover:text-orange-500 transition-colors">Solicitar Recuperação Judicial</span>
-                              <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">Status Ativo impede novos investimentos em CAPEX.</p>
+                              <span className="text-2xl font-black text-white uppercase italic group-hover:text-orange-500 transition-colors">{t('request_recovery')}</span>
+                              <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">{t('recovery_impact')}</p>
                            </div>
                         </label>
                         <div className="p-8 bg-rose-600/10 border border-rose-500/20 rounded-3xl flex gap-6">
                            <ShieldAlert size={32} className="text-rose-500 shrink-0" />
-                           <p className="text-xs text-slate-400 italic leading-relaxed font-medium">Atenção: A RJ suspende pagamentos de dívidas de rounds anteriores, mas seu rating é fixado em "D" pela auditoria central.</p>
+                           <p className="text-xs text-slate-400 italic leading-relaxed font-medium">{t('recovery_warning')}</p>
                         </div>
                      </div>
                   </div>
@@ -147,26 +148,26 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                {activeStep === 1 && (
                   <div className="space-y-12">
-                     <WizardStepHeader icon={<Megaphone />} title="Estratégia Regional" desc="Mapeamento de demanda por nodo geográfico." />
+                     <WizardStepHeader icon={<Megaphone />} title={t('marketing_strategy')} desc={t('marketing_desc')} />
                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                         {Object.entries(decisions.regions).map(([id, reg]: [any, any]) => (
                            <div key={id} className="bg-slate-900/40 p-10 rounded-[3.5rem] border border-white/5 space-y-10 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden group">
                               <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:scale-110 transition-transform"><Globe size={100}/></div>
                               <div className="flex justify-between items-center border-b border-white/5 pb-4 relative z-10">
-                                 <span className="text-sm font-black text-orange-500 uppercase italic">Nodo Regional 0{id}</span>
+                                 <span className="text-sm font-black text-orange-500 uppercase italic">{t('regional_node')} 0{id}</span>
                                  <span className="text-[10px] font-black text-slate-600">{currency}</span>
                               </div>
                               <div className="space-y-6 relative z-10">
-                                 <WizardField label={`Preço Unitário (${getCurrencySymbol(currency)})`} val={reg.price} type="number" onChange={(v:any)=>updateDecision(`regions.${id}.price`, v)} isCurrency currency={currency} />
+                                 <WizardField label={`${t('unit_price')} (${getCurrencySymbol(currency)})`} val={reg.price} type="number" onChange={(v:any)=>updateDecision(`regions.${id}.price`, v)} isCurrency currency={currency} />
                                  <div className="space-y-3">
-                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Prazo de Recebimento</label>
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">{t('payment_term')}</label>
                                     <select value={reg.term} onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))} className="w-full bg-slate-950 border-2 border-white/10 rounded-2xl p-4 text-[10px] font-black text-white uppercase outline-none focus:border-orange-600">
-                                       <option value={0}>A VISTA</option>
-                                       <option value={1}>PARCELADO (50/50)</option>
-                                       <option value={2}>LONGO PRAZO (33/33/33)</option>
+                                       <option value={0}>{t('cash_payment')}</option>
+                                       <option value={1}>{t('split_payment')}</option>
+                                       <option value={2}>{t('long_term_payment')}</option>
                                     </select>
                                  </div>
-                                 <WizardField label="Verba Marketing (Campanhas)" val={reg.marketing} type="number" onChange={(v:any)=>updateDecision(`regions.${id}.marketing`, v)} />
+                                 <WizardField label={t('marketing_budget')} val={reg.marketing} type="number" onChange={(v:any)=>updateDecision(`regions.${id}.marketing`, v)} />
                               </div>
                            </div>
                         ))}
@@ -176,18 +177,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                {activeStep === 2 && (
                   <div className="max-w-6xl mx-auto space-y-12">
-                     <WizardStepHeader icon={<Factory />} title="Operações Industriais" desc="Gestão de estoque e produtividade fabril." />
+                     <WizardStepHeader icon={<Factory />} title={t('production_ops')} desc={t('production_desc')} />
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        <InputCard label="COMPRA MP-A (UNID)" val={decisions.production.purchaseMPA} icon={<Package/>} onChange={(v:any)=>updateDecision('production.purchaseMPA', v)} />
-                        <InputCard label="COMPRA MP-B (UNID)" val={decisions.production.purchaseMPB} icon={<Package/>} onChange={(v:any)=>updateDecision('production.purchaseMPB', v)} />
-                        <InputCard label="ATIVIDADE FÁBRICA (%)" val={decisions.production.activityLevel} icon={<Activity/>} onChange={(v:any)=>updateDecision('production.activityLevel', v)} />
-                        <InputCard label="PESQUISA & DESENVOLV. ($)" val={decisions.production.rd_investment} icon={<Sparkles/>} onChange={(v:any)=>updateDecision('production.rd_investment', v)} isCurrency currency={currency} />
-                        <InputCard label="TURNO EXTRA (%)" val={decisions.production.extraProductionPercent} icon={<Zap/>} onChange={(v:any)=>updateDecision('production.extraProductionPercent', v)} />
+                        <InputCard label={t('purchase_mpa')} val={decisions.production.purchaseMPA} icon={<Package/>} onChange={(v:any)=>updateDecision('production.purchaseMPA', v)} />
+                        <InputCard label={t('purchase_mpb')} val={decisions.production.purchaseMPB} icon={<Package/>} onChange={(v:any)=>updateDecision('production.purchaseMPB', v)} />
+                        <InputCard label={t('activity_level')} val={decisions.production.activityLevel} icon={<Activity/>} onChange={(v:any)=>updateDecision('production.activityLevel', v)} />
+                        <InputCard label={t('rd_investment')} val={decisions.production.rd_investment} icon={<Sparkles/>} onChange={(v:any)=>updateDecision('production.rd_investment', v)} isCurrency currency={currency} />
+                        <InputCard label={t('extra_production')} val={decisions.production.extraProductionPercent} icon={<Zap/>} onChange={(v:any)=>updateDecision('production.extraProductionPercent', v)} />
                         <div className="bg-slate-900 border-2 border-white/5 rounded-[2.5rem] p-10 flex flex-col justify-center space-y-4">
-                           <span className="text-[10px] font-black text-slate-500 uppercase italic">Modalidade Pagto</span>
+                           <span className="text-[10px] font-black text-slate-500 uppercase italic">{t('supplier_payment')}</span>
                            <select value={decisions.production.paymentType} onChange={e => updateDecision('production.paymentType', parseInt(e.target.value))} className="w-full bg-slate-950 border-2 border-white/10 rounded-2xl p-4 text-[10px] font-black text-white uppercase outline-none focus:border-orange-600 shadow-inner">
-                              <option value={0}>A VISTA (SEM JUROS)</option>
-                              <option value={1}>30 DIAS (JUROS MP)</option>
+                              <option value={0}>{t('cash_supplier')}</option>
+                              <option value={1}>{t('term_supplier')}</option>
                            </select>
                         </div>
                      </div>
@@ -196,22 +197,23 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                {activeStep === 3 && (
                   <div className="max-w-6xl mx-auto space-y-12">
-                     <WizardStepHeader icon={<Users2 />} title="Recursos Humanos" desc="Gestão de headcount e remuneração." />
+                     <WizardStepHeader icon={<Users2 />} title={t('hr_strategy')} desc={t('hr_desc')} />
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        <InputCard label="CONTRATAÇÕES" val={decisions.hr.hired} icon={<UserPlus/>} onChange={(v:any)=>updateDecision('hr.hired', v)} />
-                        <InputCard label="DEMISSÕES" val={decisions.hr.fired} icon={<UserMinus/>} onChange={(v:any)=>updateDecision('hr.fired', v)} />
-                        <InputCard label={`PISO SALARIAL (${getCurrencySymbol(currency)})`} val={decisions.hr.salary} icon={<DollarSign/>} onChange={(v:any)=>updateDecision('hr.salary', v)} isCurrency currency={currency} />
-                        <InputCard label="TREINAMENTO (%)" val={decisions.hr.trainingPercent} icon={<Award/>} onChange={(v:any)=>updateDecision('hr.trainingPercent', v)} />
+                        <InputCard label={t('hiring')} val={decisions.hr.hired} icon={<UserPlus/>} onChange={(v:any)=>updateDecision('hr.hired', v)} />
+                        <InputCard label={t('firing')} val={decisions.hr.fired} icon={<UserMinus/>} onChange={(v:any)=>updateDecision('hr.fired', v)} />
+                        <InputCard label={`${t('min_salary')} (${getCurrencySymbol(currency)})`} val={decisions.hr.salary} icon={<DollarSign/>} onChange={(v:any)=>updateDecision('hr.salary', v)} isCurrency currency={currency} />
+                        <InputCard label={t('training')} val={decisions.hr.trainingPercent} icon={<Award/>} onChange={(v:any)=>updateDecision('hr.trainingPercent', v)} />
                      </div>
                   </div>
                )}
 
+               {/* Ativos step - omitted labels for space, assuming they are in decisions.json */}
                {activeStep === 4 && (
                   <div className="max-w-6xl mx-auto space-y-12">
-                     <WizardStepHeader icon={<Cpu />} title="Ativos de Capital" desc="Gestão de expansão ou liquidação de ativos fixos." />
+                     <WizardStepHeader icon={<Cpu />} title={t('capital_assets')} desc={t('assets_desc')} />
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         <div className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/5 space-y-8">
-                           <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><PlusCircle className="text-blue-500"/> Ordem de Compra</h4>
+                           <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><PlusCircle className="text-blue-500"/> {t('purchase_order')}</h4>
                            <div className="grid grid-cols-3 gap-6">
                               <InputCard label="ALFA" val={decisions.machinery.buy.alfa} onChange={(v:any)=>updateDecision('machinery.buy.alfa', v)} />
                               <InputCard label="BETA" val={decisions.machinery.buy.beta} onChange={(v:any)=>updateDecision('machinery.buy.beta', v)} />
@@ -219,7 +221,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            </div>
                         </div>
                         <div className="bg-slate-900/60 p-10 rounded-[3.5rem] border border-white/5 space-y-8">
-                           <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><MinusCircle className="text-rose-500"/> Ordem de Venda</h4>
+                           <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><MinusCircle className="text-rose-500"/> {t('sell_order')}</h4>
                            <div className="grid grid-cols-3 gap-6">
                               <InputCard label="ALFA" val={decisions.machinery.sell.alfa} onChange={(v:any)=>updateDecision('machinery.sell.alfa', v)} />
                               <InputCard label="BETA" val={decisions.machinery.sell.beta} onChange={(v:any)=>updateDecision('machinery.sell.beta', v)} />
@@ -232,19 +234,19 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                {activeStep === 5 && (
                   <div className="max-w-4xl mx-auto space-y-12">
-                     <WizardStepHeader icon={<Landmark />} title="Mercado Financeiro" desc="Gestão de liquidez e alavancagem." />
+                     <WizardStepHeader icon={<Landmark />} title={t('financial_market')} desc={t('finance_desc')} />
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div className="bg-slate-900/60 p-10 rounded-[4rem] border border-white/5 space-y-8">
-                           <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><Coins className="text-orange-500"/> Requisitar Crédito</h4>
-                           <InputCard label={`VALOR EMPRÉSTIMO (${getCurrencySymbol(currency)})`} val={decisions.finance.loanRequest} icon={<Landmark/>} onChange={(v:any)=>updateDecision('finance.loanRequest', v)} isCurrency currency={currency} />
-                           <WizardField label="Prazo (Meses)" val={decisions.finance.loanTerm} type="number" onChange={(v:any)=>updateDecision('finance.loanTerm', v)} />
+                           <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><Coins className="text-orange-500"/> {t('request_credit')}</h4>
+                           <InputCard label={`${t('loan_amount')} (${getCurrencySymbol(currency)})`} val={decisions.finance.loanRequest} icon={<Landmark/>} onChange={(v:any)=>updateDecision('finance.loanRequest', v)} isCurrency currency={currency} />
+                           <WizardField label={t('term_months')} val={decisions.finance.loanTerm} type="number" onChange={(v:any)=>updateDecision('finance.loanTerm', v)} />
                         </div>
                         <div className="bg-slate-900/60 p-10 rounded-[4rem] border border-white/5 space-y-8 flex flex-col justify-between">
                            <div>
-                              <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><TrendingUp className="text-emerald-500"/> Aplicação Liquidez</h4>
-                              <p className="text-[10px] font-bold text-slate-500 uppercase mt-2">Excesso de caixa gera rendimentos conforme TR.</p>
+                              <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><TrendingUp className="text-emerald-500"/> {t('liquidity_app')}</h4>
+                              <p className="text-[10px] font-bold text-slate-500 uppercase mt-2">{t('interest_explanation')}</p>
                            </div>
-                           <InputCard label={`APLICAR VALOR (${getCurrencySymbol(currency)})`} val={decisions.finance.application} icon={<Activity/>} onChange={(v:any)=>updateDecision('finance.application', v)} isCurrency currency={currency} />
+                           <InputCard label={`${t('apply_value')} (${getCurrencySymbol(currency)})`} val={decisions.finance.application} icon={<Activity/>} onChange={(v:any)=>updateDecision('finance.application', v)} isCurrency currency={currency} />
                         </div>
                      </div>
                   </div>
@@ -252,11 +254,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                {activeStep === 6 && (
                   <div className="max-w-6xl mx-auto space-y-12">
-                     <WizardStepHeader icon={<Target />} title="Metas & Auditoria" desc="Defina seus objetivos para o prêmio de precisão Oracle." />
+                     <WizardStepHeader icon={<Target />} title={t('goals_audit')} desc={t('goals_desc')} />
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        <InputCard label="PREVISÃO CUSTO UNIT." val={decisions.estimates.forecasted_unit_cost} icon={<Box/>} onChange={(v:any)=>updateDecision('estimates.forecasted_unit_cost', v)} isCurrency currency={currency} />
-                        <InputCard label="PREVISÃO RECEITA" val={decisions.estimates.forecasted_revenue} icon={<BarChart3/>} onChange={(v:any)=>updateDecision('estimates.forecasted_revenue', v)} isCurrency currency={currency} />
-                        <InputCard label="PREVISÃO LUCRO LÍQ." val={decisions.estimates.forecasted_net_profit} icon={<Scale/>} onChange={(v:any)=>updateDecision('estimates.forecasted_net_profit', v)} isCurrency currency={currency} />
+                        <InputCard label={t('forecast_cost')} val={decisions.estimates.forecasted_unit_cost} icon={<Box/>} onChange={(v:any)=>updateDecision('estimates.forecasted_unit_cost', v)} isCurrency currency={currency} />
+                        <InputCard label={t('forecast_revenue')} val={decisions.estimates.forecasted_revenue} icon={<BarChart3/>} onChange={(v:any)=>updateDecision('estimates.forecasted_revenue', v)} isCurrency currency={currency} />
+                        <InputCard label={t('forecast_profit')} val={decisions.estimates.forecasted_net_profit} icon={<Scale/>} onChange={(v:any)=>updateDecision('estimates.forecasted_net_profit', v)} isCurrency currency={currency} />
                      </div>
                   </div>
                )}
@@ -266,14 +268,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                      <div className="w-24 h-24 bg-emerald-500 rounded-[3rem] flex items-center justify-center mx-auto text-white shadow-[0_0_60px_rgba(16,185,129,0.3)] animate-pulse">
                         <CheckCircle2 size={56} />
                      </div>
-                     <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Pronto para Sincronizar</h2>
-                     <p className="text-slate-400 text-lg font-medium italic">Seus dados foram verificados e estão prontos para transmissão ao motor Oracle v18.0.</p>
+                     <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">{t('ready_sync')}</h2>
+                     <p className="text-slate-400 text-lg font-medium italic">{t('transmit_ready_desc')}</p>
                      <div className="p-10 bg-white/5 border border-white/10 rounded-[3rem] text-left space-y-6">
                         <div className="flex items-center gap-4 text-emerald-500">
                            <CheckCircle2 size={24}/>
-                           <span className="text-[10px] font-black uppercase tracking-widest">Protocolo de Integridade Validado</span>
+                           <span className="text-[10px] font-black uppercase tracking-widest">{t('integrity_validated')}</span>
                         </div>
-                        <p className="text-xs text-slate-500 font-bold leading-relaxed italic">"O envio selará suas decisões para este ciclo. Mudanças posteriores exigirão re-abertura pelo Tutor se o turnover não houver ocorrido."</p>
+                        <p className="text-xs text-slate-500 font-bold leading-relaxed italic">"{t('final_warning')}"</p>
                      </div>
                   </div>
                )}
@@ -284,7 +286,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          <button onClick={() => setActiveStep(s => Math.max(0, s-1))} disabled={activeStep === 0} className="floating-nav-btn left-8 active:scale-90 shadow-2xl transition-all"><ChevronLeft size={32} strokeWidth={2.5}/></button>
          {activeStep === STEPS.length - 1 ? (
            <button disabled={isReadOnly || isSaving} onClick={handleTransmit} className="floating-nav-btn-primary shadow-3xl">
-              {isSaving ? <Loader2 size={32} className="animate-spin" /> : <Rocket size={32} strokeWidth={2.5} />} TRANSMITIR PROTOCOLO
+              {isSaving ? <Loader2 size={32} className="animate-spin" /> : <Rocket size={32} strokeWidth={2.5} />} {t('submit_protocol')}
            </button>
          ) : (
            <button onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} className="floating-nav-btn right-8 active:scale-90 shadow-2xl transition-all"><ChevronRight size={32} strokeWidth={2.5}/></button>
@@ -317,7 +319,7 @@ const WizardField = ({ label, val, onChange, type = 'text', isCurrency, currency
 const InputCard = ({ label, val, icon, onChange, isCurrency, currency }: any) => (
   <div className="bg-slate-900 border-2 border-white/5 rounded-[3rem] p-10 flex flex-col gap-6 hover:border-orange-500/30 transition-all group shadow-2xl overflow-hidden relative">
      <div className="flex items-center gap-4 relative z-10">
-        <div className="p-4 bg-white/5 rounded-2xl text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-lg">{icon}</div>
+        {icon && <div className="p-4 bg-white/5 rounded-2xl text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-lg">{icon}</div>}
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic leading-tight">{label}</label>
      </div>
      <div className="relative z-10">
