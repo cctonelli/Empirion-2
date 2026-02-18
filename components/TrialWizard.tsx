@@ -408,7 +408,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
       <div className="fixed bottom-0 left-0 right-0 p-10 flex justify-between items-center pointer-events-none z-[100]">
          <button onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1} className="pointer-events-auto p-8 bg-slate-900 text-white border border-white/10 rounded-full shadow-2xl hover:bg-white hover:text-slate-950 transition-all active:scale-90 disabled:opacity-0">
-            <ChevronLeft size={32} />
+            <ChevronLeft size={25} />
          </button>
          
          {step === stepsCount ? (
@@ -417,7 +417,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
            </button>
          ) : (
            <button onClick={() => setStep(s => s + 1)} className="pointer-events-auto p-8 bg-orange-600 text-white rounded-full shadow-2xl hover:bg-white hover:text-orange-950 transition-all active:scale-90 border-4 border-orange-400/50">
-              <ChevronRight size={32} />
+              <ChevronRight size={25} />
            </button>
          )}
       </div>
