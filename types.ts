@@ -21,7 +21,6 @@ export type AnalysisSource = 'parameterized' | 'ai_real_world';
 export type RegionType = 'domestic' | 'international';
 export type BPVisibility = 'private' | 'shared' | 'public';
 
-// Add missing MenuItemConfig interface
 export interface MenuItemConfig {
   label: string;
   path: string;
@@ -33,20 +32,17 @@ export interface MenuItemConfig {
   }[];
 }
 
-// Add missing ChampionshipTemplate interface
 export interface ChampionshipTemplate {
   id: string;
   name: string;
   branch: Branch;
 }
 
-// Add missing InitialMachine interface
 export interface InitialMachine {
   model: MachineModel;
   count: number;
 }
 
-// Add missing BlackSwanEvent interface
 export interface BlackSwanEvent {
   title: string;
   description: string;
@@ -59,7 +55,6 @@ export interface BlackSwanEvent {
   };
 }
 
-// Add missing Loan interface
 export interface Loan {
   id?: string;
   amount: number;
@@ -68,14 +63,12 @@ export interface Loan {
   interest_rate: number;
 }
 
-// Add missing CommunityCriteria interface
 export interface CommunityCriteria {
   id: string;
   label: string;
   weight: number;
 }
 
-// Add missing BMCBlocks interface
 export interface BMCBlocks {
   customer_segments: string;
   value_propositions: string;
@@ -88,7 +81,6 @@ export interface BMCBlocks {
   cost_structure: string;
 }
 
-// Add missing EmpathyMap interface
 export interface EmpathyMap {
   think_feel: string;
   hear: string;
@@ -139,6 +131,7 @@ export interface Team {
   equity: number;
   is_bot?: boolean;
   insolvency_status?: InsolvencyStatus;
+  locale?: string; // Novo: Suporte a idioma da unidade
 }
 
 export interface TutorTeamView {
@@ -186,6 +179,7 @@ export interface Championship {
   round_started_at?: string;
   observers?: string[];
   config?: any;
+  locale?: string; // Novo: Idioma oficial da Arena
 }
 
 export interface AuditLog {
@@ -247,7 +241,6 @@ export interface MacroIndicators {
   dividend_percent: number;
   production_hours_period: number;
   
-  // Ajustadores de Custo/Preço v18.0
   raw_material_a_adjust?: number;
   machine_alpha_price_adjust?: number;
   machine_beta_price_adjust?: number;
@@ -256,7 +249,6 @@ export interface MacroIndicators {
   distribution_cost_adjust?: number;
   storage_cost_adjust?: number;
   
-  // Tarifas de Exportação
   export_tariff_usa?: number;
   export_tariff_euro?: number;
   export_tariff_china?: number;
