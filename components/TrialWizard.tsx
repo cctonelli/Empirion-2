@@ -230,7 +230,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {/* INSUMOS E ESTOCAGEM */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Insumos e Estocagem</h4>
+                       <h4 className="text-[6px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Insumos e Estocagem</h4>
                        <WizardField label="MP-A Base ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.mp_a} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_a: v}})} />
                        <WizardField label="MP-B Base ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.mp_b} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_b: v}})} />
                        <WizardField label="Ágio Compras Esp. (%)" type="number" val={marketIndicators.special_purchase_premium} onChange={(v:any)=>setMarketIndicators({...marketIndicators, special_purchase_premium: parseFloat(v)})} />
