@@ -47,7 +47,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           </div>
           <div className="flex flex-col">
             <span className="text-xl md:text-2xl font-black tracking-tighter uppercase text-white italic leading-none group-hover:text-orange-500 transition-colors">EMPIRION</span>
-            <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em] leading-none mt-1">Strategic Command Node</span>
+            <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em] leading-none mt-1">Business Simulator</span>
           </div>
         </Link>
 
