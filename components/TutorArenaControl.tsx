@@ -7,8 +7,7 @@ import {
   UserPlus, UserMinus, ShoppingCart, Info, HardDrive,
   BarChart3, Landmark, Percent, Settings2, DollarSign,
   ShieldAlert, Users, CheckCircle2, ChevronRight, Scale, AlertCircle, Briefcase, Award, Eye, X,
-  // Fix: Added missing User import from lucide-react
-  User
+  User, Calculator, Repeat, Coins
 } from 'lucide-react';
 import { EcosystemConfig, Championship, MacroIndicators, BlackSwanEvent, LaborAvailability, CurrencyType } from '../types';
 import { updateEcosystem, supabase } from '../services/supabase';
@@ -30,6 +29,11 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
   }, [championship, nextRoundIdx]);
 
   const [macro, setMacro] = useState<MacroIndicators>(inheritedRules);
+
+  // States para a calculadora de paridade interna
+  const [calcValue, setCalcValue] = useState(100);
+  const [calcFrom, setCalcFrom] = useState<string>('USD');
+  const [calcTo, setCalcTo] = useState<string>(championship.currency || 'BRL');
 
   useEffect(() => {
     setMacro(inheritedRules);
@@ -55,7 +59,15 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
     await updateEcosystem(championship.id, payload);
     onUpdate(payload);
     setIsSaving(false);
-    alert(`INTERVENÇÃO EXECUTADA: Cenário e Acessos P0${nextRoundIdx} selados.`);
+    alert(`INTERVENÇÃO EXECUTADA: Cenário e Câmbio P0${nextRoundIdx} selados no Oracle Node.`);
+  };
+
+  const calculateCrossRate = (val: number, from: string, to: string) => {
+     const baseCurrency = championship.currency || 'BRL';
+     const rates: any = { ...macro.exchange_rates, [baseCurrency]: 1.0 };
+     const fromRate = rates[from] || 1.0;
+     const toRate = rates[to] || 1.0;
+     return (val * fromRate) / toRate;
   };
 
   const addObserver = () => {
@@ -92,14 +104,88 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
             <TabBtn active={activeTab === 'market'} onClick={() => setActiveTab('market')} label="Mercado" icon={<ShoppingCart size={14}/>} />
             <TabBtn active={activeTab === 'staffing'} onClick={() => setActiveTab('staffing')} label="Staffing" icon={<Briefcase size={14}/>} />
             <TabBtn active={activeTab === 'awards'} onClick={() => setActiveTab('awards')} label="Premiações" icon={<Award size={14}/>} />
-            <TabBtn active={activeTab === 'international'} onClick={() => setActiveTab('international')} label="Câmbio" icon={<Globe size={14}/>} />
+            <TabBtn active={activeTab === 'international'} onClick={() => setActiveTab('international')} label="Câmbio Oracle" icon={<Globe size={14}/>} />
             <TabBtn active={activeTab === 'observers'} onClick={() => setActiveTab('observers')} label="Observadores" icon={<Eye size={14}/>} />
          </div>
       </div>
 
       <AnimatePresence mode="wait">
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+        <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
            
+           {activeTab === 'international' && (
+              <div className="space-y-10">
+                 <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-20 opacity-5 pointer-events-none rotate-12">
+                       <Globe size={300} />
+                    </div>
+
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+                       <div className="flex items-center gap-6">
+                          <div className="p-4 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-500/20"><Globe size={32}/></div>
+                          <div>
+                             <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Matriz de Paridade Cambial</h3>
+                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic">
+                                Moeda Base da Arena (Pivot Node): <span className="text-orange-500">{championship.currency || 'BRL'}</span>.
+                             </p>
+                          </div>
+                       </div>
+                       <div className="flex items-center gap-3 px-6 py-2 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl text-[10px] font-black uppercase italic tracking-widest">
+                          <Calculator size={14}/> Oracle Cross-Rate Engine Ativo
+                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+                       <ParamCard label="Dólar (USD)" val={macro.exchange_rates?.USD || 5.2} suffix={`/${championship.currency}`} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} icon={<DollarSign className="text-emerald-500" />} />
+                       <ParamCard label="Euro (EUR)" val={macro.exchange_rates?.EUR || 5.5} suffix={`/${championship.currency}`} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} icon={<Landmark className="text-blue-500" />} />
+                       <ParamCard label="Yuan (CNY)" val={macro.exchange_rates?.CNY || 0.72} suffix={`/${championship.currency}`} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, CNY: v}})} icon={<Globe className="text-red-400" />} />
+                       <ParamCard label="Bitcoin (BTC)" val={macro.exchange_rates?.BTC || 0.00002} suffix={`/${championship.currency}`} onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, BTC: v}})} icon={<Coins className="text-amber-500" />} />
+                    </div>
+
+                    {/* Simulador de Paridade Cruzada */}
+                    <div className="bg-slate-950/60 p-10 rounded-[3rem] border border-white/5 space-y-8 relative z-10">
+                       <div className="flex items-center gap-4 text-blue-400">
+                          <Calculator size={20} />
+                          <h4 className="text-sm font-black uppercase tracking-widest italic">Simulador de Transação Internacional</h4>
+                       </div>
+                       
+                       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                          <div className="space-y-3">
+                             <label className="text-[9px] font-black text-slate-600 uppercase italic ml-2">Valor da Ordem</label>
+                             <input type="number" value={calcValue} onChange={e => setCalcValue(Number(e.target.value))} className="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-white font-mono font-black outline-none focus:border-blue-500" />
+                          </div>
+                          <div className="space-y-3">
+                             <label className="text-[9px] font-black text-slate-600 uppercase italic ml-2">Moeda de Origem</label>
+                             <select value={calcFrom} onChange={e => setCalcFrom(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-white font-black uppercase outline-none focus:border-blue-500">
+                                {Object.keys({...macro.exchange_rates, [championship.currency || 'BRL']: 1}).map(m => <option key={m} value={m}>{m}</option>)}
+                             </select>
+                          </div>
+                          <div className="flex justify-center pb-4 text-slate-700"><Repeat size={24}/></div>
+                          <div className="space-y-3">
+                             <label className="text-[9px] font-black text-slate-600 uppercase italic ml-2">Moeda de Destino</label>
+                             <select value={calcTo} onChange={e => setCalcTo(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-white font-black uppercase outline-none focus:border-blue-500">
+                                {Object.keys({...macro.exchange_rates, [championship.currency || 'BRL']: 1}).map(m => <option key={m} value={m}>{m}</option>)}
+                             </select>
+                          </div>
+                       </div>
+
+                       <div className="p-8 bg-blue-600/5 border border-blue-500/20 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-8">
+                          <div className="space-y-2">
+                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Resultado da Conversão Oracle</span>
+                             <div className="text-5xl font-black text-white italic tracking-tighter">
+                                {calcTo} {calculateCrossRate(calcValue, calcFrom, calcTo).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                             </div>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-[9px] text-blue-300 font-bold uppercase italic leading-relaxed max-w-[300px]">
+                                "O motor Oracle converte {calcFrom} para {championship.currency || 'BRL'} (Base) e depois para {calcTo}. A precisão é vital para o cálculo de margens de exportação."
+                             </p>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           )}
+
            {activeTab === 'conjuncture' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                  <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -110,7 +196,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                  </div>
                  <div className="lg:col-span-4 bg-slate-900/50 p-10 rounded-[4rem] border border-white/10 shadow-2xl">
                     <h3 className="text-xl font-black text-white uppercase italic mb-8 flex items-center gap-3"><Users size={20} className="text-indigo-400"/> Sensibilidade Humana</h3>
-                    <MacroInput dark label="Produtividade Média" val={macro.labor_productivity} onChange={(v: number) => setMacro({...macro, labor_productivity: v})} />
+                    <MacroInput dark label="Produtividade Média" val={macro.labor_productivity || 1.0} onChange={(v: number) => setMacro({...macro, labor_productivity: v})} />
                     <div className="mt-8 space-y-4">
                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">Disponibilidade</label>
                        <div className="grid grid-cols-3 gap-2">
@@ -168,7 +254,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
               </div>
            )}
 
-           {/* Mantém as outras abas conforme original */}
            {activeTab === 'suppliers' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                  <div className="lg:col-span-4 space-y-8">
@@ -254,22 +339,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
               </div>
            )}
 
-           {activeTab === 'international' && (
-              <div className="bg-slate-900 p-10 rounded-[4rem] border border-white/10 shadow-2xl space-y-12">
-                 <div className="flex items-center gap-6">
-                    <div className="p-4 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-500/20"><Globe size={32}/></div>
-                    <div>
-                       <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Câmbio e Geopolítica</h3>
-                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic">Taxas de conversão para o Ciclo P0{nextRoundIdx}.</p>
-                    </div>
-                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <ParamCard label="Dólar (USD)" val={macro.exchange_rates?.USD || 5.2} suffix="x" onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, USD: v}})} icon={<DollarSign className="text-emerald-500" />} />
-                    <ParamCard label="Euro (EUR)" val={macro.exchange_rates?.EUR || 5.5} suffix="x" onChange={(v: number) => setMacro({...macro, exchange_rates: {...macro.exchange_rates, EUR: v}})} icon={<Landmark className="text-blue-500" />} />
-                 </div>
-              </div>
-           )}
-
         </motion.div>
       </AnimatePresence>
 
@@ -286,9 +355,9 @@ const ParamCard = ({ label, val, suffix, onChange, icon }: any) => (
   <div className="bg-slate-900/80 p-8 rounded-[3rem] border border-white/10 flex flex-col gap-6 shadow-xl group hover:border-orange-500/30 transition-all">
      <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-orange-600 group-hover:text-white transition-all w-fit">{icon}</div>
      <div>
-        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-orange-500 mb-4 block italic">{label}</label>
+        <label className="text-[10px] font-black text-slate-500 group-hover:text-orange-500 mb-4 block italic uppercase tracking-widest">{label}</label>
         <div className="flex items-center gap-3">
-           <input type="number" step="0.1" value={val} onChange={e => onChange(parseFloat(e.target.value))} className="bg-transparent text-4xl font-black text-white italic outline-none w-32 border-b border-white/5 focus:border-orange-500 transition-all" />
+           <input type="number" step="0.0001" value={val} onChange={e => onChange(parseFloat(e.target.value))} className="bg-transparent text-4xl font-black text-white italic outline-none w-32 border-b border-white/5 focus:border-orange-500 transition-all" />
            <span className="text-2xl font-black text-slate-700 italic">{suffix}</span>
         </div>
      </div>
