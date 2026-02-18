@@ -126,7 +126,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-xl"><Rocket size={32} /></div>
            <div>
               <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Sandbox Trial Setup</h2>
-              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Nova Arena • Nodo {formData.currency}</p>
+              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Nova Arena • Moeda Base: {formData.currency}</p>
            </div>
         </div>
         <div className="flex gap-4">
@@ -144,7 +144,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DO TORNEIO" desc="CONFIGURAÇÕES GLOBAIS DA ARENA SANDBOX." />
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2"><WizardField label="NOME DO TORNEIO" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TORNEIO TRIAL MASTER" /></div>
-                    <WizardSelect label="MOEDA BASE (REPORTE)" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
+                    <WizardSelect label="MOEDA BASE" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
                     
                     <div className="grid grid-cols-2 gap-4">
                       <WizardField label="TEMPO ROUND" type="number" val={formData.roundTime} onChange={()=>{}} isLocked />
@@ -189,16 +189,16 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   <WizardStepTitle icon={<MapPin size={32}/>} title="MERCADOS E REGIÕES" desc="PESO DA DEMANDA E MOEDAS LOCAIS." />
                   <div className="space-y-10">
                     <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                      <h4 className="text-xl font-black text-white uppercase italic">Configuração de Nodos</h4>
+                      <h4 className="text-xl font-black text-white uppercase italic">Configuração de Regiões</h4>
                       <button onClick={addRegion} className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-xl active:scale-95">
-                        <Plus size={16}/> Adicionar Nodo
+                        <Plus size={16}/> Adicionar Região
                       </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                        {regionConfigs.map((r, i) => (
                           <div key={i} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 group hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
                              <div className="space-y-3">
-                                <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nomenclatura do Nodo</label>
+                                <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nome da Região</label>
                                 <input value={r.name} onChange={e => updateRegion(i, { name: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-white font-black uppercase italic outline-none focus:border-orange-500" />
                              </div>
                              <div className="grid grid-cols-2 gap-6">
@@ -236,7 +236,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="Ágio Compras Esp. (%)" type="number" val={marketIndicators.special_purchase_premium} onChange={(v:any)=>setMarketIndicators({...marketIndicators, special_purchase_premium: parseFloat(v)})} />
                        <div className="grid grid-cols-2 gap-4">
                           <WizardField label="Estocagem MP ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.storage_mp} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, storage_mp: v}})} />
-                          <WizardField label="Estocagem PROD ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.storage_finished} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, storage_finished: v}})} />
+                          <WizardField label="Estocagem PA ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.storage_finished} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, storage_finished: v}})} />
                        </div>
                     </div>
 
