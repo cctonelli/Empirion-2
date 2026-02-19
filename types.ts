@@ -20,8 +20,8 @@ export type ModalityType = 'standard' | 'blitz' | 'marathon';
 export type AnalysisSource = 'parameterized' | 'ai_real_world';
 export type RegionType = 'domestic' | 'international';
 export type BPVisibility = 'private' | 'shared' | 'public';
+export type StrategicProfile = 'AGRESSIVO' | 'CONSERVADOR' | 'EFICIENTE' | 'INOVADOR' | 'EQUILIBRADO';
 
-// Fix: Added missing UserProfile interface
 export interface UserProfile {
   id: string;
   supabase_user_id: string;
@@ -59,7 +59,6 @@ export interface MachineInstance {
   accumulated_depreciation: number;
 }
 
-// Fix: Added missing InitialMachine interface
 export interface InitialMachine {
   model: MachineModel;
   age: number;
@@ -108,7 +107,6 @@ export interface KPIs {
   [key: string]: any;
 }
 
-// Fix: Added missing Loan interface
 export interface Loan {
   id: string;
   team_id: string;
@@ -126,6 +124,7 @@ export interface Team {
   kpis: KPIs;
   equity: number;
   is_bot?: boolean;
+  strategic_profile?: StrategicProfile;
   insolvency_status?: InsolvencyStatus;
   locale?: string;
 }
@@ -307,14 +306,12 @@ export interface Modality {
   page_content: any;
 }
 
-// Fix: Added missing CommunityCriteria interface
 export interface CommunityCriteria {
   id: string;
   label: string;
   weight: number;
 }
 
-// Fix: Added missing BMCBlocks interface
 export interface BMCBlocks {
   customer_segments: string;
   value_propositions: string;
@@ -327,7 +324,6 @@ export interface BMCBlocks {
   cost_structure: string;
 }
 
-// Fix: Added missing EmpathyMap interface
 export interface EmpathyMap {
   think_feel: string;
   hear: string;
@@ -337,7 +333,6 @@ export interface EmpathyMap {
   gains: string;
 }
 
-// Fix: Added missing TutorTeamView interface
 export interface TutorTeamView {
   id: string;
   name: string;
@@ -351,4 +346,5 @@ export interface TutorTeamView {
   auditLogs: AuditLog[];
   current_decision?: any;
   is_bot?: boolean;
+  strategic_profile?: StrategicProfile;
 }

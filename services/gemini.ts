@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType, BlackSwanEvent, TransparencyLevel, GazetaMode } from "../types";
+import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType, BlackSwanEvent, TransparencyLevel, GazetaMode, StrategicProfile } from "../types";
 
 const getClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -21,7 +21,7 @@ export const auditBusinessPlan = async (section: string, contextJson: string, hi
       Sua Tarefa (Fidelidade v18.0):
       1. Verifique se existe COERÊNCIA entre a Proposta de Valor e os Segmentos de Clientes no Canvas.
       2. Critique se as Atividades Chave justificam a Estrutura de Custos.
-      3. Analise se o KPI histórico (ex: ROI, Liquidez) reflete a eficiência do modelo desenhado.
+      3. Analise se o KPI histórico (ex: ROI, Liquidez) reflecte a eficiência do modelo desenhado.
       4. Identifique contradições lógicas (ex: Modelo de baixo custo com marketing agressivo ou parceiros de luxo).
       
       Idioma: Português (Brasil). Máximo 150 palavras. Tom: Direto, Construtivo e Altamente Técnico.`,
@@ -104,7 +104,6 @@ export const generateDynamicMarketNews = async (
       5. Estrutura: Uma manchete impactante + 3 parágrafos curtos cobrindo: Ocorrências de Mercado, Desempenho do Líder e Alerta de Conjuntura.
     `;
 
-    // Fix: Removed maxOutputTokens to prevent blocked responses by the thinking engine (as per @google/genai guidelines)
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: contextPrompt,
@@ -120,83 +119,67 @@ export const generateDynamicMarketNews = async (
   }
 };
 
-export const generateMarketAnalysis = async (arenaName: string, round: number, branch: string) => {
+export const generateBotDecision = async (
+  branch: Branch, 
+  round: number, 
+  regionCount: number, 
+  macro: MacroIndicators,
+  botName: string,
+  persistedProfile?: StrategicProfile
+): Promise<DecisionData> => {
   try {
     const ai = getClient();
+    
+    const profiles: Record<StrategicProfile, string> = {
+      "AGRESSIVO": "Foco total em conquistar Market Share, preços baixos, marketing massivo e expansão rápida de CAPEX.",
+      "CONSERVADOR": "Foco em preservação de caixa, margens altas, preços premium e baixo endividamento.",
+      "EFICIENTE": "Foco em otimização de custos de produção, nível de atividade equilibrado e gestão rigorosa de estoque.",
+      "INOVADOR": "Foco em P&D, qualidade superior e diferenciação regional via marketing segmentado.",
+      "EQUILIBRADO": "Abordagem moderada, balanceando crescimento e solvência sem riscos extremos."
+    };
+    
+    const profile = persistedProfile || "EQUILIBRADO";
+    const profileDesc = profiles[profile];
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Gere uma análise estratégica curta para a arena ${arenaName}, ciclo 0${round}, ramo ${branch}. Foque em competitividade e saúde financeira das unidades operantes.`,
-      config: { temperature: 0.6 }
+      contents: `Você é o CEO da empresa "${botName}" em uma simulação empresarial de alta fidelidade (${branch}).
+      Estamos no Round ${round}.
+      
+      SEU PERFIL ESTRATÉGICO: ${profile} - ${profileDesc}
+      
+      CENÁRIO MACRO ATUAL:
+      ${JSON.stringify(macro)}
+      
+      INSTRUÇÕES DE DECISÃO:
+      1. Defina preços e marketing para ${regionCount} regiões (ID 1 a ${regionCount}).
+      2. Decida compras de matéria-prima MPA e MPB (considere que 1 PA = 1 MPA + 1 MPB).
+      3. Defina nível de atividade da fábrica (0-100%) e investimento em P&D.
+      4. Decida compra de máquinas Alfa, Beta ou Gama se necessário para seu perfil.
+      5. Estime seus resultados (Forecast).
+      
+      REGRAS RÍGIDAS:
+      - O campo "regions" deve ser um objeto onde as chaves são números de 1 a ${regionCount}.
+      - Retorne APENAS o JSON puro, seguindo exatamente a interface DecisionData.
+      - Não adicione explicações fora do JSON.`,
+      config: { 
+        responseMimeType: "application/json",
+        temperature: 0.8
+      }
     });
-    return response.text || "Insight indisponível.";
-  } catch (err) {
-    console.error("Analysis Error:", err);
-    return "Falha na análise neural.";
-  }
-};
 
-export const performGroundedSearch = async (query: string) => {
-  try {
-    const ai = getClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Pesquise e analise a seguinte consulta de mercado para uma simulação empresarial: "${query}". Forneça dados atualizados e tendências reais.`,
-      config: {
-        tools: [{ googleSearch: {} }],
-        temperature: 0.3
-      },
-    });
-
-    const text = response.text || "Nenhum resultado processado.";
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
-      title: chunk.web?.title || "Fonte de Inteligência",
-      uri: chunk.web?.uri || "#"
-    })) || [];
-
-    return { text, sources };
-  } catch (err) {
-    console.error("Grounded Search Error:", err);
-    return { text: "Falha no canal de busca groundada.", sources: [] };
-  }
-};
-
-export const getLiveDecisionAdvice = async (decisions: DecisionData, branch: string) => {
-  try {
-    const ai = getClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Analise estas decisões de simulação empresarial (${branch}): ${JSON.stringify(decisions)}. Identifique erros fatais.`,
-      config: { temperature: 0.5 }
-    });
-    return response.text;
-  } catch (err) { return null; }
-};
-
-export const generateBotDecision = async (branch: Branch, round: number, regionCount: number, macro: MacroIndicators): Promise<DecisionData> => {
-  try {
-    const ai = getClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Gere decisões competitivas para round ${round} em ${branch}. Considere o cenário macro: ${JSON.stringify(macro)}. Retorne apenas JSON puro.`,
-      config: { responseMimeType: "application/json" }
-    });
     return JSON.parse(response.text || '{}');
   } catch (error) {
-    return { judicial_recovery: false, regions: {}, hr: {}, production: {}, machinery: {}, finance: {}, estimates: {} } as any;
-  }
-};
-
-export const generateBlackSwanEvent = async (branch: Branch): Promise<BlackSwanEvent> => {
-  try {
-    const ai = getClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Gere um Cisne Negro para ${branch}. Deve ser um evento econômico inesperado com modificadores para inflação, demanda, juros e produtividade. Retorne apenas JSON puro.`,
-      config: { responseMimeType: "application/json" }
-    });
-    return JSON.parse(response.text || '{}');
-  } catch (error) {
-    return { title: "Crise", description: "...", impact: "...", modifiers: { inflation: 1, demand: -10, interest: 1, productivity: -0.1 } };
+    console.error(`Falha ao gerar decisão para BOT ${botName}:`, error);
+    return { 
+      judicial_recovery: false, 
+      regions: { 1: { price: 425, marketing: 1, term: 0 } }, 
+      hr: { hired: 0, fired: 0, salary: 2000 }, 
+      production: { purchaseMPA: 5000, purchaseMPB: 5000, activityLevel: 100 }, 
+      machinery: { buy: { alfa: 0, beta: 0, gama: 0 } }, 
+      finance: { loanRequest: 0 }, 
+      estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 } 
+    } as any;
   }
 };
 
@@ -209,4 +192,95 @@ export const createChatSession = () => {
       thinkingConfig: { thinkingBudget: 8192 }
     },
   });
+};
+
+// Fix: Added generateMarketAnalysis as requested by MarketAnalysis.tsx
+export const generateMarketAnalysis = async (arenaName: string, round: number, branch: Branch) => {
+  try {
+    const ai = getClient();
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Analise o cenário estratégico para a arena de simulação "${arenaName}" no round ${round}. O setor de atuação é ${branch}. 
+      Forneça uma previsão tática curta e impactante para o conselho administrativo.`,
+      config: { temperature: 0.7 }
+    });
+    return response.text || "Análise indisponível no momento.";
+  } catch (error) {
+    console.error("Market Analysis error:", error);
+    return "Falha na conexão com o terminal de inteligência.";
+  }
+};
+
+// Fix: Added performGroundedSearch as requested by MarketAnalysis.tsx
+export const performGroundedSearch = async (query: string) => {
+  try {
+    const ai = getClient();
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Realize uma pesquisa fundamentada sobre: ${query}. Relacione os dados com tendências de mercado industrial e econômico real.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+      },
+    });
+
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+      ?.filter((chunk: any) => chunk.web)
+      .map((chunk: any) => ({
+        uri: chunk.web.uri,
+        title: chunk.web.title,
+      })) || [];
+
+    return {
+      text: response.text || "Nenhuma informação estratégica encontrada para esta query.",
+      sources: sources,
+    };
+  } catch (error) {
+    console.error("Grounded Search error:", error);
+    return { text: "Erro no processamento da busca fundamentada.", sources: [] };
+  }
+};
+
+// Fix: Added generateBlackSwanEvent as requested by AdminCommandCenter.tsx
+export const generateBlackSwanEvent = async (branch: Branch): Promise<BlackSwanEvent> => {
+  try {
+    const ai = getClient();
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Gere um evento econômico "Cisne Negro" (inesperado, raro e de impacto sistêmico) para uma simulação empresarial no ramo de ${branch}.
+      O evento deve trazer desafios reais que exijam pivotagem estratégica das equipes.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING, description: "Título impactante do evento" },
+            description: { type: Type.STRING, description: "Contexto narrativo do evento" },
+            impact: { type: Type.STRING, description: "Resumo técnico do impacto nos mercados" },
+            modifiers: {
+              type: Type.OBJECT,
+              properties: {
+                inflation: { type: Type.NUMBER, description: "Variação na inflação (ex: 0.5 para +0.5%)" },
+                demand: { type: Type.NUMBER, description: "Variação na demanda global (ex: -15 para -15%)" },
+                interest: { type: Type.NUMBER, description: "Variação na taxa de juros (ex: 1.0 para +1.0%)" },
+                productivity: { type: Type.NUMBER, description: "Impacto na produtividade (ex: -0.2 para -20%)" }
+              },
+              required: ["inflation", "demand", "interest", "productivity"]
+            }
+          },
+          required: ["title", "description", "impact", "modifiers"]
+        },
+        temperature: 0.9,
+      }
+    });
+
+    return JSON.parse(response.text || '{}');
+  } catch (error) {
+    console.error("Black Swan Generation error:", error);
+    return {
+      title: "Instabilidade Sistêmica",
+      description: "Um evento geopolítico não mapeado causou volatilidade extrema nos nodos econômicos.",
+      impact: "Redução generalizada de demanda e aumento nos custos de capital.",
+      modifiers: { inflation: 0.2, demand: -10, interest: 1.5, productivity: -0.05 }
+    };
+  }
 };

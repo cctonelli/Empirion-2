@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators, Loan, Branch, AuditLog } from '../types';
+import { DecisionData, Championship, Team, UserProfile, EcosystemConfig, BusinessPlan, TransparencyLevel, GazetaMode, InitialMachine, MacroIndicators, Loan, Branch, AuditLog, StrategicProfile } from '../types';
 import { DEFAULT_MACRO, INITIAL_INDUSTRIAL_FINANCIALS, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { calculateProjections, sanitize } from './simulation';
 import { logError, logInfo, LogContext } from '../utils/logger';
@@ -126,9 +126,11 @@ export const createChampionshipWithTeams = async (champData: any, teams: any[], 
     const { data: champ, error: cErr } = await supabase.from(champTable).insert(insertPayload).select().single();
     if (cErr) return { success: false, error: cErr.message };
 
+    const profiles: StrategicProfile[] = ["AGRESSIVO", "CONSERVADOR", "EFICIENTE", "INOVADOR", "EQUILIBRADO"];
     const teamsToInsert = teams.map(t => ({
         name: t.name,
         is_bot: t.is_bot || false,
+        strategic_profile: t.is_bot ? profiles[Math.floor(Math.random() * profiles.length)] : 'EQUILIBRADO',
         championship_id: champ.id,
         equity: finalFinancials.balance_sheet.find((n:any) => n.id === 'equity')?.value || 7252171.74,
         kpis: { rating: 'AAA', current_cash: 0, stock_quantities: { mpa: 30000, mpb: 20000 }, statements: finalFinancials }
@@ -152,11 +154,9 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
     
     const { data: { session } } = await (supabase.auth as any).getSession();
     
-    // Antes de salvar, logamos a auditoria se houver mudança (v18.9)
     if (session) {
         const { data: old } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', round).maybeSingle();
         if (old) {
-           // Logica simplificada de auditoria: salva o snapshot no decision_audit_log
            await supabase.from('decision_audit_log').insert({
                championship_id: champId,
                team_id: teamId,
@@ -165,7 +165,7 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
                field_path: 'root_snapshot',
                old_value: old.data,
                new_value: decisions,
-               comment: 'Alteração em massa via formulário'
+               comment: 'Alteração estratégica persistida'
            });
         }
     }
@@ -195,7 +195,17 @@ export const processRoundTurnover = async (id: string, round: number) => {
         for (const team of (teams || [])) {
             const { data: dec } = await supabase.from(isTrial ? 'trial_decisions' : 'current_decisions').select('*').eq('team_id', team.id).eq('round', round + 1).maybeSingle();
             let finalDecision = dec?.data;
-            if (team.is_bot && !finalDecision) finalDecision = await generateBotDecision(champ.branch, round + 1, champ.regions_count, champ.market_indicators);
+            
+            if (team.is_bot && !finalDecision) {
+              finalDecision = await generateBotDecision(
+                champ.branch, 
+                round + 1, 
+                champ.regions_count, 
+                champ.market_indicators,
+                team.name,
+                team.strategic_profile // Coerência tática persistida
+              );
+            }
 
             if (finalDecision) {
                 const res = calculateProjections(finalDecision, champ.branch, champ.ecosystem_config, champ.market_indicators, team);

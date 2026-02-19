@@ -64,12 +64,13 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             dcf: proj?.kpis?.dcf_valuation || t.kpis?.dcf_valuation || 0,
             auditLogs: (decision?.data?.audit_logs || []) as AuditLog[],
             current_decision: decision?.data,
-            is_bot: t.is_bot
+            is_bot: t.is_bot,
+            strategic_profile: t.strategic_profile
           };
         });
       } else {
         const { data: historyData } = await supabase.from(historyTable)
-          .select('*, team:teams(name, is_bot)')
+          .select('*, team:teams(name, is_bot, strategic_profile)')
           .eq('championship_id', championshipId)
           .eq('round', targetNode);
 
@@ -84,7 +85,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           kanitz: h.solvency_score_kanitz || h.kpis?.solvency_score_kanitz || 0,
           dcf: h.dcf_valuation || h.kpis?.dcf_valuation || 0,
           auditLogs: [],
-          is_bot: h.team?.is_bot
+          is_bot: h.team?.is_bot,
+          strategic_profile: h.team?.strategic_profile
         }));
       }
       setTeams(processedTeams);
@@ -195,7 +197,12 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
          
          <div className="flex justify-between items-start relative z-10">
             <div className="space-y-1">
-               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic">{team.is_bot ? 'Autonomous Node' : `Equipe ${String.fromCharCode(65 + index)}`}</h4>
+               <div className="flex items-center gap-2 mb-1">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic">{team.is_bot ? 'Autonomous Node' : `Equipe ${String.fromCharCode(65 + index)}`}</h4>
+                  {team.is_bot && team.strategic_profile && (
+                     <span className="px-2 py-0.5 bg-indigo-600 text-white rounded text-[7px] font-black uppercase tracking-widest">{team.strategic_profile}</span>
+                  )}
+               </div>
                <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">{team.name}</h3>
             </div>
             <div className="text-right">
