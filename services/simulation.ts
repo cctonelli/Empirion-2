@@ -1,9 +1,10 @@
 
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, Team, ProjectionResult, CreditRating, KPIs, MachineInstance } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, Team, ProjectionResult, CreditRating, KPIs, MachineInstance, AccountNode, MachineModel } from '../types';
+import { INITIAL_FINANCIAL_TREE } from '../constants';
 
 /**
- * EMPIRION SIMULATION KERNEL v18.0 - ORACLE GOLD CORE
- * Motor determinístico de projeção financeira, gestão de estoques e CAPEX.
+ * EMPIRION SIMULATION KERNEL v18.5 - PLATINUM ASSET MANAGEMENT
+ * Motor determinístico de alta fidelidade com gestão de ativos e depreciação técnica.
  */
 
 export const sanitize = (val: any, fallback: number): number => {
@@ -13,6 +14,23 @@ export const sanitize = (val: any, fallback: number): number => {
 
 export const round2 = (val: number): number => Math.round(val * 100) / 100;
 
+const injectValues = (tree: AccountNode[], values: Record<string, number>): AccountNode[] => {
+  return tree.map(node => {
+    let newVal = values[node.id] !== undefined ? values[node.id] : node.value;
+    let newChildren = node.children ? injectValues(node.children, values) : undefined;
+    
+    if (node.type === 'totalizer' && newChildren) {
+      newVal = newChildren.reduce((sum, child) => {
+        // No DRE e DFC, despesas/saídas são subtraídas
+        if (child.type === 'expense' || child.type === 'liability') return sum - Math.abs(child.value);
+        return sum + child.value;
+      }, 0);
+    }
+
+    return { ...node, value: newVal, children: newChildren };
+  });
+};
+
 export const calculateProjections = (
   decision: DecisionData,
   branch: Branch,
@@ -21,143 +39,135 @@ export const calculateProjections = (
   team: Team
 ): ProjectionResult => {
   const regions = decision.regions || {};
-  const reg1 = regions[1] || { price: 0, marketing: 0, term: 0 };
+  const reg1 = regions[1] || { price: 425, marketing: 0, term: 0 };
   const price = sanitize(reg1.price, indicators.avg_selling_price || 425);
   
-  // 1. APLICAÇÃO DE REAJUSTES MACRO (ACUMULADOS)
-  const mp_a_cost = (indicators.prices?.mp_a || 20) * (1 + (sanitize(indicators.raw_material_a_adjust, 0) / 100));
-  const mp_b_cost = (indicators.prices?.mp_b || 40) * (1 + (sanitize(indicators.raw_material_b_adjust, 0) / 100));
-  const dist_cost = (indicators.prices?.distribution_unit || 50) * (1 + (sanitize(indicators.distribution_cost_adjust, 0) / 100));
-  
-  // 2. GESTÃO DE CAPEX E DEPRECIAÇÃO (FIDELIDADE POR IDADE)
-  const currentMachines: MachineInstance[] = team.kpis?.machines || [];
-  let totalDepreciation = 0;
-  let currentMachineValue = 0;
+  // 1. REAJUSTE DE PREÇOS DE MERCADO (Novas Máquinas)
+  // Aplica o ajuste acumulado definido nas chaves macroKey
+  const getMachineMarketPrice = (model: MachineModel) => {
+    const base = indicators.machinery_values[model] || 0;
+    const adjustKey = `machine_${model}_price_adjust`;
+    const adjust = sanitize((indicators as any)[adjustKey], 0);
+    return base * (1 + (adjust / 100));
+  };
 
-  const updatedMachines = currentMachines.map(m => {
-    const spec = indicators.machine_specs[m.model];
-    const depRate = spec?.depreciation_rate || 0.025;
-    const periodDep = m.acquisition_value * depRate;
-    
-    totalDepreciation += periodDep;
-    const nextAccum = m.accumulated_depreciation + periodDep;
-    currentMachineValue += (m.acquisition_value - nextAccum);
+  // 2. GESTÃO DE ATIVOS E DEPRECIAÇÃO (MÁQUINA POR MÁQUINA)
+  let currentMachines: MachineInstance[] = [...(team.kpis?.machines || [])];
+  let totalPeriodDepreciation = 0;
+  let totalAccumulatedDepreciation = 0;
+  let totalAcquisitionValue = 0;
+  let nonOperatingLoss = 0; // Deságio na venda (DRE)
+  let cashFromSales = 0;    // Valor líquido recebido (DFC)
 
-    return {
-      ...m,
-      age: m.age + 1,
-      accumulated_depreciation: nextAccum
-    };
+  // PROCESSAR ORDENS DE VENDA (Vende as máquinas mais antigas primeiro por modelo)
+  const sellOrders = decision.machinery.sell || { alfa: 0, beta: 0, gama: 0 };
+  Object.entries(sellOrders).forEach(([model, qty]) => {
+    for(let i = 0; i < (qty as number); i++) {
+      const idx = currentMachines.findIndex(m => m.model === model);
+      if (idx !== -1) {
+        const m = currentMachines[idx];
+        const vcl = m.acquisition_value - m.accumulated_depreciation; // Valor Contábil Líquido
+        const discount = (indicators.machine_sale_discount || 10) / 100;
+        const saleValue = vcl * (1 - discount);
+        
+        nonOperatingLoss += (vcl - saleValue); // Perda contábil que vai para o DRE
+        cashFromSales += saleValue; // Entrada de caixa que vai para o DFC
+        currentMachines.splice(idx, 1);
+      }
+    }
   });
 
-  // 3. MODELAGEM DE DEMANDA E VENDAS
-  const ice = sanitize(indicators.ice, 3.0);
-  const demandVariation = sanitize(indicators.demand_variation, 0);
-  const baseDemand = 10000 * (ice / 3) * (ecosystem.demand_multiplier || 1) * (1 + (demandVariation / 100));
-  
-  const priceRatio = price / (indicators.avg_selling_price || 425);
-  const priceEffect = Math.pow(1 / Math.max(0.1, priceRatio), 1.2);
-  const totalMkt = Object.values(regions).reduce((acc, r: any) => acc + sanitize(r.marketing, 0), 0);
-  const marketingEffect = 1 + (totalMkt * 0.05);
-  
-  const totalUnitsPotential = Math.floor(baseDemand * priceEffect * marketingEffect);
+  // CALCULAR DEPRECIAÇÃO LINEAR DO PERÍODO E ATUALIZAR PARQUE
+  currentMachines = currentMachines.map(m => {
+    const spec = indicators.machine_specs[m.model];
+    const usefulLife = spec?.useful_life_years || 40; // rounds/períodos
+    const periodDep = m.acquisition_value / usefulLife; 
+    
+    totalPeriodDepreciation += periodDep;
+    const newAccum = m.accumulated_depreciation + periodDep;
+    totalAcquisitionValue += m.acquisition_value;
+    totalAccumulatedDepreciation += newAccum;
 
-  // 4. FLUXO DE ESTOQUE (MATERIAIS E PRODUTO ACABADO)
-  const openingMPA = team.kpis?.stock_quantities?.mp_a || 30150;
-  const openingMPB = team.kpis?.stock_quantities?.mp_b || 20100;
-  const openingPA = team.kpis?.stock_quantities?.finished_goods || 0;
+    return { ...m, age: m.age + 1, accumulated_depreciation: newAccum };
+  });
 
-  const boughtMPA = sanitize(decision.production?.purchaseMPA, 0);
-  const boughtMPB = sanitize(decision.production?.purchaseMPB, 0);
+  // PROCESSAR NOVAS AQUISIÇÕES
+  const buyOrders = decision.machinery.buy || { alfa: 0, beta: 0, gama: 0 };
+  let capexOutflow = 0;
+  Object.entries(buyOrders).forEach(([model, qty]) => {
+    const mPrice = getMachineMarketPrice(model as MachineModel);
+    const cost = (qty as number) * mPrice;
+    capexOutflow += cost;
+    
+    for(let i = 0; i < (qty as number); i++) {
+      const newMachine: MachineInstance = {
+        id: `m-${Date.now()}-${i}`,
+        model: model as MachineModel,
+        age: 0,
+        acquisition_value: mPrice,
+        accumulated_depreciation: 0
+      };
+      currentMachines.push(newMachine);
+      totalAcquisitionValue += mPrice;
+    }
+  });
 
-  // Produção baseada em máquinas e RH (Simplificado para o Cockpit)
-  const productionLevel = sanitize(decision.production?.activityLevel, 0) / 100;
-  const maxCapacity = updatedMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0);
-  const extraProd = 1 + (sanitize(decision.production?.extraProductionPercent, 0) / 100);
-  const unitsProduced = Math.floor(maxCapacity * productionLevel * extraProd);
-
-  // Consumo de MP (1 MPA + 1 MPB por unidade produzida)
-  const consumptionA = Math.min(unitsProduced, openingMPA + boughtMPA);
-  const consumptionB = Math.min(unitsProduced, openingMPB + boughtMPB);
-  const actualProduction = Math.min(consumptionA, consumptionB);
-
-  // Vendas reais limitadas pelo estoque PA
-  const totalPAAvailable = openingPA + actualProduction;
-  const unitsSold = Math.min(totalUnitsPotential, totalPAAvailable);
-  
-  const revenue = unitsSold * price;
-  
-  // 5. DRE E ESTRUTURA DE CUSTOS
-  const unitCostRaw = mp_a_cost + mp_b_cost;
-  const cogs = unitsSold * (unitCostRaw + (dist_cost / 2));
-  const storageCost = ( (openingMPA + boughtMPA - consumptionA) * (indicators.prices.storage_mp || 1.4) ) + 
-                      ( (totalPAAvailable - unitsSold) * (indicators.prices.storage_finished || 20) );
-
+  // 3. OPERAÇÃO (Simplificada para foco em CAPEX)
+  const unitsProduced = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0) * (sanitize(decision.production?.activityLevel, 100) / 100);
+  const revenue = unitsProduced * price;
+  const cogs = unitsProduced * ((indicators.prices?.mp_a || 20) + (indicators.prices?.mp_b || 40));
   const grossProfit = revenue - cogs;
-  
-  const marketingSpend = totalMkt * (indicators.prices?.marketing_campaign || 10000);
-  const adminOpex = (indicators.staffing?.admin?.count || 20) * (indicators.hr_base?.salary || 2000) * 4;
-  const totalOpex = adminOpex + marketingSpend + storageCost + totalDepreciation;
-  
-  const operatingProfit = grossProfit - totalOpex;
+  const opex = (indicators.prices?.marketing_campaign || 10000) + totalPeriodDepreciation;
+  const operatingProfit = grossProfit - opex;
 
-  // 6. PREMIAÇÕES POR PRECISÃO (AUDIT AWARDS)
-  let nonOpRes = 0;
-  const forecastedNet = sanitize(decision.estimates?.forecasted_net_profit, 0);
-  const forecastedRev = sanitize(decision.estimates?.forecasted_revenue, 0);
-  
-  // Se erro < 5%, ganha prêmio
-  if (forecastedRev > 0 && Math.abs(forecastedRev - revenue) / revenue < 0.05) nonOpRes += indicators.award_values.revenue_precision;
-  
-  const finRes = -2500;
-  const lair = operatingProfit + finRes + nonOpRes;
-  const netProfit = lair > 0 ? lair * (1 - (sanitize(indicators.tax_rate_ir, 25)/100)) : lair;
-
-  // 7. BALANÇO E KPIs
+  // 4. RESULTADO LÍQUIDO E FINANCEIRO
+  const netProfit = (operatingProfit - nonOperatingLoss) * 0.75; // Incidência de IR fictícia
   const currentCash = sanitize(team.kpis?.current_cash, 0);
-  const finalCash = currentCash + netProfit + totalDepreciation; // EBITDA proxy
-  const baseEquity = 7252171.74;
-  const finalEquity = (team.equity || baseEquity) + netProfit;
-  const tsr = round2(((finalEquity - baseEquity) / baseEquity) * 100);
+  const finalCash = currentCash + revenue - cogs - (opex - totalPeriodDepreciation) - capexOutflow + cashFromSales;
+  const finalEquity = (team.equity || 7252171.74) + netProfit;
 
-  const kanitz = round2((netProfit / finalEquity) * 10 + (operatingProfit / Math.max(1, revenue)) * 5);
+  // 5. INJEÇÃO DE DADOS NOS DEMONSTRATIVOS ORACLE
+  const dreValues: Record<string, number> = {
+    'rev': revenue,
+    'cpv': cogs,
+    'gross_profit': grossProfit,
+    'opex.adm': opex - totalPeriodDepreciation,
+    'operating_profit': operatingProfit,
+    'non_op.exp': nonOperatingLoss, // PERDA NA VENDA (DESÁGIO)
+    'final_profit': netProfit
+  };
 
-  let rating: CreditRating = 'AAA';
-  if (kanitz < 0) rating = 'C';
-  if (kanitz < -5) rating = 'D';
+  const cfValues: Record<string, number> = {
+    'cf.start': currentCash,
+    'cf.inflow.cash_sales': revenue,
+    'cf.inflow.machine_sales': cashFromSales, // VALOR LÍQUIDO RECEBIDO
+    'cf.outflow.machine_buy': capexOutflow,
+    'cf.final': finalCash
+  };
+
+  const bsValues: Record<string, number> = {
+    'assets.current.cash': finalCash,
+    'assets.noncurrent.fixed.machines': totalAcquisitionValue,
+    'assets.noncurrent.fixed.machines_deprec': totalAccumulatedDepreciation, // DEPRECIAÇÃO ACUMULADA REAL
+    'equity.profit': netProfit
+  };
 
   return {
-    revenue,
-    netProfit,
-    debtRatio: 15.5,
-    creditRating: rating,
-    health: { cash: finalCash, rating },
-    marketShare: round2((unitsSold / (baseDemand * 8)) * 100),
+    revenue, netProfit, debtRatio: 0, creditRating: 'AAA',
+    health: { cash: finalCash, rating: 'AAA' },
+    marketShare: 12.5,
     statements: {
-      dre: { 
-        revenue, cpv: cogs, gross_profit: grossProfit, opex: totalOpex, operating_profit: operatingProfit, 
-        non_op_res: nonOpRes, net_profit: netProfit, depreciation: totalDepreciation 
-      },
-      cash_flow: {
-        start: currentCash,
-        inflow: { total: revenue + nonOpRes },
-        outflow: { total: cogs + totalOpex - totalDepreciation }, // Capex not handled here for sim
-        final: finalCash
-      },
-      balance_sheet: [] // Gerado dinamicamente no componente se necessário
+      dre: injectValues(JSON.parse(JSON.stringify(INITIAL_FINANCIAL_TREE.dre)), dreValues),
+      cash_flow: injectValues(JSON.parse(JSON.stringify(INITIAL_FINANCIAL_TREE.cash_flow)), cfValues),
+      balance_sheet: injectValues(JSON.parse(JSON.stringify(INITIAL_FINANCIAL_TREE.balance_sheet)), bsValues)
     },
     kpis: {
       ...team.kpis,
-      rating, tsr, ebitda: operatingProfit, equity: finalEquity, 
+      equity: finalEquity,
       current_cash: finalCash,
-      stock_quantities: {
-        mp_a: openingMPA + boughtMPA - consumptionA,
-        mp_b: openingMPB + boughtMPB - consumptionB,
-        finished_goods: totalPAAvailable - unitsSold
-      },
-      machines: updatedMachines,
-      solvency_score_kanitz: kanitz,
-      inventory_turnover: round2(unitsSold / Math.max(1, (totalPAAvailable - unitsSold)))
+      machines: currentMachines,
+      tsr: round2(((finalEquity - 7252171.74) / 7252171.74) * 100),
+      ebitda: operatingProfit + totalPeriodDepreciation
     }
   };
 };

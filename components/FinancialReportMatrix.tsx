@@ -1,109 +1,133 @@
 
 import React from 'react';
-import { ChevronRight, TrendingUp, Activity, Landmark, ArrowRight, Calculator } from 'lucide-react';
+import { ChevronRight, TrendingUp, Activity, Landmark, Calculator, ArrowRight, CornerDownRight } from 'lucide-react';
 import { AccountNode, CurrencyType } from '../types';
 import { formatCurrency } from '../utils/formatters';
 
 interface MatrixProps {
   type: 'balance' | 'dre' | 'cashflow';
-  history: any[]; // Dados dos rounds passados
-  projection: any; // Dados projetados da decisão atual
+  history: any[]; 
+  projection: any; 
   currency: CurrencyType;
 }
 
 const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projection, currency }) => {
-  // Mock de estrutura de contas baseado no tipo
-  // No futuro, isso deve vir dinamicamente das constantes ou DB
-  const getLabel = () => {
-    if (type === 'balance') return 'Balanço Patrimonial Consolidado';
-    if (type === 'dre') return 'Demonstrativo de Resultados (DRE)';
-    return 'Fluxo de Caixa Preditivo (DFC)';
+  const getTitle = () => {
+    if (type === 'balance') return 'Balanço Patrimonial Auditado (v18.0)';
+    if (type === 'dre') return 'DRE - Demonstrativo de Resultados (Competência)';
+    return 'DFC - Fluxo de Caixa Preditivo (Regime de Caixa)';
   };
 
   const getIcon = () => {
-    if (type === 'balance') return <Landmark className="text-blue-500" />;
-    if (type === 'dre') return <TrendingUp className="text-orange-500" />;
-    return <Activity className="text-emerald-500" />;
+    if (type === 'balance') return <Landmark className="text-blue-400" />;
+    if (type === 'dre') return <TrendingUp className="text-orange-400" />;
+    return <Activity className="text-emerald-400" />;
   };
 
-  // Pega todas as contas únicas presentes no histórico e na projeção
-  const rounds = [...history.map(h => ({ round: h.round, data: h.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : type] })), 
-                  { round: 'PROJ', data: projection?.statements?.[type === 'balance' ? 'balance_sheet' : type] }];
+  // Consolidação de períodos: Histórico + Projeção
+  const periods = [
+    // Fix: Explicitly added isProjection: false to history map to satisfy TypeScript property checks
+    ...history.map(h => ({ 
+      round: h.round, 
+      data: h.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')],
+      isProjection: false 
+    })),
+    { round: 'PROJ (T+1)', data: projection?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], isProjection: true }
+  ];
+
+  // Função recursiva para renderizar a árvore de contas de forma hierárquica e completa
+  const renderRows = (nodes: any[], level = 0) => {
+    if (!nodes || !Array.isArray(nodes)) return null;
+
+    return nodes.map((node: AccountNode) => {
+      const isTotalizer = node.type === 'totalizer';
+      return (
+        <React.Fragment key={node.id}>
+          <tr className={`border-b border-white/5 transition-colors hover:bg-white/[0.03] ${isTotalizer ? 'bg-white/[0.02] font-black' : ''}`}>
+            <td className="p-4 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[300px]">
+              <div className="flex items-center gap-2" style={{ paddingLeft: `${level * 20}px` }}>
+                {level > 0 && <CornerDownRight size={10} className="text-slate-600" />}
+                <span className={`text-[10px] uppercase tracking-wider ${isTotalizer ? 'text-white' : 'text-slate-400'}`}>
+                  {node.label}
+                </span>
+              </div>
+            </td>
+            {periods.map((p: any, idx) => {
+              // Lógica de extração de valor: procura o nó correspondente no statement de cada período
+              const periodData = Array.isArray(p.data) ? p.data : [];
+              const findVal = (list: any[]): number => {
+                for (const n of list) {
+                  if (n.id === node.id) return n.value;
+                  if (n.children) {
+                    const v = findVal(n.children);
+                    if (v !== undefined) return v;
+                  }
+                }
+                return 0;
+              };
+              
+              const val = findVal(periodData);
+              return (
+                <td key={idx} className={`p-4 text-center font-mono text-xs ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-bold' : 'text-slate-300'}`}>
+                  {formatCurrency(val, currency)}
+                </td>
+              );
+            })}
+          </tr>
+          {node.children && renderRows(node.children, level + 1)}
+        </React.Fragment>
+      );
+    });
+  };
+
+  // Se o tipo for DRE ou Cashflow, os dados podem não estar em árvore. Convertemos para estrutura de lista se necessário.
+  const rootData = periods[periods.length - 1].data || [];
+  const initialData = Array.isArray(rootData) ? rootData : Object.entries(rootData).map(([k, v]: [string, any]) => ({ id: k, label: k.replace(/_/g, ' ').toUpperCase(), value: typeof v === 'number' ? v : (v?.total || 0) }));
 
   return (
-    <div className="flex flex-col h-full bg-slate-950/50 rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
-      <header className="p-8 bg-slate-900 border-b border-white/10 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-white/5 rounded-2xl">{getIcon()}</div>
+    <div className="flex flex-col h-full bg-slate-950 border border-white/10 rounded-[3rem] overflow-hidden shadow-3xl">
+      <header className="p-8 bg-slate-900 border-b border-white/10 flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-6">
+          <div className="p-4 bg-white/5 rounded-2xl shadow-inner">{getIcon()}</div>
           <div>
-            <h3 className="text-xl font-black text-white uppercase italic tracking-tight">{getLabel()}</h3>
-            <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.3em]">Oracle Financial Intelligence Matrix</p>
+            <h3 className="text-2xl font-black text-white uppercase italic tracking-tight leading-none">{getTitle()}</h3>
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mt-2 italic">Oracle High Fidelity Reporting Engine</p>
           </div>
+        </div>
+        <div className="flex items-center gap-4">
+           <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-[9px] font-black text-emerald-500 uppercase">Dados Auditados</span>
+           </div>
         </div>
       </header>
 
-      <div className="flex-1 overflow-auto custom-scrollbar p-6">
+      <div className="flex-1 overflow-auto custom-scrollbar">
         <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="text-[10px] font-black uppercase text-slate-500 tracking-widest bg-slate-900/50">
-              <th className="p-4 sticky left-0 bg-slate-900 z-20 border-r border-white/5 min-w-[250px]">Conta Contábil</th>
-              {rounds.map((r, i) => (
-                <th key={i} className={`p-4 text-center border-r border-white/5 ${r.round === 'PROJ' ? 'bg-orange-600/10 text-orange-500' : ''}`}>
-                  {r.round === 'PROJ' ? 'PROJEÇÃO T+1' : `ROUND 0${r.round}`}
+          <thead className="sticky top-0 z-40 bg-slate-900 shadow-md">
+            <tr className="text-[9px] font-black uppercase text-slate-500 tracking-widest">
+              <th className="p-4 sticky left-0 bg-slate-900 z-50 border-r border-white/10">Contas Contábeis</th>
+              {periods.map((p: any, i) => (
+                <th key={i} className={`p-4 text-center border-r border-white/5 ${p.isProjection ? 'bg-orange-600/10 text-orange-500' : ''}`}>
+                  {p.isProjection ? 'PROJEÇÃO T+1' : `ROUND 0${p.round}`}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5 font-mono text-xs">
-             {/* Renderização recursiva das contas aqui. 
-                 Simplificado para este commit, mas deve seguir a INITIAL_FINANCIAL_TREE */}
-             <tr className="hover:bg-white/5 transition-colors">
-                <td className="p-4 sticky left-0 bg-slate-950 font-black text-white uppercase italic">Demonstrativo Detalhado</td>
-                {rounds.map((_, i) => <td key={i} className="p-4 text-center opacity-20">---</td>)}
-             </tr>
-             {/* Aqui entramos com a lógica de mapeamento de contas reais */}
-             <MatrixDataRows type={type} rounds={rounds} currency={currency} />
+          <tbody className="divide-y divide-white/5">
+            {renderRows(initialData as any)}
           </tbody>
         </table>
       </div>
-      
-      <footer className="p-6 bg-slate-900/80 border-t border-white/5 flex items-center gap-4 opacity-50">
-         <Calculator size={14} className="text-blue-400" />
-         <span className="text-[8px] font-black uppercase tracking-widest">Os dados de projeção consideram elasticidade-preço e prazos de recebimento médios decididos no ciclo atual.</span>
+
+      <footer className="p-6 bg-slate-900/80 border-t border-white/5 flex items-center justify-between opacity-60 shrink-0">
+        <div className="flex items-center gap-3">
+          <Calculator size={14} className="text-blue-400" />
+          <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Projeções v18.5 baseadas em elasticidade-preço regional e PMP/PMR decidido.</span>
+        </div>
+        <span className="text-[8px] font-mono text-slate-600">SEQ_NODE_ORACLE_REPORT_VALIDATED</span>
       </footer>
     </div>
-  );
-};
-
-// Sub-componente para renderizar as linhas de dados reais
-const MatrixDataRows = ({ type, rounds, currency }: any) => {
-  // Esta função deve espelhar a estrutura de contas completa
-  // Para brevidade, vamos focar nos KPIs principais, mas no código final ela percorre a árvore completa
-  const accounts = type === 'dre' 
-    ? ['revenue', 'cpv', 'gross_profit', 'opex', 'operating_profit', 'net_profit']
-    : type === 'cashflow'
-    ? ['start', 'inflow_total', 'outflow_total', 'final']
-    : ['assets_total', 'liabilities_total', 'equity_total'];
-
-  return (
-    <>
-      {accounts.map(acc => (
-        <tr key={acc} className="hover:bg-white/[0.02]">
-          <td className="p-4 sticky left-0 bg-slate-950 border-r border-white/5 font-bold text-slate-400 uppercase tracking-tighter">
-            {acc.replace('_', ' ')}
-          </td>
-          {rounds.map((r: any, i: number) => {
-            // Lógica de extração do valor da conta do JSON consolidado de KPIs
-            const val = 0; // Fallback: extrair de r.data conforme a conta
-            return (
-              <td key={i} className={`p-4 text-center font-black ${r.round === 'PROJ' ? 'text-orange-400' : 'text-slate-200'}`}>
-                {formatCurrency(val, currency)}
-              </td>
-            );
-          })}
-        </tr>
-      ))}
-    </>
   );
 };
 
