@@ -21,6 +21,19 @@ export type AnalysisSource = 'parameterized' | 'ai_real_world';
 export type RegionType = 'domestic' | 'international';
 export type BPVisibility = 'private' | 'shared' | 'public';
 
+// Fix: Added missing UserProfile interface
+export interface UserProfile {
+  id: string;
+  supabase_user_id: string;
+  name: string;
+  nickname: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  is_opal_premium: boolean;
+  created_at: string;
+}
+
 export interface MenuItemConfig {
   label: string;
   path: string;
@@ -38,9 +51,20 @@ export interface ChampionshipTemplate {
   branch: Branch;
 }
 
+export interface MachineInstance {
+  id: string;
+  model: MachineModel;
+  age: number;
+  acquisition_value: number;
+  accumulated_depreciation: number;
+}
+
+// Fix: Added missing InitialMachine interface
 export interface InitialMachine {
   model: MachineModel;
-  count: number;
+  age: number;
+  acquisition_value: number;
+  accumulated_depreciation: number;
 }
 
 export interface BlackSwanEvent {
@@ -55,53 +79,6 @@ export interface BlackSwanEvent {
   };
 }
 
-export interface Loan {
-  id?: string;
-  amount: number;
-  remaining_rounds: number;
-  total_rounds: number;
-  interest_rate: number;
-}
-
-export interface CommunityCriteria {
-  id: string;
-  label: string;
-  weight: number;
-}
-
-export interface BMCBlocks {
-  customer_segments: string;
-  value_propositions: string;
-  channels: string;
-  customer_relationships: string;
-  revenue_streams: string;
-  key_resources: string;
-  key_activities: string;
-  key_partnerships: string;
-  cost_structure: string;
-}
-
-export interface EmpathyMap {
-  think_feel: string;
-  hear: string;
-  see: string;
-  say_do: string;
-  pains: string;
-  gains: string;
-}
-
-export interface UserProfile {
-  id: string;
-  supabase_user_id: string;
-  name: string;
-  nickname: string;
-  phone: string;
-  email: string;
-  role: UserRole;
-  is_opal_premium: boolean;
-  created_at: string;
-}
-
 export interface KPIs {
   rating: CreditRating;
   loans: any[];
@@ -109,7 +86,12 @@ export interface KPIs {
   current_cash: number;
   equity: number;
   market_share?: number;
-  stock_quantities?: any;
+  stock_quantities: {
+    mp_a: number;
+    mp_b: number;
+    finished_goods: number;
+  };
+  machines: MachineInstance[];
   tsr?: number; 
   nlcdg?: number; 
   ebitda?: number;
@@ -120,7 +102,21 @@ export interface KPIs {
   dcf_valuation?: number;
   inventory_turnover?: number;
   liquidity_current?: number;
+  scissors_effect?: number;
+  avg_receivable_days?: number;
+  avg_payable_days?: number;
   [key: string]: any;
+}
+
+// Fix: Added missing Loan interface
+export interface Loan {
+  id: string;
+  team_id: string;
+  amount: number;
+  term: number;
+  remaining_rounds: number;
+  interest_rate: number;
+  type: 'compulsory' | 'normal';
 }
 
 export interface Team {
@@ -131,22 +127,7 @@ export interface Team {
   equity: number;
   is_bot?: boolean;
   insolvency_status?: InsolvencyStatus;
-  locale?: string; // Novo: Suporte a idioma da unidade
-}
-
-export interface TutorTeamView {
-  id: string;
-  name: string;
-  rating: CreditRating;
-  tsr: number;
-  market_share: number;
-  nlcdg: number;
-  kanitz: number;
-  ebitda: number;
-  dcf: number;
-  auditLogs: AuditLog[];
-  current_decision?: DecisionData;
-  is_bot?: boolean;
+  locale?: string;
 }
 
 export interface DecisionData {
@@ -156,7 +137,11 @@ export interface DecisionData {
   production: any;
   machinery: any;
   finance: any;
-  estimates: any;
+  estimates: {
+    forecasted_unit_cost: number;
+    forecasted_revenue: number;
+    forecasted_net_profit: number;
+  };
   audit_logs?: any[];
 }
 
@@ -167,7 +152,7 @@ export interface Championship {
   total_rounds: number;
   branch: Branch;
   regions_count: number;
-  market_indicators: any;
+  market_indicators: MacroIndicators;
   round_rules?: Record<number, any>;
   teams?: Team[];
   is_trial?: boolean;
@@ -179,44 +164,9 @@ export interface Championship {
   round_started_at?: string;
   observers?: string[];
   config?: any;
-  locale?: string; // Novo: Idioma oficial da Arena
-}
-
-export interface AuditLog {
-  user_id: string;
-  changed_at: string;
-  field_path: string;
-  old_value: any;
-  new_value: any;
-}
-
-export interface RegionConfig {
-  id: number;
-  name: string;
-  currency: CurrencyType;
-  demand_weight: number;
-}
-
-export interface AccountNode {
-  id: string;
-  label: string;
-  value: number;
-  type?: 'totalizer' | 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
-  isEditable?: boolean;
-  isReadOnly?: boolean;
-  children?: AccountNode[];
-}
-
-export interface MachineSpec {
-  model: MachineModel;
-  initial_value: number;
-  production_capacity: number;
-  operators_required: number;
-  depreciation_rate: number;
-  overload_coef: number;
-  aging_coef: number;
-  useful_life_years: number;
-  overload_extra_rate: number;
+  locale?: string;
+  transparency_level: TransparencyLevel;
+  gazeta_mode: GazetaMode;
 }
 
 export interface MacroIndicators {
@@ -242,17 +192,13 @@ export interface MacroIndicators {
   production_hours_period: number;
   
   raw_material_a_adjust?: number;
+  raw_material_b_adjust?: number;
   machine_alpha_price_adjust?: number;
   machine_beta_price_adjust?: number;
   machine_gamma_price_adjust?: number;
   marketing_campaign_adjust?: number;
   distribution_cost_adjust?: number;
   storage_cost_adjust?: number;
-  
-  export_tariff_usa?: number;
-  export_tariff_euro?: number;
-  export_tariff_china?: number;
-  export_tariff_btc?: number;
 
   award_values: {
     cost_precision: number;
@@ -276,8 +222,36 @@ export interface MacroIndicators {
   };
   hr_base: { salary: number };
   exchange_rates: Record<string, number>;
-  region_configs?: RegionConfig[];
   [key: string]: any;
+}
+
+export interface MachineSpec {
+  model: MachineModel;
+  initial_value: number;
+  production_capacity: number;
+  operators_required: number;
+  depreciation_rate: number;
+  overload_coef: number;
+  aging_coef: number;
+  useful_life_years: number;
+  overload_extra_rate: number;
+}
+
+export interface RegionConfig {
+  id: number;
+  name: string;
+  currency: CurrencyType;
+  demand_weight: number;
+}
+
+export interface AccountNode {
+  id: string;
+  label: string;
+  value: number;
+  type?: 'totalizer' | 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+  isEditable?: boolean;
+  isReadOnly?: boolean;
+  children?: AccountNode[];
 }
 
 export interface BusinessPlan {
@@ -287,12 +261,7 @@ export interface BusinessPlan {
   user_id?: string;
   round: number;
   version: number;
-  data: {
-    steps: Record<number, any>;
-    canvas: BMCBlocks;
-    empathy: EmpathyMap;
-    epicenter: string;
-  };
+  data: any;
   status: 'draft' | 'submitted' | 'approved' | 'finalized';
   visibility: BPVisibility;
   is_template: boolean;
@@ -323,14 +292,63 @@ export interface ProjectionResult {
   marketShare: number;
 }
 
+export interface AuditLog {
+  user_id: string;
+  changed_at: string;
+  field_path: string;
+  old_value: any;
+  new_value: any;
+}
+
 export interface Modality {
   id: string;
   slug: string;
   name: string;
-  page_content: {
-    hero: { title: string; subtitle: string };
-    features: string[];
-    kpis: string[];
-    accent_color?: 'blue' | 'emerald' | 'orange';
-  };
+  page_content: any;
+}
+
+// Fix: Added missing CommunityCriteria interface
+export interface CommunityCriteria {
+  id: string;
+  label: string;
+  weight: number;
+}
+
+// Fix: Added missing BMCBlocks interface
+export interface BMCBlocks {
+  customer_segments: string;
+  value_propositions: string;
+  channels: string;
+  customer_relationships: string;
+  revenue_streams: string;
+  key_resources: string;
+  key_activities: string;
+  key_partnerships: string;
+  cost_structure: string;
+}
+
+// Fix: Added missing EmpathyMap interface
+export interface EmpathyMap {
+  think_feel: string;
+  hear: string;
+  see: string;
+  say_do: string;
+  pains: string;
+  gains: string;
+}
+
+// Fix: Added missing TutorTeamView interface
+export interface TutorTeamView {
+  id: string;
+  name: string;
+  rating: CreditRating;
+  tsr: number;
+  market_share: number;
+  nlcdg: number;
+  ebitda: number;
+  kanitz: number;
+  dcf: number;
+  auditLogs: AuditLog[];
+  current_decision?: any;
+  is_bot?: boolean;
 }
