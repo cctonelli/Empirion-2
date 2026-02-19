@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-// Fix: Use any to bypass react-router-dom type resolution issues in this environment
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link } = ReactRouterDOM as any;
 import { 
@@ -28,10 +26,10 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
   const { t } = useTranslation('common');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [points, setPoints] = useState(0);
+  const isTrial = localStorage.getItem('is_trial_session') === 'true';
 
   useEffect(() => {
     const fetchProfileAndPoints = async () => {
-      // Fix: Casting auth to any to resolve property missing error in this environment
       const { data: { session } } = await (supabase.auth as any).getSession();
       if (session) {
         const [prof, pts] = await Promise.all([
@@ -41,7 +39,6 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
         setProfile(prof);
         setPoints(pts);
 
-        // Assinar realtime para mudanças no saldo de pontos
         const ptsChannel = supabase.channel('realtime_points')
           .on('postgres_changes', { 
              event: 'UPDATE', 
@@ -61,17 +58,21 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
   const navItems = [
     { id: 'dashboard', label: 'Cockpit', icon: LayoutDashboard },
     { id: 'championships', label: 'Arenas', icon: Trophy },
-    { id: 'intelligence', label: 'Opal Hub', icon: Workflow }, 
+    { id: 'intelligence', label: 'Opal Hub', icon: Workflow, hideInTrial: true }, 
     { id: 'reports', label: 'Audit', icon: FileText },
     { id: 'admin', label: 'Command', icon: Shield, roles: ['admin', 'tutor'] },
   ];
 
-  const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(userRole));
+  const filteredNavItems = navItems.filter(item => {
+    if (item.hideInTrial && isTrial) return false;
+    if (item.roles && !item.roles.includes(userRole)) return false;
+    return true;
+  });
+
   const displayName = profile?.nickname || profile?.name || userName;
 
   return (
     <div className="h-screen bg-[#020617] text-slate-100 flex flex-col font-sans selection:bg-orange-500/30 overflow-hidden">
-      {/* ELITE ERP HEADER - h-12 v13.0 Oracle Cockpit */}
       <header className="h-12 bg-slate-900 border-b border-white/5 px-6 flex items-center justify-between z-[1000] shadow-2xl shrink-0">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2 group">
@@ -98,7 +99,6 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
         </div>
 
         <div className="flex items-center gap-6">
-          {/* EXIBIÇÃO DE EMPIRE POINTS EM TEMPO REAL */}
           <Link to="/rewards" className="flex items-center gap-2 px-3 py-1 bg-slate-950 border border-amber-500/20 rounded-full hover:border-amber-500/50 transition-all group">
              <Coins size={12} className="text-amber-500 group-hover:animate-spin" />
              <span className="text-[9px] font-black text-white font-mono">{points.toLocaleString()} <span className="text-amber-500/60 font-sans ml-0.5">EP</span></span>
@@ -106,7 +106,7 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
 
           <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-slate-950 border border-white/5 rounded-lg">
              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
-             <span className="text-[7px] font-mono text-slate-500 uppercase tracking-tighter">{PROTOCOL_NODE}</span>
+             <span className="text-[7px] font-mono text-slate-500 uppercase tracking-tighter">{isTrial ? 'Trial Sandbox Mode' : PROTOCOL_NODE}</span>
              <div className="w-px h-2 bg-white/10 mx-1" />
              <span className="text-[7px] font-mono text-orange-500 font-black uppercase">{APP_VERSION}</span>
           </div>
@@ -135,7 +135,6 @@ const Layout: React.FC<LayoutProps> = ({ children, userRole, userName, onLogout,
         </div>
       </header>
 
-      {/* OPERATIONAL VIEWPORT - FULL SCREEN MODE */}
       <main className="flex-1 relative overflow-hidden flex flex-col bg-[#020617]">
         {children}
         <GlobalChat />

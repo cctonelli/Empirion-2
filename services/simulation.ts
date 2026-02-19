@@ -3,8 +3,8 @@ import { DecisionData, Branch, EcosystemConfig, MacroIndicators, Team, Projectio
 import { INITIAL_FINANCIAL_TREE } from '../constants';
 
 /**
- * EMPIRION SIMULATION KERNEL v18.7 - ADVANCED ASSET TELEMETRY
- * Foco: Fidelidade na Depreciação Acumulada e Valor Contábil Líquido (VCL).
+ * EMPIRION SIMULATION KERNEL v18.7 - STATEFUL ASSET ACCOUNTING
+ * Foco: Persistência Real de Depreciação Acumulada e VCL.
  */
 
 export const sanitize = (val: any, fallback: number): number => {
@@ -14,17 +14,19 @@ export const sanitize = (val: any, fallback: number): number => {
 
 export const round2 = (val: number): number => Math.round(val * 100) / 100;
 
+// Busca valor de conta recursivamente na árvore financeira
 const findAccountValue = (nodes: AccountNode[], id: string): number => {
   for (const node of nodes) {
     if (node.id === id) return node.value;
     if (node.children) {
       const val = findAccountValue(node.children, id);
-      if (val !== undefined) return val;
+      if (val !== undefined && val !== 0) return val;
     }
   }
   return 0;
 };
 
+// Injeta novos valores na árvore, recalculando totalizadores
 const injectValues = (tree: AccountNode[], values: Record<string, number>): AccountNode[] => {
   return tree.map(node => {
     let newVal = values[node.id] !== undefined ? values[node.id] : node.value;
@@ -32,6 +34,7 @@ const injectValues = (tree: AccountNode[], values: Record<string, number>): Acco
     
     if (node.type === 'totalizer' && newChildren) {
       newVal = newChildren.reduce((sum, child) => {
+        // Se for despesa ou passivo na árvore DRE/DFC, subtrai do totalizador
         if (child.type === 'expense' || child.type === 'liability') return sum - Math.abs(child.value);
         return sum + child.value;
       }, 0);
@@ -48,10 +51,11 @@ export const calculateProjections = (
   indicators: MacroIndicators,
   team: Team
 ): ProjectionResult => {
+  // 0. RECUPERAR ESTADO ANTERIOR (Stateful Context)
   const prevStatements = team.kpis?.statements || INITIAL_FINANCIAL_TREE;
   const prevBS = prevStatements.balance_sheet || [];
   
-  // 1. REAJUSTE DE PREÇOS DE MERCADO
+  // 1. REAJUSTE DE PREÇOS DE MERCADO PARA CAPEX
   const getMachineMarketPrice = (model: MachineModel) => {
     const base = indicators.machinery_values[model] || 0;
     const adjust = sanitize((indicators as any)[`machine_${model}_price_adjust`], 0);
@@ -80,7 +84,7 @@ export const calculateProjections = (
     }
   });
 
-  // Depreciação de Máquinas (Linear Individualizada)
+  // Depreciação de Máquinas (Linear Individualizada Incrementada)
   currentMachines = currentMachines.map(m => {
     const spec = indicators.machine_specs[m.model];
     const periodDep = m.acquisition_value / (spec?.useful_life_years || 40);
@@ -89,9 +93,9 @@ export const calculateProjections = (
   });
 
   // Depreciação de Prédios e Instalações (Stateful)
-  const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings');
+  const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || 5440000;
   const prevBuildingsDeprec = Math.abs(findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings_deprec'));
-  const buildingPeriodDep = buildingsCost * 0.002; // 0.2% por round
+  const buildingPeriodDep = buildingsCost * 0.002; // Taxa de 0.2% por round
   const newBuildingsDeprecAccum = prevBuildingsDeprec + buildingPeriodDep;
   totalPeriodDepreciation += buildingPeriodDep;
 
@@ -112,30 +116,40 @@ export const calculateProjections = (
     }
   });
 
-  // 3. MOVIMENTAÇÃO DE ESTOQUE
-  const unitsProduced = Math.floor(currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0) * (sanitize(decision.production?.activityLevel, 100) / 100));
-  const closingMPA = (team.kpis?.stock_quantities?.mp_a || 0) + sanitize(decision.production?.purchaseMPA, 0) - unitsProduced;
-  const closingMPB = (team.kpis?.stock_quantities?.mp_b || 0) + sanitize(decision.production?.purchaseMPB, 0) - unitsProduced;
+  // 3. MOVIMENTAÇÃO DE ESTOQUE (LEDGER)
+  const activityLevel = sanitize(decision.production?.activityLevel, 100) / 100;
+  const capacity = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0);
+  const unitsProduced = Math.floor(capacity * activityLevel);
+  
+  const closingMPA = (team.kpis?.stock_quantities?.mp_a || 30150) + sanitize(decision.production?.purchaseMPA, 0) - unitsProduced;
+  const closingMPB = (team.kpis?.stock_quantities?.mp_b || 20100) + sanitize(decision.production?.purchaseMPB, 0) - unitsProduced;
   const stockValue = (closingMPA * indicators.prices.mp_a) + (closingMPB * indicators.prices.mp_b);
 
   // 4. RESULTADOS FINANCEIROS
-  const revenue = unitsProduced * (sanitize(Object.values(decision.regions || {})[0]?.price, 425));
+  const firstRegionId = Object.keys(decision.regions || {})[0] || 1;
+  const price = sanitize(decision.regions?.[firstRegionId]?.price, 425);
+  const revenue = unitsProduced * price;
   const cogs = unitsProduced * (indicators.prices.mp_a + indicators.prices.mp_b + 50);
   const operatingProfit = revenue - cogs - (totalPeriodDepreciation + 160000);
   const netProfit = (operatingProfit - nonOperatingLoss) * 0.75;
-  const finalCash = sanitize(team.kpis?.current_cash, 0) + revenue - cogs - (160000) - capexOutflow + cashFromSales;
+  
+  const currentCash = sanitize(team.kpis?.current_cash, 0);
+  const finalCash = currentCash + revenue - cogs - 160000 - capexOutflow + cashFromSales;
 
-  // 5. CÁLCULO DE TELEMETRIA CAPEX (VCL)
+  // 5. CÁLCULO DE TELEMETRIA CAPEX (VALOR CONTÁBIL LÍQUIDO)
   const totalMachinesCost = currentMachines.reduce((acc, m) => acc + m.acquisition_value, 0);
   const totalMachinesDeprecAccum = currentMachines.reduce((acc, m) => acc + m.accumulated_depreciation, 0);
   const totalAccumulatedDeprec = totalMachinesDeprecAccum + newBuildingsDeprecAccum;
-  const totalFixedAssetsCost = totalMachinesCost + buildingsCost + findAccountValue(prevBS, 'assets.noncurrent.fixed.land');
+  const landValue = findAccountValue(prevBS, 'assets.noncurrent.fixed.land') || 1200000;
+  const totalFixedAssetsCost = totalMachinesCost + buildingsCost + landValue;
   const netBookValue = totalFixedAssetsCost - totalAccumulatedDeprec;
 
+  // 6. ATUALIZAÇÃO DA ESTRUTURA CONTÁBIL
   const bsValues = {
     'assets.current.cash': finalCash,
     'assets.current.stock.mpa': closingMPA * indicators.prices.mp_a,
     'assets.current.stock.mpb': closingMPB * indicators.prices.mp_b,
+    'assets.current.stock.pa': unitsProduced * (price * 0.6), // Estimativa de valor de PA
     'assets.noncurrent.fixed.machines': totalMachinesCost,
     'assets.noncurrent.fixed.machines_deprec': -totalMachinesDeprecAccum,
     'assets.noncurrent.fixed.buildings_deprec': -newBuildingsDeprecAccum,
@@ -143,6 +157,7 @@ export const calculateProjections = (
   };
 
   const finalBS = injectValues(JSON.parse(JSON.stringify(prevBS)), bsValues);
+  const totalAssets = finalBS.find(n => n.id === 'assets')?.value || 0;
 
   return {
     revenue, netProfit, debtRatio: 0, creditRating: 'AAA',
@@ -158,9 +173,11 @@ export const calculateProjections = (
       current_cash: finalCash,
       machines: currentMachines,
       stock_quantities: { mp_a: closingMPA, mp_b: closingMPB, finished_goods: 0 },
-      fixed_assets_value: netBookValue, // VALOR CONTÁBIL LÍQUIDO PERSISTIDO
-      fixed_assets_depreciation: -totalAccumulatedDeprec, // DEPRECIAÇÃO ACUMULADA PERSISTIDA
-      total_assets: finalBS.find(n => n.id === 'assets')?.value || 0
+      fixed_assets_value: netBookValue, 
+      fixed_assets_depreciation: -totalAccumulatedDeprec,
+      total_assets: totalAssets,
+      stock_value: stockValue,
+      ebitda: operatingProfit + totalPeriodDepreciation
     }
   };
 };

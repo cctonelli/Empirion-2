@@ -20,21 +20,12 @@ import {
 import { generateBotDecision } from './gemini';
 import { calculateProjections } from './simulation';
 
-// Initializing Supabase client using environment variables
-// Note: Assuming these are provided in the environment as per the build context.
 const supabaseUrl = (process.env as any).VITE_SUPABASE_URL || '';
 const supabaseAnonKey = (process.env as any).VITE_SUPABASE_ANON_KEY || '';
 
-// Always export the supabase client instance
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Global flags for test/demo mode used in App.tsx
 export const isTestMode = true;
-
-/**
- * EMPIRION DATA SERVICE PROTOCOL v18.5
- * High Fidelity Realtime Engine for Supabase/PostgreSQL.
- */
 
 export const provisionDemoEnvironment = async () => {
   console.info("Empirion Demo Node: Provisioning simulated cluster...");
@@ -175,7 +166,6 @@ export const subscribeToModalities = (callback: () => void) => {
 };
 
 export const getGlobalLeaderboard = async () => {
-  // Simplified logic for global leaderboard in v18.0
   return [];
 };
 
@@ -202,7 +192,6 @@ export const getTeamAuditLog = async (teamId: string, round: number) => {
   return data || [];
 };
 
-// Fixed processRoundTurnover to use correct imports and table names dynamically
 export const processRoundTurnover = async (id: string, round: number) => {
     try {
         const isTrial = localStorage.getItem('is_trial_session') === 'true';
