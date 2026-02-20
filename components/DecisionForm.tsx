@@ -65,7 +65,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         const found = champsRes.data?.find(a => a.id === champId);
         if (found) setActiveArena(found);
 
-        const team = found?.teams?.find(t => t.id === teamId);
+        const team = found?.teams?.find((t: Team) => t.id === teamId);
         if (team) {
            // Injeção de segurança do parque P00 se estiver no Round 1 e vazio
            if (round === 1 && (!team.kpis?.machines || team.kpis.machines.length === 0)) {

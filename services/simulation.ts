@@ -113,7 +113,7 @@ export const calculateProjections = (
 
   // Demanda e Vendas
   const firstRegionId = Object.keys(decision.regions || {})[0] || 1;
-  const price = sanitize(decision.regions?.[firstRegionId]?.price, 425);
+  const price = sanitize(decision.regions?.[Number(firstRegionId)]?.price, 425);
   // Algoritmo de demanda simples para o Cockpit
   const priceIndex = indicators.avg_selling_price / price;
   const unitsSold = Math.min(totalQtyForSale, Math.floor((capacity * 0.8) * priceIndex * (1 + (indicators.demand_variation / 100))));

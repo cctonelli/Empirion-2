@@ -170,7 +170,7 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
             contents: `Como auditor senior, analise estas decisões da equipe ${team.name}: ${JSON.stringify(team.current_decision)}. KPIs Projetados: TSR ${team.tsr}%, Rating ${team.rating}. Forneça um veredito técnico de 20 palavras focando no risco de insolvência ou vantagem competitiva.`,
             config: { thinkingConfig: { thinkingBudget: 0 } }
          });
-         setAiVerdict(res.text);
+         setAiVerdict(res.text || null);
       } catch (err) {
          setAiVerdict("Erro na conexão neural.");
       } finally {

@@ -27,7 +27,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       const arena = data?.find(a => a.id === champId);
       if (arena) {
         setActiveArena(arena);
-        const team = arena.teams?.find(t => t.id === teamId);
+        const team = arena.teams?.find((t: Team) => t.id === teamId);
         if (team) setActiveTeam(team);
       }
       setLoading(false);

@@ -180,34 +180,34 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                   {step === 0 && (
                      <div className="flex-1 grid grid-cols-5 grid-rows-3 gap-3 min-h-[600px] animate-in zoom-in-95 duration-700">
                         {/* Linha 1 */}
-                        <CanvasBlock label="Parceiros Chave" icon={<Link size={14}/>} val={canvasData.key_partnerships} onChange={(v)=>setCanvasData({...canvasData, key_partnerships:v})} className="row-span-2" />
+                        <CanvasBlock label="Parceiros Chave" icon={<Link size={14}/>} val={canvasData.key_partnerships} onChange={(v: string)=>setCanvasData({...canvasData, key_partnerships:v})} className="row-span-2" />
                         <div className="grid grid-rows-2 gap-3 row-span-2">
-                           <CanvasBlock label="Atividades Chave" icon={<Zap size={14}/>} val={canvasData.key_activities} onChange={(v)=>setCanvasData({...canvasData, key_activities:v})} />
-                           <CanvasBlock label="Recursos Chave" icon={<Box size={14}/>} val={canvasData.key_resources} onChange={(v)=>setCanvasData({...canvasData, key_resources:v})} />
+                           <CanvasBlock label="Atividades Chave" icon={<Zap size={14}/>} val={canvasData.key_activities} onChange={(v: string)=>setCanvasData({...canvasData, key_activities:v})} />
+                           <CanvasBlock label="Recursos Chave" icon={<Box size={14}/>} val={canvasData.key_resources} onChange={(v: string)=>setCanvasData({...canvasData, key_resources:v})} />
                         </div>
-                        <CanvasBlock label="Proposta de Valor" icon={<Star size={14}/>} val={canvasData.value_propositions} onChange={(v)=>setCanvasData({...canvasData, value_propositions:v})} className="row-span-2 bg-orange-500/10 border-orange-500/30" />
+                        <CanvasBlock label="Proposta de Valor" icon={<Star size={14}/>} val={canvasData.value_propositions} onChange={(v: string)=>setCanvasData({...canvasData, value_propositions:v})} className="row-span-2 bg-orange-500/10 border-orange-500/30" />
                         <div className="grid grid-rows-2 gap-3 row-span-2">
-                           <CanvasBlock label="Relacionamento" icon={<Heart size={14}/>} val={canvasData.customer_relationships} onChange={(v)=>setCanvasData({...canvasData, customer_relationships:v})} />
-                           <CanvasBlock label="Canais" icon={<Truck size={14}/>} val={canvasData.channels} onChange={(v)=>setCanvasData({...canvasData, channels:v})} />
+                           <CanvasBlock label="Relacionamento" icon={<Heart size={14}/>} val={canvasData.customer_relationships} onChange={(v: string)=>setCanvasData({...canvasData, customer_relationships:v})} />
+                           <CanvasBlock label="Canais" icon={<Truck size={14}/>} val={canvasData.channels} onChange={(v: string)=>setCanvasData({...canvasData, channels:v})} />
                         </div>
-                        <CanvasBlock label="Segmentos de Clientes" icon={<Users size={14}/>} val={canvasData.customer_segments} onChange={(v)=>setCanvasData({...canvasData, customer_segments:v})} className="row-span-2" />
+                        <CanvasBlock label="Segmentos de Clientes" icon={<Users size={14}/>} val={canvasData.customer_segments} onChange={(v: string)=>setCanvasData({...canvasData, customer_segments:v})} className="row-span-2" />
                         
                         {/* Linha 3 (Base) */}
-                        <CanvasBlock label="Estrutura de Custos" icon={<ArrowDownCircle size={14}/>} val={canvasData.cost_structure} onChange={(v)=>setCanvasData({...canvasData, cost_structure:v})} className="col-span-2.5 lg:col-span-2" />
+                        <CanvasBlock label="Estrutura de Custos" icon={<ArrowDownCircle size={14}/>} val={canvasData.cost_structure} onChange={(v: string)=>setCanvasData({...canvasData, cost_structure:v})} className="col-span-2.5 lg:col-span-2" />
                         <div className="hidden lg:block"></div>
-                        <CanvasBlock label="Fontes de Receita" icon={<DollarSign size={14}/>} val={canvasData.revenue_streams} onChange={(v)=>setCanvasData({...canvasData, revenue_streams:v})} className="col-span-2.5 lg:col-span-2 bg-emerald-500/10" />
+                        <CanvasBlock label="Fontes de Receita" icon={<DollarSign size={14}/>} val={canvasData.revenue_streams} onChange={(v: string)=>setCanvasData({...canvasData, revenue_streams:v})} className="col-span-2.5 lg:col-span-2 bg-emerald-500/10" />
                      </div>
                   )}
 
                   {/* PASSO 1: MAPA DE EMPATIA */}
                   {step === 1 && (
                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-10 duration-700">
-                        <EmpathyBox label="O que o cliente VÊ?" icon={<Eye size={18}/>} val={empathyData.see} onChange={(v)=>setEmpathyData({...empathyData, see:v})} desc="O ambiente, amigos, o mercado oferece." />
-                        <EmpathyBox label="O que o cliente OUVE?" icon={<Activity size={18}/>} val={empathyData.hear} onChange={(v)=>setEmpathyData({...empathyData, hear:v})} desc="O que os influenciadores e chefes dizem." />
-                        <EmpathyBox label="O que o cliente PENSA e SENTE?" icon={<Brain size={18}/>} val={empathyData.think_feel} onChange={(v)=>setEmpathyData({...empathyData, think_feel:v})} desc="O que realmente conta, suas aspirações." />
-                        <EmpathyBox label="O que o cliente DIZ e FAZ?" icon={<MessageSquare size={18}/>} val={empathyData.say_do} onChange={(v)=>setEmpathyData({...empathyData, say_do:v})} desc="Atitude em público, comportamento." />
-                        <EmpathyBox label="Quais as DORES?" icon={<ShieldAlert size={18}/>} val={empathyData.pains} onChange={(v)=>setEmpathyData({...empathyData, pains:v})} desc="Medos, frustrações e obstáculos." color="rose" />
-                        <EmpathyBox label="Quais os GANHOS?" icon={<Trophy size={18}/>} val={empathyData.gains} onChange={(v)=>setEmpathyData({...empathyData, gains:v})} desc="Desejos, medidas de sucesso." color="emerald" />
+                        <EmpathyBox label="O que o cliente VÊ?" icon={<Eye size={18}/>} val={empathyData.see} onChange={(v: string)=>setEmpathyData({...empathyData, see:v})} desc="O ambiente, amigos, o mercado oferece." />
+                        <EmpathyBox label="O que o cliente OUVE?" icon={<Activity size={18}/>} val={empathyData.hear} onChange={(v: string)=>setEmpathyData({...empathyData, hear:v})}  desc="O que os influenciadores e chefes dizem." />
+                        <EmpathyBox label="O que o cliente PENSA e SENTE?" icon={<Brain size={18}/>} val={empathyData.think_feel} onChange={(v: string)=>setEmpathyData({...empathyData, think_feel:v})} desc="O que realmente conta, suas aspirações." />
+                        <EmpathyBox label="O que o cliente DIZ e FAZ?" icon={<MessageSquare size={18}/>} val={empathyData.say_do} onChange={(v: string)=>setEmpathyData({...empathyData, say_do:v})} desc="Atitude em público, comportamento." />
+                        <EmpathyBox label="Quais as DORES?" icon={<ShieldAlert size={18}/>} val={empathyData.pains} onChange={(v: string)=>setEmpathyData({...empathyData, pains:v})} desc="Medos, frustrações e obstáculos." color="rose" />
+                        <EmpathyBox label="Quais os GANHOS?" icon={<Trophy size={18}/>} val={empathyData.gains} onChange={(v: string)=>setEmpathyData({...empathyData, gains:v})} desc="Desejos, medidas de sucesso." color="emerald" />
                      </div>
                   )}
 
