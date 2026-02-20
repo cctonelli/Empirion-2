@@ -15,7 +15,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "types": ["vite/client"]
   },
   "include": ["App.tsx", "index.tsx", "types.ts", "constants.tsx", "i18n.ts", "services", "components", "pages", "hooks", "utils"],
   "exclude": ["node_modules"]

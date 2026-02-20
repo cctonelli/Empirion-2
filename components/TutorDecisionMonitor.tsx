@@ -164,7 +164,7 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
       if (isAuditing || !team.current_decision) return;
       setIsAuditing(true);
       try {
-         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
          const res = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: `Como auditor senior, analise estas decisões da equipe ${team.name}: ${JSON.stringify(team.current_decision)}. KPIs Projetados: TSR ${team.tsr}%, Rating ${team.rating}. Forneça um veredito técnico de 20 palavras focando no risco de insolvência ou vantagem competitiva.`,

@@ -20,8 +20,8 @@ import {
 import { generateBotDecision } from './gemini';
 import { calculateProjections } from './simulation';
 
-const supabaseUrl = (process.env as any).VITE_SUPABASE_URL || '';
-const supabaseAnonKey = (process.env as any).VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
