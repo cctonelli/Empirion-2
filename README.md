@@ -40,4 +40,25 @@ Todas as contas listadas na `INITIAL_FINANCIAL_TREE` dentro de `constants.tsx` (
 ---
 
 ## 🌎 4. Expansão Geopolítica e Multi-Moeda
-O simulador suporta até 15 regiões simultâneas com taxas de câmbio dinâmicas e balanceamento de demanda ponderado, permitindo cenários de globalização e hedge cambial.
+
+O Empirion v18.0 introduz um motor de câmbio dinâmico e suporte a operações multi-regionais, permitindo que as empresas atuem como verdadeiras multinacionais.
+
+### 4.1 Novas Moedas Suportadas
+O sistema agora processa transações e cotações nas seguintes moedas:
+*   **BRL (Real):** Moeda base de liquidação.
+*   **USD (Dólar Americano):** Padrão para comércio exterior.
+*   **EUR (Euro):** Foco em mercados europeus.
+*   **GBP (Libra Esterlina):** Alta estabilidade e valor.
+*   **CNY (Yuan Chinês):** Foco em cadeias de suprimentos asiáticas.
+*   **BTC (Bitcoin):** Ativo digital para cenários de alta volatilidade e hedge tecnológico.
+
+### 4.2 Cotações Cruzadas e Câmbio Dinâmico
+As taxas de câmbio são definidas nos `MacroIndicators` de cada round. O motor Oracle realiza a conversão automática de receitas e custos baseada na paridade do round vigente:
+*   **Hedge Cambial:** As empresas podem optar por vender em regiões com moedas mais fortes para proteger seu patrimônio líquido contra a desvalorização do Real.
+*   **Impacto no DRE:** As variações cambiais influenciam diretamente a Receita Líquida e os Custos de Importação (quando aplicável).
+
+### 4.3 Vendas para Múltiplas Regiões
+O simulador suporta a configuração de até **15 regiões simultâneas**. Cada região possui:
+*   **Peso de Demanda:** Define a atratividade e o tamanho do mercado local.
+*   **Moeda Local:** Preços são definidos na moeda da região, mas consolidados no balanço da empresa na moeda base.
+*   **Estratégia de Precificação:** As equipes podem definir preços, prazos e investimentos em marketing específicos para cada região, permitindo estratégias de penetração de mercado diferenciadas.
