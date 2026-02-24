@@ -62,3 +62,40 @@ O simulador suporta a configuração de até **15 regiões simultâneas**. Cada 
 *   **Peso de Demanda:** Define a atratividade e o tamanho do mercado local.
 *   **Moeda Local:** Preços são definidos na moeda da região, mas consolidados no balanço da empresa na moeda base.
 *   **Estratégia de Precificação:** As equipes podem definir preços, prazos e investimentos em marketing específicos para cada região, permitindo estratégias de penetração de mercado diferenciadas.
+
+---
+
+## 📊 5. Indicadores de Resultado e KPIs (Template Industrial)
+
+O Empirion v18.0 oferece um conjunto exaustivo de métricas financeiras e operacionais, distribuídas entre os diferentes terminais de visualização.
+
+### 5.1 Cockpit das Equipes (Projeções T+1)
+Durante a fase de tomada de decisão, as equipes visualizam projeções em tempo real:
+*   **EBITDA Projetado:** Potencial de geração de caixa operacional.
+*   **Caixa Final T+1:** Disponibilidade líquida estimada após o fechamento do ciclo.
+*   **Forecast de Receita:** Faturamento bruto projetado com base no preço e demanda estimada.
+*   **Forecast de Lucro Líquido:** Resultado final estimado após tributação (IR/CSLL).
+*   **CPP Unitário (Custo de Produção):** Eficiência fabril por unidade produzida.
+
+### 5.2 Dashboard do Tutor (Monitoramento Live)
+O Tutor possui visão privilegiada de todas as unidades de negócio:
+*   **TSR (Total Shareholder Return):** O principal indicador de vitória, medindo a criação de valor para o acionista.
+*   **Rating de Crédito:** Avaliação de risco (AAA a D) baseada em modelos de liquidez e endividamento.
+*   **Market Share:** Percentual de unidades vendidas em relação ao mercado total.
+*   **NLCDG:** Necessidade Líquida de Capital de Giro para sustentar a operação.
+*   **Z-Score de Kanitz:** Indicador preditivo de insolvência/falência.
+*   **DCF Valuation:** Valor de mercado da empresa calculado via Fluxo de Caixa Descontado.
+
+### 5.3 Gazeta Oracle (Inteligência de Mercado)
+O jornal oficial da arena destaca os movimentos mais relevantes:
+*   **Ranking de Performance:** Comparativo direto de TSR e Lucratividade.
+*   **Análise de ROI:** Retorno sobre o Investimento por perfil estratégico.
+*   **Market Share Consolidado:** Gráficos de dominância por região e global.
+*   **Alerta de Conjuntura:** Impacto do ICE (Confiança), Inflação e Juros nos resultados das equipes.
+
+### 5.4 Indicadores de Gestão Interna
+Disponíveis nos relatórios detalhados (DRE/Balanço):
+*   **Giro de Estoque:** Eficiência na gestão de produtos acabados e matérias-primas.
+*   **Prazo Médio de Recebimento (PMR):** Ciclo financeiro de vendas.
+*   **Efeito Tesoura:** Descompasso entre crescimento e necessidade de caixa.
+*   **Break-Even Point (Ponto de Equilíbrio):** Volume mínimo de vendas para cobertura de custos fixos.
