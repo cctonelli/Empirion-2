@@ -85,6 +85,8 @@ O Tutor possui visão privilegiada de todas as unidades de negócio:
 *   **NLCDG:** Necessidade Líquida de Capital de Giro para sustentar a operação.
 *   **Z-Score de Kanitz:** Indicador preditivo de insolvência/falência.
 *   **DCF Valuation:** Valor de mercado da empresa calculado via Fluxo de Caixa Descontado.
+*   **CCC (Cash Conversion Cycle):** Eficiência do ciclo financeiro em dias.
+*   **Índice de Cobertura de Juros:** Margem de segurança para pagamento de obrigações financeiras.
 
 ### 5.3 Gazeta Oracle (Inteligência de Mercado)
 O jornal oficial da arena destaca os movimentos mais relevantes:
@@ -121,3 +123,9 @@ Decomposição do Retorno sobre o Patrimônio em três pilares:
 *   **Elasticidade-Preço Real:** Sensibilidade da demanda às alterações de preço praticadas.
 *   **Landed Cost Regional:** Custo total do produto posto no destino (Produção + Logística + Tarifas).
 *   **Pegada de Carbono Unitária:** Impacto ambiental projetado por unidade produzida e transportada.
+
+### 6.4 Global Trade Intelligence (v18.8 Platinum)
+O Empirion agora monitora a competitividade internacional através de:
+*   **Arbitragem Cambial:** Monitoramento em tempo real das taxas de **BRL (Real)** e **GBP (Libra)** em relação ao Dólar.
+*   **Geopolítica Tarifária:** Rastreamento de impostos de exportação específicos para **Brasil** e **Reino Unido (UK)**.
+*   **Exposição Cambial Líquida:** Impacto das flutuações de moedas globais (EUR, CNY, BTC) na lucratividade consolidada.
