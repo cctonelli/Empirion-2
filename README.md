@@ -99,3 +99,25 @@ Disponíveis nos relatórios detalhados (DRE/Balanço):
 *   **Prazo Médio de Recebimento (PMR):** Ciclo financeiro de vendas.
 *   **Efeito Tesoura:** Descompasso entre crescimento e necessidade de caixa.
 *   **Break-Even Point (Ponto de Equilíbrio):** Volume mínimo de vendas para cobertura de custos fixos.
+
+---
+
+## 🚀 6. Comando Estratégico e KPIs Avançados (v18.8)
+
+O Empirion agora deriva métricas de alta complexidade para análise de MBA e decisões de diretoria:
+
+### 6.1 Gestão de Liquidez e Capital de Giro
+*   **CCC (Cash Conversion Cycle):** Mede a eficiência do capital de giro em dias (PME + PMR - PMP).
+*   **Índice de Cobertura de Juros:** Capacidade do lucro operacional cobrir as despesas financeiras.
+*   **Efeito Tesoura:** Monitoramento do descompasso entre crescimento operacional e disponibilidade de caixa.
+
+### 6.2 Análise DuPont (ROE)
+Decomposição do Retorno sobre o Patrimônio em três pilares:
+*   **Margem Líquida:** Eficiência de custos e precificação.
+*   **Giro do Ativo:** Eficiência na utilização dos ativos para gerar receita.
+*   **Alavancagem Financeira:** Impacto do endividamento na rentabilidade do acionista.
+
+### 6.3 Inteligência de Mercado e ESG
+*   **Elasticidade-Preço Real:** Sensibilidade da demanda às alterações de preço praticadas.
+*   **Landed Cost Regional:** Custo total do produto posto no destino (Produção + Logística + Tarifas).
+*   **Pegada de Carbono Unitária:** Impacto ambiental projetado por unidade produzida e transportada.

@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, ShieldAlert, Factory, Coins, Zap, PieChart,
   ShieldCheck, Activity, Landmark as BankIcon, ShoppingCart, Truck, Scale, ChevronDown, AlertCircle,
-  ArrowDownLeft, ArrowUpRight, Receipt
+  ArrowDownLeft, ArrowUpRight, Receipt, Target, Clock, Sparkles
 } from 'lucide-react';
 import { Branch, Championship, Team, AccountNode, CurrencyType } from '../types';
 import { getChampionships } from '../services/supabase';
@@ -15,7 +15,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeam, setActiveTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeReport, setActiveReport] = useState<'dre' | 'cash_flow' | 'balance'>('dre');
+  const [activeReport, setActiveReport] = useState<'dre' | 'cash_flow' | 'balance' | 'strategic'>('dre');
 
   useEffect(() => {
     const fetchContext = async () => {
@@ -55,6 +55,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
             <ReportTabBtn active={activeReport === 'dre'} onClick={() => setActiveReport('dre')} label="DRE" icon={<TrendingUp size={14} />} color="orange" />
             <ReportTabBtn active={activeReport === 'cash_flow'} onClick={() => setActiveReport('cash_flow')} label="Fluxo de Caixa" icon={<Activity size={14} />} color="emerald" />
             <ReportTabBtn active={activeReport === 'balance'} onClick={() => setActiveReport('balance')} label="Balanço" icon={<Landmark size={14} />} color="blue" />
+            <ReportTabBtn active={activeReport === 'strategic'} onClick={() => setActiveReport('strategic')} label="Estratégico" icon={<Target size={14} />} color="purple" />
          </div>
       </header>
 
@@ -89,13 +90,25 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         <ReportLine label="(=) SALDO FINAL PROJETADO" val={fmt(cf.final)} total bold highlight color={cf.final <= 0 ? 'text-rose-500' : 'text-emerald-400'} />
                      </div>
                   </motion.div>
-               ) : (
+               ) : activeReport === 'balance' ? (
                   <motion.div key="bs" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-8">
                      <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Balanço Patrimonial Auditado</h3>
                      <div className="matrix-container max-h-[600px] overflow-y-auto pr-2">
                         {balanceSheet.map(node => (
                           <AccountRow key={node.id} node={node} fmt={fmt} />
                         ))}
+                     </div>
+                  </motion.div>
+               ) : (
+                  <motion.div key="strategic" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8">
+                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6">Comando Estratégico - KPIs Avançados</h3>
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <KpiCard label="Ciclo de Conversão de Caixa" val={`${activeTeam?.kpis?.ccc?.toFixed(0) || 0} dias`} desc="PME + PMR - PMP" icon={<Clock size={20} />} color="text-blue-400" />
+                        <KpiCard label="Cobertura de Juros" val={`${activeTeam?.kpis?.interest_coverage?.toFixed(2) || 0}x`} desc="EBIT / Despesas Financeiras" icon={<ShieldAlert size={20} />} color="text-orange-400" />
+                        <KpiCard label="Elasticidade-Preço" val={`${activeTeam?.kpis?.price_elasticity?.toFixed(2) || 1.00}`} desc="Sensibilidade da Demanda" icon={<Zap size={20} />} color="text-purple-400" />
+                        <KpiCard label="Pegada de Carbono" val={`${activeTeam?.kpis?.carbon_footprint?.toFixed(2) || 0} kg CO2`} desc="Impacto Ambiental Unitário" icon={<Sparkles size={20} />} color="text-emerald-400" />
+                        <KpiCard label="Margem Líquida (DuPont)" val={`${((activeTeam?.kpis?.dupont?.margin || 0) * 100).toFixed(2)}%`} desc="Eficiência de Lucro" icon={<TrendingUp size={20} />} color="text-white" />
+                        <KpiCard label="Giro do Ativo (DuPont)" val={`${activeTeam?.kpis?.dupont?.turnover?.toFixed(2) || 0}x`} desc="Eficiência Operacional" icon={<Activity size={20} />} color="text-white" />
                      </div>
                   </motion.div>
                )}
@@ -106,8 +119,21 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   );
 };
 
+const KpiCard = ({ label, val, desc, icon, color }: any) => (
+  <div className="bg-slate-950/50 border border-white/5 p-8 rounded-[2.5rem] space-y-4 hover:border-white/10 transition-all group">
+    <div className="flex justify-between items-center">
+      <div className={`p-4 bg-white/5 rounded-2xl ${color} group-hover:scale-110 transition-transform`}>{icon}</div>
+      <span className="text-2xl font-mono font-black text-white">{val}</span>
+    </div>
+    <div>
+      <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</h4>
+      <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest mt-1">{desc}</p>
+    </div>
+  </div>
+);
+
 const ReportTabBtn = ({ active, onClick, label, icon, color }: any) => {
-  const activeClass = color === 'orange' ? 'bg-orange-600' : color === 'emerald' ? 'bg-emerald-600' : 'bg-blue-600';
+  const activeClass = color === 'orange' ? 'bg-orange-600' : color === 'emerald' ? 'bg-emerald-600' : color === 'purple' ? 'bg-purple-600' : 'bg-blue-600';
   return (
     <button onClick={onClick} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${active ? activeClass + ' text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>
       {icon} {label}

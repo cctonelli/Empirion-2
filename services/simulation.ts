@@ -142,6 +142,43 @@ export const calculateProjections = (
 
   const finalBS = injectValues(JSON.parse(JSON.stringify(prevBS)), bsValues);
 
+  // --- 7. CÁLCULO DE MÉTRICAS AVANÇADAS (ESTRATÉGICAS) ---
+  const totalAssets = findAccountValue(finalBS, 'assets');
+  const totalEquity = findAccountValue(finalBS, 'equity');
+  const netMargin = revenue > 0 ? netProfit / revenue : 0;
+  const assetTurnover = totalAssets > 0 ? revenue / totalAssets : 0;
+  const leverage = totalEquity > 0 ? totalAssets / totalEquity : 1;
+
+  // Ciclo de Conversão de Caixa (Simplificado para Projeção)
+  const pmr = 30; // Prazo médio de recebimento padrão
+  const pme = totalCPV > 0 ? (closingStockValuePA / totalCPV) * 90 : 0;
+  const pmp = 45; // Prazo médio de pagamento padrão
+  const ccc = pme + pmr - pmp;
+
+  // Cobertura de Juros
+  const finExp = Math.abs(findAccountValue(prevStatements.dre, 'fin.exp') || 2500);
+  const interestCoverage = finExp > 0 ? operatingProfit / finExp : 100;
+
+  // Elasticidade-Preço (Comparativo com round anterior)
+  const prevPrice = team.kpis?.last_price || indicators.avg_selling_price;
+  const priceChange = (price - prevPrice) / prevPrice;
+  const demandChange = (unitsSold - (team.kpis?.last_units_sold || unitsSold)) / (team.kpis?.last_units_sold || unitsSold || 1);
+  const priceElasticity = priceChange !== 0 ? Math.abs(demandChange / priceChange) : 1;
+
+  // Landed Cost e CAC Regional
+  const regionalCac: Record<number, number> = {};
+  const landedCosts: Record<number, number> = {};
+  
+  Object.entries(decision.regions || {}).forEach(([id, reg]: [string, any]) => {
+    const regId = Number(id);
+    const regUnits = unitsSold; // Simplificado: assume venda proporcional ou total na primeira região no cockpit
+    regionalCac[regId] = regUnits > 0 ? sanitize(reg.marketing, 0) / regUnits : 0;
+    landedCosts[regId] = unitCPP + (regionalCac[regId] * 1.2); // Adiciona margem de logística/tarifas
+  });
+
+  // Pegada de Carbono (0.8kg CO2 por unidade + logística)
+  const carbonFootprint = (unitsProduced * 0.8) + (unitsSold * 0.2);
+
   return {
     revenue, netProfit, debtRatio: 0, creditRating: 'AAA',
     health: { cash: finalCash, rating: 'AAA' },
@@ -168,7 +205,22 @@ export const calculateProjections = (
       cpp_unit: unitCPP,
       wac_unit: wacUnit,
       ebitda: operatingProfit + periodDepreciation,
-      fixed_assets_value: (findAccountValue(finalBS, 'assets.noncurrent.fixed.machines') + buildingsCost + 1200000) - periodDepreciation
+      fixed_assets_value: (findAccountValue(finalBS, 'assets.noncurrent.fixed.machines') + buildingsCost + 1200000) - periodDepreciation,
+      
+      // Novos KPIs Estratégicos
+      ccc,
+      interest_coverage: interestCoverage,
+      dupont: {
+        margin: netMargin,
+        turnover: assetTurnover,
+        leverage: leverage
+      },
+      landed_costs: landedCosts,
+      price_elasticity: priceElasticity,
+      regional_cac: regionalCac,
+      carbon_footprint: carbonFootprint,
+      last_price: price,
+      last_units_sold: unitsSold
     }
   };
 };

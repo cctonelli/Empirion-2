@@ -5,7 +5,7 @@ import { AccountNode, CurrencyType } from '../types';
 import { formatCurrency } from '../utils/formatters';
 
 interface MatrixProps {
-  type: 'balance' | 'dre' | 'cashflow';
+  type: 'balance' | 'dre' | 'cashflow' | 'strategic';
   history: any[]; 
   projection: any; 
   currency: CurrencyType;
@@ -15,25 +15,71 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
   const getTitle = () => {
     if (type === 'balance') return 'Balanço Patrimonial Auditado (v18.0)';
     if (type === 'dre') return 'DRE - Demonstrativo de Resultados (Competência)';
-    return 'DFC - Fluxo de Caixa Preditivo (Regime de Caixa)';
+    if (type === 'cashflow') return 'DFC - Fluxo de Caixa Preditivo (Regime de Caixa)';
+    return 'Comando Estratégico - KPIs Avançados';
   };
 
   const getIcon = () => {
     if (type === 'balance') return <Landmark className="text-blue-400" />;
     if (type === 'dre') return <TrendingUp className="text-orange-400" />;
-    return <Activity className="text-emerald-400" />;
+    if (type === 'cashflow') return <Activity className="text-emerald-400" />;
+    return <Calculator className="text-purple-400" />;
   };
 
   // Consolidação de períodos: Histórico + Projeção
   const periods = [
-    // Fix: Explicitly added isProjection: false to history map to satisfy TypeScript property checks
     ...history.map(h => ({ 
       round: h.round, 
-      data: h.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')],
+      data: type === 'strategic' ? h.kpis : h.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')],
       isProjection: false 
     })),
-    { round: 'PROJ (T+1)', data: projection?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], isProjection: true }
+    { 
+      round: 'PROJ (T+1)', 
+      data: type === 'strategic' ? projection?.kpis : projection?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], 
+      isProjection: true 
+    }
   ];
+
+  // Função para renderizar linhas de KPIs estratégicos (não hierárquicos)
+  const renderStrategicRows = () => {
+    const kpiDefinitions = [
+      { id: 'ccc', label: 'Ciclo de Conversão de Caixa (CCC)', suffix: ' dias', desc: 'Eficiência do capital de giro' },
+      { id: 'interest_coverage', label: 'Índice de Cobertura de Juros', suffix: 'x', desc: 'Capacidade de pagamento de juros' },
+      { id: 'price_elasticity', label: 'Elasticidade-Preço Real', suffix: '', desc: 'Sensibilidade da demanda ao preço' },
+      { id: 'carbon_footprint', label: 'Pegada de Carbono Unitária', suffix: ' kg CO2', desc: 'Impacto ambiental projetado' },
+      { id: 'dupont.margin', label: 'Margem Líquida (DuPont)', suffix: '%', isPercent: true, desc: 'Eficiência de lucro' },
+      { id: 'dupont.turnover', label: 'Giro do Ativo (DuPont)', suffix: 'x', desc: 'Eficiência operacional' },
+      { id: 'dupont.leverage', label: 'Alavancagem (DuPont)', suffix: 'x', desc: 'Multiplicador de patrimônio' },
+    ];
+
+    return kpiDefinitions.map(kpi => (
+      <tr key={kpi.id} className="border-b border-white/5 transition-colors hover:bg-white/[0.03]">
+        <td className="p-4 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[300px]">
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase tracking-wider text-white font-black">{kpi.label}</span>
+            <span className="text-[8px] text-slate-500 uppercase tracking-widest mt-1">{kpi.desc}</span>
+          </div>
+        </td>
+        {periods.map((p: any, idx) => {
+          const keys = kpi.id.split('.');
+          let val = p.data;
+          for (const key of keys) {
+            val = val?.[key];
+          }
+          
+          const displayVal = typeof val === 'number' 
+            ? (kpi.isPercent ? (val * 100).toFixed(2) : val.toFixed(2)) 
+            : 'N/A';
+
+          return (
+            <td key={idx} className={`p-4 text-center font-mono text-xs ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-bold' : 'text-slate-300'}`}>
+              {displayVal}{val !== undefined ? kpi.suffix : ''}
+            </td>
+          );
+        })}
+      </tr>
+    ));
+  };
 
   // Função recursiva para renderizar a árvore de contas de forma hierárquica e completa
   const renderRows = (nodes: any[], level = 0) => {
@@ -115,7 +161,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {renderRows(initialData as any)}
+            {type === 'strategic' ? renderStrategicRows() : renderRows(initialData as any)}
           </tbody>
         </table>
       </div>

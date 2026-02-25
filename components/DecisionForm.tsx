@@ -38,7 +38,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
   const [showStrategicHub, setShowStrategicHub] = useState(false);
-  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow'>('dre');
+  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic'>('dre');
   const [history, setHistory] = useState<any[]>([]);
 
   const [decisions, setDecisions] = useState<DecisionData>({
@@ -345,6 +345,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE Master" icon={<TrendingUp size={14}/>} />
                        <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Master" icon={<Landmark size={14}/>} />
                        <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa (DFC)" icon={<Activity size={14}/>} />
+                       <HubTabBtn active={hubTab === 'strategic'} onClick={() => setHubTab('strategic')} label="Comando Estratégico" icon={<Target size={14}/>} />
                     </div>
                  </div>
 

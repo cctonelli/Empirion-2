@@ -104,6 +104,18 @@ export interface KPIs {
   scissors_effect?: number;
   avg_receivable_days?: number;
   avg_payable_days?: number;
+  ccc?: number;
+  interest_coverage?: number;
+  dupont?: {
+    margin: number;
+    turnover: number;
+    leverage: number;
+  };
+  landed_costs?: Record<number, number>;
+  net_fx_exposure?: number;
+  price_elasticity?: number;
+  regional_cac?: Record<number, number>;
+  carbon_footprint?: number;
   [key: string]: any;
 }
 
@@ -343,6 +355,8 @@ export interface TutorTeamView {
   ebitda: number;
   kanitz: number;
   dcf: number;
+  ccc?: number;
+  interest_coverage?: number;
   auditLogs: AuditLog[];
   current_decision?: any;
   is_bot?: boolean;

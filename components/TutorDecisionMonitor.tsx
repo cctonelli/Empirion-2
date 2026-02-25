@@ -6,7 +6,7 @@ import {
   Zap, Activity, Trophy, ArrowRight,
   ShieldCheck, Loader2, DollarSign,
   Thermometer, ActivitySquare, GripVertical,
-  AlertTriangle, BrainCircuit, MessageSquare, Sparkles, X
+  AlertTriangle, BrainCircuit, MessageSquare, Sparkles, X, Clock
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence, Reorder } from 'framer-motion';
 const motion = _motion as any;
@@ -62,6 +62,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             ebitda: proj?.kpis?.ebitda || t.kpis?.ebitda || 0,
             kanitz: proj?.kpis?.solvency_score_kanitz || t.kpis?.solvency_score_kanitz || 0,
             dcf: proj?.kpis?.dcf_valuation || t.kpis?.dcf_valuation || 0,
+            ccc: proj?.kpis?.ccc || t.kpis?.ccc || 0,
+            interest_coverage: proj?.kpis?.interest_coverage || t.kpis?.interest_coverage || 0,
             auditLogs: (decision?.data?.audit_logs || []) as AuditLog[],
             current_decision: decision?.data,
             is_bot: t.is_bot,
@@ -84,6 +86,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           ebitda: h.ebitda || h.kpis?.ebitda || 0,
           kanitz: h.solvency_score_kanitz || h.kpis?.solvency_score_kanitz || 0,
           dcf: h.dcf_valuation || h.kpis?.dcf_valuation || 0,
+          ccc: h.ccc || h.kpis?.ccc || 0,
+          interest_coverage: h.interest_coverage || h.kpis?.interest_coverage || 0,
           auditLogs: [],
           is_bot: h.team?.is_bot,
           strategic_profile: h.team?.strategic_profile
@@ -234,6 +238,8 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
          <div className="grid grid-cols-2 gap-3 pt-6 border-t border-white/5 relative z-10">
             <MetricBox label="Kanitz Solvency" val={team.kanitz.toFixed(1)} icon={<Thermometer size={12} className="text-emerald-400"/>} trend={team.kanitz > 0 ? 'safe' : 'danger'} />
             <MetricBox label="Market Share" val={`${team.market_share.toFixed(1)}%`} icon={<Activity size={12} className="text-orange-500"/>} />
+            <MetricBox label="Ciclo Caixa (CCC)" val={`${team.ccc?.toFixed(0)}d`} icon={<Clock size={12} className="text-blue-400"/>} />
+            <MetricBox label="Cobertura Juros" val={`${team.interest_coverage?.toFixed(1)}x`} icon={<ShieldCheck size={12} className="text-purple-400"/>} />
             <MetricBox label="NLCDG Unit" val={`$ ${team.nlcdg.toFixed(1)}M`} icon={<Zap size={12} className="text-orange-500"/>} />
             <MetricBox label="DCF Valuation" val={`$ ${team.dcf.toFixed(1)}M`} icon={<DollarSign size={12} className="text-indigo-400"/>} highlight />
          </div>
