@@ -220,7 +220,12 @@ export const calculateProjections = (
       regional_cac: regionalCac,
       carbon_footprint: carbonFootprint,
       last_price: price,
-      last_units_sold: unitsSold
+      last_units_sold: unitsSold,
+      // Indicadores de Moeda e Tarifas (v18.8)
+      brl_rate: indicators.BRL || 1,
+      gbp_rate: indicators.GBP || 0,
+      export_tariff_brazil: indicators.export_tariff_brazil || 0,
+      export_tariff_uk: indicators.export_tariff_uk || 0
     }
   };
 };

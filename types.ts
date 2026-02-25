@@ -357,6 +357,10 @@ export interface TutorTeamView {
   dcf: number;
   ccc?: number;
   interest_coverage?: number;
+  export_tariff_brazil?: number;
+  export_tariff_uk?: number;
+  brl_rate?: number;
+  gbp_rate?: number;
   auditLogs: AuditLog[];
   current_decision?: any;
   is_bot?: boolean;

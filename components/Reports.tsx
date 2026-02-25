@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   TrendingUp, Landmark, Boxes, Loader2, Users, Cpu, ShieldAlert, Factory, Coins, Zap, PieChart,
   ShieldCheck, Activity, Landmark as BankIcon, ShoppingCart, Truck, Scale, ChevronDown, AlertCircle,
-  ArrowDownLeft, ArrowUpRight, Receipt, Target, Clock, Sparkles
+  ArrowDownLeft, ArrowUpRight, Receipt, Target, Clock, Sparkles, Globe, PoundSterling
 } from 'lucide-react';
 import { Branch, Championship, Team, AccountNode, CurrencyType } from '../types';
 import { getChampionships } from '../services/supabase';
@@ -109,6 +109,14 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         <KpiCard label="Pegada de Carbono" val={`${activeTeam?.kpis?.carbon_footprint?.toFixed(2) || 0} kg CO2`} desc="Impacto Ambiental Unitário" icon={<Sparkles size={20} />} color="text-emerald-400" />
                         <KpiCard label="Margem Líquida (DuPont)" val={`${((activeTeam?.kpis?.dupont?.margin || 0) * 100).toFixed(2)}%`} desc="Eficiência de Lucro" icon={<TrendingUp size={20} />} color="text-white" />
                         <KpiCard label="Giro do Ativo (DuPont)" val={`${activeTeam?.kpis?.dupont?.turnover?.toFixed(2) || 0}x`} desc="Eficiência Operacional" icon={<Activity size={20} />} color="text-white" />
+                     </div>
+
+                     <h3 className="text-xl font-black text-white uppercase italic border-b border-white/5 pb-6 pt-10">Global Trade Intelligence</h3>
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <KpiCard label="Câmbio BRL" val={activeTeam?.kpis?.brl_rate?.toFixed(2) || '1.00'} desc="Real Brasileiro" icon={<Globe size={20} />} color="text-emerald-400" />
+                        <KpiCard label="Câmbio GBP" val={activeTeam?.kpis?.gbp_rate?.toFixed(2) || '0.00'} desc="Libra Esterlina" icon={<PoundSterling size={20} />} color="text-blue-400" />
+                        <KpiCard label="Tarifa Brasil" val={`${activeTeam?.kpis?.export_tariff_brazil || 0}%`} desc="Exportação p/ BR" icon={<Scale size={20} />} color="text-orange-400" />
+                        <KpiCard label="Tarifa UK" val={`${activeTeam?.kpis?.export_tariff_uk || 0}%`} desc="Exportação p/ UK" icon={<Scale size={20} />} color="text-blue-400" />
                      </div>
                   </motion.div>
                )}

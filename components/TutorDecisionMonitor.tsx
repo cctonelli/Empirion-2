@@ -6,7 +6,7 @@ import {
   Zap, Activity, Trophy, ArrowRight,
   ShieldCheck, Loader2, DollarSign,
   Thermometer, ActivitySquare, GripVertical,
-  AlertTriangle, BrainCircuit, MessageSquare, Sparkles, X, Clock
+  AlertTriangle, BrainCircuit, MessageSquare, Sparkles, X, Clock, Globe, PoundSterling, Scale
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence, Reorder } from 'framer-motion';
 const motion = _motion as any;
@@ -64,6 +64,10 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             dcf: proj?.kpis?.dcf_valuation || t.kpis?.dcf_valuation || 0,
             ccc: proj?.kpis?.ccc || t.kpis?.ccc || 0,
             interest_coverage: proj?.kpis?.interest_coverage || t.kpis?.interest_coverage || 0,
+            export_tariff_brazil: proj?.kpis?.export_tariff_brazil || t.kpis?.export_tariff_brazil || 0,
+            export_tariff_uk: proj?.kpis?.export_tariff_uk || t.kpis?.export_tariff_uk || 0,
+            brl_rate: proj?.kpis?.brl_rate || t.kpis?.brl_rate || 1,
+            gbp_rate: proj?.kpis?.gbp_rate || t.kpis?.gbp_rate || 0,
             auditLogs: (decision?.data?.audit_logs || []) as AuditLog[],
             current_decision: decision?.data,
             is_bot: t.is_bot,
@@ -88,6 +92,10 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           dcf: h.dcf_valuation || h.kpis?.dcf_valuation || 0,
           ccc: h.ccc || h.kpis?.ccc || 0,
           interest_coverage: h.interest_coverage || h.kpis?.interest_coverage || 0,
+          export_tariff_brazil: h.export_tariff_brazil || h.kpis?.export_tariff_brazil || 0,
+          export_tariff_uk: h.export_tariff_uk || h.kpis?.export_tariff_uk || 0,
+          brl_rate: h.brl_rate || h.kpis?.brl_rate || 1,
+          gbp_rate: h.gbp_rate || h.kpis?.gbp_rate || 0,
           auditLogs: [],
           is_bot: h.team?.is_bot,
           strategic_profile: h.team?.strategic_profile
@@ -242,6 +250,26 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
             <MetricBox label="Cobertura Juros" val={`${team.interest_coverage?.toFixed(1)}x`} icon={<ShieldCheck size={12} className="text-purple-400"/>} />
             <MetricBox label="NLCDG Unit" val={`$ ${team.nlcdg.toFixed(1)}M`} icon={<Zap size={12} className="text-orange-500"/>} />
             <MetricBox label="DCF Valuation" val={`$ ${team.dcf.toFixed(1)}M`} icon={<DollarSign size={12} className="text-indigo-400"/>} highlight />
+         </div>
+
+         {/* Market Intelligence v18.8 */}
+         <div className="mt-6 flex flex-wrap gap-2 relative z-10">
+            <div className="px-3 py-1.5 bg-slate-950/80 border border-white/5 rounded-lg flex items-center gap-2">
+               <Globe size={10} className="text-emerald-400"/>
+               <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">BRL: {team.brl_rate?.toFixed(2)}</span>
+            </div>
+            <div className="px-3 py-1.5 bg-slate-950/80 border border-white/5 rounded-lg flex items-center gap-2">
+               <PoundSterling size={10} className="text-blue-400"/>
+               <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">GBP: {team.gbp_rate?.toFixed(2)}</span>
+            </div>
+            <div className="px-3 py-1.5 bg-slate-950/80 border border-white/5 rounded-lg flex items-center gap-2">
+               <Scale size={10} className="text-orange-400"/>
+               <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Tarifa BR: {team.export_tariff_brazil}%</span>
+            </div>
+            <div className="px-3 py-1.5 bg-slate-950/80 border border-white/5 rounded-lg flex items-center gap-2">
+               <Scale size={10} className="text-blue-400"/>
+               <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Tarifa UK: {team.export_tariff_uk}%</span>
+            </div>
          </div>
       </div>
    );

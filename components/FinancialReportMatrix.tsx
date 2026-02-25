@@ -50,6 +50,10 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       { id: 'dupont.margin', label: 'Margem Líquida (DuPont)', suffix: '%', isPercent: true, desc: 'Eficiência de lucro' },
       { id: 'dupont.turnover', label: 'Giro do Ativo (DuPont)', suffix: 'x', desc: 'Eficiência operacional' },
       { id: 'dupont.leverage', label: 'Alavancagem (DuPont)', suffix: 'x', desc: 'Multiplicador de patrimônio' },
+      { id: 'brl_rate', label: 'Câmbio: Real (BRL)', suffix: '', desc: 'Taxa de conversão BRL/USD' },
+      { id: 'gbp_rate', label: 'Câmbio: Libra (GBP)', suffix: '', desc: 'Taxa de conversão GBP/USD' },
+      { id: 'export_tariff_brazil', label: 'Tarifa Exportação Brasil', suffix: '%', desc: 'Imposto de exportação para o Brasil' },
+      { id: 'export_tariff_uk', label: 'Tarifa Exportação UK', suffix: '%', desc: 'Imposto de exportação para o Reino Unido' },
     ];
 
     return kpiDefinitions.map(kpi => (
