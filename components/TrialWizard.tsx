@@ -3,11 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowRight, ArrowLeft, ShieldCheck, Rocket, Loader2, Info, 
   CheckCircle2, Factory, Users, Globe, Timer, Cpu, Sparkles, 
-  Landmark, DollarSign, Target, Calculator,
+  Landmark, DollarSign, Euro, PoundSterling, Target, Calculator,
   Settings2, X, Bot, Boxes, TrendingUp, Percent, ChevronLeft, ChevronRight,
   PieChart, BarChart, Activity, Flame, Package, Award, MapPin, Gauge, BarChart3,
   Scale, Truck, UserPlus, UserMinus, Hammer, ShoppingCart, Briefcase, Tractor,
-  Coins, ClipboardList, HardDrive, ShieldAlert, Plus, Trash2
+  Bitcoin, ClipboardList, HardDrive, ShieldAlert, Plus, Trash2
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -312,14 +312,18 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="CAMPANHAS MARKETING (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="DISTRIBUIÇÃO DE PRODUTOS (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="GASTOS COM ESTOCAGEM (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO BRAZIL (%)" macroKey="export_tariff_brazil" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO EUA (%)" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} />
                              <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO EURO (%)" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} />							 
-                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORT CHINA" macroKey="export_tariff_china" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORT BTC" macroKey="export_tariff_btc" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO UK (%)" macroKey="export_tariff_uk" rules={roundRules} update={updateRoundMacro} />
+                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO CHINA (%)" macroKey="export_tariff_china" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO BTC (%)" macroKey="export_tariff_btc" rules={roundRules} update={updateRoundMacro} icon={<Bitcoin size={10}/>} />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: REAL (BRL)" macroKey="BRL" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
                              <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
-                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Euro size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: LIBRA (GBP)" macroKey="GBP" rules={roundRules} update={updateRoundMacro} icon={<PoundSterling size={10}/>} isExchange />
                              <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
-                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Coins size={10}/>} isExchange />
+                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Bitcoin size={10}/>} isExchange />
                              
                              <tr className="hover:bg-white/[0.03] transition-colors">
                                 <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR COMPRA/VENDA MÁQUINAS</td>

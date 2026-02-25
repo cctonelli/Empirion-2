@@ -1,26 +1,32 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE SCHEMA & RLS PROTOCOL v18.7 PLATINUM
--- Foco: Telemetria Avançada de Depreciação e Valor Contábil Líquido
+-- EMPIRION DATABASE SCHEMA & RLS PROTOCOL v18.8 PLATINUM
+-- Foco: Telemetria Avançada, KPIs Estratégicos e Segurança de Views
 -- ==============================================================================
 
--- 1. ADIÇÃO DE COLUNAS DE TELEMETRIA EM COMPANIES (LIVE)
+-- 1. ADIÇÃO DE COLUNAS DE TELEMETRIA E KPIs EM COMPANIES (LIVE & HISTÓRICO)
 ALTER TABLE public.companies 
 ADD COLUMN IF NOT EXISTS fixed_assets_value NUMERIC(20,2) DEFAULT 0,
-ADD COLUMN IF NOT EXISTS fixed_assets_depreciation NUMERIC(20,2) DEFAULT 0;
+ADD COLUMN IF NOT EXISTS fixed_assets_depreciation NUMERIC(20,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS ccc NUMERIC(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS interest_coverage NUMERIC(10,2) DEFAULT 0;
 
--- 2. ADIÇÃO DE COLUNAS DE TELEMETRIA EM TRIAL_COMPANIES (SANDBOX)
+-- 2. ADIÇÃO DE COLUNAS DE TELEMETRIA E KPIs EM TRIAL_COMPANIES (SANDBOX)
 ALTER TABLE public.trial_companies 
 ADD COLUMN IF NOT EXISTS fixed_assets_value NUMERIC(20,2) DEFAULT 0,
-ADD COLUMN IF NOT EXISTS fixed_assets_depreciation NUMERIC(20,2) DEFAULT 0;
+ADD COLUMN IF NOT EXISTS fixed_assets_depreciation NUMERIC(20,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS ccc NUMERIC(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS interest_coverage NUMERIC(10,2) DEFAULT 0;
 
--- 3. ÍNDICES PARA MONITORAMENTO DE "SAÚDE DOS ATIVOS" E EXAUSTÃO
+-- 3. ÍNDICES PARA MONITORAMENTO DE "SAÚDE DOS ATIVOS" E KPIs
 CREATE INDEX IF NOT EXISTS idx_companies_asset_vcl ON public.companies (fixed_assets_value DESC);
-CREATE INDEX IF NOT EXISTS idx_companies_asset_deprec ON public.companies (fixed_assets_depreciation ASC);
+CREATE INDEX IF NOT EXISTS idx_companies_ccc ON public.companies (ccc ASC);
 
 -- 4. VIEW DE AUDITORIA DE CAPEX PARA O TUTOR (HELPER)
--- Permite ver rapidamente quem está com parque de máquinas ou prédios sucateados
-CREATE OR REPLACE VIEW public.view_capex_health AS
+-- Fix: SECURITY INVOKER para conformidade com políticas de RLS do Supabase
+CREATE OR REPLACE VIEW public.view_capex_health 
+WITH (security_invoker = true)
+AS
 SELECT 
     c.championship_id,
     c.round,

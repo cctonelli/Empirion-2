@@ -227,7 +227,9 @@ export const processRoundTurnover = async (id: string, round: number) => {
                     total_assets: res.kpis.total_assets,
                     stock_value: res.kpis.stock_value,
                     fixed_assets_value: res.kpis.fixed_assets_value,
-                    fixed_assets_depreciation: res.kpis.fixed_assets_depreciation 
+                    fixed_assets_depreciation: res.kpis.fixed_assets_depreciation,
+                    ccc: res.kpis.ccc,
+                    interest_coverage: res.kpis.interest_coverage
                 });
 
                 await supabase.from(teamsTable).update({ 
