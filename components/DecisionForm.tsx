@@ -366,8 +366,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <WizardStepHeader icon={<Package />} title="Suprimentos" desc="Gerencie a cadeia de suprimentos." />
                               
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                 <InputCard label="MATÉRIA-PRIMA A (QTDE)" val={decisions.production.purchaseMPA} icon={<Package />} onChange={(v:any)=>updateDecision('production.purchaseMPA', v)} help="Quantidade de insumo MP A a ser comprado para o próximo período." />
-                                 <InputCard label="MATÉRIA-PRIMA B (QTDE)" val={decisions.production.purchaseMPB} icon={<Package />} onChange={(v:any)=>updateDecision('production.purchaseMPB', v)} help="Quantidade de insumo MP B a ser comprado para o próximo período." />
+                                 <InputCard label="MATÉRIA-PRIMA A (QTDE)" val={decisions.production.purchaseMPA} icon={<Package />} onChange={(v:any)=>updateDecision('production.purchaseMPA', v)} help="Quantidade de insumo MP-A a ser comprado para o próximo período. Lembre-se que o Produto Acabado usa 3 MP-A para cada unidade produzida." />
+                                 <InputCard label="MATÉRIA-PRIMA B (QTDE)" val={decisions.production.purchaseMPB} icon={<Package />} onChange={(v:any)=>updateDecision('production.purchaseMPB', v)} help="Quantidade de insumo MP-B a ser comprado para o próximo período. Lembre-se que o Produto Acabado usa 2 MP-B para cada unidade produzida." />
                               </div>
 
                               <div className="bg-slate-900/60 p-10 rounded-[3rem] border border-white/5 space-y-6 shadow-2xl">
