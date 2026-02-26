@@ -28,6 +28,7 @@ import TutorArenaControl from './TutorArenaControl';
 import TutorDecisionMonitor from './TutorDecisionMonitor';
 import GazetteViewer from './GazetteViewer';
 import TrialWizard from './TrialWizard';
+import ChampionshipTimer from './ChampionshipTimer';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { APP_VERSION, MENU_STRUCTURE, CHAMPIONSHIP_TEMPLATES, DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_PAGE_CONTENT } from '../constants';
@@ -190,6 +191,15 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
            <div className="flex items-center gap-6">
               <button onClick={() => { setSelectedArena(null); setIsCreatingTrial(false); navigate('/app/admin'); }} className="text-slate-500 hover:text-white transition-all flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><ArrowLeft size={14}/> Sair</button>
               <div className="h-4 w-px bg-white/10" />
+              {selectedArena && (
+                 <ChampionshipTimer 
+                   variant="compact"
+                   roundStartedAt={selectedArena.round_started_at}
+                   deadlineValue={selectedArena.deadline_value}
+                   deadlineUnit={selectedArena.deadline_unit}
+                   createdAt={selectedArena.created_at}
+                 />
+              )}
               <h1 className="text-xs font-black text-white uppercase italic tracking-widest">Arena <span className="text-orange-500">{arenaName}</span></h1>
            </div>
            <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-white/5">

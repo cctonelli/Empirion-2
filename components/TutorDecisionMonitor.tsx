@@ -14,6 +14,7 @@ import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { GoogleGenAI } from '@google/genai';
 import { Branch, EcosystemConfig, CreditRating, TutorTeamView, AuditLog, Championship } from '../types';
+import ChampionshipTimer from './ChampionshipTimer';
 
 interface MonitorProps {
   championshipId: string;
@@ -130,11 +131,24 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-40">
       <header className="px-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-         <div>
-            <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">
-               Dashboard do Tutor: <span className="text-orange-500">Comando Estratégico</span>
-            </h1>
-            <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Arena Empirion Oracle v18.0 • IA Telemetry Control</p>
+         <div className="flex flex-col md:flex-row md:items-end gap-6">
+            {arena && (
+               <div className="mb-2">
+                  <ChampionshipTimer 
+                    variant="compact"
+                    roundStartedAt={arena.round_started_at}
+                    deadlineValue={arena.deadline_value}
+                    deadlineUnit={arena.deadline_unit}
+                    createdAt={arena.created_at}
+                  />
+               </div>
+            )}
+            <div>
+               <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">
+                  Dashboard do Tutor: <span className="text-orange-500">Comando Estratégico</span>
+               </h1>
+               <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Arena Empirion Oracle v18.0 • IA Telemetry Control</p>
+            </div>
          </div>
          <div className="flex items-center gap-3 px-6 py-2 bg-slate-900 border border-white/10 rounded-2xl">
             <div className={`w-2 h-2 rounded-full ${activeTimelineNode > round ? 'bg-orange-500 animate-pulse' : 'bg-blue-500'}`} />

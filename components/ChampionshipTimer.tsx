@@ -9,9 +9,17 @@ interface ChampionshipTimerProps {
   deadlineUnit?: DeadlineUnit;
   onExpire?: () => void;
   createdAt?: string; // Fallback absoluto para arenas recém-criadas sem turnover
+  variant?: 'default' | 'compact';
 }
 
-const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, deadlineValue = 7, deadlineUnit = 'days', onExpire, createdAt }) => {
+const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ 
+  roundStartedAt, 
+  deadlineValue = 7, 
+  deadlineUnit = 'days', 
+  onExpire, 
+  createdAt,
+  variant = 'default'
+}) => {
   const [timeLeft, setTimeLeft] = useState<string>('Sincronizando...');
   const [isCritical, setIsCritical] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
@@ -70,6 +78,26 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ roundStartedAt, d
 
     return () => clearInterval(timer);
   }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit, onExpire]);
+
+  if (variant === 'compact') {
+    return (
+      <div className={`px-4 py-2 rounded-2xl border flex items-center gap-4 transition-all duration-500 shadow-xl ${
+        isUrgent ? 'bg-rose-600 border-white text-white animate-pulse shadow-rose-600/20' :
+        isCritical ? 'bg-orange-600 border-orange-400 text-white shadow-orange-600/20' : 
+        'bg-slate-950 border-white/10 text-slate-100 shadow-black/40'
+      }`}>
+        <div className="flex flex-col">
+           <span className={`text-[6px] font-black uppercase tracking-[0.2em] leading-none mb-1 ${isUrgent || isCritical ? 'text-white/70' : 'text-orange-500'}`}>
+              {isUrgent ? 'URGENTE' : isCritical ? 'PRAZO' : 'ROUND TIMER'}
+           </span>
+           <span className="text-sm font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
+        </div>
+        <div className={`p-1.5 rounded-lg ${isUrgent || isCritical ? 'bg-white/20' : 'bg-white/5'}`}>
+           <Clock size={14} className={!isCritical && !isUrgent ? 'text-orange-500 animate-pulse' : ''} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`px-8 py-4 rounded-[2rem] shadow-2xl border transition-all duration-700 flex items-center gap-6 ${

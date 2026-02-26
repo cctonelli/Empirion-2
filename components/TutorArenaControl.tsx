@@ -12,6 +12,7 @@ import {
 import { EcosystemConfig, Championship, MacroIndicators, BlackSwanEvent, LaborAvailability, CurrencyType } from '../types';
 import { updateEcosystem, supabase } from '../services/supabase';
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
+import ChampionshipTimer from './ChampionshipTimer';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 
@@ -90,9 +91,18 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                <BrainCircuit size={32}/>
             </div>
             <div>
-               <h4 className="text-xl font-black text-white uppercase italic tracking-tight">
-                  {hasDecisions ? 'Intervenção Tática Ativa' : 'Aguardando Inteligência'}
-               </h4>
+               <div className="flex items-center gap-4 mb-1">
+                  <h4 className="text-xl font-black text-white uppercase italic tracking-tight">
+                     {hasDecisions ? 'Intervenção Tática Ativa' : 'Aguardando Inteligência'}
+                  </h4>
+                  <ChampionshipTimer 
+                    variant="compact"
+                    roundStartedAt={championship.round_started_at}
+                    deadlineValue={championship.deadline_value}
+                    deadlineUnit={championship.deadline_unit}
+                    createdAt={championship.created_at}
+                  />
+               </div>
                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic flex items-center gap-2">
                   {hasDecisions ? <><CheckCircle2 size={12} className="text-emerald-500" /> Equipes já operando. Choques econômicos afetarão o fechamento P0{nextRoundIdx}.</> : <><Info size={12} /> Dados sincronizados do Wizard. Nenhuma equipe enviou decisões ainda.</>}
                </p>
