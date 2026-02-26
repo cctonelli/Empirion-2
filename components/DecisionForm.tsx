@@ -23,10 +23,10 @@ import FinancialReportMatrix from './FinancialReportMatrix';
 const STEPS = [
   { id: 'legal', label: '1. JURÍDICO', icon: Gavel },
   { id: 'marketing', label: '2. COMERCIAL', icon: Megaphone },
-  { id: 'production', label: '3. SUPRIMENTOS', icon: Package },
-  { id: 'factory', label: '4. FÁBRICA', icon: Factory },
-  { id: 'hr', label: '5. TALENTOS', icon: Users2 },
-  { id: 'assets', label: '6. ATIVOS', icon: Cpu },
+  { id: 'assets', label: '3. ATIVOS', icon: Cpu },
+  { id: 'production', label: '4. SUPRIMENTOS', icon: Package },
+  { id: 'factory', label: '5. FÁBRICA', icon: Factory },
+  { id: 'hr', label: '6. TALENTOS', icon: Users2 },
   { id: 'finance', label: '7. FINANÇAS', icon: Landmark },
   { id: 'review', label: '8. ORÁCULO', icon: ShieldCheck },
 ];
@@ -193,7 +193,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                  <div className="flex-1 overflow-y-auto custom-scrollbar p-10 bg-slate-950/40 relative">
                     <div className="max-w-5xl mx-auto pb-40 space-y-16">
                        
-                       {/* PASSO 2: COMERCIAL */}
+                       {/* STEP 2: COMERCIAL */}
                        {activeStep === 1 && (
                           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                              <StepHeader title="Matriz Comercial Regional" subtitle="Otimização de demanda via pricing e marketing." icon={<Megaphone className="text-orange-500" />} />
@@ -220,12 +220,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                           </div>
                        )}
 
-                       {/* PASSO 6: ATIVOS (CAPEX) - REVISADO v18.5 */}
-                       {activeStep === 5 && (
+                       {/* STEP 3: ATIVOS (CAPEX) - REVISADO v18.5 */}
+                       {activeStep === 2 && (
                           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                              <StepHeader title="Gestão de Ativos (CapEx)" subtitle="Expansão de parque e desinvestimento estratégico." icon={<Cpu className="text-orange-500" />} />
                              
-                             {/* INVENTÁRIO ATUAL (MÁQUINAS EXISTENTES DESDE P00) */}
+                             {/* INVENTÁRIO ATUAL (MÁQUINAS EXISTENTES NO P00) */}
                              <div className="space-y-6">
                                 <h4 className="text-xs font-black text-white uppercase italic tracking-widest flex items-center gap-2">
                                    <Warehouse size={16} className="text-blue-400"/> Parque de Máquinas Operacional (P00+)
