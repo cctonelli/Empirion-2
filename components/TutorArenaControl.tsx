@@ -56,7 +56,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
         [nextRoundIdx]: macro
       }
     };
-    await updateEcosystem(championship.id, payload);
+    await updateEcosystem(championship.id, payload, !!championship.is_trial);
     onUpdate(payload);
     setIsSaving(false);
     alert(`INTERVENÇÃO EXECUTADA: Cenário e Câmbio P0${nextRoundIdx} selados no Oracle Node.`);

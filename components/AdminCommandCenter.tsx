@@ -160,7 +160,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
             demand_variation: (currentMacro.demand_variation || 0) + event.modifiers.demand,
             interest_rate_tr: (currentMacro.interest_rate_tr || 2) + event.modifiers.interest
          };
-         await updateEcosystem(selectedArena.id, { round_rules: { ...(selectedArena.round_rules || {}), [nextRound]: updatedMacro } });
+         await updateEcosystem(selectedArena.id, { round_rules: { ...(selectedArena.round_rules || {}), [nextRound]: updatedMacro } }, !!selectedArena.is_trial);
          alert("CISNE NEGRO INTEGRADO AO PRÓXIMO TURNOVER.");
          fetchData();
       }
@@ -172,7 +172,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
     if (!confirm(`CONFIRMAR TURNOVER: Processar fechamento do Ciclo 0${selectedArena.current_round}?`)) return;
     setIsProcessing(true);
     try {
-      const res = await processRoundTurnover(selectedArena.id, selectedArena.current_round);
+      const res = await processRoundTurnover(selectedArena.id, selectedArena.current_round, !!selectedArena.is_trial);
       if (res.success) { alert("TURNOVER CONCLUÍDO."); fetchData(); } else { throw new Error(res.error); }
     } catch (err: any) { alert(`ERRO CRÍTICO: ${err.message}`); } finally { setIsProcessing(false); }
   };

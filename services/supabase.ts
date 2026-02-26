@@ -50,16 +50,33 @@ export const getUserEmpirePoints = async (userId: string): Promise<number> => {
   return data?.total_points || 0;
 };
 
-export const getChampionships = async (isPublicOnly: boolean = false) => {
-  const isTrial = localStorage.getItem('is_trial_session') === 'true';
-  const table = isTrial ? 'trial_championships' : 'championships';
-  const teamsTable = isTrial ? 'trial_teams' : 'teams';
+export const getChampionships = async (isPublicOnly: boolean = false, forceTable?: 'live' | 'trial') => {
+  const isTrialSession = localStorage.getItem('is_trial_session') === 'true';
   
-  let query = supabase.from(table).select(`*, teams:${teamsTable}(*)`);
-  if (isPublicOnly) {
-    query = query.eq('is_public', true).eq('status', 'active');
+  const fetchFromTable = async (type: 'live' | 'trial') => {
+    const table = type === 'trial' ? 'trial_championships' : 'championships';
+    const teamsTable = type === 'trial' ? 'trial_teams' : 'teams';
+    let query = supabase.from(table).select(`*, teams:${teamsTable}(*)`);
+    if (isPublicOnly) {
+      query = query.eq('is_public', true).eq('status', 'active');
+    }
+    const { data, error } = await query;
+    if (error) return [];
+    return (data || []).map(c => ({ ...c, is_trial: type === 'trial' }));
+  };
+
+  if (forceTable === 'live') return { data: await fetchFromTable('live'), error: null };
+  if (forceTable === 'trial') return { data: await fetchFromTable('trial'), error: null };
+
+  // Se não forçado, e estivermos em uma visualização de seleção (onde queremos ver tudo)
+  // ou se o isTrialSession for o critério
+  if (!isTrialSession) {
+    // Tenta buscar de ambos para garantir que o Tutor veja tudo no Admin ou Seleção
+    const [live, trial] = await Promise.all([fetchFromTable('live'), fetchFromTable('trial')]);
+    return { data: [...live, ...trial], error: null };
   }
-  return await query;
+
+  return { data: await fetchFromTable('trial'), error: null };
 };
 
 export const deleteChampionship = async (id: string, isTrial: boolean) => {
@@ -67,7 +84,8 @@ export const deleteChampionship = async (id: string, isTrial: boolean) => {
   return await supabase.from(table).delete().eq('id', id);
 };
 
-export const getActiveBusinessPlan = async (teamId: string, round: number) => {
+export const getActiveBusinessPlan = async (teamId: string, round: number, isTrial?: boolean) => {
+  const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
   return await supabase
     .from('business_plans')
     .select('*')
@@ -83,9 +101,9 @@ export const saveBusinessPlan = async (payload: Partial<BusinessPlan>) => {
   return await supabase.from('business_plans').insert(payload);
 };
 
-export const getTeamSimulationHistory = async (teamId: string) => {
-  const isTrial = localStorage.getItem('is_trial_session') === 'true';
-  const historyTable = isTrial ? 'trial_companies' : 'companies';
+export const getTeamSimulationHistory = async (teamId: string, isTrial?: boolean) => {
+  const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
+  const historyTable = isTrialSession ? 'trial_companies' : 'companies';
   const { data } = await supabase
     .from(historyTable)
     .select('*')
@@ -94,9 +112,9 @@ export const getTeamSimulationHistory = async (teamId: string) => {
   return data || [];
 };
 
-export const saveDecisions = async (teamId: string, champId: string, round: number, data: any) => {
-  const isTrial = localStorage.getItem('is_trial_session') === 'true';
-  const table = isTrial ? 'trial_decisions' : 'current_decisions';
+export const saveDecisions = async (teamId: string, champId: string, round: number, data: any, isTrial?: boolean) => {
+  const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
+  const table = isTrialSession ? 'trial_decisions' : 'current_decisions';
   
   const { data: existing } = await supabase.from(table).select('id').eq('team_id', teamId).eq('round', round).maybeSingle();
   if (existing) {
@@ -127,9 +145,9 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
   return data || [];
 };
 
-export const updateEcosystem = async (id: string, data: any) => {
-  const isTrial = localStorage.getItem('is_trial_session') === 'true';
-  const table = isTrial ? 'trial_championships' : 'championships';
+export const updateEcosystem = async (id: string, data: any, isTrial?: boolean) => {
+  const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
+  const table = isTrialSession ? 'trial_championships' : 'championships';
   return await supabase.from(table).update(data).eq('id', id);
 };
 
@@ -192,13 +210,13 @@ export const getTeamAuditLog = async (teamId: string, round: number) => {
   return data || [];
 };
 
-export const processRoundTurnover = async (id: string, round: number) => {
+export const processRoundTurnover = async (id: string, round: number, isTrial?: boolean) => {
     try {
-        const isTrial = localStorage.getItem('is_trial_session') === 'true';
-        const champTable = isTrial ? 'trial_championships' : 'championships';
-        const teamsTable = isTrial ? 'trial_teams' : 'teams';
-        const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
-        const historyTable = isTrial ? 'trial_companies' : 'companies';
+        const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
+        const champTable = isTrialSession ? 'trial_championships' : 'championships';
+        const teamsTable = isTrialSession ? 'trial_teams' : 'teams';
+        const decisionsTable = isTrialSession ? 'trial_decisions' : 'current_decisions';
+        const historyTable = isTrialSession ? 'trial_companies' : 'companies';
 
         const { data: champ } = await supabase.from(champTable).select('*').eq('id', id).single();
         const { data: teams } = await supabase.from(teamsTable).select('*').eq('championship_id', id);
