@@ -208,6 +208,9 @@ export const calculateProjections = (
       fixed_assets_value: (findAccountValue(finalBS, 'assets.noncurrent.fixed.machines') + buildingsCost + 1200000) - periodDepreciation,
       
       // Novos KPIs Estratégicos
+      total_assets: totalAssets,
+      equity: totalEquity,
+      stock_value: closingStockValuePA,
       ccc,
       interest_coverage: interestCoverage,
       dupont: {

@@ -170,7 +170,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
 
   const handleTurnover = async () => {
     if (!selectedArena || isProcessing) return;
-    if (!confirm(`CONFIRMAR TURNOVER: Processar fechamento do Ciclo 0${selectedArena.current_round}?`)) return;
+    if (!confirm(`CONFIRMAR TURNOVER: Processar fechamento do Ciclo 0${(selectedArena?.current_round ?? 0) + 1}?`)) return;
     setIsProcessing(true);
     try {
       const res = await processRoundTurnover(selectedArena.id, selectedArena.current_round, !!selectedArena.is_trial);
@@ -213,7 +213,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                 {isGeneratingEvent ? <Loader2 size={12} className="animate-spin"/> : <AlertOctagon size={12}/>} Cisne Negro (IA)
               </button>
               <button onClick={handleTurnover} disabled={isProcessing} className="px-6 py-2 bg-orange-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 flex items-center gap-2 active:scale-95">
-                {isProcessing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>} Turnover P0{selectedArena?.current_round}
+                {isProcessing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>} Turnover P0{(selectedArena?.current_round ?? 0) + 1}
               </button>
            </div>
         </header>

@@ -12,8 +12,9 @@ import { motion as _motion, AnimatePresence, Reorder } from 'framer-motion';
 const motion = _motion as any;
 import { supabase } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { GoogleGenAI } from '@google/genai';
-import { Branch, EcosystemConfig, CreditRating, TutorTeamView, AuditLog, Championship } from '../types';
+import { Branch, EcosystemConfig, CreditRating, TutorTeamView, AuditLog, Championship, MacroIndicators } from '../types';
 import ChampionshipTimer from './ChampionshipTimer';
 
 interface MonitorProps {
@@ -25,7 +26,7 @@ interface MonitorProps {
 const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, isTrial = false }) => {
   const [teams, setTeams] = useState<TutorTeamView[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTimelineNode, setActiveTimelineNode] = useState(round + 1);
+  const [activeTimelineNode, setActiveTimelineNode] = useState(round);
   const [arena, setArena] = useState<Championship | null>(null);
 
   const fetchLiveState = async (targetNode: number) => {
@@ -39,8 +40,9 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
       if (!arena) setArena(arenaData);
 
       let processedTeams: TutorTeamView[] = [];
+      const isLive = targetNode >= round;
 
-      if (targetNode > round) {
+      if (isLive) {
         const { data: teamsData } = await supabase.from(teamsTable).select('*').eq('championship_id', championshipId);
         const { data: decisionsData } = await supabase.from(decisionsTable).select('*').eq('championship_id', championshipId).eq('round', targetNode);
 
@@ -51,7 +53,11 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             inflation_rate: 0.01, demand_multiplier: 1.0, interest_rate: 0.03, market_volatility: 0.05, scenario_type: 'simulated', modality_type: 'standard' 
           });
           
-          const proj = decision ? calculateProjections(decision.data, branch, eco, arenaData?.market_indicators || arenaData?.initial_market_data, t) : null;
+          // Get indicators for the target node (Round 1, 2, etc.)
+          const currentRules = arenaData?.round_rules?.[targetNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || arenaData?.market_indicators;
+          const indicatorsForNode = { ...arenaData?.market_indicators, ...currentRules };
+          
+          const proj = decision ? calculateProjections(decision.data, branch, eco, indicatorsForNode, t) : null;
 
           return {
             id: t.id,
@@ -151,9 +157,9 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             </div>
          </div>
          <div className="flex items-center gap-3 px-6 py-2 bg-slate-900 border border-white/10 rounded-2xl">
-            <div className={`w-2 h-2 rounded-full ${activeTimelineNode > round ? 'bg-orange-500 animate-pulse' : 'bg-blue-500'}`} />
+            <div className={`w-2 h-2 rounded-full ${activeTimelineNode >= round ? 'bg-orange-500 animate-pulse' : 'bg-blue-500'}`} />
             <span className="text-[10px] font-black text-white uppercase tracking-widest">
-               {activeTimelineNode > round ? 'Monitorando Decisões Live' : `Visualizando Histórico P0${activeTimelineNode}`}
+               {activeTimelineNode >= round ? 'Monitorando Decisões Live' : `Visualizando Histórico P0${activeTimelineNode}`}
             </span>
          </div>
       </header>
@@ -162,7 +168,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
         <Reorder.Group axis="x" values={teams} onReorder={setTeams} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
           {teams.map((team, idx) => (
             <Reorder.Item key={team.id} value={team}>
-              <TeamCardDetailed team={team} index={idx} isLive={activeTimelineNode > round} />
+              <TeamCardDetailed team={team} index={idx} isLive={activeTimelineNode >= round} />
             </Reorder.Item>
           ))}
         </Reorder.Group>

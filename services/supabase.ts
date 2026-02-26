@@ -19,6 +19,7 @@ import {
 } from '../types';
 import { generateBotDecision } from './gemini';
 import { calculateProjections } from './simulation';
+import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -129,13 +130,55 @@ export const saveDecisions = async (teamId: string, champId: string, round: numb
 export const createChampionshipWithTeams = async (config: any, teams: any[], isTrial: boolean) => {
   const champTable = isTrial ? 'trial_championships' : 'championships';
   const teamsTable = isTrial ? 'trial_teams' : 'teams';
+  const historyTable = isTrial ? 'trial_companies' : 'companies';
   
   const { data: champ, error: champError } = await supabase.from(champTable).insert(config).select().single();
   if (champError) throw champError;
   
-  const teamsWithChamp = teams.map(t => ({ ...t, championship_id: champ.id, kpis: {} }));
-  const { error: teamsError } = await supabase.from(teamsTable).insert(teamsWithChamp);
+  // Initial KPIs for Round 0 (Individualized)
+  const initialKpis = {
+    statements: config.initial_financials || INITIAL_FINANCIAL_TREE,
+    machines: INITIAL_MACHINES_P00,
+    current_cash: 0,
+    stock_quantities: { mp_a: 30150, mp_b: 20100, finished_goods: 0 },
+    equity: 7252171.74,
+    total_assets: 9493163.54,
+    stock_value: 1407000.00,
+    fixed_assets_value: 6012500.00,
+    rating: 'AAA',
+    last_price: 425,
+    last_units_sold: 0,
+    ebitda: 208387.77, // Operating Profit + Depreciation approx
+    tsr: 0,
+    ccc: 0,
+    interest_coverage: 100
+  };
+
+  const teamsWithChamp = teams.map(t => ({ ...t, championship_id: champ.id, kpis: initialKpis }));
+  const { data: createdTeams, error: teamsError } = await supabase.from(teamsTable).insert(teamsWithChamp).select();
   if (teamsError) throw teamsError;
+  
+  // Insert Round 0 into history for each team (Individualized)
+  const historyEntries = (createdTeams || []).map(t => ({
+    team_id: t.id,
+    championship_id: champ.id,
+    round: 0,
+    state: {}, 
+    kpis: initialKpis,
+    equity: initialKpis.equity,
+    revenue: 0,
+    net_profit: 0,
+    total_assets: 9493163.54,
+    stock_value: 1407000.00,
+    fixed_assets_value: 6012500.00,
+    fixed_assets_depreciation: 0,
+    ccc: 0,
+    interest_coverage: 100,
+    brl_rate: 1,
+    gbp_rate: 0
+  }));
+  
+  await supabase.from(historyTable).insert(historyEntries);
   
   return champ;
 };
@@ -222,21 +265,33 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const { data: teams } = await supabase.from(teamsTable).select('*').eq('championship_id', id);
         if (!champ) throw new Error("Arena não encontrada.");
 
+        const nextRound = round + 1;
+        // Get indicators for the round being processed (Round 1, 2, etc.)
+        const currentRules = champ.round_rules?.[nextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound] || champ.market_indicators;
+        const indicatorsForRound = { ...champ.market_indicators, ...currentRules };
+
         for (const team of (teams || [])) {
-            const { data: dec } = await supabase.from(decisionsTable).select('*').eq('team_id', team.id).eq('round', round + 1).maybeSingle();
+            const { data: dec } = await supabase.from(decisionsTable).select('*').eq('team_id', team.id).eq('round', nextRound).maybeSingle();
             let finalDecision = dec?.data;
             
             if (team.is_bot && !finalDecision) {
-              finalDecision = await generateBotDecision(champ.branch, round + 1, champ.regions_count, champ.market_indicators, team.name, team.strategic_profile);
+              finalDecision = await generateBotDecision(champ.branch, nextRound, champ.regions_count, indicatorsForRound, team.name, team.strategic_profile);
+              // Persist bot decision for audit and visibility
+              await supabase.from(decisionsTable).insert({
+                team_id: team.id,
+                championship_id: id,
+                round: nextRound,
+                data: finalDecision
+              });
             }
 
             if (finalDecision) {
-                const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, champ.market_indicators, team);
+                const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, indicatorsForRound, team);
                 
                 await supabase.from(historyTable).insert({
                     team_id: team.id, 
                     championship_id: id, 
-                    round: round + 1, 
+                    round: nextRound, 
                     state: finalDecision, 
                     kpis: res.kpis, 
                     equity: res.kpis.equity,
@@ -260,7 +315,18 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 }).eq('id', team.id);
             }
         }
-        await supabase.from(champTable).update({ current_round: round + 1, round_started_at: new Date().toISOString() }).eq('id', id);
+
+        // Prepare indicators for the NEXT round (round + 2)
+        const nextNextRound = nextRound + 1;
+        const nextRules = champ.round_rules?.[nextNextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextNextRound] || indicatorsForRound;
+        const nextIndicators = { ...indicatorsForRound, ...nextRules };
+
+        await supabase.from(champTable).update({ 
+            current_round: nextRound, 
+            market_indicators: nextIndicators,
+            round_started_at: new Date().toISOString() 
+        }).eq('id', id);
+        
         return { success: true };
     } catch (err: any) { return { success: false, error: err.message }; }
 };
