@@ -15,7 +15,7 @@ import { createChampionshipWithTeams } from '../services/supabase';
 import { INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import EmpireParticles from './EmpireParticles';
-import { Branch, SalesMode, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, RegionConfig, TransparencyLevel, GazetaMode } from '../types';
+import { Branch, SalesMode, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, RegionConfig, TransparencyLevel, GazetaMode, StrategicProfile } from '../types';
 import { formatCurrency, getCurrencySymbol } from '../utils/formatters';
 
 const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
@@ -92,12 +92,33 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const handleLaunch = async () => {
     setIsSubmitting(true);
     try {
+      const profiles: StrategicProfile[] = ['AGRESSIVO', 'CONSERVADOR', 'EFICIENTE', 'INOVADOR', 'EQUILIBRADO'];
       const teamsToCreate = [
         ...teamNames.map(n => ({ name: n, is_bot: false })),
-        ...Array.from({ length: formData.botsCount }, (_, i) => ({ name: `SYNTH NODE 0${i+1}`, is_bot: true }))
+        ...Array.from({ length: formData.botsCount }, (_, i) => ({ 
+          name: `SYNTH NODE 0${i+1}`, 
+          is_bot: true,
+          strategic_profile: profiles[i % profiles.length]
+        }))
       ];
+
+      // Destructuring to avoid sending UI-only or camelCase fields to Supabase
+      const { 
+        humanTeamsCount, botsCount, marketMode, regionsCount, 
+        roundTime, roundUnit, transparency, gazetaMode, 
+        initialStockPrice, totalRounds, ...rest 
+      } = formData;
+
       await createChampionshipWithTeams({
-        ...formData,
+        ...rest,
+        total_rounds: totalRounds,
+        sales_mode: marketMode,
+        regions_count: regionsCount,
+        deadline_value: roundTime,
+        deadline_unit: roundUnit,
+        transparency_level: transparency,
+        gazeta_mode: gazetaMode,
+        initial_share_price: initialStockPrice,
         region_names: regionConfigs.map(r => r.name), 
         region_configs: regionConfigs, 
         initial_financials: financials,

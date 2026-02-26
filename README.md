@@ -7,6 +7,14 @@
 ## 🧠 1. Arquitetura de Inteligência Artificial (Gemini API)
 O Empirion utiliza o motor neural **Gemini 3 Pro** para orquestrar o Oráculo Strategos, fornecendo raciocínio profundo sobre balanços e planos de negócios. A versão **Gemini 3 Flash** é utilizada para processamento de baixa latência em bots competitivos e geração de notícias da Gazeta.
 
+### 1.1 Perfis Estratégicos de Bots (Autonomous Nodes)
+Para garantir uma dinâmica de mercado realista e heterogênea, os bots (SYNTH NODES) recebem atribuições automáticas de perfis estratégicos distintos, cada um com comportamentos de decisão únicos:
+*   **AGRESSIVO:** Foco em ganho de market share rápido, preços competitivos e alta alavancagem.
+*   **CONSERVADOR:** Prioriza a preservação de capital, liquidez imediata e baixo endividamento.
+*   **EFICIENTE:** Busca a otimização máxima dos custos de produção e das margens operacionais.
+*   **INOVADOR:** Foca em diferenciação de mercado através de investimentos em qualidade e marketing.
+*   **EQUILIBRADO:** Mantém uma postura neutra, buscando o balanço ideal entre crescimento e segurança financeira.
+
 ---
 
 ## 🏛️ 2. Segurança e Governança (RLS Protocol)
