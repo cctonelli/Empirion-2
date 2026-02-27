@@ -4,6 +4,19 @@
 -- Foco: Telemetria Avançada, KPIs Estratégicos e Segurança de Views
 -- ==============================================================================
 
+-- 0. GARANTIR EXISTÊNCIA DA TABELA DE PERFIS (CORE)
+CREATE TABLE IF NOT EXISTS public.user_profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    supabase_user_id UUID UNIQUE NOT NULL,
+    name TEXT,
+    nickname TEXT,
+    email TEXT UNIQUE,
+    phone TEXT,
+    role TEXT DEFAULT 'player',
+    is_opal_premium BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- 1. ADIÇÃO DE COLUNAS DE TELEMETRIA E KPIs EM COMPANIES (LIVE & HISTÓRICO)
 ALTER TABLE public.companies 
 ADD COLUMN IF NOT EXISTS revenue NUMERIC(20,2) DEFAULT 0,
@@ -94,5 +107,54 @@ SELECT
     END as exhaustion_percentage
 FROM public.companies c
 JOIN public.teams t ON c.team_id = t.id;
+
+-- 8. TABELA DE SEGREDOS DO SISTEMA (API KEYS)
+CREATE TABLE IF NOT EXISTS public.system_secrets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    key_name TEXT UNIQUE NOT NULL,
+    key_value TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Habilitar RLS
+ALTER TABLE public.system_secrets ENABLE ROW LEVEL SECURITY;
+
+-- Políticas: Apenas usuários autenticados com role 'tutor' ou 'admin' podem ler
+-- Nota: Assume-se que a tabela de perfis se chama 'user_profiles' conforme types.ts
+DROP POLICY IF EXISTS "Tutores e Admins podem ler segredos" ON public.system_secrets;
+CREATE POLICY "Tutores e Admins podem ler segredos" ON public.system_secrets
+    FOR SELECT
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.user_profiles
+            WHERE user_profiles.supabase_user_id = auth.uid()
+            AND user_profiles.role IN ('tutor', 'admin')
+        )
+    );
+
+-- Apenas Admins podem gerenciar (INSERT/UPDATE/DELETE)
+DROP POLICY IF EXISTS "Apenas Admins gerenciam segredos" ON public.system_secrets;
+CREATE POLICY "Apenas Admins gerenciam segredos" ON public.system_secrets
+    FOR ALL
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.user_profiles
+            WHERE user_profiles.supabase_user_id = auth.uid()
+            AND user_profiles.role = 'admin'
+        )
+    );
+
+-- 9. SEED DE SEGREDOS (API KEYS INICIAIS)
+INSERT INTO public.system_secrets (key_name, key_value, description)
+VALUES 
+    ('GEMINI_API_KEY', 'AIzaSyCsvV4g71G6w7-G8dCnbJ9ugu-t9uLdiSg', 'Chave exclusiva do EMPIRION para IA Gemini'),
+    ('API_KEY', 'AIzaSyCsvV4g71G6w7-G8dCnbJ9ugu-t9uLdiSg', 'Chave de fallback para serviços de IA')
+ON CONFLICT (key_name) DO UPDATE 
+SET key_value = EXCLUDED.key_value, 
+    updated_at = now();
 
 COMMIT;

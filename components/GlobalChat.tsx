@@ -20,11 +20,15 @@ const GlobalChat: React.FC = () => {
     }
   }, [messages]);
 
-  const toggleChat = () => {
+  const toggleChat = async () => {
     setIsOpen(!isOpen);
     setIsMinimized(false);
-    if (!chatSessionRef.current) {
-      chatSessionRef.current = createChatSession();
+    if (!chatSessionRef.current && !isOpen) {
+      try {
+        chatSessionRef.current = await createChatSession();
+      } catch (e) {
+        console.error("Failed to init chat session:", e);
+      }
     }
   };
 
@@ -39,7 +43,7 @@ const GlobalChat: React.FC = () => {
 
     try {
       if (!chatSessionRef.current) {
-        chatSessionRef.current = createChatSession();
+        chatSessionRef.current = await createChatSession();
       }
 
       const streamResponse = await chatSessionRef.current.sendMessageStream({ message: userMessage });

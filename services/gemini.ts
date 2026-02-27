@@ -2,11 +2,30 @@
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType, BlackSwanEvent, TransparencyLevel, GazetaMode, StrategicProfile } from "../types";
 
-const getClient = () => new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let cachedApiKey: string | null = null;
+
+export const getApiKey = async () => {
+  if (cachedApiKey) return cachedApiKey;
+  const envKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (envKey) {
+    cachedApiKey = envKey;
+    return cachedApiKey;
+  }
+  try {
+    const { getSystemSecret } = await import('./supabase');
+    cachedApiKey = await getSystemSecret('GEMINI_API_KEY') || '';
+  } catch (e) {
+    console.warn("Supabase Secret Fetch Failed:", e);
+    cachedApiKey = '';
+  }
+  return cachedApiKey;
+};
 
 export const auditBusinessPlan = async (section: string, contextJson: string, history: any[]) => {
   try {
-    const ai = getClient();
+    const apiKey = await getApiKey();
+    if (!apiKey) throw new Error("Gemini API Key missing.");
+    const ai = new GoogleGenAI({ apiKey });
     const context = JSON.parse(contextJson);
     
     const response = await ai.models.generateContent({
@@ -46,7 +65,9 @@ export const generateBusinessPlanField = async (
   branch: string
 ) => {
   try {
-    const ai = getClient();
+    const apiKey = await getApiKey();
+    if (!apiKey) throw new Error("Gemini API Key missing.");
+    const ai = new GoogleGenAI({ apiKey });
     const context = JSON.parse(contextJson);
     
     const response = await ai.models.generateContent({
@@ -76,7 +97,9 @@ export const generateDynamicMarketNews = async (
   gazetaMode: GazetaMode
 ) => {
   try {
-    const ai = getClient();
+    const apiKey = await getApiKey();
+    if (!apiKey) throw new Error("Gemini API Key missing.");
+    const ai = new GoogleGenAI({ apiKey });
     const isAnonymous = gazetaMode === 'anonymous';
     
     const contextPrompt = `
@@ -128,7 +151,9 @@ export const generateBotDecision = async (
   persistedProfile?: StrategicProfile
 ): Promise<DecisionData> => {
   try {
-    const ai = getClient();
+    const apiKey = await getApiKey();
+    if (!apiKey) throw new Error("Gemini API Key missing.");
+    const ai = new GoogleGenAI({ apiKey });
     
     const profiles: Record<StrategicProfile, string> = {
       "AGRESSIVO": "Foco total em conquistar Market Share, preços baixos, marketing massivo e expansão rápida de CAPEX.",
@@ -183,8 +208,10 @@ export const generateBotDecision = async (
   }
 };
 
-export const createChatSession = () => {
-  const ai = getClient();
+export const createChatSession = async () => {
+  const apiKey = await getApiKey();
+  if (!apiKey) throw new Error("Gemini API Key missing.");
+  const ai = new GoogleGenAI({ apiKey });
   return ai.chats.create({
     model: 'gemini-3-pro-preview',
     config: {
@@ -197,7 +224,9 @@ export const createChatSession = () => {
 // Fix: Added generateMarketAnalysis as requested by MarketAnalysis.tsx
 export const generateMarketAnalysis = async (arenaName: string, round: number, branch: Branch) => {
   try {
-    const ai = getClient();
+    const apiKey = await getApiKey();
+    if (!apiKey) throw new Error("Gemini API Key missing.");
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Analise o cenário estratégico para a arena de simulação "${arenaName}" no round ${round}. O setor de atuação é ${branch}. 
@@ -214,7 +243,9 @@ export const generateMarketAnalysis = async (arenaName: string, round: number, b
 // Fix: Added performGroundedSearch as requested by MarketAnalysis.tsx
 export const performGroundedSearch = async (query: string) => {
   try {
-    const ai = getClient();
+    const apiKey = await getApiKey();
+    if (!apiKey) throw new Error("Gemini API Key missing.");
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Realize uma pesquisa fundamentada sobre: ${query}. Relacione os dados com tendências de mercado industrial e econômico real.`,
@@ -243,7 +274,9 @@ export const performGroundedSearch = async (query: string) => {
 // Fix: Added generateBlackSwanEvent as requested by AdminCommandCenter.tsx
 export const generateBlackSwanEvent = async (branch: Branch): Promise<BlackSwanEvent> => {
   try {
-    const ai = getClient();
+    const apiKey = await getApiKey();
+    if (!apiKey) throw new Error("Gemini API Key missing.");
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Gere um evento econômico "Cisne Negro" (inesperado, raro e de impacto sistêmico) para uma simulação empresarial no ramo de ${branch}.

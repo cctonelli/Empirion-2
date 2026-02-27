@@ -19,6 +19,7 @@ import ChampionshipTimer from './ChampionshipTimer';
 
 import GazetteViewer from './GazetteViewer';
 import { Newspaper, PackagePlus, FileEdit } from 'lucide-react';
+import { getApiKey } from '../services/gemini';
 
 import FinancialReportMatrix from './FinancialReportMatrix';
 
@@ -217,19 +218,25 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
                const canBuy = rules?.allow_machine_sale;
                
                return (
-                  <button 
-                    key={i} 
-                    onClick={() => setActiveTimelineNode(i)} 
-                    className={`relative z-10 w-14 h-14 rounded-full border-4 transition-all flex items-center justify-center group ${activeTimelineNode === i ? 'bg-orange-600 border-orange-400 scale-125 shadow-[0_0_30px_#f97316]' : i <= round ? 'bg-slate-800 border-blue-500/50' : 'bg-slate-950 border-white/5 opacity-40'}`}
-                  >
-                     <span className={`text-xs font-black font-mono ${activeTimelineNode === i ? 'text-white' : 'text-slate-500'}`}>P{i < 10 ? `0${i}` : i}</span>
-                     
-                     {/* Metadata Icons */}
-                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {hasBP && <div className="p-1 bg-blue-600 rounded text-[6px] text-white font-black uppercase flex items-center gap-1 shadow-lg"><FileEdit size={6}/> BP</div>}
-                        {canBuy && <div className="p-1 bg-emerald-600 rounded text-[6px] text-white font-black uppercase flex items-center gap-1 shadow-lg"><PackagePlus size={6}/> MÁQ</div>}
-                     </div>
-                  </button>
+                  <div key={i} className="relative flex flex-col items-center gap-2">
+                    <button 
+                      onClick={() => setActiveTimelineNode(i)} 
+                      className={`relative z-10 w-14 h-14 rounded-full border-4 transition-all flex items-center justify-center group ${activeTimelineNode === i ? 'bg-orange-600 border-orange-400 scale-125 shadow-[0_0_30px_#f97316]' : i <= round ? 'bg-slate-800 border-blue-500/50' : 'bg-slate-950 border-white/5 opacity-40'}`}
+                    >
+                       <span className={`text-xs font-black font-mono ${activeTimelineNode === i ? 'text-white' : 'text-slate-500'}`}>P{i < 10 ? `0${i}` : i}</span>
+                       
+                       {/* Metadata Icons - Always visible but small */}
+                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-1">
+                          {hasBP && <div className="p-0.5 bg-blue-600 rounded text-[5px] text-white font-black uppercase flex items-center gap-0.5 shadow-lg border border-white/20"><FileEdit size={5}/> BP</div>}
+                          {canBuy && <div className="p-0.5 bg-emerald-600 rounded text-[5px] text-white font-black uppercase flex items-center gap-0.5 shadow-lg border border-white/20"><PackagePlus size={5}/> MÁQ</div>}
+                       </div>
+                    </button>
+                    {activeTimelineNode === i && (
+                      <div className="absolute -bottom-6 whitespace-nowrap">
+                        <span className="text-[8px] font-black text-orange-500 uppercase tracking-tighter">Selecionado</span>
+                      </div>
+                    )}
+                  </div>
                );
             })}
          </div>
@@ -268,7 +275,13 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
       if (isAuditing || (!team.current_decision && !team.statements)) return;
       setIsAuditing(true);
       try {
-         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+         const apiKey = await getApiKey();
+
+         if (!apiKey) {
+            throw new Error("API Key not found.");
+         }
+
+         const ai = new GoogleGenAI({ apiKey });
          const context = {
             decisions: team.current_decision,
             kpis: { tsr: team.tsr, rating: team.rating, market_share: team.market_share, ebitda: team.ebitda },

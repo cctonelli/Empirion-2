@@ -253,6 +253,15 @@ export const getTeamAuditLog = async (teamId: string, round: number) => {
   return data || [];
 };
 
+export const getSystemSecret = async (name: string): Promise<string | null> => {
+  const { data } = await supabase
+    .from('system_secrets')
+    .select('key_value')
+    .eq('key_name', name)
+    .maybeSingle();
+  return data?.key_value || null;
+};
+
 export const processRoundTurnover = async (id: string, round: number, isTrial?: boolean) => {
     try {
         const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');

@@ -25,6 +25,7 @@ import BusinessPlanWizard from './BusinessPlanWizard';
 import AuditLogViewer from './AuditLogViewer';
 import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getTeamSimulationHistory } from '../services/supabase';
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [showAudit, setShowAudit] = useState(false);
   const [bpStatus, setBpStatus] = useState<'pending' | 'draft' | 'submitted'>('pending');
   const [history, setHistory] = useState<any[]>([]);
+  const [selectedRound, setSelectedRound] = useState<number>(1);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -60,8 +62,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           const team = arena.teams?.find((t: any) => t.id === teamId);
           if (team) setActiveTeam(team);
 
-          const round = (arena.current_round || 0) + 1;
-          const { data: bp } = await getActiveBusinessPlan(teamId, round);
+          const currentRound = (arena.current_round || 0) + 1;
+          setSelectedRound(currentRound);
+          const { data: bp } = await getActiveBusinessPlan(teamId, currentRound);
           if (bp) setBpStatus(bp.status);
           
           const teamHistory = await getTeamSimulationHistory(teamId);
@@ -107,7 +110,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   if (loading) return <div className="h-full flex items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-orange-600" size={48} /></div>;
 
-  const requireBP = activeArena?.round_rules?.[(activeArena?.current_round || 0) + 1]?.require_business_plan;
+  const currentRound = (activeArena?.current_round || 0) + 1;
+  const requireBP = activeArena?.round_rules?.[currentRound]?.require_business_plan;
+  const isPastRound = selectedRound < currentRound;
+  const isFutureRound = selectedRound > currentRound;
 
   return (
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
@@ -171,9 +177,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                <header className="flex justify-between items-end border-b border-white/5 pb-6 mb-6">
                   <div>
                      <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">{t('cockpit')} <span className="text-orange-600">{t('operational')}</span></h2>
-                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Protocolo v18.0 • {t('cycle')} 0{(activeArena?.current_round || 0) + 1}</p>
+                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2 italic">
+                       Protocolo v18.0 • {selectedRound === currentRound ? `${t('cycle')} 0${selectedRound}` : selectedRound < currentRound ? `Histórico P0${selectedRound}` : `Planejamento P0${selectedRound}`}
+                     </p>
                   </div>
                   <div className="flex gap-4">
+                     {isPastRound && (
+                       <div className="px-6 py-3 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xl">
+                         <History size={16} /> Modo Consulta
+                       </div>
+                     )}
                      <button onClick={() => setShowGazette(true)} className="px-8 py-3 bg-slate-900 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2 shadow-xl">
                         <Newspaper size={16} /> Oracle Gazette
                      </button>
@@ -184,14 +197,54 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   <DecisionForm 
                     teamId={activeTeam?.id} 
                     champId={activeArena?.id} 
-                    round={(activeArena?.current_round || 0) + 1} 
+                    round={selectedRound} 
                     branch={activeArena?.branch}
-                    isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted')}
+                    isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted') || isPastRound || isFutureRound}
                   />
                </div>
             </div>
          </main>
       </div>
+
+      {/* Timeline de Rodadas */}
+      <footer className="h-24 bg-slate-900 border-t border-white/10 flex items-center justify-center px-12 shrink-0 z-[3000]">
+         <div className="max-w-7xl w-full flex items-center justify-between relative">
+            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-800 -translate-y-1/2 z-0" />
+            {Array.from({ length: (activeArena?.total_rounds || 12) + 1 }).map((_, i) => {
+               const rules = activeArena?.round_rules?.[i] || DEFAULT_INDUSTRIAL_CHRONOGRAM[i] || activeArena?.market_indicators;
+               const hasBP = rules?.require_business_plan;
+               const isCurrent = i === currentRound;
+               const isSelected = i === selectedRound;
+               const isPast = i < currentRound;
+               
+               return (
+                  <div key={i} className="relative flex flex-col items-center">
+                    <button 
+                      onClick={() => setSelectedRound(i)} 
+                      className={`relative z-10 w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center group ${
+                        isSelected ? 'bg-orange-600 border-orange-400 scale-125 shadow-[0_0_20px_#f97316]' : 
+                        isCurrent ? 'bg-slate-800 border-orange-500 animate-pulse' :
+                        isPast ? 'bg-slate-800 border-blue-500/50' : 
+                        'bg-slate-950 border-white/5 opacity-40'
+                      }`}
+                    >
+                       <span className={`text-[10px] font-black font-mono ${isSelected ? 'text-white' : 'text-slate-500'}`}>P{i < 10 ? `0${i}` : i}</span>
+                       
+                       {/* Metadata Icons */}
+                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-1">
+                          {hasBP && <div className="p-0.5 bg-blue-600 rounded text-[5px] text-white font-black uppercase flex items-center gap-0.5 shadow-lg border border-white/20" title="Business Plan Obrigatório"><FileEdit size={5}/> BP</div>}
+                       </div>
+                    </button>
+                    {isSelected && (
+                      <div className="absolute -bottom-6 whitespace-nowrap">
+                        <span className="text-[7px] font-black text-orange-500 uppercase tracking-tighter">{isCurrent ? 'Atual' : isPast ? 'Passado' : 'Futuro'}</span>
+                      </div>
+                    )}
+                  </div>
+               );
+            })}
+         </div>
+      </footer>
 
       <AnimatePresence>
         {showBP && (
@@ -207,7 +260,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         )}
         {showGazette && (
           <div className="fixed inset-0 z-[5000] p-4 md:p-10 bg-slate-950/95 backdrop-blur-3xl flex items-center justify-center">
-             <GazetteViewer arena={activeArena!} aiNews="" round={activeArena?.current_round || 0} activeTeam={activeTeam} onClose={() => setShowGazette(false)} />
+             <GazetteViewer arena={activeArena!} aiNews="" round={Math.max(0, selectedRound - 1)} activeTeam={activeTeam} onClose={() => setShowGazette(false)} />
           </div>
         )}
       </AnimatePresence>
