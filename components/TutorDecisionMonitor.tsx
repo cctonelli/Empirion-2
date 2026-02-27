@@ -17,6 +17,9 @@ import { GoogleGenAI } from '@google/genai';
 import { Branch, EcosystemConfig, CreditRating, TutorTeamView, AuditLog, Championship, MacroIndicators } from '../types';
 import ChampionshipTimer from './ChampionshipTimer';
 
+import GazetteViewer from './GazetteViewer';
+import { Newspaper, PackagePlus, FileEdit } from 'lucide-react';
+
 interface MonitorProps {
   championshipId: string;
   round: number;
@@ -28,8 +31,10 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
   const [loading, setLoading] = useState(true);
   const [activeTimelineNode, setActiveTimelineNode] = useState(round);
   const [arena, setArena] = useState<Championship | null>(null);
+  const [showGazette, setShowGazette] = useState(false);
 
   const fetchLiveState = async (targetNode: number) => {
+    setLoading(true);
     try {
       const champTable = isTrial ? 'trial_championships' : 'championships';
       const teamsTable = isTrial ? 'trial_teams' : 'teams';
@@ -37,7 +42,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
       const historyTable = isTrial ? 'trial_companies' : 'companies';
 
       const { data: arenaData } = await supabase.from(champTable).select('*').eq('id', championshipId).single();
-      if (!arena) setArena(arenaData);
+      if (arenaData) setArena(arenaData);
 
       let processedTeams: TutorTeamView[] = [];
       const isLive = targetNode >= round;
@@ -53,7 +58,6 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             inflation_rate: 0.01, demand_multiplier: 1.0, interest_rate: 0.03, market_volatility: 0.05, scenario_type: 'simulated', modality_type: 'standard' 
           });
           
-          // Get indicators for the target node (Round 1, 2, etc.)
           const currentRules = arenaData?.round_rules?.[targetNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || arenaData?.market_indicators;
           const indicatorsForNode = { ...arenaData?.market_indicators, ...currentRules };
           
@@ -118,7 +122,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
 
   useEffect(() => {
     fetchLiveState(activeTimelineNode);
-    if (activeTimelineNode > round) {
+    if (activeTimelineNode >= round) {
       const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
       const channel = supabase.channel(`tutor-monitor-${championshipId}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: decisionsTable, filter: `championship_id=eq.${championshipId}` }, () => fetchLiveState(activeTimelineNode))
@@ -126,6 +130,12 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
       return () => { channel.unsubscribe(); };
     }
   }, [championshipId, activeTimelineNode, round]);
+
+  const currentIndicators = useMemo(() => {
+    if (!arena) return null;
+    const rules = arena.round_rules?.[activeTimelineNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[activeTimelineNode] || arena.market_indicators;
+    return { ...arena.market_indicators, ...rules } as MacroIndicators;
+  }, [arena, activeTimelineNode]);
 
   if (loading && teams.length === 0) return (
     <div className="p-20 text-center flex flex-col items-center gap-4">
@@ -156,13 +166,33 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
                <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Arena Empirion Oracle v18.0 • IA Telemetry Control</p>
             </div>
          </div>
-         <div className="flex items-center gap-3 px-6 py-2 bg-slate-900 border border-white/10 rounded-2xl">
-            <div className={`w-2 h-2 rounded-full ${activeTimelineNode >= round ? 'bg-orange-500 animate-pulse' : 'bg-blue-500'}`} />
-            <span className="text-[10px] font-black text-white uppercase tracking-widest">
-               {activeTimelineNode >= round ? 'Monitorando Decisões Live' : `Visualizando Histórico P0${activeTimelineNode}`}
-            </span>
+         <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowGazette(true)}
+              className="px-6 py-2 bg-white/5 border border-white/10 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2"
+            >
+              <Newspaper size={14} /> Gazeta P0{activeTimelineNode}
+            </button>
+            <div className="flex items-center gap-3 px-6 py-2 bg-slate-900 border border-white/10 rounded-2xl">
+               <div className={`w-2 h-2 rounded-full ${activeTimelineNode >= round ? 'bg-orange-500 animate-pulse' : 'bg-blue-500'}`} />
+               <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                  {activeTimelineNode >= round ? 'Monitorando Decisões Live' : `Visualizando Histórico P0${activeTimelineNode}`}
+               </span>
+            </div>
          </div>
       </header>
+
+      {/* Indicadores do Período Selecionado */}
+      {currentIndicators && (
+        <div className="px-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+           <QuickIndicator label="ICE" val={`${currentIndicators.ice}%`} />
+           <QuickIndicator label="Inflação" val={`${currentIndicators.inflation_rate}%`} />
+           <QuickIndicator label="Taxa TR" val={`${currentIndicators.interest_rate_tr}%`} />
+           <QuickIndicator label="Demanda" val={`${currentIndicators.demand_variation}%`} />
+           <QuickIndicator label="BP Obrigatório" val={currentIndicators.require_business_plan ? 'SIM' : 'NÃO'} highlight={currentIndicators.require_business_plan} />
+           <QuickIndicator label="Compra Máquinas" val={currentIndicators.allow_machine_sale ? 'LIBERADA' : 'BLOQUEADA'} highlight={currentIndicators.allow_machine_sale} />
+        </div>
+      )}
 
       <div className="px-4">
         <Reorder.Group axis="x" values={teams} onReorder={setTeams} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
@@ -177,16 +207,52 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
       <footer className="fixed bottom-0 left-0 right-0 h-32 bg-slate-950/90 backdrop-blur-3xl border-t border-white/10 z-[3000] flex items-center justify-center px-12">
          <div className="max-w-7xl w-full flex items-center justify-between relative">
             <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-800 -translate-y-1/2 z-0" />
-            {Array.from({ length: 13 }).map((_, i) => (
-               <button key={i} onClick={() => setActiveTimelineNode(i)} className={`relative z-10 w-14 h-14 rounded-full border-4 transition-all flex items-center justify-center group ${activeTimelineNode === i ? 'bg-orange-600 border-orange-400 scale-125 shadow-[0_0_30px_#f97316]' : i <= round ? 'bg-slate-800 border-blue-500/50' : 'bg-slate-950 border-white/5 opacity-40'}`}>
-                  <span className={`text-xs font-black font-mono ${activeTimelineNode === i ? 'text-white' : 'text-slate-500'}`}>P{i < 10 ? `0${i}` : i}</span>
-               </button>
-            ))}
+            {Array.from({ length: (arena?.total_rounds || 12) + 1 }).map((_, i) => {
+               const rules = arena?.round_rules?.[i] || DEFAULT_INDUSTRIAL_CHRONOGRAM[i] || arena?.market_indicators;
+               const hasBP = rules?.require_business_plan;
+               const canBuy = rules?.allow_machine_sale;
+               
+               return (
+                  <button 
+                    key={i} 
+                    onClick={() => setActiveTimelineNode(i)} 
+                    className={`relative z-10 w-14 h-14 rounded-full border-4 transition-all flex items-center justify-center group ${activeTimelineNode === i ? 'bg-orange-600 border-orange-400 scale-125 shadow-[0_0_30px_#f97316]' : i <= round ? 'bg-slate-800 border-blue-500/50' : 'bg-slate-950 border-white/5 opacity-40'}`}
+                  >
+                     <span className={`text-xs font-black font-mono ${activeTimelineNode === i ? 'text-white' : 'text-slate-500'}`}>P{i < 10 ? `0${i}` : i}</span>
+                     
+                     {/* Metadata Icons */}
+                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {hasBP && <div className="p-1 bg-blue-600 rounded text-[6px] text-white font-black uppercase flex items-center gap-1 shadow-lg"><FileEdit size={6}/> BP</div>}
+                        {canBuy && <div className="p-1 bg-emerald-600 rounded text-[6px] text-white font-black uppercase flex items-center gap-1 shadow-lg"><PackagePlus size={6}/> MÁQ</div>}
+                     </div>
+                  </button>
+               );
+            })}
          </div>
       </footer>
+
+      <AnimatePresence>
+        {showGazette && arena && (
+          <div className="fixed inset-0 z-[5000] bg-slate-950/80 backdrop-blur-xl flex items-center justify-center p-10">
+            <GazetteViewer 
+              arena={arena} 
+              aiNews="" 
+              round={activeTimelineNode} 
+              onClose={() => setShowGazette(false)} 
+            />
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
+
+const QuickIndicator = ({ label, val, highlight }: any) => (
+  <div className={`p-4 rounded-2xl border ${highlight ? 'bg-orange-600/10 border-orange-500/30' : 'bg-slate-900 border-white/5'} flex flex-col gap-1`}>
+    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+    <span className={`text-sm font-black italic ${highlight ? 'text-orange-500' : 'text-white'}`}>{val}</span>
+  </div>
+);
 
 const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, index: number, isLive: boolean }) => {
    const [isAuditing, setIsAuditing] = useState(false);
