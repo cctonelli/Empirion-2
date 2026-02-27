@@ -14,7 +14,6 @@ Para garantir uma dinâmica de mercado realista e heterogênea, os bots (SYNTH N
 *   **EFICIENTE:** Busca a otimização máxima dos custos de produção e das margens operacionais.
 *   **INOVADOR:** Foca em diferenciação de mercado através de investimentos em qualidade e marketing.
 *   **EQUILIBRADO:** Mantém uma postura neutra, buscando o balanço ideal entre crescimento e segurança financeira.
-
 ---
 
 ## 🏛️ 2. Segurança e Governança (RLS Protocol)
@@ -84,6 +83,7 @@ Durante a fase de tomada de decisão, as equipes visualizam projeções em tempo
 *   **Forecast de Receita:** Faturamento bruto projetado com base no preço e demanda estimada.
 *   **Forecast de Lucro Líquido:** Resultado final estimado após tributação (IR/CSLL).
 *   **CPP Unitário (Custo de Produção):** Eficiência fabril por unidade produzida.
+*   **Gazeta Oracle Integrada:** Acesso direto ao monitoramento competitivo e notícias de mercado sem sair do cockpit.
 
 ### 5.2 Dashboard do Tutor (Monitoramento Live)
 O Tutor possui visão privilegiada de todas as unidades de negócio:
@@ -128,6 +128,9 @@ Decomposição do Retorno sobre o Patrimônio em três pilares:
 *   **Alavancagem Financeira:** Impacto do endividamento na rentabilidade do acionista.
 
 ### 6.3 Inteligência de Mercado e ESG
+*   **Market Share Real:** Participação de mercado consolidada no round anterior.
+*   **Markup Médio:** Margem bruta real praticada sobre o custo unitário (WAC).
+*   **Estoque Físico Detalhado:** Saldo exato em unidades de MP A, MP B e Produtos Acabados.
 *   **Elasticidade-Preço Real:** Sensibilidade da demanda às alterações de preço praticadas.
 *   **Landed Cost Regional:** Custo total do produto posto no destino (Produção + Logística + Tarifas).
 *   **Pegada de Carbono Unitária:** Impacto ambiental projetado por unidade produzida e transportada.
@@ -137,3 +140,20 @@ O Empirion agora monitora a competitividade internacional através de:
 *   **Arbitragem Cambial:** Monitoramento em tempo real das taxas de **BRL (Real)** e **GBP (Libra)** em relação ao Dólar.
 *   **Geopolítica Tarifária:** Rastreamento de impostos de exportação específicos para **Brasil** e **Reino Unido (UK)**.
 *   **Exposição Cambial Líquida:** Impacto das flutuações de moedas globais (EUR, CNY, BTC) na lucratividade consolidada.
+
+---
+
+## 🏆 7. Premiações por Precisão (Audit Awards)
+
+O Empirion recompensa a excelência em planejamento financeiro através do protocolo de Auditoria de Precisão.
+
+### 7.1 Critérios de Premiação
+As equipes que conseguirem aproximar suas projeções dos resultados reais da simulação recebem bônus em dinheiro e lucro líquido:
+*   **Margem de Tolerância:** 5% (para mais ou para menos).
+*   **Indicadores Auditados:**
+    *   **Custo Unitário (CPP):** Precisão na projeção dos custos de produção.
+    *   **Faturamento (Receita):** Precisão na estimativa de vendas e precificação.
+    *   **Lucro Líquido:** Precisão na visão final do resultado do exercício.
+
+### 7.2 Impacto nos Resultados
+Os prêmios são injetados diretamente no **Caixa** e no **Lucro Líquido** da equipe no round seguinte, sendo registrados como "Receitas Não Operacionais (Audit Awards)" no DRE e Fluxo de Caixa.
