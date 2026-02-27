@@ -45,6 +45,11 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     const kpiDefinitions = [
       { id: 'ccc', label: 'Ciclo de Conversão de Caixa (CCC)', suffix: ' dias', desc: 'Eficiência do capital de giro' },
       { id: 'interest_coverage', label: 'Índice de Cobertura de Juros', suffix: 'x', desc: 'Capacidade de pagamento de juros' },
+      { id: 'market_share', label: 'Market Share Real', suffix: '%', desc: 'Participação de mercado no round' },
+      { id: 'markup', label: 'Markup Médio (Margem Bruta)', suffix: '%', isPercent: true, desc: 'Margem sobre o custo unitário' },
+      { id: 'stock_quantities.mp_a', label: 'Estoque Físico: MP A', suffix: ' un', desc: 'Saldo de matéria-prima A' },
+      { id: 'stock_quantities.mp_b', label: 'Estoque Físico: MP B', suffix: ' un', desc: 'Saldo de matéria-prima B' },
+      { id: 'stock_quantities.finished_goods', label: 'Estoque Físico: Prod. Acabado', suffix: ' un', desc: 'Saldo de produtos prontos' },
       { id: 'price_elasticity', label: 'Elasticidade-Preço Real', suffix: '', desc: 'Sensibilidade da demanda ao preço' },
       { id: 'carbon_footprint', label: 'Pegada de Carbono Unitária', suffix: ' kg CO2', desc: 'Impacto ambiental projetado' },
       { id: 'dupont.margin', label: 'Margem Líquida (DuPont)', suffix: '%', isPercent: true, desc: 'Eficiência de lucro' },

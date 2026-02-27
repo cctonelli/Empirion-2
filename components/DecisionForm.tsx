@@ -19,6 +19,8 @@ const motion = _motion as any;
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM, INITIAL_MACHINES_P00 } from '../constants';
 import { formatCurrency } from '../utils/formatters';
 import FinancialReportMatrix from './FinancialReportMatrix';
+import GazetteViewer from './GazetteViewer';
+import { Newspaper } from 'lucide-react';
 
 const STEPS = [
   { id: 'legal', label: '1. JURÍDICO', icon: Gavel },
@@ -38,7 +40,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
   const [showStrategicHub, setShowStrategicHub] = useState(false);
-  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic'>('dre');
+  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic' | 'gazette'>('dre');
   const [history, setHistory] = useState<any[]>([]);
 
   const [decisions, setDecisions] = useState<DecisionData>({
@@ -571,17 +573,28 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Master" icon={<Landmark size={14}/>} />
                        <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa (DFC)" icon={<Activity size={14}/>} />
                        <HubTabBtn active={hubTab === 'strategic'} onClick={() => setHubTab('strategic')} label="Comando Estratégico" icon={<Target size={14}/>} />
+                       <HubTabBtn active={hubTab === 'gazette'} onClick={() => setHubTab('gazette')} label="Gazeta Oracle" icon={<Newspaper size={14}/>} />
                     </div>
                  </div>
 
-                 <div className="flex-1 overflow-hidden">
-                    <FinancialReportMatrix 
-                      type={hubTab} 
-                      history={history} 
-                      projection={projections} 
-                      currency={activeArena?.currency || 'BRL'} 
-                    />
-                 </div>
+                  <div className="flex-1 overflow-hidden">
+                    {hubTab === 'gazette' && activeArena ? (
+                      <GazetteViewer 
+                        arena={activeArena} 
+                        aiNews="" 
+                        round={round - 1} 
+                        activeTeam={activeTeam} 
+                        onClose={() => setHubTab('dre')} 
+                      />
+                    ) : (
+                      <FinancialReportMatrix 
+                        type={hubTab as any} 
+                        history={history} 
+                        projection={projections} 
+                        currency={activeArena?.currency || 'BRL'} 
+                      />
+                    )}
+                  </div>
               </motion.div>
             )}
          </AnimatePresence>

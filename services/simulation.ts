@@ -212,7 +212,40 @@ export const calculateProjections = (
   // --- 7. CÁLCULO DE MÉTRICAS AVANÇADAS (ESTRATÉGICAS) ---
   const totalAssets = findAccountValue(finalBS, 'assets');
   const totalEquity = findAccountValue(finalBS, 'equity');
-  const netMargin = revenue > 0 ? netProfit / revenue : 0;
+  
+  // --- 8. PREMIAÇÕES POR PRECISÃO (AUDIT AWARDS) ---
+  let totalAwards = 0;
+  const tolerance = 0.05; // 5% de tolerância padrão Oracle
+
+  // A. Precisão de Custo Unitário
+  const costDiff = Math.abs(unitCPP - sanitize(decision.estimates?.forecasted_unit_cost, 0));
+  if (unitCPP > 0 && (costDiff / unitCPP) <= tolerance) {
+    totalAwards += sanitize(indicators.award_values?.cost_precision, 0);
+  }
+
+  // B. Precisão de Faturamento
+  const revDiff = Math.abs(revenue - sanitize(decision.estimates?.forecasted_revenue, 0));
+  if (revenue > 0 && (revDiff / revenue) <= tolerance) {
+    totalAwards += sanitize(indicators.award_values?.revenue_precision, 0);
+  }
+
+  // C. Precisão de Lucro Líquido
+  const profitDiff = Math.abs(netProfit - sanitize(decision.estimates?.forecasted_net_profit, 0));
+  if (Math.abs(netProfit) > 0 && (profitDiff / Math.abs(netProfit)) <= tolerance) {
+    totalAwards += sanitize(indicators.award_values?.profit_precision, 0);
+  }
+
+  // Re-ajustar lucro e caixa com as premiações
+  const finalNetProfit = netProfit + totalAwards;
+  const finalCashWithAwards = finalCash + totalAwards;
+
+  // Atualizar Balanço com valores finais
+  const finalBSWithAwards = injectValues(JSON.parse(JSON.stringify(finalBS)), {
+    'assets.current.cash': finalCashWithAwards,
+    'equity.profit': finalNetProfit
+  });
+
+  const netMargin = revenue > 0 ? finalNetProfit / revenue : 0;
   const assetTurnover = totalAssets > 0 ? revenue / totalAssets : 0;
   const leverage = totalEquity > 0 ? totalAssets / totalEquity : 1;
 
@@ -247,8 +280,8 @@ export const calculateProjections = (
   const carbonFootprint = (unitsProduced * 0.8) + (unitsSold * 0.2);
 
   return {
-    revenue, netProfit, debtRatio: 0, creditRating: 'AAA',
-    health: { cash: finalCash, rating: 'AAA' },
+    revenue, netProfit: finalNetProfit, debtRatio: 0, creditRating: 'AAA',
+    health: { cash: finalCashWithAwards, rating: 'AAA' },
     marketShare: 12.5,
     statements: {
       dre: injectValues(JSON.parse(JSON.stringify(prevStatements.dre)), { 
@@ -256,21 +289,23 @@ export const calculateProjections = (
         'cpv': -totalCPV, 
         'operating_profit': operatingProfit,
         'fin.exp': -interestExp,
+        'non_op.rev': totalAwards,
         'non_op.exp': -machineSalesLoss,
-        'final_profit': netProfit 
+        'final_profit': finalNetProfit 
       }),
       cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
         'cf.inflow.machine_sales': machineSalesInflow,
+        'cf.inflow.awards': totalAwards,
         'cf.outflow.machine_buy': -machinePurchaseOutflow,
         'cf.outflow.interest': -interestExp,
         'cf.outflow.amortization': -amortization,
-        'cf.final': finalCash 
+        'cf.final': finalCashWithAwards 
       }),
-      balance_sheet: finalBS
+      balance_sheet: finalBSWithAwards
     },
     kpis: {
       ...team.kpis,
-      current_cash: finalCash,
+      current_cash: finalCashWithAwards,
       machines: currentMachines,
       stock_quantities: { 
         mp_a: (team.kpis?.stock_quantities?.mp_a || 0) + sanitize(decision.production?.purchaseMPA, 0) - unitsProduced, 
@@ -299,6 +334,8 @@ export const calculateProjections = (
       carbon_footprint: carbonFootprint,
       last_price: price,
       last_units_sold: unitsSold,
+      markup: wacUnit > 0 ? (price / wacUnit) - 1 : 0,
+      market_share: 12.5, // Placeholder - idealmente calculado via market share engine
       // Indicadores de Moeda e Tarifas (v18.8)
       brl_rate: indicators.BRL || 1,
       gbp_rate: indicators.GBP || 0,
