@@ -46,7 +46,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     regions: {}, 
     hr: { hired: 0, fired: 0, salary: 2000, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
     production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 100, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
-    machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 } },
+    machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 }, sell_ids: [] },
     finance: { loanRequest: 0, loanTerm: 0, application: 0 },
     estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
   });
@@ -117,6 +117,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       current[keys[keys.length - 1]] = val;
       return next;
     });
+  };
+
+  const replicateInCluster = () => {
+    if (isReadOnly) return;
+    const firstRegion = decisions.regions[1];
+    if (!firstRegion) return;
+    
+    const nextRegions = { ...decisions.regions };
+    Object.keys(nextRegions).forEach(id => {
+      nextRegions[Number(id)] = { ...firstRegion };
+    });
+    updateDecision('regions', nextRegions);
   };
 
   const handleTransmit = async () => {
@@ -229,8 +241,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <WizardStepHeader icon={<Megaphone />} title="Regiões de Vendas" desc="Configure preço, prazo e campanhas de marketing." />
                               
                               <div className="flex justify-end">
-                                 <button className="px-6 py-2 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all">
-                                    Replicar em Cluster
+                                 <button 
+                                   onClick={replicateInCluster}
+                                   className="px-6 py-2 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white hover:bg-orange-600 transition-all"
+                                 >
+                                   Replicar em Cluster
                                  </button>
                               </div>
 
@@ -288,35 +303,59 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                               <WizardStepHeader icon={<Cpu />} title="Ativos & CapEx" desc="Expansão e desinvestimento de parque fabril." />
                               
-                              {/* INVENTÁRIO ATUAL (MÁQUINAS EXISTENTES NO P00) */}
+                              {/* INVENTÁRIO ATUAL (MÁQUINAS EXISTENTES NO PXX) */}
                               <div className="space-y-6">
                                  <h4 className="text-xs font-black text-white uppercase italic tracking-widest flex items-center gap-2">
-                                    <Warehouse size={16} className="text-blue-400"/> Parque de Máquinas Operacional (P00+)
+                                    <Warehouse size={16} className="text-blue-400"/> Parque de Máquinas Operacional (P0{round}+)
                                  </h4>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {(activeTeam?.kpis?.machines || []).map((m: MachineInstance, idx: number) => (
-                                       <div key={m.id} className="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] flex justify-between items-center group shadow-xl">
-                                          <div className="flex items-center gap-4">
-                                             <div className="p-4 bg-white/5 rounded-2xl text-blue-400">
-                                                <Settings2 size={24}/>
+                                    {(activeTeam?.kpis?.machines || []).map((m: MachineInstance, idx: number) => {
+                                       const isSold = decisions.machinery.sell_ids?.includes(m.id);
+                                       const spec = currentMacro.machine_specs[m.model];
+                                       // Calculate current depreciated value
+                                       const currentDeprec = m.accumulated_depreciation + (m.acquisition_value / (spec?.useful_life_years || 40));
+                                       const currentValue = Math.max(0, m.acquisition_value - currentDeprec);
+
+                                       return (
+                                          <div key={m.id} className={`bg-slate-900 border transition-all p-8 rounded-[2.5rem] flex justify-between items-center group shadow-xl ${isSold ? 'border-rose-500/50 bg-rose-950/10' : 'border-white/10'}`}>
+                                             <div className="flex items-center gap-4">
+                                                <div className={`p-4 rounded-2xl transition-colors ${isSold ? 'bg-rose-600 text-white' : 'bg-white/5 text-blue-400'}`}>
+                                                   <Settings2 size={24}/>
+                                                </div>
+                                                <div>
+                                                   <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Unit {m.id}</span>
+                                                   <span className="text-sm font-black text-white uppercase tracking-tight">{m.model.toUpperCase()} (Idade: {m.age + 1} rounds)</span>
+                                                </div>
                                              </div>
-                                             <div>
-                                                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Unit {m.id}</span>
-                                                <span className="text-sm font-black text-white uppercase tracking-tight">{m.model.toUpperCase()} (Idade: {m.age} rounds)</span>
+                                             <div className="text-right">
+                                                <span className="block text-[8px] font-black text-slate-600 uppercase italic">Valor Contábil Residual</span>
+                                                <div className={`text-sm font-mono font-black mb-4 ${isSold ? 'text-rose-400 line-through' : 'text-emerald-400'}`}>
+                                                   $ {currentValue.toLocaleString()}
+                                                </div>
+                                                <label className="flex items-center gap-2 justify-end cursor-pointer group/check">
+                                                   <span className={`text-[9px] font-black uppercase transition-colors ${isSold ? 'text-rose-500' : 'text-slate-500 group-hover/check:text-rose-500'}`}>
+                                                      {isSold ? 'MARCADA PARA VENDA' : 'VENDER'}
+                                                   </span>
+                                                   <input 
+                                                      type="checkbox" 
+                                                      checked={isSold}
+                                                      onChange={(e) => {
+                                                         const ids = [...(decisions.machinery.sell_ids || [])];
+                                                         if (e.target.checked) {
+                                                            if (!ids.includes(m.id)) ids.push(m.id);
+                                                         } else {
+                                                            const index = ids.indexOf(m.id);
+                                                            if (index > -1) ids.splice(index, 1);
+                                                         }
+                                                         updateDecision('machinery.sell_ids', ids);
+                                                      }}
+                                                      className="w-4 h-4 rounded bg-slate-950 border-white/10 accent-rose-600" 
+                                                   />
+                                                </label>
                                              </div>
                                           </div>
-                                          <div className="text-right">
-                                             <span className="block text-[8px] font-black text-slate-600 uppercase italic">Valor Contábil Residual</span>
-                                             <div className="text-sm font-mono font-black text-emerald-400 mb-4">
-                                                $ {(m.acquisition_value - m.accumulated_depreciation).toLocaleString()}
-                                             </div>
-                                             <label className="flex items-center gap-2 justify-end cursor-pointer group/check">
-                                                <span className="text-[9px] font-black text-slate-500 uppercase group-hover/check:text-rose-500 transition-colors">VENDER</span>
-                                                <input type="checkbox" className="w-4 h-4 rounded bg-slate-950 border-white/10 accent-rose-600" />
-                                             </label>
-                                          </div>
-                                       </div>
-                                    ))}
+                                       );
+                                    })}
                                  </div>
                               </div>
 
@@ -328,6 +367,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     onChange={(v: any)=>updateDecision('machinery.buy.alfa', v)} 
                                     price={currentMacro.machinery_values.alfa * (1 + (sanitize(currentMacro.machine_alpha_price_adjust, 0) / 100))} 
                                     spec={currentMacro.machine_specs.alfa}
+                                    disabled={!currentMacro.allow_machine_sale}
                                  />
                                  <AssetCard 
                                     model="beta" 
@@ -335,6 +375,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     onChange={(v: any)=>updateDecision('machinery.buy.beta', v)} 
                                     price={currentMacro.machinery_values.beta * (1 + (sanitize(currentMacro.machine_beta_price_adjust, 0) / 100))} 
                                     spec={currentMacro.machine_specs.beta}
+                                    disabled={!currentMacro.allow_machine_sale}
                                  />
                                  <AssetCard 
                                     model="gama" 
@@ -342,20 +383,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     onChange={(v: any)=>updateDecision('machinery.buy.gama', v)} 
                                     price={currentMacro.machinery_values.gama * (1 + (sanitize(currentMacro.machine_gamma_price_adjust, 0) / 100))} 
                                     spec={currentMacro.machine_specs.gama}
+                                    disabled={!currentMacro.allow_machine_sale}
                                  />
-                              </div>
-
-                              {/* ORDENS DE VENDA */}
-                              <div className="bg-rose-900/10 border-2 border-rose-500/20 p-10 rounded-[3rem] space-y-8 shadow-2xl">
-                                 <div className="flex items-center gap-4 text-rose-500">
-                                    <Trash2 size={24}/>
-                                    <h3 className="text-xl font-black uppercase tracking-tight italic">Desinvestimento Estratégico</h3>
-                                 </div>
-                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                    <SellInput label="Vender ALFA (Qtd)" val={decisions.machinery.sell.alfa} onChange={(v: any)=>updateDecision('machinery.sell.alfa', v)} />
-                                    <SellInput label="Vender BETA (Qtd)" val={decisions.machinery.sell.beta} onChange={(v: any)=>updateDecision('machinery.sell.beta', v)} />
-                                    <SellInput label="Vender GAMA (Qtd)" val={decisions.machinery.sell.gama} onChange={(v: any)=>updateDecision('machinery.sell.gama', v)} />
-                                 </div>
                               </div>
                            </div>
                         )}
@@ -627,20 +656,41 @@ const StepHeader = ({ title, subtitle, icon }: any) => (
   </div>
 );
 
-const AssetCard = ({ model, val, onChange, price, spec }: any) => (
-  <div className="bg-slate-900/80 p-10 rounded-[3rem] border border-white/5 space-y-6 group hover:border-blue-500/30 transition-all shadow-xl">
+const AssetCard = ({ model, val, onChange, price, spec, disabled }: any) => (
+  <div className={`bg-slate-900/80 p-10 rounded-[3rem] border transition-all shadow-xl ${disabled ? 'opacity-40 grayscale pointer-events-none border-white/5' : 'border-white/5 group hover:border-blue-500/30'}`}>
      <div className="flex justify-between items-center">
         <h4 className="text-xl font-black text-white uppercase italic tracking-tight">Machine {model.toUpperCase()}</h4>
         <Cpu className="text-blue-500 opacity-20 group-hover:opacity-100 transition-opacity" />
      </div>
-     <div className="space-y-2">
-        <span className="text-[9px] font-black text-slate-500 uppercase">Preço Unitário Oracle</span>
-        <div className="text-xl font-black text-blue-400 font-mono">$ {price.toLocaleString()}</div>
-        {spec && <span className="block text-[8px] font-black text-slate-600 uppercase italic mt-1">{spec.operators_required} operators required</span>}
+     <div className="space-y-4">
+        <div className="space-y-1">
+           <span className="text-[9px] font-black text-slate-500 uppercase">Preço Unitário Oracle</span>
+           <div className="text-xl font-black text-blue-400 font-mono">$ {price.toLocaleString()}</div>
+        </div>
+        
+        {spec && (
+           <div className="grid grid-cols-1 gap-2 pt-2 border-t border-white/5">
+              <div className="flex items-center gap-2">
+                 <Users size={12} className="text-slate-500" />
+                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operators required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                 <Zap size={12} className="text-slate-500" />
+                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} units capacity</span>
+              </div>
+           </div>
+        )}
      </div>
-     <div className="pt-4 space-y-4">
+     <div className="pt-6 space-y-4">
         <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">COMPRAR (Qtd)</label>
-        <input type="number" min="0" value={val} onChange={e => onChange(parseInt(e.target.value) || 0)} className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-5 text-2xl font-mono font-black text-white outline-none focus:border-blue-600 shadow-inner" />
+        <input 
+          type="number" 
+          min="0" 
+          disabled={disabled}
+          value={val} 
+          onChange={e => onChange(parseInt(e.target.value) || 0)} 
+          className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-5 text-2xl font-mono font-black text-white outline-none focus:border-blue-600 shadow-inner disabled:opacity-50" 
+        />
      </div>
   </div>
 );

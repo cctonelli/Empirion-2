@@ -67,14 +67,71 @@ export const calculateProjections = (
   // --- 2. GESTÃO DE ATIVOS E DEPRECIAÇÃO (ABSORÇÃO) ---
   let currentMachines: MachineInstance[] = [...(team.kpis?.machines || [])];
   let periodDepreciation = 0;
+  let machineSalesInflow = 0;
+  let machineSalesLoss = 0;
+  let machinePurchaseOutflow = 0;
+  let newLoansST = 0;
+  let newLoansLT = 0;
 
-  // Atualiza idade e depreciação acumulada das máquinas existentes
+  // A. PROCESSAR VENDAS (SELL_IDS)
+  const sellIds = decision.machinery?.sell_ids || [];
+  if (sellIds.length > 0) {
+    currentMachines = currentMachines.filter(m => {
+      if (sellIds.includes(m.id)) {
+        const spec = indicators.machine_specs[m.model];
+        // Depreciação do período para a máquina vendida (pro-rata)
+        const depVal = m.acquisition_value / (spec?.useful_life_years || 40);
+        const bookValue = Math.max(0, m.acquisition_value - (m.accumulated_depreciation + depVal));
+        
+        // Venda por 80% do valor contábil (exemplo de perda estratégica)
+        const salePrice = bookValue * 0.8; 
+        machineSalesInflow += salePrice;
+        machineSalesLoss += (bookValue - salePrice);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  // B. PROCESSAR COMPRAS
+  const buyDecisions = decision.machinery?.buy || { alfa: 0, beta: 0, gama: 0 };
+  Object.entries(buyDecisions).forEach(([model, qty]: [any, any]) => {
+    if (qty > 0) {
+      const basePrice = indicators.machinery_values[model as MachineModel];
+      const adjust = model === 'alfa' ? indicators.machine_alpha_price_adjust : 
+                     model === 'beta' ? indicators.machine_beta_price_adjust : 
+                     indicators.machine_gamma_price_adjust;
+      const unitPrice = basePrice * (1 + (sanitize(adjust, 0) / 100));
+      const totalCost = unitPrice * qty;
+      
+      machinePurchaseOutflow += totalCost;
+      // Financiamento padrão: 20% Curto Prazo, 80% Longo Prazo
+      newLoansST += totalCost * 0.2;
+      newLoansLT += totalCost * 0.8;
+
+      for (let i = 0; i < qty; i++) {
+        currentMachines.push({
+          id: `M-${Math.random().toString(36).substr(2, 9)}`,
+          model: model as MachineModel,
+          age: 0,
+          acquisition_value: unitPrice,
+          accumulated_depreciation: 0
+        });
+      }
+    }
+  });
+
+  // C. ATUALIZAR IDADE E DEPRECIAÇÃO DAS MÁQUINAS QUE FICARAM
   currentMachines = currentMachines.map(m => {
     const spec = indicators.machine_specs[m.model];
     const depVal = m.acquisition_value / (spec?.useful_life_years || 40);
     periodDepreciation += depVal;
     return { ...m, age: m.age + 1, accumulated_depreciation: m.accumulated_depreciation + depVal };
   });
+
+  // D. VALOR TOTAL DO IMOBILIZADO (MÁQUINAS)
+  const totalMachineryCost = currentMachines.reduce((acc, m) => acc + m.acquisition_value, 0);
+  const totalMachineryDeprec = currentMachines.reduce((acc, m) => acc + m.accumulated_depreciation, 0);
 
   // Depreciação de Prédios (Stateful) - 0.2% por período
   const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || 5440000;
@@ -126,17 +183,27 @@ export const calculateProjections = (
   // --- 5. RESULTADOS FINANCEIROS ---
   const revenue = unitsSold * price;
   const opex = 160000 * inflationMult; // Despesas fixas sob inflação
-  const operatingProfit = revenue - totalCPV - opex;
-  const netProfit = operatingProfit * 0.75; 
   
-  const finalCash = sanitize(team.kpis?.current_cash, 0) + revenue - totalCPV - opex;
+  // Juros e Amortização (Simplificado)
+  const prevLoansST = findAccountValue(prevBS, 'liabilities.current.loans_st');
+  const interestExp = (prevLoansST + newLoansST) * (sanitize(indicators.interest_rate_tr, 2) / 100);
+  const amortization = prevLoansST * 0.1; // Amortiza 10% do saldo anterior
+
+  const operatingProfit = revenue - totalCPV - opex;
+  const lair = operatingProfit - interestExp - machineSalesLoss;
+  const netProfit = lair > 0 ? lair * 0.75 : lair; 
+  
+  const finalCash = sanitize(team.kpis?.current_cash, 0) + revenue - totalCPV - opex + machineSalesInflow - machinePurchaseOutflow - interestExp - amortization;
 
   // --- 6. ATUALIZAÇÃO DA ESTRUTURA CONTÁBIL ---
   const bsValues = {
     'assets.current.cash': finalCash,
     'assets.current.stock.pa': closingStockValuePA,
-    'assets.noncurrent.fixed.machines_deprec': -(currentMachines.reduce((acc, m) => acc + m.accumulated_depreciation, 0)),
+    'assets.noncurrent.fixed.machines': totalMachineryCost,
+    'assets.noncurrent.fixed.machines_deprec': -totalMachineryDeprec,
     'assets.noncurrent.fixed.buildings_deprec': -newBuildingsDeprecAccum,
+    'liabilities.current.loans_st': prevLoansST + newLoansST - amortization,
+    'liabilities.longterm.loans_lt': findAccountValue(prevBS, 'liabilities.longterm.loans_lt') + newLoansLT,
     'equity.profit': netProfit
   };
 
@@ -187,10 +254,18 @@ export const calculateProjections = (
       dre: injectValues(JSON.parse(JSON.stringify(prevStatements.dre)), { 
         'rev': revenue, 
         'cpv': -totalCPV, 
-        'operating_profit': operatingProfit, 
+        'operating_profit': operatingProfit,
+        'fin.exp': -interestExp,
+        'non_op.exp': -machineSalesLoss,
         'final_profit': netProfit 
       }),
-      cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 'cf.final': finalCash }),
+      cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
+        'cf.inflow.machine_sales': machineSalesInflow,
+        'cf.outflow.machine_buy': -machinePurchaseOutflow,
+        'cf.outflow.interest': -interestExp,
+        'cf.outflow.amortization': -amortization,
+        'cf.final': finalCash 
+      }),
       balance_sheet: finalBS
     },
     kpis: {
@@ -205,7 +280,7 @@ export const calculateProjections = (
       cpp_unit: unitCPP,
       wac_unit: wacUnit,
       ebitda: operatingProfit + periodDepreciation,
-      fixed_assets_value: (findAccountValue(finalBS, 'assets.noncurrent.fixed.machines') + buildingsCost + 1200000) - periodDepreciation,
+      fixed_assets_value: totalMachineryCost + buildingsCost + 1200000 - totalMachineryDeprec - newBuildingsDeprecAccum,
       
       // Novos KPIs Estratégicos
       total_assets: totalAssets,
