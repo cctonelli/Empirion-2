@@ -20,6 +20,8 @@ import ChampionshipTimer from './ChampionshipTimer';
 import GazetteViewer from './GazetteViewer';
 import { Newspaper, PackagePlus, FileEdit } from 'lucide-react';
 
+import FinancialReportMatrix from './FinancialReportMatrix';
+
 interface MonitorProps {
   championshipId: string;
   round: number;
@@ -81,6 +83,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             gbp_rate: proj?.kpis?.gbp_rate || t.kpis?.gbp_rate || 0,
             auditLogs: (decision?.data?.audit_logs || []) as AuditLog[],
             current_decision: decision?.data,
+            statements: proj?.statements || t.kpis?.statements,
             is_bot: t.is_bot,
             strategic_profile: t.strategic_profile
           };
@@ -108,6 +111,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           brl_rate: h.brl_rate || h.kpis?.brl_rate || 1,
           gbp_rate: h.gbp_rate || h.kpis?.gbp_rate || 0,
           auditLogs: [],
+          statements: h.kpis?.statements,
           is_bot: h.team?.is_bot,
           strategic_profile: h.team?.strategic_profile
         }));
@@ -257,20 +261,32 @@ const QuickIndicator = ({ label, val, highlight }: any) => (
 const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, index: number, isLive: boolean }) => {
    const [isAuditing, setIsAuditing] = useState(false);
    const [aiVerdict, setAiVerdict] = useState<string | null>(null);
+   const [showReports, setShowReports] = useState(false);
+   const [reportType, setReportType] = useState<'dre' | 'balance' | 'cashflow'>('dre');
 
    const performAiAudit = async () => {
-      if (isAuditing || !team.current_decision) return;
+      if (isAuditing || (!team.current_decision && !team.statements)) return;
       setIsAuditing(true);
       try {
-         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+         const context = {
+            decisions: team.current_decision,
+            kpis: { tsr: team.tsr, rating: team.rating, market_share: team.market_share, ebitda: team.ebitda },
+            statements: team.statements
+         };
+
          const res = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
-            contents: `Como auditor senior, analise estas decisões da equipe ${team.name}: ${JSON.stringify(team.current_decision)}. KPIs Projetados: TSR ${team.tsr}%, Rating ${team.rating}. Forneça um veredito técnico de 20 palavras focando no risco de insolvência ou vantagem competitiva.`,
+            contents: `Como auditor senior da Empirion, analise a saúde financeira e estratégica da equipe ${team.name}. 
+            Contexto: ${JSON.stringify(context)}. 
+            Forneça um veredito técnico de 25 palavras focado em riscos críticos ou oportunidades de mercado.`,
             config: { thinkingConfig: { thinkingBudget: 0 } }
          });
          setAiVerdict(res.text || null);
+         setShowReports(true); // Abre os relatórios automaticamente ao auditar
       } catch (err) {
-         setAiVerdict("Erro na conexão neural.");
+         console.error("Audit Error:", err);
+         setAiVerdict("Erro na conexão neural. Verifique a API Key.");
       } finally {
          setIsAuditing(false);
       }
@@ -319,7 +335,10 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
                {aiVerdict ? (
                   <div className="relative">
                     <p className="text-[10px] text-indigo-300 font-bold italic leading-relaxed">"{aiVerdict}"</p>
-                    <button onClick={() => setAiVerdict(null)} className="absolute -top-6 -right-2 text-slate-500 hover:text-white"><X size={10}/></button>
+                    <div className="flex gap-2 mt-4">
+                       <button onClick={() => setShowReports(true)} className="flex-1 py-2 bg-white/5 border border-white/10 text-white rounded-lg font-black text-[8px] uppercase tracking-widest hover:bg-white/10 transition-all">Ver Relatórios</button>
+                       <button onClick={() => setAiVerdict(null)} className="p-2 bg-white/5 border border-white/10 text-slate-500 hover:text-white rounded-lg transition-all"><X size={10}/></button>
+                    </div>
                   </div>
                ) : (
                   <button onClick={performAiAudit} disabled={isAuditing || !isLive} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-indigo-900 transition-all flex items-center justify-center gap-2">
@@ -328,6 +347,48 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
                )}
             </div>
          </div>
+
+         <AnimatePresence>
+            {showReports && (
+               <div className="fixed inset-0 z-[6000] bg-slate-950/95 backdrop-blur-3xl flex items-center justify-center p-4 md:p-10">
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-white/10 rounded-[4rem] w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden shadow-3xl">
+                     <header className="p-8 border-b border-white/5 flex justify-between items-center bg-slate-950/50">
+                        <div className="flex items-center gap-6">
+                           <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl"><ShieldCheck size={24}/></div>
+                           <div>
+                              <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Auditoria Financeira: {team.name}</h3>
+                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Análise de Balanço, DRE e Fluxo de Caixa</p>
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                           <div className="flex p-1 bg-slate-950 rounded-xl border border-white/5">
+                              <button onClick={() => setReportType('dre')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'dre' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DRE</button>
+                              <button onClick={() => setReportType('balance')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'balance' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Balanço</button>
+                              <button onClick={() => setReportType('cashflow')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'cashflow' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DFC</button>
+                           </div>
+                           <button onClick={() => setShowReports(false)} className="p-3 bg-white/5 hover:bg-rose-600 text-slate-500 hover:text-white rounded-xl transition-all"><X size={20}/></button>
+                        </div>
+                     </header>
+                     <div className="flex-1 overflow-hidden p-8">
+                        <FinancialReportMatrix 
+                           type={reportType} 
+                           history={[]} 
+                           projection={{ statements: team.statements } as any} 
+                           currency="BRL" 
+                        />
+                     </div>
+                     {aiVerdict && (
+                        <footer className="p-6 bg-indigo-600/10 border-t border-indigo-500/20">
+                           <div className="flex items-center gap-4">
+                              <Sparkles size={16} className="text-indigo-400 animate-pulse"/>
+                              <p className="text-xs text-indigo-200 font-bold italic">Veredito Oracle: "{aiVerdict}"</p>
+                           </div>
+                        </footer>
+                     )}
+                  </motion.div>
+               </div>
+            )}
+         </AnimatePresence>
 
          <div className="grid grid-cols-2 gap-3 pt-6 border-t border-white/5 relative z-10">
             <MetricBox label="Kanitz Solvency" val={team.kanitz.toFixed(1)} icon={<Thermometer size={12} className="text-emerald-400"/>} trend={team.kanitz > 0 ? 'safe' : 'danger'} />

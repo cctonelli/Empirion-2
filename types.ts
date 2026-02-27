@@ -363,6 +363,7 @@ export interface TutorTeamView {
   gbp_rate?: number;
   auditLogs: AuditLog[];
   current_decision?: any;
+  statements?: any;
   is_bot?: boolean;
   strategic_profile?: StrategicProfile;
 }
