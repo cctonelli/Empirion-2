@@ -135,26 +135,51 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   const { data: champ, error: champError } = await supabase.from(champTable).insert(config).select().single();
   if (champError) throw champError;
   
+  const financials = config.initial_financials || INITIAL_FINANCIAL_TREE;
+  const balanceSheet = financials.balance_sheet;
+
+  const findAccount = (nodes: AccountNode[], id: string): AccountNode | null => {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.children) {
+        const found = findAccount(node.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const totalAssets = findAccount(balanceSheet, 'assets')?.value || 9493163.54;
+  const equity = findAccount(balanceSheet, 'equity')?.value || 7252171.74;
+  const stockValue = findAccount(balanceSheet, 'assets.current.stock')?.value || 1407000.00;
+  const fixedAssetsValue = findAccount(balanceSheet, 'assets.noncurrent.fixed')?.value || 6012500.00;
+  const currentCash = findAccount(balanceSheet, 'assets.current.cash')?.value || 0;
+  
+  const buildingsDeprec = findAccount(balanceSheet, 'assets.noncurrent.fixed.buildings_deprec')?.value || 0;
+  const machinesDeprec = findAccount(balanceSheet, 'assets.noncurrent.fixed.machines_deprec')?.value || 0;
+  const totalDepreciation = Math.abs(buildingsDeprec) + Math.abs(machinesDeprec);
+
   // Initial KPIs for Round 0 (Individualized)
   const initialKpis = {
-    statements: config.initial_financials || INITIAL_FINANCIAL_TREE,
+    statements: financials,
     machines: INITIAL_MACHINES_P00,
-    current_cash: 0,
+    current_cash: currentCash,
     stock_quantities: { mp_a: 30150, mp_b: 20100, finished_goods: 0 },
-    equity: 7252171.74,
-    total_assets: 9493163.54,
-    stock_value: 1407000.00,
-    fixed_assets_value: 6012500.00,
+    equity: equity,
+    total_assets: totalAssets,
+    stock_value: stockValue,
+    fixed_assets_value: fixedAssetsValue,
+    fixed_assets_depreciation: totalDepreciation,
     rating: 'AAA',
-    last_price: 425,
+    last_price: config.initial_share_price || 425,
     last_units_sold: 0,
-    ebitda: 208387.77, // Operating Profit + Depreciation approx
+    ebitda: 208387.77, 
     tsr: 0,
     ccc: 0,
     interest_coverage: 100
   };
 
-  const teamsWithChamp = teams.map(t => ({ ...t, championship_id: champ.id, kpis: initialKpis }));
+  const teamsWithChamp = teams.map(t => ({ ...t, championship_id: champ.id, kpis: initialKpis, equity: initialKpis.equity }));
   const { data: createdTeams, error: teamsError } = await supabase.from(teamsTable).insert(teamsWithChamp).select();
   if (teamsError) throw teamsError;
   
@@ -168,10 +193,10 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     equity: initialKpis.equity,
     revenue: 0,
     net_profit: 0,
-    total_assets: 9493163.54,
-    stock_value: 1407000.00,
-    fixed_assets_value: 6012500.00,
-    fixed_assets_depreciation: 0,
+    total_assets: initialKpis.total_assets,
+    stock_value: initialKpis.stock_value,
+    fixed_assets_value: initialKpis.fixed_assets_value,
+    fixed_assets_depreciation: initialKpis.fixed_assets_depreciation,
     ccc: 0,
     interest_coverage: 100,
     brl_rate: 1,

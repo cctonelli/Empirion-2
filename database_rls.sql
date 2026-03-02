@@ -85,6 +85,8 @@ ALTER TABLE public.teams ADD COLUMN IF NOT EXISTS strategic_profile TEXT DEFAULT
 ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS strategic_profile TEXT DEFAULT 'EQUILIBRADO';
 ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS kpis JSONB DEFAULT '{}';
 ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS equity NUMERIC(20,2) DEFAULT 0;
+ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS insolvency_status TEXT DEFAULT 'SAUDAVEL';
+ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS locale TEXT DEFAULT 'pt-BR';
 
 -- 7. ÍNDICES PARA MONITORAMENTO DE "SAÚDE DOS ATIVOS" E KPIs
 CREATE INDEX IF NOT EXISTS idx_companies_asset_vcl ON public.companies (fixed_assets_value DESC);

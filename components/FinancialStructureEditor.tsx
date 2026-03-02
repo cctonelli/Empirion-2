@@ -135,9 +135,11 @@ const TreeNode: React.FC<{ node: AccountNode, onUpdate: any, level?: number, rea
   const handleMaskedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (readOnly || node.isReadOnly) return;
     const raw = e.target.value;
-    // Protocolo Oracle: Higieniza apenas dígitos e trata como centavos
+    // Protocolo Oracle: Se o label começa com (-), força o valor a ser negativo
+    const isContra = node.label.trim().startsWith('(-)');
     const digits = raw.replace(/\D/g, '');
-    const numeric = parseInt(digits || '0') / 100;
+    let numeric = parseInt(digits || '0') / 100;
+    if (isContra) numeric = -Math.abs(numeric);
     onUpdate(node.id, { value: numeric });
   };
 

@@ -83,7 +83,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     setRegionConfigs(next);
   };
 
-  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }>(INITIAL_FINANCIAL_TREE as any);
+  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }>(() => {
+    return JSON.parse(JSON.stringify(INITIAL_FINANCIAL_TREE));
+  });
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -136,8 +138,19 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   const stepsCount = 7;
   const totalPeriods = formData.totalRounds + 1;
-  const totalAssets = financials?.balance_sheet.find(n => n.id === 'assets')?.value || 0;
-  const totalEquity = financials?.balance_sheet.find(n => n.id === 'liabilities_pl')?.children?.find(n => n.id === 'equity')?.value || 7252171.74;
+  const findAccountValue = (nodes: AccountNode[], id: string): number => {
+    for (const node of nodes) {
+      if (node.id === id) return node.value;
+      if (node.children) {
+        const val = findAccountValue(node.children, id);
+        if (val !== 0) return val;
+      }
+    }
+    return 0;
+  };
+
+  const totalAssets = findAccountValue(financials.balance_sheet, 'assets') || 9493163.54;
+  const totalEquity = findAccountValue(financials.balance_sheet, 'equity') || 7252171.74;
 
   return (
     <div className="wizard-shell bg-slate-950/95 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative">
