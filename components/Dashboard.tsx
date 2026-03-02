@@ -193,13 +193,37 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </header>
                
-               <div className="flex-1 overflow-hidden">
+               <div className="flex-1 overflow-hidden flex flex-col">
+                  {selectedRound === currentRound && requireBP && bpStatus !== 'submitted' && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }} 
+                      animate={{ height: 'auto', opacity: 1 }}
+                      className="mb-4 p-4 bg-orange-600/20 border border-orange-500/50 rounded-2xl flex items-center gap-4 shadow-lg shrink-0"
+                    >
+                       <div className="p-2 bg-orange-600 rounded-xl text-white animate-pulse">
+                          <AlertTriangle size={20} />
+                       </div>
+                       <div className="flex-1">
+                          <h4 className="text-[10px] font-black text-white uppercase italic">Protocolo de Decisão Bloqueado</h4>
+                          <p className="text-[9px] font-bold text-orange-400 uppercase tracking-widest mt-0.5">
+                             Esta rodada exige o envio do **Business Plan** antes da liberação do Cockpit Operacional.
+                          </p>
+                       </div>
+                       <button 
+                         onClick={() => setShowBP(true)}
+                         className="px-6 py-2 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white hover:text-orange-600 transition-all shadow-xl"
+                       >
+                          Abrir Wizard de Plano
+                       </button>
+                    </motion.div>
+                  )}
+
                   <DecisionForm 
                     teamId={activeTeam?.id} 
                     champId={activeArena?.id} 
                     round={selectedRound} 
                     branch={activeArena?.branch}
-                    isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted') || isPastRound || isFutureRound}
+                    isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound}
                   />
                </div>
             </div>
