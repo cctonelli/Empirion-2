@@ -25,15 +25,28 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({
   currency = 'BRL'
 }) => {
   const [activeTab, setActiveTab] = useState<'balance' | 'dre' | 'cashflow'>('balance');
-  const [balanceNodes, setBalanceNodes] = useState<AccountNode[]>(initialBalance);
-  const [dreNodes, setDRENodes] = useState<AccountNode[]>(initialDRE);
-  const [cashFlowNodes, setCashFlowNodes] = useState<AccountNode[]>(initialCashFlow);
+  const [balanceNodes, setBalanceNodes] = useState<AccountNode[]>(initialBalance || []);
+  const [dreNodes, setDRENodes] = useState<AccountNode[]>(initialDRE || []);
+  const [cashFlowNodes, setCashFlowNodes] = useState<AccountNode[]>(initialCashFlow || []);
+
+  // Sincroniza apenas se as props mudarem externamente e forem diferentes do estado atual
+  useEffect(() => {
+    if (initialBalance?.length && JSON.stringify(initialBalance) !== JSON.stringify(balanceNodes)) {
+      setBalanceNodes(initialBalance);
+    }
+  }, [initialBalance]);
 
   useEffect(() => {
-    if (initialBalance?.length) setBalanceNodes(initialBalance);
-    if (initialDRE?.length) setDRENodes(initialDRE);
-    if (initialCashFlow?.length) setCashFlowNodes(initialCashFlow);
-  }, [initialBalance, initialDRE, initialCashFlow]);
+    if (initialDRE?.length && JSON.stringify(initialDRE) !== JSON.stringify(dreNodes)) {
+      setDRENodes(initialDRE);
+    }
+  }, [initialDRE]);
+
+  useEffect(() => {
+    if (initialCashFlow?.length && JSON.stringify(initialCashFlow) !== JSON.stringify(cashFlowNodes)) {
+      setCashFlowNodes(initialCashFlow);
+    }
+  }, [initialCashFlow]);
 
   const calculateTotalsRecursive = useCallback((list: AccountNode[], tabType: 'balance' | 'dre' | 'cashflow'): AccountNode[] => {
     return list.map(node => {
@@ -57,7 +70,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({
     });
   }, []);
 
-  const updateNode = (id: string, updates: Partial<AccountNode>) => {
+  const updateNode = useCallback((id: string, updates: Partial<AccountNode>) => {
     if (readOnly) return;
     const edit = (list: AccountNode[]): AccountNode[] => {
       return list.map(n => {
@@ -83,7 +96,7 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({
     }
     
     onChange?.({ balance_sheet: newBalance, dre: newDRE, cash_flow: newCashFlow });
-  };
+  }, [activeTab, balanceNodes, dreNodes, cashFlowNodes, calculateTotalsRecursive, onChange, readOnly]);
 
   const nodes = activeTab === 'balance' ? balanceNodes : activeTab === 'dre' ? dreNodes : cashFlowNodes;
 
@@ -95,8 +108,8 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({
         <TabButton active={activeTab === 'cashflow'} onClick={() => setActiveTab('cashflow')} label="Fluxo de Caixa" color="emerald" />
       </div>
 
-      <div className="bg-slate-900/40 rounded-[3rem] border border-white/5 overflow-hidden shadow-2xl">
-        <div className="p-8 space-y-4 max-h-[700px] overflow-y-auto custom-scrollbar">
+      <div key={activeTab} className="bg-slate-900/40 rounded-[3rem] border border-white/5 shadow-2xl">
+        <div className="p-8 space-y-12 min-h-[400px]">
           {nodes.length === 0 ? (
             <div className="py-20 text-center flex flex-col items-center gap-4 opacity-30">
                {/* Fixed: Loader2 imported from lucide-react */}
@@ -105,7 +118,9 @@ const FinancialStructureEditor: React.FC<FinancialStructureEditorProps> = ({
             </div>
           ) : (
             nodes.map(node => (
-              <TreeNode key={node.id} node={node} onUpdate={updateNode} readOnly={readOnly} currency={currency} />
+              <div key={node.id} className="space-y-4">
+                <TreeNode node={node} onUpdate={updateNode} readOnly={readOnly} currency={currency} />
+              </div>
             ))
           )}
         </div>
@@ -124,18 +139,16 @@ const TabButton = ({ active, onClick, label, color }: any) => {
 };
 
 const TreeNode: React.FC<{ node: AccountNode, onUpdate: any, level?: number, readOnly: boolean, currency: CurrencyType }> = ({ node, onUpdate, level = 0, readOnly, currency }) => {
-  const isParent = Array.isArray(node.children) && node.children.length > 0;
+  const isParent = !!node.children && node.children.length > 0;
   const [displayValue, setDisplayValue] = useState('');
 
   useEffect(() => {
-    // Mantém o input sempre sincronizado com o valor real formatado (sem símbolo para facilitar edição)
     setDisplayValue(formatCurrency(node.value, currency, false));
   }, [node.value, currency]);
 
   const handleMaskedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (readOnly || node.isReadOnly) return;
     const raw = e.target.value;
-    // Protocolo Oracle: Se o label começa com (-), força o valor a ser negativo
     const isContra = node.label.trim().startsWith('(-)');
     const digits = raw.replace(/\D/g, '');
     let numeric = parseInt(digits || '0') / 100;
@@ -144,9 +157,9 @@ const TreeNode: React.FC<{ node: AccountNode, onUpdate: any, level?: number, rea
   };
 
   return (
-    <div className="space-y-2">
+    <div className="relative w-full">
       <div 
-        className={`flex items-center justify-between p-5 rounded-[1.5rem] border transition-all ${
+        className={`flex items-center justify-between p-5 rounded-[1.5rem] border transition-all mb-2 ${
           isParent ? 'bg-slate-950/80 border-white/10 shadow-md group/parent' : 'bg-white/5 border-white/5 group/child hover:bg-white/10'
         }`}
         style={{ marginLeft: level * 32 }}
@@ -181,9 +194,14 @@ const TreeNode: React.FC<{ node: AccountNode, onUpdate: any, level?: number, rea
           )}
         </div>
       </div>
-      {isParent && node.children?.map(child => (
-        <TreeNode key={child.id} node={child} onUpdate={onUpdate} level={level + 1} readOnly={readOnly} currency={currency} />
-      ))}
+      
+      {isParent && (
+        <div className="relative">
+          {node.children?.map(child => (
+            <TreeNode key={child.id} node={child} onUpdate={onUpdate} level={level + 1} readOnly={readOnly} currency={currency} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
