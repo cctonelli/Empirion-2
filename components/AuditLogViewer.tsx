@@ -48,7 +48,7 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ teamId, round, onClose 
            </div>
            <div>
               <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Histórico de Alterações</h3>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic">Audit Log: Ciclo 0{round}</p>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic">Audit Log: Ciclo P-{round}</p>
            </div>
         </div>
         <button onClick={onClose} className="p-3 bg-white/5 hover:bg-rose-600 text-slate-500 hover:text-white rounded-xl transition-all">

@@ -93,7 +93,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
             <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-xl border border-orange-400/30"><Newspaper size={32} /></div>
             <div>
                <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Oracle Gazette</h1>
-               <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.5em] italic mt-2">Ciclo de Auditoria: 0{round}</p>
+               <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.5em] italic mt-2">Ciclo de Auditoria: P-{round}</p>
             </div>
          </div>
          <div className="flex items-center gap-6">
@@ -209,7 +209,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                   <div className="bg-slate-900/80 p-16 rounded-[5rem] border border-white/5 shadow-3xl text-center">
                      <div className="w-24 h-24 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-10 text-orange-600 shadow-2xl border border-white/5"><User size={48} /></div>
                      <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter mb-4">Relatório: {activeTeam.name}</h3>
-                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Análise de Performance Ciclo 0{round}</p>
+                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Análise de Performance Ciclo P-{round}</p>
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
                         <KpiItem label="Equity Final" val={`$ ${activeTeam.equity.toLocaleString()}`} icon={<ShieldCheck className="text-emerald-500" />} />
                         <KpiItem label="Market Share" val={`${(activeTeam.kpis?.market_share || 0).toFixed(1)}%`} icon={<Target className="text-orange-500" />} />

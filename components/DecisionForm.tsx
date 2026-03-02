@@ -308,7 +308,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               {/* INVENTÁRIO ATUAL (MÁQUINAS EXISTENTES NO PXX) */}
                               <div className="space-y-6">
                                  <h4 className="text-xs font-black text-white uppercase italic tracking-widest flex items-center gap-2">
-                                    <Warehouse size={16} className="text-blue-400"/> Parque de Máquinas Operacional (P0{round}+)
+                                    <Warehouse size={16} className="text-blue-400"/> Parque de Máquinas Operacional (P-{round}+)
                                  </h4>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {(activeTeam?.kpis?.machines || []).map((m: MachineInstance, idx: number) => {
@@ -496,7 +496,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </div>
                               <div className="space-y-4">
                                  <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">Ready for Oracle Transmit</h2>
-                                 <p className="text-slate-400 font-medium italic">"Revise seu protocolo tático antes de selar o ciclo P0{round}."</p>
+                                 <p className="text-slate-400 font-medium italic">"Revise seu protocolo tático antes de selar o ciclo P-{round}."</p>
                               </div>
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-left max-w-4xl mx-auto pt-12">
