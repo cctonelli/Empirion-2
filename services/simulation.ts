@@ -12,6 +12,20 @@ export const sanitize = (val: any, fallback: number): number => {
   return isNaN(n) ? fallback : n;
 };
 
+export const getCumulativeAdjust = (chronogram: any, round: number, key: string): number => {
+  let factor = 1;
+  // Reajustes começam a partir do Round 1. O Round 0 é o baseline.
+  for (let i = 1; i <= round; i++) {
+    const rules = chronogram[i];
+    const adj = sanitize(rules?.[key], 0);
+    // Reajustes são cumulativos, exceto Black Swan que é pontual
+    if (i === round || !rules?.is_black_swan) {
+      factor *= (1 + (adj / 100));
+    }
+  }
+  return factor;
+};
+
 // Busca valor de conta recursivamente na árvore financeira
 const findAccountValue = (nodes: AccountNode[], id: string): number => {
   for (const node of nodes) {

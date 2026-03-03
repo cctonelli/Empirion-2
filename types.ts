@@ -166,6 +166,8 @@ export interface Championship {
   market_indicators: MacroIndicators;
   round_rules?: Record<number, any>;
   teams?: Team[];
+  region_names?: string[];
+  region_configs?: RegionConfig[];
   is_trial?: boolean;
   is_public?: boolean;
   currency?: CurrencyType;

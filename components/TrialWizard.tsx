@@ -141,7 +141,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const findAccountValue = (nodes: AccountNode[], id: string): number => {
     for (const node of nodes) {
       if (node.id === id) return node.value;
-      if (node.children) {
+      if (node.children && node.children.length > 0) {
         const val = findAccountValue(node.children, id);
         if (val !== 0) return val;
       }
@@ -149,8 +149,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     return 0;
   };
 
-  const totalAssets = findAccountValue(financials.balance_sheet, 'assets') || 9493163.54;
-  const totalEquity = findAccountValue(financials.balance_sheet, 'equity') || 7252171.74;
+  // Oracle Baseline Totals
+  const totalAssets = useMemo(() => findAccountValue(financials.balance_sheet, 'assets') || 9493163.54, [financials.balance_sheet]);
+  const totalEquity = useMemo(() => findAccountValue(financials.balance_sheet, 'equity') || 7252171.74, [financials.balance_sheet]);
 
   return (
     <div className="wizard-shell bg-slate-950/95 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative">

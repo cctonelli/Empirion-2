@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase, getTeamSimulationHistory } from '../services/supabase';
 import { DecisionData, Branch, Championship, MachineModel, MacroIndicators, Team, MachineInstance } from '../types';
-import { calculateProjections, sanitize } from '../services/simulation';
+import { calculateProjections, sanitize, getCumulativeAdjust } from '../services/simulation';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM, INITIAL_MACHINES_P00 } from '../constants';
@@ -242,10 +242,27 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                               <WizardStepHeader icon={<Megaphone />} title="Regiões de Vendas" desc="Configure preço, prazo e campanhas de marketing." />
                               
-                              <div className="flex justify-end">
+                              <div className="flex flex-col md:flex-row justify-between items-end gap-8">
+                                 <div className="w-full md:w-80">
+                                    <div className="bg-slate-900/60 p-6 rounded-[2rem] border border-white/5 space-y-4 shadow-xl group hover:border-orange-500/20 transition-all">
+                                       <div className="flex justify-between items-center">
+                                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
+                                             JUROS VENDA A PRAZO (%) <HelpCircle size={10} className="text-slate-700" />
+                                          </label>
+                                          <Percent size={14} className="text-slate-700 group-hover:text-orange-500/50 transition-colors" />
+                                       </div>
+                                       <input 
+                                          type="number" 
+                                          step="0.01"
+                                          value={decisions.production.term_interest_rate} 
+                                          onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value) || 0)} 
+                                          className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-4 text-xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
+                                       />
+                                    </div>
+                                 </div>
                                  <button 
                                    onClick={replicateInCluster}
-                                   className="px-6 py-2 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white hover:bg-orange-600 transition-all"
+                                   className="px-10 py-5 bg-white/5 border border-white/10 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:text-white hover:bg-orange-600 transition-all shadow-xl active:scale-95"
                                  >
                                    Replicar em Cluster
                                  </button>
@@ -255,13 +272,19 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  {Object.entries(decisions.regions).map(([id, reg]: [any, any]) => (
                                     <div key={id} className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl hover:border-orange-500/20 transition-all group">
                                        <div className="flex justify-between items-center">
-                                          <span className="text-xs font-black text-orange-500 uppercase italic">Região 0{id}</span>
+                                          <span className="text-xs font-black text-orange-500 uppercase italic">
+                                             {activeArena?.region_names?.[Number(id)-1] || activeArena?.market_indicators?.region_configs?.[Number(id)-1]?.name || `Região 0${id}`}
+                                          </span>
                                           <Globe size={16} className="text-slate-700 group-hover:text-orange-500/50 transition-colors" />
                                        </div>
                                        <div className="space-y-6">
                                           <div className="space-y-4">
                                              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Preço Unitário ($)</label>
-                                             <input type="number" value={reg.price} onChange={e => updateDecision(`regions.${id}.price`, parseFloat(e.target.value) || 0.00)} className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-5 text-2xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" />
+                                             <CurrencyInput 
+                                                value={reg.price} 
+                                                onChange={v => updateDecision(`regions.${id}.price`, v)} 
+                                                currency={activeArena?.currency || 'BRL'}
+                                             />
                                           </div>
                                           
                                           <div className="space-y-4">
@@ -286,16 +309,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                        </div>
                                     </div>
                                  ))}
-                              </div>
-
-                              <div className="max-w-md">
-                                 <InputCard 
-                                   label="JUROS VENDA A PRAZO (%)" 
-                                   val={decisions.production.term_interest_rate} 
-                                   icon={<Percent />} 
-                                   onChange={(v:any)=>updateDecision('production.term_interest_rate', v)} 
-                                   help="Taxa aplicada aos clientes que compram parcelado." 
-                                 />
                               </div>
                            </div>
                         )}
@@ -367,7 +380,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     model="alfa" 
                                     val={decisions.machinery.buy.alfa} 
                                     onChange={(v: any)=>updateDecision('machinery.buy.alfa', v)} 
-                                    price={currentMacro.machinery_values.alfa * (1 + (sanitize(currentMacro.machine_alpha_price_adjust, 0) / 100))} 
+                                    price={currentMacro.machinery_values.alfa * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_alpha_price_adjust')} 
                                     spec={currentMacro.machine_specs.alfa}
                                     disabled={!currentMacro.allow_machine_sale}
                                  />
@@ -375,7 +388,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     model="beta" 
                                     val={decisions.machinery.buy.beta} 
                                     onChange={(v: any)=>updateDecision('machinery.buy.beta', v)} 
-                                    price={currentMacro.machinery_values.beta * (1 + (sanitize(currentMacro.machine_beta_price_adjust, 0) / 100))} 
+                                    price={currentMacro.machinery_values.beta * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_beta_price_adjust')} 
                                     spec={currentMacro.machine_specs.beta}
                                     disabled={!currentMacro.allow_machine_sale}
                                  />
@@ -383,7 +396,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     model="gama" 
                                     val={decisions.machinery.buy.gama} 
                                     onChange={(v: any)=>updateDecision('machinery.buy.gama', v)} 
-                                    price={currentMacro.machinery_values.gama * (1 + (sanitize(currentMacro.machine_gamma_price_adjust, 0) / 100))} 
+                                    price={currentMacro.machinery_values.gama * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_gamma_price_adjust')} 
                                     spec={currentMacro.machine_specs.gama}
                                     disabled={!currentMacro.allow_machine_sale}
                                  />
@@ -730,5 +743,28 @@ const HubTabBtn = ({ active, onClick, label, icon }: any) => (
     {icon} {label}
   </button>
 );
+
+const CurrencyInput = ({ value, onChange, currency }: { value: number, onChange: (v: number) => void, currency: string }) => {
+  const [display, setDisplay] = useState('');
+
+  useEffect(() => {
+    setDisplay(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(value));
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '');
+    const numeric = parseInt(digits || '0') / 100;
+    onChange(numeric);
+  };
+
+  return (
+    <input 
+      type="text" 
+      value={display} 
+      onChange={handleChange} 
+      className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-5 text-2xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
+    />
+  );
+};
 
 export default DecisionForm;

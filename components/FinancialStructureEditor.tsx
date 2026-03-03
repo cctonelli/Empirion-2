@@ -158,8 +158,16 @@ const TreeNode: React.FC<{ node: AccountNode, onUpdate: any, level?: number, rea
 
   return (
     <div className="relative w-full">
+      {/* Linha vertical de hierarquia */}
+      {level > 0 && (
+        <div 
+          className="absolute left-0 top-0 bottom-0 w-px bg-white/10" 
+          style={{ left: (level * 32) - 16 }}
+        />
+      )}
+      
       <div 
-        className={`flex items-center justify-between p-5 rounded-[1.5rem] border transition-all mb-2 ${
+        className={`flex items-center justify-between p-5 rounded-[1.5rem] border transition-all mb-2 relative z-10 ${
           isParent ? 'bg-slate-950/80 border-white/10 shadow-md group/parent' : 'bg-white/5 border-white/5 group/child hover:bg-white/10'
         }`}
         style={{ marginLeft: level * 32 }}
