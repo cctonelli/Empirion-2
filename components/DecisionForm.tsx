@@ -204,8 +204,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                  </nav>
 
                  {/* CONTEÚDO DO PASSO COM SCROLL VERTICAL */}
-                 <div className="flex-1 overflow-y-auto custom-scrollbar p-10 bg-slate-950/40 relative">
-                    <div className="max-w-5xl mx-auto pb-40 space-y-16">
+                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 bg-slate-950/40 relative">
+                    <div className="max-w-[1400px] mx-auto pb-40 space-y-12 px-4">
                         {/* STEP 1 - JURÍDICO */}
                         {activeStep === 0 && (
                            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -214,7 +214,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                  <button 
                                    onClick={() => updateDecision('judicial_recovery', false)}
-                                   className={`p-10 rounded-[3rem] border-2 text-left transition-all relative overflow-hidden group ${!decisions.judicial_recovery ? 'bg-slate-900 border-emerald-500 shadow-[0_20px_60px_rgba(16,185,129,0.2)]' : 'bg-slate-950 border-white/5 opacity-40'}`}
+                                   className={`p-8 rounded-3xl border-2 text-left transition-all relative overflow-hidden group ${!decisions.judicial_recovery ? 'bg-slate-900 border-emerald-500 shadow-[0_20px_60px_rgba(16,185,129,0.2)]' : 'bg-slate-950 border-white/5 opacity-40'}`}
                                  >
                                     <div className="flex items-center gap-4 mb-4">
                                        <div className={`p-4 rounded-2xl ${!decisions.judicial_recovery ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-600'}`}><ShieldCheck size={24}/></div>
@@ -225,7 +225,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                                  <button 
                                    onClick={() => updateDecision('judicial_recovery', true)}
-                                   className={`p-10 rounded-[3rem] border-2 text-left transition-all relative overflow-hidden group ${decisions.judicial_recovery ? 'bg-slate-900 border-rose-500 shadow-[0_20px_60px_rgba(244,63,94,0.2)]' : 'bg-slate-950 border-white/5 opacity-40'}`}
+                                   className={`p-8 rounded-3xl border-2 text-left transition-all relative overflow-hidden group ${decisions.judicial_recovery ? 'bg-slate-900 border-rose-500 shadow-[0_20px_60px_rgba(244,63,94,0.2)]' : 'bg-slate-950 border-white/5 opacity-40'}`}
                                  >
                                     <div className="flex items-center gap-4 mb-4">
                                        <div className={`p-4 rounded-2xl ${decisions.judicial_recovery ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-600'}`}><AlertOctagon size={24}/></div>
@@ -243,8 +243,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <WizardStepHeader icon={<Megaphone />} title="Regiões de Vendas" desc="Configure preço, prazo e campanhas de marketing." />
                               
                               <div className="flex flex-col md:flex-row justify-between items-end gap-8">
-                                 <div className="w-full md:w-80">
-                                    <div className="bg-slate-900/60 p-6 rounded-[2rem] border border-white/5 space-y-4 shadow-xl group hover:border-orange-500/20 transition-all">
+                                 <div className="w-full md:w-96">
+                                    <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5 space-y-3 shadow-xl group hover:border-orange-500/20 transition-all">
                                        <div className="flex justify-between items-center">
                                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
                                              JUROS VENDA A PRAZO (%) <HelpCircle size={10} className="text-slate-700" />
@@ -256,7 +256,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                           step="0.01"
                                           value={decisions.production.term_interest_rate} 
                                           onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value) || 0)} 
-                                          className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-4 text-xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
+                                          className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-3 text-xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
                                        />
                                     </div>
                                  </div>
@@ -268,17 +268,17 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  </button>
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                  {Object.entries(decisions.regions).map(([id, reg]: [any, any]) => (
-                                    <div key={id} className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl hover:border-orange-500/20 transition-all group">
+                                    <div key={id} className="bg-slate-900/60 p-6 rounded-3xl border border-white/5 space-y-6 shadow-2xl hover:border-orange-500/20 transition-all group">
                                        <div className="flex justify-between items-center">
                                           <span className="text-xs font-black text-orange-500 uppercase italic">
                                              {activeArena?.region_names?.[Number(id)-1] || activeArena?.market_indicators?.region_configs?.[Number(id)-1]?.name || `Região 0${id}`}
                                           </span>
                                           <Globe size={16} className="text-slate-700 group-hover:text-orange-500/50 transition-colors" />
                                        </div>
-                                       <div className="space-y-6">
-                                          <div className="space-y-4">
+                                       <div className="space-y-5">
+                                          <div className="space-y-3">
                                              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Preço Unitário ($)</label>
                                              <CurrencyInput 
                                                 value={reg.price} 
@@ -287,14 +287,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                              />
                                           </div>
                                           
-                                          <div className="space-y-4">
+                                          <div className="space-y-3">
                                              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2 flex items-center gap-2">
                                                 Prazo de Recebimento <HelpCircle size={12} className="text-slate-700" />
                                              </label>
                                              <select 
                                                value={reg.term} 
                                                onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
-                                               className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-5 text-xs font-black text-white uppercase outline-none focus:border-orange-600"
+                                               className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-4 text-xs font-black text-white uppercase outline-none focus:border-orange-600"
                                              >
                                                 <option value={0}>A VISTA</option>
                                                 <option value={1}>A VISTA+50%</option>
@@ -302,9 +302,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                              </select>
                                           </div>
 
-                                          <div className="space-y-4">
+                                          <div className="space-y-3">
                                              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Campanhas de Marketing (Unid. 0-9)</label>
-                                             <input type="number" min="0" max="9" value={reg.marketing} onChange={e => updateDecision(`regions.${id}.marketing`, Math.min(9, Math.max(0, parseInt(e.target.value) || 0)))} className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-6 py-4 text-white font-mono font-black text-xl outline-none focus:border-orange-600 shadow-inner" />
+                                             <input type="number" min="0" max="9" value={reg.marketing} onChange={e => updateDecision(`regions.${id}.marketing`, Math.min(9, Math.max(0, parseInt(e.target.value) || 0)))} className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-5 py-3 text-white font-mono font-black text-xl outline-none focus:border-orange-600 shadow-inner" />
                                           </div>
                                        </div>
                                     </div>
@@ -332,7 +332,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                        const currentValue = Math.max(0, m.acquisition_value - currentDeprec);
 
                                        return (
-                                          <div key={m.id} className={`bg-slate-900 border transition-all p-8 rounded-[2.5rem] flex justify-between items-center group shadow-xl ${isSold ? 'border-rose-500/50 bg-rose-950/10' : 'border-white/10'}`}>
+                                          <div key={m.id} className={`bg-slate-900 border transition-all p-6 rounded-2xl flex justify-between items-center group shadow-xl ${isSold ? 'border-rose-500/50 bg-rose-950/10' : 'border-white/10'}`}>
                                              <div className="flex items-center gap-4">
                                                 <div className={`p-4 rounded-2xl transition-colors ${isSold ? 'bg-rose-600 text-white' : 'bg-white/5 text-blue-400'}`}>
                                                    <Settings2 size={24}/>
@@ -414,7 +414,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <InputCard label="MATÉRIA-PRIMA B (QTDE)" val={decisions.production.purchaseMPB} icon={<Package />} onChange={(v:any)=>updateDecision('production.purchaseMPB', v)} help="Quantidade de insumo MP-B a ser comprado para o próximo período. Lembre-se que o Produto Acabado usa 2 MP-B para cada unidade produzida." />
                               </div>
 
-                              <div className="bg-slate-900/60 p-10 rounded-[3rem] border border-white/5 space-y-6 shadow-2xl">
+                              <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 space-y-4 shadow-2xl">
                                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">PAGAMENTO FORNECEDOR <HelpCircle size={12}/></label>
                                  <select value={decisions.production.paymentType} onChange={e => updateDecision('production.paymentType', parseInt(e.target.value))} className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl p-6 text-xs font-black text-white uppercase outline-none focus:border-orange-600 transition-all">
                                     <option value={0}>A VISTA</option>
@@ -460,7 +460,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <div className="space-y-10">
                                  <WizardStepHeader icon={<Landmark />} title="Mercado de Capitais" desc="Gestão de liquidez e alavancagem financeira." />
                                  
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-8">
                                        <div className="flex items-center justify-between">
                                           <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><Landmark className="text-orange-500"/> Crédito</h4>
@@ -469,7 +469,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                        <InputCard label="REQUISIÇÃO DE EMPRÉSTIMO ($)" val={decisions.finance.loanRequest} icon={<DollarSign/>} onChange={(v:any)=>updateDecision('finance.loanRequest', v)} />
                                        <div className="space-y-4">
                                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Prazo de Amortização</label>
-                                          <select value={decisions.finance.loanTerm} onChange={e => updateDecision('finance.loanTerm', parseInt(e.target.value))} className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl p-6 text-xs font-black text-white uppercase outline-none focus:border-orange-600 transition-all">
+                                          <select value={decisions.finance.loanTerm} onChange={e => updateDecision('finance.loanTerm', parseInt(e.target.value))} className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-4 text-xs font-black text-white uppercase outline-none focus:border-orange-600 transition-all">
                                              <option value={0}>A VISTA (Próximo Round)</option>
                                              <option value={1}>CURTO PRAZO (A VISTA+50%)</option>
                                              <option value={2}>LONGO PRAZO (A VISTA+33%+33%)</option>
@@ -483,7 +483,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                           <span className="px-4 py-1.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[9px] font-black uppercase">Rendimento: {currentMacro.investment_return_rate}%</span>
                                        </div>
                                        <InputCard label="APLICAÇÃO FINANCEIRA ($)" val={decisions.finance.application} icon={<Activity/>} onChange={(v:any)=>updateDecision('finance.application', v)} help="Liquidez T+1: Rendimento creditado no Resultado Financeiro do próximo período." />
-                                       <div className="p-8 bg-slate-950/50 rounded-[2rem] border border-white/5 text-[10px] font-bold text-slate-500 uppercase leading-relaxed italic">
+                                       <div className="p-6 bg-slate-950/50 rounded-2xl border border-white/5 text-[10px] font-bold text-slate-500 uppercase leading-relaxed italic">
                                           "Valores aplicados sairão do caixa disponível imediatamente e retornarão no ciclo subsequente acrescidos de rendimentos."
                                        </div>
                                     </div>
@@ -512,13 +512,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <p className="text-slate-400 font-medium italic">"Revise seu protocolo tático antes de selar o ciclo P-{round}."</p>
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-left max-w-4xl mx-auto pt-12">
-                                 <div className="bg-slate-900/60 p-10 rounded-[3rem] border border-white/5 space-y-6">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-6xl mx-auto pt-12">
+                                 <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 space-y-4">
                                     <h4 className="text-xs font-black text-orange-500 uppercase tracking-widest italic mb-4">Resumo Comercial</h4>
                                     <SummaryLine label="Preço Médio" val={`$ ${(Object.values(decisions.regions).reduce((a:any,b:any)=>a+(b.price||0), 0) / Math.max(1, Object.keys(decisions.regions).length)).toFixed(2)}`} />
                                     <SummaryLine label="Total Marketing" val={`${Object.values(decisions.regions).reduce((a:any,b:any)=>a+(b.marketing||0), 0)} units`} />
                                  </div>
-                                 <div className="bg-slate-900/60 p-10 rounded-[3rem] border border-white/5 space-y-6">
+                                 <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 space-y-4">
                                     <h4 className="text-xs font-black text-blue-500 uppercase tracking-widest italic mb-4">Resumo Industrial</h4>
                                     <SummaryLine label="Uso Capacidade" val={`${decisions.production.activityLevel}%`} />
                                     <SummaryLine label="Turno Extra" val={`${decisions.production.extraProductionPercent}%`} />
@@ -574,7 +574,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             ) : (
               <motion.div 
                 key="hub" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                className="h-full flex flex-col bg-slate-950 p-10"
+                className="h-full flex flex-col bg-slate-950 p-6 lg:p-10"
               >
                  <div className="flex justify-between items-end mb-10 shrink-0">
                     <div className="space-y-2">
@@ -618,19 +618,19 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
 // COMPONENTES AUXILIARES DE UI
 const WizardStepHeader = ({ icon, title, desc, help }: any) => (
-  <div className="flex items-center gap-8 border-b border-white/5 pb-12">
-     <div className="p-8 bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-2xl shrink-0 text-orange-500">{icon}</div>
+  <div className="flex items-center gap-6 border-b border-white/5 pb-8">
+     <div className="p-6 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl shrink-0 text-orange-500">{icon}</div>
      <div>
-        <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none flex items-center gap-4">
-           {title} {help && <span title={help} className="cursor-help"><HelpCircle size={20} className="text-slate-700" /></span>}
+        <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none flex items-center gap-3">
+           {title} {help && <span title={help} className="cursor-help"><HelpCircle size={16} className="text-slate-700" /></span>}
         </h3>
-        <p className="text-sm font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">{desc}</p>
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-3 italic">{desc}</p>
      </div>
   </div>
 );
 
 const InputCard = ({ label, val, icon, onChange, help }: any) => (
-  <div className="bg-slate-900/60 p-10 rounded-[3rem] border border-white/5 space-y-6 shadow-2xl group hover:border-orange-500/20 transition-all">
+  <div className="bg-slate-900/60 p-6 rounded-3xl border border-white/5 space-y-4 shadow-2xl group hover:border-orange-500/20 transition-all">
      <div className="flex justify-between items-center">
         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
            {label} {help && <span title={help} className="cursor-help"><HelpCircle size={12} className="text-slate-700" /></span>}
@@ -641,18 +641,18 @@ const InputCard = ({ label, val, icon, onChange, help }: any) => (
        type="number" 
        value={val} 
        onChange={e => onChange(parseFloat(e.target.value) || 0)} 
-       className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-6 text-2xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
+       className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-4 text-xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
      />
   </div>
 );
 
 const RangeInput = ({ label, val, onChange, help, color = "orange" }: any) => (
-  <div className="bg-slate-900/60 p-10 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl">
+  <div className="bg-slate-900/60 p-6 rounded-3xl border border-white/5 space-y-6 shadow-2xl">
      <div className="flex justify-between items-center">
         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
            {label} {help && <span title={help} className="cursor-help"><HelpCircle size={12} className="text-slate-700" /></span>}
         </label>
-        <span className={`text-2xl font-black font-mono ${color === 'orange' ? 'text-orange-500' : 'text-blue-500'}`}>{val}%</span>
+        <span className={`text-xl font-black font-mono ${color === 'orange' ? 'text-orange-500' : 'text-blue-500'}`}>{val}%</span>
      </div>
      <input 
        type="range" 
@@ -660,7 +660,7 @@ const RangeInput = ({ label, val, onChange, help, color = "orange" }: any) => (
        max="100" 
        value={val} 
        onChange={e => onChange(parseInt(e.target.value) || 0)} 
-       className={`w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-${color === 'orange' ? 'orange-600' : 'blue-600'}`}
+       className={`w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-${color === 'orange' ? 'orange-600' : 'blue-600'}`}
      />
   </div>
 );
@@ -683,7 +683,7 @@ const StepHeader = ({ title, subtitle, icon }: any) => (
 );
 
 const AssetCard = ({ model, val, onChange, price, spec, disabled }: any) => (
-  <div className={`bg-slate-900/80 p-10 rounded-[3rem] border transition-all shadow-xl ${disabled ? 'opacity-40 grayscale pointer-events-none border-white/5' : 'border-white/5 group hover:border-blue-500/30'}`}>
+  <div className={`bg-slate-900/80 p-6 rounded-2xl border transition-all shadow-xl ${disabled ? 'opacity-40 grayscale pointer-events-none border-white/5' : 'border-white/5 group hover:border-blue-500/30'}`}>
      <div className="flex justify-between items-center">
         <h4 className="text-xl font-black text-white uppercase italic tracking-tight">Machine {model.toUpperCase()}</h4>
         <Cpu className="text-blue-500 opacity-20 group-hover:opacity-100 transition-opacity" />
