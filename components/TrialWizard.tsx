@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   ArrowRight, ArrowLeft, ShieldCheck, Rocket, Loader2, Info, 
   CheckCircle2, Factory, Users, Globe, Timer, Cpu, Sparkles, 
