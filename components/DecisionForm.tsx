@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Loader2, Megaphone, Users2, Factory, DollarSign, 
   Save, Package, Cpu, ChevronRight, Target, 
-  Landmark, Gavel, ShieldCheck, ChevronLeft, 
+  Landmark, Gavel, ShieldCheck, ChevronLeft, AlertTriangle, 
   TrendingUp, Activity, Box, AlertOctagon, 
   Zap, BarChart3, PieChart, Coins, Rocket, Info,
   HelpCircle, Scale, RefreshCw, Layers, Globe, Boxes, Plus, Sparkles,
@@ -474,6 +474,17 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                              <option value={1}>CURTO PRAZO (A VISTA+50%)</option>
                                              <option value={2}>LONGO PRAZO (A VISTA+33%+33%)</option>
                                           </select>
+                                       </div>
+
+                                       <div className="p-6 bg-rose-950/20 rounded-2xl border border-rose-500/30 text-[11px] font-bold text-rose-200 uppercase leading-relaxed italic flex items-start gap-4">
+                                          <AlertTriangle className="text-rose-500 shrink-0" size={18} />
+                                          <div>
+                                             <p className="mb-2">ALERTA DE EMPRÉSTIMO COMPULSÓRIO</p>
+                                             <p className="font-medium normal-case text-slate-400">
+                                                Caso o saldo final de caixa seja negativo, o Oracle Strategos liberará automaticamente um empréstimo compulsório para cobrir o rombo. 
+                                                Este recurso possui um <strong>ágio de {currentMacro.compulsory_loan_agio}%</strong> sobre a taxa base de {currentMacro.interest_rate_tr}% e deve ser <strong>quitado integralmente no próximo período</strong>.
+                                             </p>
+                                          </div>
                                        </div>
                                     </div>
 

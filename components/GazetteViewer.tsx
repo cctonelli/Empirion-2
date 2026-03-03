@@ -60,7 +60,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
 
   useEffect(() => {
     const fetchNews = async () => {
-      if (round === 0) { setDynamicNews("Aguardando encerramento do Ciclo P00."); return; }
+      if (round === 0) { setDynamicNews("Aguardando encerramento do Ciclo P0."); return; }
       setIsGeneratingNews(true);
       try {
         const historyTable = arena.is_trial ? 'trial_companies' : 'companies';
@@ -198,7 +198,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                         <div className="grid grid-cols-2 gap-10">
                            <CostUnit label="Armazenagem MP" val={currentMacro.prices.storage_mp * getCumulativeAdjust(arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'storage_cost_adjust')} color="text-slate-400" />
                            <CostUnit label="Armazenagem PA" val={currentMacro.prices.storage_finished * getCumulativeAdjust(arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'storage_cost_adjust')} color="text-slate-400" />
-                           <CostUnit label="Distribuição" val={currentMacro.prices.distribution_unit * getCumulativeAdjust(arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'distribution_cost_adjust')} color="text-orange-400" />
+                           <CostUnit label="Distribuição PA" val={currentMacro.prices.distribution_unit * getCumulativeAdjust(arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'distribution_cost_adjust')} color="text-orange-400" />
                         </div>
                      </div>
                   </div>
@@ -216,6 +216,29 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                         <KpiItem label="Market Share" val={`${(activeTeam.kpis?.market_share || 0).toFixed(1)}%`} icon={<Target className="text-orange-500" />} />
                         <KpiItem label="Rating" val={activeTeam.kpis?.rating || 'AAA'} icon={<Star className="text-amber-500" />} />
                      </div>
+
+                     {/* Alerta de Empréstimo Compulsório P0 */}
+                     {round === 0 && (
+                        <div className="mt-16 p-10 bg-rose-950/20 border-2 border-rose-500/30 rounded-[3rem] text-left space-y-6">
+                           <div className="flex items-center gap-4 text-rose-500">
+                              <AlertTriangle size={32} />
+                              <h4 className="text-2xl font-black uppercase italic tracking-tighter">Aviso de Empréstimo Compulsório (P0)</h4>
+                           </div>
+                           <p className="text-slate-300 text-lg leading-relaxed italic">
+                              Sua unidade inicia o Ciclo P1 com um <strong>Empréstimo Compulsório de $ 1.372.362,00</strong> liberado automaticamente no P0 para cobrir insuficiência de caixa.
+                           </p>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                              <div className="space-y-2">
+                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Encargos Financeiros (P1)</span>
+                                 <div className="text-xl font-black text-white font-mono">Juros: {currentMacro.interest_rate_tr}% + Ágio: {currentMacro.compulsory_loan_agio}%</div>
+                              </div>
+                              <div className="space-y-2">
+                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Prazo de Quitação</span>
+                                 <div className="text-xl font-black text-orange-500 font-mono italic uppercase">Imediato (Ciclo P1)</div>
+                              </div>
+                           </div>
+                        </div>
+                     )}
                   </div>
                </motion.div>
             )}

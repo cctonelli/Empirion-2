@@ -163,8 +163,8 @@ export const calculateProjections = (
   const operatorsRequired = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.operators_required || 0), 0);
   const totalMOD = (operatorsRequired * currentSalary * socialChargesAttr) * activityLevel;
 
-  // Matéria-Prima Consumida (Com reajuste específico de MP A/B)
-  const totalMP = (unitsProduced * mpaPrice) + (unitsProduced * mpbPrice);
+  // Matéria-Prima Consumida (Com reajuste específico de MP A/B e consumo 3:2)
+  const totalMP = (unitsProduced * 3 * mpaPrice) + (unitsProduced * 2 * mpbPrice);
 
   // Manutenção Industrial (GGF reajustado por inflação)
   const maintenance = capacity * 2.5 * inflationMult; 
@@ -198,16 +198,40 @@ export const calculateProjections = (
   const revenue = unitsSold * price;
   const opex = 160000 * inflationMult; // Despesas fixas sob inflação
   
-  // Juros e Amortização (Simplificado)
+  // Juros e Amortização (Diferenciação Normal vs Compulsório)
   const prevLoansST = findAccountValue(prevBS, 'liabilities.current.loans_st');
-  const interestExp = (prevLoansST + newLoansST) * (sanitize(indicators.interest_rate_tr, 2) / 100);
-  const amortization = prevLoansST * 0.1; // Amortiza 10% do saldo anterior
+  const prevCashFlow = team.kpis?.statements?.cash_flow || [];
+  const prevCompulsoryLoan = findAccountValue(prevCashFlow, 'cf.inflow.compulsory');
+  const prevNormalLoans = Math.max(0, prevLoansST - prevCompulsoryLoan);
+
+  // Custos do Empréstimo Compulsório (Sempre pago no round seguinte)
+  const compulsoryInterest = prevCompulsoryLoan * (sanitize(indicators.interest_rate_tr, 2) / 100);
+  const compulsoryAgio = prevCompulsoryLoan * (sanitize(indicators.compulsory_loan_agio, 3) / 100);
+  const totalCompulsoryCost = compulsoryInterest + compulsoryAgio;
+  const compulsoryRepayment = prevCompulsoryLoan;
+
+  // Custos de Empréstimos Normais
+  const normalInterest = (prevNormalLoans + newLoansST) * (sanitize(indicators.interest_rate_tr, 2) / 100);
+  const normalAmortization = prevNormalLoans * 0.1; // Amortiza 10% do saldo normal anterior
+
+  const interestExp = normalInterest + totalCompulsoryCost;
+  const totalAmortization = normalAmortization + compulsoryRepayment;
 
   const operatingProfit = revenue - totalCPV - opex;
   const lair = operatingProfit - interestExp - machineSalesLoss;
   const netProfit = lair > 0 ? lair * 0.75 : lair; 
   
-  const finalCash = sanitize(team.kpis?.current_cash, 0) + revenue - totalCPV - opex + machineSalesInflow - machinePurchaseOutflow - interestExp - amortization;
+  // Fluxo de Caixa ANTES do novo compulsório
+  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + revenue - totalCPV - opex + machineSalesInflow - machinePurchaseOutflow - interestExp - totalAmortization;
+  
+  // Liberação Automática de Empréstimo Compulsório (Strategos Core)
+  let newCompulsoryLoan = 0;
+  if (cashBeforeCompulsory < 0) {
+    newCompulsoryLoan = Math.abs(cashBeforeCompulsory);
+    cashBeforeCompulsory = 0; // Caixa zerado, coberto pelo compulsório
+  }
+
+  const finalCash = cashBeforeCompulsory;
 
   // --- 6. ATUALIZAÇÃO DA ESTRUTURA CONTÁBIL ---
   const bsValues = {
@@ -216,7 +240,7 @@ export const calculateProjections = (
     'assets.noncurrent.fixed.machines': totalMachineryCost,
     'assets.noncurrent.fixed.machines_deprec': -totalMachineryDeprec,
     'assets.noncurrent.fixed.buildings_deprec': -newBuildingsDeprecAccum,
-    'liabilities.current.loans_st': prevLoansST + newLoansST - amortization,
+    'liabilities.current.loans_st': prevNormalLoans + newLoansST - normalAmortization + newCompulsoryLoan,
     'liabilities.longterm.loans_lt': findAccountValue(prevBS, 'liabilities.longterm.loans_lt') + newLoansLT,
     'equity.profit': netProfit
   };
@@ -310,9 +334,10 @@ export const calculateProjections = (
       cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
         'cf.inflow.machine_sales': machineSalesInflow,
         'cf.inflow.awards': totalAwards,
+        'cf.inflow.compulsory': newCompulsoryLoan,
         'cf.outflow.machine_buy': -machinePurchaseOutflow,
         'cf.outflow.interest': -interestExp,
-        'cf.outflow.amortization': -amortization,
+        'cf.outflow.amortization': -totalAmortization,
         'cf.final': finalCashWithAwards 
       }),
       balance_sheet: finalBSWithAwards
@@ -322,8 +347,8 @@ export const calculateProjections = (
       current_cash: finalCashWithAwards,
       machines: currentMachines,
       stock_quantities: { 
-        mp_a: (team.kpis?.stock_quantities?.mp_a || 0) + sanitize(decision.production?.purchaseMPA, 0) - unitsProduced, 
-        mp_b: (team.kpis?.stock_quantities?.mp_b || 0) + sanitize(decision.production?.purchaseMPB, 0) - unitsProduced, 
+        mp_a: (team.kpis?.stock_quantities?.mp_a || 0) + sanitize(decision.production?.purchaseMPA, 0) - (unitsProduced * 3), 
+        mp_b: (team.kpis?.stock_quantities?.mp_b || 0) + sanitize(decision.production?.purchaseMPB, 0) - (unitsProduced * 2), 
         finished_goods: closingStockPA 
       },
       cpp_unit: unitCPP,
