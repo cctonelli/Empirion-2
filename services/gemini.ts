@@ -118,6 +118,7 @@ export const generateDynamicMarketNews = async (
       
       CONJUNTURA ECONÔMICA:
       Inflação: ${macro.inflation_rate}% | Juros: ${macro.interest_rate_tr}% | ICE: ${macro.ice}
+      ${macro.is_black_swan ? `EVENTO CISNE NEGRO ATIVO: ${macro.black_swan_title}. Descrição: ${macro.black_swan_description}.` : ""}
       
       DIRETRIZES DE PUBLICAÇÃO:
       1. Anonimato: ${isAnonymous ? "SIM. Use apelidos como 'Líder do Setor', 'Empresa A', 'Player Emergente'. NUNCA revele nomes reais." : "NÃO. Use os nomes reais das equipes."}

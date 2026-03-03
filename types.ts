@@ -206,6 +206,10 @@ export interface MacroIndicators {
   dividend_percent: number;
   production_hours_period: number;
   
+  is_black_swan?: boolean;
+  black_swan_title?: string;
+  black_swan_description?: string;
+
   raw_material_a_adjust?: number;
   raw_material_b_adjust?: number;
   machine_alpha_price_adjust?: number;

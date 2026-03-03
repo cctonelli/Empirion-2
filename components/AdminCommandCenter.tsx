@@ -159,7 +159,10 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
             ...currentMacro,
             inflation_rate: (currentMacro.inflation_rate || 1) + event.modifiers.inflation,
             demand_variation: (currentMacro.demand_variation || 0) + event.modifiers.demand,
-            interest_rate_tr: (currentMacro.interest_rate_tr || 2) + event.modifiers.interest
+            interest_rate_tr: (currentMacro.interest_rate_tr || 2) + event.modifiers.interest,
+            is_black_swan: true,
+            black_swan_title: event.title,
+            black_swan_description: event.description
          };
          await updateEcosystem(selectedArena.id, { round_rules: { ...(selectedArena.round_rules || {}), [nextRound]: updatedMacro } }, !!selectedArena.is_trial);
          alert("CISNE NEGRO INTEGRADO AO PRÓXIMO TURNOVER.");

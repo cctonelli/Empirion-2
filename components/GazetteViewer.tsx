@@ -112,6 +112,19 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
          <AnimatePresence mode="wait">
             {activeTab === 'news' && (
               <motion.div key="news" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-12">
+                 {currentMacro.is_black_swan && (
+                    <div className="p-10 bg-rose-600/10 border-2 border-rose-500/30 rounded-[3rem] relative overflow-hidden group animate-pulse">
+                       <div className="absolute -right-10 -top-10 opacity-10 group-hover:rotate-12 transition-transform"><AlertTriangle size={200} /></div>
+                       <div className="relative z-10 space-y-4">
+                          <div className="flex items-center gap-4 text-rose-500">
+                             <ShieldAlert size={32} />
+                             <h4 className="text-2xl font-black uppercase italic tracking-tighter">ALERTA DE CISNE NEGRO</h4>
+                          </div>
+                          <h3 className="text-3xl font-black text-white uppercase italic">{currentMacro.black_swan_title}</h3>
+                          <p className="text-slate-300 text-lg leading-relaxed italic">{currentMacro.black_swan_description}</p>
+                       </div>
+                    </div>
+                 )}
                  <div className="p-16 bg-white/[0.02] border border-white/5 rounded-[5rem] shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-20 opacity-[0.02] group-hover:scale-110 transition-transform"><Newspaper size={400} /></div>
                     <div className="relative z-10 space-y-10">
