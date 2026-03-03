@@ -200,7 +200,9 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     ccc: 0,
     interest_coverage: 100,
     brl_rate: 1,
-    gbp_rate: 0
+    gbp_rate: 0,
+    compulsory_loan_balance: 0,
+    compulsory_loan_interest_paid: 0
   }));
   
   await supabase.from(historyTable).insert(historyEntries);
@@ -340,7 +342,9 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                     export_tariff_brazil: res.kpis.export_tariff_brazil,
                     export_tariff_uk: res.kpis.export_tariff_uk,
                     brl_rate: res.kpis.brl_rate,
-                    gbp_rate: res.kpis.gbp_rate
+                    gbp_rate: res.kpis.gbp_rate,
+                    compulsory_loan_balance: res.kpis.compulsory_loan_balance || 0,
+                    compulsory_loan_interest_paid: res.kpis.compulsory_loan_interest_paid || 0
                 });
 
                 await supabase.from(teamsTable).update({ 

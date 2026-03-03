@@ -116,6 +116,8 @@ export interface KPIs {
   price_elasticity?: number;
   regional_cac?: Record<number, number>;
   carbon_footprint?: number;
+  compulsory_loan_balance?: number;
+  compulsory_loan_interest_paid?: number;
   [key: string]: any;
 }
 

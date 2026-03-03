@@ -375,6 +375,11 @@ export const calculateProjections = (
       last_units_sold: unitsSold,
       markup: wacUnit > 0 ? (price / wacUnit) - 1 : 0,
       market_share: 12.5, // Placeholder - idealmente calculado via market share engine
+      
+      // KPIs de Empréstimo Compulsório
+      compulsory_loan_balance: newCompulsoryLoan,
+      compulsory_loan_interest_paid: totalCompulsoryCost,
+
       // Indicadores de Moeda e Tarifas (v18.8)
       brl_rate: indicators.BRL || 1,
       gbp_rate: indicators.GBP || 0,
