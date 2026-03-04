@@ -176,7 +176,15 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     ebitda: 208387.77, 
     tsr: 0,
     ccc: 0,
-    interest_coverage: 100
+    interest_coverage: 100,
+    nlcdg: 0,
+    solvency_score_kanitz: 1.5,
+    dcf_valuation: 1.7,
+    scissors_effect: 0,
+    liquidity_current: 1.5,
+    solvency_index: 2.0,
+    inventory_turnover: 0,
+    carbon_footprint: 0
   };
 
   const teamsWithChamp = teams.map(t => ({ ...t, championship_id: champ.id, kpis: initialKpis, equity: initialKpis.equity }));
@@ -202,7 +210,16 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     brl_rate: 1,
     gbp_rate: 0,
     compulsory_loan_balance: 0,
-    compulsory_loan_interest_paid: 0
+    compulsory_loan_interest_paid: 0,
+    tsr: 0,
+    nlcdg: 0,
+    solvency_score_kanitz: 1.5,
+    dcf_valuation: 1.7,
+    scissors_effect: 0,
+    liquidity_current: 1.5,
+    solvency_index: 2.0,
+    inventory_turnover: 0,
+    carbon_footprint: 0
   }));
   
   await supabase.from(historyTable).insert(historyEntries);
@@ -344,7 +361,16 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                     brl_rate: res.kpis.brl_rate,
                     gbp_rate: res.kpis.gbp_rate,
                     compulsory_loan_balance: res.kpis.compulsory_loan_balance || 0,
-                    compulsory_loan_interest_paid: res.kpis.compulsory_loan_interest_paid || 0
+                    compulsory_loan_interest_paid: res.kpis.compulsory_loan_interest_paid || 0,
+                    tsr: res.kpis.tsr || 0,
+                    nlcdg: res.kpis.nlcdg || 0,
+                    solvency_score_kanitz: res.kpis.solvency_score_kanitz || 0,
+                    dcf_valuation: res.kpis.dcf_valuation || 0,
+                    scissors_effect: res.kpis.scissors_effect || 0,
+                    liquidity_current: res.kpis.liquidity_current || 0,
+                    solvency_index: res.kpis.solvency_index || 0,
+                    inventory_turnover: res.kpis.inventory_turnover || 0,
+                    carbon_footprint: res.kpis.carbon_footprint || 0
                 });
 
                 await supabase.from(teamsTable).update({ 

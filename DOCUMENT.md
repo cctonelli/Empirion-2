@@ -3,6 +3,32 @@
 ## Visão Geral
 O Oracle Strategos é um simulador empresarial avançado (Modo Industrial Trial) focado em gestão financeira, operacional e estratégica. O objetivo é gerenciar uma unidade industrial, tomando decisões que afetam a produção, o mercado e a saúde financeira da empresa.
 
+## 🧠 Arquitetura de Inteligência Artificial (Gemini API)
+O Empirion utiliza o motor neural **Gemini 3 Pro** para orquestrar o Oráculo Strategos, fornecendo raciocínio profundo sobre balanços e planos de negócios. A versão **Gemini 3 Flash** é utilizada para processamento de baixa latência em bots competitivos e geração de notícias da Gazeta.
+
+### Perfis Estratégicos de Bots (Autonomous Nodes)
+Para garantir uma dinâmica de mercado realista e heterogênea, os bots recebem atribuições automáticas de perfis estratégicos:
+*   **AGRESSIVO:** Foco em market share, preços baixos e alta alavancagem.
+*   **CONSERVADOR:** Foco em preservação de capital e liquidez.
+*   **EFICIENTE:** Foco em otimização de custos e margens.
+*   **INOVADOR:** Foco em P&D, qualidade e diferenciação.
+*   **EQUILIBRADO:** Postura moderada entre crescimento e segurança.
+
+## 🏛️ Segurança e Governança (RLS Protocol)
+O acesso é segmentado em quatro níveis de autoridade via Supabase RLS:
+1. **System Admin:** Acesso total (`role = 'admin'`).
+2. **Arena Tutor:** Controle total sobre campeonatos criados (`tutor_id`).
+3. **Team Member:** Leitura/escrita exclusiva nos dados da própria equipe.
+4. **Market Observer:** Acesso de leitura a dados consolidados da arena.
+
+## 📊 Protocolo de Integridade Contábil
+Todas as contas na `INITIAL_FINANCIAL_TREE` são **imutáveis**. Contas com valor zero no P0 servem como placeholders para o motor Oracle e não devem ser removidas.
+
+## 🌎 Expansão Geopolítica e Multi-Moeda
+O sistema suporta operações multi-regionais (até 15 regiões) com moedas dinâmicas:
+*   **Moedas:** BRL (Base), USD, EUR, GBP, CNY, BTC.
+*   **Câmbio:** Taxas definidas nos `MacroIndicators`. O motor realiza conversão automática e monitora a exposição cambial.
+
 ## Regras de Negócio (Core Industrial)
 
 ### 1. Produção e Capacidade
@@ -43,6 +69,25 @@ O Oracle Strategos é um simulador empresarial avançado (Modo Industrial Trial)
 - **Inadimplência (PECLD):** Percentual do faturamento a prazo que é provisionado como perda.
 - **Marketing:** Investimento regional para aumentar a atratividade da marca.
 - **Distribuição:** Custo logístico unitário por venda realizada.
+
+## 🚀 Indicadores e KPIs Avançados (v18.8)
+
+### 1. Gestão de Liquidez e Capital de Giro
+- **CCC (Cash Conversion Cycle):** Eficiência do capital de giro em dias.
+- **NLCDG:** Necessidade Líquida de Capital de Giro.
+- **Efeito Tesoura:** Descompasso entre crescimento e disponibilidade de caixa.
+- **Índice de Cobertura de Juros:** Capacidade de cobrir despesas financeiras.
+
+### 2. Análise de Valor e Rentabilidade
+- **TSR (Total Shareholder Return):** Principal indicador de vitória (Criação de Valor).
+- **Análise DuPont:** Decomposição do ROE (Margem x Giro x Alavancagem).
+- **DCF Valuation:** Valor de mercado via Fluxo de Caixa Descontado.
+- **Z-Score de Kanitz:** Indicador preditivo de insolvência.
+
+### 3. Inteligência de Mercado e ESG
+- **Elasticidade-Preço Real:** Sensibilidade da demanda.
+- **Landed Cost:** Custo total do produto no destino.
+- **Pegada de Carbono:** Impacto ambiental por unidade (Produção + Logística).
 
 ## Decisões Arquiteturais
 

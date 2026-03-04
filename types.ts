@@ -106,6 +106,10 @@ export interface KPIs {
   avg_payable_days?: number;
   ccc?: number;
   interest_coverage?: number;
+  export_tariff_brazil?: number;
+  export_tariff_uk?: number;
+  brl_rate?: number;
+  gbp_rate?: number;
   dupont?: {
     margin: number;
     turnover: number;

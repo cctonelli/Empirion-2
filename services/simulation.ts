@@ -247,10 +247,6 @@ export const calculateProjections = (
 
   const finalBS = injectValues(JSON.parse(JSON.stringify(prevBS)), bsValues);
 
-  // --- 7. CÁLCULO DE MÉTRICAS AVANÇADAS (ESTRATÉGICAS) ---
-  const totalAssets = findAccountValue(finalBS, 'assets');
-  const totalEquity = findAccountValue(finalBS, 'equity');
-  
   // --- 8. PREMIAÇÕES POR PRECISÃO (AUDIT AWARDS) ---
   let totalAwards = 0;
   const tolerance = 0.05; // 5% de tolerância padrão Oracle
@@ -276,6 +272,52 @@ export const calculateProjections = (
   // Re-ajustar lucro e caixa com as premiações
   const finalNetProfit = netProfit + totalAwards;
   const finalCashWithAwards = finalCash + totalAwards;
+
+  // --- 7. CÁLCULO DE MÉTRICAS AVANÇADAS (ESTRATÉGICAS) ---
+  const totalAssets = findAccountValue(finalBS, 'assets');
+  const totalEquity = findAccountValue(finalBS, 'equity');
+  const currentAssets = findAccountValue(finalBS, 'assets.current');
+  const currentLiabilities = findAccountValue(finalBS, 'liabilities.current');
+  const totalLiabilities = findAccountValue(finalBS, 'liabilities');
+  
+  // TSR (Total Shareholder Return) - Baseado no crescimento do Equity
+  const prevEquity = team.equity || 7252171;
+  const tsr = ((totalEquity - prevEquity) / prevEquity) * 100;
+
+  // Liquidez e Solvência
+  const liquidityCurrent = currentLiabilities > 0 ? currentAssets / currentLiabilities : 2;
+  const solvencyIndex = totalLiabilities > 0 ? totalAssets / totalLiabilities : 5;
+
+  // NLCDG (Necessidade Líquida de Capital de Giro)
+  const accountsReceivable = revenue * 0.6; // Estimativa: 60% das vendas a prazo
+  const inventoryValue = closingStockValuePA;
+  const accountsPayable = (totalMP + maintenance) * 0.4; // Estimativa: 40% dos custos a prazo
+  const nlcdg = (accountsReceivable + inventoryValue) - accountsPayable;
+
+  // Efeito Tesoura (Scissors Effect)
+  const treasuryBalance = finalCashWithAwards;
+  const scissorsEffect = nlcdg - treasuryBalance;
+
+  // Z-Score de Kanitz (Simplificado para Simulação Industrial)
+  // Z = 0.05*X1 + 1.65*X2 + 3.55*X3 - 1.06*X4 - 0.33*X5
+  const x1 = totalEquity > 0 ? finalNetProfit / totalEquity : 0;
+  const x2 = liquidityCurrent;
+  const x3 = currentLiabilities > 0 ? (currentAssets - inventoryValue) / currentLiabilities : 1;
+  const x4 = totalAssets > 0 ? currentAssets / totalAssets : 0.5;
+  const x5 = totalEquity > 0 ? totalLiabilities / totalEquity : 0.5;
+  const kanitz = (0.05 * x1) + (1.65 * x2) + (3.55 * x3) - (1.06 * x4) - (0.33 * x5);
+
+  // DCF Valuation (Fluxo de Caixa Descontado - Perpetuidade Simplificada)
+  const ebitda = operatingProfit + periodDepreciation;
+  const wacc = 0.12; // Taxa de desconto padrão 12%
+  const dcfValuation = ebitda > 0 ? (ebitda / wacc) / 1000000 : 0; // Em milhões
+
+  // Rating de Crédito Dinâmico
+  let rating: CreditRating = 'B';
+  if (liquidityCurrent > 1.5 && x5 < 0.8) rating = 'AAA';
+  else if (liquidityCurrent > 1.2 && x5 < 1.2) rating = 'AA';
+  else if (liquidityCurrent > 1.0 && x5 < 1.5) rating = 'A';
+  else if (liquidityCurrent > 0.8) rating = 'BB+';
 
   // Atualizar Balanço com valores finais
   const finalBSWithAwards = injectValues(JSON.parse(JSON.stringify(finalBS)), {
@@ -318,8 +360,8 @@ export const calculateProjections = (
   const carbonFootprint = (unitsProduced * 0.8) + (unitsSold * 0.2);
 
   return {
-    revenue, netProfit: finalNetProfit, debtRatio: 0, creditRating: 'AAA',
-    health: { cash: finalCashWithAwards, rating: 'AAA' },
+    revenue, netProfit: finalNetProfit, debtRatio: x5, creditRating: rating,
+    health: { cash: finalCashWithAwards, rating: rating },
     marketShare: 12.5,
     statements: {
       dre: injectValues(JSON.parse(JSON.stringify(prevStatements.dre)), { 
@@ -360,6 +402,14 @@ export const calculateProjections = (
       total_assets: totalAssets,
       equity: totalEquity,
       stock_value: closingStockValuePA,
+      tsr,
+      nlcdg: nlcdg / 1000000, // Em milhões para o dashboard
+      solvency_score_kanitz: kanitz,
+      dcf_valuation: dcfValuation,
+      scissors_effect: scissorsEffect / 1000000, // Em milhões
+      liquidity_current: liquidityCurrent,
+      solvency_index: solvencyIndex,
+      inventory_turnover: totalCPV > 0 ? (totalCPV / ((prevStockValue + closingStockValuePA) / 2)) : 0,
       ccc,
       interest_coverage: interestCoverage,
       dupont: {
@@ -374,7 +424,9 @@ export const calculateProjections = (
       last_price: price,
       last_units_sold: unitsSold,
       markup: wacUnit > 0 ? (price / wacUnit) - 1 : 0,
-      market_share: 12.5, // Placeholder - idealmente calculado via market share engine
+      market_share: Math.min(25, 12.5 * priceIndex * (1 + (indicators.demand_variation / 100))), 
+      avg_receivable_days: pmr,
+      avg_payable_days: pmp,
       
       // KPIs de Empréstimo Compulsório
       compulsory_loan_balance: newCompulsoryLoan,
