@@ -359,10 +359,15 @@ export const calculateProjections = (
   // Pegada de Carbono (0.8kg CO2 por unidade + logística)
   const carbonFootprint = (unitsProduced * 0.8) + (unitsSold * 0.2);
 
+  // Cálculo de Market Share Projetado (Sensibilidade a Preço e Marketing)
+  const marketingInvestment = sanitize(Object.values(decision.regions || {})[0]?.marketing, 0);
+  const marketingIndex = 1 + (Math.log10(marketingInvestment + 1) / 10); // Escala logarítmica para marketing
+  const projectedMarketShare = Math.min(40, 12.5 * priceIndex * marketingIndex * (1 + (indicators.demand_variation / 100)));
+
   return {
     revenue, netProfit: finalNetProfit, debtRatio: x5, creditRating: rating,
     health: { cash: finalCashWithAwards, rating: rating },
-    marketShare: 12.5,
+    marketShare: projectedMarketShare,
     statements: {
       dre: injectValues(JSON.parse(JSON.stringify(prevStatements.dre)), { 
         'rev': revenue, 
@@ -424,7 +429,7 @@ export const calculateProjections = (
       last_price: price,
       last_units_sold: unitsSold,
       markup: wacUnit > 0 ? (price / wacUnit) - 1 : 0,
-      market_share: Math.min(25, 12.5 * priceIndex * (1 + (indicators.demand_variation / 100))), 
+      market_share: projectedMarketShare, 
       avg_receivable_days: pmr,
       avg_payable_days: pmp,
       

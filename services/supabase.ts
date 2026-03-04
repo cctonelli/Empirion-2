@@ -323,13 +323,16 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const currentRules = champ.round_rules?.[nextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound] || champ.market_indicators;
         const indicatorsForRound = { ...champ.market_indicators, ...currentRules };
 
+        const teamResults: any[] = [];
+        const marketDecisions: Record<string, any> = {};
+
+        // 1. Coletar todas as decisões e gerar para bots
         for (const team of (teams || [])) {
             const { data: dec } = await supabase.from(decisionsTable).select('*').eq('team_id', team.id).eq('round', nextRound).maybeSingle();
             let finalDecision = dec?.data;
             
             if (team.is_bot && !finalDecision) {
               finalDecision = await generateBotDecision(champ.branch, nextRound, champ.regions_count, indicatorsForRound, team.name, team.strategic_profile);
-              // Persist bot decision for audit and visibility
               await supabase.from(decisionsTable).insert({
                 team_id: team.id,
                 championship_id: id,
@@ -337,53 +340,90 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 data: finalDecision
               });
             }
+            marketDecisions[team.id] = finalDecision;
+        }
+
+        // 2. Calcular Médias de Mercado (Preço e Marketing) para Market Share Competitivo
+        const validDecisions = Object.values(marketDecisions).filter(d => !!d);
+        const avgPrice = validDecisions.length > 0 
+          ? validDecisions.reduce((acc, d) => acc + (Object.values(d.regions || {})[0] as any)?.price || 0, 0) / validDecisions.length 
+          : indicatorsForRound.avg_selling_price;
+        
+        const totalMarketing = validDecisions.reduce((acc, d) => acc + (Object.values(d.regions || {})[0] as any)?.marketing || 0, 0);
+        const avgMarketing = validDecisions.length > 0 ? totalMarketing / validDecisions.length : 0;
+
+        // 3. Processar cada equipe com o contexto competitivo
+        for (const team of (teams || [])) {
+            const finalDecision = marketDecisions[team.id];
 
             if (finalDecision) {
-                const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, indicatorsForRound, team);
+                // Ajustar indicadores com a média real do mercado para este round
+                const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
+                const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, competitiveIndicators, team);
                 
-                await supabase.from(historyTable).insert({
-                    team_id: team.id, 
-                    championship_id: id, 
-                    round: nextRound, 
-                    state: finalDecision, 
-                    kpis: res.kpis, 
-                    equity: res.kpis.equity,
-                    revenue: res.revenue,
-                    net_profit: res.netProfit,
-                    total_assets: res.kpis.total_assets,
-                    stock_value: res.kpis.stock_value,
-                    fixed_assets_value: res.kpis.fixed_assets_value,
-                    fixed_assets_depreciation: res.kpis.fixed_assets_depreciation,
-                    ccc: res.kpis.ccc,
-                    interest_coverage: res.kpis.interest_coverage,
-                    export_tariff_brazil: res.kpis.export_tariff_brazil,
-                    export_tariff_uk: res.kpis.export_tariff_uk,
-                    brl_rate: res.kpis.brl_rate,
-                    gbp_rate: res.kpis.gbp_rate,
-                    compulsory_loan_balance: res.kpis.compulsory_loan_balance || 0,
-                    compulsory_loan_interest_paid: res.kpis.compulsory_loan_interest_paid || 0,
-                    tsr: res.kpis.tsr || 0,
-                    nlcdg: res.kpis.nlcdg || 0,
-                    solvency_score_kanitz: res.kpis.solvency_score_kanitz || 0,
-                    dcf_valuation: res.kpis.dcf_valuation || 0,
-                    scissors_effect: res.kpis.scissors_effect || 0,
-                    liquidity_current: res.kpis.liquidity_current || 0,
-                    solvency_index: res.kpis.solvency_index || 0,
-                    inventory_turnover: res.kpis.inventory_turnover || 0,
-                    carbon_footprint: res.kpis.carbon_footprint || 0
-                });
-
-                await supabase.from(teamsTable).update({ 
-                    equity: res.kpis.equity, 
-                    kpis: res.kpis 
-                }).eq('id', team.id);
+                // Cálculo de Market Share Competitivo (Relativo aos outros)
+                const teamPrice = (Object.values(finalDecision.regions || {})[0] as any)?.price || avgPrice;
+                const teamMarketing = (Object.values(finalDecision.regions || {})[0] as any)?.marketing || 0;
+                
+                const priceWeight = teamPrice > 0 ? (avgPrice / teamPrice) : 1;
+                const marketingWeight = 1 + (teamMarketing > 0 ? Math.log10(teamMarketing + 1) / 10 : 0);
+                const rawScore = priceWeight * marketingWeight;
+                
+                teamResults.push({ team, res, rawScore });
             }
         }
 
-        // Prepare indicators for the NEXT round (round + 2)
+        // 4. Normalizar Market Share para somar 100%
+        const totalScore = teamResults.reduce((acc, r) => acc + r.rawScore, 0);
+        for (const item of teamResults) {
+            const competitiveShare = totalScore > 0 ? (item.rawScore / totalScore) * 100 : (100 / teams!.length);
+            item.res.kpis.market_share = competitiveShare;
+            item.res.marketShare = competitiveShare;
+
+            await supabase.from(historyTable).insert({
+                team_id: item.team.id, 
+                championship_id: id, 
+                round: nextRound, 
+                state: marketDecisions[item.team.id], 
+                kpis: item.res.kpis, 
+                equity: item.res.kpis.equity,
+                revenue: item.res.revenue,
+                net_profit: item.res.netProfit,
+                total_assets: item.res.kpis.total_assets,
+                stock_value: item.res.kpis.stock_value,
+                fixed_assets_value: item.res.kpis.fixed_assets_value,
+                fixed_assets_depreciation: item.res.kpis.fixed_assets_depreciation,
+                ccc: item.res.kpis.ccc,
+                interest_coverage: item.res.kpis.interest_coverage,
+                export_tariff_brazil: item.res.kpis.export_tariff_brazil,
+                export_tariff_uk: item.res.kpis.export_tariff_uk,
+                brl_rate: item.res.kpis.brl_rate,
+                gbp_rate: item.res.kpis.gbp_rate,
+                compulsory_loan_balance: item.res.kpis.compulsory_loan_balance || 0,
+                compulsory_loan_interest_paid: item.res.kpis.compulsory_loan_interest_paid || 0,
+                tsr: item.res.kpis.tsr || 0,
+                nlcdg: item.res.kpis.nlcdg || 0,
+                solvency_score_kanitz: item.res.kpis.solvency_score_kanitz || 0,
+                dcf_valuation: item.res.kpis.dcf_valuation || 0,
+                scissors_effect: item.res.kpis.scissors_effect || 0,
+                liquidity_current: item.res.kpis.liquidity_current || 0,
+                solvency_index: item.res.kpis.solvency_index || 0,
+                inventory_turnover: item.res.kpis.inventory_turnover || 0,
+                carbon_footprint: item.res.kpis.carbon_footprint || 0,
+                market_share: competitiveShare
+            });
+
+            await supabase.from(teamsTable).update({ 
+                equity: item.res.kpis.equity, 
+                kpis: item.res.kpis 
+            }).eq('id', item.team.id);
+        }
+
+        // 5. Preparar indicadores para o PRÓXIMO round (round + 2)
         const nextNextRound = nextRound + 1;
         const nextRules = champ.round_rules?.[nextNextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextNextRound] || indicatorsForRound;
-        const nextIndicators = { ...indicatorsForRound, ...nextRules };
+        // Atualiza o preço médio de mercado para o próximo round baseado na realidade deste round
+        const nextIndicators = { ...indicatorsForRound, ...nextRules, avg_selling_price: avgPrice };
 
         await supabase.from(champTable).update({ 
             current_round: nextRound, 
