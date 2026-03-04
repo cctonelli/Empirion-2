@@ -112,3 +112,13 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
 - **Data:** Novembro de 2025
 - **Motivo:** Alinhamento do motor de simulação com a regra de negócio industrial (3 MP-A e 2 MP-B por PA).
 - **Status:** Em produção.
+
+### v2025-12 - Visibilidade de Mercado e Valor da Ação
+- **Data:** Dezembro de 2025
+- **Motivo:** Melhorar a transparência de mercado para o Tutor e Equipes, incluindo o cálculo do Valor da Ação.
+- **Diferenças:**
+  - Adição do KPI `share_price` (Valor da Ação) baseado no Patrimônio Líquido.
+  - Tabela de Monitoramento da Gazeta agora exibe Receita, Lucro Líquido e Valor da Ação.
+  - Tutor agora possui seletor de unidades na aba "Unidade" da Gazeta.
+  - Identificação de equipes na Gazeta liberada para o Tutor independentemente do modo de anonimato.
+- **Status:** Em produção.

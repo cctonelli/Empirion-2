@@ -122,6 +122,7 @@ export interface KPIs {
   carbon_footprint?: number;
   compulsory_loan_balance?: number;
   compulsory_loan_interest_paid?: number;
+  share_price?: number;
   [key: string]: any;
 }
 
@@ -245,6 +246,7 @@ export interface MacroIndicators {
   };
   hr_base: { salary: number };
   exchange_rates: Record<string, number>;
+  initial_share_price?: number;
   [key: string]: any;
 }
 

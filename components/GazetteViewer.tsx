@@ -26,12 +26,28 @@ interface GazetteViewerProps {
 
 type GazetteTab = 'news' | 'market_intelligence' | 'macro' | 'individual';
 
-const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, activeTeam, onClose }) => {
+const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, activeTeam: initialActiveTeam, userRole, onClose }) => {
   const [activeTab, setActiveTab] = useState<GazetteTab>('news');
   const [dynamicNews, setDynamicNews] = useState<string>('');
   const [isGeneratingNews, setIsGeneratingNews] = useState(false);
   const [competitors, setCompetitors] = useState<any[]>([]);
   const [loadingCompetitors, setLoadingCompetitors] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(initialActiveTeam?.id || null);
+
+  const activeTeam = useMemo(() => {
+    if (selectedTeamId) {
+      const comp = competitors.find(c => c.team_id === selectedTeamId);
+      if (comp) {
+        return {
+          id: comp.team_id,
+          name: comp.team?.name || 'Unidade',
+          equity: comp.equity,
+          kpis: comp.kpis
+        } as Team;
+      }
+    }
+    return initialActiveTeam;
+  }, [selectedTeamId, competitors, initialActiveTeam]);
   
   const currentMacro = useMemo((): MacroIndicators => {
     const rules = arena.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || {};
@@ -153,24 +169,30 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                            <tr className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] bg-slate-900 border-b border-white/10">
                               <th className="p-8 border-r border-white/5">Equipe (Strategos Unit)</th>
                               <th className="p-8 text-center">Market Share</th>
-                              <th className="p-8 text-center">Equity (Patrimônio)</th>
+                              <th className="p-8 text-center">Equity</th>
+                              <th className="p-8 text-center">Receita</th>
+                              <th className="p-8 text-center">Lucro Líquido</th>
+                              <th className="p-8 text-center">Valor Ação</th>
                               <th className="p-8 text-center">Rating</th>
-                              {isFullTransparency && <th className="p-8 text-center">Vendas (P. Médio)</th>}
+                              {isFullTransparency && <th className="p-8 text-center">P. Médio</th>}
                            </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 font-mono">
                            {loadingCompetitors ? (
-                             <tr><td colSpan={5} className="p-20 text-center text-slate-500 italic uppercase font-black text-xs"><Loader2 className="animate-spin mx-auto mb-4"/> Sincronizando dados competitivos...</td></tr>
+                             <tr><td colSpan={8} className="p-20 text-center text-slate-500 italic uppercase font-black text-xs"><Loader2 className="animate-spin mx-auto mb-4"/> Sincronizando dados competitivos...</td></tr>
                            ) : competitors.map((t, i) => (
                              <tr key={i} className="hover:bg-white/[0.03] transition-colors group">
                                 <td className="p-8 border-r border-white/5">
                                    <div className="flex items-center gap-6">
                                       <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-slate-300 font-black italic">{i+1}</div>
-                                      <span className="text-xl font-black text-white uppercase italic tracking-tight">{isIdentified ? t.team?.name : `Unidade Alpha-${t.team_id.slice(0,4)}`}</span>
+                                      <span className="text-xl font-black text-white uppercase italic tracking-tight">{isIdentified || userRole === 'tutor' ? t.team?.name : `Unidade Alpha-${t.team_id.slice(0,4)}`}</span>
                                    </div>
                                 </td>
                                 <td className="p-8 text-center text-orange-500 font-black text-2xl italic">{(t.kpis?.market_share || 0).toFixed(1)}%</td>
                                 <td className="p-8 text-center text-white font-black text-lg">$ {t.equity.toLocaleString()}</td>
+                                <td className="p-8 text-center text-emerald-400 font-black text-lg">$ {(t.kpis?.statements?.dre?.revenue || 0).toLocaleString()}</td>
+                                <td className="p-8 text-center text-blue-400 font-black text-lg">$ {(t.kpis?.statements?.dre?.net_profit || 0).toLocaleString()}</td>
+                                <td className="p-8 text-center text-amber-400 font-black text-2xl italic">$ {(t.kpis?.share_price || (t.equity / 72000)).toFixed(2)}</td>
                                 <td className="p-8 text-center">
                                    <span className={`px-5 py-2 rounded-xl font-black text-sm border-2 ${t.kpis?.rating === 'AAA' ? 'bg-emerald-600/10 border-emerald-500 text-emerald-400' : 'bg-slate-950 border-white/10 text-slate-500'}`}>{t.kpis?.rating || 'N/A'}</span>
                                 </td>
@@ -178,7 +200,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                                    <td className="p-8 text-center">
                                       <div className="flex flex-col gap-1">
                                          <span className="text-xs font-black text-blue-400">$ {(t.kpis?.statements?.dre?.revenue / Math.max(1, t.kpis?.statements?.dre?.revenue / 425)).toFixed(2)}</span>
-                                         <span className="text-[8px] font-black text-slate-600 uppercase">Média Regional</span>
                                       </div>
                                    </td>
                                 )}
@@ -218,17 +239,41 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                </motion.div>
             )}
 
-            {activeTab === 'individual' && activeTeam && (
+            {activeTab === 'individual' && (
                <motion.div key="ind" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                   <div className="bg-slate-900/80 p-16 rounded-[5rem] border border-white/5 shadow-3xl text-center">
-                     <div className="w-24 h-24 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-10 text-orange-600 shadow-2xl border border-white/5"><User size={48} /></div>
-                     <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter mb-4">Relatório: {activeTeam.name}</h3>
-                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Análise de Performance Ciclo P-{round}</p>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
-                        <KpiItem label="Equity Final" val={`$ ${activeTeam.equity.toLocaleString()}`} icon={<ShieldCheck className="text-emerald-500" />} />
-                        <KpiItem label="Market Share" val={`${(activeTeam.kpis?.market_share || 0).toFixed(1)}%`} icon={<Target className="text-orange-500" />} />
-                        <KpiItem label="Rating" val={activeTeam.kpis?.rating || 'AAA'} icon={<Star className="text-amber-500" />} />
+                     <div className="flex flex-col items-center gap-6 mb-10">
+                        <div className="w-24 h-24 bg-white/5 rounded-3xl flex items-center justify-center text-orange-600 shadow-2xl border border-white/5"><User size={48} /></div>
+                        
+                        {(userRole === 'tutor' || isFullTransparency) && competitors.length > 0 && (
+                          <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
+                            {competitors.map(c => (
+                              <button 
+                                key={c.team_id}
+                                onClick={() => setSelectedTeamId(c.team_id)}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${selectedTeamId === c.team_id ? 'bg-orange-600 border-orange-400 text-white shadow-lg' : 'bg-slate-950 border-white/5 text-slate-500 hover:border-white/20'}`}
+                              >
+                                {isIdentified || userRole === 'tutor' ? c.team?.name : `Alpha-${c.team_id.slice(0,4)}`}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                      </div>
+
+                     {activeTeam ? (
+                       <>
+                         <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter mb-4">Relatório: {activeTeam.name}</h3>
+                         <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Análise de Performance Ciclo P-{round}</p>
+                         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-16">
+                            <KpiItem label="Valor da Ação" val={`$ ${(activeTeam.kpis?.share_price || (activeTeam.equity / 72000)).toFixed(2)}`} icon={<Coins className="text-amber-400" />} />
+                            <KpiItem label="Equity Final" val={`$ ${activeTeam.equity.toLocaleString()}`} icon={<ShieldCheck className="text-emerald-500" />} />
+                            <KpiItem label="Market Share" val={`${(activeTeam.kpis?.market_share || 0).toFixed(1)}%`} icon={<Target className="text-orange-500" />} />
+                            <KpiItem label="Rating" val={activeTeam.kpis?.rating || 'AAA'} icon={<Star className="text-amber-500" />} />
+                         </div>
+                       </>
+                     ) : (
+                       <div className="py-20 text-slate-500 font-black uppercase italic tracking-widest">Selecione uma unidade para visualizar o relatório detalhado</div>
+                     )}
 
                      {/* Alerta de Empréstimo Compulsório P0 */}
                      {round === 0 && (

@@ -430,6 +430,7 @@ export const calculateProjections = (
       last_units_sold: unitsSold,
       markup: wacUnit > 0 ? (price / wacUnit) - 1 : 0,
       market_share: projectedMarketShare, 
+      share_price: totalEquity / 72000,
       avg_receivable_days: pmr,
       avg_payable_days: pmp,
       

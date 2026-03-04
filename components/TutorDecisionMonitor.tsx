@@ -249,6 +249,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
               arena={arena} 
               aiNews="" 
               round={activeTimelineNode} 
+              userRole="tutor"
               onClose={() => setShowGazette(false)} 
             />
           </div>

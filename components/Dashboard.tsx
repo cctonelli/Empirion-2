@@ -284,7 +284,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         )}
         {showGazette && (
           <div className="fixed inset-0 z-[5000] p-4 md:p-10 bg-slate-950/95 backdrop-blur-3xl flex items-center justify-center">
-             <GazetteViewer arena={activeArena!} aiNews="" round={Math.max(0, selectedRound - 1)} activeTeam={activeTeam} onClose={() => setShowGazette(false)} />
+             <GazetteViewer arena={activeArena!} aiNews="" round={Math.max(0, selectedRound - 1)} activeTeam={activeTeam} userRole={userRole} onClose={() => setShowGazette(false)} />
           </div>
         )}
       </AnimatePresence>
