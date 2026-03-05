@@ -552,13 +552,13 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                  </div>
 
                  {/* BOTTOM CONTROL BAR - Fixa, sem sobrepor conteúdo */}
-                 <footer className="h-28 bg-slate-900 border-t border-white/10 flex items-center justify-between px-10 shrink-0 z-[100] shadow-top-2xl">
+                 <footer className="h-16 bg-slate-900 border-t border-white/10 flex items-center justify-between px-10 shrink-0 z-[100] shadow-top-2xl">
                     <button 
                       onClick={() => setActiveStep(s => Math.max(0, s-1))} 
                       disabled={activeStep === 0} 
                       className="px-10 py-4 bg-slate-800 border border-white/5 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all flex items-center gap-4 disabled:opacity-0"
                     >
-                       <ChevronLeft size={16}/> Voltar
+                       <ChevronLeft size={14}/> Voltar
                     </button>
                     <div className="flex gap-2">
                        {STEPS.map((_, i) => (
@@ -570,7 +570,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         onClick={handleTransmit} 
                         className="px-14 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-600/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-4"
                       >
-                         Transmitir <Rocket size={16}/>
+                         Transmitir <Rocket size={14}/>
                       </button>
                     ) : (
                       <button 
