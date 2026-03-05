@@ -1486,8 +1486,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
               >
                  <div className="flex justify-between items-end mb-10 shrink-0">
                     <div className="space-y-2">
-                       <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">Strategic <span className="text-orange-500">Analysis Hub</span></h2>
-                       <p className="text-slate-400 font-medium italic">Visão 360° do Império: Histórico Auditado + Projeção v18.5</p>
+                       <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">Strategic <span className="text-orange-500">Hub</span></h2>
+                       <p className="text-slate-400 font-medium italic">Visão 360° do Império: Histórico Auditado + Projeção</p>
                     </div>
                     <div className="flex gap-2 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
                        <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE Master" icon={<TrendingUp size={14}/>} />
