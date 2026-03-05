@@ -179,6 +179,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     interest_coverage: 100,
     nlcdg: 0,
     solvency_score_kanitz: 1.5,
+    altman_z_score: 6.25,
     dcf_valuation: 1.7,
     scissors_effect: 0,
     liquidity_current: 1.5,
@@ -214,6 +215,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     tsr: 0,
     nlcdg: 0,
     solvency_score_kanitz: 1.5,
+    altman_z_score: 6.25,
     dcf_valuation: 1.7,
     scissors_effect: 0,
     liquidity_current: 1.5,
@@ -332,7 +334,24 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             let finalDecision = dec?.data;
             
             if (team.is_bot && !finalDecision) {
-              finalDecision = await generateBotDecision(champ.branch, nextRound, champ.regions_count, indicatorsForRound, team.name, team.strategic_profile);
+              // Buscar KPIs atuais do BOT para decisão contextualizada
+              const { data: lastHistory } = await supabase
+                .from(historyTable)
+                .select('kpis')
+                .eq('team_id', team.id)
+                .order('round', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              finalDecision = await generateBotDecision(
+                champ.branch, 
+                nextRound, 
+                champ.regions_count, 
+                indicatorsForRound, 
+                team.name, 
+                team.strategic_profile,
+                lastHistory?.kpis
+              );
               await supabase.from(decisionsTable).insert({
                 team_id: team.id,
                 championship_id: id,
@@ -404,6 +423,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 tsr: item.res.kpis.tsr || 0,
                 nlcdg: item.res.kpis.nlcdg || 0,
                 solvency_score_kanitz: item.res.kpis.solvency_score_kanitz || 0,
+                altman_z_score: item.res.kpis.altman_z_score || 0,
                 dcf_valuation: item.res.kpis.dcf_valuation || 0,
                 scissors_effect: item.res.kpis.scissors_effect || 0,
                 liquidity_current: item.res.kpis.liquidity_current || 0,

@@ -149,7 +149,8 @@ export const generateBotDecision = async (
   regionCount: number, 
   macro: MacroIndicators,
   botName: string,
-  persistedProfile?: StrategicProfile
+  persistedProfile?: StrategicProfile,
+  currentKpis?: any
 ): Promise<DecisionData> => {
   try {
     const apiKey = await getApiKey();
@@ -166,6 +167,7 @@ export const generateBotDecision = async (
     
     const profile = persistedProfile || "EQUILIBRADO";
     const profileDesc = profiles[profile];
+    const randomSeed = Math.random().toString(36).substring(7);
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -173,6 +175,10 @@ export const generateBotDecision = async (
       Estamos no Round ${round}.
       
       SEU PERFIL ESTRATÉGICO: ${profile} - ${profileDesc}
+      ID ÚNICO DE SESSÃO (SEED): ${randomSeed}
+      
+      SUA SITUAÇÃO FINANCEIRA ATUAL (KPIs):
+      ${currentKpis ? JSON.stringify(currentKpis) : "Início de operação (Round 0)"}
       
       CENÁRIO MACRO ATUAL:
       ${JSON.stringify(macro)}
@@ -187,10 +193,11 @@ export const generateBotDecision = async (
       REGRAS RÍGIDAS:
       - O campo "regions" deve ser um objeto onde as chaves são números de 1 a ${regionCount}.
       - Retorne APENAS o JSON puro, seguindo exatamente a interface DecisionData.
-      - Não adicione explicações fora do JSON.`,
+      - Não adicione explicações fora do JSON.
+      - Suas decisões devem ser ÚNICAS e baseadas estritamente no seu perfil e situação financeira atual.`,
       config: { 
         responseMimeType: "application/json",
-        temperature: 0.8
+        temperature: 0.9 // Aumentado para maior variabilidade
       }
     });
 

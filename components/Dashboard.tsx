@@ -120,7 +120,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20 shadow-2xl">
          <CockpitStat label={t('labels.equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
-         <CockpitStat label={t('labels.solvency')} val={(currentKpis.solvency_index || 1.0).toFixed(2)} trend="Oracle" pos icon={<Landmark size={16}/>} />
+         <CockpitStat 
+            label="Altman Z''-Score" 
+            val={(currentKpis.altman_z_score || 0).toFixed(2)} 
+            trend={currentKpis.altman_z_score && currentKpis.altman_z_score > 5.85 ? 'SEGURO' : currentKpis.altman_z_score && currentKpis.altman_z_score < 4.15 ? 'PERIGO' : 'ALERTA'} 
+            pos={currentKpis.altman_z_score && currentKpis.altman_z_score > 5.85}
+            neg={currentKpis.altman_z_score && currentKpis.altman_z_score < 4.15}
+            icon={<Landmark size={16}/>} 
+         />
          <CockpitStat label={t('labels.inventory_turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend="Cycle" pos icon={<Box size={16}/>} />
          <CockpitStat label={t('labels.liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend="Current" pos icon={<Activity size={16}/>} />
          <CockpitStat label={t('labels.rating')} val={currentKpis.rating} trend="Audit" pos icon={<Shield size={16}/>} />
@@ -292,14 +299,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   );
 };
 
-const CockpitStat = ({ label, val, trend, pos, icon }: any) => (
+const CockpitStat = ({ label, val, trend, pos, neg, icon }: any) => (
   <div className="px-8 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden">
      <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
            <div className="text-orange-500">{icon}</div>
            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">{label}</span>
         </div>
-        <span className={`text-[9px] font-black italic ${pos ? 'text-emerald-500' : 'text-rose-500'}`}>{trend}</span>
+        <span className={`text-[9px] font-black italic ${pos ? 'text-emerald-500' : neg ? 'text-rose-500' : 'text-amber-500'}`}>{trend}</span>
      </div>
      <span className="text-3xl font-black text-white font-mono tracking-tighter italic leading-none truncate drop-shadow-xl">{val}</span>
   </div>

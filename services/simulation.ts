@@ -298,26 +298,35 @@ export const calculateProjections = (
   const treasuryBalance = finalCashWithAwards;
   const scissorsEffect = nlcdg - treasuryBalance;
 
-  // Z-Score de Kanitz (Simplificado para Simulação Industrial)
-  // Z = 0.05*X1 + 1.65*X2 + 3.55*X3 - 1.06*X4 - 0.33*X5
-  const x1 = totalEquity > 0 ? finalNetProfit / totalEquity : 0;
-  const x2 = liquidityCurrent;
-  const x3 = currentLiabilities > 0 ? (currentAssets - inventoryValue) / currentLiabilities : 1;
-  const x4 = totalAssets > 0 ? currentAssets / totalAssets : 0.5;
+  // Z-Score de Kanitz (Legado)
+  const x1_k = totalEquity > 0 ? finalNetProfit / totalEquity : 0;
+  const x2_k = liquidityCurrent;
+  const x3_k = currentLiabilities > 0 ? (currentAssets - inventoryValue) / currentLiabilities : 1;
+  const x4_k = totalAssets > 0 ? currentAssets / totalAssets : 0.5;
   const x5 = totalEquity > 0 ? totalLiabilities / totalEquity : 0.5;
-  const kanitz = (0.05 * x1) + (1.65 * x2) + (3.55 * x3) - (1.06 * x4) - (0.33 * x5);
+  const kanitz = (0.05 * x1_k) + (1.65 * x2_k) + (3.55 * x3_k) - (1.06 * x4_k) - (0.33 * x5);
+
+  // Altman Z''-Score (Emerging Markets / Private Firms)
+  // Z'' = 3.25 + 6.56X1 + 3.26X2 + 6.72X3 + 1.05X4
+  const x1_altman = totalAssets > 0 ? (currentAssets - currentLiabilities) / totalAssets : 0;
+  const x2_altman = totalAssets > 0 ? (finalNetProfit) / totalAssets : 0; // Lucros Retidos (Proxy: Lucro do Período)
+  const x3_altman = totalAssets > 0 ? operatingProfit / totalAssets : 0; // EBIT
+  const x4_altman = totalLiabilities > 0 ? totalEquity / totalLiabilities : 1;
+  const altmanZ = 3.25 + (6.56 * x1_altman) + (3.26 * x2_altman) + (6.72 * x3_altman) + (1.05 * x4_altman);
 
   // DCF Valuation (Fluxo de Caixa Descontado - Perpetuidade Simplificada)
   const ebitda = operatingProfit + periodDepreciation;
   const wacc = 0.12; // Taxa de desconto padrão 12%
   const dcfValuation = ebitda > 0 ? (ebitda / wacc) / 1000000 : 0; // Em milhões
 
-  // Rating de Crédito Dinâmico
-  let rating: CreditRating = 'B';
+  // Rating de Crédito Dinâmico (Alinhado com restrição SQL: AAA, AA, A, B, C, D)
+  let rating: CreditRating = 'D';
   if (liquidityCurrent > 1.5 && x5 < 0.8) rating = 'AAA';
   else if (liquidityCurrent > 1.2 && x5 < 1.2) rating = 'AA';
   else if (liquidityCurrent > 1.0 && x5 < 1.5) rating = 'A';
-  else if (liquidityCurrent > 0.8) rating = 'BB+';
+  else if (liquidityCurrent > 0.8 && x5 < 2.0) rating = 'B';
+  else if (liquidityCurrent > 0.5 && x5 < 3.0) rating = 'C';
+  else rating = 'D';
 
   // Atualizar Balanço com valores finais
   const finalBSWithAwards = injectValues(JSON.parse(JSON.stringify(finalBS)), {
@@ -410,6 +419,7 @@ export const calculateProjections = (
       tsr,
       nlcdg: nlcdg / 1000000, // Em milhões para o dashboard
       solvency_score_kanitz: kanitz,
+      altman_z_score: altmanZ,
       dcf_valuation: dcfValuation,
       scissors_effect: scissorsEffect / 1000000, // Em milhões
       liquidity_current: liquidityCurrent,

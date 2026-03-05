@@ -82,7 +82,9 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
 - **TSR (Total Shareholder Return):** Principal indicador de vitória (Criação de Valor).
 - **Análise DuPont:** Decomposição do ROE (Margem x Giro x Alavancagem).
 - **DCF Valuation:** Valor de mercado via Fluxo de Caixa Descontado.
-- **Z-Score de Kanitz:** Indicador preditivo de insolvência.
+- **Altman Z''-Score (v2025-12.2):** Indicador preditivo de insolvência para mercados emergentes e empresas privadas, substituindo o modelo de Kanitz.
+  - **Fórmula:** Z'' = 3.25 + 6.56X1 + 3.26X2 + 6.72X3 + 1.05X4.
+  - **Escala:** Seguro (> 5.85), Alerta (4.15 - 5.85), Perigo (< 4.15).
 
 ### 3. Inteligência de Mercado e ESG
 - **Elasticidade-Preço Real:** Sensibilidade da demanda.
@@ -121,4 +123,23 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
   - Tabela de Monitoramento da Gazeta agora exibe Receita, Lucro Líquido e Valor da Ação.
   - Tutor agora possui seletor de unidades na aba "Unidade" da Gazeta.
   - Identificação de equipes na Gazeta liberada para o Tutor independentemente do modo de anonimato.
+  - Atualização do `database_rls.sql` com colunas `share_price`, `ebitda` e restrição de `credit_rating`.
+- **Status:** Em produção.
+
+### v2025-12.2 - Implementação do Altman Z''-Score
+- **Data:** Dezembro de 2025
+- **Motivo:** Substituição do modelo de Kanitz pelo Altman Z''-Score para maior eficácia global e alinhamento com mercados emergentes.
+- **Diferenças:**
+  - Implementação da fórmula Z'' = 3.25 + 6.56X1 + 3.26X2 + 6.72X3 + 1.05X4.
+  - Atualização da interface do Tutor com escala de cores (Seguro/Alerta/Perigo).
+  - Adição da coluna `altman_z_score` no banco de dados.
+- **Status:** Em produção.
+
+### v2025-12.3 - Autonomia de BOTs e Visualização de Solvência
+- **Data:** Dezembro de 2025
+- **Motivo:** Garantir competitividade realista entre BOTs e transparência de risco para os jogadores.
+- **Diferenças:**
+  - BOTs agora recebem seus próprios KPIs históricos para decidir o próximo round, garantindo decisões contextuais e independentes.
+  - Implementação de Seeds aleatórias e aumento de temperatura na IA para evitar decisões duplicadas entre BOTs do mesmo perfil.
+  - Dashboard do jogador e Relatórios Estratégicos agora exibem Altman Z''-Score com escala de cores (Verde/Amarelo/Vermelho).
 - **Status:** Em produção.

@@ -75,6 +75,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             nlcdg: proj?.kpis?.nlcdg || t.kpis?.nlcdg || 0,
             ebitda: proj?.kpis?.ebitda || t.kpis?.ebitda || 0,
             kanitz: proj?.kpis?.solvency_score_kanitz || t.kpis?.solvency_score_kanitz || 0,
+            altman_z_score: proj?.kpis?.altman_z_score || t.kpis?.altman_z_score || 0,
             dcf: proj?.kpis?.dcf_valuation || t.kpis?.dcf_valuation || 0,
             ccc: proj?.kpis?.ccc || t.kpis?.ccc || 0,
             interest_coverage: proj?.kpis?.interest_coverage || t.kpis?.interest_coverage || 0,
@@ -104,6 +105,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           nlcdg: h.nlcdg || h.kpis?.nlcdg || 0,
           ebitda: h.ebitda || h.kpis?.ebitda || 0,
           kanitz: h.solvency_score_kanitz || h.kpis?.solvency_score_kanitz || 0,
+          altman_z_score: h.altman_z_score || h.kpis?.altman_z_score || 0,
           dcf: h.dcf_valuation || h.kpis?.dcf_valuation || 0,
           ccc: h.ccc || h.kpis?.ccc || 0,
           interest_coverage: h.interest_coverage || h.kpis?.interest_coverage || 0,
@@ -405,7 +407,7 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
          </AnimatePresence>
 
          <div className="grid grid-cols-2 gap-3 pt-6 border-t border-white/5 relative z-10">
-            <MetricBox label="Kanitz Solvency" val={team.kanitz.toFixed(1)} icon={<Thermometer size={12} className="text-emerald-400"/>} trend={team.kanitz > 0 ? 'safe' : 'danger'} />
+            <MetricBox label="Altman Z''-Score" val={team.altman_z_score?.toFixed(2) || '0.00'} icon={<Thermometer size={12} className="text-emerald-400"/>} trend={team.altman_z_score && team.altman_z_score > 5.85 ? 'safe' : team.altman_z_score && team.altman_z_score < 4.15 ? 'danger' : 'warning'} />
             <MetricBox label="Market Share" val={`${team.market_share.toFixed(1)}%`} icon={<Activity size={12} className="text-orange-500"/>} />
             <MetricBox label="Ciclo Caixa (CCC)" val={`${team.ccc?.toFixed(0)}d`} icon={<Clock size={12} className="text-blue-400"/>} />
             <MetricBox label="Cobertura Juros" val={`${team.interest_coverage?.toFixed(1)}x`} icon={<ShieldCheck size={12} className="text-purple-400"/>} />

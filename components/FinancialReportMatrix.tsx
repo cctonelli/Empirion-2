@@ -45,6 +45,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     const kpiDefinitions = [
       { id: 'ccc', label: 'Ciclo de Conversão de Caixa (CCC)', suffix: ' dias', desc: 'Eficiência do capital de giro' },
       { id: 'interest_coverage', label: 'Índice de Cobertura de Juros', suffix: 'x', desc: 'Capacidade de pagamento de juros' },
+      { id: 'altman_z_score', label: "Altman Z''-Score (Solvência)", suffix: '', desc: 'Saúde financeira global (Seguro > 5.85)' },
       { id: 'market_share', label: 'Market Share Real', suffix: '%', desc: 'Participação de mercado no round' },
       { id: 'markup', label: 'Markup Médio (Margem Bruta)', suffix: '%', isPercent: true, desc: 'Margem sobre o custo unitário' },
       { id: 'stock_quantities.mp_a', label: 'Estoque Físico: MP A', suffix: ' un', desc: 'Saldo de matéria-prima A' },
@@ -80,8 +81,15 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
             ? (kpi.isPercent ? (val * 100).toFixed(2) : val.toFixed(2)) 
             : 'N/A';
 
+          let colorClass = p.isProjection ? 'text-orange-500 font-bold' : 'text-slate-300';
+          if (kpi.id === 'altman_z_score' && typeof val === 'number') {
+            if (val > 5.85) colorClass = 'text-emerald-500 font-bold';
+            else if (val < 4.15) colorClass = 'text-rose-500 font-bold';
+            else colorClass = 'text-amber-500 font-bold';
+          }
+
           return (
-            <td key={idx} className={`p-4 text-center font-mono text-xs ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-bold' : 'text-slate-300'}`}>
+            <td key={idx} className={`p-4 text-center font-mono text-xs ${p.isProjection ? 'bg-orange-600/5' : ''} ${colorClass}`}>
               {displayVal}{val !== undefined ? kpi.suffix : ''}
             </td>
           );

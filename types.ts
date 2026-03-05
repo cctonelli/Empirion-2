@@ -8,7 +8,7 @@ export type Branch = 'industrial' | 'commercial' | 'services' | 'agribusiness' |
 export type SalesMode = 'internal' | 'external' | 'hybrid';
 export type ScenarioType = 'simulated' | 'real';
 export type ChampionshipStatus = 'draft' | 'active' | 'finished';
-export type CreditRating = 'AAA' | 'AA' | 'A' | 'BB+' | 'B' | 'C' | 'D' | 'E' | 'N/A';
+export type CreditRating = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D';
 export type InsolvencyStatus = 'SAUDAVEL' | 'ALERTA' | 'RJ' | 'BANKRUPT';
 export type MachineModel = 'alfa' | 'beta' | 'gama';
 export type DeadlineUnit = 'hours' | 'days' | 'weeks' | 'months';
@@ -98,6 +98,7 @@ export interface KPIs {
   bep?: number; 
   solvency_index?: number;
   solvency_score_kanitz?: number;
+  altman_z_score?: number;
   dcf_valuation?: number;
   inventory_turnover?: number;
   liquidity_current?: number;
@@ -368,6 +369,7 @@ export interface TutorTeamView {
   nlcdg: number;
   ebitda: number;
   kanitz: number;
+  altman_z_score: number;
   dcf: number;
   ccc?: number;
   interest_coverage?: number;
