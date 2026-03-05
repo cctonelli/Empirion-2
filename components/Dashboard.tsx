@@ -119,9 +119,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
       
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20 shadow-2xl">
-         <CockpitStat label={t('labels.equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
+         <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
          <CockpitStat 
-            label="E-SDS v1.1" 
+            label="E-SDS" 
             val={(currentKpis.esds?.display || 0).toFixed(1)} 
             trend={currentKpis.esds?.zone || 'ALERTA'} 
             pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
@@ -129,9 +129,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             icon={<Gauge size={16}/>} 
             tooltip={currentKpis.esds?.gemini_insights}
          />
-         <CockpitStat label={t('labels.inventory_turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend="Cycle" pos icon={<Box size={16}/>} />
-         <CockpitStat label={t('labels.liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend="Current" pos icon={<Activity size={16}/>} />
-         <CockpitStat label={t('labels.rating')} val={currentKpis.rating} trend="Audit" pos icon={<Shield size={16}/>} />
+         <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend="Cycle" pos icon={<Box size={16}/>} />
+         <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend="Current" pos icon={<Activity size={16}/>} />
+         <CockpitStat label={t('Rating')} val={currentKpis.rating} trend="Audit" pos icon={<Shield size={16}/>} />
          <div className="px-8 flex items-center justify-center border-l border-white/5 bg-orange-600/5">
             <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} createdAt={activeArena?.created_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
          </div>
@@ -152,16 +152,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   {bpStatus === 'submitted' && <CheckCircle2 size={16} className="text-emerald-500" />}
                </div>
                <div>
-                  <h4 className="text-sm font-black uppercase text-white">{t('business_plan')}</h4>
+                  <h4 className="text-sm font-black uppercase text-white">{t('Business Plan')}</h4>
                   <p className={`text-[9px] font-bold uppercase mt-1 ${requireBP && bpStatus !== 'submitted' ? 'text-orange-400' : 'text-slate-500'}`}>
                      {requireBP ? `${t('requirement')} P0${(activeArena?.current_round || 0) + 1}` : t('optional_cycle')}
                   </p>
                </div>
-               <button onClick={() => setShowBP(true)} className="w-full py-3 bg-white/5 hover:bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">{t('edit_plan')}</button>
+               <button onClick={() => setShowBP(true)} className="w-full py-3 bg-white/5 hover:bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">{t('Editar BP')}</button>
             </div>
 
             <div className="bg-slate-950/80 p-6 rounded-[2.5rem] border border-white/5 space-y-6 shadow-inner">
-               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2"><TrendingUp size={12} className="text-blue-500" /> {t('equity_history')}</h4>
+               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2"><TrendingUp size={12} className="text-blue-500" /> {t('Equity History')}</h4>
                <div className="h-40">
                   <Chart options={trendOptions} series={trendSeries} type="area" height="100%" />
                </div>
@@ -170,10 +170,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             <div className="bg-slate-950 p-6 rounded-[2.5rem] border border-white/5 space-y-4">
                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2"><Scale size={12} className="text-emerald-500" /> PMR vs PMP</h4>
                <div className="space-y-3">
-                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">{t('labels.receivable_days')}</span><span className="text-white">{currentKpis.avg_receivable_days || 45} {t('days')}</span></div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">{t('labels.payable_days')}</span><span className="text-white">{currentKpis.avg_payable_days || 30} {t('days')}</span></div>
+                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">{t('Receivable Days')}</span><span className="text-white">{currentKpis.avg_receivable_days || 45} {t('days')}</span></div>
+                  <div className="flex justify-between text-[10px] font-bold uppercase"><span className="text-slate-600">{t('Payable Days')}</span><span className="text-white">{currentKpis.avg_payable_days || 30} {t('days')}</span></div>
                   <div className="pt-2 border-t border-white/5 flex justify-between items-end">
-                     <span className="text-[8px] font-black text-rose-500 uppercase">{t('scissors_effect')}</span>
+                     <span className="text-[8px] font-black text-rose-500 uppercase">{t('Scissors Effect')}</span>
                      <span className="text-lg font-black text-rose-500">{(currentKpis.scissors_effect || -15)} {t('days')}</span>
                   </div>
                </div>
