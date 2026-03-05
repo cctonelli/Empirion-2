@@ -649,33 +649,393 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                         {/* STEP 5 - FÁBRICA */}
                         {activeStep === 4 && (
-                           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <WizardStepHeader icon={<Factory />} title="Chão de Fábrica" desc="Gerencie o chão de fábrica." />
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                 <RangeInput label="USO DA CAPACIDADE (%)" val={decisions.production.activityLevel} onChange={(v:any)=>updateDecision('production.activityLevel', v)} help="De 0 a 100%. Nível de utilização das máquinas instaladas." />
-                                 <RangeInput label="TURNO EXTRA (%)" val={decisions.production.extraProductionPercent} onChange={(v:any)=>updateDecision('production.extraProductionPercent', v)} color="orange" help="Aumenta a produção além da capacidade normal. Custo-hora do aalário base da MOD aumenta em 50%." />
-                                 <RangeInput label="INVESTIMENTO P&D (%)" val={decisions.production.rd_investment} onChange={(v:any)=>updateDecision('production.rd_investment', v)} color="blue" help="Percentual sobre o Faturamento Bruto. Reduz custo unitário a longo prazo e aumenta atratividade." />
+                        <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           {/* Cabeçalho do passo */}
+                           <WizardStepHeader 
+                              icon={<Factory size={32} strokeWidth={2.5} />} 
+                              title="Chão de Fábrica & Operações" 
+                              desc="Configure o nível de utilização da capacidade instalada, turnos extras e investimento em P&D. Essas decisões definem o volume produzido, custos operacionais e ganhos de eficiência de longo prazo." 
+                              help="Atenção: Turno extra aumenta custos de mão de obra em 50%. P&D reduz custo unitário progressivamente."
+                           />
+
+                           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+                              {/* 1. Uso da Capacidade */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
+                              <div className="flex justify-between items-start mb-8">
+                                 <div>
+                                    <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2">
+                                    Uso da Capacidade Instalada
+                                    </h5>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                    Percentual de utilização das máquinas disponíveis. Valores acima de 90% podem gerar desgaste extra e custos de manutenção não planejados.
+                                    </p>
+                                 </div>
+                                 <div className="p-4 rounded-2xl bg-orange-600/10 group-hover:bg-orange-600/20 transition-colors">
+                                    <Zap size={28} className="text-orange-400" />
+                                 </div>
+                              </div>
+
+                              <div className="space-y-6">
+                                 <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                    Nível de Utilização
+                                    <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
+                                    </label>
+                                    <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400">
+                                    {decisions.production.activityLevel}%
+                                    </span>
+                                 </div>
+
+                                 <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    value={decisions.production.activityLevel}
+                                    onChange={e => updateDecision('production.activityLevel', parseInt(e.target.value) || 0)}
+                                    className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:shadow-lg hover:accent-orange-500 transition-all"
+                                 />
+
+                                 <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
+                                    <div>Baixo: Menor custo, menor produção</div>
+                                    <div className="text-right">Alto: Maior produção, risco de breakdown</div>
+                                 </div>
+                              </div>
+                              </div>
+
+                              {/* 2. Turno Extra */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
+                              <div className="flex justify-between items-start mb-8">
+                                 <div>
+                                    <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2">
+                                    Turno Extra / Horas Adicionais
+                                    </h5>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                    Produção além da capacidade normal. Aumenta a folha de pagamento em 50% sobre as horas extras e pode gerar fadiga da equipe.
+                                    </p>
+                                 </div>
+                                 <div className="p-4 rounded-2xl bg-rose-600/10 group-hover:bg-rose-600/20 transition-colors">
+                                    <Hammer size={28} className="text-rose-400" />
+                                 </div>
+                              </div>
+
+                              <div className="space-y-6">
+                                 <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                    Percentual de Turno Extra
+                                    <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
+                                    </label>
+                                    <span className="text-2xl lg:text-3xl font-mono font-bold text-rose-400">
+                                    {decisions.production.extraProductionPercent}%
+                                    </span>
+                                 </div>
+
+                                 <input
+                                    type="range"
+                                    min="0"
+                                    max="50"
+                                    step="5"
+                                    value={decisions.production.extraProductionPercent}
+                                    onChange={e => updateDecision('production.extraProductionPercent', parseInt(e.target.value) || 0)}
+                                    className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-rose-500 [&::-webkit-slider-thumb]:shadow-lg hover:accent-rose-500 transition-all"
+                                 />
+
+                                 <div className="text-xs text-rose-300 italic pt-2">
+                                    Custo adicional estimado: +50% sobre MOD das horas extras
+                                 </div>
+                              </div>
+                              </div>
+
+                              {/* 3. Investimento em P&D */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
+                              <div className="flex justify-between items-start mb-8">
+                                 <div>
+                                    <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2">
+                                    Investimento em P&D
+                                    </h5>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                    Percentual do faturamento bruto alocado em pesquisa e desenvolvimento. Reduz custo unitário ao longo dos rounds e aumenta atratividade do produto.
+                                    </p>
+                                 </div>
+                                 <div className="p-4 rounded-2xl bg-blue-600/10 group-hover:bg-blue-600/20 transition-colors">
+                                    <Cpu size={28} className="text-blue-400" />
+                                 </div>
+                              </div>
+
+                              <div className="space-y-6">
+                                 <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                    Percentual do Faturamento Bruto
+                                    <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
+                                    </label>
+                                    <span className="text-2xl lg:text-3xl font-mono font-bold text-blue-400">
+                                    {decisions.production.rd_investment}%
+                                    </span>
+                                 </div>
+
+                                 <input
+                                    type="range"
+                                    min="0"
+                                    max="10"
+                                    step="0.5"
+                                    value={decisions.production.rd_investment}
+                                    onChange={e => updateDecision('production.rd_investment', parseFloat(e.target.value) || 0)}
+                                    className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:shadow-lg hover:accent-blue-500 transition-all"
+                                 />
+
+                                 <div className="text-xs text-blue-300 italic pt-2">
+                                    Efeito cumulativo: redução de custo unitário ~0.5–1.5% por ponto investido (longo prazo)
+                                 </div>
+                              </div>
                               </div>
                            </div>
+
+                           {/* Caixa de alerta / resumo rápido */}
+                           <div className="bg-slate-950/60 border border-white/5 rounded-3xl p-8 lg:p-10 max-w-4xl mx-auto text-center">
+                              <div className="flex items-center justify-center gap-4 mb-6">
+                              <AlertTriangle size={24} className="text-yellow-400" />
+                              <h6 className="text-lg font-black text-yellow-300 uppercase tracking-wide">
+                                 Equilíbrio Operacional
+                              </h6>
+                              </div>
+                              <p className="text-sm text-slate-300 leading-relaxed max-w-2xl mx-auto">
+                              Altos níveis de capacidade + turno extra aumentam produção imediata, mas elevam custos e riscos. Investimento contínuo em P&D é a chave para competitividade sustentável nos rounds finais.
+                              </p>
+                           </div>
+
+                           {/* Espaçamento final */}
+                           <div className="h-24 lg:h-32" />
+                        </div>
                         )}
 
                         {/* STEP 6 - TALENTOS */}
                         {activeStep === 5 && (
-                           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <WizardStepHeader icon={<Users2 />} title="Gestão de Talentos" desc="Defina a força de trabalho e incentivos salariais." />
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                 <InputCard label="NOVAS ADMISSÕES" val={decisions.hr.hired} icon={<UserPlus />} onChange={(v:any)=>updateDecision('hr.hired', v)} help="Aumenta a capacidade de produção baseada em operadores/máquina." />
-                                 <InputCard label="DESLIGAMENTOS" val={decisions.hr.fired} icon={<UserMinus />} onChange={(v:any)=>updateDecision('hr.fired', v)} help="Reduz a folha de pagamento, mas gera custos de rescisão." />
-                                 <InputCard label="PISO SALARIAL ($)" val={decisions.hr.salary} icon={<DollarSign />} onChange={(v:any)=>updateDecision('hr.salary', v)} help="Define o salário base. Afeta motivação e atratividade de talentos." />
-                                 <RangeInput label="TREINAMENTO (%)" val={decisions.hr.trainingPercent} onChange={(v:any)=>updateDecision('hr.trainingPercent', v)} color="blue" help="Aumenta a produtividade por homem-hora." />
-                                 <RangeInput label="PARTICIPAÇÃO LUCROS (PPR %)" val={decisions.hr.participationPercent} onChange={(v:any)=>updateDecision('hr.participationPercent', v)} help="Motivador variável baseado no lucro líquido final." />
-                                 <RangeInput label="PRÊMIO PRODUTIVIDADE (%)" val={decisions.hr.productivityBonusPercent} onChange={(v:any)=>updateDecision('hr.productivityBonusPercent', v)} color="orange" help="Bônus imediato por atingimento de metas fabris." />
+                        <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           {/* Cabeçalho do passo */}
+                           <WizardStepHeader 
+                              icon={<Users2 size={32} strokeWidth={2.5} />} 
+                              title="Gestão de Talentos & RH" 
+                              desc="Defina contratações, demissões, piso salarial e incentivos. Essas decisões afetam diretamente a produtividade, motivação da equipe, custos fixos e risco de greves ou turnover elevado." 
+                              help="Salário baixo + pouca motivação pode gerar queda de produtividade e eventos negativos. Treinamento e bônus são investimentos de retorno médio/longo prazo."
+                           />
+
+                           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+                              {/* 1. Novas Admissões */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-emerald-500/30 hover:shadow-emerald-500/10 transition-all duration-300 group">
+                              <div className="flex justify-between items-start mb-8">
+                                 <div>
+                                    <h5 className="text-xl font-black text-emerald-400 uppercase tracking-tight mb-2">
+                                    Novas Admissões
+                                    </h5>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                    Quantidade de novos colaboradores contratados neste round. Aumenta a capacidade produtiva (operadores por máquina), mas gera custo imediato de integração e folha.
+                                    </p>
+                                 </div>
+                                 <div className="p-4 rounded-2xl bg-emerald-600/10 group-hover:bg-emerald-600/20 transition-colors">
+                                    <UserPlus size={28} className="text-emerald-400" />
+                                 </div>
+                              </div>
+
+                              <div className="space-y-6">
+                                 <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                    Número de Contratações
+                                    <HelpCircle size={16} className="text-slate-500 group-hover:text-emerald-400 transition-colors cursor-help" />
+                                    </label>
+                                    <span className="text-2xl lg:text-3xl font-mono font-bold text-emerald-400">
+                                    +{decisions.hr.hired}
+                                    </span>
+                                 </div>
+
+                                 <input
+                                    type="number"
+                                    min="0"
+                                    step="5"
+                                    value={decisions.hr.hired}
+                                    onChange={e => updateDecision('hr.hired', parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                                    placeholder="0"
+                                 />
+
+                                 <p className="text-xs text-emerald-300 italic">
+                                    Impacto: +{Math.round((decisions.hr.hired || 0) * (currentMacro?.operators_per_machine || 1.8))} operadores efetivos (estimado)
+                                 </p>
+                              </div>
+                              </div>
+
+                              {/* 2. Desligamentos */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-rose-500/30 hover:shadow-rose-500/10 transition-all duration-300 group">
+                              <div className="flex justify-between items-start mb-8">
+                                 <div>
+                                    <h5 className="text-xl font-black text-rose-400 uppercase tracking-tight mb-2">
+                                    Desligamentos
+                                    </h5>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                    Número de funcionários demitidos. Reduz folha salarial, mas gera multa rescisória (estimada em 1–2 salários) e perda imediata de capacidade produtiva.
+                                    </p>
+                                 </div>
+                                 <div className="p-4 rounded-2xl bg-rose-600/10 group-hover:bg-rose-600/20 transition-colors">
+                                    <UserMinus size={28} className="text-rose-400" />
+                                 </div>
+                              </div>
+
+                              <div className="space-y-6">
+                                 <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                    Número de Demissões
+                                    <HelpCircle size={16} className="text-slate-500 group-hover:text-rose-400 transition-colors cursor-help" />
+                                    </label>
+                                    <span className="text-2xl lg:text-3xl font-mono font-bold text-rose-400">
+                                    -{decisions.hr.fired}
+                                    </span>
+                                 </div>
+
+                                 <input
+                                    type="number"
+                                    min="0"
+                                    step="5"
+                                    value={decisions.hr.fired}
+                                    onChange={e => updateDecision('hr.fired', parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 transition-all"
+                                    placeholder="0"
+                                 />
+
+                                 <p className="text-xs text-rose-300 italic">
+                                    Custo estimado de rescisão: ~${formatCurrency((decisions.hr.fired || 0) * (decisions.hr.salary || 2000) * 1.5, 'BRL')}
+                                 </p>
+                              </div>
+                              </div>
+
+                              {/* 3. Piso Salarial */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
+                              <div className="flex justify-between items-start mb-8">
+                                 <div>
+                                    <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2">
+                                    Piso Salarial Base
+                                    </h5>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                    Salário mensal base por colaborador. Valores baixos reduzem custos fixos, mas impactam negativamente motivação, produtividade e atratividade para novas contratações.
+                                    </p>
+                                 </div>
+                                 <div className="p-4 rounded-2xl bg-orange-600/10 group-hover:bg-orange-600/20 transition-colors">
+                                    <DollarSign size={28} className="text-orange-400" />
+                                 </div>
+                              </div>
+
+                              <div className="space-y-6">
+                                 <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                    Salário Mensal Base
+                                    <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
+                                    </label>
+                                    <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400">
+                                    {formatCurrency(decisions.hr.salary, 'BRL')}
+                                    </span>
+                                 </div>
+
+                                 <input
+                                    type="number"
+                                    min="1000"
+                                    step="100"
+                                    value={decisions.hr.salary}
+                                    onChange={e => updateDecision('hr.salary', parseInt(e.target.value) || 2000)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
+                                    placeholder="2000"
+                                 />
+
+                                 <p className="text-xs text-orange-300 italic">
+                                    Mínimo regional sugerido: R$ {currentMacro?.min_salary || 1800}
+                                 </p>
+                              </div>
                               </div>
                            </div>
-                        )}
 
+                           {/* Incentivos variáveis – segunda linha */}
+                           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 pt-8 border-t border-white/10">
+                              {/* Treinamento */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-blue-500/30 hover:shadow-blue-500/10 transition-all duration-300 group">
+                              <h5 className="text-xl font-black text-blue-400 uppercase tracking-tight mb-4 flex items-center gap-3">
+                                 <Zap size={24} /> Treinamento (% da folha)
+                              </h5>
+                              <p className="text-sm text-slate-400 mb-6">
+                                 Percentual investido em capacitação. Aumenta produtividade por homem-hora e reduz risco de obsolescência técnica.
+                              </p>
+                              <div className="flex items-center justify-between mb-4">
+                                 <span className="text-sm font-semibold text-slate-300">{decisions.hr.trainingPercent}%</span>
+                              </div>
+                              <input
+                                 type="range"
+                                 min="0"
+                                 max="15"
+                                 step="0.5"
+                                 value={decisions.hr.trainingPercent}
+                                 onChange={e => updateDecision('hr.trainingPercent', parseFloat(e.target.value) || 0)}
+                                 className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 hover:accent-blue-500"
+                              />
+                              </div>
+
+                              {/* Participação nos Lucros */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-emerald-500/30 hover:shadow-emerald-500/10 transition-all duration-300 group">
+                              <h5 className="text-xl font-black text-emerald-400 uppercase tracking-tight mb-4 flex items-center gap-3">
+                                 <Coins size={24} /> Participação nos Lucros (PPR %)
+                              </h5>
+                              <p className="text-sm text-slate-400 mb-6">
+                                 Percentual do lucro líquido distribuído como bônus. Motiva alinhamento com resultados da empresa, mas só pago se houver lucro.
+                              </p>
+                              <div className="flex items-center justify-between mb-4">
+                                 <span className="text-sm font-semibold text-slate-300">{decisions.hr.participationPercent}%</span>
+                              </div>
+                              <input
+                                 type="range"
+                                 min="0"
+                                 max="20"
+                                 step="1"
+                                 value={decisions.hr.participationPercent}
+                                 onChange={e => updateDecision('hr.participationPercent', parseInt(e.target.value) || 0)}
+                                 className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-600 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500 hover:accent-emerald-500"
+                              />
+                              </div>
+
+                              {/* Prêmio Produtividade */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
+                              <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-4 flex items-center gap-3">
+                                 <TrendingUp size={24} /> Prêmio por Produtividade (%)
+                              </h5>
+                              <p className="text-sm text-slate-400 mb-6">
+                                 Bônus imediato baseado no atingimento de metas de produção. Aumenta motivação no curto prazo e produtividade efetiva.
+                              </p>
+                              <div className="flex items-center justify-between mb-4">
+                                 <span className="text-sm font-semibold text-slate-300">{decisions.hr.productivityBonusPercent}%</span>
+                              </div>
+                              <input
+                                 type="range"
+                                 min="0"
+                                 max="15"
+                                 step="0.5"
+                                 value={decisions.hr.productivityBonusPercent}
+                                 onChange={e => updateDecision('hr.productivityBonusPercent', parseFloat(e.target.value) || 0)}
+                                 className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-600 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-orange-500 hover:accent-orange-500"
+                              />
+                              </div>
+                           </div>
+
+                           {/* Resumo de trade-offs */}
+                           <div className="bg-slate-950/60 border border-white/5 rounded-3xl p-8 lg:p-10 max-w-4xl mx-auto text-center mt-12">
+                              <div className="flex items-center justify-center gap-4 mb-6">
+                              <HeartPulse size={24} className="text-yellow-400" />
+                              <h6 className="text-lg font-black text-yellow-300 uppercase tracking-wide">
+                                 Equilíbrio de Pessoal
+                              </h6>
+                              </div>
+                              <p className="text-sm text-slate-300 leading-relaxed max-w-3xl mx-auto">
+                              Folha alta + incentivos fortes = equipe motivada e produtiva, mas margem pressionada. Demissões excessivas ou salários baixos podem gerar eventos negativos (greves, baixa qualidade). O ideal é equilíbrio entre custo e motivação para sustentabilidade de longo prazo.
+                              </p>
+                           </div>
+
+                           {/* Espaçamento final */}
+                           <div className="h-24 lg:h-32" />
+                        </div>
+                        )}
                         {/* STEP 7 - FINANÇAS & METAS */}
                         {activeStep === 6 && (
                            <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -931,11 +1291,11 @@ const AssetCard = ({ model, val, onChange, price, spec, disabled }: any) => (
            <div className="grid grid-cols-1 gap-2 pt-2 border-t border-white/5">
               <div className="flex items-center gap-2">
                  <Users size={12} className="text-slate-500" />
-                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operators required</span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operators required</span>
               </div>
               <div className="flex items-center gap-2">
                  <Zap size={12} className="text-slate-500" />
-                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} units capacity</span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} units capacity</span>
               </div>
            </div>
         )}
