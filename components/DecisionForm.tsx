@@ -1448,36 +1448,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                     </div>
                  </div>
 
-                 {/* BOTTOM CONTROL BAR - Fixa, sem sobrepor conteúdo */}
-                 <footer className="h-16 bg-slate-900 border-t border-white/10 flex items-center justify-between px-10 shrink-0 z-[100] shadow-top-2xl">
-                    <button 
-                      onClick={() => setActiveStep(s => Math.max(0, s-1))} 
-                      disabled={activeStep === 0} 
-                      className="px-10 py-4 bg-slate-800 border border-white/5 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all flex items-center gap-4 disabled:opacity-0"
-                    >
-                       <ChevronLeft size={14}/> Voltar
-                    </button>
-                    <div className="flex gap-2">
-                       {STEPS.map((_, i) => (
-                          <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${activeStep === i ? 'bg-orange-500 scale-150 shadow-[0_0_10px_#f97316]' : 'bg-white/10'}`} />
-                       ))}
-                    </div>
-                    {activeStep === STEPS.length - 1 ? (
-                      <button 
-                        onClick={handleTransmit} 
-                        className="px-14 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-600/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-4"
-                      >
-                         Transmitir <Rocket size={14}/>
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => setActiveStep(s => Math.min(STEPS.length - 1, s + 1))} 
-                        className="px-14 py-4 bg-white text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-xl flex items-center gap-4 active:scale-95"
-                      >
-                         Próximo <ChevronRight size={16}/>
-                      </button>
-                    )}
-                 </footer>
               </motion.div>
             ) : (
               <motion.div 
