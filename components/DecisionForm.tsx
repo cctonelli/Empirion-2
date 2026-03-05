@@ -208,160 +208,33 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                     <div className="max-w-[1400px] mx-auto pb-40 space-y-12 px-4">
                         {/* STEP 1 - JURÍDICO */}
                         {activeStep === 0 && (
-                        <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                           {/* Cabeçalho do passo */}
-                           <WizardStepHeader 
-                              icon={<Gavel size={32} strokeWidth={2.5} />} 
-                              title="Status Jurídico & Solvência" 
-                              desc="Defina o regime jurídico da empresa para este ciclo. A escolha impacta diretamente acesso a crédito, capacidade de investimento, percepção de mercado e risco de intervenção do Oracle." 
-                              help="Recuperação Judicial é uma medida extrema. Use apenas quando o caixa e a estrutura financeira estão insustentáveis sem reestruturação forçada."
-                           />
-
-                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-                              {/* Opção 1: Operação Normal */}
-                              <motion.button
-                              whileHover={{ scale: 1.02, boxShadow: "0 20px 60px rgba(16,185,129,0.25)" }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => updateDecision('judicial_recovery', false)}
-                              disabled={isReadOnly}
-                              className={`
-                                 p-10 lg:p-12 rounded-3xl border-2 text-left transition-all duration-300 relative overflow-hidden group
-                                 ${!decisions.judicial_recovery 
-                                    ? 'bg-slate-900 border-emerald-500/70 shadow-[0_20px_60px_rgba(16,185,129,0.25)] ring-2 ring-emerald-500/30' 
-                                    : 'bg-slate-950/60 border-white/10 opacity-60 hover:opacity-90'}
-                              `}
-                              >
-                              <div className="flex justify-between items-start mb-10">
-                                 <div className="max-w-[80%]">
-                                    <h5 className="text-2xl font-black text-emerald-400 uppercase tracking-tight mb-4">
-                                    Operação Normal
-                                    </h5>
-                                    <p className="text-base text-slate-300 leading-relaxed mb-6">
-                                    Empresa opera em plena conformidade jurídica e financeira. Acesso irrestrito a linhas de crédito, CapEx, emissão de ações e fornecedores sem restrições.
-                                    </p>
-                                    <ul className="space-y-3 text-sm text-emerald-200/90">
-                                    <li className="flex items-start gap-3">
-                                       <ShieldCheck size={18} className="shrink-0 mt-0.5" />
-                                       Crédito disponível na taxa base
-                                    </li>
-                                    <li className="flex items-start gap-3">
-                                       <ShieldCheck size={18} className="shrink-0 mt-0.5" />
-                                       Investimentos e expansão sem limitações
-                                    </li>
-                                    <li className="flex items-start gap-3">
-                                       <ShieldCheck size={18} className="shrink-0 mt-0.5" />
-                                       Percepção positiva no mercado (menor custo de capital implícito)
-                                    </li>
-                                    </ul>
-                                 </div>
-                                 <div className="p-6 rounded-2xl bg-emerald-600/15 group-hover:bg-emerald-600/25 transition-colors shrink-0">
-                                    <ShieldCheck size={40} className="text-emerald-400" />
-                                 </div>
-                              </div>
-
-                              <div className="absolute bottom-8 right-8">
-                                 <span className="text-xl font-black text-emerald-500/80 uppercase tracking-widest">
-                                    Recomendado
-                                 </span>
-                              </div>
-                              </motion.button>
-
-                              {/* Opção 2: Recuperação Judicial */}
-                              <motion.button
-                              whileHover={{ scale: 1.02, boxShadow: "0 20px 60px rgba(244,63,94,0.25)" }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => updateDecision('judicial_recovery', true)}
-                              disabled={isReadOnly}
-                              className={`
-                                 p-10 lg:p-12 rounded-3xl border-2 text-left transition-all duration-300 relative overflow-hidden group
-                                 ${decisions.judicial_recovery 
-                                    ? 'bg-slate-900 border-rose-500/70 shadow-[0_20px_60px_rgba(244,63,94,0.25)] ring-2 ring-rose-500/30' 
-                                    : 'bg-slate-950/60 border-white/10 opacity-60 hover:opacity-90'}
-                              `}
-                              >
-                              <div className="flex justify-between items-start mb-10">
-                                 <div className="max-w-[80%]">
-                                    <h5 className="text-2xl font-black text-rose-400 uppercase tracking-tight mb-4">
-                                    Protocolo de Recuperação Judicial (RJ)
-                                    </h5>
-                                    <p className="text-base text-slate-300 leading-relaxed mb-6">
-                                    Ativa regime especial de proteção contra credores. Permite reestruturação forçada, mas impõe restrições severas por vários rounds.
-                                    </p>
-
-                                    <div className="space-y-4 mt-6">
-                                    <h6 className="text-sm font-semibold text-rose-300 uppercase tracking-wide mb-2">
-                                       Consequências imediatas e de médio prazo:
-                                    </h6>
-                                    <ul className="space-y-3 text-sm text-rose-200/90">
-                                       <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          Acesso a novo crédito bloqueado ou com spread muito alto
-                                       </li>
-                                       <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          CapEx e investimentos em máquinas limitados a 30–50% do normal
-                                       </li>
-                                       <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          Custo financeiro de dívidas existentes congeladas + correção monetária
-                                       </li>
-                                       <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          Percepção negativa no mercado → demanda potencialmente reduzida em 10–25%
-                                       </li>
-                                       <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          Duração típica: 3–6 rounds (até aprovação do plano de recuperação)
-                                       </li>
-                                    </ul>
+                           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                              <WizardStepHeader icon={<Gavel />} title="Status de Solvência" desc="Defina o protocolo legal de operação da unidade para este ciclo." help="Clique em Recuperação Judicial caso queira requerê-la." />
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                 <button 
+                                   onClick={() => updateDecision('judicial_recovery', false)}
+                                   className={`p-8 rounded-3xl border-2 text-left transition-all relative overflow-hidden group ${!decisions.judicial_recovery ? 'bg-slate-900 border-emerald-500 shadow-[0_20px_60px_rgba(16,185,129,0.2)]' : 'bg-slate-950 border-white/5 opacity-40'}`}
+                                 >
+                                    <div className="flex items-center gap-4 mb-4">
+                                       <div className={`p-4 rounded-2xl ${!decisions.judicial_recovery ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-600'}`}><ShieldCheck size={24}/></div>
+                                       <span className="text-xl font-black text-white uppercase italic">Operação Normal</span>
                                     </div>
-                                 </div>
-                                 <div className="p-6 rounded-2xl bg-rose-600/15 group-hover:bg-rose-600/25 transition-colors shrink-0">
-                                    <AlertOctagon size={40} className="text-rose-400" />
-                                 </div>
-                              </div>
+                                    <p className="text-xs text-slate-400 font-medium leading-relaxed">Unidade operando com plena capacidade jurídica e acesso a crédito.</p>
+                                 </button>
 
-                              <div className="absolute bottom-8 right-8">
-                                 <span className="text-xl font-black text-rose-500/80 uppercase tracking-widest">
-                                    Último recurso
-                                 </span>
+                                 <button 
+                                   onClick={() => updateDecision('judicial_recovery', true)}
+                                   className={`p-8 rounded-3xl border-2 text-left transition-all relative overflow-hidden group ${decisions.judicial_recovery ? 'bg-slate-900 border-rose-500 shadow-[0_20px_60px_rgba(244,63,94,0.2)]' : 'bg-slate-950 border-white/5 opacity-40'}`}
+                                 >
+                                    <div className="flex items-center gap-4 mb-4">
+                                       <div className={`p-4 rounded-2xl ${decisions.judicial_recovery ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-600'}`}><AlertOctagon size={24}/></div>
+                                       <span className="text-xl font-black text-white uppercase italic">Protocolo RJ</span>
+                                    </div>
+                                    <p className="text-xs text-slate-400 font-medium leading-relaxed">Recuperação Judicial: Crédito e Capex Limitados. Foco em reestruturação.</p>
+                                 </button>
                               </div>
-                              </motion.button>
                            </div>
-
-                           {/* Resumo de trade-offs e recomendação estratégica */}
-                           <div className="bg-slate-950/70 border border-white/5 rounded-3xl p-10 lg:p-12 max-w-4xl mx-auto text-center mt-12">
-                              <div className="flex items-center justify-center gap-4 mb-6">
-                              <Scale size={28} className="text-yellow-400" />
-                              <h6 className="text-xl font-black text-yellow-300 uppercase tracking-wide">
-                                 Quando optar pela Recuperação Judicial?
-                              </h6>
-                              </div>
-                              <p className="text-base text-slate-300 leading-relaxed max-w-3xl mx-auto mb-8">
-                              RJ é uma ferramenta de sobrevivência, não de crescimento. Ative apenas se:
-                              </p>
-                              <ul className="text-left max-w-2xl mx-auto space-y-4 text-sm text-slate-300">
-                              <li className="flex items-start gap-4">
-                                 <AlertTriangle size={20} className="text-yellow-400 shrink-0 mt-1" />
-                                 Caixa projetado negativo por mais de 2 rounds consecutivos
-                              </li>
-                              <li className="flex items-start gap-4">
-                                 <AlertTriangle size={20} className="text-yellow-400 shrink-0 mt-1" />
-                                 Dívidas vencidas > 40–50% do patrimônio líquido
-                              </li>
-                              <li className="flex items-start gap-4">
-                                 <AlertTriangle size={20} className="text-yellow-400 shrink-0 mt-1" />
-                                 Sem acesso viável a empréstimos normais ou aplicações para cobrir o rombo
-                              </li>
-                              </ul>
-                              <p className="mt-8 text-base font-medium text-emerald-300 italic">
-                              Na maioria dos cenários competitivos, manter operação normal + ajuste agressivo de custos e liquidez é a estratégia mais vencedora.
-                              </p>
-                           </div>
-
-                           {/* Espaçamento final */}
-                           <div className="h-24 lg:h-32" />
-                        </div>
                         )}
 
 
