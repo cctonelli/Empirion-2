@@ -237,81 +237,130 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                            </div>
                         )}
 
+
                         {/* STEP 2 - COMERCIAL */}
-                        {activeStep === 1 && (
-                           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <WizardStepHeader icon={<Megaphone />} title="Regiões de Vendas" desc="Configure preço, prazo e campanhas de marketing." />
-                              
-                              <div className="flex flex-col md:flex-row justify-between items-end gap-8">
-                                 <div className="w-full md:w-96">
-                                    <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5 space-y-3 shadow-xl group hover:border-orange-500/20 transition-all">
-                                       <div className="flex justify-between items-center">
-                                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
-                                             JUROS VENDA A PRAZO (%) <HelpCircle size={10} className="text-slate-700" />
-                                          </label>
-                                          <Percent size={14} className="text-slate-700 group-hover:text-orange-500/50 transition-colors" />
-                                       </div>
-                                       <input 
-                                          type="number" 
-                                          step="0.01"
-                                          value={decisions.production.term_interest_rate} 
-                                          onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value) || 0)} 
-                                          className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-3 text-xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
-                                       />
+                        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           {/* Cabeçalho do passo */}
+                           <WizardStepHeader 
+                              icon={<Megaphone size={32} />} 
+                              title="Estratégia Comercial" 
+                              desc="Configure preços, prazos de recebimento e investimentos em marketing por região. Decisões impactam diretamente a demanda e margem." 
+                              help="A replicação aplica as configurações da Região 1 para todas as demais."
+                           />
+
+                           {/* Configuração global: Juros + Botão replicar */}
+                           <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-10 bg-slate-900/40 p-8 rounded-3xl border border-white/10 shadow-xl">
+                              <div className="w-full lg:w-96 space-y-4">
+                              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-3">
+                                 Juros de Venda a Prazo (%)
+                                 <HelpCircle size={16} className="text-slate-500 hover:text-orange-400 transition-colors cursor-help" />
+                              </label>
+                              <div className="relative">
+                                 <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max="20"
+                                    value={decisions.production.term_interest_rate}
+                                    onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
+                                    placeholder="0.00"
+                                 />
+                                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xl font-bold text-orange-400">%</span>
+                              </div>
+                              </div>
+
+                              <button
+                              onClick={replicateInCluster}
+                              disabled={Object.keys(decisions.regions).length <= 1}
+                              className={`
+                                 px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center gap-3 shadow-xl
+                                 ${Object.keys(decisions.regions).length <= 1 
+                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700' 
+                                    : 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white border border-orange-400/30 active:scale-95'}
+                              `}
+                              >
+                              <RefreshCw size={18} />
+                              Replicar Configuração da Região 1
+                              </button>
+                           </div>
+
+                           {/* Cards de regiões */}
+                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 xl:gap-10">
+                              {Object.entries(decisions.regions).map(([id, reg]: [string, any]) => (
+                              <div 
+                                 key={id} 
+                                 className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/5 shadow-2xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group"
+                              >
+                                 <div className="flex justify-between items-center mb-8">
+                                    <h4 className="text-xl font-black text-orange-400 uppercase italic tracking-tight">
+                                    {activeArena?.region_names?.[Number(id)-1] || `Região ${id}`}
+                                    </h4>
+                                    <Globe size={24} className="text-slate-600 group-hover:text-orange-400 transition-colors" />
+                                 </div>
+
+                                 <div className="space-y-8">
+                                    {/* Preço */}
+                                    <div className="space-y-3">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                       Preço Unitário
+                                       <HelpCircle size={14} className="text-slate-500" />
+                                    </label>
+                                    <CurrencyInput
+                                       value={reg.price}
+                                       onChange={v => updateDecision(`regions.${id}.price`, v)}
+                                       currency={activeArena?.currency || 'BRL'}
+                                    />
+                                    </div>
+
+                                    {/* Prazo */}
+                                    <div className="space-y-3">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                       Prazo de Recebimento
+                                       <HelpCircle size={14} className="text-slate-500" />
+                                    </label>
+                                    <select
+                                       value={reg.term}
+                                       onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
+                                       className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-lg font-semibold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all appearance-none"
+                                    >
+                                       <option value={0}>À vista</option>
+                                       <option value={1}>À vista + 50%</option>
+                                       <option value={2}>À vista + 50% + 50%</option>
+                                    </select>
+                                    </div>
+
+                                    {/* Marketing */}
+                                    <div className="space-y-3">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                       Campanhas de Marketing (0–9)
+                                       <HelpCircle size={14} className="text-slate-500" />
+                                    </label>
+                                    <input
+                                       type="number"
+                                       min="0"
+                                       max="9"
+                                       value={reg.marketing}
+                                       onChange={e => {
+                                          const val = Math.min(9, Math.max(0, parseInt(e.target.value) || 0));
+                                          updateDecision(`regions.${id}.marketing`, val);
+                                       }}
+                                       className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
+                                    />
                                     </div>
                                  </div>
-                                 <button 
-                                   onClick={replicateInCluster}
-                                   className="px-10 py-5 bg-white/5 border border-white/10 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:text-white hover:bg-orange-600 transition-all shadow-xl active:scale-95"
-                                 >
-                                   Replicar em Cluster
-                                 </button>
                               </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                 {Object.entries(decisions.regions).map(([id, reg]: [any, any]) => (
-                                    <div key={id} className="bg-slate-900/60 p-6 rounded-3xl border border-white/5 space-y-6 shadow-2xl hover:border-orange-500/20 transition-all group">
-                                       <div className="flex justify-between items-center">
-                                          <span className="text-xs font-black text-orange-500 uppercase italic">
-                                             {activeArena?.region_names?.[Number(id)-1] || activeArena?.market_indicators?.region_configs?.[Number(id)-1]?.name || `Região 0${id}`}
-                                          </span>
-                                          <Globe size={16} className="text-slate-700 group-hover:text-orange-500/50 transition-colors" />
-                                       </div>
-                                       <div className="space-y-5">
-                                          <div className="space-y-3">
-                                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Preço Unitário ($)</label>
-                                             <CurrencyInput 
-                                                value={reg.price} 
-                                                onChange={v => updateDecision(`regions.${id}.price`, v)} 
-                                                currency={activeArena?.currency || 'BRL'}
-                                             />
-                                          </div>
-                                          
-                                          <div className="space-y-3">
-                                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2 flex items-center gap-2">
-                                                Prazo de Recebimento <HelpCircle size={12} className="text-slate-700" />
-                                             </label>
-                                             <select 
-                                               value={reg.term} 
-                                               onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
-                                               className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-4 text-xs font-black text-white uppercase outline-none focus:border-orange-600"
-                                             >
-                                                <option value={0}>A VISTA</option>
-                                                <option value={1}>A VISTA+50%</option>
-                                                <option value={2}>A VISTA+50%+50%</option>
-                                             </select>
-                                          </div>
-
-                                          <div className="space-y-3">
-                                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Campanhas de Marketing (Unid. 0-9)</label>
-                                             <input type="number" min="0" max="9" value={reg.marketing} onChange={e => updateDecision(`regions.${id}.marketing`, Math.min(9, Math.max(0, parseInt(e.target.value) || 0)))} className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl px-5 py-3 text-white font-mono font-black text-xl outline-none focus:border-orange-600 shadow-inner" />
-                                          </div>
-                                       </div>
-                                    </div>
-                                 ))}
-                              </div>
+                              ))}
                            </div>
+
+                           {/* Espaçamento extra antes do próximo step / bottom bar */}
+                           <div className="h-24 lg:h-32" />
+                        </div>
                         )}
+
+
+
+
 
                         {/* STEP 3 - ATIVOS */}
                         {activeStep === 2 && (
