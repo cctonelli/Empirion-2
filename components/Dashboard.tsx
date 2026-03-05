@@ -121,12 +121,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       <section className="h-20 grid grid-cols-2 md:grid-cols-6 bg-slate-900 border-b border-white/10 shrink-0 z-20 shadow-2xl">
          <CockpitStat label={t('labels.equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
          <CockpitStat 
-            label="Altman Z''-Score" 
-            val={(currentKpis.altman_z_score || 0).toFixed(2)} 
-            trend={currentKpis.altman_z_score && currentKpis.altman_z_score > 5.85 ? 'SEGURO' : currentKpis.altman_z_score && currentKpis.altman_z_score < 4.15 ? 'PERIGO' : 'ALERTA'} 
-            pos={currentKpis.altman_z_score && currentKpis.altman_z_score > 5.85}
-            neg={currentKpis.altman_z_score && currentKpis.altman_z_score < 4.15}
-            icon={<Landmark size={16}/>} 
+            label="E-SDS v1.1" 
+            val={(currentKpis.esds?.display || 0).toFixed(1)} 
+            trend={currentKpis.esds?.zone || 'ALERTA'} 
+            pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
+            neg={currentKpis.esds?.zone === 'Laranja' || currentKpis.esds?.zone === 'Vermelho'}
+            icon={<Gauge size={16}/>} 
+            tooltip={currentKpis.esds?.gemini_insights}
          />
          <CockpitStat label={t('labels.inventory_turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend="Cycle" pos icon={<Box size={16}/>} />
          <CockpitStat label={t('labels.liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend="Current" pos icon={<Activity size={16}/>} />
@@ -299,8 +300,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   );
 };
 
-const CockpitStat = ({ label, val, trend, pos, neg, icon }: any) => (
-  <div className="px-8 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden">
+const CockpitStat = ({ label, val, trend, pos, neg, icon, tooltip }: any) => (
+  <div className="px-8 border-r border-white/5 hover:bg-white/[0.02] transition-all group flex flex-col justify-center overflow-hidden relative">
      <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
            <div className="text-orange-500">{icon}</div>
@@ -309,6 +310,11 @@ const CockpitStat = ({ label, val, trend, pos, neg, icon }: any) => (
         <span className={`text-[9px] font-black italic ${pos ? 'text-emerald-500' : neg ? 'text-rose-500' : 'text-amber-500'}`}>{trend}</span>
      </div>
      <span className="text-3xl font-black text-white font-mono tracking-tighter italic leading-none truncate drop-shadow-xl">{val}</span>
+     {tooltip && (
+       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/95 backdrop-blur-sm p-4 z-50 flex flex-col justify-center">
+         <p className="text-[8px] font-bold text-slate-300 leading-tight">{tooltip}</p>
+       </div>
+     )}
   </div>
 );
 

@@ -370,6 +370,14 @@ export interface TutorTeamView {
   ebitda: number;
   kanitz: number;
   altman_z_score: number;
+  esds?: {
+    raw: number;
+    display: number;
+    zone: 'Azul' | 'Verde' | 'Amarelo' | 'Laranja' | 'Vermelho';
+    main_drivers: string[];
+    warnings: string[];
+    gemini_insights: string;
+  };
   dcf: number;
   ccc?: number;
   interest_coverage?: number;
