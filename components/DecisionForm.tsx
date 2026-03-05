@@ -210,29 +210,29 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         {activeStep === 0 && (
                         <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
                            {/* Cabeçalho do passo */}
-                           <WizardStepHeader 
-                              icon={<Gavel size={32} strokeWidth={2.5} />} 
-                              title="Status Jurídico & Solvência" 
-                              desc="Defina o regime jurídico da empresa para este ciclo. A escolha impacta diretamente acesso a crédito, capacidade de investimento, percepção de mercado e risco de intervenção do Oracle." 
+                           <WizardStepHeader
+                              icon={<Gavel size={32} strokeWidth={2.5} />}
+                              title="Status Jurídico & Solvência"
+                              desc="Defina o regime jurídico da empresa para este ciclo. A escolha impacta diretamente acesso a crédito, capacidade de investimento, percepção de mercado e risco de intervenção do Oracle."
                               help="Recuperação Judicial é uma medida extrema. Use apenas quando o caixa e a estrutura financeira estão insustentáveis sem reestruturação forçada."
                            />
 
-                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-                              {/* Opção 1: Operação Normal */}
+                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                              {/* Operação Normal */}
                               <motion.button
-                              whileHover={{ scale: 1.02, boxShadow: "0 20px 60px rgba(16,185,129,0.25)" }}
+                              whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               onClick={() => updateDecision('judicial_recovery', false)}
                               disabled={isReadOnly}
                               className={`
-                                 p-10 lg:p-12 rounded-3xl border-2 text-left transition-all duration-300 relative overflow-hidden group
-                                 ${!decisions.judicial_recovery 
-                                    ? 'bg-slate-900 border-emerald-500/70 shadow-[0_20px_60px_rgba(16,185,129,0.25)] ring-2 ring-emerald-500/30' 
-                                    : 'bg-slate-950/60 border-white/10 opacity-60 hover:opacity-90'}
+                                 relative overflow-hidden p-8 lg:p-10 rounded-3xl border-2 text-left transition-all duration-300 group
+                                 ${!decisions.judicial_recovery
+                                    ? 'bg-slate-900 border-emerald-500 shadow-2xl ring-2 ring-emerald-500/30'
+                                    : 'bg-slate-950/60 border-white/10 opacity-60 hover:opacity-90 hover:border-emerald-500/30'}
                               `}
                               >
-                              <div className="flex justify-between items-start mb-10">
-                                 <div className="max-w-[80%]">
+                              <div className="flex justify-between items-start mb-8">
+                                 <div className="max-w-[75%]">
                                     <h5 className="text-2xl font-black text-emerald-400 uppercase tracking-tight mb-4">
                                     Operação Normal
                                     </h5>
@@ -241,46 +241,47 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     </p>
                                     <ul className="space-y-3 text-sm text-emerald-200/90">
                                     <li className="flex items-start gap-3">
-                                       <ShieldCheck size={18} className="shrink-0 mt-0.5" />
-                                       Crédito disponível na taxa base
+                                       <ShieldCheck size={18} className="shrink-0 mt-1" />
+                                       Crédito disponível na taxa base do mercado
                                     </li>
                                     <li className="flex items-start gap-3">
-                                       <ShieldCheck size={18} className="shrink-0 mt-0.5" />
-                                       Investimentos e expansão sem limitações
+                                       <ShieldCheck size={18} className="shrink-0 mt-1" />
+                                       Investimentos e expansão sem limitações regulatórias
                                     </li>
                                     <li className="flex items-start gap-3">
-                                       <ShieldCheck size={18} className="shrink-0 mt-0.5" />
-                                       Percepção positiva no mercado (menor custo de capital implícito)
+                                       <ShieldCheck size={18} className="shrink-0 mt-1" />
+                                       Percepção positiva no mercado → menor custo de capital implícito
                                     </li>
                                     </ul>
                                  </div>
-                                 <div className="p-6 rounded-2xl bg-emerald-600/15 group-hover:bg-emerald-600/25 transition-colors shrink-0">
+
+                                 <div className="p-5 rounded-2xl bg-emerald-600/15 group-hover:bg-emerald-600/25 transition-colors shrink-0">
                                     <ShieldCheck size={40} className="text-emerald-400" />
                                  </div>
                               </div>
 
-                              <div className="absolute bottom-8 right-8">
-                                 <span className="text-xl font-black text-emerald-500/80 uppercase tracking-widest">
+                              <div className="absolute bottom-6 right-6">
+                                 <span className="text-lg font-black text-emerald-500/80 uppercase tracking-widest">
                                     Recomendado
                                  </span>
                               </div>
                               </motion.button>
 
-                              {/* Opção 2: Recuperação Judicial */}
+                              {/* Recuperação Judicial */}
                               <motion.button
-                              whileHover={{ scale: 1.02, boxShadow: "0 20px 60px rgba(244,63,94,0.25)" }}
+                              whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               onClick={() => updateDecision('judicial_recovery', true)}
                               disabled={isReadOnly}
                               className={`
-                                 p-10 lg:p-12 rounded-3xl border-2 text-left transition-all duration-300 relative overflow-hidden group
-                                 ${decisions.judicial_recovery 
-                                    ? 'bg-slate-900 border-rose-500/70 shadow-[0_20px_60px_rgba(244,63,94,0.25)] ring-2 ring-rose-500/30' 
-                                    : 'bg-slate-950/60 border-white/10 opacity-60 hover:opacity-90'}
+                                 relative overflow-hidden p-8 lg:p-10 rounded-3xl border-2 text-left transition-all duration-300 group
+                                 ${decisions.judicial_recovery
+                                    ? 'bg-slate-900 border-rose-500 shadow-2xl ring-2 ring-rose-500/30'
+                                    : 'bg-slate-950/60 border-white/10 opacity-60 hover:opacity-90 hover:border-rose-500/30'}
                               `}
                               >
-                              <div className="flex justify-between items-start mb-10">
-                                 <div className="max-w-[80%]">
+                              <div className="flex justify-between items-start mb-8">
+                                 <div className="max-w-[75%]">
                                     <h5 className="text-2xl font-black text-rose-400 uppercase tracking-tight mb-4">
                                     Protocolo de Recuperação Judicial (RJ)
                                     </h5>
@@ -288,78 +289,79 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     Ativa regime especial de proteção contra credores. Permite reestruturação forçada, mas impõe restrições severas por vários rounds.
                                     </p>
 
-                                    <div className="space-y-4 mt-6">
-                                    <h6 className="text-sm font-semibold text-rose-300 uppercase tracking-wide mb-2">
-                                       Consequências imediatas e de médio prazo:
+                                    <div className="space-y-5 mt-6">
+                                    <h6 className="text-sm font-semibold text-rose-300 uppercase tracking-wide">
+                                       Consequências principais (no contexto da simulação):
                                     </h6>
                                     <ul className="space-y-3 text-sm text-rose-200/90">
                                        <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          Acesso a novo crédito bloqueado ou com spread muito alto
+                                          <AlertOctagon size={18} className="shrink-0 mt-1 text-rose-400" />
+                                          Novo crédito bloqueado ou com spread altíssimo (taxa + 4–8%)
                                        </li>
                                        <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          CapEx e investimentos em máquinas limitados a 30–50% do normal
+                                          <AlertOctagon size={18} className="shrink-0 mt-1 text-rose-400" />
+                                          CapEx e compra de máquinas limitado a ~40% do valor normal
                                        </li>
                                        <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          Custo financeiro de dívidas existentes congeladas + correção monetária
+                                          <AlertOctagon size={18} className="shrink-0 mt-1 text-rose-400" />
+                                          Dívidas existentes congeladas + correção monetária (inflação aplicada)
                                        </li>
                                        <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          Percepção negativa no mercado → demanda potencialmente reduzida em 10–25%
+                                          <AlertOctagon size={18} className="shrink-0 mt-1 text-rose-400" />
+                                          Percepção de risco elevada → demanda pode cair 10–30% por rounds
                                        </li>
                                        <li className="flex items-start gap-3">
-                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
-                                          Duração típica: 3–6 rounds (até aprovação do plano de recuperação)
+                                          <AlertOctagon size={18} className="shrink-0 mt-1 text-rose-400" />
+                                          Duração típica: 4–8 rounds até aprovação do plano de recuperação
                                        </li>
                                     </ul>
                                     </div>
                                  </div>
-                                 <div className="p-6 rounded-2xl bg-rose-600/15 group-hover:bg-rose-600/25 transition-colors shrink-0">
+
+                                 <div className="p-5 rounded-2xl bg-rose-600/15 group-hover:bg-rose-600/25 transition-colors shrink-0">
                                     <AlertOctagon size={40} className="text-rose-400" />
                                  </div>
                               </div>
 
-                              <div className="absolute bottom-8 right-8">
-                                 <span className="text-xl font-black text-rose-500/80 uppercase tracking-widest">
+                              <div className="absolute bottom-6 right-6">
+                                 <span className="text-lg font-black text-rose-500/80 uppercase tracking-widest">
                                     Último recurso
                                  </span>
                               </div>
                               </motion.button>
                            </div>
 
-                           {/* Resumo de trade-offs e recomendação estratégica */}
-                           <div className="bg-slate-950/70 border border-white/5 rounded-3xl p-10 lg:p-12 max-w-4xl mx-auto text-center mt-12">
+                           {/* Caixa de recomendação estratégica */}
+                           <div className="bg-slate-950/70 border border-white/5 rounded-3xl p-8 lg:p-12 max-w-4xl mx-auto text-center">
                               <div className="flex items-center justify-center gap-4 mb-6">
                               <Scale size={28} className="text-yellow-400" />
                               <h6 className="text-xl font-black text-yellow-300 uppercase tracking-wide">
-                                 Quando optar pela Recuperação Judicial?
+                                 Quando realmente vale acionar RJ?
                               </h6>
                               </div>
-                              <p className="text-base text-slate-300 leading-relaxed max-w-3xl mx-auto mb-8">
-                              RJ é uma ferramenta de sobrevivência, não de crescimento. Ative apenas se:
+                              <p className="text-base text-slate-300 leading-relaxed mb-8">
+                              RJ é ferramenta de **sobrevivência**, não de crescimento. Considere apenas se:
                               </p>
-                              <ul className="text-left max-w-2xl mx-auto space-y-4 text-sm text-slate-300">
+                              <ul className="text-left max-w-3xl mx-auto space-y-4 text-sm text-slate-300">
                               <li className="flex items-start gap-4">
                                  <AlertTriangle size={20} className="text-yellow-400 shrink-0 mt-1" />
-                                 Caixa projetado negativo por mais de 2 rounds consecutivos
+                                 Caixa projetado negativo por 2+ rounds consecutivos sem solução viável
                               </li>
                               <li className="flex items-start gap-4">
                                  <AlertTriangle size={20} className="text-yellow-400 shrink-0 mt-1" />
-                                 Dívidas vencidas > 40–50% do patrimônio líquido
+                                 Dívidas vencidas > 45–60% do patrimônio líquido atual
                               </li>
                               <li className="flex items-start gap-4">
                                  <AlertTriangle size={20} className="text-yellow-400 shrink-0 mt-1" />
-                                 Sem acesso viável a empréstimos normais ou aplicações para cobrir o rombo
+                                 Sem acesso realista a empréstimos normais ou vendas de ativos para cobrir rombo
                               </li>
                               </ul>
-                              <p className="mt-8 text-base font-medium text-emerald-300 italic">
-                              Na maioria dos cenários competitivos, manter operação normal + ajuste agressivo de custos e liquidez é a estratégia mais vencedora.
+                              <p className="mt-10 text-lg font-medium text-emerald-300 italic">
+                              Na maioria dos campeonatos competitivos, ajuste agressivo de custos + gestão de caixa é muito mais vantajoso do que entrar em RJ.
                               </p>
                            </div>
 
-                           {/* Espaçamento final */}
+                           {/* Espaçamento final antes da barra de navegação */}
                            <div className="h-24 lg:h-32" />
                         </div>
                         )}
