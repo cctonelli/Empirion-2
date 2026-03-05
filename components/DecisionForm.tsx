@@ -513,23 +513,138 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                         {/* STEP 4 - SUPRIMENTOS */}
                         {activeStep === 3 && (
-                           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <WizardStepHeader icon={<Package />} title="Suprimentos" desc="Gerencie a cadeia de suprimentos." />
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                 <InputCard label="MATÉRIA-PRIMA A (QTDE)" val={decisions.production.purchaseMPA} icon={<Package />} onChange={(v:any)=>updateDecision('production.purchaseMPA', v)} help="Quantidade de insumo MP-A a ser comprado para o próximo período. Lembre-se que o Produto Acabado usa 3 MP-A para cada unidade produzida." />
-                                 <InputCard label="MATÉRIA-PRIMA B (QTDE)" val={decisions.production.purchaseMPB} icon={<Package />} onChange={(v:any)=>updateDecision('production.purchaseMPB', v)} help="Quantidade de insumo MP-B a ser comprado para o próximo período. Lembre-se que o Produto Acabado usa 2 MP-B para cada unidade produzida." />
+                        <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           {/* Cabeçalho do passo */}
+                           <WizardStepHeader 
+                              icon={<Package size={32} strokeWidth={2.5} />} 
+                              title="Cadeia de Suprimentos" 
+                              desc="Defina as quantidades de matéria-prima a serem adquiridas e as condições de pagamento aos fornecedores. Decisões críticas para evitar rupturas de estoque ou excesso de capital parado." 
+                              help="Lembre-se: Produto Acabado consome 3 MP-A e 2 MP-B por unidade produzida."
+                           />
+
+                           {/* Seção: Compras de Matéria-Prima */}
+                           <div className="space-y-10">
+                              <div className="flex items-center justify-between">
+                              <h4 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">
+                                 <Boxes size={28} className="text-orange-400" />
+                                 Aquisição de Insumos
+                              </h4>
+                              <span className="text-sm font-medium text-slate-400 italic">
+                                 Para produção do próximo período
+                              </span>
                               </div>
 
-                              <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 space-y-4 shadow-2xl">
-                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">PAGAMENTO FORNECEDOR <HelpCircle size={12}/></label>
-                                 <select value={decisions.production.paymentType} onChange={e => updateDecision('production.paymentType', parseInt(e.target.value))} className="w-full bg-slate-950 border-4 border-white/5 rounded-3xl p-6 text-xs font-black text-white uppercase outline-none focus:border-orange-600 transition-all">
-                                    <option value={0}>A VISTA</option>
-                                    <option value={1}>A VISTA+50%</option>
-                                    <option value={2}>A VISTA+33%+33%</option>
-                                 </select>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                              {/* MP-A */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
+                                 <div className="flex justify-between items-start mb-8">
+                                    <div>
+                                    <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-1">
+                                       Matéria-Prima A
+                                    </h5>
+                                    <p className="text-sm text-slate-400 italic">
+                                       Consumo: 3 unidades por produto acabado
+                                    </p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl bg-orange-600/10">
+                                    <Package size={28} className="text-orange-400" />
+                                    </div>
+                                 </div>
+
+                                 <div className="space-y-6">
+                                    <label className="block text-sm font-semibold text-slate-300 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                    Quantidade a Comprar (unidades)
+                                    <HelpCircle size={16} className="text-slate-500 hover:text-orange-400 transition-colors cursor-help" />
+                                    </label>
+                                    <input
+                                    type="number"
+                                    min="0"
+                                    step="100"
+                                    value={decisions.production.purchaseMPA}
+                                    onChange={e => updateDecision('production.purchaseMPA', parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
+                                    placeholder="0"
+                                    />
+                                    <p className="text-xs text-slate-500 italic pt-2">
+                                    Sugestão baseada em capacidade atual: {Math.round((activeTeam?.kpis?.production_capacity || 0) * 3 * 1.1 / 100)} – {Math.round((activeTeam?.kpis?.production_capacity || 0) * 3 * 1.3 / 100)} unidades
+                                    </p>
+                                 </div>
+                              </div>
+
+                              {/* MP-B */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
+                                 <div className="flex justify-between items-start mb-8">
+                                    <div>
+                                    <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-1">
+                                       Matéria-Prima B
+                                    </h5>
+                                    <p className="text-sm text-slate-400 italic">
+                                       Consumo: 2 unidades por produto acabado
+                                    </p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl bg-orange-600/10">
+                                    <Package size={28} className="text-orange-400" />
+                                    </div>
+                                 </div>
+
+                                 <div className="space-y-6">
+                                    <label className="block text-sm font-semibold text-slate-300 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                    Quantidade a Comprar (unidades)
+                                    <HelpCircle size={16} className="text-slate-500 hover:text-orange-400 transition-colors cursor-help" />
+                                    </label>
+                                    <input
+                                    type="number"
+                                    min="0"
+                                    step="100"
+                                    value={decisions.production.purchaseMPB}
+                                    onChange={e => updateDecision('production.purchaseMPB', parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
+                                    placeholder="0"
+                                    />
+                                    <p className="text-xs text-slate-500 italic pt-2">
+                                    Sugestão baseada em capacidade atual: {Math.round((activeTeam?.kpis?.production_capacity || 0) * 2 * 1.1 / 100)} – {Math.round((activeTeam?.kpis?.production_capacity || 0) * 2 * 1.3 / 100)} unidades
+                                    </p>
+                                 </div>
+                              </div>
                               </div>
                            </div>
+
+                           {/* Seção: Condições de Pagamento */}
+                           <div className="space-y-10 pt-12 border-t border-white/10">
+                              <h4 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">
+                              <Landmark size={28} className="text-emerald-400" />
+                              Forma de Pagamento aos Fornecedores
+                              </h4>
+
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl max-w-2xl mx-auto">
+                              <label className="block text-sm font-semibold text-slate-300 uppercase tracking-wide mb-6 flex items-center gap-3">
+                                 Condições de Pagamento
+                                 <HelpCircle size={18} className="text-slate-500 hover:text-emerald-400 transition-colors cursor-help" />
+                              </label>
+
+                              <select
+                                 value={decisions.production.paymentType}
+                                 onChange={e => updateDecision('production.paymentType', parseInt(e.target.value))}
+                                 className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-lg lg:text-xl font-semibold text-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all appearance-none"
+                              >
+                                 <option value={0}>À vista (desconto implícito)</option>
+                                 <option value={1}>À vista + 50% no próximo período</option>
+                                 <option value={2}>Parcelado: à vista + 33% + 33%</option>
+                              </select>
+
+                              <div className="mt-8 p-6 bg-slate-950/60 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
+                                 <p className="font-medium mb-3">Impactos esperados:</p>
+                                 <ul className="space-y-2 list-disc pl-5">
+                                    <li>À vista → Melhor preço unitário, mas exige caixa imediato</li>
+                                    <li>Parcelado → Preserva liquidez no curto prazo, mas aumenta custo financeiro</li>
+                                 </ul>
+                              </div>
+                              </div>
+                           </div>
+
+                           {/* Espaçamento final */}
+                           <div className="h-24 lg:h-32" />
+                        </div>
                         )}
 
                         {/* STEP 5 - FÁBRICA */}
