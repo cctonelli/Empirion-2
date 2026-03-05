@@ -208,33 +208,160 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                     <div className="max-w-[1400px] mx-auto pb-40 space-y-12 px-4">
                         {/* STEP 1 - JURÍDICO */}
                         {activeStep === 0 && (
-                           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <WizardStepHeader icon={<Gavel />} title="Status de Solvência" desc="Defina o protocolo legal de operação da unidade para este ciclo." help="Clique em Recuperação Judicial caso queira requerê-la." />
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                 <button 
-                                   onClick={() => updateDecision('judicial_recovery', false)}
-                                   className={`p-8 rounded-3xl border-2 text-left transition-all relative overflow-hidden group ${!decisions.judicial_recovery ? 'bg-slate-900 border-emerald-500 shadow-[0_20px_60px_rgba(16,185,129,0.2)]' : 'bg-slate-950 border-white/5 opacity-40'}`}
-                                 >
-                                    <div className="flex items-center gap-4 mb-4">
-                                       <div className={`p-4 rounded-2xl ${!decisions.judicial_recovery ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-600'}`}><ShieldCheck size={24}/></div>
-                                       <span className="text-xl font-black text-white uppercase italic">Operação Normal</span>
-                                    </div>
-                                    <p className="text-xs text-slate-400 font-medium leading-relaxed">Unidade operando com plena capacidade jurídica e acesso a crédito.</p>
-                                 </button>
+                        <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           {/* Cabeçalho do passo */}
+                           <WizardStepHeader 
+                              icon={<Gavel size={32} strokeWidth={2.5} />} 
+                              title="Status Jurídico & Solvência" 
+                              desc="Defina o regime jurídico da empresa para este ciclo. A escolha impacta diretamente acesso a crédito, capacidade de investimento, percepção de mercado e risco de intervenção do Oracle." 
+                              help="Recuperação Judicial é uma medida extrema. Use apenas quando o caixa e a estrutura financeira estão insustentáveis sem reestruturação forçada."
+                           />
 
-                                 <button 
-                                   onClick={() => updateDecision('judicial_recovery', true)}
-                                   className={`p-8 rounded-3xl border-2 text-left transition-all relative overflow-hidden group ${decisions.judicial_recovery ? 'bg-slate-900 border-rose-500 shadow-[0_20px_60px_rgba(244,63,94,0.2)]' : 'bg-slate-950 border-white/5 opacity-40'}`}
-                                 >
-                                    <div className="flex items-center gap-4 mb-4">
-                                       <div className={`p-4 rounded-2xl ${decisions.judicial_recovery ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-600'}`}><AlertOctagon size={24}/></div>
-                                       <span className="text-xl font-black text-white uppercase italic">Protocolo RJ</span>
-                                    </div>
-                                    <p className="text-xs text-slate-400 font-medium leading-relaxed">Recuperação Judicial: Crédito e Capex Limitados. Foco em reestruturação.</p>
-                                 </button>
+                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+                              {/* Opção 1: Operação Normal */}
+                              <motion.button
+                              whileHover={{ scale: 1.02, boxShadow: "0 20px 60px rgba(16,185,129,0.25)" }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => updateDecision('judicial_recovery', false)}
+                              disabled={isReadOnly}
+                              className={`
+                                 p-10 lg:p-12 rounded-3xl border-2 text-left transition-all duration-300 relative overflow-hidden group
+                                 ${!decisions.judicial_recovery 
+                                    ? 'bg-slate-900 border-emerald-500/70 shadow-[0_20px_60px_rgba(16,185,129,0.25)] ring-2 ring-emerald-500/30' 
+                                    : 'bg-slate-950/60 border-white/10 opacity-60 hover:opacity-90'}
+                              `}
+                              >
+                              <div className="flex justify-between items-start mb-10">
+                                 <div className="max-w-[80%]">
+                                    <h5 className="text-2xl font-black text-emerald-400 uppercase tracking-tight mb-4">
+                                    Operação Normal
+                                    </h5>
+                                    <p className="text-base text-slate-300 leading-relaxed mb-6">
+                                    Empresa opera em plena conformidade jurídica e financeira. Acesso irrestrito a linhas de crédito, CapEx, emissão de ações e fornecedores sem restrições.
+                                    </p>
+                                    <ul className="space-y-3 text-sm text-emerald-200/90">
+                                    <li className="flex items-start gap-3">
+                                       <ShieldCheck size={18} className="shrink-0 mt-0.5" />
+                                       Crédito disponível na taxa base
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                       <ShieldCheck size={18} className="shrink-0 mt-0.5" />
+                                       Investimentos e expansão sem limitações
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                       <ShieldCheck size={18} className="shrink-0 mt-0.5" />
+                                       Percepção positiva no mercado (menor custo de capital implícito)
+                                    </li>
+                                    </ul>
+                                 </div>
+                                 <div className="p-6 rounded-2xl bg-emerald-600/15 group-hover:bg-emerald-600/25 transition-colors shrink-0">
+                                    <ShieldCheck size={40} className="text-emerald-400" />
+                                 </div>
                               </div>
+
+                              <div className="absolute bottom-8 right-8">
+                                 <span className="text-xl font-black text-emerald-500/80 uppercase tracking-widest">
+                                    Recomendado
+                                 </span>
+                              </div>
+                              </motion.button>
+
+                              {/* Opção 2: Recuperação Judicial */}
+                              <motion.button
+                              whileHover={{ scale: 1.02, boxShadow: "0 20px 60px rgba(244,63,94,0.25)" }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => updateDecision('judicial_recovery', true)}
+                              disabled={isReadOnly}
+                              className={`
+                                 p-10 lg:p-12 rounded-3xl border-2 text-left transition-all duration-300 relative overflow-hidden group
+                                 ${decisions.judicial_recovery 
+                                    ? 'bg-slate-900 border-rose-500/70 shadow-[0_20px_60px_rgba(244,63,94,0.25)] ring-2 ring-rose-500/30' 
+                                    : 'bg-slate-950/60 border-white/10 opacity-60 hover:opacity-90'}
+                              `}
+                              >
+                              <div className="flex justify-between items-start mb-10">
+                                 <div className="max-w-[80%]">
+                                    <h5 className="text-2xl font-black text-rose-400 uppercase tracking-tight mb-4">
+                                    Protocolo de Recuperação Judicial (RJ)
+                                    </h5>
+                                    <p className="text-base text-slate-300 leading-relaxed mb-6">
+                                    Ativa regime especial de proteção contra credores. Permite reestruturação forçada, mas impõe restrições severas por vários rounds.
+                                    </p>
+
+                                    <div className="space-y-4 mt-6">
+                                    <h6 className="text-sm font-semibold text-rose-300 uppercase tracking-wide mb-2">
+                                       Consequências imediatas e de médio prazo:
+                                    </h6>
+                                    <ul className="space-y-3 text-sm text-rose-200/90">
+                                       <li className="flex items-start gap-3">
+                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
+                                          Acesso a novo crédito bloqueado ou com spread muito alto
+                                       </li>
+                                       <li className="flex items-start gap-3">
+                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
+                                          CapEx e investimentos em máquinas limitados a 30–50% do normal
+                                       </li>
+                                       <li className="flex items-start gap-3">
+                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
+                                          Custo financeiro de dívidas existentes congeladas + correção monetária
+                                       </li>
+                                       <li className="flex items-start gap-3">
+                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
+                                          Percepção negativa no mercado → demanda potencialmente reduzida em 10–25%
+                                       </li>
+                                       <li className="flex items-start gap-3">
+                                          <AlertOctagon size={18} className="shrink-0 mt-0.5 text-rose-400" />
+                                          Duração típica: 3–6 rounds (até aprovação do plano de recuperação)
+                                       </li>
+                                    </ul>
+                                    </div>
+                                 </div>
+                                 <div className="p-6 rounded-2xl bg-rose-600/15 group-hover:bg-rose-600/25 transition-colors shrink-0">
+                                    <AlertOctagon size={40} className="text-rose-400" />
+                                 </div>
+                              </div>
+
+                              <div className="absolute bottom-8 right-8">
+                                 <span className="text-xl font-black text-rose-500/80 uppercase tracking-widest">
+                                    Último recurso
+                                 </span>
+                              </div>
+                              </motion.button>
                            </div>
+
+                           {/* Resumo de trade-offs e recomendação estratégica */}
+                           <div className="bg-slate-950/70 border border-white/5 rounded-3xl p-10 lg:p-12 max-w-4xl mx-auto text-center mt-12">
+                              <div className="flex items-center justify-center gap-4 mb-6">
+                              <Scale size={28} className="text-yellow-400" />
+                              <h6 className="text-xl font-black text-yellow-300 uppercase tracking-wide">
+                                 Quando optar pela Recuperação Judicial?
+                              </h6>
+                              </div>
+                              <p className="text-base text-slate-300 leading-relaxed max-w-3xl mx-auto mb-8">
+                              RJ é uma ferramenta de sobrevivência, não de crescimento. Ative apenas se:
+                              </p>
+                              <ul className="text-left max-w-2xl mx-auto space-y-4 text-sm text-slate-300">
+                              <li className="flex items-start gap-4">
+                                 <AlertTriangle size={20} className="text-yellow-400 shrink-0 mt-1" />
+                                 Caixa projetado negativo por mais de 2 rounds consecutivos
+                              </li>
+                              <li className="flex items-start gap-4">
+                                 <AlertTriangle size={20} className="text-yellow-400 shrink-0 mt-1" />
+                                 Dívidas vencidas > 40–50% do patrimônio líquido
+                              </li>
+                              <li className="flex items-start gap-4">
+                                 <AlertTriangle size={20} className="text-yellow-400 shrink-0 mt-1" />
+                                 Sem acesso viável a empréstimos normais ou aplicações para cobrir o rombo
+                              </li>
+                              </ul>
+                              <p className="mt-8 text-base font-medium text-emerald-300 italic">
+                              Na maioria dos cenários competitivos, manter operação normal + ajuste agressivo de custos e liquidez é a estratégia mais vencedora.
+                              </p>
+                           </div>
+
+                           {/* Espaçamento final */}
+                           <div className="h-24 lg:h-32" />
+                        </div>
                         )}
 
 
@@ -1038,100 +1165,301 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         )}
                         {/* STEP 7 - FINANÇAS & METAS */}
                         {activeStep === 6 && (
-                           <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <div className="space-y-10">
-                                 <WizardStepHeader icon={<Landmark />} title="Mercado de Capitais" desc="Gestão de liquidez e alavancagem financeira." />
-                                 
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="space-y-8">
-                                       <div className="flex items-center justify-between">
-                                          <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><Landmark className="text-orange-500"/> Crédito</h4>
-                                          <span className="px-4 py-1.5 bg-orange-600/10 border border-orange-500/20 text-orange-500 rounded-lg text-[9px] font-black uppercase">Taxa TR: {currentMacro.interest_rate_tr}%</span>
-                                       </div>
-                                       <InputCard label="REQUISIÇÃO DE EMPRÉSTIMO ($)" val={decisions.finance.loanRequest} icon={<DollarSign/>} onChange={(v:any)=>updateDecision('finance.loanRequest', v)} />
-                                       <div className="space-y-4">
-                                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic ml-2">Prazo de Amortização</label>
-                                          <select value={decisions.finance.loanTerm} onChange={e => updateDecision('finance.loanTerm', parseInt(e.target.value))} className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-4 text-xs font-black text-white uppercase outline-none focus:border-orange-600 transition-all">
-                                             <option value={0}>A VISTA (Próximo Round)</option>
-                                             <option value={1}>CURTO PRAZO (A VISTA+50%)</option>
-                                             <option value={2}>LONGO PRAZO (A VISTA+33%+33%)</option>
-                                          </select>
-                                       </div>
+                        <div className="space-y-16 lg:space-y-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           {/* Cabeçalho do passo */}
+                           <WizardStepHeader 
+                              icon={<Landmark size={32} strokeWidth={2.5} />} 
+                              title="Finanças & Mercado de Capitais" 
+                              desc="Gerencie liquidez, alavancagem e aplicações financeiras. Decisões aqui definem a saúde de caixa, custo de capital e capacidade de investimento nos próximos rounds. Equilíbrio entre endividamento e aplicações é chave para evitar crises ou perda de oportunidade." 
+                              help="Empréstimos compulsórios ocorrem automaticamente se o caixa fechar negativo (com ágio maior). Aplicações rendem no próximo período."
+                           />
 
-                                       <div className="p-6 bg-rose-950/20 rounded-2xl border border-rose-500/30 text-[11px] font-bold text-rose-200 uppercase leading-relaxed italic flex items-start gap-4">
-                                          <AlertTriangle className="text-rose-500 shrink-0" size={18} />
-                                          <div>
-                                             <p className="mb-2">ALERTA DE EMPRÉSTIMO COMPULSÓRIO</p>
-                                             <p className="font-medium normal-case text-slate-400">
-                                                Caso o saldo final de caixa seja negativo, o Oracle Strategos liberará automaticamente um empréstimo compulsório para cobrir o rombo. 
-                                                Este recurso possui um <strong>ágio de {currentMacro.compulsory_loan_agio}%</strong> sobre a taxa base de {currentMacro.interest_rate_tr}% e deve ser <strong>quitado integralmente no próximo período</strong>.
-                                             </p>
-                                          </div>
-                                       </div>
+                           {/* Seção 1: Mercado de Capitais – Empréstimo + Aplicação */}
+                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+                              {/* Empréstimo */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-12 rounded-3xl border border-white/10 shadow-xl hover:border-rose-500/30 hover:shadow-rose-500/10 transition-all duration-300 group">
+                              <div className="flex justify-between items-start mb-10">
+                                 <div className="max-w-[75%]">
+                                    <h5 className="text-2xl font-black text-rose-400 uppercase tracking-tight mb-3">
+                                    Requisição de Empréstimo
+                                    </h5>
+                                    <p className="text-base text-slate-300 leading-relaxed mb-6">
+                                    Solicitação de novo capital via financiamento bancário. Taxa base: {currentMacro?.interest_rate_tr || 2}% ao período + spread de risco. Prazo escolhido afeta o fluxo de amortização.
+                                    </p>
+                                    <div className="flex items-center gap-3 text-sm text-rose-300 italic">
+                                    <AlertTriangle size={18} />
+                                    Caso o caixa feche negativo, o Oracle aplica empréstimo compulsório com ágio de {currentMacro?.compulsory_loan_agio || 4}% sobre a taxa base.
                                     </div>
-
-                                    <div className="space-y-8">
-                                       <div className="flex items-center justify-between">
-                                          <h4 className="text-xl font-black text-white uppercase italic flex items-center gap-3"><TrendingUp className="text-emerald-500"/> Aplicação</h4>
-                                          <span className="px-4 py-1.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[9px] font-black uppercase">Rendimento: {currentMacro.investment_return_rate}%</span>
-                                       </div>
-                                       <InputCard label="APLICAÇÃO FINANCEIRA ($)" val={decisions.finance.application} icon={<Activity/>} onChange={(v:any)=>updateDecision('finance.application', v)} help="Liquidez T+1: Rendimento creditado no Resultado Financeiro do próximo período." />
-                                       <div className="p-6 bg-slate-950/50 rounded-2xl border border-white/5 text-[10px] font-bold text-slate-500 uppercase leading-relaxed italic">
-                                          "Valores aplicados sairão do caixa disponível imediatamente e retornarão no ciclo subsequente acrescidos de rendimentos."
-                                       </div>
-                                    </div>
+                                 </div>
+                                 <div className="p-5 rounded-2xl bg-rose-600/10 group-hover:bg-rose-600/20 transition-colors shrink-0">
+                                    <DollarSign size={32} className="text-rose-400" />
                                  </div>
                               </div>
 
-                              <div className="space-y-10 pt-16 border-t border-white/5">
-                                 <WizardStepHeader icon={<Target />} title="Projeções e Metas" desc="As premiações de auditoria dependem da sua precisão nestes campos." />
-                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                    <InputCard label="PREVISÃO CUSTO UNITÁRIO (CPP)" val={decisions.estimates.forecasted_unit_cost} icon={<Zap/>} onChange={(v:any)=>updateDecision('estimates.forecasted_unit_cost', v)} help={`Tolerância Oracle: $ ${currentMacro.award_values.cost_precision}`} />
-                                    <InputCard label="PREVISÃO FATURAMENTO (BRUTO)" val={decisions.estimates.forecasted_revenue} icon={<BarChart3/>} onChange={(v:any)=>updateDecision('estimates.forecasted_revenue', v)} help={`Tolerância Oracle: $ ${currentMacro.award_values.revenue_precision}`} />
-                                    <InputCard label="PREVISÃO LUCRO LÍQUIDO" val={decisions.estimates.forecasted_net_profit} icon={<PieChart/>} onChange={(v:any)=>updateDecision('estimates.forecasted_net_profit', v)} help={`Tolerância Oracle: $ ${currentMacro.award_values.profit_precision}`} />
+                              <div className="space-y-8">
+                                 <div className="space-y-4">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                    Valor Solicitado
+                                    <HelpCircle size={16} className="text-slate-500 group-hover:text-rose-400 transition-colors cursor-help" />
+                                    </label>
+                                    <input
+                                    type="number"
+                                    min="0"
+                                    step="10000"
+                                    value={decisions.finance.loanRequest}
+                                    onChange={e => updateDecision('finance.loanRequest', parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 transition-all"
+                                    placeholder="0"
+                                    />
                                  </div>
+
+                                 <div className="space-y-4">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                    Prazo de Amortização
+                                    <HelpCircle size={16} className="text-slate-500 group-hover:text-rose-400 transition-colors cursor-help" />
+                                    </label>
+                                    <select
+                                    value={decisions.finance.loanTerm}
+                                    onChange={e => updateDecision('finance.loanTerm', parseInt(e.target.value))}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-xl font-semibold text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 transition-all appearance-none"
+                                    >
+                                    <option value={0}>Curto – Quitação no próximo round</option>
+                                    <option value={1}>Médio – À vista + 50% no próximo</option>
+                                    <option value={2}>Longo – Parcelado em 3x (33% cada)</option>
+                                    </select>
+                                 </div>
+
+                                 <div className="pt-4 text-sm text-rose-300 italic">
+                                    Custo financeiro estimado aproximado: R$ {formatCurrency((decisions.finance.loanRequest || 0) * (currentMacro?.interest_rate_tr || 0.02) * (decisions.finance.loanTerm + 1), 'BRL')}
+                                 </div>
+                              </div>
+                              </div>
+
+                              {/* Aplicação Financeira */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-12 rounded-3xl border border-white/10 shadow-xl hover:border-emerald-500/30 hover:shadow-emerald-500/10 transition-all duration-300 group">
+                              <div className="flex justify-between items-start mb-10">
+                                 <div className="max-w-[75%]">
+                                    <h5 className="text-2xl font-black text-emerald-400 uppercase tracking-tight mb-3">
+                                    Aplicação Financeira
+                                    </h5>
+                                    <p className="text-base text-slate-300 leading-relaxed mb-6">
+                                    Valor aplicado em títulos de renda fixa. Sai do caixa imediatamente e retorna no próximo round acrescido de rendimento ({currentMacro?.investment_return_rate || 1.8}% estimado).
+                                    </p>
+                                    <div className="text-sm text-emerald-300 italic">
+                                    Ideal para excesso de caixa temporário ou estratégia conservadora de preservação de valor.
+                                    </div>
+                                 </div>
+                                 <div className="p-5 rounded-2xl bg-emerald-600/10 group-hover:bg-emerald-600/20 transition-colors shrink-0">
+                                    <Activity size={32} className="text-emerald-400" />
+                                 </div>
+                              </div>
+
+                              <div className="space-y-8">
+                                 <div className="space-y-4">
+                                    <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
+                                    Valor a Aplicar
+                                    <HelpCircle size={16} className="text-slate-500 group-hover:text-emerald-400 transition-colors cursor-help" />
+                                    </label>
+                                    <input
+                                    type="number"
+                                    min="0"
+                                    step="10000"
+                                    value={decisions.finance.application}
+                                    onChange={e => updateDecision('finance.application', parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                                    placeholder="0"
+                                    />
+                                 </div>
+
+                                 <div className="pt-4 text-sm text-emerald-300 italic">
+                                    Rendimento projetado no próximo round: ~R$ {formatCurrency((decisions.finance.application || 0) * (currentMacro?.investment_return_rate || 0.018), 'BRL')}
+                                 </div>
+                              </div>
                               </div>
                            </div>
+
+                           {/* Seção 2: Projeções e Metas Oracle */}
+                           <div className="space-y-12 pt-16 border-t border-white/10">
+                              <h4 className="text-3xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">
+                              <Target size={32} className="text-yellow-400" />
+                              Previsões para Premiação Oracle
+                              </h4>
+                              <p className="text-base text-slate-300 max-w-3xl">
+                              Preencha com o máximo de precisão possível. As premiações de auditoria dependem da proximidade entre previsão e resultado real (dentro da tolerância definida pelo macro).
+                              </p>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+                              {/* Previsão Custo Unitário */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-yellow-500/30 hover:shadow-yellow-500/10 transition-all duration-300 group">
+                                 <h5 className="text-xl font-black text-yellow-400 uppercase tracking-tight mb-4">
+                                    Previsão Custo Unitário (CPP)
+                                 </h5>
+                                 <p className="text-sm text-slate-400 mb-6">
+                                    Estimativa do custo médio ponderado de produção. Tolerância Oracle: ±{currentMacro?.award_values?.cost_precision || 'R$ 5,00'}.
+                                 </p>
+                                 <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={decisions.estimates.forecasted_unit_cost}
+                                    onChange={e => updateDecision('estimates.forecasted_unit_cost', parseFloat(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/30 transition-all"
+                                 />
+                              </div>
+
+                              {/* Previsão Faturamento */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-yellow-500/30 hover:shadow-yellow-500/10 transition-all duration-300 group">
+                                 <h5 className="text-xl font-black text-yellow-400 uppercase tracking-tight mb-4">
+                                    Previsão Faturamento Bruto
+                                 </h5>
+                                 <p className="text-sm text-slate-400 mb-6">
+                                    Estimativa de receita total. Tolerância Oracle: ±{currentMacro?.award_values?.revenue_precision || 'R$ 50.000'}.
+                                 </p>
+                                 <input
+                                    type="number"
+                                    min="0"
+                                    step="1000"
+                                    value={decisions.estimates.forecasted_revenue}
+                                    onChange={e => updateDecision('estimates.forecasted_revenue', parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/30 transition-all"
+                                 />
+                              </div>
+
+                              {/* Previsão Lucro Líquido */}
+                              <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-yellow-500/30 hover:shadow-yellow-500/10 transition-all duration-300 group">
+                                 <h5 className="text-xl font-black text-yellow-400 uppercase tracking-tight mb-4">
+                                    Previsão Lucro Líquido
+                                 </h5>
+                                 <p className="text-sm text-slate-400 mb-6">
+                                    Estimativa do resultado líquido final. Tolerância Oracle: ±{currentMacro?.award_values?.profit_precision || 'R$ 20.000'}.
+                                 </p>
+                                 <input
+                                    type="number"
+                                    min="-1000000"
+                                    step="1000"
+                                    value={decisions.estimates.forecasted_net_profit}
+                                    onChange={e => updateDecision('estimates.forecasted_net_profit', parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/30 transition-all"
+                                 />
+                              </div>
+                              </div>
+                           </div>
+
+                           {/* Resumo de trade-offs financeiros */}
+                           <div className="bg-slate-950/70 border border-white/5 rounded-3xl p-10 lg:p-12 max-w-4xl mx-auto text-center mt-16">
+                              <div className="flex items-center justify-center gap-4 mb-6">
+                              <Scale size={28} className="text-yellow-400" />
+                              <h6 className="text-xl font-black text-yellow-300 uppercase tracking-wide">
+                                 Equilíbrio Financeiro Estratégico
+                              </h6>
+                              </div>
+                              <p className="text-base text-slate-300 leading-relaxed max-w-3xl mx-auto">
+                              Endividamento excessivo aumenta risco de compulsório caro. Aplicações protegem caixa, mas reduzem liquidez imediata para CapEx ou suprimentos. As previsões precisas geram premiações Oracle significativas — use as projeções do header para calibrar.
+                              </p>
+                           </div>
+
+                           {/* Espaçamento final */}
+                           <div className="h-32 lg:h-40" />
+                        </div>
                         )}
 
                         {/* STEP 8 - REVISÃO */}
                         {activeStep === 7 && (
-                           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
-                              <div className="w-24 h-24 bg-emerald-500 rounded-[3rem] flex items-center justify-center mx-auto text-white shadow-[0_0_60px_rgba(16,185,129,0.3)] animate-pulse mb-8">
-                                 <ShieldCheck size={48} />
+                        <div className="space-y-16 lg:space-y-24 animate-in fade-in slide-in-from-bottom-4 duration-700 text-center">
+                           {/* Cabeçalho épico */}
+                           <div className="space-y-8">
+                              <div className="relative mx-auto w-32 h-32 lg:w-40 lg:h-40">
+                              <div className="absolute inset-0 bg-emerald-500/20 rounded-[3rem] blur-3xl animate-pulse-slow" />
+                              <div className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-emerald-600 to-emerald-400 rounded-[3rem] shadow-[0_0_60px_rgba(16,185,129,0.4)] border-4 border-emerald-300/30">
+                                 <ShieldCheck size={64} className="text-white drop-shadow-lg" strokeWidth={2.5} />
                               </div>
+                              </div>
+
                               <div className="space-y-4">
-                                 <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">Ready for Oracle Transmit</h2>
-                                 <p className="text-slate-400 font-medium italic">"Revise seu protocolo tático antes de selar o ciclo P-{round}."</p>
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-6xl mx-auto pt-12">
-                                 <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 space-y-4">
-                                    <h4 className="text-xs font-black text-orange-500 uppercase tracking-widest italic mb-4">Resumo Comercial</h4>
-                                    <SummaryLine label="Preço Médio" val={`$ ${(Object.values(decisions.regions).reduce((a:any,b:any)=>a+(b.price||0), 0) / Math.max(1, Object.keys(decisions.regions).length)).toFixed(2)}`} />
-                                    <SummaryLine label="Total Marketing" val={`${Object.values(decisions.regions).reduce((a:any,b:any)=>a+(b.marketing||0), 0)} units`} />
-                                 </div>
-                                 <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 space-y-4">
-                                    <h4 className="text-xs font-black text-blue-500 uppercase tracking-widest italic mb-4">Resumo Industrial</h4>
-                                    <SummaryLine label="Uso Capacidade" val={`${decisions.production.activityLevel}%`} />
-                                    <SummaryLine label="Turno Extra" val={`${decisions.production.extraProductionPercent}%`} />
-                                    <SummaryLine label="Novos Ativos" val={`${decisions.machinery.buy.alfa + decisions.machinery.buy.beta + decisions.machinery.buy.gama} unidades`} />
-                                 </div>
-                              </div>
-
-                              <div className="max-w-2xl mx-auto p-8 bg-rose-600/10 border border-rose-500/20 rounded-3xl space-y-4">
-                                 <div className="flex items-center gap-3 text-rose-500 justify-center">
-                                    <AlertOctagon size={20} />
-                                    <h5 className="font-black uppercase italic text-sm">Aviso de Governança</h5>
-                                 </div>
-                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed italic">
-                                    "As decisões podem ser alteradas livremente até o vencimento do TIMER DE ROUND. Decisões não seladas (em rascunho) serão ignoradas pelo motor Oracle no momento do Turnover, resultando em dados zerados para sua unidade."
-                                 </p>
+                              <h2 className="text-4xl lg:text-6xl font-black text-white uppercase italic tracking-tighter leading-none">
+                                 Protocolo Pronto para o Oráculo
+                              </h2>
+                              <p className="text-xl lg:text-2xl text-slate-300 font-medium italic max-w-3xl mx-auto">
+                                 Revise todas as decisões táticas antes de selar o ciclo P-{round}. Uma vez transmitido, o destino da sua empresa estará nas mãos do Oráculo Strategos.
+                              </p>
                               </div>
                            </div>
+
+                           {/* Resumo em grid – decisões críticas */}
+                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
+                              {/* Comercial */}
+                              <div className="bg-slate-900/80 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
+                              <div className="flex items-center justify-center gap-4 mb-6">
+                                 <Megaphone size={28} className="text-orange-400" />
+                                 <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight">
+                                    Comercial
+                                 </h5>
+                              </div>
+                              <div className="space-y-4 text-left text-sm text-slate-300">
+                                 <SummaryLine label="Preço Médio" val={`R$ ${(Object.values(decisions.regions).reduce((a: any, b: any) => a + (b.price || 0), 0) / Math.max(1, Object.keys(decisions.regions).length)).toFixed(2)}`} />
+                                 <SummaryLine label="Marketing Total" val={`${Object.values(decisions.regions).reduce((a: any, b: any) => a + (b.marketing || 0), 0)} unidades`} />
+                                 <SummaryLine label="Prazo Médio" val={Object.values(decisions.regions).some(r => r.term > 0) ? 'Parcelado' : 'À vista'} />
+                              </div>
+                              </div>
+
+                              {/* Industrial / Operacional */}
+                              <div className="bg-slate-900/80 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
+                              <div className="flex items-center justify-center gap-4 mb-6">
+                                 <Factory size={28} className="text-blue-400" />
+                                 <h5 className="text-xl font-black text-blue-400 uppercase tracking-tight">
+                                    Industrial
+                                 </h5>
+                              </div>
+                              <div className="space-y-4 text-left text-sm text-slate-300">
+                                 <SummaryLine label="Capacidade Utilizada" val={`${decisions.production.activityLevel}%`} />
+                                 <SummaryLine label="Turno Extra" val={`${decisions.production.extraProductionPercent}%`} />
+                                 <SummaryLine label="Novas Máquinas" val={`${decisions.machinery.buy.alfa + decisions.machinery.buy.beta + decisions.machinery.buy.gama} unid.`} />
+                                 <SummaryLine label="P&D" val={`${decisions.production.rd_investment}%`} />
+                              </div>
+                              </div>
+
+                              {/* Financeiro / RH */}
+                              <div className="bg-slate-900/80 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
+                              <div className="flex items-center justify-center gap-4 mb-6">
+                                 <Landmark size={28} className="text-emerald-400" />
+                                 <h5 className="text-xl font-black text-emerald-400 uppercase tracking-tight">
+                                    Financeiro / RH
+                                 </h5>
+                              </div>
+                              <div className="space-y-4 text-left text-sm text-slate-300">
+                                 <SummaryLine label="Empréstimo Solicitado" val={decisions.finance.loanRequest > 0 ? formatCurrency(decisions.finance.loanRequest, 'BRL') : 'Nenhum'} />
+                                 <SummaryLine label="Aplicação Financeira" val={decisions.finance.application > 0 ? formatCurrency(decisions.finance.application, 'BRL') : 'Nenhuma'} />
+                                 <SummaryLine label="Folha Salarial Estimada" val={formatCurrency((activeTeam?.kpis?.employees || 0) * (decisions.hr.salary || 2000), 'BRL')} />
+                                 <SummaryLine label="RJ Ativada?" val={decisions.judicial_recovery ? 'SIM – Restrições Ativas' : 'Não'} color={decisions.judicial_recovery ? 'text-rose-400' : 'text-emerald-400'} />
+                              </div>
+                              </div>
+                           </div>
+
+                           {/* Alertas finais – governança e urgência */}
+                           <div className="space-y-8 max-w-3xl mx-auto">
+                              <div className="bg-rose-950/40 border border-rose-500/30 rounded-3xl p-10 lg:p-12 shadow-[0_0_40px_rgba(244,63,94,0.15)]">
+                              <div className="flex items-center justify-center gap-4 mb-6">
+                                 <AlertOctagon size={32} className="text-rose-400" />
+                                 <h6 className="text-2xl font-black text-rose-300 uppercase tracking-wide">
+                                    Aviso de Governança Final
+                                 </h6>
+                              </div>
+                              <p className="text-base text-rose-200 leading-relaxed text-center">
+                                 Decisões em rascunho serão <strong>ignoradas</strong> pelo Oráculo no momento do Turnover. Apenas protocolos transmitidos e selados serão processados. O timer está correndo — qualquer alteração posterior ao envio será registrada como nova rodada.
+                              </p>
+                              </div>
+
+                              <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-3xl p-8 lg:p-10 shadow-[0_0_40px_rgba(16,185,129,0.15)]">
+                              <p className="text-lg text-emerald-200 font-medium italic text-center leading-relaxed">
+                                 "O Oráculo não julga intenções. Ele julga resultados. Transmita com precisão. Forje seu império."
+                              </p>
+                              </div>
+                           </div>
+
+                           {/* Espaçamento antes da barra de navegação */}
+                           <div className="h-32 lg:h-40" />
+                        </div>
                         )}
-                    </div>
-                 </div>
 
                  {/* BOTTOM CONTROL BAR - Fixa, sem sobrepor conteúdo */}
                  <footer className="h-16 bg-slate-900 border-t border-white/10 flex items-center justify-between px-10 shrink-0 z-[100] shadow-top-2xl">
@@ -1291,11 +1619,11 @@ const AssetCard = ({ model, val, onChange, price, spec, disabled }: any) => (
            <div className="grid grid-cols-1 gap-2 pt-2 border-t border-white/5">
               <div className="flex items-center gap-2">
                  <Users size={12} className="text-slate-500" />
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operators required</span>
+                 <span className="text-[12px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operators required</span>
               </div>
               <div className="flex items-center gap-2">
                  <Zap size={12} className="text-slate-500" />
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} units capacity</span>
+                 <span className="text-[12px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} units capacity</span>
               </div>
            </div>
         )}
