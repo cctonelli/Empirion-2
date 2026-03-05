@@ -1365,101 +1365,42 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                         {/* STEP 8 - REVISÃO */}
                         {activeStep === 7 && (
-                        <div className="space-y-16 lg:space-y-24 animate-in fade-in slide-in-from-bottom-4 duration-700 text-center">
-                           {/* Cabeçalho épico */}
-                           <div className="space-y-8">
-                              <div className="relative mx-auto w-32 h-32 lg:w-40 lg:h-40">
-                              <div className="absolute inset-0 bg-emerald-500/20 rounded-[3rem] blur-3xl animate-pulse-slow" />
-                              <div className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-emerald-600 to-emerald-400 rounded-[3rem] shadow-[0_0_60px_rgba(16,185,129,0.4)] border-4 border-emerald-300/30">
-                                 <ShieldCheck size={64} className="text-white drop-shadow-lg" strokeWidth={2.5} />
+                           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
+                              <div className="w-24 h-24 bg-emerald-500 rounded-[3rem] flex items-center justify-center mx-auto text-white shadow-[0_0_60px_rgba(16,185,129,0.3)] animate-pulse mb-8">
+                                 <ShieldCheck size={48} />
                               </div>
-                              </div>
-
                               <div className="space-y-4">
-                              <h2 className="text-4xl lg:text-6xl font-black text-white uppercase italic tracking-tighter leading-none">
-                                 Protocolo Pronto para o Oráculo
-                              </h2>
-                              <p className="text-xl lg:text-2xl text-slate-300 font-medium italic max-w-3xl mx-auto">
-                                 Revise todas as decisões táticas antes de selar o ciclo P-{round}. Uma vez transmitido, o destino da sua empresa estará nas mãos do Oráculo Strategos.
-                              </p>
+                                 <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">Ready for Oracle Transmit</h2>
+                                 <p className="text-slate-400 font-medium italic">"Revise seu protocolo tático antes de selar o ciclo P-{round}."</p>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-6xl mx-auto pt-12">
+                                 <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 space-y-4">
+                                    <h4 className="text-xs font-black text-orange-500 uppercase tracking-widest italic mb-4">Resumo Comercial</h4>
+                                    <SummaryLine label="Preço Médio" val={`$ ${(Object.values(decisions.regions).reduce((a:any,b:any)=>a+(b.price||0), 0) / Math.max(1, Object.keys(decisions.regions).length)).toFixed(2)}`} />
+                                    <SummaryLine label="Total Marketing" val={`${Object.values(decisions.regions).reduce((a:any,b:any)=>a+(b.marketing||0), 0)} units`} />
+                                 </div>
+                                 <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 space-y-4">
+                                    <h4 className="text-xs font-black text-blue-500 uppercase tracking-widest italic mb-4">Resumo Industrial</h4>
+                                    <SummaryLine label="Uso Capacidade" val={`${decisions.production.activityLevel}%`} />
+                                    <SummaryLine label="Turno Extra" val={`${decisions.production.extraProductionPercent}%`} />
+                                    <SummaryLine label="Novos Ativos" val={`${decisions.machinery.buy.alfa + decisions.machinery.buy.beta + decisions.machinery.buy.gama} unidades`} />
+                                 </div>
+                              </div>
+
+                              <div className="max-w-2xl mx-auto p-8 bg-rose-600/10 border border-rose-500/20 rounded-3xl space-y-4">
+                                 <div className="flex items-center gap-3 text-rose-500 justify-center">
+                                    <AlertOctagon size={20} />
+                                    <h5 className="font-black uppercase italic text-sm">Aviso de Governança</h5>
+                                 </div>
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed italic">
+                                    "As decisões podem ser alteradas livremente até o vencimento do TIMER DE ROUND. Decisões não seladas (em rascunho) serão ignoradas pelo motor Oracle no momento do Turnover, resultando em dados zerados para sua unidade."
+                                 </p>
                               </div>
                            </div>
-
-                           {/* Resumo em grid – decisões críticas */}
-                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
-                              {/* Comercial */}
-                              <div className="bg-slate-900/80 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
-                              <div className="flex items-center justify-center gap-4 mb-6">
-                                 <Megaphone size={28} className="text-orange-400" />
-                                 <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight">
-                                    Comercial
-                                 </h5>
-                              </div>
-                              <div className="space-y-4 text-left text-sm text-slate-300">
-                                 <SummaryLine label="Preço Médio" val={`R$ ${(Object.values(decisions.regions).reduce((a: any, b: any) => a + (b.price || 0), 0) / Math.max(1, Object.keys(decisions.regions).length)).toFixed(2)}`} />
-                                 <SummaryLine label="Marketing Total" val={`${Object.values(decisions.regions).reduce((a: any, b: any) => a + (b.marketing || 0), 0)} unidades`} />
-                                 <SummaryLine label="Prazo Médio" val={Object.values(decisions.regions).some(r => r.term > 0) ? 'Parcelado' : 'À vista'} />
-                              </div>
-                              </div>
-
-                              {/* Industrial / Operacional */}
-                              <div className="bg-slate-900/80 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
-                              <div className="flex items-center justify-center gap-4 mb-6">
-                                 <Factory size={28} className="text-blue-400" />
-                                 <h5 className="text-xl font-black text-blue-400 uppercase tracking-tight">
-                                    Industrial
-                                 </h5>
-                              </div>
-                              <div className="space-y-4 text-left text-sm text-slate-300">
-                                 <SummaryLine label="Capacidade Utilizada" val={`${decisions.production.activityLevel}%`} />
-                                 <SummaryLine label="Turno Extra" val={`${decisions.production.extraProductionPercent}%`} />
-                                 <SummaryLine label="Novas Máquinas" val={`${decisions.machinery.buy.alfa + decisions.machinery.buy.beta + decisions.machinery.buy.gama} unid.`} />
-                                 <SummaryLine label="P&D" val={`${decisions.production.rd_investment}%`} />
-                              </div>
-                              </div>
-
-                              {/* Financeiro / RH */}
-                              <div className="bg-slate-900/80 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
-                              <div className="flex items-center justify-center gap-4 mb-6">
-                                 <Landmark size={28} className="text-emerald-400" />
-                                 <h5 className="text-xl font-black text-emerald-400 uppercase tracking-tight">
-                                    Financeiro / RH
-                                 </h5>
-                              </div>
-                              <div className="space-y-4 text-left text-sm text-slate-300">
-                                 <SummaryLine label="Empréstimo Solicitado" val={decisions.finance.loanRequest > 0 ? formatCurrency(decisions.finance.loanRequest, 'BRL') : 'Nenhum'} />
-                                 <SummaryLine label="Aplicação Financeira" val={decisions.finance.application > 0 ? formatCurrency(decisions.finance.application, 'BRL') : 'Nenhuma'} />
-                                 <SummaryLine label="Folha Salarial Estimada" val={formatCurrency((activeTeam?.kpis?.employees || 0) * (decisions.hr.salary || 2000), 'BRL')} />
-                                 <SummaryLine label="RJ Ativada?" val={decisions.judicial_recovery ? 'SIM – Restrições Ativas' : 'Não'} color={decisions.judicial_recovery ? 'text-rose-400' : 'text-emerald-400'} />
-                              </div>
-                              </div>
-                           </div>
-
-                           {/* Alertas finais – governança e urgência */}
-                           <div className="space-y-8 max-w-3xl mx-auto">
-                              <div className="bg-rose-950/40 border border-rose-500/30 rounded-3xl p-10 lg:p-12 shadow-[0_0_40px_rgba(244,63,94,0.15)]">
-                              <div className="flex items-center justify-center gap-4 mb-6">
-                                 <AlertOctagon size={32} className="text-rose-400" />
-                                 <h6 className="text-2xl font-black text-rose-300 uppercase tracking-wide">
-                                    Aviso de Governança Final
-                                 </h6>
-                              </div>
-                              <p className="text-base text-rose-200 leading-relaxed text-center">
-                                 Decisões em rascunho serão <strong>ignoradas</strong> pelo Oráculo no momento do Turnover. Apenas protocolos transmitidos e selados serão processados. O timer está correndo — qualquer alteração posterior ao envio será registrada como nova rodada.
-                              </p>
-                              </div>
-
-                              <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-3xl p-8 lg:p-10 shadow-[0_0_40px_rgba(16,185,129,0.15)]">
-                              <p className="text-lg text-emerald-200 font-medium italic text-center leading-relaxed">
-                                 "O Oráculo não julga intenções. Ele julga resultados. Transmita com precisão. Forje seu império."
-                              </p>
-                              </div>
-                           </div>
-
-                           {/* Espaçamento antes da barra de navegação */}
-                           <div className="h-32 lg:h-40" />
-                        </div>
                         )}
+                    </div>
+                 </div>
 
                  {/* BOTTOM CONTROL BAR - Fixa, sem sobrepor conteúdo */}
                  <footer className="h-16 bg-slate-900 border-t border-white/10 flex items-center justify-between px-10 shrink-0 z-[100] shadow-top-2xl">
