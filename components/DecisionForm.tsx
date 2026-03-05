@@ -368,102 +368,113 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                         {/* STEP 2 - COMERCIAL */}
                         {activeStep === 1 && (
-                        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
                            {/* Cabeçalho do passo */}
-                           <WizardStepHeader 
-                              icon={<Megaphone size={32} />} 
-                              title="Estratégia Comercial" 
-                              desc="Configure preços, prazos de recebimento e investimentos em marketing por região. Decisões impactam diretamente a demanda e margem." 
-                              help="A replicação aplica as configurações da Região 1 para todas as demais."
+                           <WizardStepHeader
+                              icon={<Megaphone size={32} strokeWidth={2.5} />}
+                              title="Estratégia Comercial"
+                              desc="Configure preço unitário, prazo de recebimento e investimento em marketing por região. Essas decisões determinam diretamente a demanda projetada, margem bruta, fluxo de caixa e competitividade no mercado."
+                              help="O botão 'Replicar' aplica as configurações da Região 1 em todas as demais — útil para estratégias uniformes ou testes rápidos."
                            />
 
-                           {/* Configuração global: Juros + Botão replicar */}
-                           <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-10 bg-slate-900/40 p-8 rounded-3xl border border-white/10 shadow-xl">
-                              <div className="w-full lg:w-96 space-y-4">
-                              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-3">
-                                 Juros de Venda a Prazo (%)
-                                 <HelpCircle size={16} className="text-slate-500 hover:text-orange-400 transition-colors cursor-help" />
-                              </label>
-                              <div className="relative">
-                                 <input
+                           {/* Configuração global: Juros de venda a prazo + Replicar */}
+                           <div className="bg-slate-900/60 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
+                              <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-10">
+                              <div className="w-full lg:w-96 space-y-5">
+                                 <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-3">
+                                    Juros de Venda a Prazo (%)
+                                    <HelpCircle size={18} className="text-slate-500 hover:text-orange-400 transition-colors cursor-help" />
+                                 </label>
+                                 <div className="relative">
+                                    <input
                                     type="number"
                                     step="0.01"
                                     min="0"
                                     max="20"
                                     value={decisions.production.term_interest_rate}
                                     onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value) || 0)}
-                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
                                     placeholder="0.00"
-                                 />
-                                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xl font-bold text-orange-400">%</span>
-                              </div>
+                                    />
+                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xl font-bold text-orange-400">%</span>
+                                 </div>
+                                 <p className="text-sm text-slate-400 leading-relaxed">
+                                    Taxa de juros cobrada sobre vendas parceladas. Valores altos aumentam receita financeira, mas reduzem atratividade da oferta e podem diminuir volume de vendas (elasticidade-preço negativa). Ideal manter abaixo de 1.5–2.5% em mercados competitivos.
+                                 </p>
                               </div>
 
                               <button
-                              onClick={replicateInCluster}
-                              disabled={Object.keys(decisions.regions).length <= 1}
-                              className={`
-                                 px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center gap-3 shadow-xl
-                                 ${Object.keys(decisions.regions).length <= 1 
-                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700' 
+                                 onClick={replicateInCluster}
+                                 disabled={Object.keys(decisions.regions).length <= 1}
+                                 className={`
+                                    px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center gap-3 shadow-xl
+                                    ${Object.keys(decisions.regions).length <= 1
+                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
                                     : 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white border border-orange-400/30 active:scale-95'}
-                              `}
+                                 `}
                               >
-                              <RefreshCw size={18} />
-                              Replicar Configuração da Região 1
+                                 <RefreshCw size={18} />
+                                 Replicar Configuração da Região 1
                               </button>
+                              </div>
                            </div>
 
-                           {/* Cards de regiões */}
-                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 xl:gap-10">
+                           {/* Cards por região – com explicações detalhadas */}
+                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-10">
                               {Object.entries(decisions.regions).map(([id, reg]: [string, any]) => (
-                              <div 
-                                 key={id} 
-                                 className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/5 shadow-2xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group"
+                              <div
+                                 key={id}
+                                 className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group"
                               >
                                  <div className="flex justify-between items-center mb-8">
                                     <h4 className="text-xl font-black text-orange-400 uppercase italic tracking-tight">
-                                    {activeArena?.region_names?.[Number(id)-1] || `Região ${id}`}
+                                    {activeArena?.region_names?.[Number(id) - 1] || `Região ${id}`}
                                     </h4>
                                     <Globe size={24} className="text-slate-600 group-hover:text-orange-400 transition-colors" />
                                  </div>
 
-                                 <div className="space-y-8">
-                                    {/* Preço */}
-                                    <div className="space-y-3">
+                                 <div className="space-y-10">
+                                    {/* Preço Unitário */}
+                                    <div className="space-y-4">
                                     <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
                                        Preço Unitário
-                                       <HelpCircle size={14} className="text-slate-500" />
+                                       <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
                                     </label>
                                     <CurrencyInput
                                        value={reg.price}
                                        onChange={v => updateDecision(`regions.${id}.price`, v)}
                                        currency={activeArena?.currency || 'BRL'}
                                     />
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                       Preço de venda por unidade na região. Valores altos aumentam margem unitária, mas reduzem volume vendido (elasticidade-preço). Valores baixos conquistam market share, mas comprimem lucro bruto. Considere custo unitário projetado + markup desejado.
+                                    </p>
                                     </div>
 
-                                    {/* Prazo */}
-                                    <div className="space-y-3">
+                                    {/* Prazo de Recebimento */}
+                                    <div className="space-y-4">
                                     <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
                                        Prazo de Recebimento
-                                       <HelpCircle size={14} className="text-slate-500" />
+                                       <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
                                     </label>
                                     <select
                                        value={reg.term}
                                        onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
                                        className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-lg font-semibold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all appearance-none"
                                     >
-                                       <option value={0}>À vista</option>
-                                       <option value={1}>À vista + 50%</option>
-                                       <option value={2}>À vista + 50% + 50%</option>
+                                       <option value={0}>À vista (imediato)</option>
+                                       <option value={1}>À vista + 50% no próximo round</option>
+                                       <option value={2}>À vista + 50% + 50% (dois rounds)</option>
                                     </select>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                       Condições de pagamento oferecidas ao cliente. Prazos longos aumentam atratividade e volume, mas pioram fluxo de caixa (recebimento atrasado) e elevam risco de inadimplência. À vista preserva liquidez, mas pode limitar vendas em regiões sensíveis a preço.
+                                    </p>
                                     </div>
 
-                                    {/* Marketing */}
-                                    <div className="space-y-3">
+                                    {/* Campanhas de Marketing */}
+                                    <div className="space-y-4">
                                     <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2">
                                        Campanhas de Marketing (0–9)
-                                       <HelpCircle size={14} className="text-slate-500" />
+                                       <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
                                     </label>
                                     <input
                                        type="number"
@@ -474,15 +485,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                           const val = Math.min(9, Math.max(0, parseInt(e.target.value) || 0));
                                           updateDecision(`regions.${id}.marketing`, val);
                                        }}
-                                       className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
+                                       className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
                                     />
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                       Intensidade da campanha publicitária (escala 0–9). Cada ponto aumenta significativamente a demanda potencial, mas consome verba de marketing (custo fixo por região). Retorno decrescente: investir pesado em regiões com alta elasticidade-preço gera mais volume; em mercados saturados, o ganho é menor.
+                                    </p>
                                     </div>
                                  </div>
                               </div>
                               ))}
                            </div>
 
-                           {/* Espaçamento extra antes do próximo step / bottom bar */}
+                           {/* Espaçamento final */}
                            <div className="h-24 lg:h-32" />
                         </div>
                         )}
