@@ -364,93 +364,151 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                         {/* STEP 3 - ATIVOS */}
                         {activeStep === 2 && (
-                           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <WizardStepHeader icon={<Cpu />} title="Ativos & CapEx" desc="Expansão e desinvestimento de parque fabril." />
-                              
-                              {/* INVENTÁRIO ATUAL (MÁQUINAS EXISTENTES NO PXX) */}
-                              <div className="space-y-6">
-                                 <h4 className="text-xs font-black text-white uppercase italic tracking-widest flex items-center gap-2">
-                                    <Warehouse size={16} className="text-blue-400"/> Parque de Máquinas Operacional (P-{round}+)
-                                 </h4>
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {(activeTeam?.kpis?.machines || []).map((m: MachineInstance, idx: number) => {
-                                       const isSold = decisions.machinery.sell_ids?.includes(m.id);
-                                       const spec = currentMacro.machine_specs[m.model];
-                                       // Calculate current depreciated value
-                                       const currentDeprec = m.accumulated_depreciation + (m.acquisition_value / (spec?.useful_life_years || 40));
-                                       const currentValue = Math.max(0, m.acquisition_value - currentDeprec);
+                        <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                           {/* Cabeçalho do passo */}
+                           <WizardStepHeader 
+                              icon={<Cpu size={32} strokeWidth={2.5} />} 
+                              title="Gestão de Ativos & CapEx" 
+                              desc="Analise o parque atual de máquinas e decida sobre expansão (compra) ou desinvestimento (venda). Impacta diretamente capacidade produtiva e depreciação futura." 
+                              help="Máquinas vendidas geram caixa imediato, mas reduzem capacidade no próximo round."
+                           />
 
-                                       return (
-                                          <div key={m.id} className={`bg-slate-900 border transition-all p-6 rounded-2xl flex justify-between items-center group shadow-xl ${isSold ? 'border-rose-500/50 bg-rose-950/10' : 'border-white/10'}`}>
-                                             <div className="flex items-center gap-4">
-                                                <div className={`p-4 rounded-2xl transition-colors ${isSold ? 'bg-rose-600 text-white' : 'bg-white/5 text-blue-400'}`}>
-                                                   <Settings2 size={24}/>
-                                                </div>
-                                                <div>
-                                                   <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Unit {m.id}</span>
-                                                   <span className="text-sm font-black text-white uppercase tracking-tight">{m.model.toUpperCase()} (Idade: {m.age + 1} rounds)</span>
-                                                </div>
-                                             </div>
-                                             <div className="text-right">
-                                                <span className="block text-[8px] font-black text-slate-600 uppercase italic">Valor Contábil Residual</span>
-                                                <div className={`text-sm font-mono font-black mb-4 ${isSold ? 'text-rose-400 line-through' : 'text-emerald-400'}`}>
-                                                   $ {currentValue.toLocaleString()}
-                                                </div>
-                                                <label className="flex items-center gap-2 justify-end cursor-pointer group/check">
-                                                   <span className={`text-[9px] font-black uppercase transition-colors ${isSold ? 'text-rose-500' : 'text-slate-500 group-hover/check:text-rose-500'}`}>
-                                                      {isSold ? 'MARCADA PARA VENDA' : 'VENDER'}
-                                                   </span>
-                                                   <input 
-                                                      type="checkbox" 
-                                                      checked={isSold}
-                                                      onChange={(e) => {
-                                                         const ids = [...(decisions.machinery.sell_ids || [])];
-                                                         if (e.target.checked) {
-                                                            if (!ids.includes(m.id)) ids.push(m.id);
-                                                         } else {
-                                                            const index = ids.indexOf(m.id);
-                                                            if (index > -1) ids.splice(index, 1);
-                                                         }
-                                                         updateDecision('machinery.sell_ids', ids);
-                                                      }}
-                                                      className="w-4 h-4 rounded bg-slate-950 border-white/10 accent-rose-600" 
-                                                   />
-                                                </label>
-                                             </div>
-                                          </div>
-                                       );
-                                    })}
-                                 </div>
+                           {/* Seção 1: Parque de Máquinas Atual (Inventário) */}
+                           <div className="space-y-10">
+                              <div className="flex items-center justify-between">
+                              <h4 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">
+                                 <Warehouse size={28} className="text-blue-400" />
+                                 Parque Operacional Atual (P-{round})
+                              </h4>
+                              <span className="text-sm font-medium text-slate-400 italic">
+                                 {activeTeam?.kpis?.machines?.length || 0} unidades instaladas
+                              </span>
                               </div>
 
-                              {/* ORDENS DE AQUISIÇÃO (COM REAJUSTE MACRO) */}
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                 <AssetCard 
-                                    model="alfa" 
-                                    val={decisions.machinery.buy.alfa} 
-                                    onChange={(v: any)=>updateDecision('machinery.buy.alfa', v)} 
-                                    price={currentMacro.machinery_values.alfa * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_alpha_price_adjust')} 
-                                    spec={currentMacro.machine_specs.alfa}
-                                    disabled={!currentMacro.allow_machine_sale}
-                                 />
-                                 <AssetCard 
-                                    model="beta" 
-                                    val={decisions.machinery.buy.beta} 
-                                    onChange={(v: any)=>updateDecision('machinery.buy.beta', v)} 
-                                    price={currentMacro.machinery_values.beta * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_beta_price_adjust')} 
-                                    spec={currentMacro.machine_specs.beta}
-                                    disabled={!currentMacro.allow_machine_sale}
-                                 />
-                                 <AssetCard 
-                                    model="gama" 
-                                    val={decisions.machinery.buy.gama} 
-                                    onChange={(v: any)=>updateDecision('machinery.buy.gama', v)} 
-                                    price={currentMacro.machinery_values.gama * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_gamma_price_adjust')} 
-                                    spec={currentMacro.machine_specs.gama}
-                                    disabled={!currentMacro.allow_machine_sale}
-                                 />
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+                              {(activeTeam?.kpis?.machines || []).map((m: MachineInstance, idx: number) => {
+                                 const isSold = decisions.machinery.sell_ids?.includes(m.id);
+                                 const spec = currentMacro.machine_specs?.[m.model];
+                                 const currentDeprec = m.accumulated_depreciation + (m.acquisition_value / (spec?.useful_life_years || 40));
+                                 const currentValue = Math.max(0, m.acquisition_value - currentDeprec);
+
+                                 return (
+                                    <motion.div
+                                    key={m.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.08 }}
+                                    className={`
+                                       bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border shadow-xl transition-all duration-300
+                                       ${isSold 
+                                          ? 'border-rose-500/40 bg-rose-950/20 opacity-85' 
+                                          : 'border-white/10 hover:border-blue-500/30 hover:shadow-blue-500/10'}
+                                    `}
+                                    >
+                                    <div className="flex justify-between items-start mb-8">
+                                       <div>
+                                          <span className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">
+                                          Unidade #{m.id}
+                                          </span>
+                                          <h5 className="text-xl font-black text-white uppercase tracking-tight">
+                                          {m.model.toUpperCase()}
+                                          </h5>
+                                          <span className="text-sm text-slate-400 italic">
+                                          Idade: {m.age + 1} {m.age + 1 === 1 ? 'round' : 'rounds'}
+                                          </span>
+                                       </div>
+                                       <div className={`p-4 rounded-2xl ${isSold ? 'bg-rose-600/20' : 'bg-blue-600/10'}`}>
+                                          <Settings2 size={24} className={isSold ? 'text-rose-400' : 'text-blue-400'} />
+                                       </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                       <div className="flex justify-between items-center py-4 border-t border-white/5">
+                                          <span className="text-sm font-medium text-slate-300">Valor Contábil Residual</span>
+                                          <span className={`text-xl font-mono font-bold ${isSold ? 'text-rose-400 line-through opacity-70' : 'text-emerald-400'}`}>
+                                          {formatCurrency(currentValue, activeArena?.currency || 'BRL')}
+                                          </span>
+                                       </div>
+
+                                       <label className="flex items-center justify-end gap-3 cursor-pointer group">
+                                          <span className={`
+                                          text-sm font-semibold uppercase transition-colors
+                                          ${isSold ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}
+                                          `}>
+                                          {isSold ? 'Marcada para Venda' : 'Marcar para Venda'}
+                                          </span>
+                                          <input
+                                          type="checkbox"
+                                          checked={isSold}
+                                          onChange={(e) => {
+                                             const ids = [...(decisions.machinery.sell_ids || [])];
+                                             if (e.target.checked) {
+                                                if (!ids.includes(m.id)) ids.push(m.id);
+                                             } else {
+                                                const index = ids.indexOf(m.id);
+                                                if (index > -1) ids.splice(index, 1);
+                                             }
+                                             updateDecision('machinery.sell_ids', ids);
+                                          }}
+                                          className="w-5 h-5 rounded border-2 border-slate-600 accent-rose-600 bg-slate-950 checked:bg-rose-600"
+                                          />
+                                       </label>
+                                    </div>
+                                    </motion.div>
+                                 );
+                              })}
                               </div>
                            </div>
+
+                           {/* Seção 2: Ordens de Aquisição (Novas Máquinas) */}
+                           <div className="space-y-10 pt-12 border-t border-white/10">
+                              <div className="flex items-center justify-between">
+                              <h4 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">
+                                 <Plus size={28} className="text-emerald-400" />
+                                 Novas Ordens de Compra
+                              </h4>
+                              {currentMacro.allow_machine_sale ? (
+                                 <span className="px-5 py-2 bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-sm font-semibold text-emerald-300">
+                                    Mercado de Máquinas Aberto
+                                 </span>
+                              ) : (
+                                 <span className="px-5 py-2 bg-rose-600/20 border border-rose-500/30 rounded-xl text-sm font-semibold text-rose-300">
+                                    Compras Bloqueadas neste Round
+                                 </span>
+                              )}
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
+                              <AssetCard
+                                 model="alfa"
+                                 val={decisions.machinery.buy.alfa}
+                                 onChange={(v: number) => updateDecision('machinery.buy.alfa', v)}
+                                 price={currentMacro.machinery_values.alfa * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_alpha_price_adjust')}
+                                 spec={currentMacro.machine_specs.alfa}
+                                 disabled={!currentMacro.allow_machine_sale}
+                              />
+                              <AssetCard
+                                 model="beta"
+                                 val={decisions.machinery.buy.beta}
+                                 onChange={(v: number) => updateDecision('machinery.buy.beta', v)}
+                                 price={currentMacro.machinery_values.beta * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_beta_price_adjust')}
+                                 spec={currentMacro.machine_specs.beta}
+                                 disabled={!currentMacro.allow_machine_sale}
+                              />
+                              <AssetCard
+                                 model="gama"
+                                 val={decisions.machinery.buy.gama}
+                                 onChange={(v: number) => updateDecision('machinery.buy.gama', v)}
+                                 price={currentMacro.machinery_values.gama * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_gamma_price_adjust')}
+                                 spec={currentMacro.machine_specs.gama}
+                                 disabled={!currentMacro.allow_machine_sale}
+                              />
+                              </div>
+                           </div>
+
+                           {/* Espaçamento final antes do próximo step ou barra de navegação */}
+                           <div className="h-24 lg:h-32" />
+                        </div>
                         )}
 
                         {/* STEP 4 - SUPRIMENTOS */}
