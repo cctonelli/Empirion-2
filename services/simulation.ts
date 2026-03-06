@@ -182,21 +182,79 @@ export const calculateProjections = (
   const totalValueInInventory = prevStockValue + totalCPP;
   const wacUnit = totalQtyForSale > 0 ? totalValueInInventory / totalQtyForSale : unitCPP;
 
-  // Demanda e Vendas
-  const firstRegionId = Object.keys(decision.regions || {})[0] || 1;
-  const price = sanitize(decision.regions?.[Number(firstRegionId)]?.price, 425);
-  // Algoritmo de demanda simples para o Cockpit
-  const priceIndex = indicators.avg_selling_price / price;
-  const unitsSold = Math.min(totalQtyForSale, Math.floor((capacity * 0.8) * priceIndex * (1 + (indicators.demand_variation / 100))));
+  // --- 4. DEMANDA E VENDAS POR REGIÃO ---
+  let totalUnitsSold = 0;
+  let totalRevenue = 0;
+  let totalCashSales = 0;
+  let totalCreditSales = 0;
+  let totalMarketingExp = 0;
+
+  const regions = Object.entries(decision.regions || {});
+  const regionCount = regions.length || 1;
+  const baseDemandPerRegion = (capacity * 0.8) / regionCount;
+
+  regions.forEach(([id, reg]: [string, any]) => {
+    const regPrice = sanitize(reg.price, 425);
+    const regMarketing = sanitize(reg.marketing, 0);
+    const regTerm = sanitize(reg.term, 0); // 0: A VISTA, 1: A VISTA + 50%, 2: A VISTA + 33% + 33%
+
+    // Marketing Expense (GGF Comercial)
+    totalMarketingExp += regMarketing * indicators.prices.marketing_campaign * (sanitize(indicators.marketing_campaign_adjust, 0) / 100 + 1);
+
+    // Algoritmo de Demanda Regional
+    const priceIndex = indicators.avg_selling_price / regPrice;
+    const marketingIndex = 1 + (regMarketing * 0.08); // +8% por ponto de marketing
+    const termIndex = 1 + (regTerm * 0.05); // +5% por nível de prazo (incentivo comercial)
+    
+    let regDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (indicators.demand_variation / 100)));
+    
+    // Limitar pelo estoque disponível (distribuição simples)
+    const regUnitsSold = Math.min(regDemand, Math.floor(totalQtyForSale / regionCount)); 
+    totalUnitsSold += regUnitsSold;
+
+    const regRevenue = regUnitsSold * regPrice;
+    totalRevenue += regRevenue;
+
+    // Mix de Prazo (User Request: A VISTA; A VISTA + 50%; A VISTA + 33% + 33%)
+    let cashPercent = 1;
+    if (regTerm === 1) cashPercent = 0.5;
+    if (regTerm === 2) cashPercent = 0.3333;
+
+    totalCashSales += regRevenue * cashPercent;
+    totalCreditSales += regRevenue * (1 - cashPercent);
+  });
+
+  // Ajuste final se o total vendido ultrapassar o estoque real (segurança)
+  if (totalUnitsSold > totalQtyForSale) {
+    const ratio = totalQtyForSale / totalUnitsSold;
+    totalUnitsSold = totalQtyForSale;
+    totalRevenue *= ratio;
+    totalCashSales *= ratio;
+    totalCreditSales *= ratio;
+  }
 
   // CPV (Custo do Produto Vendido)
-  const totalCPV = unitsSold * wacUnit;
-  const closingStockPA = totalQtyForSale - unitsSold;
+  const totalCPV = totalUnitsSold * wacUnit;
+  const closingStockPA = totalQtyForSale - totalUnitsSold;
   const closingStockValuePA = closingStockPA * wacUnit;
 
   // --- 5. RESULTADOS FINANCEIROS ---
-  const revenue = unitsSold * price;
-  const opex = 160000 * inflationMult; // Despesas fixas sob inflação
+  const revenue = totalRevenue;
+  
+  // PECLD (Inadimplência) - Apenas sobre vendas a prazo (User Request)
+  const defaultRate = (sanitize(indicators.customer_default_rate, 2.5) / 100);
+  const badDebtExp = totalCreditSales * defaultRate;
+
+  // OPEX reajustado + Marketing + Inadimplência
+  const prevOpexSales = Math.abs(findAccountValue(prevStatements.dre, 'opex.sales') || 873250);
+  const prevOpexAdm = Math.abs(findAccountValue(prevStatements.dre, 'opex.adm') || 216000);
+  const prevOpexRd = Math.abs(findAccountValue(prevStatements.dre, 'opex.rd') || 41844);
+
+  const currentOpexSales = (prevOpexSales * inflationMult) + totalMarketingExp;
+  const currentOpexAdm = prevOpexAdm * inflationMult;
+  const currentOpexRd = prevOpexRd * inflationMult;
+
+  const opex = currentOpexSales + currentOpexAdm + currentOpexRd + badDebtExp;
   
   // Juros e Amortização (Diferenciação Normal vs Compulsório)
   const prevLoansST = findAccountValue(prevBS, 'liabilities.current.loans_st');
@@ -219,10 +277,14 @@ export const calculateProjections = (
 
   const operatingProfit = revenue - totalCPV - opex;
   const lair = operatingProfit - interestExp - machineSalesLoss;
-  const netProfit = lair > 0 ? lair * 0.75 : lair; 
+  const netProfit = lair > 0 ? lair * (1 - (sanitize(indicators.tax_rate_ir, 25) / 100)) : lair; 
   
-  // Fluxo de Caixa ANTES do novo compulsório
-  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + revenue - totalCPV - opex + machineSalesInflow - machinePurchaseOutflow - interestExp - totalAmortization;
+  // Fluxo de Caixa (DFC)
+  // Recebimento = Vendas à Vista (Atual) + Recebimento de Clientes (Anterior)
+  const prevClients = findAccountValue(prevBS, 'assets.current.clients');
+  const cashInflowFromSales = totalCashSales + prevClients;
+
+  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales - totalCPV - opex + machineSalesInflow - machinePurchaseOutflow - interestExp - totalAmortization;
   
   // Liberação Automática de Empréstimo Compulsório (Strategos Core)
   let newCompulsoryLoan = 0;
@@ -237,6 +299,8 @@ export const calculateProjections = (
   const bsValues = {
     'assets.current.cash': finalCash,
     'assets.current.stock.pa': closingStockValuePA,
+    'assets.current.clients': totalCreditSales,
+    'assets.current.pecld': -badDebtExp,
     'assets.noncurrent.fixed.machines': totalMachineryCost,
     'assets.noncurrent.fixed.machines_deprec': -totalMachineryDeprec,
     'assets.noncurrent.fixed.buildings_deprec': -newBuildingsDeprecAccum,
@@ -289,7 +353,7 @@ export const calculateProjections = (
   const solvencyIndex = totalLiabilities > 0 ? totalAssets / totalLiabilities : 5;
 
   // NLCDG (Necessidade Líquida de Capital de Giro)
-  const accountsReceivable = revenue * 0.6; // Estimativa: 60% das vendas a prazo
+  const accountsReceivable = totalCreditSales; 
   const inventoryValue = closingStockValuePA;
   const accountsPayable = (totalMP + maintenance) * 0.4; // Estimativa: 40% dos custos a prazo
   const nlcdg = (accountsReceivable + inventoryValue) - accountsPayable;
@@ -348,10 +412,13 @@ export const calculateProjections = (
   const finExp = Math.abs(findAccountValue(prevStatements.dre, 'fin.exp') || 2500);
   const interestCoverage = finExp > 0 ? operatingProfit / finExp : 100;
 
+  const weightedAvgPrice = totalUnitsSold > 0 ? totalRevenue / totalUnitsSold : indicators.avg_selling_price;
+  const priceIndex = indicators.avg_selling_price / weightedAvgPrice;
+
   // Elasticidade-Preço (Comparativo com round anterior)
   const prevPrice = team.kpis?.last_price || indicators.avg_selling_price;
-  const priceChange = (price - prevPrice) / prevPrice;
-  const demandChange = (unitsSold - (team.kpis?.last_units_sold || unitsSold)) / (team.kpis?.last_units_sold || unitsSold || 1);
+  const priceChange = (weightedAvgPrice - prevPrice) / prevPrice;
+  const demandChange = (totalUnitsSold - (team.kpis?.last_units_sold || totalUnitsSold)) / (team.kpis?.last_units_sold || totalUnitsSold || 1);
   const priceElasticity = priceChange !== 0 ? Math.abs(demandChange / priceChange) : 1;
 
   // Landed Cost e CAC Regional
@@ -360,13 +427,13 @@ export const calculateProjections = (
   
   Object.entries(decision.regions || {}).forEach(([id, reg]: [string, any]) => {
     const regId = Number(id);
-    const regUnits = unitsSold; // Simplificado: assume venda proporcional ou total na primeira região no cockpit
+    const regUnits = totalUnitsSold / (Object.keys(decision.regions || {}).length || 1); 
     regionalCac[regId] = regUnits > 0 ? sanitize(reg.marketing, 0) / regUnits : 0;
     landedCosts[regId] = unitCPP + (regionalCac[regId] * 1.2); // Adiciona margem de logística/tarifas
   });
 
   // Pegada de Carbono (0.8kg CO2 por unidade + logística)
-  const carbonFootprint = (unitsProduced * 0.8) + (unitsSold * 0.2);
+  const carbonFootprint = (unitsProduced * 0.8) + (totalUnitsSold * 0.2);
 
   // Cálculo de Market Share Projetado (Sensibilidade a Preço e Marketing)
   const marketingInvestment = sanitize(Object.values(decision.regions || {})[0]?.marketing, 0);
@@ -381,6 +448,10 @@ export const calculateProjections = (
       dre: injectValues(JSON.parse(JSON.stringify(prevStatements.dre)), { 
         'rev': revenue, 
         'cpv': -totalCPV, 
+        'opex.sales': -currentOpexSales,
+        'opex.adm': -currentOpexAdm,
+        'opex.rd': -currentOpexRd,
+        'opex.bad_debt': -badDebtExp,
         'operating_profit': operatingProfit,
         'fin.exp': -interestExp,
         'non_op.rev': totalAwards,
@@ -388,10 +459,13 @@ export const calculateProjections = (
         'final_profit': finalNetProfit 
       }),
       cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
+        'cf.inflow.cash_sales': totalCashSales,
+        'cf.inflow.term_sales': prevClients,
         'cf.inflow.machine_sales': machineSalesInflow,
         'cf.inflow.awards': totalAwards,
         'cf.inflow.compulsory': newCompulsoryLoan,
         'cf.outflow.machine_buy': -machinePurchaseOutflow,
+        'cf.outflow.opex': currentOpexSales + currentOpexAdm + currentOpexRd,
         'cf.outflow.interest': -interestExp,
         'cf.outflow.amortization': -totalAmortization,
         'cf.final': finalCashWithAwards 
@@ -436,9 +510,9 @@ export const calculateProjections = (
       price_elasticity: priceElasticity,
       regional_cac: regionalCac,
       carbon_footprint: carbonFootprint,
-      last_price: price,
-      last_units_sold: unitsSold,
-      markup: wacUnit > 0 ? (price / wacUnit) - 1 : 0,
+      last_price: weightedAvgPrice,
+      last_units_sold: totalUnitsSold,
+      markup: (wacUnit > 0 && totalUnitsSold > 0) ? ((totalRevenue / totalUnitsSold) / wacUnit) - 1 : 0,
       market_share: projectedMarketShare, 
       share_price: totalEquity / 72000,
       avg_receivable_days: pmr,
@@ -449,11 +523,11 @@ export const calculateProjections = (
       compulsory_loan_interest_paid: totalCompulsoryCost,
 
       // E-SDS v1.1 Inputs
-      fco_livre: (operatingProfit + periodDepreciation) - maintenance - interestExp - (lair > 0 ? lair * 0.25 : 0),
+      fco_livre: (operatingProfit + periodDepreciation) - maintenance - interestExp - (lair > 0 ? lair * (sanitize(indicators.tax_rate_ir, 25) / 100) : 0),
       capex_manutencao: maintenance,
       capex_estrategico: machinePurchaseOutflow,
       juros_pagos: interestExp,
-      impostos_pagos: lair > 0 ? lair * 0.25 : 0,
+      impostos_pagos: lair > 0 ? lair * (sanitize(indicators.tax_rate_ir, 25) / 100) : 0,
       passivo_circulante: currentLiabilities,
       despesas_operacionais_projetadas_proxima_rodada: opex * 1.05, // Projeção conservadora
       receita_liquida: revenue,
@@ -466,7 +540,7 @@ export const calculateProjections = (
       despesas_operacionais_diarias: opex / 30,
       passivo_total: totalLiabilities,
       pl: totalEquity,
-      percentual_divida_curto_prazo: totalLiabilities > 0 ? (currentLiabilities / totalLiabilities) * 100 : 0,
+      percentual_divida_curto_prazo: totalLiabilities > 0 ? (currentLiabilities / totalLiabilities) * 100 : 100,
 
       // Indicadores de Moeda e Tarifas (v18.8)
       brl_rate: indicators.BRL || 1,

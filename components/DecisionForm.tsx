@@ -535,9 +535,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                        onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
                                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-base text-white outline-none focus:border-orange-500 transition-all appearance-none"
                                     >
-                                       <option value={0}>À vista</option>
-                                       <option value={1}>+50% próximo round</option>
-                                       <option value={2}>+50% +50% (2 rounds)</option>
+                                       <option value={0}>A VISTA</option>
+                                       <option value={1}>A VISTA + 50%</option>
+                                       <option value={2}>A VISTA + 33% + 33%</option>
                                     </select>
                                     </div>
 

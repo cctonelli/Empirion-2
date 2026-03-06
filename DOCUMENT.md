@@ -151,3 +151,12 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
   - Adição de colunas `esds_gargalo` e `esds_insights` para diagnósticos via IA.
   - Diferenciação entre CapEx de Manutenção e Estratégico no cálculo de fluxo de caixa livre.
 - **Status:** Em produção.
+
+### v2026-03.1 - Refinamento de PECLD e Mix de Prazo
+- **Data:** Março de 2026
+- **Motivo:** Ajuste na lógica de inadimplência (PECLD) para incidir apenas sobre vendas a prazo e inclusão de mix regional de recebimento (A VISTA, 50%, 33%+33%).
+- **Diferenças:**
+  - PECLD agora é calculado exclusivamente sobre a parcela de vendas a prazo (Credit Sales).
+  - Implementação de 3 termos de recebimento por região: A VISTA (100% caixa), A VISTA + 50% (50% caixa), A VISTA + 33% + 33% (33% caixa).
+  - Atualização do motor de simulação (`simulation.ts`) para processar vendas e fluxo de caixa de forma regionalizada.
+- **Status:** Em produção.
