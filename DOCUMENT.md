@@ -160,3 +160,14 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
   - Implementação de 3 termos de recebimento por região: A VISTA (100% caixa), A VISTA + 50% (50% caixa), A VISTA + 33% + 33% (33% caixa).
   - Atualização do motor de simulação (`simulation.ts`) para processar vendas e fluxo de caixa de forma regionalizada.
 - **Status:** Em produção.
+
+### v2026-03.2 - Financiamento BDI e Ativos Fabris
+- **Data:** Março de 2026
+- **Motivo:** Implementação de regras específicas para aquisição/venda de máquinas, financiamento BDI e impacto de treinamento na produtividade.
+- **Diferenças:**
+  - **Financiamento BDI:** 4 rounds de carência (apenas juros) + 4 rounds de amortização (principal + juros). Implementada a **mutação de parcelas**, onde o principal a vencer no próximo round é reclassificado de Longo Prazo para Curto Prazo no Balanço Patrimonial.
+  - **Venda de Máquinas:** Deságio lançado como Despesa Não Operacional; entrada de caixa líquida no DFC.
+  - **Aquisição de Máquinas:** Efeito **imediato** na produção; novas máquinas já contribuem para a capacidade fabril no mesmo round da compra.
+  - **Treinamento:** Investimento obrigatório para novas máquinas; penalidade de 25% na produtividade se investimento < 5%.
+  - **Capacidade:** Restrição de produção baseada na disponibilidade de operadores vs necessidade das máquinas.
+- **Status:** Em produção.

@@ -143,7 +143,8 @@ export interface Loan {
   term: number;
   remaining_rounds: number;
   interest_rate: number;
-  type: 'compulsory' | 'normal';
+  type: 'compulsory' | 'normal' | 'bdi';
+  grace_period_remaining?: number;
 }
 
 export interface Team {

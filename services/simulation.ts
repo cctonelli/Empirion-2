@@ -39,10 +39,10 @@ const findAccountValue = (nodes: AccountNode[], id: string): number => {
 };
 
 // Injeta novos valores na árvore, recalculando totalizadores
-const injectValues = (tree: AccountNode[], values: Record<string, number>): AccountNode[] => {
+const injectValues = (tree: AccountNode[], values: Record<string, number>, zeroOut: boolean = false): AccountNode[] => {
   return tree.map(node => {
-    let newVal = values[node.id] !== undefined ? values[node.id] : node.value;
-    let newChildren = node.children ? injectValues(node.children, values) : undefined;
+    let newVal = values[node.id] !== undefined ? values[node.id] : (zeroOut ? 0 : node.value);
+    let newChildren = node.children ? injectValues(node.children, values, zeroOut) : undefined;
     
     if (node.type === 'totalizer' && newChildren) {
       newVal = newChildren.reduce((sum, child) => {
@@ -84,23 +84,19 @@ export const calculateProjections = (
   let machineSalesInflow = 0;
   let machineSalesLoss = 0;
   let machinePurchaseOutflow = 0;
-  let newLoansST = 0;
-  let newLoansLT = 0;
-
+  let newBdiLoanAmount = 0;
+  
   // A. PROCESSAR VENDAS (SELL_IDS)
   const sellIds = decision.machinery?.sell_ids || [];
+  const desagioVenda = (sanitize(indicators.machine_sale_discount, 10) / 100);
+  
   if (sellIds.length > 0) {
     currentMachines = currentMachines.filter(m => {
       if (sellIds.includes(m.id)) {
-        const spec = indicators.machine_specs[m.model];
-        // Depreciação do período para a máquina vendida (pro-rata)
-        const depVal = m.acquisition_value / (spec?.useful_life_years || 40);
-        const bookValue = Math.max(0, m.acquisition_value - (m.accumulated_depreciation + depVal));
-        
-        // Venda por 80% do valor contábil (exemplo de perda estratégica)
-        const salePrice = bookValue * 0.8; 
+        const bookValue = Math.max(0, m.acquisition_value - m.accumulated_depreciation);
+        const salePrice = bookValue * (1 - desagioVenda); 
         machineSalesInflow += salePrice;
-        machineSalesLoss += (bookValue - salePrice);
+        machineSalesLoss += (bookValue - salePrice); // Deságio considerado como perda não operacional
         return false;
       }
       return true;
@@ -119,9 +115,8 @@ export const calculateProjections = (
       const totalCost = unitPrice * qty;
       
       machinePurchaseOutflow += totalCost;
-      // Financiamento padrão: 20% Curto Prazo, 80% Longo Prazo
-      newLoansST += totalCost * 0.2;
-      newLoansLT += totalCost * 0.8;
+      // Financiamento BDI: 100% Longo Prazo (Regra: 4 carência + 4 amortização)
+      newBdiLoanAmount += totalCost;
 
       for (let i = 0; i < qty; i++) {
         currentMachines.push({
@@ -129,18 +124,26 @@ export const calculateProjections = (
           model: model as MachineModel,
           age: 0,
           acquisition_value: unitPrice,
-          accumulated_depreciation: 0
+          accumulated_depreciation: 0 // Depreciação começa no PRÓXIMO período
         });
       }
     }
   });
 
-  // C. ATUALIZAR IDADE E DEPRECIAÇÃO DAS MÁQUINAS QUE FICARAM
+  // C. ATUALIZAR IDADE E DEPRECIAÇÃO DAS MÁQUINAS QUE FICARAM (Apenas as que já existiam no início do round)
+  const existingMachineIds = (team.kpis?.machines || []).map(m => m.id);
   currentMachines = currentMachines.map(m => {
+    const isNew = !existingMachineIds.includes(m.id);
     const spec = indicators.machine_specs[m.model];
     const depVal = m.acquisition_value / (spec?.useful_life_years || 40);
-    periodDepreciation += depVal;
-    return { ...m, age: m.age + 1, accumulated_depreciation: m.accumulated_depreciation + depVal };
+    
+    // Depreciação já começa a ser computada sobre a nova aquisição a partir do PRÓXIMO período
+    // Então aqui só depreciamos se NÃO for nova
+    if (!isNew) {
+      periodDepreciation += depVal;
+      return { ...m, age: m.age + 1, accumulated_depreciation: m.accumulated_depreciation + depVal };
+    }
+    return { ...m, age: m.age + 1 };
   });
 
   // D. VALOR TOTAL DO IMOBILIZADO (MÁQUINAS)
@@ -157,11 +160,30 @@ export const calculateProjections = (
   // --- 3. CÁLCULO DO CPP (CUSTO DO PRODUTO PRODUZIDO) ---
   const capacity = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0);
   const activityLevel = sanitize(decision.production?.activityLevel, 100) / 100;
-  const unitsProduced = Math.floor(capacity * activityLevel);
 
-  // Mão de Obra Direta (MOD) reajustada por inflação
+  // Verificação de Operadores vs Capacidade
+  const operatorsAvailable = (team.kpis?.staffing?.production || 470) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
   const operatorsRequired = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.operators_required || 0), 0);
-  const totalMOD = (operatorsRequired * currentSalary * socialChargesAttr) * activityLevel;
+  
+  // Mão de Obra Direta (MOD) reajustada por inflação
+  const payrollMOD = operatorsRequired * currentSalary * activityLevel;
+  const socialChargesMOD = payrollMOD * (socialChargesAttr - 1);
+  const totalMOD = payrollMOD + socialChargesMOD;
+
+  // Se faltar operador, a capacidade efetiva é reduzida proporcionalmente
+  const operatorConstraint = operatorsRequired > 0 ? Math.min(1, operatorsAvailable / operatorsRequired) : 1;
+  const effectiveCapacity = capacity * operatorConstraint;
+  
+  // Impacto de Treinamento na Produtividade
+  // Se comprou máquinas novas e investiu pouco em treinamento (< 5%), penaliza produtividade
+  const boughtNew = machinePurchaseOutflow > 0;
+  const trainingPercent = sanitize(decision.hr?.trainingPercent, 0);
+  const trainingPenalty = (boughtNew && trainingPercent < 5) ? 0.75 : 1; // 25% de perda se não treinar
+  
+  // Custo de Treinamento (Baseado na folha da fábrica)
+  const trainingCost = payrollMOD * (trainingPercent / 100);
+
+  const unitsProduced = Math.floor(effectiveCapacity * activityLevel * trainingPenalty);
 
   // Matéria-Prima Consumida (Com reajuste específico de MP A/B e consumo 3:2)
   const totalMP = (unitsProduced * 3 * mpaPrice) + (unitsProduced * 2 * mpbPrice);
@@ -245,46 +267,101 @@ export const calculateProjections = (
   const defaultRate = (sanitize(indicators.customer_default_rate, 2.5) / 100);
   const badDebtExp = totalCreditSales * defaultRate;
 
+  // Suprimentos (Pagamento a Fornecedores)
+  const purchaseMPA = sanitize(decision.production?.purchaseMPA, 0);
+  const purchaseMPB = sanitize(decision.production?.purchaseMPB, 0);
+  const totalPurchaseMP = (purchaseMPA * mpaPrice) + (purchaseMPB * mpbPrice);
+
+  // Distribuição e Estocagem
+  const distributionCost = totalUnitsSold * indicators.prices.distribution_unit * (1 + (sanitize(indicators.distribution_cost_adjust, 0) / 100));
+  const currentMPAStock = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA - (unitsProduced * 3);
+  const currentMPBStock = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB - (unitsProduced * 2);
+  const storageCost = (closingStockPA * indicators.prices.storage_finished) + (Math.max(0, currentMPAStock) * indicators.prices.storage_mp) + (Math.max(0, currentMPBStock) * indicators.prices.storage_mp);
+
   // OPEX reajustado + Marketing + Inadimplência
   const prevOpexSales = Math.abs(findAccountValue(prevStatements.dre, 'opex.sales') || 873250);
   const prevOpexAdm = Math.abs(findAccountValue(prevStatements.dre, 'opex.adm') || 216000);
   const prevOpexRd = Math.abs(findAccountValue(prevStatements.dre, 'opex.rd') || 41844);
 
-  const currentOpexSales = (prevOpexSales * inflationMult) + totalMarketingExp;
+  const currentOpexSales = (prevOpexSales * inflationMult) + totalMarketingExp + distributionCost + storageCost;
   const currentOpexAdm = prevOpexAdm * inflationMult;
   const currentOpexRd = prevOpexRd * inflationMult;
 
-  const opex = currentOpexSales + currentOpexAdm + currentOpexRd + badDebtExp;
+  const opex = currentOpexSales + currentOpexAdm + currentOpexRd + badDebtExp + trainingCost;
   
-  // Juros e Amortização (Diferenciação Normal vs Compulsório)
-  const prevLoansST = findAccountValue(prevBS, 'liabilities.current.loans_st');
-  const prevCashFlow = team.kpis?.statements?.cash_flow || [];
-  const prevCompulsoryLoan = findAccountValue(prevCashFlow, 'cf.inflow.compulsory');
-  const prevNormalLoans = Math.max(0, prevLoansST - prevCompulsoryLoan);
+  // Juros e Amortização (Diferenciação Normal vs Compulsório vs BDI)
+  const prevLoans = (team.kpis?.loans || []) as any[];
+  let totalInterestExp = 0;
+  let totalAmortization = 0;
+  const currentLoans: any[] = [];
 
-  // Custos do Empréstimo Compulsório (Sempre pago no round seguinte)
-  const compulsoryInterest = prevCompulsoryLoan * (sanitize(indicators.interest_rate_tr, 2) / 100);
-  const compulsoryAgio = prevCompulsoryLoan * (sanitize(indicators.compulsory_loan_agio, 3) / 100);
-  const totalCompulsoryCost = compulsoryInterest + compulsoryAgio;
-  const compulsoryRepayment = prevCompulsoryLoan;
+  // Processar Empréstimos Existentes
+  prevLoans.forEach(loan => {
+    let interest = loan.amount * (loan.interest_rate / 100);
+    let amort = 0;
 
-  // Custos de Empréstimos Normais
-  const normalInterest = (prevNormalLoans + newLoansST) * (sanitize(indicators.interest_rate_tr, 2) / 100);
-  const normalAmortization = prevNormalLoans * 0.1; // Amortiza 10% do saldo normal anterior
+    if (loan.type === 'bdi') {
+      if (loan.grace_period_remaining > 0) {
+        // Carência: paga apenas juros
+        amort = 0;
+        loan.grace_period_remaining -= 1;
+      } else {
+        // Amortização: principal + juros (Amortização Constante baseada nos rounds restantes)
+        amort = loan.amount / loan.remaining_rounds;
+      }
+    } else if (loan.type === 'normal') {
+      amort = loan.amount * 0.1; // 10% padrão
+    } else if (loan.type === 'compulsory') {
+      amort = loan.amount; // Compulsório paga tudo no round seguinte
+      interest = loan.amount * (sanitize(indicators.interest_rate_tr, 2) / 100) + (loan.amount * (sanitize(indicators.compulsory_loan_agio, 3) / 100));
+    }
 
-  const interestExp = normalInterest + totalCompulsoryCost;
-  const totalAmortization = normalAmortization + compulsoryRepayment;
+    totalInterestExp += interest;
+    totalAmortization += amort;
+    
+    const remaining = loan.amount - amort;
+    if (remaining > 0.01 && loan.remaining_rounds > 1) {
+      currentLoans.push({
+        ...loan,
+        amount: remaining,
+        remaining_rounds: loan.remaining_rounds - 1
+      });
+    }
+  });
 
+  // Adicionar Novo Empréstimo BDI se houve compra
+  if (newBdiLoanAmount > 0) {
+    currentLoans.push({
+      id: `L-BDI-${Math.random().toString(36).substr(2, 5)}`,
+      type: 'bdi',
+      amount: newBdiLoanAmount,
+      interest_rate: sanitize(indicators.interest_rate_tr, 2),
+      term: 8,
+      remaining_rounds: 8,
+      grace_period_remaining: 4
+    });
+  }
+
+  const interestExp = totalInterestExp;
   const operatingProfit = revenue - totalCPV - opex;
   const lair = operatingProfit - interestExp - machineSalesLoss;
-  const netProfit = lair > 0 ? lair * (1 - (sanitize(indicators.tax_rate_ir, 25) / 100)) : lair; 
   
+  const taxRate = (sanitize(indicators.tax_rate_ir, 25) / 100);
+  const taxProv = lair > 0 ? lair * taxRate : 0;
+  const netProfit = lair - taxProv;
+  
+  const dividendPercent = (sanitize(indicators.dividend_percent, 25) / 100);
+  const dividends = netProfit > 0 ? netProfit * dividendPercent : 0;
+
   // Fluxo de Caixa (DFC)
   // Recebimento = Vendas à Vista (Atual) + Recebimento de Clientes (Anterior)
   const prevClients = findAccountValue(prevBS, 'assets.current.clients');
   const cashInflowFromSales = totalCashSales + prevClients;
 
-  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales - totalCPV - opex + machineSalesInflow - machinePurchaseOutflow - interestExp - totalAmortization;
+  // Total Outflows para cálculo de caixa
+  const totalOutflows = totalPurchaseMP + totalMOD + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + dividends + trainingCost;
+
+  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow - totalOutflows;
   
   // Liberação Automática de Empréstimo Compulsório (Strategos Core)
   let newCompulsoryLoan = 0;
@@ -296,6 +373,26 @@ export const calculateProjections = (
   const finalCash = cashBeforeCompulsory;
 
   // --- 6. ATUALIZAÇÃO DA ESTRUTURA CONTÁBIL ---
+  let totalLoansST = newCompulsoryLoan;
+  let totalLoansLT = 0;
+
+  currentLoans.forEach(l => {
+    if (l.type === 'bdi') {
+      // Mutação BDI: Próxima parcela de principal vai para Curto Prazo
+      if (l.grace_period_remaining === 0) {
+        const nextAmort = l.amount / l.remaining_rounds;
+        totalLoansST += nextAmort;
+        totalLoansLT += (l.amount - nextAmort);
+      } else {
+        // Ainda em carência, o principal só vira ST quando o próximo round for de amortização
+        totalLoansLT += l.amount;
+      }
+    } else {
+      // Outros empréstimos (Normal, Compulsório) são tratados como ST
+      totalLoansST += l.amount;
+    }
+  });
+
   const bsValues = {
     'assets.current.cash': finalCash,
     'assets.current.stock.pa': closingStockValuePA,
@@ -304,8 +401,8 @@ export const calculateProjections = (
     'assets.noncurrent.fixed.machines': totalMachineryCost,
     'assets.noncurrent.fixed.machines_deprec': -totalMachineryDeprec,
     'assets.noncurrent.fixed.buildings_deprec': -newBuildingsDeprecAccum,
-    'liabilities.current.loans_st': prevNormalLoans + newLoansST - normalAmortization + newCompulsoryLoan,
-    'liabilities.longterm.loans_lt': findAccountValue(prevBS, 'liabilities.longterm.loans_lt') + newLoansLT,
+    'liabilities.current.loans_st': totalLoansST,
+    'liabilities.longterm.loans_lt': totalLoansLT,
     'equity.profit': netProfit
   };
 
@@ -457,25 +554,37 @@ export const calculateProjections = (
         'non_op.rev': totalAwards,
         'non_op.exp': -machineSalesLoss,
         'final_profit': finalNetProfit 
-      }),
+      }, true),
       cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
+        'cf.start': sanitize(team.kpis?.current_cash, 0),
         'cf.inflow.cash_sales': totalCashSales,
         'cf.inflow.term_sales': prevClients,
         'cf.inflow.machine_sales': machineSalesInflow,
         'cf.inflow.awards': totalAwards,
         'cf.inflow.compulsory': newCompulsoryLoan,
+        'cf.outflow.payroll': -payrollMOD,
+        'cf.outflow.social_charges': -socialChargesMOD,
+        'cf.outflow.rd': -currentOpexRd,
+        'cf.outflow.marketing': -totalMarketingExp,
+        'cf.outflow.training': -trainingCost,
+        'cf.outflow.distribution': -distributionCost,
+        'cf.outflow.storage': -storageCost,
+        'cf.outflow.suppliers': -totalPurchaseMP,
         'cf.outflow.machine_buy': -machinePurchaseOutflow,
-        'cf.outflow.opex': currentOpexSales + currentOpexAdm + currentOpexRd,
+        'cf.outflow.maintenance': -maintenance,
         'cf.outflow.interest': -interestExp,
         'cf.outflow.amortization': -totalAmortization,
+        'cf.outflow.taxes': -taxProv,
+        'cf.outflow.dividends': -dividends,
         'cf.final': finalCashWithAwards 
-      }),
+      }, true),
       balance_sheet: finalBSWithAwards
     },
     kpis: {
       ...team.kpis,
       current_cash: finalCashWithAwards,
       machines: currentMachines,
+      loans: currentLoans,
       stock_quantities: { 
         mp_a: (team.kpis?.stock_quantities?.mp_a || 0) + sanitize(decision.production?.purchaseMPA, 0) - (unitsProduced * 3), 
         mp_b: (team.kpis?.stock_quantities?.mp_b || 0) + sanitize(decision.production?.purchaseMPB, 0) - (unitsProduced * 2), 
@@ -520,7 +629,7 @@ export const calculateProjections = (
       
       // KPIs de Empréstimo Compulsório
       compulsory_loan_balance: newCompulsoryLoan,
-      compulsory_loan_interest_paid: totalCompulsoryCost,
+      compulsory_loan_interest_paid: interestExp,
 
       // E-SDS v1.1 Inputs
       fco_livre: (operatingProfit + periodDepreciation) - maintenance - interestExp - (lair > 0 ? lair * (sanitize(indicators.tax_rate_ir, 25) / 100) : 0),

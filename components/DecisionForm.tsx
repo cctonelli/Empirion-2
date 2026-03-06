@@ -590,21 +590,21 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <div className="space-y-2">
                                  <span className="font-semibold text-emerald-300">Financiamento BDI (novas máquinas)</span>
                                  <p className="leading-relaxed">
-                                    Carência de 4 rounds (paga apenas juros) + 4 rounds amortizando principal + juros. Taxa definida no macro. Ideal para expansão sem comprometer caixa imediato.
+                                    Carência de 4 rounds (paga apenas juros) + 4 rounds amortizando principal + juros. Taxa definida no período. Ideal para expansão sem comprometer caixa imediato.
                                  </p>
                               </div>
 
                               <div className="space-y-2">
                                  <span className="font-semibold text-emerald-300">Operadores necessários</span>
                                  <p className="leading-relaxed">
-                                    Cada máquina nova exige {currentMacro?.operators_per_machine || '~1.8–2.2'} operadores por unidade. Verifique saldo de RH → pode exigir contratações ou demissões.
+                                    Cada máquina nova exige um número específico de operadores por unidade. Verifique saldo de RH → pode exigir contratações ou demissões.
                                  </p>
                               </div>
 
                               <div className="space-y-2">
                                  <span className="font-semibold text-emerald-300">Treinamento obrigatório</span>
                                  <p className="leading-relaxed">
-                                    Máquina de modelo novo → equipe precisa de treinamento (investimento em % da folha ou valor fixo). Sem treinamento → produtividade inicial reduzida em 20–40%.
+                                    Máquina de modelo novo → equipe precisa de treinamento (investimento em % da folha de pagamento da fábrica). Sem treinamento → produtividade inicial reduzida em 20–40%.
                                  </p>
                               </div>
 
