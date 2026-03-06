@@ -124,6 +124,15 @@ export interface KPIs {
   compulsory_loan_balance?: number;
   compulsory_loan_interest_paid?: number;
   share_price?: number;
+  esds?: {
+    raw: number;
+    display: number;
+    zone: 'Azul' | 'Verde' | 'Amarelo' | 'Laranja' | 'Vermelho';
+    main_drivers: string[];
+    gargalo_principal?: string;
+    warnings: string[];
+    gemini_insights: string;
+  };
   [key: string]: any;
 }
 
@@ -375,6 +384,7 @@ export interface TutorTeamView {
     display: number;
     zone: 'Azul' | 'Verde' | 'Amarelo' | 'Laranja' | 'Vermelho';
     main_drivers: string[];
+    gargalo_principal?: string;
     warnings: string[];
     gemini_insights: string;
   };

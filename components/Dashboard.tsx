@@ -127,7 +127,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
             neg={currentKpis.esds?.zone === 'Laranja' || currentKpis.esds?.zone === 'Vermelho'}
             icon={<Gauge size={16}/>} 
-            tooltip={currentKpis.esds?.gemini_insights}
+            tooltip={`${currentKpis.esds?.gargalo_principal ? `Gargalo: ${currentKpis.esds.gargalo_principal} | ` : ''}${currentKpis.esds?.gemini_insights || ''}`}
          />
          <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend="Cycle" pos icon={<Box size={16}/>} />
          <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend="Current" pos icon={<Activity size={16}/>} />

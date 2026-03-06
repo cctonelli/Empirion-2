@@ -346,67 +346,67 @@ export const calculateESDS = async (
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Você é o analista financeiro especialista do Empirion, uma plataforma de simulação empresarial multiplayer gamificada (modernizada para 2026 com foco Brasil/global). Seu papel é calcular e interpretar o E-SDS v1.1 (Empirion Solvency Dynamics Score versão 1.1), um modelo proprietário de solvência dinâmica superior a Kanitz e Altman clássico, pois prioriza fluxo de caixa real, dinâmica de rodadas, recorrência e volatilidade — ideal para ambientes voláteis e simulados.
+      contents: `Você é o motor de diagnóstico financeiro do Empirion. Calcule e interprete o E-SDS v1.1 (Empirion Solvency Dynamics Score versão 1.1), modelo proprietário de solvência dinâmica focado em fluxo de caixa real, dinâmica de rodadas e diferenciação entre estratégia e erro.
 
-O E-SDS v1.1 mede a resiliência financeira de uma empresa/equipe em rodadas discretas do campeonato. Fórmula base (score bruto, sem clip inicial):
-
+Fórmula base (score bruto, sem clip inicial):
 E-SDS_raw = (4.0 × Pilar1) + (3.0 × Pilar2_refinado) + (2.0 × Pilar3) + (1.5 × Pilar4) – (2.5 × Pilar5) – (1.0 × Pilar6)
 
-Pilares detalhados (calcular com média móvel das últimas 3 rodadas disponíveis para reduzir ruído; se menos de 3 rodadas, usar as disponíveis):
+Cálculos usam média móvel das últimas 3 rodadas (ou as disponíveis se menos de 3).
+
+Pilares refinados v1.1:
 
 1. Geração de Caixa Operacional Líquida (Peso 4.0)  
    FCO_Livre / (Passivo_Circulante + Despesas_Operacionais_Projetadas_Proxima_Rodada)  
    - FCO_Livre = Caixa_Operacional - CapEx_Manutenção - Juros_Pagos - Impostos_Pagos  
-   - CapEx total = CapEx_Manutenção (obrigatório para operações) + CapEx_Estratégico/Expansão (flag no state ou decisão da equipe; NÃO deduzir CapEx_Estratégico se >30% do total e tutor marcou como "investimento aprovado" via config).  
-   - Threshold ideal: >1.2 (cobre curto prazo + margem).  
+   - CapEx total = CapEx_Manutenção (obrigatório para operações) + CapEx_Estratégico/Expansão (flag no state ou decisão da equipe).  
+   - NÃO deduzir CapEx_Estratégico se for >30% do total e houver indicação de investimento estratégico.  
    - Se FCO_Livre negativo majoritariamente por CapEx_Estratégico, marcar como "investimento fase" no output (não punir como prejuízo operacional).
 
-2. Sustentabilidade do Crescimento Alavancado (Peso 3.0) – refinado v1.1  
+2. Sustentabilidade do Crescimento Alavancado (Peso 3.0)  
    (Δ_Receita_Líquida_% média 3 rodadas) / (Custo_Médio_Dívida × Alavancagem_Efetiva)  
-   - Custo_Médio_Dívida = Juros_Totais / Dívida_Média  
-   - Alavancagem_Efetiva = Dívida_Líquida / max(EBITDA, 0.01)   [ou fallback: Dívida_Total / max(PL, 0.01 × Ativo_Total) se PL ≤ 0 para evitar divisão por zero ou inversão]  
-   - Se PL ≤ 0, adicionar warning "Equity wipeout detectado – risco crítico".
+   - Alavancagem_Efetiva = Dívida_Líquida / max(EBITDA, 0.01)
+   - Se PL ≤ 0, use fallback: Dívida_Total / max(abs(PL), 0.01) e adicione warning "Equity wipeout detectado – risco crítico".
 
 3. Margem de Segurança Bruta + Recorrência (Peso 2.0)  
    (EBITDA + Receita_Recorrente_Projetada) / Receita_Total  
-   - Receita_Recorrente: % de vendas com contratos longos/fidelidade alta (definido no config jsonb do championship para branch 'services' ou 'SaaS-like'; default 0 se não configurado).  
-   - Threshold bom: >0.25–0.35 dependendo do ramo.
+   - Threshold ideal: >0.25.
 
 4. Eficiência de Giro de Caixa – Dias de Caixa Operacional (Peso 1.5)  
    Dias_Caixa = (Caixa + Aplicações) / (Despesas_Operacionais_Diárias)  
-   - Score normalizado: 10 × (1 - exp(-Dias_Caixa / 60))   [assintótico para >180 dias]  
-   - <30 dias = alerta forte; >90 dias = "seguro de vida".
+   - Score normalizado: 10 × (1 - exp(-Dias_Caixa / 60))
 
 5. Penalizador de Alavancagem Excessiva (Peso -2.5)  
    max(0, (Passivo_Total / max(PL, 1)) - 3.0) × (1 + %_Dívida_Curto_Prazo)  
-   - Se PL ≤ 0, multiplicar penalidade por 1.5 (equity negativo amplifica risco).
+   - Se PL ≤ 0, multiplicar penalidade por 1.5.
 
 6. Penalizador de Volatilidade de Caixa (Peso -1.0)  
-   Coeficiente_Variação_FCO (std dev / média das últimas 4 rodadas) × 0.5  
-   - Alta volatilidade (>0.8) pune mesmo com média positiva (ex: má gestão sazonal no agronegócio).
+   Coeficiente_Variação_FCO (std dev / média das últimas 4 rodadas) × 0.5
 
-Classificação Semáforo (baseada em E-SDS_raw):
-- Azul: ≥8.0 → Resiliência Elite (suporta crises 30-40%)
-- Verde: 5.5–7.9 → Saudável (monitorar alavancagem/volatilidade)
-- Amarelo: 3.0–5.4 → Estresse (risco alto em 2-3 rodadas sem correção)
-- Laranja: 1.5–2.9 → Perigo Iminente (intervenção urgente)
-- Vermelho: <1.5 → Insolvência Provável na próxima rodada (falência auto se não bailout)
+Classificação Semáforo:
+- Azul: ≥8.0 → Resiliência Elite
+- Verde: 5.5–7.9 → Saudável
+- Amarelo: 3.0–5.4 → Estresse
+- Laranja: 1.5–2.9 → Perigo Iminente
+- Vermelho: <1.5 → Insolvência Provável
 
-Input de dados (extraídos do state jsonb em companies table, round atual e anteriores via Supabase realtime):
+Identifique o gargalo_principal (o pilar com maior contribuição negativa ou menor contribuição positiva relativa ao peso) e mapeie para uma das categorias: 'Operacional', 'Financeiro', 'Estrutural', 'Estratégico'.
+
+Input de dados:
 ${JSON.stringify(inputData)}
 
 Output obrigatório em formato JSON:
 {
   "esds_raw": number,
-  "esds_display": number (clip 0-10 apenas para gauge UI),
+  "esds_display": number (clip 0-10 para UI),
   "zone": "Azul/Verde/Amarelo/Laranja/Vermelho",
   "main_drivers": ["string"],
+  "gargalo_principal": "Operacional/Financeiro/Estrutural/Estratégico",
   "warnings": ["string"],
   "gemini_insights": "string"
-}`,
+} (Retorne APENAS o JSON)`,
       config: {
         responseMimeType: "application/json",
-        temperature: 0.2
+        temperature: 0.1
       }
     });
 
@@ -416,6 +416,7 @@ Output obrigatório em formato JSON:
       display: result.esds_display,
       zone: result.zone,
       main_drivers: result.main_drivers,
+      gargalo_principal: result.gargalo_principal,
       warnings: result.warnings,
       gemini_insights: result.gemini_insights
     };

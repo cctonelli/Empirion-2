@@ -14,6 +14,7 @@ import {
 import { saveDecisions, getChampionships, supabase, getTeamSimulationHistory } from '../services/supabase';
 import { DecisionData, Branch, Championship, MachineModel, MacroIndicators, Team, MachineInstance } from '../types';
 import { calculateProjections, sanitize, getCumulativeAdjust } from '../services/simulation';
+import { calculateESDS } from '../services/gemini';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM, INITIAL_MACHINES_P00 } from '../constants';
@@ -42,6 +43,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [showStrategicHub, setShowStrategicHub] = useState(false);
   const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic' | 'gazette'>('dre');
   const [history, setHistory] = useState<any[]>([]);
+  const [isCalculatingESDS, setIsCalculatingESDS] = useState(false);
+  const [projectedESDS, setProjectedESDS] = useState<any>(null);
 
   const [decisions, setDecisions] = useState<DecisionData>({
     judicial_recovery: false,
@@ -144,6 +147,19 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     finally { setIsSaving(false); }
   };
 
+  const handleSimulateESDS = async () => {
+    if (!projections || !activeArena) return;
+    setIsCalculatingESDS(true);
+    try {
+      const res = await calculateESDS(round, activeArena.branch, projections.kpis, history);
+      setProjectedESDS(res);
+    } catch (err) {
+      console.error("ESDS Projection Fault", err);
+    } finally {
+      setIsCalculatingESDS(false);
+    }
+  };
+
   if (isLoadingDraft) return (
     <div className="h-full flex flex-col items-center justify-center bg-slate-950/20 rounded-[3rem]">
       <Loader2 className="animate-spin text-orange-600 mb-4" size={48} />
@@ -166,6 +182,22 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             <div className="flex items-center gap-4">
                <QuickKpi label="EBITDA Projetado" val={formatCurrency(projections?.kpis?.ebitda || 0, activeArena?.currency || 'BRL')} icon={<Zap size={12}/>} color="text-orange-400" />
                <QuickKpi label="Caixa Final T+1" val={formatCurrency(projections?.statements?.cash_flow?.final || 0, activeArena?.currency || 'BRL')} icon={<Coins size={12}/>} color="text-emerald-400" />
+               <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded-xl border border-white/5">
+                  <div className="flex flex-col">
+                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">E-SDS Projetado</span>
+                     <span className={`text-xs font-black ${projectedESDS ? (projectedESDS.zone === 'Azul' || projectedESDS.zone === 'Verde' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}`}>
+                        {isCalculatingESDS ? 'Calculando...' : projectedESDS ? `${projectedESDS.display.toFixed(1)} (${projectedESDS.zone})` : '---'}
+                     </span>
+                  </div>
+                  <button 
+                    onClick={handleSimulateESDS} 
+                    disabled={isCalculatingESDS || !projections}
+                    className="p-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-all disabled:opacity-50"
+                    title="Simular E-SDS com IA"
+                  >
+                    <Sparkles size={12} className={isCalculatingESDS ? 'animate-spin' : ''} />
+                  </button>
+               </div>
             </div>
          </div>
 
@@ -537,17 +569,68 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                         {/* STEP 3 - ATIVOS */}
                         {activeStep === 2 && (
-                        <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="space-y-12 lg:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
                            {/* Cabeçalho do passo */}
-                           <WizardStepHeader 
-                              icon={<Cpu size={32} strokeWidth={2.5} />} 
-                              title="Gestão de Ativos & CapEx" 
-                              desc="Analise o parque atual de máquinas e decida sobre expansão (compra) ou desinvestimento (venda). Impacta diretamente capacidade produtiva e depreciação futura." 
-                              help="Máquinas vendidas geram caixa imediato, mas reduzem capacidade no próximo round."
+                           <WizardStepHeader
+                              icon={<Cpu size={32} strokeWidth={2.5} />}
+                              title="Gestão de Ativos & CapEx"
+                              desc="Analise o parque atual e decida sobre expansão (compra) ou desinvestimento (venda). Cada máquina nova exige operadores, treinamento e pode ter reajustes progressivos."
+                              help="Venda gera caixa imediato (com deságio), mas reduz capacidade. Compra nova pode ser financiada via BDI com carência."
                            />
 
-                           {/* Seção 1: Parque de Máquinas Atual (Inventário) */}
-                           <div className="space-y-10">
+                           {/* Ajuda estratégica centralizada – aparece uma única vez */}
+                           <div className="bg-slate-900/60 backdrop-blur-sm p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
+                              <h5 className="text-lg font-black text-orange-400 uppercase tracking-wide mb-6 flex items-center gap-3">
+                              <Info size={20} /> Informações essenciais para decisões de CapEx
+                              </h5>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm text-slate-300">
+                              <div className="space-y-2">
+                                 <span className="font-semibold text-emerald-300">Financiamento BDI (novas máquinas)</span>
+                                 <p className="leading-relaxed">
+                                    Carência de 4 rounds (paga apenas juros) + 4 rounds amortizando principal + juros. Taxa definida no macro. Ideal para expansão sem comprometer caixa imediato.
+                                 </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                 <span className="font-semibold text-emerald-300">Operadores necessários</span>
+                                 <p className="leading-relaxed">
+                                    Cada máquina nova exige {currentMacro?.operators_per_machine || '~1.8–2.2'} operadores por unidade. Verifique saldo de RH → pode exigir contratações ou demissões.
+                                 </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                 <span className="font-semibold text-emerald-300">Treinamento obrigatório</span>
+                                 <p className="leading-relaxed">
+                                    Máquina de modelo novo → equipe precisa de treinamento (investimento em % da folha ou valor fixo). Sem treinamento → produtividade inicial reduzida em 20–40%.
+                                 </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                 <span className="font-semibold text-rose-300">Deságio na venda</span>
+                                 <p className="leading-relaxed">
+                                    Definido pelo tutor: <strong>{currentMacro?.machine_sale_discount || 0}%</strong> ({currentMacro?.machine_sale_discount_label || 'DESÁGIO VENDA MÁQUINAS'}). Valor líquido recebido = valor contábil × (1 - deságio).
+                                 </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                 <span className="font-semibold text-orange-300">Reajustes de preço</span>
+                                 <p className="leading-relaxed">
+                                    Máquinas novas sofrem reajuste acumulado por round. Varia por modelo (ver valores abaixo). Ajuste é cumulativo desde o round inicial.
+                                 </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                 <span className="font-semibold text-slate-300">Disponibilidade</span>
+                                 <p className="leading-relaxed">
+                                    Nem todo round permite compra. Status atual: <strong>{currentMacro.allow_machine_sale ? 'Disponível' : 'Bloqueado neste round'}</strong>.
+                                 </p>
+                              </div>
+                              </div>
+                           </div>
+
+                           {/* Seção 1: Parque Atual */}
+                           <div className="space-y-8">
                               <div className="flex items-center justify-between">
                               <h4 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">
                                  <Warehouse size={28} className="text-blue-400" />
@@ -558,36 +641,38 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </span>
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                               {(activeTeam?.kpis?.machines || []).map((m: MachineInstance, idx: number) => {
                                  const isSold = decisions.machinery.sell_ids?.includes(m.id);
                                  const spec = currentMacro.machine_specs?.[m.model];
                                  const currentDeprec = m.accumulated_depreciation + (m.acquisition_value / (spec?.useful_life_years || 40));
                                  const currentValue = Math.max(0, m.acquisition_value - currentDeprec);
+                                 const desagio = currentMacro?.machine_sale_discount || 0;
+                                 const valorVendaLiquida = currentValue * (1 - desagio / 100);
 
                                  return (
                                     <motion.div
                                     key={m.id}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: idx * 0.08 }}
+                                    transition={{ delay: idx * 0.06 }}
                                     className={`
-                                       bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border shadow-xl transition-all duration-300
+                                       bg-slate-900/70 backdrop-blur-sm p-6 rounded-3xl border transition-all duration-300
                                        ${isSold 
-                                          ? 'border-rose-500/40 bg-rose-950/20 opacity-85' 
-                                          : 'border-white/10 hover:border-blue-500/30 hover:shadow-blue-500/10'}
+                                          ? 'border-rose-500/50 bg-rose-950/20' 
+                                          : 'border-white/10 hover:border-blue-500/30'}
                                     `}
                                     >
-                                    <div className="flex justify-between items-start mb-8">
+                                    <div className="flex justify-between items-start mb-6">
                                        <div>
                                           <span className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">
                                           Unidade #{m.id}
                                           </span>
-                                          <h5 className="text-xl font-black text-white uppercase tracking-tight">
+                                          <h5 className="text-lg font-black text-white uppercase tracking-tight">
                                           {m.model.toUpperCase()}
                                           </h5>
                                           <span className="text-sm text-slate-400 italic">
-                                          Idade: {m.age + 1} {m.age + 1 === 1 ? 'round' : 'rounds'}
+                                          Idade: {m.age + 1} round{m.age + 1 !== 1 ? 's' : ''}
                                           </span>
                                        </div>
                                        <div className={`p-4 rounded-2xl ${isSold ? 'bg-rose-600/20' : 'bg-blue-600/10'}`}>
@@ -595,19 +680,23 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                        </div>
                                     </div>
 
-                                    <div className="space-y-6">
-                                       <div className="flex justify-between items-center py-4 border-t border-white/5">
-                                          <span className="text-sm font-medium text-slate-300">Valor Contábil Residual</span>
-                                          <span className={`text-xl font-mono font-bold ${isSold ? 'text-rose-400 line-through opacity-70' : 'text-emerald-400'}`}>
+                                    <div className="space-y-4 text-sm">
+                                       <div className="flex justify-between border-t border-white/5 pt-3">
+                                          <span className="text-slate-300">Valor Contábil Residual</span>
+                                          <span className={`font-mono font-bold ${isSold ? 'text-rose-400 line-through opacity-70' : 'text-emerald-400'}`}>
                                           {formatCurrency(currentValue, activeArena?.currency || 'BRL')}
                                           </span>
                                        </div>
 
-                                       <label className="flex items-center justify-end gap-3 cursor-pointer group">
-                                          <span className={`
-                                          text-sm font-semibold uppercase transition-colors
-                                          ${isSold ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}
-                                          `}>
+                                       {isSold && (
+                                          <div className="flex justify-between text-rose-300">
+                                          <span>Valor Líquido Após Deságio ({desagio}%)</span>
+                                          <span className="font-bold">{formatCurrency(valorVendaLiquida, activeArena?.currency || 'BRL')}</span>
+                                          </div>
+                                       )}
+
+                                       <label className="flex items-center justify-end gap-3 cursor-pointer group pt-2">
+                                          <span className={`text-sm font-semibold uppercase transition-colors ${isSold ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}`}>
                                           {isSold ? 'Marcada para Venda' : 'Marcar para Venda'}
                                           </span>
                                           <input
@@ -623,7 +712,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                              }
                                              updateDecision('machinery.sell_ids', ids);
                                           }}
-                                          className="w-5 h-5 rounded border-2 border-slate-600 accent-rose-600 bg-slate-950 checked:bg-rose-600"
+                                          className="w-5 h-5 rounded border-2 border-slate-600 accent-rose-600 bg-slate-950"
                                           />
                                        </label>
                                     </div>
@@ -633,8 +722,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </div>
                            </div>
 
-                           {/* Seção 2: Ordens de Aquisição (Novas Máquinas) */}
-                           <div className="space-y-10 pt-12 border-t border-white/10">
+                           {/* Seção 2: Novas Ordens de Compra */}
+                           <div className="space-y-8 pt-10 border-t border-white/10">
                               <div className="flex items-center justify-between">
                               <h4 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">
                                  <Plus size={28} className="text-emerald-400" />
@@ -642,7 +731,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </h4>
                               {currentMacro.allow_machine_sale ? (
                                  <span className="px-5 py-2 bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-sm font-semibold text-emerald-300">
-                                    Mercado de Máquinas Aberto
+                                    Mercado Aberto
                                  </span>
                               ) : (
                                  <span className="px-5 py-2 bg-rose-600/20 border border-rose-500/30 rounded-xl text-sm font-semibold text-rose-300">
@@ -651,7 +740,32 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               )}
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
+                              {/* Exibição dos reajustes atuais por modelo */}
+                              <div className="bg-slate-950/60 p-6 rounded-2xl border border-white/5 text-sm">
+                              <h6 className="text-orange-400 font-semibold mb-4">Reajustes acumulados atuais (para novas compras):</h6>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                 <div>
+                                    <span className="text-slate-400">Alfa:</span>{' '}
+                                    <span className="font-mono text-orange-300">
+                                    +{((getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_alpha_price_adjust') - 1) * 100).toFixed(1)}%
+                                    </span>
+                                 </div>
+                                 <div>
+                                    <span className="text-slate-400">Beta:</span>{' '}
+                                    <span className="font-mono text-orange-300">
+                                    +{((getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_beta_price_adjust') - 1) * 100).toFixed(1)}%
+                                    </span>
+                                 </div>
+                                 <div>
+                                    <span className="text-slate-400">Gama:</span>{' '}
+                                    <span className="font-mono text-orange-300">
+                                    +{((getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_gamma_price_adjust') - 1) * 100).toFixed(1)}%
+                                    </span>
+                                 </div>
+                              </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
                               <AssetCard
                                  model="alfa"
                                  val={decisions.machinery.buy.alfa}
@@ -679,8 +793,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </div>
                            </div>
 
-                           {/* Espaçamento final antes do próximo step ou barra de navegação */}
-                           <div className="h-24 lg:h-32" />
+                           {/* Espaçamento final */}
+                           <div className="h-20 lg:h-28" />
                         </div>
                         )}
 
@@ -1576,17 +1690,17 @@ const AssetCard = ({ model, val, onChange, price, spec, disabled }: any) => (
            <div className="grid grid-cols-1 gap-2 pt-2 border-t border-white/5">
               <div className="flex items-center gap-2">
                  <Users size={12} className="text-slate-500" />
-                 <span className="text-[12px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operators required</span>
+                 <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operators required</span>
               </div>
               <div className="flex items-center gap-2">
                  <Zap size={12} className="text-slate-500" />
-                 <span className="text-[12px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} units capacity</span>
+                 <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} units capacity</span>
               </div>
            </div>
         )}
      </div>
      <div className="pt-6 space-y-4">
-        <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic ml-2">COMPRAR (Qtd)</label>
+        <label className="text-[14px] font-black text-slate-500 uppercase tracking-widest italic ml-2">COMPRAR (Qtd)</label>
         <input 
           type="number" 
           min="0" 

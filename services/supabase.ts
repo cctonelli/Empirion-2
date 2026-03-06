@@ -17,7 +17,7 @@ import {
   RegionConfig,
   Modality
 } from '../types';
-import { generateBotDecision } from './gemini';
+import { generateBotDecision, calculateESDS } from './gemini';
 import { calculateProjections } from './simulation';
 import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
@@ -185,8 +185,33 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     liquidity_current: 1.5,
     solvency_index: 2.0,
     inventory_turnover: 0,
-    carbon_footprint: 0
+    carbon_footprint: 0,
+    // E-SDS v1.1 Inputs for P0
+    fco_livre: 208387.77 - 50000 - 2500 - 14871, // EBITDA - Manutencao - Juros - IR (estimado P0)
+    capex_manutencao: 50000,
+    capex_estrategico: 0,
+    juros_pagos: 2500,
+    impostos_pagos: 14871,
+    passivo_circulante: 2240991.80,
+    despesas_operacionais_projetadas_proxima_rodada: 1149623.86,
+    receita_liquida: 4184440.05,
+    custo_medio_divida: 2500 / 2240991.80,
+    alavancagem_efetiva: 2240991.80 / 208387.77,
+    divida_liquida: 2240991.80 - currentCash,
+    receita_recorrente_projetada: 0,
+    caixa: currentCash,
+    aplicacoes: 0,
+    despesas_operacionais_diarias: 1149623.86 / 30,
+    passivo_total: 2240991.80,
+    pl: equity,
+    percentual_divida_curto_prazo: 100
   };
+
+  // Calculate initial E-SDS for P0
+  const p0Esds = await calculateESDS(0, config.branch || 'industrial', initialKpis, []);
+  if (p0Esds) {
+    (initialKpis as any).esds = p0Esds;
+  }
 
   const teamsWithChamp = teams.map(t => ({ ...t, championship_id: champ.id, kpis: initialKpis, equity: initialKpis.equity }));
   const { data: createdTeams, error: teamsError } = await supabase.from(teamsTable).insert(teamsWithChamp).select();
@@ -221,7 +246,11 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     liquidity_current: 1.5,
     solvency_index: 2.0,
     inventory_turnover: 0,
-    carbon_footprint: 0
+    carbon_footprint: 0,
+    esds_score: p0Esds?.display || 0,
+    esds_zone: p0Esds?.zone || 'Verde',
+    esds_gargalo: p0Esds?.gargalo_principal,
+    esds_insights: p0Esds?.gemini_insights
   }));
   
   await supabase.from(historyTable).insert(historyEntries);
@@ -380,6 +409,19 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
                 const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, competitiveIndicators, team);
                 
+                // 3.1 Calcular E-SDS v1.1 via Gemini
+                const { data: previousRounds } = await supabase
+                  .from(historyTable)
+                  .select('*')
+                  .eq('team_id', team.id)
+                  .order('round', { ascending: false })
+                  .limit(3);
+
+                const esdsResult = await calculateESDS(nextRound, champ.branch, res.kpis, previousRounds || []);
+                if (esdsResult) {
+                  res.kpis.esds = esdsResult;
+                }
+
                 // Cálculo de Market Share Competitivo (Relativo aos outros)
                 const teamPrice = (Object.values(finalDecision.regions || {})[0] as any)?.price || avgPrice;
                 const teamMarketing = (Object.values(finalDecision.regions || {})[0] as any)?.marketing || 0;
@@ -430,6 +472,13 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 solvency_index: item.res.kpis.solvency_index || 0,
                 inventory_turnover: item.res.kpis.inventory_turnover || 0,
                 carbon_footprint: item.res.kpis.carbon_footprint || 0,
+                fco_livre: item.res.kpis.fco_livre || 0,
+                capex_manutencao: item.res.kpis.capex_manutencao || 0,
+                capex_estrategico: item.res.kpis.capex_estrategico || 0,
+                esds_score: item.res.kpis.esds?.display || 0,
+                esds_zone: item.res.kpis.esds?.zone || 'ALERTA',
+                esds_gargalo: item.res.kpis.esds?.gargalo_principal,
+                esds_insights: item.res.kpis.esds?.gemini_insights,
                 market_share: competitiveShare
             });
 

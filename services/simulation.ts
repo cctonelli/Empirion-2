@@ -448,6 +448,26 @@ export const calculateProjections = (
       compulsory_loan_balance: newCompulsoryLoan,
       compulsory_loan_interest_paid: totalCompulsoryCost,
 
+      // E-SDS v1.1 Inputs
+      fco_livre: (operatingProfit + periodDepreciation) - maintenance - interestExp - (lair > 0 ? lair * 0.25 : 0),
+      capex_manutencao: maintenance,
+      capex_estrategico: machinePurchaseOutflow,
+      juros_pagos: interestExp,
+      impostos_pagos: lair > 0 ? lair * 0.25 : 0,
+      passivo_circulante: currentLiabilities,
+      despesas_operacionais_projetadas_proxima_rodada: opex * 1.05, // Projeção conservadora
+      receita_liquida: revenue,
+      custo_medio_divida: totalLiabilities > 0 ? interestExp / totalLiabilities : 0,
+      alavancagem_efetiva: (totalLiabilities - finalCashWithAwards) / Math.max(operatingProfit + periodDepreciation, 0.01),
+      divida_liquida: totalLiabilities - finalCashWithAwards,
+      receita_recorrente_projetada: branch === 'services' ? revenue * 0.4 : 0,
+      caixa: finalCashWithAwards,
+      aplicacoes: 0, 
+      despesas_operacionais_diarias: opex / 30,
+      passivo_total: totalLiabilities,
+      pl: totalEquity,
+      percentual_divida_curto_prazo: totalLiabilities > 0 ? (currentLiabilities / totalLiabilities) * 100 : 0,
+
       // Indicadores de Moeda e Tarifas (v18.8)
       brl_rate: indicators.BRL || 1,
       gbp_rate: indicators.GBP || 0,
