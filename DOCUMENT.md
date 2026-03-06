@@ -168,6 +168,12 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
   - **Financiamento BDI:** 4 rounds de carência (apenas juros) + 4 rounds de amortização (principal + juros). Implementada a **mutação de parcelas**, onde o principal a vencer no próximo round é reclassificado de Longo Prazo para Curto Prazo no Balanço Patrimonial.
   - **Venda de Máquinas:** Deságio lançado como Despesa Não Operacional; entrada de caixa líquida no DFC.
   - **Aquisição de Máquinas:** Efeito **imediato** na produção; novas máquinas já contribuem para a capacidade fabril no mesmo round da compra.
+  - **E-SDS v1.2:** Refinamento do motor de diagnóstico financeiro:
+    - **Pesos Dinâmicos:** Pesos de Alavancagem e Volatilidade agora variam por setor (Indústria/Agro vs Serviços/SaaS).
+    - **Threshold Hard:** Se Dívida Líquida / EBITDA > 6.0, o score é forçado para zona de perigo (Laranja/Vermelho).
+    - **Top Gargalos:** Identificação dos 3 principais detratores do score no dashboard.
+    - **Pedagogia:** Insights traduzidos para linguagem simples e direta.
+    - **Consistência:** Tratamento de dados faltantes com flag de "estimado".
   - **Treinamento:** Investimento obrigatório para novas máquinas; penalidade de 25% na produtividade se investimento < 5%.
   - **Capacidade:** Restrição de produção baseada na disponibilidade de operadores vs necessidade das máquinas.
 - **Status:** Em produção.

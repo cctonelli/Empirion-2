@@ -341,68 +341,51 @@ export const calculateESDS = async (
       round: currentRound,
       branch: branch,
       state: currentState,
-      previous_rounds: previousRounds
+      previous_rounds: previousRounds,
+      // Default values for consistency (User Request v1.2)
+      receita_recorrente_projetada: currentState.receita_recorrente_projetada || 0,
+      capex_estrategico: currentState.capex_estrategico || 0,
+      is_estimated: (!currentState.receita_recorrente_projetada || !currentState.capex_estrategico)
     };
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Você é o motor de diagnóstico financeiro do Empirion. Calcule e interprete o E-SDS v1.1 (Empirion Solvency Dynamics Score versão 1.1), modelo proprietário de solvência dinâmica focado em fluxo de caixa real, dinâmica de rodadas e diferenciação entre estratégia e erro.
+      contents: `Você é o motor de diagnóstico financeiro do Empirion. Calcule e interprete o E-SDS v1.2 (Empirion Solvency Dynamics Score versão 1.2), focado em fluxo de caixa real e solvência dinâmica.
 
-Fórmula base (score bruto, sem clip inicial):
-E-SDS_raw = (4.0 × Pilar1) + (3.0 × Pilar2_refinado) + (2.0 × Pilar3) + (1.5 × Pilar4) – (2.5 × Pilar5) – (1.0 × Pilar6)
+Fórmula Base (E-SDS_raw):
+E-SDS_raw = (4.0 × Pilar1) + (3.0 × Pilar2) + (2.0 × Pilar3) + (1.5 × Pilar4) + (PesoP5 × Pilar5) + (PesoP6 × Pilar6)
 
-Cálculos usam média móvel das últimas 3 rodadas (ou as disponíveis se menos de 3).
+Ajustes Setoriais (Branch-Specific Weights):
+- Industrial/Agro: PesoP5 = -3.2 | PesoP6 = -1.5
+- Services/SaaS: PesoP5 = -2.0 | PesoP6 = -0.8
+- Default: PesoP5 = -3.0 | PesoP6 = -1.0
 
-Pilares refinados v1.1:
+Pilares v1.2:
+1. Geração de Caixa Operacional Líquida (Peso 4.0): FCO_Livre / (Passivo_Circulante + Despesas_Projetadas). FCO_Livre = Caixa_Op - CapEx_Manut - Juros - Impostos. Não punir CapEx_Estratégico se for investimento de expansão.
+2. Sustentabilidade do Crescimento (Peso 3.0): (Δ_Receita_Líquida_% / (Custo_Dívida × Alavancagem_Efetiva)). Se Alavancagem > 6, aplicar threshold de risco crítico.
+3. Margem de Segurança + Recorrência (Peso 2.0): (EBITDA + Receita_Recorrente) / Receita_Total.
+4. Eficiência de Giro (Peso 1.5): 10 × (1 - exp(-Dias_Caixa / 60)).
+5. Penalizador de Alavancagem (Peso Variável): max(0, (Passivo_Total / PL) - 3.0) × (1 + %_Dívida_Curto_Prazo).
+6. Penalizador de Volatilidade (Peso Variável): Coeficiente de Variação do FCO nas últimas 4 rodadas.
 
-1. Geração de Caixa Operacional Líquida (Peso 4.0)  
-   FCO_Livre / (Passivo_Circulante + Despesas_Operacionais_Projetadas_Proxima_Rodada)  
-   - FCO_Livre = Caixa_Operacional - CapEx_Manutenção - Juros_Pagos - Impostos_Pagos  
-   - CapEx total = CapEx_Manutenção (obrigatório para operações) + CapEx_Estratégico/Expansão (flag no state ou decisão da equipe).  
-   - NÃO deduzir CapEx_Estratégico se for >30% do total e houver indicação de investimento estratégico.  
-   - Se FCO_Livre negativo majoritariamente por CapEx_Estratégico, marcar como "investimento fase" no output (não punir como prejuízo operacional).
+REGRAS CRÍTICAS v1.2:
+- Threshold Hard: Se Dívida Líquida / EBITDA > 6.0, a zona deve ser obrigatoriamente Laranja ou Vermelho, independente do score total.
+- Clipping: esds_display deve ser clipado entre 0 e 10 para a UI.
+- Pedagogia: Traduza conceitos complexos (Pilar 2) para linguagem simples nos insights. Ex: "Seu crescimento não cobre o custo do dinheiro".
+- Dados Faltantes: Se is_estimated for true, mencione "Baseado em dados parciais (estimado)".
 
-2. Sustentabilidade do Crescimento Alavancado (Peso 3.0)  
-   (Δ_Receita_Líquida_% média 3 rodadas) / (Custo_Médio_Dívida × Alavancagem_Efetiva)  
-   - Alavancagem_Efetiva = Dívida_Líquida / max(EBITDA, 0.01)
-   - Se PL ≤ 0, use fallback: Dívida_Total / max(abs(PL), 0.01) e adicione warning "Equity wipeout detectado – risco crítico".
+Input: ${JSON.stringify(inputData)}
 
-3. Margem de Segurança Bruta + Recorrência (Peso 2.0)  
-   (EBITDA + Receita_Recorrente_Projetada) / Receita_Total  
-   - Threshold ideal: >0.25.
-
-4. Eficiência de Giro de Caixa – Dias de Caixa Operacional (Peso 1.5)  
-   Dias_Caixa = (Caixa + Aplicações) / (Despesas_Operacionais_Diárias)  
-   - Score normalizado: 10 × (1 - exp(-Dias_Caixa / 60))
-
-5. Penalizador de Alavancagem Excessiva (Peso -2.5)  
-   max(0, (Passivo_Total / max(PL, 1)) - 3.0) × (1 + %_Dívida_Curto_Prazo)  
-   - Se PL ≤ 0, multiplicar penalidade por 1.5.
-
-6. Penalizador de Volatilidade de Caixa (Peso -1.0)  
-   Coeficiente_Variação_FCO (std dev / média das últimas 4 rodadas) × 0.5
-
-Classificação Semáforo:
-- Azul: ≥8.0 → Resiliência Elite
-- Verde: 5.5–7.9 → Saudável
-- Amarelo: 3.0–5.4 → Estresse
-- Laranja: 1.5–2.9 → Perigo Iminente
-- Vermelho: <1.5 → Insolvência Provável
-
-Identifique o gargalo_principal (o pilar com maior contribuição negativa ou menor contribuição positiva relativa ao peso) e mapeie para uma das categorias: 'Operacional', 'Financeiro', 'Estrutural', 'Estratégico'.
-
-Input de dados:
-${JSON.stringify(inputData)}
-
-Output obrigatório em formato JSON:
+Output JSON:
 {
   "esds_raw": number,
-  "esds_display": number (clip 0-10 para UI),
+  "esds_display": number,
   "zone": "Azul/Verde/Amarelo/Laranja/Vermelho",
-  "main_drivers": ["string"],
+  "top_gargalos": ["string"], (Top 3 maiores impactos negativos)
   "gargalo_principal": "Operacional/Financeiro/Estrutural/Estratégico",
+  "is_estimated": boolean,
   "warnings": ["string"],
-  "gemini_insights": "string"
+  "gemini_insights": "string" (Linguagem didática e direta)
 } (Retorne APENAS o JSON)`,
       config: {
         responseMimeType: "application/json",
@@ -412,11 +395,13 @@ Output obrigatório em formato JSON:
 
     const result = JSON.parse(response.text || '{}');
     return {
-      raw: result.esds_raw,
-      display: result.esds_display,
+      esds_raw: result.esds_raw,
+      esds_display: result.esds_display,
       zone: result.zone,
-      main_drivers: result.main_drivers,
+      top_gargalos: result.top_gargalos.map((g: any) => typeof g === 'string' ? { name: g, impact: 0, percentage: 0 } : g),
       gargalo_principal: result.gargalo_principal,
+      main_drivers: result.main_drivers || [],
+      is_estimated: result.is_estimated,
       warnings: result.warnings,
       gemini_insights: result.gemini_insights
     };

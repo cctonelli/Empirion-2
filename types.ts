@@ -124,15 +124,7 @@ export interface KPIs {
   compulsory_loan_balance?: number;
   compulsory_loan_interest_paid?: number;
   share_price?: number;
-  esds?: {
-    raw: number;
-    display: number;
-    zone: 'Azul' | 'Verde' | 'Amarelo' | 'Laranja' | 'Vermelho';
-    main_drivers: string[];
-    gargalo_principal?: string;
-    warnings: string[];
-    gemini_insights: string;
-  };
+  esds?: ESDSCalculation;
   [key: string]: any;
 }
 
@@ -172,6 +164,28 @@ export interface DecisionData {
     forecasted_net_profit: number;
   };
   audit_logs?: any[];
+}
+
+export interface ChampionshipConfig {
+  branch?: Branch;
+  recorrencia_percent?: Record<string, number>;
+  [key: string]: any;
+}
+
+export interface ESDSCalculation {
+  esds_raw: number;
+  esds_display: number;
+  zone: 'Azul' | 'Verde' | 'Amarelo' | 'Laranja' | 'Vermelho';
+  top_gargalos: Array<{ name: string; impact: number; percentage: number }>;
+  gargalo_principal: string;
+  main_drivers: string[];
+  warnings: string[];
+  is_estimated: boolean;
+  gemini_insights: string;
+}
+
+export interface CompanyState extends KPIs {
+  // Adicionais se necessário, mas KPIs já cobre a maioria
 }
 
 export interface Championship {
@@ -380,15 +394,7 @@ export interface TutorTeamView {
   ebitda: number;
   kanitz: number;
   altman_z_score: number;
-  esds?: {
-    raw: number;
-    display: number;
-    zone: 'Azul' | 'Verde' | 'Amarelo' | 'Laranja' | 'Vermelho';
-    main_drivers: string[];
-    gargalo_principal?: string;
-    warnings: string[];
-    gemini_insights: string;
-  };
+  esds?: ESDSCalculation;
   dcf: number;
   ccc?: number;
   interest_coverage?: number;

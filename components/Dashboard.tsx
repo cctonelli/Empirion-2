@@ -122,12 +122,34 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={16}/>} />
          <CockpitStat 
             label="E-SDS" 
-            val={(currentKpis.esds?.display || 0).toFixed(1)} 
+            val={(currentKpis.esds?.esds_display || 0).toFixed(1)} 
             trend={currentKpis.esds?.zone || 'ALERTA'} 
             pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
             neg={currentKpis.esds?.zone === 'Laranja' || currentKpis.esds?.zone === 'Vermelho'}
             icon={<Gauge size={16}/>} 
-            tooltip={`${currentKpis.esds?.gargalo_principal ? `Gargalo: ${currentKpis.esds.gargalo_principal} | ` : ''}${currentKpis.esds?.gemini_insights || ''}`}
+            tooltip={
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase text-orange-500">Diagnóstico E-SDS v1.2</p>
+                <p className="text-[9px] text-slate-300 leading-tight">{currentKpis.esds?.gemini_insights || 'Análise indisponível'}</p>
+                {currentKpis.esds?.top_gargalos && currentKpis.esds.top_gargalos.length > 0 && (
+                  <div className="pt-2 border-t border-white/10">
+                    <p className="text-[8px] font-black uppercase text-slate-500 mb-1">Principais Detratores:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {currentKpis.esds.top_gargalos.map((g, i) => (
+                        <span key={i} className="px-1.5 py-0.5 bg-rose-500/20 text-rose-400 text-[7px] font-black rounded uppercase border border-rose-500/30" title={`${g.percentage}% de impacto`}>
+                          {g.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {currentKpis.esds?.is_estimated && (
+                  <p className="text-[7px] font-bold text-amber-500 italic mt-1 flex items-center gap-1">
+                    <Info size={8}/> Baseado em dados parciais (estimado)
+                  </p>
+                )}
+              </div>
+            }
          />
          <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend="Cycle" pos icon={<Box size={16}/>} />
          <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend="Current" pos icon={<Activity size={16}/>} />
@@ -312,7 +334,11 @@ const CockpitStat = ({ label, val, trend, pos, neg, icon, tooltip }: any) => (
      <span className="text-3xl font-black text-white font-mono tracking-tighter italic leading-none truncate drop-shadow-xl">{val}</span>
      {tooltip && (
        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/95 backdrop-blur-sm p-4 z-50 flex flex-col justify-center">
-         <p className="text-[8px] font-bold text-slate-300 leading-tight">{tooltip}</p>
+         {typeof tooltip === 'string' ? (
+           <p className="text-[8px] font-bold text-slate-300 leading-tight">{tooltip}</p>
+         ) : (
+           tooltip
+         )}
        </div>
      )}
   </div>

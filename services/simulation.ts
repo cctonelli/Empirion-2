@@ -1,6 +1,7 @@
 
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, Team, ProjectionResult, CreditRating, KPIs, MachineInstance, AccountNode, MachineModel } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, Team, ProjectionResult, CreditRating, KPIs, MachineInstance, AccountNode, MachineModel, ESDSCalculation, ChampionshipConfig, CompanyState } from '../types';
 import { INITIAL_FINANCIAL_TREE } from '../constants';
+import { supabase } from './supabase';
 
 /**
  * EMPIRION SIMULATION KERNEL v18.8 - STATEFUL COST ACCOUNTING
@@ -659,3 +660,271 @@ export const calculateProjections = (
     }
   };
 };
+
+// Cache simples em memória (para protótipo – migre para Supabase kpis cache em prod)
+const esdsCache = new Map<string, ESDSCalculation>();
+
+/**
+ * Calcula E-SDS v1.2 completo com todas as correções
+ * @param companyId UUID da company
+ * @param currentRound Rodada atual
+ */
+export async function calculateESDS(
+  companyId: string,
+  currentRound: number
+): Promise<ESDSCalculation> {
+  const cacheKey = `${companyId}-${currentRound}`;
+  if (esdsCache.has(cacheKey)) {
+    return esdsCache.get(cacheKey)!;
+  }
+
+  // 1. Buscar dados da company (atual + anteriores)
+  const { data: rounds, error } = await supabase
+    .from('companies')
+    .select('round, state')
+    .eq('id', companyId)
+    .lte('round', currentRound)
+    .order('round', { ascending: false })
+    .limit(5); // margem para deltas e volatilidade
+
+  if (error || !rounds?.length) throw new Error('Dados insuficientes para cálculo E-SDS');
+
+  const sorted = rounds.sort((a, b) => b.round - a.round);
+  const current: CompanyState = sorted[0].state;
+  const prevStates = sorted.slice(1).map(r => r.state as CompanyState);
+  const allStates = [current, ...prevStates];
+
+  // 2. Config do campeonato
+  const { data: champ } = await supabase
+    .from('championships')
+    .select('config')
+    .eq('id', current.championship_id)
+    .single();
+
+  const config = (champ?.config as ChampionshipConfig) || {};
+  const branch = config.branch || 'industrial';
+
+  // Pesos dinâmicos
+  const weights = {
+    p1: 4.0,
+    p2: 3.0,
+    p3: 2.0,
+    p4: 1.5,
+    p5: branch === 'agribusiness' || branch === 'industrial' ? -3.0 : -2.5,
+    p6: branch === 'agribusiness' ? -2.0 : branch === 'services' ? -0.8 : -1.2,
+  };
+
+  // 3. Função auxiliar segura de extração que entende a árvore financeira
+  const getVal = (state: CompanyState, path: string): number => {
+    // Se o path for direto no objeto state
+    const parts = path.split('.');
+    let val: any = state;
+    for (const part of parts) {
+      if (val && val[part] !== undefined) {
+        val = val[part];
+      } else {
+        val = undefined;
+        break;
+      }
+    }
+    if (typeof val === 'number') return val;
+
+    // Se não encontrou, tenta buscar nas árvores financeiras (DRE, DFC, BP)
+    const statements = state.statements || {};
+    const dre = statements.dre || [];
+    const dfc = statements.cash_flow || [];
+    const bp = statements.balance_sheet || [];
+
+    // Mapeamento de paths simplificados para IDs da árvore
+    const map: Record<string, string> = {
+      'balance_sheet.patrimonio_liquido': 'equity',
+      'balance_sheet.ativo_total': 'assets',
+      'dre.receita_liquida': 'rev',
+      'cash_flow.operational_cash_flow': 'cf.inflow.cash_sales',
+      'financials.juros_totais': 'fin.exp',
+      'liabilities.divida_media': 'liabilities',
+      'dre.ebitda': 'ebitda',
+      'assets.caixa_aplicacoes': 'assets.current.cash',
+      'opex.diaria': 'opex.adm',
+      'liabilities.total': 'liabilities',
+      'liabilities.curto_prazo': 'liabilities.current',
+      'liabilities.divida_liquida': 'divida_liquida',
+      'liabilities.divida_total': 'liabilities'
+    };
+
+    const accountId = map[path] || path;
+    return Math.abs(findAccountValue([...dre, ...dfc, ...bp], accountId));
+  };
+
+  // Variáveis extraídas (com defaults seguros)
+  const pl = getVal(current, 'balance_sheet.patrimonio_liquido');
+  const ativoTotal = getVal(current, 'balance_sheet.ativo_total') || 1;
+  const receitaList = allStates.map(s => getVal(s, 'dre.receita_liquida'));
+  const fcoList = allStates.map(s => getVal(s, 'cash_flow.operational_cash_flow'));
+  const jurosTotais = getVal(current, 'financials.juros_totais');
+  const dividaMedia = getVal(current, 'liabilities.divida_media') || 1;
+  const ebitda = getVal(current, 'dre.ebitda') || 0.01;
+  const caixaAplic = getVal(current, 'assets.caixa_aplicacoes');
+  const opexDiaria = (getVal(current, 'opex.adm') + getVal(current, 'opex.sales')) / 30 || 1;
+  const passivoTotal = getVal(current, 'liabilities.total') || 1;
+  const dividaCurto = getVal(current, 'liabilities.curto_prazo');
+  const percentCurto = dividaCurto / Math.max(passivoTotal, 1);
+
+  let isEstimated = false;
+  const warnings: string[] = [];
+
+  // Flags de estimativa
+  const recorrenciaConfigurada = !!config.recorrencia_percent?.[branch];
+  if (!recorrenciaConfigurada) {
+    isEstimated = true;
+    warnings.push('Recorrência estimada em 0% (configuração ausente no campeonato)');
+  }
+
+  // 4. Pilares com média móvel onde aplicável
+  const n = Math.min(3, allStates.length);
+
+  // Pilar 1: FCO Livre (nuance CapEx estratégico)
+  const p1_values = allStates.slice(0, n).map(state => {
+    const fco = getVal(state, 'cash_flow.operational_cash_flow');
+    const capexTotal = getVal(state, 'investments.total_capex') || 0;
+    const isEstrategico = !!state.decisions?.capex_strategic_approved;
+    const capexManut = isEstrategico ? capexTotal * 0.3 : capexTotal; // 70% manut se não estratégico
+    const fcoLivre = fco - capexManut - getVal(state, 'financials.juros_pagos') - getVal(state, 'taxes.paid');
+    const denom = getVal(state, 'liabilities.current') + getVal(state, 'opex.projected_next_round');
+    return denom > 0 ? fcoLivre / denom : 0;
+  });
+  const p1_avg = p1_values.reduce((a, b) => a + b, 0) / p1_values.length;
+
+  // Pilar 2: Sustentabilidade Crescimento Alavancado (média delta)
+  const deltas: number[] = [];
+  for (let i = 1; i < receitaList.length; i++) {
+    const recAtual = receitaList[i - 1];
+    const recAnt = receitaList[i];
+    deltas.push(recAnt !== 0 ? (recAtual - recAnt) / Math.abs(recAnt) : 0);
+  }
+  const deltaMedia = deltas.length > 0 ? deltas.reduce((a, b) => a + b, 0) / deltas.length : 0;
+
+  const custoDivida = jurosTotais / Math.max(dividaMedia, 1);
+  const alavancagemEfetiva =
+    pl > 0
+      ? getVal(current, 'liabilities.divida_liquida') / Math.max(ebitda, 0.01)
+      : getVal(current, 'liabilities.divida_total') / Math.max(pl, 0.01 * ativoTotal);
+
+  const p2 = deltaMedia / (custoDivida * alavancagemEfetiva + 0.0001);
+  const p2_avg = p2;
+
+  if (pl <= 0) {
+    isEstimated = true;
+    warnings.push('Fallback aplicado em alavancagem devido a PL ≤ 0');
+  }
+
+  // Pilar 3: Margem + Recorrência
+  const recorrencia = recorrenciaConfigurada ? config.recorrencia_percent![branch] : 0;
+  const p3 = (ebitda + receitaList[0] * recorrencia) / Math.max(receitaList[0], 1);
+  const p3_avg = p3;
+
+  // Pilar 4: Dias de Caixa
+  const diasCaixa = caixaAplic / Math.max(opexDiaria, 1);
+  const p4_avg = 10 * (1 - Math.exp(-diasCaixa / 60));
+
+  // Pilar 5: Alavancagem Excessiva
+  const alavancagemBruta = passivoTotal / Math.max(pl, 1);
+  let p5 = Math.max(0, alavancagemBruta - 3) * (1 + percentCurto);
+  if (pl <= 0) p5 *= 1.5;
+  const p5_avg = p5;
+
+  // Pilar 6: Volatilidade
+  const meanFCO = fcoList.reduce((a, b) => a + b, 0) / fcoList.length || 0.0001;
+  const variance = fcoList.reduce((sum, x) => sum + (x - meanFCO) ** 2, 0) / fcoList.length;
+  const stdDev = Math.sqrt(variance);
+  const cv = meanFCO > 0.0001 ? stdDev / meanFCO : stdDev > 0 ? 10 : 0;
+  const p6_avg = cv * 0.5;
+
+  // 5. Score bruto
+  const esds_raw =
+    weights.p1 * p1_avg +
+    weights.p2 * p2_avg +
+    weights.p3 * p3_avg +
+    weights.p4 * p4_avg -
+    weights.p5 * p5_avg -
+    weights.p6 * p6_avg;
+
+  // Threshold hard
+  if (p5_avg > 6) {
+    warnings.push('Alavancagem extrema detectada');
+  }
+
+  // 6. Zona
+  const zone =
+    esds_raw >= 8.0 ? 'Azul' :
+    esds_raw >= 5.5 ? 'Verde' :
+    esds_raw >= 3.0 ? 'Amarelo' :
+    esds_raw >= 1.5 ? 'Laranja' : 'Vermelho';
+
+  // 7. Gargalos baseados em contribuição negativa direta
+  const pillars = [
+    { name: 'Insuficiência de Caixa Operacional', contribution: weights.p1 * p1_avg },
+    { name: 'Crescimento não sustenta custo da dívida', contribution: weights.p2 * p2_avg },
+    { name: 'Margem/Recorrência Fraca', contribution: weights.p3 * p3_avg },
+    { name: 'Buffer de Caixa Insuficiente', contribution: weights.p4 * p4_avg },
+    { name: 'Estrutura de Capital Sobrecarregada', contribution: weights.p5 * p5_avg },
+    { name: 'Instabilidade Crônica de Fluxo', contribution: weights.p6 * p6_avg },
+  ];
+
+  const negative = pillars.filter(p => p.contribution < 0);
+  const totalNegativeImpact = negative.reduce((sum, p) => sum + Math.abs(p.contribution), 0) || 1;
+
+  const top_gargalos = negative
+    .map(p => ({
+      name: p.name,
+      impact: Math.abs(p.contribution),
+      percentage: Math.round((Math.abs(p.contribution) / totalNegativeImpact) * 100),
+    }))
+    .sort((a, b) => b.impact - a.impact)
+    .slice(0, 3);
+
+  const gargalo_principal = top_gargalos[0]?.name || 'Nenhum gargalo dominante';
+
+  // 8. Drivers equilibrados (positivos + negativos)
+  const main_drivers: string[] = [];
+
+  // Negativos
+  if (p1_avg < 1.0) main_drivers.push('Caixa operacional insuficiente – priorize redução de custos ou aceleração de recebíveis');
+  if (p2_avg < 0.5) main_drivers.push('Crescimento não cobre o custo da dívida – revise investimentos ou renegocie financiamentos');
+  if (p3_avg < 0.25) main_drivers.push('Margem e recorrência baixas – busque contratos de longo prazo ou fidelização');
+  if (p4_avg < 5) main_drivers.push('Buffer de caixa crítico – acumule reservas com urgência');
+  if (p5_avg > 3) main_drivers.push('Alavancagem excessiva – reduza dependência de terceiros');
+  if (p6_avg > 0.8) main_drivers.push('Fluxo volátil – estabilize com planejamento sazonal ou hedges');
+
+  // Positivos
+  if (p1_avg > 1.5) main_drivers.push('Caixa operacional forte – excelente cobertura de curto prazo');
+  if (p2_avg > 1.2) main_drivers.push('Crescimento sustentável em relação ao custo da dívida');
+  if (p3_avg > 0.35) main_drivers.push('Margem e recorrência sólidas – base previsível');
+  if (p4_avg > 8) main_drivers.push('Buffer de caixa robusto – alta resiliência');
+  if (p5_avg < 1.5) main_drivers.push('Alavancagem controlada – estrutura saudável');
+  if (p6_avg < 0.5) main_drivers.push('Fluxo de caixa estável – boa gestão operacional');
+
+  // 9. Warnings adicionais
+  if (pl <= 0) warnings.push('Equity wipeout – patrimônio líquido negativo');
+  if (p5_avg > 6) warnings.push('Alavancagem extrema – risco crítico de inadimplência');
+  if (p6_avg > 1.0) warnings.push('Volatilidade crítica de caixa – mesmo com média positiva');
+  if (!!current.decisions?.capex_strategic_approved && p1_avg < 0.5) {
+    warnings.push('FCO negativo majoritariamente por investimento estratégico aprovado');
+  }
+
+  // 10. Retorno final
+  const result: ESDSCalculation = {
+    esds_raw,
+    esds_display: Math.max(0, Math.min(10, esds_raw)),
+    zone,
+    top_gargalos,
+    gargalo_principal,
+    main_drivers,
+    warnings,
+    is_estimated: isEstimated,
+    gemini_insights: main_drivers.join('. ')
+  };
+
+  esdsCache.set(cacheKey, result);
+  return result;
+}

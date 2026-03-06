@@ -182,7 +182,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             <div className="flex items-center gap-4">
                <QuickKpi label="EBITDA Projetado" val={formatCurrency(projections?.kpis?.ebitda || 0, activeArena?.currency || 'BRL')} icon={<Zap size={12}/>} color="text-orange-400" />
                <QuickKpi label="Caixa Final T+1" val={formatCurrency(projections?.statements?.cash_flow?.final || 0, activeArena?.currency || 'BRL')} icon={<Coins size={12}/>} color="text-emerald-400" />
-               <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded-xl border border-white/5">
+               <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded-xl border border-white/5 group relative">
                   <div className="flex flex-col">
                      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">E-SDS Projetado</span>
                      <span className={`text-xs font-black ${projectedESDS ? (projectedESDS.zone === 'Azul' || projectedESDS.zone === 'Verde' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}`}>
@@ -197,6 +197,25 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                   >
                     <Sparkles size={12} className={isCalculatingESDS ? 'animate-spin' : ''} />
                   </button>
+
+                  {projectedESDS && (
+                    <div className="absolute top-full left-0 mt-2 w-64 p-4 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-[200] pointer-events-none">
+                       <p className="text-[10px] font-black uppercase text-orange-500 mb-2">Projeção E-SDS v1.2</p>
+                       <p className="text-[9px] text-slate-300 leading-tight mb-3">{projectedESDS.gemini_insights}</p>
+                       {projectedESDS.top_gargalos && projectedESDS.top_gargalos.length > 0 && (
+                         <div className="pt-2 border-t border-white/5">
+                           <p className="text-[8px] font-black uppercase text-slate-500 mb-1">Gargalos Projetados:</p>
+                           <div className="flex flex-wrap gap-1">
+                             {projectedESDS.top_gargalos.map((g: any, i: number) => (
+                               <span key={i} className="px-1.5 py-0.5 bg-rose-500/20 text-rose-400 text-[7px] font-black rounded uppercase border border-rose-500/30" title={`${g.percentage}% de impacto`}>
+                                 {g.name}
+                               </span>
+                             ))}
+                           </div>
+                         </div>
+                       )}
+                    </div>
+                  )}
                </div>
             </div>
          </div>
