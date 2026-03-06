@@ -409,43 +409,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               help="Use o botão replicar para aplicar a Região 1 em todas as demais."
                            />
 
-                           {/* Configuração global: Juros + Replicar */}
-                           <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 bg-slate-900/60 p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
-                              <div className="w-full lg:w-80 space-y-4">
-                              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-3">
-                                 Juros de Venda a Prazo (%)
-                                 <HelpCircle size={16} className="text-slate-500 hover:text-orange-400 transition-colors cursor-help" />
-                              </label>
-                              <div className="relative">
-                                 <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    max="20"
-                                    value={decisions.production.term_interest_rate}
-                                    onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value) || 0)}
-                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-5 py-4 text-xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
-                                    placeholder="0.00"
-                                 />
-                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-bold text-orange-400">%</span>
-                              </div>
-                              </div>
-
-                              <button
-                              onClick={replicateInCluster}
-                              disabled={Object.keys(decisions.regions).length <= 1}
-                              className={`
-                                 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center gap-3 shadow-xl
-                                 ${Object.keys(decisions.regions).length <= 1
-                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
-                                    : 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white border border-orange-400/30 active:scale-95'}
-                              `}
-                              >
-                              <RefreshCw size={16} />
-                              Replicar Região 1
-                              </button>
-                           </div>
-
                            {/* Bloco único de explicações – visível sempre */}
                            <div className="bg-slate-900/50 backdrop-blur-sm p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
                               <h5 className="text-lg font-black text-orange-400 uppercase tracking-wide mb-6 flex items-center gap-3">
@@ -499,6 +462,45 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </div>
                               </div>
                            </div>
+
+                           {/* Configuração global: Juros + Replicar */}
+                           <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 bg-slate-900/60 p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
+                              <div className="w-full lg:w-80 space-y-4">
+                              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-3">
+                                 Juros de Venda a Prazo (%)
+                                 <HelpCircle size={16} className="text-slate-500 hover:text-orange-400 transition-colors cursor-help" />
+                              </label>
+                              <div className="relative">
+                                 <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max="20"
+                                    value={decisions.production.term_interest_rate}
+                                    onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value) || 0)}
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-5 py-4 text-xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
+                                    placeholder="0.00"
+                                 />
+                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-bold text-orange-400">%</span>
+                              </div>
+                              </div>
+
+                              <button
+                              onClick={replicateInCluster}
+                              disabled={Object.keys(decisions.regions).length <= 1}
+                              className={`
+                                 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center gap-3 shadow-xl
+                                 ${Object.keys(decisions.regions).length <= 1
+                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
+                                    : 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white border border-orange-400/30 active:scale-95'}
+                              `}
+                              >
+                              <RefreshCw size={16} />
+                              Replicar Região 1
+                              </button>
+                           </div>
+
+
 
                            {/* Cards de regiões – agora bem compactos */}
                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
