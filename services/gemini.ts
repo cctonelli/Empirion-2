@@ -144,14 +144,30 @@ export const generateDynamicMarketNews = async (
 };
 
 export const generateBotDecision = async (
-  branch: Branch, 
-  round: number, 
-  regionCount: number, 
+  branch: Branch,
+  round: number,
+  regionCount: number,
   macro: MacroIndicators,
   botName: string,
   persistedProfile?: StrategicProfile,
   currentKpis?: any
 ): Promise<DecisionData> => {
+  const fallback = (count: number): DecisionData => {
+    const regions: Record<number, any> = {};
+    for (let i = 1; i <= count; i++) {
+      regions[i] = { price: 425 + Math.floor(Math.random() * 50), marketing: 1 + Math.floor(Math.random() * 2), term: 0 };
+    }
+    return {
+      judicial_recovery: false,
+      regions,
+      hr: { hired: 0, fired: 0, salary: 2000 + Math.floor(Math.random() * 100), trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
+      production: { purchaseMPA: 5000, purchaseMPB: 5000, activityLevel: 100, paymentType: 0, rd_investment: 0, term_interest_rate: 1.5, extraProductionPercent: 0 },
+      machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 }, sell_ids: [] },
+      finance: { loanRequest: 0, loanTerm: 1, application: 0 },
+      estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
+    } as any;
+  };
+
   try {
     const apiKey = await getApiKey();
     if (!apiKey) throw new Error("Gemini API Key missing.");
@@ -170,7 +186,7 @@ export const generateBotDecision = async (
     const randomSeed = Math.random().toString(36).substring(7);
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-pro-preview",
       contents: `Você é o CEO da empresa "${botName}" em uma simulação empresarial de alta fidelidade (${branch}).
       Estamos no Round ${round}.
       
@@ -197,22 +213,73 @@ export const generateBotDecision = async (
       - Suas decisões devem ser ÚNICAS e baseadas estritamente no seu perfil e situação financeira atual.`,
       config: { 
         responseMimeType: "application/json",
-        temperature: 0.9 // Aumentado para maior variabilidade
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            judicial_recovery: { type: Type.BOOLEAN },
+            regions: { type: Type.OBJECT },
+            hr: {
+              type: Type.OBJECT,
+              properties: {
+                hired: { type: Type.NUMBER },
+                fired: { type: Type.NUMBER },
+                salary: { type: Type.NUMBER },
+                trainingPercent: { type: Type.NUMBER },
+                participationPercent: { type: Type.NUMBER },
+                productivityBonusPercent: { type: Type.NUMBER },
+                misc: { type: Type.NUMBER }
+              },
+              required: ["hired", "fired", "salary"]
+            },
+            production: {
+              type: Type.OBJECT,
+              properties: {
+                purchaseMPA: { type: Type.NUMBER },
+                purchaseMPB: { type: Type.NUMBER },
+                activityLevel: { type: Type.NUMBER },
+                paymentType: { type: Type.NUMBER },
+                rd_investment: { type: Type.NUMBER },
+                term_interest_rate: { type: Type.NUMBER },
+                extraProductionPercent: { type: Type.NUMBER }
+              },
+              required: ["purchaseMPA", "purchaseMPB", "activityLevel"]
+            },
+            machinery: {
+              type: Type.OBJECT,
+              properties: {
+                buy: { type: Type.OBJECT },
+                sell: { type: Type.OBJECT },
+                sell_ids: { type: Type.ARRAY, items: { type: Type.STRING } }
+              }
+            },
+            finance: {
+              type: Type.OBJECT,
+              properties: {
+                loanRequest: { type: Type.NUMBER },
+                loanTerm: { type: Type.NUMBER },
+                application: { type: Type.NUMBER }
+              }
+            },
+            estimates: {
+              type: Type.OBJECT,
+              properties: {
+                forecasted_unit_cost: { type: Type.NUMBER },
+                forecasted_revenue: { type: Type.NUMBER },
+                forecasted_net_profit: { type: Type.NUMBER }
+              },
+              required: ["forecasted_unit_cost", "forecasted_revenue", "forecasted_net_profit"]
+            }
+          },
+          required: ["judicial_recovery", "regions", "hr", "production", "machinery", "finance", "estimates"]
+        },
+        temperature: 0.9
       }
     });
 
     return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error(`Falha ao gerar decisão para BOT ${botName}:`, error);
-    return { 
-      judicial_recovery: false, 
-      regions: { 1: { price: 425, marketing: 1, term: 0 } }, 
-      hr: { hired: 0, fired: 0, salary: 2000 }, 
-      production: { purchaseMPA: 5000, purchaseMPB: 5000, activityLevel: 100 }, 
-      machinery: { buy: { alfa: 0, beta: 0, gama: 0 } }, 
-      finance: { loanRequest: 0 }, 
-      estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 } 
-    } as any;
+    return fallback(regionCount);
   }
 };
 
@@ -349,7 +416,7 @@ export const calculateESDS = async (
     };
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-pro-preview",
       contents: `Você é o motor de diagnóstico financeiro do Empirion. Calcule e interprete o E-SDS v1.2 (Empirion Solvency Dynamics Score versão 1.2), focado em fluxo de caixa real e solvência dinâmica.
 
 Fórmula Base (E-SDS_raw):
