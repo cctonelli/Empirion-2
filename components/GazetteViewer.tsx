@@ -5,7 +5,7 @@ import {
   Globe, Landmark, Zap, AlertTriangle, LayoutGrid, Newspaper, 
   X, User, Star, TrendingUp, Target, Activity, ShieldCheck, Loader2,
   Table as TableIcon, Info, Users, BarChart3, ChevronRight, MapPin, 
-  ArrowUpRight, ArrowDownRight, Package, ShoppingCart, Sparkles, Monitor, Flame, ShieldAlert, Coins
+  ArrowUpRight, ArrowDownRight, Package, ShoppingCart, Sparkles, Monitor, Flame, ShieldAlert, Coins, Truck
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -217,7 +217,8 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                      <MacroBox label="Crescimento (ICE)" val={`${currentMacro.ice}%`} icon={<Activity className="text-emerald-500"/>} />
                      <MacroBox label="Inflação" val={`${currentMacro.inflation_rate}%`} icon={<Flame className="text-rose-500"/>} />
                      <MacroBox label="Juros Bancários + TR" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark className="text-blue-500"/>} />
-                     <MacroBox label="Inadimplência" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert className="text-orange-500"/>} />
+                     <MacroBox label="Inadimplência de Clientes" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert className="text-orange-500"/>} />
+                     <MacroBox label="Juros Compra a Prazo" val={`${currentMacro.supplier_interest}%`} icon={<Truck className="text-orange-500"/>} />
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                      <div className="bg-slate-900/60 p-12 rounded-[5rem] border border-white/10 shadow-3xl">
