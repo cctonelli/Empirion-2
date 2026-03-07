@@ -540,7 +540,7 @@ export const calculateProjections = (
     'liabilities.current.loans_st': totalLoansST,
     'liabilities.current.vat_payable': finalVatPayable,
     'liabilities.longterm.loans_lt': totalLoansLT,
-    'equity.profit': netProfit
+    'equity.profit': findAccountValue(prevBS, 'equity.profit') + netProfit
   };
 
   const finalBS = injectValues(JSON.parse(JSON.stringify(prevBS)), bsValues);
@@ -629,7 +629,7 @@ export const calculateProjections = (
   // Atualizar Balanço com valores finais
   const finalBSWithAwards = injectValues(JSON.parse(JSON.stringify(finalBS)), {
     'assets.current.cash': finalCashWithAwards,
-    'equity.profit': finalNetProfit
+    'equity.profit': findAccountValue(prevBS, 'equity.profit') + finalNetProfit
   });
 
   const netMargin = revenue > 0 ? finalNetProfit / revenue : 0;
@@ -683,6 +683,7 @@ export const calculateProjections = (
         'rev': revenue, 
         'vat_sales': -ivaOnSales,
         'cpv': -totalCPV, 
+        'gross_profit': revenue - ivaOnSales - totalCPV,
         'opex.sales': -currentOpexSales,
         'opex.adm': -currentOpexAdm,
         'opex.payroll_adm': -totalPayrollAdm,

@@ -66,10 +66,11 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
     }
   ],
   dre: [
-    { id: 'rev', label: '(+) RECEITAS BRUTAS DE VENDAS', value: 4184440.05, type: 'revenue', isEditable: true },
-    { id: 'vat_sales', label: '(-) IVA SOBRE VENDAS', value: 0.00, type: 'expense', isEditable: true },
-    { id: 'net_sales', label: '(=) RECEITA LÍQUIDA DE VENDAS', value: 4184440.05, type: 'totalizer', isReadOnly: true },
-    { id: 'cpv', label: '(-) CPV-CUSTO PROD. VENDIDO', value: -2972830.93, type: 'expense', isEditable: true },
+    { id: 'gross_margin_group', label: 'MARGEM BRUTA', value: 0, type: 'totalizer', children: [
+        { id: 'rev', label: '(+) RECEITAS BRUTAS DE VENDAS', value: 4184440.05, type: 'revenue', isEditable: true },
+        { id: 'vat_sales', label: '(-) IVA SOBRE VENDAS', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cpv', label: '(-) CPV-CUSTO PROD. VENDIDO', value: -2972830.93, type: 'expense', isEditable: true },
+    ]},
     { id: 'gross_profit', label: '(=) LUCRO BRUTO', value: 1211609.12, type: 'totalizer', isReadOnly: true },
     { id: 'opex', label: '(-) DESPESAS OPERACIONAIS', value: -1149623.86, type: 'totalizer', children: [
         { id: 'opex.sales', label: 'DE VENDAS (MARKETING/LOGISTICA)', value: 873250.00, type: 'expense', isEditable: true },
@@ -89,9 +90,10 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0.00, type: 'expense', isEditable: true }
     ]},
     { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 59485.26, type: 'totalizer', isReadOnly: true },
-    { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.31, type: 'expense', isEditable: true },
-    { id: 'profit_after_tax', label: '(=) LUCRO APÓS O IR', value: 44613.95, type: 'totalizer', isReadOnly: true },
-    { id: 'ppr', label: '(-) PPR-PARTICIPAÇÃO NO LUCRO', value: 0.00, type: 'expense', isEditable: true },
+    { id: 'tax_ppr_group', label: 'IMPOSTOS E PARTICIPAÇÕES', value: 0, type: 'totalizer', children: [
+        { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.31, type: 'expense', isEditable: true },
+        { id: 'ppr', label: '(-) PPR-PARTICIPAÇÃO NO LUCRO', value: 0.00, type: 'expense', isEditable: true },
+    ]},
     { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 44613.95, type: 'totalizer', isReadOnly: true }
   ],
   cash_flow: [
@@ -103,7 +105,8 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'cf.inflow.machine_sales', label: 'VENDA DE MÁQUINAS', value: 0.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.awards', label: 'PREMIAÇÕES RECEBIDAS', value: 0.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.loans_normal', label: 'EMPRÉSTIMOS NORMAIS', value: 0.00, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.compulsory', label: 'EMPRÉSTIMO COMPULSÓRIO', value: 1372362.00, type: 'revenue', isEditable: true }
+        { id: 'cf.inflow.compulsory', label: 'EMPRÉSTIMO COMPULSÓRIO', value: 1372362.00, type: 'revenue', isEditable: true },
+        { id: 'cf.inflow.fin_rev', label: 'RECEITAS FINANCEIRAS', value: 0.00, type: 'revenue', isEditable: true }
     ]},
     { id: 'cf.outflow', label: '(-) SAÍDAS', value: -4158696.90, type: 'totalizer', children: [
         { id: 'cf.outflow.payroll', label: 'FOLHA DE PAGAMENTO', value: 1180000.00, type: 'expense', isEditable: true },
@@ -122,7 +125,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true },
-		    { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true }
+        { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true }
     ]},
     { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0.00, type: 'totalizer' }
   ]
