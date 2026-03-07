@@ -5,7 +5,8 @@ import {
   Globe, Landmark, Zap, AlertTriangle, LayoutGrid, Newspaper, 
   X, User, Star, TrendingUp, Target, Activity, ShieldCheck, Loader2,
   Table as TableIcon, Info, Users, BarChart3, ChevronRight, MapPin, 
-  ArrowUpRight, ArrowDownRight, Package, ShoppingCart, Sparkles, Monitor, Flame, ShieldAlert, Coins, Truck
+  ArrowUpRight, ArrowDownRight, Package, ShoppingCart, Sparkles, Monitor, Flame, 
+  ShieldAlert, Coins, Truck, Scale
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -219,6 +220,16 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                      <MacroBox label="Juros Bancários + TR" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark className="text-blue-500"/>} />
                      <MacroBox label="Inadimplência de Clientes" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert className="text-orange-500"/>} />
                      <MacroBox label="Juros Compra a Prazo" val={`${currentMacro.supplier_interest}%`} icon={<Truck className="text-orange-500"/>} />
+                     <MacroBox label="Rendimento de Aplicações" val={`${currentMacro.investment_return_rate}%`} icon={<TrendingUp className="text-orange-500"/>} />
+                     <MacroBox label="IVA s/ Compras" val={`${currentMacro.vat_purchases_rate}%`} icon={<Scale className="text-orange-500"/>} />
+                     <MacroBox label="IVA s/ Vendas" val={`${currentMacro.vat_sales_rate}%`} icon={<Scale className="text-orange-500"/>} />
+                     <MacroBox label="Imposto de Renda" val={`${currentMacro.tax_rate_ir}%`} icon={<Scale className="text-orange-500"/>} />
+                     <MacroBox label="Multa s/ Atrasos" val={`${currentMacro.late_penalty_rate}%`} icon={<ShieldAlert className="text-orange-500"/>} />
+                     <MacroBox label="Deságio Venda de Máquinas" val={`${currentMacro.machine_sale_discount}%`} icon={<TrendingUp className="text-orange-500"/>} />
+                     <MacroBox label="Ágio Compras Especiais" val={`${currentMacro.special_purchase_premium}%`} icon={<Package className="text-orange-500"/>} />
+                     <MacroBox label="Ágio Empréstimo Compulsório" val={`${currentMacro.compulsory_loan_agio}%`} icon={<Landmark className="text-orange-500"/>} />
+                     <MacroBox label="Encargos Sociais" val={`${currentMacro.social_charges}%`} icon={<Users className="text-orange-500"/>} />
+                     <MacroBox label="Campanhas de Marketing" val={`${currentMacro.marketing_campaign_adjust}%`} icon={<Landmark className="text-orange-500"/>} />
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                      <div className="bg-slate-900/60 p-12 rounded-[5rem] border border-white/10 shadow-3xl">
