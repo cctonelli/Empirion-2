@@ -76,6 +76,13 @@ export const calculateProjections = (
   const mpaPrice = indicators.prices.mp_a * (1 + (sanitize(indicators.raw_material_a_adjust, 0) / 100));
   const mpbPrice = indicators.prices.mp_b * (1 + (sanitize(indicators.raw_material_b_adjust, 0) / 100));
   
+  const vatPurchasesRate = sanitize(indicators.vat_purchases_rate, 0) / 100;
+  const vatSalesRate = sanitize(indicators.vat_sales_rate, 0) / 100;
+  
+  // Preços LÍQUIDOS para estoque (conforme recomendação IVA: Estoque MP ← valor sem IVA)
+  const netMpaPrice = mpaPrice * (1 - vatPurchasesRate);
+  const netMpbPrice = mpbPrice * (1 - vatPurchasesRate);
+  
   const currentSalary = indicators.hr_base.salary * inflationMult;
   const socialChargesAttr = 1 + (sanitize(indicators.social_charges, 35) / 100);
 
@@ -186,8 +193,8 @@ export const calculateProjections = (
 
   const unitsProduced = Math.floor(effectiveCapacity * activityLevel * trainingPenalty);
 
-  // Matéria-Prima Consumida (Com reajuste específico de MP A/B e consumo 3:2)
-  const totalMP = (unitsProduced * 3 * mpaPrice) + (unitsProduced * 2 * mpbPrice);
+  // Matéria-Prima Consumida (Com reajuste específico de MP A/B e consumo 3:2) - VALOR LÍQUIDO (sem IVA)
+  const totalMP = (unitsProduced * 3 * netMpaPrice) + (unitsProduced * 2 * netMpbPrice);
 
   // Manutenção Industrial (GGF reajustado por inflação)
   const maintenance = capacity * 2.5 * inflationMult; 
@@ -344,7 +351,37 @@ export const calculateProjections = (
   }
 
   const interestExp = totalInterestExp;
-  const operatingProfit = revenue - totalCPV - opex;
+  
+  // --- 4.5 APURAÇÃO DE IVA (CONFORME RECOMENDAÇÃO) ---
+  const ivaOnSales = revenue * vatSalesRate;
+  const ivaRecoverableGenerated = totalPurchaseMP * vatPurchasesRate;
+  const ivaBalance = ivaOnSales - ivaRecoverableGenerated;
+
+  const prevVatRecoverable = findAccountValue(prevBS, 'assets.current.vat_recoverable');
+  const prevVatPayable = findAccountValue(prevBS, 'liabilities.current.vat_payable');
+
+  // Pagamento automático do IVA a recolher do período anterior (Fluxo de Caixa)
+  const vatPayment = prevVatPayable;
+
+  let finalVatPayable = 0;
+  let finalVatRecoverable = prevVatRecoverable;
+
+  if (ivaBalance > 0) {
+    // Saldo devedor no período: compensa com crédito acumulado (IVA a recuperar)
+    if (finalVatRecoverable >= ivaBalance) {
+      finalVatRecoverable -= ivaBalance;
+      finalVatPayable = 0;
+    } else {
+      finalVatPayable = ivaBalance - finalVatRecoverable;
+      finalVatRecoverable = 0;
+    }
+  } else {
+    // Saldo credor no período: aumenta o IVA a recuperar
+    finalVatRecoverable += Math.abs(ivaBalance);
+    finalVatPayable = 0;
+  }
+
+  const operatingProfit = (revenue - ivaOnSales) - totalCPV - opex;
   const lair = operatingProfit - interestExp - machineSalesLoss;
   
   const taxRate = (sanitize(indicators.tax_rate_ir, 25) / 100);
@@ -359,8 +396,8 @@ export const calculateProjections = (
   const prevClients = findAccountValue(prevBS, 'assets.current.clients');
   const cashInflowFromSales = totalCashSales + prevClients;
 
-  // Total Outflows para cálculo de caixa
-  const totalOutflows = totalPurchaseMP + totalMOD + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + dividends + trainingCost;
+  // Total Outflows para cálculo de caixa (incluindo pagamento automático de IVA)
+  const totalOutflows = totalPurchaseMP + totalMOD + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + dividends + trainingCost + vatPayment;
 
   let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow - totalOutflows;
   
@@ -394,15 +431,24 @@ export const calculateProjections = (
     }
   });
 
+  const closingMpaQty = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA - (unitsProduced * 3);
+  const closingMpbQty = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB - (unitsProduced * 2);
+  const closingMpaValue = Math.max(0, closingMpaQty) * netMpaPrice;
+  const closingMpbValue = Math.max(0, closingMpbQty) * netMpbPrice;
+
   const bsValues = {
     'assets.current.cash': finalCash,
     'assets.current.stock.pa': closingStockValuePA,
+    'assets.current.stock.mpa': closingMpaValue,
+    'assets.current.stock.mpb': closingMpbValue,
     'assets.current.clients': totalCreditSales,
     'assets.current.pecld': -badDebtExp,
+    'assets.current.vat_recoverable': finalVatRecoverable,
     'assets.noncurrent.fixed.machines': totalMachineryCost,
     'assets.noncurrent.fixed.machines_deprec': -totalMachineryDeprec,
     'assets.noncurrent.fixed.buildings_deprec': -newBuildingsDeprecAccum,
     'liabilities.current.loans_st': totalLoansST,
+    'liabilities.current.vat_payable': finalVatPayable,
     'liabilities.longterm.loans_lt': totalLoansLT,
     'equity.profit': netProfit
   };
@@ -545,6 +591,7 @@ export const calculateProjections = (
     statements: {
       dre: injectValues(JSON.parse(JSON.stringify(prevStatements.dre)), { 
         'rev': revenue, 
+        'vat_sales': -ivaOnSales,
         'cpv': -totalCPV, 
         'opex.sales': -currentOpexSales,
         'opex.adm': -currentOpexAdm,
@@ -565,6 +612,7 @@ export const calculateProjections = (
         'cf.inflow.compulsory': newCompulsoryLoan,
         'cf.outflow.payroll': -payrollMOD,
         'cf.outflow.social_charges': -socialChargesMOD,
+        'cf.outflow.vat_payable': -vatPayment,
         'cf.outflow.rd': -currentOpexRd,
         'cf.outflow.marketing': -totalMarketingExp,
         'cf.outflow.training': -trainingCost,
