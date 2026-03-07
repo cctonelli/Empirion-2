@@ -57,7 +57,8 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
 - **Empréstimos Normais:** Prazos de Curto e Longo Prazo, com juros baseados na Taxa TR.
 - **Tributação:** 
   - Imposto de Renda de 25% sobre o lucro tributável.
-  - **IVA (v2026-03.3):** Sistema de débito e crédito. IVA sobre vendas (débito) e IVA sobre compras (crédito). O saldo é apurado mensalmente, compensando créditos acumulados antes de gerar nova guia de recolhimento.
+  - **IVA (v2026-03.4):** Sistema de débito e crédito Gold Standard. O crédito das compras do período é reconhecido no ativo *antes* da apuração, garantindo compensação integral.
+- **PPR (v2026-03.4):** Participação nos Lucros de 10% sobre o LAIR, incorporada à folha de pagamento para fins de fluxo de caixa.
 - **Dividendos:** Distribuição obrigatória de 25% do lucro líquido.
 - **Auditoria (Audit Awards):** Premiações por precisão nas projeções de Custo Unitário, Faturamento e Lucro Líquido (Tolerância de 5%).
 
@@ -191,12 +192,25 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
   - **Capacidade:** Restrição de produção baseada na disponibilidade de operadores vs necessidade das máquinas.
 - **Status:** Em produção.
 
-### v2026-03.3 - Implementação de IVA Gold Standard
+### v2026-03.5 - Kernel v19.1: Decisões Dinâmicas & Recuperação Judicial
 - **Data:** Março de 2026
-- **Motivo:** Refinamento técnico da apuração de IVA para garantir integridade contábil, acúmulo correto de créditos e liquidação de passivos.
+- **Motivo:** Integração total dos inputs do `DecisionForm.tsx` ao motor de simulação, garantindo que todas as escolhas das equipes tenham impacto financeiro e operacional real.
 - **Diferenças:**
-  - **Acúmulo de Créditos:** Créditos de compras do período atual são somados ao saldo acumulado antes da compensação.
-  - **Liquidação Automática:** Pagamento automático do IVA a recolher do período anterior no início da rodada.
-  - **Estoque Líquido:** Valor de estoque de Matéria-Prima (MP) agora é registrado pelo valor líquido (deduzido o IVA recuperável).
-  - **Transparência:** Adição de contas específicas no Balanço Patrimonial para IVA a Recuperar e IVA a Recolher.
+  - **Recuperação Judicial (RJ):** Implementação de status de crise profunda. Se ativado:
+    - Queda de 15% na demanda (estigma de mercado).
+    - Ágio de 50% nas taxas de juros de empréstimos existentes.
+    - Bloqueio total de novos financiamentos (BDI e Manuais).
+    - CapEx limitado a 40% do valor solicitado (restrição de crédito).
+  - **Gestão de Suprimentos:**
+    - **Payment Type:** Escolha entre A Vista (100% caixa), 30 dias ou 60 dias (100% Fornecedores no Passivo).
+  - **Produção Extra:** Implementação de turno extra (Hora Extra) que aumenta a capacidade mas penaliza o custo da MOD em 50% para as unidades excedentes.
+  - **P&D Dinâmico:** Investimento em Pesquisa e Desenvolvimento agora é uma porcentagem direta da receita, permitindo estratégias de inovação agressivas.
+  - **Recursos Humanos:**
+    - **Salário:** Equipes podem definir o salário nominal, impactando diretamente o custo da MOD e OPEX.
+    - **PPR Dinâmico:** Percentual de participação nos lucros (0-20%) definido pela equipe.
+    - **Bônus de Produtividade:** Adicional sobre a folha para incentivar eficiência.
+  - **Financeiro:**
+    - **Empréstimos Manuais:** Processamento de solicitações de empréstimo com prazos de 6, 12 ou 24 rounds.
+    - **Aplicações Financeiras:** Possibilidade de investir excedente de caixa para gerar rendimentos financeiros.
+    - **Juros de Prazo:** Receita financeira gerada sobre as vendas a prazo (Term Interest Rate).
 - **Status:** Em produção.

@@ -72,8 +72,10 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
     { id: 'cpv', label: '(-) CPV-CUSTO PROD. VENDIDO', value: -2972830.93, type: 'expense', isEditable: true },
     { id: 'gross_profit', label: '(=) LUCRO BRUTO', value: 1211609.12, type: 'totalizer', isReadOnly: true },
     { id: 'opex', label: '(-) DESPESAS OPERACIONAIS', value: -1149623.86, type: 'totalizer', children: [
-        { id: 'opex.sales', label: 'DE VENDAS', value: 873250.00, type: 'expense', isEditable: true },
-        { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 216000.00, type: 'expense', isEditable: true },
+        { id: 'opex.sales', label: 'DE VENDAS (MARKETING/LOGISTICA)', value: 873250.00, type: 'expense', isEditable: true },
+        { id: 'opex.adm', label: 'ADMINISTRATIVAS (GERAIS)', value: 216000.00, type: 'expense', isEditable: true },
+        { id: 'opex.payroll_adm', label: 'FOLHA ADM + ENCARGOS', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'opex.payroll_sales', label: 'FOLHA VENDAS + ENCARGOS', value: 0.00, type: 'expense', isEditable: true },
         { id: 'opex.bad_debt', label: 'INADIMPLÊNCIA S/ SALDO CLIENTES', value: 18529.46, type: 'expense', isEditable: true },
         { id: 'opex.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 41844.40, type: 'expense', isEditable: true }
     ]},

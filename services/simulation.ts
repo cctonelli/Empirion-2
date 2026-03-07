@@ -69,7 +69,7 @@ export const calculateProjections = (
   const prevBS = prevStatements.balance_sheet || [];
   
   // --- 1. REAJUSTES TEMPORAIS ESPECÍFICOS ---
-  // Inflação geral afeta Salários, Manutenção e Despesas Fixas
+  // Inflação geral afeta Manutenção e Despesas Fixas
   const inflationMult = 1 + (sanitize(indicators.inflation_rate, 0) / 100);
   
   // Reajuste de MP é independente da inflação geral (conforme diretriz v18.8)
@@ -83,8 +83,15 @@ export const calculateProjections = (
   const netMpaPrice = mpaPrice * (1 - vatPurchasesRate);
   const netMpbPrice = mpbPrice * (1 - vatPurchasesRate);
   
-  const currentSalary = indicators.hr_base.salary * inflationMult;
+  // Decisão de Salário da Equipe (ou base se não preenchido)
+  const decisionSalary = sanitize(decision.hr?.salary, 0);
+  const currentSalary = decisionSalary > 0 ? decisionSalary : (indicators.hr_base.salary * inflationMult);
   const socialChargesAttr = 1 + (sanitize(indicators.social_charges, 35) / 100);
+
+  // Impacto de Recuperação Judicial (RJ)
+  const isRJ = decision.judicial_recovery === true;
+  const rjDemandPenalty = isRJ ? 0.85 : 1.0; // 15% de queda na demanda por estigma
+  const rjInterestAgio = isRJ ? 1.5 : 1.0; // 50% de aumento nos juros
 
   // --- 2. GESTÃO DE ATIVOS E DEPRECIAÇÃO (ABSORÇÃO) ---
   let currentMachines: MachineInstance[] = [...(team.kpis?.machines || [])];
@@ -122,11 +129,17 @@ export const calculateProjections = (
       const unitPrice = basePrice * (1 + (sanitize(adjust, 0) / 100));
       const totalCost = unitPrice * qty;
       
-      machinePurchaseOutflow += totalCost;
-      // Financiamento BDI: 100% Longo Prazo (Regra: 4 carência + 4 amortização)
-      newBdiLoanAmount += totalCost;
+      // Se em RJ, limita investimento a 40% do solicitado
+      const effectivePurchaseCost = isRJ ? totalCost * 0.4 : totalCost;
+      const effectiveQty = isRJ ? Math.floor(qty * 0.4) : qty;
 
-      for (let i = 0; i < qty; i++) {
+      machinePurchaseOutflow += effectivePurchaseCost;
+      // Financiamento BDI: 100% Longo Prazo (Regra: 4 carência + 4 amortização) - Bloqueado em RJ
+      if (!isRJ) {
+        newBdiLoanAmount += effectivePurchaseCost;
+      }
+
+      for (let i = 0; i < effectiveQty; i++) {
         currentMachines.push({
           id: `M-${Math.random().toString(36).substr(2, 9)}`,
           model: model as MachineModel,
@@ -173,10 +186,23 @@ export const calculateProjections = (
   const operatorsAvailable = (team.kpis?.staffing?.production || 470) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
   const operatorsRequired = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.operators_required || 0), 0);
   
-  // Mão de Obra Direta (MOD) reajustada por inflação
+  // Mão de Obra Direta (MOD) reajustada por inflação ou decisão
   const payrollMOD = operatorsRequired * currentSalary * activityLevel;
   const socialChargesMOD = payrollMOD * (socialChargesAttr - 1);
-  const totalMOD = payrollMOD + socialChargesMOD;
+  const productivityBonus = payrollMOD * (sanitize(decision.hr?.productivityBonusPercent, 0) / 100);
+  const totalMOD = payrollMOD + socialChargesMOD + productivityBonus;
+
+  // Folha Administrativa e de Vendas (User Request: Breakdown Adm/Vendas)
+  const staffAdmin = indicators.staffing?.admin?.count || 20;
+  const staffSales = indicators.staffing?.sales?.count || 10;
+  
+  const payrollAdm = staffAdmin * currentSalary * (indicators.staffing?.admin?.salaries || 4);
+  const socialChargesAdm = payrollAdm * (socialChargesAttr - 1);
+  const totalPayrollAdm = payrollAdm + socialChargesAdm;
+
+  const payrollSales = staffSales * currentSalary * (indicators.staffing?.sales?.salaries || 4);
+  const socialChargesSales = payrollSales * (socialChargesAttr - 1);
+  const totalPayrollSales = payrollSales + socialChargesSales;
 
   // Se faltar operador, a capacidade efetiva é reduzida proporcionalmente
   const operatorConstraint = operatorsRequired > 0 ? Math.min(1, operatorsAvailable / operatorsRequired) : 1;
@@ -191,7 +217,18 @@ export const calculateProjections = (
   // Custo de Treinamento (Baseado na folha da fábrica)
   const trainingCost = payrollMOD * (trainingPercent / 100);
 
-  const unitsProduced = Math.floor(effectiveCapacity * activityLevel * trainingPenalty);
+  let unitsProduced = Math.floor(effectiveCapacity * activityLevel * trainingPenalty);
+
+  // Produção Extra (Hora Extra) - Custo MOD 50% superior para o excedente
+  const extraProductionPercent = sanitize(decision.production?.extraProductionPercent, 0);
+  if (extraProductionPercent > 0) {
+    const extraUnits = Math.floor(unitsProduced * (extraProductionPercent / 100));
+    const extraModCost = (extraUnits / (unitsProduced || 1)) * totalMOD * 1.5;
+    unitsProduced += extraUnits;
+    // O custo extra é adicionado ao totalMOD para compor o CPP
+    // totalMOD += extraModCost; // Não alteramos a variável totalMOD aqui para não duplicar no DFC, mas somamos no CPP
+  }
+  const extraProductionCost = extraProductionPercent > 0 ? (Math.floor(unitsProduced * (extraProductionPercent / (100 + extraProductionPercent))) / (unitsProduced || 1)) * totalMOD * 0.5 : 0;
 
   // Matéria-Prima Consumida (Com reajuste específico de MP A/B e consumo 3:2) - VALOR LÍQUIDO (sem IVA)
   const totalMP = (unitsProduced * 3 * netMpaPrice) + (unitsProduced * 2 * netMpbPrice);
@@ -199,8 +236,8 @@ export const calculateProjections = (
   // Manutenção Industrial (GGF reajustado por inflação)
   const maintenance = capacity * 2.5 * inflationMult; 
 
-  // TOTAL CPP = MP (Reajuste Específico) + MOD (Inflação) + Depreciação (Histórica) + Manutenção (Inflação)
-  const totalCPP = totalMP + totalMOD + periodDepreciation + maintenance;
+  // TOTAL CPP = MP (Reajuste Específico) + MOD (Inflação) + Depreciação (Histórica) + Manutenção (Inflação) + Extras
+  const totalCPP = totalMP + totalMOD + extraProductionCost + periodDepreciation + maintenance;
   const unitCPP = unitsProduced > 0 ? totalCPP / unitsProduced : 0;
 
   // --- 4. GESTÃO DE ESTOQUE E CPV (MÉTODO WAC) ---
@@ -236,7 +273,7 @@ export const calculateProjections = (
     const marketingIndex = 1 + (regMarketing * 0.08); // +8% por ponto de marketing
     const termIndex = 1 + (regTerm * 0.05); // +5% por nível de prazo (incentivo comercial)
     
-    let regDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (indicators.demand_variation / 100)));
+    let regDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (indicators.demand_variation / 100)) * rjDemandPenalty);
     
     // Limitar pelo estoque disponível (distribuição simples)
     const regUnitsSold = Math.min(regDemand, Math.floor(totalQtyForSale / regionCount)); 
@@ -279,6 +316,18 @@ export const calculateProjections = (
   const purchaseMPA = sanitize(decision.production?.purchaseMPA, 0);
   const purchaseMPB = sanitize(decision.production?.purchaseMPB, 0);
   const totalPurchaseMP = (purchaseMPA * mpaPrice) + (purchaseMPB * mpbPrice);
+  
+  // Tipo de Pagamento Fornecedores (0: A Vista, 1: 30 dias, 2: 60 dias)
+  const supplierPaymentType = sanitize(decision.production?.paymentType, 0);
+  let cashOutflowSuppliers = totalPurchaseMP;
+  let newAccountsPayable = 0;
+  
+  if (supplierPaymentType > 0) {
+    cashOutflowSuppliers = 0; // Paga no round seguinte
+    newAccountsPayable = totalPurchaseMP;
+  }
+  
+  const prevSuppliers = findAccountValue(prevBS, 'liabilities.current.suppliers');
 
   // Distribuição e Estocagem
   const distributionCost = totalUnitsSold * indicators.prices.distribution_unit * (1 + (sanitize(indicators.distribution_cost_adjust, 0) / 100));
@@ -291,9 +340,12 @@ export const calculateProjections = (
   const prevOpexAdm = Math.abs(findAccountValue(prevStatements.dre, 'opex.adm') || 216000);
   const prevOpexRd = Math.abs(findAccountValue(prevStatements.dre, 'opex.rd') || 41844);
 
-  const currentOpexSales = (prevOpexSales * inflationMult) + totalMarketingExp + distributionCost + storageCost;
-  const currentOpexAdm = prevOpexAdm * inflationMult;
-  const currentOpexRd = prevOpexRd * inflationMult;
+  const currentOpexSales = (prevOpexSales * inflationMult) + totalMarketingExp + distributionCost + storageCost + totalPayrollSales;
+  const currentOpexAdm = (prevOpexAdm * inflationMult) + totalPayrollAdm;
+  
+  // P&D Investimento dinâmico (% da Receita)
+  const rdInvestmentPercent = sanitize(decision.production?.rd_investment, 0);
+  const currentOpexRd = rdInvestmentPercent > 0 ? (revenue * (rdInvestmentPercent / 100)) : (prevOpexRd * inflationMult);
 
   const opex = currentOpexSales + currentOpexAdm + currentOpexRd + badDebtExp + trainingCost;
   
@@ -305,7 +357,7 @@ export const calculateProjections = (
 
   // Processar Empréstimos Existentes
   prevLoans.forEach(loan => {
-    let interest = loan.amount * (loan.interest_rate / 100);
+    let interest = loan.amount * (loan.interest_rate / 100) * rjInterestAgio;
     let amort = 0;
 
     if (loan.type === 'bdi') {
@@ -350,9 +402,36 @@ export const calculateProjections = (
     });
   }
 
+  // Processar Novo Empréstimo Solicitado (Manual)
+  const loanRequest = sanitize(decision.finance?.loanRequest, 0);
+  const loanTerm = sanitize(decision.finance?.loanTerm, 0); // 0: 6 rounds, 1: 12 rounds, 2: 24 rounds
+  const loanTermsMap = [6, 12, 24];
+  const selectedTerm = loanTermsMap[loanTerm] || 12;
+
+  if (loanRequest > 0 && !isRJ) {
+    currentLoans.push({
+      id: `L-REQ-${Math.random().toString(36).substr(2, 5)}`,
+      type: 'normal',
+      amount: loanRequest,
+      interest_rate: sanitize(indicators.interest_rate_tr, 2) + 2, // 2% de spread para manual
+      term: selectedTerm,
+      remaining_rounds: selectedTerm
+    });
+  }
+
   const interestExp = totalInterestExp;
   
-  // --- 4.5 APURAÇÃO DE IVA (CORRIGIDA v18.9) ---
+  // Rendimentos de Aplicações Financeiras
+  const prevInvestments = findAccountValue(prevBS, 'assets.current.investments');
+  const investmentReturn = prevInvestments * (sanitize(indicators.investment_return_rate, 1) / 100);
+  
+  // Receita Financeira de Vendas a Prazo (Juros de Prazo)
+  const termInterestRate = sanitize(decision.production?.term_interest_rate, 0) / 100;
+  const termInterestRevenue = totalCreditSales * termInterestRate;
+  
+  const totalFinancialRevenue = investmentReturn + termInterestRevenue;
+  
+  // --- 4.5 APURAÇÃO DE IVA (GOLD STANDARD v19.0) ---
   const ivaOnSales = revenue * vatSalesRate; // Débito gerado nas vendas
   const ivaRecoverableGenerated = totalPurchaseMP * vatPurchasesRate; // Crédito gerado nas compras
 
@@ -362,7 +441,7 @@ export const calculateProjections = (
   // 1. Pagamento automático do passivo anterior (Fluxo de Caixa)
   const vatPayment = prevVatPayable; 
 
-  // 2. Acúmulo de Créditos (Anterior + Atual)
+  // 2. Acúmulo de Créditos (Anterior + Atual) - CORREÇÃO v19.0: Crédito atual entra no ativo antes da netting
   const totalRecoverableAvailable = prevVatRecoverable + ivaRecoverableGenerated;
 
   // 3. Apuração do Saldo Líquido do Período
@@ -383,11 +462,16 @@ export const calculateProjections = (
   }
 
   const operatingProfit = (revenue - ivaOnSales) - totalCPV - opex;
-  const lair = operatingProfit - interestExp - machineSalesLoss;
+  const lair = operatingProfit - interestExp + totalFinancialRevenue - machineSalesLoss;
   
+  // PPR (Participação nos Lucros) - Dinâmico conforme decisão (0-20%)
+  const pprRate = sanitize(decision.hr?.participationPercent, 10) / 100;
+  const ppr = lair > 0 ? lair * pprRate : 0;
+  const lairAfterPpr = lair - ppr;
+
   const taxRate = (sanitize(indicators.tax_rate_ir, 25) / 100);
-  const taxProv = lair > 0 ? lair * taxRate : 0;
-  const netProfit = lair - taxProv;
+  const taxProv = lairAfterPpr > 0 ? lairAfterPpr * taxRate : 0;
+  const netProfit = lairAfterPpr - taxProv;
   
   const dividendPercent = (sanitize(indicators.dividend_percent, 25) / 100);
   const dividends = netProfit > 0 ? netProfit * dividendPercent : 0;
@@ -396,11 +480,14 @@ export const calculateProjections = (
   // Recebimento = Vendas à Vista (Atual) + Recebimento de Clientes (Anterior)
   const prevClients = findAccountValue(prevBS, 'assets.current.clients');
   const cashInflowFromSales = totalCashSales + prevClients;
+  
+  // Aplicação Financeira (Saída de Caixa)
+  const applicationAmount = sanitize(decision.finance?.application, 0);
 
-  // Total Outflows para cálculo de caixa (incluindo pagamento automático de IVA)
-  const totalOutflows = totalPurchaseMP + totalMOD + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + dividends + trainingCost + vatPayment;
+  // Total Outflows para cálculo de caixa (incluindo pagamento automático de IVA e PPR)
+  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + ppr + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + dividends + trainingCost + vatPayment + applicationAmount;
 
-  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow - totalOutflows;
+  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + totalFinancialRevenue - totalOutflows;
   
   // Liberação Automática de Empréstimo Compulsório (Strategos Core)
   let newCompulsoryLoan = 0;
@@ -439,6 +526,7 @@ export const calculateProjections = (
 
   const bsValues = {
     'assets.current.cash': finalCash,
+    'assets.current.investments': prevInvestments + applicationAmount,
     'assets.current.stock.pa': closingStockValuePA,
     'assets.current.stock.mpa': closingMpaValue,
     'assets.current.stock.mpb': closingMpbValue,
@@ -448,6 +536,7 @@ export const calculateProjections = (
     'assets.noncurrent.fixed.machines': totalMachineryCost,
     'assets.noncurrent.fixed.machines_deprec': -totalMachineryDeprec,
     'assets.noncurrent.fixed.buildings_deprec': -newBuildingsDeprecAccum,
+    'liabilities.current.suppliers': newAccountsPayable,
     'liabilities.current.loans_st': totalLoansST,
     'liabilities.current.vat_payable': finalVatPayable,
     'liabilities.longterm.loans_lt': totalLoansLT,
@@ -596,12 +685,18 @@ export const calculateProjections = (
         'cpv': -totalCPV, 
         'opex.sales': -currentOpexSales,
         'opex.adm': -currentOpexAdm,
+        'opex.payroll_adm': -totalPayrollAdm,
+        'opex.payroll_sales': -totalPayrollSales,
         'opex.rd': -currentOpexRd,
         'opex.bad_debt': -badDebtExp,
         'operating_profit': operatingProfit,
+        'fin.rev': totalFinancialRevenue,
         'fin.exp': -interestExp,
         'non_op.rev': totalAwards,
         'non_op.exp': -machineSalesLoss,
+        'lair': lair,
+        'tax_prov': -taxProv,
+        'ppr': -ppr,
         'final_profit': finalNetProfit 
       }, true),
       cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
@@ -610,22 +705,25 @@ export const calculateProjections = (
         'cf.inflow.term_sales': prevClients,
         'cf.inflow.machine_sales': machineSalesInflow,
         'cf.inflow.awards': totalAwards,
+        'cf.inflow.loans_normal': loanRequest,
         'cf.inflow.compulsory': newCompulsoryLoan,
-        'cf.outflow.payroll': -payrollMOD,
-        'cf.outflow.social_charges': -socialChargesMOD,
+        'cf.inflow.fin_rev': totalFinancialRevenue,
+        'cf.outflow.payroll': -(payrollMOD + payrollAdm + payrollSales + ppr + productivityBonus + extraProductionCost),
+        'cf.outflow.social_charges': -(socialChargesMOD + socialChargesAdm + socialChargesSales),
         'cf.outflow.vat_payable': -vatPayment,
         'cf.outflow.rd': -currentOpexRd,
         'cf.outflow.marketing': -totalMarketingExp,
         'cf.outflow.training': -trainingCost,
         'cf.outflow.distribution': -distributionCost,
         'cf.outflow.storage': -storageCost,
-        'cf.outflow.suppliers': -totalPurchaseMP,
+        'cf.outflow.suppliers': -(cashOutflowSuppliers + prevSuppliers),
         'cf.outflow.machine_buy': -machinePurchaseOutflow,
         'cf.outflow.maintenance': -maintenance,
         'cf.outflow.interest': -interestExp,
         'cf.outflow.amortization': -totalAmortization,
         'cf.outflow.taxes': -taxProv,
         'cf.outflow.dividends': -dividends,
+        'cf.investment_apply': -applicationAmount,
         'cf.final': finalCashWithAwards 
       }, true),
       balance_sheet: finalBSWithAwards
@@ -682,11 +780,11 @@ export const calculateProjections = (
       compulsory_loan_interest_paid: interestExp,
 
       // E-SDS v1.2 Inputs
-      fco_livre: (operatingProfit + periodDepreciation) - maintenance - interestExp - (lair > 0 ? lair * (sanitize(indicators.tax_rate_ir, 25) / 100) : 0),
+      fco_livre: (operatingProfit + periodDepreciation) - maintenance - interestExp - taxProv,
       capex_manutencao: maintenance,
       capex_estrategico: machinePurchaseOutflow,
       juros_pagos: interestExp,
-      impostos_pagos: lair > 0 ? lair * (sanitize(indicators.tax_rate_ir, 25) / 100) : 0,
+      impostos_pagos: taxProv,
       passivo_circulante: currentLiabilities,
       despesas_operacionais_projetadas_proxima_rodada: opex * 1.05, // Projeção conservadora
       receita_liquida: revenue,
