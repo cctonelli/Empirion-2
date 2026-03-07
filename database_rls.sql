@@ -4,6 +4,8 @@
 -- Foco: Telemetria Avançada, KPIs Estratégicos e Segurança de Views
 -- ==============================================================================
 
+BEGIN;
+
 -- 0. GARANTIR EXISTÊNCIA DA TABELA DE PERFIS (CORE)
 CREATE TABLE IF NOT EXISTS public.user_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -55,6 +57,8 @@ ADD COLUMN IF NOT EXISTS esds_score NUMERIC(10,2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS esds_zone TEXT,
 ADD COLUMN IF NOT EXISTS esds_gargalo TEXT,
 ADD COLUMN IF NOT EXISTS esds_insights TEXT,
+ADD COLUMN IF NOT EXISTS esds_top_gargalos JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS esds_main_drivers JSONB DEFAULT '[]',
 ADD COLUMN IF NOT EXISTS share_price NUMERIC(20,2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS credit_rating TEXT CHECK (credit_rating = ANY (ARRAY['AAA'::text, 'AA'::text, 'A'::text, 'B'::text, 'C'::text, 'D'::text]));
 
@@ -130,6 +134,8 @@ ADD COLUMN IF NOT EXISTS esds_score NUMERIC(10,2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS esds_zone TEXT,
 ADD COLUMN IF NOT EXISTS esds_gargalo TEXT,
 ADD COLUMN IF NOT EXISTS esds_insights TEXT,
+ADD COLUMN IF NOT EXISTS esds_top_gargalos JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS esds_main_drivers JSONB DEFAULT '[]',
 ADD COLUMN IF NOT EXISTS share_price NUMERIC(20,2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS credit_rating TEXT CHECK (credit_rating = ANY (ARRAY['AAA'::text, 'AA'::text, 'A'::text, 'B'::text, 'C'::text, 'D'::text]));
 
@@ -151,7 +157,8 @@ CREATE INDEX IF NOT EXISTS idx_companies_asset_vcl ON public.companies (fixed_as
 CREATE INDEX IF NOT EXISTS idx_companies_ccc ON public.companies (ccc ASC);
 
 -- 4. VIEW DE AUDITORIA DE CAPEX PARA O TUTOR (HELPER)
--- Fix: SECURITY INVOKER para conformidade com políticas de RLS do Supabase
+-- Fix: DROP VIEW antes de recriar para permitir mudança na estrutura de colunas
+DROP VIEW IF EXISTS public.view_capex_health;
 CREATE OR REPLACE VIEW public.view_capex_health 
 WITH (security_invoker = true)
 AS
@@ -161,6 +168,8 @@ SELECT
     t.name as team_name,
     c.fixed_assets_value as net_book_value,
     c.fixed_assets_depreciation as accumulated_depreciation,
+    c.esds_score,
+    c.esds_zone,
     CASE 
         WHEN (c.fixed_assets_value + ABS(c.fixed_assets_depreciation)) = 0 THEN 0 
         ELSE ABS(c.fixed_assets_depreciation) / (c.fixed_assets_value + ABS(c.fixed_assets_depreciation)) * 100 

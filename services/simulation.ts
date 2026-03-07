@@ -632,7 +632,7 @@ export const calculateProjections = (
       compulsory_loan_balance: newCompulsoryLoan,
       compulsory_loan_interest_paid: interestExp,
 
-      // E-SDS v1.1 Inputs
+      // E-SDS v1.2 Inputs
       fco_livre: (operatingProfit + periodDepreciation) - maintenance - interestExp - (lair > 0 ? lair * (sanitize(indicators.tax_rate_ir, 25) / 100) : 0),
       capex_manutencao: maintenance,
       capex_estrategico: machinePurchaseOutflow,
@@ -774,10 +774,19 @@ export async function calculateESDS(
   const warnings: string[] = [];
 
   // Flags de estimativa
+  const defaultRecurrence: Record<string, number> = {
+    'agribusiness': 0.2,
+    'services': 0.6,
+    'industrial': 0.1
+  };
   const recorrenciaConfigurada = !!config.recorrencia_percent?.[branch];
+  const recorrencia = recorrenciaConfigurada 
+    ? config.recorrencia_percent![branch] 
+    : (defaultRecurrence[branch] || 0);
+
   if (!recorrenciaConfigurada) {
     isEstimated = true;
-    warnings.push('Recorrência estimada em 0% (configuração ausente no campeonato)');
+    warnings.push(`Recorrência estimada em ${Math.round(recorrencia * 100)}% (configuração ausente no campeonato)`);
   }
 
   // 4. Pilares com média móvel onde aplicável
@@ -795,9 +804,10 @@ export async function calculateESDS(
   });
   const p1_avg = p1_values.reduce((a, b) => a + b, 0) / p1_values.length;
 
-  // Pilar 2: Sustentabilidade Crescimento Alavancado (média delta)
+  // Pilar 2: Sustentabilidade Crescimento Alavancado (média delta 3 rodadas)
   const deltas: number[] = [];
-  for (let i = 1; i < receitaList.length; i++) {
+  const n_p2 = Math.min(4, receitaList.length); // Precisamos de n+1 para n deltas
+  for (let i = 1; i < n_p2; i++) {
     const recAtual = receitaList[i - 1];
     const recAnt = receitaList[i];
     deltas.push(recAnt !== 0 ? (recAtual - recAnt) / Math.abs(recAnt) : 0);
@@ -819,13 +829,13 @@ export async function calculateESDS(
   }
 
   // Pilar 3: Margem + Recorrência
-  const recorrencia = recorrenciaConfigurada ? config.recorrencia_percent![branch] : 0;
   const p3 = (ebitda + receitaList[0] * recorrencia) / Math.max(receitaList[0], 1);
   const p3_avg = p3;
 
-  // Pilar 4: Dias de Caixa
+  // Pilar 4: Dias de Caixa (Decaimento setorial)
+  const decayConstant = branch === 'agribusiness' ? 90 : branch === 'services' ? 45 : 60;
   const diasCaixa = caixaAplic / Math.max(opexDiaria, 1);
-  const p4_avg = 10 * (1 - Math.exp(-diasCaixa / 60));
+  const p4_avg = 10 * (1 - Math.exp(-diasCaixa / decayConstant));
 
   // Pilar 5: Alavancagem Excessiva
   const alavancagemBruta = passivoTotal / Math.max(pl, 1);
@@ -833,12 +843,13 @@ export async function calculateESDS(
   if (pl <= 0) p5 *= 1.5;
   const p5_avg = p5;
 
-  // Pilar 6: Volatilidade
+  // Pilar 6: Volatilidade (Calibragem setorial)
   const meanFCO = fcoList.reduce((a, b) => a + b, 0) / fcoList.length || 0.0001;
   const variance = fcoList.reduce((sum, x) => sum + (x - meanFCO) ** 2, 0) / fcoList.length;
   const stdDev = Math.sqrt(variance);
   const cv = meanFCO > 0.0001 ? stdDev / meanFCO : stdDev > 0 ? 10 : 0;
-  const p6_avg = cv * 0.5;
+  const volMultiplier = branch === 'agribusiness' ? 0.8 : branch === 'industrial' ? 0.5 : 0.3;
+  const p6_avg = cv * volMultiplier;
 
   // 5. Score bruto
   const esds_raw =

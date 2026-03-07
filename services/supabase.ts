@@ -186,7 +186,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     solvency_index: 2.0,
     inventory_turnover: 0,
     carbon_footprint: 0,
-    // E-SDS v1.1 Inputs for P0
+    // E-SDS v1.2 Inputs for P0
     fco_livre: 208387.77 - 50000 - 2500 - 14871, // EBITDA - Manutencao - Juros - IR (estimado P0)
     capex_manutencao: 50000,
     capex_estrategico: 0,
@@ -247,10 +247,12 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     solvency_index: 2.0,
     inventory_turnover: 0,
     carbon_footprint: 0,
-    esds_score: p0Esds?.display || 0,
+    esds_score: p0Esds?.esds_display || 0,
     esds_zone: p0Esds?.zone || 'Verde',
     esds_gargalo: p0Esds?.gargalo_principal,
-    esds_insights: p0Esds?.gemini_insights
+    esds_insights: p0Esds?.gemini_insights,
+    esds_top_gargalos: p0Esds?.top_gargalos || [],
+    esds_main_drivers: p0Esds?.main_drivers || []
   }));
   
   await supabase.from(historyTable).insert(historyEntries);
@@ -409,7 +411,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
                 const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, competitiveIndicators, team);
                 
-                // 3.1 Calcular E-SDS v1.1 via Gemini
+                // 3.1 Calcular E-SDS v1.2 via Gemini
                 const { data: previousRounds } = await supabase
                   .from(historyTable)
                   .select('*')
@@ -475,10 +477,12 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 fco_livre: item.res.kpis.fco_livre || 0,
                 capex_manutencao: item.res.kpis.capex_manutencao || 0,
                 capex_estrategico: item.res.kpis.capex_estrategico || 0,
-                esds_score: item.res.kpis.esds?.display || 0,
+                esds_score: item.res.kpis.esds?.esds_display || 0,
                 esds_zone: item.res.kpis.esds?.zone || 'ALERTA',
                 esds_gargalo: item.res.kpis.esds?.gargalo_principal,
                 esds_insights: item.res.kpis.esds?.gemini_insights,
+                esds_top_gargalos: item.res.kpis.esds?.top_gargalos || [],
+                esds_main_drivers: item.res.kpis.esds?.main_drivers || [],
                 market_share: competitiveShare
             });
 

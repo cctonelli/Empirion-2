@@ -356,17 +356,18 @@ Fórmula Base (E-SDS_raw):
 E-SDS_raw = (4.0 × Pilar1) + (3.0 × Pilar2) + (2.0 × Pilar3) + (1.5 × Pilar4) + (PesoP5 × Pilar5) + (PesoP6 × Pilar6)
 
 Ajustes Setoriais (Branch-Specific Weights):
-- Industrial/Agro: PesoP5 = -3.2 | PesoP6 = -1.5
-- Services/SaaS: PesoP5 = -2.0 | PesoP6 = -0.8
+- Industrial: PesoP5 = -3.0 | PesoP6 = -1.2
+- Agribusiness: PesoP5 = -3.0 | PesoP6 = -2.0
+- Services/SaaS: PesoP5 = -2.5 | PesoP6 = -0.8
 - Default: PesoP5 = -3.0 | PesoP6 = -1.0
 
 Pilares v1.2:
 1. Geração de Caixa Operacional Líquida (Peso 4.0): FCO_Livre / (Passivo_Circulante + Despesas_Projetadas). FCO_Livre = Caixa_Op - CapEx_Manut - Juros - Impostos. Não punir CapEx_Estratégico se for investimento de expansão.
-2. Sustentabilidade do Crescimento (Peso 3.0): (Δ_Receita_Líquida_% / (Custo_Dívida × Alavancagem_Efetiva)). Se Alavancagem > 6, aplicar threshold de risco crítico.
-3. Margem de Segurança + Recorrência (Peso 2.0): (EBITDA + Receita_Recorrente) / Receita_Total.
-4. Eficiência de Giro (Peso 1.5): 10 × (1 - exp(-Dias_Caixa / 60)).
+2. Sustentabilidade do Crescimento (Peso 3.0): (Média_Móvel_3_Rounds(Δ_Receita_Líquida_%) / (Custo_Dívida × Alavancagem_Efetiva)).
+3. Margem de Segurança + Recorrência (Peso 2.0): (EBITDA + Receita_Recorrente) / Receita_Total. Defaults: 60% (Serviços), 20% (Agro), 10% (Indústria).
+4. Eficiência de Giro (Peso 1.5): 10 × (1 - exp(-Dias_Caixa / K)). K=90 (Agro), 60 (Indústria), 45 (Serviços).
 5. Penalizador de Alavancagem (Peso Variável): max(0, (Passivo_Total / PL) - 3.0) × (1 + %_Dívida_Curto_Prazo).
-6. Penalizador de Volatilidade (Peso Variável): Coeficiente de Variação do FCO nas últimas 4 rodadas.
+6. Penalizador de Volatilidade (Peso Variável): Coeficiente de Variação do FCO × Multiplicador (0.8 Agro, 0.5 Ind, 0.3 Serv).
 
 REGRAS CRÍTICAS v1.2:
 - Threshold Hard: Se Dívida Líquida / EBITDA > 6.0, a zona deve ser obrigatoriamente Laranja ou Vermelho, independente do score total.

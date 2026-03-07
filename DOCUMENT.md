@@ -83,9 +83,20 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
 - **Análise DuPont:** Decomposição do ROE (Margem x Giro x Alavancagem).
 - **DCF Valuation:** Valor de mercado via Fluxo de Caixa Descontado.
 - **Altman Z''-Score (v2025-12.2):** Indicador preditivo de insolvência para mercados emergentes e empresas privadas.
-- **E-SDS v1.1 (Empirion Solvency Dynamics Score - v2026-03):** Modelo proprietário de solvência dinâmica focado em fluxo de caixa real, dinâmica de rodadas e diferenciação entre estratégia e erro.
-  - **Fórmula:** E-SDS_raw = (4.0 × Pilar1) + (3.0 × Pilar2) + (2.0 × Pilar3) + (1.5 × Pilar4) – (2.5 × Pilar5) – (1.0 × Pilar6).
-  - **Pilares:** 1. Geração de Caixa Operacional Líquida | 2. Sustentabilidade do Crescimento Alavancado | 3. Margem de Segurança Bruta + Recorrência | 4. Eficiência de Giro de Caixa | 5. Penalizador de Alavancagem Excessiva | 6. Penalizador de Volatilidade de Caixa.
+- **E-SDS v1.2 (Empirion Solvency Dynamics Score - v2026-03.2):** Modelo proprietário de solvência dinâmica focado em fluxo de caixa real, dinâmica de rodadas e diferenciação entre estratégia e erro.
+  - **Fórmula Base:** `E-SDS_raw = (W1×P1) + (W2×P2) + (W3×P3) + (W4×P4) + (W5×P5) + (W6×P6)`
+  - **Pilares (P):**
+    1. **P1 (FCO Livre):** `(FCO - CapEx Manut - Juros - Impostos) / (Passivo Circulante + Despesas Projetadas)`. Avalia a capacidade de honrar compromissos imediatos com caixa próprio.
+    2. **P2 (Sustentabilidade):** `MA3(Δ Receita) / (Custo da Dívida × Alavancagem Efetiva)`. Verifica se o crescimento médio de 3 rodadas justifica o custo do capital de terceiros.
+    3. **P3 (Margem + Recorrência):** `(EBITDA + (Receita × %Recorrência)) / Receita`. Mede a resiliência. Defaults: 60% (Serviços), 20% (Agro), 10% (Indústria).
+    4. **P4 (Dias de Caixa):** `10 × (1 - e^(-Dias de Caixa / K))`. K=90 (Agro), 60 (Indústria), 45 (Serviços). Pontua a liquidez imediata.
+    5. **P5 (Alavancagem):** `max(0, (Passivo Total / PL) - 3) × (1 + %Dívida CP)`. Penaliza o endividamento excessivo e a concentração no curto prazo.
+    6. **P6 (Volatilidade):** `CV(FCO) × Multiplicador`. Penaliza a instabilidade crônica na geração de caixa (0.8 Agro, 0.5 Ind, 0.3 Serv).
+  - **Pesos Dinâmicos (W):**
+    - **P1:** 4.0 | **P2:** 3.0 | **P3:** 2.0 | **P4:** 1.5
+    - **P5 (Penalizador):** -3.0 (Indústria/Agro) ou -2.5 (Serviços).
+    - **P6 (Volatilidade):** Multiplicador de CV: 0.8 (Agro), 0.5 (Indústria), 0.3 (Serviços). Pesos finais: -2.0 (Agro), -1.2 (Indústria), -0.8 (Serviços).
+  - **Threshold Hard:** Se `Dívida Líquida / EBITDA > 6.0`, o score é automaticamente rebaixado para a zona de perigo (Laranja/Vermelho), independentemente dos outros pilares.
   - **Escala:** Azul (≥8.0), Verde (5.5-7.9), Amarelo (3.0-5.4), Laranja (1.5-2.9), Vermelho (<1.5).
 
 ### 3. Inteligência de Mercado e ESG
