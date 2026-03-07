@@ -55,7 +55,9 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
   - **Quitação:** 100% no ciclo subsequente.
   - **P0 Especial:** Unidades iniciam com **$ 1.372.362,00** de compulsório a ser quitado no P1.
 - **Empréstimos Normais:** Prazos de Curto e Longo Prazo, com juros baseados na Taxa TR.
-- **Tributação:** Imposto de Renda de 25% sobre o lucro tributável.
+- **Tributação:** 
+  - Imposto de Renda de 25% sobre o lucro tributável.
+  - **IVA (v2026-03.3):** Sistema de débito e crédito. IVA sobre vendas (débito) e IVA sobre compras (crédito). O saldo é apurado mensalmente, compensando créditos acumulados antes de gerar nova guia de recolhimento.
 - **Dividendos:** Distribuição obrigatória de 25% do lucro líquido.
 - **Auditoria (Audit Awards):** Premiações por precisão nas projeções de Custo Unitário, Faturamento e Lucro Líquido (Tolerância de 5%).
 
@@ -187,4 +189,14 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
     - **Consistência:** Tratamento de dados faltantes com flag de "estimado".
   - **Treinamento:** Investimento obrigatório para novas máquinas; penalidade de 25% na produtividade se investimento < 5%.
   - **Capacidade:** Restrição de produção baseada na disponibilidade de operadores vs necessidade das máquinas.
+- **Status:** Em produção.
+
+### v2026-03.3 - Implementação de IVA Gold Standard
+- **Data:** Março de 2026
+- **Motivo:** Refinamento técnico da apuração de IVA para garantir integridade contábil, acúmulo correto de créditos e liquidação de passivos.
+- **Diferenças:**
+  - **Acúmulo de Créditos:** Créditos de compras do período atual são somados ao saldo acumulado antes da compensação.
+  - **Liquidação Automática:** Pagamento automático do IVA a recolher do período anterior no início da rodada.
+  - **Estoque Líquido:** Valor de estoque de Matéria-Prima (MP) agora é registrado pelo valor líquido (deduzido o IVA recuperável).
+  - **Transparência:** Adição de contas específicas no Balanço Patrimonial para IVA a Recuperar e IVA a Recolher.
 - **Status:** Em produção.

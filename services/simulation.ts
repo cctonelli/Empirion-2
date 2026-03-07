@@ -352,33 +352,34 @@ export const calculateProjections = (
 
   const interestExp = totalInterestExp;
   
-  // --- 4.5 APURAÇÃO DE IVA (CONFORME RECOMENDAÇÃO) ---
-  const ivaOnSales = revenue * vatSalesRate;
-  const ivaRecoverableGenerated = totalPurchaseMP * vatPurchasesRate;
-  const ivaBalance = ivaOnSales - ivaRecoverableGenerated;
+  // --- 4.5 APURAÇÃO DE IVA (CORRIGIDA v18.9) ---
+  const ivaOnSales = revenue * vatSalesRate; // Débito gerado nas vendas
+  const ivaRecoverableGenerated = totalPurchaseMP * vatPurchasesRate; // Crédito gerado nas compras
 
   const prevVatRecoverable = findAccountValue(prevBS, 'assets.current.vat_recoverable');
   const prevVatPayable = findAccountValue(prevBS, 'liabilities.current.vat_payable');
 
-  // Pagamento automático do IVA a recolher do período anterior (Fluxo de Caixa)
-  const vatPayment = prevVatPayable;
+  // 1. Pagamento automático do passivo anterior (Fluxo de Caixa)
+  const vatPayment = prevVatPayable; 
+
+  // 2. Acúmulo de Créditos (Anterior + Atual)
+  const totalRecoverableAvailable = prevVatRecoverable + ivaRecoverableGenerated;
+
+  // 3. Apuração do Saldo Líquido do Período
+  // Saldo = Débito (Vendas) - Crédito Total Disponível
+  const netIvaBalance = ivaOnSales - totalRecoverableAvailable;
 
   let finalVatPayable = 0;
-  let finalVatRecoverable = prevVatRecoverable;
+  let finalVatRecoverable = 0;
 
-  if (ivaBalance > 0) {
-    // Saldo devedor no período: compensa com crédito acumulado (IVA a recuperar)
-    if (finalVatRecoverable >= ivaBalance) {
-      finalVatRecoverable -= ivaBalance;
-      finalVatPayable = 0;
-    } else {
-      finalVatPayable = ivaBalance - finalVatRecoverable;
-      finalVatRecoverable = 0;
-    }
+  if (netIvaBalance > 0) {
+    // Empresa deve pagar a diferença (Saldo Devedor)
+    finalVatPayable = netIvaBalance;
+    finalVatRecoverable = 0;
   } else {
-    // Saldo credor no período: aumenta o IVA a recuperar
-    finalVatRecoverable += Math.abs(ivaBalance);
+    // Empresa fica com crédito acumulado (Saldo Credor)
     finalVatPayable = 0;
+    finalVatRecoverable = Math.abs(netIvaBalance);
   }
 
   const operatingProfit = (revenue - ivaOnSales) - totalCPV - opex;
