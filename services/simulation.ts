@@ -204,6 +204,21 @@ export const calculateProjections = (
   const socialChargesSales = payrollSales * (socialChargesAttr - 1);
   const totalPayrollSales = payrollSales + socialChargesSales;
 
+  // --- 3.1 CÁLCULO DE RESCISÃO E PPR PROPORCIONAL (USER REQUEST) ---
+  const prevPprPayable = findAccountValue(prevBS, 'liabilities.current.ppr_payable') || 0;
+  const totalStaff = (team.kpis?.staffing?.production || 470) + staffAdmin + staffSales;
+  const firedTotal = sanitize(decision.hr?.fired, 0);
+  
+  // PPR proporcional aos demitidos (liquidado na rescisão)
+  const pprProporcional = (firedTotal > 0 && totalStaff > 0) ? prevPprPayable * (firedTotal / totalStaff) : 0;
+  
+  // Indenização base: 1 salário base + 1 multa (total 2 salários)
+  const custoIndenizacao = firedTotal * currentSalary * 2;
+  
+  // O PPR restante (dos que ficaram) também será pago nesta rodada (regra: pago no período seguinte)
+  const pprNormalPayment = prevPprPayable - pprProporcional;
+  const totalPprPayment = prevPprPayable; // No final, todo o passivo anterior é liquidado
+
   // Se faltar operador, a capacidade efetiva é reduzida proporcionalmente
   const operatorConstraint = operatorsRequired > 0 ? Math.min(1, operatorsAvailable / operatorsRequired) : 1;
   const effectiveCapacity = capacity * operatorConstraint;
@@ -476,6 +491,13 @@ export const calculateProjections = (
   const dividendPercent = (sanitize(indicators.dividend_percent, 25) / 100);
   const dividends = netProfit > 0 ? netProfit * dividendPercent : 0;
 
+  // --- 4.6 MOTIVAÇÃO E CLIMA ORGANIZACIONAL (PPR IMPACT) ---
+  // O PPR provisionado (currentPpr) e o salário influenciam a motivação
+  const avgMarketSalary = indicators.hr_base.salary * inflationMult;
+  const salaryIndex = currentSalary / avgMarketSalary;
+  const pprIndex = 1 + (pprRate * 2); // PPR de 10% aumenta motivação em 20%
+  const motivation = Math.min(1.2, salaryIndex * pprIndex);
+
   // Fluxo de Caixa (DFC)
   // Recebimento = Vendas à Vista (Atual) + Recebimento de Clientes (Anterior)
   const prevClients = findAccountValue(prevBS, 'assets.current.clients');
@@ -484,8 +506,9 @@ export const calculateProjections = (
   // Aplicação Financeira (Saída de Caixa)
   const applicationAmount = sanitize(decision.finance?.application, 0);
 
-  // Total Outflows para cálculo de caixa (incluindo pagamento automático de IVA e PPR)
-  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + ppr + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + dividends + trainingCost + vatPayment + applicationAmount;
+  // Total Outflows para cálculo de caixa
+  // Inclui: Pagamento do PPR anterior (totalPprPayment) + Indenização de demissões (custoIndenizacao)
+  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + dividends + trainingCost + vatPayment + applicationAmount;
 
   let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + totalFinancialRevenue - totalOutflows;
   
@@ -539,6 +562,9 @@ export const calculateProjections = (
     'liabilities.current.suppliers': newAccountsPayable,
     'liabilities.current.loans_st': totalLoansST,
     'liabilities.current.vat_payable': finalVatPayable,
+    'liabilities.current.taxes': taxProv,
+    'liabilities.current.dividends': dividends,
+    'liabilities.current.ppr_payable': ppr, // Provisiona o PPR calculado nesta rodada para pagar na próxima
     'liabilities.longterm.loans_lt': totalLoansLT,
     'equity.profit': findAccountValue(prevBS, 'equity.profit') + netProfit
   };
@@ -710,7 +736,7 @@ export const calculateProjections = (
         'cf.inflow.loans_normal': loanRequest,
         'cf.inflow.compulsory': newCompulsoryLoan,
         'cf.inflow.fin_rev': totalFinancialRevenue,
-        'cf.outflow.payroll': -(payrollMOD + payrollAdm + payrollSales + ppr + productivityBonus + extraProductionCost),
+        'cf.outflow.payroll': -(payrollMOD + payrollAdm + payrollSales + totalPprPayment + custoIndenizacao + productivityBonus + extraProductionCost),
         'cf.outflow.social_charges': -(socialChargesMOD + socialChargesAdm + socialChargesSales),
         'cf.outflow.vat_payable': -vatPayment,
         'cf.outflow.rd': -currentOpexRd,

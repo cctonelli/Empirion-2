@@ -58,7 +58,7 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
 - **Tributação:** 
   - Imposto de Renda de 25% sobre o lucro tributável.
   - **IVA (v2026-03.4):** Sistema de débito e crédito Gold Standard. O crédito das compras do período é reconhecido no ativo *antes* da apuração, garantindo compensação integral.
-- **PPR (v2026-03.4):** Participação nos Lucros de 10% sobre o LAIR, incorporada à folha de pagamento para fins de fluxo de caixa.
+- **PPR (v2026-03.6):** Participação nos Lucros (0-20% do LAIR) provisionada no Passivo Circulante (`ppr_payable`) no período de apuração e paga integralmente no período seguinte. Em caso de demissão, o PPR proporcional provisionado é liquidado imediatamente junto com a rescisão.
 - **Dividendos:** Distribuição obrigatória de 25% do lucro líquido.
 - **Auditoria (Audit Awards):** Premiações por precisão nas projeções de Custo Unitário, Faturamento e Lucro Líquido (Tolerância de 5%).
 
@@ -213,4 +213,16 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
     - **Empréstimos Manuais:** Processamento de solicitações de empréstimo com prazos de 6, 12 ou 24 rounds.
     - **Aplicações Financeiras:** Possibilidade de investir excedente de caixa para gerar rendimentos financeiros.
     - **Juros de Prazo:** Receita financeira gerada sobre as vendas a prazo (Term Interest Rate).
+- **Status:** Em produção.
+
+### v2026-03.6 - Provisionamento de PPR e Rescisão Proporcional
+- **Data:** Março de 2026
+- **Motivo:** Alinhamento contábil com o princípio da competência e realismo no fluxo de caixa de demissões.
+- **Diferenças:**
+  - **PPR (Provisionamento):** O PPR calculado na rodada atual (0-20% do LAIR) é provisionado na conta `liabilities.current.ppr_payable` (Passivo Circulante) e reconhecido como despesa no DRE.
+  - **PPR (Pagamento):** O pagamento do PPR ocorre integralmente na rodada subsequente à sua apuração, saindo do caixa via `cf.outflow.payroll`.
+  - **Rescisão:** Em caso de demissão, o colaborador recebe:
+    - Salário do período + Multa Rescisória (1 salário base).
+    - **PPR Proporcional:** A parcela do PPR que já estava provisionada no passivo (referente ao lucro de períodos anteriores) é liquidada imediatamente na rescisão.
+  - **Impacto E-SDS:** Melhora a fidelidade da alavancagem (baixa correta do passivo) e reflete o custo real de saída de talentos no FCO.
 - **Status:** Em produção.

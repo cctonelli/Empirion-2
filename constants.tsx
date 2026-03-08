@@ -48,6 +48,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
 			      { id: 'liabilities.current.vat_payable', label: 'IVA a recolher', value: 0.00, type: 'liability', isEditable: true },
             { id: 'liabilities.current.taxes', label: 'Imposto de Renda a pagar', value: 14871.31, type: 'liability', isEditable: true },
             { id: 'liabilities.current.dividends', label: 'Dividendos a Pagar', value: 11153.49, type: 'liability', isEditable: true },
+            { id: 'liabilities.current.ppr_payable', label: 'PPR a Pagar', value: 0, type: 'liability', isEditable: true },
             { id: 'liabilities.current.loans_st', label: 'Empréstimos de curto prazo', value: 1497362.00, type: 'liability', isEditable: true }
           ] 
         },
