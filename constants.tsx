@@ -70,7 +70,10 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
     { id: 'gross_margin_group', label: 'MARGEM BRUTA', value: 0, type: 'totalizer', children: [
         { id: 'rev', label: '(+) RECEITAS BRUTAS DE VENDAS', value: 4184440.05, type: 'revenue', isEditable: true },
         { id: 'vat_sales', label: '(-) IVA SOBRE VENDAS', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cpv', label: '(-) CPV-CUSTO PROD. VENDIDO', value: -2972830.93, type: 'expense', isEditable: true },
+        { id: 'cpv', label: '(-) CPV-CUSTO PROD. VENDIDO', value: -2972830.93, type: 'totalizer', children: [
+            { id: 'dre.cif', label: 'CIF - CUSTO INDIRETO FABRICAÇÃO', value: 0, type: 'expense', isEditable: true },
+            { id: 'dre.cpv_mp', label: 'MATÉRIA-PRIMA CONSUMIDA', value: 0, type: 'expense', isEditable: true },
+        ]},
     ]},
     { id: 'gross_profit', label: '(=) LUCRO BRUTO', value: 1211609.12, type: 'totalizer', isReadOnly: true },
     { id: 'opex', label: '(-) DESPESAS OPERACIONAIS', value: -1149623.86, type: 'totalizer', children: [

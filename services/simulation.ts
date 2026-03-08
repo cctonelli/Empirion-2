@@ -251,8 +251,12 @@ export const calculateProjections = (
   // Manutenção Industrial (GGF reajustado por inflação)
   const maintenance = capacity * 2.5 * inflationMult; 
 
-  // TOTAL CPP = MP (Reajuste Específico) + MOD (Inflação) + Depreciação (Histórica) + Manutenção (Inflação) + Extras
-  const totalCPP = totalMP + totalMOD + extraProductionCost + periodDepreciation + maintenance;
+  // --- 3.2 COMPOSIÇÃO DO CIF E CPP (USER REQUEST) ---
+  // CIF = MOD + Extras + Depreciação + Manutenção + Rescisão (Indenização + PPR Proporcional)
+  const totalCIF = totalMOD + extraProductionCost + periodDepreciation + maintenance + custoIndenizacao + pprProporcional;
+  
+  // TOTAL CPP = MP + CIF
+  const totalCPP = totalMP + totalCIF;
   const unitCPP = unitsProduced > 0 ? totalCPP / unitsProduced : 0;
 
   // --- 4. GESTÃO DE ESTOQUE E CPV (MÉTODO WAC) ---
@@ -317,6 +321,12 @@ export const calculateProjections = (
 
   // CPV (Custo do Produto Vendido)
   const totalCPV = totalUnitsSold * wacUnit;
+  
+  // Proporção de MP e CIF no CPV (Baseado no WAC do período)
+  const currentCppMpRatio = totalCPP > 0 ? totalMP / totalCPP : 0.6;
+  const totalCPV_MP = totalCPV * currentCppMpRatio;
+  const totalCPV_CIF = totalCPV * (1 - currentCppMpRatio);
+
   const closingStockPA = totalQtyForSale - totalUnitsSold;
   const closingStockValuePA = closingStockPA * wacUnit;
 
@@ -490,6 +500,9 @@ export const calculateProjections = (
   
   const dividendPercent = (sanitize(indicators.dividend_percent, 25) / 100);
   const dividends = netProfit > 0 ? netProfit * dividendPercent : 0;
+  
+  // Pagamento de Dividendos do período anterior (USER REQUEST)
+  const prevDividends = findAccountValue(prevBS, 'liabilities.current.dividends') || 0;
 
   // --- 4.6 MOTIVAÇÃO E CLIMA ORGANIZACIONAL (PPR IMPACT) ---
   // O PPR provisionado (currentPpr) e o salário influenciam a motivação
@@ -507,8 +520,8 @@ export const calculateProjections = (
   const applicationAmount = sanitize(decision.finance?.application, 0);
 
   // Total Outflows para cálculo de caixa
-  // Inclui: Pagamento do PPR anterior (totalPprPayment) + Indenização de demissões (custoIndenizacao)
-  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + dividends + trainingCost + vatPayment + applicationAmount;
+  // Inclui: Pagamento do PPR anterior (totalPprPayment) + Indenização de demissões (custoIndenizacao) + Dividendos anteriores + IVA anterior
+  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + prevDividends + trainingCost + vatPayment + applicationAmount;
 
   let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + totalFinancialRevenue - totalOutflows;
   
@@ -561,9 +574,9 @@ export const calculateProjections = (
     'assets.noncurrent.fixed.buildings_deprec': -newBuildingsDeprecAccum,
     'liabilities.current.suppliers': newAccountsPayable,
     'liabilities.current.loans_st': totalLoansST,
-    'liabilities.current.vat_payable': finalVatPayable,
+    'liabilities.current.vat_payable': finalVatPayable, // O pagamento (vatPayment) já liquidou o anterior, finalVatPayable é a nova dívida
     'liabilities.current.taxes': taxProv,
-    'liabilities.current.dividends': dividends,
+    'liabilities.current.dividends': dividends, // Provisiona os novos dividendos, os anteriores (prevDividends) foram pagos
     'liabilities.current.ppr_payable': ppr, // Provisiona o PPR calculado nesta rodada para pagar na próxima
     'liabilities.longterm.loans_lt': totalLoansLT,
     'equity.profit': findAccountValue(prevBS, 'equity.profit') + netProfit
@@ -709,6 +722,8 @@ export const calculateProjections = (
         'rev': revenue, 
         'vat_sales': -ivaOnSales,
         'cpv': -totalCPV, 
+        'dre.cif': -totalCPV_CIF,
+        'dre.cpv_mp': -totalCPV_MP,
         'gross_profit': revenue - ivaOnSales - totalCPV,
         'opex.sales': -currentOpexSales,
         'opex.adm': -currentOpexAdm,
@@ -752,7 +767,7 @@ export const calculateProjections = (
         'cf.outflow.amortization': -totalAmortization,
         'cf.outflow.late_penalties': 0, // Placeholder
         'cf.outflow.taxes': -taxProv,
-        'cf.outflow.dividends': -dividends,
+        'cf.outflow.dividends': -prevDividends,
         'cf.investment_apply': -applicationAmount,
         'cf.final': finalCashWithAwards 
       }, true),
