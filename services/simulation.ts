@@ -706,6 +706,7 @@ export const calculateProjections = (
         'cf.inflow.term_sales': prevClients,
         'cf.inflow.machine_sales': machineSalesInflow,
         'cf.inflow.awards': totalAwards,
+        'cf.inflow.investment_withdrawal': 0, // Placeholder se não houver decisão explícita
         'cf.inflow.loans_normal': loanRequest,
         'cf.inflow.compulsory': newCompulsoryLoan,
         'cf.inflow.fin_rev': totalFinancialRevenue,
@@ -718,10 +719,12 @@ export const calculateProjections = (
         'cf.outflow.distribution': -distributionCost,
         'cf.outflow.storage': -storageCost,
         'cf.outflow.suppliers': -(cashOutflowSuppliers + prevSuppliers),
+        'cf.outflow.misc': 0, // Placeholder
         'cf.outflow.machine_buy': -machinePurchaseOutflow,
         'cf.outflow.maintenance': -maintenance,
         'cf.outflow.interest': -interestExp,
         'cf.outflow.amortization': -totalAmortization,
+        'cf.outflow.late_penalties': 0, // Placeholder
         'cf.outflow.taxes': -taxProv,
         'cf.outflow.dividends': -dividends,
         'cf.investment_apply': -applicationAmount,
