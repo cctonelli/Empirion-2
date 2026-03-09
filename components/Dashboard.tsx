@@ -90,7 +90,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const projections = useMemo(() => {
     if (!decisions || !activeArena || !activeTeam) return null;
     const currentRound = (activeArena.current_round || 0) + 1;
-    const indicators = activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || activeArena.market_indicators || DEFAULT_MACRO;
+    const indicators = {
+      ...DEFAULT_MACRO,
+      ...(activeArena.market_indicators || {}),
+      ...(activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {})
+    };
     
     return calculateProjections(
       decisions,
@@ -133,7 +137,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     { name: 'Liquidez', data: history.map(h => h.kpis?.liquidity_current || 0) }
   ];
 
-  if (loading) return <div className="h-full flex items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-orange-600" size={48} /></div>;
+  if (loading) return <div className="flex-1 flex items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-orange-600" size={48} /></div>;
 
   const currentRound = (activeArena?.current_round || 0) + 1;
   const requireBP = activeArena?.round_rules?.[currentRound]?.require_business_plan;
@@ -141,7 +145,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const isFutureRound = selectedRound > currentRound;
 
   return (
-    <div className="flex flex-col h-full bg-[#020617] text-slate-100 overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col bg-[#020617] text-slate-100 overflow-hidden font-sans">
       
       {/* 1. Header fixo superior – KPIs + Timer */}
       <section className="h-24 shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-20 shadow-2xl">

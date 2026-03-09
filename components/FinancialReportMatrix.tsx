@@ -147,8 +147,14 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
   };
 
   // Se o tipo for DRE ou Cashflow, os dados podem não estar em árvore. Convertemos para estrutura de lista se necessário.
-  const rootData = periods[periods.length - 1].data || [];
-  const initialData = Array.isArray(rootData) ? rootData : Object.entries(rootData).map(([k, v]: [string, any]) => ({ id: k, label: k.replace(/_/g, ' ').toUpperCase(), value: typeof v === 'number' ? v : (v?.total || 0) }));
+  const rootData = periods[periods.length - 1]?.data || [];
+  const initialData = Array.isArray(rootData) 
+    ? rootData 
+    : Object.entries(rootData || {}).map(([k, v]: [string, any]) => ({ 
+        id: k, 
+        label: k.replace(/_/g, ' ').toUpperCase(), 
+        value: typeof v === 'number' ? v : (v?.total || 0) 
+      }));
 
   return (
     <div className="flex flex-col h-full bg-slate-950 border border-white/10 rounded-[3.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">

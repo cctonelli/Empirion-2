@@ -63,7 +63,11 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const projections = useMemo(() => {
     if (!activeArena || !activeTeam) return null;
     const currentRound = round;
-    const indicators = activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || activeArena.market_indicators || DEFAULT_MACRO;
+    const indicators = {
+      ...DEFAULT_MACRO,
+      ...(activeArena.market_indicators || {}),
+      ...(activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || {})
+    };
     
     return calculateProjections(
       decisions,
