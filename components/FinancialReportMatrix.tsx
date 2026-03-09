@@ -59,6 +59,9 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       { id: 'brl_rate', label: 'Câmbio: Real (BRL)', suffix: '', desc: 'Taxa de conversão BRL/USD' },
       { id: 'gbp_rate', label: 'Câmbio: Libra (GBP)', suffix: '', desc: 'Taxa de conversão GBP/USD' },
       { id: 'export_tariff_brazil', label: 'Tarifa Exportação Brasil', suffix: '%', desc: 'Imposto de exportação para o Brasil' },
+      { id: 'export_tariff_usa', label: 'Tarifa Exportação EUA', suffix: '%', desc: 'Imposto de exportação para os EUA' },
+      { id: 'export_tariff_euro', label: 'Tarifa Exportação Europa', suffix: '%', desc: 'Imposto de exportação para a Europa' },
+      { id: 'export_tariff_china', label: 'Tarifa Exportação China', suffix: '%', desc: 'Imposto de exportação para a China' },
       { id: 'export_tariff_uk', label: 'Tarifa Exportação UK', suffix: '%', desc: 'Imposto de exportação para o Reino Unido' },
     ];
 
