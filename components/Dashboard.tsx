@@ -25,7 +25,7 @@ import BusinessPlanWizard from './BusinessPlanWizard';
 import AuditLogViewer from './AuditLogViewer';
 import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getTeamSimulationHistory } from '../services/supabase';
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
-import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO } from '../constants';
 
 import FinancialReportMatrix from './FinancialReportMatrix';
 import { calculateProjections } from '../services/simulation';
@@ -90,7 +90,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const projections = useMemo(() => {
     if (!decisions || !activeArena || !activeTeam) return null;
     const currentRound = (activeArena.current_round || 0) + 1;
-    const indicators = activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || activeArena.market_indicators;
+    const indicators = activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || activeArena.market_indicators || DEFAULT_MACRO;
     
     return calculateProjections(
       decisions,
@@ -141,10 +141,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const isFutureRound = selectedRound > currentRound;
 
   return (
-    <div className="grid min-h-screen grid-rows-[auto_1fr_auto] bg-[#020617] text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-full bg-[#020617] text-slate-100 overflow-hidden font-sans">
       
       {/* 1. Header fixo superior – KPIs + Timer */}
-      <section className="h-24 grid grid-cols-2 md:grid-cols-6 bg-slate-900/80 backdrop-blur-md border-b border-white/10 shrink-0 z-20 shadow-2xl">
+      <section className="h-24 shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-20 shadow-2xl">
          <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={18}/>} />
          <CockpitStat 
             label="E-SDS" 
@@ -187,11 +187,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} createdAt={activeArena?.created_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
          </div>
       </section>
-
+ 
       {/* 2. Área principal expansível */}
-      <div className="grid grid-cols-[320px_1fr] overflow-hidden">
+      <div className="flex-1 flex min-h-0 overflow-hidden">
          {/* Sidebar esquerda – Intel Pulse (fixa, scrollável) */}
-         <aside className="bg-slate-900/40 backdrop-blur-xl border-r border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar z-10 p-8 space-y-8">
+         <aside className="w-[320px] shrink-0 bg-slate-900/40 backdrop-blur-xl border-r border-white/10 flex flex-col overflow-y-auto custom-scrollbar z-10 p-8 space-y-8">
             <header className="flex items-center justify-between border-b border-white/5 pb-6">
                <div className="flex flex-col">
                   <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] flex items-center gap-2 mb-1">
@@ -267,7 +267,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </aside>
 
          {/* Conteúdo central – tabs ou seções */}
-         <main className="flex flex-col overflow-hidden p-8 bg-slate-950">
+         <main className="flex-1 flex flex-col overflow-hidden p-8 bg-slate-950">
             <div className="max-w-[1400px] mx-auto w-full flex-1 flex flex-col overflow-hidden">
                {/* Sub-header: Protocolo v18.0 • Cycle 0X + Oracle Gazette botão */}
                <header className="shrink-0 flex justify-between items-center mb-8 border-b border-white/10 pb-6">

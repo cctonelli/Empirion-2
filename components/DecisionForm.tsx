@@ -63,7 +63,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const projections = useMemo(() => {
     if (!activeArena || !activeTeam) return null;
     const currentRound = round;
-    const indicators = activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || activeArena.market_indicators;
+    const indicators = activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || activeArena.market_indicators || DEFAULT_MACRO;
     
     return calculateProjections(
       decisions,
@@ -76,7 +76,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
   useEffect(() => {
     const initializeForm = async () => {
-      if (!champId || !teamId) return;
+      if (!champId || !teamId) {
+        setIsLoadingDraft(false);
+        return;
+      }
       setIsLoadingDraft(true);
       try {
         const [champsRes, historyRes] = await Promise.all([
