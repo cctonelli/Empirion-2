@@ -27,6 +27,9 @@ import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getT
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 
+import FinancialReportMatrix from './FinancialReportMatrix';
+import { calculateProjections } from '../services/simulation';
+
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const navigate = useNavigate();
   const { t } = useTranslation('dashboard');
@@ -40,6 +43,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [bpStatus, setBpStatus] = useState<'pending' | 'draft' | 'submitted'>('pending');
   const [history, setHistory] = useState<any[]>([]);
   const [selectedRound, setSelectedRound] = useState<number>(1);
+  const [activeTab, setActiveTab] = useState<'decisoes' | 'financeiro' | 'historico'>('decisoes');
+  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic'>('dre');
+  const [decisions, setDecisions] = useState<any>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -69,12 +75,31 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           
           const teamHistory = await getTeamSimulationHistory(teamId);
           setHistory(teamHistory);
+
+          // Fetch current decisions for projection
+          const table = arena.is_trial ? 'trial_decisions' : 'current_decisions';
+          const { data: draft } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', currentRound).maybeSingle();
+          if (draft?.data) setDecisions(draft.data);
         }
       } catch (err) { console.error("Cockpit Init Fault", err); }
       finally { setLoading(false); }
     };
     fetchAll();
   }, [navigate]);
+
+  const projections = useMemo(() => {
+    if (!decisions || !activeArena || !activeTeam) return null;
+    const currentRound = (activeArena.current_round || 0) + 1;
+    const indicators = activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || activeArena.market_indicators;
+    
+    return calculateProjections(
+      decisions,
+      activeArena.branch || 'industrial',
+      (activeArena as any).ecosystem_config || {},
+      indicators,
+      activeTeam
+    );
+  }, [decisions, activeArena, activeTeam]);
 
   const currentKpis = useMemo((): KPIs => {
     const baseFallback = {
@@ -116,8 +141,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const isFutureRound = selectedRound > currentRound;
 
   return (
-    <div className="flex flex-col h-full bg-[#020617] overflow-hidden font-sans border-t border-white/5">
+    <div className="grid min-h-screen grid-rows-[auto_1fr_auto] bg-[#020617] text-slate-100 overflow-hidden font-sans">
       
+      {/* 1. Header fixo superior – KPIs + Timer */}
       <section className="h-24 grid grid-cols-2 md:grid-cols-6 bg-slate-900/80 backdrop-blur-md border-b border-white/10 shrink-0 z-20 shadow-2xl">
          <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={18}/>} />
          <CockpitStat 
@@ -162,8 +188,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </div>
       </section>
 
-      <div className="flex flex-1 overflow-hidden">
-         <aside className="w-80 bg-slate-900/40 backdrop-blur-xl border-r border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar z-10 p-8 space-y-8">
+      {/* 2. Área principal expansível */}
+      <div className="grid grid-cols-[320px_1fr] overflow-hidden">
+         {/* Sidebar esquerda – Intel Pulse (fixa, scrollável) */}
+         <aside className="bg-slate-900/40 backdrop-blur-xl border-r border-white/10 flex flex-col shrink-0 overflow-y-auto custom-scrollbar z-10 p-8 space-y-8">
             <header className="flex items-center justify-between border-b border-white/5 pb-6">
                <div className="flex flex-col">
                   <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] flex items-center gap-2 mb-1">
@@ -238,71 +266,152 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             </div>
          </aside>
 
-         <main className="flex-1 bg-slate-950 p-8 overflow-hidden flex flex-col relative">
+         {/* Conteúdo central – tabs ou seções */}
+         <main className="flex flex-col overflow-hidden p-8 bg-slate-950">
             <div className="max-w-[1400px] mx-auto w-full flex-1 flex flex-col overflow-hidden">
-               <header className="flex justify-between items-end border-b border-white/5 pb-8 mb-8">
-                  <div className="space-y-3">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-1 bg-orange-600 rounded-full" />
-                        <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">
-                          {t('cockpit')} <span className="text-orange-600 drop-shadow-[0_0_20px_rgba(234,88,12,0.4)]">{t('operational')}</span>
-                        </h2>
-                     </div>
-                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic flex items-center gap-3">
-                       <Cpu size={14} className="text-orange-600/50" />
-                       Protocolo v18.0 • {selectedRound === currentRound ? `${t('cycle')} 0${selectedRound}` : selectedRound < currentRound ? `Histórico P0${selectedRound}` : `Planejamento P0${selectedRound}`}
-                     </p>
+               {/* Sub-header: Protocolo v18.0 • Cycle 0X + Oracle Gazette botão */}
+               <header className="shrink-0 flex justify-between items-center mb-8 border-b border-white/10 pb-6">
+                  <div className="space-y-2">
+                    <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">
+                      COCKPIT <span className="text-orange-600 drop-shadow-[0_0_20px_rgba(234,88,12,0.4)]">OPERACIONAL</span>
+                    </h2>
+                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic flex items-center gap-3">
+                      <Cpu size={14} className="text-orange-600/50" />
+                      Protocolo v18.0 • {selectedRound === currentRound ? `${t('cycle')} 0${selectedRound}` : selectedRound < currentRound ? `Histórico P0${selectedRound}` : `Planejamento P0${selectedRound}`}
+                    </p>
                   </div>
                   <div className="flex gap-4">
-                     {isPastRound && (
-                       <div className="px-8 py-4 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 shadow-2xl backdrop-blur-md">
-                         <History size={18} className="animate-pulse" /> Modo Consulta
-                       </div>
-                     )}
-                     <button onClick={() => setShowGazette(true)} className="px-10 py-4 bg-slate-900/80 backdrop-blur-md border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-orange-600 hover:border-orange-400 transition-all flex items-center gap-3 shadow-2xl active:scale-95 group">
-                        <Newspaper size={18} className="group-hover:rotate-12 transition-transform" /> Oracle Gazette
-                     </button>
+                    {isPastRound && (
+                      <div className="px-6 py-3 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 shadow-2xl backdrop-blur-md">
+                        <History size={16} className="animate-pulse" /> Modo Consulta
+                      </div>
+                    )}
+                    <button onClick={() => setShowGazette(true)} className="px-8 py-3 bg-slate-900/80 backdrop-blur-md border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-orange-600 hover:border-orange-400 transition-all flex items-center gap-3 shadow-2xl active:scale-95 group">
+                      <Newspaper size={16} className="group-hover:rotate-12 transition-transform" /> Oracle Gazette
+                    </button>
                   </div>
                </header>
-               
-               <div className="flex-1 overflow-hidden flex flex-col">
-                  {selectedRound === currentRound && requireBP && bpStatus !== 'submitted' && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }} 
-                      animate={{ height: 'auto', opacity: 1 }}
-                      className="mb-4 p-4 bg-orange-600/20 border border-orange-500/50 rounded-2xl flex items-center gap-4 shadow-lg shrink-0"
-                    >
-                       <div className="p-2 bg-orange-600 rounded-xl text-white animate-pulse">
-                          <AlertTriangle size={20} />
-                       </div>
-                       <div className="flex-1">
-                          <h4 className="text-[10px] font-black text-white uppercase italic">Protocolo de Decisão Bloqueado</h4>
-                          <p className="text-[9px] font-bold text-orange-400 uppercase tracking-widest mt-0.5">
-                             Esta rodada exige o envio do **Business Plan** antes da liberação do Cockpit Operacional.
-                          </p>
-                       </div>
-                       <button 
-                         onClick={() => setShowBP(true)}
-                         className="px-6 py-2 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white hover:text-orange-600 transition-all shadow-xl"
-                       >
-                          Abrir Wizard de Plano
-                       </button>
-                    </motion.div>
-                  )}
 
-                  <DecisionForm 
-                    teamId={activeTeam?.id} 
-                    champId={activeArena?.id} 
-                    round={selectedRound} 
-                    branch={activeArena?.branch}
-                    isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound}
-                  />
+               {/* Tabs principais */}
+               <div className="flex-1 flex flex-col overflow-hidden">
+                  <nav className="shrink-0 flex gap-2 border-b border-white/5 mb-6">
+                    <TabButton active={activeTab === 'decisoes'} onClick={() => setActiveTab('decisoes')} label="Decisões da Rodada" icon={<PenTool size={14}/>} />
+                    <TabButton active={activeTab === 'financeiro'} onClick={() => setActiveTab('financeiro')} label="Matriz Financeira" icon={<TableIcon size={14}/>} />
+                    <TabButton active={activeTab === 'historico'} onClick={() => setActiveTab('historico')} label="Histórico & Projeções" icon={<BarChart3 size={14}/>} />
+                  </nav>
+
+                  <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                    {activeTab === 'decisoes' && (
+                      <div className="h-full">
+                        {selectedRound === currentRound && requireBP && bpStatus !== 'submitted' && (
+                          <motion.div 
+                            initial={{ height: 0, opacity: 0 }} 
+                            animate={{ height: 'auto', opacity: 1 }}
+                            className="mb-6 p-6 bg-orange-600/20 border border-orange-500/50 rounded-3xl flex items-center gap-6 shadow-lg shrink-0"
+                          >
+                             <div className="p-3 bg-orange-600 rounded-2xl text-white animate-pulse">
+                                <AlertTriangle size={24} />
+                             </div>
+                             <div className="flex-1">
+                                <h4 className="text-xs font-black text-white uppercase italic">Protocolo de Decisão Bloqueado</h4>
+                                <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mt-1">
+                                   Esta rodada exige o envio do **Business Plan** antes da liberação do Cockpit Operacional.
+                                </p>
+                             </div>
+                             <button 
+                               onClick={() => setShowBP(true)}
+                               className="px-8 py-3 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-orange-600 transition-all shadow-xl"
+                             >
+                                Abrir Wizard de Plano
+                             </button>
+                          </motion.div>
+                        )}
+
+                        <DecisionForm 
+                          teamId={activeTeam?.id} 
+                          champId={activeArena?.id} 
+                          round={selectedRound} 
+                          branch={activeArena?.branch}
+                          isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound}
+                          onDecisionsChange={(d) => setDecisions(d)}
+                        />
+                      </div>
+                    )}
+
+                    {activeTab === 'financeiro' && (
+                      <div className="space-y-8 h-full flex flex-col">
+                        <div className="flex gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl shrink-0">
+                          <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE Master" icon={<TrendingUp size={14}/>} />
+                          <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Master" icon={<Landmark size={14}/>} />
+                          <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa" icon={<Activity size={14}/>} />
+                          <HubTabBtn active={hubTab === 'strategic'} onClick={() => setHubTab('strategic')} label="Comando Estratégico" icon={<Target size={14}/>} />
+                        </div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                          <FinancialReportMatrix 
+                            type={hubTab} 
+                            history={history} 
+                            projection={projections} 
+                            currency={activeArena?.currency || 'BRL'} 
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === 'historico' && (
+                      <div className="space-y-12 pb-12">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 space-y-6 shadow-2xl">
+                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-3">
+                               <TrendingUp size={18} className="text-blue-500" /> Evolução do Patrimônio Líquido
+                             </h4>
+                             <div className="h-80">
+                                <Chart options={{...trendOptions, chart: { ...trendOptions.chart, sparkline: { enabled: false } }}} series={[{ name: 'Equity', data: history.map(h => h.equity) }]} type="area" height="100%" />
+                             </div>
+                          </div>
+                          <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 space-y-6 shadow-2xl">
+                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-3">
+                               <Activity size={18} className="text-emerald-500" /> Índice de Liquidez Corrente
+                             </h4>
+                             <div className="h-80">
+                                <Chart options={{...trendOptions, colors: ['#10b981']}} series={[{ name: 'Liquidez', data: history.map(h => h.kpis?.liquidity_current || 0) }]} type="area" height="100%" />
+                             </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl">
+                           <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-3">
+                             <AlertTriangle size={18} className="text-orange-500" /> Alertas de Gargalos Estratégicos (E-SDS)
+                           </h4>
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              {currentKpis.esds?.top_gargalos?.map((g, i) => (
+                                <div key={i} className="p-6 bg-slate-950/80 rounded-3xl border border-white/5 space-y-3">
+                                   <div className="flex justify-between items-start">
+                                      <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{g.name}</span>
+                                      <span className="text-xl font-black text-white italic">{g.percentage}%</span>
+                                   </div>
+                                   <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                      <div className="h-full bg-rose-500" style={{ width: `${g.percentage}%` }} />
+                                   </div>
+                                   <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">Impacto crítico na solvência dinâmica da unidade.</p>
+                                </div>
+                              ))}
+                              {(!currentKpis.esds?.top_gargalos || currentKpis.esds.top_gargalos.length === 0) && (
+                                <div className="col-span-3 py-12 text-center">
+                                   <CheckCircle2 size={32} className="text-emerald-500 mx-auto mb-4 opacity-20" />
+                                   <p className="text-xs font-black text-slate-600 uppercase tracking-widest">Nenhum gargalo crítico detectado no momento.</p>
+                                </div>
+                              )}
+                           </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                </div>
             </div>
          </main>
       </div>
 
-      {/* Timeline de Rodadas */}
+      {/* 3. Timeline inferior – rodadas P01–P12 */}
       <footer className="h-24 bg-slate-900 border-t border-white/10 flex items-center justify-center px-12 shrink-0 z-[3000]">
          <div className="max-w-7xl w-full flex items-center justify-between relative">
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-800 -translate-y-1/2 z-0" />
@@ -394,6 +503,32 @@ const CockpitStat = ({ label, val, trend, pos, neg, icon, tooltip }: any) => (
        </div>
      )}
   </div>
+);
+
+const TabButton = ({ active, onClick, label, icon }: any) => (
+  <button 
+    onClick={onClick} 
+    className={`px-8 py-4 rounded-t-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 border-b-2 italic active:scale-95 ${
+      active 
+        ? 'bg-orange-600/10 text-orange-500 border-orange-500 shadow-[0_-10px_30px_rgba(249,115,22,0.1)]' 
+        : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'
+    }`}
+  >
+    {icon} {label}
+  </button>
+);
+
+const HubTabBtn = ({ active, onClick, label, icon }: any) => (
+  <button 
+    onClick={onClick} 
+    className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 border-2 italic active:scale-95 ${
+      active 
+        ? 'bg-orange-600 text-white border-orange-400 shadow-2xl scale-105 z-10' 
+        : 'bg-slate-950 border-transparent text-slate-500 hover:text-white hover:bg-white/5'
+    }`}
+  >
+    {icon} {label}
+  </button>
 );
 
 export default Dashboard;

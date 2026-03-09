@@ -34,14 +34,12 @@ const STEPS = [
   { id: 'review', label: '8. ORÁCULO', icon: ShieldCheck },
 ];
 
-const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false }) => {
+const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean; onDecisionsChange?: (d: DecisionData) => void }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false, onDecisionsChange }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeam, setActiveTeam] = useState<Team | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
-  const [showStrategicHub, setShowStrategicHub] = useState(false);
-  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic' | 'gazette'>('dre');
   const [history, setHistory] = useState<any[]>([]);
   const [isCalculatingESDS, setIsCalculatingESDS] = useState(false);
   const [projectedESDS, setProjectedESDS] = useState<any>(null);
@@ -55,6 +53,26 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     finance: { loanRequest: 0, loanTerm: 0, application: 0 },
     estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
   });
+
+  useEffect(() => {
+    if (onDecisionsChange && decisions) {
+      onDecisionsChange(decisions);
+    }
+  }, [decisions, onDecisionsChange]);
+
+  const projections = useMemo(() => {
+    if (!activeArena || !activeTeam) return null;
+    const currentRound = round;
+    const indicators = activeArena.round_rules?.[currentRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[currentRound] || activeArena.market_indicators;
+    
+    return calculateProjections(
+      decisions,
+      activeArena.branch || 'industrial',
+      (activeArena as any).ecosystem_config || {},
+      indicators,
+      activeTeam
+    );
+  }, [decisions, activeArena, activeTeam, round]);
 
   useEffect(() => {
     const initializeForm = async () => {
@@ -104,11 +122,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     return { ...DEFAULT_MACRO, ...activeArena.market_indicators, ...rules } as MacroIndicators;
   }, [activeArena, round]);
 
-  const projections = useMemo(() => {
-    if (!activeTeam || !activeArena) return null;
-    const eco = { inflation_rate: 0.01, demand_multiplier: 1, interest_rate: 0.02, market_volatility: 0.05, scenario_type: 'simulated' as any, modality_type: 'standard' as any };
-    return calculateProjections(decisions, branch, eco, currentMacro, activeTeam);
-  }, [decisions, activeTeam, activeArena, currentMacro]);
 
   const updateDecision = (path: string, val: any) => {
     if (isReadOnly) return;
@@ -224,15 +237,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          </div>
 
          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setShowStrategicHub(!showStrategicHub)}
-              className={`px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 border shadow-2xl active:scale-95 ${
-                showStrategicHub ? 'bg-orange-600 border-orange-400 text-white' : 'bg-slate-800 border-white/10 text-slate-300 hover:bg-slate-700'
-              }`}
-            >
-               {showStrategicHub ? <Minimize2 size={18}/> : <Maximize2 size={18}/>}
-               {showStrategicHub ? 'Voltar para Decisões' : 'Ver Relatórios Completos'}
-            </button>
             <button onClick={handleTransmit} disabled={isSaving || isReadOnly} className="px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-emerald-600/20 hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-3 active:scale-95 group">
                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Rocket size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} Transmitir Protocolo
             </button>
@@ -242,7 +246,6 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       {/* ÁREA DE CONTEÚDO PRINCIPAL COM SCROLL REAL */}
       <div className="flex-1 overflow-hidden relative flex flex-col">
          <AnimatePresence mode="wait">
-            {!showStrategicHub ? (
               <motion.div 
                 key="inputs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="h-full flex flex-col"
@@ -1579,59 +1582,17 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <div className="flex items-center gap-3 text-rose-500 justify-center">
                                     <AlertOctagon size={20} />
                                     <h5 className="font-black uppercase italic text-sm">Aviso de Governança</h5>
-                                 </div>
                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed italic">
                                     "As decisões podem ser alteradas livremente até o vencimento do TIMER DE ROUND. Decisões não seladas (em rascunho) serão ignoradas pelo motor Oracle no momento do Turnover, resultando em dados zerados para sua unidade."
                                  </p>
                               </div>
                            </div>
-                        )}
+                        </div>
+                     )}
                     </div>
                  </div>
 
               </motion.div>
-            ) : (
-                 <motion.div 
-                key="hub" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                className="h-full flex flex-col bg-slate-950 p-8 lg:p-12"
-              >
-                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-12 shrink-0 gap-8">
-                    <div className="space-y-3">
-                       <div className="flex items-center gap-3">
-                          <div className="w-12 h-1 bg-orange-600 rounded-full" />
-                          <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter leading-none">Strategic <span className="text-orange-600 drop-shadow-[0_0_20px_rgba(234,88,12,0.4)]">Hub</span></h2>
-                       </div>
-                       <p className="text-slate-400 font-medium italic text-lg">Visão 360° do Império: Histórico Auditado + Projeção em Tempo Real</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2.5 p-2 bg-slate-900/80 backdrop-blur-md rounded-[2rem] border border-white/10 shadow-2xl">
-                       <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE Master" icon={<TrendingUp size={16}/>} />
-                       <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Master" icon={<Landmark size={16}/>} />
-                       <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa" icon={<Activity size={16}/>} />
-                       <HubTabBtn active={hubTab === 'strategic'} onClick={() => setHubTab('strategic')} label="Comando Estratégico" icon={<Target size={16}/>} />
-                       <HubTabBtn active={hubTab === 'gazette'} onClick={() => setHubTab('gazette')} label="Gazeta Oracle" icon={<Newspaper size={16}/>} />
-                    </div>
-                 </div>
-
-                  <div className="flex-1 overflow-hidden">
-                    {hubTab === 'gazette' && activeArena ? (
-                      <GazetteViewer 
-                        arena={activeArena} 
-                        aiNews="" 
-                        round={round - 1} 
-                        activeTeam={activeTeam} 
-                        onClose={() => setHubTab('dre')} 
-                      />
-                    ) : (
-                      <FinancialReportMatrix 
-                        type={hubTab as any} 
-                        history={history} 
-                        projection={projections} 
-                        currency={activeArena?.currency || 'BRL'} 
-                      />
-                    )}
-                  </div>
-              </motion.div>
-            )}
          </AnimatePresence>
       </div>
     </div>
