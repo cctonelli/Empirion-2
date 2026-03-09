@@ -170,32 +170,35 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   return (
     <div className="flex flex-col h-full bg-[#020617] rounded-[3rem] border border-white/5 overflow-hidden shadow-3xl">
       {/* HEADER TÁTICO FIXO */}
-      <header className="px-10 py-6 bg-slate-900 border-b border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 shrink-0 z-[100] shadow-2xl">
-         <div className="flex items-center gap-8">
+      <header className="px-12 py-8 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 flex flex-col md:flex-row justify-between items-center gap-8 shrink-0 z-[100] shadow-2xl">
+         <div className="flex items-center gap-10">
             <div className="flex flex-col">
-               <span className="text-[9px] font-black text-orange-500 uppercase tracking-[0.4em] italic leading-none">Decision Terminal v18.5</span>
-               <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mt-1">
-                  War Room: <span className="text-slate-400">{activeTeam?.name}</span>
+               <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-0.5 bg-orange-600 rounded-full" />
+                  <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic leading-none">Decision Terminal v18.5</span>
+               </div>
+               <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mt-1">
+                  War Room: <span className="text-slate-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{activeTeam?.name}</span>
                </h2>
             </div>
-            <div className="h-10 w-px bg-white/10 hidden md:block" />
-            <div className="flex items-center gap-4">
-               <QuickKpi label="EBITDA Projetado" val={formatCurrency(projections?.kpis?.ebitda || 0, activeArena?.currency || 'BRL')} icon={<Zap size={12}/>} color="text-orange-400" />
-               <QuickKpi label="Caixa Final T+1" val={formatCurrency(projections?.statements?.cash_flow?.final || 0, activeArena?.currency || 'BRL')} icon={<Coins size={12}/>} color="text-emerald-400" />
-               <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded-xl border border-white/5 group relative">
+            <div className="h-12 w-px bg-white/10 hidden md:block" />
+            <div className="flex items-center gap-5">
+               <QuickKpi label="EBITDA Projetado" val={formatCurrency(projections?.kpis?.ebitda || 0, activeArena?.currency || 'BRL')} icon={<Zap size={14}/>} color="text-orange-400" />
+               <QuickKpi label="Caixa Final T+1" val={formatCurrency(projections?.statements?.cash_flow?.final || 0, activeArena?.currency || 'BRL')} icon={<Coins size={14}/>} color="text-emerald-400" />
+               <div className="flex items-center gap-3 bg-slate-950/50 p-3 rounded-2xl border border-white/5 group relative hover:border-orange-500/30 transition-all cursor-help">
                   <div className="flex flex-col">
-                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">E-SDS Projetado</span>
-                     <span className={`text-xs font-black ${projectedESDS ? (projectedESDS.zone === 'Azul' || projectedESDS.zone === 'Verde' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}`}>
+                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">E-SDS Projetado</span>
+                     <span className={`text-sm font-black italic tracking-tighter ${projectedESDS ? (projectedESDS.zone === 'Azul' || projectedESDS.zone === 'Verde' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}`}>
                         {isCalculatingESDS ? 'Calculando...' : projectedESDS ? `${projectedESDS.display.toFixed(1)} (${projectedESDS.zone})` : '---'}
                      </span>
                   </div>
                   <button 
                     onClick={handleSimulateESDS} 
                     disabled={isCalculatingESDS || !projections}
-                    className="p-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-all disabled:opacity-50"
+                    className="p-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl transition-all disabled:opacity-50 shadow-lg active:scale-90"
                     title="Simular E-SDS com IA"
                   >
-                    <Sparkles size={12} className={isCalculatingESDS ? 'animate-spin' : ''} />
+                    <Sparkles size={14} className={isCalculatingESDS ? 'animate-spin' : ''} />
                   </button>
 
                   {projectedESDS && (
@@ -220,18 +223,18 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             </div>
          </div>
 
-         <div className="flex items-center gap-3">
+         <div className="flex items-center gap-4">
             <button 
               onClick={() => setShowStrategicHub(!showStrategicHub)}
-              className={`px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3 border shadow-xl ${
-                showStrategicHub ? 'bg-orange-600 border-orange-400 text-white' : 'bg-slate-800 border-white/5 text-slate-300 hover:bg-slate-700'
+              className={`px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 border shadow-2xl active:scale-95 ${
+                showStrategicHub ? 'bg-orange-600 border-orange-400 text-white' : 'bg-slate-800 border-white/10 text-slate-300 hover:bg-slate-700'
               }`}
             >
-               {showStrategicHub ? <Minimize2 size={16}/> : <Maximize2 size={16}/>}
+               {showStrategicHub ? <Minimize2 size={18}/> : <Maximize2 size={18}/>}
                {showStrategicHub ? 'Voltar para Decisões' : 'Ver Relatórios Completos'}
             </button>
-            <button onClick={handleTransmit} disabled={isSaving || isReadOnly} className="px-10 py-3.5 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-600/20 hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-3 active:scale-95">
-               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Rocket size={16} />} Transmitir Protocolo
+            <button onClick={handleTransmit} disabled={isSaving || isReadOnly} className="px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-emerald-600/20 hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-3 active:scale-95 group">
+               {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Rocket size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} Transmitir Protocolo
             </button>
          </div>
       </header>
@@ -245,11 +248,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                 className="h-full flex flex-col"
               >
                  {/* NAV BAR DE PASSOS - Fixa abaixo do header */}
-                 <nav className="flex p-1.5 gap-1 bg-slate-900/60 border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
+                 <nav className="flex p-2 gap-2 bg-slate-900/40 backdrop-blur-md border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
                     {STEPS.map((s, idx) => (
-                      <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[130px] py-4 px-2 rounded-2xl transition-all flex flex-col items-center gap-2 border ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-xl scale-[1.02] z-10' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
-                         <s.icon size={14} strokeWidth={3} />
-                         <span className="text-[8px] font-black uppercase tracking-tighter">{s.label}</span>
+                      <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[150px] py-5 px-4 rounded-2xl transition-all flex flex-col items-center gap-2.5 border group relative overflow-hidden ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-2xl scale-[1.02] z-10' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
+                         {activeStep === idx && (
+                           <motion.div layoutId="activeStep" className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-700 -z-10" />
+                         )}
+                         <s.icon size={16} strokeWidth={activeStep === idx ? 3 : 2} className={activeStep === idx ? 'drop-shadow-lg' : 'group-hover:scale-110 transition-transform'} />
+                         <span className="text-[9px] font-black uppercase tracking-[0.1em]">{s.label}</span>
                       </button>
                     ))}
                  </nav>
@@ -1585,21 +1591,24 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
               </motion.div>
             ) : (
-              <motion.div 
+                 <motion.div 
                 key="hub" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                className="h-full flex flex-col bg-slate-950 p-6 lg:p-10"
+                className="h-full flex flex-col bg-slate-950 p-8 lg:p-12"
               >
-                 <div className="flex justify-between items-end mb-10 shrink-0">
-                    <div className="space-y-2">
-                       <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter">Strategic <span className="text-orange-500">Hub</span></h2>
-                       <p className="text-slate-400 font-medium italic">Visão 360° do Império: Histórico Auditado + Projeção</p>
+                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-12 shrink-0 gap-8">
+                    <div className="space-y-3">
+                       <div className="flex items-center gap-3">
+                          <div className="w-12 h-1 bg-orange-600 rounded-full" />
+                          <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter leading-none">Strategic <span className="text-orange-600 drop-shadow-[0_0_20px_rgba(234,88,12,0.4)]">Hub</span></h2>
+                       </div>
+                       <p className="text-slate-400 font-medium italic text-lg">Visão 360° do Império: Histórico Auditado + Projeção em Tempo Real</p>
                     </div>
-                    <div className="flex gap-2 p-1.5 bg-slate-900 rounded-2xl border border-white/5">
-                       <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE Master" icon={<TrendingUp size={14}/>} />
-                       <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Master" icon={<Landmark size={14}/>} />
-                       <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa (DFC)" icon={<Activity size={14}/>} />
-                       <HubTabBtn active={hubTab === 'strategic'} onClick={() => setHubTab('strategic')} label="Comando Estratégico" icon={<Target size={14}/>} />
-                       <HubTabBtn active={hubTab === 'gazette'} onClick={() => setHubTab('gazette')} label="Gazeta Oracle" icon={<Newspaper size={14}/>} />
+                    <div className="flex flex-wrap gap-2.5 p-2 bg-slate-900/80 backdrop-blur-md rounded-[2rem] border border-white/10 shadow-2xl">
+                       <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE Master" icon={<TrendingUp size={16}/>} />
+                       <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Master" icon={<Landmark size={16}/>} />
+                       <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa" icon={<Activity size={16}/>} />
+                       <HubTabBtn active={hubTab === 'strategic'} onClick={() => setHubTab('strategic')} label="Comando Estratégico" icon={<Target size={16}/>} />
+                       <HubTabBtn active={hubTab === 'gazette'} onClick={() => setHubTab('gazette')} label="Gazeta Oracle" icon={<Newspaper size={16}/>} />
                     </div>
                  </div>
 
@@ -1631,13 +1640,16 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
 // COMPONENTES AUXILIARES DE UI
 const WizardStepHeader = ({ icon, title, desc, help }: any) => (
-  <div className="flex items-center gap-6 border-b border-white/5 pb-8">
-     <div className="p-6 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl shrink-0 text-orange-500">{icon}</div>
+  <div className="flex items-center gap-8 border-b border-white/5 pb-10">
+     <div className="p-8 bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.3)] shrink-0 text-orange-500 relative group">
+        <div className="absolute inset-0 bg-orange-600/5 rounded-[2.5rem] group-hover:bg-orange-600/10 transition-colors" />
+        <div className="relative z-10">{icon}</div>
+     </div>
      <div>
-        <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none flex items-center gap-3">
-           {title} {help && <span title={help} className="cursor-help"><HelpCircle size={16} className="text-slate-700" /></span>}
+        <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none flex items-center gap-4">
+           {title} {help && <span title={help} className="cursor-help p-1.5 bg-white/5 rounded-full hover:bg-orange-600/20 transition-colors"><HelpCircle size={18} className="text-slate-600" /></span>}
         </h3>
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-3 italic">{desc}</p>
+        <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic leading-relaxed max-w-3xl">{desc}</p>
      </div>
   </div>
 );
@@ -1752,7 +1764,7 @@ const QuickKpi = ({ label, val, icon, color }: any) => (
 );
 
 const HubTabBtn = ({ active, onClick, label, icon }: any) => (
-  <button onClick={onClick} className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 border-2 italic active:scale-95 ${active ? 'bg-orange-600 text-white border-orange-400 shadow-lg' : 'bg-slate-950 border-transparent text-slate-500 hover:text-white'}`}>
+  <button onClick={onClick} className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 border-2 italic active:scale-95 ${active ? 'bg-orange-600 text-white border-orange-400 shadow-2xl scale-105 z-10' : 'bg-slate-950 border-transparent text-slate-500 hover:text-white hover:bg-white/5'}`}>
     {icon} {label}
   </button>
 );

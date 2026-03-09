@@ -56,21 +56,14 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       { id: 'dupont.margin', label: 'Margem Líquida (DuPont)', suffix: '%', isPercent: true, desc: 'Eficiência de lucro' },
       { id: 'dupont.turnover', label: 'Giro do Ativo (DuPont)', suffix: 'x', desc: 'Eficiência operacional' },
       { id: 'dupont.leverage', label: 'Alavancagem (DuPont)', suffix: 'x', desc: 'Multiplicador de patrimônio' },
-      { id: 'brl_rate', label: 'Câmbio: Real (BRL)', suffix: '', desc: 'Taxa de conversão BRL/USD' },
-      { id: 'gbp_rate', label: 'Câmbio: Libra (GBP)', suffix: '', desc: 'Taxa de conversão GBP/USD' },
-      { id: 'export_tariff_brazil', label: 'Tarifa Exportação Brasil', suffix: '%', desc: 'Imposto de exportação para o Brasil' },
-      { id: 'export_tariff_usa', label: 'Tarifa Exportação EUA', suffix: '%', desc: 'Imposto de exportação para os EUA' },
-      { id: 'export_tariff_euro', label: 'Tarifa Exportação Europa', suffix: '%', desc: 'Imposto de exportação para a Europa' },
-      { id: 'export_tariff_china', label: 'Tarifa Exportação China', suffix: '%', desc: 'Imposto de exportação para a China' },
-      { id: 'export_tariff_uk', label: 'Tarifa Exportação UK', suffix: '%', desc: 'Imposto de exportação para o Reino Unido' },
     ];
 
     return kpiDefinitions.map(kpi => (
-      <tr key={kpi.id} className="border-b border-white/5 transition-colors hover:bg-white/[0.03]">
-        <td className="p-4 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[300px]">
+      <tr key={kpi.id} className="border-b border-white/5 transition-all hover:bg-white/[0.03] group">
+        <td className="p-6 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[350px] shadow-xl">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider text-white font-black">{kpi.label}</span>
-            <span className="text-[8px] text-slate-500 uppercase tracking-widest mt-1">{kpi.desc}</span>
+            <span className="text-[11px] uppercase tracking-[0.15em] text-white font-black group-hover:text-orange-500 transition-colors">{kpi.label}</span>
+            <span className="text-[9px] text-slate-500 uppercase tracking-widest mt-2 italic font-medium">{kpi.desc}</span>
           </div>
         </td>
         {periods.map((p: any, idx) => {
@@ -84,16 +77,24 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
             ? (kpi.isPercent ? (val * 100).toFixed(2) : val.toFixed(2)) 
             : 'N/A';
 
-          let colorClass = p.isProjection ? 'text-orange-500 font-bold' : 'text-slate-300';
+          let colorClass = p.isProjection ? 'text-orange-500 font-black' : 'text-slate-300';
           if (kpi.id === 'altman_z_score' && typeof val === 'number') {
-            if (val > 5.85) colorClass = 'text-emerald-500 font-bold';
-            else if (val < 4.15) colorClass = 'text-rose-500 font-bold';
-            else colorClass = 'text-amber-500 font-bold';
+            if (val > 5.85) colorClass = 'text-emerald-500 font-black';
+            else if (val < 4.15) colorClass = 'text-rose-500 font-black';
+            else colorClass = 'text-amber-500 font-black';
           }
 
           return (
-            <td key={idx} className={`p-4 text-center font-mono text-xs ${p.isProjection ? 'bg-orange-600/5' : ''} ${colorClass}`}>
-              {displayVal}{val !== undefined ? kpi.suffix : ''}
+            <td key={idx} className={`p-6 text-center font-mono text-sm ${p.isProjection ? 'bg-orange-600/5' : ''} ${colorClass}`}>
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-lg tracking-tighter">{displayVal}{val !== undefined ? kpi.suffix : ''}</span>
+                {idx > 0 && typeof val === 'number' && typeof periods[idx-1].data?.[kpi.id] === 'number' && (
+                  <div className={`flex items-center gap-1 text-[8px] font-black uppercase ${val > periods[idx-1].data[kpi.id] ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    {val > periods[idx-1].data[kpi.id] ? <TrendingUp size={8}/> : <Activity size={8}/>}
+                    {Math.abs(((val / periods[idx-1].data[kpi.id]) - 1) * 100).toFixed(1)}%
+                  </div>
+                )}
+              </div>
             </td>
           );
         })}
@@ -109,17 +110,16 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       const isTotalizer = node.type === 'totalizer';
       return (
         <React.Fragment key={node.id}>
-          <tr className={`border-b border-white/5 transition-colors hover:bg-white/[0.03] ${isTotalizer ? 'bg-white/[0.02] font-black' : ''}`}>
-            <td className="p-4 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[300px]">
-              <div className="flex items-center gap-2" style={{ paddingLeft: `${level * 20}px` }}>
-                {level > 0 && <CornerDownRight size={10} className="text-slate-600" />}
-                <span className={`text-[10px] uppercase tracking-wider ${isTotalizer ? 'text-white' : 'text-slate-400'}`}>
+          <tr className={`border-b border-white/5 transition-all hover:bg-white/[0.03] group ${isTotalizer ? 'bg-white/[0.02] font-black' : ''}`}>
+            <td className="p-5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[350px] shadow-xl">
+              <div className="flex items-center gap-3" style={{ paddingLeft: `${level * 24}px` }}>
+                {level > 0 && <CornerDownRight size={12} className="text-slate-600" />}
+                <span className={`text-[11px] uppercase tracking-[0.1em] transition-colors ${isTotalizer ? 'text-white group-hover:text-orange-500' : 'text-slate-400 group-hover:text-slate-200'}`}>
                   {node.label}
                 </span>
               </div>
             </td>
             {periods.map((p: any, idx) => {
-              // Lógica de extração de valor: procura o nó correspondente no statement de cada período
               const periodData = Array.isArray(p.data) ? p.data : [];
               const findVal = (list: any[]): number => {
                 for (const n of list) {
@@ -134,8 +134,8 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
               
               const val = findVal(periodData);
               return (
-                <td key={idx} className={`p-4 text-center font-mono text-xs ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-bold' : 'text-slate-300'}`}>
-                  {formatCurrency(val, currency)}
+                <td key={idx} className={`p-5 text-center font-mono text-sm ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
+                  <span className="tracking-tighter">{formatCurrency(val, currency)}</span>
                 </td>
               );
             })}
@@ -151,31 +151,34 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
   const initialData = Array.isArray(rootData) ? rootData : Object.entries(rootData).map(([k, v]: [string, any]) => ({ id: k, label: k.replace(/_/g, ' ').toUpperCase(), value: typeof v === 'number' ? v : (v?.total || 0) }));
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 border border-white/10 rounded-[3rem] overflow-hidden shadow-3xl">
-      <header className="p-8 bg-slate-900 border-b border-white/10 flex justify-between items-center shrink-0">
-        <div className="flex items-center gap-6">
-          <div className="p-4 bg-white/5 rounded-2xl shadow-inner">{getIcon()}</div>
+    <div className="flex flex-col h-full bg-slate-950 border border-white/10 rounded-[3.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+      <header className="p-10 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 flex justify-between items-center shrink-0 z-50">
+        <div className="flex items-center gap-8">
+          <div className="p-5 bg-white/5 rounded-3xl shadow-inner border border-white/5">{getIcon()}</div>
           <div>
-            <h3 className="text-2xl font-black text-white uppercase italic tracking-tight leading-none">{getTitle()}</h3>
-            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mt-2 italic">Oracle High Fidelity Reporting Engine</p>
+            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">{getTitle()}</h3>
+            <p className="text-[11px] text-slate-500 font-black uppercase tracking-[0.5em] mt-3 italic">Oracle High Fidelity Reporting Engine • v18.5</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-           <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[9px] font-black text-emerald-500 uppercase">Dados Auditados</span>
+        <div className="flex items-center gap-6">
+           <div className="px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 shadow-lg">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Dados Auditados</span>
            </div>
         </div>
       </header>
 
-      <div className="flex-1 overflow-auto custom-scrollbar">
+      <div className="flex-1 overflow-auto custom-scrollbar relative">
         <table className="w-full text-left border-collapse">
-          <thead className="sticky top-0 z-40 bg-slate-900 shadow-md">
-            <tr className="text-[9px] font-black uppercase text-slate-500 tracking-widest">
-              <th className="p-4 sticky left-0 bg-slate-900 z-50 border-r border-white/10">Contas Contábeis</th>
+          <thead className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md shadow-2xl">
+            <tr className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">
+              <th className="p-6 sticky left-0 bg-slate-900 z-50 border-r border-white/10 shadow-xl">Contas Contábeis</th>
               {periods.map((p: any, i) => (
-                <th key={i} className={`p-4 text-center border-r border-white/5 ${p.isProjection ? 'bg-orange-600/10 text-orange-500' : ''}`}>
-                  {p.isProjection ? 'PROJEÇÃO T+1' : `ROUND 0${p.round}`}
+                <th key={i} className={`p-6 text-center border-r border-white/5 ${p.isProjection ? 'bg-orange-600/10 text-orange-500' : ''}`}>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="opacity-50 text-[8px]">{p.isProjection ? 'PRÓXIMO CICLO' : 'HISTÓRICO'}</span>
+                    <span className="text-sm tracking-tighter">{p.isProjection ? 'PROJEÇÃO T+1' : `ROUND 0${p.round}`}</span>
+                  </div>
                 </th>
               ))}
             </tr>
@@ -186,12 +189,17 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
         </table>
       </div>
 
-      <footer className="p-6 bg-slate-900/80 border-t border-white/5 flex items-center justify-between opacity-60 shrink-0">
-        <div className="flex items-center gap-3">
-          <Calculator size={14} className="text-blue-400" />
-          <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Projeções v18.5 baseadas em elasticidade-preço regional e PMP/PMR decidido.</span>
+      <footer className="p-8 bg-slate-900/90 backdrop-blur-md border-t border-white/5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-4">
+          <Calculator size={18} className="text-blue-400" />
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 leading-relaxed">
+            Projeções v18.5 baseadas em elasticidade-preço regional, PMP/PMR decidido e curvas de aprendizado industrial.
+          </span>
         </div>
-        <span className="text-[8px] font-mono text-slate-600">SEQ_NODE_ORACLE_REPORT_VALIDATED</span>
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+          <span className="text-[9px] font-mono text-slate-600 tracking-tighter">SEQ_NODE_ORACLE_REPORT_VALIDATED_P0{history.length}</span>
+        </div>
       </footer>
     </div>
   );

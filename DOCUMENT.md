@@ -226,3 +226,21 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
     - **PPR Proporcional:** A parcela do PPR que já estava provisionada no passivo (referente ao lucro de períodos anteriores) é liquidada imediatamente na rescisão.
   - **Impacto E-SDS:** Melhora a fidelidade da alavancagem (baixa correta do passivo) e reflete o custo real de saída de talentos no FCO.
 - **Status:** Em produção.
+
+### v2026-03.7 - Refatoração UI/UX: Cockpit & Strategic Hub v18.5
+- **Data:** Março de 2026
+- **Motivo:** Aprimorar a visualização estratégica e a experiência do usuário, transformando dados complexos em insights acionáveis.
+- **Diferenças:**
+  - **Cockpit Operacional (Dashboard):**
+    - Implementação de **Glassmorphism** e hierarquia visual avançada nos KPIs superiores.
+    - **E-SDS Diagnostic:** Tooltip interativo com insights da IA, identificação de gargalos e telemetria em tempo real.
+    - **Sidebar Intel Pulse:** Monitoramento de histórico de patrimônio, efeito tesoura e status do Business Plan com feedback visual dinâmico.
+  - **Decision Terminal (DecisionForm):**
+    - Navegação por passos refatorada com animações fluidas (`framer-motion`) e ícones semânticos.
+    - **War Room Header:** Visualização consolidada de EBITDA projetado, Caixa Final e E-SDS simulado via IA.
+    - **Wizard UX:** Cabeçalhos de seção didáticos e cards de input com feedback tátil e visual.
+  - **Strategic Hub (FinancialReportMatrix):**
+    - Relatórios financeiros com design de alta fidelidade, bordas suaves e tipografia mono-espaçada para precisão.
+    - **Trend Intelligence:** Indicadores de tendência (variação %) integrados diretamente nas linhas de KPIs estratégicos.
+    - **Audit Visualization:** Diferenciação clara entre dados históricos auditados e projeções preditivas.
+- **Status:** Em produção.
