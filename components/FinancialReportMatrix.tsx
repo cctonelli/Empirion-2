@@ -5,7 +5,7 @@ import { AccountNode, CurrencyType } from '../types';
 import { formatCurrency } from '../utils/formatters';
 
 interface MatrixProps {
-  type: 'balance' | 'dre' | 'cashflow' | 'strategic';
+  type: 'balance' | 'dre' | 'cashflow' | 'strategic' | 'commitments';
   history: any[]; 
   projection: any; 
   currency: CurrencyType;
@@ -16,6 +16,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     if (type === 'balance') return 'Balanço Patrimonial Auditado (v18.0)';
     if (type === 'dre') return 'DRE - Demonstrativo de Resultados (Competência)';
     if (type === 'cashflow') return 'DFC - Fluxo de Caixa Preditivo (Regime de Caixa)';
+    if (type === 'commitments') return 'Agenda de Compromissos Financeiros (Direitos e Deveres)';
     return 'Comando Estratégico - KPIs Avançados';
   };
 
@@ -23,6 +24,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     if (type === 'balance') return <Landmark className="text-blue-400" />;
     if (type === 'dre') return <TrendingUp className="text-orange-400" />;
     if (type === 'cashflow') return <Activity className="text-emerald-400" />;
+    if (type === 'commitments') return <Landmark className="text-amber-400" />;
     return <Calculator className="text-purple-400" />;
   };
 
@@ -100,6 +102,57 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
         })}
       </tr>
     ));
+  };
+
+  // Função para renderizar a Agenda de Compromissos
+  const renderCommitmentRows = () => {
+    const receivables = periods[periods.length - 1]?.data?.commitments?.receivables || [];
+    const payables = periods[periods.length - 1]?.data?.commitments?.payables || [];
+
+    return (
+      <>
+        <tr className="bg-emerald-500/10 font-black">
+          <td colSpan={periods.length + 1} className="p-4 text-emerald-400 text-[10px] uppercase tracking-widest">
+            Direitos Comprometidos (Entradas Futuras)
+          </td>
+        </tr>
+        {receivables.map((item: any) => (
+          <tr key={item.id} className="border-b border-white/5 transition-all hover:bg-white/[0.03] group">
+            <td className="p-5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[350px] shadow-xl">
+              <span className="text-[11px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
+            </td>
+            {periods.map((p: any, idx: number) => {
+              const val = p.data?.commitments?.receivables?.find((r: any) => r.id === item.id)?.value || 0;
+              return (
+                <td key={idx} className={`p-5 text-center font-mono text-sm ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
+                  <span className="tracking-tighter">{formatCurrency(val, currency)}</span>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+        <tr className="bg-rose-500/10 font-black">
+          <td colSpan={periods.length + 1} className="p-4 text-rose-400 text-[10px] uppercase tracking-widest">
+            Deveres Comprometidos (Saídas Futuras)
+          </td>
+        </tr>
+        {payables.map((item: any) => (
+          <tr key={item.id} className="border-b border-white/5 transition-all hover:bg-white/[0.03] group">
+            <td className="p-5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[350px] shadow-xl">
+              <span className="text-[11px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
+            </td>
+            {periods.map((p: any, idx: number) => {
+              const val = p.data?.commitments?.payables?.find((r: any) => r.id === item.id)?.value || 0;
+              return (
+                <td key={idx} className={`p-5 text-center font-mono text-sm ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
+                  <span className="tracking-tighter">{formatCurrency(val, currency)}</span>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </>
+    );
   };
 
   // Função recursiva para renderizar a árvore de contas de forma hierárquica e completa
@@ -190,7 +243,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {type === 'strategic' ? renderStrategicRows() : renderRows(initialData as any)}
+            {type === 'strategic' ? renderStrategicRows() : (type === 'commitments' ? renderCommitmentRows() : renderRows(initialData as any))}
           </tbody>
         </table>
       </div>

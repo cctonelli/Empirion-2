@@ -272,7 +272,7 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
    const [isAuditing, setIsAuditing] = useState(false);
    const [aiVerdict, setAiVerdict] = useState<string | null>(null);
    const [showReports, setShowReports] = useState(false);
-   const [reportType, setReportType] = useState<'dre' | 'balance' | 'cashflow'>('dre');
+   const [reportType, setReportType] = useState<'dre' | 'balance' | 'cashflow' | 'commitments'>('dre');
 
    const performAiAudit = async () => {
       if (isAuditing || (!team.current_decision && !team.statements)) return;
@@ -381,6 +381,7 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
                               <button onClick={() => setReportType('dre')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'dre' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DRE</button>
                               <button onClick={() => setReportType('balance')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'balance' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Balanço</button>
                               <button onClick={() => setReportType('cashflow')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'cashflow' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DFC</button>
+                              <button onClick={() => setReportType('commitments')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'commitments' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Agenda</button>
                            </div>
                            <button onClick={() => setShowReports(false)} className="p-3 bg-white/5 hover:bg-rose-600 text-slate-500 hover:text-white rounded-xl transition-all"><X size={20}/></button>
                         </div>

@@ -125,6 +125,10 @@ export interface KPIs {
   compulsory_loan_interest_paid?: number;
   share_price?: number;
   esds?: ESDSCalculation;
+  commitments?: {
+    receivables: any[];
+    payables: any[];
+  };
   [key: string]: any;
 }
 

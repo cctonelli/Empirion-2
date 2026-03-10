@@ -244,3 +244,15 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
     - **Trend Intelligence:** Indicadores de tendência (variação %) integrados diretamente nas linhas de KPIs estratégicos.
     - **Audit Visualization:** Diferenciação clara entre dados históricos auditados e projeções preditivas.
 - **Status:** Em produção.
+
+### v2026-03.8 - Agenda de Compromissos Financeiros (Cash Flow Commitments)
+- **Data:** Março de 2026
+- **Motivo:** Fornecer às equipes uma visão clara dos direitos e deveres já comprometidos no Balanço Patrimonial que impactarão o Fluxo de Caixa futuro.
+- **Diferenças:**
+  - **Agenda Financeira:** Novo relatório no Strategic Hub que consolida:
+    - **Direitos (Receivables):** Contas a Receber (Clientes), Aplicações Financeiras e IVA a Recuperar.
+    - **Deveres (Payables):** Fornecedores, Empréstimos (CP/LP), Imposto de Renda a Pagar, Dividendos a Pagar, PPR a Pagar e IVA a Recolher.
+  - **Correção Contábil (DFC):** O Fluxo de Caixa Projetado agora liquida corretamente o **Imposto de Renda** provisionado no período anterior (`prevTaxes`), seguindo o regime de caixa para pagamentos de tributos.
+  - **Transparência:** Facilita o planejamento financeiro ao separar o que é "geração de caixa operacional do período" do que é "liquidação de compromissos passados".
+  - **Database (v19.1):** Adição das colunas `total_receivables` e `total_payables` nas tabelas `companies` e `trial_companies` para telemetria direta e auditoria rápida.
+- **Status:** Em produção.

@@ -44,7 +44,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [history, setHistory] = useState<any[]>([]);
   const [selectedRound, setSelectedRound] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'decisoes' | 'financeiro' | 'historico'>('decisoes');
-  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic'>('dre');
+  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic' | 'commitments'>('dre');
   const [decisions, setDecisions] = useState<any>(null);
 
   const visibleHistory = useMemo(() => {
@@ -364,6 +364,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE Master" icon={<TrendingUp size={14}/>} />
                           <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Master" icon={<Landmark size={14}/>} />
                           <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa" icon={<Activity size={14}/>} />
+                          <HubTabBtn active={hubTab === 'commitments'} onClick={() => setHubTab('commitments')} label="Agenda Financeira" icon={<Landmark size={14}/>} />
                           <HubTabBtn active={hubTab === 'strategic'} onClick={() => setHubTab('strategic')} label="Comando Estratégico" icon={<Target size={14}/>} />
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar">

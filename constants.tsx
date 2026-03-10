@@ -45,7 +45,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { 
           id: 'liabilities.current', label: 'PASSIVO CIRCULANTE', value: 2240991.80, type: 'totalizer', children: [
             { id: 'liabilities.current.suppliers', label: 'Fornecedores', value: 717605.00, type: 'liability', isEditable: true },
-			      { id: 'liabilities.current.vat_payable', label: 'IVA a recolher', value: 0.00, type: 'liability', isEditable: true },
+			      { id: 'liabilities.current.vat_payable', label: 'IVA a Recolher', value: 0.00, type: 'liability', isEditable: true },
             { id: 'liabilities.current.taxes', label: 'Imposto de Renda a pagar', value: 14871.31, type: 'liability', isEditable: true },
             { id: 'liabilities.current.dividends', label: 'Dividendos a Pagar', value: 11153.49, type: 'liability', isEditable: true },
             { id: 'liabilities.current.ppr_payable', label: 'PPR a Pagar', value: 0, type: 'liability', isEditable: true },

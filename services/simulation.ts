@@ -67,6 +67,14 @@ export const calculateProjections = (
   // 0. RECUPERAR ESTADO ANTERIOR
   const prevStatements = team.kpis?.statements || INITIAL_FINANCIAL_TREE;
   const prevBS = prevStatements.balance_sheet || [];
+  const prevTaxes = findAccountValue(prevBS, 'liabilities.current.taxes') || 0;
+  const prevDividends = findAccountValue(prevBS, 'liabilities.current.dividends') || 0;
+  const prevPprPayable = findAccountValue(prevBS, 'liabilities.current.ppr_payable') || 0;
+  const prevVatRecoverable = findAccountValue(prevBS, 'assets.current.vat_recoverable') || 0;
+  const prevVatPayable = findAccountValue(prevBS, 'liabilities.current.vat_payable') || 0;
+  const prevClients = findAccountValue(prevBS, 'assets.current.clients') || 0;
+  const prevInvestments = findAccountValue(prevBS, 'assets.current.investments') || 0;
+  const prevSuppliers = findAccountValue(prevBS, 'liabilities.current.suppliers') || 0;
   
   // --- 1. REAJUSTES TEMPORAIS ESPECÍFICOS ---
   // Inflação geral afeta Manutenção e Despesas Fixas
@@ -205,7 +213,6 @@ export const calculateProjections = (
   const totalPayrollSales = payrollSales + socialChargesSales;
 
   // --- 3.1 CÁLCULO DE RESCISÃO E PPR PROPORCIONAL (USER REQUEST) ---
-  const prevPprPayable = findAccountValue(prevBS, 'liabilities.current.ppr_payable') || 0;
   const totalStaff = (team.kpis?.staffing?.production || 470) + staffAdmin + staffSales;
   const firedTotal = sanitize(decision.hr?.fired, 0);
   
@@ -352,8 +359,6 @@ export const calculateProjections = (
     newAccountsPayable = totalPurchaseMP;
   }
   
-  const prevSuppliers = findAccountValue(prevBS, 'liabilities.current.suppliers');
-
   // Distribuição e Estocagem
   const distributionCost = totalUnitsSold * indicators.prices.distribution_unit * (1 + (sanitize(indicators.distribution_cost_adjust, 0) / 100));
   const currentMPAStock = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA - (unitsProduced * 3);
@@ -447,7 +452,6 @@ export const calculateProjections = (
   const interestExp = totalInterestExp;
   
   // Rendimentos de Aplicações Financeiras
-  const prevInvestments = findAccountValue(prevBS, 'assets.current.investments');
   const investmentReturn = prevInvestments * (sanitize(indicators.investment_return_rate, 1) / 100);
   
   // Receita Financeira de Vendas a Prazo (Juros de Prazo)
@@ -459,9 +463,6 @@ export const calculateProjections = (
   // --- 4.5 APURAÇÃO DE IVA (GOLD STANDARD v19.0) ---
   const ivaOnSales = revenue * vatSalesRate; // Débito gerado nas vendas
   const ivaRecoverableGenerated = totalPurchaseMP * vatPurchasesRate; // Crédito gerado nas compras
-
-  const prevVatRecoverable = findAccountValue(prevBS, 'assets.current.vat_recoverable');
-  const prevVatPayable = findAccountValue(prevBS, 'liabilities.current.vat_payable');
 
   // 1. Pagamento automático do passivo anterior (Fluxo de Caixa)
   const vatPayment = prevVatPayable; 
@@ -501,9 +502,6 @@ export const calculateProjections = (
   const dividendPercent = (sanitize(indicators.dividend_percent, 25) / 100);
   const dividends = netProfit > 0 ? netProfit * dividendPercent : 0;
   
-  // Pagamento de Dividendos do período anterior (USER REQUEST)
-  const prevDividends = findAccountValue(prevBS, 'liabilities.current.dividends') || 0;
-
   // --- 4.6 MOTIVAÇÃO E CLIMA ORGANIZACIONAL (PPR IMPACT) ---
   // O PPR provisionado (currentPpr) e o salário influenciam a motivação
   const avgMarketSalary = indicators.hr_base.salary * inflationMult;
@@ -513,7 +511,6 @@ export const calculateProjections = (
 
   // Fluxo de Caixa (DFC)
   // Recebimento = Vendas à Vista (Atual) + Recebimento de Clientes (Anterior)
-  const prevClients = findAccountValue(prevBS, 'assets.current.clients');
   const cashInflowFromSales = totalCashSales + prevClients;
   
   // Aplicação Financeira (Saída de Caixa)
@@ -768,7 +765,7 @@ export const calculateProjections = (
           'cf.outflow.interest': -interestExp,
           'cf.outflow.amortization': -totalAmortization,
           'cf.outflow.late_penalties': 0, // Placeholder
-          'cf.outflow.taxes': -taxProv,
+          'cf.outflow.taxes': -prevTaxes,
           'cf.outflow.dividends': -prevDividends,
           'cf.investment_apply': -applicationAmount,
           'cf.final': finalCashWithAwards 
@@ -776,6 +773,22 @@ export const calculateProjections = (
         balance_sheet: finalBSWithAwards
       },
       current_cash: finalCashWithAwards,
+      commitments: {
+        receivables: [
+          { id: 'clients', label: 'Contas a Receber (Clientes)', value: prevClients },
+          { id: 'investments', label: 'Aplicações Financeiras', value: prevInvestments },
+          { id: 'vat_recoverable', label: 'IVA a Recuperar', value: findAccountValue(prevBS, 'assets.current.vat_recoverable') }
+        ],
+        payables: [
+          { id: 'suppliers', label: 'Fornecedores', value: prevSuppliers },
+          { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: findAccountValue(prevBS, 'liabilities.current.loans_st') },
+          { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: findAccountValue(prevBS, 'liabilities.longterm.loans_lt') },
+          { id: 'taxes', label: 'Imposto de Renda a Pagar', value: prevTaxes },
+          { id: 'dividends', label: 'Dividendos a Pagar', value: prevDividends },
+          { id: 'ppr', label: 'PPR a Pagar', value: prevPprPayable },
+          { id: 'vat_payable', label: 'IVA a Recolher', value: prevVatPayable }
+        ]
+      },
       machines: currentMachines,
       loans: currentLoans,
       stock_quantities: { 

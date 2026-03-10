@@ -1,7 +1,7 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE SCHEMA & RLS PROTOCOL v18.8 PLATINUM
--- Foco: Telemetria Avançada, KPIs Estratégicos e Segurança de Views
+-- EMPIRION DATABASE SCHEMA & RLS PROTOCOL v19.1 PLATINUM
+-- Foco: Telemetria Avançada, KPIs Estratégicos, Agenda Financeira e Segurança
 -- ==============================================================================
 
 BEGIN;
@@ -66,6 +66,8 @@ ADD COLUMN IF NOT EXISTS esds_insights TEXT,
 ADD COLUMN IF NOT EXISTS esds_top_gargalos JSONB DEFAULT '[]',
 ADD COLUMN IF NOT EXISTS esds_main_drivers JSONB DEFAULT '[]',
 ADD COLUMN IF NOT EXISTS share_price NUMERIC(20,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS total_receivables NUMERIC(20,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS total_payables NUMERIC(20,2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS credit_rating TEXT CHECK (credit_rating = ANY (ARRAY['AAA'::text, 'AA'::text, 'A'::text, 'B'::text, 'C'::text, 'D'::text]));
 
 -- 2. ADIÇÃO DE COLUNAS EM CHAMPIONSHIP_MACRO_RULES (ORACLE CORE)
@@ -149,6 +151,8 @@ ADD COLUMN IF NOT EXISTS esds_insights TEXT,
 ADD COLUMN IF NOT EXISTS esds_top_gargalos JSONB DEFAULT '[]',
 ADD COLUMN IF NOT EXISTS esds_main_drivers JSONB DEFAULT '[]',
 ADD COLUMN IF NOT EXISTS share_price NUMERIC(20,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS total_receivables NUMERIC(20,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS total_payables NUMERIC(20,2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS credit_rating TEXT CHECK (credit_rating = ANY (ARRAY['AAA'::text, 'AA'::text, 'A'::text, 'B'::text, 'C'::text, 'D'::text]));
 
 -- 6. ADIÇÃO DE PERFIS ESTRATÉGICOS E KPIs EM TEAMS (LIVE & TRIAL)

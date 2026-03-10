@@ -28,6 +28,19 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const isTestMode = true;
 
+const findAccountValue = (nodes: AccountNode[], path: string): number => {
+  const parts = path.split('.');
+  let current: AccountNode[] | undefined = nodes;
+  
+  for (let i = 0; i < parts.length; i++) {
+    const node: AccountNode | undefined = current?.find(n => n.id === parts[i]);
+    if (!node) return 0;
+    if (i === parts.length - 1) return node.value;
+    current = node.children;
+  }
+  return 0;
+};
+
 export const provisionDemoEnvironment = async () => {
   console.info("Empirion Demo Node: Provisioning simulated cluster...");
 };
@@ -204,7 +217,23 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     despesas_operacionais_diarias: 1149623.86 / 30,
     passivo_total: 2240991.80,
     pl: equity,
-    percentual_divida_curto_prazo: 100
+    percentual_divida_curto_prazo: 100,
+    commitments: {
+      receivables: [
+        { id: 'clients', label: 'Contas a Receber (Clientes)', value: findAccountValue(balanceSheet, 'assets.current.clients') || 1407000.00 },
+        { id: 'investments', label: 'Aplicações Financeiras', value: findAccountValue(balanceSheet, 'assets.current.investments') || 0 },
+        { id: 'vat_recoverable', label: 'IVA a Recuperar', value: findAccountValue(balanceSheet, 'assets.current.vat_recoverable') || 0 }
+      ],
+      payables: [
+        { id: 'suppliers', label: 'Fornecedores', value: findAccountValue(balanceSheet, 'liabilities.current.suppliers') || 717605.00 },
+        { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: findAccountValue(balanceSheet, 'liabilities.current.loans_st') || 1372362.00 },
+        { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: findAccountValue(balanceSheet, 'liabilities.longterm.loans_lt') || 868629.80 },
+        { id: 'taxes', label: 'Imposto de Renda a Pagar', value: findAccountValue(balanceSheet, 'liabilities.current.taxes') || 14871.31 },
+        { id: 'dividends', label: 'Dividendos a Pagar', value: findAccountValue(balanceSheet, 'liabilities.current.dividends') || 11153.49 },
+        { id: 'ppr', label: 'PPR a Pagar', value: findAccountValue(balanceSheet, 'liabilities.current.ppr_payable') || 0 },
+        { id: 'vat_payable', label: 'IVA a Recolher', value: findAccountValue(balanceSheet, 'liabilities.current.vat_payable') || 0 }
+      ]
+    }
   };
 
   // Calculate initial E-SDS for P0
@@ -229,6 +258,8 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     net_profit: 0,
     total_assets: initialKpis.total_assets,
     stock_value: initialKpis.stock_value,
+    total_receivables: initialKpis.commitments.receivables.reduce((sum: number, r: any) => sum + r.value, 0),
+    total_payables: initialKpis.commitments.payables.reduce((sum: number, p: any) => sum + p.value, 0),
     fixed_assets_value: initialKpis.fixed_assets_value,
     fixed_assets_depreciation: initialKpis.fixed_assets_depreciation,
     ccc: 0,
@@ -454,6 +485,8 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 net_profit: item.res.netProfit,
                 total_assets: item.res.kpis.total_assets,
                 stock_value: item.res.kpis.stock_value,
+                total_receivables: item.res.kpis.commitments?.receivables?.reduce((sum: number, r: any) => sum + r.value, 0) || 0,
+                total_payables: item.res.kpis.commitments?.payables?.reduce((sum: number, p: any) => sum + p.value, 0) || 0,
                 fixed_assets_value: item.res.kpis.fixed_assets_value,
                 fixed_assets_depreciation: item.res.kpis.fixed_assets_depreciation,
                 ccc: item.res.kpis.ccc,
