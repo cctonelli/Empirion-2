@@ -338,7 +338,6 @@ export interface ProjectionResult {
     rating: CreditRating;
   };
   kpis: KPIs;
-  statements: any;
   marketShare: number;
 }
 

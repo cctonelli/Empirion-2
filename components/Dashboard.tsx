@@ -47,6 +47,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic'>('dre');
   const [decisions, setDecisions] = useState<any>(null);
 
+  const visibleHistory = useMemo(() => {
+    return history.filter(h => h.round <= selectedRound);
+  }, [history, selectedRound]);
+
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
@@ -114,8 +118,20 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       loans: [],
       statements: { dre: { revenue: 3322735 }, cash_flow: { outflow: { total: 0 } } }
     };
+
+    const currentRound = (activeArena?.current_round || 0) + 1;
+
+    if (selectedRound < currentRound) {
+      const past = history.find(h => h.round === selectedRound);
+      if (past?.kpis) return { ...baseFallback, ...past.kpis } as KPIs;
+    }
+    
+    if (selectedRound === currentRound && projections?.kpis) {
+      return { ...baseFallback, ...projections.kpis } as KPIs;
+    }
+
     return { ...baseFallback, ...(activeTeam?.kpis || {}) } as KPIs;
-  }, [activeTeam]);
+  }, [activeTeam, selectedRound, activeArena, history, projections]);
 
   const trendOptions: any = {
     chart: { type: 'area', toolbar: { show: false }, background: 'transparent', sparkline: { enabled: false } },
@@ -124,7 +140,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05 } },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
     xaxis: { 
-      categories: history.map(h => `P${h.round < 10 ? '0' : ''}${h.round}`), 
+      categories: visibleHistory.map(h => `P${h.round < 10 ? '0' : ''}${h.round}`), 
       labels: { style: { colors: '#64748b', fontSize: '10px', fontWeight: 800 } } 
     },
     yaxis: { labels: { style: { colors: '#64748b', fontSize: '10px' } } },
@@ -133,8 +149,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   };
 
   const trendSeries = [
-    { name: 'Equity', data: history.map(h => h.equity) },
-    { name: 'Liquidez', data: history.map(h => h.kpis?.liquidity_current || 0) }
+    { name: 'Equity', data: visibleHistory.map(h => h.equity) },
+    { name: 'Liquidez', data: visibleHistory.map(h => h.kpis?.liquidity_current || 0) }
   ];
 
   if (loading) return <div className="flex-1 flex items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-orange-600" size={48} /></div>;
@@ -149,11 +165,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       
       {/* 1. Header fixo superior – KPIs + Timer */}
       <section className="h-24 shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-20 shadow-2xl">
-         <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend="Real" pos icon={<ShieldCheck size={18}/>} />
+         <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<ShieldCheck size={18}/>} />
          <CockpitStat 
             label="E-SDS" 
             val={(currentKpis.esds?.esds_display || 0).toFixed(1)} 
-            trend={currentKpis.esds?.zone || 'ALERTA'} 
+            trend={selectedRound === currentRound ? "Proj" : (currentKpis.esds?.zone || 'ALERTA')} 
             pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
             neg={currentKpis.esds?.zone === 'Laranja' || currentKpis.esds?.zone === 'Vermelho'}
             icon={<Gauge size={18}/>} 
@@ -184,9 +200,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </div>
             }
          />
-         <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend="Cycle" pos icon={<Box size={18}/>} />
-         <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend="Current" pos icon={<Activity size={18}/>} />
-         <CockpitStat label={t('Rating')} val={currentKpis.rating} trend="Audit" pos icon={<Shield size={18}/>} />
+         <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Box size={18}/>} />
+         <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Activity size={18}/>} />
+         <CockpitStat label={t('Rating')} val={currentKpis.rating} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Shield size={18}/>} />
          <div className="px-8 flex items-center justify-center border-l border-white/5 bg-gradient-to-br from-orange-600/10 to-transparent">
             <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} createdAt={activeArena?.created_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
          </div>
@@ -353,8 +369,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                           <FinancialReportMatrix 
                             type={hubTab} 
-                            history={history} 
-                            projection={projections} 
+                            history={visibleHistory} 
+                            projection={selectedRound === currentRound ? projections : null} 
                             currency={activeArena?.currency || 'BRL'} 
                           />
                         </div>
@@ -369,7 +385,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                                <TrendingUp size={18} className="text-blue-500" /> Evolução do Patrimônio Líquido
                              </h4>
                              <div className="h-80">
-                                <Chart options={{...trendOptions, chart: { ...trendOptions.chart, sparkline: { enabled: false } }}} series={[{ name: 'Equity', data: history.map(h => h.equity) }]} type="area" height="100%" />
+                                <Chart options={{...trendOptions, chart: { ...trendOptions.chart, sparkline: { enabled: false } }}} series={[{ name: 'Equity', data: visibleHistory.map(h => h.equity) }]} type="area" height="100%" />
                              </div>
                           </div>
                           <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 space-y-6 shadow-2xl">
@@ -377,7 +393,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                                <Activity size={18} className="text-emerald-500" /> Índice de Liquidez Corrente
                              </h4>
                              <div className="h-80">
-                                <Chart options={{...trendOptions, colors: ['#10b981']}} series={[{ name: 'Liquidez', data: history.map(h => h.kpis?.liquidity_current || 0) }]} type="area" height="100%" />
+                                <Chart options={{...trendOptions, colors: ['#10b981']}} series={[{ name: 'Liquidez', data: visibleHistory.map(h => h.kpis?.liquidity_current || 0) }]} type="area" height="100%" />
                              </div>
                           </div>
                         </div>

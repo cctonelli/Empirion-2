@@ -204,7 +204,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             <div className="h-12 w-px bg-white/10 hidden md:block" />
             <div className="flex items-center gap-5">
                <QuickKpi label="EBITDA Projetado" val={formatCurrency(projections?.kpis?.ebitda || 0, activeArena?.currency || 'BRL')} icon={<Zap size={14}/>} color="text-orange-400" />
-               <QuickKpi label="Caixa Final T+1" val={formatCurrency(projections?.statements?.cash_flow?.final || 0, activeArena?.currency || 'BRL')} icon={<Coins size={14}/>} color="text-emerald-400" />
+               <QuickKpi label="Caixa Final T+1" val={formatCurrency(projections?.kpis?.statements?.cash_flow?.find((n: any) => n.id === 'cf.final')?.value || 0, activeArena?.currency || 'BRL')} icon={<Coins size={14}/>} color="text-emerald-400" />
                <div className="flex items-center gap-3 bg-slate-950/50 p-3 rounded-2xl border border-white/5 group relative hover:border-orange-500/30 transition-all cursor-help">
                   <div className="flex flex-col">
                      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">E-SDS Projetado</span>

@@ -85,7 +85,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             gbp_rate: proj?.kpis?.gbp_rate || t.kpis?.gbp_rate || 0,
             auditLogs: (decision?.data?.audit_logs || []) as AuditLog[],
             current_decision: decision?.data,
-            statements: proj?.statements || t.kpis?.statements,
+            statements: proj?.kpis?.statements || t.kpis?.statements,
             is_bot: t.is_bot,
             strategic_profile: t.strategic_profile
           };
@@ -389,7 +389,7 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
                         <FinancialReportMatrix 
                            type={reportType} 
                            history={[]} 
-                           projection={{ statements: team.statements } as any} 
+                           projection={{ kpis: { statements: team.statements } } as any} 
                            currency="BRL" 
                         />
                      </div>

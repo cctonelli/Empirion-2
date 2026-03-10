@@ -35,7 +35,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     })),
     { 
       round: 'PROJ (T+1)', 
-      data: type === 'strategic' ? projection?.kpis : projection?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], 
+      data: type === 'strategic' ? projection?.kpis : projection?.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], 
       isProjection: true 
     }
   ];
