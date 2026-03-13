@@ -327,7 +327,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           <motion.div 
                             initial={{ height: 0, opacity: 0 }} 
                             animate={{ height: 'auto', opacity: 1 }}
-                            className="mb-6 p-6 bg-orange-600/20 border border-orange-500/50 rounded-3xl flex items-center gap-6 shadow-lg shrink-0"
+                            className="mb-6 p-6 bg-orange-600/20 border border-orange-500/50 rounded-2xl flex items-center gap-6 shadow-lg shrink-0"
                           >
                              <div className="p-3 bg-orange-600 rounded-2xl text-white animate-pulse">
                                 <AlertTriangle size={24} />
@@ -360,7 +360,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
                     {activeTab === 'financeiro' && (
                       <div className="space-y-8 h-full flex flex-col">
-                        <div className="flex gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl shrink-0">
+                        <div className="flex gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl shrink-0">
                           <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE Master" icon={<TrendingUp size={14}/>} />
                           <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Master" icon={<Landmark size={14}/>} />
                           <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa" icon={<Activity size={14}/>} />
@@ -405,7 +405,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                            </h4>
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                               {currentKpis.esds?.top_gargalos?.map((g, i) => (
-                                <div key={i} className="p-6 bg-slate-950/80 rounded-3xl border border-white/5 space-y-3">
+                                <div key={i} className="p-6 bg-slate-950/80 rounded-2xl border border-white/5 space-y-3">
                                    <div className="flex justify-between items-start">
                                       <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{g.name}</span>
                                       <span className="text-xl font-black text-white italic">{g.percentage}%</span>
@@ -474,7 +474,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
       <AnimatePresence>
         {showBP && (
-          <div className="fixed inset-0 z-[6000] bg-slate-950/98 backdrop-blur-3xl overflow-y-auto">
+          <div className="fixed inset-0 z-[6000] bg-slate-950/98 backdrop-blur-2xl overflow-y-auto">
              <button onClick={() => setShowBP(false)} className="fixed top-10 right-10 p-5 bg-white/5 hover:bg-rose-600 text-white rounded-full z-[7000] shadow-2xl transition-all"><X size={28}/></button>
              <BusinessPlanWizard championshipId={activeArena?.id} teamId={activeTeam?.id} currentRound={(activeArena?.current_round || 0) + 1} onClose={() => setShowBP(false)} />
           </div>
@@ -485,7 +485,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           </div>
         )}
         {showGazette && (
-          <div className="fixed inset-0 z-[5000] p-4 md:p-10 bg-slate-950/95 backdrop-blur-3xl flex items-center justify-center">
+          <div className="fixed inset-0 z-[5000] p-4 md:p-10 bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center">
              <GazetteViewer arena={activeArena!} aiNews="" round={Math.max(0, selectedRound - 1)} activeTeam={activeTeam} userRole={userRole} onClose={() => setShowGazette(false)} />
           </div>
         )}
@@ -511,7 +511,7 @@ const CockpitStat = ({ label, val, trend, pos, neg, icon, tooltip }: any) => (
         </div>
      </div>
      <div className="flex items-baseline gap-1">
-        <span className="text-3xl font-black text-white font-mono tracking-tighter italic leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">{val}</span>
+        <span className="text-2xl font-black text-white font-mono tracking-tighter italic leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">{val}</span>
      </div>
      
      {tooltip && (
