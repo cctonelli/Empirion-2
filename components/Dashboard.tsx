@@ -280,7 +280,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                         <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">{t('Scissors Effect')}</span>
                         <span className="text-[7px] text-slate-600 uppercase font-bold">Risco de Liquidez</span>
                      </div>
-                     <span className="text-2xl font-black text-rose-500 italic tracking-tighter">{(currentKpis.scissors_effect || -15)} {t('days')}</span>
+                     <span className="text-2xl font-black text-rose-500 italic tracking-tighter">{(currentKpis.scissors_effect || -2)} {t('days')}</span>
                   </div>
                </div>
             </div>
@@ -361,8 +361,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     {activeTab === 'financeiro' && (
                       <div className="space-y-8 h-full flex flex-col">
                         <div className="flex gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl shrink-0">
-                          <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE Master" icon={<TrendingUp size={14}/>} />
-                          <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Master" icon={<Landmark size={14}/>} />
+                          <HubTabBtn active={hubTab === 'dre'} onClick={() => setHubTab('dre')} label="DRE" icon={<TrendingUp size={14}/>} />
+                          <HubTabBtn active={hubTab === 'balance'} onClick={() => setHubTab('balance')} label="Balanço Patrimonial" icon={<Landmark size={14}/>} />
                           <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa" icon={<Activity size={14}/>} />
                           <HubTabBtn active={hubTab === 'commitments'} onClick={() => setHubTab('commitments')} label="Agenda Financeira" icon={<Landmark size={14}/>} />
                           <HubTabBtn active={hubTab === 'strategic'} onClick={() => setHubTab('strategic')} label="Comando Estratégico" icon={<Target size={14}/>} />
