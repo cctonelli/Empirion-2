@@ -1,6 +1,7 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { ScenarioType, DecisionData, MacroIndicators, AnalysisSource, Branch, RegionType, BlackSwanEvent, TransparencyLevel, GazetaMode, StrategicProfile } from "../types";
+import { computeESDSDeterministic } from "./simulation";
 
 let cachedApiKey: string | null = null;
 
@@ -400,8 +401,16 @@ export const calculateESDS = async (
   previousRounds: any[]
 ) => {
   try {
+    // 1. CÁLCULO DETERMINÍSTICO (User Request v1.2)
+    // Garante precisão matemática e consistência com a fórmula oficial
+    const deterministicResult = computeESDSDeterministic(currentState, previousRounds, branch);
+
     const apiKey = await getApiKey();
-    if (!apiKey) throw new Error("Gemini API Key missing.");
+    if (!apiKey) {
+      console.warn("Gemini API Key missing. Returning deterministic result without insights.");
+      return deterministicResult;
+    }
+
     const ai = new GoogleGenAI({ apiKey });
 
     const inputData = {
@@ -409,51 +418,42 @@ export const calculateESDS = async (
       branch: branch,
       state: currentState,
       previous_rounds: previousRounds,
-      // Default values for consistency (User Request v1.2)
-      receita_recorrente_projetada: currentState.receita_recorrente_projetada || 0,
-      capex_estrategico: currentState.capex_estrategico || 0,
-      is_estimated: (!currentState.receita_recorrente_projetada || !currentState.capex_estrategico)
+      deterministic_score: deterministicResult.esds_display,
+      deterministic_zone: deterministicResult.zone,
+      is_estimated: deterministicResult.is_estimated
     };
 
     const response = await ai.models.generateContent({
       model: "gemini-3.1-pro-preview",
-      contents: `Você é o motor de diagnóstico financeiro do Empirion. Calcule e interprete o E-SDS v1.2 (Empirion Solvency Dynamics Score versão 1.2), focado em fluxo de caixa real e solvência dinâmica.
+      contents: `Você é o motor de diagnóstico financeiro do Empirion. Interprete o E-SDS v1.2 (Empirion Solvency Dynamics Score versão 1.2) calculado.
+      
+O score já foi calculado de forma determinística:
+Score: ${deterministicResult.esds_display}
+Zona: ${deterministicResult.zone}
 
-Fórmula Base (E-SDS_raw):
-E-SDS_raw = (4.0 × Pilar1) + (3.0 × Pilar2) + (2.0 × Pilar3) + (1.5 × Pilar4) + (PesoP5 × Pilar5) + (PesoP6 × Pilar6)
+Sua tarefa é gerar INSIGHTS didáticos e identificar os GARGALOS principais com base nos dados fornecidos.
 
-Ajustes Setoriais (Branch-Specific Weights):
-- Industrial: PesoP5 = -3.0 | PesoP6 = -1.2
-- Agribusiness: PesoP5 = -3.0 | PesoP6 = -2.0
-- Services/SaaS: PesoP5 = -2.5 | PesoP6 = -0.8
-- Default: PesoP5 = -3.0 | PesoP6 = -1.0
+Pilares v1.2 para sua análise:
+1. Geração de Caixa Operacional Líquida: FCO_Livre vs (Passivo_Circulante + Despesas).
+2. Sustentabilidade do Crescimento: Δ_Receita vs Custo_Dívida.
+3. Margem de Segurança + Recorrência: EBITDA + Recorrência.
+4. Eficiência de Giro: Dias de Caixa.
+5. Penalizador de Alavancagem: Passivo_Total / PL.
+6. Penalizador de Volatilidade: CV do FCO.
 
-Pilares v1.2:
-1. Geração de Caixa Operacional Líquida (Peso 4.0): FCO_Livre / (Passivo_Circulante + Despesas_Projetadas). FCO_Livre = Caixa_Op - CapEx_Manut - Juros - Impostos. Não punir CapEx_Estratégico se for investimento de expansão.
-2. Sustentabilidade do Crescimento (Peso 3.0): (Média_Móvel_3_Rounds(Δ_Receita_Líquida_%) / (Custo_Dívida × Alavancagem_Efetiva)).
-3. Margem de Segurança + Recorrência (Peso 2.0): (EBITDA + Receita_Recorrente) / Receita_Total. Defaults: 60% (Serviços), 20% (Agro), 10% (Indústria).
-4. Eficiência de Giro (Peso 1.5): 10 × (1 - exp(-Dias_Caixa / K)). K=90 (Agro), 60 (Indústria), 45 (Serviços).
-5. Penalizador de Alavancagem (Peso Variável): max(0, (Passivo_Total / PL) - 3.0) × (1 + %_Dívida_Curto_Prazo).
-6. Penalizador de Volatilidade (Peso Variável): Coeficiente de Variação do FCO × Multiplicador (0.8 Agro, 0.5 Ind, 0.3 Serv).
-
-REGRAS CRÍTICAS v1.2:
-- Threshold Hard: Se Dívida Líquida / EBITDA > 6.0, a zona deve ser obrigatoriamente Laranja ou Vermelho, independente do score total.
-- Clipping: esds_display deve ser clipado entre 0 e 10 para a UI.
-- Pedagogia: Traduza conceitos complexos (Pilar 2) para linguagem simples nos insights. Ex: "Seu crescimento não cobre o custo do dinheiro".
+REGRAS DE INSIGHTS:
+- Pedagogia: Traduza conceitos complexos para linguagem simples. Ex: "Seu crescimento não cobre o custo do dinheiro".
+- Foco em Ação: O que o gestor deve fazer para melhorar o score?
 - Dados Faltantes: Se is_estimated for true, mencione "Baseado em dados parciais (estimado)".
 
 Input: ${JSON.stringify(inputData)}
 
 Output JSON:
 {
-  "esds_raw": number,
-  "esds_display": number,
-  "zone": "Azul/Verde/Amarelo/Laranja/Vermelho",
   "top_gargalos": ["string"], (Top 3 maiores impactos negativos)
   "gargalo_principal": "Operacional/Financeiro/Estrutural/Estratégico",
-  "is_estimated": boolean,
   "warnings": ["string"],
-  "gemini_insights": "string" (Linguagem didática e direta)
+  "gemini_insights": "string" (Linguagem didática e direta, max 300 caracteres)
 } (Retorne APENAS o JSON)`,
       config: {
         responseMimeType: "application/json",
@@ -461,20 +461,18 @@ Output JSON:
       }
     });
 
-    const result = JSON.parse(response.text || '{}');
+    const aiResult = JSON.parse(response.text || '{}');
+    
     return {
-      esds_raw: result.esds_raw,
-      esds_display: result.esds_display,
-      zone: result.zone,
-      top_gargalos: result.top_gargalos.map((g: any) => typeof g === 'string' ? { name: g, impact: 0, percentage: 0 } : g),
-      gargalo_principal: result.gargalo_principal,
-      main_drivers: result.main_drivers || [],
-      is_estimated: result.is_estimated,
-      warnings: result.warnings,
-      gemini_insights: result.gemini_insights
+      ...deterministicResult,
+      top_gargalos: aiResult.top_gargalos?.map((g: any) => typeof g === 'string' ? { name: g, impact: 0, percentage: 0 } : g) || [],
+      gargalo_principal: aiResult.gargalo_principal || deterministicResult.gargalo_principal,
+      warnings: aiResult.warnings || [],
+      gemini_insights: aiResult.gemini_insights || deterministicResult.gemini_insights
     };
   } catch (error) {
     console.error("ESDS Calculation error:", error);
-    return null;
+    // Fallback para o determinístico em caso de erro na IA
+    return computeESDSDeterministic(currentState, previousRounds, branch);
   }
 };

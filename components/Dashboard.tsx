@@ -105,9 +105,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       activeArena.branch || 'industrial',
       (activeArena as any).ecosystem_config || {},
       indicators,
-      activeTeam
+      activeTeam,
+      history
     );
-  }, [decisions, activeArena, activeTeam]);
+  }, [decisions, activeArena, activeTeam, history]);
 
   const currentKpis = useMemo((): KPIs => {
     const baseFallback = {
@@ -262,6 +263,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                </div>
             </div>
 
+
             <div className="bg-slate-950/60 p-8 rounded-[3rem] border border-white/5 space-y-6 shadow-2xl">
                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
                  <Scale size={14} className="text-emerald-500" /> PMR vs PMP
@@ -269,18 +271,18 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                <div className="space-y-4">
                   <div className="flex justify-between items-center text-[10px] font-bold uppercase">
                     <span className="text-slate-600">{t('Receivable Days')}</span>
-                    <span className="text-white font-mono">{currentKpis.avg_receivable_days || 45} {t('days')}</span>
+                    <span className="text-white font-mono">{currentKpis.avg_receivable_days?.toFixed(0) ?? 45} {t('days')}</span>
                   </div>
                   <div className="flex justify-between items-center text-[10px] font-bold uppercase">
                     <span className="text-slate-600">{t('Payable Days')}</span>
-                    <span className="text-white font-mono">{currentKpis.avg_payable_days || 30} {t('days')}</span>
+                    <span className="text-white font-mono">{currentKpis.avg_payable_days?.toFixed(0) ?? 30} {t('days')}</span>
                   </div>
                   <div className="pt-4 border-t border-white/5 flex justify-between items-end">
                      <div className="flex flex-col">
                         <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">{t('Scissors Effect')}</span>
                         <span className="text-[7px] text-slate-600 uppercase font-bold">Risco de Liquidez</span>
                      </div>
-                     <span className="text-2xl font-black text-rose-500 italic tracking-tighter">{(currentKpis.scissors_effect || -2)} {t('days')}</span>
+                     <span className="text-2xl font-black text-rose-500 italic tracking-tighter">{currentKpis.scissors_effect?.toFixed(1) ?? -15.0} {t('days')}</span>
                   </div>
                </div>
             </div>
