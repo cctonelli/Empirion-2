@@ -106,7 +106,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       (activeArena as any).ecosystem_config || {},
       indicators,
       activeTeam,
-      history
+      history,
+      currentRound,
+      activeArena.round_rules
     );
   }, [decisions, activeArena, activeTeam, history]);
 

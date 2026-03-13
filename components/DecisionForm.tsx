@@ -74,7 +74,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       activeArena.branch || 'industrial',
       (activeArena as any).ecosystem_config || {},
       indicators,
-      activeTeam
+      activeTeam,
+      [],
+      currentRound,
+      activeArena.round_rules
     );
   }, [decisions, activeArena, activeTeam, round]);
 
@@ -959,8 +962,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <div className="mt-8 p-6 bg-slate-950/60 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
                                  <p className="font-medium mb-3">Impactos esperados:</p>
                                  <ul className="space-y-2 list-disc pl-5">
-                                    <li>À vista → Melhor preço unitário, mas exige caixa imediato</li>
-                                    <li>Parcelado → Preserva liquidez no curto prazo, mas aumenta custo financeiro</li>
+                                    <li>À vista → Melhor gestão de passivos, exige caixa imediato</li>
+                                    <li>Parcelado → Preserva liquidez no curto prazo, aumenta o PMP</li>
                                  </ul>
                               </div>
                               </div>

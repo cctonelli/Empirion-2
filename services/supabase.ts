@@ -283,7 +283,10 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     esds_gargalo: p0Esds?.gargalo_principal,
     esds_insights: p0Esds?.gemini_insights,
     esds_top_gargalos: p0Esds?.top_gargalos || [],
-    esds_main_drivers: p0Esds?.main_drivers || []
+    esds_main_drivers: p0Esds?.main_drivers || [],
+    supplier_interest_expenses: 0,
+    emergency_purchase_expenses: 0,
+    emergency_units_total: 0
   }));
   
   await supabase.from(historyTable).insert(historyEntries);
@@ -440,7 +443,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             if (finalDecision) {
                 // Ajustar indicadores com a média real do mercado para este round
                 const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
-                const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, competitiveIndicators, team);
+                const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, competitiveIndicators, team, [], nextRound, champ.round_rules);
                 
                 // 3.1 Calcular E-SDS v1.2 via Gemini
                 const { data: previousRounds } = await supabase
@@ -516,7 +519,10 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 esds_insights: item.res.kpis.esds?.gemini_insights,
                 esds_top_gargalos: item.res.kpis.esds?.top_gargalos || [],
                 esds_main_drivers: item.res.kpis.esds?.main_drivers || [],
-                market_share: competitiveShare
+                market_share: competitiveShare,
+                supplier_interest_expenses: item.res.kpis.supplier_interest_expenses || 0,
+                emergency_purchase_expenses: item.res.kpis.emergency_purchase_expenses || 0,
+                emergency_units_total: item.res.kpis.emergency_units_total || 0
             });
 
             await supabase.from(teamsTable).update({ 

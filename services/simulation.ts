@@ -63,7 +63,9 @@ export const calculateProjections = (
   ecosystem: EcosystemConfig,
   indicators: MacroIndicators,
   team: Team,
-  history: any[] = []
+  history: any[] = [],
+  round?: number,
+  round_rules?: Record<number, any>
 ): ProjectionResult => {
   // 0. RECUPERAR ESTADO ANTERIOR
   const prevStatements = team.kpis?.statements || INITIAL_FINANCIAL_TREE;
@@ -78,12 +80,24 @@ export const calculateProjections = (
   const prevSuppliers = findAccountValue(prevBS, 'liabilities.current.suppliers') || 0;
   
   // --- 1. REAJUSTES TEMPORAIS ESPECÍFICOS ---
+  // Se round e round_rules forem fornecidos, usamos o ajuste cumulativo.
+  // Caso contrário, usamos o ajuste pontual do objeto indicators (fallback).
+  const currentRound = round ?? 0;
+  const rules = round_rules || {};
+
+  const getAdjust = (key: string, fallback: number) => {
+    if (round !== undefined && round_rules !== undefined) {
+      return getCumulativeAdjust(round_rules, round, key);
+    }
+    return 1 + (fallback / 100);
+  };
+
   // Inflação geral afeta Manutenção e Despesas Fixas
-  const inflationMult = 1 + (sanitize(indicators.inflation_rate, 0) / 100);
+  const inflationMult = getAdjust('inflation_rate', sanitize(indicators.inflation_rate, 0));
   
   // Reajuste de MP é independente da inflação geral (conforme diretriz v18.8)
-  const mpaPrice = indicators.prices.mp_a * (1 + (sanitize(indicators.raw_material_a_adjust, 0) / 100));
-  const mpbPrice = indicators.prices.mp_b * (1 + (sanitize(indicators.raw_material_b_adjust, 0) / 100));
+  const mpaPrice = indicators.prices.mp_a * getAdjust('raw_material_a_adjust', sanitize(indicators.raw_material_a_adjust, 0));
+  const mpbPrice = indicators.prices.mp_b * getAdjust('raw_material_b_adjust', sanitize(indicators.raw_material_b_adjust, 0));
   
   const vatPurchasesRate = sanitize(indicators.vat_purchases_rate, 0) / 100;
   const vatSalesRate = sanitize(indicators.vat_sales_rate, 0) / 100;
@@ -132,10 +146,15 @@ export const calculateProjections = (
   Object.entries(buyDecisions).forEach(([model, qty]: [any, any]) => {
     if (qty > 0) {
       const basePrice = indicators.machinery_values[model as MachineModel];
-      const adjust = model === 'alfa' ? indicators.machine_alpha_price_adjust : 
-                     model === 'beta' ? indicators.machine_beta_price_adjust : 
-                     indicators.machine_gamma_price_adjust;
-      const unitPrice = basePrice * (1 + (sanitize(adjust, 0) / 100));
+      const adjustKey = model === 'alfa' ? 'machine_alpha_price_adjust' : 
+                        model === 'beta' ? 'machine_beta_price_adjust' : 
+                        'machine_gamma_price_adjust';
+      
+      const fallbackAdjust = model === 'alfa' ? indicators.machine_alpha_price_adjust : 
+                             model === 'beta' ? indicators.machine_beta_price_adjust : 
+                             indicators.machine_gamma_price_adjust;
+
+      const unitPrice = basePrice * getAdjust(adjustKey, sanitize(fallbackAdjust, 0));
       const totalCost = unitPrice * qty;
       
       // Se em RJ, limita investimento a 40% do solicitado
@@ -253,8 +272,61 @@ export const calculateProjections = (
   }
   const extraProductionCost = extraProductionPercent > 0 ? (Math.floor(unitsProduced * (extraProductionPercent / (100 + extraProductionPercent))) / (unitsProduced || 1)) * totalMOD * 0.5 : 0;
 
-  // Matéria-Prima Consumida (Com reajuste específico de MP A/B e consumo 3:2) - VALOR LÍQUIDO (sem IVA)
-  const totalMP = (unitsProduced * 3 * netMpaPrice) + (unitsProduced * 2 * netMpbPrice);
+  // --- 3.1 GESTÃO DE SUPRIMENTOS E COMPRAS DE EMERGÊNCIA (USER REQUEST) ---
+  const purchaseMPA = sanitize(decision.production?.purchaseMPA, 0);
+  const purchaseMPB = sanitize(decision.production?.purchaseMPB, 0);
+  const supplierPaymentType = sanitize(decision.production?.paymentType, 0); // 0: A Vista, 1: A VISTA + 50%, 2: A VISTA + 33% + 33%
+  
+  // Fator de Juros do Fornecedor (se não for à vista)
+  const supplierInterestRate = sanitize(indicators.supplier_interest, 0) / 100;
+  const supplierInterestFactor = supplierPaymentType > 0 ? (1 + supplierInterestRate) : 1.0;
+
+  // Verificação de Necessidade de Compra de Emergência
+  const initialMPAStock = team.kpis?.stock_quantities?.mp_a || 0;
+  const initialMPBStock = team.kpis?.stock_quantities?.mp_b || 0;
+  
+  const requiredMPA = unitsProduced * 3;
+  const requiredMPB = unitsProduced * 2;
+  
+  const availableMPA = initialMPAStock + purchaseMPA;
+  const availableMPB = initialMPBStock + purchaseMPB;
+  
+  let emergencyMPA = 0;
+  let emergencyMPB = 0;
+  
+  if (requiredMPA > availableMPA) emergencyMPA = requiredMPA - availableMPA;
+  if (requiredMPB > availableMPB) emergencyMPB = requiredMPB - availableMPB;
+  
+  // Ágio de Compra Especial
+  const specialPremium = 1 + (sanitize(indicators.special_purchase_premium, 5) / 100);
+  
+  // Cálculo dos Custos de Aquisição (Considerando Juros e Ágio)
+  const plannedPurchaseCost = (purchaseMPA * mpaPrice * supplierInterestFactor) + 
+                                (purchaseMPB * mpbPrice * supplierInterestFactor);
+                                
+  const emergencyPurchaseCost = (emergencyMPA * mpaPrice * supplierInterestFactor * specialPremium) + 
+                                (emergencyMPB * mpbPrice * supplierInterestFactor * specialPremium);
+
+  const totalPurchaseMP = plannedPurchaseCost + emergencyPurchaseCost;
+
+  // Matéria-Prima Consumida (Com reajuste, juros e ágio se aplicável) - VALOR LÍQUIDO (sem IVA)
+  const netEmergencyMpaPrice = netMpaPrice * supplierInterestFactor * specialPremium;
+  const netEmergencyMpbPrice = netMpbPrice * supplierInterestFactor * specialPremium;
+  const netPlannedMpaPrice = netMpaPrice * supplierInterestFactor;
+  const netPlannedMpbPrice = netMpbPrice * supplierInterestFactor;
+
+  // Consumo: Prioriza estoque inicial, depois compra planejada, depois emergência
+  const totalUnitsMPA = Math.max(requiredMPA, availableMPA);
+  const totalUnitsMPB = Math.max(requiredMPB, availableMPB);
+  
+  const avgNetMpaPrice = ((initialMPAStock * netMpaPrice) + (purchaseMPA * netPlannedMpaPrice) + (emergencyMPA * netEmergencyMpaPrice)) / (totalUnitsMPA || 1);
+  const avgNetMpbPrice = ((initialMPBStock * netMpbPrice) + (purchaseMPB * netPlannedMpbPrice) + (emergencyMPB * netEmergencyMpbPrice)) / (totalUnitsMPB || 1);
+
+  const totalMP = (unitsProduced * 3 * avgNetMpaPrice) + (unitsProduced * 2 * avgNetMpbPrice);
+
+  const supplierInterestExpenses = totalPurchaseMP * (1 - (1 / supplierInterestFactor));
+  const emergencyPurchaseExpenses = emergencyPurchaseCost;
+  const emergencyUnitsTotal = emergencyMPA + emergencyMPB;
 
   // Manutenção Industrial (GGF reajustado por inflação)
   const maintenance = capacity * 2.5 * inflationMult; 
@@ -357,25 +429,27 @@ export const calculateProjections = (
   const badDebtExp = totalCreditSales * defaultRate;
 
   // Suprimentos (Pagamento a Fornecedores)
-  const purchaseMPA = sanitize(decision.production?.purchaseMPA, 0);
-  const purchaseMPB = sanitize(decision.production?.purchaseMPB, 0);
-  const totalPurchaseMP = (purchaseMPA * mpaPrice) + (purchaseMPB * mpbPrice);
-  
-  // Tipo de Pagamento Fornecedores (0: A Vista, 1: 30 dias, 2: 60 dias)
-  const supplierPaymentType = sanitize(decision.production?.paymentType, 0);
+  // totalPurchaseMP já calculado acima com juros e ágio
   let cashOutflowSuppliers = totalPurchaseMP;
   let newAccountsPayable = 0;
   
-  if (supplierPaymentType > 0) {
-    cashOutflowSuppliers = 0; // Paga no round seguinte
-    newAccountsPayable = totalPurchaseMP;
+  if (supplierPaymentType === 1) {
+    // A VISTA + 50% no próximo período
+    cashOutflowSuppliers = totalPurchaseMP * 0.5;
+    newAccountsPayable = totalPurchaseMP * 0.5;
+  } else if (supplierPaymentType === 2) {
+    // Parcelado: à vista + 33% + 33%
+    cashOutflowSuppliers = totalPurchaseMP * 0.3333;
+    newAccountsPayable = totalPurchaseMP * 0.6667;
   }
   
   // Distribuição e Estocagem
-  const distributionCost = totalUnitsSold * indicators.prices.distribution_unit * (1 + (sanitize(indicators.distribution_cost_adjust, 0) / 100));
-  const currentMPAStock = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA - (unitsProduced * 3);
-  const currentMPBStock = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB - (unitsProduced * 2);
-  const storageCost = (closingStockPA * indicators.prices.storage_finished) + (Math.max(0, currentMPAStock) * indicators.prices.storage_mp) + (Math.max(0, currentMPBStock) * indicators.prices.storage_mp);
+  const distributionCost = totalUnitsSold * indicators.prices.distribution_unit * getAdjust('distribution_cost_adjust', sanitize(indicators.distribution_cost_adjust, 0));
+  const currentMPAStock = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA + emergencyMPA - (unitsProduced * 3);
+  const currentMPBStock = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB + emergencyMPB - (unitsProduced * 2);
+  const storageCost = (closingStockPA * indicators.prices.storage_finished * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0))) + 
+                      (Math.max(0, currentMPAStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0))) + 
+                      (Math.max(0, currentMPBStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0)));
 
   // OPEX reajustado + Marketing + Inadimplência
   const prevOpexSales = Math.abs(findAccountValue(prevStatements.dre, 'opex.sales') || 873250);
@@ -564,10 +638,10 @@ export const calculateProjections = (
     }
   });
 
-  const closingMpaQty = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA - (unitsProduced * 3);
-  const closingMpbQty = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB - (unitsProduced * 2);
-  const closingMpaValue = Math.max(0, closingMpaQty) * netMpaPrice;
-  const closingMpbValue = Math.max(0, closingMpbQty) * netMpbPrice;
+  const closingMpaQty = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA + emergencyMPA - (unitsProduced * 3);
+  const closingMpbQty = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB + emergencyMPB - (unitsProduced * 2);
+  const closingMpaValue = Math.max(0, closingMpaQty) * avgNetMpaPrice;
+  const closingMpbValue = Math.max(0, closingMpbQty) * avgNetMpbPrice;
 
   const bsValues = {
     'assets.current.cash': finalCash,
@@ -690,7 +764,8 @@ export const calculateProjections = (
 
   // Ciclo de Conversão de Caixa (Dinâmico)
   const pme = totalCPV > 0 ? (closingStockValuePA / totalCPV) * 90 : 0;
-  const pmp = supplierPaymentType === 1 ? 30 : (supplierPaymentType === 2 ? 60 : 0);
+  // PMP ajustado para refletir o mix de prazo (User Request: 0+30 = 15 dias)
+  const pmp = supplierPaymentType === 1 ? 15 : (supplierPaymentType === 2 ? 30 : 0);
   const ccc = pme + pmr - pmp;
 
   // Cobertura de Juros
@@ -876,7 +951,12 @@ export const calculateProjections = (
       brl_rate: indicators.BRL || 1,
       gbp_rate: indicators.GBP || 0,
       export_tariff_brazil: indicators.export_tariff_brazil || 0,
-      export_tariff_uk: indicators.export_tariff_uk || 0
+      export_tariff_uk: indicators.export_tariff_uk || 0,
+
+      // Telemetria de Suprimentos (v19.2)
+      supplier_interest_expenses: supplierInterestExpenses,
+      emergency_purchase_expenses: emergencyPurchaseExpenses,
+      emergency_units_total: emergencyUnitsTotal
     }
   };
 

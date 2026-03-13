@@ -73,6 +73,13 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
 - **Marketing:** Investimento regional para aumentar a atratividade da marca.
 - **Distribuição:** Custo logístico unitário por venda realizada.
 
+### 6. Gestão de Suprimentos e Compras de Emergência (v2026-03.9)
+- **Juros do Fornecedor (supplier_interest):** Incide sobre o valor total da compra de Matéria-Prima (MP) quando a equipe opta por prazos de pagamento (A VISTA + 50% ou Parcelado). O juros é aplicado como um acréscimo direto no preço de aquisição.
+- **Compra de Emergência (special_purchase_premium):** Ativada automaticamente se a soma do estoque inicial + compra planejada for insuficiente para cobrir a produção desejada.
+  - **Ágio:** Sobre as unidades compradas em emergência, incide um prêmio (special_purchase_premium) definido pelo Tutor.
+  - **Cumulatividade:** Se a compra de emergência for feita a prazo, incidem tanto o ágio de emergência quanto o juros do fornecedor.
+- **Custo Médio (WAC):** O custo das MPs consumidas e o valor do estoque final refletem a média ponderada entre o estoque inicial (preço antigo) e as novas aquisições (preço novo + juros + ágio).
+
 ## 🚀 Indicadores e KPIs Avançados (v18.8)
 
 ### 1. Gestão de Liquidez e Capital de Giro
@@ -202,7 +209,7 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
     - Bloqueio total de novos financiamentos (BDI e Manuais).
     - CapEx limitado a 40% do valor solicitado (restrição de crédito).
   - **Gestão de Suprimentos:**
-    - **Payment Type:** Escolha entre A Vista (100% caixa), 30 dias ou 60 dias (100% Fornecedores no Passivo).
+    - **Payment Type:** Escolha entre A Vista (100% caixa), A VISTA + 50% (PMP 15 dias) ou A VISTA + 33% + 33% (PMP 30 dias).
   - **Produção Extra:** Implementação de turno extra (Hora Extra) que aumenta a capacidade mas penaliza o custo da MOD em 50% para as unidades excedentes.
   - **P&D Dinâmico:** Investimento em Pesquisa e Desenvolvimento agora é uma porcentagem direta da receita, permitindo estratégias de inovação agressivas.
   - **Recursos Humanos:**
@@ -255,4 +262,24 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
   - **Correção Contábil (DFC):** O Fluxo de Caixa Projetado agora liquida corretamente o **Imposto de Renda** provisionado no período anterior (`prevTaxes`), seguindo o regime de caixa para pagamentos de tributos.
   - **Transparência:** Facilita o planejamento financeiro ao separar o que é "geração de caixa operacional do período" do que é "liquidação de compromissos passados".
   - **Database (v19.1):** Adição das colunas `total_receivables` e `total_payables` nas tabelas `companies` e `trial_companies` para telemetria direta e auditoria rápida.
+- **Status:** Em produção.
+
+- **Status:** Em produção.
+
+### v2026-03.9 - Suprimentos Estratégicos & Dashboard do Tutor
+- **Data:** Março de 2026
+- **Motivo:** Implementação de juros de fornecedor, ágio de compra de emergência e ampliação da telemetria estratégica para o Tutor.
+- **Diferenças:**
+  - **Juros de Fornecedor:** Acréscimo no custo de aquisição de MP para compras a prazo.
+  - **Compra de Emergência:** Aquisição automática de MP faltante com incidência de ágio (`special_purchase_premium`).
+  - **Dashboard do Tutor:** Inclusão de indicadores de juros, ágio, reajustes de MP e alertas visuais para eventos "Black Swan".
+- **Status:** Em produção.
+
+### v2026-03.10 - Telemetria de Suprimentos & Schema Supabase v19.2
+- **Data:** Março de 2026
+- **Motivo:** Persistência de dados de eficiência de suprimentos para auditoria avançada e monitoramento de planejamento de equipes.
+- **Diferenças:**
+  - **Database (v19.2 Diamond):** Adição das colunas `supplier_interest_expenses`, `emergency_purchase_expenses` e `emergency_units_total` nas tabelas `companies` e `trial_companies`.
+  - **View de Auditoria:** Criação da view `view_supply_chain_health` para permitir ao Tutor identificar rapidamente equipes com custos excessivos de suprimentos.
+  - **Simulation Kernel:** O motor de simulação agora exporta esses dados de telemetria para o Supabase em cada Turnover.
 - **Status:** Em produção.

@@ -64,7 +64,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           const currentRules = arenaData?.round_rules?.[targetNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || arenaData?.market_indicators;
           const indicatorsForNode = { ...arenaData?.market_indicators, ...currentRules };
           
-          const proj = decision ? calculateProjections(decision.data, branch, eco, indicatorsForNode, t) : null;
+          const proj = decision ? calculateProjections(decision.data, branch, eco, indicatorsForNode, t, [], targetNode, arenaData?.round_rules) : null;
 
           return {
             id: t.id,
@@ -191,13 +191,33 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
 
       {/* Indicadores do Período Selecionado */}
       {currentIndicators && (
-        <div className="px-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-           <QuickIndicator label="ICE" val={`${currentIndicators.ice}%`} />
-           <QuickIndicator label="Inflação" val={`${currentIndicators.inflation_rate}%`} />
-           <QuickIndicator label="Taxa TR" val={`${currentIndicators.interest_rate_tr}%`} />
-           <QuickIndicator label="Demanda" val={`${currentIndicators.demand_variation}%`} />
-           <QuickIndicator label="BP Obrigatório" val={currentIndicators.require_business_plan ? 'SIM' : 'NÃO'} highlight={currentIndicators.require_business_plan} />
-           <QuickIndicator label="Compra Máquinas" val={currentIndicators.allow_machine_sale ? 'LIBERADA' : 'BLOQUEADA'} highlight={currentIndicators.allow_machine_sale} />
+        <div className="px-4 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+             <QuickIndicator label="ICE" val={`${currentIndicators.ice}%`} />
+             <QuickIndicator label="Inflação" val={`${currentIndicators.inflation_rate}%`} />
+             <QuickIndicator label="Taxa TR" val={`${currentIndicators.interest_rate_tr}%`} />
+             <QuickIndicator label="Demanda" val={`${currentIndicators.demand_variation}%`} />
+             <QuickIndicator label="Juros Fornecedor" val={`${currentIndicators.supplier_interest}%`} highlight={currentIndicators.supplier_interest > 2} />
+             <QuickIndicator label="Ágio Emergência" val={`${currentIndicators.special_purchase_premium}%`} highlight={currentIndicators.special_purchase_premium > 10} />
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+             <QuickIndicator label="Reajuste MP-A" val={`${currentIndicators.raw_material_a_adjust}%`} />
+             <QuickIndicator label="Reajuste MP-B" val={`${currentIndicators.raw_material_b_adjust}%`} />
+             <QuickIndicator label="BP Obrigatório" val={currentIndicators.require_business_plan ? 'SIM' : 'NÃO'} highlight={currentIndicators.require_business_plan} />
+             <QuickIndicator label="Compra Máquinas" val={currentIndicators.allow_machine_sale ? 'LIBERADA' : 'BLOQUEADA'} highlight={currentIndicators.allow_machine_sale} />
+             {currentIndicators.is_black_swan && (
+               <div className="col-span-2 bg-red-950/50 border border-red-500/50 rounded-2xl p-4 flex items-center gap-4 animate-pulse">
+                 <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+                   <AlertTriangle size={20} />
+                 </div>
+                 <div>
+                   <h4 className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1">Evento Black Swan Ativo</h4>
+                   <p className="text-xs font-bold text-white leading-tight">{currentIndicators.black_swan_title || 'Instabilidade Sistêmica'}</p>
+                 </div>
+               </div>
+             )}
+          </div>
         </div>
       )}
 
