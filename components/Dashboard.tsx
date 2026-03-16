@@ -176,12 +176,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             trend={selectedRound === currentRound ? "Proj" : (currentKpis.esds?.zone || 'ALERTA')} 
             pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
             neg={currentKpis.esds?.zone === 'Laranja' || currentKpis.esds?.zone === 'Vermelho'}
-            icon={<Gauge size={14}/>} 
+            icon={<Gauge size={12}/>} 
             tooltip={
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <Sparkles size={8} className="text-orange-500" />
-                  <p className="text-[8px] font-black uppercase text-orange-500 tracking-widest">Diagnóstico E-SDS v1.2</p>
+                  <p className="text-[8px] font-black uppercase text-orange-500 tracking-widest">Diagnóstico E-SDS</p>
                 </div>
                 <p className="text-[7px] text-slate-300 leading-tight italic">{currentKpis.esds?.gemini_insights || 'Análise indisponível'}</p>
                 {currentKpis.esds?.top_gargalos && currentKpis.esds.top_gargalos.length > 0 && (
@@ -199,9 +199,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               </div>
             }
          />
-         <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Box size={14}/>} />
-         <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Activity size={14}/>} />
-         <CockpitStat label={t('Rating')} val={currentKpis.rating} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Shield size={14}/>} />
+         <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Box size={12}/>} />
+         <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Activity size={12}/>} />
+         <CockpitStat label={t('Rating')} val={currentKpis.rating} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Shield size={12}/>} />
          <div className="px-4 flex items-center justify-center border-l border-white/5 bg-gradient-to-br from-orange-600/10 to-transparent">
             <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} createdAt={activeArena?.created_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
          </div>
