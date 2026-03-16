@@ -62,10 +62,10 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
 
     return kpiDefinitions.map(kpi => (
       <tr key={kpi.id} className="border-b border-white/5 transition-all hover:bg-white/[0.03] group">
-        <td className="p-6 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[350px] shadow-xl">
+        <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
           <div className="flex flex-col">
-            <span className="text-[11px] uppercase tracking-[0.15em] text-white font-black group-hover:text-orange-500 transition-colors">{kpi.label}</span>
-            <span className="text-[9px] text-slate-500 uppercase tracking-widest mt-2 italic font-medium">{kpi.desc}</span>
+            <span className="text-[8px] uppercase tracking-[0.15em] text-white font-black group-hover:text-orange-500 transition-colors">{kpi.label}</span>
+            <span className="text-[7px] text-slate-500 uppercase tracking-widest mt-0.5 italic font-medium">{kpi.desc}</span>
           </div>
         </td>
         {periods.map((p: any, idx) => {
@@ -87,12 +87,12 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
           }
 
           return (
-            <td key={idx} className={`p-6 text-center font-mono text-sm ${p.isProjection ? 'bg-orange-600/5' : ''} ${colorClass}`}>
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-lg tracking-tighter">{displayVal}{val !== undefined ? kpi.suffix : ''}</span>
+            <td key={idx} className={`p-1.5 text-center font-mono text-[10px] ${p.isProjection ? 'bg-orange-600/5' : ''} ${colorClass}`}>
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-sm tracking-tighter">{displayVal}{val !== undefined ? kpi.suffix : ''}</span>
                 {idx > 0 && typeof val === 'number' && typeof periods[idx-1].data?.[kpi.id] === 'number' && (
-                  <div className={`flex items-center gap-1 text-[8px] font-black uppercase ${val > periods[idx-1].data[kpi.id] ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {val > periods[idx-1].data[kpi.id] ? <TrendingUp size={8}/> : <Activity size={8}/>}
+                  <div className={`flex items-center gap-0.5 text-[6px] font-black uppercase ${val > periods[idx-1].data[kpi.id] ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    {val > periods[idx-1].data[kpi.id] ? <TrendingUp size={6}/> : <Activity size={6}/>}
                     {Math.abs(((val / periods[idx-1].data[kpi.id]) - 1) * 100).toFixed(1)}%
                   </div>
                 )}
@@ -112,19 +112,19 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     return (
       <>
         <tr className="bg-emerald-500/10 font-black">
-          <td colSpan={periods.length + 1} className="p-4 text-emerald-400 text-[10px] uppercase tracking-widest">
+          <td colSpan={periods.length + 1} className="p-2 text-emerald-400 text-[9px] uppercase tracking-widest">
             Direitos Comprometidos (Entradas Futuras)
           </td>
         </tr>
         {receivables.map((item: any) => (
           <tr key={item.id} className="border-b border-white/5 transition-all hover:bg-white/[0.03] group">
-            <td className="p-5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[350px] shadow-xl">
-              <span className="text-[11px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
+            <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
+              <span className="text-[8px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
             </td>
             {periods.map((p: any, idx: number) => {
               const val = p.data?.commitments?.receivables?.find((r: any) => r.id === item.id)?.value || 0;
               return (
-                <td key={idx} className={`p-5 text-center font-mono text-sm ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
+                <td key={idx} className={`p-1.5 text-center font-mono text-[10px] ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
                   <span className="tracking-tighter">{formatCurrency(val, currency)}</span>
                 </td>
               );
@@ -132,19 +132,19 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
           </tr>
         ))}
         <tr className="bg-rose-500/10 font-black">
-          <td colSpan={periods.length + 1} className="p-4 text-rose-400 text-[10px] uppercase tracking-widest">
+          <td colSpan={periods.length + 1} className="p-2 text-rose-400 text-[9px] uppercase tracking-widest">
             Deveres Comprometidos (Saídas Futuras)
           </td>
         </tr>
         {payables.map((item: any) => (
           <tr key={item.id} className="border-b border-white/5 transition-all hover:bg-white/[0.03] group">
-            <td className="p-5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[350px] shadow-xl">
-              <span className="text-[11px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
+            <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
+              <span className="text-[8px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
             </td>
             {periods.map((p: any, idx: number) => {
               const val = p.data?.commitments?.payables?.find((r: any) => r.id === item.id)?.value || 0;
               return (
-                <td key={idx} className={`p-5 text-center font-mono text-sm ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
+                <td key={idx} className={`p-1.5 text-center font-mono text-[10px] ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
                   <span className="tracking-tighter">{formatCurrency(val, currency)}</span>
                 </td>
               );
@@ -164,10 +164,10 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       return (
         <React.Fragment key={node.id}>
           <tr className={`border-b border-white/5 transition-all hover:bg-white/[0.03] group ${isTotalizer ? 'bg-white/[0.02] font-black' : ''}`}>
-            <td className="p-5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[350px] shadow-xl">
-              <div className="flex items-center gap-3" style={{ paddingLeft: `${level * 24}px` }}>
-                {level > 0 && <CornerDownRight size={12} className="text-slate-600" />}
-                <span className={`text-[11px] uppercase tracking-[0.1em] transition-colors ${isTotalizer ? 'text-white group-hover:text-orange-500' : 'text-slate-400 group-hover:text-slate-200'}`}>
+            <td className="p-3 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[280px] shadow-xl">
+              <div className="flex items-center gap-2" style={{ paddingLeft: `${level * 16}px` }}>
+                {level > 0 && <CornerDownRight size={10} className="text-slate-600" />}
+                <span className={`text-[10px] uppercase tracking-[0.1em] transition-colors ${isTotalizer ? 'text-white group-hover:text-orange-500' : 'text-slate-400 group-hover:text-slate-200'}`}>
                   {node.label}
                 </span>
               </div>
@@ -187,7 +187,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
               
               const val = findVal(periodData);
               return (
-                <td key={idx} className={`p-5 text-center font-mono text-sm ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
+                <td key={idx} className={`p-3 text-center font-mono text-xs ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
                   <span className="tracking-tighter">{formatCurrency(val, currency)}</span>
                 </td>
               );
@@ -210,19 +210,19 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       }));
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 border border-white/10 rounded-[3.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">
-      <header className="p-10 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 flex justify-between items-center shrink-0 z-50">
-        <div className="flex items-center gap-8">
-          <div className="p-5 bg-white/5 rounded-3xl shadow-inner border border-white/5">{getIcon()}</div>
+    <div className="flex flex-col bg-slate-950 border border-white/10 rounded-xl overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+      <header className="p-2 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 flex justify-between items-center shrink-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 bg-white/5 rounded-lg shadow-inner border border-white/5">{getIcon()}</div>
           <div>
-            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">{getTitle()}</h3>
-            <p className="text-[11px] text-slate-500 font-black uppercase tracking-[0.5em] mt-3 italic">Oracle High Fidelity Reporting Engine • v18.5</p>
+            <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-none">{getTitle()}</h3>
+            <p className="text-[7px] text-slate-500 font-black uppercase tracking-[0.5em] mt-0.5 italic">Oracle High Fidelity Reporting Engine • v18.5</p>
           </div>
         </div>
-        <div className="flex items-center gap-6">
-           <div className="px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 shadow-lg">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Dados Auditados</span>
+        <div className="flex items-center gap-4">
+           <div className="px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center gap-2 shadow-lg">
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Dados Auditados</span>
            </div>
         </div>
       </header>
@@ -230,13 +230,13 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       <div className="flex-1 overflow-auto custom-scrollbar relative">
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md shadow-2xl">
-            <tr className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">
-              <th className="p-6 sticky left-0 bg-slate-900 z-50 border-r border-white/10 shadow-xl">Contas Contábeis</th>
+            <tr className="text-[7px] font-black uppercase text-slate-500 tracking-[0.1em]">
+              <th className="p-1.5 sticky left-0 bg-slate-900 z-50 border-r border-white/10 shadow-xl">Contas Contábeis</th>
               {periods.map((p: any, i) => (
-                <th key={i} className={`p-6 text-center border-r border-white/5 ${p.isProjection ? 'bg-orange-600/10 text-orange-500' : ''}`}>
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="opacity-50 text-[8px]">{p.isProjection ? 'PRÓXIMO CICLO' : 'HISTÓRICO'}</span>
-                    <span className="text-sm tracking-tighter">{p.isProjection ? 'PROJEÇÃO T+1' : `ROUND 0${p.round}`}</span>
+                <th key={i} className={`p-1.5 text-center border-r border-white/5 ${p.isProjection ? 'bg-orange-600/10 text-orange-500' : ''}`}>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="opacity-50 text-[5px]">{p.isProjection ? 'PRÓXIMO CICLO' : 'HISTÓRICO'}</span>
+                    <span className="text-[9px] tracking-tighter">{p.isProjection ? 'PROJEÇÃO T+1' : `ROUND 0${p.round}`}</span>
                   </div>
                 </th>
               ))}
@@ -248,16 +248,16 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
         </table>
       </div>
 
-      <footer className="p-8 bg-slate-900/90 backdrop-blur-md border-t border-white/5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <Calculator size={18} className="text-blue-400" />
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 leading-relaxed">
+      <footer className="p-2 bg-slate-900/90 backdrop-blur-md border-t border-white/5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <Calculator size={12} className="text-blue-400" />
+          <span className="text-[7px] font-black uppercase tracking-[0.1em] text-slate-400 leading-relaxed">
             Projeções v18.5 baseadas em elasticidade-preço regional, PMP/PMR decidido e curvas de aprendizado industrial.
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-          <span className="text-[9px] font-mono text-slate-600 tracking-tighter">SEQ_NODE_ORACLE_REPORT_VALIDATED_P0{history.length}</span>
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+          <span className="text-[8px] font-mono text-slate-600 tracking-tighter">SEQ_NODE_ORACLE_REPORT_VALIDATED_P0{history.length}</span>
         </div>
       </footer>
     </div>

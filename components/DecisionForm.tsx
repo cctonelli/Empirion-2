@@ -191,37 +191,37 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#020617] rounded-[3rem] border border-white/5 overflow-hidden shadow-3xl">
+    <div className="flex flex-col h-full bg-[#020617] rounded-xl border border-white/5 overflow-hidden shadow-3xl">
       {/* HEADER TÁTICO FIXO */}
-      <header className="px-12 py-8 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 flex flex-col md:flex-row justify-between items-center gap-8 shrink-0 z-[100] shadow-2xl">
-         <div className="flex items-center gap-10">
+      <header className="px-4 py-3 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0 z-[100] shadow-2xl">
+         <div className="flex items-center gap-6">
             <div className="flex flex-col">
-               <div className="flex items-center gap-2 mb-1">
-                  <div className="w-8 h-0.5 bg-orange-600 rounded-full" />
-                  <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic leading-none">Decision Terminal v18.5</span>
+               <div className="flex items-center gap-2 mb-0.5">
+                  <div className="w-6 h-0.5 bg-orange-600 rounded-full" />
+                  <span className="text-[8px] font-black text-orange-500 uppercase tracking-[0.3em] italic leading-none">Decision Terminal v18.5</span>
                </div>
-               <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mt-1">
+               <h2 className="text-xl font-black text-white uppercase italic tracking-tighter mt-0.5">
                   War Room: <span className="text-slate-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{activeTeam?.name}</span>
                </h2>
             </div>
-            <div className="h-12 w-px bg-white/10 hidden md:block" />
-            <div className="flex items-center gap-5">
-               <QuickKpi label="EBITDA Projetado" val={formatCurrency(projections?.kpis?.ebitda || 0, activeArena?.currency || 'BRL')} icon={<Zap size={14}/>} color="text-orange-400" />
-               <QuickKpi label="Caixa Final T+1" val={formatCurrency(projections?.kpis?.statements?.cash_flow?.find((n: any) => n.id === 'cf.final')?.value || 0, activeArena?.currency || 'BRL')} icon={<Coins size={14}/>} color="text-emerald-400" />
-               <div className="flex items-center gap-3 bg-slate-950/50 p-3 rounded-2xl border border-white/5 group relative hover:border-orange-500/30 transition-all cursor-help">
+            <div className="h-8 w-px bg-white/10 hidden md:block" />
+            <div className="flex items-center gap-3">
+               <QuickKpi label="EBITDA Projetado" val={formatCurrency(projections?.kpis?.ebitda || 0, activeArena?.currency || 'BRL')} icon={<Zap size={12}/>} color="text-orange-400" />
+               <QuickKpi label="Caixa Final T+1" val={formatCurrency(projections?.kpis?.statements?.cash_flow?.find((n: any) => n.id === 'cf.final')?.value || 0, activeArena?.currency || 'BRL')} icon={<Coins size={12}/>} color="text-emerald-400" />
+               <div className="flex items-center gap-2 bg-slate-950/50 p-2 rounded-xl border border-white/5 group relative hover:border-orange-500/30 transition-all cursor-help">
                   <div className="flex flex-col">
-                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">E-SDS Projetado</span>
-                     <span className={`text-sm font-black italic tracking-tighter ${projectedESDS ? (projectedESDS.zone === 'Azul' || projectedESDS.zone === 'Verde' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}`}>
+                     <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-0.5">E-SDS Projetado</span>
+                     <span className={`text-xs font-black italic tracking-tighter ${projectedESDS ? (projectedESDS.zone === 'Azul' || projectedESDS.zone === 'Verde' ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}`}>
                         {isCalculatingESDS ? 'Calculando...' : projectedESDS ? `${projectedESDS.display.toFixed(1)} (${projectedESDS.zone})` : '---'}
                      </span>
                   </div>
                   <button 
                     onClick={handleSimulateESDS} 
                     disabled={isCalculatingESDS || !projections}
-                    className="p-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl transition-all disabled:opacity-50 shadow-lg active:scale-90"
+                    className="p-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-all disabled:opacity-50 shadow-lg active:scale-90"
                     title="Simular E-SDS com IA"
                   >
-                    <Sparkles size={14} className={isCalculatingESDS ? 'animate-spin' : ''} />
+                    <Sparkles size={12} className={isCalculatingESDS ? 'animate-spin' : ''} />
                   </button>
 
                   {projectedESDS && (
@@ -247,8 +247,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          </div>
 
          <div className="flex items-center gap-4">
-            <button onClick={handleTransmit} disabled={isSaving || isReadOnly} className="px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-emerald-600/20 hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-3 active:scale-95 group">
-               {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Rocket size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} Transmitir Protocolo
+            <button onClick={handleTransmit} disabled={isSaving || isReadOnly} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.15em] shadow-2xl shadow-emerald-600/20 hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-2 active:scale-95 group">
+               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Rocket size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} Transmitir Protocolo
             </button>
          </div>
       </header>
@@ -261,21 +261,21 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                 className="h-full flex flex-col"
               >
                  {/* NAV BAR DE PASSOS - Fixa abaixo do header */}
-                 <nav className="flex p-2 gap-2 bg-slate-900/40 backdrop-blur-md border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
+                 <nav className="flex p-1 gap-1 bg-slate-900/40 backdrop-blur-md border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
                     {STEPS.map((s, idx) => (
-                      <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[150px] py-5 px-4 rounded-2xl transition-all flex flex-col items-center gap-2.5 border group relative overflow-hidden ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-2xl scale-[1.02] z-10' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
+                      <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[120px] py-3 px-3 rounded-xl transition-all flex flex-col items-center gap-1.5 border group relative overflow-hidden ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-2xl scale-[1.02] z-10' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
                          {activeStep === idx && (
                            <motion.div layoutId="activeStep" className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-700 -z-10" />
                          )}
-                         <s.icon size={16} strokeWidth={activeStep === idx ? 3 : 2} className={activeStep === idx ? 'drop-shadow-lg' : 'group-hover:scale-110 transition-transform'} />
-                         <span className="text-[9px] font-black uppercase tracking-[0.1em]">{s.label}</span>
+                         <s.icon size={14} strokeWidth={activeStep === idx ? 3 : 2} className={activeStep === idx ? 'drop-shadow-lg' : 'group-hover:scale-110 transition-transform'} />
+                         <span className="text-[8px] font-black uppercase tracking-[0.1em]">{s.label}</span>
                       </button>
                     ))}
                  </nav>
 
                  {/* CONTEÚDO DO PASSO COM SCROLL VERTICAL */}
-                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 bg-slate-950/40 relative">
-                    <div className="max-w-[1400px] mx-auto pb-40 space-y-12 px-4">
+                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 lg:p-4 bg-slate-950/40 relative">
+                    <div className="w-full mx-auto pb-40 space-y-8 px-2">
                         {/* STEP 1 - JURÍDICO */}
                         {activeStep === 0 && (
                         <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -1611,25 +1611,25 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
 // COMPONENTES AUXILIARES DE UI
 const WizardStepHeader = ({ icon, title, desc, help }: any) => (
-  <div className="flex items-center gap-8 border-b border-white/5 pb-10">
-     <div className="p-8 bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.3)] shrink-0 text-orange-500 relative group">
-        <div className="absolute inset-0 bg-orange-600/5 rounded-[2.5rem] group-hover:bg-orange-600/10 transition-colors" />
+  <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+     <div className="p-4 bg-slate-900 border border-white/10 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.3)] shrink-0 text-orange-500 relative group">
+        <div className="absolute inset-0 bg-orange-600/5 rounded-xl group-hover:bg-orange-600/10 transition-colors" />
         <div className="relative z-10">{icon}</div>
      </div>
      <div>
-        <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none flex items-center gap-4">
-           {title} {help && <span title={help} className="cursor-help p-1.5 bg-white/5 rounded-full hover:bg-orange-600/20 transition-colors"><HelpCircle size={18} className="text-slate-600" /></span>}
+        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-none flex items-center gap-4">
+           {title} {help && <span title={help} className="cursor-help p-1.5 bg-white/5 rounded-full hover:bg-orange-600/20 transition-colors"><HelpCircle size={14} className="text-slate-600" /></span>}
         </h3>
-        <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic leading-relaxed max-w-3xl">{desc}</p>
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic leading-relaxed max-w-3xl">{desc}</p>
      </div>
   </div>
 );
 
 const InputCard = ({ label, val, icon, onChange, help }: any) => (
-  <div className="bg-slate-900/60 p-6 rounded-3xl border border-white/5 space-y-4 shadow-2xl group hover:border-orange-500/20 transition-all">
+  <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 space-y-2 shadow-2xl group hover:border-orange-500/20 transition-all">
      <div className="flex justify-between items-center">
-        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
-           {label} {help && <span title={help} className="cursor-help"><HelpCircle size={12} className="text-slate-700" /></span>}
+        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
+           {label} {help && <span title={help} className="cursor-help"><HelpCircle size={10} className="text-slate-700" /></span>}
         </label>
         <div className="text-slate-700 group-hover:text-orange-500/50 transition-colors">{icon}</div>
      </div>
@@ -1637,18 +1637,18 @@ const InputCard = ({ label, val, icon, onChange, help }: any) => (
        type="number" 
        value={val} 
        onChange={e => onChange(parseFloat(e.target.value) || 0)} 
-       className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-4 text-xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
+       className="w-full bg-slate-950 border-2 border-white/5 rounded-lg p-2 text-base font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
      />
   </div>
 );
 
 const RangeInput = ({ label, val, onChange, help, color = "orange" }: any) => (
-  <div className="bg-slate-900/60 p-6 rounded-3xl border border-white/5 space-y-6 shadow-2xl">
+  <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 space-y-3 shadow-2xl">
      <div className="flex justify-between items-center">
-        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
-           {label} {help && <span title={help} className="cursor-help"><HelpCircle size={12} className="text-slate-700" /></span>}
+        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
+           {label} {help && <span title={help} className="cursor-help"><HelpCircle size={10} className="text-slate-700" /></span>}
         </label>
-        <span className={`text-xl font-black font-mono ${color === 'orange' ? 'text-orange-500' : 'text-blue-500'}`}>{val}%</span>
+        <span className={`text-base font-black font-mono ${color === 'orange' ? 'text-orange-500' : 'text-blue-500'}`}>{val}%</span>
      </div>
      <input 
        type="range" 
@@ -1656,7 +1656,7 @@ const RangeInput = ({ label, val, onChange, help, color = "orange" }: any) => (
        max="100" 
        value={val} 
        onChange={e => onChange(parseInt(e.target.value) || 0)} 
-       className={`w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-${color === 'orange' ? 'orange-600' : 'blue-600'}`}
+       className={`w-full h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-${color === 'orange' ? 'orange-600' : 'blue-600'}`}
      />
   </div>
 );
@@ -1679,39 +1679,39 @@ const StepHeader = ({ title, subtitle, icon }: any) => (
 );
 
 const AssetCard = ({ model, val, onChange, price, spec, disabled }: any) => (
-  <div className={`bg-slate-900/80 p-6 rounded-2xl border transition-all shadow-xl ${disabled ? 'opacity-40 grayscale pointer-events-none border-white/5' : 'border-white/5 group hover:border-blue-500/30'}`}>
+  <div className={`bg-slate-900/80 p-3 rounded-xl border transition-all shadow-xl ${disabled ? 'opacity-40 grayscale pointer-events-none border-white/5' : 'border-white/5 group hover:border-blue-500/30'}`}>
      <div className="flex justify-between items-center">
-        <h4 className="text-xl font-black text-white uppercase italic tracking-tight">Machine {model.toUpperCase()}</h4>
-        <Cpu className="text-blue-500 opacity-20 group-hover:opacity-100 transition-opacity" />
+        <h4 className="text-lg font-black text-white uppercase italic tracking-tight">Machine {model.toUpperCase()}</h4>
+        <Cpu size={16} className="text-blue-500 opacity-20 group-hover:opacity-100 transition-opacity" />
      </div>
-     <div className="space-y-4">
-        <div className="space-y-1">
-           <span className="text-[9px] font-black text-slate-500 uppercase">Preço Unitário Oracle</span>
-           <div className="text-xl font-black text-blue-400 font-mono">$ {price.toLocaleString()}</div>
+     <div className="space-y-2">
+        <div className="space-y-0.5">
+           <span className="text-[8px] font-black text-slate-500 uppercase">Preço Unitário Oracle</span>
+           <div className="text-lg font-black text-blue-400 font-mono">$ {price.toLocaleString()}</div>
         </div>
         
         {spec && (
-           <div className="grid grid-cols-1 gap-2 pt-2 border-t border-white/5">
+           <div className="grid grid-cols-1 gap-1 pt-1 border-t border-white/5">
               <div className="flex items-center gap-2">
-                 <Users size={12} className="text-slate-500" />
-                 <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operators required</span>
+                 <Users size={10} className="text-slate-500" />
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operators required</span>
               </div>
               <div className="flex items-center gap-2">
-                 <Zap size={12} className="text-slate-500" />
-                 <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} units capacity</span>
+                 <Zap size={10} className="text-slate-500" />
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} units capacity</span>
               </div>
            </div>
         )}
      </div>
-     <div className="pt-6 space-y-4">
-        <label className="text-[14px] font-black text-slate-500 uppercase tracking-widest italic ml-2">COMPRAR (Qtd)</label>
+     <div className="pt-3 space-y-2">
+        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic ml-1">COMPRAR (Qtd)</label>
         <input 
           type="number" 
           min="0" 
           disabled={disabled}
           value={val} 
           onChange={e => onChange(parseInt(e.target.value) || 0)} 
-          className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-5 text-2xl font-mono font-black text-white outline-none focus:border-blue-600 shadow-inner disabled:opacity-50" 
+          className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-2 text-lg font-mono font-black text-white outline-none focus:border-blue-600 shadow-inner disabled:opacity-50" 
         />
      </div>
   </div>
@@ -1758,7 +1758,7 @@ const CurrencyInput = ({ value, onChange, currency }: { value: number, onChange:
       type="text" 
       value={display} 
       onChange={handleChange} 
-      className="w-full bg-slate-950 border-2 border-white/5 rounded-2xl p-5 text-2xl font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
+      className="w-full bg-slate-950 border-2 border-white/5 rounded-xl p-2 text-lg font-mono font-black text-white outline-none focus:border-orange-600 shadow-inner" 
     />
   );
 };
