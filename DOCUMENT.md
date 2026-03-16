@@ -283,3 +283,12 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
   - **View de Auditoria:** Criação da view `view_supply_chain_health` para permitir ao Tutor identificar rapidamente equipes com custos excessivos de suprimentos.
   - **Simulation Kernel:** O motor de simulação agora exporta esses dados de telemetria para o Supabase em cada Turnover.
 - **Status:** Em produção.
+
+### v2026-03.11 - Refatoração do Kernel & Integridade Contábil
+- **Data:** Março de 2026
+- **Motivo:** Centralização da lógica de cálculo de KPIs e garantia de integridade contábil absoluta entre demonstrações financeiras e indicadores.
+- **Diferenças:**
+  - **Modularização:** Extração da lógica de KPIs para a função `calculateKpisFromStatements`, garantindo que todos os indicadores (TSR, DuPont, Z-Score, E-SDS, etc.) sejam derivados diretamente das demonstrações financeiras finais (Balanço, DRE, DFC).
+  - **Consistência:** Eliminação de cálculos redundantes no `calculateProjections`, reduzindo o risco de divergências entre o que é exibido nos relatórios e o que é armazenado no banco de dados.
+  - **DX (Developer Experience):** Código mais limpo, testável e fácil de manter, com separação clara entre "Simulação de Eventos" e "Cálculo de Indicadores".
+- **Status:** Em produção.

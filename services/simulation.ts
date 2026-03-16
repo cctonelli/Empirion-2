@@ -28,12 +28,12 @@ export const getCumulativeAdjust = (chronogram: any, round: number, key: string)
 };
 
 // Busca valor de conta recursivamente na árvore financeira
-const findAccountValue = (nodes: AccountNode[], id: string): number => {
+export const findAccountValue = (nodes: AccountNode[], id: string): number => {
   for (const node of nodes) {
     if (node.id === id) return node.value;
-    if (node.children) {
+    if (node.children && node.children.length > 0) {
       const val = findAccountValue(node.children, id);
-      if (val !== undefined && val !== 0) return val;
+      if (val !== 0) return val;
     }
   }
   return 0;
@@ -693,270 +693,124 @@ export const calculateProjections = (
   const finalNetProfit = netProfit + totalAwards;
   const finalCashWithAwards = finalCash + totalAwards;
 
-  // --- 7. CÁLCULO DE MÉTRICAS AVANÇADAS (ESTRATÉGICAS) ---
-  const totalAssets = findAccountValue(finalBS, 'assets');
-  const totalEquity = findAccountValue(finalBS, 'equity');
-  const currentAssets = findAccountValue(finalBS, 'assets.current');
-  const currentLiabilities = findAccountValue(finalBS, 'liabilities.current');
-  const totalLiabilities = findAccountValue(finalBS, 'liabilities');
-  
-  // TSR (Total Shareholder Return) - Baseado no crescimento do Equity
-  const prevEquity = team.equity || 7252171;
-  const tsr = ((totalEquity - prevEquity) / prevEquity) * 100;
-
-  // Liquidez e Solvência
-  const liquidityCurrent = currentLiabilities > 0 ? currentAssets / currentLiabilities : 2;
-  const solvencyIndex = totalLiabilities > 0 ? totalAssets / totalLiabilities : 5;
-
-  // NCG (Necessidade de Capital de Giro) - Operacional
-  const ncg = (totalCreditSales + closingStockValuePA + finalVatRecoverable) - 
-              (newAccountsPayable + taxProv + dividends + ppr + finalVatPayable);
-  
-  // Saldo de Tesouraria (ST) - Financeiro
-  const st = (finalCashWithAwards + (prevInvestments + applicationAmount)) - totalLoansST;
-  
-  // Efeito Tesoura (Scissors Effect) - Diferença entre NCG e ST em DIAS
-  const scissorsEffectValue = ncg - st;
-  const dailyRevenue = revenue / 90; // Baseado em um trimestre de 90 dias
-  const scissorsEffect = dailyRevenue > 0 ? (scissorsEffectValue / dailyRevenue) : 0;
-  
-  const nlcdg = ncg; // Alinhando NLCDG com NCG para o dashboard
-
-  // Z-Score de Kanitz (Legado)
-  const x1_k = totalEquity > 0 ? finalNetProfit / totalEquity : 0;
-  const x2_k = liquidityCurrent;
-  const x3_k = currentLiabilities > 0 ? (currentAssets - closingStockValuePA) / currentLiabilities : 1;
-  const x4_k = totalAssets > 0 ? currentAssets / totalAssets : 0.5;
-  const x5 = totalEquity > 0 ? totalLiabilities / totalEquity : 0.5;
-  const kanitz = (0.05 * x1_k) + (1.65 * x2_k) + (3.55 * x3_k) - (1.06 * x4_k) - (0.33 * x5);
-
-  // Altman Z''-Score (Emerging Markets / Private Firms)
-  // Z'' = 3.25 + 6.56X1 + 3.26X2 + 6.72X3 + 1.05X4
-  const x1_altman = totalAssets > 0 ? (currentAssets - currentLiabilities) / totalAssets : 0;
-  const x2_altman = totalAssets > 0 ? (finalNetProfit) / totalAssets : 0; // Lucros Retidos (Proxy: Lucro do Período)
-  const x3_altman = totalAssets > 0 ? operatingProfit / totalAssets : 0; // EBIT
-  const x4_altman = totalLiabilities > 0 ? totalEquity / totalLiabilities : 1;
-  const altmanZ = 3.25 + (6.56 * x1_altman) + (3.26 * x2_altman) + (6.72 * x3_altman) + (1.05 * x4_altman);
-
-  // DCF Valuation (Fluxo de Caixa Descontado - Perpetuidade Simplificada)
-  const ebitda = operatingProfit + periodDepreciation;
-  const wacc = 0.12; // Taxa de desconto padrão 12%
-  const dcfValuation = ebitda > 0 ? (ebitda / wacc) / 1000000 : 0; // Em milhões
-
-  // Rating de Crédito Dinâmico (Alinhado com restrição SQL: AAA, AA, A, B, C, D)
-  let rating: CreditRating = 'D';
-  if (liquidityCurrent > 1.5 && x5 < 0.8) rating = 'AAA';
-  else if (liquidityCurrent > 1.2 && x5 < 1.2) rating = 'AA';
-  else if (liquidityCurrent > 1.0 && x5 < 1.5) rating = 'A';
-  else if (liquidityCurrent > 0.8 && x5 < 2.0) rating = 'B';
-  else if (liquidityCurrent > 0.5 && x5 < 3.0) rating = 'C';
-  else rating = 'D';
-
-  // Atualizar Balanço com valores finais
-  const finalBSWithAwards = injectValues(JSON.parse(JSON.stringify(finalBS)), {
-    'assets.current.cash': finalCashWithAwards,
-    'equity.profit': findAccountValue(prevBS, 'equity.profit') + finalNetProfit
-  });
-
-  const netMargin = revenue > 0 ? finalNetProfit / revenue : 0;
-  const assetTurnover = totalAssets > 0 ? revenue / totalAssets : 0;
-  const leverage = totalEquity > 0 ? totalAssets / totalEquity : 1;
-
-  // Ciclo de Conversão de Caixa (Dinâmico)
-  const pme = totalCPV > 0 ? (closingStockValuePA / totalCPV) * 90 : 0;
-  // PMP ajustado para refletir o mix de prazo (User Request: 0+30 = 15 dias)
-  const pmp = supplierPaymentType === 1 ? 15 : (supplierPaymentType === 2 ? 30 : 0);
-  const ccc = pme + pmr - pmp;
-
-  // Cobertura de Juros
-  const finExp = Math.abs(findAccountValue(prevStatements.dre, 'fin.exp') || 2500);
-  const interestCoverage = finExp > 0 ? operatingProfit / finExp : 100;
-
+  // --- 6.5 CÁLCULOS INTERMEDIÁRIOS PARA KPIs ---
   const weightedAvgPrice = totalUnitsSold > 0 ? totalRevenue / totalUnitsSold : indicators.avg_selling_price;
   const priceIndex = indicators.avg_selling_price / weightedAvgPrice;
-
-  // Elasticidade-Preço (Comparativo com round anterior)
-  const prevPrice = team.kpis?.last_price || indicators.avg_selling_price;
-  const priceChange = (weightedAvgPrice - prevPrice) / prevPrice;
-  const demandChange = (totalUnitsSold - (team.kpis?.last_units_sold || totalUnitsSold)) / (team.kpis?.last_units_sold || totalUnitsSold || 1);
-  const priceElasticity = priceChange !== 0 ? Math.abs(demandChange / priceChange) : 1;
-
-  // Landed Cost e CAC Regional
-  const regionalCac: Record<number, number> = {};
-  const landedCosts: Record<number, number> = {};
+  const pmp = supplierPaymentType === 1 ? 15 : (supplierPaymentType === 2 ? 30 : 0);
   
-  Object.entries(decision.regions || {}).forEach(([id, reg]: [string, any]) => {
-    const regId = Number(id);
-    const regUnits = totalUnitsSold / (Object.keys(decision.regions || {}).length || 1); 
-    regionalCac[regId] = regUnits > 0 ? sanitize(reg.marketing, 0) / regUnits : 0;
-    landedCosts[regId] = unitCPP + (regionalCac[regId] * 1.2); // Adiciona margem de logística/tarifas
-  });
-
-  // Pegada de Carbono (0.8kg CO2 por unidade + logística)
-  const carbonFootprint = (unitsProduced * 0.8) + (totalUnitsSold * 0.2);
-
-  // Cálculo de Market Share Projetado (Sensibilidade a Preço e Marketing)
   const marketingInvestment = sanitize(Object.values(decision.regions || {})[0]?.marketing, 0);
-  const marketingIndex = 1 + (Math.log10(marketingInvestment + 1) / 10); // Escala logarítmica para marketing
+  const marketingIndex = 1 + (Math.log10(marketingInvestment + 1) / 10);
   const projectedMarketShare = Math.min(40, 12.5 * priceIndex * marketingIndex * (1 + (indicators.demand_variation / 100)));
 
+  // --- 7. CÁLCULO DE MÉTRICAS AVANÇADAS (ESTRATÉGICAS) ---
+  const kpis = calculateKpisFromStatements({
+    statements: { 
+      dre: injectValues(JSON.parse(JSON.stringify(prevStatements.dre)), { 
+        'rev': revenue, 
+        'vat_sales': -ivaOnSales,
+        'cpv': -totalCPV, 
+        'dre.cif': -totalCPV_CIF,
+        'dre.cpv_mp': -totalCPV_MP,
+        'gross_profit': revenue - ivaOnSales - totalCPV,
+        'opex.sales': -currentOpexSales,
+        'opex.adm': -currentOpexAdm,
+        'opex.payroll_adm': -totalPayrollAdm,
+        'opex.payroll_sales': -totalPayrollSales,
+        'opex.rd': -currentOpexRd,
+        'opex.bad_debt': -badDebtExp,
+        'operating_profit': operatingProfit,
+        'fin.rev': totalFinancialRevenue,
+        'fin.exp': -interestExp,
+        'non_op.rev': totalAwards,
+        'non_op.exp': -machineSalesLoss,
+        'lair': lair,
+        'tax_prov': -taxProv,
+        'ppr': -ppr,
+        'final_profit': finalNetProfit 
+      }, true),
+      cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
+        'cf.start': sanitize(team.kpis?.current_cash, 0),
+        'cf.inflow.cash_sales': totalCashSales,
+        'cf.inflow.term_sales': prevClients,
+        'cf.inflow.machine_sales': machineSalesInflow,
+        'cf.inflow.awards': totalAwards,
+        'cf.inflow.investment_withdrawal': 0, 
+        'cf.inflow.loans_normal': loanRequest,
+        'cf.inflow.compulsory': newCompulsoryLoan,
+        'cf.inflow.fin_rev': totalFinancialRevenue,
+        'cf.outflow.payroll': -(payrollMOD + payrollAdm + payrollSales + totalPprPayment + custoIndenizacao + productivityBonus + extraProductionCost),
+        'cf.outflow.social_charges': -(socialChargesMOD + socialChargesAdm + socialChargesSales),
+        'cf.outflow.vat_payable': -vatPayment,
+        'cf.outflow.rd': -currentOpexRd,
+        'cf.outflow.marketing': -totalMarketingExp,
+        'cf.outflow.training': -trainingCost,
+        'cf.outflow.distribution': -distributionCost,
+        'cf.outflow.storage': -storageCost,
+        'cf.outflow.suppliers': -(cashOutflowSuppliers + prevSuppliers),
+        'cf.outflow.misc': 0, 
+        'cf.outflow.machine_buy': -machinePurchaseOutflow,
+        'cf.outflow.maintenance': -maintenance,
+        'cf.outflow.interest': -interestExp,
+        'cf.outflow.amortization': -totalAmortization,
+        'cf.outflow.late_penalties': 0, 
+        'cf.outflow.taxes': -prevTaxes,
+        'cf.outflow.dividends': -prevDividends,
+        'cf.investment_apply': -applicationAmount,
+        'cf.final': finalCashWithAwards 
+      }, true),
+      balance_sheet: injectValues(JSON.parse(JSON.stringify(finalBS)), {
+        'assets.current.cash': finalCashWithAwards,
+        'equity.profit': findAccountValue(prevBS, 'equity.profit') + finalNetProfit
+      })
+    },
+    prevStatements,
+    revenue,
+    netProfit: finalNetProfit,
+    operatingProfit,
+    totalAwards,
+    finalCash: finalCashWithAwards,
+    prevEquity: team.equity || 7252171,
+    prevInvestments,
+    applicationAmount,
+    totalMachineryCost,
+    buildingsCost,
+    totalMachineryDeprec,
+    newBuildingsDeprecAccum,
+    unitsProduced,
+    totalUnitsSold,
+    closingStockPA,
+    closingStockValuePA,
+    unitCPP,
+    wacUnit,
+    periodDepreciation,
+    weightedAvgPrice,
+    totalRevenue: revenue,
+    prevStockValue,
+    pmr,
+    pmp,
+    indicators,
+    branch,
+    history,
+    supplierInterestExpenses,
+    emergencyPurchaseExpenses,
+    emergencyUnitsTotal,
+    currentMachines,
+    currentLoans,
+    stockQuantities: { 
+      mp_a: (team.kpis?.stock_quantities?.mp_a || 0) + sanitize(decision.production?.purchaseMPA, 0) - (unitsProduced * 3), 
+      mp_b: (team.kpis?.stock_quantities?.mp_b || 0) + sanitize(decision.production?.purchaseMPB, 0) - (unitsProduced * 2), 
+      finished_goods: closingStockPA 
+    }
+  });
+
   const result: ProjectionResult = {
-    revenue, netProfit: finalNetProfit, debtRatio: x5, creditRating: rating,
-    health: { cash: finalCashWithAwards, rating: rating },
+    revenue, netProfit: finalNetProfit, debtRatio: kpis.percentual_divida_curto_prazo, creditRating: kpis.rating,
+    health: { cash: finalCashWithAwards, rating: kpis.rating },
     marketShare: projectedMarketShare,
     kpis: {
       ...team.kpis,
-      statements: {
-        dre: injectValues(JSON.parse(JSON.stringify(prevStatements.dre)), { 
-          'rev': revenue, 
-          'vat_sales': -ivaOnSales,
-          'cpv': -totalCPV, 
-          'dre.cif': -totalCPV_CIF,
-          'dre.cpv_mp': -totalCPV_MP,
-          'gross_profit': revenue - ivaOnSales - totalCPV,
-          'opex.sales': -currentOpexSales,
-          'opex.adm': -currentOpexAdm,
-          'opex.payroll_adm': -totalPayrollAdm,
-          'opex.payroll_sales': -totalPayrollSales,
-          'opex.rd': -currentOpexRd,
-          'opex.bad_debt': -badDebtExp,
-          'operating_profit': operatingProfit,
-          'fin.rev': totalFinancialRevenue,
-          'fin.exp': -interestExp,
-          'non_op.rev': totalAwards,
-          'non_op.exp': -machineSalesLoss,
-          'lair': lair,
-          'tax_prov': -taxProv,
-          'ppr': -ppr,
-          'final_profit': finalNetProfit 
-        }, true),
-        cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
-          'cf.start': sanitize(team.kpis?.current_cash, 0),
-          'cf.inflow.cash_sales': totalCashSales,
-          'cf.inflow.term_sales': prevClients,
-          'cf.inflow.machine_sales': machineSalesInflow,
-          'cf.inflow.awards': totalAwards,
-          'cf.inflow.investment_withdrawal': 0, // Placeholder se não houver decisão explícita
-          'cf.inflow.loans_normal': loanRequest,
-          'cf.inflow.compulsory': newCompulsoryLoan,
-          'cf.inflow.fin_rev': totalFinancialRevenue,
-          'cf.outflow.payroll': -(payrollMOD + payrollAdm + payrollSales + totalPprPayment + custoIndenizacao + productivityBonus + extraProductionCost),
-          'cf.outflow.social_charges': -(socialChargesMOD + socialChargesAdm + socialChargesSales),
-          'cf.outflow.vat_payable': -vatPayment,
-          'cf.outflow.rd': -currentOpexRd,
-          'cf.outflow.marketing': -totalMarketingExp,
-          'cf.outflow.training': -trainingCost,
-          'cf.outflow.distribution': -distributionCost,
-          'cf.outflow.storage': -storageCost,
-          'cf.outflow.suppliers': -(cashOutflowSuppliers + prevSuppliers),
-          'cf.outflow.misc': 0, // Placeholder
-          'cf.outflow.machine_buy': -machinePurchaseOutflow,
-          'cf.outflow.maintenance': -maintenance,
-          'cf.outflow.interest': -interestExp,
-          'cf.outflow.amortization': -totalAmortization,
-          'cf.outflow.late_penalties': 0, // Placeholder
-          'cf.outflow.taxes': -prevTaxes,
-          'cf.outflow.dividends': -prevDividends,
-          'cf.investment_apply': -applicationAmount,
-          'cf.final': finalCashWithAwards 
-        }, true),
-        balance_sheet: finalBSWithAwards
-      },
-      current_cash: finalCashWithAwards,
-      commitments: {
-        receivables: [
-          { id: 'clients', label: 'Contas a Receber (Clientes)', value: prevClients },
-          { id: 'investments', label: 'Aplicações Financeiras', value: prevInvestments },
-          { id: 'vat_recoverable', label: 'IVA a Recuperar', value: findAccountValue(prevBS, 'assets.current.vat_recoverable') }
-        ],
-        payables: [
-          { id: 'suppliers', label: 'Fornecedores', value: prevSuppliers },
-          { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: findAccountValue(prevBS, 'liabilities.current.loans_st') },
-          { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: findAccountValue(prevBS, 'liabilities.longterm.loans_lt') },
-          { id: 'taxes', label: 'Imposto de Renda a Pagar', value: prevTaxes },
-          { id: 'dividends', label: 'Dividendos a Pagar', value: prevDividends },
-          { id: 'ppr', label: 'PPR a Pagar', value: prevPprPayable },
-          { id: 'vat_payable', label: 'IVA a Recolher', value: prevVatPayable }
-        ]
-      },
-      machines: currentMachines,
-      loans: currentLoans,
-      stock_quantities: { 
-        mp_a: (team.kpis?.stock_quantities?.mp_a || 0) + sanitize(decision.production?.purchaseMPA, 0) - (unitsProduced * 3), 
-        mp_b: (team.kpis?.stock_quantities?.mp_b || 0) + sanitize(decision.production?.purchaseMPB, 0) - (unitsProduced * 2), 
-        finished_goods: closingStockPA 
-      },
-      cpp_unit: unitCPP,
-      wac_unit: wacUnit,
-      ebitda: operatingProfit + periodDepreciation,
-      fixed_assets_value: totalMachineryCost + buildingsCost + 1200000 - totalMachineryDeprec - newBuildingsDeprecAccum,
-      
-      // Novos KPIs Estratégicos
-      total_assets: totalAssets,
-      equity: totalEquity,
-      stock_value: closingStockValuePA,
-      tsr,
-      nlcdg: nlcdg / 1000000, // Em milhões para o dashboard
-      solvency_score_kanitz: kanitz,
-      altman_z_score: altmanZ,
-      dcf_valuation: dcfValuation,
-      scissors_effect: scissorsEffect / 1000000, // Em milhões
-      liquidity_current: liquidityCurrent,
-      solvency_index: solvencyIndex,
-      inventory_turnover: totalCPV > 0 ? (totalCPV / ((prevStockValue + closingStockValuePA) / 2)) : 0,
-      ccc,
-      interest_coverage: interestCoverage,
-      dupont: {
-        margin: netMargin,
-        turnover: assetTurnover,
-        leverage: leverage
-      },
-      landed_costs: landedCosts,
-      price_elasticity: priceElasticity,
-      regional_cac: regionalCac,
-      carbon_footprint: carbonFootprint,
-      last_price: weightedAvgPrice,
-      last_units_sold: totalUnitsSold,
-      markup: (wacUnit > 0 && totalUnitsSold > 0) ? ((totalRevenue / totalUnitsSold) / wacUnit) - 1 : 0,
-      market_share: projectedMarketShare, 
-      share_price: totalEquity / 72000,
-      avg_receivable_days: pmr,
-      avg_payable_days: pmp,
-      
-      // KPIs de Empréstimo Compulsório
-      compulsory_loan_balance: newCompulsoryLoan,
-      compulsory_loan_interest_paid: interestExp,
-
-      // E-SDS v1.2 Inputs
-      fco_livre: (operatingProfit + periodDepreciation) - maintenance - interestExp - taxProv,
-      capex_manutencao: maintenance,
-      capex_estrategico: machinePurchaseOutflow,
-      juros_pagos: interestExp,
-      impostos_pagos: taxProv,
-      passivo_circulante: currentLiabilities,
-      despesas_operacionais_projetadas_proxima_rodada: opex * 1.05, // Projeção conservadora
-      receita_liquida: revenue,
-      custo_medio_divida: totalLiabilities > 0 ? interestExp / totalLiabilities : 0,
-      alavancagem_efetiva: (totalLiabilities - finalCashWithAwards) / Math.max(operatingProfit + periodDepreciation, 0.01),
-      divida_liquida: totalLiabilities - finalCashWithAwards,
-      receita_recorrente_projetada: branch === 'services' ? revenue * 0.4 : 0,
-      caixa: finalCashWithAwards,
-      aplicacoes: 0, 
-      despesas_operacionais_diarias: opex / 30,
-      passivo_total: totalLiabilities,
-      pl: totalEquity,
-      percentual_divida_curto_prazo: totalLiabilities > 0 ? (currentLiabilities / totalLiabilities) * 100 : 100,
-
-      // Indicadores de Moeda e Tarifas (v18.8)
-      brl_rate: indicators.BRL || 1,
-      gbp_rate: indicators.GBP || 0,
-      export_tariff_brazil: indicators.export_tariff_brazil || 0,
-      export_tariff_uk: indicators.export_tariff_uk || 0,
-
-      // Telemetria de Suprimentos (v19.2)
-      supplier_interest_expenses: supplierInterestExpenses,
-      emergency_purchase_expenses: emergencyPurchaseExpenses,
-      emergency_units_total: emergencyUnitsTotal
+      ...kpis,
+      market_share: projectedMarketShare,
     }
   };
 
@@ -980,6 +834,198 @@ export const calculateProjections = (
   result.kpis.esds = computeESDSDeterministic(esdsInputs, history, branch);
 
   return result;
+};
+
+/**
+ * Calcula KPIs a partir das demonstrações financeiras (v2026-03.11)
+ */
+export const calculateKpisFromStatements = (params: {
+  statements: any;
+  prevStatements?: any;
+  revenue: number;
+  netProfit: number;
+  operatingProfit: number;
+  totalAwards: number;
+  finalCash: number;
+  prevEquity: number;
+  prevInvestments: number;
+  applicationAmount: number;
+  totalMachineryCost: number;
+  buildingsCost: number;
+  totalMachineryDeprec: number;
+  newBuildingsDeprecAccum: number;
+  unitsProduced: number;
+  totalUnitsSold: number;
+  closingStockPA: number;
+  closingStockValuePA: number;
+  unitCPP: number;
+  wacUnit: number;
+  periodDepreciation: number;
+  weightedAvgPrice: number;
+  totalRevenue: number;
+  prevStockValue: number;
+  pmr: number;
+  pmp: number;
+  indicators: MacroIndicators;
+  branch: Branch;
+  history: any[];
+  supplierInterestExpenses: number;
+  emergencyPurchaseExpenses: number;
+  emergencyUnitsTotal: number;
+  currentMachines: any[];
+  currentLoans: any[];
+  stockQuantities: any;
+}): any => {
+  const { statements, prevStatements = {}, revenue, netProfit, operatingProfit, totalAwards, finalCash, prevEquity, prevInvestments, applicationAmount, totalMachineryCost, buildingsCost, totalMachineryDeprec, newBuildingsDeprecAccum, unitsProduced, totalUnitsSold, closingStockPA, closingStockValuePA, unitCPP, wacUnit, periodDepreciation, weightedAvgPrice, totalRevenue, prevStockValue, pmr, pmp, indicators, branch, history, supplierInterestExpenses, emergencyPurchaseExpenses, emergencyUnitsTotal, currentMachines, currentLoans, stockQuantities } = params;
+  
+  const finalBS = statements.balance_sheet;
+  const totalAssets = findAccountValue(finalBS, 'assets');
+  const totalEquity = findAccountValue(finalBS, 'equity');
+  const currentAssets = findAccountValue(finalBS, 'assets.current');
+  const currentLiabilities = findAccountValue(finalBS, 'liabilities.current');
+  const totalLiabilities = findAccountValue(finalBS, 'liabilities');
+
+  // TSR (Total Shareholder Return) - Baseado no crescimento do Equity
+  const tsr = ((totalEquity - prevEquity) / prevEquity) * 100;
+
+  // Liquidez e Solvência
+  const liquidityCurrent = currentLiabilities > 0 ? currentAssets / currentLiabilities : 2;
+  const solvencyIndex = totalLiabilities > 0 ? totalAssets / totalLiabilities : 5;
+
+  // NCG (Necessidade de Capital de Giro) - Operacional
+  const ncg = (findAccountValue(finalBS, 'assets.current.clients') + closingStockValuePA + findAccountValue(finalBS, 'assets.current.vat_recoverable')) - 
+              (findAccountValue(finalBS, 'liabilities.current.suppliers') + findAccountValue(finalBS, 'liabilities.current.taxes') + findAccountValue(finalBS, 'liabilities.current.dividends') + findAccountValue(finalBS, 'liabilities.current.ppr_payable') + findAccountValue(finalBS, 'liabilities.current.vat_payable'));
+  
+  // Saldo de Tesouraria (ST) - Financeiro
+  const st = (finalCash + (prevInvestments + applicationAmount)) - findAccountValue(finalBS, 'liabilities.current.loans_st');
+  
+  // Efeito Tesoura (Scissors Effect) - Diferença entre NCG e ST em DIAS
+  const scissorsEffectValue = ncg - st;
+  const dailyRevenue = revenue / 90; 
+  const scissorsEffect = dailyRevenue > 0 ? (scissorsEffectValue / dailyRevenue) : 0;
+  
+  const nlcdg = ncg; 
+
+  // Z-Score de Kanitz (Legado)
+  const x1_k = totalEquity > 0 ? netProfit / totalEquity : 0;
+  const x2_k = liquidityCurrent;
+  const x3_k = currentLiabilities > 0 ? (currentAssets - closingStockValuePA) / currentLiabilities : 1;
+  const x4_k = totalAssets > 0 ? currentAssets / totalAssets : 0.5;
+  const x5 = totalEquity > 0 ? totalLiabilities / totalEquity : 0.5;
+  const kanitz = (0.05 * x1_k) + (1.65 * x2_k) + (3.55 * x3_k) - (1.06 * x4_k) - (0.33 * x5);
+
+  // Altman Z''-Score
+  const x1_altman = totalAssets > 0 ? (currentAssets - currentLiabilities) / totalAssets : 0;
+  const x2_altman = totalAssets > 0 ? (netProfit) / totalAssets : 0; 
+  const x3_altman = totalAssets > 0 ? operatingProfit / totalAssets : 0; 
+  const x4_altman = totalLiabilities > 0 ? totalEquity / totalLiabilities : 1;
+  const altmanZ = 3.25 + (6.56 * x1_altman) + (3.26 * x2_altman) + (6.72 * x3_altman) + (1.05 * x4_altman);
+
+  // DCF Valuation
+  const ebitda = operatingProfit + periodDepreciation;
+  const wacc = 0.12; 
+  const dcfValuation = ebitda > 0 ? (ebitda / wacc) / 1000000 : 0;
+
+  // Rating de Crédito
+  let rating: CreditRating = 'D';
+  if (liquidityCurrent > 1.5 && x5 < 0.8) rating = 'AAA';
+  else if (liquidityCurrent > 1.2 && x5 < 1.2) rating = 'AA';
+  else if (liquidityCurrent > 1.0 && x5 < 1.5) rating = 'A';
+  else if (liquidityCurrent > 0.8 && x5 < 2.0) rating = 'B';
+  else if (liquidityCurrent > 0.5 && x5 < 3.0) rating = 'C';
+  else rating = 'D';
+
+  const ccc = (pmr + (closingStockValuePA > 0 ? (closingStockValuePA / (revenue / 90)) : 0)) - pmp;
+  const interestCoverage = Math.abs(findAccountValue(statements.dre, 'fin.exp')) > 0 ? operatingProfit / Math.abs(findAccountValue(statements.dre, 'fin.exp')) : 100;
+  const netMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+  const assetTurnover = totalAssets > 0 ? revenue / totalAssets : 0;
+  const leverage = totalEquity > 0 ? totalAssets / totalEquity : 1;
+
+  return {
+    statements,
+    current_cash: finalCash,
+    commitments: {
+      receivables: [
+        { id: 'clients', label: 'Contas a Receber (Clientes)', value: findAccountValue(finalBS, 'assets.current.clients') },
+        { id: 'investments', label: 'Aplicações Financeiras', value: findAccountValue(finalBS, 'assets.current.investments') },
+        { id: 'vat_recoverable', label: 'IVA a Recuperar', value: findAccountValue(finalBS, 'assets.current.vat_recoverable') }
+      ],
+      payables: [
+        { id: 'suppliers', label: 'Fornecedores', value: findAccountValue(finalBS, 'liabilities.current.suppliers') },
+        { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: findAccountValue(finalBS, 'liabilities.current.loans_st') },
+        { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: findAccountValue(finalBS, 'liabilities.longterm.loans_lt') },
+        { id: 'taxes', label: 'Imposto de Renda a Pagar', value: findAccountValue(finalBS, 'liabilities.current.taxes') },
+        { id: 'dividends', label: 'Dividendos a Pagar', value: findAccountValue(finalBS, 'liabilities.current.dividends') },
+        { id: 'ppr', label: 'PPR a Pagar', value: findAccountValue(finalBS, 'liabilities.current.ppr_payable') },
+        { id: 'vat_payable', label: 'IVA a Recolher', value: findAccountValue(finalBS, 'liabilities.current.vat_payable') }
+      ]
+    },
+    machines: currentMachines,
+    loans: currentLoans,
+    stock_quantities: stockQuantities,
+    cpp_unit: unitCPP,
+    wac_unit: wacUnit,
+    ebitda,
+    fixed_assets_value: findAccountValue(finalBS, 'assets.noncurrent.fixed'),
+    total_assets: totalAssets,
+    equity: totalEquity,
+    stock_value: closingStockValuePA,
+    tsr,
+    nlcdg: nlcdg / 1000000,
+    solvency_score_kanitz: kanitz,
+    altman_z_score: altmanZ,
+    dcf_valuation: dcfValuation,
+    scissors_effect: scissorsEffect / 1000000,
+    liquidity_current: liquidityCurrent,
+    solvency_index: solvencyIndex,
+    inventory_turnover: (revenue / 4) > 0 ? (revenue / 4 / ((prevStockValue + closingStockValuePA) / 2)) : 0,
+    ccc,
+    interest_coverage: interestCoverage,
+    dupont: {
+      margin: netMargin,
+      turnover: assetTurnover,
+      leverage: leverage
+    },
+    rating,
+    landed_costs: {}, // Placeholder se não houver regionalização
+    price_elasticity: 0,
+    regional_cac: {},
+    carbon_footprint: 0,
+    last_price: weightedAvgPrice,
+    last_units_sold: totalUnitsSold,
+    markup: (wacUnit > 0 && totalUnitsSold > 0) ? ((totalRevenue / totalUnitsSold) / wacUnit) - 1 : 0,
+    market_share: 0, 
+    share_price: totalEquity / 72000,
+    avg_receivable_days: pmr,
+    avg_payable_days: pmp,
+    compulsory_loan_balance: findAccountValue(finalBS, 'liabilities.current.loans_st'),
+    compulsory_loan_interest_paid: Math.abs(findAccountValue(statements.dre, 'fin.exp')),
+    fco_livre: ebitda - findAccountValue(statements.cash_flow, 'cf.outflow.maintenance') - Math.abs(findAccountValue(statements.dre, 'fin.exp')) - Math.abs(findAccountValue(statements.dre, 'tax_prov')),
+    capex_manutencao: findAccountValue(statements.cash_flow, 'cf.outflow.maintenance'),
+    capex_estrategico: findAccountValue(statements.cash_flow, 'cf.outflow.machine_buy'),
+    juros_pagos: Math.abs(findAccountValue(statements.dre, 'fin.exp')),
+    impostos_pagos: Math.abs(findAccountValue(statements.dre, 'tax_prov')),
+    passivo_circulante: currentLiabilities,
+    despesas_operacionais_projetadas_proxima_rodada: Math.abs(findAccountValue(statements.dre, 'opex')) * 1.05,
+    receita_liquida: revenue,
+    custo_medio_divida: totalLiabilities > 0 ? Math.abs(findAccountValue(statements.dre, 'fin.exp')) / totalLiabilities : 0,
+    alavancagem_efetiva: (totalLiabilities - finalCash) / Math.max(ebitda, 0.01),
+    divida_liquida: totalLiabilities - finalCash,
+    receita_recorrente_projetada: branch === 'services' ? revenue * 0.4 : 0,
+    caixa: finalCash,
+    aplicacoes: findAccountValue(finalBS, 'assets.current.investments'),
+    despesas_operacionais_diarias: Math.abs(findAccountValue(statements.dre, 'opex')) / 90,
+    passivo_total: totalLiabilities,
+    pl: totalEquity,
+    percentual_divida_curto_prazo: totalLiabilities > 0 ? (currentLiabilities / totalLiabilities) * 100 : 100,
+    brl_rate: indicators.BRL || 1,
+    gbp_rate: indicators.GBP || 0,
+    export_tariff_brazil: indicators.export_tariff_brazil || 0,
+    export_tariff_uk: indicators.export_tariff_uk || 0,
+    supplier_interest_expenses: supplierInterestExpenses,
+    emergency_purchase_expenses: emergencyPurchaseExpenses,
+    emergency_units_total: emergencyUnitsTotal
+  };
 };
 
 /**

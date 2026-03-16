@@ -1,7 +1,7 @@
 
 -- ==============================================================================
--- EMPIRION DATABASE SCHEMA & RLS PROTOCOL v19.2 DIAMOND
--- Foco: Suprimentos Estratégicos, Juros de Fornecedor e Compras de Emergência
+-- EMPIRION DATABASE SCHEMA & RLS PROTOCOL v19.3 SAPPHIRE
+-- Foco: Integridade Contábil, Refatoração do Kernel e Fidelidade de KPIs
 -- ==============================================================================
 
 BEGIN;
@@ -203,6 +203,8 @@ ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS locale TEXT DEFAULT 'pt-
 -- 7. ÍNDICES PARA MONITORAMENTO DE "SAÚDE DOS ATIVOS" E KPIs
 CREATE INDEX IF NOT EXISTS idx_companies_asset_vcl ON public.companies (fixed_assets_value DESC);
 CREATE INDEX IF NOT EXISTS idx_companies_ccc ON public.companies (ccc ASC);
+CREATE INDEX IF NOT EXISTS idx_companies_tsr ON public.companies (tsr DESC);
+CREATE INDEX IF NOT EXISTS idx_companies_esds ON public.companies (esds_score DESC);
 
 -- 4. VIEW DE AUDITORIA DE CAPEX PARA O TUTOR (HELPER)
 -- Fix: DROP VIEW antes de recriar para permitir mudança na estrutura de colunas
