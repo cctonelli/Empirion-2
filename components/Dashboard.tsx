@@ -237,14 +237,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
               {!isSidebarCollapsed ? (
                 <>
-                  <div className={`p-4 rounded-2xl border space-y-3 shadow-2xl transition-all relative overflow-hidden group ${requireBP && bpStatus !== 'submitted' ? 'bg-orange-600/10 border-orange-500/40' : 'bg-slate-950/80 border-white/5 hover:border-white/10'}`}>
+                  <div className={`p-3 rounded-2xl border space-y-2.5 shadow-2xl transition-all relative overflow-hidden group ${requireBP && bpStatus !== 'submitted' ? 'bg-orange-600/10 border-orange-500/40' : 'bg-slate-950/80 border-white/5 hover:border-white/10'}`}>
                     {requireBP && bpStatus !== 'submitted' && (
                       <div className="absolute top-0 right-0 p-2">
                           <div className="w-1 h-1 bg-orange-500 rounded-full animate-ping" />
                       </div>
                     )}
                     <div className="flex justify-between items-center">
-                        <div className={`p-2 rounded-lg ${requireBP ? 'bg-orange-600/20 text-orange-500' : 'bg-slate-800 text-slate-600'}`}>
+                        <div className={`p-1.5 rounded-lg ${requireBP ? 'bg-orange-600/20 text-orange-500' : 'bg-slate-800 text-slate-600'}`}>
                           <PenTool size={16} />
                         </div>
                         {bpStatus === 'submitted' && (
@@ -260,7 +260,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           {requireBP ? `${t('requirement')} P0${(activeArena?.current_round || 0) + 1}` : t('optional_cycle')}
                         </p>
                     </div>
-                    <button onClick={() => setShowBP(true)} className="w-full py-2 bg-white/5 hover:bg-orange-600 text-white rounded-lg text-[8px] font-black uppercase tracking-[0.1em] transition-all shadow-xl border border-white/5 hover:border-transparent active:scale-95">{t('Editar BP')}</button>
+                    <button onClick={() => setShowBP(true)} className="w-full py-1.5 bg-white/5 hover:bg-orange-600 text-white rounded-lg text-[8px] font-black uppercase tracking-[0.1em] transition-all shadow-xl border border-white/5 hover:border-transparent active:scale-95">{t('Editar BP')}</button>
                   </div>
 
                   <div className="bg-slate-950/60 p-4 rounded-2xl border border-white/5 space-y-3 shadow-2xl group">
