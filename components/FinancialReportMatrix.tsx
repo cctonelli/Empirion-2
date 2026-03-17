@@ -33,14 +33,30 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     ...history.map(h => ({ 
       round: h.round, 
       data: type === 'strategic' ? h.kpis : h.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')],
+      raw: h,
       isProjection: false 
     })),
     { 
       round: 'PROJ (T+1)', 
       data: type === 'strategic' ? projection?.kpis : projection?.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], 
+      raw: projection,
       isProjection: true 
     }
   ];
+
+  // Helper para buscar valor com fallback
+  const getKpiValue = (p: any, kpiId: string) => {
+    const keys = kpiId.split('.');
+    let val = p.data;
+    for (const key of keys) {
+      val = val?.[key];
+    }
+    // Fallback para colunas diretas se não encontrar no objeto data (kpis)
+    if ((val === undefined || val === null) && p.raw) {
+      val = p.raw[kpiId];
+    }
+    return val;
+  };
 
   // Função para renderizar linhas de KPIs estratégicos (não hierárquicos)
   const renderStrategicRows = () => {
@@ -69,11 +85,8 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
           </div>
         </td>
         {periods.map((p: any, idx) => {
-          const keys = kpi.id.split('.');
-          let val = p.data;
-          for (const key of keys) {
-            val = val?.[key];
-          }
+          const val = getKpiValue(p, kpi.id);
+          const prevVal = idx > 0 ? getKpiValue(periods[idx-1], kpi.id) : undefined;
           
           const displayVal = typeof val === 'number' 
             ? (kpi.isPercent ? (val * 100).toFixed(2) : val.toFixed(2)) 
@@ -89,11 +102,11 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
           return (
             <td key={idx} className={`p-1.5 text-center font-mono text-[10px] ${p.isProjection ? 'bg-orange-600/5' : ''} ${colorClass}`}>
               <div className="flex flex-col items-center gap-0.5">
-                <span className="text-sm tracking-tighter">{displayVal}{val !== undefined ? kpi.suffix : ''}</span>
-                {idx > 0 && typeof val === 'number' && typeof periods[idx-1].data?.[kpi.id] === 'number' && (
-                  <div className={`flex items-center gap-0.5 text-[6px] font-black uppercase ${val > periods[idx-1].data[kpi.id] ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {val > periods[idx-1].data[kpi.id] ? <TrendingUp size={6}/> : <Activity size={6}/>}
-                    {Math.abs(((val / periods[idx-1].data[kpi.id]) - 1) * 100).toFixed(1)}%
+                <span className="text-sm tracking-tighter">{displayVal}{val !== undefined && val !== null && val !== 'N/A' ? kpi.suffix : ''}</span>
+                {idx > 0 && typeof val === 'number' && typeof prevVal === 'number' && prevVal !== 0 && (
+                  <div className={`flex items-center gap-0.5 text-[6px] font-black uppercase ${val > prevVal ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    {val > prevVal ? <TrendingUp size={6}/> : <Activity size={6}/>}
+                    {Math.abs(((val / prevVal) - 1) * 100).toFixed(1)}%
                   </div>
                 )}
               </div>

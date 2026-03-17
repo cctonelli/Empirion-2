@@ -127,7 +127,21 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
     if (selectedRound < currentRound) {
       const past = history.find(h => h.round === selectedRound);
-      if (past?.kpis) return { ...baseFallback, ...past.kpis } as KPIs;
+      if (past) {
+        const merged = { ...baseFallback, ...past, ...past.kpis } as any;
+        // Normalização para E-SDS se vier das colunas da tabela
+        if (!merged.esds && past.esds_score !== undefined) {
+          merged.esds = {
+            esds_display: past.esds_score,
+            zone: past.esds_zone,
+            gargalo_principal: past.esds_gargalo,
+            gemini_insights: past.esds_insights,
+            top_gargalos: past.esds_top_gargalos,
+            main_drivers: past.esds_main_drivers
+          };
+        }
+        return merged as KPIs;
+      }
     }
     
     if (selectedRound === currentRound && projections?.kpis) {
@@ -237,15 +251,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
               {!isSidebarCollapsed ? (
                 <>
-                  <div className={`p-3 rounded-2xl border space-y-2.5 shadow-2xl transition-all relative overflow-hidden group ${requireBP && bpStatus !== 'submitted' ? 'bg-orange-600/10 border-orange-500/40' : 'bg-slate-950/80 border-white/5 hover:border-white/10'}`}>
+                  <div className={`p-2.5 rounded-2xl border space-y-2 shadow-2xl transition-all relative overflow-hidden group ${requireBP && bpStatus !== 'submitted' ? 'bg-orange-600/10 border-orange-500/40' : 'bg-slate-950/80 border-white/5 hover:border-white/10'}`}>
                     {requireBP && bpStatus !== 'submitted' && (
                       <div className="absolute top-0 right-0 p-2">
                           <div className="w-1 h-1 bg-orange-500 rounded-full animate-ping" />
                       </div>
                     )}
                     <div className="flex justify-between items-center">
-                        <div className={`p-1.5 rounded-lg ${requireBP ? 'bg-orange-600/20 text-orange-500' : 'bg-slate-800 text-slate-600'}`}>
-                          <PenTool size={16} />
+                        <div className={`p-1 rounded-lg ${requireBP ? 'bg-orange-600/20 text-orange-500' : 'bg-slate-800 text-slate-600'}`}>
+                          <PenTool size={14} />
                         </div>
                         {bpStatus === 'submitted' && (
                           <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
@@ -260,7 +274,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           {requireBP ? `${t('requirement')} P0${(activeArena?.current_round || 0) + 1}` : t('optional_cycle')}
                         </p>
                     </div>
-                    <button onClick={() => setShowBP(true)} className="w-full py-1.5 bg-white/5 hover:bg-orange-600 text-white rounded-lg text-[8px] font-black uppercase tracking-[0.1em] transition-all shadow-xl border border-white/5 hover:border-transparent active:scale-95">{t('Editar BP')}</button>
+                    <button onClick={() => setShowBP(true)} className="w-full py-1 bg-white/5 hover:bg-orange-600 text-white rounded-lg text-[8px] font-black uppercase tracking-[0.1em] transition-all shadow-xl border border-white/5 hover:border-transparent active:scale-95">{t('Editar BP')}</button>
                   </div>
 
                   <div className="bg-slate-950/60 p-4 rounded-2xl border border-white/5 space-y-3 shadow-2xl group">
