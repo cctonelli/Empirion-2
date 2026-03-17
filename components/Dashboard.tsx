@@ -471,7 +471,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* 3. Timeline inferior – rodadas P-1–P12 (Movida para dentro do scrollable main) */}
+               {/* 3. Timeline inferior – rodadas P1–P12 (Movida para dentro do scrollable main) */}
                <footer className="mt-4 py-2 bg-slate-900/40 border-t border-white/5 flex items-center justify-center px-4 shrink-0">
                   <div className="w-full flex items-center justify-between relative">
                       <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-800 -translate-y-1/2 z-0" />
@@ -493,7 +493,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                                   'bg-slate-950 border-white/5 opacity-40'
                                 }`}
                               >
-                                  <span className={`text-[8px] font-black font-mono ${isSelected ? 'text-white' : 'text-slate-500'}`}>P{i < 10 ? `0${i}` : i}</span>
+                                  <span className={`text-[8px] font-black font-mono ${isSelected ? 'text-white' : 'text-slate-500'}`}>P{i < 10 ? `${i}` : i}</span>
                                   
                                   {/* Metadata Icons */}
                                   <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex gap-1">
