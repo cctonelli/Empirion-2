@@ -81,69 +81,55 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
 
   if (variant === 'compact') {
     return (
-      <div className={`px-3 py-1 rounded-xl border flex items-center gap-3 transition-all duration-500 shadow-xl ${
-        isUrgent ? 'bg-rose-600 border-white text-white animate-pulse shadow-rose-600/20' :
-        isCritical ? 'bg-orange-600 border-orange-400 text-white shadow-orange-600/20' : 
-        'bg-slate-950 border-white/10 text-slate-100 shadow-black/40'
-      }`}>
-        <div className="flex flex-col">
-           <span className={`text-[6px] font-black uppercase tracking-[0.2em] leading-none mb-1 ${isUrgent || isCritical ? 'text-white/70' : 'text-orange-500'}`}>
-              {isUrgent ? 'URGENTE' : isCritical ? 'PRAZO' : 'ROUND TIMER'}
-           </span>
-           <span className="text-sm font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
+      <div 
+        className={`px-4 py-1.5 rounded-xl border flex items-center gap-4 transition-all duration-500 shadow-lg ${
+          isUrgent 
+            ? 'bg-rose-700/90 border-rose-400 text-white animate-pulse' 
+            : isCritical 
+            ? 'bg-orange-700/90 border-orange-400 text-white' 
+            : 'bg-slate-900/80 border-slate-600/40 text-slate-100'
+        }`}
+      >
+        <div className="flex flex-col min-w-[80px]">
+          <span className={`text-[7px] font-black uppercase tracking-[0.2em] mb-0.5 leading-none ${isUrgent || isCritical ? 'text-white/90' : 'text-orange-400'}`}>
+            {isUrgent ? 'URGENTE' : isCritical ? 'PRAZO FINAL' : 'RESTA'}
+          </span>
+          <span className="text-xl font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
         </div>
-        <div className={`p-1.5 rounded-lg ${isUrgent || isCritical ? 'bg-white/20' : 'bg-white/5'}`}>
-           <Clock size={14} className={!isCritical && !isUrgent ? 'text-orange-500 animate-pulse' : ''} />
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-md flex-shrink-0 ${
+          isUrgent ? 'bg-white text-rose-700' : 
+          isCritical ? 'bg-white text-orange-700' : 
+          'bg-white/10 text-orange-400 border border-white/10'
+        }`}>
+          {isUrgent ? <AlertCircle size={22} strokeWidth={2.5} /> : <Clock size={22} strokeWidth={2} className={!isCritical ? 'animate-pulse' : ''} />}
         </div>
       </div>
     );
   }
 
   return (
-    <div 
-      className={`px-6 py-3 rounded-2xl shadow-2xl border flex items-center gap-5 transition-all duration-500 ${
-        isUrgent 
-          ? 'bg-rose-700/90 border-rose-400 text-white animate-pulse scale-[1.03]' 
-          : isCritical 
-          ? 'bg-orange-700/90 border-orange-400 text-white' 
-          : 'bg-slate-900/80 border-slate-600/40 text-slate-100'
-      }`}
-    >
-      {/* Texto + tempo */}
-      <div className="flex flex-col min-w-[110px]">
-        <span 
-          className={`text-[10px] font-black uppercase tracking-[0.25em] mb-1 leading-none ${
-            isUrgent || isCritical ? 'text-white' : 'text-orange-400'
-          }`}
-        >
-          {isUrgent 
-            ? 'URGENTE: TRANSMITA' 
-            : isCritical 
-            ? 'PRAZO FINAL' 
-            : 'RESTA PARA DECIDIR'}
+    <div className={`px-8 py-4 rounded-[2rem] shadow-2xl border transition-all duration-700 flex items-center gap-6 ${
+      isUrgent ? 'bg-rose-600 border-white text-white animate-pulse scale-105' :
+      isCritical ? 'bg-orange-600 border-orange-400 text-white' : 
+      'bg-slate-900 border-white/10 text-slate-100'
+    }`}>
+      <div className="flex flex-col">
+        <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-1 ${
+          isUrgent || isCritical ? 'text-white' : 'text-orange-500'
+        }`}>
+          {isUrgent ? 'URGENTE: TRANSMITA' : isCritical ? 'PRAZO FINAL' : 'RESTA PARA DECIDIR'}
         </span>
-        <span className="text-3xl font-mono font-extrabold tracking-[-0.05em] leading-none">
-          {timeLeft}
-        </span>
+        <span className="text-2xl font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
       </div>
-
-      {/* Ícone maior e mais destacado */}
-      <div 
-        className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-lg flex-shrink-0 ${
-          isUrgent 
-            ? 'bg-white text-rose-700 border-2 border-white animate-pulse' 
-            : isCritical 
-            ? 'bg-white text-orange-700 border-2 border-white' 
-            : 'bg-white/10 text-orange-400 border border-white/20'
-        }`}
-      >
-        {isUrgent ? (
-          <AlertCircle size={36} strokeWidth={2.5} />
-        ) : (
-          <Clock size={36} strokeWidth={2} className={!isCritical ? 'animate-pulse' : ''} />
-        )}
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-lg ${
+        isUrgent ? 'bg-white text-rose-600' : 
+        isCritical ? 'bg-white text-orange-600' : 
+        'bg-white/5 text-orange-500 border border-white/5'
+      }`}>
+        {isUrgent ? <AlertCircle size={32} /> : <Clock size={32} className={!isCritical ? 'animate-pulse' : ''} />}
       </div>
     </div>
   );
+};
 
 export default ChampionshipTimer;
