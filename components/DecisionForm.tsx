@@ -201,7 +201,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                   <span className="text-[8px] font-black text-orange-500 uppercase tracking-[0.3em] italic leading-none">Decision Terminal v18.5</span>
                </div>
                <h2 className="text-xl font-black text-white uppercase italic tracking-tighter mt-0.5">
-                  War Room: <span className="text-slate-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{activeTeam?.name}</span>
+                  Team: <span className="text-slate-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{activeTeam?.name}</span>
                </h2>
             </div>
             <div className="h-8 w-px bg-white/10 hidden md:block" />
@@ -447,59 +447,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               help="Use o botão replicar para aplicar a Região 1 em todas as demais."
                            />
 
-                           {/* Bloco único de explicações – visível sempre */}
-                           <div className="bg-slate-900/50 backdrop-blur-sm p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
-                              <h5 className="text-lg font-black text-orange-400 uppercase tracking-wide mb-6 flex items-center gap-3">
-                              <Info size={20} />
-                              Entenda o impacto de cada decisão comercial
-                              </h5>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 text-sm">
-                              {/* Juros de venda a prazo */}
-                              <div className="space-y-2">
-                                 <label className="font-semibold text-slate-300 flex items-center gap-2">
-                                    Juros de Venda a Prazo (%)
-                                    <HelpCircle size={14} className="text-slate-500" />
-                                 </label>
-                                 <p className="text-slate-400 leading-relaxed">
-                                    Taxa cobrada em vendas parceladas. Alto → mais receita financeira, mas menor atratividade e volume de vendas. Mantenha baixo (0.8–2.5%) em mercados competitivos.
-                                 </p>
-                              </div>
-
-                              {/* Preço Unitário */}
-                              <div className="space-y-2">
-                                 <label className="font-semibold text-slate-300 flex items-center gap-2">
-                                    Preço Unitário
-                                    <HelpCircle size={14} className="text-slate-500" />
-                                 </label>
-                                 <p className="text-slate-400 leading-relaxed">
-                                    Preço de venda na região. Alto → maior margem unitária, mas menor volume (elasticidade-preço). Baixo → ganha market share, mas comprime lucro. Alinhe com custo projetado + markup desejado.
-                                 </p>
-                              </div>
-
-                              {/* Prazo de Recebimento */}
-                              <div className="space-y-2">
-                                 <label className="font-semibold text-slate-300 flex items-center gap-2">
-                                    Prazo de Recebimento
-                                    <HelpCircle size={14} className="text-slate-500" />
-                                 </label>
-                                 <p className="text-slate-400 leading-relaxed">
-                                    Parcelamento oferecido. Prazo longo → mais vendas, mas fluxo de caixa piora e risco de inadimplência cresce. À vista → preserva liquidez, mas pode limitar volume em regiões sensíveis.
-                                 </p>
-                              </div>
-
-                              {/* Campanhas de Marketing */}
-                              <div className="space-y-2">
-                                 <label className="font-semibold text-slate-300 flex items-center gap-2">
-                                    Campanhas de Marketing (0–9)
-                                    <HelpCircle size={14} className="text-slate-500" />
-                                 </label>
-                                 <p className="text-slate-400 leading-relaxed">
-                                    Intensidade publicitária. Cada ponto aumenta demanda, mas consome verba fixa. Retorno decrescente: invista mais em regiões com alta elasticidade-preço. 0 = sem esforço, 9 = campanha agressiva.
-                                 </p>
-                              </div>
-                              </div>
-                           </div>
 
                            {/* Configuração global: Juros + Replicar */}
                            <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 bg-slate-900/60 p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
@@ -604,7 +552,59 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         </div>
                         )}
 
+                           {/* Bloco único de explicações – visível sempre */}
+                           <div className="bg-slate-900/50 backdrop-blur-sm p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
+                              <h5 className="text-lg font-black text-orange-400 uppercase tracking-wide mb-6 flex items-center gap-3">
+                              <Info size={20} />
+                              Entenda o impacto de cada decisão comercial
+                              </h5>
 
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 text-sm">
+                              {/* Juros de venda a prazo */}
+                              <div className="space-y-2">
+                                 <label className="font-semibold text-slate-300 flex items-center gap-2">
+                                    Juros de Venda a Prazo (%)
+                                    <HelpCircle size={14} className="text-slate-500" />
+                                 </label>
+                                 <p className="text-slate-400 leading-relaxed">
+                                    Taxa cobrada em vendas parceladas. Alto → mais receita financeira, mas menor atratividade e volume de vendas. Mantenha baixo (0.8–2.5%) em mercados competitivos.
+                                 </p>
+                              </div>
+
+                              {/* Preço Unitário */}
+                              <div className="space-y-2">
+                                 <label className="font-semibold text-slate-300 flex items-center gap-2">
+                                    Preço Unitário
+                                    <HelpCircle size={14} className="text-slate-500" />
+                                 </label>
+                                 <p className="text-slate-400 leading-relaxed">
+                                    Preço de venda na região. Alto → maior margem unitária, mas menor volume (elasticidade-preço). Baixo → ganha market share, mas comprime lucro. Alinhe com custo projetado + markup desejado.
+                                 </p>
+                              </div>
+
+                              {/* Prazo de Recebimento */}
+                              <div className="space-y-2">
+                                 <label className="font-semibold text-slate-300 flex items-center gap-2">
+                                    Prazo de Recebimento
+                                    <HelpCircle size={14} className="text-slate-500" />
+                                 </label>
+                                 <p className="text-slate-400 leading-relaxed">
+                                    Parcelamento oferecido. Prazo longo → mais vendas, mas fluxo de caixa piora e risco de inadimplência cresce. À vista → preserva liquidez, mas pode limitar volume em regiões sensíveis.
+                                 </p>
+                              </div>
+
+                              {/* Campanhas de Marketing */}
+                              <div className="space-y-2">
+                                 <label className="font-semibold text-slate-300 flex items-center gap-2">
+                                    Campanhas de Marketing (0–9)
+                                    <HelpCircle size={14} className="text-slate-500" />
+                                 </label>
+                                 <p className="text-slate-400 leading-relaxed">
+                                    Intensidade publicitária. Cada ponto aumenta demanda, mas consome verba fixa. Retorno decrescente: invista mais em regiões com alta elasticidade-preço. 0 = sem esforço, 9 = campanha agressiva.
+                                 </p>
+                              </div>
+                              </div>
+                           </div>
 
 
                         {/* STEP 3 - ATIVOS */}
@@ -1198,7 +1198,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     Desligamentos
                                     </h5>
                                     <p className="text-sm text-slate-400 leading-relaxed">
-                                    Número de funcionários demitidos. Reduz folha salarial, mas gera multa rescisória (estimada em 1–2 salários) e perda imediata de capacidade produtiva.
+                                    Número de funcionários demitidos. Reduz folha salarial, mas, além do salário do período, gera multa rescisória de 1 salário + encargos sociais sobre a multa e perda imediata de capacidade produtiva.
                                     </p>
                                  </div>
                                  <div className="p-4 rounded-2xl bg-rose-600/10 group-hover:bg-rose-600/20 transition-colors">
