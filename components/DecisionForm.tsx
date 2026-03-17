@@ -1285,7 +1285,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <Zap size={24} /> Treinamento (% da folha)
                               </h5>
                               <p className="text-sm text-slate-400 mb-6">
-                                 Percentual investido em capacitação. Aumenta produtividade por homem-hora e reduz risco de obsolescência técnica.
+                                 Percentual investido em capacitação: Aumenta produtividade por homem-hora e reduz risco de obsolescência técnica. Novas contratações ou novos modelos de máquinas exigem treinamento de equipe. 
                               </p>
                               <div className="flex items-center justify-between mb-4">
                                  <span className="text-sm font-semibold text-slate-300">{decisions.hr.trainingPercent}%</span>
