@@ -168,7 +168,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     <div className="flex-1 flex flex-col bg-[#020617] text-slate-100 overflow-hidden font-sans">
       
       {/* 1. Header fixo superior – KPIs + Timer – AJUSTADO PARA h-[68px] */}
-      <section className="fixed top-0 left-0 right-0 z-50 h-[80px] shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/85 backdrop-blur-lg border-b border-white/10 shadow-2xl">
+      <section className="fixed top-0 left-0 right-0 z-50 h-[68px] shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/85 backdrop-blur-lg border-b border-white/10 shadow-2xl">
         <CockpitStat 
           label={t('Equity')} 
           val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} 
