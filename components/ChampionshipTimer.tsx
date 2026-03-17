@@ -100,28 +100,50 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
   }
 
   return (
-    <div className={`px-8 py-4 rounded-[2rem] shadow-2xl border transition-all duration-700 flex items-center gap-6 ${
-      isUrgent ? 'bg-rose-600 border-white text-white animate-pulse scale-105' :
-      isCritical ? 'bg-orange-600 border-orange-400 text-white' : 
-      'bg-slate-900 border-white/10 text-slate-100'
-    }`}>
-      <div className="flex flex-col">
-        <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-1 ${
-          isUrgent || isCritical ? 'text-white' : 'text-orange-500'
-        }`}>
-          {isUrgent ? 'URGENTE: TRANSMITA' : isCritical ? 'PRAZO FINAL' : 'RESTA PARA DECIDIR'}
+    <div 
+      className={`px-6 py-3 rounded-2xl shadow-2xl border flex items-center gap-5 transition-all duration-500 ${
+        isUrgent 
+          ? 'bg-rose-700/90 border-rose-400 text-white animate-pulse scale-[1.03]' 
+          : isCritical 
+          ? 'bg-orange-700/90 border-orange-400 text-white' 
+          : 'bg-slate-900/80 border-slate-600/40 text-slate-100'
+      }`}
+    >
+      {/* Texto + tempo */}
+      <div className="flex flex-col min-w-[110px]">
+        <span 
+          className={`text-[10px] font-black uppercase tracking-[0.25em] mb-1 leading-none ${
+            isUrgent || isCritical ? 'text-white' : 'text-orange-400'
+          }`}
+        >
+          {isUrgent 
+            ? 'URGENTE: TRANSMITA' 
+            : isCritical 
+            ? 'PRAZO FINAL' 
+            : 'RESTA PARA DECIDIR'}
         </span>
-        <span className="text-2xl font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
+        <span className="text-3xl font-mono font-extrabold tracking-[-0.05em] leading-none">
+          {timeLeft}
+        </span>
       </div>
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-lg ${
-        isUrgent ? 'bg-white text-rose-600' : 
-        isCritical ? 'bg-white text-orange-600' : 
-        'bg-white/5 text-orange-500 border border-white/5'
-      }`}>
-        {isUrgent ? <AlertCircle size={32} /> : <Clock size={32} className={!isCritical ? 'animate-pulse' : ''} />}
+
+      {/* Ícone maior e mais destacado */}
+      <div 
+        className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all shadow-lg flex-shrink-0 ${
+          isUrgent 
+            ? 'bg-white text-rose-700 border-2 border-white animate-pulse' 
+            : isCritical 
+            ? 'bg-white text-orange-700 border-2 border-white' 
+            : 'bg-white/10 text-orange-400 border border-white/20'
+        }`}
+      >
+        {isUrgent ? (
+          <AlertCircle size={36} strokeWidth={2.5} />
+        ) : (
+          <Clock size={36} strokeWidth={2} className={!isCritical ? 'animate-pulse' : ''} />
+        )}
       </div>
     </div>
   );
-};
 
 export default ChampionshipTimer;
