@@ -168,7 +168,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     <div className="flex-1 flex flex-col bg-[#020617] text-slate-100 overflow-hidden font-sans">
       
       {/* 1. Header fixo superior – KPIs + Timer */}
-      <section className="h-12 shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-20 shadow-2xl">
+      <section className="h-16 shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-20 shadow-2xl">
          <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<ShieldCheck size={12}/>} />
          <CockpitStat 
             label="E-SDS" 
@@ -202,8 +202,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Box size={12}/>} />
          <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Activity size={12}/>} />
          <CockpitStat label={t('Rating')} val={currentKpis.rating} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Shield size={12}/>} />
-         <div className="px-4 flex items-center justify-center border-l border-white/5 bg-gradient-to-br from-orange-600/10 to-transparent">
-            <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} createdAt={activeArena?.created_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
+         <div className="px-2 flex items-center justify-center border-l border-white/5 bg-gradient-to-br from-orange-600/10 to-transparent">
+            <ChampionshipTimer variant="compact" roundStartedAt={activeArena?.round_started_at} createdAt={activeArena?.created_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
          </div>
       </section>
  
@@ -214,7 +214,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             {/* Toggle Button */}
             <button 
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="absolute -right-2.5 top-12 w-5 h-5 bg-orange-600 rounded-full flex items-center justify-center text-white shadow-lg z-20 hover:bg-orange-500 transition-colors"
+              className="absolute -right-2.5 top-16 w-5 h-5 bg-orange-600 rounded-full flex items-center justify-center text-white shadow-lg z-20 hover:bg-orange-500 transition-colors"
             >
               <ChevronRight size={12} className={`transition-transform duration-300 ${isSidebarCollapsed ? '' : 'rotate-180'}`} />
             </button>
@@ -522,7 +522,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 };
 
 const CockpitStat = ({ label, val, trend, pos, neg, icon, tooltip }: any) => (
-  <div className="px-2 border-r border-white/5 hover:bg-white/[0.03] transition-all group flex flex-col justify-center overflow-hidden relative">
+  <div className="px-1 border-r border-white/5 hover:bg-white/[0.03] transition-all group flex flex-col justify-center overflow-hidden relative">
      <div className="flex items-center justify-between mb-0.5">
         <div className="flex items-center gap-1.5">
            <div className="p-1 bg-orange-500/10 rounded text-orange-500 group-hover:scale-110 transition-transform">{icon}</div>

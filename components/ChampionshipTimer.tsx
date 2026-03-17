@@ -81,7 +81,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
 
   if (variant === 'compact') {
     return (
-      <div className={`px-4 py-2 rounded-2xl border flex items-center gap-4 transition-all duration-500 shadow-xl ${
+      <div className={`px-3 py-1 rounded-xl border flex items-center gap-3 transition-all duration-500 shadow-xl ${
         isUrgent ? 'bg-rose-600 border-white text-white animate-pulse shadow-rose-600/20' :
         isCritical ? 'bg-orange-600 border-orange-400 text-white shadow-orange-600/20' : 
         'bg-slate-950 border-white/10 text-slate-100 shadow-black/40'
