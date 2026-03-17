@@ -103,16 +103,23 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       }
       setIsLoadingDraft(true);
       try {
-        const [champsRes, historyRes] = await Promise.all([
-           getChampionships(),
-           getTeamSimulationHistory(teamId)
-        ]);
+        const champsRes = await getChampionships();
+        const historyRes = await getTeamSimulationHistory(teamId);
         
         setHistory(historyRes);
         const found = champsRes.data?.find(a => a.id === champId);
         if (found) setActiveArena(found);
 
-        const team = found?.teams?.find((t: Team) => t.id === teamId);
+        let team = found?.teams?.find((t: Team) => t.id === teamId);
+        
+        // Se for modo leitura (consulta de round passado), buscar no histórico
+        if (isReadOnly && historyRes) {
+          const snapshot = historyRes.find((h: any) => h.round === round);
+          if (snapshot) {
+            team = snapshot.team_data;
+          }
+        }
+
         if (team) {
            // Injeção de segurança do parque P00 se estiver no Round 1 e vazio
            if (round === 1 && (!team.kpis?.machines || team.kpis.machines.length === 0)) {
@@ -301,7 +308,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                  </nav>
 
                  {/* CONTEÚDO DO PASSO COM SCROLL VERTICAL */}
-                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 lg:p-4 bg-slate-950/40 relative">
+                 <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-2 lg:p-4 bg-slate-950/40 relative">
                     <div className="w-full mx-auto pb-40 space-y-8 px-2">
                         {/* STEP 1 - JURÍDICO */}
                         {activeStep === 0 && (
@@ -876,6 +883,51 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               help="Lembre-se: Produto Acabado consome 3 MP-A e 2 MP-B por unidade produzida."
                            />
 
+                           {/* Seção: Saldos e Custos de Armazenagem */}
+                           <div className="bg-slate-900/60 backdrop-blur-sm p-6 lg:p-8 rounded-3xl border border-white/10 shadow-xl">
+                              <h5 className="text-lg font-black text-orange-400 uppercase tracking-wide mb-6 flex items-center gap-3">
+                                 <Warehouse size={20} /> Saldos Atuais e Custos de Armazenagem
+                              </h5>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                 <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estoque Prod. Acabados</span>
+                                    <div className="flex justify-between items-end">
+                                       <span className="text-xl font-mono font-bold text-white">{activeTeam?.kpis?.inventory_finished || 0} un</span>
+                                       <div className="text-right">
+                                          <span className="text-[8px] text-slate-500 uppercase block">Custo Armaz.</span>
+                                          <span className="text-xs font-mono text-rose-400">
+                                             {formatCurrency((activeTeam?.kpis?.inventory_finished || 0) * (currentMacro.storage_cost_finished || 5), activeArena?.currency || 'BRL')}
+                                          </span>
+                                       </div>
+                                    </div>
+                                 </div>
+                                 <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estoque MP-A</span>
+                                    <div className="flex justify-between items-end">
+                                       <span className="text-xl font-mono font-bold text-white">{activeTeam?.kpis?.inventory_mpa || 0} un</span>
+                                       <div className="text-right">
+                                          <span className="text-[8px] text-slate-500 uppercase block">Custo Armaz.</span>
+                                          <span className="text-xs font-mono text-rose-400">
+                                             {formatCurrency((activeTeam?.kpis?.inventory_mpa || 0) * (currentMacro.storage_cost_raw || 2), activeArena?.currency || 'BRL')}
+                                          </span>
+                                       </div>
+                                    </div>
+                                 </div>
+                                 <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estoque MP-B</span>
+                                    <div className="flex justify-between items-end">
+                                       <span className="text-xl font-mono font-bold text-white">{activeTeam?.kpis?.inventory_mpb || 0} un</span>
+                                       <div className="text-right">
+                                          <span className="text-[8px] text-slate-500 uppercase block">Custo Armaz.</span>
+                                          <span className="text-xs font-mono text-rose-400">
+                                             {formatCurrency((activeTeam?.kpis?.inventory_mpb || 0) * (currentMacro.storage_cost_raw || 2), activeArena?.currency || 'BRL')}
+                                          </span>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+
                            {/* Seção: Compras de Matéria-Prima */}
                            <div className="space-y-10">
                               <div className="flex items-center justify-between">
@@ -919,6 +971,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
                                     placeholder="0"
                                     />
+                                    <div className="flex justify-between items-center pt-2">
+                                       <div className="text-xs text-slate-500 italic">
+                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(currentMacro.raw_material_prices.mpa * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpa_price_adjust'), activeArena?.currency || 'BRL')}</span>
+                                       </div>
+                                       <div className="text-xs text-slate-500 italic">
+                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPA * currentMacro.raw_material_prices.mpa * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpa_price_adjust'), activeArena?.currency || 'BRL')}</span>
+                                       </div>
+                                    </div>
                                     <p className="text-xs text-slate-500 italic pt-2">
                                     Sugestão baseada em capacidade atual: {Math.round((activeTeam?.kpis?.production_capacity || 0) * 3 * 1.1 / 100)} – {Math.round((activeTeam?.kpis?.production_capacity || 0) * 3 * 1.3 / 100)} unidades
                                     </p>
@@ -955,6 +1015,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
                                     placeholder="0"
                                     />
+                                    <div className="flex justify-between items-center pt-2">
+                                       <div className="text-xs text-slate-500 italic">
+                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(currentMacro.raw_material_prices.mpb * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpb_price_adjust'), activeArena?.currency || 'BRL')}</span>
+                                       </div>
+                                       <div className="text-xs text-slate-500 italic">
+                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPB * currentMacro.raw_material_prices.mpb * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpb_price_adjust'), activeArena?.currency || 'BRL')}</span>
+                                       </div>
+                                    </div>
                                     <p className="text-xs text-slate-500 italic pt-2">
                                     Sugestão baseada em capacidade atual: {Math.round((activeTeam?.kpis?.production_capacity || 0) * 2 * 1.1 / 100)} – {Math.round((activeTeam?.kpis?.production_capacity || 0) * 2 * 1.3 / 100)} unidades
                                     </p>
@@ -985,6 +1053,56 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <option value={1}>À vista + 50% no próximo período</option>
                                  <option value={2}>Parcelado: à vista + 33% + 33%</option>
                               </select>
+
+                              {/* Detalhamento das Parcelas */}
+                              <div className="mt-6 p-4 bg-slate-950/40 rounded-2xl border border-white/5 space-y-3">
+                                 <h6 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Cronograma de Desembolso Estimado (com juros)</h6>
+                                 {(() => {
+                                    const priceA = currentMacro.raw_material_prices.mpa * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpa_price_adjust');
+                                    const priceB = currentMacro.raw_material_prices.mpb * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpb_price_adjust');
+                                    const total = (decisions.production.purchaseMPA * priceA) + (decisions.production.purchaseMPB * priceB);
+                                    const interest = currentMacro.interest_rate_tr || 0.02;
+
+                                    if (decisions.production.paymentType === 0) {
+                                       return (
+                                          <div className="flex justify-between items-center text-sm">
+                                             <span className="text-slate-400 italic">Parcela Única (T+0)</span>
+                                             <span className="font-mono font-bold text-white">{formatCurrency(total, activeArena?.currency || 'BRL')}</span>
+                                          </div>
+                                       );
+                                    } else if (decisions.production.paymentType === 1) {
+                                       return (
+                                          <div className="space-y-2 text-sm">
+                                             <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 italic">Entrada (T+0) - 50%</span>
+                                                <span className="font-mono font-bold text-white">{formatCurrency(total * 0.5, activeArena?.currency || 'BRL')}</span>
+                                             </div>
+                                             <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 italic">Parcela 2 (T+1) - 50% + Juros</span>
+                                                <span className="font-mono font-bold text-white">{formatCurrency(total * 0.5 * (1 + interest), activeArena?.currency || 'BRL')}</span>
+                                             </div>
+                                          </div>
+                                       );
+                                    } else {
+                                       return (
+                                          <div className="space-y-2 text-sm">
+                                             <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 italic">Entrada (T+0) - 34%</span>
+                                                <span className="font-mono font-bold text-white">{formatCurrency(total * 0.34, activeArena?.currency || 'BRL')}</span>
+                                             </div>
+                                             <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 italic">Parcela 2 (T+1) - 33% + Juros</span>
+                                                <span className="font-mono font-bold text-white">{formatCurrency(total * 0.33 * (1 + interest), activeArena?.currency || 'BRL')}</span>
+                                             </div>
+                                             <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 italic">Parcela 3 (T+2) - 33% + Juros Acum.</span>
+                                                <span className="font-mono font-bold text-white">{formatCurrency(total * 0.33 * (1 + interest * 2), activeArena?.currency || 'BRL')}</span>
+                                             </div>
+                                          </div>
+                                       );
+                                    }
+                                 })()}
+                              </div>
 
                               <div className="mt-8 p-6 bg-slate-950/60 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
                                  <p className="font-medium mb-3">Impactos esperados:</p>
@@ -1429,14 +1547,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     Valor Solicitado
                                     <HelpCircle size={16} className="text-slate-500 group-hover:text-rose-400 transition-colors cursor-help" />
                                     </label>
-                                    <input
-                                    type="number"
-                                    min="0"
-                                    step="10000"
-                                    value={decisions.finance.loanRequest}
-                                    onChange={e => updateDecision('finance.loanRequest', parseInt(e.target.value) || 0)}
-                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 transition-all"
-                                    placeholder="0"
+                                    <CurrencyInput
+                                       value={decisions.finance.loanRequest}
+                                       onChange={v => updateDecision('finance.loanRequest', v)}
+                                       currency={activeArena?.currency || 'BRL'}
                                     />
                                  </div>
 
@@ -1487,14 +1601,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     Valor a Aplicar
                                     <HelpCircle size={16} className="text-slate-500 group-hover:text-emerald-400 transition-colors cursor-help" />
                                     </label>
-                                    <input
-                                    type="number"
-                                    min="0"
-                                    step="10000"
-                                    value={decisions.finance.application}
-                                    onChange={e => updateDecision('finance.application', parseInt(e.target.value) || 0)}
-                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
-                                    placeholder="0"
+                                    <CurrencyInput
+                                       value={decisions.finance.application}
+                                       onChange={v => updateDecision('finance.application', v)}
+                                       currency={activeArena?.currency || 'BRL'}
                                     />
                                  </div>
 
@@ -1524,13 +1634,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <p className="text-sm text-slate-400 mb-6">
                                     Estimativa do custo médio ponderado de produção. Tolerância Oracle: ±{currentMacro?.award_values?.cost_precision || 'R$ 5,00'}.
                                  </p>
-                                 <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
+                                 <CurrencyInput
                                     value={decisions.estimates.forecasted_unit_cost}
-                                    onChange={e => updateDecision('estimates.forecasted_unit_cost', parseFloat(e.target.value) || 0)}
-                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/30 transition-all"
+                                    onChange={v => updateDecision('estimates.forecasted_unit_cost', v)}
+                                    currency={activeArena?.currency || 'BRL'}
                                  />
                               </div>
 
@@ -1542,13 +1649,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <p className="text-sm text-slate-400 mb-6">
                                     Estimativa de receita total. Tolerância Oracle: ±{currentMacro?.award_values?.revenue_precision || 'R$ 50.000'}.
                                  </p>
-                                 <input
-                                    type="number"
-                                    min="0"
-                                    step="1000"
+                                 <CurrencyInput
                                     value={decisions.estimates.forecasted_revenue}
-                                    onChange={e => updateDecision('estimates.forecasted_revenue', parseInt(e.target.value) || 0)}
-                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/30 transition-all"
+                                    onChange={v => updateDecision('estimates.forecasted_revenue', v)}
+                                    currency={activeArena?.currency || 'BRL'}
                                  />
                               </div>
 
@@ -1560,13 +1664,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <p className="text-sm text-slate-400 mb-6">
                                     Estimativa do resultado líquido final. Tolerância Oracle: ±{currentMacro?.award_values?.profit_precision || 'R$ 20.000'}.
                                  </p>
-                                 <input
-                                    type="number"
-                                    min="-1000000"
-                                    step="1000"
+                                 <CurrencyInput
                                     value={decisions.estimates.forecasted_net_profit}
-                                    onChange={e => updateDecision('estimates.forecasted_net_profit', parseInt(e.target.value) || 0)}
-                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-3xl font-mono font-bold text-white outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/30 transition-all"
+                                    onChange={v => updateDecision('estimates.forecasted_net_profit', v)}
+                                    currency={activeArena?.currency || 'BRL'}
                                  />
                               </div>
                               </div>
