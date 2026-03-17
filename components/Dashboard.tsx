@@ -271,7 +271,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     <div>
                         <h4 className="text-sm font-black uppercase text-white tracking-tight">{t('Business Plan')}</h4>
                         <p className={`text-[7px] font-bold uppercase mt-0.5 tracking-widest leading-relaxed ${requireBP && bpStatus !== 'submitted' ? 'text-orange-400' : 'text-slate-500'}`}>
-                          {requireBP ? `${t('requirement')} P0${(activeArena?.current_round || 0) + 1}` : t('optional_cycle')}
+                          {requireBP ? `${t('requirement')} P-${(activeArena?.current_round || 0) + 1}` : t('optional_cycle')}
                         </p>
                     </div>
                     <button onClick={() => setShowBP(true)} className="w-full py-1 bg-white/5 hover:bg-orange-600 text-white rounded-lg text-[8px] font-black uppercase tracking-[0.1em] transition-all shadow-xl border border-white/5 hover:border-transparent active:scale-95">{t('Editar BP')}</button>
@@ -339,7 +339,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     </h2>
                     <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] italic flex items-center gap-1.5">
                       <Cpu size={10} className="text-orange-600/50" />
-                      Protocolo v18.0 • {selectedRound === currentRound ? `${t('cycle')} 0${selectedRound}` : selectedRound < currentRound ? `Histórico P0${selectedRound}` : `Planejamento P0${selectedRound}`}
+                      Protocolo v18.0 • {selectedRound === currentRound ? `${t('cycle')} 0${selectedRound}` : selectedRound < currentRound ? `Histórico P-${selectedRound}` : `Planejamento P-${selectedRound}`}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -471,7 +471,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
                </div>
 
-               {/* 3. Timeline inferior – rodadas P01–P12 (Movida para dentro do scrollable main) */}
+               {/* 3. Timeline inferior – rodadas P-1–P12 (Movida para dentro do scrollable main) */}
                <footer className="mt-4 py-2 bg-slate-900/40 border-t border-white/5 flex items-center justify-center px-4 shrink-0">
                   <div className="w-full flex items-center justify-between relative">
                       <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-800 -translate-y-1/2 z-0" />

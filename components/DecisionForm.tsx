@@ -36,6 +36,7 @@ const STEPS = [
 
 const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean; onDecisionsChange?: (d: DecisionData) => void }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false, onDecisionsChange }) => {
   const [activeStep, setActiveStep] = useState(0);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeam, setActiveTeam] = useState<Team | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -82,6 +83,19 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   }, [decisions, activeArena, activeTeam, round]);
 
   useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [activeStep]);
+
+  // Persistência em memória local para evitar perda ao navegar entre abas
+  useEffect(() => {
+    if (!teamId || !champId || isLoadingDraft) return;
+    const key = `draft_decisions_${champId}_${teamId}_${round}`;
+    localStorage.setItem(key, JSON.stringify(decisions));
+  }, [decisions, teamId, champId, round, isLoadingDraft]);
+
+  useEffect(() => {
     const initializeForm = async () => {
       if (!champId || !teamId) {
         setIsLoadingDraft(false);
@@ -110,13 +124,26 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         const table = found?.is_trial ? 'trial_decisions' : 'current_decisions';
         const { data: draft } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', round).maybeSingle();
 
-        const initialRegions: any = {};
-        for (let i = 1; i <= (found?.regions_count || 1); i++) {
-          initialRegions[i] = draft?.data?.regions?.[i] || { price: 425, term: 0, marketing: 0 };
+        // Tentar recuperar do localStorage primeiro (rascunho local mais recente)
+        const localKey = `draft_decisions_${champId}_${teamId}_${round}`;
+        const localDraft = localStorage.getItem(localKey);
+        let finalData = draft?.data;
+
+        if (localDraft) {
+          try {
+            finalData = JSON.parse(localDraft);
+          } catch (e) {
+            console.error("Erro ao carregar rascunho local", e);
+          }
         }
 
-        if (draft?.data) {
-          setDecisions({ ...draft.data, regions: initialRegions });
+        const initialRegions: any = {};
+        for (let i = 1; i <= (found?.regions_count || 1); i++) {
+          initialRegions[i] = finalData?.regions?.[i] || { price: 425, term: 0, marketing: 0 };
+        }
+
+        if (finalData) {
+          setDecisions({ ...finalData, regions: initialRegions });
         } else {
           setDecisions(prev => ({ ...prev, regions: initialRegions }));
         }
@@ -954,7 +981,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  onChange={e => updateDecision('production.paymentType', parseInt(e.target.value))}
                                  className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-lg lg:text-xl font-semibold text-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all appearance-none"
                               >
-                                 <option value={0}>À vista (desconto implícito)</option>
+                                 <option value={0}>À vista (vence neste período)</option>
                                  <option value={1}>À vista + 50% no próximo período</option>
                                  <option value={2}>Parcelado: à vista + 33% + 33%</option>
                               </select>
