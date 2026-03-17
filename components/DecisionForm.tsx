@@ -1169,7 +1169,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     Número de Contratações
                                     <HelpCircle size={16} className="text-slate-500 group-hover:text-emerald-400 transition-colors cursor-help" />
                                     </label>
-                                    <span className="text-2xl lg:text-3xl font-mono font-bold text-emerald-400">
+                                    <span className="text-1.5xl lg:text-2xl font-mono font-bold text-emerald-400">
                                     +{decisions.hr.hired}
                                     </span>
                                  </div>
@@ -1212,7 +1212,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     Número de Demissões
                                     <HelpCircle size={16} className="text-slate-500 group-hover:text-rose-400 transition-colors cursor-help" />
                                     </label>
-                                    <span className="text-2xl lg:text-3xl font-mono font-bold text-rose-400">
+                                    <span className="text-1.5xl lg:text-2xl font-mono font-bold text-rose-400">
                                     -{decisions.hr.fired}
                                     </span>
                                  </div>
@@ -1271,7 +1271,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  />
 
                                  <p className="text-xs text-orange-300 italic">
-                                    Mínimo regional sugerido: R$ {currentMacro?.min_salary || 1800}
+                                    Mínimo regional sugerido: R$ {currentMacro?.min_salary || 2000}
                                  </p>
                               </div>
                               </div>
