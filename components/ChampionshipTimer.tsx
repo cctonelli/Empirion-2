@@ -1,98 +1,124 @@
 
-// components/ChampionshipTimer.tsx
-import React, { useState, useEffect } from 'react';
-import { Clock, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Clock, AlertCircle, Hourglass } from 'lucide-react';
+import { DeadlineUnit } from '../types';
 
 interface ChampionshipTimerProps {
-  roundStartedAt?: string | null;
-  createdAt?: string | null;
+  roundStartedAt?: string; 
   deadlineValue?: number;
-  deadlineUnit?: 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
-  variant?: 'compact' | 'default';
+  deadlineUnit?: DeadlineUnit;
+  onExpire?: () => void;
+  createdAt?: string; // Fallback absoluto para arenas recém-criadas sem turnover
+  variant?: 'default' | 'compact';
 }
 
-const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
-  roundStartedAt,
+const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ 
+  roundStartedAt, 
+  deadlineValue = 7, 
+  deadlineUnit = 'days', 
+  onExpire, 
   createdAt,
-  deadlineValue = 60,
-  deadlineUnit = 'minutes',
+  variant = 'default'
 }) => {
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<string>('Sincronizando...');
+  const [isCritical, setIsCritical] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
+  
+  const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!deadlineValue) return;
+    // FIX: Se não houver round_started_at, tenta usar a data de criação da arena. 
+    // Isso evita o reset visual se o turnover ainda não ocorreu no ciclo 0.
+    const effectiveStart = roundStartedAt || createdAt;
+    
+    if (!effectiveStart) {
+       setTimeLeft('Aguardando...');
+       return;
+    }
 
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime();
-      let endTime: number;
+    startTimeRef.current = new Date(effectiveStart).getTime();
+    let durationMs = 0;
 
-      const getUnitMs = (unit: string) => {
-        switch (unit) {
-          case 'months': return 30 * 24 * 3600000;
-          case 'weeks': return 7 * 24 * 3600000;
-          case 'days': return 24 * 3600000;
-          case 'hours': return 3600000;
-          case 'minutes': return 60000;
-          default: return 60000;
-        }
-      };
+    switch(deadlineUnit) {
+      case 'hours': durationMs = deadlineValue * 60 * 60 * 1000; break;
+      case 'days': durationMs = deadlineValue * 24 * 60 * 60 * 1000; break;
+      case 'weeks': durationMs = deadlineValue * 7 * 24 * 60 * 60 * 1000; break;
+      case 'months': durationMs = deadlineValue * 30 * 24 * 60 * 60 * 1000; break;
+      default: durationMs = 7 * 24 * 60 * 60 * 1000;
+    }
 
-      const duration = deadlineValue * getUnitMs(deadlineUnit);
+    const targetDate = startTimeRef.current + durationMs;
 
-      if (roundStartedAt) {
-        const start = new Date(roundStartedAt).getTime();
-        endTime = start + duration;
-      } else if (createdAt) {
-        const start = new Date(createdAt).getTime();
-        endTime = start + duration;
-      } else {
-        endTime = now + duration; // fallback
+    const timer = setInterval(() => {
+      const now = Date.now();
+      const diff = targetDate - now;
+
+      if (diff <= 0) {
+        setTimeLeft('ENCERRADO');
+        setIsCritical(true);
+        setIsUrgent(true);
+        clearInterval(timer);
+        if (onExpire) onExpire();
+        return;
       }
 
-      const diff = Math.max(0, endTime - now);
-      setTimeLeft(diff);
-      setIsUrgent(diff < 300000); // < 5 minutos → urgente
-    };
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
 
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000);
-    return () => clearInterval(interval);
-  }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit]);
+      let formatted = "";
+      if (d > 0) formatted += `${d}d `;
+      formatted += `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      
+      setTimeLeft(formatted);
+      setIsCritical(diff < 12 * 60 * 60 * 1000); // 12h para alerta crítico
+      setIsUrgent(diff < 2 * 60 * 60 * 1000);    // 2h para pulsante
+    }, 1000);
 
-  const formatTime = (ms: number) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+    return () => clearInterval(timer);
+  }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit, onExpire]);
 
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const isExpired = timeLeft <= 0;
+  if (variant === 'compact') {
+    return (
+      <div className={`px-4 py-2 rounded-2xl border flex items-center gap-4 transition-all duration-500 shadow-xl ${
+        isUrgent ? 'bg-rose-600 border-white text-white animate-pulse shadow-rose-600/20' :
+        isCritical ? 'bg-orange-600 border-orange-400 text-white shadow-orange-600/20' : 
+        'bg-slate-950 border-white/10 text-slate-100 shadow-black/40'
+      }`}>
+        <div className="flex flex-col">
+           <span className={`text-[6px] font-black uppercase tracking-[0.2em] leading-none mb-1 ${isUrgent || isCritical ? 'text-white/70' : 'text-orange-500'}`}>
+              {isUrgent ? 'URGENTE' : isCritical ? 'PRAZO' : 'ROUND TIMER'}
+           </span>
+           <span className="text-sm font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
+        </div>
+        <div className={`p-1.5 rounded-lg ${isUrgent || isCritical ? 'bg-white/20' : 'bg-white/5'}`}>
+           <Clock size={14} className={!isCritical && !isUrgent ? 'text-orange-500 animate-pulse' : ''} />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`flex items-center gap-2.5 px-4 py-1.5 rounded-xl border text-sm font-mono font-bold tracking-tight transition-all ${
-      isExpired 
-        ? 'bg-rose-950/60 border-rose-500/40 text-rose-300 animate-pulse' 
-        : isUrgent 
-        ? 'bg-amber-950/60 border-amber-500/40 text-amber-300 animate-pulse' 
-        : 'bg-slate-900/70 border-slate-600/40 text-slate-200'
+    <div className={`px-8 py-4 rounded-[2rem] shadow-2xl border transition-all duration-700 flex items-center gap-6 ${
+      isUrgent ? 'bg-rose-600 border-white text-white animate-pulse scale-105' :
+      isCritical ? 'bg-orange-600 border-orange-400 text-white' : 
+      'bg-slate-900 border-white/10 text-slate-100'
     }`}>
-      <Clock size={16} className={isUrgent || isExpired ? 'text-inherit' : 'text-slate-400'} />
-      
-      <div className="flex items-baseline gap-1">
-        {isExpired ? (
-          <span className="text-rose-400 font-black uppercase tracking-wider text-xs">ENCERRADO</span>
-        ) : (
-          <>
-            <span className="text-lg font-black">{formatTime(timeLeft)}</span>
-            {isUrgent && <AlertTriangle size={12} className="text-amber-400 animate-pulse" />}
-          </>
-        )}
+      <div className="flex flex-col">
+        <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-1 ${
+          isUrgent || isCritical ? 'text-white' : 'text-orange-500'
+        }`}>
+          {isUrgent ? 'URGENTE: TRANSMITA' : isCritical ? 'PRAZO FINAL' : 'RESTA PARA DECIDIR'}
+        </span>
+        <span className="text-2xl font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
+      </div>
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-lg ${
+        isUrgent ? 'bg-white text-rose-600' : 
+        isCritical ? 'bg-white text-orange-600' : 
+        'bg-white/5 text-orange-500 border border-white/5'
+      }`}>
+        {isUrgent ? <AlertCircle size={32} /> : <Clock size={32} className={!isCritical ? 'animate-pulse' : ''} />}
       </div>
     </div>
   );

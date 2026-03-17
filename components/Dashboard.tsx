@@ -167,79 +167,44 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   return (
     <div className="flex-1 flex flex-col bg-[#020617] text-slate-100 overflow-hidden font-sans">
       
-      {/* 1. Header fixo superior – KPIs + Timer – AJUSTADO PARA h-[68px] */}
-      <section className="fixed top-0 left-0 right-0 z-50 h-[68px] shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/85 backdrop-blur-lg border-b border-white/10 shadow-2xl">
-        <CockpitStat 
-          label={t('Equity')} 
-          val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} 
-          trend={selectedRound === currentRound ? "Proj" : "Real"} 
-          pos 
-          icon={<ShieldCheck size={14}/>} 
-        />
-        <CockpitStat 
-          label="E-SDS" 
-          val={(currentKpis.esds?.esds_display || 0).toFixed(1)} 
-          trend={selectedRound === currentRound ? "Proj" : (currentKpis.esds?.zone || 'ALERTA')} 
-          pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
-          neg={currentKpis.esds?.zone === 'Laranja' || currentKpis.esds?.zone === 'Vermelho'}
-          icon={<Gauge size={14}/>} 
-          tooltip={
-            <div className="space-y-1.5 p-2 text-xs">
-              <div className="flex items-center gap-1.5">
-                <Sparkles size={8} className="text-orange-500" />
-                <p className="text-[8px] font-black uppercase text-orange-500 tracking-widest">E-SDS v1.2</p>
-              </div>
-              <p className="text-[9px] text-slate-200 leading-tight italic">
-                {currentKpis.esds?.gemini_insights || 'Análise indisponível'}
-              </p>
-              {currentKpis.esds?.top_gargalos && currentKpis.esds.top_gargalos.length > 0 && (
-                <div className="pt-1.5 border-t border-white/5">
-                  <p className="text-[8px] font-black uppercase text-slate-500 mb-1">Gargalos:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {currentKpis.esds?.top_gargalos?.map((g, i) => (
-                      <span 
-                        key={i} 
-                        className="px-1.5 py-0.5 bg-rose-600/10 text-rose-300 text-[8px] font-black rounded border border-rose-500/20"
-                        title={`${g.percentage}% impacto`}
-                      >
-                        {g.name}
-                      </span>
-                    ))}
-                  </div>
+      {/* 1. Header fixo superior – KPIs + Timer */}
+      <section className="h-12 shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-20 shadow-2xl">
+         <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<ShieldCheck size={12}/>} />
+         <CockpitStat 
+            label="E-SDS" 
+            val={(currentKpis.esds?.esds_display || 0).toFixed(1)} 
+            trend={selectedRound === currentRound ? "Proj" : (currentKpis.esds?.zone || 'ALERTA')} 
+            pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
+            neg={currentKpis.esds?.zone === 'Laranja' || currentKpis.esds?.zone === 'Vermelho'}
+            icon={<Gauge size={12}/>} 
+            tooltip={
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={8} className="text-orange-500" />
+                  <p className="text-[8px] font-black uppercase text-orange-500 tracking-widest">Diagnóstico E-SDS</p>
                 </div>
-              )}
-            </div>
-          }
-        />
-        <CockpitStat 
-          label={t('Inventory Turnover')} 
-          val={(currentKpis.inventory_turnover || 0).toFixed(1)} 
-          trend={selectedRound === currentRound ? "Proj" : "Real"} 
-          pos 
-          icon={<Box size={14}/>} 
-        />
-        <CockpitStat 
-          label={t('Liquidity')} 
-          val={(currentKpis.liquidity_current || 1.0).toFixed(2)} 
-          trend={selectedRound === currentRound ? "Proj" : "Real"} 
-          pos 
-          icon={<Activity size={14}/>} 
-        />
-        <CockpitStat 
-          label={t('Rating')} 
-          val={currentKpis.rating} 
-          trend={selectedRound === currentRound ? "Proj" : "Real"} 
-          pos 
-          icon={<Shield size={14}/>} 
-        />
-        <div className="px-5 flex items-center justify-center border-l border-white/10 bg-gradient-to-br from-orange-600/5 to-transparent">
-          <ChampionshipTimer 
-            roundStartedAt={activeArena?.round_started_at} 
-            createdAt={activeArena?.created_at} 
-            deadlineValue={activeArena?.deadline_value} 
-            deadlineUnit={activeArena?.deadline_unit} 
-          />
-        </div>
+                <p className="text-[7px] text-slate-300 leading-tight italic">{currentKpis.esds?.gemini_insights || 'Análise indisponível'}</p>
+                {currentKpis.esds?.top_gargalos && currentKpis.esds.top_gargalos.length > 0 && (
+                  <div className="pt-1.5 border-t border-white/10">
+                    <p className="text-[6px] font-black uppercase text-slate-500 mb-0.5 tracking-widest">Principais Detratores:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {currentKpis.esds.top_gargalos.map((g, i) => (
+                        <span key={i} className="px-1 py-0.5 bg-rose-500/10 text-rose-400 text-[5px] font-black rounded-full uppercase border border-rose-500/20" title={`${g.percentage}% de impacto`}>
+                          {g.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            }
+         />
+         <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Box size={12}/>} />
+         <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Activity size={12}/>} />
+         <CockpitStat label={t('Rating')} val={currentKpis.rating} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Shield size={12}/>} />
+         <div className="px-4 flex items-center justify-center border-l border-white/5 bg-gradient-to-br from-orange-600/10 to-transparent">
+            <ChampionshipTimer roundStartedAt={activeArena?.round_started_at} createdAt={activeArena?.created_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
+         </div>
       </section>
  
       {/* 2. Área principal expansível */}
@@ -557,28 +522,34 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 };
 
 const CockpitStat = ({ label, val, trend, pos, neg, icon, tooltip }: any) => (
-  <div className="px-5 border-r border-white/10 hover:bg-white/[0.04] transition-all group flex flex-col justify-center relative text-sm">
-    <div className="flex items-center justify-between mb-0.5">
-      <div className="flex items-center gap-2">
-        <div className="p-1 bg-orange-500/10 rounded-md text-orange-400 group-hover:scale-110 transition-transform">
-          {icon}
+  <div className="px-2 border-r border-white/5 hover:bg-white/[0.03] transition-all group flex flex-col justify-center overflow-hidden relative">
+     <div className="flex items-center justify-between mb-0.5">
+        <div className="flex items-center gap-1.5">
+           <div className="p-1 bg-orange-500/10 rounded text-orange-500 group-hover:scale-110 transition-transform">{icon}</div>
+           <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.1em] truncate">{label}</span>
         </div>
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{label}</span>
-      </div>
-      <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
-        pos ? 'text-emerald-400' : neg ? 'text-rose-400' : 'text-amber-400'
-      }`}>
-        {pos ? <ArrowUpRight size={10} /> : neg ? <ArrowDownRight size={10} /> : <Activity size={10} />}
-        {trend}
-      </div>
-    </div>
-    <span className="text-2xl font-black font-mono tracking-tight text-white drop-shadow-sm">{val}</span>
-
-    {tooltip && (
-      <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-50 bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl p-3 min-w-[220px]">
-        {tooltip}
-      </div>
-    )}
+        <div className={`flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[6px] font-black uppercase tracking-tighter ${
+          pos ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 
+          neg ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 
+          'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+        }`}>
+          {pos ? <ArrowUpRight size={6} /> : neg ? <ArrowDownRight size={6} /> : <Activity size={6} />}
+          {trend}
+        </div>
+     </div>
+     <div className="flex items-baseline gap-1">
+        <span className="text-lg font-black text-white font-mono tracking-tighter italic leading-none drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{val}</span>
+     </div>
+     
+     {tooltip && (
+       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-slate-900/98 backdrop-blur-md p-3 z-50 flex flex-col justify-center border-x border-white/5 translate-y-2 group-hover:translate-y-0">
+         {typeof tooltip === 'string' ? (
+           <p className="text-[7px] font-bold text-slate-300 leading-relaxed italic">{tooltip}</p>
+         ) : (
+           tooltip
+         )}
+       </div>
+     )}
   </div>
 );
 
