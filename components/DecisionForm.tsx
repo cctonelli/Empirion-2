@@ -1255,7 +1255,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     Salário Mensal Base
                                     <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
                                     </label>
-                                    <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400">
+                                    <span className="text-1.5xl lg:text-2xl font-mono font-bold text-orange-400">
                                     {formatCurrency(decisions.hr.salary, 'BRL')}
                                     </span>
                                  </div>
