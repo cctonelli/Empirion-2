@@ -15,14 +15,14 @@ const CURRENCY_LOCALE_MAP: Record<string, string> = {
   'BTC': 'en-US'
 };
 
-export const formatCurrency = (value: number, currency: CurrencyType = 'BRL', showSymbol: boolean = true): string => {
+export const formatCurrency = (value: number, currency: CurrencyType = 'BRL', showSymbol: boolean = true, fractionDigits: number = 2): string => {
   const locale = CURRENCY_LOCALE_MAP[currency] || 'en-US';
   
-  // Tratamento especial para Criptoativos (8 casas decimais)
+  // Tratamento especial para Criptoativos (8 casas decimais por padrão)
   if (currency === 'BTC') {
     const formatter = new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 8,
-      maximumFractionDigits: 8,
+      minimumFractionDigits: Math.max(8, fractionDigits),
+      maximumFractionDigits: Math.max(8, fractionDigits),
     });
     return showSymbol ? `₿ ${formatter.format(value)}` : formatter.format(value);
   }
@@ -31,8 +31,8 @@ export const formatCurrency = (value: number, currency: CurrencyType = 'BRL', sh
   return new Intl.NumberFormat(locale, {
     style: showSymbol ? 'currency' : 'decimal',
     currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value);
 };
 

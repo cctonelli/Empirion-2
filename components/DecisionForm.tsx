@@ -845,6 +845,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  val={decisions.machinery.buy.alfa}
                                  onChange={(v: number) => updateDecision('machinery.buy.alfa', v)}
                                  price={getAdjustedPrice(currentMacro.machinery_values.alfa, 'machine_alpha_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
+                                 currency={activeArena?.currency || 'BRL'}
                                  spec={currentMacro.machine_specs.alfa}
                                  disabled={!currentMacro.allow_machine_sale}
                               />
@@ -853,6 +854,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  val={decisions.machinery.buy.beta}
                                  onChange={(v: number) => updateDecision('machinery.buy.beta', v)}
                                  price={getAdjustedPrice(currentMacro.machinery_values.beta, 'machine_beta_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
+                                 currency={activeArena?.currency || 'BRL'}
                                  spec={currentMacro.machine_specs.beta}
                                  disabled={!currentMacro.allow_machine_sale}
                               />
@@ -861,6 +863,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  val={decisions.machinery.buy.gama}
                                  onChange={(v: number) => updateDecision('machinery.buy.gama', v)}
                                  price={getAdjustedPrice(currentMacro.machinery_values.gama, 'machine_gamma_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
+                                 currency={activeArena?.currency || 'BRL'}
                                  spec={currentMacro.machine_specs.gama}
                                  disabled={!currentMacro.allow_machine_sale}
                               />
@@ -987,7 +990,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     />
                                     <div className="flex justify-between items-center pt-2">
                                        <div className="text-xs text-slate-500 italic">
-                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(getAdjustedPrice(currentMacro.prices.mp_a, 'raw_material_a_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL')}</span>
+                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(getAdjustedPrice(currentMacro.prices.mp_a, 'raw_material_a_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL', true, 4)}</span>
                                        </div>
                                        <div className="text-xs text-slate-500 italic">
                                           Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPA * getAdjustedPrice(currentMacro.prices.mp_a, 'raw_material_a_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL')}</span>
@@ -1031,7 +1034,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     />
                                     <div className="flex justify-between items-center pt-2">
                                        <div className="text-xs text-slate-500 italic">
-                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(getAdjustedPrice(currentMacro.prices.mp_b, 'raw_material_b_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL')}</span>
+                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(getAdjustedPrice(currentMacro.prices.mp_b, 'raw_material_b_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL', true, 4)}</span>
                                        </div>
                                        <div className="text-xs text-slate-500 italic">
                                           Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPB * getAdjustedPrice(currentMacro.prices.mp_b, 'raw_material_b_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL')}</span>
@@ -1820,7 +1823,7 @@ const StepHeader = ({ title, subtitle, icon }: any) => (
   </div>
 );
 
-const AssetCard = ({ model, val, onChange, price, spec, disabled }: any) => (
+const AssetCard = ({ model, val, onChange, price, currency, spec, disabled }: any) => (
   <div className={`bg-slate-900/80 p-3 rounded-xl border transition-all shadow-xl ${disabled ? 'opacity-40 grayscale pointer-events-none border-white/5' : 'border-white/5 group hover:border-blue-500/30'}`}>
      <div className="flex justify-between items-center">
         <h4 className="text-lg font-black text-white uppercase italic tracking-tight">Machine {model.toUpperCase()}</h4>
@@ -1829,7 +1832,7 @@ const AssetCard = ({ model, val, onChange, price, spec, disabled }: any) => (
      <div className="space-y-2">
         <div className="space-y-0.5">
            <span className="text-[8px] font-black text-slate-500 uppercase">Preço Unitário Oracle</span>
-           <div className="text-lg font-black text-blue-400 font-mono">$ {price.toLocaleString()}</div>
+           <div className="text-lg font-black text-blue-400 font-mono">{formatCurrency(price, currency, true, 4)}</div>
         </div>
         
         {spec && (

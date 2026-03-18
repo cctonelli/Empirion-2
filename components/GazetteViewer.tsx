@@ -15,6 +15,7 @@ import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO } from '../constants';
 import { generateDynamicMarketNews } from '../services/gemini';
 import { supabase } from '../services/supabase';
 import { getCumulativeAdjust, getAdjustedPrice } from '../services/simulation';
+import { formatCurrency } from '../utils/formatters';
 
 interface GazetteViewerProps {
   arena: Championship;
@@ -234,17 +235,17 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                      <div className="bg-slate-900/60 p-12 rounded-[5rem] border border-white/10 shadow-3xl">
                         <h3 className="text-2xl font-black text-white uppercase italic mb-10 flex items-center gap-4"><Coins className="text-orange-500"/> Custos de Insumos</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                           <CostUnit label="Matéria-Prima A" val={getAdjustedPrice(currentMacro.prices.mp_a, 'raw_material_a_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-blue-400" />
-                           <CostUnit label="Matéria-Prima B" val={getAdjustedPrice(currentMacro.prices.mp_b, 'raw_material_b_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-indigo-400" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                           <CostUnit label="Matéria-Prima A" val={getAdjustedPrice(currentMacro.prices.mp_a, 'raw_material_a_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-blue-400" currency={arena.currency || '$'} />
+                           <CostUnit label="Matéria-Prima B" val={getAdjustedPrice(currentMacro.prices.mp_b, 'raw_material_b_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-indigo-400" currency={arena.currency || '$'} />
                         </div>
                      </div>
                      <div className="bg-slate-900/60 p-12 rounded-[5rem] border border-white/10 shadow-3xl">
                         <h3 className="text-2xl font-black text-white uppercase italic mb-10 flex items-center gap-4"><Package className="text-blue-500"/> Custos com Estocagem e Distribuição (unid)</h3>
-                        <div className="grid grid-cols-2 gap-10">
-                           <CostUnit label="Armazenagem MP" val={getAdjustedPrice(currentMacro.prices.storage_mp, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" />
-                           <CostUnit label="Armazenagem PA" val={getAdjustedPrice(currentMacro.prices.storage_finished, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" />
-                           <CostUnit label="Distribuição PA" val={getAdjustedPrice(currentMacro.prices.distribution_unit, 'distribution_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-orange-400" />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                           <CostUnit label="Armazenagem MP" val={getAdjustedPrice(currentMacro.prices.storage_mp, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" currency={arena.currency || '$'} />
+                           <CostUnit label="Armazenagem PA" val={getAdjustedPrice(currentMacro.prices.storage_finished, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" currency={arena.currency || '$'} />
+                           <CostUnit label="Distribuição PA" val={getAdjustedPrice(currentMacro.prices.distribution_unit, 'distribution_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-orange-400" currency={arena.currency || '$'} />
                         </div>
                      </div>
                   </div>
@@ -333,10 +334,10 @@ const MacroBox = ({ label, val, icon }: any) => (
    </div>
 );
 
-const CostUnit = ({ label, val, color }: any) => (
-   <div className="p-8 bg-slate-950/50 rounded-[2.5rem] border border-white/5 flex flex-col items-center gap-3 group hover:border-orange-500/20 transition-all shadow-inner">
-      <span className={`text-[10px] font-black uppercase tracking-widest ${color}`}>{label}</span>
-      <span className="text-2xl font-black text-white font-mono">$ {val.toLocaleString()}</span>
+const CostUnit = ({ label, val, color, currency }: any) => (
+   <div className="p-6 bg-slate-950/50 rounded-[2.5rem] border border-white/5 flex flex-col items-center gap-3 group hover:border-orange-500/20 transition-all shadow-inner min-w-[160px]">
+      <span className={`text-[9px] font-black uppercase tracking-widest ${color}`}>{label}</span>
+      <span className="text-xl font-black text-white font-mono whitespace-nowrap">{formatCurrency(val, currency, true, 4)}</span>
    </div>
 );
 
