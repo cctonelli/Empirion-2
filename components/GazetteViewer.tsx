@@ -65,7 +65,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
            .from(historyTable)
            .select('*, team:teams(name)')
            .eq('championship_id', arena.id)
-           .eq('round', round);
+           .eq('round', round - 1);
         
         if (data) setCompetitors(data);
      } catch (err) { console.error("Intel Fetch Fault", err); }
@@ -86,7 +86,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
           .from(historyTable)
           .select('*, team:teams(name)')
           .eq('championship_id', arena.id)
-          .eq('round', round);
+          .eq('round', round - 1);
 
         if (teamsData && teamsData.length > 0) {
           const news = await generateDynamicMarketNews(
@@ -288,8 +288,8 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                        <div className="py-20 text-slate-500 font-black uppercase italic tracking-widest">Selecione uma unidade para visualizar o relatório detalhado</div>
                      )}
 
-                     {/* Alerta de Empréstimo Compulsório P0 */}
-                     {round === 0 && (
+                     {/* Alerta de Empréstimo Compulsório P0/P1 */}
+                     {round <= 1 && (
                         <div className="mt-16 p-10 bg-rose-950/20 border-2 border-rose-500/30 rounded-[3rem] text-left space-y-6">
                            <div className="flex items-center gap-4 text-rose-500">
                               <AlertTriangle size={32} />
