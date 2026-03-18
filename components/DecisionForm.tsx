@@ -889,42 +889,56 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <Warehouse size={20} /> Saldos Atuais e Custos de Armazenagem
                               </h5>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                 <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estoque Prod. Acabados</span>
-                                    <div className="flex justify-between items-end">
-                                       <span className="text-xl font-mono font-bold text-white">{activeTeam?.kpis?.inventory_finished || 0} un</span>
-                                       <div className="text-right">
-                                          <span className="text-[8px] text-slate-500 uppercase block">Custo Armaz.</span>
-                                          <span className="text-xs font-mono text-rose-400">
-                                             {formatCurrency((activeTeam?.kpis?.inventory_finished || 0) * (currentMacro.prices.storage_finished || 5), activeArena?.currency || 'BRL')}
-                                          </span>
-                                       </div>
-                                    </div>
-                                 </div>
-                                 <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estoque MP-A</span>
-                                    <div className="flex justify-between items-end">
-                                       <span className="text-xl font-mono font-bold text-white">{activeTeam?.kpis?.inventory_mpa || 0} un</span>
-                                       <div className="text-right">
-                                          <span className="text-[8px] text-slate-500 uppercase block">Custo Armaz.</span>
-                                          <span className="text-xs font-mono text-rose-400">
-                                             {formatCurrency((activeTeam?.kpis?.inventory_mpa || 0) * (currentMacro.prices.storage_mp || 2), activeArena?.currency || 'BRL')}
-                                          </span>
-                                       </div>
-                                    </div>
-                                 </div>
-                                 <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estoque MP-B</span>
-                                    <div className="flex justify-between items-end">
-                                       <span className="text-xl font-mono font-bold text-white">{activeTeam?.kpis?.inventory_mpb || 0} un</span>
-                                       <div className="text-right">
-                                          <span className="text-[8px] text-slate-500 uppercase block">Custo Armaz.</span>
-                                          <span className="text-xs font-mono text-rose-400">
-                                             {formatCurrency((activeTeam?.kpis?.inventory_mpb || 0) * (currentMacro.prices.storage_mp || 2), activeArena?.currency || 'BRL')}
-                                          </span>
-                                       </div>
-                                    </div>
-                                 </div>
+                                 {(() => {
+                                    const storageAdjust = getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'storage_cost_adjust');
+                                    const unitStoragePA = (currentMacro.prices.storage_finished || 5) * storageAdjust;
+                                    const unitStorageMP = (currentMacro.prices.storage_mp || 2) * storageAdjust;
+                                    
+                                    const stockPA = activeTeam?.kpis?.stock_quantities?.finished_goods || 0;
+                                    const stockMPA = activeTeam?.kpis?.stock_quantities?.mp_a || 0;
+                                    const stockMPB = activeTeam?.kpis?.stock_quantities?.mp_b || 0;
+
+                                    return (
+                                       <>
+                                          <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5">
+                                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estoque Prod. Acabados</span>
+                                             <div className="flex justify-between items-end">
+                                                <span className="text-xl font-mono font-bold text-white">{stockPA} un</span>
+                                                <div className="text-right">
+                                                   <span className="text-[8px] text-slate-500 uppercase block">Custo Armaz.</span>
+                                                   <span className="text-xs font-mono text-rose-400">
+                                                      {formatCurrency(stockPA * unitStoragePA, activeArena?.currency || 'BRL')}
+                                                   </span>
+                                                </div>
+                                             </div>
+                                          </div>
+                                          <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5">
+                                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estoque MP-A</span>
+                                             <div className="flex justify-between items-end">
+                                                <span className="text-xl font-mono font-bold text-white">{stockMPA} un</span>
+                                                <div className="text-right">
+                                                   <span className="text-[8px] text-slate-500 uppercase block">Custo Armaz.</span>
+                                                   <span className="text-xs font-mono text-rose-400">
+                                                      {formatCurrency(stockMPA * unitStorageMP, activeArena?.currency || 'BRL')}
+                                                   </span>
+                                                </div>
+                                             </div>
+                                          </div>
+                                          <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5">
+                                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Estoque MP-B</span>
+                                             <div className="flex justify-between items-end">
+                                                <span className="text-xl font-mono font-bold text-white">{stockMPB} un</span>
+                                                <div className="text-right">
+                                                   <span className="text-[8px] text-slate-500 uppercase block">Custo Armaz.</span>
+                                                   <span className="text-xs font-mono text-rose-400">
+                                                      {formatCurrency(stockMPB * unitStorageMP, activeArena?.currency || 'BRL')}
+                                                   </span>
+                                                </div>
+                                             </div>
+                                          </div>
+                                       </>
+                                    );
+                                 })()}
                               </div>
                            </div>
 
@@ -1061,7 +1075,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     const priceA = currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpa_price_adjust');
                                     const priceB = currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpb_price_adjust');
                                     const total = (decisions.production.purchaseMPA * priceA) + (decisions.production.purchaseMPB * priceB);
-                                    const interest = currentMacro.interest_rate_tr || 0.02;
+                                    const interest = (currentMacro.interest_rate_tr || 2.0) / 100;
 
                                     if (decisions.production.paymentType === 0) {
                                        return (
@@ -1461,7 +1475,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  type="range"
                                  min="0"
                                  max="20"
-                                 step="1"
+                                 step="0.5"
                                  value={decisions.hr.participationPercent}
                                  onChange={e => updateDecision('hr.participationPercent', parseInt(e.target.value) || 0)}
                                  className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-600 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500 hover:accent-emerald-500"
@@ -1529,7 +1543,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     Requisição de Empréstimo
                                     </h5>
                                     <p className="text-base text-slate-300 leading-relaxed mb-6">
-                                    Solicitação de novo capital via financiamento bancário. Taxa base: {currentMacro?.interest_rate_tr || 2}% ao período + spread de risco. Prazo escolhido afeta o fluxo de amortização.
+                                    Solicitação de novo capital via financiamento bancário. Taxa base: {currentMacro?.interest_rate_tr || 2}% ao período. Prazo escolhido afeta o fluxo de amortização.
                                     </p>
                                     <div className="flex items-center gap-3 text-sm text-rose-300 italic">
                                     <AlertTriangle size={18} />
@@ -1571,7 +1585,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  </div>
 
                                  <div className="pt-4 text-sm text-rose-300 italic">
-                                    Custo financeiro estimado aproximado: R$ {formatCurrency((decisions.finance.loanRequest || 0) * (currentMacro?.interest_rate_tr || 0.02) * (decisions.finance.loanTerm + 1), 'BRL')}
+                                    Custo financeiro estimado aproximado: {formatCurrency(((decisions.finance.loanRequest || 0) * ((currentMacro?.interest_rate_tr || 2.0) / 100) * (decisions.finance.loanTerm + 2)) / 2, activeArena?.currency || 'BRL')}
                                  </div>
                               </div>
                               </div>
@@ -1609,7 +1623,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  </div>
 
                                  <div className="pt-4 text-sm text-emerald-300 italic">
-                                    Rendimento projetado no próximo round: ~R$ {formatCurrency((decisions.finance.application || 0) * (currentMacro?.investment_return_rate || 0.018), 'BRL')}
+                                    Rendimento projetado no próximo round: ~{formatCurrency((decisions.finance.application || 0) * ((currentMacro?.investment_return_rate || 1.8) / 100), activeArena?.currency || 'BRL')}
                                  </div>
                               </div>
                               </div>

@@ -486,7 +486,7 @@ export const calculateProjections = (
         amort = loan.amount / loan.remaining_rounds;
       }
     } else if (loan.type === 'normal') {
-      amort = loan.amount * 0.1; // 10% padrão
+      amort = loan.amount / loan.remaining_rounds;
     } else if (loan.type === 'compulsory') {
       amort = loan.amount; // Compulsório paga tudo no round seguinte
       interest = loan.amount * (sanitize(indicators.interest_rate_tr, 2) / 100) + (loan.amount * (sanitize(indicators.compulsory_loan_agio, 3) / 100));
@@ -520,16 +520,16 @@ export const calculateProjections = (
 
   // Processar Novo Empréstimo Solicitado (Manual)
   const loanRequest = sanitize(decision.finance?.loanRequest, 0);
-  const loanTerm = sanitize(decision.finance?.loanTerm, 0); // 0: 6 rounds, 1: 12 rounds, 2: 24 rounds
-  const loanTermsMap = [6, 12, 24];
-  const selectedTerm = loanTermsMap[loanTerm] || 12;
+  const loanTerm = sanitize(decision.finance?.loanTerm, 0); // 0: 1 round, 1: 2 rounds, 2: 3 rounds
+  const loanTermsMap = [1, 2, 3];
+  const selectedTerm = loanTermsMap[loanTerm] || 1;
 
   if (loanRequest > 0 && !isRJ) {
     currentLoans.push({
       id: `L-REQ-${Math.random().toString(36).substr(2, 5)}`,
       type: 'normal',
       amount: loanRequest,
-      interest_rate: sanitize(indicators.interest_rate_tr, 2) + 2, // 2% de spread para manual
+      interest_rate: sanitize(indicators.interest_rate_tr, 2), // Sem spread conforme diretriz
       term: selectedTerm,
       remaining_rounds: selectedTerm
     });
