@@ -15,8 +15,8 @@ export const sanitize = (val: any, fallback: number): number => {
 
 export const getCumulativeAdjust = (chronogram: any, round: number, key: string): number => {
   let factor = 1;
-  // Reajustes começam a partir do Round 1. O Round 0 é o baseline.
-  for (let i = 1; i <= round; i++) {
+  // Reajustes começam a partir do Round 0.
+  for (let i = 0; i <= round; i++) {
     const rules = chronogram[i];
     const adj = sanitize(rules?.[key], 0);
     // Reajustes são cumulativos, exceto Black Swan que é pontual
@@ -57,6 +57,21 @@ const injectValues = (tree: AccountNode[], values: Record<string, number>, zeroO
   });
 };
 
+/**
+ * Calcula o preço reajustado de um item baseado no round e cronograma.
+ * Centraliza a lógica para evitar duplicidade e confusão entre rounds.
+ * @param basePrice Preço base original
+ * @param key Chave de reajuste no cronograma
+ * @param round Round de REFERÊNCIA (o round cujos resultados estamos vendo/calculando)
+ * @param chronogram Cronograma de regras
+ */
+export const getAdjustedPrice = (basePrice: number, key: string, round: number, chronogram: any): number => {
+  // O reajuste aplicado aos resultados do Round N é o acumulado até Round N-1.
+  // Ex: Resultados de P1 usam reajuste de P0.
+  // Ex: Resultados de P0 usam reajuste de P-1 (nenhum).
+  return basePrice * getCumulativeAdjust(chronogram, round - 1, key);
+};
+
 export const calculateProjections = (
   decision: DecisionData,
   branch: Branch,
@@ -87,7 +102,7 @@ export const calculateProjections = (
 
   const getAdjust = (key: string, fallback: number) => {
     if (round !== undefined && round_rules !== undefined) {
-      return getCumulativeAdjust(round_rules, round, key);
+      return getAdjustedPrice(1, key, round, round_rules);
     }
     return 1 + (fallback / 100);
   };

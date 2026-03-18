@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { saveDecisions, getChampionships, supabase, getTeamSimulationHistory } from '../services/supabase';
 import { DecisionData, Branch, Championship, MachineModel, MacroIndicators, Team, MachineInstance } from '../types';
-import { calculateProjections, sanitize, getCumulativeAdjust } from '../services/simulation';
+import { calculateProjections, sanitize, getCumulativeAdjust, getAdjustedPrice } from '../services/simulation';
 import { calculateESDS } from '../services/gemini';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -77,7 +77,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
       indicators,
       activeTeam,
       [],
-      currentRound,
+      round,
       activeArena.round_rules
     );
   }, [decisions, activeArena, activeTeam, round]);
@@ -821,19 +821,19 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  <div>
                                     <span className="text-slate-400">Alfa:</span>{' '}
                                     <span className="font-mono text-orange-300">
-                                    +{((getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_alpha_price_adjust') - 1) * 100).toFixed(1)}%
+                                    +{((getAdjustedPrice(1, 'machine_alpha_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM) - 1) * 100).toFixed(1)}%
                                     </span>
                                  </div>
                                  <div>
                                     <span className="text-slate-400">Beta:</span>{' '}
                                     <span className="font-mono text-orange-300">
-                                    +{((getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_beta_price_adjust') - 1) * 100).toFixed(1)}%
+                                    +{((getAdjustedPrice(1, 'machine_beta_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM) - 1) * 100).toFixed(1)}%
                                     </span>
                                  </div>
                                  <div>
                                     <span className="text-slate-400">Gama:</span>{' '}
                                     <span className="font-mono text-orange-300">
-                                    +{((getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_gamma_price_adjust') - 1) * 100).toFixed(1)}%
+                                    +{((getAdjustedPrice(1, 'machine_gamma_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM) - 1) * 100).toFixed(1)}%
                                     </span>
                                  </div>
                               </div>
@@ -844,7 +844,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  model="alfa"
                                  val={decisions.machinery.buy.alfa}
                                  onChange={(v: number) => updateDecision('machinery.buy.alfa', v)}
-                                 price={currentMacro.machinery_values.alfa * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_alpha_price_adjust')}
+                                 price={getAdjustedPrice(currentMacro.machinery_values.alfa, 'machine_alpha_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
                                  spec={currentMacro.machine_specs.alfa}
                                  disabled={!currentMacro.allow_machine_sale}
                               />
@@ -852,7 +852,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  model="beta"
                                  val={decisions.machinery.buy.beta}
                                  onChange={(v: number) => updateDecision('machinery.buy.beta', v)}
-                                 price={currentMacro.machinery_values.beta * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_beta_price_adjust')}
+                                 price={getAdjustedPrice(currentMacro.machinery_values.beta, 'machine_beta_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
                                  spec={currentMacro.machine_specs.beta}
                                  disabled={!currentMacro.allow_machine_sale}
                               />
@@ -860,7 +860,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                  model="gama"
                                  val={decisions.machinery.buy.gama}
                                  onChange={(v: number) => updateDecision('machinery.buy.gama', v)}
-                                 price={currentMacro.machinery_values.gama * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'machine_gamma_price_adjust')}
+                                 price={getAdjustedPrice(currentMacro.machinery_values.gama, 'machine_gamma_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
                                  spec={currentMacro.machine_specs.gama}
                                  disabled={!currentMacro.allow_machine_sale}
                               />
@@ -890,7 +890,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </h5>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                  {(() => {
-                                    const storageAdjust = getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'storage_cost_adjust');
+                                    const storageAdjust = getAdjustedPrice(1, 'storage_cost_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
                                     const unitStoragePA = (currentMacro.prices.storage_finished || 5) * storageAdjust;
                                     const unitStorageMP = (currentMacro.prices.storage_mp || 2) * storageAdjust;
                                     
@@ -987,10 +987,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     />
                                     <div className="flex justify-between items-center pt-2">
                                        <div className="text-xs text-slate-500 italic">
-                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_a_adjust'), activeArena?.currency || 'BRL')}</span>
+                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(getAdjustedPrice(currentMacro.prices.mp_a, 'raw_material_a_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL')}</span>
                                        </div>
                                        <div className="text-xs text-slate-500 italic">
-                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPA * currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_a_adjust'), activeArena?.currency || 'BRL')}</span>
+                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPA * getAdjustedPrice(currentMacro.prices.mp_a, 'raw_material_a_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL')}</span>
                                        </div>
                                     </div>
                                     <p className="text-xs text-slate-500 italic pt-2">
@@ -1031,10 +1031,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     />
                                     <div className="flex justify-between items-center pt-2">
                                        <div className="text-xs text-slate-500 italic">
-                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_b_adjust'), activeArena?.currency || 'BRL')}</span>
+                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(getAdjustedPrice(currentMacro.prices.mp_b, 'raw_material_b_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL')}</span>
                                        </div>
                                        <div className="text-xs text-slate-500 italic">
-                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPB * currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_b_adjust'), activeArena?.currency || 'BRL')}</span>
+                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPB * getAdjustedPrice(currentMacro.prices.mp_b, 'raw_material_b_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM), activeArena?.currency || 'BRL')}</span>
                                        </div>
                                     </div>
                                     <p className="text-xs text-slate-500 italic pt-2">
@@ -1072,8 +1072,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <div className="mt-6 p-4 bg-slate-950/40 rounded-2xl border border-white/5 space-y-3">
                                  <h6 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Cronograma de Desembolso Estimado (com juros)</h6>
                                  {(() => {
-                                    const priceA = currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_a_adjust');
-                                    const priceB = currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_b_adjust');
+                                    const priceA = getAdjustedPrice(currentMacro.prices.mp_a, 'raw_material_a_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+                                    const priceB = getAdjustedPrice(currentMacro.prices.mp_b, 'raw_material_b_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
                                     const total = (decisions.production.purchaseMPA * priceA) + (decisions.production.purchaseMPB * priceB);
                                     const interest = (currentMacro.interest_rate_tr || 2.0) / 100;
 

@@ -14,7 +14,7 @@ import { Championship, UserRole, Team, MacroIndicators } from '../types';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO } from '../constants';
 import { generateDynamicMarketNews } from '../services/gemini';
 import { supabase } from '../services/supabase';
-import { getCumulativeAdjust } from '../services/simulation';
+import { getCumulativeAdjust, getAdjustedPrice } from '../services/simulation';
 
 interface GazetteViewerProps {
   arena: Championship;
@@ -235,16 +235,16 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                      <div className="bg-slate-900/60 p-12 rounded-[5rem] border border-white/10 shadow-3xl">
                         <h3 className="text-2xl font-black text-white uppercase italic mb-10 flex items-center gap-4"><Coins className="text-orange-500"/> Custos de Insumos</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                           <CostUnit label="Matéria-Prima A" val={currentMacro.prices.mp_a * getCumulativeAdjust(arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_a_adjust')} color="text-blue-400" />
-                           <CostUnit label="Matéria-Prima B" val={currentMacro.prices.mp_b * getCumulativeAdjust(arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_b_adjust')} color="text-indigo-400" />
+                           <CostUnit label="Matéria-Prima A" val={getAdjustedPrice(currentMacro.prices.mp_a, 'raw_material_a_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-blue-400" />
+                           <CostUnit label="Matéria-Prima B" val={getAdjustedPrice(currentMacro.prices.mp_b, 'raw_material_b_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-indigo-400" />
                         </div>
                      </div>
                      <div className="bg-slate-900/60 p-12 rounded-[5rem] border border-white/10 shadow-3xl">
                         <h3 className="text-2xl font-black text-white uppercase italic mb-10 flex items-center gap-4"><Package className="text-blue-500"/> Custos com Estocagem e Distribuição (unid)</h3>
                         <div className="grid grid-cols-2 gap-10">
-                           <CostUnit label="Armazenagem MP" val={currentMacro.prices.storage_mp * getCumulativeAdjust(arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'storage_cost_adjust')} color="text-slate-400" />
-                           <CostUnit label="Armazenagem PA" val={currentMacro.prices.storage_finished * getCumulativeAdjust(arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'storage_cost_adjust')} color="text-slate-400" />
-                           <CostUnit label="Distribuição PA" val={currentMacro.prices.distribution_unit * getCumulativeAdjust(arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'distribution_cost_adjust')} color="text-orange-400" />
+                           <CostUnit label="Armazenagem MP" val={getAdjustedPrice(currentMacro.prices.storage_mp, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" />
+                           <CostUnit label="Armazenagem PA" val={getAdjustedPrice(currentMacro.prices.storage_finished, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" />
+                           <CostUnit label="Distribuição PA" val={getAdjustedPrice(currentMacro.prices.distribution_unit, 'distribution_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-orange-400" />
                         </div>
                      </div>
                   </div>
