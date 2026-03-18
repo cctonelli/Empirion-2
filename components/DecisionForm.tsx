@@ -987,10 +987,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     />
                                     <div className="flex justify-between items-center pt-2">
                                        <div className="text-xs text-slate-500 italic">
-                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpa_price_adjust'), activeArena?.currency || 'BRL')}</span>
+                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_a_adjust'), activeArena?.currency || 'BRL')}</span>
                                        </div>
                                        <div className="text-xs text-slate-500 italic">
-                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPA * currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpa_price_adjust'), activeArena?.currency || 'BRL')}</span>
+                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPA * currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_a_adjust'), activeArena?.currency || 'BRL')}</span>
                                        </div>
                                     </div>
                                     <p className="text-xs text-slate-500 italic pt-2">
@@ -1031,10 +1031,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                                     />
                                     <div className="flex justify-between items-center pt-2">
                                        <div className="text-xs text-slate-500 italic">
-                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpb_price_adjust'), activeArena?.currency || 'BRL')}</span>
+                                          Preço Unit. (ajustado): <span className="text-orange-400 font-bold">{formatCurrency(currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_b_adjust'), activeArena?.currency || 'BRL')}</span>
                                        </div>
                                        <div className="text-xs text-slate-500 italic">
-                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPB * currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpb_price_adjust'), activeArena?.currency || 'BRL')}</span>
+                                          Total: <span className="text-orange-400 font-bold">{formatCurrency(decisions.production.purchaseMPB * currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_b_adjust'), activeArena?.currency || 'BRL')}</span>
                                        </div>
                                     </div>
                                     <p className="text-xs text-slate-500 italic pt-2">
@@ -1072,8 +1072,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               <div className="mt-6 p-4 bg-slate-950/40 rounded-2xl border border-white/5 space-y-3">
                                  <h6 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Cronograma de Desembolso Estimado (com juros)</h6>
                                  {(() => {
-                                    const priceA = currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpa_price_adjust');
-                                    const priceB = currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round - 1, 'mpb_price_adjust');
+                                    const priceA = currentMacro.prices.mp_a * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_a_adjust');
+                                    const priceB = currentMacro.prices.mp_b * getCumulativeAdjust(activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM, round, 'raw_material_b_adjust');
                                     const total = (decisions.production.purchaseMPA * priceA) + (decisions.production.purchaseMPB * priceB);
                                     const interest = (currentMacro.interest_rate_tr || 2.0) / 100;
 
