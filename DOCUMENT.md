@@ -126,7 +126,20 @@ O sistema suporta operações multi-regionais (até 15 regiões) com moedas din�
   6. Gatilho de Empréstimo Compulsório.
   7. Auditoria e Premiações.
 
+### Inteligência da Oracle Gazette (`GazetteViewer.tsx`)
+- **Regra de Visualização de Custos (v2026-04):** A Gazette exibe os custos projetados para o round selecionado (ex: P1), aplicando os índices de reajuste definidos no cronograma da arena sobre os preços base do `MacroIndicator` vigente.
+- **Sincronização P0 -> P1:** No Round 1 (P1), os valores exibidos já incorporam os reajustes acumulados do Round 0 (P0), garantindo que a equipe tome decisões com os preços reais que serão praticados na aquisição de insumos.
+
 ## Versionamento
+
+### v2026-04 - RLS Sync & Gazette Intelligence
+- **Data:** Abril de 2026
+- **Motivo:** Fortalecimento da segurança de dados via Supabase RLS e precisão informativa na Oracle Gazette.
+- **Diferenças:**
+  - **RLS Master Data:** Implementação de políticas granulares no `database_rls.sql` para proteger `user_profiles`, `championships`, `teams` e `companies`.
+  - **Gazette Preview:** Ajuste na lógica de exibição para mostrar preços realistas (ajustados pelo cronograma) no início de cada round.
+  - **Moeda e Máscara:** Padronização de 4 casas decimais e máscara de moeda dinâmica conforme configuração da Arena.
+- **Status:** Em produção.
 
 ### v2025-10 - Implementação de Empréstimo Compulsório
 - **Data:** Outubro de 2025
