@@ -1,0 +1,14 @@
+# Supabase Configuration for EMPIRION
+
+project_id = "empirion-oracle"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://*.supabase.co"]
+
+[api]
+port = 54321
+schemas = ["public", "auth"]
+
+[db]
+port = 54322
