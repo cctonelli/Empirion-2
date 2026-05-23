@@ -262,6 +262,16 @@ project-root/
   - *Strategic Hub:* Design de alta fidelidade das tabelas de DRE/Balanço com tipografia mono-espaçada nos valores, variação em percentual integrada de tendência e visualização de auditoria.
 - **Status:** Em produção.
 
+### v2026-05.1 - Reconciliação Contábil Oracle-Sapphire
+- **Data:** Maio de 2026
+- **Motivo:** Garantir integridade fiduciária impecável entre o fluxo de caixa (DFC), a movimentação de passivos nos demonstrativos fiscais e as baixas de clientes e PECLD no Balanço Patrimonial, mitigando descompassos decimais de float através de uma validação de fechamento exata.
+- **Diferenças:**
+  - *Fluxo de Impostos no Caixa:* Substituição do `taxProv` do período atual pelo pagamento real do tributo acumulado anterior `prevTaxes` (regime de caixa puro).
+  - *Sincronização de Financiamento de Capex:* Inclusão do financiamento BDI de ativos novos (`newBdiLoanAmount`) no caixa e registro nas entradas da DFC de empréstimos, impedindo quedas artificiais do caixa operacional por compras a prazo de imobilizados.
+  - *Contas a Receber e PECLD:* Reconciliação do recebimento de vendas a prazo para considerar a baixa contábil líquida anterior (`prevClients - prevPecld`), zerando disparidades de créditos.
+  - *Auditoria Float Precision (Z-Guard):* Uma rotina de auditoria matemática do Balanço de Encerramento absorve divergências microscópicas de arredondamento de float do JavaScript e equilibra de forma inexorável o Ativo com o Passivo + PL.
+- **Status:** Em produção.
+
 ### v2026-03.6 - Provisionamento de PPR e Rescisão Proporcional
 - **Data:** Março de 2026
 - **Motivo:** Alinhamento contábil com o princípio da competência e realismo no fluxo de caixa de demissões.

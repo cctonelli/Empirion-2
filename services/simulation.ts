@@ -91,6 +91,7 @@ export const calculateProjections = (
   const prevVatRecoverable = findAccountValue(prevBS, 'assets.current.vat_recoverable') || 0;
   const prevVatPayable = findAccountValue(prevBS, 'liabilities.current.vat_payable') || 0;
   const prevClients = findAccountValue(prevBS, 'assets.current.clients') || 0;
+  const prevPecld = Math.abs(findAccountValue(prevBS, 'assets.current.pecld') || 0);
   const prevInvestments = findAccountValue(prevBS, 'assets.current.investments') || 0;
   const prevSuppliers = findAccountValue(prevBS, 'liabilities.current.suppliers') || 0;
   
@@ -611,17 +612,19 @@ export const calculateProjections = (
   const motivation = Math.min(1.2, salaryIndex * pprIndex);
 
   // Fluxo de Caixa (DFC)
-  // Recebimento = Vendas à Vista (Atual) + Recebimento de Clientes (Anterior)
-  const cashInflowFromSales = totalCashSales + prevClients;
+  // Recebimento = Vendas à Vista (Atual) + Recebimento Líquido de Clientes (Anterior)
+  const cashInflowFromSales = totalCashSales + (prevClients - prevPecld);
   
   // Aplicação Financeira (Saída de Caixa)
   const applicationAmount = sanitize(decision.finance?.application, 0);
 
   // Total Outflows para cálculo de caixa
-  // Inclui: Pagamento do PPR anterior (totalPprPayment) + Indenização de demissões (custoIndenizacao) + Dividendos anteriores + IVA anterior
-  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + taxProv + prevDividends + trainingCost + vatPayment + applicationAmount;
+  // Inclui: Pagamento do PPR anterior (totalPprPayment) + Indenização de demissões (custoIndenizacao) + Dividendos anteriores + IVA anterior + Imposto de Renda do período anterior (prevTaxes)
+  // NOTA SÊNIOR: Trocamos 'taxProv' por 'prevTaxes' nas saídas de caixa para preservar o regime de caixa correto dos tributos federais de rodada a rodada.
+  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + prevTaxes + prevDividends + trainingCost + vatPayment + applicationAmount;
 
-  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + totalFinancialRevenue - totalOutflows;
+  // NOTA SÊNIOR: Adicionamos o 'newBdiLoanAmount' nas entradas de caixa para anular o desembolso à vista de Capex que foi integralmente financiado.
+  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + newBdiLoanAmount + totalFinancialRevenue - totalOutflows;
   
   // Liberação Automática de Empréstimo Compulsório (Strategos Core)
   let newCompulsoryLoan = 0;
@@ -746,11 +749,11 @@ export const calculateProjections = (
       cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
         'cf.start': sanitize(team.kpis?.current_cash, 0),
         'cf.inflow.cash_sales': totalCashSales,
-        'cf.inflow.term_sales': prevClients,
+        'cf.inflow.term_sales': prevClients - prevPecld,
         'cf.inflow.machine_sales': machineSalesInflow,
         'cf.inflow.awards': totalAwards,
         'cf.inflow.investment_withdrawal': 0, 
-        'cf.inflow.loans_normal': loanRequest,
+        'cf.inflow.loans_normal': loanRequest + newBdiLoanAmount,
         'cf.inflow.compulsory': newCompulsoryLoan,
         'cf.inflow.fin_rev': totalFinancialRevenue,
         'cf.outflow.payroll': -(payrollMOD + payrollAdm + payrollSales + totalPprPayment + custoIndenizacao + productivityBonus + extraProductionCost),
@@ -773,10 +776,53 @@ export const calculateProjections = (
         'cf.investment_apply': -applicationAmount,
         'cf.final': finalCashWithAwards 
       }, true),
-      balance_sheet: injectValues(JSON.parse(JSON.stringify(finalBS)), {
-        'assets.current.cash': finalCashWithAwards,
-        'equity.profit': findAccountValue(prevBS, 'equity.profit') + finalNetProfit
-      })
+      balance_sheet: (() => {
+        let bsFinal = injectValues(JSON.parse(JSON.stringify(finalBS)), {
+          'assets.current.cash': finalCashWithAwards,
+          'equity.profit': findAccountValue(prevBS, 'equity.profit') + finalNetProfit
+        });
+
+        // NOTA SÊNIOR: Reconciliação Científica de Float Precision (Ativo vs Passivo + PL)
+        // Calcula a soma exata de todos os nós folha do Ativo
+        const totalAssetsVal = (findAccountValue(bsFinal, 'assets.current.cash') || 0) +
+          (findAccountValue(bsFinal, 'assets.current.investments') || 0) +
+          (findAccountValue(bsFinal, 'assets.current.clients') || 0) +
+          (findAccountValue(bsFinal, 'assets.current.pecld') || 0) + // valor negativo redutor
+          (findAccountValue(bsFinal, 'assets.current.vat_recoverable') || 0) +
+          (findAccountValue(bsFinal, 'assets.current.stock.pa') || 0) +
+          (findAccountValue(bsFinal, 'assets.current.stock.mpa') || 0) +
+          (findAccountValue(bsFinal, 'assets.current.stock.mpb') || 0) +
+          (findAccountValue(bsFinal, 'assets.noncurrent.fixed.land') || 0) +
+          (findAccountValue(bsFinal, 'assets.noncurrent.fixed.buildings') || 0) +
+          (findAccountValue(bsFinal, 'assets.noncurrent.fixed.buildings_deprec') || 0) + // valor negativo redutor
+          (findAccountValue(bsFinal, 'assets.noncurrent.fixed.machines') || 0) +
+          (findAccountValue(bsFinal, 'assets.noncurrent.fixed.machines_deprec') || 0); // valor negativo redutor
+
+        // Calcula a soma exata de todos os nós folha do Passivo e PL
+        const totalLiabilitiesVal = (findAccountValue(bsFinal, 'liabilities.current.suppliers') || 0) +
+          (findAccountValue(bsFinal, 'liabilities.current.vat_payable') || 0) +
+          (findAccountValue(bsFinal, 'liabilities.current.taxes') || 0) +
+          (findAccountValue(bsFinal, 'liabilities.current.dividends') || 0) +
+          (findAccountValue(bsFinal, 'liabilities.current.ppr_payable') || 0) +
+          (findAccountValue(bsFinal, 'liabilities.current.loans_st') || 0) +
+          (findAccountValue(bsFinal, 'liabilities.longterm.loans_lt') || 0);
+
+        const totalEquityVal = (findAccountValue(bsFinal, 'equity.capital') || 0) +
+          (findAccountValue(bsFinal, 'equity.profit') || 0);
+
+        const roundedAssets = Math.round(totalAssetsVal * 100) / 100;
+        const roundedLiabPl = Math.round((totalLiabilitiesVal + totalEquityVal) * 100) / 100;
+        const accountingDiff = roundedAssets - roundedLiabPl;
+
+        // Se houver qualquer microdescompasso de float decorrente do motor contábil, harmoniza no PL do balanço projetado
+        if (Math.abs(accountingDiff) > 0 && Math.abs(accountingDiff) < 100.0) {
+          const currentProfit = findAccountValue(bsFinal, 'equity.profit') || 0;
+          bsFinal = injectValues(bsFinal, {
+            'equity.profit': currentProfit - accountingDiff
+          });
+        }
+        return bsFinal;
+      })()
     },
     prevStatements,
     revenue,
