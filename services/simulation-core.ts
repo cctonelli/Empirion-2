@@ -1,11 +1,11 @@
-import { DecisionData, Branch, EcosystemConfig, MacroIndicators, Team, ProjectionResult, KPIs, AccountNode, MachineInstance, MachineModel } from '../types';
+import { DecisionData, Branch, EcosystemConfig, MacroIndicators, Team, ProjectionResult, KPIs, AccountNode, MachineInstance, MachineModel, CreditRating, ESDSCalculation } from '../types';
 import { INITIAL_FINANCIAL_TREE } from '../constants';
 import { sanitize, getAdjustedPrice, findAccountValue } from './simulation';
 
 /**
- * ORACLE ACCOUNTING STRATEGOS - NUCLEO DE INTEGRIDADE CONTABIL E GESTÃO DE ESTOQUES (v19.5 SAPPHIRE)
- * Esta classe é responsável por implementar a consolidação tripla e auditoria fina de estoque
- * através de um Kardex estruturado (fluxo quantitativo e valorizado de MP e PA via WAC).
+ * ORACLE ACCOUNTING STRATEGOS - NÚCLEO DE INTEGRIDADE CONTÁBIL, KPI ENGINE E E-SDS (v19.5 SAPPHIRE)
+ * Esta classe é responsável por implementar a consolidação tripla de balanços,
+ * o cálculo de todos os KPIs corporativos unificados e o motor analítico E-SDS v1.2 completo.
  */
 
 export interface KardexItem {
@@ -44,6 +44,23 @@ export interface CPVDetails {
   estoqueFinalPA: number;
   totalCPV: number;
   custoUnitarioProducao: number;
+}
+
+/**
+ * Auxiliar para injetar ou ajustar valores em contas mapeadas
+ */
+function injectValues(tree: AccountNode[], values: Record<string, number>): AccountNode[] {
+  const deepClone = (nodes: AccountNode[]): AccountNode[] => {
+    return nodes.map(node => {
+      let newVal = node.value;
+      if (values[node.id] !== undefined) {
+        newVal = values[node.id];
+      }
+      const newChildren = node.children ? deepClone(node.children) : undefined;
+      return { ...node, value: newVal, children: newChildren };
+    });
+  };
+  return deepClone(tree);
 }
 
 /**
@@ -122,6 +139,419 @@ export function validateTripleConsistency(statements: any): { isValid: boolean; 
     warnings
   };
 }
+
+/**
+ * Motor centralizado para cálculo do E-SDS v1.2 de forma robusta e multissetorial.
+ * Composto por 6 pilares ponderados com pesos dinâmicos ajustados especificamente por setor (Branch).
+ */
+export const computeESDSDeterministic = (
+  current: any,
+  history: any[],
+  branch: Branch,
+  config: any = {}
+): ESDSCalculation => {
+  // Helper interno de extração de valores de subcontas ou KPIs pré-calculados
+  const getVal = (state: any, path: string): number => {
+    if (!state) return 0;
+    
+    // De preferência, extrair do objeto de KPIs calculado diretamente no primeiro nível
+    if (state[path] !== undefined) return state[path];
+    
+    // Senão, tentar descer na árvore financeira
+    const statements = state.statements || {};
+    const dre = statements.dre || [];
+    const dfc = statements.cash_flow || [];
+    const bp = statements.balance_sheet || [];
+    const all = [...dre, ...dfc, ...bp];
+
+    const map: Record<string, string> = {
+      'fco_livre': 'cf.inflow.cash_sales', // Simplificação heurística
+      'receita_liquida': 'rev',
+      'ebitda': 'ebitda',
+      'caixa': 'assets.current.cash',
+      'passivo_total': 'liabilities',
+      'pl': 'equity',
+      'divida_liquida': 'divida_liquida',
+      'passivo_circulante': 'liabilities.current',
+      'despesas_operacionais_diarias': 'opex.adm'
+    };
+
+    const accountId = map[path] || path;
+    return Math.abs(findAccountValue(all, accountId));
+  };
+
+  // Pesos Dinâmicos Customizados por Setor (Branch-Specific Weights)
+  let weights = {
+    p1: 4.0, // Fluxo de Caixa Livre Operacional
+    p2: 3.0, // Crescimento Sustentável
+    p3: 2.0, // Margens e DuPont
+    p4: 1.5, // Dias de Caixa e Liquidez de Giro
+    p5: 3.0, // Penalizador de Alavancagem e Endividamento (Valor Negativo)
+    p6: 1.2  // Penalizador de Imprecisão Cambial e de Vendas (Valor Negativo)
+  };
+
+  if (branch === 'agribusiness') {
+    weights = {
+      p1: 3.5,
+      p2: 2.5,
+      p3: 2.0,
+      p4: 2.5, // Maior impacto pela necessidade de fluxo de safra
+      p5: 2.5,
+      p6: 2.0  // Elevado risco de volatilidade de commodities e câmbio
+    };
+  } else if (branch === 'services') {
+    weights = {
+      p1: 4.0,
+      p2: 3.0,
+      p3: 3.0, // Ponderação alta de margem e recorrência recorrente
+      p4: 1.0, 
+      p5: 1.5, // Menor dependência de máquinas pesadas ou ativo imobilizado
+      p6: 0.8  // Baixo impacto de fretes marítimos ou câmbio direto
+    };
+  }
+
+  // --- PILAR 1: GERAÇÃO DE CAIXA OPERACIONAL LÍQUIDA ---
+  // Relação de FCO Livre sobre as saídas e passivos operacionais exigíveis diretos
+  const fcoLivre = getVal(current, 'fco_livre');
+  const passivoCirc = getVal(current, 'passivo_circulante');
+  const opexProj = current.despesas_operacionais_projetadas_proxima_rodada || (getVal(current, 'despesas_operacionais_diarias') * 30 * 1.05);
+  const denomP1 = passivoCirc + opexProj;
+  const p1 = denomP1 > 0 ? fcoLivre / denomP1 : 0;
+
+  // --- PILAR 2: SUSTENTABILIDADE DO CRESCIMENTO ---
+  // Delta de receita contra custo de endividamento ajustado à alavancagem
+  const receitaAtual = getVal(current, 'receita_liquida');
+  const historyKpis = history.map(h => h.kpis || h.state || h);
+  const receitaList = [receitaAtual, ...historyKpis.map(h => getVal(h, 'receita_liquida'))];
+  
+  const deltas: number[] = [];
+  for (let i = 1; i < Math.min(4, receitaList.length); i++) {
+    const recAtual = receitaList[i - 1];
+    const recAnt = receitaList[i];
+    deltas.push(recAnt !== 0 ? (recAtual - recAnt) / Math.abs(recAnt) : 0);
+  }
+  const deltaMedia = deltas.length > 0 ? deltas.reduce((a, b) => a + b, 0) / deltas.length : 0;
+  const custoDivida = getVal(current, 'custo_medio_divida') || 0.05;
+  const alavancagemEfetiva = getVal(current, 'alavancagem_efetiva') || 1;
+  const p2 = deltaMedia / (custoDivida * alavancagemEfetiva + 0.0001);
+
+  // --- PILAR 3: ANÁLISE DUPONT & MARGENS ---
+  // Ponderador integrado de Margem operacionais e fator setorial de recorrência de vendas
+  const defaultRecurrence: Record<string, number> = {
+    'agribusiness': 0.2,
+    'services': 0.6,
+    'industrial': 0.1
+  };
+  const recorrencia = config.recorrencia_percent?.[branch] || defaultRecurrence[branch] || 0;
+  const ebitda = getVal(current, 'ebitda');
+  const p3 = (ebitda + receitaAtual * recorrencia) / Math.max(receitaAtual, 1);
+
+  // --- PILAR 4: COBERTURA DE GIRO E DIAS DE CAIXA ---
+  // Medição de segurança dos dias de caixa com decaimento logístico conforme o setor
+  const decayConstant = branch === 'agribusiness' ? 90 : branch === 'services' ? 45 : 60;
+  const caixa = getVal(current, 'caixa');
+  const opexDiaria = getVal(current, 'despesas_operacionais_diarias') || 1;
+  const diasCaixa = caixa / Math.max(opexDiaria, 1);
+  const p4 = 10 * (1 - Math.exp(-diasCaixa / decayConstant));
+
+  // --- PILAR 5: ALAVANCAGEM & CONCENTRAÇÃO (Penalizador) ---
+  // Agressividade de capital de curto prazo frente ao Patrimônio Líquido
+  const passivoTotal = getVal(current, 'passivo_total');
+  const pl = getVal(current, 'pl');
+  const alavancagemBruta = passivoTotal / Math.max(pl, 1);
+  const percentCurto = (getVal(current, 'percentual_divida_curto_prazo') || 0) / 100;
+  let p5 = Math.max(0, alavancagemBruta - 3) * (1 + percentCurto);
+  if (pl <= 0) p5 = 10 * (1 + percentCurto); // Penalidade extrema para insolvência iminente
+
+  // --- PILAR 6: VOLATILIDADE CAMBIAL E DE RECEITA (Penalizador) ---
+  // Coeficiente de variação histórica do FCO integrado às perdas cambiais potenciais
+  const fcoList = [fcoLivre, ...historyKpis.map(h => getVal(h, 'fco_livre'))];
+  const meanFCO = fcoList.reduce((a, b) => a + b, 0) / fcoList.length || 0.0001;
+  const variance = fcoList.reduce((sum, x) => sum + (x - meanFCO) ** 2, 0) / fcoList.length;
+  const stdDev = Math.sqrt(variance);
+  const cv = Math.abs(meanFCO) > 0.0001 ? stdDev / Math.abs(meanFCO) : (stdDev > 0 ? 10 : 0);
+  
+  // Fator cambial dinâmico (com base nas taxas BRL / GBP nos indicadores)
+  const brlRate = current.brl_rate || 5.0;
+  const gbpRate = current.gbp_rate || 6.2;
+  const exchangeVolatility = Math.abs(gbpRate / brlRate - 1.24) * 2; // Desvio da taxa de referência histórica
+
+  const volMultiplier = branch === 'agribusiness' ? 0.8 : branch === 'industrial' ? 0.5 : 0.3;
+  const p6 = (cv + exchangeVolatility) * volMultiplier;
+
+  // CÁLCULO GERAL PONDERADO DO SCORE
+  const esds_raw = (weights.p1 * p1) + (weights.p2 * p2) + (weights.p3 * p3) + (weights.p4 * p4) - (weights.p5 * p5) - (weights.p6 * p6);
+
+  // Mapeamento categórico das zonas de solvência
+  let zone: any = 'Verde';
+  if (esds_raw >= 8.0) zone = 'Azul';
+  else if (esds_raw >= 5.5) zone = 'Verde';
+  else if (esds_raw >= 3.0) zone = 'Amarelo';
+  else if (esds_raw >= 1.5) zone = 'Laranja';
+  else zone = 'Vermelho';
+
+  // Detecção e rebaixamento automático por limites críticos de cobertura de juros
+  const dividaLiquida = getVal(current, 'divida_liquida');
+  const netDebtToEbitda = ebitda > 0 ? dividaLiquida / ebitda : 10;
+  if (netDebtToEbitda > 6.0 && (zone === 'Azul' || zone === 'Verde' || zone === 'Amarelo')) {
+    zone = 'Laranja';
+  }
+
+  // Identificação sistemática dos maiores gargalos táticos (Top Gargalos)
+  const top_gargalos: { name: string; impact: number; percentage: number; }[] = [];
+  const main_drivers: string[] = [];
+  
+  if (p1 < 0.4) {
+    top_gargalos.push({ 
+      name: 'Geração de Caixa Operacional Limitada', 
+      impact: Math.round(Math.min(10, (1 - p1) * 8)), 
+      percentage: Math.round(Math.max(0, Math.min(100, 100 * (1 - p1)))) 
+    });
+    main_drivers.push('Fluxo operacional de caixa negativo ou insuficiente para cobertura ordinária de despesas');
+  }
+  if (p2 < 0.2) {
+    top_gargalos.push({ 
+      name: 'Insustentabilidade de Expansão', 
+      impact: Math.round(Math.min(10, (1 - p2) * 8)), 
+      percentage: Math.round(Math.max(0, Math.min(100, 100 * (1 - p2)))) 
+    });
+    main_drivers.push('O ritmo de crescimento setorial é menor que o custo médio ponderado da estrutura de capital');
+  }
+  if (p4 < 3) {
+    top_gargalos.push({ 
+      name: 'Giro Crítico / Margem de Caixa', 
+      impact: Math.round(Math.min(10, (1 - p4/10) * 8)), 
+      percentage: Math.round(Math.max(0, Math.min(100, 100 * (1 - p4/10)))) 
+    });
+    main_drivers.push('Reserva financeira abaixo do nível de alerta de cobertura de desembolso operacional diário');
+  }
+  if (p5 > 2.5) {
+    top_gargalos.push({ 
+      name: 'Sobre-alavancagem Bancária/Fornecedores', 
+      impact: Math.round(Math.min(10, p5 * 1.5)), 
+      percentage: Math.round(Math.min(100, p5 * 10)) 
+    });
+    main_drivers.push('Alto comprometimento patrimonial e perfil excessivo de vencimentos concentrado no curto prazo');
+  }
+  if (p6 > 1.5) {
+    top_gargalos.push({ 
+      name: 'Instabilidade de Receita / Exposição Cambial', 
+      impact: Math.round(Math.min(10, p6 * 1.5)), 
+      percentage: Math.round(Math.min(100, p6 * 10)) 
+    });
+    main_drivers.push('Alta volatilidade do fluxo de caixa ordinário incrementada por descompassos cambiais');
+  }
+
+  const gargalo_principal = p5 > 2.5 ? 'Crédito e Alavancagem' : 
+                            p1 < 0.4 ? 'Operacional / Caixa' : 
+                            p4 < 3 ? 'Liquidez de Curto Prazo' : 'Mercado';
+
+  const esdsValue = Math.max(0, Math.min(10, esds_raw));
+
+  return {
+    esds_raw,
+    esds_display: esdsValue,
+    zone,
+    top_gargalos, 
+    gargalo_principal,
+    main_drivers,
+    warnings: [],
+    is_estimated: history.length < 2,
+    gemini_insights: main_drivers.join('. ') || "Solvência financeira saudável sob as regras atuais."
+  };
+};
+
+/**
+ * Consolida, refina e computa todos os KPIs contábeis de ponta a ponta
+ * a partir das demonstrações financeiras geradas, unificando os cálculos
+ * e bloqueando redundâncias do frontend.
+ */
+export const calculateKpisFromStatements = (params: {
+  statements: any;
+  prevStatements?: any;
+  revenue: number;
+  netProfit: number;
+  operatingProfit: number;
+  totalAwards: number;
+  finalCash: number;
+  prevEquity: number;
+  prevInvestments: number;
+  applicationAmount: number;
+  totalMachineryCost: number;
+  buildingsCost: number;
+  totalMachineryDeprec: number;
+  newBuildingsDeprecAccum: number;
+  unitsProduced: number;
+  totalUnitsSold: number;
+  closingStockPA: number;
+  closingStockValuePA: number;
+  unitCPP: number;
+  wacUnit: number;
+  periodDepreciation: number;
+  weightedAvgPrice: number;
+  totalRevenue: number;
+  prevStockValue: number;
+  pmr: number;
+  pmp: number;
+  indicators: MacroIndicators;
+  branch: Branch;
+  history: any[];
+  supplierInterestExpenses: number;
+  emergencyPurchaseExpenses: number;
+  emergencyUnitsTotal: number;
+  currentMachines: any[];
+  currentLoans: any[];
+  stockQuantities: any;
+}): any => {
+  const { statements, prevStatements = {}, revenue, netProfit, operatingProfit, totalAwards, finalCash, prevEquity, prevInvestments, applicationAmount, totalMachineryCost, buildingsCost, totalMachineryDeprec, newBuildingsDeprecAccum, unitsProduced, totalUnitsSold, closingStockPA, closingStockValuePA, unitCPP, wacUnit, periodDepreciation, weightedAvgPrice, totalRevenue, prevStockValue, pmr, pmp, indicators, branch, history, supplierInterestExpenses, emergencyPurchaseExpenses, emergencyUnitsTotal, currentMachines, currentLoans, stockQuantities } = params;
+  
+  const finalBS = statements.balance_sheet;
+  const totalAssets = findAccountValue(finalBS, 'assets');
+  const totalEquity = findAccountValue(finalBS, 'equity');
+  const currentAssets = findAccountValue(finalBS, 'assets.current');
+  const currentLiabilities = findAccountValue(finalBS, 'liabilities.current');
+  const totalLiabilities = findAccountValue(finalBS, 'liabilities');
+
+  // TSR (Total Shareholder Return) - Baseado no crescimento real do equity
+  const tsr = ((totalEquity - prevEquity) / prevEquity) * 100;
+
+  // Índices de Liquidez e Alavancagem
+  const liquidityCurrent = currentLiabilities > 0 ? currentAssets / currentLiabilities : 2;
+  const solvencyIndex = totalLiabilities > 0 ? totalAssets / totalLiabilities : 5;
+
+  // NCG (Necessidade de Capital de Giro) - Operacional
+  const ncg = (findAccountValue(finalBS, 'assets.current.clients') + closingStockValuePA + findAccountValue(finalBS, 'assets.current.vat_recoverable')) - 
+              (findAccountValue(finalBS, 'liabilities.current.suppliers') + findAccountValue(finalBS, 'liabilities.current.taxes') + findAccountValue(finalBS, 'liabilities.current.dividends') + findAccountValue(finalBS, 'liabilities.current.ppr_payable') + findAccountValue(finalBS, 'liabilities.current.vat_payable'));
+  
+  // Saldo de Tesouraria (ST) - Financeiro líquido
+  const st = (finalCash + (prevInvestments + applicationAmount)) - findAccountValue(finalBS, 'liabilities.current.loans_st');
+  
+  // Efeito Tesoura (Scissors Effect) - Diferença entre NCG e ST em dias de receita
+  const scissorsEffectValue = ncg - st;
+  const dailyRevenue = revenue / 90; 
+  const scissorsEffect = dailyRevenue > 0 ? (scissorsEffectValue / dailyRevenue) : 0;
+
+  // Z-Score de Kanitz de Solvência
+  const x1_k = totalEquity > 0 ? netProfit / totalEquity : 0;
+  const x2_k = liquidityCurrent;
+  const x3_k = currentLiabilities > 0 ? (currentAssets - closingStockValuePA) / currentLiabilities : 1;
+  const x4_k = totalAssets > 0 ? currentAssets / totalAssets : 0.5;
+  const x5 = totalEquity > 0 ? totalLiabilities / totalEquity : 0.5;
+  const kanitz = (0.05 * x1_k) + (1.65 * x2_k) + (3.55 * x3_k) - (1.06 * x4_k) - (0.33 * x5);
+
+  // Altman Z''-Score para mercados emergentes
+  const x1_altman = totalAssets > 0 ? (currentAssets - currentLiabilities) / totalAssets : 0;
+  const x2_altman = totalAssets > 0 ? (netProfit) / totalAssets : 0; 
+  const x3_altman = totalAssets > 0 ? operatingProfit / totalAssets : 0; 
+  const x4_altman = totalLiabilities > 0 ? totalEquity / totalLiabilities : 1;
+  const altmanZ = 3.25 + (6.56 * x1_altman) + (3.26 * x2_altman) + (6.72 * x3_altman) + (1.05 * x4_altman);
+
+  // EBITDA e Valuation DCF Simplificada
+  const ebitda = operatingProfit + periodDepreciation;
+  const wacc = 0.12; 
+  const dcfValuation = ebitda > 0 ? (ebitda / wacc) / 1000000 : 0;
+
+  // Critérios rígidos para Rating de Crédito Corporativo
+  let rating: CreditRating = 'D';
+  if (liquidityCurrent > 1.5 && x5 < 0.8) rating = 'AAA';
+  else if (liquidityCurrent > 1.2 && x5 < 1.2) rating = 'AA';
+  else if (liquidityCurrent > 1.0 && x5 < 1.5) rating = 'A';
+  else if (liquidityCurrent > 0.8 && x5 < 2.0) rating = 'B';
+  else if (liquidityCurrent > 0.5 && x5 < 3.0) rating = 'C';
+  else rating = 'D';
+
+  const ccc = (pmr + (closingStockValuePA > 0 ? (closingStockValuePA / (revenue / 90)) : 0)) - pmp;
+  const interestCoverage = Math.abs(findAccountValue(statements.dre, 'fin.exp')) > 0 ? operatingProfit / Math.abs(findAccountValue(statements.dre, 'fin.exp')) : 100;
+  const netMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+  const assetTurnover = totalAssets > 0 ? revenue / totalAssets : 0;
+  const leverage = totalEquity > 0 ? totalAssets / totalEquity : 1;
+
+  return {
+    statements,
+    current_cash: finalCash,
+    commitments: {
+      receivables: [
+        { id: 'clients', label: 'Contas a Receber (Clientes)', value: findAccountValue(finalBS, 'assets.current.clients') },
+        { id: 'investments', label: 'Aplicações Financeiras', value: findAccountValue(finalBS, 'assets.current.investments') },
+        { id: 'vat_recoverable', label: 'IVA a Recuperar', value: findAccountValue(finalBS, 'assets.current.vat_recoverable') }
+      ],
+      payables: [
+        { id: 'suppliers', label: 'Fornecedores', value: findAccountValue(finalBS, 'liabilities.current.suppliers') },
+        { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: findAccountValue(finalBS, 'liabilities.current.loans_st') },
+        { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: findAccountValue(finalBS, 'liabilities.longterm.loans_lt') },
+        { id: 'taxes', label: 'Imposto de Renda a Pagar', value: findAccountValue(finalBS, 'liabilities.current.taxes') },
+        { id: 'dividends', label: 'Dividendos a Pagar', value: findAccountValue(finalBS, 'liabilities.current.dividends') },
+        { id: 'ppr', label: 'PPR a Pagar', value: findAccountValue(finalBS, 'liabilities.current.ppr_payable') },
+        { id: 'vat_payable', label: 'IVA a Recolher', value: findAccountValue(finalBS, 'liabilities.current.vat_payable') }
+      ]
+    },
+    machines: currentMachines,
+    loans: currentLoans,
+    stock_quantities: stockQuantities,
+    cpp_unit: unitCPP,
+    wac_unit: wacUnit,
+    ebitda,
+    fixed_assets_value: findAccountValue(finalBS, 'assets.noncurrent.fixed'),
+    total_assets: totalAssets,
+    equity: totalEquity,
+    stock_value: closingStockValuePA,
+    tsr,
+    nlcdg: ncg / 1000000,
+    solvency_score_kanitz: kanitz,
+    altman_z_score: altmanZ,
+    dcf_valuation: dcfValuation,
+    scissors_effect: scissorsEffect / 1000000,
+    liquidity_current: liquidityCurrent,
+    solvency_index: solvencyIndex,
+    inventory_turnover: (revenue / 4) > 0 ? (revenue / 4 / ((prevStockValue + closingStockValuePA) / 2)) : 0,
+    ccc,
+    interest_coverage: interestCoverage,
+    dupont: {
+      margin: netMargin,
+      turnover: assetTurnover,
+      leverage: leverage
+    },
+    rating,
+    landed_costs: {}, 
+    price_elasticity: 0,
+    regional_cac: {},
+    carbon_footprint: 0,
+    last_price: weightedAvgPrice,
+    last_units_sold: totalUnitsSold,
+    markup: (wacUnit > 0 && totalUnitsSold > 0) ? ((totalRevenue / totalUnitsSold) / wacUnit) - 1 : 0,
+    market_share: 0, 
+    share_price: totalEquity / 72000,
+    avg_receivable_days: pmr,
+    avg_payable_days: pmp,
+    compulsory_loan_balance: findAccountValue(finalBS, 'liabilities.current.loans_st'),
+    compulsory_loan_interest_paid: Math.abs(findAccountValue(statements.dre, 'fin.exp')),
+    fco_livre: ebitda - findAccountValue(statements.cash_flow, 'cf.outflow.maintenance') - Math.abs(findAccountValue(statements.dre, 'fin.exp')) - Math.abs(findAccountValue(statements.dre, 'tax_prov')),
+    capex_manutencao: findAccountValue(statements.cash_flow, 'cf.outflow.maintenance'),
+    capex_estrategico: findAccountValue(statements.cash_flow, 'cf.outflow.machine_buy'),
+    juros_pagos: Math.abs(findAccountValue(statements.dre, 'fin.exp')),
+    impostos_pagos: Math.abs(findAccountValue(statements.dre, 'tax_prov')),
+    passivo_circulante: currentLiabilities,
+    despesas_operacionais_projetadas_proxima_rodada: Math.abs(findAccountValue(statements.dre, 'opex')) * 1.05,
+    receita_liquida: revenue,
+    custo_medio_divida: totalLiabilities > 0 ? Math.abs(findAccountValue(statements.dre, 'fin.exp')) / totalLiabilities : 0,
+    alavancagem_efetiva: (totalLiabilities - finalCash) / Math.max(ebitda, 0.01),
+    divida_liquida: totalLiabilities - finalCash,
+    receita_recorrente_projetada: branch === 'services' ? revenue * 0.4 : 0,
+    caixa: finalCash,
+    aplicacoes: findAccountValue(finalBS, 'assets.current.investments'),
+    despesas_operacionais_diarias: Math.abs(findAccountValue(statements.dre, 'opex')) / 90,
+    passivo_total: totalLiabilities,
+    pl: totalEquity,
+    percentual_divida_curto_prazo: totalLiabilities > 0 ? (currentLiabilities / totalLiabilities) * 100 : 100,
+    brl_rate: indicators.BRL || 5.0,
+    gbp_rate: indicators.GBP || 6.2,
+    export_tariff_brazil: indicators.export_tariff_brazil || 0,
+    export_tariff_uk: indicators.export_tariff_uk || 0,
+    supplier_interest_expenses: supplierInterestExpenses,
+    emergency_purchase_expenses: emergencyPurchaseExpenses,
+    emergency_units_total: emergencyUnitsTotal
+  };
+};
 
 /**
  * Valida a consistência técnica tripla (Balanço, DRE e DFC) e a aderência física do estoque.

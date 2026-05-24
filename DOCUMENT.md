@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.5 Sapphire (Maio 2026)
+- **Versão Ativa:** v19.5 Sapphire Gold Edition (Centralização de KPIs & E-SDS v1.2 - Maio 2026)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -206,6 +206,15 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.5 Sapphire Gold Edition - Centralização de KPIs e E-SDS v1.2
+- **Data:** 24 de Maio de 2026
+- **Motivo:** Centralização técnica absoluta e unificação matemática das equações corporativas e do motor E-SDS v1.2 em `services/simulation-core.ts`, mitigando qualquer descompasso operacional offline-online.
+- **Diferenças:**
+  - *Consolidação Estrita:* Migração integral e delegação unificada de `calculateKpisFromStatements` e `computeESDSDeterministic` para o arquivo de núcleo (`simulation-core.ts`).
+  - *E-SDS v1.2 Dinâmico & Setorial:* Ponderação matemática dinâmica dos pilares (P1 a P6) com calibração estrita pelo tipo de branch (`agribusiness`, `services`, `industrial`) e desvio padrão quadrático da volatilidade histórica (P6).
+  - *Quantificação Científica de Gargalos:* Abstração refinada de `top_gargalos` adaptada para representação de objetos de impacto e percentual compatíveis com as diretrizes do ecossistema.
+- **Status:** Em Produção (Fidelidade Mútua).
 
 ### v19.5 Sapphire - Integridade Contábil & Kardex de Estoque
 - **Data:** Maio de 2026
