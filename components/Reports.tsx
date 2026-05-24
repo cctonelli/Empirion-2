@@ -6,14 +6,16 @@ import {
   ArrowDownLeft, ArrowUpRight, Receipt, Target, Clock, Sparkles, Globe, PoundSterling
 } from 'lucide-react';
 import { Branch, Championship, Team, AccountNode, CurrencyType } from '../types';
-import { getChampionships } from '../services/supabase';
+import { getChampionships, getTeamSimulationHistory } from '../services/supabase';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { formatCurrency } from '../utils/formatters';
+import Chart from 'react-apexcharts';
 
 const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeam, setActiveTeam] = useState<Team | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeReport, setActiveReport] = useState<'dre' | 'cash_flow' | 'balance' | 'strategic'>('dre');
 
@@ -28,7 +30,15 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       if (arena) {
         setActiveArena(arena);
         const team = arena.teams?.find((t: Team) => t.id === teamId);
-        if (team) setActiveTeam(team);
+        if (team) {
+          setActiveTeam(team);
+          try {
+            const hist = await getTeamSimulationHistory(team.id);
+            setHistory(hist || []);
+          } catch (err) {
+            console.error("Error fetching history in reports:", err);
+          }
+        }
       }
       setLoading(false);
     };
@@ -57,6 +67,8 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       const opex = findAccountVal(rawDre, 'opex');
       const opProfit = findAccountVal(rawDre, 'operating_profit');
       const netProfit = findAccountVal(rawDre, 'final_profit');
+      const dreMod = findAccountVal(rawDre, 'dre.mod');
+      const dreCif = findAccountVal(rawDre, 'dre.cif');
       return {
         revenue: rev,
         vat_sales: vat,
@@ -66,6 +78,8 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
         opex: opex,
         operating_profit: opProfit,
         net_profit: netProfit,
+        mod: dreMod,
+        cif: dreCif,
       };
     }
     return rawDre || {};
@@ -83,6 +97,98 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
     }
     return rawCf || { inflow: {}, outflow: {} };
   }, [activeTeam]);
+
+  const costsEvolutionData = useMemo(() => {
+    const sortedHistory = [...(history || [])].sort((a, b) => a.round - b.round);
+    const hasHistory = sortedHistory.length > 0;
+
+    let points: Array<{ round: string; mod: number; cif: number }> = [];
+
+    if (hasHistory) {
+      points = sortedHistory.map(h => {
+        const dreTree = h.kpis?.statements?.dre || [];
+        return {
+          round: `Rodada ${h.round}`,
+          mod: Math.abs(findAccountVal(dreTree, 'dre.mod')),
+          cif: Math.abs(findAccountVal(dreTree, 'dre.cif'))
+        };
+      });
+
+      const currentRound = activeArena?.current_round || 1;
+      const historyRounds = sortedHistory.map(h => h.round);
+      if (!historyRounds.includes(currentRound) && activeTeam?.kpis?.statements?.dre) {
+        const currentDre = activeTeam.kpis.statements.dre;
+        points.push({
+          round: `Rodada ${currentRound} (Atual)`,
+          mod: Math.abs(findAccountVal(currentDre, 'dre.mod')),
+          cif: Math.abs(findAccountVal(currentDre, 'dre.cif'))
+        });
+      }
+    } else {
+      const currentDre = activeTeam?.kpis?.statements?.dre || [];
+      const currentRound = activeArena?.current_round || 1;
+      points = [
+        {
+          round: `Rodada ${currentRound} (Atual)`,
+          mod: Math.abs(findAccountVal(currentDre, 'dre.mod')),
+          cif: Math.abs(findAccountVal(currentDre, 'dre.cif'))
+        }
+      ];
+    }
+
+    return {
+      categories: points.map(p => p.round),
+      modSeries: [{ name: 'MOD (Mão de Obra Direta)', data: points.map(p => p.mod) }],
+      cifSeries: [{ name: 'CIF (Custo Indireto Fabril)', data: points.map(p => p.cif) }]
+    };
+  }, [history, activeTeam, activeArena]);
+
+  const currentCpvDetails = useMemo(() => {
+    return activeTeam?.kpis?.cpv_details || {};
+  }, [activeTeam]);
+
+  const chartOptions = (title: string, color: string) => ({
+    chart: {
+      id: `chart-${title.toLowerCase().replace(/\s+/g, '-')}`,
+      toolbar: { show: false },
+      background: 'transparent',
+      fontFamily: 'Inter, sans-serif'
+    },
+    colors: [color],
+    stroke: { curve: 'smooth', width: 3 },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.45,
+        opacityTo: 0.05,
+        stops: [0, 100]
+      }
+    },
+    grid: {
+      borderColor: 'rgba(255,255,255,0.05)',
+      strokeDashArray: 4,
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } }
+    },
+    xaxis: {
+      categories: costsEvolutionData.categories,
+      labels: { style: { colors: '#64748b', fontSize: '9px', fontWeight: 600 } },
+      axisBorder: { show: false },
+      axisTicks: { show: false }
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#64748b', fontSize: '9px', fontWeight: 600 },
+        formatter: (v: number) => fmt(Math.abs(v))
+      }
+    },
+    tooltip: {
+      theme: 'dark',
+      x: { show: true },
+      y: { formatter: (v: number) => fmt(Math.abs(v)) }
+    }
+  });
 
   const balanceSheet = useMemo((): AccountNode[] => activeTeam?.kpis?.statements?.balance_sheet || [], [activeTeam]);
 
@@ -121,6 +227,100 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                         <ReportLine label="( - ) DESPESAS OPERACIONAIS" val={fmt(dre.opex)} neg />
                         <ReportLine label="( = ) RESULTADO OPERACIONAL" val={fmt(dre.operating_profit)} highlight />
                         <ReportLine label="( = ) LUCRO LÍQUIDO DO CICLO" val={fmt(dre.net_profit)} total />
+                     </div>
+
+                     {/* Painel Analítico de Custos Fabris (Audit Node) */}
+                     <div className="pt-12 mt-12 border-t border-white/5 space-y-8">
+                        <div>
+                           <h4 className="text-xl font-black text-white uppercase italic tracking-tight">Painel Analítico de Custos Fabris</h4>
+                           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">
+                             Evolução temporal e auditoria das contas de mão de obra direta (dre.mod) e custos indiretos de fabricação (dre.cif)
+                           </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                           {/* MOD Column */}
+                           <div className="bg-slate-950/40 border border-white/5 rounded-[3rem] p-8 space-y-6">
+                              <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                 <div>
+                                    <h5 className="font-black text-white text-xs uppercase tracking-wider">Mão de Obra Direta (MOD)</h5>
+                                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Salários, encargos, indenizações, horas-extras e prêmios</p>
+                                 </div>
+                                 <div className="text-right">
+                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">Total na Rodada</span>
+                                    <span className="text-lg font-mono font-black text-orange-500">{fmt(Math.abs(dre.mod || 0))}</span>
+                                 </div>
+                              </div>
+
+                              <div className="h-[220px]">
+                                 {typeof window !== 'undefined' && (
+                                    <Chart
+                                       options={chartOptions('MOD', '#f97316') as any}
+                                       series={costsEvolutionData.modSeries}
+                                       type="area"
+                                       height="100%"
+                                       width="100%"
+                                    />
+                                 )}
+                              </div>
+
+                              <div className="space-y-2 pt-2">
+                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Breakdown dos Custos Reais</span>
+                                 <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col gap-1">
+                                       <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Base & Encargos</span>
+                                       <span className="text-xs font-mono font-medium text-slate-300">{fmt(currentCpvDetails.maoDeObraDireta || 0)}</span>
+                                    </div>
+                                    <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col gap-1">
+                                       <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Rescisões Trabalhistas</span>
+                                       <span className="text-xs font-mono font-medium text-slate-300">
+                                          {fmt((currentCpvDetails.indenizacoesRescisorias || 0) + (currentCpvDetails.pprProporcional || 0))}
+                                       </span>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+
+                           {/* CIF Column */}
+                           <div className="bg-slate-950/40 border border-white/5 rounded-[3rem] p-8 space-y-6">
+                              <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                 <div>
+                                    <h5 className="font-black text-white text-xs uppercase tracking-wider">Custos Indiretos de Fabricação (CIF)</h5>
+                                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Manutenção, estocagem, treinamento e depreciação</p>
+                                 </div>
+                                 <div className="text-right">
+                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">Total na Rodada</span>
+                                    <span className="text-lg font-mono font-black text-indigo-400">{fmt(Math.abs(dre.cif || 0))}</span>
+                                 </div>
+                              </div>
+
+                              <div className="h-[220px]">
+                                 {typeof window !== 'undefined' && (
+                                    <Chart
+                                       options={chartOptions('CIF', '#818cf8') as any}
+                                       series={costsEvolutionData.cifSeries}
+                                       type="area"
+                                       height="100%"
+                                       width="100%"
+                                    />
+                                 )}
+                              </div>
+
+                              <div className="space-y-2 pt-2">
+                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Breakdown dos Custos Reais</span>
+                                 <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col gap-1">
+                                       <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Manutenção Corretiva</span>
+                                       <span className="text-xs font-mono font-medium text-slate-300">{fmt(currentCpvDetails.manutencaoFabril || 0)}</span>
+                                    </div>
+                                    <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col gap-1">
+                                       <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Depreciação Industrial</span>
+                                       <span className="text-xs font-mono font-medium text-slate-300">{fmt(currentCpvDetails.depreciacaoFabril || 0)}</span>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
                      </div>
                   </motion.div>
                ) : activeReport === 'cash_flow' ? (

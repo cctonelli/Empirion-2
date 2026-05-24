@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence, Reorder } from 'framer-motion';
 const motion = _motion as any;
-import { supabase } from '../services/supabase';
+import { supabase, getTeamSimulationHistory } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { GoogleGenAI } from '@google/genai';
@@ -86,6 +86,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             auditLogs: (decision?.data?.audit_logs || []) as AuditLog[],
             current_decision: decision?.data,
             statements: proj?.kpis?.statements || t.kpis?.statements,
+            cpv_details: proj?.kpis?.cpv_details || t.kpis?.cpv_details,
             is_bot: t.is_bot,
             strategic_profile: t.strategic_profile
           };
@@ -116,6 +117,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           gbp_rate: h.gbp_rate || h.kpis?.gbp_rate || 0,
           auditLogs: [],
           statements: h.kpis?.statements,
+          cpv_details: h.kpis?.cpv_details,
           is_bot: h.team?.is_bot,
           strategic_profile: h.team?.strategic_profile
         }));
@@ -293,7 +295,22 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
    const [isAuditing, setIsAuditing] = useState(false);
    const [aiVerdict, setAiVerdict] = useState<string | null>(null);
    const [showReports, setShowReports] = useState(false);
-   const [reportType, setReportType] = useState<'dre' | 'balance' | 'cashflow' | 'commitments'>('dre');
+   const [reportType, setReportType] = useState<'dre' | 'balance' | 'cashflow' | 'commitments' | 'kardex' | 'strategic'>('dre');
+   const [teamHistory, setTeamHistory] = useState<any[]>([]);
+
+   useEffect(() => {
+      if (showReports && team.id) {
+         const fetchHistory = async () => {
+            try {
+               const hist = await getTeamSimulationHistory(team.id);
+               setTeamHistory(hist || []);
+            } catch (err) {
+               console.error("Error fetching team history for tutor:", err);
+            }
+         };
+         fetchHistory();
+      }
+   }, [showReports, team.id]);
 
    const performAiAudit = async () => {
       if (isAuditing || (!team.current_decision && !team.statements)) return;
@@ -398,11 +415,13 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
                            </div>
                         </div>
                         <div className="flex items-center gap-4">
-                           <div className="flex p-1 bg-slate-950 rounded-xl border border-white/5">
-                              <button onClick={() => setReportType('dre')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'dre' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DRE</button>
-                              <button onClick={() => setReportType('balance')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'balance' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Balanço</button>
-                              <button onClick={() => setReportType('cashflow')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'cashflow' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DFC</button>
-                              <button onClick={() => setReportType('commitments')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'commitments' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Agenda</button>
+                           <div className="flex p-1 bg-slate-950 rounded-xl border border-white/5 flex-wrap gap-1">
+                              <button onClick={() => setReportType('dre')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'dre' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DRE</button>
+                              <button onClick={() => setReportType('balance')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'balance' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Balanço</button>
+                              <button onClick={() => setReportType('cashflow')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'cashflow' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DFC</button>
+                              <button onClick={() => setReportType('commitments')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'commitments' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Agenda</button>
+                              <button onClick={() => setReportType('kardex')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'kardex' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Kardex & Custos</button>
+                              <button onClick={() => setReportType('strategic')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'strategic' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Estratégico</button>
                            </div>
                            <button onClick={() => setShowReports(false)} className="p-3 bg-white/5 hover:bg-rose-600 text-slate-500 hover:text-white rounded-xl transition-all"><X size={20}/></button>
                         </div>
@@ -410,8 +429,8 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
                      <div className="flex-1 overflow-hidden p-8">
                         <FinancialReportMatrix 
                            type={reportType} 
-                           history={[]} 
-                           projection={{ kpis: { statements: team.statements } } as any} 
+                           history={teamHistory} 
+                           projection={{ kpis: { statements: team.statements, cpv_details: team.cpv_details } } as any} 
                            currency="BRL" 
                         />
                      </div>

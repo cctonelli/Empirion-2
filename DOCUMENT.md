@@ -313,6 +313,17 @@ project-root/
   - *Strategic Hub:* Design de alta fidelidade das tabelas de DRE/Balanço com tipografia mono-espaçada nos valores, variação em percentual integrada de tendência e visualização de auditoria.
 - **Status:** Em produção.
 
+### v2026-05.2 - Auditabilidade Financeira Expandida (DRE, MOD, CIF & Visão do Tutor)
+- **Data:** Maio de 2026
+- **Motivo:** Introdução de gráficos e detalhamentos específicos sobre as subcontas do Custo Indireto de Fabricação (CIF) e da Mão de Obra Direta (MOD) no DRE das equipes para robustecer a capacidade de tomada de decisões e auditoria estratégica. Extensão completa destas ferramentas de simulação histórica para os Tutores.
+- **Diferenças:**
+  - *Série Temporal de Custos (react-apexcharts):* Integração de gráficos de área cumulativos na aba de DRE que mostram de forma límpida a evolução rodada a rodada do montante absoluto de MOD (`dre.mod`) e de CIF (`dre.cif`), permitindo que as equipes auditem instantaneamente se suas ações de CapEx, treinamento ou gestão de pessoal estão gerando eficiência operacional.
+  - *Navegabilidade Analítica Decifrada:* Expansão dos relatórios de DRE com gavetas de colapso (*collapsibles/details*) interativas, contendo o detalhamento componente por componente das contas:
+    - **MOD:** Salário-Base, Encargos Sociais, Provisões de PPR, Custos de Demissões/Rescisões, Horas Extras e Prêmios de Produtividade.
+    - **CIF:** Despesas de Treinamento Técnico, Manutenção de Equipamentos, Custos de Armazenagem de Matéria-Prima e Produtos Acabados, Depreciações de Instalações Prédio e Depreciação Amortizada do Maquinário.
+  - *Monitor do Tutor Empoderado:* O painel de decisões do Tutor (`TutorDecisionMonitor`) foi vitaminado para carregar automaticamente a série histórica contábil da equipe em exibição ao abrir o modal de auditoria. Adicionalmente, as abas de **Kardex & Custos** e **Estratégico** foram integradas ao popup de auditoria do Tutor, promovendo 100% de paridade com o que os alunos veem e garantindo um feedback pedagógico cirúrgico sob o motor de KPIs (`cpv_details`).
+- **Status:** Em produção.
+
 ### v19.8 Obsidian Enterprise - Resolução de Consistência Competitiva & RLS
 - **Data:** Maio de 2026
 - **Motivo:** Solução do bug de visibilidade competitiva e o conserto de joins lógicos para dados Trial/Live no Monitor de Decisões do Tutor e na Oracle Gazette, permitindo visibilidade competitiva irrestrita intra-campeonato para tomada de decisões estratégicas por todas as equipes.

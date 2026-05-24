@@ -408,6 +408,7 @@ export interface TutorTeamView {
   auditLogs: AuditLog[];
   current_decision?: any;
   statements?: any;
+  cpv_details?: any;
   is_bot?: boolean;
   strategic_profile?: StrategicProfile;
 }
