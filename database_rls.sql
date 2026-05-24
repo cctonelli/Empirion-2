@@ -275,20 +275,38 @@ CREATE POLICY "Leitura de trial_championships" ON public.trial_championships
 -- ==============================================================================
 -- POLÍTICAS PARA TEAMS (LIVE & TRIAL)
 -- ==============================================================================
--- Nota: A lógica de 'propriedade' de um time pode variar. 
--- Se o ID do time for o ID do perfil do usuário (1:1), usamos auth.uid() vinculado ao user_profiles.
 DROP POLICY IF EXISTS "Times: Jogadores veem seu próprio time" ON public.teams;
 CREATE POLICY "Times: Jogadores veem seu próprio time" ON public.teams
     FOR SELECT TO authenticated
     USING (
-        EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND (user_profiles.id = teams.id OR user_profiles.role IN ('tutor', 'admin')))
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND up.role IN ('tutor', 'admin')
+        )
+        OR EXISTS (
+            SELECT 1 FROM public.team_members tm
+            JOIN public.users u ON tm.user_id = u.id
+            WHERE u.supabase_user_id = auth.uid()
+            AND tm.championship_id = teams.championship_id
+        )
     );
 
 DROP POLICY IF EXISTS "Times: Jogadores atualizam seu próprio time" ON public.teams;
 CREATE POLICY "Times: Jogadores atualizam seu próprio time" ON public.teams
     FOR UPDATE TO authenticated
     USING (
-        EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND (user_profiles.id = teams.id OR user_profiles.role IN ('tutor', 'admin')))
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND up.role IN ('tutor', 'admin')
+        )
+        OR EXISTS (
+            SELECT 1 FROM public.team_members tm
+            JOIN public.users u ON tm.user_id = u.id
+            WHERE u.supabase_user_id = auth.uid()
+            AND tm.team_id = teams.id
+        )
     );
 
 -- ==============================================================================
@@ -298,14 +316,34 @@ DROP POLICY IF EXISTS "Companies: Jogadores veem sua própria empresa" ON public
 CREATE POLICY "Companies: Jogadores veem sua própria empresa" ON public.companies
     FOR SELECT TO authenticated
     USING (
-        EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND (user_profiles.id = companies.team_id OR user_profiles.role IN ('tutor', 'admin')))
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND up.role IN ('tutor', 'admin')
+        )
+        OR EXISTS (
+            SELECT 1 FROM public.team_members tm
+            JOIN public.users u ON tm.user_id = u.id
+            WHERE u.supabase_user_id = auth.uid()
+            AND tm.championship_id = companies.championship_id
+        )
     );
 
 DROP POLICY IF EXISTS "Companies: Jogadores atualizam sua própria empresa" ON public.companies;
 CREATE POLICY "Companies: Jogadores atualizam sua própria empresa" ON public.companies
     FOR UPDATE TO authenticated
     USING (
-        EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND (user_profiles.id = companies.team_id OR user_profiles.role IN ('tutor', 'admin')))
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND up.role IN ('tutor', 'admin')
+        )
+        OR EXISTS (
+            SELECT 1 FROM public.team_members tm
+            JOIN public.users u ON tm.user_id = u.id
+            WHERE u.supabase_user_id = auth.uid()
+            AND tm.team_id = companies.team_id
+        )
     );
 
 -- ==============================================================================
@@ -322,29 +360,33 @@ CREATE POLICY "Todos leem macro rules" ON public.championship_macro_rules
 DROP POLICY IF EXISTS "Trial Teams: Jogadores veem seu próprio time" ON public.trial_teams;
 CREATE POLICY "Trial Teams: Jogadores veem seu próprio time" ON public.trial_teams
     FOR SELECT TO authenticated
-    USING (
-        EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND (user_profiles.id = trial_teams.id OR user_profiles.role IN ('tutor', 'admin')))
-    );
+    USING (true);
 
 DROP POLICY IF EXISTS "Trial Teams: Jogadores atualizam seu próprio time" ON public.trial_teams;
 CREATE POLICY "Trial Teams: Jogadores atualizam seu próprio time" ON public.trial_teams
     FOR UPDATE TO authenticated
     USING (
-        EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND (user_profiles.id = trial_teams.id OR user_profiles.role IN ('tutor', 'admin')))
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND (up.id = trial_teams.id OR up.role IN ('tutor', 'admin'))
+        )
     );
 
 DROP POLICY IF EXISTS "Trial Companies: Jogadores veem sua própria empresa" ON public.trial_companies;
 CREATE POLICY "Trial Companies: Jogadores veem sua própria empresa" ON public.trial_companies
     FOR SELECT TO authenticated
-    USING (
-        EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND (user_profiles.id = trial_companies.team_id OR user_profiles.role IN ('tutor', 'admin')))
-    );
+    USING (true);
 
 DROP POLICY IF EXISTS "Trial Companies: Jogadores atualizam sua própria empresa" ON public.trial_companies;
 CREATE POLICY "Trial Companies: Jogadores atualizam sua própria empresa" ON public.trial_companies
     FOR UPDATE TO authenticated
     USING (
-        EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND (user_profiles.id = trial_companies.team_id OR user_profiles.role IN ('tutor', 'admin')))
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND (up.id = trial_companies.team_id OR up.role IN ('tutor', 'admin'))
+        )
     );
 
 -- 8. TABELA DE SEGREDOS DO SISTEMA (API KEYS)

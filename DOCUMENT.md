@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.5 Sapphire Gold Edition (Centralização de KPIs & E-SDS v1.2 - Maio 2026)
+- **Versão Ativa:** v19.8 Obsidian Enterprise (Resolução de RLS, Joins de Concorrentes & Oracle Gazette - Maio 2026)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -301,6 +301,15 @@ project-root/
   - *Cockpit Operacional (Dashboard):* Glassmorphism, tooltip de E-SDS dinâmico por IA, Sidebar Intel Pulse.
   - *Decision Terminal (DecisionForm):* Wizard UX por passos com animações fluidas (`framer-motion`), War Room Header unificado, inputs didáticos.
   - *Strategic Hub:* Design de alta fidelidade das tabelas de DRE/Balanço com tipografia mono-espaçada nos valores, variação em percentual integrada de tendência e visualização de auditoria.
+- **Status:** Em produção.
+
+### v19.8 Obsidian Enterprise - Resolução de Consistência Competitiva & RLS
+- **Data:** Maio de 2026
+- **Motivo:** Solução do bug de visibilidade competitiva e o conserto de joins lógicos para dados Trial/Live no Monitor de Decisões do Tutor e na Oracle Gazette, permitindo visibilidade competitiva irrestrita intra-campeonato para tomada de decisões estratégicas por todas as equipes.
+- **Diferenças:**
+  - *Visibilidade de Mercado (Oracle Gazette):* Correção de joins estáticos `team:teams(name)` para joins dinâmicos baseados no tipo do campeonato (`trial_teams` ou `teams`), resolvendo falhas de busca e telas cinzas vazias para as equipes em modo simulador de treino (Trial).
+  - *Monitor do Tutor (TutorDecisionMonitor):* Ajustado o join de histórico contábil de competidores para também utilizar dinamicamente `trial_teams` ou `teams`.
+  - *Políticas RLS Desbloqueadas:* Substituição das políticas restritivas de SELECT de `teams`, `companies`, `trial_teams`, e `trial_companies` por políticas que autorizam qualquer jogador pertencente a um time ver concorrentes associados ao seu mesmo campeonato (`championship_id`). Gravações (UPDATING) continuam blindadas para os criadores correspondentes.
 - **Status:** Em produção.
 
 ### v2026-05.1 - Reconciliação Contábil Oracle-Sapphire

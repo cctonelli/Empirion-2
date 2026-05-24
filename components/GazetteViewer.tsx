@@ -61,9 +61,10 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
      setLoadingCompetitors(true);
      try {
         const historyTable = arena.is_trial ? 'trial_companies' : 'companies';
+        const teamsTable = arena.is_trial ? 'trial_teams' : 'teams';
         const { data } = await supabase
            .from(historyTable)
-           .select('*, team:teams(name)')
+           .select(`*, team:${teamsTable}(name)`)
            .eq('championship_id', arena.id)
            .eq('round', round - 1);
         
@@ -82,9 +83,10 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
       setIsGeneratingNews(true);
       try {
         const historyTable = arena.is_trial ? 'trial_companies' : 'companies';
+        const teamsTable = arena.is_trial ? 'trial_teams' : 'teams';
         const { data: teamsData } = await supabase
           .from(historyTable)
-          .select('*, team:teams(name)')
+          .select(`*, team:${teamsTable}(name)`)
           .eq('championship_id', arena.id)
           .eq('round', round - 1);
 

@@ -91,8 +91,9 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           };
         });
       } else {
+        const teamsTable = isTrial ? 'trial_teams' : 'teams';
         const { data: historyData } = await supabase.from(historyTable)
-          .select('*, team:teams(name, is_bot, strategic_profile)')
+          .select(`*, team:${teamsTable}(name, is_bot, strategic_profile)`)
           .eq('championship_id', championshipId)
           .eq('round', targetNode);
 
