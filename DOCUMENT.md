@@ -207,14 +207,15 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
-### v19.7 Obsidian Plus (Obsidian Executive) - Abas Espaciais & Sparklines SVG
+### v19.7 Obsidian Plus (Obsidian Executive) - Abas Espaciais Glassmorphic & Sparklines Bézier
 - **Data:** 24 de Maio de 2026
-- **Motivo:** Solucionar a sobrecarga cognitiva e fadiga vertical do cockpit executivo, enriquecendo o painel `RightPreviewPanel.tsx` com visualizações vetoriais rápidas de evolução contábil e segmentação de foco.
+- **Motivo:** Solucionar a sobrecarga cognitiva e fadiga vertical do cockpit executivo, enriquecendo o painel `RightPreviewPanel.tsx` com visualizações vetoriais rápidas de evolução contábil, segmentação glassmorphic e auditoria em tempo real.
 - **Diferenças:**
-  - *Arquitetura por Abas Táticas:* Divisão estrutural em 3 Abas ("Finanças", "Riscos & Auditoria", "Kardex/MP"), eliminando 60% do scroll vertical e permitindo maior concentração de dados em monitores padrão.
-  - *Sparklines SVG Nativas:* Micrográficos vetoriais desenhados sob demanda em tempo real, calculando os gradientes de tendência e comparando os dados consolidados do Round Corrente (T) com as projeções simuladas de Tomada de Decisão (T+1) para receita, lucro, caixa e EBITDA.
-  - *Alertas Reativos Dinâmicos:* Pontos pulsantes de aviso inseridos nos cabeçalhos de aba alertam intuitivamente o jogador quando há riscos ou inconsistências contábeis geradas pelo Z-Guard sem necessitar da aba de riscos visível.
-- **Status:** Em Produção (Alta DX & UX).
+  - *Arquitetura por Abas Glassmorphic:* Divisão estrutural em 3 Abas ("Finanças", "Riscos", "Kardex/MP"), estilizadas sob o padrão premium de glassmorphism (desfoque de fundo `backdrop-blur-md`, bordas finas com brilho e ícones de alta qualidade), reduzindo 60% do scroll vertical.
+  - *Sparklines SVG com Curva de Bézier:* Desenho vetorial de micrográficos utilizando curvas cúbicas de Bézier suaves para expressar tendências realistas. Inclui animação de traçado (`stroke-dashoffset` animado de 100 para 0 por elemento) no montador do componente.
+  - *Badge Contábil Z-Guard Integrado ao Topo:* Inclusão de um selo de auditoria global tático em tempo real no cabeçalho do cockpit, monitorando a integridade tripla e fornecendo um card de diagnóstico completo sob hover (tooltip puro CSS).
+  - *Tooltips Detalhados de Evolução:* Adicionados gatilhos interativos em cada Sparkline estrutural para detalhar o comparativo exato entre o Round Corrente (T) e a simulação de projeção (T+1).
+- **Status:** Em Produção (Alta DX & UX com avaliação Oracle de excelência).
 
 ### v19.6 Obsidian - Cockpit Modular & Presets Táticos
 - **Data:** 24 de Maio de 2026

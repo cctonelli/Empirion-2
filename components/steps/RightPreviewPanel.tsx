@@ -41,8 +41,34 @@ const TrendSparkline: React.FC<TrendSparklineProps> = ({ label, current, project
   const y1 = 20 - ((current - valMin) / diff) * 16;
   const y2 = 20 - ((projected - valMin) / diff) * 16;
 
+  // Curva de Bézier cúbica para suavidade de transição de tendência
+  // Ponto inicial (0, y1), controle inicial (24, y1), controle final (36, y2) e ponto final (60, y2)
+  const pathD = `M 0 ${y1} C 24 ${y1}, 36 ${y2}, 60 ${y2}`;
+  const fillD = `M 0 24 L 0 ${y1} C 24 ${y1}, 36 ${y2}, 60 ${y2} L 60 24 Z`;
+
+  const safeLabelId = label.replace(/[^a-zA-Z0-9]/g, '-');
+
   return (
-    <div className="flex items-center justify-between p-3 bg-slate-950/40 rounded-xl border border-white/5 shadow-inner transition-all hover:bg-slate-950/60 hover:border-white/10">
+    <div className="relative group flex items-center justify-between p-3 bg-slate-950/40 rounded-xl border border-white/5 shadow-inner transition-all duration-300 hover:bg-slate-950/60 hover:border-white/10 hover:scale-[1.01]">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes drawLine-${safeLabelId} {
+          from { stroke-dashoffset: 100; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes fadeInGradient-${safeLabelId} {
+          from { fill-opacity: 0; }
+          to { fill-opacity: 1; }
+        }
+        .anim-line-${safeLabelId} {
+          stroke-dasharray: 100;
+          stroke-dashoffset: 100;
+          animation: drawLine-${safeLabelId} 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .anim-fill-${safeLabelId} {
+          animation: fadeInGradient-${safeLabelId} 1.2s ease-out forwards;
+        }
+      `}} />
+
       <div className="flex flex-col min-w-0 flex-1">
         <span className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 font-sans">{label}</span>
         <div className="flex items-baseline gap-2 mt-1">
@@ -59,28 +85,39 @@ const TrendSparkline: React.FC<TrendSparklineProps> = ({ label, current, project
       </div>
       
       {/* Vetor Mini Sparkline SVG com Gradient de brilho */}
-      <div className="w-16 h-8 flex items-center justify-end shrink-0 ml-2">
+      <div className="w-16 h-8 flex items-center justify-end shrink-0 ml-2 relative">
         <svg width="60" height="24" className="overflow-visible">
           <defs>
-            <linearGradient id={`grad-${label.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor={strokeColor} stopOpacity="0.02" />
-              <stop offset="100%" stopColor={strokeColor} stopOpacity="0.15" />
+            <linearGradient id={`grad-${safeLabelId}`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor={strokeColor} stopOpacity="0.01" />
+              <stop offset="100%" stopColor={strokeColor} stopOpacity="0.18" />
             </linearGradient>
           </defs>
           <path
-            d={`M 0 24 L 0 ${y1} L 60 ${y2} L 60 24 Z`}
-            fill={`url(#grad-${label.replace(/\s+/g, '-')})`}
+            className={`anim-fill-${safeLabelId}`}
+            d={fillD}
+            fill={`url(#grad-${safeLabelId})`}
           />
-          <line
-            x1="0" y1={y1}
-            x2="60" y2={y2}
+          <path
+            className={`anim-line-${safeLabelId}`}
+            d={pathD}
+            fill="none"
             stroke={strokeColor}
-            strokeWidth="1.5"
+            strokeWidth="2"
             strokeLinecap="round"
           />
           <circle cx="0" cy={y1} r="2.5" fill="#020617" stroke={strokeColor} strokeWidth="1" />
-          <circle cx="60" cy={y2} r="3" fill={strokeColor} />
+          <circle cx="60" cy={y2} r="3" fill={strokeColor} className="animate-pulse" />
         </svg>
+      </div>
+
+      {/* Tooltip Dinâmica e Inteligente */}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 rounded-lg border border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur-xl pointer-events-none opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 text-[8px] text-slate-300 font-sans leading-normal">
+        <div className="font-bold text-white mb-0.5 uppercase tracking-wide flex items-center gap-1">
+          <TrendingUp size={10} className="text-orange-400 animate-pulse" />
+          Tendência: {label}
+        </div>
+        Comparativo do Round Corrente (T) para a projeção da rodada (T+1). Atualmente {isUp ? 'subindo' : 'caindo'} <strong className={colorClass}>{Math.abs(percentChange).toFixed(1)}%</strong>.
       </div>
     </div>
   );
@@ -279,9 +316,34 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
           <Activity size={16} className="text-orange-500 animate-pulse shrink-0" />
           <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white font-mono truncate">Piloto Imperial (T+1)</span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-mono font-bold text-emerald-400 uppercase rounded-full flex items-center gap-1.5 shadow-inner">
-            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> REAL-TIME
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Badge Global de Integridade Contábil Z-Guard */}
+          <div className="relative group/zguard">
+            <div className={`px-2 py-1 border text-[8px] font-mono font-bold uppercase rounded-md flex items-center gap-1 shadow-inner cursor-help transition-all ${
+              validation.isValid 
+                ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400' 
+                : 'bg-rose-500/10 border-rose-500/25 text-rose-400 animate-pulse'
+            }`}>
+              {validation.isValid ? <ShieldCheck size={10} className="text-emerald-400" /> : <Shield size={10} className="text-rose-400 animate-bounce" />}
+              <span>Z-Guard: {validation.isValid ? 'OK' : 'RUPTURA'}</span>
+            </div>
+            
+            {/* Tooltip do Z-Guard */}
+            <div className="absolute right-0 top-full mt-2 w-64 p-3 rounded-lg border border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur-xl pointer-events-none opacity-0 scale-95 group-hover/zguard:opacity-100 group-hover/zguard:scale-100 transition-all duration-200 z-50 text-[8px] text-slate-300 font-sans leading-relaxed">
+              <div className="font-bold text-white mb-1 uppercase tracking-wide flex items-center gap-1">
+                <ShieldCheck size={11} className={validation.isValid ? "text-emerald-400" : "text-rose-400"} />
+                Status do Auditor Z-Guard
+              </div>
+              {validation.isValid ? (
+                <span>Reconciliação tripla validada! A DRE, DFC e Balanço Patrimonial projetados de T+1 demonstram perfeita integridade de fluxos e saldos fiscais.</span>
+              ) : (
+                <span className="text-rose-300 font-semibold">Atenção: Identificadas disparidades operacionais ou fiscais contábeis que necessitam de ajustes imediatos para alinhar entradas e saídas.</span>
+              )}
+            </div>
+          </div>
+
+          <div className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/25 text-[8px] font-mono font-bold text-emerald-400 uppercase rounded-full flex items-center gap-1 shadow-inner">
+            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
           </div>
           <button 
             type="button"
@@ -294,44 +356,47 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
         </div>
       </div>
 
-      {/* CONTROLE DE ABAS (TABS CONTROLLER) - EVITA SOBRECARGA VERTICAL */}
-      <div className="p-3 bg-slate-950/40 border-b border-white/5 shrink-0">
-        <div className="flex bg-slate-900/60 p-1 rounded-xl border border-white/5 gap-0.5">
+      {/* CONTROLE DE ABAS (TABS CONTROLLER) - GLASSMORPHIC LAYOUT COM ÍCONES */}
+      <div className="p-3 bg-slate-950/20 border-b border-white/5 shrink-0">
+        <div className="flex bg-[#090d16]/75 p-1 rounded-xl border border-white/10 gap-1 backdrop-blur-md">
           <button
             type="button"
             onClick={() => setActiveTab('finance')}
-            className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'finance'
-                ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-orange-500/20 text-orange-400 border border-orange-500/35 backdrop-blur-lg shadow-[0_0_15px_rgba(249,115,22,0.15)]'
+                : 'border border-transparent text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            Finanças
+            <BarChart3 size={11} className={activeTab === 'finance' ? 'text-orange-400' : 'text-slate-500'} />
+            <span>Finanças</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('risks')}
-            className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer relative ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer relative ${
               activeTab === 'risks'
-                ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-orange-500/20 text-orange-400 border border-orange-500/35 backdrop-blur-lg shadow-[0_0_15px_rgba(249,115,22,0.15)]'
+                : 'border border-transparent text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            Riscos
+            <Shield size={11} className={activeTab === 'risks' ? 'text-orange-400 animate-pulse' : 'text-slate-500'} />
+            <span>Riscos</span>
             {alerts.length > 0 && (
-              <span className="absolute top-1 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full animate-ping" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full animate-ping" />
             )}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('kardex')}
-            className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'kardex'
-                ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-orange-500/20 text-orange-400 border border-orange-500/35 backdrop-blur-lg shadow-[0_0_15px_rgba(249,115,22,0.15)]'
+                : 'border border-transparent text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            Kardex/MP
+            <Warehouse size={11} className={activeTab === 'kardex' ? 'text-orange-400' : 'text-slate-500'} />
+            <span>Kardex/MP</span>
           </button>
         </div>
       </div>
