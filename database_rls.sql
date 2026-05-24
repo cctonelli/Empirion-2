@@ -276,7 +276,10 @@ CREATE POLICY "Leitura de trial_championships" ON public.trial_championships
 -- POLÍTICAS PARA TEAMS (LIVE & TRIAL)
 -- ==============================================================================
 DROP POLICY IF EXISTS "Times: Jogadores veem seu próprio time" ON public.teams;
-CREATE POLICY "Times: Jogadores veem seu próprio time" ON public.teams
+DROP POLICY IF EXISTS "Teams_Visibility" ON public.teams;
+DROP POLICY IF EXISTS "Leitura de equipes competidoras" ON public.teams;
+
+CREATE POLICY "Leitura de equipes competidoras" ON public.teams
     FOR SELECT TO authenticated
     USING (
         EXISTS (
@@ -290,10 +293,18 @@ CREATE POLICY "Times: Jogadores veem seu próprio time" ON public.teams
             WHERE u.supabase_user_id = auth.uid()
             AND tm.championship_id = teams.championship_id
         )
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND teams.championship_id IN (
+                SELECT t.championship_id FROM public.teams t WHERE t.id = up.id
+            )
+        )
     );
 
 DROP POLICY IF EXISTS "Times: Jogadores atualizam seu próprio time" ON public.teams;
-CREATE POLICY "Times: Jogadores atualizam seu próprio time" ON public.teams
+DROP POLICY IF EXISTS "Jogadores atualizam seu proprio time_v2" ON public.teams;
+CREATE POLICY "Jogadores atualizam seu proprio time_v2" ON public.teams
     FOR UPDATE TO authenticated
     USING (
         EXISTS (
@@ -307,13 +318,22 @@ CREATE POLICY "Times: Jogadores atualizam seu próprio time" ON public.teams
             WHERE u.supabase_user_id = auth.uid()
             AND tm.team_id = teams.id
         )
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND up.id = teams.id
+        )
     );
 
 -- ==============================================================================
 -- POLÍTICAS PARA COMPANIES (LIVE & TRIAL)
 -- ==============================================================================
 DROP POLICY IF EXISTS "Companies: Jogadores veem sua própria empresa" ON public.companies;
-CREATE POLICY "Companies: Jogadores veem sua própria empresa" ON public.companies
+DROP POLICY IF EXISTS "Companies_Access_Master" ON public.companies;
+DROP POLICY IF EXISTS "Players_View_Own_History" ON public.companies;
+DROP POLICY IF EXISTS "Leitura de empresas competidoras" ON public.companies;
+
+CREATE POLICY "Leitura de empresas competidoras" ON public.companies
     FOR SELECT TO authenticated
     USING (
         EXISTS (
@@ -327,10 +347,18 @@ CREATE POLICY "Companies: Jogadores veem sua própria empresa" ON public.compani
             WHERE u.supabase_user_id = auth.uid()
             AND tm.championship_id = companies.championship_id
         )
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND companies.championship_id IN (
+                SELECT t.championship_id FROM public.teams t WHERE t.id = up.id
+            )
+        )
     );
 
 DROP POLICY IF EXISTS "Companies: Jogadores atualizam sua própria empresa" ON public.companies;
-CREATE POLICY "Companies: Jogadores atualizam sua própria empresa" ON public.companies
+DROP POLICY IF EXISTS "Jogadores atualizam sua propria empresa_v2" ON public.companies;
+CREATE POLICY "Jogadores atualizam sua propria empresa_v2" ON public.companies
     FOR UPDATE TO authenticated
     USING (
         EXISTS (
@@ -343,6 +371,11 @@ CREATE POLICY "Companies: Jogadores atualizam sua própria empresa" ON public.co
             JOIN public.users u ON tm.user_id = u.id
             WHERE u.supabase_user_id = auth.uid()
             AND tm.team_id = companies.team_id
+        )
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id = auth.uid()
+            AND up.id = companies.team_id
         )
     );
 

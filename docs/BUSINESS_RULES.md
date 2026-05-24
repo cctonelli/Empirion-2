@@ -1,21 +1,168 @@
 # Regras de Negócio Core - EMPIRION
 
-## 1. Ciclo Industrial
-- **MP -> PA:** Cada unidade de Produto Acabado (PA) consome **3 unidades de MP-A** e **2 unidades de MP-B**.
-- **Turnos:**
-  - Standard: 100% capacidade.
-  - Extra: Até 50% extra (+50% custo MOD).
+## 1. Ciclo Industrial e Formação de Unidades
+- **Consumo de MP por PA:** Cada unidade de Produto Acabado (PA) consome obrigatoriamente **3 unidades de MP-A** e **2 unidades de MP-B**.
+- **Turnos e Capacidade:**
+  - Standard: Operação regular usando a capacidade nominal máxima das máquinas com base em 100% de atividade.
+  - Extra: Possibilidade de produzir unidades adicionais ativando o percentual de produção extra (até 50%). O custo unitário da Mão de Obra Direta (MOD) para o excedente produzido em turno extra sofre um acréscimo de **+50%** (multiplicador de 1.5x), integrado ao CPP como `extraProductionCost`.
 
-## 2. Gestão Financeira
-- **Empréstimo Compulsório:** Ativado automaticamente em saldo negativo. Quitado no ciclo seguinte.
-- **Tributação:** IR (25%), Dividendos (25% obrigatório), IVA (Crédito/Débito).
-- **PPR:** 0-20% do LAIR, definido pela equipe.
+---
 
-## 3. Avaliação de Desempenho (KPIs)
-- **TSR (Total Shareholder Return):** Métrica principal de vitória.
-- **E-SDS Score:** Saúde financeira dinâmica (Azul, Verde, Amarelo, Laranja, Vermelho).
-- **Altman Z''-Score:** Predição de insolvência.
+## 2. Detalhamento e Formação do CPP (Custo de Produção do Período)
 
-## 4. Mercado
-- **Elasticidade-Preço:** O preço de venda impacta diretamente a demanda regional.
-- **Venda a Prazo:** Gera inadimplência (PECLD) e requer financiamento do capital de giro.
+O **CPP** é a soma de todos os recursos econômicos consumidos para manufaturar mercadorias ao longo do ciclo. Ele é decomposto rigidamente em três pilares contábeis:
+
+$$\text{CPP} = \text{Matéria-Prima Consumida (MP)} + \text{Mão de Obra Direta (MOD)} + \text{Custos Indiretos de Fabricação (CIF)}$$
+
+---
+
+### A. Matéria-Prima Consumida (MP)
+Reflete o custo líquido (expurgado do IVA recuperável) de todos os insumos consumidos na fabricação de mercadorias no período.
+
+1.  **Orquestração de Suprimentos:**
+    O abastecimento de consumos fábrica segue uma esteira de priorização física estruturada:
+    *   **Passo 1:** Consumo do Estoque Inicial de Matérias-Primas.
+    *   **Passo 2:** Consumo de Compras Planejadas ativas na rodada.
+    *   **Passo 3:** Ativação Automática de **Compra de Emergência** caso o estoque inicial somado às compras planejadas não cubra as necessidades produtivas pautadas pelo nível de atividade do operador. As compras emergenciais sofrem um acréscimo de ágio estipulado por `special_purchase_premium`.
+
+2.  **Encargos Financeiros de Compra:**
+    A decisão do tipo de pagamento influencia diretamente o custo de aquisição. Condições parceladas ou a prazo incluem juros de fornecedor (`supplier_interest_rate`), impactando o valor patrimonial da matéria-prima estocada e consumida.
+
+3.  **Equação de Valoração da MP Consumida:**
+    Calcula-se o Preço Médio Líquido de Matéria-Prima Consumida de MP-A (`avgNetMpaPrice`) e MP-B (`avgNetMpbPrice`):
+    *   Consumo Total de MP-A = $\text{Unidades Produzidas} \times 3 \times \text{avgNetMpaPrice}$
+    *   Consumo Total de MP-B = $\text{Unidades Produzidas} \times 2 \times \text{avgNetMpbPrice}$
+    *   **Custo Total de Matéria-Prima Consumida (MP):**
+        $$\text{Total MP} = (\text{Unidades Produzidas} \times 3 \times \text{avgNetMpaPrice}) + (\text{Unidades Produzidas} \times 2 \times \text{avgNetMpbPrice})$$
+
+---
+
+### B. Mão de Obra Direta (MOD)
+Compreende todos os salários, encargos, benefícios e indenizações diretamente vinculados aos operadores responsáveis pela manufatura dos produtos.
+
+1.  **Mão de Obra de Fábrica Base:**
+    Calculada partir dos operadores requeridos (`operatorsRequired`), salário-base atual (`currentSalary`) e nível de atividade de produção (`activityLevel`):
+    $$\text{payrollMOD} = \text{operatorsRequired} \times \text{currentSalary} \times \text{activityLevel}$$
+
+2.  **Encargos Sociais e Benefícios:**
+    *   **Encargos Sociais:** Incidência tributária programática sobre a folha de pagamento base:
+        $$\text{socialChargesMOD} = \text{payrollMOD} \times (\text{socialChargesAttr} - 1)$$
+    *   **Prêmio de Produtividade:** Prêmio eventual concedido voluntariamente pela gestão:
+        $$\text{productivityBonus} = \text{payrollMOD} \times \left(\frac{\text{productivityBonusPercent}}{100}\right)$$
+
+3.  **Hora-Extra (Produção Extra):**
+    Sobretaxa decorrente de produção acima de 100% da capacidade nominal (turno extra):
+    $$\text{extraProductionCost} = \text{Fração de Produção do Turno Extra} \times 1.5_{\text{fator}} \times \text{MOD Base}$$
+
+4.  **Indenizações Rescisórias de Pessoal Fabril:**
+    Custos de desligamento de operadores fabris no período:
+    $$\text{Rescisão} = \text{Indenização de Desligamento} + \text{PPR Proporcional para Desligados}$$
+
+5.  **Custo Total de Mão de Obra Direta (MOD Completa):**
+    No Custeio por Absorção, a conta da MOD incorpora todos os dispêndios laborais ativos e indenizações da fábrica:
+    $$\text{MOD Completa} = \text{payrollMOD} + \text{socialChargesMOD} + \text{productivityBonus} + \text{extraProductionCost} + \text{Rescisão}$$
+
+---
+
+### C. Custos Indiretos de Fabricação (CIF)
+Os Custos Indiretos de Fabricação acumulam todos os serviços corporativos necessários para dar suporte e viabilidade ao parque de manufatura nas suas operações diárias:
+
+1.  **Manutenção das Máquinas:** Custo de manutenção preventiva e periódica indexada à infraestrutura operacional ativa e inflação do período:
+    $$\text{Manutenção} = \text{Capacidade Nominal} \times 2.5 \times \text{inflationMult}$$
+
+2.  **Despesas de Treinamento:** Realizadas no caso de aquisições de novos modelos de equipamentos (CAPEX) para calibrar a produtividade, com percentual estipulado sobre a folha líquida produtora:
+    $$\text{Treinamento} = \text{payrollMOD} \times \left(\frac{\text{trainingPercent}}{100}\right)$$
+
+3.  **Custo de Estocagem (Armazenagem):** Custos logísticos calculados sobre as posições de estoque remanescentes físicas nas duas frentes de matérias-primas (MP-A/MP-B) e estoques não liquidados de produtos acabados (PA) do período:
+    $$\text{Estocagem} = (\text{Qtd Final PA} \times \text{Preço Unit. Armaz. PA}) + (\text{Qtd Final MPA} \times \text{Preço Unit. Armaz. MP}) + (\text{Qtd Final MPB} \times \text{Preço Unit. Armaz. MP})$$
+
+4.  **Depreciação Industrial (Imobilizado do Parque):**
+    *   **Depreciação de Máquinas:** Custo financeiro calculado individualmente para as máquinas operacionais ativas baseado no custo de aquisição e tempo de vida útil econômica útil.
+    *   **Depreciação Predial:** Desgaste linear estipulado em 0.2% do valor contábil histórico das edificações de galpões fabris:
+        $$\text{Depreciação Predial} = \text{Valor Histórico das Instalações} \times 0.002$$
+
+5.  **Custo Total de Custos Indiretos (CIF Completo):**
+    De acordo com a nossa governança e conformidade internacional societária (SAP/Oracle):
+    $$\text{CIF Completo} = \text{Depreciação de Máquinas/Instalações} + \text{Manutenção} + \text{Treinamento} + \text{Estocagem}$$
+
+Desta forma, o **CPP** acumula-se por:
+$$\text{Total CPP} = \text{Total MP Consumida} + \text{MOD Completa} + \text{CIF Completo}$$
+
+---
+
+## 3. Gestão de Estoque e Cálculo de CPV (Método Kardex-WAC)
+
+A valoração estruturada do fluxo físico-financeiro de Estoques segue o protocolo WAC (**Weighted Average Cost** - Custo Médio Ponderado / Média Ponderada Móvel).
+
+```
+   [Estoque Inicial PA] (Valores Retidos)
+             │
+             ├────────────────► (+) [Produção do Período] (CPP total)
+             ▼
+   [Lote de Mercadoria Disponível para Venda] 
+   (Total Qtd = Estoque Inicial Qtd + Unidades Produzidas)
+   (Total Valor = Estoque Inicial Valor + Custo CPP)
+             │
+             ├────────────────► Cálculo do Custo Unitário Médio Ponderado (WAC):
+             │                  WAC = Total Valor / Total Qtd
+             │
+             ├─────────► Vendas Realizadas ───────► CPV = Qtd Vendida * WAC
+             ▼
+   [Estoque Final PA] (Qtd Restante * WAC) ───► Balanço Patrimonial (Ativo)
+```
+
+1.  **Agregação do Lote Disponível:**
+    *   $\text{Quantidade Total para Venda (Lote)} = \text{Quantidade Estoque Inicial de PA} + \text{Unidades Produzidas (Período)}$
+    *   $\text{Valor Contábil Total Disponível} = \text{Preço de Custo de Estoque Inicial} + \text{CPP total do Período}$
+
+2.  **Cálculo da Média Ponderada Móvel (WAC Unitário):**
+    O custo médio que valora todas os itens de forma equânime é extraído pela razão:
+    $$\text{WAC Unitário} = \frac{\text{Contábil Total Disponível}}{\text{Quantidade Total de Lote}}$$
+
+3.  **Valoração e Baixa Contábil (Formação do CPV):**
+    *   **Custo de Mercadorias Vendidas (CPV total):** Dá-se a baixa do estoque e registra-se o impacto no DRE:
+        $$\text{Total CPV} = \text{Quantidade Efetivamente Vendida} \times \text{WAC Unitário}$$
+    *   **Estoque Final de PA (Balanço Patrimonial):** Contabilizado no Ativo Circulante:
+        $$\text{Quantidade de Estoque Final} = \text{Quantidade de Lote} - \text{Quantidade Efetivamente Vendida}$$
+        $$\text{Valor Patrimonial de Estoque Final} = \text{Quantidade de Estoque Final} \times \text{WAC Unitário}$$
+
+---
+
+## 4. Desmembramento Contábil do CPV no DRE
+
+Para prover transparência gerencial e aderência extrema aos padrões internacionais de relatórios do setor (SAP/Oracle), o CPV total faturado no DRE não é apresentado como uma conta monolítica de baixa. Ele é dividido proporcionalmente de acordo com a composição de custos fabris incorridos na produção (CPP):
+
+1.  **Extração das Proporções Industriais (CPP Ratios):**
+    *   Fração de Matéria-Prima: $R_{MP} = \frac{\text{Total MP}}{\text{Total CPP}}$
+    *   Fração de Mão de Obra Direta: $R_{MOD} = \frac{\text{MOD Completa}}{\text{Total CPP}}$
+    *   Fração de Custos Indiretos: $R_{CIF} = \frac{\text{CIF Completo}}{\text{Total CPP}}$
+
+2.  **Desmembramento e Baixa nos Lotes Vendidos (DRE Accounts):**
+    No ato de faturamento, a conta subtotalizadora `cpv` recebe as seguintes alocações refinadas que juntas perfazem exatos 100% do custo de baixa:
+    *   **`dre.cpv_mp`** (Matéria-Prima Consumida Vendida):
+        $$\text{dre.cpv\_mp} = - (\text{Total CPV} \times R_{MP})$$
+    *   **`dre.mod`** (Mão de Obra Direta Vendida):
+        $$\text{dre.mod} = - (\text{Total CPV} \times R_{MOD})$$
+    *   **`dre.cif`** (Custos Indiretos de Fabricação Vendidos):
+        $$\text{dre.cif} = - (\text{Total CPV} \times R_{CIF})$$
+
+Isso garante correspondência e integridade absoluta na equação:
+$$\text{cpv} = \text{dre.cpv\_mp} + \text{dre.mod} + \text{dre.cif}$$
+
+---
+
+## 5. Gestão Financeira, Tributos e Provedores do Mercado
+- **Empréstimo Compulsório:** Ativado automaticamente no saldo negativo do caixa para garantir liquidez operacional, sendo amortizado no ciclo subsequente.
+- **Tributação Corporativa:**
+  - Imposto de Renda Provisão (IR): Alíquota nominal de 25% calculada sobre o lucro do período (LAIR).
+  - Impostos Indiretos (IVA): Mecanismo de crédito/débito incidente na circulação comercial de produtos e insumos.
+  - Dividendos Obrigatórios: Distribuição legal prioritária fixada em 25% do lucro líquido gerado.
+- **Participação nos Resultados (PPR):** Estipulada pela governança corporativa na faixa de 0% a 20% aplicados sobre o Lucro Antes do IR (LAIR).
+
+---
+
+## 6. Avaliação de Desempenho (Métricas e Relatórios)
+- **TSR (Total Shareholder Return):** Composto pelo crescimento patrimonial ponderado pelas distribuições e valorização histórica do equity. Principal diretriz de competitividade.
+- **E-SDS Score:** Algoritmo dinâmico de avaliação com 6 pilares de integridade financeira baseado em faixas alertivas de cores (Azul, Verde, Amarelo, Laranja, Vermelho).
+- **Z-Score de Solvência:** Combinação estatística paramétrica baseada no Altman Z''-Score de emergentes e no Kanitz Index para blindagem tática contra inadimplências.
+- **Venda a Prazo & Risco de Crédito:** Vendas com prazos alongados promovem a aceleração de penetração de mercado fabril, contudo, criam maior necessidade de financiamento de giro operacional (NCG) e ativam provisões estatísticas de créditos de liquidação duvidosa (PECLD).

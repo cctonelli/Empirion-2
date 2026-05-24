@@ -348,24 +348,16 @@ export const calculateProjections = (
   // Manutenção Industrial (GGF reajustado por inflação)
   const maintenance = capacity * 2.5 * inflationMult; 
 
-  // --- 3.2 COMPOSIÇÃO DO CIF E CPP (USER REQUEST) ---
-  // CIF = MOD + Extras + Depreciação + Manutenção + Rescisão (Indenização + PPR Proporcional)
-  const totalCIF = totalMOD + extraProductionCost + periodDepreciation + maintenance + custoIndenizacao + pprProporcional;
-  
-  // TOTAL CPP = MP + CIF
-  const totalCPP = totalMP + totalCIF;
-  const unitCPP = unitsProduced > 0 ? totalCPP / unitsProduced : 0;
-
-  // --- 4. GESTÃO DE ESTOQUE E CPV (MÉTODO WAC) ---
+  // --- 4. GESTÃO FISICA DE ESTOQUES E DEMANDA ---
+  // Para evitar dependências cíclicas com o WAC, os fluxos físicos e de venda são computados primeiro,
+  // permitindo auferir precisamente o custo de estocagem do período que integrará o CIF.
   const prevStockQty = sanitize(team.kpis?.stock_quantities?.finished_goods, 0);
   const prevStockValue = findAccountValue(prevBS, 'assets.current.stock.pa');
   
-  // Novo Valor e Quantidade Total para Média Ponderada
+  // Quantidade total disponível para venda
   const totalQtyForSale = prevStockQty + unitsProduced;
-  const totalValueInInventory = prevStockValue + totalCPP;
-  const wacUnit = totalQtyForSale > 0 ? totalValueInInventory / totalQtyForSale : unitCPP;
 
-  // --- 4. DEMANDA E VENDAS POR REGIÃO ---
+  // Demanda e Vendas por Região (Físico)
   let totalUnitsSold = 0;
   let totalRevenue = 0;
   let totalCashSales = 0;
@@ -382,24 +374,20 @@ export const calculateProjections = (
     const regMarketing = sanitize(reg.marketing, 0);
     const regTerm = sanitize(reg.term, 0); // 0: A VISTA, 1: A VISTA + 50%, 2: A VISTA + 33% + 33%
 
-    // Marketing Expense (GGF Comercial)
     totalMarketingExp += regMarketing * indicators.prices.marketing_campaign * (sanitize(indicators.marketing_campaign_adjust, 0) / 100 + 1);
 
-    // Algoritmo de Demanda Regional
     const priceIndex = indicators.avg_selling_price / regPrice;
-    const marketingIndex = 1 + (regMarketing * 0.08); // +8% por ponto de marketing
-    const termIndex = 1 + (regTerm * 0.05); // +5% por nível de prazo (incentivo comercial)
+    const marketingIndex = 1 + (regMarketing * 0.08);
+    const termIndex = 1 + (regTerm * 0.05);
     
     let regDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (indicators.demand_variation / 100)) * rjDemandPenalty);
     
-    // Limitar pelo estoque disponível (distribuição simples)
     const regUnitsSold = Math.min(regDemand, Math.floor(totalQtyForSale / regionCount)); 
     totalUnitsSold += regUnitsSold;
 
     const regRevenue = regUnitsSold * regPrice;
     totalRevenue += regRevenue;
 
-    // Mix de Prazo (User Request: A VISTA; A VISTA + 50%; A VISTA + 33% + 33%)
     let cashPercent = 1;
     let avgDays = 0;
     if (regTerm === 1) {
@@ -418,7 +406,6 @@ export const calculateProjections = (
 
   const pmr = totalRevenue > 0 ? weightedPmrSum / totalRevenue : 0;
 
-  // Ajuste final se o total vendido ultrapassar o estoque real (segurança)
   if (totalUnitsSold > totalQtyForSale) {
     const ratio = totalQtyForSale / totalUnitsSold;
     totalUnitsSold = totalQtyForSale;
@@ -427,16 +414,46 @@ export const calculateProjections = (
     totalCreditSales *= ratio;
   }
 
+  // Custo de Distribuição comercial
+  const distributionCost = totalUnitsSold * indicators.prices.distribution_unit * getAdjust('distribution_cost_adjust', sanitize(indicators.distribution_cost_adjust, 0));
+
+  // Estoque Final de Produto Acabado e Matéria-Prima Físicos
+  const closingStockPA = totalQtyForSale - totalUnitsSold;
+  const currentMPAStock = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA + emergencyMPA - (unitsProduced * 3);
+  const currentMPBStock = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB + emergencyMPB - (unitsProduced * 2);
+
+  // Custo Real de Estocagem do Período (calculado sobre saldos físicos finais)
+  const storageCost = (closingStockPA * indicators.prices.storage_finished * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0))) + 
+                      (Math.max(0, currentMPAStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0))) + 
+                      (Math.max(0, currentMPBStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0)));
+
+  // --- 4.1 COMPOSIÇÃO DE CUSTO MOD E CIF (SISTEMÁTICA REAL DE ABSORÇÃO) ---
+  // MOD COMPLETA: Salário-Base + Encargos Sociais + Indenização (Rescisão) + Hora-Extra + Prêmio Produtividade
+  const finalMOD = totalMOD + extraProductionCost + (custoIndenizacao + pprProporcional);
+
+  // CIF COMPLETO: Despesas de Treinamento + Manutenção + Estocagem de MP/PA + Depreciação de Prédios + Depreciação de Máquinas
+  const finalCIF = periodDepreciation + maintenance + trainingCost + storageCost;
+
+  // CPP TOTAL: MP Consumida + MOD Completa + CIF Completo
+  const totalCPP = totalMP + finalMOD + finalCIF;
+  const unitCPP = unitsProduced > 0 ? totalCPP / unitsProduced : 0;
+
+  // --- 4.2 GESTÃO CONTÁBIL DE ESTOQUES (KARDEX-WAC FINANCEIRO) ---
+  const totalValueInInventory = prevStockValue + totalCPP;
+  const wacUnit = totalQtyForSale > 0 ? totalValueInInventory / totalQtyForSale : unitCPP;
+
   // CPV (Custo do Produto Vendido)
   const totalCPV = totalUnitsSold * wacUnit;
-  
-  // Proporção de MP e CIF no CPV (Baseado no WAC do período)
-  const currentCppMpRatio = totalCPP > 0 ? totalMP / totalCPP : 0.6;
-  const totalCPV_MP = totalCPV * currentCppMpRatio;
-  const totalCPV_CIF = totalCPV * (1 - currentCppMpRatio);
-
-  const closingStockPA = totalQtyForSale - totalUnitsSold;
   const closingStockValuePA = closingStockPA * wacUnit;
+
+  // Desmembramento de Proporções Industriais do CPV
+  const currentCppMpRatio = totalCPP > 0 ? totalMP / totalCPP : 0.6;
+  const currentCppModRatio = totalCPP > 0 ? finalMOD / totalCPP : 0.25;
+  const currentCppCifRatio = totalCPP > 0 ? finalCIF / totalCPP : 0.15;
+
+  const totalCPV_MP = totalCPV * currentCppMpRatio;
+  const totalCPV_MOD = totalCPV * currentCppModRatio;
+  const totalCPV_CIF = totalCPV * currentCppCifRatio;
 
   // --- 5. RESULTADOS FINANCEIROS ---
   const revenue = totalRevenue;
@@ -460,27 +477,21 @@ export const calculateProjections = (
     newAccountsPayable = totalPurchaseMP * 0.6667;
   }
   
-  // Distribuição e Estocagem
-  const distributionCost = totalUnitsSold * indicators.prices.distribution_unit * getAdjust('distribution_cost_adjust', sanitize(indicators.distribution_cost_adjust, 0));
-  const currentMPAStock = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA + emergencyMPA - (unitsProduced * 3);
-  const currentMPBStock = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB + emergencyMPB - (unitsProduced * 2);
-  const storageCost = (closingStockPA * indicators.prices.storage_finished * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0))) + 
-                      (Math.max(0, currentMPAStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0))) + 
-                      (Math.max(0, currentMPBStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0)));
-
   // OPEX reajustado + Marketing + Inadimplência
   const prevOpexSales = Math.abs(findAccountValue(prevStatements.dre, 'opex.sales') || 873250);
   const prevOpexAdm = Math.abs(findAccountValue(prevStatements.dre, 'opex.adm') || 216000);
   const prevOpexRd = Math.abs(findAccountValue(prevStatements.dre, 'opex.rd') || 41844);
 
-  const currentOpexSales = (prevOpexSales * inflationMult) + totalMarketingExp + distributionCost + storageCost + totalPayrollSales;
+  // NOTA SÊNIOR: Como storageCost e trainingCost foram capitalizados no CIF contábil e incorporados ao CPP,
+  // eles NÃO transitam de forma duplicada no OPEX de vendas/adm operacional imediato do DRE.
+  const currentOpexSales = (prevOpexSales * inflationMult) + totalMarketingExp + distributionCost + totalPayrollSales;
   const currentOpexAdm = (prevOpexAdm * inflationMult) + totalPayrollAdm;
   
   // P&D Investimento dinâmico (% da Receita)
   const rdInvestmentPercent = sanitize(decision.production?.rd_investment, 0);
   const currentOpexRd = rdInvestmentPercent > 0 ? (revenue * (rdInvestmentPercent / 100)) : (prevOpexRd * inflationMult);
 
-  const opex = currentOpexSales + currentOpexAdm + currentOpexRd + badDebtExp + trainingCost;
+  const opex = currentOpexSales + currentOpexAdm + currentOpexRd + badDebtExp;
   
   // Juros e Amortização (Diferenciação Normal vs Compulsório vs BDI)
   const prevLoans = (team.kpis?.loans || []) as any[];
@@ -728,6 +739,7 @@ export const calculateProjections = (
         'rev': revenue, 
         'vat_sales': -ivaOnSales,
         'cpv': -totalCPV, 
+        'dre.mod': -totalCPV_MOD,
         'dre.cif': -totalCPV_CIF,
         'dre.cpv_mp': -totalCPV_MP,
         'gross_profit': revenue - ivaOnSales - totalCPV,

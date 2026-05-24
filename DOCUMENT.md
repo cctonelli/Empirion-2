@@ -207,6 +207,16 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.8 Obsidian Diamond (Obsidian Executive v2) - Abertura Contábil DRE (dre.mod, dre.cif, dre.cpv_mp) e Refinamento do Motor WAC
+- **Data:** 24 de Maio de 2026
+- **Motivo:** Implementar o desmembramento analítico do Custo do Produto Vendido (`cpv`) no DRE para fornecer relatórios contábeis de custos mais precisos e em conformidade internacional (SAP/Oracle). Foram incluídas e preenchidas as contas de Matéria-Prima Consumida Vendida (`dre.cpv_mp`), Mão de Obra Direta Vendida (`dre.mod`) e Custos Indiretos de Fabricação Vendidos (`dre.cif`), resolvendo completamente a integridade de baixa de estoques.
+- **Diferenças:**
+  - *Inclusão de dre.mod no DRE:* Nova conta adicionada como folha de fábrica e horas extras proporcionais no Custo de Produção (CPP) e dada baixa no ato de venda.
+  - *Desmembramento Proporcional Contábil:* Em vez de imputar um CPV monolítico, o simulador agora calcula dinamicamente as proporções industriais de MP, MOD e CIF incorridos no período corrente e as replica no faturamento WAC final para fechar de forma concisa o CPV em cada conta-filha.
+  - *Refinamento do Relatório Financeiro (Reports.tsx):* Adaptação de componentes UI para encontrar valores aninhados dentro de estruturas dinâmicas de contas contábeis no array do DRE sem conflitar com agrupamentos do topo do DRE.
+  - *Guia Exaustivo de Negócio (BUSINESS_RULES.md):* Criação de documentação dedicada e formalizada de todas as fórmulas de formação de CPP, CPV, Kardex-WAC e reconciliação de integridade física-contábil de estoques.
+- **Status:** Em Produção (Conformidade Completa & Auditoria Sólida).
+
 ### v19.7 Obsidian Plus (Obsidian Executive) - Abas Espaciais Glassmorphic & Sparklines Bézier
 - **Data:** 24 de Maio de 2026
 - **Motivo:** Solucionar a sobrecarga cognitiva e fadiga vertical do cockpit executivo, enriquecendo o painel `RightPreviewPanel.tsx` com visualizações vetoriais rápidas de evolução contábil, segmentação glassmorphic e auditoria em tempo real.

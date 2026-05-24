@@ -35,7 +35,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
                 Uso da Capacidade Instalada
               </h5>
               <p className="text-sm text-slate-400 leading-relaxed font-sans">
-                Percentual de utilização das máquinas disponíveis. Valores acima de 90% podem gerar desgaste extra e custos de manutenção não planejados.
+                Percentual de utilização das máquinas disponíveis. Valores acima de 100% podem gerar desgaste extra e custos de manutenção não planejados.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-orange-600/10 group-hover:bg-orange-600/20 transition-colors shrink-0">

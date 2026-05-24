@@ -35,8 +35,55 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
     fetchContext();
   }, []);
 
-  const dre = useMemo(() => activeTeam?.kpis?.statements?.dre || {}, [activeTeam]);
-  const cf = useMemo(() => activeTeam?.kpis?.statements?.cash_flow || { inflow: {}, outflow: {} }, [activeTeam]);
+  const findAccountVal = (nodes: any[], id: string): number => {
+    if (!Array.isArray(nodes)) return 0;
+    for (const node of nodes) {
+      if (node.id === id) return node.value;
+      if (node.children && node.children.length > 0) {
+        const val = findAccountVal(node.children, id);
+        if (val !== 0) return val;
+      }
+    }
+    return 0;
+  };
+
+  const dre = useMemo(() => {
+    const rawDre = activeTeam?.kpis?.statements?.dre;
+    if (Array.isArray(rawDre)) {
+      const rev = findAccountVal(rawDre, 'rev');
+      const vat = findAccountVal(rawDre, 'vat_sales');
+      const cpv = findAccountVal(rawDre, 'cpv');
+      const gross = findAccountVal(rawDre, 'gross_profit');
+      const opex = findAccountVal(rawDre, 'opex');
+      const opProfit = findAccountVal(rawDre, 'operating_profit');
+      const netProfit = findAccountVal(rawDre, 'final_profit');
+      return {
+        revenue: rev,
+        vat_sales: vat,
+        net_sales: rev + vat,
+        cpv: cpv,
+        gross_profit: gross,
+        opex: opex,
+        operating_profit: opProfit,
+        net_profit: netProfit,
+      };
+    }
+    return rawDre || {};
+  }, [activeTeam]);
+
+  const cf = useMemo(() => {
+    const rawCf = activeTeam?.kpis?.statements?.cash_flow;
+    if (Array.isArray(rawCf)) {
+      return {
+        start: findAccountVal(rawCf, 'cf.start'),
+        inflow: { total: findAccountVal(rawCf, 'cf.inflow') },
+        outflow: { total: findAccountVal(rawCf, 'cf.outflow') },
+        final: findAccountVal(rawCf, 'cf.final')
+      };
+    }
+    return rawCf || { inflow: {}, outflow: {} };
+  }, [activeTeam]);
+
   const balanceSheet = useMemo((): AccountNode[] => activeTeam?.kpis?.statements?.balance_sheet || [], [activeTeam]);
 
   const currency = activeArena?.currency || 'BRL';
