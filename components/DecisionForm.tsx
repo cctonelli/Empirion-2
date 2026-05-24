@@ -292,10 +292,42 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          <AnimatePresence mode="wait">
               <motion.div 
                 key="inputs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="h-full flex flex-col"
+                className="h-full flex flex-col lg:flex-row lg:overflow-hidden"
               >
-                 {/* NAV BAR DE PASSOS - Fixa abaixo do header */}
-                 <nav className="flex p-1 gap-1 bg-slate-900/40 backdrop-blur-md border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
+                 {/* COCKPIT DE CONTROLE - NAVEGAÇÃO LATERAL ESQUERDA (EXCLUSIVA DESKTOP) */}
+                 <div className="hidden lg:flex flex-col w-64 bg-slate-950/80 border-r border-white/5 p-4 shrink-0 overflow-y-auto custom-scrollbar">
+                    <div className="mb-4 text-center pb-3 border-b border-white/5">
+                       <span className="text-[10px] font-black tracking-[0.2em] text-orange-500 uppercase font-mono">Empire Cockpit v2.0</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5 flex-1 animate-in fade-in duration-300">
+                       {STEPS.map((s, idx) => {
+                          const Icon = s.icon;
+                          return (
+                            <button
+                               key={s.id}
+                               onClick={() => setActiveStep(idx)}
+                               className={`w-full py-3.5 px-4 rounded-xl transition-all flex items-center justify-between border relative overflow-hidden group text-left ${activeStep === idx ? 'bg-orange-600/15 border-orange-500/40 text-white shadow-xl' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+                            >
+                               {activeStep === idx && (
+                                 <motion.div layoutId="activeStepVertical" className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500" />
+                               )}
+                               <div className="flex items-center gap-2.5">
+                                  <Icon size={14} className={activeStep === idx ? 'text-orange-400' : 'group-hover:text-slate-300'} />
+                                  <span className="text-[9px] font-black uppercase tracking-wider">{s.label.split('. ')[1] || s.label}</span>
+                                </div>
+                               <ChevronRight size={10} className={`opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0 ${activeStep === idx ? 'opacity-105 translate-x-0 text-orange-400' : ''}`} />
+                            </button>
+                          );
+                       })}
+                    </div>
+                 </div>
+
+                 {/* WRAPPER CENTRAL (FORMULÁRIO) & DIREITO (LIVE PREVIEW) */}
+                 <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden h-full">
+                     {/* SUB-WRAPPER CENTRAL (NAV MOBILE + CONTEÚDO ATIVO) */}
+                     <div className="flex-1 flex flex-col h-full overflow-hidden">
+                        {/* NAV BAR DE PASSOS SUPERIOR (HORIZONTAL - EXCLUSIVO EM MOBILE/TABLET) */}
+                        <nav className="flex lg:hidden p-1 gap-1 bg-slate-900/40 backdrop-blur-md border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
                     {STEPS.map((s, idx) => (
                       <button key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[120px] py-3 px-3 rounded-xl transition-all flex flex-col items-center gap-1.5 border group relative overflow-hidden ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-2xl scale-[1.02] z-10' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
                          {activeStep === idx && (
@@ -1865,6 +1897,238 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         </div>
                      )}
                     </div>
+                 </div>
+                 
+                 {/* Fim do Sub-wrapper Central */}
+                 </div>
+
+                 {/* COCKPIT PREVIEW: PAINEL LATERAL DIREITO EM TEMPO REAL (DESKTOP) */}
+                 <div className="w-full lg:w-[400px] bg-slate-950/90 border-t lg:border-t-0 lg:border-l border-white/5 shrink-0 flex flex-col h-full overflow-hidden">
+                    {/* Header do Preview */}
+                    <div className="p-4 bg-slate-900 border-b border-white/10 shrink-0 flex justify-between items-center">
+                       <div className="flex items-center gap-2">
+                          <Activity size={14} className="text-orange-500 animate-pulse" />
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white font-mono">Piloto Imperial (T+1)</span>
+                       </div>
+                       <div className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-mono font-bold text-emerald-400 uppercase rounded-full animate-pulse flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> REAL-TIME
+                       </div>
+                    </div>
+
+                    {/* Widgets de Simulação Instantânea do Auditor Z-Guard, E-SDS, Kardex e Finanças */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-5">
+                       
+                       {/* WIDGET Z-GUARD: AUDITORIA CONTÁBIL */}
+                       {(() => {
+                          const statements = projections?.kpis?.statements;
+                          let isValid = true;
+                          let errors: string[] = [];
+                          if (projections?.kpis?.validation) {
+                             isValid = projections.kpis.validation.isValid;
+                             errors = projections.kpis.validation.errors || [];
+                          }
+
+                          return (
+                             <div className={`p-4 rounded-xl border transition-all ${isValid ? 'bg-emerald-950/10 border-emerald-500/10' : 'bg-red-950/10 border-red-500/10'}`}>
+                                <div className="flex justify-between items-start mb-2">
+                                   <div className="flex items-center gap-1.5">
+                                      {isValid ? <ShieldCheck size={14} className="text-emerald-500" /> : <Shield size={14} className="text-red-500" />}
+                                      <span className="text-[10px] font-black uppercase tracking-wider text-white">Reconciliação Contábil</span>
+                                   </div>
+                                   <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${isValid ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                                      {isValid ? 'CONSISTENTE' : 'DISPARIDADE'}
+                                   </span>
+                                </div>
+                                {isValid ? (
+                                   <p className="text-[9px] text-emerald-400/80 italic">Integridade contábil ativa entre DRE, DFC e Balanço Patrimonial (Z-Guard).</p>
+                                ) : (
+                                   <div className="space-y-1">
+                                      <p className="text-[9px] text-red-200 italic font-bold">Identificadas rupturas de integridade contábil:</p>
+                                      {errors.map((err, i) => (
+                                         <p key={i} className="text-[8px] text-red-300 font-mono leading-tight flex items-start gap-1">
+                                            <span>•</span> {err}
+                                         </p>
+                                      ))}
+                                   </div>
+                                )}
+                             </div>
+                          );
+                       })()}
+
+                       {/* WIDGET SOLVÊNCIA E-SDS */}
+                       {(() => {
+                          const esdsVal = projections?.kpis?.esds?.esds_display ?? 0;
+                          const esdsZone = projections?.kpis?.esds?.zone ?? 'Verde';
+                          const esdsGargalos = projections?.kpis?.esds?.top_gargalos ?? [];
+                          
+                          let bgHex = 'bg-emerald-500';
+                          let textHex = 'text-emerald-400';
+                          let borderHex = 'border-emerald-500/20';
+                          if (esdsZone === 'Azul') { bgHex = 'bg-blue-500'; textHex = 'text-blue-400'; borderHex = 'border-blue-500/20'; }
+                          else if (esdsZone === 'Amarelo') { bgHex = 'bg-yellow-500'; textHex = 'text-yellow-400'; borderHex = 'border-yellow-500/20'; }
+                          else if (esdsZone === 'Laranja') { bgHex = 'bg-orange-500'; textHex = 'text-orange-400'; borderHex = 'border-orange-500/20'; }
+                          else if (esdsZone === 'Vermelho') { bgHex = 'bg-rose-500'; textHex = 'text-rose-400'; borderHex = 'border-rose-500/20'; }
+
+                          return (
+                             <div className="p-4 rounded-xl border bg-slate-900 border-white/5 space-y-2.5">
+                                <div className="flex justify-between items-center">
+                                   <span className="text-[10px] font-black uppercase tracking-wider text-white flex items-center gap-1.5 font-sans">
+                                      <Target size={12} className="text-orange-500" />
+                                      Solvência E-SDS
+                                   </span>
+                                   <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${borderHex} ${textHex} font-mono`}>
+                                      Zona {esdsZone}
+                                   </span>
+                                </div>
+                                <div className="flex items-end gap-3">
+                                   <div className="text-2xl font-black italic tracking-tighter text-white font-mono">
+                                      {esdsVal.toFixed(2)}
+                                   </div>
+                                   <div className="flex-1 pb-1">
+                                      <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden">
+                                         <div className={`h-full ${bgHex} transition-all`} style={{ width: `${Math.min(100, Math.max(5, esdsVal * 10))}%` }} />
+                                      </div>
+                                   </div>
+                                </div>
+                                {esdsGargalos.length > 0 && (
+                                   <div className="pt-2 border-t border-white/5">
+                                      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">Gargalos Ativos:</span>
+                                      <div className="flex flex-wrap gap-1">
+                                         {esdsGargalos.map((g: any, i: number) => (
+                                            <span key={i} className="px-1.5 py-0.5 bg-rose-500/10 text-rose-400 text-[8px] font-bold rounded uppercase border border-rose-500/20">
+                                               {g.name}
+                                            </span>
+                                         ))}
+                                      </div>
+                                   </div>
+                                )}
+                             </div>
+                          );
+                       })()}
+
+                       {/* WIDGET KARDEX & ESTOQUE */}
+                       {(() => {
+                          const mpaInput = decisions.production.purchaseMPA ?? 0;
+                          const mpbInput = decisions.production.purchaseMPB ?? 0;
+                          
+                          const initialA = activeTeam?.kpis?.stock_quantities?.mp_a ?? 30150;
+                          const estProd = Math.floor((activeTeam?.kpis?.production_capacity || 0) * (decisions.production.activityLevel / 100));
+                          const extraP = decisions.production.extraProductionPercent || 0;
+                          const totalP = estProd + Math.floor(estProd * (extraP / 100));
+                          
+                          const consA = totalP * 3;
+                          const finalA = Math.max(0, initialA + mpaInput - consA);
+                          const emergA = consA > (initialA + mpaInput) ? consA - (initialA + mpaInput) : 0;
+                          
+                          const initialB = activeTeam?.kpis?.stock_quantities?.mp_b ?? 20100;
+                          const consB = totalP * 2;
+                          const finalB = Math.max(0, initialB + mpbInput - consB);
+                          const emergB = consB > (initialB + mpbInput) ? consB - (initialB + mpbInput) : 0;
+
+                          return (
+                             <div className="p-4 rounded-xl border bg-slate-900 border-white/5 space-y-3.5">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-white flex items-center gap-1.5 font-sans">
+                                   <Warehouse size={12} className="text-orange-500" />
+                                   Kardex Físico & Estoque MP
+                                </span>
+
+                                {/* MATÉRIA-PRIMA A */}
+                                <div className="space-y-1">
+                                   <div className="flex justify-between items-center text-[9px]">
+                                      <span className="font-bold text-slate-300 font-sans">MATÉRIA-PRIMA A (Silício)</span>
+                                      {emergA > 0 ? (
+                                         <span className="text-[8px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 animate-pulse font-mono">
+                                            EMERGÊNCIA (+{emergA})
+                                         </span>
+                                      ) : (
+                                         <span className="text-[8px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono">
+                                            SALDO OK (+{finalA})
+                                         </span>
+                                      )}
+                                   </div>
+                                   <div className="relative w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
+                                      <div className={`h-full ${emergA > 0 ? 'bg-rose-600' : 'bg-orange-500'} transition-all`} style={{ width: `${Math.min(100, Math.max(5, (finalA / Math.max(1, initialA)) * 100))}%` }} />
+                                   </div>
+                                   <div className="flex justify-between items-center text-[8px] text-slate-500 font-mono leading-none">
+                                      <span>Inic: {initialA}</span>
+                                      <span>Cons: {consA}</span>
+                                      <span>Fin: {finalA}</span>
+                                   </div>
+                                </div>
+
+                                {/* MATÉRIA-PRIMA B */}
+                                <div className="space-y-1 pt-1.5 border-t border-white/5">
+                                   <div className="flex justify-between items-center text-[9px]">
+                                      <span className="font-bold text-slate-300 font-sans">MATÉRIA-PRIMA B (Germânio)</span>
+                                      {emergB > 0 ? (
+                                         <span className="text-[8px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 animate-pulse font-mono">
+                                            EMERGÊNCIA (+{emergB})
+                                         </span>
+                                      ) : (
+                                         <span className="text-[8px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono">
+                                            SALDO OK (+{finalB})
+                                         </span>
+                                      )}
+                                   </div>
+                                   <div className="relative w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
+                                      <div className={`h-full ${emergB > 0 ? 'bg-rose-600' : 'bg-orange-500'} transition-all`} style={{ width: `${Math.min(100, Math.max(5, (finalB / Math.max(1, initialB)) * 100))}%` }} />
+                                   </div>
+                                   <div className="flex justify-between items-center text-[8px] text-slate-500 font-mono leading-none">
+                                      <span>Inic: {initialB}</span>
+                                      <span>Cons: {consB}</span>
+                                      <span>Fin: {finalB}</span>
+                                   </div>
+                                </div>
+                             </div>
+                          );
+                       })()}
+
+                       {/* WIDGET FINANÇAS */}
+                       {(() => {
+                          const dre = projections?.kpis?.statements?.income_statement || [];
+                          const dfc = projections?.kpis?.statements?.cash_flow || [];
+                          
+                          const receita = dre.find((n: any) => n.id === 'is.revenue')?.value || 0;
+                          const ebitda = projections?.kpis?.ebitda || 0;
+                          const lucroLiq = dre.find((n: any) => n.id === 'is.net_profit')?.value || 0;
+                          const cashFinal = dfc.find((n: any) => n.id === 'cf.final')?.value || 0;
+
+                          return (
+                             <div className="p-4 rounded-xl border bg-slate-900 border-white/5 space-y-2">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-white flex items-center gap-1.5 font-sans">
+                                   <BarChart3 size={12} className="text-orange-500" />
+                                   DRE & DFC Projetadas (T+1)
+                                </span>
+                                <div className="space-y-1.5 text-[10px] text-slate-400 font-medium font-mono">
+                                   <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                      <span className="font-sans text-[9px]">Faturamento</span>
+                                      <span className="font-bold text-white">{formatCurrency(receita, activeArena?.currency || 'BRL')}</span>
+                                   </div>
+                                   <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                      <span className="font-sans text-[9px]">EBITDA Ajustado</span>
+                                      <span className="font-bold text-orange-400">{formatCurrency(ebitda, activeArena?.currency || 'BRL')}</span>
+                                   </div>
+                                   <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                      <span className="font-sans text-[9px]">Lucro Líquido</span>
+                                      <span className={`font-bold ${lucroLiq >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                         {formatCurrency(lucroLiq, activeArena?.currency || 'BRL')}
+                                      </span>
+                                   </div>
+                                   <div className="flex justify-between items-center py-1">
+                                      <span className="font-sans text-[9px]">Caixa Final Estimado</span>
+                                      <span className={`font-bold ${cashFinal >= 20000 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                         {formatCurrency(cashFinal, activeArena?.currency || 'BRL')}
+                                      </span>
+                                   </div>
+                                </div>
+                             </div>
+                          );
+                       })()}
+
+                    </div>
+                 </div>
+
+                 {/* Fim do Central & Direita Wrapper */}
                  </div>
 
               </motion.div>
