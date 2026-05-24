@@ -1048,6 +1048,126 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                               </div>
                            </div>
 
+                           {/* Projeção Dinâmica do Kardex de Suprimentos & Simulação de Compra Emergencial (v19.5 Sapphire) */}
+                           <div className="mt-8 p-6 lg:p-8 bg-slate-900/40 backdrop-blur-md rounded-3xl border border-white/5 space-y-6">
+                              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                 <div>
+                                    <h4 className="text-lg font-black text-white uppercase italic tracking-tight flex items-center gap-2">
+                                       <Activity size={18} className="text-amber-500" />
+                                       Simulação em Tempo Real do Kardex de Suprimentos (WAC & Z-Guard)
+                                    </h4>
+                                    <p className="text-xs text-slate-400 italic mt-1">
+                                       Projeta em tempo real os fluxos físicos e avalia a iminência de Cisnes de Estoque (compras de emergência) baseando-se no plano de produção e estoque disponível.
+                                    </p>
+                                 </div>
+                                 <div className="px-4 py-1.5 bg-slate-950 rounded-full border border-slate-800 text-[10px] font-mono font-semibold text-slate-400">
+                                    Produção Projetada: <span className="text-amber-500 font-bold">{(() => {
+                                       const estProd = Math.floor((activeTeam?.kpis?.production_capacity || 0) * (decisions.production.activityLevel / 100));
+                                       const extraP = decisions.production.extraProductionPercent || 0;
+                                       return estProd + Math.floor(estProd * (extraP / 100));
+                                    })()} un</span>
+                                 </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                 {/* Kardex MP-A */}
+                                 {(() => {
+                                    const initialA = activeTeam?.kpis?.stock_quantities?.mp_a ?? 30150;
+                                    const pA = decisions.production.purchaseMPA ?? 0;
+                                    const estProd = Math.floor((activeTeam?.kpis?.production_capacity || 0) * (decisions.production.activityLevel / 100));
+                                    const extraP = decisions.production.extraProductionPercent || 0;
+                                    const totalP = estProd + Math.floor(estProd * (extraP / 100));
+                                    const consA = totalP * 3;
+                                    const totalAvailA = initialA + pA;
+                                    const emergA = consA > totalAvailA ? consA - totalAvailA : 0;
+                                    const finalA = Math.max(0, totalAvailA + emergA - consA);
+
+                                    return (
+                                       <div className="p-5 bg-slate-950/60 rounded-2xl border border-white/5 space-y-4">
+                                          <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                             <span className="text-xs font-black text-orange-400 uppercase tracking-wider">Matéria-Prima A</span>
+                                             {emergA > 0 ? (
+                                                <span className="text-[9px] font-bold px-2 py-0.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full flex items-center gap-1 animate-pulse">
+                                                   ● Compra de Emergência Ativada (+{emergA})
+                                                </span>
+                                             ) : (
+                                                <span className="text-[9px] font-bold px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+                                                   ● Estoque Seguro (+{finalA})
+                                                </span>
+                                             )}
+                                          </div>
+                                          <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                                             <div className="bg-slate-950 p-2 rounded-lg">
+                                                <span className="block text-slate-500">Saldo Inicial</span>
+                                                <span className="font-mono font-bold text-slate-300">{initialA} un</span>
+                                             </div>
+                                             <div className="bg-slate-950 p-2 rounded-lg">
+                                                <span className="block text-slate-500">Entrada (Plan)</span>
+                                                <span className="font-mono font-bold text-orange-400">+{pA} un</span>
+                                             </div>
+                                             <div className="bg-slate-950 p-2 rounded-lg">
+                                                <span className="block text-slate-500">Consumo (Est)</span>
+                                                <span className="font-mono font-bold text-red-400">-{consA} un</span>
+                                             </div>
+                                          </div>
+                                          <div className="flex justify-between items-center text-xs pt-1">
+                                             <span className="text-slate-500">Saldo Final Projetado:</span>
+                                             <span className="font-mono font-black text-white">{finalA} un</span>
+                                          </div>
+                                       </div>
+                                    );
+                                 })()}
+
+                                 {/* Kardex MP-B */}
+                                 {(() => {
+                                    const initialB = activeTeam?.kpis?.stock_quantities?.mp_b ?? 20100;
+                                    const pB = decisions.production.purchaseMPB ?? 0;
+                                    const estProd = Math.floor((activeTeam?.kpis?.production_capacity || 0) * (decisions.production.activityLevel / 100));
+                                    const extraP = decisions.production.extraProductionPercent || 0;
+                                    const totalP = estProd + Math.floor(estProd * (extraP / 100));
+                                    const consB = totalP * 2;
+                                    const totalAvailB = initialB + pB;
+                                    const emergB = consB > totalAvailB ? consB - totalAvailB : 0;
+                                    const finalB = Math.max(0, totalAvailB + emergB - consB);
+
+                                    return (
+                                       <div className="p-5 bg-slate-950/60 rounded-2xl border border-white/5 space-y-4">
+                                          <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                             <span className="text-xs font-black text-orange-400 uppercase tracking-wider">Matéria-Prima B</span>
+                                             {emergB > 0 ? (
+                                                <span className="text-[9px] font-bold px-2 py-0.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full flex items-center gap-1 animate-pulse">
+                                                   ● Compra de Emergência Ativada (+{emergB})
+                                                </span>
+                                             ) : (
+                                                <span className="text-[9px] font-bold px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+                                                   ● Estoque Seguro (+{finalB})
+                                                </span>
+                                             )}
+                                          </div>
+                                          <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                                             <div className="bg-slate-950 p-2 rounded-lg">
+                                                <span className="block text-slate-500">Saldo Inicial</span>
+                                                <span className="font-mono font-bold text-slate-300">{initialB} un</span>
+                                             </div>
+                                             <div className="bg-slate-950 p-2 rounded-lg">
+                                                <span className="block text-slate-500">Entrada (Plan)</span>
+                                                <span className="font-mono font-bold text-orange-400">+{pB} un</span>
+                                             </div>
+                                             <div className="bg-slate-950 p-2 rounded-lg">
+                                                <span className="block text-slate-500">Consumo (Est)</span>
+                                                <span className="font-mono font-bold text-red-400">-{consB} un</span>
+                                             </div>
+                                          </div>
+                                          <div className="flex justify-between items-center text-xs pt-1">
+                                             <span className="text-slate-500">Saldo Final Projetado:</span>
+                                             <span className="font-mono font-black text-white">{finalB} un</span>
+                                          </div>
+                                       </div>
+                                    );
+                                 })()}
+                              </div>
+                           </div>
+
                            {/* Seção: Condições de Pagamento */}
                            <div className="space-y-10 pt-12 border-t border-white/10">
                               <h4 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-4">

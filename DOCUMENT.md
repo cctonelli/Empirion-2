@@ -209,9 +209,11 @@ project-root/
 
 ### v19.5 Sapphire Gold Edition - Centralização de KPIs e E-SDS v1.2
 - **Data:** 24 de Maio de 2026
-- **Motivo:** Centralização técnica absoluta e unificação matemática das equações corporativas e do motor E-SDS v1.2 em `services/simulation-core.ts`, mitigando qualquer descompasso operacional offline-online.
+- **Motivo:** Centralização técnica absoluta e unificação matemática das equações corporativas e do motor E-SDS v1.2 em `services/simulation-core.ts`, mitigando qualquer descompasso operacional offline-online e fechando as lacunas táticas de conciliação.
 - **Diferenças:**
-  - *Consolidação Estrita:* Migração integral e delegação unificada de `calculateKpisFromStatements` e `computeESDSDeterministic` para o arquivo de núcleo (`simulation-core.ts`).
+  - *Consolidação Estrita & Sem Redundância:* Migração integral e delegação unificada do custeio de estoques (Kardex-WAC), cálculo de CPV, `calculateKpisFromStatements` e `processRoundWithValidation` para a biblioteca unificada de núcleo contábil (`simulation-core.ts`).
+  - *Simbiose E-SDS & Auditoria Contábil:* Integração direta da validação tripla contábil (`validateTripleConsistency`) dentro da computação do score de solvência E-SDS, penalizando descompassos contábeis em 3.0 pontos no score, forçando o rebaixamento da zona e registrando o gargalo de ruptura de integridade (Z-Guard).
+  - *Cockpit de Tomada de Decisão com Kardex Ativo:* Inclusão de painel visual interativo com simulação em tempo real sobre fluxos de matéria-prima no cockpit das equipes (`DecisionForm.tsx`), alertando dinamicamente sobre risco de defasagem de estoques e compras de emergência.
   - *E-SDS v1.2 Dinâmico & Setorial:* Ponderação matemática dinâmica dos pilares (P1 a P6) com calibração estrita pelo tipo de branch (`agribusiness`, `services`, `industrial`) e desvio padrão quadrático da volatilidade histórica (P6).
   - *Quantificação Científica de Gargalos:* Abstração refinada de `top_gargalos` adaptada para representação de objetos de impacto e percentual compatíveis com as diretrizes do ecossistema.
 - **Status:** Em Produção (Fidelidade Mútua).

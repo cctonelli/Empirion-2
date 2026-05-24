@@ -280,7 +280,20 @@ export const computeESDSDeterministic = (
   const p6 = (cv + exchangeVolatility) * volMultiplier;
 
   // CÁLCULO GERAL PONDERADO DO SCORE
-  const esds_raw = (weights.p1 * p1) + (weights.p2 * p2) + (weights.p3 * p3) + (weights.p4 * p4) - (weights.p5 * p5) - (weights.p6 * p6);
+  let esds_raw_pre = (weights.p1 * p1) + (weights.p2 * p2) + (weights.p3 * p3) + (weights.p4 * p4) - (weights.p5 * p5) - (weights.p6 * p6);
+
+  // Integração Direta da Auditoria de Consistência Tripla (Audit Integrity Sync)
+  let hasAccountingInconsistency = false;
+  const statementsForAudit = current.statements;
+  if (statementsForAudit) {
+    const auditStatus = validateTripleConsistency(statementsForAudit);
+    if (!auditStatus.isValid) {
+      hasAccountingInconsistency = true;
+      // Penalização de 3.0 pontos por discrepância severa de integridade contábil
+      esds_raw_pre = Math.max(0, esds_raw_pre - 3.0);
+    }
+  }
+  const esds_raw = esds_raw_pre;
 
   // Mapeamento categórico das zonas de solvência
   let zone: any = 'Verde';
@@ -297,9 +310,23 @@ export const computeESDSDeterministic = (
     zone = 'Laranja';
   }
 
+  // Se houver discrepância física ou contábil, limite a classificação para Amarelo se estivesse em mais alta
+  if (hasAccountingInconsistency && (zone === 'Azul' || zone === 'Verde')) {
+    zone = 'Amarelo';
+  }
+
   // Identificação sistemática dos maiores gargalos táticos (Top Gargalos)
   const top_gargalos: { name: string; impact: number; percentage: number; }[] = [];
   const main_drivers: string[] = [];
+  
+  if (hasAccountingInconsistency) {
+    top_gargalos.push({
+      name: 'Rompimento de Integridade Contábil (Z-Guard)',
+      impact: 9,
+      percentage: 95
+    });
+    main_drivers.push('Identificadas falhas críticas de reconciliação contábil entre DRE, DFC e Balanço Patrimonial');
+  }
   
   if (p1 < 0.4) {
     top_gargalos.push({ 

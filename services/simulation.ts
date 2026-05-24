@@ -2,7 +2,7 @@
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, Team, ProjectionResult, CreditRating, KPIs, MachineInstance, AccountNode, MachineModel, ESDSCalculation, ChampionshipConfig, CompanyState } from '../types';
 import { INITIAL_FINANCIAL_TREE } from '../constants';
 import { supabase } from './supabase';
-import { validateTripleConsistency, computeESDSDeterministic as coreComputeESDS, calculateKpisFromStatements as coreCalculateKpis } from './simulation-core';
+import { validateTripleConsistency, computeESDSDeterministic as coreComputeESDS, calculateKpisFromStatements as coreCalculateKpis, processRoundWithValidation } from './simulation-core';
 
 /**
  * EMPIRION SIMULATION KERNEL v18.8 - STATEFUL COST ACCOUNTING
@@ -865,74 +865,6 @@ export const calculateProjections = (
     }
   });
 
-  const mpaQtyConsumed = unitsProduced * 3;
-  const mpbQtyConsumed = unitsProduced * 2;
-  const initialMpaQty = team.kpis?.stock_quantities?.mp_a || 30150;
-  const initialMpbQty = team.kpis?.stock_quantities?.mp_b || 20100;
-  const initialPaQty = team.kpis?.stock_quantities?.finished_goods || 0;
-  const finalMpaQtyReal = initialMpaQty + purchaseMPA + emergencyMPA - mpaQtyConsumed;
-  const finalMpbQtyReal = initialMpbQty + purchaseMPB + emergencyMPB - mpbQtyConsumed;
-
-  // Auditoria Z-Guard de estoque WAC e Kardex completo
-  const kardex = {
-    mpa: {
-      saldoInicialQtd: initialMpaQty,
-      saldoInicialValor: initialMpaQty * netMpaPrice,
-      saldoInicialUnitario: netMpaPrice,
-      entradasQtd: purchaseMPA + emergencyMPA,
-      entradasValor: (purchaseMPA * netPlannedMpaPrice) + (emergencyMPA * netEmergencyMpaPrice),
-      entradasUnitario: (purchaseMPA + emergencyMPA) > 0 ? ((purchaseMPA * netPlannedMpaPrice) + (emergencyMPA * netEmergencyMpaPrice)) / (purchaseMPA + emergencyMPA) : 0,
-      saidasQtd: mpaQtyConsumed,
-      saidasValor: mpaQtyConsumed * avgNetMpaPrice,
-      saidasUnitario: avgNetMpaPrice,
-      saldoFinalQtd: Math.max(0, finalMpaQtyReal),
-      saldoFinalValor: closingMpaValue,
-      saldoFinalUnitario: avgNetMpaPrice
-    },
-    mpb: {
-      saldoInicialQtd: initialMpbQty,
-      saldoInicialValor: initialMpbQty * netMpbPrice,
-      saldoInicialUnitario: netMpbPrice,
-      entradasQtd: purchaseMPB + emergencyMPB,
-      entradasValor: (purchaseMPB * netPlannedMpbPrice) + (emergencyMPB * netEmergencyMpbPrice),
-      entradasUnitario: (purchaseMPB + emergencyMPB) > 0 ? ((purchaseMPB * netPlannedMpbPrice) + (emergencyMPB * netEmergencyMpbPrice)) / (purchaseMPB + emergencyMPB) : 0,
-      saidasQtd: mpbQtyConsumed,
-      saidasValor: mpbQtyConsumed * avgNetMpbPrice,
-      saidasUnitario: avgNetMpbPrice,
-      saldoFinalQtd: Math.max(0, finalMpbQtyReal),
-      saldoFinalValor: closingMpbValue,
-      saldoFinalUnitario: avgNetMpbPrice
-    },
-    pa: {
-      saldoInicialQtd: initialPaQty,
-      saldoInicialValor: prevStockValue,
-      saldoInicialUnitario: initialPaQty > 0 ? prevStockValue / initialPaQty : 0,
-      entradasQtd: unitsProduced,
-      entradasValor: totalCPP,
-      entradasUnitario: unitCPP,
-      saidasQtd: totalUnitsSold,
-      saidasValor: totalCPV,
-      saidasUnitario: wacUnit,
-      saldoFinalQtd: closingStockPA,
-      saldoFinalValor: closingStockValuePA,
-      saldoFinalUnitario: wacUnit
-    }
-  };
-
-  const cpvDetails = {
-    mpConsumida: totalMP,
-    maoDeObraDireta: totalMOD,
-    depreciacaoFabril: periodDepreciation,
-    manutencaoFabril: maintenance,
-    indenizacoesRescisorias: custoIndenizacao,
-    pprProporcional: pprProporcional,
-    totalCPP,
-    estoqueInicialPA: prevStockValue,
-    estoqueFinalPA: closingStockValuePA,
-    totalCPV,
-    custoUnitarioProducao: unitCPP
-  };
-
   const result: ProjectionResult = {
     revenue, netProfit: finalNetProfit, debtRatio: kpis.percentual_divida_curto_prazo, creditRating: kpis.rating,
     health: { cash: finalCashWithAwards, rating: kpis.rating },
@@ -940,13 +872,32 @@ export const calculateProjections = (
     kpis: {
       ...team.kpis,
       ...kpis,
-      market_share: projectedMarketShare,
-      kardex,
-      cpv_details: cpvDetails
+      market_share: projectedMarketShare
     }
   };
 
-  // 7. CÁLCULO DO E-SDS DETERMINÍSTICO (User Request v1.2)
+  // Executa centralizadamente a orquestração de validações, Kardex-WAC e CPV através de simulation-core (v19.5 Sapphire Gold)
+  const validationResult = processRoundWithValidation(
+    decision,
+    branch,
+    ecosystem,
+    indicators,
+    team,
+    history,
+    currentRound,
+    rules,
+    result.kpis
+  );
+
+  result.kpis.kardex = validationResult.kardex;
+  result.kpis.cpv_details = validationResult.cpvDetails;
+  result.kpis.validation = {
+    isValid: validationResult.isValid,
+    errors: validationResult.errors,
+    warnings: validationResult.warnings
+  };
+
+  // 7. CÁLCULO DO E-SDS DETERMINÍSTICO COM INTEGRAÇÃO SIMBIÓTICA (User Request v1.2)
   const esdsInputs = {
     fco_livre: result.kpis.fco_livre,
     passivo_circulante: result.kpis.passivo_circulante,
@@ -960,18 +911,11 @@ export const calculateProjections = (
     percentual_divida_curto_prazo: result.kpis.percentual_divida_curto_prazo,
     custo_medio_divida: result.kpis.custo_medio_divida,
     alavancagem_efetiva: result.kpis.alavancagem_efetiva,
-    divida_liquida: result.kpis.divida_liquida
+    divida_liquida: result.kpis.divida_liquida,
+    statements: result.kpis.statements  // Enviado para viabilizar auditoria simbiótica profunda do E-SDS v1.2
   };
 
   result.kpis.esds = computeESDSDeterministic(esdsInputs, history, branch);
-
-  // Injetar auditoria de consistência tripla rígida (v19.5 Sapphire)
-  const validation = validateTripleConsistencyLocal(result.kpis.statements);
-  result.kpis.validation = {
-    isValid: validation.isValid,
-    errors: validation.errors,
-    warnings: validation.warnings
-  };
 
   return result;
 };
