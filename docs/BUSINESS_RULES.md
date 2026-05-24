@@ -1,6 +1,21 @@
 # Regras de Negócio Core - EMPIRION
 
-## 1. Ciclo Industrial e Formação de Unidades
+**Versão:** v19.9 Obsidian Diamond Enterprise II  
+**Data:** 24 de Maio de 2026  
+**Método Contábil:** Custeio por Absorção Completo (Full Absorption Costing)  
+**Referências:** CPC 16 (R1) / IAS 2 / SAP & Oracle Best Practices
+
+## 1. Princípios Contábeis Gerais (Imutáveis)
+
+- O Empirion utiliza **Custeio por Absorção** como método oficial de custeio.
+- Todos os custos de produção (MP + MOD + CIF) são **ativados no estoque** até o momento da venda.
+- O CPV é apurado apenas sobre as unidades vendidas, utilizando **Weighted Average Cost (WAC)**.
+- Depreciação é sempre tratada como despesa não-caixa (non-cash expense).
+- Qualquer inconsistência tripla (DRE × BP × DFC) deve bloquear o fechamento da rodada.
+
+---
+
+## 2. Ciclo Industrial e Formação de Unidades
 - **Consumo de MP por PA:** Cada unidade de Produto Acabado (PA) consome obrigatoriamente **3 unidades de MP-A** e **2 unidades de MP-B**.
 - **Turnos e Capacidade:**
   - Standard: Operação regular usando a capacidade nominal máxima das máquinas com base em 100% de atividade.
@@ -8,7 +23,7 @@
 
 ---
 
-## 2. Detalhamento e Formação do CPP (Custo de Produção do Período)
+## 3. Detalhamento e Formação do CPP (Custo de Produção do Período)
 
 O **CPP** é a soma de todos os recursos econômicos consumidos para manufaturar mercadorias ao longo do ciclo. Ele é decomposto rigidamente em três pilares contábeis:
 
@@ -90,9 +105,15 @@ $$\text{Total CPP} = \text{Total MP Consumida} + \text{MOD Completa} + \text{CIF
 
 ---
 
-## 3. Gestão de Estoque e Cálculo de CPV (Método Kardex-WAC)
+## 4. Gestão de Estoque e Cálculo de CPV (Método Kardex-WAC)
 
 A valoração estruturada do fluxo físico-financeiro de Estoques segue o protocolo WAC (**Weighted Average Cost** - Custo Médio Ponderado / Média Ponderada Móvel).
+
+**Fluxo:**
+- Estoque Inicial + Produção (CPP) → Lote Disponível
+- WAC Unitário = Valor Total Disponível / Quantidade Total
+- CPV = Quantidade Vendida × WAC Unitário
+- Estoque Final = (Quantidade Total - Vendida) × WAC Unitário
 
 ```
    [Estoque Inicial PA] (Valores Retidos)
@@ -128,7 +149,7 @@ A valoração estruturada do fluxo físico-financeiro de Estoques segue o protoc
 
 ---
 
-## 4. Desmembramento Contábil do CPV no DRE
+## 5. Desmembramento Contábil do CPV no DRE
 
 Para prover transparência gerencial e aderência extrema aos padrões internacionais de relatórios do setor (SAP/Oracle), o CPV total faturado no DRE não é apresentado como uma conta monolítica de baixa. Ele é dividido proporcionalmente de acordo com a composição de custos fabris incorridos na produção (CPP):
 
@@ -151,7 +172,23 @@ $$\text{cpv} = \text{dre.cpv\_mp} + \text{dre.mod} + \text{dre.cif}$$
 
 ---
 
-## 5. Gestão Financeira, Tributos e Provedores do Mercado
+## 6. Trânsito Contábil pelas Três Demonstrações
+
+### 6.1 DRE (Regime de Competência)
+- CPV desmembrado (MP + MOD + CIF) é baixado no momento da venda.
+- Depreciação parcialmente incluída no CIF.
+
+### 6.2 Balanço Patrimonial
+- Estoques (MP + PA) valorizados por WAC no Ativo Circulante.
+- Imobilizado líquido após depreciação acumulada.
+
+### 6.3 Fluxo de Caixa (DFC)
+- Registra saídas reais: pagamento de MOD, Manutenção, Treinamento, Estocagem, Compras de MP e CapEx.
+- Depreciação é adicionada de volta (non-cash).
+
+---
+
+## 7. Gestão Financeira, Tributos e Provedores do Mercado
 - **Empréstimo Compulsório:** Ativado automaticamente no saldo negativo do caixa para garantir liquidez operacional, sendo amortizado no ciclo subsequente.
 - **Tributação Corporativa:**
   - Imposto de Renda Provisão (IR): Alíquota nominal de 25% calculada sobre o lucro do período (LAIR).
@@ -161,8 +198,19 @@ $$\text{cpv} = \text{dre.cpv\_mp} + \text{dre.mod} + \text{dre.cif}$$
 
 ---
 
-## 6. Avaliação de Desempenho (Métricas e Relatórios)
+## 8. Avaliação de Desempenho (Métricas e Relatórios)
 - **TSR (Total Shareholder Return):** Composto pelo crescimento patrimonial ponderado pelas distribuições e valorização histórica do equity. Principal diretriz de competitividade.
 - **E-SDS Score:** Algoritmo dinâmico de avaliação com 6 pilares de integridade financeira baseado em faixas alertivas de cores (Azul, Verde, Amarelo, Laranja, Vermelho).
 - **Z-Score de Solvência:** Combinação estatística paramétrica baseada no Altman Z''-Score de emergentes e no Kanitz Index para blindagem tática contra inadimplências.
 - **Venda a Prazo & Risco de Crédito:** Vendas com prazos alongados promovem a aceleração de penetração de mercado fabril, contudo, criam maior necessidade de financiamento de giro operacional (NCG) e ativam provisões estatísticas de créditos de liquidação duvidosa (PECLD).
+
+---
+
+**Histórico de Versões**
+
+- **v19.9** (24/05/2026) – Desmembramento completo de MOD e CIF + regras de Absorção.
+- **v19.8** – Implementação do Kardex-WAC.
+- **v19.5** – Validação tripla contábil.
+
+**Aprovado por:** Oracle Accounting Strategos  
+**Status:** Regra Viva do Sistema Empirion
