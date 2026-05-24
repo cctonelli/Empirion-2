@@ -477,6 +477,12 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             item.res.kpis.market_share = competitiveShare;
             item.res.marketShare = competitiveShare;
 
+            // Bloqueio Rígido de Integridade Contábil (v19.5 Sapphire)
+            if (item.res.kpis?.validation?.isValid === false) {
+                const checkErrors = item.res.kpis.validation.errors || [];
+                throw new Error(`BLOQUEIO DE SEGURANÇA CONTÁBIL (SAPPHIRE): Inconsistência crítica identificada para ${item.team.name}: ${checkErrors.join(' | ')}`);
+            }
+
             await supabase.from(historyTable).insert({
                 team_id: item.team.id, 
                 championship_id: id, 

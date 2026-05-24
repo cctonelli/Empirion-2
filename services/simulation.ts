@@ -818,7 +818,7 @@ export const calculateProjections = (
         if (Math.abs(accountingDiff) > 0 && Math.abs(accountingDiff) < 100.0) {
           const currentProfit = findAccountValue(bsFinal, 'equity.profit') || 0;
           bsFinal = injectValues(bsFinal, {
-            'equity.profit': currentProfit - accountingDiff
+            'equity.profit': currentProfit + accountingDiff
           });
         }
         return bsFinal;
@@ -964,7 +964,86 @@ export const calculateProjections = (
 
   result.kpis.esds = computeESDSDeterministic(esdsInputs, history, branch);
 
+  // Injetar auditoria de consistência tripla rígida (v19.5 Sapphire)
+  const validation = validateTripleConsistencyLocal(result.kpis.statements);
+  result.kpis.validation = {
+    isValid: validation.isValid,
+    errors: validation.errors,
+    warnings: validation.warnings
+  };
+
   return result;
+};
+
+/**
+ * Realiza auditoria de equivalência patrimonial local no motor de simulação (Vite/Node)
+ */
+export const validateTripleConsistencyLocal = (statements: any): { isValid: boolean; errors: string[]; warnings: string[] } => {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  if (!statements) {
+    errors.push("Nenhum demonstrativo contábil foi fornecido para auditoria.");
+    return { isValid: false, errors, warnings };
+  }
+
+  const bs = statements.balance_sheet || [];
+  const dre = statements.dre || [];
+  const dfc = statements.cash_flow || [];
+
+  const cashVal = findAccountValue(bs, 'assets.current.cash') || 0;
+  const investmentsVal = findAccountValue(bs, 'assets.current.investments') || 0;
+  const clientsVal = findAccountValue(bs, 'assets.current.clients') || 0;
+  const pecldVal = findAccountValue(bs, 'assets.current.pecld') || 0;
+  const vatRecoverableVal = findAccountValue(bs, 'assets.current.vat_recoverable') || 0;
+  const stockPaVal = findAccountValue(bs, 'assets.current.stock.pa') || 0;
+  const stockMpaVal = findAccountValue(bs, 'assets.current.stock.mpa') || 0;
+  const stockMpbVal = findAccountValue(bs, 'assets.current.stock.mpb') || 0;
+  
+  const landVal = findAccountValue(bs, 'assets.noncurrent.fixed.land') || 0;
+  const buildingsVal = findAccountValue(bs, 'assets.noncurrent.fixed.buildings') || 0;
+  const buildingsDeprecVal = findAccountValue(bs, 'assets.noncurrent.fixed.buildings_deprec') || 0;
+  const machinesVal = findAccountValue(bs, 'assets.noncurrent.fixed.machines') || 0;
+  const machinesDeprecVal = findAccountValue(bs, 'assets.noncurrent.fixed.machines_deprec') || 0;
+
+  const totalAssetsVal = cashVal + investmentsVal + clientsVal + pecldVal + vatRecoverableVal + 
+                         stockPaVal + stockMpaVal + stockMpbVal + 
+                         landVal + buildingsVal + buildingsDeprecVal + machinesVal + machinesDeprecVal;
+
+  const suppliersVal = findAccountValue(bs, 'liabilities.current.suppliers') || 0;
+  const vatPayableVal = findAccountValue(bs, 'liabilities.current.vat_payable') || 0;
+  const taxesVal = findAccountValue(bs, 'liabilities.current.taxes') || 0;
+  const dividendsVal = findAccountValue(bs, 'liabilities.current.dividends') || 0;
+  const pprPayableVal = findAccountValue(bs, 'liabilities.current.ppr_payable') || 0;
+  const loansStVal = findAccountValue(bs, 'liabilities.current.loans_st') || 0;
+  const loansLtVal = findAccountValue(bs, 'liabilities.longterm.loans_lt') || 0;
+
+  const totalLiabilitiesVal = suppliersVal + vatPayableVal + taxesVal + dividendsVal + pprPayableVal + loansStVal + loansLtVal;
+
+  const capitalVal = findAccountValue(bs, 'equity.capital') || 0;
+  const profitVal = findAccountValue(bs, 'equity.profit') || 0;
+
+  const totalEquityVal = capitalVal + profitVal;
+
+  const roundedAssets = Math.round(totalAssetsVal * 100) / 100;
+  const roundedLiabPl = Math.round((totalLiabilitiesVal + totalEquityVal) * 100) / 100;
+  const accountingDiff = Math.abs(roundedAssets - roundedLiabPl);
+
+  if (accountingDiff > 0.05) {
+    errors.push(`Disparidade de Equação Contábil: O total do Ativo (${roundedAssets.toFixed(2)} BRL) diverge do Passivo + PL (${roundedLiabPl.toFixed(2)} BRL) por ${accountingDiff.toFixed(2)} BRL.`);
+  }
+
+  const finalCfCash = findAccountValue(dfc, 'cf.final') || 0;
+  const cashDiff = Math.abs(cashVal - finalCfCash);
+  if (cashDiff > 0.05) {
+    errors.push(`Inconsistência de Caixa: DFC relata Caixa Final de ${finalCfCash.toFixed(2)} BRL, enquanto Balanço registra ${cashVal.toFixed(2)} BRL.`);
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  };
 };
 
 /**
