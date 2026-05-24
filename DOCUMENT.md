@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.3 Sapphire (Março/Abril 2026)
+- **Versão Ativa:** v19.5 Sapphire (Maio 2026)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -206,6 +206,17 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.5 Sapphire - Integridade Contábil & Kardex de Estoque
+- **Data:** Maio de 2026
+- **Motivo:** Introdução de controle quantitativo e financeiro de estoque (Kardex-WAC) e auditoria tripla de consistência para estancar perdas e garantir reconciliação perfeita de DRE, DFC e Balanço Patrimonial.
+- **Diferenças:**
+  - *Kardex de Suprimentos:* Rastreamento minucioso do fluxo físico/financeiro para MP A, MP B e Produto Acabado de acordo com o WAC (Custo Médio Ponderado).
+  - *Detalhamento CPP e CPV:* Exposição explícita do processo de custeio por absorção industrial, dividindo o custo acumulado em Matéria-Prima Consumida, MOD e GGF/CIF (Manutenção, Depreciação, PPR de demissão, Rescisões).
+  - *Interface de Usuário:* Aba integrada de Kardex & CPV com dados históricos e projeção temporária T+1.
+  - *Processo de Validação:* Estruturação de `processRoundWithValidation` em `services/simulation-core.ts` para checar e registrar logs contábeis e fiscais.
+  - *Estúdio de Simulação Automatizada:* Adição de um estúdio interativo de simulação de Turnover no `OpalIntelligenceHub`, rodando cenários completos de equipe (compra de máquinas, captações de empréstimos, vendas à vista/a prazo, compras emergenciais e custeio WAC), fornecendo relatórios do Oráculo de IA baseados em feedbacks analíticos do Kardex.
+- **Status:** Em produção.
 
 ### v2026-04 - RLS Sync & Gazette Intelligence (Versão Atual)
 - **Data:** Abril de 2026

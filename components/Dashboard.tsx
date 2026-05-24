@@ -44,7 +44,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [history, setHistory] = useState<any[]>([]);
   const [selectedRound, setSelectedRound] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'decisoes' | 'financeiro' | 'historico'>('decisoes');
-  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic' | 'commitments'>('dre');
+  const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic' | 'commitments' | 'kardex'>('dre');
   const [decisions, setDecisions] = useState<any>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -408,6 +408,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           <HubTabBtn active={hubTab === 'cashflow'} onClick={() => setHubTab('cashflow')} label="Fluxo de Caixa" icon={<Activity size={10}/>} />
                           <HubTabBtn active={hubTab === 'commitments'} onClick={() => setHubTab('commitments')} label="Agenda Financeira" icon={<Landmark size={10}/>} />
                           <HubTabBtn active={hubTab === 'strategic'} onClick={() => setHubTab('strategic')} label="Comando Estratégico" icon={<Target size={10}/>} />
+                          <HubTabBtn active={hubTab === 'kardex'} onClick={() => setHubTab('kardex')} label="Kardex & CPV" icon={<Activity size={10}/>} />
                         </div>
                         <div className="flex-1">
                           <FinancialReportMatrix 

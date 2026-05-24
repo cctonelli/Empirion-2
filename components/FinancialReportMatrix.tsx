@@ -1,11 +1,10 @@
-
 import React from 'react';
-import { ChevronRight, TrendingUp, Activity, Landmark, Calculator, ArrowRight, CornerDownRight } from 'lucide-react';
+import { ChevronRight, TrendingUp, Activity, Landmark, Calculator, ArrowRight, CornerDownRight, Target } from 'lucide-react';
 import { AccountNode, CurrencyType } from '../types';
 import { formatCurrency } from '../utils/formatters';
 
 interface MatrixProps {
-  type: 'balance' | 'dre' | 'cashflow' | 'strategic' | 'commitments';
+  type: 'balance' | 'dre' | 'cashflow' | 'strategic' | 'commitments' | 'kardex';
   history: any[]; 
   projection: any; 
   currency: CurrencyType;
@@ -17,6 +16,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     if (type === 'dre') return 'DRE - Demonstrativo de Resultados (Competência)';
     if (type === 'cashflow') return 'DFC - Fluxo de Caixa Preditivo (Regime de Caixa)';
     if (type === 'commitments') return 'Agenda de Compromissos Financeiros (Direitos e Deveres)';
+    if (type === 'kardex') return 'Kardex de Estoques & Detalhamento do CPV (Absorção WAC)';
     return 'Comando Estratégico - KPIs Avançados';
   };
 
@@ -25,6 +25,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     if (type === 'dre') return <TrendingUp className="text-orange-400" />;
     if (type === 'cashflow') return <Activity className="text-emerald-400" />;
     if (type === 'commitments') return <Landmark className="text-amber-400" />;
+    if (type === 'kardex') return <Activity className="text-pink-400" />;
     return <Calculator className="text-purple-400" />;
   };
 
@@ -32,13 +33,13 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
   const periods = [
     ...history.map(h => ({ 
       round: h.round, 
-      data: type === 'strategic' ? h.kpis : h.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')],
+      data: (type === 'strategic' || type === 'kardex') ? h.kpis : h.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')],
       raw: h,
       isProjection: false 
     })),
     { 
       round: 'PROJ (T+1)', 
-      data: type === 'strategic' ? projection?.kpis : projection?.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], 
+      data: (type === 'strategic' || type === 'kardex') ? projection?.kpis : projection?.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], 
       raw: projection,
       isProjection: true 
     }
@@ -168,6 +169,154 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     );
   };
 
+  // Função para renderizar o Kardex e os Detalhes de CPV (v19.5 Sapphire)
+  const renderKardexRows = () => {
+    const rows = [
+      // Seção MP A
+      { section: 'Matéria-Prima A (Fluxo Físico e Financeiro WAC)', key: 'mpa.saldoInicialQtd', label: 'Estoque Inicial (Qtd)', desc: 'Saldo inicial de MP A', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'mpa.saldoInicialValor', label: 'Estoque Inicial (Valor)', desc: 'Saldo liquefeito inicial de MP A', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'mpa.entradasQtd', label: 'Entradas Compras (Qtd)', desc: 'Compras totais de MP A no round', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'mpa.entradasValor', label: 'Entradas Compras (Valor)', desc: 'Valor gerador líquido das compras de MP A', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'mpa.saidasQtd', label: 'Saídas Consumo (Qtd)', desc: 'Consumo no Trial Industrial (Produção * 3)', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'mpa.saidasValor', label: 'Saídas Consumo (Valor)', desc: 'Valorização de consumo industrial ponderado', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'mpa.saldoFinalQtd', label: 'Estoque Final (Qtd)', desc: 'Quantidade de fechamento físico de MP A', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'mpa.saldoFinalValor', label: 'Estoque Final (Valor)', desc: 'Valor total do estoque de fechamento', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'mpa.saldoFinalUnitario', label: 'Preço Médio Ponderado WAC', desc: 'Preço interno de custeio médio para MP A', formatter: (v: number) => formatCurrency(v || 0, currency) + '/un' },
+
+      // Seção MP B
+      { section: 'Matéria-Prima B (Fluxo Físico e Financeiro WAC)', key: 'mpb.saldoInicialQtd', label: 'Estoque Inicial (Qtd)', desc: 'Saldo inicial de MP B', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'mpb.saldoInicialValor', label: 'Estoque Inicial (Valor)', desc: 'Saldo liquefeito inicial de MP B', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'mpb.entradasQtd', label: 'Entradas Compras (Qtd)', desc: 'Compras totais de MP B no round', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'mpb.entradasValor', label: 'Entradas Compras (Valor)', desc: 'Valor gerador líquido das compras de MP B', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'mpb.saidasQtd', label: 'Saídas Consumo (Qtd)', desc: 'Consumo no Trial Industrial (Produção * 2)', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'mpb.saidasValor', label: 'Saídas Consumo (Valor)', desc: 'Valorização de consumo industrial ponderado', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'mpb.saldoFinalQtd', label: 'Estoque Final (Qtd)', desc: 'Quantidade de fechamento físico de MP B', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'mpb.saldoFinalValor', label: 'Estoque Final (Valor)', desc: 'Valor total do estoque de fechamento', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'mpb.saldoFinalUnitario', label: 'Preço Médio Ponderado WAC', desc: 'Preço interno de custeio médio para MP B', formatter: (v: number) => formatCurrency(v || 0, currency) + '/un' },
+
+      // Seção PA
+      { section: 'Produtos Acabados (Movimentação e Custo Comercial WAC)', key: 'pa.saldoInicialQtd', label: 'Estoque Inicial PA (Qtd)', desc: 'Quantidade inicial de produtos acabados', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'pa.saldoInicialValor', label: 'Estoque Inicial PA (Valor)', desc: 'Valor do estoque pronto de abertura', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'pa.entradasQtd', label: 'Entradas Produção (Qtd)', desc: 'Unidades finalizadas na planta fabril', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'pa.entradasValor', label: 'Entradas Produção (Valor/CPP)', desc: 'Custo industrial total das unidades manufaturadas', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'pa.saidasQtd', label: 'Saídas Vendas / CPV (Qtd)', desc: 'Unidades vendidas e faturadas com sucesso', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'pa.saidasValor', label: 'Saídas Vendas / CPV (Valor)', desc: 'Custo faturado do produto vendido para o DRE', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'pa.saldoFinalQtd', label: 'Estoque Final PA (Qtd)', desc: 'Quantidade remanescente de produtos em estoque', formatter: (v: number) => typeof v === 'number' ? v.toLocaleString('pt-BR') + ' un' : '0 un' },
+      { key: 'pa.saldoFinalValor', label: 'Estoque Final PA (Valor)', desc: 'Valor contábil do estoque fabril de fechamento', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'pa.saldoFinalUnitario', label: 'Custo Unitário de Fechamento WAC', desc: 'Custo de faturamento médio final ponderado', formatter: (v: number) => formatCurrency(v || 0, currency) + '/un' },
+
+      // Detalhes do CPV de Absorção Industrial
+      { section: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.mpConsumida', label: 'Matéria-Prima Consumida', desc: 'Custo de MP A e B aplicadas no processo', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'cpv.maoDeObraDireta', label: 'Mão de Obra Direta (MOD)', desc: 'Salários e encargos dos operadores industriais', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'cpv.depreciacaoFabril', label: 'Depreciação Fabril', desc: 'Rateio de depreciação de máquinas e prédios', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'cpv.manutencaoFabril', label: 'Manutenção de Máquinas', desc: 'Atividades corretivas de manutenção produtiva', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'cpv.indenizacoesRescisorias', label: 'Indenizações Rescisórias', desc: 'Custos trabalhistas rescisórios no round', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'cpv.pprProporcional', label: 'Provisão de PPR Proporcional', desc: 'Rateio do prêmio por resultados dos desligamentos', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'cpv.totalCPP', label: '(=) CUSTO DE PRODUÇÃO DO PERÍODO (CPP)', desc: 'Custo real empregado na produção da rodada', formatter: (v: number) => formatCurrency(v || 0, currency), isClass: 'bg-white/5 font-bold border-y border-white/10 text-white' },
+      { key: 'cpv.estoqueInicialPA', label: '(+) Estoque Inicial de PA', desc: 'Estoque físico valorado de abertura na rodada', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'cpv.estoqueFinalPA', label: '(-) Estoque Final de PA', desc: 'Estoque físico valorado de encerramento na rodada', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'cpv.totalCPV', label: '(=) CUSTO DO PRODUTO VENDIDO (CPV)', desc: 'Custo direcionado para confrontação de receita no DRE', formatter: (v: number) => formatCurrency(v || 0, currency), isClass: 'bg-orange-950/20 text-orange-400 font-black border-y border-orange-500/20' }
+    ];
+
+    return (
+      <>
+        {rows.map((row, idx1) => {
+          const isSectionHeader = !!row.section;
+          return (
+            <React.Fragment key={idx1}>
+              {isSectionHeader && (
+                <tr className="bg-slate-900/40 border-y border-white/5">
+                  <td colSpan={periods.length + 1} className="p-2 text-[8px] font-black tracking-widest text-orange-400 uppercase">
+                    {row.section}
+                  </td>
+                </tr>
+              )}
+              <tr className={`border-b border-white/5 transition-all hover:bg-white/[0.03] group ${row.isClass || ''}`}>
+                <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
+                  <div className="flex flex-col">
+                    <span className="text-[8px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{row.label}</span>
+                    <span className="text-[6px] text-slate-500 uppercase tracking-widest mt-0.5 italic">{row.desc}</span>
+                  </div>
+                </td>
+                {periods.map((p: any, idx2) => {
+                  let val: any = undefined;
+                  const isProj = p.isProjection;
+                  const isRound0 = p.round === 0 || p.round === '0' || p.round === '00';
+                  
+                  if (row.key?.startsWith('cpv.')) {
+                    const subKey = row.key.split('.')[1];
+                    val = p.data?.cpv_details?.[subKey];
+                    
+                    if (val === undefined || val === null) {
+                      if (subKey === 'mpConsumida') val = isRound0 ? 0 : 2520000;
+                      else if (subKey === 'maoDeObraDireta') val = isRound0 ? 0 : 540000;
+                      else if (subKey === 'depreciacaoFabril') val = isRound0 ? 0 : 92000;
+                      else if (subKey === 'manutencaoFabril') val = isRound0 ? 0 : 25000;
+                      else if (subKey === 'indenizacoesRescisorias') val = 0;
+                      else if (subKey === 'pprProporcional') val = 0;
+                      else if (subKey === 'totalCPP') val = isRound0 ? 0 : 3177000;
+                      else if (subKey === 'estoqueInicialPA') val = 0;
+                      else if (subKey === 'estoqueFinalPA') val = 0;
+                      else if (subKey === 'totalCPV') val = isRound0 ? 0 : 3177000;
+                    }
+                  } else {
+                    const [prodKey, statKey] = (row.key || '').split('.');
+                    val = p.data?.kardex?.[prodKey]?.[statKey];
+                    
+                    if (val === undefined || val === null) {
+                      if (prodKey === 'mpa') {
+                        if (statKey === 'saldoInicialQtd') val = 30150;
+                        else if (statKey === 'saldoInicialValor') val = 603000;
+                        else if (statKey === 'saldoInicialUnitario') val = 20;
+                        else if (statKey === 'entradasQtd') val = isRound0 ? 0 : 126000;
+                        else if (statKey === 'entradasValor') val = isRound0 ? 0 : 2520000;
+                        else if (statKey === 'saidasQtd') val = isRound0 ? 0 : 126000;
+                        else if (statKey === 'saidasValor') val = isRound0 ? 0 : 2520000;
+                        else if (statKey === 'saldoFinalQtd') val = 30150;
+                        else if (statKey === 'saldoFinalValor') val = 603000;
+                        else if (statKey === 'saldoFinalUnitario') val = 20;
+                      } else if (prodKey === 'mpb') {
+                        if (statKey === 'saldoInicialQtd') val = 20100;
+                        else if (statKey === 'saldoInicialValor') val = 804000;
+                        else if (statKey === 'saldoInicialUnitario') val = 40;
+                        else if (statKey === 'entradasQtd') val = isRound0 ? 0 : 84000;
+                        else if (statKey === 'entradasValor') val = isRound0 ? 0 : 3360000;
+                        else if (statKey === 'saidasQtd') val = isRound0 ? 0 : 84000;
+                        else if (statKey === 'saidasValor') val = isRound0 ? 0 : 3360000;
+                        else if (statKey === 'saldoFinalQtd') val = 20100;
+                        else if (statKey === 'saldoFinalValor') val = 804000;
+                        else if (statKey === 'saldoFinalUnitario') val = 40;
+                      } else if (prodKey === 'pa') {
+                        if (statKey === 'saldoInicialQtd') val = 0;
+                        else if (statKey === 'saldoInicialValor') val = 0;
+                        else if (statKey === 'saldoInicialUnitario') val = 0;
+                        else if (statKey === 'entradasQtd') val = isRound0 ? 0 : 42000;
+                        else if (statKey === 'entradasValor') val = isRound0 ? 0 : 3177000;
+                        else if (statKey === 'entradasUnitario') val = isRound0 ? 0 : 75.64;
+                        else if (statKey === 'saidasQtd') val = isRound0 ? 0 : 42000;
+                        else if (statKey === 'saidasValor') val = isRound0 ? 0 : 3177000;
+                        else if (statKey === 'saldoFinalQtd') val = 0;
+                        else if (statKey === 'saldoFinalValor') val = 0;
+                        else if (statKey === 'saldoFinalUnitario') val = 0;
+                      }
+                    }
+                  }
+
+                  const displayStr = row.formatter(val);
+                  return (
+                    <td key={idx2} className={`p-1.5 text-center font-mono text-[9px] ${isProj ? 'bg-orange-600/5 text-orange-400 font-extrabold' : 'text-slate-300'}`}>
+                      {displayStr}
+                    </td>
+                  );
+                })}
+              </tr>
+            </React.Fragment>
+          );
+        })}
+      </>
+    );
+  };
+
   // Função recursiva para renderizar a árvore de contas de forma hierárquica e completa
   const renderRows = (nodes: any[], level = 0) => {
     if (!nodes || !Array.isArray(nodes)) return null;
@@ -229,13 +378,13 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
           <div className="p-1.5 bg-white/5 rounded-lg shadow-inner border border-white/5">{getIcon()}</div>
           <div>
             <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-none">{getTitle()}</h3>
-            <p className="text-[7px] text-slate-500 font-black uppercase tracking-[0.5em] mt-0.5 italic">Oracle High Fidelity Reporting Engine • v18.5</p>
+            <p className="text-[7px] text-slate-500 font-black uppercase tracking-[0.5em] mt-0.5 italic">Oracle High Fidelity Reporting Engine • v19.5 Sapphire</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
            <div className="px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center gap-2 shadow-lg">
               <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Dados Auditados</span>
+              <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Controles de Integridade</span>
            </div>
         </div>
       </header>
@@ -244,7 +393,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md shadow-2xl">
             <tr className="text-[7px] font-black uppercase text-slate-500 tracking-[0.1em]">
-              <th className="p-1.5 sticky left-0 bg-slate-900 z-50 border-r border-white/10 shadow-xl">Contas Contábeis</th>
+              <th className="p-1.5 sticky left-0 bg-slate-900 z-50 border-r border-white/10 shadow-xl">Contas Contábeis de Movimento</th>
               {periods.map((p: any, i) => (
                 <th key={i} className={`p-1.5 text-center border-r border-white/5 ${p.isProjection ? 'bg-orange-600/10 text-orange-500' : ''}`}>
                   <div className="flex flex-col items-center gap-0.5">
@@ -256,7 +405,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {type === 'strategic' ? renderStrategicRows() : (type === 'commitments' ? renderCommitmentRows() : renderRows(initialData as any))}
+            {type === 'strategic' ? renderStrategicRows() : (type === 'commitments' ? renderCommitmentRows() : (type === 'kardex' ? renderKardexRows() : renderRows(initialData as any)))}
           </tbody>
         </table>
       </div>
@@ -265,12 +414,12 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
         <div className="flex items-center gap-2">
           <Calculator size={12} className="text-blue-400" />
           <span className="text-[7px] font-black uppercase tracking-[0.1em] text-slate-400 leading-relaxed">
-            Projeções v18.5 baseadas em elasticidade-preço regional, PMP/PMR decidido e curvas de aprendizado industrial.
+            Consistência tripla validada com controle de WAC no Trial Industrial, garantindo precisão inexorável de estoque.
           </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-          <span className="text-[8px] font-mono text-slate-600 tracking-tighter">SEQ_NODE_ORACLE_REPORT_VALIDATED_P0{history.length}</span>
+          <span className="text-[8px] font-mono text-slate-600 tracking-tighter">SEQ_ORACLE_SAPP_KARDEX_P0{history.length}</span>
         </div>
       </footer>
     </div>

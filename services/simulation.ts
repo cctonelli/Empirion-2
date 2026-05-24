@@ -864,6 +864,74 @@ export const calculateProjections = (
     }
   });
 
+  const mpaQtyConsumed = unitsProduced * 3;
+  const mpbQtyConsumed = unitsProduced * 2;
+  const initialMpaQty = team.kpis?.stock_quantities?.mp_a || 30150;
+  const initialMpbQty = team.kpis?.stock_quantities?.mp_b || 20100;
+  const initialPaQty = team.kpis?.stock_quantities?.finished_goods || 0;
+  const finalMpaQtyReal = initialMpaQty + purchaseMPA + emergencyMPA - mpaQtyConsumed;
+  const finalMpbQtyReal = initialMpbQty + purchaseMPB + emergencyMPB - mpbQtyConsumed;
+
+  // Auditoria Z-Guard de estoque WAC e Kardex completo
+  const kardex = {
+    mpa: {
+      saldoInicialQtd: initialMpaQty,
+      saldoInicialValor: initialMpaQty * netMpaPrice,
+      saldoInicialUnitario: netMpaPrice,
+      entradasQtd: purchaseMPA + emergencyMPA,
+      entradasValor: (purchaseMPA * netPlannedMpaPrice) + (emergencyMPA * netEmergencyMpaPrice),
+      entradasUnitario: (purchaseMPA + emergencyMPA) > 0 ? ((purchaseMPA * netPlannedMpaPrice) + (emergencyMPA * netEmergencyMpaPrice)) / (purchaseMPA + emergencyMPA) : 0,
+      saidasQtd: mpaQtyConsumed,
+      saidasValor: mpaQtyConsumed * avgNetMpaPrice,
+      saidasUnitario: avgNetMpaPrice,
+      saldoFinalQtd: Math.max(0, finalMpaQtyReal),
+      saldoFinalValor: closingMpaValue,
+      saldoFinalUnitario: avgNetMpaPrice
+    },
+    mpb: {
+      saldoInicialQtd: initialMpbQty,
+      saldoInicialValor: initialMpbQty * netMpbPrice,
+      saldoInicialUnitario: netMpbPrice,
+      entradasQtd: purchaseMPB + emergencyMPB,
+      entradasValor: (purchaseMPB * netPlannedMpbPrice) + (emergencyMPB * netEmergencyMpbPrice),
+      entradasUnitario: (purchaseMPB + emergencyMPB) > 0 ? ((purchaseMPB * netPlannedMpbPrice) + (emergencyMPB * netEmergencyMpbPrice)) / (purchaseMPB + emergencyMPB) : 0,
+      saidasQtd: mpbQtyConsumed,
+      saidasValor: mpbQtyConsumed * avgNetMpbPrice,
+      saidasUnitario: avgNetMpbPrice,
+      saldoFinalQtd: Math.max(0, finalMpbQtyReal),
+      saldoFinalValor: closingMpbValue,
+      saldoFinalUnitario: avgNetMpbPrice
+    },
+    pa: {
+      saldoInicialQtd: initialPaQty,
+      saldoInicialValor: prevStockValue,
+      saldoInicialUnitario: initialPaQty > 0 ? prevStockValue / initialPaQty : 0,
+      entradasQtd: unitsProduced,
+      entradasValor: totalCPP,
+      entradasUnitario: unitCPP,
+      saidasQtd: totalUnitsSold,
+      saidasValor: totalCPV,
+      saidasUnitario: wacUnit,
+      saldoFinalQtd: closingStockPA,
+      saldoFinalValor: closingStockValuePA,
+      saldoFinalUnitario: wacUnit
+    }
+  };
+
+  const cpvDetails = {
+    mpConsumida: totalMP,
+    maoDeObraDireta: totalMOD,
+    depreciacaoFabril: periodDepreciation,
+    manutencaoFabril: maintenance,
+    indenizacoesRescisorias: custoIndenizacao,
+    pprProporcional: pprProporcional,
+    totalCPP,
+    estoqueInicialPA: prevStockValue,
+    estoqueFinalPA: closingStockValuePA,
+    totalCPV,
+    custoUnitarioProducao: unitCPP
+  };
+
   const result: ProjectionResult = {
     revenue, netProfit: finalNetProfit, debtRatio: kpis.percentual_divida_curto_prazo, creditRating: kpis.rating,
     health: { cash: finalCashWithAwards, rating: kpis.rating },
@@ -872,6 +940,8 @@ export const calculateProjections = (
       ...team.kpis,
       ...kpis,
       market_share: projectedMarketShare,
+      kardex,
+      cpv_details: cpvDetails
     }
   };
 

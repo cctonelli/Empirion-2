@@ -68,28 +68,38 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
   ],
 
   dre: [
-    { id: 'dre.gross_revenue', label: 'RECEITA BRUTA DE VENDAS', value: 0, type: 'revenue' },
-    { id: 'dre.iva_sales', label: '(-) IVA / Impostos sobre Vendas', value: 0, type: 'tax' },
-    { id: 'dre.net_revenue', label: '= RECEITA LÍQUIDA', value: 0, type: 'totalizer', calculationType: 'sum' },
-
-    { id: 'dre.cpv', label: '(-) CUSTO DOS PRODUTOS VENDIDOS', value: 0, type: 'expense', links: ['assets.current.inventory'] },
-    { id: 'dre.gross_profit', label: '= LUCRO BRUTO', value: 0, type: 'totalizer', calculationType: 'sum' },
-
-    { id: 'dre.operating_expenses', label: '(-) DESPESAS OPERACIONAIS', value: 0, type: 'totalizer', children: [
-      { id: 'dre.depreciation', label: 'Depreciação', value: 0, type: 'expense', links: ['assets.non_current.fixed.depreciation'] },
-      { id: 'dre.labor', label: 'Mão de Obra Direta + Indireta', value: 0, type: 'expense' },
-      { id: 'dre.marketing', label: 'Marketing e Vendas', value: 0, type: 'expense' },
-      { id: 'dre.admin', label: 'Despesas Administrativas', value: 0, type: 'expense' },
-      { id: 'dre.other_op', label: 'Outras Despesas Operacionais', value: 0, type: 'expense' },
+    { id: 'gross_margin_group', label: 'MARGEM BRUTA', value: 0, type: 'totalizer', children: [
+        { id: 'rev', label: '(+) RECEITAS BRUTAS DE VENDAS', value: 4184440.05, type: 'revenue', isEditable: true },
+        { id: 'vat_sales', label: '(-) IVA SOBRE VENDAS', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cpv', label: '(-) CPV-CUSTO PROD. VENDIDO', value: -2972830.93, type: 'totalizer', children: [
+            { id: 'dre.cif', label: 'CIF - CUSTO INDIRETO FABRICAÇÃO', value: 0, type: 'expense', isEditable: true },
+            { id: 'dre.cpv_mp', label: 'MATÉRIA-PRIMA CONSUMIDA', value: 0, type: 'expense', isEditable: true },
+        ]},
     ]},
-    { id: 'dre.operating_profit', label: '= LUCRO OPERACIONAL (EBIT)', value: 0, type: 'totalizer', calculationType: 'sum' },
-
-    { id: 'dre.financial_result', label: 'Resultado Financeiro (Juros, Variações Cambiais)', value: 0, type: 'revenue_expense' },
-    { id: 'dre.ebt', label: '= LUCRO ANTES DO IR (LAIR)', value: 0, type: 'totalizer', calculationType: 'sum' },
-
-    { id: 'dre.ir', label: '(-) Provisão IR/CSLL', value: 0, type: 'tax', links: ['liabilities.current.taxes_payable'] },
-    { id: 'dre.ppr', label: '(-) Provisão Participação nos Resultados', value: 0, type: 'expense', links: ['liabilities.current.ppr'] },
-    { id: 'dre.net_profit', label: '= LUCRO LÍQUIDO DO EXERCÍCIO', value: 0, type: 'totalizer', calculationType: 'sum', links: ['equity.profit_accumulated'] },
+    { id: 'gross_profit', label: '(=) LUCRO BRUTO', value: 1211609.12, type: 'totalizer', isReadOnly: true },
+    { id: 'opex', label: '(-) DESPESAS OPERACIONAIS', value: -1149623.86, type: 'totalizer', children: [
+        { id: 'opex.sales', label: 'DE VENDAS (MARKETING/LOGISTICA)', value: 873250.00, type: 'expense', isEditable: true },
+        { id: 'opex.adm', label: 'ADMINISTRATIVAS (GERAIS)', value: 216000.00, type: 'expense', isEditable: true },
+        { id: 'opex.payroll_adm', label: 'FOLHA ADM + ENCARGOS', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'opex.payroll_sales', label: 'FOLHA VENDAS + ENCARGOS', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'opex.bad_debt', label: 'INADIMPLÊNCIA S/ SALDO CLIENTES', value: 18529.46, type: 'expense', isEditable: true },
+        { id: 'opex.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 41844.40, type: 'expense', isEditable: true }
+    ]},
+    { id: 'operating_profit', label: '(=) RESULTADO OPERACIONAL', value: 61985.27, type: 'totalizer', isReadOnly: true },
+    { id: 'fin_res', label: '(+/-) RESULTADO FINANCEIRO', value: -2500.00, type: 'totalizer', children: [
+        { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
+        { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 2500.00, type: 'expense', isEditable: true }
+    ]},
+    { id: 'non_op_res', label: '(+/-) RESULTADO NÃO OPERACIONAL', value: 0.00, type: 'totalizer', children: [
+        { id: 'non_op.rev', label: '(+) RECEITAS NÃO OPERACIONAIS', value: 0.00, type: 'revenue', isEditable: true },
+        { id: 'non_op.exp', label: '(-) DESPESAS NÃO OPERACIONAIS', value: 0.00, type: 'expense', isEditable: true }
+    ]},
+    { id: 'lair', label: '(=) LUCRO ANTES DO IR (LAIR)', value: 59485.26, type: 'totalizer', isReadOnly: true },
+    { id: 'tax_ppr_group', label: 'IMPOSTOS E PARTICIPAÇÕES', value: 0, type: 'totalizer', children: [
+        { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.31, type: 'expense', isEditable: true },
+        { id: 'ppr', label: '(-) PPR-PARTICIPAÇÃO NO LUCRO', value: 0.00, type: 'expense', isEditable: true },
+    ]},
+    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 44613.95, type: 'totalizer', isReadOnly: true }
   ],
 
   cash_flow: [
