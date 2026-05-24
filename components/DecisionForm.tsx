@@ -44,6 +44,8 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [history, setHistory] = useState<any[]>([]);
   const [isCalculatingESDS, setIsCalculatingESDS] = useState(false);
   const [projectedESDS, setProjectedESDS] = useState<any>(null);
+  const [isLeftNavCollapsed, setIsLeftNavCollapsed] = useState(false);
+  const [isRightPreviewCollapsed, setIsRightPreviewCollapsed] = useState(false);
 
   const [decisions, setDecisions] = useState<DecisionData>({
     judicial_recovery: false,
@@ -295,9 +297,28 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                 className="h-full flex flex-col lg:flex-row lg:overflow-hidden"
               >
                  {/* COCKPIT DE CONTROLE - NAVEGAÇÃO LATERAL ESQUERDA (EXCLUSIVA DESKTOP) */}
-                 <div className="hidden lg:flex flex-col w-64 bg-slate-950/80 border-r border-white/5 p-4 shrink-0 overflow-y-auto custom-scrollbar">
-                    <div className="mb-4 text-center pb-3 border-b border-white/5">
-                       <span className="text-[10px] font-black tracking-[0.2em] text-orange-500 uppercase font-mono">Empire Cockpit v2.0</span>
+                 <div className={`hidden lg:flex flex-col bg-slate-950/80 border-r border-white/5 shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out ${isLeftNavCollapsed ? 'w-[72px] p-3' : 'w-64 p-4'}`}>
+                    <div className={`mb-4 flex items-center pb-3 border-b border-white/5 ${isLeftNavCollapsed ? 'flex-col justify-center gap-2' : 'justify-between gap-1'}`}>
+                       {!isLeftNavCollapsed ? (
+                          <>
+                             <span className="text-[10px] font-black tracking-[0.2em] text-orange-500 uppercase font-mono truncate animate-in fade-in duration-300">Empire Cockpit v2.0</span>
+                             <button 
+                                onClick={() => setIsLeftNavCollapsed(true)} 
+                                className="p-1 hover:bg-white/5 rounded-lg text-slate-500 hover:text-slate-300 transition-colors shrink-0 cursor-pointer"
+                                title="Recolher painel"
+                             >
+                                <ChevronLeft size={14} />
+                             </button>
+                          </>
+                       ) : (
+                          <button 
+                             onClick={() => setIsLeftNavCollapsed(false)} 
+                             className="p-1 hover:bg-white/5 rounded-lg text-orange-500 hover:text-orange-400 transition-colors cursor-pointer"
+                             title="Expandir painel"
+                          >
+                             <ChevronRight size={16} />
+                          </button>
+                       )}
                     </div>
                     <div className="flex flex-col gap-1.5 flex-1 animate-in fade-in duration-300">
                        {STEPS.map((s, idx) => {
@@ -306,16 +327,21 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                             <button
                                key={s.id}
                                onClick={() => setActiveStep(idx)}
-                               className={`w-full py-3.5 px-4 rounded-xl transition-all flex items-center justify-between border relative overflow-hidden group text-left ${activeStep === idx ? 'bg-orange-600/15 border-orange-500/40 text-white shadow-xl' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+                               className={`w-full py-3.5 rounded-xl transition-all flex items-center border relative overflow-hidden group ${isLeftNavCollapsed ? 'justify-center px-0 animate-pulse-subtle' : 'justify-between px-4 text-left'} ${activeStep === idx ? 'bg-orange-600/15 border-orange-500/40 text-white shadow-xl' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+                               title={isLeftNavCollapsed ? s.label : undefined}
                             >
                                {activeStep === idx && (
                                  <motion.div layoutId="activeStepVertical" className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500" />
                                )}
-                               <div className="flex items-center gap-2.5">
+                               <div className={`flex items-center ${isLeftNavCollapsed ? 'justify-center' : 'gap-2.5'}`}>
                                   <Icon size={14} className={activeStep === idx ? 'text-orange-400' : 'group-hover:text-slate-300'} />
-                                  <span className="text-[9px] font-black uppercase tracking-wider">{s.label.split('. ')[1] || s.label}</span>
+                                  {!isLeftNavCollapsed && (
+                                     <span className="text-[9px] font-black uppercase tracking-wider animate-in fade-in duration-300">{s.label.split('. ')[1] || s.label}</span>
+                                  )}
                                 </div>
-                               <ChevronRight size={10} className={`opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0 ${activeStep === idx ? 'opacity-105 translate-x-0 text-orange-400' : ''}`} />
+                               {!isLeftNavCollapsed && (
+                                  <ChevronRight size={10} className={`opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0 ${activeStep === idx ? 'opacity-105 translate-x-0 text-orange-400' : ''}`} />
+                               )}
                             </button>
                           );
                        })}
@@ -325,7 +351,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                  {/* WRAPPER CENTRAL (FORMULÁRIO) & DIREITO (LIVE PREVIEW) */}
                  <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden h-full">
                      {/* SUB-WRAPPER CENTRAL (NAV MOBILE + CONTEÚDO ATIVO) */}
-                     <div className="flex-1 flex flex-col h-full overflow-hidden">
+                     <div className="flex-1 flex flex-col h-full overflow-hidden relative">
                         {/* NAV BAR DE PASSOS SUPERIOR (HORIZONTAL - EXCLUSIVO EM MOBILE/TABLET) */}
                         <nav className="flex lg:hidden p-1 gap-1 bg-slate-900/40 backdrop-blur-md border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
                     {STEPS.map((s, idx) => (
@@ -1899,21 +1925,45 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                     </div>
                  </div>
                  
-                 {/* Fim do Sub-wrapper Central */}
-                 </div>
+                     {/* ABA VERTICAL SE O PREVIEW ESTIVER COLAPSADO */}
+                     {isRightPreviewCollapsed && (
+                       <button 
+                         onClick={() => setIsRightPreviewCollapsed(false)}
+                         className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-40 bg-orange-600/90 hover:bg-orange-600 text-white py-6 px-1.5 rounded-l-xl border-l border-y border-orange-400/30 flex-col items-center gap-3 shadow-2xl transition-all transform hover:-translate-x-0.5 duration-200 cursor-pointer animate-in slide-in-from-right-10 shrink-0"
+                         title="Expandir Painel de Simulação Real-Time"
+                       >
+                         <Activity size={12} className="text-white animate-pulse" />
+                         <span className="text-[8px] font-black uppercase tracking-widest select-none" style={{ writingMode: 'vertical-rl' }}>
+                           COCKPIT PREVIEW
+                         </span>
+                         <ChevronLeft size={10} className="text-white/80 animate-bounce mt-1" />
+                       </button>
+                     )}
+                     
+                     {/* Fim do Sub-wrapper Central */}
+                     </div>
 
-                 {/* COCKPIT PREVIEW: PAINEL LATERAL DIREITO EM TEMPO REAL (DESKTOP) */}
-                 <div className="w-full lg:w-[400px] bg-slate-950/90 border-t lg:border-t-0 lg:border-l border-white/5 shrink-0 flex flex-col h-full overflow-hidden">
-                    {/* Header do Preview */}
-                    <div className="p-4 bg-slate-900 border-b border-white/10 shrink-0 flex justify-between items-center">
-                       <div className="flex items-center gap-2">
-                          <Activity size={14} className="text-orange-500 animate-pulse" />
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white font-mono">Piloto Imperial (T+1)</span>
-                       </div>
-                       <div className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-mono font-bold text-emerald-400 uppercase rounded-full animate-pulse flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> REAL-TIME
-                       </div>
-                    </div>
+                  {/* COCKPIT PREVIEW: PAINEL LATERAL DIREITO EM TEMPO REAL (DESKTOP) */}
+                  <div className={`w-full bg-slate-950/90 border-t lg:border-t-0 lg:border-l border-white/5 shrink-0 flex flex-col h-full overflow-hidden transition-all duration-300 ease-in-out ${isRightPreviewCollapsed ? 'lg:w-[0px] lg:border-l-0 lg:opacity-0' : 'lg:w-[400px]'}`}>
+                     {/* Header do Preview */}
+                     <div className="p-4 bg-slate-900 border-b border-white/10 shrink-0 flex justify-between items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                           <Activity size={14} className="text-orange-500 animate-pulse shrink-0" />
+                           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white font-mono truncate">Piloto Imperial (T+1)</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                           <div className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-mono font-bold text-emerald-400 uppercase rounded-full animate-pulse flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> REAL-TIME
+                           </div>
+                           <button 
+                             onClick={() => setIsRightPreviewCollapsed(true)} 
+                             className="hidden lg:block p-1 hover:bg-white/5 rounded-lg text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                             title="Ocultar painel de simulação"
+                           >
+                              <ChevronRight size={14} />
+                           </button>
+                        </div>
+                     </div>
 
                     {/* Widgets de Simulação Instantânea do Auditor Z-Guard, E-SDS, Kardex e Finanças */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-5">
