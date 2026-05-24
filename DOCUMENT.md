@@ -207,6 +207,24 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.7 Obsidian Plus (Obsidian Executive) - Abas Espaciais & Sparklines SVG
+- **Data:** 24 de Maio de 2026
+- **Motivo:** Solucionar a sobrecarga cognitiva e fadiga vertical do cockpit executivo, enriquecendo o painel `RightPreviewPanel.tsx` com visualizações vetoriais rápidas de evolução contábil e segmentação de foco.
+- **Diferenças:**
+  - *Arquitetura por Abas Táticas:* Divisão estrutural em 3 Abas ("Finanças", "Riscos & Auditoria", "Kardex/MP"), eliminando 60% do scroll vertical e permitindo maior concentração de dados em monitores padrão.
+  - *Sparklines SVG Nativas:* Micrográficos vetoriais desenhados sob demanda em tempo real, calculando os gradientes de tendência e comparando os dados consolidados do Round Corrente (T) com as projeções simuladas de Tomada de Decisão (T+1) para receita, lucro, caixa e EBITDA.
+  - *Alertas Reativos Dinâmicos:* Pontos pulsantes de aviso inseridos nos cabeçalhos de aba alertam intuitivamente o jogador quando há riscos ou inconsistências contábeis geradas pelo Z-Guard sem necessitar da aba de riscos visível.
+- **Status:** Em Produção (Alta DX & UX).
+
+### v19.6 Obsidian - Cockpit Modular & Presets Táticos
+- **Data:** 24 de Maio de 2026
+- **Motivo:** Decomposição arquitetural do painel monolítico de decisões `DecisionForm.tsx` em um hub modular, inteligente e ágil, mitigando a fadiga operacional do tomador de decisão.
+- **Diferenças:**
+  - *Modularização Estrita:* Distribuição estrutural do formulário em etapas isoladas (`/components/steps/`: SupplyStep, FactoryStep, HRStep, FinanceStep, etc.), facilitando grandemente o DX e a isolamento de bugs.
+  - *Presets de Decisão Rápida:* Introdução de botões executivos de calibração ("Conservadora", "Equilibrada", "Agressiva") para preenchimento ágil de variáveis padrão e menor esforço manual de inputs.
+  - *Torre de Controle Unificada:* Criação do arquivo `RightPreviewPanel.tsx` integrando o simulador instantâneo com Z-Guard para checar quebras de integridade tributária/caixa antes de enviar os dados ao Oráculo.
+- **Status:** Em Produção.
+
 ### v19.5 Sapphire Gold Edition - Centralização de KPIs e E-SDS v1.2
 - **Data:** 24 de Maio de 2026
 - **Motivo:** Centralização técnica absoluta e unificação matemática das equações corporativas e do motor E-SDS v1.2 em `services/simulation-core.ts`, mitigando qualquer descompasso operacional offline-online e fechando as lacunas táticas de conciliação.
