@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.10 Obsidian Diamond Enterprise II (Financiamentos, Amortização, Rating Spreads e Amortization Schedule - Maio 2026)
+- **Versão Ativa:** v19.11 Obsidian Diamond Enterprise II (Liquidez de Aplicações, Treinamento CapEx, Custeio de Estocagem e Conciliação Tripla - Maio 2026)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -350,6 +350,15 @@ project-root/
   - *Sincronização de Financiamento de Capex:* Inclusão do financiamento BDI de ativos novos (`newBdiLoanAmount`) no caixa e registro nas entradas da DFC de empréstimos, impedindo quedas artificiais do caixa operacional por compras a prazo de imobilizados.
   - *Contas a Receber e PECLD:* Reconciliação do recebimento de vendas a prazo para considerar a baixa contábil líquida anterior (`prevClients - prevPecld`), zerando disparidades de créditos.
   - *Auditoria Float Precision (Z-Guard):* Uma rotina de auditoria matemática do Balanço de Encerramento absorve divergências microscópicas de arredondamento de float do JavaScript e equilibra de forma inexorável o Ativo com o Passivo + PL.
+- **Status:** Em produção.
+
+### v2026-05.4 / v19.11 - Redoma de Caixa, Aplicações Financeiras, Custeio Absorção e Treinamento CapEx
+- **Data:** 25 de Maio de 2026
+- **Motivo:** Harmonização tripla profunda e refinamentos contábeis recomendados pelo conselho consultivo. Introdução do resgate de segurança automatizado de aplicações, consistência estrita de amortização de principal e juros, ativação correta do Treinamento de Novos Modelos e estocagem em CIF/Estoque de ativos em absorção.
+- **Diferenças:**
+  - *Resgate Automático de Investimentos:* Se o caixa projetado da equipe for ficar vermelho, o motor resgata de maneira preventiva do saldo de `'assets.current.investments'` para mitigar empréstimos compulsórios e resguardar o rating fiduciário da corporação.
+  - *Custeio e Ativação de Treinamento/Armazenamento:* Treinamentos industriais (CapEx para novas máquinas) e armazenagem física (`storageCost`) são integralmente capitalizados como CIF na rubrica de estoque de produtos acabados via Kardex-WAC e baixados por competência no CPV da DRE, mantendo o caixa direto (`cf.outflow.training`, `cf.outflow.storage`) sincronizado com o Balanço.
+  - *Visualização de Dívidas & Feedback no Cockpit:* Alerta sonoro/visual dinâmico e pulsante no cockpit se o Rating fiduciário for rebaixado para "D", amparado pela tabela de Spreads e Projeções do Cronograma Futuro de Amortização.
 - **Status:** Em produção.
 
 ### v2026-05.3 / v19.10 - Financiamentos, Amortização, Rating Spreads e Amortization Schedule

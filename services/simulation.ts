@@ -662,6 +662,15 @@ export const calculateProjections = (
   // NOTA SÊNIOR: Adicionamos o 'newBdiLoanAmount' nas entradas de caixa para anular o desembolso à vista de Capex que foi integralmente financiado.
   let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + newBdiLoanAmount + totalFinancialRevenue - totalOutflows;
   
+  // NOTA SÊNIOR: Mecanismo Inteligente de Resgate Automático de Aplicações Financeiras (v19.11)
+  // Se o caixa operacional projetado for ficar negativo, resgatamos os investimentos temporários acumulados
+  // para evitar o acionamento indesejado do traumático Empréstimo Compulsório / Emergencial.
+  let investmentWithdrawal = 0;
+  if (cashBeforeCompulsory < 0 && prevInvestments > 0) {
+    investmentWithdrawal = Math.min(Math.abs(cashBeforeCompulsory), prevInvestments);
+    cashBeforeCompulsory += investmentWithdrawal;
+  }
+
   // Liberação Automática de Empréstimo Compulsório (Strategos Core)
   let newCompulsoryLoan = 0;
   if (cashBeforeCompulsory < 0) {
@@ -714,7 +723,7 @@ export const calculateProjections = (
 
   const bsValues = {
     'assets.current.cash': finalCash,
-    'assets.current.investments': prevInvestments + applicationAmount,
+    'assets.current.investments': Math.max(0, prevInvestments - investmentWithdrawal) + applicationAmount,
     'assets.current.stock.pa': closingStockValuePA,
     'assets.current.stock.mpa': closingMpaValue,
     'assets.current.stock.mpb': closingMpbValue,
@@ -804,7 +813,7 @@ export const calculateProjections = (
         'cf.inflow.term_sales': prevClients - prevPecld,
         'cf.inflow.machine_sales': machineSalesInflow,
         'cf.inflow.awards': totalAwards,
-        'cf.inflow.investment_withdrawal': 0, 
+        'cf.inflow.investment_withdrawal': investmentWithdrawal, 
         'cf.inflow.loans_normal': loanRequest + newBdiLoanAmount,
         'cf.inflow.compulsory': newCompulsoryLoan,
         'cf.inflow.fin_rev': totalFinancialRevenue,

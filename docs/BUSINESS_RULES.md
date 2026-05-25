@@ -88,6 +88,15 @@ Os Custos Indiretos de Fabricação acumulam todos os serviços corporativos nec
 2.  **Despesas de Treinamento:** Realizadas no caso de aquisições de novos modelos de equipamentos (CAPEX) para calibrar a produtividade, com percentual estipulado sobre a folha líquida produtora:
     $$\text{Treinamento} = \text{payrollMOD} \times \left(\frac{\text{trainingPercent}}{100}\right)$$
 
+### 2.1 Treinamento para Aquisição de Novos Modelos de Máquinas
+- Sempre que a equipe adquirir **novos modelos de máquinas**, é obrigatório definir um percentual de investimento em Treinamento (`trainingPercent`).
+- Este custo representa capacitação técnica específica para o novo equipamento.
+- **Tratamento Contábil:**
+  - **Fluxo de Caixa:** Registrado como saída direta em `cf.outflow.training` (pagamento a terceiros).
+  - **Custeio:** Ativado como componente do **CIF** (Custos Indiretos de Fabricação).
+  - **DRE:** Baixado proporcionalmente via `dre.cif` no CPV conforme as unidades produzidas forem vendidas.
+  - **Balanço:** Integrado ao custo de ativação do ativo imobilizado ou ao estoque de produtos acabados.
+
 3.  **Custo de Estocagem (Armazenagem):** Custos logísticos calculados sobre as posições de estoque remanescentes físicas nas duas frentes de matérias-primas (MP-A/MP-B) e estoques não liquidados de produtos acabados (PA) do período:
     $$\text{Estocagem} = (\text{Qtd Final PA} \times \text{Preço Unit. Armaz. PA}) + (\text{Qtd Final MPA} \times \text{Preço Unit. Armaz. MP}) + (\text{Qtd Final MPB} \times \text{Preço Unit. Armaz. MP})$$
 
