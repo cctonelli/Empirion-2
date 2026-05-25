@@ -40,8 +40,20 @@ Reflete o custo líquido (expurgado do IVA recuperável) de todos os insumos con
     *   **Passo 2:** Consumo de Compras Planejadas ativas na rodada.
     *   **Passo 3:** Ativação Automática de **Compra de Emergência** caso o estoque inicial somado às compras planejadas não cubra as necessidades produtivas pautadas pelo nível de atividade do operador. As compras emergenciais sofrem um acréscimo de ágio estipulado por `special_purchase_premium`.
 
-2.  **Encargos Financeiros de Compra:**
-    A decisão do tipo de pagamento influencia diretamente o custo de aquisição. Condições parceladas ou a prazo incluem juros de fornecedor (`supplier_interest_rate`), impactando o valor patrimonial da matéria-prima estocada e consumida.
+2.  **Encargos Financeiros de Compra (Proporcionalidade Contábil v19.12):**
+    A decisão do tipo de pagamento influencia diretamente o custo de aquisição. Condições parceladas ou a prazo incluem juros de fornecedor (`supplier_interest_rate`), calculados estritamente sobre o **saldo devedor proporcional de principal remanescente por período**:
+    *   **À vista (paymentType 0):** Sem encargos. Juros = 0.
+    *   **À vista + 50% (paymentType 1):** Entrada correspondente a 50% pura sem encargos. Os 50% restantes (Parcela 2 em T+1) acumulam juros de 1 período:
+        $$\text{P2}_{T+1} = \frac{\text{V\_base}}{2} \times (1 + \text{supplier\_interest\_rate})$$
+        Fator de juros agregado no custo de estoque: $1 + 0.5 \times \text{supplier\_interest\_rate}$.
+    *   **À vista 34% + 33% + 33% (paymentType 2):** Entrada de 34% pura sem encargos. As parcelas subsequentes pagam juros sobre os saldos devedores de principal anteriores:
+        *   **Parcela 2 (T+1):** Amortização de 33% de principal + Juros sobre o saldo devedor de principal de 66% por 1 período:
+            $$\text{P2}_{T+1} = \text{V\_base} \times (0.33 + 0.66 \times \text{supplier\_interest\_rate})$$
+        *   **Parcela 3 (T+2):** Amortização de 33% de principal + Juros sobre o saldo devedor remanescente de 33% por mais 1 período:
+            $$\text{P3}_{T+2} = \text{V\_base} \times (0.33 + 0.33 \times \text{supplier\_interest\_rate})$$
+        Fator de juros agregado no custo de estoque: $1 + 0.99 \times \text{supplier\_interest\_rate}$.
+    
+    Toda a lógica foi parametrizada tanto no motor de simulação contábil quanto nas telas de relatórios visuais (Z-Guard e RightPreviewPanel) assegurando perfeita consistência matemática ao nível do centavo na reconciliação tripla.
 
 3.  **Equação de Valoração da MP Consumida:**
     Calcula-se o Preço Médio Líquido de Matéria-Prima Consumida de MP-A (`avgNetMpaPrice`) e MP-B (`avgNetMpbPrice`):

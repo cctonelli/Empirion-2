@@ -723,8 +723,12 @@ export function processRoundWithValidation(
   const netMpbPrice = mpbPrice * (1 - vatPurchasesRate);
 
   const supplierPaymentType = sanitize(decision.production?.paymentType, 0);
+  // Fator de Juros do Fornecedor (Proporcional ao Saldo Devedor Financiado - v19.12)
   const supplierInterestRate = sanitize(indicators.supplier_interest, 0) / 100;
-  const supplierInterestFactor = supplierPaymentType > 0 ? (1 + supplierInterestRate) : 1.0;
+  const supplierInterestFactor = 
+    supplierPaymentType === 0 ? 1.0 :
+    supplierPaymentType === 1 ? (1 + 0.5 * supplierInterestRate) :
+    (1 + 0.99 * supplierInterestRate);
 
   const netPlannedMpaPrice = netMpaPrice * supplierInterestFactor;
   const netPlannedMpbPrice = netMpbPrice * supplierInterestFactor;

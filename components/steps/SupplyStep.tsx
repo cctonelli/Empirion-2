@@ -345,47 +345,77 @@ export const SupplyStep: React.FC<SupplyStepProps> = ({
 
           {/* Detalhamento das Parcelas */}
           <div className="mt-6 p-4 bg-slate-950/40 rounded-2xl border border-white/5 space-y-3">
-            <h6 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest font-mono">Cronograma de Desembolso Estimado (com juros)</h6>
+            <h6 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest font-mono">Cronograma de Desembolso Estimado (com juros proporcional/amortizado)</h6>
             {(() => {
               const priceA = getAdjustedPrice(currentMacro?.prices?.mp_a || 15, 'raw_material_a_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
               const priceB = getAdjustedPrice(currentMacro?.prices?.mp_b || 25, 'raw_material_b_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
               const total = ((decisions.production.purchaseMPA || 0) * priceA) + ((decisions.production.purchaseMPB || 0) * priceB);
-              const interest = (currentMacro?.interest_rate_tr || 2.0) / 100;
+              const interest = (currentMacro?.supplier_interest || 1.5) / 100;
 
               if (decisions.production.paymentType === 0) {
                 return (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400 italic">Parcela Única (T+0)</span>
-                    <span className="font-mono font-bold text-white">{formatCurrency(total, activeArena?.currency || 'BRL')}</span>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400 italic">Parcela Única (T+0) - 100%</span>
+                      <span className="font-mono font-bold text-white">{formatCurrency(total, activeArena?.currency || 'BRL')}</span>
+                    </div>
+                    <div className="pt-1.5 border-t border-white/5 flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
+                      <span>Custo Total com Juros</span>
+                      <span className="font-mono text-slate-300">{formatCurrency(total, activeArena?.currency || 'BRL')}</span>
+                    </div>
                   </div>
                 );
               } else if (decisions.production.paymentType === 1) {
+                const entrada = total * 0.5;
+                const parcela2 = total * 0.5 * (1 + interest);
+                const custoTotal = total * (1 + 0.5 * interest);
                 return (
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 italic">Entrada (T+0) - 50%</span>
-                      <span className="font-mono font-bold text-white">{formatCurrency(total * 0.5, activeArena?.currency || 'BRL')}</span>
+                      <span className="font-mono font-bold text-white">{formatCurrency(entrada, activeArena?.currency || 'BRL')}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 italic">Parcela 2 (T+1) - 50% + Juros</span>
-                      <span className="font-mono font-bold text-white">{formatCurrency(total * 0.5 * (1 + interest), activeArena?.currency || 'BRL')}</span>
+                      <span className="font-mono font-bold text-white">{formatCurrency(parcela2, activeArena?.currency || 'BRL')}</span>
+                    </div>
+                    <div className="pt-1.5 border-t border-white/5 flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
+                      <span>Próximo Passivo Circulante (T+1)</span>
+                      <span className="font-mono text-indigo-400">{formatCurrency(parcela2, activeArena?.currency || 'BRL')}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
+                      <span>Custo Total Real (Estoque)</span>
+                      <span className="font-mono text-emerald-400">{formatCurrency(custoTotal, activeArena?.currency || 'BRL')}</span>
                     </div>
                   </div>
                 );
               } else {
+                const entrada = total * 0.34;
+                const parcela2 = total * 0.33 + total * 0.66 * interest;
+                const parcela3 = total * 0.33 + total * 0.33 * interest;
+                const custoTotal = total * (1 + 0.99 * interest);
+                const passivoGerado = total * (0.66 + 0.99 * interest);
                 return (
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400 italic">Entrada (T+0) - 34%</span>
-                      <span className="font-mono font-bold text-white">{formatCurrency(total * 0.34, activeArena?.currency || 'BRL')}</span>
+                      <span className="text-slate-400 italic">Entrada (T+0) - 34% (s/ juros)</span>
+                      <span className="font-mono font-bold text-white">{formatCurrency(entrada, activeArena?.currency || 'BRL')}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400 italic">Parcela 2 (T+1) - 33% + Juros</span>
-                      <span className="font-mono font-bold text-white">{formatCurrency(total * 0.33 * (1 + interest), activeArena?.currency || 'BRL')}</span>
+                      <span className="text-slate-400 italic">Parcela 2 (T+1) - 33% + Juros p/ 66% SD</span>
+                      <span className="font-mono font-bold text-white">{formatCurrency(parcela2, activeArena?.currency || 'BRL')}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400 italic">Parcela 3 (T+2) - 33% + Juros Acum.</span>
-                      <span className="font-mono font-bold text-white">{formatCurrency(total * 0.33 * (1 + interest * 2), activeArena?.currency || 'BRL')}</span>
+                      <span className="text-slate-400 italic">Parcela 3 (T+2) - 33% + Juros p/ 33% SD</span>
+                      <span className="font-mono font-bold text-white">{formatCurrency(parcela3, activeArena?.currency || 'BRL')}</span>
+                    </div>
+                    <div className="pt-1.5 border-t border-white/5 flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
+                      <span>Passivo em Fornecedores (Balanço T+0)</span>
+                      <span className="font-mono text-indigo-400">{formatCurrency(passivoGerado, activeArena?.currency || 'BRL')}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500">
+                      <span>Custo Total Real (Estoque)</span>
+                      <span className="font-mono text-emerald-400">{formatCurrency(custoTotal, activeArena?.currency || 'BRL')}</span>
                     </div>
                   </div>
                 );

@@ -315,9 +315,12 @@ export const calculateProjections = (
   const purchaseMPB = sanitize(decision.production?.purchaseMPB, 0);
   const supplierPaymentType = sanitize(decision.production?.paymentType, 0); // 0: A Vista, 1: A VISTA + 50%, 2: A VISTA + 33% + 33%
   
-  // Fator de Juros do Fornecedor (se não for à vista)
+  // Fator de Juros do Fornecedor (Proporcional ao Saldo Devedor Financiado - v19.12)
   const supplierInterestRate = sanitize(indicators.supplier_interest, 0) / 100;
-  const supplierInterestFactor = supplierPaymentType > 0 ? (1 + supplierInterestRate) : 1.0;
+  const supplierInterestFactor = 
+    supplierPaymentType === 0 ? 1.0 :
+    supplierPaymentType === 1 ? (1 + 0.5 * supplierInterestRate) :
+    (1 + 0.99 * supplierInterestRate);
 
   // Verificação de Necessidade de Compra de Emergência
   const initialMPAStock = team.kpis?.stock_quantities?.mp_a || 0;
@@ -483,19 +486,24 @@ export const calculateProjections = (
   const defaultRate = (sanitize(indicators.customer_default_rate, 2.5) / 100);
   const badDebtExp = totalCreditSales * defaultRate;
 
-  // Suprimentos (Pagamento a Fornecedores)
-  // totalPurchaseMP já calculado acima com juros e ágio
-  let cashOutflowSuppliers = totalPurchaseMP;
+  // Suprimentos (Pagamento a Fornecedores - v19.12)
+  // Custo nominal base sem juros do fornecedor para fracionamento de caixa e passivos fidedignos
+  const basePurchaseCost = (purchaseMPA * mpaPrice) + 
+                            (purchaseMPB * mpbPrice) + 
+                            (emergencyMPA * mpaPrice * specialPremium) + 
+                            (emergencyMPB * mpbPrice * specialPremium);
+
+  let cashOutflowSuppliers = basePurchaseCost;
   let newAccountsPayable = 0;
   
   if (supplierPaymentType === 1) {
-    // A VISTA + 50% no próximo período
-    cashOutflowSuppliers = totalPurchaseMP * 0.5;
-    newAccountsPayable = totalPurchaseMP * 0.5;
+    // A VISTA 50% (sem juros) + 50% no próximo período (com juros de 1 período: i)
+    cashOutflowSuppliers = basePurchaseCost * 0.5;
+    newAccountsPayable = basePurchaseCost * 0.5 * (1 + supplierInterestRate);
   } else if (supplierPaymentType === 2) {
-    // Parcelado: à vista + 33% + 33%
-    cashOutflowSuppliers = totalPurchaseMP * 0.3333;
-    newAccountsPayable = totalPurchaseMP * 0.6667;
+    // À vista 34% (sem juros) + 33% em T+1 (com juros sobre 66%) + 33% em T+2 (com juros sobre 33%)
+    cashOutflowSuppliers = basePurchaseCost * 0.34;
+    newAccountsPayable = basePurchaseCost * (0.66 + 0.99 * supplierInterestRate);
   }
   
   // OPEX reajustado + Marketing + Inadimplência

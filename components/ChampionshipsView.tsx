@@ -84,9 +84,9 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
          </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="flex flex-row overflow-x-auto gap-8 pb-8 pt-2 px-2 scroll-smooth custom-scrollbar snap-x snap-mandatory">
          {filteredChamps.map((champ) => (
-           <div key={champ.id} className={`bg-slate-900/50 backdrop-blur-xl p-10 rounded-[3.5rem] border transition-all duration-500 relative overflow-hidden shadow-2xl ${expandedArena === champ.id ? 'border-orange-500/50 ring-4 ring-orange-500/10' : 'border-white/5'}`}>
+           <div key={champ.id} className={`bg-slate-900/50 backdrop-blur-xl p-10 rounded-[3.5rem] border transition-all duration-500 relative overflow-hidden shadow-2xl flex-shrink-0 w-[85vw] md:w-[460px] snap-start ${expandedArena === champ.id ? 'border-orange-500/50 ring-4 ring-orange-500/10' : 'border-white/5'}`}>
               
               <div className="space-y-8">
                 <div className="flex justify-between items-start">
@@ -177,7 +177,7 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
          ))}
          
          {filteredChamps.length === 0 && (
-           <div className="col-span-full py-20 text-center bg-white/5 rounded-[4rem] border border-dashed border-white/10">
+           <div className="w-full min-w-full flex-shrink-0 py-20 text-center bg-white/5 rounded-[4rem] border border-dashed border-white/10">
               <Trophy size={48} className="text-slate-700 mx-auto mb-6" />
               <p className="text-slate-500 font-black uppercase text-sm tracking-widest">Nenhuma arena encontrada para este filtro.</p>
            </div>

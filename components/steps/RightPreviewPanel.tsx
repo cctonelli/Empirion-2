@@ -573,6 +573,136 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
                 )}
               </div>
             </div>
+
+            {/* NOVO PAINEL: CRONOGRAMA DE FORNECEDORES (v19.12) */}
+            <div className="space-y-3.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5 font-sans">
+                <Warehouse size={14} className="text-orange-500 animate-pulse" />
+                Cronograma de Fornecedores (Contas a Pagar)
+              </span>
+              
+              <div className="space-y-3 bg-slate-900 p-4 rounded-2xl border border-white/5 shadow-xl">
+                {(() => {
+                  const currentMacro = activeArena?.round_rules?.[round] || activeArena?.market_indicators || null;
+                  const priceA = currentMacro?.prices?.mp_a || 15;
+                  const priceB = currentMacro?.prices?.mp_b || 25;
+                  const mpaQty = decisions.production.purchaseMPA || 0;
+                  const mpbQty = decisions.production.purchaseMPB || 0;
+                  
+                  const total = (mpaQty * priceA) + (mpbQty * priceB);
+                  const interest = (currentMacro?.supplier_interest || 1.5) / 100;
+                  const type = decisions.production.paymentType || 0;
+
+                  if (total === 0) {
+                    return (
+                      <div className="text-center py-4 bg-slate-950/45 rounded-xl border border-white/5">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Nenhuma Compra Planejada</span>
+                        <span className="text-[8px] text-slate-600 mt-1 block">A estimativa de desembolso para o ciclo atual é zero. Planeje compras na aba Suprimentos.</span>
+                      </div>
+                    );
+                  }
+
+                  if (type === 0) {
+                    return (
+                      <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 space-y-2 font-sans">
+                        <div className="flex justify-between items-center text-[9px]">
+                          <span className="text-slate-400">Modalidade de Pagamento</span>
+                          <span className="font-bold text-white uppercase bg-slate-800 px-1.5 py-0.5 rounded">À Vista</span>
+                        </div>
+                        <div className="pt-1 border-t border-white/5 flex justify-between items-center text-[9px]">
+                          <span className="text-slate-400 italic">Entrada (T+0) - 100%</span>
+                          <span className="font-mono font-bold text-emerald-400">{formatCurrency(total, activeArena?.currency || 'BRL')}</span>
+                        </div>
+                        <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[8px] font-black text-slate-500 uppercase">
+                          <span>Novo Passivo no Balanço</span>
+                          <span className="font-mono text-slate-400">{formatCurrency(0, activeArena?.currency || 'BRL')}</span>
+                        </div>
+                      </div>
+                    );
+                  } else if (type === 1) {
+                    const ent = total * 0.5;
+                    const p2 = total * 0.5 * (1 + interest);
+                    const juros = total * 0.5 * interest;
+                    return (
+                      <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 space-y-2 font-sans">
+                        <div className="flex justify-between items-center text-[9px]">
+                          <span className="text-slate-400">Modalidade de Pagamento</span>
+                          <span className="font-bold text-white uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded">À Vista + 50%</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[9px] pt-1 border-t border-white/5">
+                          <div>
+                            <span className="text-slate-500 uppercase text-[7px] block">Entrada (T+0)</span>
+                            <span className="font-bold text-white font-mono">{formatCurrency(ent, activeArena?.currency || 'BRL')}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 uppercase text-[7px] block">Parcela 2 (T+1)</span>
+                            <span className="font-bold text-orange-400 font-mono">{formatCurrency(p2, activeArena?.currency || 'BRL')}</span>
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t border-white/5 text-[8px] space-y-1">
+                          <div className="flex justify-between items-center text-slate-400">
+                            <span>Principal Financiado</span>
+                            <span className="font-mono">{formatCurrency(ent, activeArena?.currency || 'BRL')}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400">
+                            <span>Juros Totais Fornecedor</span>
+                            <span className="font-mono text-rose-400">+{formatCurrency(juros, activeArena?.currency || 'BRL')} ({currentMacro?.supplier_interest || 1.5}%)</span>
+                          </div>
+                          <div className="pt-1.5 border-t border-white/5 flex justify-between items-center font-black text-slate-500 uppercase">
+                            <span>Novo Passivo (Fornecedores T+0)</span>
+                            <span className="font-mono text-indigo-400">{formatCurrency(p2, activeArena?.currency || 'BRL')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    const ent = total * 0.34;
+                    const p2 = total * 0.33 + total * 0.66 * interest;
+                    const p3 = total * 0.33 + total * 0.33 * interest;
+                    const jurosTot = total * 0.99 * interest;
+                    const passivo = total * (0.66 + 0.99 * interest);
+                    return (
+                      <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 space-y-2 font-sans">
+                        <div className="flex justify-between items-center text-[9px]">
+                          <span className="text-slate-400">Modalidade de Pagamento</span>
+                          <span className="font-bold text-white uppercase bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-1.5 py-0.5 rounded">Entrada + 33% + 33%</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5 text-[8px] pt-1.5 border-t border-white/5">
+                          <div className="bg-slate-950/50 p-1.5 rounded border border-white/5">
+                            <span className="text-slate-500 text-[6px] uppercase font-mono block">Entrada (T+0)</span>
+                            <span className="font-bold text-white font-mono">{formatCurrency(ent, activeArena?.currency || 'BRL')}</span>
+                          </div>
+                          <div className="bg-slate-950/50 p-1.5 rounded border border-white/5">
+                            <span className="text-slate-500 text-[6px] uppercase font-mono block">Parcela 2 (T+1)</span>
+                            <span className="font-bold text-orange-400 font-mono">{formatCurrency(p2, activeArena?.currency || 'BRL')}</span>
+                            <span className="text-[5px] text-slate-600 block leading-tight mt-0.5">Juros: {formatCurrency(total * 0.66 * interest, activeArena?.currency || 'BRL')}</span>
+                          </div>
+                          <div className="bg-slate-950/50 p-1.5 rounded border border-white/5">
+                            <span className="text-slate-500 text-[6px] uppercase font-mono block">Parcela 3 (T+2)</span>
+                            <span className="font-bold text-orange-400 font-mono">{formatCurrency(p3, activeArena?.currency || 'BRL')}</span>
+                            <span className="text-[5px] text-slate-600 block leading-tight mt-0.5">Juros: {formatCurrency(total * 0.33 * interest, activeArena?.currency || 'BRL')}</span>
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t border-white/5 text-[8px] space-y-1">
+                          <div className="flex justify-between items-center text-slate-400">
+                            <span>Principal Financiado</span>
+                            <span className="font-mono">{formatCurrency(total * 0.66, activeArena?.currency || 'BRL')}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400">
+                            <span>Juros Acumulados Remanescentes</span>
+                            <span className="font-mono text-rose-400">+{formatCurrency(jurosTot, activeArena?.currency || 'BRL')} ({currentMacro?.supplier_interest || 1.5}%)</span>
+                          </div>
+                          <div className="pt-1.5 border-t border-white/5 flex justify-between items-center font-black text-slate-500 uppercase">
+                            <span>Novo Passivo (Fornecedores T+0)</span>
+                            <span className="font-mono text-indigo-400">{formatCurrency(passivo, activeArena?.currency || 'BRL')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+            </div>
           </div>
         )}
 

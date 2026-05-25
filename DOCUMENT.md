@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.12 Obsidian Diamond Enterprise II (Estabilidade Contábil, Redoma de Caixa e Ativação de Custos no CIF - Maio 2026)
+- **Versão Ativa:** v19.12 Obsidian Diamond Enterprise II (Estabilidade Contábil, Redoma de Caixa, Ativação de Custos no CIF, Juros Proporcionais de Fornecedores e Rolagem Lateral de Arenas - Maio 2026)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -354,11 +354,14 @@ project-root/
 
 ### v2026-05.5 / v19.12 - Redoma de Caixa Consolidada, Ativação Integral de Custos e Alinhamento Consultivo
 - **Data:** 25 de Maio de 2026
-- **Motivo:** Homologação e refinamento com o Comitê de Auditoria Oracle do resgate automático preventivo de liquidez acumulada (Redoma de Caixa), amortizações estruturais e a ativação detalhada de custos industriais invisíveis no CIF (Custeio por Absorção).
+- **Motivo:** Homologação e refinamento com o Comitê de Auditoria Oracle do resgate automático preventivo de liquidez acumulada (Redoma de Caixa), amortizações estruturais, ativação detalhada de custos industriais no CIF e amortização de juro de fornecedores proporcional ao saldo devedor.
 - **Diferenças:**
   - *Resgate Preventivo Automático:* Caso as projeções operacionais ameacem disparar o Empréstimo Compulsório/Emergencial, o motor agora varre preventivamente a rubrica `'assets.current.investments'`, liquidando o montante estrito para manter o fluxo positivo e salvaguardar o Rating Fiduciário corporativo.
   - *Ativação de Custos Industriais (WAC / CIF):* Custos de treinamento fabril e estocagem física passam a ser classificados como custos CIF capitalizados no estoque. O impacto imediato no fluxo de caixa é contabilizado em saídas diretas (`cf.outflow.training`, `cf.outflow.storage`), enquanto o DRE realiza a amortização por competência (CPV) sob o método Kardex-WAC.
-  - *Documentação e Governança:* Toda a lógica de mitigação inteligente e spreads fiduciários foi documentada em `BUSINESS_RULES.md`, garantindo excelente DX (Developer Experience) e fidelidade prática para capacitação acadêmica de alto nível.
+  - *Juros Proporcionais de Fornecedores:* Correção e aprimoramento da distribuição dos juros de fornecedores para compras a prazo. O cálculo obedece estritamente a amortização e a incidência sobre o saldo devedor por período (T+0 sem juros de entrada, T+1 incidindo sobre o SD de 66% e T+2 incidindo sobre o SD de 33%).
+  - *Cronogramas HUD & Visualização:* Atualização interativa no formulário de Suprimentos (`SupplyStep`) e no painel lateral de consolidação financeira (`RightPreviewPanel`) para expor abertamente a alocação de parcelas de principal, taxas de juros, e os novos passivos gerados no balanço de encerramento.
+  - *Rolagem Lateral de Torneios:* Implementação de rolagem lateral horizontal fluida (`flex-row overflow-x-auto`) com efeito de snap-scrolling no painel principal de visualização de arenas (`ChampionshipsView`), otimizando o design system para navegação intuitiva e eliminando quebras verticais e excesso de rolagem quando há dezenas de simulações concorrentes.
+  - *Documentação e Governança:* Toda a lógica de mitigação inteligente, spreads fiduciários e cronogramas de suprimentos foi documentada em `BUSINESS_RULES.md`, garantindo excelente DX (Developer Experience) e fidelidade prática para capacitação acadêmica de alto nível.
 - **Status:** Em produção.
 
 ### v2026-05.4 / v19.11 - Redoma de Caixa, Aplicações Financeiras, Custeio Absorção e Treinamento CapEx
