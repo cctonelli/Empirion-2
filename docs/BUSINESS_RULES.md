@@ -262,6 +262,52 @@ Empresas que incorrerem em quebra de caixa e requererem **Empréstimo Compulsór
 
 ---
 
+## 10. Regras de Financiamento e Crédito
+
+### 10.1 Empréstimos Normais (Voluntários)
+
+- Decididos pela equipe no Step Financeiro.
+- Taxa final = Taxa Base + Spread por Rating de Crédito.
+- Spreads:
+  - AAA: +1.5%
+  - AA/A: +2.5%
+  - B: +6.0%
+  - D (Default): +15.0%
+
+**Contabilização:**
+- DFC: Entrada imediata (`cf.inflow.loans_normal`).
+- DRE: Juros como despesa financeira.
+- BP: Registrado em Passivo (Circulante / Não Circulante).
+
+### 10.2 Financiamento de Máquinas (CapEx com Carência)
+
+- Possui período de carência configurável (padrão 2-4 rodadas).
+- Durante carência: paga apenas juros.
+- Após carência: amortização (PRICE ou SAC).
+
+**Contabilização:**
+- Ativo: + Imobilizado (máquina).
+- Passivo: + Financiamento.
+- DRE: Juros + Depreciação (CIF).
+- DFC: Saída de juros durante carência; juros + amortização depois.
+
+### 10.3 Empréstimos Compulsórios
+
+- Ativados automaticamente quando caixa projetado < 0.
+- Taxa punitiva: Taxa Base + Spread Rating + 5.0% flat de sobretaxa.
+- Amortização preferencial na rodada seguinte.
+- **Consequências:**
+  - Rebaixamento automático para Rating D.
+  - Penalidade de +50% no peso da dívida para cálculo de alavancagem e E-SDS.
+  - Impacto negativo forte nos scores de solvência.
+
+**Contabilização:**
+- DFC: Entrada emergencial + forte saída na rodada seguinte.
+- DRE: Juros elevados.
+- BP: Passivo Circulante com peso majorado.
+
+---
+
 **Histórico de Versões**
 
 - **v19.10** (25/05/2026) – Diferenciação analítica de Empréstimos Normais vs. Compulsórios, taxas por Rating Spreads, cap punitivo no rating corporativo e novo Cronograma de Amortização de Dívidas projetado (3 rounds).
