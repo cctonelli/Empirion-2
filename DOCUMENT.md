@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.11 Obsidian Diamond Enterprise II (Liquidez de Aplicações, Treinamento CapEx, Custeio de Estocagem e Conciliação Tripla - Maio 2026)
+- **Versão Ativa:** v19.12 Obsidian Diamond Enterprise II (Estabilidade Contábil, Redoma de Caixa e Ativação de Custos no CIF - Maio 2026)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -350,6 +350,15 @@ project-root/
   - *Sincronização de Financiamento de Capex:* Inclusão do financiamento BDI de ativos novos (`newBdiLoanAmount`) no caixa e registro nas entradas da DFC de empréstimos, impedindo quedas artificiais do caixa operacional por compras a prazo de imobilizados.
   - *Contas a Receber e PECLD:* Reconciliação do recebimento de vendas a prazo para considerar a baixa contábil líquida anterior (`prevClients - prevPecld`), zerando disparidades de créditos.
   - *Auditoria Float Precision (Z-Guard):* Uma rotina de auditoria matemática do Balanço de Encerramento absorve divergências microscópicas de arredondamento de float do JavaScript e equilibra de forma inexorável o Ativo com o Passivo + PL.
+- **Status:** Em produção.
+
+### v2026-05.5 / v19.12 - Redoma de Caixa Consolidada, Ativação Integral de Custos e Alinhamento Consultivo
+- **Data:** 25 de Maio de 2026
+- **Motivo:** Homologação e refinamento com o Comitê de Auditoria Oracle do resgate automático preventivo de liquidez acumulada (Redoma de Caixa), amortizações estruturais e a ativação detalhada de custos industriais invisíveis no CIF (Custeio por Absorção).
+- **Diferenças:**
+  - *Resgate Preventivo Automático:* Caso as projeções operacionais ameacem disparar o Empréstimo Compulsório/Emergencial, o motor agora varre preventivamente a rubrica `'assets.current.investments'`, liquidando o montante estrito para manter o fluxo positivo e salvaguardar o Rating Fiduciário corporativo.
+  - *Ativação de Custos Industriais (WAC / CIF):* Custos de treinamento fabril e estocagem física passam a ser classificados como custos CIF capitalizados no estoque. O impacto imediato no fluxo de caixa é contabilizado em saídas diretas (`cf.outflow.training`, `cf.outflow.storage`), enquanto o DRE realiza a amortização por competência (CPV) sob o método Kardex-WAC.
+  - *Documentação e Governança:* Toda a lógica de mitigação inteligente e spreads fiduciários foi documentada em `BUSINESS_RULES.md`, garantindo excelente DX (Developer Experience) e fidelidade prática para capacitação acadêmica de alto nível.
 - **Status:** Em produção.
 
 ### v2026-05.4 / v19.11 - Redoma de Caixa, Aplicações Financeiras, Custeio Absorção e Treinamento CapEx
