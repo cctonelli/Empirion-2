@@ -188,8 +188,64 @@ $$\text{cpv} = \text{dre.cpv\_mp} + \text{dre.mod} + \text{dre.cif}$$
 
 ---
 
-## 7. Gestão Financeira, Tributos e Provedores do Mercado
-- **Empréstimo Compulsório:** Ativado automaticamente no saldo negativo do caixa para garantir liquidez operacional, sendo amortizado no ciclo subsequente.
+## 7. Gestão Financeira, Financiamentos e Provedores do Mercado (v19.10)
+
+O Empirion disponibiliza três classes de crédito estruturadas para suportar as necessidades operacionais e de investimento das equipes (CapEx e OpEx):
+
+### A. Empréstimo Normal (Requisitado Manualmente)
+*   **Finalidade:** Suporte programado ao Capital de Giro (NCG) ou folga operacional.
+*   **Prazo (Term):** Escolha estipulada pela equipe (1, 2 ou 3 rodadas) na aba de Decisões de Finanças.
+*   **Taxa de Juros ao Período:** Baseada no cenário macroeconômico (Selic/TR) acrescida do **Spread Fiduciário de Risco (Rating Spread)**:
+    $$\text{Taxa de Juros (Normal)} = \text{Taxa TR \%} + \text{Spread de Rating (Risk Spread) \%}$$
+*   **Amortização Constante (SAC):** O valor principal é diluído de forma constante sobre os rounds restantes:
+    $$\text{Amortização} = \frac{\text{Saldo Devedor Atual}}{\text{Rounds Restantes}}$$
+
+### B. Financiamento de Máquinas (BDI)
+*   **Finalidade:** Financiar a aquisição de novas máquinas operacionais (CAPEX).
+*   **Prazo e Carência:** 8 Rodadas de prazo com **4 rodadas de carência inicial (Grace Period)**.
+*   **Durante a Carência:** A equipe paga apenas o encargo financeiro (juros incidentes sobre o saldo devedor integral); nenhuma amortização de principal ocorre.
+    $$\text{Prestações (Carência)} = \text{Saldo Devedor} \times \text{Taxa TR \%}$$
+*   **Após a Carência (Pós-Carência):** O saldo devedor é liquidado linearmente em parcelas constantes ao longo das 4 rodadas subsequentes.
+    $$\text{Amortização} = \frac{\text{Saldo Devedor}}{\text{Remaining Rounds (4)}}$$
+
+### C. Empréstimo Compulsório / Emergencial (De Liquidez Automática)
+*   **Finalidade:** Socorrer emergencialmente o caixa da empresa em caso de saldo negativo temporário ao final de uma rodada (quebra de caixa contábil).
+*   **Prazo:** Curto prazo severo – com vencimento e amortização INTEGRAL programada já no ciclo subsequente (1 round de prazo).
+*   **Taxa de Juros Punitiva (Penalty Rate):** Desenvolvida sob alta sobretaxa fiduciária e ágios punitivos para penalizar severamente a inércia de controladoria do operador:
+    $$\text{Taxa de Juros (Compulsório)} = \text{Taxa TR \%} + \text{Ágio de Compulsório \%} + \text{Spread de Rating \%} + 5.0\%_{\text{Sobretaxa Punitiva de Default}}$$
+*   **Amortização:** 100% amortizado no período seguinte:
+    $$\text{Amortização} = \text{Saldo Devedor Atual}$$
+
+---
+
+### D. Tabela Oficial de Spread de Rating Fiduciário (Corporate Risk Spreads)
+
+O custo do capital das operações de crédito da equipe é dinamicamente atrelado à excelência de suas métricas econômicas e rating fiduciário vigente calculado na central de inteligência empresarial:
+
+| Rating | Spread de Risco Adicional (% ao período) |
+| :---: | :---: |
+| **AAA** | + 1.5% |
+| **AA** | + 2.0% |
+| **A** | + 2.5% |
+| **BBB** | + 3.5% |
+| **BB** | + 4.5% |
+| **B** | + 6.0% |
+| **CCC** | + 8.0% |
+| **CC** | + 10.0% |
+| **C** | + 12.0% |
+| **D** | + 15.0% |
+
+---
+
+### E. Penalidade Sistêmica de Default (Capacidade de Alavancagem e Impacto E-SDS)
+
+Empresas que incorrerem em quebra de caixa e requererem **Empréstimo Compulsório** sofrem as seguintes punições de governança fiduciária:
+1.  **Rebaixamento e Cap do Rating de Crédito:** O rating fiduciário corporativo é sumariamente rebaixado e limitado ao teto **D** (Default/Distressed zone) no round em que houver compulsório ativo.
+2.  **Sinal de Risco na Alavancagem:** Para cálculo do Z-Score de Kanitz, o passivo circulante de quebra de caixa (`loans_st`) de compulsório recebe um acréscimo multiplicador punitivo de **+50%** de ponderação no passivo para cálculo do indicador de dependência de capital de terceiros (`x5`), derrubando o score geral de solvência de Kanitz e as métricas estruturais do E-SDS.
+
+---
+
+## 8. Gestão de Tributos e Provedores do Mercado
 - **Tributação Corporativa:**
   - Imposto de Renda Provisão (IR): Alíquota nominal de 25% calculada sobre o lucro do período (LAIR).
   - Impostos Indiretos (IVA): Mecanismo de crédito/débito incidente na circulação comercial de produtos e insumos.
@@ -198,7 +254,7 @@ $$\text{cpv} = \text{dre.cpv\_mp} + \text{dre.mod} + \text{dre.cif}$$
 
 ---
 
-## 8. Avaliação de Desempenho (Métricas e Relatórios)
+## 9. Avaliação de Desempenho (Métricas e Relatórios)
 - **TSR (Total Shareholder Return):** Composto pelo crescimento patrimonial ponderado pelas distribuições e valorização histórica do equity. Principal diretriz de competitividade.
 - **E-SDS Score:** Algoritmo dinâmico de avaliação com 6 pilares de integridade financeira baseado em faixas alertivas de cores (Azul, Verde, Amarelo, Laranja, Vermelho).
 - **Z-Score de Solvência:** Combinação estatística paramétrica baseada no Altman Z''-Score de emergentes e no Kanitz Index para blindagem tática contra inadimplências.
@@ -208,9 +264,10 @@ $$\text{cpv} = \text{dre.cpv\_mp} + \text{dre.mod} + \text{dre.cif}$$
 
 **Histórico de Versões**
 
+- **v19.10** (25/05/2026) – Diferenciação analítica de Empréstimos Normais vs. Compulsórios, taxas por Rating Spreads, cap punitivo no rating corporativo e novo Cronograma de Amortização de Dívidas projetado (3 rounds).
 - **v19.9** (24/05/2026) – Desmembramento completo de MOD e CIF + regras de Absorção.
 - **v19.8** – Implementação do Kardex-WAC.
 - **v19.5** – Validação tripla contábil.
 
 **Aprovado por:** Oracle Accounting Strategos  
-**Status:** Regra Viva do Sistema Empirion
+**Status:** Regra Viva do Sistema Empirion-2

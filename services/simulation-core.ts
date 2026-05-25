@@ -389,6 +389,78 @@ export const computeESDSDeterministic = (
 };
 
 /**
+ * Calcula o Cronograma de Financiamento (Amortization Schedule) para os próximos 3 rounds
+ * de forma a fornecer visibilidade de amortização e juros às equipes e aos tutores.
+ * @param loans Lista de empréstimos correntes da equipe
+ * @param indicators Indicadores macroeconômicos
+ */
+export function calculateAmortizationSchedule(loans: any[], indicators: any): any[] {
+  if (!loans || !Array.isArray(loans)) return [];
+  const list = JSON.parse(JSON.stringify(loans));
+  const schedule: any[] = [];
+
+  for (const loan of list) {
+    let tempAmount = loan.amount;
+    let tempRounds = loan.remaining_rounds;
+    let tempGrace = loan.grace_period_remaining || 0;
+    const installments: { round: number; amort: number; interest: number; total: number; balance_after: number }[] = [];
+
+    const interestRateVal = loan.interest_rate || (indicators ? sanitize(indicators.interest_rate_tr, 2) : 2);
+
+    for (let r = 1; r <= 3; r++) {
+      if (tempAmount <= 0) break;
+
+      let interest = 0;
+      let amort = 0;
+
+      if (loan.type === 'bdi') {
+        interest = tempAmount * (interestRateVal / 100);
+        if (tempGrace > 0) {
+          amort = 0;
+          tempGrace -= 1;
+        } else {
+          amort = tempAmount / Math.max(1, tempRounds);
+        }
+      } else if (loan.type === 'normal') {
+        interest = tempAmount * (interestRateVal / 100);
+        amort = tempAmount / Math.max(1, tempRounds);
+      } else if (loan.type === 'compulsory') {
+        const compulsoryAgio = indicators ? sanitize(indicators.compulsory_loan_agio, 3) : 3;
+        interest = tempAmount * ((interestRateVal / 100) + (compulsoryAgio / 100));
+        amort = tempAmount;
+      }
+
+      const total = amort + interest;
+      const balance_after = Math.max(0, tempAmount - amort);
+
+      installments.push({
+        round: r,
+        amort,
+        interest,
+        total,
+        balance_after
+      });
+
+      tempAmount = balance_after;
+      tempRounds = Math.max(1, tempRounds - 1);
+    }
+
+    schedule.push({
+      id: loan.id,
+      type: loan.type,
+      amount: loan.amount,
+      interest_rate: interestRateVal,
+      term: loan.term || loan.remaining_rounds,
+      remaining_rounds: loan.remaining_rounds,
+      grace_period_remaining: loan.grace_period_remaining || 0,
+      installments
+    });
+  }
+
+  return schedule;
+}
+
+/**
  * Consolida, refina e computa todos os KPIs contábeis de ponta a ponta
  * a partir das demonstrações financeiras geradas, unificando os cálculos
  * e bloqueando redundâncias do frontend.
@@ -463,7 +535,10 @@ export const calculateKpisFromStatements = (params: {
   const x2_k = liquidityCurrent;
   const x3_k = currentLiabilities > 0 ? (currentAssets - closingStockValuePA) / currentLiabilities : 1;
   const x4_k = totalAssets > 0 ? currentAssets / totalAssets : 0.5;
-  const x5 = totalEquity > 0 ? totalLiabilities / totalEquity : 0.5;
+  const hasCompulsory = currentLoans ? currentLoans.some((l: any) => l.type === 'compulsory') : false;
+  
+  // Se houver empréstimo compulsório (quebra de caixa recente), aplica ágio de risco de alavancagem de forma punitiva (+1.5 no multiplicador de passivos)
+  const x5 = totalEquity > 0 ? (totalLiabilities + (hasCompulsory ? (findAccountValue(finalBS, 'liabilities.current.loans_st') || 500000) * 1.5 : 0)) / totalEquity : 0.5;
   const kanitz = (0.05 * x1_k) + (1.65 * x2_k) + (3.55 * x3_k) - (1.06 * x4_k) - (0.33 * x5);
 
   // Altman Z''-Score para mercados emergentes
@@ -480,7 +555,9 @@ export const calculateKpisFromStatements = (params: {
 
   // Critérios rígidos para Rating de Crédito Corporativo
   let rating: CreditRating = 'D';
-  if (liquidityCurrent > 1.5 && x5 < 0.8) rating = 'AAA';
+  if (hasCompulsory) {
+    rating = 'D'; // Rebaixamento imediato e capitulação de rating por default de tesouraria flagrante (v19.10)
+  } else if (liquidityCurrent > 1.5 && x5 < 0.8) rating = 'AAA';
   else if (liquidityCurrent > 1.2 && x5 < 1.2) rating = 'AA';
   else if (liquidityCurrent > 1.0 && x5 < 1.5) rating = 'A';
   else if (liquidityCurrent > 0.8 && x5 < 2.0) rating = 'B';
@@ -514,6 +591,7 @@ export const calculateKpisFromStatements = (params: {
     },
     machines: currentMachines,
     loans: currentLoans,
+    amortization_schedule: calculateAmortizationSchedule(currentLoans, indicators),
     stock_quantities: stockQuantities,
     cpp_unit: unitCPP,
     wac_unit: wacUnit,

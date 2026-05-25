@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.9 Obsidian Diamond Enterprise II (Persistência Sólida do Ciclo Financeiro PMR, PMP, Efeito Tesoura & Reconciliação do Cockpit - Maio 2026)
+- **Versão Ativa:** v19.10 Obsidian Diamond Enterprise II (Financiamentos, Amortização, Rating Spreads e Amortization Schedule - Maio 2026)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -351,6 +351,15 @@ project-root/
   - *Contas a Receber e PECLD:* Reconciliação do recebimento de vendas a prazo para considerar a baixa contábil líquida anterior (`prevClients - prevPecld`), zerando disparidades de créditos.
   - *Auditoria Float Precision (Z-Guard):* Uma rotina de auditoria matemática do Balanço de Encerramento absorve divergências microscópicas de arredondamento de float do JavaScript e equilibra de forma inexorável o Ativo com o Passivo + PL.
 - **Status:** Em produção.
+
+### v2026-05.3 / v19.10 - Financiamentos, Amortização, Rating Spreads e Amortization Schedule
+- **Data:** 25 de Maio de 2026
+- **Motivo:** Implementação da diferenciação realística entre Empréstimos Normais e Compulsórios, taxas flutuantes baseadas no spread de risco da tabela de ratings fiduciários corporativos, e consolidação das penalidades e covenants de caixa da empresa, integrando o Amortization Schedule de 3 rodadas.
+- **Diferenças:**
+  - *Empréstimo Normal (Requisitado Manualmente):* Passa a ser acrescido do Spread de Rating Fiduciário (% de ágio associada à saúde de solvência da sua própria equipe). Amortização constante (SAC).
+  - *Empréstimo Compulsório (Quebra de Caixa):* O caixa negativo é socorrido automaticamente com vencimento direto na rodada seguinte (1 round). Aplica-se taxa altamente punitiva (TR + Ágio de Compulsório + Rating Risk Spread + 5.0% de sobretaxa flat de default fiduciário). O compulsório passa a ser persistido e injetado nos `currentLoans` e no fluxo de amortizações de forma fidedigna.
+  - *Penalização no Endividamento:* Empresas com contratação de compulsório ativo sofrem rebaixamento compulsório imediato de seu Rating Fiduciário para o patamar mínimo **D** (Default/Distressed zone) na rodada. Além disso, a rubrica `loans_st` recebe acréscimo de **+50%** de peso de passivo para cálculo do coeficiente de alavancagem (`x5`), afetando o Z-Score de Kanitz, o Altman Z-Score e as métricas do E-SDS.
+  - *Amortization Schedule:* Módulo centralizado em `simulation-core.ts` projeta com precisão científica as prestações de juros, amortização e saldo devedor das próximas 3 rodadas de todos os empréstimos ativos, integrados aos painéis de pré-visualização e demonstrações financeiras.
 
 ### v2026-03.6 - Provisionamento de PPR e Rescisão Proporcional
 - **Data:** Março de 2026

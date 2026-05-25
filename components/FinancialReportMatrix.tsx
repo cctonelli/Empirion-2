@@ -33,13 +33,13 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
   const periods = [
     ...history.map(h => ({ 
       round: h.round, 
-      data: (type === 'strategic' || type === 'kardex') ? h.kpis : h.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')],
+      data: (type === 'strategic' || type === 'kardex' || type === 'commitments') ? h.kpis : h.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')],
       raw: h,
       isProjection: false 
     })),
     { 
       round: 'PROJ (T+1)', 
-      data: (type === 'strategic' || type === 'kardex') ? projection?.kpis : projection?.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], 
+      data: (type === 'strategic' || type === 'kardex' || type === 'commitments') ? projection?.kpis : projection?.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], 
       raw: projection,
       isProjection: true 
     }
@@ -165,6 +165,74 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
             })}
           </tr>
         ))}
+
+        {/* cronograma de financiamentos (v19.10) */}
+        <tr className="bg-amber-500/10 font-black border-t border-white/10">
+          <td colSpan={periods.length + 1} className="p-2 text-amber-400 text-[9px] uppercase tracking-widest font-sans">
+            Cronograma de Amortização de Financiamentos & Empréstimos (Amortization Schedule)
+          </td>
+        </tr>
+        {(!periods[periods.length - 1]?.data?.loans || periods[periods.length - 1]?.data?.loans.length === 0) ? (
+          <tr className="border-b border-white/5">
+            <td colSpan={periods.length + 1} className="p-3 text-center text-slate-500 text-[8px] uppercase tracking-wider font-sans">
+              Nenhuma dívida ou financiamento estruturado ativo no período atual.
+            </td>
+          </tr>
+        ) : (
+          periods[periods.length - 1]?.data?.loans?.map((loan: any, lIdx: number) => {
+            const loanName = loan.type === 'bdi' ? 'Financiamento Máquinas (BDI)' : loan.type === 'normal' ? 'Empréstimo Normal' : 'Empréstimo Compulsório';
+            const sch = periods[periods.length - 1]?.data?.amortization_schedule?.find((s: any) => s.id === loan.id);
+            return (
+              <React.Fragment key={loan.id || lIdx}>
+                <tr className="bg-slate-950/20 font-bold border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                  <td className="p-1.5 pl-3 sticky left-0 bg-slate-900 border-r border-white/10 text-slate-200 text-[8px] uppercase tracking-wider font-sans">
+                    {loanName} <span className="text-slate-500 text-[7px] font-mono">[{loan.id?.slice(2, 7) || 'REQ'}]</span>
+                  </td>
+                  {periods.map((p: any, idx: number) => {
+                    const lInP = p.data?.loans?.find((l: any) => l.id === loan.id);
+                    const bal = lInP ? lInP.amount : 0;
+                    return (
+                      <td key={idx} className={`p-1.5 text-center font-mono text-[9px] ${p.isProjection ? 'text-orange-400 font-bold bg-orange-500/5' : 'text-slate-400'}`}>
+                        {bal > 0 ? formatCurrency(bal, currency) : '-'}
+                      </td>
+                    );
+                  })}
+                </tr>
+                {sch && sch.installments && sch.installments.length > 0 && (
+                  <tr className="border-b border-white/5 bg-slate-950/45">
+                    <td colSpan={periods.length + 1} className="p-2 py-2.5 pl-5">
+                      <div className="space-y-1 w-full">
+                        <span className="text-[7px] font-black tracking-widest text-slate-500 uppercase block font-sans">
+                          Próximos Fluxos Projetados (Amortização + Juros ao Período):
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {sch.installments.map((inst: any, idx: number) => (
+                            <div key={idx} className="bg-slate-900/60 border border-white/5 p-1.5 rounded-lg text-left text-[8px] font-sans min-w-[124px]">
+                              <div className="text-slate-500 text-[6px] font-mono uppercase">Instalment r{idx + 1}</div>
+                              <div className="text-orange-400 font-mono font-bold">{formatCurrency(inst.total, currency)}</div>
+                              <div className="text-[6px] text-slate-400 leading-none mt-0.5 font-mono">
+                                Amort: {formatCurrency(inst.amort, currency)}<br />
+                                Juros: {formatCurrency(inst.interest, currency)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            );
+          })
+        )}
+        <tr className="bg-rose-500/5 border-b border-white/5">
+          <td colSpan={periods.length + 1} className="p-2.5 pl-3">
+            <span className="text-[8px] text-rose-300 italic flex items-center gap-1.5 font-sans leading-normal">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+              <strong>Sinal de Governança E-SDS:</strong> Toda captação reduz o pilar de Alavancagem Operacional do E-SDS. A manutenção de níveis saudáveis de caixa e de geração de EBITDA é crucial para evitar penalização do rating corporativo.
+            </span>
+          </td>
+        </tr>
       </>
     );
   };

@@ -111,6 +111,7 @@ export interface KPIs {
   export_tariff_uk?: number;
   brl_rate?: number;
   gbp_rate?: number;
+  amortization_schedule?: any[];
   dupont?: {
     margin: number;
     turnover: number;

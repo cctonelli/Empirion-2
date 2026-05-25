@@ -14,6 +14,27 @@ export const sanitize = (val: any, fallback: number): number => {
   return isNaN(n) ? fallback : n;
 };
 
+/**
+ * Retorna o spread de taxa de juros com base no Rating de Crédito Corporativo da equipe
+ * @param rating Rating de crédito da equipe
+ */
+export function getSpreadByRating(rating?: string): number {
+  if (!rating) return 6.0;
+  switch (rating.toUpperCase()) {
+    case 'AAA': return 1.5; // +1.5% ao período
+    case 'AA': return 2.0;  // +2.0% ao período
+    case 'A': return 2.5;   // +2.5% ao período
+    case 'BBB': return 3.5; // +3.5% ao período
+    case 'BB': return 4.5;  // +4.5% ao período
+    case 'B': return 6.0;   // +6.0% ao período
+    case 'CCC': return 8.0; // +8.0% ao período
+    case 'CC': return 10.0; // +10.0% ao período
+    case 'C': return 12.0;  // +12.0% ao período
+    case 'D': return 15.0;  // +15.0% ao período
+    default: return 6.0;
+  }
+}
+
 export const getCumulativeAdjust = (chronogram: any, round: number, key: string): number => {
   let factor = 1;
   // Reajustes começam a partir do Round 0.
@@ -524,11 +545,11 @@ export const calculateProjections = (
     totalAmortization += amort;
     
     const remaining = loan.amount - amort;
-    if (remaining > 0.01 && loan.remaining_rounds > 1) {
+    if (remaining > 0.01) {
       currentLoans.push({
         ...loan,
         amount: remaining,
-        remaining_rounds: loan.remaining_rounds - 1
+        remaining_rounds: Math.max(1, loan.remaining_rounds - 1)
       });
     }
   });
@@ -553,11 +574,14 @@ export const calculateProjections = (
   const selectedTerm = loanTermsMap[loanTerm] || 1;
 
   if (loanRequest > 0 && !isRJ) {
+    const loanSpread = getSpreadByRating(team.kpis?.rating || 'B');
+    const normalInterestRate = sanitize(indicators.interest_rate_tr, 2) + loanSpread;
+
     currentLoans.push({
       id: `L-REQ-${Math.random().toString(36).substr(2, 5)}`,
       type: 'normal',
       amount: loanRequest,
-      interest_rate: sanitize(indicators.interest_rate_tr, 2), // Sem spread conforme diretriz
+      interest_rate: normalInterestRate, // Base TR + spread de rating
       term: selectedTerm,
       remaining_rounds: selectedTerm
     });
@@ -643,6 +667,21 @@ export const calculateProjections = (
   if (cashBeforeCompulsory < 0) {
     newCompulsoryLoan = Math.abs(cashBeforeCompulsory);
     cashBeforeCompulsory = 0; // Caixa zerado, coberto pelo compulsório
+
+    // NOTA SÊNIOR: Adiciona o compulsório à nossa carteira corrente de empréstimos (currentLoans)
+    // para que ele seja projetado, amortizado e auditado adequadamente nas telas e no próximo round do motor.
+    const compulsoryAgio = sanitize(indicators.compulsory_loan_agio, 3);
+    const riskSpread = getSpreadByRating(team.kpis?.rating || 'B');
+    const punitiveRate = sanitize(indicators.interest_rate_tr, 2) + compulsoryAgio + riskSpread + 5.0; // TR + agio + spread + 5% default penalty
+
+    currentLoans.push({
+      id: `L-CMP-${Math.random().toString(36).substr(2, 5)}`,
+      type: 'compulsory',
+      amount: newCompulsoryLoan,
+      interest_rate: punitiveRate,
+      term: 1,
+      remaining_rounds: 1
+    });
   }
 
   const finalCash = cashBeforeCompulsory;

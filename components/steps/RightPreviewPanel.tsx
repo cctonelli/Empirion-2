@@ -504,6 +504,75 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
                 />
               </div>
             </div>
+
+            {/* SEÇÃO INTERATIVA: CRONOGRAMA DE FINANCIAMENTOS (v19.10) */}
+            <div className="space-y-3.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5 font-sans">
+                <Activity size={14} className="text-orange-500 animate-pulse" />
+                Cronograma de Financiamentos (Amortization Schedule)
+              </span>
+              
+              <div className="space-y-3 bg-slate-900 p-4 rounded-2xl border border-white/5 shadow-xl">
+                {(!projections?.kpis?.amortization_schedule || projections.kpis.amortization_schedule.length === 0) ? (
+                  <div className="text-center py-4 bg-slate-950/45 rounded-xl border border-white/5">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Nenhum Financiamento Ativo</span>
+                    <span className="text-[8px] text-slate-600 mt-1 block">A empresa não possui dívidas estruturadas de curto ou longo prazo pendentes.</span>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {projections.kpis.amortization_schedule.map((loan: any, lIdx: number) => {
+                      const typeLabel = loan.type === 'bdi' ? 'Financiamento de Máquinas (BDI)' : loan.type === 'normal' ? 'Empréstimo Normal' : 'Empréstimo Compulsório';
+                      const typeColor = loan.type === 'bdi' ? 'text-cyan-400 border-cyan-500/20 bg-cyan-500/5' : loan.type === 'normal' ? 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5' : 'text-rose-400 border-rose-500/20 bg-rose-500/5';
+                      return (
+                        <div key={loan.id || lIdx} className="p-3 bg-slate-950/40 rounded-xl border border-white/5 space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${typeColor} font-sans`}>
+                              {typeLabel}
+                            </span>
+                            <span className="text-[8px] text-slate-500 font-mono">ID: {loan.id ? loan.id.slice(2, 7) : 'REQ'}</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 text-[9px] font-sans">
+                            <div>
+                              <span className="text-slate-500 uppercase text-[7px] block">Saldo Devedor Atual</span>
+                              <span className="font-bold text-white font-mono">{formatCurrency(loan.amount, activeArena?.currency || 'BRL')}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 uppercase text-[7px] block">Prazo / Carência</span>
+                              <span className="font-bold text-slate-300 font-mono">
+                                {loan.remaining_rounds}R {loan.grace_period_remaining > 0 ? `(Carência: ${loan.grace_period_remaining}R)` : ''}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-white/5 space-y-1">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block font-sans">Próximas Prestações Projetadas (DRE + DFC):</span>
+                            <div className="grid grid-cols-3 gap-1">
+                              {loan.installments?.map((inst: any, instIdx: number) => (
+                                <div key={instIdx} className="bg-slate-950/60 p-1.5 rounded border border-white/5 flex flex-col justify-between">
+                                  <span className="text-slate-500 text-[6px] uppercase font-mono block">Inst. r{instIdx + 1}</span>
+                                  <span className="text-[8px] font-black text-orange-400 font-mono mt-0.5">{formatCurrency(inst.total, activeArena?.currency || 'BRL')}</span>
+                                  <div className="text-[5px] text-slate-600 font-mono mt-0.5 leading-none">
+                                    Amort: {formatCurrency(inst.amort, activeArena?.currency || 'BRL')}<br />
+                                    Juros: {formatCurrency(inst.interest, activeArena?.currency || 'BRL')}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="p-2.5 bg-rose-500/5 rounded-xl border border-rose-500/10 text-[8px] text-rose-300 leading-normal flex items-start gap-1.5 font-sans">
+                      <AlertTriangle size={10} className="text-rose-400 shrink-0 mt-0.5" />
+                      <span>
+                        <strong>Impacto Alavancagem E-SDS:</strong> Financiamentos e capitais de terceiros contraídos reduzem o pilar de endividamento do score E-SDS, exigindo EBITDA compensatório para manter o rating fiduciário na zona Verde.
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
