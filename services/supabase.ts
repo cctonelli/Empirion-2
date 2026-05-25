@@ -199,6 +199,8 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     solvency_index: 2.0,
     inventory_turnover: 0,
     carbon_footprint: 0,
+    avg_receivable_days: 45,
+    avg_payable_days: 30,
     // E-SDS v1.2 Inputs for P0
     fco_livre: 208387.77 - 50000 - 2500 - 14871, // EBITDA - Manutencao - Juros - IR (estimado P0)
     capex_manutencao: 50000,
@@ -278,6 +280,8 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     solvency_index: 2.0,
     inventory_turnover: 0,
     carbon_footprint: 0,
+    avg_receivable_days: 45,
+    avg_payable_days: 30,
     esds_score: p0Esds?.esds_display || 0,
     esds_zone: p0Esds?.zone || 'Verde',
     esds_gargalo: p0Esds?.gargalo_principal,
@@ -528,7 +532,9 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 market_share: competitiveShare,
                 supplier_interest_expenses: item.res.kpis.supplier_interest_expenses || 0,
                 emergency_purchase_expenses: item.res.kpis.emergency_purchase_expenses || 0,
-                emergency_units_total: item.res.kpis.emergency_units_total || 0
+                emergency_units_total: item.res.kpis.emergency_units_total || 0,
+                avg_receivable_days: item.res.kpis.avg_receivable_days || 0,
+                avg_payable_days: item.res.kpis.avg_payable_days || 0
             });
 
             await supabase.from(teamsTable).update({ 

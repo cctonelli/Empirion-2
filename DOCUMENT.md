@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.8 Obsidian Enterprise (Resolução de RLS, Joins de Concorrentes & Oracle Gazette - Maio 2026)
+- **Versão Ativa:** v19.9 Obsidian Diamond Enterprise II (Persistência Sólida do Ciclo Financeiro PMR, PMP, Efeito Tesoura & Reconciliação do Cockpit - Maio 2026)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -206,6 +206,15 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.9 Obsidian Diamond Enterprise II - Persistência Sólida do Ciclo Financeiro (PMR, PMP & Efeito Tesoura)
+- **Data:** 25 de Maio de 2026
+- **Motivo:** Garantir a perfeita visualização contábil de PMR (Prazo Médio de Recebimento), PMP (Prazo Médio de Pagamento) e Efeito Tesoura no Cockpit/Painel de Tomada de Decisão das Equipes, eliminando falhas de dados legados no carregamento de rodadas iniciais.
+- **Diferenças:**
+  - *Persistência no Supabase:* Inclusão das colunas `avg_receivable_days` e `avg_payable_days` na inserção de cada simulação/turnover nas tabelas `companies` e `trial_companies`.
+  - *Inicialização do Campeonato (P0):* Definição exata de prazos base fiduciários para a rodada `0` (PMR: 45 dias, PMP: 30 dias) ao gerar o campeonato e seus respectivos históricos iniciais.
+  - *Sanitização e Fallbacks no Cockpit:* Programação de fallbacks no frontend (`Dashboard.tsx`) para assegurar legibilidade mesmo em registros obsoletos ou nulos, com tratamento refinado do Efeito Tesoura para resolver o stringing de `-0.0` para `0.0` dias.
+- **Status:** Em Produção (Fidelidade Fiduciária e DX Premium).
 
 ### v19.8 Obsidian Diamond (Obsidian Executive v2) - Abertura Contábil DRE (dre.mod, dre.cif, dre.cpv_mp) e Refinamento do Motor WAC
 - **Data:** 24 de Maio de 2026

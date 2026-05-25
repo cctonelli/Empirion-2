@@ -296,18 +296,20 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     <div className="space-y-2">
                         <div className="flex justify-between items-center text-[8px] font-bold uppercase">
                           <span className="text-slate-600">{t('Receivable Days')}</span>
-                          <span className="text-white font-mono">{currentKpis.avg_receivable_days?.toFixed(0) ?? 45} {t('days')}</span>
+                          <span className="text-white font-mono">{(currentKpis.avg_receivable_days || 45).toFixed(0)} {t('days')}</span>
                         </div>
                         <div className="flex justify-between items-center text-[8px] font-bold uppercase">
                           <span className="text-slate-600">{t('Payable Days')}</span>
-                          <span className="text-white font-mono">{currentKpis.avg_payable_days?.toFixed(0) ?? 30} {t('days')}</span>
+                          <span className="text-white font-mono">{(currentKpis.avg_payable_days || 30).toFixed(0)} {t('days')}</span>
                         </div>
                         <div className="pt-2 border-t border-white/5 flex justify-between items-end">
                           <div className="flex flex-col">
                               <span className="text-[6px] font-black text-rose-500 uppercase tracking-widest mb-0.5">{t('Scissors Effect')}</span>
                               <span className="text-[5px] text-slate-600 uppercase font-bold">Risco de Liquidez</span>
                           </div>
-                          <span className="text-lg font-black text-rose-500 italic tracking-tighter">{currentKpis.scissors_effect?.toFixed(1) ?? -15.0} {t('days')}</span>
+                          <span className="text-lg font-black text-rose-500 italic tracking-tighter">
+                            {Math.abs(currentKpis.scissors_effect || 0) < 0.05 ? '0.0' : (currentKpis.scissors_effect ?? -15.0).toFixed(1)} {t('days')}
+                          </span>
                         </div>
                     </div>
                   </div>
