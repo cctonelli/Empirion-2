@@ -538,37 +538,54 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   );
 };
 
-const CockpitStat = ({ label, val, trend, pos, neg, icon, tooltip }: any) => (
-  <div className="px-1 border-r border-white/5 hover:bg-white/[0.03] transition-all group flex flex-col justify-center overflow-hidden relative">
-     <div className="flex items-center justify-between mb-0.5">
-        <div className="flex items-center gap-1.5">
-           <div className="p-1 bg-orange-500/10 rounded text-orange-500 group-hover:scale-110 transition-transform">{icon}</div>
-           <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.1em] truncate">{label}</span>
-        </div>
-        <div className={`flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[6px] font-black uppercase tracking-tighter ${
-          pos ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 
-          neg ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 
-          'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-        }`}>
-          {pos ? <ArrowUpRight size={6} /> : neg ? <ArrowDownRight size={6} /> : <Activity size={6} />}
-          {trend}
-        </div>
-     </div>
-     <div className="flex items-baseline gap-1">
-        <span className="text-lg font-black text-white font-mono tracking-tighter italic leading-none drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{val}</span>
-     </div>
-     
-     {tooltip && (
-       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-slate-900/98 backdrop-blur-md p-3 z-50 flex flex-col justify-center border-x border-white/5 translate-y-2 group-hover:translate-y-0">
-         {typeof tooltip === 'string' ? (
-           <p className="text-[7px] font-bold text-slate-300 leading-relaxed italic">{tooltip}</p>
-         ) : (
-           tooltip
-         )}
+const CockpitStat = ({ label, val, trend, pos, neg, icon, tooltip }: any) => {
+  const isDefault = val === 'D';
+  return (
+    <div className={`px-1 border-r border-white/5 hover:bg-white/[0.03] transition-all group flex flex-col justify-center overflow-hidden relative ${
+      isDefault ? 'bg-rose-500/10 animate-pulse border-r-rose-500/20' : ''
+    }`}>
+       <div className="flex items-center justify-between mb-0.5">
+          <div className="flex items-center gap-1.5">
+             <div className={`p-1 rounded group-hover:scale-110 transition-transform ${
+               isDefault ? 'bg-rose-500/20 text-rose-400' : 'bg-orange-500/10 text-orange-500'
+             }`}>{isDefault ? <AlertOctagon size={12} className="text-rose-500 animate-spin" /> : icon}</div>
+             <span className={`text-[8px] font-black uppercase tracking-[0.1em] truncate ${
+               isDefault ? 'text-rose-400' : 'text-slate-500'
+             }`}>{label}</span>
+          </div>
+          <div className={`flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[6px] font-black uppercase tracking-tighter ${
+            isDefault ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+            pos ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 
+            neg ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 
+            'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+          }`}>
+            {isDefault ? <AlertOctagon size={6} /> : pos ? <ArrowUpRight size={6} /> : neg ? <ArrowDownRight size={6} /> : <Activity size={6} />}
+            {isDefault ? 'DEFAULT' : trend}
+          </div>
        </div>
-     )}
-  </div>
-);
+       <div className="flex items-baseline gap-1">
+          <span className={`text-lg font-black font-mono tracking-tighter italic leading-none drop-shadow-[0_0_10px_rgba(255,255,255,0.1)] ${
+            isDefault ? 'text-rose-400 font-extrabold animate-bounce' : 'text-white'
+          }`}>{val}</span>
+       </div>
+       
+       {(tooltip || isDefault) && (
+         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-slate-900/98 backdrop-blur-md p-3 z-50 flex flex-col justify-center border-x border-white/5 translate-y-2 group-hover:translate-y-0">
+           {isDefault ? (
+             <div className="space-y-1 text-rose-400">
+               <p className="text-[8px] font-black uppercase tracking-widest">ALERTA CRÍTICO: RATING D</p>
+               <p className="text-[7px] leading-tight font-medium">Sua empresa atingiu inadimplência técnica por contratação de compulsório ou caixa insolvente.</p>
+             </div>
+           ) : typeof tooltip === 'string' ? (
+             <p className="text-[7px] font-bold text-slate-300 leading-relaxed italic">{tooltip}</p>
+           ) : (
+             tooltip
+           )}
+         </div>
+       )}
+    </div>
+  );
+};
 
 const TabButton = ({ active, onClick, label, icon }: any) => (
   <button 
