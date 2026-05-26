@@ -471,4 +471,13 @@ ON CONFLICT (key_name) DO UPDATE
 SET key_value = EXCLUDED.key_value, 
     updated_at = now();
 
+-- 10. NOTA DE GOVERNANÇA DE BANCO DE DADOS v19.14 (SAPPHIRE DIAMOND)
+-- Conforme a Decisão Arquitetural Sênior ADR-DB-04, colunas de tráfego de controle e de simulação
+-- (tais como 'initial_machines', 'initial_stock_quantities', 'tutor_name' e 'institution_name')
+-- foram voluntariamente mantidas como propriedades de transporte em memória no ciclo Javascript.
+-- Em vez de poluir as tabelas 'trial_championships' e 'championships' com campos específicos lógicos,
+-- foi implementada uma Rotina de Higienização Fiduciária de Payload (Database Payload Sanitization)
+-- no frontend em 'services/supabase.ts'. Essa rotina blinda o banco de dados contra erros de Schema Cache
+-- no PostgREST, preservando a integridade original das tabelas sem necessidade de ALTER TABLE nocivo.
+
 COMMIT;

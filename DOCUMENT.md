@@ -216,6 +216,7 @@ project-root/
   - *Quadro Ativo de Bots:* Configuração do módulo de concorrentes mecânicos (Bots autônomos) integrados com perfis mercadológicos (AGRESSIVO, CONSERVADOR, etc.).
   - *Preview Real-Time & Recalculo fiduciário:* Inclusão do botão "Recalcular P0" que roda o kernel matemático determinístico em tempo real e renderiza os demonstrativos em sub-abas dedicadas no Step 8 (DRE, DFC, Balanço e E-SDS).
   - *Serviço de Templates:* Persistência das escolhas do Tutor de forma dinâmica na base do Supabase (`p0_templates`) para reaproveitamento ágil.
+  - *Higienização Fiduciária de Payload (Database Payload Sanitization):* Integração de um filtro inteligente no método `createChampionshipWithTeams` em `services/supabase.ts` que permite ao front-end transitar modelos ricos e flexíveis de parâmetros de simulação, mas isola e limpa essas chaves dinâmicas antes que a query de inserção atinja as tabelas `trial_championships` e `championships`. Isso evita colisões com a DDL no Supabase e blinda o simulador contra erros de Schema Cache em mutações futuras. (Decisão ADR-DB-04)
 - **Status:** Em Produção (Fidelidade Absoluta e Excelência de DX).
 
 ### v19.13 Sapphire Diamond Enterprise - Estabilidade Fiduciária P0 (Fallbacks de Auditoria, Reload Limpo & Exibição Explicita P0)

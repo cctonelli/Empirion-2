@@ -145,7 +145,40 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   const teamsTable = isTrial ? 'trial_teams' : 'teams';
   const historyTable = isTrial ? 'trial_companies' : 'companies';
   
-  const { data: champ, error: champError } = await supabase.from(champTable).insert(config).select().single();
+  // v19.14: Higienização Fiduciária de Payload (Database Payload Sanitization)
+  // Filtra as propriedades do config para persistir apenas as colunas estruturais reais das tabelas no Supabase.
+  // Colunas lógicas de transporte (como `initial_machines` ou `initial_stock_quantities`) continuarão no config
+  // em memória para serem usadas nos KPIs iniciais abaixo, mas não quebram a query INSERT do PostgREST.
+  const validTrialCols = [
+    'name', 'branch', 'status', 'current_round', 'total_rounds', 'config',
+    'initial_financials', 'initial_market_data', 'market_indicators', 'tutor_id',
+    'deadline_value', 'deadline_unit', 'region_names', 'region_configs', 'currency',
+    'sales_mode', 'scenario_type', 'description', 'gazeta_mode', 'transparency_level',
+    'observers', 'round_started_at', 'is_public', 'dividend_percent', 'ecosystem_config',
+    'regions_count', 'social_charges', 'compulsory_loan_agio', 'production_hours_period',
+    'award_values', 'exchange_rates', 'staffing', 'prices', 'machinery_values',
+    'is_trial', 'round_rules', 'brl_rate', 'gbp_rate', 'initial_share_price'
+  ];
+  
+  const validLiveCols = [...validTrialCols, 'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'];
+  const allowedKeys = isTrial ? validTrialCols : validLiveCols;
+  const dbPayload: any = {};
+  
+  Object.keys(config).forEach(key => {
+    if (allowedKeys.includes(key)) {
+      dbPayload[key] = config[key];
+    }
+  });
+
+  // Garantindo compatibilidade mínima de campos obrigatórios não nulos para campeonatos live
+  if (!isTrial) {
+    if (!dbPayload.products) dbPayload.products = {};
+    if (!dbPayload.config) dbPayload.config = {};
+  } else {
+    if (!dbPayload.config) dbPayload.config = {};
+  }
+
+  const { data: champ, error: champError } = await supabase.from(champTable).insert(dbPayload).select().single();
   if (champError) throw champError;
   
   const financials = config.initial_financials || INITIAL_FINANCIAL_TREE;
