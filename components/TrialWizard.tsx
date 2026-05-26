@@ -19,6 +19,7 @@ import { Branch, SalesMode, AccountNode, DeadlineUnit, CurrencyType, MacroIndica
 import { formatCurrency, getCurrencySymbol } from '../utils/formatters';
 
 const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  // Ajustado para 8 passos claros e didáticos de acordo com os requisitos Sapphire v19.14
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -29,7 +30,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     institutionName: 'Fundação Dom Cabral (FDC)',
     tournamentName: 'COPA EMPIRION CHAMPIONSHIP',
     currency: 'BRL',
-    round_duration: 1,
+    round_duration: 12,
     total_rounds: 12,
     transparency_level: 'medium',
     gazeta_mode: 'anonymous',
@@ -66,7 +67,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       finished_qty: 0,
       finished_unit_val: 0.00
     },
-    financial_investments: 0.00,
+    financial_investments: 0.00 as any, // asserts for starting modes compatibility
     share_price_initial: 425.00,
     dividend_percent: 25.0,
     dividend_frequency: 1,
@@ -116,7 +117,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   // Recurso de alteração de modo de P0
   const handleModeChange = (mode: 'start_from_zero' | 'start_with_base' | 'start_with_running') => {
     setTutorConfig(prev => {
-      const updated = { ...prev, starting_mode: mode };
+      const updated = { ...prev, starting_mode: mode } as any;
       if (mode === 'start_from_zero') {
         updated.caixa_inicial = 1000000.00;
         updated.capital_social = 1000000.00;
@@ -170,7 +171,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
         ];
       }
-      return updated;
+      return updated as TutorP0Config;
     });
   };
 
@@ -342,13 +343,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   }, [tutorConfig.starting_mode]);
 
   return (
-    <div className="wizard-shell bg-slate-950/95 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative">
+    <div id="trial_wizard_shell" className="wizard-shell bg-slate-950/95 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative">
       <EmpireParticles />
-      <header className="wizard-header-fixed px-12 py-10 flex items-center justify-between border-b border-white/5">
+      <header id="trial_wizard_header" className="wizard-header-fixed px-12 py-10 flex items-center justify-between border-b border-white/5">
         <div className="flex items-center gap-8">
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-xl"><Rocket size={32} /></div>
            <div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">P0 Advanced Configurator</h2>
+              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">P0 COOPERATIVE CONFIGURATOR</h2>
               <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">v19.14 SAPPHIRE DIAMOND • MOEDA: {tutorConfig.currency}</p>
            </div>
         </div>
@@ -366,7 +367,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12 pb-20">
                  <WizardStepTitle icon={<Globe size={32}/>} title="1. IDENTIDADE DA COMPETIÇÃO" desc="Configurações globais de identidade pedagógica externa." />
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
                     <div className="lg:col-span-2">
                       <WizardField label="NOME DO TUTOR ADMINISTRADOR" val={tutorConfig.tutorName} onChange={(v:any)=>setTutorConfig({...tutorConfig, tutorName: v})} placeholder="Ex: Prof. Silas Silveira" />
                     </div>
@@ -378,7 +379,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <WizardSelect label="MOEDA DE EXIBIÇÃO" val={tutorConfig.currency} onChange={(v:any)=>setTutorConfig({...tutorConfig, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <WizardField label="TEMPO DO ROUND" type="number" val={tutorConfig.round_duration} onChange={(v:any)=>setTutorConfig({...tutorConfig, round_duration: parseInt(v) || 1})} />
+                      <WizardField label="TEMPO DO ROUND" type="number" val={tutorConfig.round_duration} onChange={(v:any)=>setTutorConfig({...tutorConfig, round_duration: parseInt(v) || 12})} />
                       <div className="space-y-4 text-left group">
                         <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 italic">UNIDADE TEMPO</label>
                         <input className="w-full bg-slate-950/40 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-slate-500 outline-none cursor-not-allowed" value="HORAS" readOnly />
@@ -398,9 +399,10 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -25 }} className="space-y-12 pb-20">
                  <WizardStepTitle icon={<Library size={32}/>} title="2. MODO DE INÍCIO DA ARENA & TEMPLATES" desc="Selecione o modelo pedagógico de entrada e gerencie templates corporativos." />
                  
-                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
                     {/* Modo 1: Start from Zero */}
                     <div 
+                      id="card_start_from_zero"
                       onClick={() => handleModeChange('start_from_zero')}
                       className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[300px] hover:scale-[1.02] ${tutorConfig.starting_mode === 'start_from_zero' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
                     >
@@ -414,6 +416,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
                     {/* Modo 2: Start with Base */}
                     <div 
+                      id="card_start_with_base"
                       onClick={() => handleModeChange('start_with_base')}
                       className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[300px] hover:scale-[1.02] ${tutorConfig.starting_mode === 'start_with_base' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
                     >
@@ -427,6 +430,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
                     {/* Modo 3: Start with Running Company */}
                     <div 
+                      id="card_start_with_running"
                       onClick={() => handleModeChange('start_with_running')}
                       className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[300px] hover:scale-[1.02] ${tutorConfig.starting_mode === 'start_with_running' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
                     >
@@ -439,7 +443,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     </div>
                  </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-900/60 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-900/60 p-10 rounded-[3rem] border border-white/10 shadow-2xl text-left">
                     <div className="space-y-6">
                       <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-3"><FolderOpen size={18} className="text-orange-500" /> Carregar Configuração de Template</h4>
                       <p className="text-xs text-slate-500 leading-relaxed">Carregue rapidamente uma árvore contábil ou estrutura previamente salva para esta arena Sandbox.</p>
@@ -449,20 +453,20 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         <div className="text-xs font-black text-slate-600 italic">Lista de templates vazia no momento (padrões locais ativos).</div>
                       ) : (
                         <div className="space-y-3 max-h-[160px] overflow-y-auto pr-3 custom-scrollbar">
-                          {savedTemplates.map((t) => (
-                            <div key={t.id} className="flex items-center justify-between p-4 bg-slate-950/80 border border-white/5 rounded-2xl hover:border-orange-500/30 transition-all">
-                              <div className="text-left w-3/4">
-                                <span className="block text-xs font-bold text-white uppercase truncate">{t.name}</span>
-                                <span className="block text-[10px] text-slate-500 truncate mt-1">{t.description || "Sem descrição informada."}</span>
-                              </div>
-                              <button onClick={() => handleLoadTpl(t)} className="px-5 py-2 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase hover:bg-white hover:text-orange-950 transition-colors">Carregar</button>
-                            </div>
-                          ))}
+                           {savedTemplates.map((t) => (
+                             <div key={t.id} className="flex items-center justify-between p-4 bg-slate-950/80 border border-white/5 rounded-2xl hover:border-orange-500/30 transition-all">
+                               <div className="text-left w-3/4">
+                                 <span className="block text-xs font-bold text-white uppercase truncate">{t.name}</span>
+                                 <span className="block text-[10px] text-slate-500 truncate mt-1">{t.description || "Sem descrição informada."}</span>
+                               </div>
+                               <button onClick={() => handleLoadTpl(t)} className="px-5 py-2 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase hover:bg-white hover:text-orange-950 transition-colors">Carregar</button>
+                             </div>
+                           ))}
                         </div>
                       )}
                     </div>
 
-                    <div className="space-y-6 border-l border-white/5 pl-8">
+                    <div className="space-y-6 border-l border-white/5 pl-8 text-left">
                       <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-3"><Save size={18} className="text-emerald-500" /> Salvar Configuração Atual</h4>
                       <p className="text-xs text-slate-500 leading-relaxed font-medium">Salve os dados contábeis, industriais e de mercado que você montou para reutilizar futuramente em qualquer campeonato.</p>
                       <button 
@@ -477,21 +481,21 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  {/* Modal de confirmação do salvar template */}
                  {showSaveTplModal && (
                    <div className="fixed inset-0 z-[999] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm">
-                     <div className="bg-slate-900 border-2 border-white/10 p-10 rounded-[3rem] max-w-lg w-full space-y-8 shadow-[0_50px_100px_rgba(0,0,0,0.9)] animate-in fade-in zoom-in duration-200">
+                     <div className="bg-slate-900 border-2 border-white/10 p-10 rounded-[3rem] max-w-lg w-full space-y-8 shadow-[0_50px_100px_rgba(0,0,0,0.9)] animate-in fade-in zoom-in duration-200 text-left">
                        <h3 className="text-2xl font-black text-white uppercase italic">Salvar P0 como Template</h3>
                        <div className="space-y-4">
-                         <div className="space-y-2 text-left">
-                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome do Template</label>
-                           <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Ex: Cenario Dificil Autopeças" className="w-full p-4 bg-slate-950 border border-white/10 rounded-2xl text-white font-black" />
-                         </div>
-                         <div className="space-y-2 text-left">
-                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Descrição detalhada</label>
-                           <textarea value={templateDesc} onChange={e => setTemplateDesc(e.target.value)} placeholder="Este modelo inicia as equipes com altos compromissos de endividamento..." className="w-full p-4 bg-slate-950 border border-white/10 rounded-2xl text-white text-xs h-24" />
-                         </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome do Template</label>
+                            <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Ex: Cenario Dificil Autopeças" className="w-full p-4 bg-slate-950 border border-white/10 rounded-2xl text-white font-black" />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Descrição detalhada</label>
+                            <textarea value={templateDesc} onChange={e => setTemplateDesc(e.target.value)} placeholder="Este modelo inicia as equipes com altos compromissos de endividamento..." className="w-full p-4 bg-slate-950 border border-white/10 rounded-2xl text-white text-xs h-24 font-medium" />
+                          </div>
                        </div>
                        <div className="flex gap-4 justify-end">
-                         <button onClick={() => setShowSaveTplModal(false)} className="px-6 py-3 bg-slate-950 border border-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white transition-colors">Cancelar</button>
-                         <button onClick={handleSaveTpl} className="px-8 py-3 bg-emerald-600 rounded-xl text-[10px] font-black uppercase text-white hover:bg-white hover:text-emerald-950 transition-colors">Gravar Template</button>
+                          <button onClick={() => setShowSaveTplModal(false)} className="px-6 py-3 bg-slate-950 border border-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white transition-colors">Cancelar</button>
+                          <button onClick={handleSaveTpl} className="px-8 py-3 bg-emerald-600 rounded-xl text-[10px] font-black uppercase text-white hover:bg-white hover:text-emerald-950 transition-colors">Gravar Template</button>
                        </div>
                      </div>
                    </div>
@@ -502,129 +506,142 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
             {/* STEP 3: CONFIGURAÇÃO DO PARQUE INDUSTRIAL */}
             {step === 3 && (
               <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
-                 <WizardStepTitle icon={<Cpu size={32}/>} title="3. PARQUE INDUSTRIAL & ENGENHARIA" desc="Dimensione e configure a frota produtiva de máquinas e operadores." />
+                 <WizardStepTitle icon={<Cpu size={32}/>} title="3. PARQUE INDUSTRIAL & ENGENHARIA" desc="Dimensione e configure a frota produtiva de máquinas e idade depreciativa." />
                  
-                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                   {/* Config Máquina Alfa */}
-                   <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
-                     <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                       <span className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">A</span>
-                       <div>
-                         <h4 className="text-xl font-black text-white italic leading-none">MÁQUINA ALPHA</h4>
-                         <span className="text-[9px] text-slate-500 font-mono">Valor Unitário: $500k • Cap: 2000 un</span>
-                       </div>
-                     </div>
-                     <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" val={tutorConfig.machines[0].qty} onChange={(v:any)=>{
-                       const mac = [...tutorConfig.machines];
-                       mac[0].qty = Math.max(0, parseInt(v) || 0);
-                       setTutorConfig({...tutorConfig, machines: mac});
-                     }} />
-                     <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[0].age} onChange={(v:any)=>{
-                       const mac = [...tutorConfig.machines];
-                       mac[0].age = Math.min(25, Math.max(0, parseInt(v) || 0));
-                       setTutorConfig({...tutorConfig, machines: mac});
-                     }} />
-                     <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={tutorConfig.machines[0].efficiency * 100} onChange={(v:any)=>{
-                       const mac = [...tutorConfig.machines];
-                       mac[0].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
-                       setTutorConfig({...tutorConfig, machines: mac});
-                     }} />
-                   </div>
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left animate-in fade-in slide-in-from-bottom-5 duration-300">
+                    {/* Config Máquina Alfa */}
+                    <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                      <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                        <span className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">A</span>
+                        <div>
+                          <h4 className="text-xl font-black text-white italic leading-none text-left">MÁQUINA ALPHA</h4>
+                          <span className="text-[9px] text-slate-500 font-mono text-left block mt-1">Acquisição: $500k • Cap: 2K un</span>
+                        </div>
+                      </div>
+                      <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" val={tutorConfig.machines[0].qty} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[0].qty = Math.max(0, parseInt(v) || 0);
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                      <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[0].age} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[0].age = Math.min(25, Math.max(0, parseInt(v) || 0));
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                      <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={Math.round(tutorConfig.machines[0].efficiency * 100)} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[0].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                    </div>
 
-                   {/* Config Máquina Beta */}
-                   <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
-                     <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                       <span className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">B</span>
-                       <div>
-                         <h4 className="text-xl font-black text-white italic leading-none">MÁQUINA BETA</h4>
-                         <span className="text-[9px] text-slate-500 font-mono">Valor Unitário: $1.5M • Cap: 6000 un</span>
-                       </div>
-                     </div>
-                     <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" val={tutorConfig.machines[1].qty} onChange={(v:any)=>{
-                       const mac = [...tutorConfig.machines];
-                       mac[1].qty = Math.max(0, parseInt(v) || 0);
-                       setTutorConfig({...tutorConfig, machines: mac});
-                     }} />
-                     <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[1].age} onChange={(v:any)=>{
-                       const mac = [...tutorConfig.machines];
-                       mac[1].age = Math.min(25, Math.max(0, parseInt(v) || 0));
-                       setTutorConfig({...tutorConfig, machines: mac});
-                     }} />
-                     <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={tutorConfig.machines[1].efficiency * 100} onChange={(v:any)=>{
-                       const mac = [...tutorConfig.machines];
-                       mac[1].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
-                       setTutorConfig({...tutorConfig, machines: mac});
-                     }} />
-                   </div>
+                    {/* Config Máquina Beta */}
+                    <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                      <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                        <span className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">B</span>
+                        <div>
+                          <h4 className="text-xl font-black text-white italic leading-none text-left">MÁQUINA BETA</h4>
+                          <span className="text-[9px] text-slate-500 font-mono text-left block mt-1">Acquisição: $1.5M • Cap: 6K un</span>
+                        </div>
+                      </div>
+                      <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" val={tutorConfig.machines[1].qty} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[1].qty = Math.max(0, parseInt(v) || 0);
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                      <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[1].age} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[1].age = Math.min(25, Math.max(0, parseInt(v) || 0));
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                      <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={Math.round(tutorConfig.machines[1].efficiency * 100)} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[1].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                    </div>
 
-                   {/* Config Máquina Gama */}
-                   <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
-                     <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                       <span className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">G</span>
-                       <div>
-                         <h4 className="text-xl font-black text-white italic leading-none">MÁQUINA GAMMA</h4>
-                         <span className="text-[9px] text-slate-500 font-mono">Valor Unitário: $3.0M • Cap: 12000 un</span>
-                       </div>
-                     </div>
-                     <WizardField label="QUANTIDADE INICIAL IN FROTA" type="number" val={tutorConfig.machines[2].qty} onChange={(v:any)=>{
-                       const mac = [...tutorConfig.machines];
-                       mac[2].qty = Math.max(0, parseInt(v) || 0);
-                       setTutorConfig({...tutorConfig, machines: mac});
-                     }} />
-                     <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[2].age} onChange={(v:any)=>{
-                       const mac = [...tutorConfig.machines];
-                       mac[2].age = Math.min(25, Math.max(0, parseInt(v) || 0));
-                       setTutorConfig({...tutorConfig, machines: mac});
-                     }} />
-                     <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={tutorConfig.machines[2].efficiency * 100} onChange={(v:any)=>{
-                       const mac = [...tutorConfig.machines];
-                       mac[2].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
-                       setTutorConfig({...tutorConfig, machines: mac});
-                     }} />
-                   </div>
-                 </div>
-
-                 {/* Configuração de Mão de Obra */}
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 bg-white/5 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
-                   <div className="md:col-span-3 mb-2"><h4 className="text-xs font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">MÃO DE OBRA INDUSTRAIL E TREINAMENTO</h4></div>
-                   <WizardField label="SALÁRIO BASE RECRUTADOR ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.workforce.baseSalary} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, baseSalary: v}})}/>
-                   <WizardSelect label="NÍVEL DE TREINAMENTO INICIAL" val={tutorConfig.workforce.trainingLevel} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, trainingLevel: parseInt(v)}})} options={[{v:'1',l:'NÍVEL 1 (BÁSICO)'},{v:'2',l:'NÍVEL 2 (OPERACIONAL)'},{v:'3',l:'NÍVEL 3 (ESPECIALIZADO)'},{v:'4',l:'NÍVEL 4 (MASTER)'},{v:'5',l:'NÍVEL 5 (ORACLE ENGINE)'}]} />
-                   <div className="p-8 bg-slate-950/60 rounded-3xl border border-white/5 flex flex-col justify-center">
-                     <span className="block text-[10px] uppercase font-black text-slate-600 tracking-wider">Capacidade Pronta</span>
-                     <span className="text-2xl font-mono font-black text-white mt-1">
-                      {tutorConfig.machines.reduce((acc, m) => acc + (m.qty * (m.model === 'alfa' ? 2000 : m.model === 'beta' ? 6000 : 12000)), 0)} un/ciclo
-                     </span>
-                   </div>
+                    {/* Config Máquina Gama */}
+                    <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                      <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                        <span className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">G</span>
+                        <div>
+                          <h4 className="text-xl font-black text-white italic leading-none text-left">MÁQUINA GAMMA</h4>
+                          <span className="text-[9px] text-slate-500 font-mono text-left block mt-1">Acquisição: $3.0M • Cap: 12K un</span>
+                        </div>
+                      </div>
+                      <WizardField label="QUANTIDADE INICIAL IN FROTA" type="number" val={tutorConfig.machines[2].qty} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[2].qty = Math.max(0, parseInt(v) || 0);
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                      <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[2].age} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[2].age = Math.min(25, Math.max(0, parseInt(v) || 0));
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                      <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={Math.round(tutorConfig.machines[2].efficiency * 100)} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[2].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                    </div>
                  </div>
               </motion.div>
             )}
 
-            {/* STEP 4: CONFIGURAÇÃO DE MERCADOS E REGIÕES */}
+            {/* STEP 4: MÃO DE OBRA INICIAL (Passo 4 separado e expandido!) */}
             {step === 4 && (
               <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
-                  <WizardStepTitle icon={<MapPin size={32}/>} title="4. MERCADOS, COMPETIÇÃO E REGIÕES" desc="Defina a segmentação de mercados, pricing base e custos logísticos por praça." />
+                 <WizardStepTitle icon={<Users size={32}/>} title="4. QUADRO DE COLABORADORES & RH" desc="Ajuste o dimensionamento do quadro fabril e os fatores de retenção de talentos." />
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
+                    <WizardField label="OPERADORES POR MÁG. ALPHA" type="number" val={tutorConfig.workforce.operatorsPerAlpha} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, operatorsPerAlpha: parseInt(v) || 0}})}/>
+                    <WizardField label="OPERADORES POR MÁG. BETA" type="number" val={tutorConfig.workforce.operatorsPerBeta} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, operatorsPerBeta: parseInt(v) || 0}})}/>
+                    <WizardField label="OPERADORES POR MÁG. GAMMA" type="number" val={tutorConfig.workforce.operatorsPerGamma} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, operatorsPerGamma: parseInt(v) || 0}})}/>
+                    
+                    <WizardField label="SALÁRIO BASE RECRUTA ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.workforce.baseSalary} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, baseSalary: v}})}/>
+                    <WizardSelect label="NÍVEL DE TREINAMENTO INICIAL" val={tutorConfig.workforce.trainingLevel} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, trainingLevel: parseInt(v)}})} options={[{v:'1',l:'NÍVEL 1 (BÁSICO)'},{v:'2',l:'NÍVEL 2 (OPERACIONAL)'},{v:'3',l:'NÍVEL 3 (ESPECIALIZADO)'},{v:'4',l:'NÍVEL 4 (MASTER)'},{v:'5',l:'NÍVEL 5 (ORACLE ENGINE)'}]} />
+                    
+                    {/* Resumos de RH */}
+                    <div className="p-8 bg-slate-900 border border-white/5 rounded-[2.5rem] flex flex-col justify-center shadow-xl">
+                      <span className="block text-[10px] uppercase font-black text-slate-500 tracking-wider">Demanda Teórica do Turno</span>
+                      <span className="text-3xl font-mono font-black text-white mt-1">
+                        {(tutorConfig.machines[0].qty * tutorConfig.workforce.operatorsPerAlpha) + 
+                         (tutorConfig.machines[1].qty * tutorConfig.workforce.operatorsPerBeta) + 
+                         (tutorConfig.machines[2].qty * tutorConfig.workforce.operatorsPerGamma)} Colaboradores
+                      </span>
+                    </div>
+                 </div>
+              </motion.div>
+            )}
+
+            {/* STEP 5: CONFIGURAÇÃO DE MERCADOS E REGIÕES */}
+            {step === 5 && (
+              <motion.div key="s5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
+                  <WizardStepTitle icon={<MapPin size={32}/>} title="5. MERCADOS COMERCIAIS E PREÇOS" desc="Defina a segmentação de mercados, pricing base e custos logísticos de fretes." />
                   <div className="space-y-10">
-                    <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                      <h4 className="text-xl font-black text-white uppercase italic">Configuração de Regiões</h4>
+                    <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/10 shadow-xl text-left">
+                      <h4 className="text-xl font-black text-white uppercase italic">Configuração de Regiões de Venda</h4>
                       <button 
                         onClick={() => {
                           const nextId = tutorConfig.regions.length + 1;
                           const reg = [...tutorConfig.regions, { id: nextId, name: `Região 0${nextId}`, currency: 'BRL' as CurrencyType, demand_weight: 15, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 }];
                           setTutorConfig({ ...tutorConfig, regions: reg });
                         }} 
-                        className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-xl active:scale-95"
+                        className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-xl active:scale-95 animate-pulse"
                       >
-                        <Plus size={16}/> Adicionar Região
+                        <Plus size={16}/> Adicionar Praça
                       </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                        {tutorConfig.regions.map((r, i) => (
                           <div key={i} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 group hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
                              <div className="space-y-3">
-                                <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nome da Região</label>
+                                <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nome da Região Comercial</label>
                                 <input value={r.name} onChange={e => {
                                   const reg = [...tutorConfig.regions];
-                                  reg[i].name = e.target.value;
+                                  reg[i].name = e.target.value.toUpperCase();
                                   setTutorConfig({...tutorConfig, regions: reg});
                                 }} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-white font-black uppercase italic outline-none focus:border-orange-500" />
                              </div>
@@ -650,20 +667,20 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              </div>
                              <div className="grid grid-cols-2 gap-6 pt-3 border-t border-white/5">
                                 <div className="space-y-2">
-                                  <label className="text-[8px] font-black text-slate-500 uppercase">Preço Venda Sugerido</label>
-                                  <input type="number" value={r.suggested_price} onChange={e => {
-                                     const reg = [...tutorConfig.regions];
-                                     reg[i].suggested_price = parseFloat(e.target.value) || 0;
-                                     setTutorConfig({...tutorConfig, regions: reg});
-                                  }} className="w-full p-2 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-mono font-bold text-white hover:border-orange-500 focus:border-orange-500 outline-none" />
+                                   <label className="text-[8px] font-black text-slate-500 uppercase">Preço Venda Sugerido</label>
+                                   <input type="number" value={r.suggested_price} onChange={e => {
+                                      const reg = [...tutorConfig.regions];
+                                      reg[i].suggested_price = parseFloat(e.target.value) || 0;
+                                      setTutorConfig({...tutorConfig, regions: reg});
+                                   }} className="w-full p-2 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-mono font-bold text-white hover:border-orange-500 focus:border-orange-500 outline-none" />
                                 </div>
                                 <div className="space-y-2">
-                                  <label className="text-[8px] font-black text-slate-500 uppercase">Fator Custo Carga Unit.</label>
-                                  <input type="number" value={r.distribution_cost} onChange={e => {
-                                     const reg = [...tutorConfig.regions];
-                                     reg[i].distribution_cost = parseFloat(e.target.value) || 0;
-                                     setTutorConfig({...tutorConfig, regions: reg});
-                                  }} className="w-full p-2 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-mono font-bold text-white hover:border-orange-500 focus:border-orange-500 outline-none" />
+                                   <label className="text-[8px] font-black text-slate-500 uppercase">Custo Distribuição (Frete un.)</label>
+                                   <input type="number" value={r.distribution_cost} onChange={e => {
+                                      const reg = [...tutorConfig.regions];
+                                      reg[i].distribution_cost = parseFloat(e.target.value) || 0;
+                                      setTutorConfig({...tutorConfig, regions: reg});
+                                   }} className="w-full p-2 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-mono font-bold text-white hover:border-orange-500 focus:border-orange-500 outline-none" />
                                 </div>
                              </div>
                              {tutorConfig.regions.length > 1 && (
@@ -684,14 +701,14 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
-            {/* STEP 5: CONFIGURAÇÃO FINANCEIRA INICIAL */}
-            {step === 5 && (
+            {/* STEP 6: CONFIGURAÇÃO FINANCEIRA INICIAL */}
+            {step === 6 && (
               <motion.div key="s5" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="space-y-12 pb-24">
-                 <WizardStepTitle icon={<Landmark size={32}/>} title="5. EQUILÍBRIO FINANCEIRO INICIAL" desc="Regule as contas contábeis de liquidez e política de fomento à acionistas." />
+                 <WizardStepTitle icon={<Landmark size={32}/>} title="6. EQUILÍBRIO FINANCEIRO INICIAL" desc="Regule as contas contábeis de liquidez e política de fomento à acionistas." />
                  
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left animate-in fade-in zoom-in-95 duration-200">
                     {/* LIQUIDEZ E CAPITAL */}
-                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative">
                        <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Capitalização de Entrada</h4>
                        <WizardField label="CAPITAL SOCIAL FIDUCIÁRIO ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.capital_social} onChange={(v:any)=>setTutorConfig({...tutorConfig, capital_social: v})} />
                        <WizardField label="CAIXA / BANCO INICIAL ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.caixa_inicial} onChange={(v:any)=>setTutorConfig({...tutorConfig, caixa_inicial: v})} />
@@ -699,7 +716,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     </div>
 
                     {/* VALOR DE MATÉRIA PRIMA */}
-                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative">
                        <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Carga De Estoques P0</h4>
                        <div className="grid grid-cols-2 gap-4">
                          <WizardField label="QTD MP-A" type="number" val={tutorConfig.inventories.mpa_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpa_qty: parseInt(v) || 0}})} />
@@ -716,7 +733,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     </div>
 
                     {/* ACIONISTAS E TRIBUTÁRIOS */}
-                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative">
                        <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Acionistas & IPO</h4>
                        <WizardField label="PREÇO DA AÇÃO INICIAL ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.share_price_initial} onChange={(v:any)=>setTutorConfig({...tutorConfig, share_price_initial: v})} />
                        <WizardField label="DISTRIBUIÇÃO DIVIDENDOS (%)" type="number" val={tutorConfig.dividend_percent} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_percent: parseFloat(v) || 0})} />
@@ -726,10 +743,10 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
-            {/* STEP 6: PARÂMETROS MACROECONÔMICOS DO P0 */}
-            {step === 6 && (
-              <motion.div key="s6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10">
-                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="6. CRONOGRAMA MACROECONÔMICO" desc="Variações conjunturais, taxas de compliance tributário, juros e câmbio." />
+            {/* STEP 7: PARÂMETROS MACROECONÔMICOS DO P0 */}
+            {step === 7 && (
+              <motion.div key="s6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10 text-left">
+                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="7. CRONOGRAMA MACROECONÔMICO" desc="Variações conjunturais, taxas de compliance tributário, juros e câmbio." />
                  
                  <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[450px] flex flex-col relative group">
                     <div className="overflow-auto custom-scrollbar flex-1 relative">
@@ -765,17 +782,17 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
-            {/* STEP 7: PREVIEW COMPLETO DO P0 (Obrigatoriedade) */}
-            {step === 7 && (
-              <motion.div key="s7" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+            {/* STEP 8: PREVIEW COMPLETO DO P0 + CONFIRMAÇÃO (Focado em Deploy) */}
+            {step === 8 && (
+              <motion.div key="s7" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12 text-left">
                  <div className="flex justify-between items-center border-b border-white/5 pb-8">
-                   <WizardStepTitle icon={<Calculator size={32}/>} title="7. REAL-TIME IMPACT PREVIEW (P0)" desc="Auditoria fiduciária dinâmica antes do deploy oficial." />
-                   <button 
-                     onClick={handleRecalculate}
-                     className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
-                   >
-                     <Activity size={16}/> Recalcular P0
-                   </button>
+                    <WizardStepTitle icon={<Calculator size={32}/>} title="8. REAL-TIME AUDITOR & PREVIEW" desc="Auditoria fiduciária e estruturação industrial final antes do deploy da arena." />
+                    <button 
+                      onClick={handleRecalculate}
+                      className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
+                    >
+                      <Activity size={16}/> Recalcular P0
+                    </button>
                  </div>
 
                  {/* Top indicators */}
@@ -784,79 +801,94 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <SummaryCard label="PATRIMÔNIO LÍQUIDO" val={totalEquity} currency={tutorConfig.currency} icon={<BarChart size={20}/>} color="blue" />
                     
                     {/* E-SDS badge */}
-                    <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 flex items-center gap-6 shadow-xl text-left">
+                    <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 flex items-center gap-6 shadow-xl">
                        <div className="p-4 rounded-2xl bg-emerald-600/20 text-emerald-400"><Gauge size={20}/></div>
                        <div>
-                         <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">E-SDS INICIAL</span>
-                         <span className="text-xl font-black text-emerald-400 capitalize flex items-center gap-2">
-                           {estimatedESDS.score} / 100
-                           <span className="text-[9px] font-bold bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-500">{estimatedESDS.zone}</span>
-                         </span>
+                          <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">E-SDS INICIAL</span>
+                          <span className="text-xl font-black text-emerald-400 capitalize flex items-center gap-2">
+                            {estimatedESDS.score} / 100
+                            <span className="text-[9px] font-bold bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-500">{estimatedESDS.zone}</span>
+                          </span>
                        </div>
                     </div>
 
                     {/* Industrial summary */}
-                    <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 flex items-center gap-6 shadow-xl text-left">
+                    <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 flex items-center gap-6 shadow-xl">
                        <div className="p-4 rounded-2xl bg-purple-600/20 text-purple-400"><Cpu size={20}/></div>
                        <div>
-                         <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">MÁQUINAS / CAPACIDADE</span>
-                         <span className="text-lg font-mono font-black text-white">
-                           {p0StatementsResult.machines.length} Unidades
-                         </span>
+                          <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">MÁQUINAS / CAPACIDADE</span>
+                          <span className="text-lg font-mono font-black text-white">
+                            {p0StatementsResult.machines.length} Unidades
+                          </span>
                        </div>
                     </div>
                  </div>
 
                  {/* Balance validation indicator */}
-                 <div className="p-6 bg-emerald-950/40 border-2 border-emerald-500/30 rounded-[2rem] flex items-center justify-between text-left">
-                   <div className="flex items-center gap-4">
-                     <CheckCircle2 size={32} className="text-emerald-500" />
-                     <div>
-                       <span className="block text-xs font-black text-emerald-400 uppercase tracking-wider">BALANÇO PATRIMONIAL CONCILIADO</span>
-                       <span className="text-[11px] text-slate-500 font-medium">Os ativos batem 100% com o Passivo + Patrimônio Líquido nesta simulação ({formatCurrency(totalAssets, tutorConfig.currency)}).</span>
+                 <div className="p-6 bg-emerald-950/40 border-2 border-emerald-500/30 rounded-[2rem] flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <CheckCircle2 size={32} className="text-emerald-500" />
+                      <div>
+                        <span className="block text-xs font-black text-emerald-400 uppercase tracking-wider">BALANÇO PATRIMONIAL CONCILIADO</span>
+                        <span className="text-[11px] text-slate-500 font-medium">Os ativos batem 100% com o Passivo + Patrimônio Líquido nesta simulação ({formatCurrency(totalAssets, tutorConfig.currency)}).</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-black text-emerald-500 uppercase">Fechamento Líquido</span>
+                 </div>
+
+                 {/* Configuração de Equipes de Lançamento */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
+                   <div>
+                     <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Users size={16} className="text-orange-500"/> Equipes Humanas ({humanTeamsCount})</h4>
+                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">Quantos times de alunos participarão dessa simulação simulada.</p>
+                     <div className="mt-4 flex gap-4 items-center">
+                       <button onClick={() => setHumanTeamsCount(h => Math.max(1, h - 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserMinus size={16}/></button>
+                       <span className="text-2xl font-black font-mono text-white px-4">{humanTeamsCount}</span>
+                       <button onClick={() => setHumanTeamsCount(h => Math.min(10, h + 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserPlus size={16}/></button>
+                     </div>
+                     <div className="mt-4 space-y-2">
+                       {teamNames.map((name, idx) => (
+                         <input 
+                           key={idx}
+                           value={name}
+                           onChange={e => {
+                             const next = [...teamNames];
+                             next[idx] = e.target.value.toUpperCase();
+                             setTeamNames(next);
+                           }} 
+                           className="w-full bg-slate-950 border border-white/5 rounded-xl px-4 py-2 text-xs font-bold text-white uppercase font-mono"
+                           placeholder={`NOME TIME ${idx + 1}`}
+                         />
+                       ))}
                      </div>
                    </div>
-                   <span className="text-[10px] font-mono font-black text-emerald-500 uppercase">Fechamento Líquido</span>
+                   <div>
+                     <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Bot size={16} className="text-blue-500"/> Competidores Virtuais ({botsCount})</h4>
+                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">Configure robôs inteligentes autônomos para concorrer no faturamento regional.</p>
+                     <div className="mt-4 flex gap-4 items-center">
+                       <button onClick={() => setBotsCount(b => Math.max(0, b - 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserMinus size={16}/></button>
+                       <span className="text-2xl font-black font-mono text-white px-4">{botsCount}</span>
+                       <button onClick={() => setBotsCount(b => Math.min(5, b + 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserPlus size={16}/></button>
+                     </div>
+                     <div className="p-4 bg-slate-950/80 border border-white/5 rounded-2xl mt-4 text-[11px] text-slate-400 font-medium">
+                       Os robôs assumem estratégias variadas (Conservadora, Agressiva, Equilibrada, etc.) utilizando inteligência gerada por IA na rodada.
+                     </div>
+                   </div>
                  </div>
 
                  {/* Financial statements editor preview */}
-                 <FinancialStructureEditor 
-                    initialBalance={editableFinancials.balance_sheet} 
-                    initialDRE={editableFinancials.dre} 
-                    initialCashFlow={editableFinancials.cash_flow} 
-                    onChange={(u) => setEditableFinancials(u as any)}
-                    currency={tutorConfig.currency}
-                    readOnly
-                 />
+                 <div className="space-y-4">
+                   <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><ClipboardList size={16} className="text-orange-500"/> Demonstrativos Fiduciários do P0</h4>
+                   <FinancialStructureEditor 
+                      initialBalance={editableFinancials.balance_sheet} 
+                      initialDRE={editableFinancials.dre} 
+                      initialCashFlow={editableFinancials.cash_flow} 
+                      onChange={(u) => setEditableFinancials(u as any)}
+                      currency={tutorConfig.currency}
+                      readOnly
+                   />
+                 </div>
               </motion.div>
-            )}
-
-            {/* STEP 8: CONFIRMAÇÃO FINAL */}
-            {step === 8 && (
-               <motion.div key="s8" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 text-center py-10">
-                  <CheckCircle2 size={120} className="text-emerald-500 mx-auto animate-pulse" />
-                  <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Arena Sandbox Pronta</h2>
-                  <p className="text-slate-500 text-lg font-medium max-w-2xl mx-auto italic">O calibrador fiduciário inicial está totalmente validado com a estrutura industrial do Tutor.</p>
-
-                  <div className="max-w-2xl mx-auto bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 text-left grid grid-cols-2 gap-6">
-                    <div>
-                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Prof. Administrador</span>
-                      <span className="text-sm font-black text-white uppercase">{tutorConfig.tutorName}</span>
-                    </div>
-                    <div>
-                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Entidade Financeira</span>
-                      <span className="text-sm font-black text-white uppercase">{tutorConfig.institutionName}</span>
-                    </div>
-                    <div>
-                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Modo de Inicialização</span>
-                      <span className="text-sm font-black text-orange-500 uppercase font-mono">{tutorConfig.starting_mode.replace(/_/g, ' ')}</span>
-                    </div>
-                    <div>
-                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Moeda & IPO</span>
-                      <span className="text-sm font-black text-white font-mono">{tutorConfig.currency} • {formatCurrency(tutorConfig.share_price_initial, tutorConfig.currency)}</span>
-                    </div>
-                  </div>
-               </motion.div>
             )}
           </AnimatePresence>
         </div>
@@ -865,7 +897,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       <button onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1} className="floating-nav-btn left-10"><ChevronLeft size={15} /></button>
       {step === stepsCount ? (
         <button onClick={handleLaunch} disabled={isSubmitting} className="floating-nav-btn-primary">
-          {isSubmitting ? <><Loader2 className="animate-spin" size={24}/> Sincronizando...</> : 'LANÇAR SANDBOX'}
+          {isSubmitting ? <><Loader2 className="animate-spin" size={24}/> PROCESSANDO...</> : 'LANÇAR SANDBOX COMPETITIVO'}
         </button>
       ) : (
         <button onClick={() => setStep(s => s + 1)} className="floating-nav-btn right-10"><ChevronRight size={15} /></button>
@@ -908,7 +940,7 @@ const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods, isExc
 const WizardStepTitle = ({ icon, title, desc }: any) => (
   <div className="flex items-center gap-8 border-b border-white/5 pb-8">
      <div className="p-6 bg-slate-900 border border-orange-500/30 rounded-[2.5rem] text-orange-500 shadow-2xl flex items-center justify-center">{icon}</div>
-     <div className="text-left"><h3 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3><p className="text-sm font-black text-slate-500 uppercase tracking-[0.4em] mt-3 italic">{desc}</p></div>
+     <div className="text-left"><h3 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3><p className="text-sm font-black text-slate-500 uppercase tracking-[0.4em] mt-3 italic text-left">{desc}</p></div>
   </div>
 );
 

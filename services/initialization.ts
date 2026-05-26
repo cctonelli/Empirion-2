@@ -35,7 +35,7 @@ export interface InventoryP0Config {
   finished_unit_val: number;
 }
 
-export interface TutorP0Config {
+export interface BaseP0Config {
   tutorName: string;
   institutionName: string;
   tournamentName: string;
@@ -46,7 +46,6 @@ export interface TutorP0Config {
   gazeta_mode: 'anonymous' | 'identified';
 
   // Configurações de Atividade e Início
-  starting_mode: 'start_from_zero' | 'start_with_base' | 'start_with_running';
   activity_type: string; // "industrial"
   accounting_template_id: string; // "industrial_br_v1"
 
@@ -69,6 +68,21 @@ export interface TutorP0Config {
   // Step 6: Overrides
   macroOverrides: Record<string, any>;
 }
+
+export interface StartFromZeroConfig extends BaseP0Config {
+  starting_mode: 'start_from_zero';
+  financial_investments: 0;
+}
+
+export interface StartWithBaseConfig extends BaseP0Config {
+  starting_mode: 'start_with_base';
+}
+
+export interface StartWithRunningConfig extends BaseP0Config {
+  starting_mode: 'start_with_running';
+}
+
+export type TutorP0Config = StartFromZeroConfig | StartWithBaseConfig | StartWithRunningConfig;
 
 export interface P0Template {
   id: string;

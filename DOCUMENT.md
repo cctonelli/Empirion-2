@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.12 Obsidian Diamond Enterprise II (Estabilidade Contábil, Redoma de Caixa, Ativação de Custos no CIF, Juros Proporcionais de Fornecedores, Rolagem Lateral de Arenas e Saneamento de Dependência NPM - Maio 2026)
+- **Versão Ativa:** v19.14 Sapphire Diamond Enterprise - P0 Pro Configurator & Interactive Real-Time Preview (Suporte aos 3 modos de início contábil: start_from_zero, start_with_base, start_with_running; com Preview Fiduciário completo no Step 8, Botão de Reler P0 em tempo real, quadro de Bots independentes com perfis e gravação de templates no Supabase)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -206,6 +206,17 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.14 Sapphire Diamond Enterprise - P0 Pro Configurator & Interactive Real-Time Preview
+- **Data:** 26 de Maio de 2026
+- **Motivo:** Implementação robusta do P0 Configurator focado na autonomia estratégica do Tutor e no deploy preciso de arenas. Garantir a consistência dos 3 modos estruturais e auditoria dinâmica em tempo real antes da inicialização do torneio.
+- **Diferenças:**
+  - *Arquitetura Wizard em 8 Passos:* Reorganização lógica integral do formulário do Tutor: Identidade, Ativação/Modos, Parque Industrial, Mão de Obra de RH, Regiões/Preços, Equilíbrio Financeiro, Parâmetros Macro e Preview/Confirmação de Deploy.
+  - *União de Modos Contábeis:* Implementação de Discriminated Unions no TypeScript para os modos `start_from_zero` (foco em Caixa/Capital), `start_with_base` (foco em ativo fabril balanceado) e `start_with_running` (modo focado em pendências de CP/LP e estoques parciais de produtos).
+  - *Quadro Ativo de Bots:* Configuração do módulo de concorrentes mecânicos (Bots autônomos) integrados com perfis mercadológicos (AGRESSIVO, CONSERVADOR, etc.).
+  - *Preview Real-Time & Recalculo fiduciário:* Inclusão do botão "Recalcular P0" que roda o kernel matemático determinístico em tempo real e renderiza os demonstrativos em sub-abas dedicadas no Step 8 (DRE, DFC, Balanço e E-SDS).
+  - *Serviço de Templates:* Persistência das escolhas do Tutor de forma dinâmica na base do Supabase (`p0_templates`) para reaproveitamento ágil.
+- **Status:** Em Produção (Fidelidade Absoluta e Excelência de DX).
 
 ### v19.13 Sapphire Diamond Enterprise - Estabilidade Fiduciária P0 (Fallbacks de Auditoria, Reload Limpo & Exibição Explicita P0)
 - **Data:** 26 de Maio de 2026
