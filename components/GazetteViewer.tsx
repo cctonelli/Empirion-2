@@ -11,7 +11,7 @@ import {
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { Championship, UserRole, Team, MacroIndicators } from '../types';
-import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO } from '../constants';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO, INITIAL_FINANCIAL_TREE } from '../constants';
 import { generateDynamicMarketNews } from '../services/gemini';
 import { supabase } from '../services/supabase';
 import { getCumulativeAdjust, getAdjustedPrice } from '../services/simulation';
@@ -62,11 +62,37 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
      try {
         const historyTable = arena.is_trial ? 'trial_companies' : 'companies';
         const teamsTable = arena.is_trial ? 'trial_teams' : 'teams';
-        const { data } = await supabase
+        const targetRound = round - 1;
+        let { data } = await supabase
            .from(historyTable)
            .select(`*, team:${teamsTable}(name)`)
            .eq('championship_id', arena.id)
-           .eq('round', round - 1);
+           .eq('round', targetRound);
+        
+        // Fallback local robusto se o histórico não estiver presente ainda no Supabase (P0)
+        if ((!data || data.length === 0) && targetRound === 0) {
+           console.warn("Oracle Gazette – P0 não encontrado em trial_companies/companies. Executando fallback via trial_teams/teams...");
+           const { data: teamsWithKpis } = await supabase
+              .from(teamsTable)
+              .select('*')
+              .eq('championship_id', arena.id);
+           
+           if (teamsWithKpis && teamsWithKpis.length > 0) {
+              data = teamsWithKpis.map((t: any) => ({
+                 team_id: t.id,
+                 championship_id: arena.id,
+                 round: 0,
+                 equity: t.equity || t.kpis?.equity || 7252171.74,
+                 team: { name: t.name },
+                 kpis: t.kpis || {
+                    market_share: 100 / teamsWithKpis.length,
+                    statements: INITIAL_FINANCIAL_TREE,
+                    share_price: (t.equity || 7252171.74) / 72000,
+                    rating: 'AAA'
+                 }
+              }));
+           }
+        }
         
         if (data) setCompetitors(data);
      } catch (err) { console.error("Intel Fetch Fault", err); }
@@ -84,11 +110,37 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
       try {
         const historyTable = arena.is_trial ? 'trial_companies' : 'companies';
         const teamsTable = arena.is_trial ? 'trial_teams' : 'teams';
-        const { data: teamsData } = await supabase
+        const targetRound = round - 1;
+        let { data: teamsData } = await supabase
           .from(historyTable)
           .select(`*, team:${teamsTable}(name)`)
           .eq('championship_id', arena.id)
-          .eq('round', round - 1);
+          .eq('round', targetRound);
+
+        // Fallback local robusto se o histórico não estiver presente ainda no Supabase (P0)
+        if ((!teamsData || teamsData.length === 0) && targetRound === 0) {
+          console.warn("Oracle Gazette News – P0 vazio na busca de histórico. Buscando via Teams...");
+          const { data: teamsWithKpis } = await supabase
+             .from(teamsTable)
+             .select('*')
+             .eq('championship_id', arena.id);
+          
+          if (teamsWithKpis && teamsWithKpis.length > 0) {
+             teamsData = teamsWithKpis.map((t: any) => ({
+                team_id: t.id,
+                championship_id: arena.id,
+                round: 0,
+                equity: t.equity || t.kpis?.equity || 7252171.74,
+                team: { name: t.name },
+                kpis: t.kpis || {
+                   market_share: 100 / teamsWithKpis.length,
+                   statements: INITIAL_FINANCIAL_TREE,
+                   share_price: (t.equity || 7252171.74) / 72000,
+                   rating: 'AAA'
+                }
+             }));
+          }
+        }
 
         if (teamsData && teamsData.length > 0) {
           const news = await generateDynamicMarketNews(

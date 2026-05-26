@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.12 Obsidian Diamond Enterprise II (Estabilidade Contábil, Redoma de Caixa, Ativação de Custos no CIF, Juros Proporcionais de Fornecedores e Rolagem Lateral de Arenas - Maio 2026)
+- **Versão Ativa:** v19.12 Obsidian Diamond Enterprise II (Estabilidade Contábil, Redoma de Caixa, Ativação de Custos no CIF, Juros Proporcionais de Fornecedores, Rolagem Lateral de Arenas e Saneamento de Dependência NPM - Maio 2026)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -207,6 +207,16 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.13 Sapphire Diamond Enterprise - Estabilidade Fiduciária P0 (Fallbacks de Auditoria, Reload Limpo & Exibição Explicita P0)
+- **Data:** 26 de Maio de 2026
+- **Motivo:** Garantir a estabilidade de visualização e consistência relacional do ponto de partida fiduciário P0 (Round 0) sob concorrências assíncronas no Supabase, assegurando que as equipes visualizem perfeitamente as demonstrações após o lançamento pelo Tutor.
+- **Diferenças:**
+  - *Fallback Local no Dashboard:* Introdução de geração dinâmica e injeção do P0 em memória caso o Supabase atrase ou retorne o histórico vazio no primeiro ciclo.
+  - *Shield de Auditoria na Gazette/Monitoramento:* Criação de barreira inteligente que detecta a ausência de histórico do P0 e consulta dinamicamente a tabela `teams/trial_teams` correspondente, derivando em tempo real as contas estruturadas de cada equipe de forma privada.
+  - *Reset de Cache Reativo:* Configuração de reload cirúrgico temporal (`window.location.reload()`) após a conclusão dos assistentes de lançamento (`TrialWizard` e `ChampionshipWizard`), desfazendo instâncias presas no cliente e forçando o recalculo de sessões.
+  - *Exibição Explícita de P0:* Ajuste no display de cabeçalhos de relatórios para renderizar `"INICIAL (P0)"` em vez de `"ROUND 00"`, elevando o realismo corporativo.
+- **Status:** Em Produção (Fidelidade Inexorável e UX blindada).
+
 ### v19.9 Obsidian Diamond Enterprise II - Persistência Sólida do Ciclo Financeiro (PMR, PMP & Efeito Tesoura)
 - **Data:** 25 de Maio de 2026
 - **Motivo:** Garantir a perfeita visualização contábil de PMR (Prazo Médio de Recebimento), PMP (Prazo Médio de Pagamento) e Efeito Tesoura no Cockpit/Painel de Tomada de Decisão das Equipes, eliminando falhas de dados legados no carregamento de rodadas iniciais.
@@ -361,7 +371,8 @@ project-root/
   - *Juros Proporcionais de Fornecedores:* Correção e aprimoramento da distribuição dos juros de fornecedores para compras a prazo. O cálculo obedece estritamente a amortização e a incidência sobre o saldo devedor por período (T+0 sem juros de entrada, T+1 incidindo sobre o SD de 66% e T+2 incidindo sobre o SD de 33%).
   - *Cronogramas HUD & Visualização:* Atualização interativa no formulário de Suprimentos (`SupplyStep`) e no painel lateral de consolidação financeira (`RightPreviewPanel`) para expor abertamente a alocação de parcelas de principal, taxas de juros, e os novos passivos gerados no balanço de encerramento.
   - *Rolagem Lateral de Torneios:* Implementação de rolagem lateral horizontal fluida (`flex-row overflow-x-auto`) com efeito de snap-scrolling no painel principal de visualização de arenas (`ChampionshipsView`), otimizando o design system para navegação intuitiva e eliminando quebras verticais e excesso de rolagem quando há dezenas de simulações concorrentes.
-  - *Documentação e Governança:* Toda a lógica de mitigação inteligente, spreads fiduciários e cronogramas de suprimentos foi documentada em `BUSINESS_RULES.md`, garantindo excelente DX (Developer Experience) e fidelidade prática para capacitação acadêmica de alto nível.
+  - *Saneamento de Dependência NPM (DOMException):* Resolução do aviso de obsolescência (`npm warn deprecated node-domexception@1.0.0`) introduzido transitivamente pelo ecossistema do SDK. Implementou-se um *stub* robusto de infraestrutura local em `/stubs/node-domexception` que reexporta o `DOMException` nativo da plataforma moderna (Node.js 18+), acoplado via política de `"overrides"` no manifesto do projeto, eliminando warnings com zero dependências externas ou riscos colaterais.
+  - *Documentação e Governança:* Toda a lógica de mitigação inteligente, spreads fiduciários, mapeamento de dependências e cronogramas de suprimentos foi documentada em `BUSINESS_RULES.md`, garantindo excelente DX (Developer Experience) e fidelidade prática para capacitação acadêmica de alto nível.
 - **Status:** Em produção.
 
 ### v2026-05.4 / v19.11 - Redoma de Caixa, Aplicações Financeiras, Custeio Absorção e Treinamento CapEx

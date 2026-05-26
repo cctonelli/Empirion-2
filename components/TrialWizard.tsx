@@ -129,6 +129,10 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         round_rules: roundRules, 
       }, teamsToCreate, true);
       onComplete();
+      // Força um refresh após a criação para garantir que o cache de todos os estados seja reiniciado
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (e: any) { alert(`FALHA NA ARENA: ${e.message}`); } finally { setIsSubmitting(false); }
   };
 

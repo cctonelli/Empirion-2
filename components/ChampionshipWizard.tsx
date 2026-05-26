@@ -62,6 +62,10 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         round_rules: roundRules,
       }, teamsToCreate, isTrial);
       onComplete();
+      // Força um refresh após a criação para garantir que o cache de todos os estados seja reiniciado
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (e: any) { alert(`FALHA: ${e.message}`); }
     finally { setIsSubmitting(false); }
   };

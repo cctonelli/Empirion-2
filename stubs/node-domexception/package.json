@@ -1,0 +1,7 @@
+{
+  "name": "node-domexception",
+  "version": "1.0.0",
+  "description": "Native HTML DOMException stub for modern Node.js environments",
+  "main": "index.js",
+  "private": true
+}

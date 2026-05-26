@@ -25,7 +25,7 @@ import BusinessPlanWizard from './BusinessPlanWizard';
 import AuditLogViewer from './AuditLogViewer';
 import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getTeamSimulationHistory } from '../services/supabase';
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
-import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO } from '../constants';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO, INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00 } from '../constants';
 
 import FinancialReportMatrix from './FinancialReportMatrix';
 import { calculateProjections } from '../services/simulation';
@@ -78,7 +78,78 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           const { data: bp } = await getActiveBusinessPlan(teamId, currentRound);
           if (bp) setBpStatus(bp.status);
           
-          const teamHistory = await getTeamSimulationHistory(teamId);
+          let teamHistory = await getTeamSimulationHistory(teamId);
+          
+          // Se o histórico estiver vazio ou não contiver a Rodada 0 (P0), geramos um Fallback Local robusto do P0
+          const hasP0 = teamHistory.some((h: any) => h.round === 0);
+          if (!hasP0) {
+            console.warn("Oracle Shield – P0 não encontrado no histórico do Supabase. Injetando Fallback Local do estado inicial...");
+            const defaultCash = 111163.54; // default do caixa inicial
+            const initialP0Fallback = {
+              team_id: teamId,
+              championship_id: champId,
+              round: 0,
+              state: {},
+              equity: 7252171.74,
+              total_assets: 9493163.54,
+              stock_value: 1407000.00,
+              fixed_assets_value: 6012500.00,
+              revenue: 4184440.05,
+              net_profit: 208387.77,
+              kpis: {
+                statements: INITIAL_FINANCIAL_TREE,
+                machines: INITIAL_MACHINES_P00,
+                current_cash: defaultCash,
+                stock_quantities: { mp_a: 30150, mp_b: 20100, finished_goods: 0 },
+                equity: 7252171.74,
+                total_assets: 9493163.54,
+                stock_value: 1407000.00,
+                fixed_assets_value: 6012500.00,
+                fixed_assets_depreciation: 75000,
+                rating: 'AAA',
+                last_price: arena.initial_share_price || 100,
+                last_units_sold: 0,
+                ebitda: 208387.77,
+                tsr: 0,
+                ccc: 0,
+                interest_coverage: 100,
+                nlcdg: 0,
+                solvency_score_kanitz: 1.5,
+                altman_z_score: 6.25,
+                dcf_valuation: 1.7,
+                scissors_effect: 0,
+                liquidity_current: 1.5,
+                solvency_index: 2.0,
+                inventory_turnover: 0,
+                carbon_footprint: 0,
+                avg_receivable_days: 45,
+                avg_payable_days: 30,
+                esds: {
+                  esds_display: 78,
+                  zone: 'Verde',
+                  gargalo_principal: 'Nenhum',
+                  gemini_insights: 'Empresa em perfeito equilíbrio contábil inicial. Ativos estruturados.',
+                  top_gargalos: [],
+                  main_drivers: []
+                },
+                commitments: {
+                  receivables: [
+                    { id: 'clients', label: 'Contas a Receber (Clientes)', value: 1407000.00 },
+                    { id: 'investments', label: 'Aplicações Financeiras', value: 0 },
+                    { id: 'vat_recoverable', label: 'IVA a Recuperar', value: 0 }
+                  ],
+                  payables: [
+                    { id: 'suppliers', label: 'Fornecedores', value: 717605.00 },
+                    { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: 1372362.00 },
+                    { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: 868629.80 },
+                    { id: 'taxes', label: 'Imposto de Renda a Pagar', value: 14871.31 },
+                    { id: 'dividends', label: 'Dividendos a Pagar', value: 11153.49 }
+                  ]
+                }
+              }
+            };
+            teamHistory = [initialP0Fallback, ...teamHistory];
+          }
           setHistory(teamHistory);
 
           // Fetch current decisions for projection
