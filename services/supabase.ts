@@ -175,9 +175,9 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   // Initial KPIs for Round 0 (Individualized)
   const initialKpis = {
     statements: financials,
-    machines: INITIAL_MACHINES_P00,
+    machines: config.initial_machines || INITIAL_MACHINES_P00,
     current_cash: currentCash,
-    stock_quantities: { mp_a: 30150, mp_b: 20100, finished_goods: 0 },
+    stock_quantities: config.initial_stock_quantities || { mp_a: 30150, mp_b: 20100, finished_goods: 0 },
     equity: equity,
     total_assets: totalAssets,
     stock_value: stockValue,
@@ -558,3 +558,57 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         return { success: true };
     } catch (err: any) { return { success: false, error: err.message }; }
 };
+
+export const getP0Templates = async (): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('p0_templates')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.warn("Using local fallback for p0_templates:", error);
+      const local = localStorage.getItem('local_p0_templates');
+      return local ? JSON.parse(local) : [];
+    }
+    return data || [];
+  } catch (err) {
+    const local = localStorage.getItem('local_p0_templates');
+    return local ? JSON.parse(local) : [];
+  }
+};
+
+export const saveP0Template = async (template: any) => {
+  try {
+    const { data: authData } = await supabase.auth.getUser();
+    const payload = {
+      ...template,
+      tutor_id: authData?.user?.id || null,
+      updated_at: new Date().toISOString()
+    };
+    
+    const { data, error } = await supabase
+      .from('p0_templates')
+      .insert(payload)
+      .select();
+      
+    if (error) {
+      console.warn("Mocking save in LocalStorage as fallback:", error);
+      const local = localStorage.getItem('local_p0_templates');
+      const list = local ? JSON.parse(local) : [];
+      const payloadFallback = { ...payload, id: `tpl-${Math.random().toString(36).substr(2, 9)}`, created_at: new Date().toISOString() };
+      list.push(payloadFallback);
+      localStorage.setItem('local_p0_templates', JSON.stringify(list));
+      return { data: [payloadFallback], error: null };
+    }
+    return { data, error: null };
+  } catch (err) {
+    const local = localStorage.getItem('local_p0_templates');
+    const list = local ? JSON.parse(local) : [];
+    const payloadFallback = { ...template, id: `tpl-${Math.random().toString(36).substr(2, 9)}`, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    list.push(payloadFallback);
+    localStorage.setItem('local_p0_templates', JSON.stringify(list));
+    return { data: [payloadFallback], error: null };
+  }
+};
+

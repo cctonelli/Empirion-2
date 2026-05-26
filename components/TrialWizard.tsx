@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   ArrowRight, ArrowLeft, ShieldCheck, Rocket, Loader2, Info, 
@@ -7,12 +6,13 @@ import {
   Settings2, X, Bot, Boxes, TrendingUp, Percent, ChevronLeft, ChevronRight,
   PieChart, BarChart, Activity, Flame, Package, Award, MapPin, Gauge, BarChart3,
   Scale, Truck, UserPlus, UserMinus, Hammer, ShoppingCart, Briefcase, Tractor,
-  Bitcoin, ClipboardList, HardDrive, ShieldAlert, Plus, Trash2
+  Bitcoin, ClipboardList, HardDrive, ShieldAlert, Plus, Trash2, Library, Save, FolderOpen
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
-import { createChampionshipWithTeams } from '../services/supabase';
-import { INITIAL_FINANCIAL_TREE, DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
+import { createChampionshipWithTeams, getP0Templates, saveP0Template } from '../services/supabase';
+import { generatePureP0, TutorP0Config, P0Template } from '../services/initialization';
+import { DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import EmpireParticles from './EmpireParticles';
 import { Branch, SalesMode, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, RegionConfig, TransparencyLevel, GazetaMode, StrategicProfile } from '../types';
@@ -23,139 +23,323 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    humanTeamsCount: 1,
-    botsCount: 2,
-    marketMode: 'hybrid' as SalesMode,
-    regionsCount: 4,
-    totalRounds: 12, 
-    roundTime: 1, 
-    roundUnit: 'hours' as DeadlineUnit,
-    initialStockPrice: DEFAULT_INITIAL_SHARE_PRICE,
-    currency: 'BRL' as CurrencyType,
-    transparency: 'medium' as TransparencyLevel,
-    gazetaMode: 'anonymous' as GazetaMode,
+  // v19.14 Tutor Controller Config
+  const [tutorConfig, setTutorConfig] = useState<TutorP0Config>({
+    tutorName: 'Prof. Silas Silveira',
+    institutionName: 'Fundação Dom Cabral (FDC)',
+    tournamentName: 'COPA EMPIRION CHAMPIONSHIP',
+    currency: 'BRL',
+    round_duration: 1,
+    total_rounds: 12,
+    transparency_level: 'medium',
+    gazeta_mode: 'anonymous',
+    
+    starting_mode: 'start_with_base',
+    activity_type: 'industrial',
+    accounting_template_id: 'industrial_br_v1',
+    
+    machines: [
+      { model: 'alfa', qty: 3, age: 3, efficiency: 1.0 },
+      { model: 'beta', qty: 2, age: 5, efficiency: 0.95 },
+      { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+    ],
+    workforce: {
+      operatorsPerAlpha: 94,
+      operatorsPerBeta: 235,
+      operatorsPerGamma: 445,
+      baseSalary: 2000.00,
+      trainingLevel: 3
+    },
+    regions: [
+      { id: 1, name: 'BRASIL (LOCAL)', currency: 'BRL', demand_weight: 40, suggested_price: 425.00, distribution_cost: 50.00, marketing_cost: 10000.00 },
+      { id: 2, name: 'EUA (EXPORT)', currency: 'USD', demand_weight: 20, suggested_price: 425.00, distribution_cost: 50.00, marketing_cost: 10000.00 },
+      { id: 3, name: 'EUROPA (EXPORT)', currency: 'EUR', demand_weight: 20, suggested_price: 425.00, distribution_cost: 50.00, marketing_cost: 10000.00 },
+      { id: 4, name: 'CHINA (EXPORT)', currency: 'CNY', demand_weight: 20, suggested_price: 425.00, distribution_cost: 50.00, marketing_cost: 10000.00 }
+    ],
+    capital_social: 7200000.00,
+    caixa_inicial: 1500000.00,
+    inventories: {
+      mpa_qty: 30150,
+      mpa_unit_val: 20.00,
+      mpb_qty: 20100,
+      mpb_unit_val: 40.00,
+      finished_qty: 0,
+      finished_unit_val: 0.00
+    },
+    financial_investments: 0.00,
+    share_price_initial: 425.00,
     dividend_percent: 25.0,
-    branch: 'industrial' as Branch
+    dividend_frequency: 1,
+    macroOverrides: {}
   });
 
-  const [marketIndicators, setMarketIndicators] = useState<MacroIndicators>({
-    ...DEFAULT_MACRO,
-    ...DEFAULT_INDUSTRIAL_CHRONOGRAM[0] as MacroIndicators
-  });
+  // Salvar/Carregar templates
+  const [savedTemplates, setSavedTemplates] = useState<P0Template[]>([]);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDesc, setTemplateDesc] = useState('');
+  const [showSaveTplModal, setShowSaveTplModal] = useState(false);
+  const [tplLoading, setTplLoading] = useState(false);
 
-  const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
+  // Teams counts and state
+  const [humanTeamsCount, setHumanTeamsCount] = useState(1);
+  const [botsCount, setBotsCount] = useState(2);
   const [teamNames, setTeamNames] = useState<string[]>(['EQUIPE ALPHA']);
-  const [regionConfigs, setRegionConfigs] = useState<RegionConfig[]>([]);
 
+  // Chronogram parameters of rounds
+  const [roundRules, setRoundRules] = useState<Record<number, Partial<MacroIndicators>>>(DEFAULT_INDUSTRIAL_CHRONOGRAM);
+
+  // Sincronizar nomes de equipes humanas
   useEffect(() => {
     setTeamNames(prev => {
       const next = [...prev];
-      if (next.length < formData.humanTeamsCount) {
-        for (let i = next.length; i < formData.humanTeamsCount; i++) {
+      if (next.length < humanTeamsCount) {
+        for (let i = next.length; i < humanTeamsCount; i++) {
           next.push(`EQUIPE TRIAL 0${i + 1}`);
         }
       }
-      return next.slice(0, formData.humanTeamsCount);
+      return next.slice(0, humanTeamsCount);
     });
-  }, [formData.humanTeamsCount]);
+  }, [humanTeamsCount]);
+
+  // Carregar templates ao iniciar
+  const loadTemplatesFromSupabase = async () => {
+    setTplLoading(true);
+    const list = await getP0Templates();
+    setSavedTemplates(list);
+    setTplLoading(false);
+  };
 
   useEffect(() => {
-    if (regionConfigs.length === 0) {
-      setRegionConfigs([
-        { id: 1, name: 'BRASIL (LOCAL)', currency: 'BRL', demand_weight: 40 },
-        { id: 2, name: 'EUA (EXPORT)', currency: 'USD', demand_weight: 20 },
-        { id: 3, name: 'EUROPA (EXPORT)', currency: 'EUR', demand_weight: 20 },
-        { id: 4, name: 'CHINA (EXPORT)', currency: 'CNY', demand_weight: 20 },
-      ]);
-    }
+    loadTemplatesFromSupabase();
   }, []);
 
-  const addRegion = () => {
-    const nextId = regionConfigs.length + 1;
-    setRegionConfigs([...regionConfigs, { id: nextId, name: `Região 0${nextId}`, currency: 'BRL', demand_weight: 10 }]);
+  // Recurso de alteração de modo de P0
+  const handleModeChange = (mode: 'start_from_zero' | 'start_with_base' | 'start_with_running') => {
+    setTutorConfig(prev => {
+      const updated = { ...prev, starting_mode: mode };
+      if (mode === 'start_from_zero') {
+        updated.caixa_inicial = 1000000.00;
+        updated.capital_social = 1000000.00;
+        updated.financial_investments = 0;
+        updated.inventories = {
+          mpa_qty: 0,
+          mpa_unit_val: 20.00,
+          mpb_qty: 0,
+          mpb_unit_val: 40.00,
+          finished_qty: 0,
+          finished_unit_val: 0.00
+        };
+        updated.machines = [
+          { model: 'alfa', qty: 0, age: 0, efficiency: 1.0 },
+          { model: 'beta', qty: 0, age: 0, efficiency: 1.0 },
+          { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+        ];
+      } else if (mode === 'start_with_base') {
+        updated.caixa_inicial = 1500000.00;
+        updated.capital_social = 7200000.00;
+        updated.financial_investments = 0;
+        updated.inventories = {
+          mpa_qty: 30150,
+          mpa_unit_val: 20.00,
+          mpb_qty: 20100,
+          mpb_unit_val: 40.00,
+          finished_qty: 0,
+          finished_unit_val: 0.00
+        };
+        updated.machines = [
+          { model: 'alfa', qty: 3, age: 3, efficiency: 1.0 },
+          { model: 'beta', qty: 2, age: 5, efficiency: 0.95 },
+          { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+        ];
+      } else {
+        // start_with_running
+        updated.caixa_inicial = 1500000.00;
+        updated.capital_social = 7200000.00;
+        updated.financial_investments = 500000.00;
+        updated.inventories = {
+          mpa_qty: 35000,
+          mpa_unit_val: 20.00,
+          mpb_qty: 25000,
+          mpb_unit_val: 40.00,
+          finished_qty: 1200,
+          finished_unit_val: 180.00
+        };
+        updated.machines = [
+          { model: 'alfa', qty: 5, age: 6, efficiency: 1.0 },
+          { model: 'beta', qty: 1, age: 4, efficiency: 0.98 },
+          { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+        ];
+      }
+      return updated;
+    });
   };
 
-  const updateRegion = (index: number, updates: Partial<RegionConfig>) => {
-    const next = [...regionConfigs];
-    next[index] = { ...next[index], ...updates };
-    setRegionConfigs(next);
-  };
+  // Gerar P0 determinístico com base no editor ou estado
+  const p0StatementsResult = useMemo(() => {
+    return generatePureP0(tutorConfig);
+  }, [tutorConfig]);
 
-  const [financials, setFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }>(() => {
-    return JSON.parse(JSON.stringify(INITIAL_FINANCIAL_TREE));
+  const [editableFinancials, setEditableFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }>(() => {
+    return {
+      balance_sheet: p0StatementsResult.balance_sheet,
+      dre: p0StatementsResult.dre,
+      cash_flow: p0StatementsResult.cash_flow
+    };
   });
+
+  // Atualiza as demonstrações da UI de preview quando o P0 matemático recalculado é alterado
+  useEffect(() => {
+    setEditableFinancials({
+      balance_sheet: p0StatementsResult.balance_sheet,
+      dre: p0StatementsResult.dre,
+      cash_flow: p0StatementsResult.cash_flow
+    });
+  }, [p0StatementsResult]);
+
+  // Recalcular P0 manual
+  const handleRecalculate = () => {
+    const fresh = generatePureP0(tutorConfig);
+    setEditableFinancials({
+      balance_sheet: fresh.balance_sheet,
+      dre: fresh.dre,
+      cash_flow: fresh.cash_flow
+    });
+  };
+
+  // Salvar template contábil/configuração atualizado
+  const handleSaveTpl = async () => {
+    if (!templateName) {
+      alert("Defina o nome do template!");
+      return;
+    }
+    const tplPayload = {
+      name: templateName,
+      description: templateDesc,
+      category: 'industrial',
+      code: `TPL_${templateName.replace(/\s+/g, '_').toUpperCase()}_${Date.now()}`,
+      config: tutorConfig,
+      is_public: true
+    };
+    
+    await saveP0Template(tplPayload);
+    setShowSaveTplModal(false);
+    loadTemplatesFromSupabase();
+    alert("Template P0 Salvo com Sucesso!");
+  };
+
+  const handleLoadTpl = (tpl: P0Template) => {
+    setTutorConfig(tpl.config);
+    alert(`Template "${tpl.name}" carregado com sucesso!`);
+  };
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
+  // Lançar Arena com as preferências contábeis v19.14
   const handleLaunch = async () => {
     setIsSubmitting(true);
     try {
       const profiles: StrategicProfile[] = ['AGRESSIVO', 'CONSERVADOR', 'EFICIENTE', 'INOVADOR', 'EQUILIBRADO'];
       const teamsToCreate = [
         ...teamNames.map(n => ({ name: n, is_bot: false })),
-        ...Array.from({ length: formData.botsCount }, (_, i) => ({ 
+        ...Array.from({ length: botsCount }, (_, i) => ({ 
           name: `SYNTH NODE 0${i+1}`, 
           is_bot: true,
           strategic_profile: profiles[i % profiles.length]
         }))
       ];
 
-      // Destructuring to avoid sending UI-only or camelCase fields to Supabase
-      const { 
-        humanTeamsCount, botsCount, marketMode, regionsCount, 
-        roundTime, roundUnit, transparency, gazetaMode, 
-        initialStockPrice, totalRounds, ...rest 
-      } = formData;
+      // Determinar quantidade de máquinas estruturadas e quantidades de estoques
+      const initialStockQty = {
+        mp_a: tutorConfig.inventories.mpa_qty,
+        mp_b: tutorConfig.inventories.mpb_qty,
+        finished_goods: tutorConfig.inventories.finished_qty
+      };
 
+      // Preparação e despacho do payload
       await createChampionshipWithTeams({
-        ...rest,
-        total_rounds: totalRounds,
-        sales_mode: marketMode,
-        regions_count: regionsCount,
-        deadline_value: roundTime,
-        deadline_unit: roundUnit,
-        transparency_level: transparency,
-        gazeta_mode: gazetaMode,
-        initial_share_price: initialStockPrice,
-        region_names: regionConfigs.map(r => r.name), 
-        region_configs: regionConfigs, 
-        initial_financials: financials,
+        name: tutorConfig.tournamentName,
+        total_rounds: tutorConfig.total_rounds,
+        sales_mode: 'hybrid' as SalesMode,
+        branch: 'industrial' as Branch,
+        regions_count: tutorConfig.regions.length,
+        deadline_value: tutorConfig.round_duration,
+        deadline_unit: 'hours' as DeadlineUnit,
+        transparency_level: tutorConfig.transparency_level,
+        gazeta_mode: tutorConfig.gazeta_mode,
+        initial_share_price: tutorConfig.share_price_initial,
+        region_names: tutorConfig.regions.map(r => r.name), 
+        region_configs: tutorConfig.regions.map(r => ({ id: r.id, name: r.name, currency: r.currency, demand_weight: r.demand_weight })), 
+        initial_financials: editableFinancials,
+        initial_machines: p0StatementsResult.machines,
+        initial_stock_quantities: initialStockQty,
         is_trial: true, 
-        market_indicators: { ...marketIndicators, dividend_percent: formData.dividend_percent, region_configs: regionConfigs },
+        market_indicators: { 
+          ...DEFAULT_MACRO, 
+          dividend_percent: tutorConfig.dividend_percent, 
+          region_configs: tutorConfig.regions.map(r => ({ id: r.id, name: r.name, currency: r.currency, demand_weight: r.demand_weight }))
+        },
         round_rules: roundRules, 
+        tutor_name: tutorConfig.tutorName,
+        institution_name: tutorConfig.institutionName
       }, teamsToCreate, true);
+
       onComplete();
-      // Força um refresh após a criação para garantir que o cache de todos os estados seja reiniciado
+      
       setTimeout(() => {
         window.location.reload();
       }, 500);
-    } catch (e: any) { alert(`FALHA NA ARENA: ${e.message}`); } finally { setIsSubmitting(false); }
+    } catch (e: any) { 
+      alert(`FALHA NA SOLDA DA ARENA: ${e.message}`); 
+    } finally { 
+      setIsSubmitting(false); 
+    }
   };
 
   const updateRoundMacro = (round: number, key: string, val: any) => {
     setRoundRules(prev => ({ ...prev, [round]: { ...(prev[round] || {}), [key]: val } }));
   };
 
-  const stepsCount = 7;
-  const totalPeriods = formData.totalRounds + 1;
-  const findAccountValue = (nodes: AccountNode[], id: string): number => {
-    for (const node of nodes) {
-      if (node.id === id) return node.value;
-      if (node.children && node.children.length > 0) {
-        const val = findAccountValue(node.children, id);
-        if (val !== 0) return val;
-      }
-    }
-    return 0;
-  };
+  // Auxiliares de visualização e cálculo
+  const stepsCount = 8;
+  const totalPeriods = tutorConfig.total_rounds + 1;
 
-  // Oracle Baseline Totals
-  const totalAssets = useMemo(() => findAccountValue(financials.balance_sheet, 'assets') || 9493163.54, [financials.balance_sheet]);
-  const totalEquity = useMemo(() => findAccountValue(financials.balance_sheet, 'equity') || 7252171.74, [financials.balance_sheet]);
+  const totalAssets = useMemo(() => {
+    const assetsFound = editableFinancials.balance_sheet.find(n => n.id === 'assets')?.value;
+    return assetsFound || 9493163.54;
+  }, [editableFinancials.balance_sheet]);
+
+  const totalEquity = useMemo(() => {
+    const plFound = editableFinancials.balance_sheet.find(n => n.id === 'equity' || n.id === 'equity_group')?.value;
+    // se não achar pelo ID, pega o PL acumulador
+    const liabilitiesPLNode = editableFinancials.balance_sheet.find(n => n.id === 'liabilities_pl');
+    const plSub = liabilitiesPLNode?.children?.find(c => c.id === 'equity');
+    return plSub?.value || totalAssets - 1000000;
+  }, [editableFinancials.balance_sheet, totalAssets]);
+
+  // Estimativa do E-SDS base do P0
+  const estimatedESDS = useMemo(() => {
+    let score = 75;
+    let zone: 'Azul' | 'Verde' | 'Amarelo' | 'Laranja' | 'Vermelho' = 'Verde';
+    let insights = 'A empresa inicia com sólida saúde fiduciária. Ausência de gargalos imediatos.';
+    
+    if (tutorConfig.starting_mode === 'start_from_zero') {
+      score = 95;
+      zone = 'Azul';
+      insights = 'Modo Start-From-Zero: Alavancagem bancária nula e máxima flexibilidade de ativos.';
+    } else if (tutorConfig.starting_mode === 'start_with_base') {
+      score = 80;
+      zone = 'Verde';
+      insights = 'Estrutura industrial básica integrada. Carga financeira de deprec. de máquinas moderada.';
+    } else {
+      score = 65;
+      zone = 'Amarelo';
+      insights = 'Running Company: A empresa possui compromissos de empréstimos anteriores e custos de depreciação ativos.';
+    }
+    
+    return { score, zone, insights };
+  }, [tutorConfig.starting_mode]);
 
   return (
     <div className="wizard-shell bg-slate-950/95 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative">
@@ -164,8 +348,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         <div className="flex items-center gap-8">
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-xl"><Rocket size={32} /></div>
            <div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Sandbox Trial Setup</h2>
-              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">Nova Arena • Moeda Base: {formData.currency}</p>
+              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">P0 Advanced Configurator</h2>
+              <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">v19.14 SAPPHIRE DIAMOND • MOEDA: {tutorConfig.currency}</p>
            </div>
         </div>
         <div className="flex gap-4">
@@ -178,142 +362,376 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       <div ref={scrollRef} className="wizard-content custom-scrollbar">
         <div className="max-w-full">
           <AnimatePresence mode="wait">
+            {/* STEP 1: IDENTIDADE DO TORNEIO */}
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12 pb-20">
-                 <WizardStepTitle icon={<Globe size={32}/>} title="IDENTIDADE DO TORNEIO" desc="CONFIGURAÇÕES GLOBAIS DA ARENA SANDBOX." />
+                 <WizardStepTitle icon={<Globe size={32}/>} title="1. IDENTIDADE DA COMPETIÇÃO" desc="Configurações globais de identidade pedagógica externa." />
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2"><WizardField label="NOME DO TORNEIO" val={formData.name} onChange={(v:any)=>setFormData({...formData, name: v})} placeholder="Ex: TORNEIO TRIAL MASTER" /></div>
-                    <WizardSelect label="MOEDA BASE" val={formData.currency} onChange={(v:any)=>setFormData({...formData, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
+                    <div className="lg:col-span-2">
+                      <WizardField label="NOME DO TUTOR ADMINISTRADOR" val={tutorConfig.tutorName} onChange={(v:any)=>setTutorConfig({...tutorConfig, tutorName: v})} placeholder="Ex: Prof. Silas Silveira" />
+                    </div>
+                    <WizardField label="NOME DA FACULDADE / ENTIDADE" val={tutorConfig.institutionName} onChange={(v:any)=>setTutorConfig({...tutorConfig, institutionName: v})} placeholder="Ex: FGV / FDC" />
+                    
+                    <div className="lg:col-span-2">
+                      <WizardField label="NOME DO TORNEIO / ARENA" val={tutorConfig.tournamentName} onChange={(v:any)=>setTutorConfig({...tutorConfig, tournamentName: v})} placeholder="Ex: COPA GLOBAL DE SIMULAÇÃO" />
+                    </div>
+                    <WizardSelect label="MOEDA DE EXIBIÇÃO" val={tutorConfig.currency} onChange={(v:any)=>setTutorConfig({...tutorConfig, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <WizardField label="TEMPO ROUND" type="number" val={formData.roundTime} onChange={()=>{}} isLocked />
-                      <WizardSelect label="Horas/Dias" val={formData.roundUnit} onChange={()=>{}} options={[{v:'hours',l:'HORAS'},{v:'days',l:'DIAS'}]} isLocked />
+                      <WizardField label="TEMPO DO ROUND" type="number" val={tutorConfig.round_duration} onChange={(v:any)=>setTutorConfig({...tutorConfig, round_duration: parseInt(v) || 1})} />
+                      <div className="space-y-4 text-left group">
+                        <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 italic">UNIDADE TEMPO</label>
+                        <input className="w-full bg-slate-950/40 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-slate-500 outline-none cursor-not-allowed" value="HORAS" readOnly />
+                      </div>
                     </div>
 
-                    <WizardSelect label="GOVERNANÇA TÁTICA" val={formData.transparency} onChange={(v:any)=>setFormData({...formData, transparency: v as TransparencyLevel})} options={[{v:'low',l:'BAIXA (SIGILOSA)'},{v:'medium',l:'MÉDIA (PADRÃO)'},{v:'high',l:'ALTA (TRANSPARENTE)'},{v:'full',l:'TOTAL (OPEN DATA)'}]} />
-                    <WizardSelect label="IDENTIDADE GAZETA" val={formData.gazetaMode} onChange={(v:any)=>setFormData({...formData, gazetaMode: v as GazetaMode})} options={[{v:'anonymous',l:'ANÔNIMA'},{v:'identified',l:'IDENTIFICADA'}]} />
+                    <WizardSelect label="GOVERNANÇA TÁTICA" val={tutorConfig.transparency_level} onChange={(v:any)=>setTutorConfig({...tutorConfig, transparency_level: v as any})} options={[{v:'low',l:'BAIXA (SIGILOSA)'},{v:'medium',l:'MÉDIA (PADRÃO)'},{v:'high',l:'ALTA (TRANSPARENTE)'},{v:'full',l:'TOTAL (OPEN DATA)'}]} />
+                    <WizardSelect label="IDENTIDADE GAZETA" val={tutorConfig.gazeta_mode} onChange={(v:any)=>setTutorConfig({...tutorConfig, gazeta_mode: v as any})} options={[{v:'anonymous',l:'ANÔNIMA'},{v:'identified',l:'IDENTIFICADA'}]} />
                     
-                    <WizardField label="TOTAL DE ROUNDS" type="number" val={formData.totalRounds} onChange={(v:any)=>setFormData({...formData, totalRounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
-                    <WizardField label="PREÇO AÇÃO INICIAL ($)" type="currency" currency={formData.currency} val={formData.initialStockPrice} onChange={(v:any)=>setFormData({...formData, initialStockPrice: v})} />
-                    <WizardField label="DIVIDENDOS (%)" type="number" val={formData.dividend_percent} onChange={(v:any)=>setFormData({...formData, dividend_percent: parseFloat(v)})} />
+                    <WizardField label="TOTAL DE ROUNDS" type="number" val={tutorConfig.total_rounds} onChange={(v:any)=>setTutorConfig({...tutorConfig, total_rounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
                  </div>
               </motion.div>
             )}
 
+            {/* STEP 2: MODO DE INÍCIO & TEMPLATE */}
             {step === 2 && (
-               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
-                  <WizardStepTitle icon={<Users size={32}/>} title="EQUIPES E BOTS" desc="DEFINA QUEM PARTICIPARÁ DA COMPETIÇÃO NO CLUSTER." />
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                     <div className="space-y-8 bg-white/5 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
-                        <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Participantes</h4>
-                        <div className="grid grid-cols-2 gap-8">
-                           <WizardField label="EQUIPES HUMANAS" type="number" val={formData.humanTeamsCount} onChange={(v:any)=>setFormData({...formData, humanTeamsCount: Math.max(1, parseInt(v))})} />
-                           <WizardField label="EQUIPES BOTS" type="number" val={formData.botsCount} onChange={(v:any)=>setFormData({...formData, botsCount: parseInt(v)})} />
+              <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -25 }} className="space-y-12 pb-20">
+                 <WizardStepTitle icon={<Library size={32}/>} title="2. MODO DE INÍCIO DA ARENA & TEMPLATES" desc="Selecione o modelo pedagógico de entrada e gerencie templates corporativos." />
+                 
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Modo 1: Start from Zero */}
+                    <div 
+                      onClick={() => handleModeChange('start_from_zero')}
+                      className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[300px] hover:scale-[1.02] ${tutorConfig.starting_mode === 'start_from_zero' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                    >
+                      <div>
+                        <div className="w-14 h-14 bg-orange-600/20 text-orange-500 rounded-2xl flex items-center justify-center mb-6"><Award size={24} /></div>
+                        <h4 className="text-xl font-black text-white italic">START FROM ZERO</h4>
+                        <p className="text-xs text-slate-500 mt-4 leading-relaxed">Competições avançadas. Equipes iniciam puramente com Capital Social inicial em Caixa, devendo instalar máquinas e gerir contrações de equipe do absoluto zero.</p>
+                      </div>
+                      <span className="text-[10px] uppercase tracking-[0.3em] font-black text-orange-500 mt-6 block">NÍVEL: DIFÍCIL (PRO)</span>
+                    </div>
+
+                    {/* Modo 2: Start with Base */}
+                    <div 
+                      onClick={() => handleModeChange('start_with_base')}
+                      className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[300px] hover:scale-[1.02] ${tutorConfig.starting_mode === 'start_with_base' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                    >
+                      <div>
+                        <div className="w-14 h-14 bg-blue-600/20 text-blue-500 rounded-2xl flex items-center justify-center mb-6"><Factory size={24} /></div>
+                        <h4 className="text-xl font-black text-white italic">START WITH BASE</h4>
+                        <p className="text-xs text-slate-500 mt-4 leading-relaxed">Estrutura tradicional. As equipes iniciam com parque industrial montado (máquinas básicas, colaboradores e capital fiduciário balanceado).</p>
+                      </div>
+                      <span className="text-[10px] uppercase tracking-[0.3em] font-black text-blue-500 mt-6 block">NÍVEL: MÉDIO (PADRÃO)</span>
+                    </div>
+
+                    {/* Modo 3: Start with Running Company */}
+                    <div 
+                      onClick={() => handleModeChange('start_with_running')}
+                      className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[300px] hover:scale-[1.02] ${tutorConfig.starting_mode === 'start_with_running' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                    >
+                      <div>
+                        <div className="w-14 h-14 bg-emerald-600/20 text-emerald-500 rounded-2xl flex items-center justify-center mb-6"><Activity size={24} /></div>
+                        <h4 className="text-xl font-black text-white italic">RUNNING COMPANY</h4>
+                        <p className="text-xs text-slate-500 mt-4 leading-relaxed">Operação em andamento. Equipes assumem companhia estabelecida com estoque de MP, produtos finalizados, parcelamentos de impostos/fornecedores e obrigações históricas.</p>
+                      </div>
+                      <span className="text-[10px] uppercase tracking-[0.3em] font-black text-emerald-500 mt-6 block">NÍVEL: FÁCIL (ACELERADO)</span>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-900/60 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-3"><FolderOpen size={18} className="text-orange-500" /> Carregar Configuração de Template</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">Carregue rapidamente uma árvore contábil ou estrutura previamente salva para esta arena Sandbox.</p>
+                      {tplLoading ? (
+                        <div className="flex items-center gap-3 text-xs font-black text-slate-500"><Loader2 className="animate-spin" size={16}/> Sincronizando templates...</div>
+                      ) : savedTemplates.length === 0 ? (
+                        <div className="text-xs font-black text-slate-600 italic">Lista de templates vazia no momento (padrões locais ativos).</div>
+                      ) : (
+                        <div className="space-y-3 max-h-[160px] overflow-y-auto pr-3 custom-scrollbar">
+                          {savedTemplates.map((t) => (
+                            <div key={t.id} className="flex items-center justify-between p-4 bg-slate-950/80 border border-white/5 rounded-2xl hover:border-orange-500/30 transition-all">
+                              <div className="text-left w-3/4">
+                                <span className="block text-xs font-bold text-white uppercase truncate">{t.name}</span>
+                                <span className="block text-[10px] text-slate-500 truncate mt-1">{t.description || "Sem descrição informada."}</span>
+                              </div>
+                              <button onClick={() => handleLoadTpl(t)} className="px-5 py-2 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase hover:bg-white hover:text-orange-950 transition-colors">Carregar</button>
+                            </div>
+                          ))}
                         </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-6 border-l border-white/5 pl-8">
+                      <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-3"><Save size={18} className="text-emerald-500" /> Salvar Configuração Atual</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed font-medium">Salve os dados contábeis, industriais e de mercado que você montou para reutilizar futuramente em qualquer campeonato.</p>
+                      <button 
+                        onClick={() => setShowSaveTplModal(true)} 
+                        className="px-8 py-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-emerald-950 transition-colors shadow-2xl flex items-center gap-3"
+                      >
+                        <Save size={16}/> Salvar Ajustes Atuais
+                      </button>
+                    </div>
+                 </div>
+
+                 {/* Modal de confirmação do salvar template */}
+                 {showSaveTplModal && (
+                   <div className="fixed inset-0 z-[999] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm">
+                     <div className="bg-slate-900 border-2 border-white/10 p-10 rounded-[3rem] max-w-lg w-full space-y-8 shadow-[0_50px_100px_rgba(0,0,0,0.9)] animate-in fade-in zoom-in duration-200">
+                       <h3 className="text-2xl font-black text-white uppercase italic">Salvar P0 como Template</h3>
+                       <div className="space-y-4">
+                         <div className="space-y-2 text-left">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome do Template</label>
+                           <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Ex: Cenario Dificil Autopeças" className="w-full p-4 bg-slate-950 border border-white/10 rounded-2xl text-white font-black" />
+                         </div>
+                         <div className="space-y-2 text-left">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Descrição detalhada</label>
+                           <textarea value={templateDesc} onChange={e => setTemplateDesc(e.target.value)} placeholder="Este modelo inicia as equipes com altos compromissos de endividamento..." className="w-full p-4 bg-slate-950 border border-white/10 rounded-2xl text-white text-xs h-24" />
+                         </div>
+                       </div>
+                       <div className="flex gap-4 justify-end">
+                         <button onClick={() => setShowSaveTplModal(false)} className="px-6 py-3 bg-slate-950 border border-white/10 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white transition-colors">Cancelar</button>
+                         <button onClick={handleSaveTpl} className="px-8 py-3 bg-emerald-600 rounded-xl text-[10px] font-black uppercase text-white hover:bg-white hover:text-emerald-950 transition-colors">Gravar Template</button>
+                       </div>
                      </div>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar">
-                        {teamNames.map((n, i) => (
-                           <div key={i} className="relative">
-                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600">ID 0{i+1}</span>
-                             <input value={n} onChange={e => { const next = [...teamNames]; next[i] = e.target.value; setTeamNames(next); }} className="w-full bg-slate-900 border border-white/10 pl-14 pr-4 py-4 rounded-2xl text-[10px] font-black text-white uppercase outline-none focus:border-blue-500 transition-all" />
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-               </motion.div>
+                   </div>
+                 )}
+              </motion.div>
             )}
 
+            {/* STEP 3: CONFIGURAÇÃO DO PARQUE INDUSTRIAL */}
             {step === 3 && (
-               <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
-                  <WizardStepTitle icon={<MapPin size={32}/>} title="MERCADOS E REGIÕES" desc="PESO DA DEMANDA E MOEDAS LOCAIS." />
+              <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
+                 <WizardStepTitle icon={<Cpu size={32}/>} title="3. PARQUE INDUSTRIAL & ENGENHARIA" desc="Dimensione e configure a frota produtiva de máquinas e operadores." />
+                 
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                   {/* Config Máquina Alfa */}
+                   <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                     <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                       <span className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">A</span>
+                       <div>
+                         <h4 className="text-xl font-black text-white italic leading-none">MÁQUINA ALPHA</h4>
+                         <span className="text-[9px] text-slate-500 font-mono">Valor Unitário: $500k • Cap: 2000 un</span>
+                       </div>
+                     </div>
+                     <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" val={tutorConfig.machines[0].qty} onChange={(v:any)=>{
+                       const mac = [...tutorConfig.machines];
+                       mac[0].qty = Math.max(0, parseInt(v) || 0);
+                       setTutorConfig({...tutorConfig, machines: mac});
+                     }} />
+                     <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[0].age} onChange={(v:any)=>{
+                       const mac = [...tutorConfig.machines];
+                       mac[0].age = Math.min(25, Math.max(0, parseInt(v) || 0));
+                       setTutorConfig({...tutorConfig, machines: mac});
+                     }} />
+                     <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={tutorConfig.machines[0].efficiency * 100} onChange={(v:any)=>{
+                       const mac = [...tutorConfig.machines];
+                       mac[0].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
+                       setTutorConfig({...tutorConfig, machines: mac});
+                     }} />
+                   </div>
+
+                   {/* Config Máquina Beta */}
+                   <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                     <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                       <span className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">B</span>
+                       <div>
+                         <h4 className="text-xl font-black text-white italic leading-none">MÁQUINA BETA</h4>
+                         <span className="text-[9px] text-slate-500 font-mono">Valor Unitário: $1.5M • Cap: 6000 un</span>
+                       </div>
+                     </div>
+                     <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" val={tutorConfig.machines[1].qty} onChange={(v:any)=>{
+                       const mac = [...tutorConfig.machines];
+                       mac[1].qty = Math.max(0, parseInt(v) || 0);
+                       setTutorConfig({...tutorConfig, machines: mac});
+                     }} />
+                     <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[1].age} onChange={(v:any)=>{
+                       const mac = [...tutorConfig.machines];
+                       mac[1].age = Math.min(25, Math.max(0, parseInt(v) || 0));
+                       setTutorConfig({...tutorConfig, machines: mac});
+                     }} />
+                     <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={tutorConfig.machines[1].efficiency * 100} onChange={(v:any)=>{
+                       const mac = [...tutorConfig.machines];
+                       mac[1].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
+                       setTutorConfig({...tutorConfig, machines: mac});
+                     }} />
+                   </div>
+
+                   {/* Config Máquina Gama */}
+                   <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
+                     <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                       <span className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">G</span>
+                       <div>
+                         <h4 className="text-xl font-black text-white italic leading-none">MÁQUINA GAMMA</h4>
+                         <span className="text-[9px] text-slate-500 font-mono">Valor Unitário: $3.0M • Cap: 12000 un</span>
+                       </div>
+                     </div>
+                     <WizardField label="QUANTIDADE INICIAL IN FROTA" type="number" val={tutorConfig.machines[2].qty} onChange={(v:any)=>{
+                       const mac = [...tutorConfig.machines];
+                       mac[2].qty = Math.max(0, parseInt(v) || 0);
+                       setTutorConfig({...tutorConfig, machines: mac});
+                     }} />
+                     <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[2].age} onChange={(v:any)=>{
+                       const mac = [...tutorConfig.machines];
+                       mac[2].age = Math.min(25, Math.max(0, parseInt(v) || 0));
+                       setTutorConfig({...tutorConfig, machines: mac});
+                     }} />
+                     <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={tutorConfig.machines[2].efficiency * 100} onChange={(v:any)=>{
+                       const mac = [...tutorConfig.machines];
+                       mac[2].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
+                       setTutorConfig({...tutorConfig, machines: mac});
+                     }} />
+                   </div>
+                 </div>
+
+                 {/* Configuração de Mão de Obra */}
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 bg-white/5 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
+                   <div className="md:col-span-3 mb-2"><h4 className="text-xs font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">MÃO DE OBRA INDUSTRAIL E TREINAMENTO</h4></div>
+                   <WizardField label="SALÁRIO BASE RECRUTADOR ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.workforce.baseSalary} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, baseSalary: v}})}/>
+                   <WizardSelect label="NÍVEL DE TREINAMENTO INICIAL" val={tutorConfig.workforce.trainingLevel} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, trainingLevel: parseInt(v)}})} options={[{v:'1',l:'NÍVEL 1 (BÁSICO)'},{v:'2',l:'NÍVEL 2 (OPERACIONAL)'},{v:'3',l:'NÍVEL 3 (ESPECIALIZADO)'},{v:'4',l:'NÍVEL 4 (MASTER)'},{v:'5',l:'NÍVEL 5 (ORACLE ENGINE)'}]} />
+                   <div className="p-8 bg-slate-950/60 rounded-3xl border border-white/5 flex flex-col justify-center">
+                     <span className="block text-[10px] uppercase font-black text-slate-600 tracking-wider">Capacidade Pronta</span>
+                     <span className="text-2xl font-mono font-black text-white mt-1">
+                      {tutorConfig.machines.reduce((acc, m) => acc + (m.qty * (m.model === 'alfa' ? 2000 : m.model === 'beta' ? 6000 : 12000)), 0)} un/ciclo
+                     </span>
+                   </div>
+                 </div>
+              </motion.div>
+            )}
+
+            {/* STEP 4: CONFIGURAÇÃO DE MERCADOS E REGIÕES */}
+            {step === 4 && (
+              <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
+                  <WizardStepTitle icon={<MapPin size={32}/>} title="4. MERCADOS, COMPETIÇÃO E REGIÕES" desc="Defina a segmentação de mercados, pricing base e custos logísticos por praça." />
                   <div className="space-y-10">
                     <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
                       <h4 className="text-xl font-black text-white uppercase italic">Configuração de Regiões</h4>
-                      <button onClick={addRegion} className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-xl active:scale-95">
+                      <button 
+                        onClick={() => {
+                          const nextId = tutorConfig.regions.length + 1;
+                          const reg = [...tutorConfig.regions, { id: nextId, name: `Região 0${nextId}`, currency: 'BRL' as CurrencyType, demand_weight: 15, suggested_price: 425.0, distribution_cost: 50.0, marketing_cost: 10000.0 }];
+                          setTutorConfig({ ...tutorConfig, regions: reg });
+                        }} 
+                        className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-xl active:scale-95"
+                      >
                         <Plus size={16}/> Adicionar Região
                       </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                       {regionConfigs.map((r, i) => (
+                       {tutorConfig.regions.map((r, i) => (
                           <div key={i} className="p-8 bg-slate-900 border border-white/5 rounded-[3rem] space-y-6 group hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
                              <div className="space-y-3">
                                 <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Nome da Região</label>
-                                <input value={r.name} onChange={e => updateRegion(i, { name: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-white font-black uppercase italic outline-none focus:border-orange-500" />
+                                <input value={r.name} onChange={e => {
+                                  const reg = [...tutorConfig.regions];
+                                  reg[i].name = e.target.value;
+                                  setTutorConfig({...tutorConfig, regions: reg});
+                                }} className="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-white font-black uppercase italic outline-none focus:border-orange-500" />
                              </div>
                              <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-3">
-                                   <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Moeda</label>
-                                   <select value={r.currency} onChange={e => updateRegion(i, { currency: e.target.value as CurrencyType })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-[10px] font-black text-white uppercase outline-none">
+                                   <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Moeda Transacional</label>
+                                   <select value={r.currency} onChange={e => {
+                                     const reg = [...tutorConfig.regions];
+                                     reg[i].currency = e.target.value as CurrencyType;
+                                     setTutorConfig({...tutorConfig, regions: reg});
+                                   }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-[10px] font-black text-white uppercase outline-none">
                                       <option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="CNY">CNY</option><option value="BTC">BTC</option>
                                    </select>
                                 </div>
                                 <div className="space-y-3">
                                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest italic ml-2">Peso Demanda (%)</label>
-                                   <input type="number" value={r.demand_weight} onChange={e => updateRegion(i, { demand_weight: parseInt(e.target.value) || 0 })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-center text-lg font-mono font-black text-orange-500 outline-none" />
+                                   <input type="number" value={r.demand_weight} onChange={e => {
+                                     const reg = [...tutorConfig.regions];
+                                     reg[i].demand_weight = parseInt(e.target.value) || 0;
+                                     setTutorConfig({...tutorConfig, regions: reg});
+                                   }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-center text-lg font-mono font-black text-orange-500 outline-none" />
                                 </div>
                              </div>
-                             {regionConfigs.length > 1 && (
-                               <button onClick={() => setRegionConfigs(regionConfigs.filter((_, idx) => idx !== i))} className="absolute top-4 right-4 p-2 text-slate-700 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
+                             <div className="grid grid-cols-2 gap-6 pt-3 border-t border-white/5">
+                                <div className="space-y-2">
+                                  <label className="text-[8px] font-black text-slate-500 uppercase">Preço Venda Sugerido</label>
+                                  <input type="number" value={r.suggested_price} onChange={e => {
+                                     const reg = [...tutorConfig.regions];
+                                     reg[i].suggested_price = parseFloat(e.target.value) || 0;
+                                     setTutorConfig({...tutorConfig, regions: reg});
+                                  }} className="w-full p-2 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-mono font-bold text-white hover:border-orange-500 focus:border-orange-500 outline-none" />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-[8px] font-black text-slate-500 uppercase">Fator Custo Carga Unit.</label>
+                                  <input type="number" value={r.distribution_cost} onChange={e => {
+                                     const reg = [...tutorConfig.regions];
+                                     reg[i].distribution_cost = parseFloat(e.target.value) || 0;
+                                     setTutorConfig({...tutorConfig, regions: reg});
+                                  }} className="w-full p-2 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-mono font-bold text-white hover:border-orange-500 focus:border-orange-500 outline-none" />
+                                </div>
+                             </div>
+                             {tutorConfig.regions.length > 1 && (
+                               <button 
+                                 onClick={() => {
+                                   const reg = tutorConfig.regions.filter((_, idx) => idx !== i);
+                                   setTutorConfig({...tutorConfig, regions: reg});
+                                 }} 
+                                 className="absolute top-4 right-4 p-2 text-slate-700 hover:text-rose-500 transition-colors"
+                               >
+                                 <Trash2 size={16}/>
+                               </button>
                              )}
                           </div>
                        ))}
                     </div>
                   </div>
-               </motion.div>
+              </motion.div>
             )}
 
-            {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="space-y-12 pb-24">
-                 <WizardStepTitle icon={<Settings2 size={32}/>} title="REGRAS E PREMIAÇÕES" desc="CONFIGURAÇÃO DE CUSTOS BASE E METAS DE AUDITORIA." />
+            {/* STEP 5: CONFIGURAÇÃO FINANCEIRA INICIAL */}
+            {step === 5 && (
+              <motion.div key="s5" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="space-y-12 pb-24">
+                 <WizardStepTitle icon={<Landmark size={32}/>} title="5. EQUILÍBRIO FINANCEIRO INICIAL" desc="Regule as contas contábeis de liquidez e política de fomento à acionistas." />
                  
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {/* INSUMOS E ESTOCAGEM */}
+                    {/* LIQUIDEZ E CAPITAL */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[6px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Insumos e Estocagem</h4>
-                       <WizardField label="MP-A Base ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.mp_a} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_a: v}})} />
-                       <WizardField label="MP-B Base ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.mp_b} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, mp_b: v}})} />
-                       <WizardField label="Ágio Compras Esp. (%)" type="number" val={marketIndicators.special_purchase_premium} onChange={(v:any)=>setMarketIndicators({...marketIndicators, special_purchase_premium: parseFloat(v)})} />
+                       <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Capitalização de Entrada</h4>
+                       <WizardField label="CAPITAL SOCIAL FIDUCIÁRIO ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.capital_social} onChange={(v:any)=>setTutorConfig({...tutorConfig, capital_social: v})} />
+                       <WizardField label="CAIXA / BANCO INICIAL ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.caixa_inicial} onChange={(v:any)=>setTutorConfig({...tutorConfig, caixa_inicial: v})} />
+                       <WizardField label="APLICAÇÕES FINANCEIRAS ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.financial_investments} onChange={(v:any)=>setTutorConfig({...tutorConfig, financial_investments: v})} />
+                    </div>
+
+                    {/* VALOR DE MATÉRIA PRIMA */}
+                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                       <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Carga De Estoques P0</h4>
                        <div className="grid grid-cols-2 gap-4">
-                          <WizardField label="Estocagem MP ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.storage_mp} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, storage_mp: v}})} />
-                          <WizardField label="Estocagem PA ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.storage_finished} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, storage_finished: v}})} />
+                         <WizardField label="QTD MP-A" type="number" val={tutorConfig.inventories.mpa_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpa_qty: parseInt(v) || 0}})} />
+                         <WizardField label="PREÇO UN MPA" type="number" val={tutorConfig.inventories.mpa_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpa_unit_val: parseFloat(v) || 0}})} />
+                       </div>
+                       <div className="grid grid-cols-2 gap-4">
+                         <WizardField label="QTD MP-B" type="number" val={tutorConfig.inventories.mpb_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpb_qty: parseInt(v) || 0}})} />
+                         <WizardField label="PREÇO UN MPB" type="number" val={tutorConfig.inventories.mpb_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpb_unit_val: parseFloat(v) || 0}})} />
+                       </div>
+                       <div className="grid grid-cols-2 gap-4">
+                         <WizardField label="PA ACABADO" type="number" val={tutorConfig.inventories.finished_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, finished_qty: parseInt(v) || 0}})} />
+                         <WizardField label="CUSTO UN PA" type="number" val={tutorConfig.inventories.finished_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, finished_unit_val: parseFloat(v) || 0}})} />
                        </div>
                     </div>
 
-                    {/* ATIVO & CAPEX */}
+                    {/* ACIONISTAS E TRIBUTÁRIOS */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Ativo & CapEx</h4>
-                       <WizardField label="MÁQUINA ALFA ($)" type="currency" currency={formData.currency} val={marketIndicators.machinery_values.alfa} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: v}})} />
-                       <WizardField label="MÁQUINA BETA ($)" type="currency" currency={formData.currency} val={marketIndicators.machinery_values.beta} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, beta: v}})} />
-                       <WizardField label="MÁQUINA GAMA ($)" type="currency" currency={formData.currency} val={marketIndicators.machinery_values.gama} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, gama: v}})} />
-                       <WizardField label="Deságio Venda (%)" type="number" val={marketIndicators.machine_sale_discount} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machine_sale_discount: parseFloat(v)})} />
-                    </div>
-
-                    {/* MERCADO E STAFFING */}
-                    <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                       <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Mercado & Staffing</h4>
-                       <WizardField label="Preço Venda Médio ($)" type="currency" currency={formData.currency} val={marketIndicators.avg_selling_price} onChange={(v:any)=>setMarketIndicators({...marketIndicators, avg_selling_price: v})} />
-                       <WizardField label="Distribuição Unit. ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.distribution_unit} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, distribution_unit: v}})} />
-                       <WizardField label="Campanha Marketing ($)" type="currency" currency={formData.currency} val={marketIndicators.prices.marketing_campaign} onChange={(v:any)=>setMarketIndicators({...marketIndicators, prices: {...marketIndicators.prices, marketing_campaign: v}})} />
-                       <WizardField label="Salário Base P00 ($)" type="currency" currency={formData.currency} val={marketIndicators.hr_base.salary} onChange={(v:any)=>setMarketIndicators({...marketIndicators, hr_base: {...marketIndicators.hr_base, salary: v}})} />
-                       <WizardField label="Horas Produção/Homem" type="number" val={marketIndicators.production_hours_period} onChange={(v:any)=>setMarketIndicators({...marketIndicators, production_hours_period: parseInt(v)})} />
-                    </div>
-
-                    {/* PREMIAÇÕES POR PRECISÃO */}
-                    <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8 bg-orange-600/5 p-10 rounded-[3rem] border-2 border-orange-500/20 shadow-2xl">
-                       <div className="md:col-span-3 mb-4"><h4 className="text-xs font-black text-orange-500 uppercase tracking-[0.4em] italic">Premiações por Precisão (Audit Awards)</h4></div>
-                       <WizardField label="Prêmio: Custo Unitário ($)" type="currency" currency={formData.currency} val={marketIndicators.award_values.cost_precision} onChange={(v:any)=>setMarketIndicators({...marketIndicators, award_values: {...marketIndicators.award_values, cost_precision: v}})} />
-                       <WizardField label="Prêmio: Faturamento ($)" type="currency" currency={formData.currency} val={marketIndicators.award_values.revenue_precision} onChange={(v:any)=>setMarketIndicators({...marketIndicators, award_values: {...marketIndicators.award_values, revenue_precision: v}})} />
-                       <WizardField label="Prêmio: Lucro Líquido ($)" type="currency" currency={formData.currency} val={marketIndicators.award_values.profit_precision} onChange={(v:any)=>setMarketIndicators({...marketIndicators, award_values: {...marketIndicators.award_values, profit_precision: v}})} />
+                       <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Acionistas & IPO</h4>
+                       <WizardField label="PREÇO DA AÇÃO INICIAL ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.share_price_initial} onChange={(v:any)=>setTutorConfig({...tutorConfig, share_price_initial: v})} />
+                       <WizardField label="DISTRIBUIÇÃO DIVIDENDOS (%)" type="number" val={tutorConfig.dividend_percent} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_percent: parseFloat(v) || 0})} />
+                       <WizardSelect label="PAGAR DIVIDENDOS A CADA" val={tutorConfig.dividend_frequency} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_frequency: parseInt(v)})} options={[{v:'1',l:'TODO PERÍODO (ROUNDS)'},{v:'2',l:'A CADA 2 ROUNDS'},{v:'4',l:'A CADA 4 ROUNDS (QUADRIMESTRE)'}]} />
                     </div>
                  </div>
               </motion.div>
             )}
 
-            {step === 5 && (
-              <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10">
-                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="INDICADORES ESTRATÉGICOS" desc="MATRIZ ECONÔMICA COMPLETA v18.0 ORACLE." />
+            {/* STEP 6: PARÂMETROS MACROECONÔMICOS DO P0 */}
+            {step === 6 && (
+              <motion.div key="s6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-10">
+                 <WizardStepTitle icon={<BarChart3 size={32}/>} title="6. CRONOGRAMA MACROECONÔMICO" desc="Variações conjunturais, taxas de compliance tributário, juros e câmbio." />
                  
-                 <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[620px] flex flex-col relative group">
+                 <div className="rounded-[3rem] bg-slate-950/90 border-2 border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden h-[450px] flex flex-col relative group">
                     <div className="overflow-auto custom-scrollbar flex-1 relative">
                        <table className="w-full text-left border-separate border-spacing-0">
                           <thead className="sticky top-0 z-[100] bg-slate-900 shadow-xl">
@@ -336,92 +754,108 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <CompactMatrixRow periods={totalPeriods} label="JUROS BANCÁRIOS + TR (%)" macroKey="interest_rate_tr" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="JUROS COMPRA A PRAZO (%)" macroKey="supplier_interest" rules={roundRules} update={updateRoundMacro} icon={<Truck size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="RENDIMENTO APLICAÇÃO (%)" macroKey="investment_return_rate" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="IVA SOBRE COMPRAS (%)" macroKey="vat_purchases_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="IVA SOBRE VENDAS (%)" macroKey="vat_sales_rate" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />							 
                              <CompactMatrixRow periods={totalPeriods} label="IMPOSTO DE RENDA (%)" macroKey="tax_rate_ir" rules={roundRules} update={updateRoundMacro} icon={<Scale size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="MULTA POR ATRASOS (%)" macroKey="late_penalty_rate" rules={roundRules} update={updateRoundMacro} icon={<ShieldAlert size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="DESÁGIO VENDA MÁQUINAS (%)" macroKey="machine_sale_discount" rules={roundRules} update={updateRoundMacro} icon={<TrendingUp size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="ÁGIO COMPRAS ESPECIAIS (%)" macroKey="special_purchase_premium" rules={roundRules} update={updateRoundMacro} icon={<Package size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="ÁGIO EMPRÉSTIMO COMPULSÓRIO (%)" macroKey="compulsory_loan_agio" rules={roundRules} update={updateRoundMacro} icon={<Landmark size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="ENCARGOS SOCIAIS (%)" macroKey="social_charges" rules={roundRules} update={updateRoundMacro} icon={<Users size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="MATÉRIA-PRIMA A (%)" macroKey="raw_material_a_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="MATÉRIA-PRIMA B (%)" macroKey="raw_material_b_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="MÁQUINA ALFA (%)" macroKey="machine_alpha_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="MÁQUINA BETA (%)" macroKey="machine_beta_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="MÁQUINA GAMA (%)" macroKey="machine_gamma_price_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="CAMPANHAS MARKETING (%)" macroKey="marketing_campaign_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="DISTRIBUIÇÃO DE PRODUTOS (%)" macroKey="distribution_cost_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="GASTOS COM ESTOCAGEM (%)" macroKey="storage_cost_adjust" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO BRAZIL (%)" macroKey="export_tariff_brazil" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO EUA (%)" macroKey="export_tariff_usa" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO EURO (%)" macroKey="export_tariff_euro" rules={roundRules} update={updateRoundMacro} />							 
-                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO UK (%)" macroKey="export_tariff_uk" rules={roundRules} update={updateRoundMacro} />
-                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO CHINA (%)" macroKey="export_tariff_china" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} />
-                             <CompactMatrixRow periods={totalPeriods} label="TARIFA EXPORTAÇÃO BTC (%)" macroKey="export_tariff_btc" rules={roundRules} update={updateRoundMacro} icon={<Bitcoin size={10}/>} />
                              <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: REAL (BRL)" macroKey="BRL" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
                              <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: DÓLAR (USD)" macroKey="USD" rules={roundRules} update={updateRoundMacro} icon={<DollarSign size={10}/>} isExchange />
                              <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: EURO (EUR)" macroKey="EUR" rules={roundRules} update={updateRoundMacro} icon={<Euro size={10}/>} isExchange />
-                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: LIBRA (GBP)" macroKey="GBP" rules={roundRules} update={updateRoundMacro} icon={<PoundSterling size={10}/>} isExchange />
-                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: YUAN (CNY)" macroKey="CNY" rules={roundRules} update={updateRoundMacro} icon={<Globe size={10}/>} isExchange />
-                             <CompactMatrixRow periods={totalPeriods} label="CÂMBIO: BITCOIN (BTC)" macroKey="BTC" rules={roundRules} update={updateRoundMacro} icon={<Bitcoin size={10}/>} isExchange />
-                             
-                             <tr className="hover:bg-white/[0.03] transition-colors">
-                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-emerald-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><HardDrive size={10}/> LIBERAR COMPRA/VENDA MÁQUINAS</td>
-                                {Array.from({ length: totalPeriods }).map((_, i) => (
-                                   <td key={i} className="p-2 border-r border-white/5 text-center">
-                                      <button 
-                                        onClick={() => updateRoundMacro(i, 'allow_machine_sale', !(roundRules[i]?.allow_machine_sale ?? DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale))}
-                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400' : 'bg-rose-600/10 border-rose-500/30 text-rose-500 opacity-40'}`}
-                                      >
-                                         {(roundRules[i]?.allow_machine_sale ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.allow_machine_sale || false)) ? 'SIM' : 'NÃO'}
-                                      </button>
-                                   </td>
-                                ))}
-                             </tr>
-
-                             <tr className="hover:bg-white/[0.03] transition-colors">
-                                <td className="p-4 sticky left-0 bg-slate-950 z-30 font-black text-[9px] text-blue-400 uppercase tracking-widest border-r-2 border-white/10 whitespace-nowrap flex items-center gap-2"><ClipboardList size={10}/> APRESENTAR BUSINESS PLAN</td>
-                                {Array.from({ length: totalPeriods }).map((_, i) => (
-                                   <td key={i} className="p-2 border-r border-white/5 text-center">
-                                      <button 
-                                        onClick={() => updateRoundMacro(i, 'require_business_plan', !(roundRules[i]?.require_business_plan ?? DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan))}
-                                        className={`w-full py-2 rounded-xl text-[8px] font-black uppercase transition-all border ${ (roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-slate-900 border-white/10 text-slate-700 opacity-40'}`}
-                                      >
-                                         {(roundRules[i]?.require_business_plan ?? (DEFAULT_INDUSTRIAL_CHRONOGRAM[i]?.require_business_plan || false)) ? 'SIM' : 'NÃO'}
-                                      </button>
-                                   </td>
-                                ))}
-                             </tr>
                           </tbody>
                        </table>
                     </div>
-                    <motion.div animate={{ left: ['-1%', '101%'] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="absolute top-0 bottom-0 w-px bg-orange-500/20 shadow-[0_0_15px_#f97316] z-[110] pointer-events-none" />
                  </div>
               </motion.div>
             )}
 
-            {step === 6 && (
-              <motion.div key="s6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                 <WizardStepTitle icon={<Calculator size={32}/>} title="Oracle Baselines" desc="Dados contábeis iniciais do Round Zero." />
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    <SummaryCard label="ATIVO TOTAL" val={totalAssets} currency={formData.currency} icon={<PieChart size={20}/>} color="orange" />
-                    <SummaryCard label="PATRIMÔNIO LÍQUIDO" val={totalEquity} currency={formData.currency} icon={<BarChart size={20}/>} color="blue" />
+            {/* STEP 7: PREVIEW COMPLETO DO P0 (Obrigatoriedade) */}
+            {step === 7 && (
+              <motion.div key="s7" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                 <div className="flex justify-between items-center border-b border-white/5 pb-8">
+                   <WizardStepTitle icon={<Calculator size={32}/>} title="7. REAL-TIME IMPACT PREVIEW (P0)" desc="Auditoria fiduciária dinâmica antes do deploy oficial." />
+                   <button 
+                     onClick={handleRecalculate}
+                     className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
+                   >
+                     <Activity size={16}/> Recalcular P0
+                   </button>
                  </div>
+
+                 {/* Top indicators */}
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <SummaryCard label="ATIVO TOTAL" val={totalAssets} currency={tutorConfig.currency} icon={<PieChart size={20}/>} color="orange" />
+                    <SummaryCard label="PATRIMÔNIO LÍQUIDO" val={totalEquity} currency={tutorConfig.currency} icon={<BarChart size={20}/>} color="blue" />
+                    
+                    {/* E-SDS badge */}
+                    <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 flex items-center gap-6 shadow-xl text-left">
+                       <div className="p-4 rounded-2xl bg-emerald-600/20 text-emerald-400"><Gauge size={20}/></div>
+                       <div>
+                         <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">E-SDS INICIAL</span>
+                         <span className="text-xl font-black text-emerald-400 capitalize flex items-center gap-2">
+                           {estimatedESDS.score} / 100
+                           <span className="text-[9px] font-bold bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-500">{estimatedESDS.zone}</span>
+                         </span>
+                       </div>
+                    </div>
+
+                    {/* Industrial summary */}
+                    <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 flex items-center gap-6 shadow-xl text-left">
+                       <div className="p-4 rounded-2xl bg-purple-600/20 text-purple-400"><Cpu size={20}/></div>
+                       <div>
+                         <span className="block text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">MÁQUINAS / CAPACIDADE</span>
+                         <span className="text-lg font-mono font-black text-white">
+                           {p0StatementsResult.machines.length} Unidades
+                         </span>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Balance validation indicator */}
+                 <div className="p-6 bg-emerald-950/40 border-2 border-emerald-500/30 rounded-[2rem] flex items-center justify-between text-left">
+                   <div className="flex items-center gap-4">
+                     <CheckCircle2 size={32} className="text-emerald-500" />
+                     <div>
+                       <span className="block text-xs font-black text-emerald-400 uppercase tracking-wider">BALANÇO PATRIMONIAL CONCILIADO</span>
+                       <span className="text-[11px] text-slate-500 font-medium">Os ativos batem 100% com o Passivo + Patrimônio Líquido nesta simulação ({formatCurrency(totalAssets, tutorConfig.currency)}).</span>
+                     </div>
+                   </div>
+                   <span className="text-[10px] font-mono font-black text-emerald-500 uppercase">Fechamento Líquido</span>
+                 </div>
+
+                 {/* Financial statements editor preview */}
                  <FinancialStructureEditor 
-                    initialBalance={financials.balance_sheet} 
-                    initialDRE={financials.dre} 
-                    initialCashFlow={financials.cash_flow} 
-                    onChange={(u) => setFinancials(u as any)}
-                    currency={formData.currency}
+                    initialBalance={editableFinancials.balance_sheet} 
+                    initialDRE={editableFinancials.dre} 
+                    initialCashFlow={editableFinancials.cash_flow} 
+                    onChange={(u) => setEditableFinancials(u as any)}
+                    currency={tutorConfig.currency}
+                    readOnly
                  />
               </motion.div>
             )}
 
-            {step === 7 && (
-               <motion.div key="s7" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 text-center py-20">
+            {/* STEP 8: CONFIRMAÇÃO FINAL */}
+            {step === 8 && (
+               <motion.div key="s8" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 text-center py-10">
                   <CheckCircle2 size={120} className="text-emerald-500 mx-auto animate-pulse" />
-                  <h2 className="text-7xl font-black text-white uppercase italic tracking-tighter">Arena Trial Pronta</h2>
-                  <p className="text-slate-500 text-2xl font-medium max-w-2xl mx-auto italic">Protocolo Oracle v18.0 Gold sincronizado com o cluster temporário.</p>
+                  <h2 className="text-6xl font-black text-white uppercase italic tracking-tighter">Arena Sandbox Pronta</h2>
+                  <p className="text-slate-500 text-lg font-medium max-w-2xl mx-auto italic">O calibrador fiduciário inicial está totalmente validado com a estrutura industrial do Tutor.</p>
+
+                  <div className="max-w-2xl mx-auto bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 text-left grid grid-cols-2 gap-6">
+                    <div>
+                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Prof. Administrador</span>
+                      <span className="text-sm font-black text-white uppercase">{tutorConfig.tutorName}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Entidade Financeira</span>
+                      <span className="text-sm font-black text-white uppercase">{tutorConfig.institutionName}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Modo de Inicialização</span>
+                      <span className="text-sm font-black text-orange-500 uppercase font-mono">{tutorConfig.starting_mode.replace(/_/g, ' ')}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Moeda & IPO</span>
+                      <span className="text-sm font-black text-white font-mono">{tutorConfig.currency} • {formatCurrency(tutorConfig.share_price_initial, tutorConfig.currency)}</span>
+                    </div>
+                  </div>
                </motion.div>
             )}
           </AnimatePresence>
@@ -443,9 +877,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 const SummaryCard = ({ label, val, icon, color, currency }: any) => (
   <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 flex items-center gap-6 shadow-xl">
      <div className={`p-4 rounded-2xl ${color === 'orange' ? 'bg-orange-600/20 text-orange-500' : 'bg-blue-600/20 text-blue-500'}`}>{icon}</div>
-     <div>
+     <div className="text-left">
        <span className="block text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">{label}</span>
-       <span className="text-3xl font-black text-white font-mono italic">{formatCurrency(val, currency)}</span>
+       <span className="text-2xl font-black text-white font-mono italic">{formatCurrency(val, currency)}</span>
      </div>
   </div>
 );
@@ -474,7 +908,7 @@ const CompactMatrixRow = ({ label, macroKey, rules, update, icon, periods, isExc
 const WizardStepTitle = ({ icon, title, desc }: any) => (
   <div className="flex items-center gap-8 border-b border-white/5 pb-8">
      <div className="p-6 bg-slate-900 border border-orange-500/30 rounded-[2.5rem] text-orange-500 shadow-2xl flex items-center justify-center">{icon}</div>
-     <div><h3 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3><p className="text-sm font-black text-slate-500 uppercase tracking-[0.4em] mt-3 italic">{desc}</p></div>
+     <div className="text-left"><h3 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none">{title}</h3><p className="text-sm font-black text-slate-500 uppercase tracking-[0.4em] mt-3 italic">{desc}</p></div>
   </div>
 );
 
@@ -492,8 +926,6 @@ const WizardField = ({ label, val, onChange, type = 'text', placeholder, isCurre
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawText = e.target.value;
     if (type === 'currency') {
-      // Remove tudo exceto números e vírgulas/pontos decimais dependendo da localidade
-      // Abordagem Oracle: trata como centavos (multiplica/divide por 100)
       const digits = rawText.replace(/\D/g, '');
       const numericValue = parseInt(digits || '0') / 100;
       onChange(numericValue);
