@@ -73,7 +73,7 @@ export interface BaseP0Config {
   land_value?: number;
   real_estate_acquisition_funding?: 'capital' | 'debt';
 
-  // Parâmetros Contábeis Avançados de P0 (v19.17)
+  // Parâmetros Contábeis Avançados de P0 (v19.17-v19.18)
   clients_initial?: number;
   suppliers_initial?: number;
   taxes_initial?: number;
@@ -159,7 +159,7 @@ export const INDUSTRIAL_BR_TEMPLATE = {
 
 /**
  * Função Oracle determinística para gerar as demonstrações de P0 (Round 0)
- * baseado nas configurações exatas do Tutor.
+ * baseado nas configurações exatas do Tutor na v19.18 Obsidian Diamond Enterprise.
  */
 export function generatePureP0(config: TutorP0Config): { 
   balance_sheet: AccountNode[]; 
@@ -179,16 +179,23 @@ export function generatePureP0(config: TutorP0Config): {
   const BETA_PRICE = 1500000.00;
   const GAMMA_PRICE = 3000000.00;
 
-  // 1. Gerar instâncias físicas das máquinas e calcular valores industriais
+  const isZeroMode = config.starting_mode === 'start_from_zero';
+  const isBaseMode = config.starting_mode === 'start_with_base';
+  const isRunningMode = config.starting_mode === 'start_with_running';
+
+  // 1. Gerar instâncias físicas de máquinas baseadas no modo e dados do tutor
   const generatedMachines: MachineInstance[] = [];
   let totalMachinesAcquisitionValue = 0;
   let totalMachinesAccumDeprec = 0;
 
-  config.machines.forEach((mac, index) => {
+  // Forçar zero absoluto no parque de máquinas para Greenfield de fábrica
+  const actualMachines = isZeroMode ? [] : config.machines;
+
+  actualMachines.forEach((mac, index) => {
     const modelPrice = mac.model === 'alfa' ? ALPHA_PRICE : mac.model === 'beta' ? BETA_PRICE : GAMMA_PRICE;
     for (let q = 0; q < mac.qty; q++) {
       const uniqueId = `m-${mac.model}-${index}-${q}`;
-      // Deprecação: 2.5% por ano
+      // Deprecação: linear consistente de máquinas: 2.5% por ano
       const deprecRate = 0.025;
       const accDeprec = modelPrice * mac.age * deprecRate * mac.efficiency;
       
@@ -205,29 +212,25 @@ export function generatePureP0(config: TutorP0Config): {
     }
   });
 
-  // 2. Resolver Modo de Inicialização Contábil
+  // 2. Parâmetros de Entrada Contábeis e Financeiros
   let cash = config.caixa_inicial;
   let capital = config.capital_social;
   let investments = config.financial_investments;
   
-  let mpa_val = config.inventories.mpa_qty * config.inventories.mpa_unit_val;
-  let mpb_val = config.inventories.mpb_qty * config.inventories.mpb_unit_val;
-  let finished_val = config.inventories.finished_qty * config.inventories.finished_unit_val;
+  // Garantir estoques zerados no Greenfield
+  let mpa_val = isZeroMode ? 0 : (config.inventories.mpa_qty * config.inventories.mpa_unit_val);
+  let mpb_val = isZeroMode ? 0 : (config.inventories.mpb_qty * config.inventories.mpb_unit_val);
+  let finished_val = isZeroMode ? 0 : (config.inventories.finished_qty * config.inventories.finished_unit_val);
 
-  const isZeroMode = config.starting_mode === 'start_from_zero';
-  const isBaseMode = config.starting_mode === 'start_with_base';
-
-  // Estoque em Processo (WIP): Greenfield começa com 0; Empresa de Base com $50k e Running com $250k (ou parametrizado)
+  // Estoque WIP (Work-in-progress / em elaboração) parametrizado
   const wip_stock = isZeroMode ? 0 : (config.wip_stock_value !== undefined ? config.wip_stock_value : (isBaseMode ? 50000.00 : 250000.00));
   let totalStock = mpa_val + mpb_val + finished_val + wip_stock;
 
-  let land = 0;
-  let buildings = 0;
-  let bDeprec = 0;
-  
+  // Contas do Ativo Circulante
   let clients = 0;
   let pecld = 0;
 
+  // Contas de Passivo e Obrigações
   let suppliers = 0;
   let taxes = 0;
   let dividends = 0;
@@ -237,7 +240,7 @@ export function generatePureP0(config: TutorP0Config): {
   let loans_lt = 0;
   let profit_accum = 0;
 
-  // Configuração Imobiliária e Instalações (v19.16) com fallbacks sadios baseados nas premissas contábeis de cada modo
+  // Imobiliário Fiduciário: Prédio Locado vs Próprio
   const buildingMode = config.building_mode ?? (isZeroMode ? 'rented' : 'owned');
   const bValDefault = isZeroMode ? 2000000.00 : (isBaseMode ? 2000000.00 : 5440000.00);
   const buildingBaseValue = buildingMode === 'owned' ? (config.building_value ?? bValDefault) : 0;
@@ -248,141 +251,129 @@ export function generatePureP0(config: TutorP0Config): {
   const landValDefault = isZeroMode ? 1000000.00 : (isBaseMode ? 1000000.00 : 1200000.00);
   const calculatedLand = buildingMode === 'owned' ? (config.land_value ?? landValDefault) : 0;
 
-  const installValDefault = isZeroMode ? 250000.00 : (isBaseMode ? 500000.00 : 1000000.00);
+  // Benfeitorias/Instalações: sempre existente para montagem de linha de montagem
+  const installValDefault = isZeroMode ? 200000.00 : (isBaseMode ? 500000.00 : 1000000.00);
   const installationsVal = config.installations_value ?? installValDefault;
 
-  // Depreciação Predial Acumulada: 4.0% ao ano sobre o edifício próprio
-  const calculatedBDeprec = buildingMode === 'owned' ? parseFloat((buildingBaseValue * 0.04 * buildingAge).toFixed(2)) : 0;
+  // Cálculo de Depreciação ou Amortização acumulada:
+  // - Prédio Próprio: Depreciação em edificação (vida útil útil 25 anos = 4.0% ao ano sobre prédio físico)
+  // - Prédio Locado: Amortização em Benfeitorias em Imóveis de Terceiros (linear 10 anos = 10% s/ instalações)
+  let buildingsAssetValue = 0;
+  let buildingAccDeprecOrAmort = 0;
+  let land = 0;
 
-  if (isZeroMode) {
-    // Apenas capital, caixa e o imobilizado/instalações configurado pelo Tutor. Máquinas e estoques zerados.
-    totalMachinesAcquisitionValue = 0;
-    totalMachinesAccumDeprec = 0;
-    totalStock = 0;
-    mpa_val = 0;
-    mpb_val = 0;
-    finished_val = 0;
-    generatedMachines.length = 0;
-
+  if (buildingMode === 'owned') {
     land = calculatedLand;
-    buildings = buildingBaseValue + installationsVal;
-    bDeprec = calculatedBDeprec;
-  } else if (isBaseMode) {
-    // Uma estrutura industrial de pequeno-médio porte, saudável e calibrada
-    land = calculatedLand;
-    buildings = buildingBaseValue + installationsVal;
-    bDeprec = calculatedBDeprec;
-    
-    clients = config.clients_initial !== undefined ? config.clients_initial : 300000.00;
-    pecld = config.custom_pecld_val !== undefined ? -Math.abs(config.custom_pecld_val) : -parseFloat((clients * 0.015).toFixed(2));
-    suppliers = config.suppliers_initial !== undefined ? config.suppliers_initial : 100000.00;
-    taxes = config.taxes_initial !== undefined ? config.taxes_initial : 15000.00;
-    dividends = config.dividends_initial !== undefined ? config.dividends_initial : 5000.00;
+    buildingsAssetValue = buildingBaseValue + installationsVal;
+    buildingAccDeprecOrAmort = parseFloat((buildingBaseValue * 0.04 * buildingAge).toFixed(2));
   } else {
-    // Start with Running Company (Empresa Rodando - Complexo Pleno)
-    land = calculatedLand;
-    buildings = buildingBaseValue + installationsVal;
-    bDeprec = calculatedBDeprec;
-    
-    clients = config.clients_initial !== undefined ? config.clients_initial : 2092193.00;
-    pecld = config.custom_pecld_val !== undefined ? -Math.abs(config.custom_pecld_val) : -18529.46;
-    suppliers = config.suppliers_initial !== undefined ? config.suppliers_initial : 717605.00;
-    taxes = config.taxes_initial !== undefined ? config.taxes_initial : 14871.31;
-    dividends = config.dividends_initial !== undefined ? config.dividends_initial : 11153.49;
-    ppr = 25000.00;
+    // Alugada: Sem terreno próprio. Valor ativo em benfeitorias físicas. Amortização de 10% a.a. sobre instalações
+    land = 0;
+    buildingsAssetValue = installationsVal;
+    buildingAccDeprecOrAmort = parseFloat((installationsVal * 0.10 * buildingAge).toFixed(2));
   }
 
-  // Calcular Ativo Líquido Imobilizado
-  const imobilizadoBruto = land + buildings + totalMachinesAcquisitionValue;
-  const imobilizadoDeprec = -(bDeprec + totalMachinesAccumDeprec);
-  const totalCapexNet = imobilizadoBruto + imobilizadoDeprec;
-
-  // Calcular Ativos Totais (sem caixa nem investimentos nem estoques pra podermos ver a sobra)
-  const otherAssets = clients + pecld + totalStock;
-  const cashAssets = cash + investments;
-  const sumAssets = cashAssets + otherAssets + totalCapexNet;
-
-  // Determinar Passivo / Contas a pagar prévios
-  const fixedLiabilities = suppliers + taxes + dividends + ppr;
-
-  // BALANCIAMENTO FIDUCIÁRIO RIGOROSO (MANDATO SAPPHIRE)
-  let excess = sumAssets - (fixedLiabilities + capital);
-
+  // 3. Calibração e Diferenciação dos Modos Contábeis
   if (isZeroMode) {
-    // No "Start from Zero", o imobilizado gerado precisa de funding correto definido pelo Tutor para equilibrar o balanço de abertura
-    const realEstateNet = land + buildings - bDeprec;
+    // Greenfield Purista
+    clients = 0;
+    pecld = 0;
+    suppliers = 0;
+    taxes = 0;
+    dividends = 0;
+    ppr = 0;
+
+    // Funding do Setup Imobiliário Greenfield
+    const realEstateNet = land + buildingsAssetValue - buildingAccDeprecOrAmort;
     if (realEstateNet > 0) {
       const funding = config.real_estate_acquisition_funding ?? 'capital';
       if (funding === 'capital') {
-        // Financiamento por Capital Próprio -> expande o Capital Social para carregar o Imobilizado além do Caixa
+        // Integralização total dos Sócios
         capital = config.capital_social + realEstateNet;
         loans_lt = 0;
       } else {
-        // Financiamento por Dívida -> preserva capital básico e ativa Passivo de Longo Prazo correspondente
+        // Alavancagem Imobiliária via Dívida de Longo Prazo
         loans_lt = realEstateNet;
       }
-    } else {
-      loans_lt = 0;
     }
     loans_st = 0;
-    // O excesso fiduciário é recalculado em cima do novo Capital/Obrigações equilibrado
-    const currentLiabsAndCapital = fixedLiabilities + capital + loans_lt;
-    excess = sumAssets - currentLiabsAndCapital;
-    profit_accum = parseFloat(excess.toFixed(2));
+    profit_accum = 0;
+    
   } else if (isBaseMode) {
+    // Cenário PME - Indústria de Base (Pequena/Média Empresa em Movimento)
+    clients = config.clients_initial !== undefined ? config.clients_initial : 300000.00;
+    pecld = config.custom_pecld_val !== undefined ? -Math.abs(config.custom_pecld_val) : -parseFloat((clients * 0.015).toFixed(2)); // PECLD histórica padrão 1.5%
+    suppliers = config.suppliers_initial !== undefined ? config.suppliers_initial : 100000.00;
+    taxes = config.taxes_initial !== undefined ? config.taxes_initial : 15000.00;
+    dividends = config.dividends_initial !== undefined ? config.dividends_initial : 5000.00;
+    ppr = 0;
+
+    // Lucro Acumulado histórico de fomento correspondente ao Balancete DRE
+    profit_accum = 25080.00;
+
+    // Calcular Ativos e Equalizar balanço via Capital ou Empréstimo Sócio-Fomento
+    const totalImobilizadoNet = land + buildingsAssetValue - buildingAccDeprecOrAmort + (totalMachinesAcquisitionValue - totalMachinesAccumDeprec);
+    const totalCirculanteAssets = cash + investments + (clients + pecld) + totalStock;
+    const computedAssets = totalCirculanteAssets + totalImobilizadoNet;
+
+    const subtotalLiabsPME = suppliers + taxes + dividends + ppr;
+    let excess = computedAssets - (subtotalLiabsPME + capital + profit_accum);
+
     if (excess > 0) {
-      // Financiou o crescimento remanescente com empréstimos de fomento
+      // Diferença fiduciária vira dívida bancária de curto e longo prazo (PME)
       loans_st = parseFloat((excess * 0.3).toFixed(2));
       loans_lt = parseFloat((excess * 0.7).toFixed(2));
-      profit_accum = 25080.00; // Lucro retido histórico correspondente ao DRE de base calibrado
-      // Ajusta capital social ou caixa se precisar equalizar precisamente
-      const subtotalLiab = fixedLiabilities + loans_st + loans_lt + capital + profit_accum;
-      if (sumAssets !== subtotalLiab) {
-        capital = parseFloat((sumAssets - (fixedLiabilities + loans_st + loans_lt + profit_accum)).toFixed(2));
-      }
-    } else {
-      loans_st = 0;
-      loans_lt = 0;
-      profit_accum = parseFloat(excess.toFixed(2));
+    } else if (excess < 0) {
+      capital = parseFloat((capital + excess).toFixed(2));
     }
+
   } else {
-    // Running Company
+    // Cenário S.A. - Corporação Running (Empresa de Grande Porte Ativa)
+    clients = config.clients_initial !== undefined ? config.clients_initial : 2092193.00;
+    pecld = config.custom_pecld_val !== undefined ? -Math.abs(config.custom_pecld_val) : -18529.46; // Perdas Estimadas correspondentes ao DRE real
+    suppliers = config.suppliers_initial !== undefined ? config.suppliers_initial : 717605.00;
+    taxes = config.taxes_initial !== undefined ? config.taxes_initial : 14871.31;
+    dividends = config.dividends_initial !== undefined ? config.dividends_initial : 11153.49;
+    ppr = 25000.00; // PPR provisionado histórico
+
+    profit_accum = 52171.74; // Lucro retido histórico real de S.A.
+
+    // Calcular Ativos Totais e Reconciliar
+    const totalImobilizadoNet = land + buildingsAssetValue - buildingAccDeprecOrAmort + (totalMachinesAcquisitionValue - totalMachinesAccumDeprec);
+    const totalCirculanteAssets = cash + investments + (clients + pecld) + totalStock;
+    const computedAssets = totalCirculanteAssets + totalImobilizadoNet;
+
+    const subtotalLiabsRunning = suppliers + taxes + dividends + ppr;
+    let excess = computedAssets - (subtotalLiabsRunning + capital + profit_accum);
+
     if (excess > 0) {
-      // Usa os empréstimos tradicionais da árvore para equalização
-      const remainingForLoans = excess - 52171.74; // Reserva o lucro histórico
-      if (remainingForLoans > 0) {
-        loans_st = parseFloat((remainingForLoans * 0.6).toFixed(2));
-        loans_lt = parseFloat((remainingForLoans * 0.4).toFixed(2));
-        profit_accum = 52171.74;
-      } else {
-        loans_st = 0;
-        loans_lt = 0;
-        profit_accum = parseFloat(excess.toFixed(2));
-      }
-    } else {
+      // Reconcilia Alavancagem padrão (Capital de Giro e Linhas de Fomento Corporativo)
+      loans_st = parseFloat((excess * 0.6).toFixed(2));
+      loans_lt = parseFloat((excess * 0.4).toFixed(2));
+    } else if (excess < 0) {
       loans_st = 0;
       loans_lt = 0;
-      profit_accum = parseFloat(excess.toFixed(2));
+      capital = parseFloat((capital + excess).toFixed(2));
     }
   }
 
-  // 3. Atualizar Valores das Contas no Balanço Patrimonial
+  // 4. Injeção Analítica das Contas Ativas do Balanço Patrimonial
   updateNodeValue(bs, 'assets.current.cash', cash);
   updateNodeValue(bs, 'assets.current.investments', investments);
   updateNodeValue(bs, 'assets.current.clients', clients);
-  updateNodeValue(bs, 'assets.current.pecld', pecld);
+  updateNodeValue(bs, 'assets.current.pecld', pecld); // Inadimplência
   
-  updateNodeValue(bs, 'assets.current.stock.pa', finished_val, `Estoque Produto Acabado (${config.inventories.finished_qty} un)`);
-  updateNodeValue(bs, 'assets.current.stock.mpa', mpa_val, `Estoque MP A (${config.inventories.mpa_qty} un)`);
-  updateNodeValue(bs, 'assets.current.stock.mpb', mpb_val, `Estoque MP B (${config.inventories.mpb_qty} un)`);
+  updateNodeValue(bs, 'assets.current.stock.pa', finished_val, `Estoque Produto Acabado (${isZeroMode ? 0 : config.inventories.finished_qty} un)`);
+  updateNodeValue(bs, 'assets.current.stock.mpa', mpa_val, `Estoque MP A (${isZeroMode ? 0 : config.inventories.mpa_qty} un)`);
+  updateNodeValue(bs, 'assets.current.stock.mpb', mpb_val, `Estoque MP B (${isZeroMode ? 0 : config.inventories.mpb_qty} un)`);
 
-  // Acoplar Conta de Produtos em Elaboração / WIP se houver valor
-  if (wip_stock > 0) {
-    const activeCurrentGroup = bs.find((n: any) => n.id === 'assets')?.children?.find((c: any) => c.id === 'assets.current');
-    const stockNode = activeCurrentGroup?.children?.find((c: any) => c.id === 'assets.current.stock');
-    if (stockNode && stockNode.children) {
-      // Remove para evitar duplicados
-      stockNode.children = stockNode.children.filter((c: any) => c.id !== 'assets.current.stock.wip');
+  // Sincronizar dinamicamente Estoques WIP (Work-in-progress) na árvore do Ativo Circulante
+  const activeCurrentGroup = bs.find((n: any) => n.id === 'assets')?.children?.find((c: any) => c.id === 'assets.current');
+  const stockNode = activeCurrentGroup?.children?.find((c: any) => c.id === 'assets.current.stock');
+  if (stockNode && stockNode.children) {
+    // Purga o anterior para evitar acumulação de leaks de nó
+    stockNode.children = stockNode.children.filter((c: any) => c.id !== 'assets.current.stock.wip');
+    if (wip_stock > 0) {
       stockNode.children.push({
         id: 'assets.current.stock.wip',
         label: 'Estoque de Produtos em Elaboração (WIP)',
@@ -393,17 +384,19 @@ export function generatePureP0(config: TutorP0Config): {
     }
   }
 
+  // Injeção do Ativo Imobilizado
   updateNodeValue(bs, 'assets.noncurrent.fixed.land', land);
   
-  // Customização de Rótulos imobiliários para clareza em prédio alugado vs próprio
-  const buildingLabel = buildingMode === 'rented' ? 'Benfeitorias em Imóveis de Terceiros (Locado)' : 'Prédios e Instalações (Próprio)';
-  const bDeprecLabel = buildingMode === 'rented' ? '(-) Depreciação de Benfeitorias' : '(-) Deprec. Acum. Prédios/Inst.';
-  updateNodeValue(bs, 'assets.noncurrent.fixed.buildings', buildings, buildingLabel);
-  updateNodeValue(bs, 'assets.noncurrent.fixed.buildings_deprec', -bDeprec, bDeprecLabel);
+  const labelImovel = buildingMode === 'rented' ? 'Benfeitorias em Imóveis de Terceiros (Locado)' : 'Prédios e Instalações (Próprio)';
+  const labelAmort = buildingMode === 'rented' ? '(-) Amortização de Benfeitorias Terceiros' : '(-) Deprec. Acum. Prédios/Inst.';
+  
+  updateNodeValue(bs, 'assets.noncurrent.fixed.buildings', buildingsAssetValue, labelImovel);
+  updateNodeValue(bs, 'assets.noncurrent.fixed.buildings_deprec', -buildingAccDeprecOrAmort, labelAmort);
   
   updateNodeValue(bs, 'assets.noncurrent.fixed.machines', totalMachinesAcquisitionValue, `Máquinas (${generatedMachines.length} un)`);
   updateNodeValue(bs, 'assets.noncurrent.fixed.machines_deprec', -totalMachinesAccumDeprec);
 
+  // 5. Injeção das Contas Passivas e do Patrimônio Líquido
   updateNodeValue(bs, 'liabilities.current.suppliers', suppliers);
   updateNodeValue(bs, 'liabilities.current.taxes', taxes);
   updateNodeValue(bs, 'liabilities.current.dividends', dividends);
@@ -414,54 +407,51 @@ export function generatePureP0(config: TutorP0Config): {
   updateNodeValue(bs, 'equity.capital', capital);
   updateNodeValue(bs, 'equity.profit', profit_accum);
 
-  // Recalcular Totalizadores de cima para baixo
+  // Recalcular toda a árvore patrimonial (totalizers) de baixo para cima recursivamente
   recalculateTotalizers(bs);
 
-  // Garantir igualdade fiduciária absoluta após arredondamentos
+  // Reconciliação fiduciária analítica (Sincronismo Ativo vs Passivo+PL ao centavo)
   const assetsNode = bs.find((n: any) => n.id === 'assets');
   const liabPLNode = bs.find((n: any) => n.id === 'liabilities_pl');
   if (assetsNode && liabPLNode && assetsNode.value !== liabPLNode.value) {
-    const lDiff = assetsNode.value - liabPLNode.value;
-    profit_accum = parseFloat((profit_accum + lDiff).toFixed(2));
+    const diffDecimal = assetsNode.value - liabPLNode.value;
+    profit_accum = parseFloat((profit_accum + diffDecimal).toFixed(2));
     updateNodeValue(bs, 'equity.profit', profit_accum);
     recalculateTotalizers(bs);
   }
 
-  // 4. Tratar demonstrações DRE e Fluxo de Caixa para P0
-  if (config.starting_mode === 'start_from_zero') {
-    // Zera DRE pois a empresa inicia zerada
+  // 6. Atualização de DRE e DFC Históricas para P00
+  if (isZeroMode) {
+    // Greenfield purista começa do zero absoluto comercial
     dre.forEach((node: any) => {
       node.value = 0;
       if (node.children) node.children.forEach((c: any) => c.value = 0);
     });
-    // Fluxo de caixa tem saldo inicial = Caixa Inicial
     cf.forEach((node: any) => {
       node.value = 0;
       if (node.children) node.children.forEach((c: any) => c.value = 0);
     });
     updateNodeValue(cf, 'cf.start', cash);
     updateNodeValue(cf, 'cf.final', cash);
-  } else if (config.starting_mode === 'start_with_base') {
-    // Valores de DRE simplificados e realistas de Pequeno/Médio Porte
+    
+  } else if (isBaseMode) {
+    // DRE e Fluxos de Caixa coerentes de PME
     updateNodeValue(dre, 'rev', 1255000.00);
     updateNodeValue(dre, 'vat_sales', -125500.00);
     
-    // CPV Group & Children
     updateNodeValue(dre, 'dre.mod', -380000.00);
     updateNodeValue(dre, 'dre.cif', -105000.00);
     updateNodeValue(dre, 'dre.cpv_mp', -400000.00);
     
-    // OPEX Children
     updateNodeValue(dre, 'opex.sales', -95000.00);
     updateNodeValue(dre, 'opex.adm', -85000.00);
     updateNodeValue(dre, 'opex.bad_debt', -15000.00);
     updateNodeValue(dre, 'opex.rd', -20000.00);
     
-    // Finance/NonOp/Tax
     updateNodeValue(dre, 'fin.exp', -1500.00);
     updateNodeValue(dre, 'tax_prov', -3420.00);
     
-    // CF Children
+    // DFC de Base PME
     updateNodeValue(cf, 'cf.start', cash);
     updateNodeValue(cf, 'cf.inflow.cash_sales', 900000.00);
     updateNodeValue(cf, 'cf.inflow.term_sales', 355000.00);
@@ -477,11 +467,36 @@ export function generatePureP0(config: TutorP0Config): {
     updateNodeValue(cf, 'cf.outflow.interest', -1500.00);
     updateNodeValue(cf, 'cf.outflow.taxes', -3420.00);
     
-    // Atualiza totais do Fluxo de Caixa fiduciariamente
     updateNodeValue(cf, 'cf.final', cash);
+    
   } else {
-    // Running Company: Mantém o histórico real demonstrado em INITIAL_FINANCIAL_TREE
-    updateNodeValue(cf, 'cf.start', cash); // Caixa vira saldo de caixa inicial
+    // S.A. Running: Restaura o DRE complexo histórico herdado do Simulador Sênior
+    updateNodeValue(dre, 'rev', 4184440.05);
+    updateNodeValue(dre, 'vat_sales', 0.00);
+    updateNodeValue(dre, 'dre.mod', -1269000.00);
+    updateNodeValue(dre, 'dre.cif', -330502.50);
+    updateNodeValue(dre, 'dre.cpv_mp', -1373328.43);
+    
+    updateNodeValue(dre, 'opex.sales', -873250.00);
+    updateNodeValue(dre, 'opex.adm', -216000.00);
+    updateNodeValue(dre, 'opex.bad_debt', -18529.46);
+    updateNodeValue(dre, 'opex.rd', -41844.40);
+    updateNodeValue(dre, 'fin.exp', -2500.00);
+    updateNodeValue(dre, 'tax_prov', -14871.31);
+    
+    // DFC de S.A.
+    updateNodeValue(cf, 'cf.start', cash);
+    updateNodeValue(cf, 'cf.inflow.cash_sales', 2900000.00);
+    updateNodeValue(cf, 'cf.inflow.term_sales', 1284440.05);
+    updateNodeValue(cf, 'cf.outflow.payroll', -1269000.00);
+    updateNodeValue(cf, 'cf.outflow.social_charges', -380700.00);
+    updateNodeValue(cf, 'cf.outflow.marketing', -450000.00);
+    updateNodeValue(cf, 'cf.outflow.distribution', -423250.00);
+    updateNodeValue(cf, 'cf.outflow.suppliers', -1100000.00);
+    updateNodeValue(cf, 'cf.outflow.interest', -2500.00);
+    updateNodeValue(cf, 'cf.outflow.taxes', -14871.31);
+    
+    updateNodeValue(cf, 'cf.final', cash);
   }
 
   // Recalcular as outras demonstrações
@@ -491,27 +506,27 @@ export function generatePureP0(config: TutorP0Config): {
   const finalAssetsVal = assetsNode?.value || 0;
   const finalEquityVal = bs.find((n: any) => n.id === 'equity')?.value || 0;
 
-  // 5. Preencher os KPIs iniciais para o primeiro período de faturamento
+  // 7. Consolidação de KPIs de P00 e Capacidades Produtivas para a Arena
   const p0Kpis: Partial<KPIs> = {
-    rating: 'AAA',
+    rating: isZeroMode ? 'AAA' : (isBaseMode ? 'AA' : 'A'),
     current_cash: cash,
     equity: finalEquityVal,
     total_assets: finalAssetsVal,
     stock_value: totalStock,
-    fixed_assets_value: imobilizadoBruto,
-    fixed_assets_depreciation: bDeprec + totalMachinesAccumDeprec,
+    fixed_assets_value: totalMachinesAcquisitionValue + land + buildingsAssetValue,
+    fixed_assets_depreciation: buildingAccDeprecOrAmort + totalMachinesAccumDeprec,
     stock_quantities: {
-      mp_a: config.inventories.mpa_qty,
-      mp_b: config.inventories.mpb_qty,
-      finished_goods: config.inventories.finished_qty
+      mp_a: isZeroMode ? 0 : config.inventories.mpa_qty,
+      mp_b: isZeroMode ? 0 : config.inventories.mpb_qty,
+      finished_goods: isZeroMode ? 0 : config.inventories.finished_qty
     },
     last_price: config.share_price_initial,
     last_units_sold: 0,
-    ebitda: config.starting_mode === 'start_with_running' ? 208387.77 : (config.starting_mode === 'start_with_base' ? 62000.00 : 0),
-    interest_coverage: 100,
-    solvency_score_kanitz: 1.5,
-    altman_z_score: 6.25,
-    dcf_valuation: 1.7
+    ebitda: isZeroMode ? 0 : (isBaseMode ? 62000.00 : 208387.77),
+    interest_coverage: isZeroMode ? 1000 : (loans_st + loans_lt > 0 ? 50 : 100),
+    solvency_score_kanitz: isZeroMode ? 5.0 : (isBaseMode ? 2.1 : 1.5),
+    altman_z_score: isZeroMode ? 8.0 : (isBaseMode ? 5.8 : 3.2),
+    dcf_valuation: finalEquityVal * (isZeroMode ? 1.0 : isBaseMode ? 1.25 : 1.45)
   };
 
   return {

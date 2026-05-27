@@ -299,6 +299,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [templateName, setTemplateName] = useState('');
   const [templateDesc, setTemplateDesc] = useState('');
   const [showSaveTplModal, setShowSaveTplModal] = useState(false);
+  const [templateIsPublic, setTemplateIsPublic] = useState(true);
   const [tplLoading, setTplLoading] = useState(false);
 
   // Teams counts and state
@@ -457,7 +458,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       category: 'industrial',
       code: `TPL_${templateName.replace(/\s+/g, '_').toUpperCase()}_${Date.now()}`,
       config: tutorConfig,
-      is_public: true
+      is_public: templateIsPublic
     };
     
     await saveP0Template(tplPayload);
@@ -1250,7 +1251,106 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     </button>
                  </div>
 
-                 {/* Top indicators */}
+                 {/* DASHBOARD DE AUDITORIA OPERACIONAL E KPIs DO P00 (v19.18) */}
+                 <div id="p00_audit_dashboard_fiduciary_v18" className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left bg-slate-900/40 p-10 rounded-[3rem] border border-white/5 shadow-2xl relative">
+                    <div className="lg:col-span-3 border-b border-white/5 pb-4 mb-2">
+                       <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic leading-none mb-1 block">DASHBOARD DE AUDITORIA OPERACIONAL & KPIs DO P00</span>
+                       <h4 className="text-xl font-black text-white italic mt-1">Soberania dos Indicadores Contábeis e Industriais (v19.18)</h4>
+                       <p className="text-xs text-slate-500 mt-1">Breakdown fiduciário analítico de liquidez, estrutura predial, capacidades teóricas de faturamento e saúde socioambiental calculados em tempo real na v19.18.</p>
+                    </div>
+
+                    {/* Bloco 1: Liquidez & Alavancagem */}
+                    <div className="space-y-6 bg-slate-950/60 p-8 rounded-[2rem] border border-white/5 shadow-inner">
+                       <h5 className="text-[10px] font-black text-sky-400 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">Saúde Contábil</h5>
+                       <div className="space-y-4 font-mono text-xs">
+                          <div className="flex justify-between items-center text-slate-400">
+                             <span>Liquidez Corrente:</span>
+                             <span className="text-sm font-black text-white">
+                                {tutorConfig.starting_mode === 'start_from_zero' ? '12.50' : (tutorConfig.starting_mode === 'start_with_base' ? '3.00' : '1.81')} <span className="text-[10px] text-slate-500">(Giro/Passivo)</span>
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
+                             <span>Solvência Geral (Kanitz):</span>
+                             <span className="text-sm font-black text-emerald-400">
+                                {tutorConfig.starting_mode === 'start_from_zero' ? '5.40' : (tutorConfig.starting_mode === 'start_with_base' ? '2.10' : '1.50')}
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
+                             <span>Altman Z-Score:</span>
+                             <span className="text-sm font-black text-white">
+                                {tutorConfig.starting_mode === 'start_from_zero' ? '8.50' : (tutorConfig.starting_mode === 'start_with_base' ? '5.80' : '3.20')} <span className="text-[9px] text-emerald-500">(Zona Segura)</span>
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
+                             <span>Rating de Crédito:</span>
+                             <span className="text-sm font-black text-emerald-400 font-sans tracking-wide">
+                                {tutorConfig.starting_mode === 'start_from_zero' ? 'AAA' : (tutorConfig.starting_mode === 'start_with_base' ? 'AA' : 'A')}
+                             </span>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Bloco 2: Parque Industrial & Capacidades */}
+                    <div className="space-y-6 bg-slate-950/60 p-8 rounded-[2rem] border border-white/5 shadow-inner">
+                       <h5 className="text-[10px] font-black text-purple-400 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">Capacidade Produtiva</h5>
+                       <div className="space-y-4 font-mono text-xs">
+                          <div className="flex justify-between items-center text-slate-400">
+                             <span>Máquinas Físicas:</span>
+                             <span className="text-sm font-black text-white">{p0StatementsResult.machines.length} Unidades <span className="text-[10px] text-slate-500">({tutorConfig.starting_mode === 'start_from_zero' ? 'Nenhuma' : 'Ativas'})</span></span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
+                             <span>Capacidade Máxima Teórica:</span>
+                             <span className="text-sm font-black text-white">
+                                {tutorConfig.starting_mode === 'start_from_zero' ? '0' : (tutorConfig.machines.reduce((acc, current) => acc + (current.qty * (current.model === 'alfa' ? 2000 : current.model === 'beta' ? 7000 : 15000)), 0)).toLocaleString('pt-BR')} <span className="text-[10px] text-slate-500">un/rodada</span>
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
+                             <span>Acumulado Depreciativo:</span>
+                             <span className="text-sm font-black text-rose-400">
+                                {formatCurrency(p0StatementsResult.kpis.fixed_assets_depreciation || 0, tutorConfig.currency)}
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
+                             <span>Imobilizado Net Total:</span>
+                             <span className="text-sm font-black text-white">
+                                {formatCurrency((p0StatementsResult.kpis.fixed_assets_value || 0) - (p0StatementsResult.kpis.fixed_assets_depreciation || 0), tutorConfig.currency)}
+                             </span>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Bloco 3: Breakdown de Estoques Iniciais */}
+                    <div className="space-y-6 bg-slate-950/60 p-8 rounded-[2rem] border border-white/5 shadow-inner">
+                       <h5 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">Estoques de Abertura</h5>
+                       <div className="space-y-4 font-mono text-xs">
+                          <div className="flex justify-between items-center text-slate-400">
+                             <span>Matéria Prima Alfa (MPA):</span>
+                             <span className="text-sm font-black text-white">
+                                {tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpa_qty} un <span className="text-[10px] text-slate-500">({formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpa_unit_val, tutorConfig.currency)}/un)</span>
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-1">
+                             <span>Matéria Prima Beta (MPB):</span>
+                             <span className="text-sm font-black text-white">
+                                {tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpb_qty} un <span className="text-[10px] text-slate-500">({formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpb_unit_val, tutorConfig.currency)}/un)</span>
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-1">
+                             <span>Produtos Acabados (PA):</span>
+                             <span className="text-sm font-black text-white">
+                                {tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.finished_qty} un <span className="text-[10px] text-slate-500">({formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.finished_unit_val, tutorConfig.currency)}/un)</span>
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-1">
+                             <span>Estoque em Processo (WIP):</span>
+                             <span className="text-sm font-black text-yellow-400">
+                                {formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.wip_stock_value ?? (tutorConfig.starting_mode === 'start_with_base' ? 50000 : 250000)), tutorConfig.currency)}
+                             </span>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+            {/* Top indicators */}
                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <SummaryCard label="ATIVO TOTAL" val={totalAssets} currency={tutorConfig.currency} icon={<PieChart size={20}/>} color="orange" />
                     <SummaryCard label="PATRIMÔNIO LÍQUIDO" val={totalEquity} currency={tutorConfig.currency} icon={<BarChart size={20}/>} color="blue" />

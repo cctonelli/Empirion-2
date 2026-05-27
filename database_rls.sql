@@ -471,7 +471,37 @@ ON CONFLICT (key_name) DO UPDATE
 SET key_value = EXCLUDED.key_value, 
     updated_at = now();
 
--- 10. NOTA DE GOVERNANÇA DE BANCO DE DADOS v19.14 (SAPPHIRE DIAMOND)
+-- 11. TABELA DE TEMPLATES DE CONFIGURAÇÃO DO P0 (v19.18 OBSIDIAN DIAMOND)
+CREATE TABLE IF NOT EXISTS public.p0_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    description TEXT,
+    is_public BOOLEAN DEFAULT true,
+    tutor_id TEXT, -- Em sintonia com as persistências locais de tutor/user
+    config JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Habilitar RLS
+ALTER TABLE public.p0_templates ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS de Templates
+DROP POLICY IF EXISTS "Leitura de templates públicos e próprios" ON public.p0_templates;
+CREATE POLICY "Leitura de templates públicos e próprios" ON public.p0_templates
+    FOR SELECT TO authenticated
+    USING (is_public = true OR tutor_id = auth.uid()::text);
+
+DROP POLICY IF EXISTS "Escrita apenas para tutores e admins" ON public.p0_templates;
+CREATE POLICY "Escrita apenas para tutores e admins" ON public.p0_templates
+    FOR ALL TO authenticated
+    USING (tutor_id = auth.uid()::text OR EXISTS (
+        SELECT 1 FROM public.user_profiles
+        WHERE user_profiles.supabase_user_id = auth.uid()
+        AND user_profiles.role IN ('tutor', 'admin')
+    ));
+
+-- 12. NOTA DE GOVERNANÇA DE BANCO DE DADOS v19.14 (SAPPHIRE DIAMOND)
 -- Conforme a Decisão Arquitetural Sênior ADR-DB-04, colunas de tráfego de controle e de simulação
 -- (tais como 'initial_machines', 'initial_stock_quantities', 'tutor_name' e 'institution_name')
 -- foram voluntariamente mantidas como propriedades de transporte em memória no ciclo Javascript.

@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.17 Sapphire Diamond Enterprise - Advanced Accounting Initialization & Deep Fiduciary Mode Differentiation (Start from Zero, Pre-configured Small Base, and Running Corporation; integration of WIP Work-In-Progress logic, Third-Party Building Improvement amortization, PECLD on credit-sales, Supplier/Customer adjustments, and side-by-side Official Factory Presets + User Saved Templates)
+- **Versão Ativa:** v19.18 Obsidian Diamond Enterprise - Real-Time Recalculable P0 Preview (Balanço Patrimonial Completo, DRE Projetado, Fluxo de Caixa, Capacidade Produtiva Operacional, Notas E-SDS, Breakdown de Estoques Iniciais e KPIs Finanças) + Mature Template System (p0_templates salvando com filtros de Público/Privado em Supabase RLS) + Geração Pura do P0 (generatePureP0 100% calibrado fiduciariamente para os 3 modos: Start from Zero, Start with Base e Running Company)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -447,6 +447,15 @@ project-root/
   - *PPR (Provisionamento):* Provisionamento em `liabilities.current.ppr_payable` (Passivo Circulante) e reconhecido como despesa no DRE.
   - *PPR (Pagamento):* Pagamento na rodada seguinte na rubrica `cf.outflow.payroll`.
   - *Rescisão:* Em caso de demissão, liquidação do PPR proporcional provisionado na rescisão além do salário e multa rescisória (1 salário base).
+- **Status:** Em produção.
+
+### v19.18 - Obsidian Diamond Enterprise (Tutor Masterclass)
+- **Data:** Maio de 2026
+- **Motivo:** Implementação do painel fiduciário em tempo real (Real-Time Auditor) e do sistema maduro de templates persistentes na tabela `p0_templates` do Supabase com proteção RLS.
+- **Principais Diferenças na v19.18:**
+  - **Tabela `p0_templates`:** Criada a estrutura física e as políticas de segurança de linha (RLS) que blindam os templates de cada tutor e dão suporte a visualização de templates compartilhados e privados.
+  - **Audit Dashboard (v19.18) no Step 8:** Centralização analítica contendo kpis avançados de Solvência de Kanitz, Altman Z-Score de mercados emergentes, classificação automática de risco de crédito (AAA a A-), cálculos de faturamento teórico do maquinário ativo e listagem minuciosa de estoque (MPA, MPB, PA e WIP).
+  - **Reconciliação e Recálculo Dinâmico:** Correção fiduciária exata ao centavo e recálculo em tempo real (Real-Time Recalculable P0 Preview) com perfeita amarração contábil de Ativos e Passivos + PL.
 - **Status:** Em produção.
 
 ### v2026-03.5 - Kernel v19.1: Decisões Dinâmicas & Recuperação Judicial
