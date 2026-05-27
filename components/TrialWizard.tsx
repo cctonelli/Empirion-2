@@ -18,6 +18,226 @@ import EmpireParticles from './EmpireParticles';
 import { Branch, SalesMode, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, RegionConfig, TransparencyLevel, GazetaMode, StrategicProfile } from '../types';
 import { formatCurrency, getCurrencySymbol } from '../utils/formatters';
 
+const OFFICIAL_PRESETS: any[] = [
+  {
+    id: 'preset-greenfield-rented',
+    name: 'Greenfield Purista (Galpão Alugado)',
+    description: 'Empresa começa do absoluto zero em galpão locada. Capital Social de $1.2M focado 100% em Giro e Ativos de curto prazo.',
+    config: {
+      tutorName: 'Prof. Silas Silveira',
+      institutionName: 'Fundação Dom Cabral (FDC)',
+      tournamentName: 'COPA GREENFIELD PURISTA',
+      currency: 'BRL',
+      round_duration: 12,
+      total_rounds: 8,
+      transparency_level: 'medium',
+      gazeta_mode: 'identified',
+      activity_type: 'industrial',
+      accounting_template_id: 'industrial_br_v1',
+      starting_mode: 'start_from_zero',
+      building_mode: 'rented',
+      real_estate_acquisition_funding: 'capital',
+      installations_value: 200000,
+      machines: [
+        { model: 'alfa', qty: 0, age: 0, efficiency: 1.0 },
+        { model: 'beta', qty: 0, age: 0, efficiency: 1.0 },
+        { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+      ],
+      workforce: {
+        operatorsPerAlpha: 4,
+        operatorsPerBeta: 6,
+        operatorsPerGamma: 10,
+        baseSalary: 2500,
+        trainingLevel: 1
+      },
+      regions: [
+        { id: 1, name: 'Sudeste', currency: 'BRL', demand_weight: 50, suggested_price: 180, distribution_cost: 12, marketing_cost: 20000 },
+        { id: 2, name: 'Sul', currency: 'BRL', demand_weight: 30, suggested_price: 185, distribution_cost: 15, marketing_cost: 15000 },
+        { id: 3, name: 'Nordeste', currency: 'BRL', demand_weight: 20, suggested_price: 195, distribution_cost: 22, marketing_cost: 10000 }
+      ],
+      capital_social: 1200000,
+      caixa_inicial: 1200000,
+      inventories: { mpa_qty: 0, mpa_unit_val: 20, mpb_qty: 0, mpb_unit_val: 40, finished_qty: 0, finished_unit_val: 0 },
+      financial_investments: 0,
+      share_price_initial: 100,
+      dividend_percent: 25,
+      dividend_frequency: 2,
+      clients_initial: 0,
+      custom_pecld_val: 0,
+      suppliers_initial: 0,
+      taxes_initial: 0,
+      dividends_initial: 0,
+      wip_stock_value: 0,
+      macroOverrides: {}
+    }
+  },
+  {
+    id: 'preset-greenfield-owned',
+    name: 'Greenfield Real Estate (Prédio Próprio)',
+    description: 'Galpão industrial próprio integralizado no Balanço de P0 ($2.25M bruto). Financiamento via Capital Próprio expandido.',
+    config: {
+      tutorName: 'Prof. Silas Silveira',
+      institutionName: 'Fundação Dom Cabral (FDC)',
+      tournamentName: 'COPA GREENFIELD REAL ESTATE',
+      currency: 'BRL',
+      round_duration: 12,
+      total_rounds: 8,
+      transparency_level: 'medium',
+      gazeta_mode: 'identified',
+      activity_type: 'industrial',
+      accounting_template_id: 'industrial_br_v1',
+      starting_mode: 'start_from_zero',
+      building_mode: 'owned',
+      real_estate_acquisition_funding: 'capital',
+      building_value: 2000000,
+      land_value: 1000000,
+      installations_value: 250000,
+      building_age: 0,
+      machines: [
+        { model: 'alfa', qty: 0, age: 0, efficiency: 1.0 },
+        { model: 'beta', qty: 0, age: 0, efficiency: 1.0 },
+        { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+      ],
+      workforce: {
+        operatorsPerAlpha: 4,
+        operatorsPerBeta: 6,
+        operatorsPerGamma: 10,
+        baseSalary: 2500,
+        trainingLevel: 1
+      },
+      regions: [
+        { id: 1, name: 'Sudeste', currency: 'BRL', demand_weight: 50, suggested_price: 180, distribution_cost: 12, marketing_cost: 20000 },
+        { id: 2, name: 'Sul', currency: 'BRL', demand_weight: 30, suggested_price: 185, distribution_cost: 15, marketing_cost: 15000 },
+        { id: 3, name: 'Nordeste', currency: 'BRL', demand_weight: 20, suggested_price: 195, distribution_cost: 22, marketing_cost: 10000 }
+      ],
+      capital_social: 1200000,
+      caixa_inicial: 1200000,
+      inventories: { mpa_qty: 0, mpa_unit_val: 20, mpb_qty: 0, mpb_unit_val: 40, finished_qty: 0, finished_unit_val: 0 },
+      financial_investments: 0,
+      share_price_initial: 100,
+      dividend_percent: 25,
+      dividend_frequency: 2,
+      clients_initial: 0,
+      custom_pecld_val: 0,
+      suppliers_initial: 0,
+      taxes_initial: 0,
+      dividends_initial: 0,
+      wip_stock_value: 0,
+      macroOverrides: {}
+    }
+  },
+  {
+    id: 'preset-base-standard',
+    name: 'Cenário PME - Indústria de Base',
+    description: 'Estrutura tradicional balanceada e de menor risco contendo 3 máquinas Alfa físicas, estoques ativos e Contas a Receber.',
+    config: {
+      tutorName: 'Prof. Silas Silveira',
+      institutionName: 'Fundação Dom Cabral (FDC)',
+      tournamentName: 'COPA BASE SAUDÁVEL',
+      currency: 'BRL',
+      round_duration: 12,
+      total_rounds: 8,
+      transparency_level: 'medium',
+      gazeta_mode: 'identified',
+      activity_type: 'industrial',
+      accounting_template_id: 'industrial_br_v1',
+      starting_mode: 'start_with_base',
+      building_mode: 'owned',
+      real_estate_acquisition_funding: 'capital',
+      building_value: 2000000,
+      land_value: 1000000,
+      installations_value: 500000,
+      building_age: 2,
+      machines: [
+        { model: 'alfa', qty: 3, age: 3, efficiency: 1.0 },
+        { model: 'beta', qty: 2, age: 5, efficiency: 0.95 },
+        { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+      ],
+      workforce: {
+        operatorsPerAlpha: 94,
+        operatorsPerBeta: 235,
+        operatorsPerGamma: 445,
+        baseSalary: 2800,
+        trainingLevel: 2
+      },
+      regions: [
+        { id: 1, name: 'Sudeste', currency: 'BRL', demand_weight: 50, suggested_price: 180, distribution_cost: 12, marketing_cost: 20000 },
+        { id: 2, name: 'Sul', currency: 'BRL', demand_weight: 30, suggested_price: 185, distribution_cost: 15, marketing_cost: 15000 },
+        { id: 3, name: 'Nordeste', currency: 'BRL', demand_weight: 20, suggested_price: 195, distribution_cost: 22, marketing_cost: 10000 }
+      ],
+      capital_social: 7200000,
+      caixa_inicial: 1500000,
+      inventories: { mpa_qty: 30150, mpa_unit_val: 20, mpb_qty: 20100, mpb_unit_val: 40, finished_qty: 120, finished_unit_val: 180 },
+      financial_investments: 0,
+      share_price_initial: 100,
+      dividend_percent: 25,
+      dividend_frequency: 2,
+      clients_initial: 300000.00,
+      custom_pecld_val: 4500.00,
+      suppliers_initial: 100000.00,
+      taxes_initial: 15000.00,
+      dividends_initial: 5000.00,
+      wip_stock_value: 50000.00,
+      macroOverrides: {}
+    }
+  },
+  {
+    id: 'preset-running-complex',
+    name: 'Cenário S.A. - Corporação running',
+    description: 'Nível Avançado. Operação com alto volume financeiro acumulado, obrigações, dividendos pré-declarados e estoque em processamento pleno.',
+    config: {
+      tutorName: 'Prof. Silas Silveira',
+      institutionName: 'Fundação Dom Cabral (FDC)',
+      tournamentName: 'ARENA RUNNING PLENA',
+      currency: 'BRL',
+      round_duration: 12,
+      total_rounds: 8,
+      transparency_level: 'medium',
+      gazeta_mode: 'identified',
+      activity_type: 'industrial',
+      accounting_template_id: 'industrial_br_v1',
+      starting_mode: 'start_with_running',
+      building_mode: 'owned',
+      real_estate_acquisition_funding: 'debt',
+      building_value: 5440000,
+      land_value: 1200000,
+      installations_value: 1000000,
+      building_age: 10,
+      machines: [
+        { model: 'alfa', qty: 5, age: 6, efficiency: 1.0 },
+        { model: 'beta', qty: 1, age: 4, efficiency: 0.98 },
+        { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+      ],
+      workforce: {
+        operatorsPerAlpha: 94,
+        operatorsPerBeta: 235,
+        operatorsPerGamma: 445,
+        baseSalary: 3200,
+        trainingLevel: 3
+      },
+      regions: [
+        { id: 1, name: 'Sudeste', currency: 'BRL', demand_weight: 50, suggested_price: 180, distribution_cost: 12, marketing_cost: 20000 },
+        { id: 2, name: 'Sul', currency: 'BRL', demand_weight: 30, suggested_price: 185, distribution_cost: 15, marketing_cost: 15000 },
+        { id: 3, name: 'Nordeste', currency: 'BRL', demand_weight: 20, suggested_price: 195, distribution_cost: 22, marketing_cost: 10000 }
+      ],
+      capital_social: 7200000,
+      caixa_inicial: 1500000,
+      inventories: { mpa_qty: 35000, mpa_unit_val: 20, mpb_qty: 25000, mpb_unit_val: 40, finished_qty: 1200, finished_unit_val: 180 },
+      financial_investments: 500000,
+      share_price_initial: 100,
+      dividend_percent: 25,
+      dividend_frequency: 2,
+      clients_initial: 2092193.00,
+      custom_pecld_val: 18529.46,
+      suppliers_initial: 717605.00,
+      taxes_initial: 14871.31,
+      dividends_initial: 11153.49,
+      wip_stock_value: 250000.00,
+      macroOverrides: {}
+    }
+  }
+];
+
 const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   // Ajustado para 8 passos claros e didáticos de acordo com os requisitos Sapphire v19.14
   const [step, setStep] = useState(1);
@@ -135,6 +355,12 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           { model: 'beta', qty: 0, age: 0, efficiency: 1.0 },
           { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
         ];
+        updated.clients_initial = 0;
+        updated.custom_pecld_val = 0;
+        updated.suppliers_initial = 0;
+        updated.taxes_initial = 0;
+        updated.dividends_initial = 0;
+        updated.wip_stock_value = 0;
       } else if (mode === 'start_with_base') {
         updated.caixa_inicial = 1500000.00;
         updated.capital_social = 7200000.00;
@@ -152,6 +378,12 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           { model: 'beta', qty: 2, age: 5, efficiency: 0.95 },
           { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
         ];
+        updated.clients_initial = 300000.00;
+        updated.custom_pecld_val = 4500.00;
+        updated.suppliers_initial = 100000.00;
+        updated.taxes_initial = 15000.00;
+        updated.dividends_initial = 5000.00;
+        updated.wip_stock_value = 50000.00;
       } else {
         // start_with_running
         updated.caixa_inicial = 1500000.00;
@@ -170,6 +402,12 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           { model: 'beta', qty: 1, age: 4, efficiency: 0.98 },
           { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
         ];
+        updated.clients_initial = 2092193.00;
+        updated.custom_pecld_val = 18529.46;
+        updated.suppliers_initial = 717605.00;
+        updated.taxes_initial = 14871.31;
+        updated.dividends_initial = 11153.49;
+        updated.wip_stock_value = 250000.00;
       }
       return updated as TutorP0Config;
     });
@@ -445,25 +683,56 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-900/60 p-10 rounded-[3rem] border border-white/10 shadow-2xl text-left">
                     <div className="space-y-6">
-                      <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-3"><FolderOpen size={18} className="text-orange-500" /> Carregar Configuração de Template</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">Carregue rapidamente uma árvore contábil ou estrutura previamente salva para esta arena Sandbox.</p>
-                      {tplLoading ? (
-                        <div className="flex items-center gap-3 text-xs font-black text-slate-500"><Loader2 className="animate-spin" size={16}/> Sincronizando templates...</div>
-                      ) : savedTemplates.length === 0 ? (
-                        <div className="text-xs font-black text-slate-600 italic">Lista de templates vazia no momento (padrões locais ativos).</div>
-                      ) : (
-                        <div className="space-y-3 max-h-[160px] overflow-y-auto pr-3 custom-scrollbar">
-                           {savedTemplates.map((t) => (
-                             <div key={t.id} className="flex items-center justify-between p-4 bg-slate-950/80 border border-white/5 rounded-2xl hover:border-orange-500/30 transition-all">
-                               <div className="text-left w-3/4">
+                      <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-3"><FolderOpen size={18} className="text-orange-500" /> Carregar Preset ou Template</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed font-medium">Carregue cenários calibrados de fábrica ou configurações salvas por você para inicializar instantaneamente a economia desta arena.</p>
+                      
+                      <div className="space-y-6 max-h-[280px] overflow-y-auto pr-3 custom-scrollbar">
+                         {/* PRESETS DE FÁBRICA */}
+                         <div className="space-y-2">
+                           <span className="text-[9px] font-black text-sky-400 uppercase tracking-[0.2em] block border-b border-white/5 pb-1 italic">Templates de Fábrica (Preservados)</span>
+                           {OFFICIAL_PRESETS.map((t) => (
+                             <div key={t.id} className="flex items-center justify-between p-3 bg-slate-950/60 border border-white/5 rounded-2xl hover:border-sky-500/30 transition-all">
+                               <div className="text-left w-2/3">
                                  <span className="block text-xs font-bold text-white uppercase truncate">{t.name}</span>
-                                 <span className="block text-[10px] text-slate-500 truncate mt-1">{t.description || "Sem descrição informada."}</span>
+                                 <span className="block text-[10px] text-slate-400 truncate mt-1">{t.description}</span>
                                </div>
-                               <button onClick={() => handleLoadTpl(t)} className="px-5 py-2 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase hover:bg-white hover:text-orange-950 transition-colors">Carregar</button>
+                               <button 
+                                 onClick={() => {
+                                   setTutorConfig(JSON.parse(JSON.stringify(t.config)));
+                                 }} 
+                                 className="px-4 py-2 bg-sky-600/80 hover:bg-sky-500 text-white rounded-xl text-[9px] font-black uppercase transition-colors"
+                               >
+                                 Carregar
+                               </button>
                              </div>
                            ))}
-                        </div>
-                      )}
+                         </div>
+
+                         {/* SEUS TEMPLATES DO SUPABASE */}
+                         <div className="space-y-2 pt-2">
+                           <span className="text-[9px] font-black text-orange-500 uppercase tracking-[0.2em] block border-b border-white/5 pb-1 italic">Templates do Usuário (Sincronizado)</span>
+                           {tplLoading ? (
+                             <div className="flex items-center gap-3 text-[10px] font-black text-slate-500 py-2"><Loader2 className="animate-spin" size={14}/> Sincronizando...</div>
+                           ) : savedTemplates.length === 0 ? (
+                             <div className="text-[10px] text-slate-600 italic py-2">Sem templates personalizados nas nuvens. Salve o atual ao lado para gerar um!</div>
+                           ) : (
+                             savedTemplates.map((t) => (
+                               <div key={t.id} className="flex items-center justify-between p-3 bg-slate-950/80 border border-white/5 rounded-2xl hover:border-orange-500/30 transition-all">
+                                 <div className="text-left w-2/3">
+                                   <span className="block text-xs font-bold text-white uppercase truncate">{t.name}</span>
+                                   <span className="block text-[10px] text-slate-500 truncate mt-1">{t.description || "Sem descrição informada."}</span>
+                                 </div>
+                                 <button 
+                                   onClick={() => handleLoadTpl(t)} 
+                                   className="px-4 py-2 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase hover:bg-white hover:text-orange-950 transition-all"
+                                 >
+                                   Carregar
+                                 </button>
+                               </div>
+                             ))
+                           )}
+                         </div>
+                      </div>
                     </div>
 
                     <div className="space-y-6 border-l border-white/5 pl-8 text-left">
@@ -706,7 +975,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               <motion.div key="s5" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="space-y-12 pb-24">
                  <WizardStepTitle icon={<Landmark size={32}/>} title="6. EQUILÍBRIO FINANCEIRO INICIAL" desc="Regule as contas contábeis de liquidez e política de fomento à acionistas." />
                  
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left animate-in fade-in zoom-in-95 duration-200">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-8 text-left animate-in fade-in zoom-in-95 duration-200">
                     {/* LIQUIDEZ E CAPITAL */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative">
                        <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Capitalização de Entrada</h4>
@@ -738,6 +1007,68 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="PREÇO DA AÇÃO INICIAL ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.share_price_initial} onChange={(v:any)=>setTutorConfig({...tutorConfig, share_price_initial: v})} />
                        <WizardField label="DISTRIBUIÇÃO DIVIDENDOS (%)" type="number" val={tutorConfig.dividend_percent} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_percent: parseFloat(v) || 0})} />
                        <WizardSelect label="PAGAR DIVIDENDOS A CADA" val={tutorConfig.dividend_frequency} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_frequency: parseInt(v)})} options={[{v:'1',l:'TODO PERÍODO (ROUNDS)'},{v:'2',l:'A CADA 2 ROUNDS'},{v:'4',l:'A CADA 4 ROUNDS (QUADRIMESTRE)'}]} />
+                     </div>
+
+                     {/* CONTAS PATRIMONIAIS RETROATIVAS (CLIENTES, FORNECEDORES, WIP) */}
+                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+                        <h4 className="text-[10px] font-black text-violet-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Ajustes Retroativos (Clientes/Fornecedores/WIP)</h4>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <WizardField 
+                             label="Clientes ($)" 
+                             type="currency" 
+                             currency={tutorConfig.currency} 
+                             val={tutorConfig.clients_initial ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 300000.00 : 2092193.00)} 
+                             onChange={(v:any)=>setTutorConfig({...tutorConfig, clients_initial: parseFloat(v) || 0})}
+                             isLocked={tutorConfig.starting_mode === 'start_from_zero'}
+                          />
+                          <WizardField 
+                             label="PECLD ($)" 
+                             type="currency" 
+                             currency={tutorConfig.currency} 
+                             val={tutorConfig.custom_pecld_val ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 4500.00 : 18529.46)} 
+                             onChange={(v:any)=>setTutorConfig({...tutorConfig, custom_pecld_val: parseFloat(v) || 0})}
+                             isLocked={tutorConfig.starting_mode === 'start_from_zero'}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <WizardField 
+                             label="Fornecedores ($)" 
+                             type="currency" 
+                             currency={tutorConfig.currency} 
+                             val={tutorConfig.suppliers_initial ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 100000.00 : 717605.00)} 
+                             onChange={(v:any)=>setTutorConfig({...tutorConfig, suppliers_initial: parseFloat(v) || 0})}
+                             isLocked={tutorConfig.starting_mode === 'start_from_zero'}
+                          />
+                          <WizardField 
+                             label="Impostos ($)" 
+                             type="currency" 
+                             currency={tutorConfig.currency} 
+                             val={tutorConfig.taxes_initial ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 15000.00 : 14871.31)} 
+                             onChange={(v:any)=>setTutorConfig({...tutorConfig, taxes_initial: parseFloat(v) || 0})}
+                             isLocked={tutorConfig.starting_mode === 'start_from_zero'}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <WizardField 
+                             label="Dividendos ($)" 
+                             type="currency" 
+                             currency={tutorConfig.currency} 
+                             val={tutorConfig.dividends_initial ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 5000.00 : 11153.49)} 
+                             onChange={(v:any)=>setTutorConfig({...tutorConfig, dividends_initial: parseFloat(v) || 0})}
+                             isLocked={tutorConfig.starting_mode === 'start_from_zero'}
+                          />
+                          <WizardField 
+                             label="Estoque WIP ($)" 
+                             type="currency" 
+                             currency={tutorConfig.currency} 
+                             val={tutorConfig.wip_stock_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 50000.00 : 250000.00)} 
+                             onChange={(v:any)=>setTutorConfig({...tutorConfig, wip_stock_value: parseFloat(v) || 0})}
+                             isLocked={tutorConfig.starting_mode === 'start_from_zero'}
+                          />
+                        </div>
                     </div>
 
                     {/* SEÇÃO IMOBILIÁRIA E BENFEITORIAS DE SETUP (v19.16) */}

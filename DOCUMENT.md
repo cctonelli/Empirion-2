@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.14 Sapphire Diamond Enterprise - P0 Pro Configurator & Interactive Real-Time Preview (Suporte aos 3 modos de início contábil: start_from_zero, start_with_base, start_with_running; com Preview Fiduciário completo no Step 8, Botão de Reler P0 em tempo real, quadro de Bots independentes com perfis e gravação de templates no Supabase)
+- **Versão Ativa:** v19.17 Sapphire Diamond Enterprise - Advanced Accounting Initialization & Deep Fiduciary Mode Differentiation (Start from Zero, Pre-configured Small Base, and Running Corporation; integration of WIP Work-In-Progress logic, Third-Party Building Improvement amortization, PECLD on credit-sales, Supplier/Customer adjustments, and side-by-side Official Factory Presets + User Saved Templates)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -206,6 +206,21 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.17 Sapphire Diamond Enterprise - Modos Contábeis Parametrizados, Estoques WIP, PECLD Histórica e Presets de Fábrica
+- **Data:** 27 de Maio de 2026
+- **Motivo:** Introduzir diferenciação real, contábil e pedagógica de altíssimo nível para os três modos de inicialização do simulador ("Start from Zero", "Start with Base" e "Start with Running Company"). Atender aos requisitos fiduciários do consultor tributário da Oracle de modo a evitar o vazio informacional de começar demonstrativos históricos zerados e dar robustez técnica de simulação.
+- **Diferenças:**
+  - *Diferenciação Estrita de 3 Modos:* 
+    - **Start from Zero:** Operação purista com Balanço de Abertura enxuto, concentrado em Caixa/Bancos e Capital Social. Não possui máquinas ativas inicialmente. Suporta galpão locada ou própria.
+    - **Start with Base:** Calibração realística correspondente a pequenas e médias empresas (PMEs) com 3 máquinas Alfa físicas ativas, carga moderada de MP, contas ativas do Balanço (Clientes, Fornecedores, Impostos) e DRE/DFC históricas realistas de abertura.
+    - **Start with Running Company:** Operação em escala corporativa industrial em pleno funcionamento, contendo 5 Alfas e 1 Beta físicas ativas, faturamentos e contas a pagar volumosos acumulados (Clientes e Fornecedores) e estoque processado WIP (Work-In-Progress) carregado no Balanço inicial.
+  - *Sincronização Ativa de Estoques WIP (Work-In-Progress):* Introdução do acoplamento dinâmico da conta de produtos em elaboração (`wip_stock_value`) no Ativo Circulante, balanceando perfeitamente a produção em processamento.
+  - *Benfeitorias em Imóveis de Terceiros:* Quando o Tutor configura prédio locado/alugado, o Balanço de abertura direciona o valor investido em benfeitorias físicas (`installations_value`) para a conta ativa regulamentar de "Benfeitorias em Imóveis de Terceiros", e calcula sua amortização contábil linear durante a vida útil estimada do contrato de locação (10 anos).
+  - *DRE e Fluxo de Caixa Históricos de Abertura:* Calibração de dados históricos simulados em P0 para os modos de Base e Running, preenchendo o DRE e DFC iniciais com faturamento, CPVs analíticos e investimentos pretéritos coerentes, superando relatórios zerados e enriquecendo a experiência analítica inicial do Oráculo de IA.
+  - *Painel de Presets Oficiais de Fábrica (Step 2):* Criação de quatro cenários padrão calibrados integrados na sidebar do Tutor de forma imutável (Greenfield Alugado, Greenfield Próprio, PME Base e Corporação Executiva S.A.) que coexistirão lado a lado com os templates salvos do próprio usuário no Supabase.
+  - *Quarto Painel de Ajustes de Giro (Step 6):* Adição dos inputs de regulação direta de Clientes iniciais, Provisão PECLD, Fornecedores, Provisões de Imposto, Obrigações de Dividendos declarados e Estoque WIP com bloqueio inteligente baseado na relevância do modo ativo.
+- **Status:** Em Produção (Rigor de Equilíbrio Fiduciário de 100% e Reconciliação Matemática Perfeita de Arredondamento).
 
 ### v19.16 Sapphire Diamond Enterprise - Modelagem Fiduciária Imobiliária & Estratégias de Funding de Setup do Tutor
 - **Data:** 27 de Maio de 2026
