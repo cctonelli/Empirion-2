@@ -36,7 +36,7 @@ SELECT
     c.emergency_units_total as emergency_units,
     (c.emergency_purchase_expenses + c.supplier_interest_expenses) as total_supply_overhead
 FROM public.companies c
-JOIN public.teams t ON c.team_id = t.id;
+JOIN public.teams t ON c.team_id::text = t.id::text;
 
 -- 4. GARANTIR EXISTÊNCIA DA TABELA DE PERFIS (CORE)
 CREATE TABLE IF NOT EXISTS public.user_profiles (
@@ -225,7 +225,7 @@ SELECT
         ELSE ABS(c.fixed_assets_depreciation) / (c.fixed_assets_value + ABS(c.fixed_assets_depreciation)) * 100 
     END as exhaustion_percentage
 FROM public.companies c
-JOIN public.teams t ON c.team_id = t.id;
+JOIN public.teams t ON c.team_id::text = t.id::text;
 
 -- Habilitar RLS em todas as tabelas core
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
@@ -243,17 +243,17 @@ ALTER TABLE public.trial_companies ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Usuários veem seu próprio perfil" ON public.user_profiles;
 CREATE POLICY "Usuários veem seu próprio perfil" ON public.user_profiles
     FOR SELECT TO authenticated
-    USING (supabase_user_id = auth.uid() OR role IN ('tutor', 'admin'));
+    USING (supabase_user_id::text = auth.uid()::text OR role IN ('tutor', 'admin'));
 
 DROP POLICY IF EXISTS "Usuários criam seu próprio perfil" ON public.user_profiles;
 CREATE POLICY "Usuários criam seu próprio perfil" ON public.user_profiles
     FOR INSERT TO authenticated
-    WITH CHECK (supabase_user_id = auth.uid());
+    WITH CHECK (supabase_user_id::text = auth.uid()::text);
 
 DROP POLICY IF EXISTS "Usuários atualizam seu próprio perfil" ON public.user_profiles;
 CREATE POLICY "Usuários atualizam seu próprio perfil" ON public.user_profiles
     FOR UPDATE TO authenticated
-    USING (supabase_user_id = auth.uid() OR role = 'admin');
+    USING (supabase_user_id::text = auth.uid()::text OR role = 'admin');
 
 -- ==============================================================================
 -- POLÍTICAS PARA CHAMPIONSHIPS (LIVE & TRIAL)
@@ -263,8 +263,8 @@ CREATE POLICY "Leitura de campeonatos" ON public.championships
     FOR SELECT TO authenticated
     USING (
         is_public = true 
-        OR EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND role IN ('tutor', 'admin'))
-        OR EXISTS (SELECT 1 FROM public.teams WHERE championship_id = championships.id AND EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id = auth.uid() AND user_profiles.id = teams.id)) -- Simplificação: assume-se que team_id pode ser vinculado ao profile_id em alguns contextos, ou ajuste conforme a lógica de inscrição
+        OR EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id::text = auth.uid()::text AND role IN ('tutor', 'admin'))
+        OR EXISTS (SELECT 1 FROM public.teams WHERE championship_id::text = championships.id::text AND EXISTS (SELECT 1 FROM public.user_profiles WHERE supabase_user_id::text = auth.uid()::text AND user_profiles.id::text = teams.id::text)) -- Simplificação: assume-se que team_id pode ser vinculado ao profile_id em alguns contextos, ou ajuste conforme a lógica de inscrição
     );
 
 DROP POLICY IF EXISTS "Leitura de trial_championships" ON public.trial_championships;
@@ -284,20 +284,20 @@ CREATE POLICY "Leitura de equipes competidoras" ON public.teams
     USING (
         EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
+            WHERE up.supabase_user_id::text = auth.uid()::text
             AND up.role IN ('tutor', 'admin')
         )
         OR EXISTS (
             SELECT 1 FROM public.team_members tm
-            JOIN public.users u ON tm.user_id = u.id
-            WHERE u.supabase_user_id = auth.uid()
-            AND tm.championship_id = teams.championship_id
+            JOIN public.users u ON tm.user_id::text = u.id::text
+            WHERE u.supabase_user_id::text = auth.uid()::text
+            AND tm.championship_id::text = teams.championship_id::text
         )
         OR EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
-            AND teams.championship_id IN (
-                SELECT t.championship_id FROM public.teams t WHERE t.id = up.id
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND teams.championship_id::text IN (
+                SELECT t.championship_id::text FROM public.teams t WHERE t.id::text = up.id::text
             )
         )
     );
@@ -309,19 +309,19 @@ CREATE POLICY "Jogadores atualizam seu proprio time_v2" ON public.teams
     USING (
         EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
+            WHERE up.supabase_user_id::text = auth.uid()::text
             AND up.role IN ('tutor', 'admin')
         )
         OR EXISTS (
             SELECT 1 FROM public.team_members tm
-            JOIN public.users u ON tm.user_id = u.id
-            WHERE u.supabase_user_id = auth.uid()
-            AND tm.team_id = teams.id
+            JOIN public.users u ON tm.user_id::text = u.id::text
+            WHERE u.supabase_user_id::text = auth.uid()::text
+            AND tm.team_id::text = teams.id::text
         )
         OR EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
-            AND up.id = teams.id
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.id::text = teams.id::text
         )
     );
 
@@ -338,20 +338,20 @@ CREATE POLICY "Leitura de empresas competidoras" ON public.companies
     USING (
         EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
+            WHERE up.supabase_user_id::text = auth.uid()::text
             AND up.role IN ('tutor', 'admin')
         )
         OR EXISTS (
             SELECT 1 FROM public.team_members tm
-            JOIN public.users u ON tm.user_id = u.id
-            WHERE u.supabase_user_id = auth.uid()
-            AND tm.championship_id = companies.championship_id
+            JOIN public.users u ON tm.user_id::text = u.id::text
+            WHERE u.supabase_user_id::text = auth.uid()::text
+            AND tm.championship_id::text = companies.championship_id::text
         )
         OR EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
-            AND companies.championship_id IN (
-                SELECT t.championship_id FROM public.teams t WHERE t.id = up.id
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND companies.championship_id::text IN (
+                SELECT t.championship_id::text FROM public.teams t WHERE t.id::text = up.id::text
             )
         )
     );
@@ -363,19 +363,19 @@ CREATE POLICY "Jogadores atualizam sua propria empresa_v2" ON public.companies
     USING (
         EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
+            WHERE up.supabase_user_id::text = auth.uid()::text
             AND up.role IN ('tutor', 'admin')
         )
         OR EXISTS (
             SELECT 1 FROM public.team_members tm
-            JOIN public.users u ON tm.user_id = u.id
-            WHERE u.supabase_user_id = auth.uid()
-            AND tm.team_id = companies.team_id
+            JOIN public.users u ON tm.user_id::text = u.id::text
+            WHERE u.supabase_user_id::text = auth.uid()::text
+            AND tm.team_id::text = companies.team_id::text
         )
         OR EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
-            AND up.id = companies.team_id
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.id::text = companies.team_id::text
         )
     );
 
@@ -401,8 +401,8 @@ CREATE POLICY "Trial Teams: Jogadores atualizam seu próprio time" ON public.tri
     USING (
         EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
-            AND (up.id = trial_teams.id OR up.role IN ('tutor', 'admin'))
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND (up.id::text = trial_teams.id::text OR up.role IN ('tutor', 'admin'))
         )
     );
 
@@ -417,8 +417,8 @@ CREATE POLICY "Trial Companies: Jogadores atualizam sua própria empresa" ON pub
     USING (
         EXISTS (
             SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id = auth.uid()
-            AND (up.id = trial_companies.team_id OR up.role IN ('tutor', 'admin'))
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND (up.id::text = trial_companies.team_id::text OR up.role IN ('tutor', 'admin'))
         )
     );
 
@@ -444,7 +444,7 @@ CREATE POLICY "Tutores e Admins podem ler segredos" ON public.system_secrets
     USING (
         EXISTS (
             SELECT 1 FROM public.user_profiles
-            WHERE user_profiles.supabase_user_id = auth.uid()
+            WHERE user_profiles.supabase_user_id::text = auth.uid()::text
             AND user_profiles.role IN ('tutor', 'admin')
         )
     );
@@ -457,7 +457,7 @@ CREATE POLICY "Apenas Admins gerenciam segredos" ON public.system_secrets
     USING (
         EXISTS (
             SELECT 1 FROM public.user_profiles
-            WHERE user_profiles.supabase_user_id = auth.uid()
+            WHERE user_profiles.supabase_user_id::text = auth.uid()::text
             AND user_profiles.role = 'admin'
         )
     );
@@ -490,14 +490,14 @@ ALTER TABLE public.p0_templates ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Leitura de templates públicos e próprios" ON public.p0_templates;
 CREATE POLICY "Leitura de templates públicos e próprios" ON public.p0_templates
     FOR SELECT TO authenticated
-    USING (is_public = true OR tutor_id = auth.uid()::text);
+    USING (is_public = true OR tutor_id::text = auth.uid()::text);
 
 DROP POLICY IF EXISTS "Escrita apenas para tutores e admins" ON public.p0_templates;
 CREATE POLICY "Escrita apenas para tutores e admins" ON public.p0_templates
     FOR ALL TO authenticated
-    USING (tutor_id = auth.uid()::text OR EXISTS (
+    USING (tutor_id::text = auth.uid()::text OR EXISTS (
         SELECT 1 FROM public.user_profiles
-        WHERE user_profiles.supabase_user_id = auth.uid()
+        WHERE user_profiles.supabase_user_id::text = auth.uid()::text
         AND user_profiles.role IN ('tutor', 'admin')
     ));
 

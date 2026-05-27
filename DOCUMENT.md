@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.18 Obsidian Diamond Enterprise - Real-Time Recalculable P0 Preview (Balanço Patrimonial Completo, DRE Projetado, Fluxo de Caixa, Capacidade Produtiva Operacional, Notas E-SDS, Breakdown de Estoques Iniciais e KPIs Finanças) + Mature Template System (p0_templates salvando com filtros de Público/Privado em Supabase RLS) + Geração Pura do P0 (generatePureP0 100% calibrado fiduciariamente para os 3 modos: Start from Zero, Start with Base e Running Company)
+- **Versão Ativa:** v19.19 Obsidian Diamond Enterprise - Database Precision Patch (RLS Explicit Cast Rules) + Real-Time Recalculable P0 Preview + Mature Template System (p0_templates salvando com filtros de Público/Privado em Supabase RLS com tipagem fiduciária blindada)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -447,6 +447,13 @@ project-root/
   - *PPR (Provisionamento):* Provisionamento em `liabilities.current.ppr_payable` (Passivo Circulante) e reconhecido como despesa no DRE.
   - *PPR (Pagamento):* Pagamento na rodada seguinte na rubrica `cf.outflow.payroll`.
   - *Rescisão:* Em caso de demissão, liquidação do PPR proporcional provisionado na rescisão além do salário e multa rescisória (1 salário base).
+- **Status:** Em produção.
+
+### v19.19 - Obsidian Diamond Enterprise (Database Precision Patch)
+- **Data:** Maio de 2026
+- **Motivo:** Ajuste de precisão arquitetural no mapeamento de tipos fiduciários no banco de dados Supabase para evitar erros de comparação implícita de tipos.
+- **Principais Diferenças na v19.19:**
+  - **Conversão de Tipagem Explícita (Explicit Casts):** Introdução de coerções do tipo `::text` em todas as comparações de chaves primárias e estrangeiras (`id`, `team_id`, `championship_id`, `supabase_user_id` e `auth.uid()`) nas políticas de Row Level Security (RLS) e nas views fiduciárias de auditoria (`view_supply_chain_health`, `view_capex_health`). Isso elimina qualquer incompatibilidade contábil e técnica do tipo `uuid = text` gerada por atualizações no Supabase.
 - **Status:** Em produção.
 
 ### v19.18 - Obsidian Diamond Enterprise (Tutor Masterclass)
