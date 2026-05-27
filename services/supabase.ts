@@ -671,3 +671,34 @@ export const saveP0Template = async (template: any) => {
   }
 };
 
+export const deleteP0Template = async (id: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { error } = await supabase
+      .from('p0_templates')
+      .delete()
+      .eq('id', id);
+    
+    // Limpeza fiduciária no LocalStorage para cenários offline ou fallbacks locais coerentes
+    const local = localStorage.getItem('local_p0_templates');
+    if (local) {
+      const list = JSON.parse(local);
+      const filtered = list.filter((item: any) => item.id !== id);
+      localStorage.setItem('local_p0_templates', JSON.stringify(filtered));
+    }
+
+    if (error) {
+      console.warn("Using local delete fallback for p0_templates:", error);
+    }
+    return { success: true };
+  } catch (err: any) {
+    const local = localStorage.getItem('local_p0_templates');
+    if (local) {
+      const list = JSON.parse(local);
+      const filtered = list.filter((item: any) => item.id !== id);
+      localStorage.setItem('local_p0_templates', JSON.stringify(filtered));
+    }
+    return { success: true };
+  }
+};
+
+

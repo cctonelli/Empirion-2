@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
-import { createChampionshipWithTeams, getP0Templates, saveP0Template } from '../services/supabase';
+import { createChampionshipWithTeams, getP0Templates, saveP0Template, deleteP0Template } from '../services/supabase';
 import { generatePureP0, TutorP0Config, P0Template } from '../services/initialization';
 import { DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import FinancialStructureEditor from './FinancialStructureEditor';
@@ -296,6 +296,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   // Salvar/Carregar templates
   const [savedTemplates, setSavedTemplates] = useState<P0Template[]>([]);
+  const [showFiduciaryMonitor, setShowFiduciaryMonitor] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [templateDesc, setTemplateDesc] = useState('');
   const [showSaveTplModal, setShowSaveTplModal] = useState(false);
@@ -470,6 +471,18 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const handleLoadTpl = (tpl: P0Template) => {
     setTutorConfig(tpl.config);
     alert(`Template "${tpl.name}" carregado com sucesso!`);
+  };
+
+  const handleDeleteTpl = async (id: string) => {
+    if (window.confirm("Deseja mesmo excluir este template contábil de forma permanente?")) {
+      const res = await deleteP0Template(id);
+      if (res.success) {
+        await loadTemplatesFromSupabase();
+        alert("Template excluído com sucesso das nuvens fiduciárias!");
+      } else {
+        alert("Falha fiduciária ao tentar remover template.");
+      }
+    }
   };
 
   useEffect(() => {
@@ -718,19 +731,28 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              <div className="text-[10px] text-slate-600 italic py-2">Sem templates personalizados nas nuvens. Salve o atual ao lado para gerar um!</div>
                            ) : (
                              savedTemplates.map((t) => (
-                               <div key={t.id} className="flex items-center justify-between p-3 bg-slate-950/80 border border-white/5 rounded-2xl hover:border-orange-500/30 transition-all">
-                                 <div className="text-left w-2/3">
-                                   <span className="block text-xs font-bold text-white uppercase truncate">{t.name}</span>
-                                   <span className="block text-[10px] text-slate-500 truncate mt-1">{t.description || "Sem descrição informada."}</span>
-                                 </div>
-                                 <button 
-                                   onClick={() => handleLoadTpl(t)} 
-                                   className="px-4 py-2 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase hover:bg-white hover:text-orange-950 transition-all"
-                                 >
-                                   Carregar
-                                 </button>
-                               </div>
-                             ))
+                                <div key={t.id} className="flex items-center justify-between p-3 bg-slate-950/80 border border-white/5 rounded-2xl hover:border-orange-500/30 transition-all">
+                                  <div className="text-left w-7/12">
+                                    <span className="block text-xs font-bold text-white uppercase truncate">{t.name}</span>
+                                    <span className="block text-[10px] text-slate-500 truncate mt-1">{t.description || "Sem descrição informada."}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button 
+                                      onClick={() => handleLoadTpl(t)} 
+                                      className="px-3 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase transition-all"
+                                    >
+                                      Carregar
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteTpl(t.id)} 
+                                      className="p-2 bg-rose-600/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
+                                      title="Excluir das nuvens"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
                            )}
                          </div>
                       </div>
@@ -1448,6 +1470,128 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           </AnimatePresence>
         </div>
       </div>
+
+
+      {/* BOTÃO FLUTUANTE DO MONITOR FIDUCIÁRIO REAL-TIME v19.21 (OBISIDIAN MASTERCLASS) */}
+      <button 
+        onClick={() => setShowFiduciaryMonitor(true)}
+        className="fixed right-0 top-[250px] z-[90] bg-orange-600 hover:bg-orange-500 text-white font-black font-sans text-[9px] tracking-[0.2em] py-5 px-3 uppercase rounded-l-2xl shadow-[0_0_30px_rgba(249,115,22,0.4)] transition-all flex flex-col items-center gap-3 hover:pl-5 group"
+        id="btn_floating_fiduciary_monitor"
+      >
+        <Activity size={14} className="animate-pulse text-white group-hover:scale-125 transition-transform" />
+        <span className="writing-mode-vertical uppercase tracking-wider font-mono">Monitor Fiduciário P0</span>
+      </button>
+
+      {/* DRAWER SLIDE-OVER DO MONITOR FIDUCIÁRIO REAL-TIME */}
+      <AnimatePresence>
+        {showFiduciaryMonitor && (
+          <div className="fixed inset-0 z-[500] flex justify-end">
+            {/* Backdrop com blur fiduciário */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFiduciaryMonitor(false)}
+              className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+              id="fiduciary_monitor_backdrop"
+            />
+            
+            {/* Corpo do Drawer */}
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-4xl h-full bg-slate-900 border-l border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.9)] flex flex-col text-left overflow-hidden"
+              id="fiduciary_monitor_drawer"
+            >
+              <div className="p-8 bg-slate-950 border-b border-white/5 flex items-center justify-between sticky top-0 z-[100]">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-orange-600/20 text-orange-400 rounded-xl"><Activity size={24} className="animate-pulse" /></div>
+                  <div>
+                    <h3 className="text-lg font-black text-white uppercase italic tracking-tight">Real-Time Fiduciary Monitor</h3>
+                    <p className="text-[10px] text-orange-500 font-mono uppercase tracking-widest mt-1">v19.21 • Simulação de Impacto Financeiro de P00 em Tempo Real</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowFiduciaryMonitor(false)}
+                  className="p-3 bg-white/5 border border-white/5 text-slate-400 hover:text-white rounded-xl transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+                {/* Banner Descritivo */}
+                <div className="p-6 bg-orange-600/10 border-2 border-orange-500/25 rounded-2xl">
+                  <p className="text-xs text-orange-200 leading-relaxed font-medium">
+                    Excelente tutor! Este painel simula instantaneamente o impacto contábil de cada ajuste feito em qualquer passo do cronograma (máquinas, estoques, benfeitorias, capital e passivos). Veja os demonstrativos se movimentando em sintonia antes de abrir a arena.
+                  </p>
+                </div>
+
+                {/* KPI Breakdown */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-5 bg-slate-950/60 rounded-2xl border border-white/5 flex flex-col justify-between">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">E-SDS Provisório</span>
+                    <div className="flex items-baseline gap-2 mt-2">
+                      <span className="text-2xl font-black text-emerald-400">{estimatedESDS.score} / 100</span>
+                      <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-black font-mono">{estimatedESDS.zone}</span>
+                    </div>
+                  </div>
+                  <div className="p-5 bg-slate-950/60 rounded-2xl border border-white/5 flex flex-col justify-between">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Ativos Calculados</span>
+                    <span className="text-2xl font-mono font-black text-white mt-1">
+                      {formatCurrency(totalAssets, tutorConfig.currency)}
+                    </span>
+                  </div>
+                  <div className="p-5 bg-slate-950/60 rounded-2xl border border-white/5 flex flex-col justify-between">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Conciliação Patrimonial</span>
+                    <span className="text-sm font-black text-emerald-400 mt-2 flex items-center gap-1.5 font-sans">
+                      <ShieldCheck size={14} /> 100% Equalizado
+                    </span>
+                  </div>
+                </div>
+
+                {/* Matriz interativa de demonstrações */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-xs font-black text-white uppercase italic flex items-center gap-2">
+                      <ClipboardList size={14} className="text-orange-500" /> Demonstrações Fiduciárias Dinâmicas
+                    </h4>
+                    <span className="text-[9px] font-black text-slate-500 font-mono uppercase bg-white/5 px-2.5 py-1 rounded-full">Sincronizado</span>
+                  </div>
+                  <FinancialStructureEditor 
+                    initialBalance={editableFinancials.balance_sheet} 
+                    initialDRE={editableFinancials.dre} 
+                    initialCashFlow={editableFinancials.cash_flow} 
+                    onChange={(u) => setEditableFinancials(u as any)}
+                    currency={tutorConfig.currency}
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-950 border-t border-white/5 flex justify-end gap-3 sticky bottom-0 z-[100]">
+                <button 
+                  onClick={() => {
+                    handleRecalculate();
+                    alert("Dados do P0 recalculados com sucesso das configurações fiduciárias!");
+                  }}
+                  className="px-6 py-3 bg-slate-900 border border-white/10 hover:border-orange-500/30 text-white rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2"
+                >
+                  <Activity size={12} /> Forçar Recálculo
+                </button>
+                <button 
+                  onClick={() => setShowFiduciaryMonitor(false)}
+                  className="px-8 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-[10px] font-black uppercase transition-all"
+                >
+                  Continuar Configurando
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <button onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1} className="floating-nav-btn left-10"><ChevronLeft size={15} /></button>
       {step === stepsCount ? (

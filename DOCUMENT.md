@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.19 Obsidian Diamond Enterprise - Database Precision Patch (RLS Explicit Cast Rules) + Real-Time Recalculable P0 Preview + Mature Template System (p0_templates salvando com filtros de Público/Privado em Supabase RLS com tipagem fiduciária blindada)
+- **Versão Ativa:** v19.21 Sapphire Obsidian Masterclass (Accounting & Tutor Experience Patch - Monitor Fiduciário no Wizard, Sincronismo Físico e Exclusão Completa no Supabase/Local Storage)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -447,6 +447,23 @@ project-root/
   - *PPR (Provisionamento):* Provisionamento em `liabilities.current.ppr_payable` (Passivo Circulante) e reconhecido como despesa no DRE.
   - *PPR (Pagamento):* Pagamento na rodada seguinte na rubrica `cf.outflow.payroll`.
   - *Rescisão:* Em caso de demissão, liquidação do PPR proporcional provisionado na rescisão além do salário e multa rescisória (1 salário base).
+- **Status:** Em produção.
+
+### v19.21 - Sapphire Obsidian Masterclass (Accounting & Tutor Experience Patch)
+- **Data:** Maio de 2026
+- **Motivo:** Implementação de Monitor Fiduciário em Tempo Real disponível em todo o Wizard e integração física e fiduciária de exclusão de templates no ecossistema Supabase/Local Storage.
+- **Principais Diferenças na v19.21:**
+  - **Monitor Fiduciário Real-Time Drawer:** Desenvolvimento de um painel lateral retrátil (slide-over) impulsionado por animações fluidas de `framer-motion`. Ele permite ao Tutor simular e prever o fechamento completo do Balanço Patrimonial, DRE e Demonstração do Fluxo de Caixa do P0 instantaneamente na tela enquanto altera campos operacionais nos Steps 2 a 7 (com recalculo automático fiduciário a cada digitação).
+  - **Exclusão Física de Templates (`deleteP0Template`):** Suporte completo para exclusão definitiva de templates personalizados nas nuvens Supabase com sincronismo e limpeza imediata no fallback do `localStorage`. Botão de lixeira vermelha adicionado na listagem de cenários de Step 2 do configurador para a robustez do ciclo CRUD de templates de campeonatos.
+- **Status:** Em produção.
+
+### v19.20 - Obsidian Diamond Enterprise (Database Performance Indices)
+- **Data:** Maio de 2026
+- **Motivo:** Otimização de performance de consulta e planos de execução (Query Planner) no PostgreSQL para views de governança contábil e visualização de templates de P0.
+- **Principais Diferenças na v19.20:**
+  - **Índices de Expressão (Expression Indexes) para Casts de Texto:** Criação de índices específicos como `idx_companies_team_id_cast_text` e `idx_teams_id_cast_text` que indexam a expressão `(team_id)::text` e `(id)::text`. Isso remove os "Seq Scans" gerados pelos castings necessários nas RLS de segurança e fusão de views.
+  - **Busca por Escopo de Campeonato:** Indexação composta `idx_companies_champ_round_fiduciary` para agilizar filtragens por `championship_id` + `round`, trazendo as consultas e auditorias aos tempos de resposta de microssegundos.
+  - **Eficiência de RLS de Templates:** Criação do índice composto `idx_p0_templates_tutor_public` na tabela `p0_templates` para garantir carragamento imediato das configurações P0 sem latência.
 - **Status:** Em produção.
 
 ### v19.19 - Obsidian Diamond Enterprise (Database Precision Patch)

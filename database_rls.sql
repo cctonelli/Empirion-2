@@ -510,4 +510,11 @@ CREATE POLICY "Escrita apenas para tutores e admins" ON public.p0_templates
 -- no frontend em 'services/supabase.ts'. Essa rotina blinda o banco de dados contra erros de Schema Cache
 -- no PostgREST, preservando a integridade original das tabelas sem necessidade de ALTER TABLE nocivo.
 
+-- 13. ÍNDICES DE PERFORMANCE FIDUCIÁRIA v19.20 (OBSIDIAN ENHANCED)
+-- Otimizações cirúrgicas de plano de execução (Query Plans) para as novas Views de Auditoria e Templates
+CREATE INDEX IF NOT EXISTS idx_companies_champ_round_fiduciary ON public.companies (championship_id, round);
+CREATE INDEX IF NOT EXISTS idx_companies_team_id_cast_text ON public.companies (((team_id)::text));
+CREATE INDEX IF NOT EXISTS idx_teams_id_cast_text ON public.teams (((id)::text));
+CREATE INDEX IF NOT EXISTS idx_p0_templates_tutor_public ON public.p0_templates (tutor_id, is_public);
+
 COMMIT;
