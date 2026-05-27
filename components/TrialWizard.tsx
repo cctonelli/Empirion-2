@@ -739,6 +739,78 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="DISTRIBUIÇÃO DIVIDENDOS (%)" type="number" val={tutorConfig.dividend_percent} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_percent: parseFloat(v) || 0})} />
                        <WizardSelect label="PAGAR DIVIDENDOS A CADA" val={tutorConfig.dividend_frequency} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_frequency: parseInt(v)})} options={[{v:'1',l:'TODO PERÍODO (ROUNDS)'},{v:'2',l:'A CADA 2 ROUNDS'},{v:'4',l:'A CADA 4 ROUNDS (QUADRIMESTRE)'}]} />
                     </div>
+
+                    {/* SEÇÃO IMOBILIÁRIA E BENFEITORIAS DE SETUP (v19.16) */}
+                    <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-slate-900/60 p-12 rounded-[4rem] border border-white/5 shadow-2xl relative space-y-8">
+                       <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 gap-6">
+                          <div>
+                             <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.4em] italic">Regime de Imobilizado & Benfeitorias</h4>
+                             <p className="text-xs text-slate-500 mt-1">Configure o espaço físico de abertura (Edifícios, Terrenos, Benfeitorias e a estratégia de financiamento contábil).</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                             <span className="text-xs font-black text-slate-400">MODO ATUAL:</span>
+                             <span className="text-xs font-bold px-4 py-2 bg-white/5 text-white border border-white/10 rounded-full font-mono">
+                               {tutorConfig.starting_mode === 'start_from_zero' ? 'START FROM ZERO' : tutorConfig.starting_mode === 'start_with_base' ? 'START WITH BASE' : 'RUNNING COMPANY'}
+                             </span>
+                          </div>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                          <WizardSelect 
+                             label="Tipo de Estabelecimento (Prédio)" 
+                             val={tutorConfig.building_mode ?? (tutorConfig.starting_mode === 'start_from_zero' ? 'rented' : 'owned')} 
+                             onChange={(v: any) => setTutorConfig({ ...tutorConfig, building_mode: v })}
+                             options={[
+                                { v: 'rented', l: 'Locado (Alugado)' },
+                                { v: 'owned', l: 'Próprio (Integralizado)' }
+                             ]}
+                          />
+
+                          <WizardSelect 
+                             label="Método de Funding (Origem Contábil)" 
+                             val={tutorConfig.real_estate_acquisition_funding ?? 'capital'} 
+                             onChange={(v: any) => setTutorConfig({ ...tutorConfig, real_estate_acquisition_funding: v })}
+                             options={[
+                                { v: 'capital', l: 'Capital Próprio (Capital Social)' },
+                                { v: 'debt', l: 'Obrigações de Longo Prazo' }
+                             ]}
+                             isLocked={(tutorConfig.building_mode ?? (tutorConfig.starting_mode === 'start_from_zero' ? 'rented' : 'owned')) === 'rented'}
+                          />
+
+                          <WizardField 
+                             label="Benfeitorias & Instalações ($)" 
+                             type="currency" 
+                             currency={tutorConfig.currency} 
+                             val={tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 250000.00 : tutorConfig.starting_mode === 'start_with_base' ? 500000.00 : 1000000.00)} 
+                             onChange={(v: any) => setTutorConfig({ ...tutorConfig, installations_value: v })} 
+                          />
+
+                          {(tutorConfig.building_mode ?? (tutorConfig.starting_mode === 'start_from_zero' ? 'rented' : 'owned')) === 'owned' ? (
+                             <>
+                                <WizardField 
+                                   label="Valor do Prédio ($)" 
+                                   type="currency" 
+                                   currency={tutorConfig.currency} 
+                                   val={tutorConfig.building_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 2000000.00 : tutorConfig.starting_mode === 'start_with_base' ? 2000000.00 : 5440000.00)} 
+                                   onChange={(v: any) => setTutorConfig({ ...tutorConfig, building_value: v })} 
+                                />
+                                <WizardField 
+                                   label="Valor do Terreno ($)" 
+                                   type="currency" 
+                                   currency={tutorConfig.currency} 
+                                   val={tutorConfig.land_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 1000000.00 : tutorConfig.starting_mode === 'start_with_base' ? 1000000.00 : 1200000.00)} 
+                                   onChange={(v: any) => setTutorConfig({ ...tutorConfig, land_value: v })} 
+                                />
+                                <WizardField 
+                                   label="Idade do Imóvel (Anos)" 
+                                   type="number" 
+                                   val={tutorConfig.building_age ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 2 : 10)} 
+                                   onChange={(v: any) => setTutorConfig({ ...tutorConfig, building_age: parseInt(v) || 0 })} 
+                                />
+                             </>
+                          ) : null}
+                       </div>
+                    </div>
                  </div>
               </motion.div>
             )}

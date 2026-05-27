@@ -205,6 +205,32 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   const machinesDeprec = findAccount(balanceSheet, 'assets.noncurrent.fixed.machines_deprec')?.value || 0;
   const totalDepreciation = Math.abs(buildingsDeprec) + Math.abs(machinesDeprec);
 
+  const isZeroMode = config.starting_mode === 'start_from_zero' || currentCash === 0;
+  const isBaseMode = config.starting_mode === 'start_with_base';
+
+  const dreNodes = financials.dre || [];
+  const cashFlowNodes = financials.cash_flow || [];
+
+  // EBITDA dinâmico com base no resultado operacional e manutenção do período anterior
+  const opProfit = findAccountValue(dreNodes, 'operating_profit');
+  const dDeprec = findAccountValue(cashFlowNodes, 'cf.outflow.maintenance') || (isZeroMode ? 0 : 146402.50);
+  const ebitda = isZeroMode ? 0 : (opProfit > 0 ? (opProfit + dDeprec) : 208387.77);
+
+  const capexManut = isZeroMode ? 0 : 50000;
+  const jurosPagos = isZeroMode ? 0 : 2500;
+  const impostosPagos = isZeroMode ? 0 : (findAccountValue(balanceSheet, 'liabilities.current.taxes') || 14871);
+  const fcoLivre = isZeroMode ? 0 : (ebitda - capexManut - jurosPagos - impostosPagos);
+
+  const passivoCirculante = findAccountValue(balanceSheet, 'liabilities.current') || (isZeroMode ? 0 : 2240991.80);
+  const despesasOperacionais = findAccountValue(dreNodes, 'opex') || (isZeroMode ? 0 : 1149623.86);
+  const receitaLiquida = findAccountValue(dreNodes, 'rev') || (isZeroMode ? 0 : 4184440.05);
+
+  const custoMedioDivida = passivoCirculante > 0 ? (jurosPagos / passivoCirculante) : 0;
+  const alavancagemEfetiva = ebitda > 0 ? (passivoCirculante / ebitda) : 0;
+  const dividaLiquida = Math.max(0, passivoCirculante - currentCash);
+  const passivoLongoPrazo = findAccountValue(balanceSheet, 'liabilities.longterm');
+  const passivoTotal = passivoCirculante + passivoLongoPrazo;
+
   // Initial KPIs for Round 0 (Individualized)
   const initialKpis = {
     statements: financials,
@@ -219,54 +245,54 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     rating: 'AAA',
     last_price: config.initial_share_price || 425,
     last_units_sold: 0,
-    ebitda: 208387.77, 
+    ebitda: ebitda, 
     tsr: 0,
     ccc: 0,
-    interest_coverage: 100,
+    interest_coverage: isZeroMode ? 100 : (jurosPagos > 0 ? (ebitda / jurosPagos) : 100),
     nlcdg: 0,
-    solvency_score_kanitz: 1.5,
-    altman_z_score: 6.25,
-    dcf_valuation: 1.7,
+    solvency_score_kanitz: isZeroMode ? 10.0 : 1.5,
+    altman_z_score: isZeroMode ? 99.9 : 6.25,
+    dcf_valuation: isZeroMode ? 1.0 : 1.7,
     scissors_effect: 0,
-    liquidity_current: 1.5,
-    solvency_index: 2.0,
+    liquidity_current: isZeroMode ? 99.9 : (passivoCirculante > 0 ? ((totalAssets - fixedAssetsValue) / passivoCirculante) : 99.9),
+    solvency_index: isZeroMode ? 99.9 : (passivoTotal > 0 ? (totalAssets / passivoTotal) : 99.9),
     inventory_turnover: 0,
     carbon_footprint: 0,
-    avg_receivable_days: 45,
-    avg_payable_days: 30,
-    // E-SDS v1.2 Inputs for P0
-    fco_livre: 208387.77 - 50000 - 2500 - 14871, // EBITDA - Manutencao - Juros - IR (estimado P0)
-    capex_manutencao: 50000,
+    avg_receivable_days: isZeroMode ? 0 : 45,
+    avg_payable_days: isZeroMode ? 0 : 30,
+    // E-SDS inputs
+    fco_livre: fcoLivre,
+    capex_manutencao: capexManut,
     capex_estrategico: 0,
-    juros_pagos: 2500,
-    impostos_pagos: 14871,
-    passivo_circulante: 2240991.80,
-    despesas_operacionais_projetadas_proxima_rodada: 1149623.86,
-    receita_liquida: 4184440.05,
-    custo_medio_divida: 2500 / 2240991.80,
-    alavancagem_efetiva: 2240991.80 / 208387.77,
-    divida_liquida: 2240991.80 - currentCash,
+    juros_pagos: jurosPagos,
+    impostos_pagos: impostosPagos,
+    passivo_circulante: passivoCirculante,
+    despesas_operacionais_projetadas_proxima_rodada: despesasOperacionais,
+    receita_liquida: receitaLiquida,
+    custo_medio_divida: custoMedioDivida,
+    alavancagem_efetiva: alavancagemEfetiva,
+    divida_liquida: dividaLiquida,
     receita_recorrente_projetada: 0,
     caixa: currentCash,
     aplicacoes: 0,
-    despesas_operacionais_diarias: 1149623.86 / 30,
-    passivo_total: 2240991.80,
+    despesas_operacionais_diarias: despesasOperacionais / 30,
+    passivo_total: passivoTotal,
     pl: equity,
-    percentual_divida_curto_prazo: 100,
+    percentual_divida_curto_prazo: passivoTotal > 0 ? ((passivoCirculante / passivoTotal) * 100) : 100,
     commitments: {
       receivables: [
-        { id: 'clients', label: 'Contas a Receber (Clientes)', value: findAccountValue(balanceSheet, 'assets.current.clients') || 1407000.00 },
-        { id: 'investments', label: 'Aplicações Financeiras', value: findAccountValue(balanceSheet, 'assets.current.investments') || 0 },
-        { id: 'vat_recoverable', label: 'IVA a Recuperar', value: findAccountValue(balanceSheet, 'assets.current.vat_recoverable') || 0 }
+        { id: 'clients', label: 'Contas a Receber (Clientes)', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'assets.current.clients')?.value ?? 1407000.00) },
+        { id: 'investments', label: 'Aplicações Financeiras', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'assets.current.investments')?.value ?? 0) },
+        { id: 'vat_recoverable', label: 'IVA a Recuperar', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'assets.current.vat_recoverable')?.value ?? 0) }
       ],
       payables: [
-        { id: 'suppliers', label: 'Fornecedores', value: findAccountValue(balanceSheet, 'liabilities.current.suppliers') || 717605.00 },
-        { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: findAccountValue(balanceSheet, 'liabilities.current.loans_st') || 1372362.00 },
-        { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: findAccountValue(balanceSheet, 'liabilities.longterm.loans_lt') || 868629.80 },
-        { id: 'taxes', label: 'Imposto de Renda a Pagar', value: findAccountValue(balanceSheet, 'liabilities.current.taxes') || 14871.31 },
-        { id: 'dividends', label: 'Dividendos a Pagar', value: findAccountValue(balanceSheet, 'liabilities.current.dividends') || 11153.49 },
-        { id: 'ppr', label: 'PPR a Pagar', value: findAccountValue(balanceSheet, 'liabilities.current.ppr_payable') || 0 },
-        { id: 'vat_payable', label: 'IVA a Recolher', value: findAccountValue(balanceSheet, 'liabilities.current.vat_payable') || 0 }
+        { id: 'suppliers', label: 'Fornecedores', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.current.suppliers')?.value ?? 717605.00) },
+        { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.current.loans_st')?.value ?? 1372362.00) },
+        { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.longterm.loans_lt')?.value ?? 868629.80) },
+        { id: 'taxes', label: 'Imposto de Renda a Pagar', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.current.taxes')?.value ?? 14871.31) },
+        { id: 'dividends', label: 'Dividendos a Pagar', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.current.dividends')?.value ?? 11153.49) },
+        { id: 'ppr', label: 'PPR a Pagar', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.current.ppr_payable')?.value ?? 0) },
+        { id: 'vat_payable', label: 'IVA a Recolher', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'liabilities.current.vat_payable')?.value ?? 0) }
       ]
     }
   };

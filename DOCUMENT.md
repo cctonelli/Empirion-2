@@ -207,6 +207,26 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.16 Sapphire Diamond Enterprise - Modelagem Fiduciária Imobiliária & Estratégias de Funding de Setup do Tutor
+- **Data:** 27 de Maio de 2026
+- **Motivo:** Introduzir controle absoluto e realismo contábil sobre os Ativos Imobilizados (Terrenos, Edificações próprias ou locadas) e a estratégia de balanceamento fiduciário do passivo/Capital nos três modos de inicialização do torneio, atendendo plenamente à casuística em que no Greenfield ("Start from Zero") o espaço produtivo pode ser locado ou próprio.
+- **Diferenças:**
+  - *Opção de Estabelecimento Industrial:* Inclusão do parâmetro `building_mode` ('rented' ou 'owned') permitindo ao Tutor escolher se as empresas começam operando em espaço Alugado (onde Terrenos e Prédios são zerados no Balanço de P0) ou Próprio (onde os bens entram ativados no Ativo Imobilizado).
+  - *Customização Patrimonial Completa:* Mapeamento de chaves cirúrgicas editáveis de imobilizado: Valor de Edificações de Abertura (`building_value`), Valor do Terreno (`land_value`), Idade do Imóvel (`building_age` para apurar depreciação acumulada predial inicial de 4.0% a.a.) e Benfeitorias/Instalações Técnicas Iniciais (`installations_value`).
+  - *Estratégia de Funding Contábil:* Introdução do mecanismo `real_estate_acquisition_funding` ('capital' ou 'debt'). Se o imobilizado de abertura for integralizado via Capital Próprio ('capital'), o Capital Social fiduciário se expande na exata medida do ativo líquido gerado; se financiado via Obrigações ('debt'), o Caixa Inicial e o Capital Social básico são preservados no Giro do P0 e o imobilizado é contrabalançado contra Financiamentos de Longo Prazo no Passivo Exigível.
+  - *Interface de Regulação do Tutor (Step 6):* Acoplagem de um painel responsivo no Step 6 do `TrialWizard.tsx` inteligente, exibindo dinamicamente os inputs de imobilizado e fundings com bloqueios e revelações contextuais conforme o modo de prédio habilitado.
+- **Status:** Em Produção (Fidelidade Metódica de 100% e Mecânica Educacional Premium).
+
+### v19.15 Sapphire Diamond Enterprise - Sincronização Dinâmica de KPIs Contábeis de P0 (Eliminação do Fantasma de Passivos e Despesas)
+- **Data:** 27 de Maio de 2026
+- **Motivo:** Garantir a consistência absoluta dos KPIs industriais e financeiros do Round 0 (P0) em campeonatos criados dinamicamente, eliminando fallbacks parciais hardcoded herdados da estrutura corporativa de "Running Company" quando operando no modo "Start from Zero" ou templates customizados do Tutor.
+- **Diferenças:**
+  - *Sincronização Dinâmica Contábil de P00:* O método `createChampionshipWithTeams` em `services/supabase.ts` foi integralmente refatorado para ler e derivar os KPIs históricos de Round 0 de cada time diretamente do `initial_financials` gerado ou editado pelo Tutor.
+  - *Tratamento de Coalescência de Valor Zero Fiduciário:* Substituição do operador lógico `||` por verificação de modo (`starting_mode === 'start_from_zero'`) e coalescência nula `??` nas funções de busca de contas (`findAccountValue`), assegurando que `0.00` de uma conta contábil limpa (ex: passivos, empréstimos, despesas operacionais, inventários) seja respeitado como um dado legítimo e não substituído por fallbacks padrão de Running Company.
+  - *Estimativa Dinâmica de EBITDA e FCO Livre:* Criação de blocos matemáticos sob demanda que analisam o resultado operacional (`operating_profit`) e manutenção no Fluxo de Caixa para estimar o EBITDA inicial real da arena instalada.
+  - *Mitigação de Juros e Compromissos Fantasmas:* Limpeza cirúrgica nos arrays de `commitments` de contas a pagar (`payables`) e contas a receber (`receivables`) no Round 0 de cada equipe, evitando a imposição fiduciária de dívidas antigas a equipes de arenas iniciadas inteiramente do zero.
+- **Status:** Em Produção (Fidelidade Fiduciária de 100% e Simulação Limpa).
+
 ### v19.14 Sapphire Diamond Enterprise - P0 Pro Configurator & Interactive Real-Time Preview
 - **Data:** 26 de Maio de 2026
 - **Motivo:** Implementação robusta do P0 Configurator focado na autonomia estratégica do Tutor e no deploy preciso de arenas. Garantir a consistência dos 3 modos estruturais e auditoria dinâmica em tempo real antes da inicialização do torneio.

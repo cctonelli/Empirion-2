@@ -65,6 +65,14 @@ export interface BaseP0Config {
   dividend_percent: number;
   dividend_frequency: number; // A cada X rounds
   
+  // Propriedades Imobiliárias Fiduciárias (v19.16)
+  building_mode?: 'rented' | 'owned';
+  building_value?: number;
+  building_age?: number;
+  installations_value?: number;
+  land_value?: number;
+  real_estate_acquisition_funding?: 'capital' | 'debt';
+
   // Step 6: Overrides
   macroOverrides: Record<string, any>;
 }
@@ -215,8 +223,28 @@ export function generatePureP0(config: TutorP0Config): {
   let loans_lt = 0;
   let profit_accum = 0;
 
-  if (config.starting_mode === 'start_from_zero') {
-    // Apenas capital e caixa. Outros zerados.
+  const isZeroMode = config.starting_mode === 'start_from_zero';
+  const isBaseMode = config.starting_mode === 'start_with_base';
+
+  // Configuração Imobiliária e Instalações (v19.16) com fallbacks sadios baseados nas premissas contábeis de cada modo
+  const buildingMode = config.building_mode ?? (isZeroMode ? 'rented' : 'owned');
+  const bValDefault = isZeroMode ? 2000000.00 : (isBaseMode ? 2000000.00 : 5440000.00);
+  const buildingBaseValue = buildingMode === 'owned' ? (config.building_value ?? bValDefault) : 0;
+  
+  const bAgeDefault = isZeroMode ? 0 : (isBaseMode ? 2 : 10);
+  const buildingAge = config.building_age ?? bAgeDefault;
+
+  const landValDefault = isZeroMode ? 1000000.00 : (isBaseMode ? 1000000.00 : 1200000.00);
+  const calculatedLand = buildingMode === 'owned' ? (config.land_value ?? landValDefault) : 0;
+
+  const installValDefault = isZeroMode ? 250000.00 : (isBaseMode ? 500000.00 : 1000000.00);
+  const installationsVal = config.installations_value ?? installValDefault;
+
+  // Depreciação Predial Acumulada: 4.0% ao ano sobre o edifício próprio
+  const calculatedBDeprec = buildingMode === 'owned' ? parseFloat((buildingBaseValue * 0.04 * buildingAge).toFixed(2)) : 0;
+
+  if (isZeroMode) {
+    // Apenas capital, caixa e o imobilizado/instalações configurado pelo Tutor. Máquinas e estoques zerados.
     totalMachinesAcquisitionValue = 0;
     totalMachinesAccumDeprec = 0;
     totalStock = 0;
@@ -224,16 +252,21 @@ export function generatePureP0(config: TutorP0Config): {
     mpb_val = 0;
     finished_val = 0;
     generatedMachines.length = 0;
-  } else if (config.starting_mode === 'start_with_base') {
+
+    land = calculatedLand;
+    buildings = buildingBaseValue + installationsVal;
+    bDeprec = calculatedBDeprec;
+  } else if (isBaseMode) {
     // Uma estrutura industrial enxuta e saudável
-    land = 1000000.00;
-    buildings = 2000000.00;
-    bDeprec = 2000000.00 * 0.04 * 2; // 4% ao ano por 2 anos = 160.000
+    land = calculatedLand;
+    buildings = buildingBaseValue + installationsVal;
+    bDeprec = calculatedBDeprec;
   } else {
     // Start with Running Company (Empresa Rodando - Complexo)
-    land = 1200000.00;
-    buildings = 5440000.00;
-    bDeprec = 2176000.00;
+    land = calculatedLand;
+    buildings = buildingBaseValue + installationsVal;
+    bDeprec = calculatedBDeprec;
+    
     clients = 2092193.00;
     pecld = -18529.46;
     suppliers = 717605.00;
@@ -255,16 +288,30 @@ export function generatePureP0(config: TutorP0Config): {
   const fixedLiabilities = suppliers + taxes + dividends + ppr;
 
   // BALANCIAMENTO FIDUCIÁRIO RIGOROSO (MANDATO SAPPHIRE)
-  // Assets = Liabilities + PL
-  // Assets = (suppliers + taxes + dividends + ppr + loans_st + loans_lt) + (capital_social + profit_accum)
-  // Let's solve loans and profit_accum to make Assets === Passivo + PL exactly!
-  const excess = sumAssets - (fixedLiabilities + capital);
+  let excess = sumAssets - (fixedLiabilities + capital);
 
-  if (config.starting_mode === 'start_from_zero') {
+  if (isZeroMode) {
+    // No "Start from Zero", o imobilizado gerado precisa de funding correto definido pelo Tutor para equilibrar o balanço de abertura
+    const realEstateNet = land + buildings - bDeprec;
+    if (realEstateNet > 0) {
+      const funding = config.real_estate_acquisition_funding ?? 'capital';
+      if (funding === 'capital') {
+        // Financiamento por Capital Próprio -> expande o Capital Social para carregar o Imobilizado além do Caixa
+        capital = config.capital_social + realEstateNet;
+        loans_lt = 0;
+      } else {
+        // Financiamento por Dívida -> preserva capital básico e ativa Passivo de Longo Prazo correspondente
+        loans_lt = realEstateNet;
+      }
+    } else {
+      loans_lt = 0;
+    }
     loans_st = 0;
-    loans_lt = 0;
+    // O excesso fiduciário é recalculado em cima do novo Capital/Obrigações equilibrado
+    const currentLiabsAndCapital = fixedLiabilities + capital + loans_lt;
+    excess = sumAssets - currentLiabsAndCapital;
     profit_accum = parseFloat(excess.toFixed(2));
-  } else if (config.starting_mode === 'start_with_base') {
+  } else if (isBaseMode) {
     if (excess > 0) {
       // Financiou os ativos remanescentes com empréstimos
       loans_st = parseFloat((excess * 0.4).toFixed(2));
