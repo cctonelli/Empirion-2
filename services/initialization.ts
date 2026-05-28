@@ -237,6 +237,11 @@ export function generatePureP0(config: TutorP0Config): {
   const dre = financials.dre;
   const cf = financials.cash_flow;
 
+  // ZERAGEM RADICAL FIDUCIÁRIA DAS ÁRVORES CONTÁBEIS CLONADAS (Para evitar vazamentos do default histórico)
+  clearFinancialTree(bs);
+  clearFinancialTree(dre);
+  clearFinancialTree(cf);
+
   // Preço padrão das máquinas regulado
   const ALPHA_PRICE = 500000.00;
   const BETA_PRICE = 1500000.00;

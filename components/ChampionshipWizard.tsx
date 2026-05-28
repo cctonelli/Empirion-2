@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { INITIAL_FINANCIAL_TREE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { Branch, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, TransparencyLevel, GazetaMode } from '../types';
-import { createChampionshipWithTeams } from '../services/supabase';
+import { supabase, createChampionshipWithTeams } from '../services/supabase';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import FinancialStructureEditor from './FinancialStructureEditor';
@@ -53,7 +53,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       ...Array.from({ length: formData.bots_count }, (_, i) => ({ name: `BOT Oracle 0${i+1}`, is_bot: true }))
     ];
     try {
-      await createChampionshipWithTeams({
+      const champ = await createChampionshipWithTeams({
         ...formData,
         status: 'active',
         region_names: regionNames,
@@ -61,6 +61,30 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
         market_indicators: marketIndicators,
         round_rules: roundRules,
       }, teamsToCreate, isTrial);
+
+      // Auto-selecionar a nova arena e a primeira equipe humana para evitar vazamento de dados antigos
+      if (champ && champ.id) {
+         try {
+            const table = isTrial ? 'trial_teams' : 'teams';
+            const { data: teamData } = await supabase
+               .from(table)
+               .select('id')
+               .eq('championship_id', champ.id)
+               .eq('is_bot', false)
+               .order('name', { ascending: true })
+               .limit(1);
+
+            if (teamData && teamData[0]) {
+               localStorage.setItem('active_champ_id', champ.id);
+               localStorage.setItem('active_team_id', teamData[0].id);
+               localStorage.setItem('is_trial_session', isTrial ? 'true' : 'false');
+               console.log("Oracle Session Matcher – Auto-seleção completada:", champ.id, teamData[0].id);
+            }
+         } catch (selectErr) {
+            console.error("Oracle Session Matcher Fault – Falha no auto-align de sessão:", selectErr);
+         }
+      }
+
       onComplete();
       // Força um refresh após a criação para garantir que o cache de todos os estados seja reiniciado
       setTimeout(() => {

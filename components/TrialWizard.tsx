@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
-import { createChampionshipWithTeams, getP0Templates, saveP0Template, deleteP0Template } from '../services/supabase';
+import { supabase, createChampionshipWithTeams, getP0Templates, saveP0Template, deleteP0Template } from '../services/supabase';
 import { generatePureP0, TutorP0Config, P0Template, SUPPORTED_ACCOUNTING_MODELS } from '../services/initialization';
 import { DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import FinancialStructureEditor from './FinancialStructureEditor';
@@ -307,7 +307,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [showSaveTplModal, setShowSaveTplModal] = useState(false);
   const [templateIsPublic, setTemplateIsPublic] = useState(true);
   const [tplLoading, setTplLoading] = useState(false);
-  const [activeAuditTab, setActiveAuditTab] = useState<'esds' | 'liquidity' | 'assets' | 'governance'>('esds');
+  const [activeAuditTab, setActiveAuditTab] = useState<'esds' | 'liquidity' | 'assets' | 'governance' | 'financials'>('esds');
+  const [selectedFinancialTab, setSelectedFinancialTab] = useState<'balance' | 'dre' | 'cashflow'>('balance');
   const [isLiveHudOpen, setIsLiveHudOpen] = useState(false);
 
   const previewFinancials = useMemo(() => {
@@ -674,7 +675,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       };
 
       // Preparação e despacho do payload
-      await createChampionshipWithTeams({
+      const champ = await createChampionshipWithTeams({
         name: tutorConfig.tournamentName,
         starting_mode: tutorConfig.starting_mode,
         total_rounds: tutorConfig.total_rounds,
@@ -701,6 +702,28 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         tutor_name: tutorConfig.tutorName,
         institution_name: tutorConfig.institutionName
       }, teamsToCreate, true);
+
+      // Auto-selecionar a nova arena e a primeira equipe humana para evitar vazamento de dados antigos
+      if (champ && champ.id) {
+         try {
+            const { data: teamData } = await supabase
+               .from('trial_teams')
+               .select('id')
+               .eq('championship_id', champ.id)
+               .eq('is_bot', false)
+               .order('name', { ascending: true })
+               .limit(1);
+
+            if (teamData && teamData[0]) {
+               localStorage.setItem('active_champ_id', champ.id);
+               localStorage.setItem('active_team_id', teamData[0].id);
+               localStorage.setItem('is_trial_session', 'true');
+               console.log("Oracle Session Matcher – Auto-seleção completada:", champ.id, teamData[0].id);
+            }
+         } catch (selectErr) {
+            console.error("Oracle Session Matcher Fault – Falha no auto-align de sessão:", selectErr);
+         }
+      }
 
       onComplete();
       
@@ -1983,6 +2006,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeAuditTab === 'esds' ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/20' : 'bg-slate-900 text-slate-400 hover:text-white border border-white/5'}`}
                        >
                           <Gauge size={12}/> E-SDS 6 Pilares
+                        </button>
+                        <button 
+                           id="btn-active-audit-tab-financials"
+                           onClick={() => setActiveAuditTab('financials')} 
+                           className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeAuditTab === 'financials' ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/20' : 'bg-slate-900 text-slate-400 hover:text-white border border-white/5'}`}
+                        >
+                           <Calculator size={12}/> Demonstrações (P0)
                        </button>
                        <button 
                           onClick={() => setActiveAuditTab('liquidity')} 
@@ -2092,7 +2122,89 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           </motion.div>
                        )}
 
-                       {activeAuditTab === 'liquidity' && (
+                       {activeAuditTab === 'financials' && (
+                           <motion.div key="tab-fin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+                              <div className="text-left">
+                                 <h5 className="text-xs font-black text-white uppercase tracking-wider mb-2">Demonstrações Financeiras Projetadas de Abertura (Round 0)</h5>
+                                 <p className="text-xs text-slate-500 mb-6">Valores recalculados dinamicamente com base nas escolhas do Tutor para a arena corrente.</p>
+                                 
+                                 <div className="flex gap-2 mb-6 bg-slate-950/80 p-1.5 rounded-2xl border border-white/5 w-fit">
+                                    <button 
+                                       type="button"
+                                       onClick={() => setSelectedFinancialTab('balance')} 
+                                       className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedFinancialTab === 'balance' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                       Balanço Patrimonial
+                                    </button>
+                                    <button 
+                                       type="button"
+                                       onClick={() => setSelectedFinancialTab('dre')} 
+                                       className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedFinancialTab === 'dre' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                       DRE (Competência)
+                                    </button>
+                                    <button 
+                                       type="button"
+                                       onClick={() => setSelectedFinancialTab('cashflow')} 
+                                       className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedFinancialTab === 'cashflow' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                       DFC (Regime Caixa)
+                                    </button>
+                                 </div>
+
+                                 <div className="bg-slate-950/80 border border-white/5 rounded-[2rem] overflow-hidden max-h-[550px] overflow-y-auto shadow-inner">
+                                    <table className="w-full text-left border-collapse">
+                                       <thead>
+                                          <tr className="bg-slate-900 border-b border-white/5 text-[9px] uppercase tracking-wider font-black text-slate-400">
+                                             <th className="p-4">Conta Contábil / Item</th>
+                                             <th className="p-4 text-right">Saldo Projetado (Round 0)</th>
+                                          </tr>
+                                       </thead>
+                                       <tbody>
+                                          {(() => {
+                                             const renderFinancialRows = (nodes: any[], level = 0): React.ReactNode => {
+                                                if (!nodes || !Array.isArray(nodes)) return null;
+                                                return nodes.map((node: any) => {
+                                                   const isTotalizer = node.type === 'totalizer';
+                                                   return (
+                                                      <React.Fragment key={node.id}>
+                                                         <tr className={`border-b border-white/5 transition-all hover:bg-white/[0.03] group ${isTotalizer ? 'bg-white/[0.02] font-black' : ''}`}>
+                                                            <td className="p-3">
+                                                               <div className="flex items-center gap-2" style={{ paddingLeft: `${level * 16}px` }}>
+                                                                  {level > 0 && <span className="text-slate-600 font-sans">↳</span>}
+                                                                  <span className={`text-[10px] uppercase tracking-wider transition-colors ${isTotalizer ? 'text-white group-hover:text-orange-400 font-black' : 'text-slate-400 group-hover:text-slate-200 font-medium'}`}>
+                                                                     {node.label}
+                                                                  </span>
+                                                               </div>
+                                                            </td>
+                                                            <td className="p-3 text-right font-mono text-xs">
+                                                               <span className={`tracking-tighter ${isTotalizer ? 'font-black text-orange-400 text-sm' : 'text-slate-300'}`}>
+                                                                  {formatCurrency(node.value || 0, tutorConfig.currency)}
+                                                               </span>
+                                                            </td>
+                                                         </tr>
+                                                         {node.children && renderFinancialRows(node.children, level + 1)}
+                                                      </React.Fragment>
+                                                   );
+                                                });
+                                             };
+
+                                             return renderFinancialRows(
+                                                selectedFinancialTab === 'balance' 
+                                                   ? editableFinancials.balance_sheet 
+                                                   : selectedFinancialTab === 'dre' 
+                                                      ? editableFinancials.dre 
+                                                      : editableFinancials.cash_flow
+                                             );
+                                          })()}
+                                       </tbody>
+                                    </table>
+                                 </div>
+                              </div>
+                           </motion.div>
+                        )}
+
+                        {activeAuditTab === 'liquidity' && (
                           <motion.div key="tab-liq" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-xs text-left">
                                 {/* Ativo Circulante */}

@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.27 Obsidian Diamond Enterprise (Greenfield Lock de Parque Industrial, Estocagem e Autofill Contábil de Caixa/Capital)
+- **Versão Ativa:** v19.28 Obsidian Diamond Enterprise (Preview Contábil Completo de P00, Fallback Dinâmico do Cockpit e Resolução de Sessão fiduciária)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -216,6 +216,15 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.28 Obsidian Diamond Enterprise - Explorer de Demonstrativos Contábeis P00, Sanitarização Dinâmica de Cockpit e Sincronismo de Sessões fiduciárias
+- **Data:** 28 de Maio de 2026
+- **Motivo:** Sanar débito técnico contábil remanescente e consolidar as ações de correção final para a v19.28 recomendadas pela auditoria Oracle Accounting Strategos. Trazer visibilidade em tempo real completa para o Round 0 (P0) no wizard de criação de arenas, banir fallbacks e dados fantasmas remanescentes no Cockpit do aluno, e garantir blindagem completa contra caches/seleções obsoletas.
+- **Diferenças:**
+  - *Explorer Real-Time de Demonstrativos Contábeis (Step 8):* Integração de uma aba interativa e completa denominada "Demonstrações (P0)" no painel de auditoria do Step 8 em `TrialWizard.tsx`. Essa aba permite ao Tutor clicar e inspecionar a árvore hierárquica completa em tempo real para o Balanço Patrimonial, DRE e DFC, geradas de forma dinâmica e fidedigna para a arena que está prestes a inicializar.
+  - *Cockpit com Fallback Dinâmico Blindado (Dashboard):* No frontend, alteração do Cockpit (`components/Dashboard.tsx`) para eliminar o fallback estático de números mockados (como Ativo de 9.4M e Caixa de 111k) quando a Rodada 0 ainda está carregando ou indisponível. Agora, o sistema detecta e constrói dinamicamente o estado fiduciário se baseando estritamente nos dados de `team?.kpis`, assegurando coerência absoluta com as configurações salvas pelo Tutor.
+  - *Auto-alinhamento e Sincronismo Fiduciário de Sessão:* Ajuste em `TrialWizard.tsx` e `ChampionshipWizard.tsx` para interceptar a resposta do banco de dados na criação da arena competitiva. O sistema identifica automaticamente a nova ID de campeonato e a primeira ID de equipe humana gerada, injetando-os cirurgicamente no `localStorage` antes de recarregar a interface. Isso remove qualquer resíduo de sessão obsoleta ou dados mortos na visualização inicial do Cockpit do aluno.
+- **Status:** Em Produção (Fidelidade Fiduciária Extrema, Certificação Superior).
 
 ### v19.27 Obsidian Diamond Enterprise - Greenfield Lock de Parque Industrial, Estocagem e Autofill Contábil de Caixa/Capital
 - **Data:** 28 de Maio de 2026
