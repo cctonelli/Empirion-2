@@ -82,12 +82,12 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                  team_id: t.id,
                  championship_id: arena.id,
                  round: 0,
-                 equity: t.equity || t.kpis?.equity || 7252171.74,
+                 equity: t.equity || t.kpis?.equity || (arena.starting_mode === 'start_from_zero' ? (arena.config?.caixa_inicial ?? 111163.54) : 7252171.74),
                  team: { name: t.name },
                  kpis: t.kpis || {
                     market_share: 100 / teamsWithKpis.length,
                     statements: INITIAL_FINANCIAL_TREE,
-                    share_price: (t.equity || 7252171.74) / 72000,
+                    share_price: (t.equity || (arena.starting_mode === 'start_from_zero' ? (arena.config?.caixa_inicial ?? 111163.54) : 7252171.74)) / 72000,
                     rating: 'AAA'
                  }
               }));
@@ -120,6 +120,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
         // Fallback local robusto se o histórico não estiver presente ainda no Supabase (P0)
         if ((!teamsData || teamsData.length === 0) && targetRound === 0) {
           console.warn("Oracle Gazette News – P0 vazio na busca de histórico. Buscando via Teams...");
+          const defaultEquity = arena.starting_mode === 'start_from_zero' ? (arena.config?.caixa_inicial ?? 111163.54) : 7252171.74;
           const { data: teamsWithKpis } = await supabase
              .from(teamsTable)
              .select('*')
@@ -130,12 +131,12 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                 team_id: t.id,
                 championship_id: arena.id,
                 round: 0,
-                equity: t.equity || t.kpis?.equity || 7252171.74,
+                equity: t.equity || t.kpis?.equity || defaultEquity,
                 team: { name: t.name },
                 kpis: t.kpis || {
                    market_share: 100 / teamsWithKpis.length,
                    statements: INITIAL_FINANCIAL_TREE,
-                   share_price: (t.equity || 7252171.74) / 72000,
+                   share_price: (t.equity || t.kpis?.equity || defaultEquity) / 72000,
                    rating: 'AAA'
                 }
              }));

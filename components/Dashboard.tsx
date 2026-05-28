@@ -26,6 +26,7 @@ import AuditLogViewer from './AuditLogViewer';
 import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getTeamSimulationHistory } from '../services/supabase';
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO, INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00 } from '../constants';
+import { generatePureP0 } from '../services/initialization';
 
 import FinancialReportMatrix from './FinancialReportMatrix';
 import { calculateProjections } from '../services/simulation';
@@ -85,28 +86,47 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           if (!hasP0) {
             console.warn("Oracle Shield – P0 não encontrado no histórico do Supabase. Injetando Fallback Local do estado inicial...");
             const kpis = team?.kpis || {};
-            const defaultCash = kpis.current_cash ?? 111163.54; // default do caixa inicial
+            const isZeroMode = arena.starting_mode === 'start_from_zero';
+            const defaultCash = kpis.current_cash ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 111163.54); // default do caixa inicial
+            
+            // Garantir as declarações corretas em tempo de inicialização Greenfield
+            let statementsFallback = kpis.statements;
+            if (!statementsFallback) {
+              if (isZeroMode) {
+                statementsFallback = generatePureP0({
+                  starting_mode: 'start_from_zero',
+                  caixa_inicial: arena.config?.caixa_inicial ?? 0,
+                  capital_social: arena.config?.capital_social ?? 0,
+                  inventories: { mpa_qty: 0, mpb_qty: 0, mpa_unit_val: 0, mpb_unit_val: 0, finished_qty: 0, finished_unit_val: 0 },
+                  machines: [],
+                  building_mode: 'rented'
+                } as any);
+              } else {
+                statementsFallback = INITIAL_FINANCIAL_TREE;
+              }
+            }
+
             const initialP0Fallback = {
               team_id: teamId,
               championship_id: champId,
               round: 0,
               state: {},
-              equity: kpis.equity ?? 7252171.74,
-              total_assets: kpis.total_assets ?? 9493163.54,
-              stock_value: kpis.stock_value ?? 1407000.00,
-              fixed_assets_value: kpis.fixed_assets_value ?? 6012500.00,
+              equity: kpis.equity ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 7252171.74),
+              total_assets: kpis.total_assets ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 9493163.54),
+              stock_value: kpis.stock_value ?? (isZeroMode ? 0 : 1407000.00),
+              fixed_assets_value: kpis.fixed_assets_value ?? (isZeroMode ? 0 : 6012500.00),
               revenue: 0,
               net_profit: 0,
               kpis: {
-                statements: kpis.statements || INITIAL_FINANCIAL_TREE,
-                machines: kpis.machines || INITIAL_MACHINES_P00,
+                statements: statementsFallback,
+                machines: kpis.machines || (isZeroMode ? [] : INITIAL_MACHINES_P00),
                 current_cash: defaultCash,
-                stock_quantities: kpis.stock_quantities || { mp_a: 30150, mp_b: 20100, finished_goods: 0 },
-                equity: kpis.equity ?? 7252171.74,
-                total_assets: kpis.total_assets ?? 9493163.54,
-                stock_value: kpis.stock_value ?? 1407000.00,
-                fixed_assets_value: kpis.fixed_assets_value ?? 6012500.00,
-                fixed_assets_depreciation: kpis.fixed_assets_depreciation ?? 75000,
+                stock_quantities: kpis.stock_quantities || (isZeroMode ? { mp_a: 0, mp_b: 0, finished_goods: 0 } : { mp_a: 30150, mp_b: 20100, finished_goods: 0 }),
+                equity: kpis.equity ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 7252171.74),
+                total_assets: kpis.total_assets ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 9493163.54),
+                stock_value: kpis.stock_value ?? (isZeroMode ? 0 : 1407000.00),
+                fixed_assets_value: kpis.fixed_assets_value ?? (isZeroMode ? 0 : 6012500.00),
+                fixed_assets_depreciation: kpis.fixed_assets_depreciation ?? (isZeroMode ? 0 : 75000),
                 rating: kpis.rating || 'AAA',
                 last_price: kpis.last_price || (arena.initial_share_price || 100),
                 last_units_sold: 0,
@@ -115,16 +135,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                 ccc: 0,
                 interest_coverage: kpis.interest_coverage ?? 100,
                 nlcdg: kpis.nlcdg ?? 0,
-                solvency_score_kanitz: kpis.solvency_score_kanitz ?? 1.5,
-                altman_z_score: kpis.altman_z_score ?? 6.25,
-                dcf_valuation: kpis.dcf_valuation ?? 1.7,
+                solvency_score_kanitz: kpis.solvency_score_kanitz ?? (isZeroMode ? 10.0 : 1.5),
+                altman_z_score: kpis.altman_z_score ?? (isZeroMode ? 99.9 : 6.25),
+                dcf_valuation: kpis.dcf_valuation ?? (isZeroMode ? 1.0 : 1.7),
                 scissors_effect: kpis.scissors_effect ?? 0,
-                liquidity_current: kpis.liquidity_current ?? 1.5,
-                solvency_index: kpis.solvency_index ?? 2.0,
+                liquidity_current: kpis.liquidity_current ?? (isZeroMode ? 99.9 : 1.5),
+                solvency_index: kpis.solvency_index ?? (isZeroMode ? 99.9 : 2.0),
                 inventory_turnover: kpis.inventory_turnover ?? 0,
                 carbon_footprint: kpis.carbon_footprint ?? 0,
-                avg_receivable_days: kpis.avg_receivable_days ?? 45,
-                avg_payable_days: kpis.avg_payable_days ?? 30,
+                avg_receivable_days: kpis.avg_receivable_days ?? (isZeroMode ? 0 : 45),
+                avg_payable_days: kpis.avg_payable_days ?? (isZeroMode ? 0 : 30),
                 esds: kpis.esds || {
                   esds_display: 78,
                   zone: 'Verde',
@@ -135,16 +155,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                 },
                 commitments: kpis.commitments || {
                   receivables: [
-                    { id: 'clients', label: 'Contas a Receber (Clientes)', value: 1407000.00 },
+                    { id: 'clients', label: 'Contas a Receber (Clientes)', value: 0 },
                     { id: 'investments', label: 'Aplicações Financeiras', value: 0 },
                     { id: 'vat_recoverable', label: 'IVA a Recuperar', value: 0 }
                   ],
                   payables: [
-                    { id: 'suppliers', label: 'Fornecedores', value: 717605.00 },
-                    { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: 1372362.00 },
-                    { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: 868629.80 },
-                    { id: 'taxes', label: 'Imposto de Renda a Pagar', value: 14871.31 },
-                    { id: 'dividends', label: 'Dividendos a Pagar', value: 11153.49 }
+                    { id: 'suppliers', label: 'Fornecedores', value: 0 },
+                    { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: 0 },
+                    { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: 0 },
+                    { id: 'taxes', label: 'Imposto de Renda a Pagar', value: 0 },
+                    { id: 'dividends', label: 'Dividendos a Pagar', value: 0 }
                   ]
                 }
               }

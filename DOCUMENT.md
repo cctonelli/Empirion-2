@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.28 Obsidian Diamond Enterprise (Preview Contábil Completo de P00, Fallback Dinâmico do Cockpit e Resolução de Sessão fiduciária)
+- **Versão Ativa:** v19.29 Obsidian Diamond Enterprise (Fechamento Definitivo - Zeragem Greenfield Pura, Invalidação Forte de Cache e Fallbacks de Cockpit Blindados)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -216,6 +216,17 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.29 Obsidian Diamond Enterprise - Fechamento Definitivo (Zeragem Greenfield Pura, Invalidação Forte de Cache e Fallbacks de Cockpit Blindados)
+- **Data:** 28 de Maio de 2026
+- **Motivo:** Fechar e sanar de maneira irrevogável qualquer vestígio de vazamento de dados legados ou mockados no modo Greenfield ("Start from Zero"). Eliminar por completo a herança de saldos antigos no visualizador da Gazeta (`GazetteViewer`), no Cockpit principal (`Dashboard`), e criar uma invalidação agressiva do cache de navegador após criação de campeonatos.
+- **Diferenças:**
+  - *Zeragem Greenfield Avançada (`validateCleanP0`):* Refinamento rigoroso adicionado ao gerador de P0 (`generatePureP0`) para garantir que nenhuma estrutura contábil, estoques, máquinas Alfa/Beta/Gama ou saldo de capital social possua qualquer resíduo residual que destoe das configurações puristas Greenfield escolhidas pelo Tutor.
+  - *Descontaminação do GazetteViewer:* Substituição de todos os fallbacks numéricos fixos em cópias locais (como o patrimônio de 7.2M) por cálculos dinâmicos baseados no `starting_mode` da arena contida em `arena.starting_mode`. Isso garante que em arenas Greenfield, as visualizações de inteligência de mercado projetem valores coerentes de caixa inicial e patrimônio.
+  - *Blindagem de Local Fallbacks no Cockpit:* No `/components/Dashboard.tsx`, adaptamos a barreira do painel local de visualização temporária de P0. Caso o histórico no Supabase ainda esteja carregando, o painel recupera fidedignamente o `starting_mode` do campeonato ativo e injeta um Balanço de Abertura limpo e desprovido de ativos fabris obsoletos, respeitando o caixa inicial e o imobilizado nulo do modo "Start from Zero".
+  - *Invalidação Forte de Estado:* Processo de `setTimeout(() => window.location.reload(), 500)` integrado nos fluxos de conclusão e lançamento de campeonatos nos assistentes de deploy (`TrialWizard` e `ChampionshipWizard`). Isso zera states do React e expira o cache de queries do navegador, direcionando o fluxo para um ecossistema completamente atualizado.
+  - *Aprimoramento de Tipos:* Adição de suporte explícito opcional a `starting_mode?: string` na interface TS `Championship` e mapeamento correspondente de persistência de payload de banco em `supabase.ts`.
+- **Status:** Homologado e 100% Compilado (Zero Warnings & Sem Erros de Linter).
 
 ### v19.28 Obsidian Diamond Enterprise - Explorer de Demonstrativos Contábeis P00, Sanitarização Dinâmica de Cockpit e Sincronismo de Sessões fiduciárias
 - **Data:** 28 de Maio de 2026

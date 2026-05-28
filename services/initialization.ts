@@ -221,6 +221,65 @@ export const INDUSTRIAL_BR_TEMPLATE = {
 };
 
 /**
+ * Função fiduciária para validação profunda e higienização final ("Start from Zero" Shield).
+ * Garante que em modo "Start from Zero", ativos obsoletos, depreciações anteriores, 
+ * estoques fantasmas e passivos anacrônicos sejam forçados a zero absoluto.
+ */
+export function validateCleanP0(
+  balance_sheet: AccountNode[],
+  dre: AccountNode[],
+  cash_flow: AccountNode[],
+  starting_mode: string,
+  initial_cash: number
+): { balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] } {
+  const isZeroMode = starting_mode === 'start_from_zero';
+
+  if (isZeroMode) {
+    // 1. Forçar zeragem de todas as contas do Ativo Circulante exceto Caixa Inicial e Aplicações
+    updateNodeValue(balance_sheet, 'assets.current.clients', 0);
+    updateNodeValue(balance_sheet, 'assets.current.pecld', 0);
+    updateNodeValue(balance_sheet, 'assets.current.stock.pa', 0);
+    updateNodeValue(balance_sheet, 'assets.current.stock.mpa', 0);
+    updateNodeValue(balance_sheet, 'assets.current.stock.mpb', 0);
+    
+    // Purgar qualquer nó WIP da árvore de estoques
+    const currentGroup = balance_sheet.find(n => n.id === 'assets')?.children?.find(c => c.id === 'assets.current');
+    const stockNode = currentGroup?.children?.find(c => c.id === 'assets.current.stock');
+    if (stockNode && stockNode.children) {
+      stockNode.children = stockNode.children.filter(c => c.id !== 'assets.current.stock.wip');
+    }
+
+    // 2. Forçar zeragem das contas do Passivo Circulante
+    updateNodeValue(balance_sheet, 'liabilities.current.suppliers', 0);
+    updateNodeValue(balance_sheet, 'liabilities.current.taxes', 0);
+    updateNodeValue(balance_sheet, 'liabilities.current.dividends', 0);
+    updateNodeValue(balance_sheet, 'liabilities.current.ppr_payable', 0);
+    updateNodeValue(balance_sheet, 'liabilities.current.loans_st', 0);
+
+    // 3. Lucros acumulados iniciais devem ser estritamente zero no Greenfield
+    updateNodeValue(balance_sheet, 'equity.profit', 0);
+    
+    // 4. Máquinas no Ativo Imobilizado devem ser rigorosamente 0
+    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.machines', 0);
+    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.machines_deprec', 0);
+
+    // 5. Recalcular e Reconciliar Ativo = Passivo + PL
+    recalculateTotalizers(balance_sheet);
+    const assetsVal = balance_sheet.find(n => n.id === 'assets')?.value || 0;
+    const liabPLVal = balance_sheet.find(n => n.id === 'liabilities_pl')?.value || 0;
+    if (assetsVal !== liabPLVal) {
+      const diff = assetsVal - liabPLVal;
+      const eqGroup = balance_sheet.find(n => n.id === 'equity');
+      const capVal = eqGroup?.children?.find(c => c.id === 'equity.capital')?.value || 0;
+      updateNodeValue(balance_sheet, 'equity.capital', capVal + diff);
+      recalculateTotalizers(balance_sheet);
+    }
+  }
+
+  return { balance_sheet, dre, cash_flow };
+}
+
+/**
  * Função Oracle determinística para gerar as demonstrações de P0 (Round 0)
  * baseado nas configurações exatas do Tutor na v19.18 Obsidian Diamond Enterprise.
  */
@@ -679,6 +738,9 @@ export function generatePureP0(config: TutorP0Config): {
 
   const cf_final_val = cf_start_val + total_inflow + total_outflow;
   updateNodeValue(cf, 'cf.final', cf_final_val);
+
+  // EXECUTA CHANCELA E HIGIENIZAÇÃO MÁXIMA DA ÁRVORE PARA GARANTIR ZERO ABSOLUTO
+  validateCleanP0(bs, dre, cf, config.starting_mode, cash);
 
   const finalAssetsVal = assetsNode?.value || 0;
   const finalEquityVal = bs.find((n: any) => n.id === 'equity')?.value || 0;

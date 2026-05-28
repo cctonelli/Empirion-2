@@ -217,6 +217,7 @@ export interface Championship {
   locale?: string;
   transparency_level: TransparencyLevel;
   gazeta_mode: GazetaMode;
+  starting_mode?: string;
 }
 
 export interface MacroIndicators {
