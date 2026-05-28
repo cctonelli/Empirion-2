@@ -308,6 +308,17 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [templateIsPublic, setTemplateIsPublic] = useState(true);
   const [tplLoading, setTplLoading] = useState(false);
   const [activeAuditTab, setActiveAuditTab] = useState<'esds' | 'liquidity' | 'assets' | 'governance'>('esds');
+  const [isLiveHudOpen, setIsLiveHudOpen] = useState(false);
+
+  const previewFinancials = useMemo(() => {
+    if (!selectedPreviewTemplate?.config) return null;
+    try {
+      return generatePureP0(selectedPreviewTemplate.config);
+    } catch (e) {
+      console.error("Erro ao gerar preview de template:", e);
+      return null;
+    }
+  }, [selectedPreviewTemplate]);
 
   // Teams counts and state
   const [humanTeamsCount, setHumanTeamsCount] = useState(1);
@@ -911,42 +922,63 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <div 
                       id="card_start_from_zero"
                       onClick={() => handleModeChange('start_from_zero')}
-                      className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[300px] hover:scale-[1.02] ${tutorConfig.starting_mode === 'start_from_zero' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                      className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[385px] hover:scale-[1.02] relative overflow-hidden group ${tutorConfig.starting_mode === 'start_from_zero' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.25)]' : 'bg-slate-950/40 border-white/5 hover:border-white/10'}`}
                     >
+                      <div className="absolute right-6 top-6 text-[8px] font-mono tracking-widest text-orange-600/40 font-black">GREENFIELD INDUSTRIAL</div>
                       <div>
-                        <div className="w-14 h-14 bg-orange-600/20 text-orange-500 rounded-2xl flex items-center justify-center mb-6"><Award size={24} /></div>
-                        <h4 className="text-xl font-black text-white italic">START FROM ZERO</h4>
-                        <p className="text-xs text-slate-500 mt-4 leading-relaxed">Competições avançadas. Equipes iniciam puramente com Capital Social inicial em Caixa, devendo instalar máquinas e gerir contrações de equipe do absoluto zero.</p>
+                        <div className="w-14 h-14 bg-orange-600/20 text-orange-500 rounded-2xl flex items-center justify-center mb-6 shadow-md"><Award size={24} /></div>
+                        <h4 className="text-xl font-black text-white italic leading-none">START FROM ZERO</h4>
+                        <p className="text-xs text-slate-400 mt-4 leading-relaxed">Competições avançadas. Equipes iniciam puramente com Capital Social em Caixa. Parque industrial de máquinas e estoques começam 100% vazios.</p>
                       </div>
-                      <span className="text-[10px] uppercase tracking-[0.3em] font-black text-orange-500 mt-6 block">NÍVEL: DIFÍCIL (PRO)</span>
+                      
+                      <div className="mt-6 pt-4 border-t border-white/5 space-y-2 text-[10px] font-mono text-slate-400">
+                        <div className="flex justify-between"><span className="text-slate-500">Complexidade:</span><span className="text-orange-500 font-bold">★ ★ ★ ★ ★ (Máxima)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Liquidez P00:</span><span className="text-orange-300">$1.0M (100% Caixa)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Frota Máquinas:</span><span className="text-slate-400 font-semibold">0 (Zero Absoluto)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Fluxo P01:</span><span className="text-slate-400 font-medium font-semibold">Instalar tudo do zero</span></div>
+                      </div>
                     </div>
 
                     {/* Modo 2: Start with Base */}
                     <div 
                       id="card_start_with_base"
                       onClick={() => handleModeChange('start_with_base')}
-                      className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[300px] hover:scale-[1.02] ${tutorConfig.starting_mode === 'start_with_base' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                      className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[385px] hover:scale-[1.02] relative overflow-hidden group ${tutorConfig.starting_mode === 'start_with_base' ? 'bg-blue-600/15 border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.25)]' : 'bg-slate-950/40 border-white/5 hover:border-white/10'}`}
                     >
+                      <div className="absolute right-6 top-6 text-[8px] font-mono tracking-widest text-blue-500/40 font-black">PME ESTÁVEL</div>
                       <div>
-                        <div className="w-14 h-14 bg-blue-600/20 text-blue-500 rounded-2xl flex items-center justify-center mb-6"><Factory size={24} /></div>
-                        <h4 className="text-xl font-black text-white italic">START WITH BASE</h4>
-                        <p className="text-xs text-slate-500 mt-4 leading-relaxed">Estrutura tradicional. As equipes iniciam com parque industrial montado (máquinas básicas, colaboradores e capital fiduciário balanceado).</p>
+                        <div className="w-14 h-14 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mb-6 shadow-md"><Factory size={24} /></div>
+                        <h4 className="text-xl font-black text-white italic leading-none">START WITH BASE</h4>
+                        <p className="text-xs text-slate-400 mt-4 leading-relaxed">Estrutura de abertura tradicional. As equipes iniciam com parque industrial básico operando, alguns insumos de matérias-primas e colaboradores.</p>
                       </div>
-                      <span className="text-[10px] uppercase tracking-[0.3em] font-black text-blue-500 mt-6 block">NÍVEL: MÉDIO (PADRÃO)</span>
+                      
+                      <div className="mt-6 pt-4 border-t border-white/5 space-y-2 text-[10px] font-mono text-slate-400">
+                        <div className="flex justify-between"><span className="text-slate-500">Complexidade:</span><span className="text-blue-500 font-bold">★ ★ ★ ☆ ☆ (Média)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Liquidez P00:</span><span className="text-blue-300">$1.5M Caixa • Balanceado</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Frota Máquinas:</span><span className="text-slate-400 font-semibold">3 Alfas, 2 Betas ($6.0M)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Fluxo P01:</span><span className="text-slate-400 font-medium font-semibold">Contas e estoques básicos</span></div>
+                      </div>
                     </div>
 
                     {/* Modo 3: Start with Running Company */}
                     <div 
                       id="card_start_with_running"
                       onClick={() => handleModeChange('start_with_running')}
-                      className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[300px] hover:scale-[1.02] ${tutorConfig.starting_mode === 'start_with_running' ? 'bg-orange-600/15 border-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.2)]' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                      className={`p-10 rounded-[3rem] border-4 cursor-pointer transition-all flex flex-col justify-between min-h-[385px] hover:scale-[1.02] relative overflow-hidden group ${tutorConfig.starting_mode === 'start_with_running' ? 'bg-emerald-600/15 border-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.25)]' : 'bg-slate-950/40 border-white/5 hover:border-white/10'}`}
                     >
+                      <div className="absolute right-6 top-6 text-[8px] font-mono tracking-widest text-emerald-500/40 font-black">CORPORATIVE S.A.</div>
                       <div>
-                        <div className="w-14 h-14 bg-emerald-600/20 text-emerald-500 rounded-2xl flex items-center justify-center mb-6"><Activity size={24} /></div>
-                        <h4 className="text-xl font-black text-white italic">RUNNING COMPANY</h4>
-                        <p className="text-xs text-slate-500 mt-4 leading-relaxed">Operação em andamento. Equipes assumem companhia estabelecida com estoque de MP, produtos finalizados, parcelamentos de impostos/fornecedores e obrigações históricas.</p>
+                        <div className="w-14 h-14 bg-emerald-600/20 text-emerald-500 rounded-2xl flex items-center justify-center mb-6 shadow-md"><Activity size={24} /></div>
+                        <h4 className="text-xl font-black text-white italic leading-none">RUNNING COMPANY</h4>
+                        <p className="text-xs text-slate-400 mt-4 leading-relaxed">Operação de mercado plena. As equipes herdam passivos pesados, recebíveis pendentes, estoques prontos e frota depreciando em larga escala.</p>
                       </div>
-                      <span className="text-[10px] uppercase tracking-[0.3em] font-black text-emerald-500 mt-6 block">NÍVEL: FÁCIL (ACELERADO)</span>
+                      
+                      <div className="mt-6 pt-4 border-t border-white/5 space-y-2 text-[10px] font-mono text-slate-400">
+                        <div className="flex justify-between"><span className="text-slate-500">Complexidade:</span><span className="text-emerald-500 font-bold">★ ★ ☆ ☆ ☆ (Fácil)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Liquidez P00:</span><span className="text-emerald-300">$2.1M (Contas complexas)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Frota Máquinas:</span><span className="text-slate-400 font-semibold">3 Alfas, 2 Betas ($8.5M)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Fluxo P01:</span><span className="text-slate-400 font-medium font-semibold">Demanda alta de manutenção</span></div>
+                      </div>
                     </div>
                  </div>
 
@@ -1159,6 +1191,41 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 </div>
                               </div>
 
+                              {/* PAINEL DE PREVIEW DE BALANÇO PROJETADO */}
+                              {previewFinancials && (
+                                <div className="p-6 bg-slate-950/90 rounded-[2rem] border-2 border-orange-500/20 space-y-4">
+                                  <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] italic border-b border-white/5 pb-2 flex items-center gap-2 font-sans">
+                                    <BarChart3 size={14} className="text-orange-500 animate-pulse" /> Balanço de Abertura Estimado (P00 Calculado)
+                                  </h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
+                                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                                      <span className="text-[9px] text-slate-500 uppercase font-sans">ATIVO TOTAL</span>
+                                      <span className="block text-xs font-black text-white mt-1">
+                                        {formatCurrency(previewFinancials.balance_sheet?.find((n: any) => n.id === 'assets')?.value || 0, selectedPreviewTemplate.config?.currency)}
+                                      </span>
+                                    </div>
+                                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                                      <span className="text-[9px] text-slate-500 uppercase font-sans font-sans">PATR. LÍQUIDO</span>
+                                      <span className="block text-xs font-black text-emerald-400 mt-1">
+                                        {formatCurrency(previewFinancials.balance_sheet?.find((n: any) => n.id === 'equity' || n.id === 'equity_group')?.value || (previewFinancials.balance_sheet?.find((n: any) => n.id === 'assets')?.value ?? 1000000) - (previewFinancials.balance_sheet?.find((n: any) => n.id === 'liabilities')?.value ?? 0), selectedPreviewTemplate.config?.currency)}
+                                      </span>
+                                    </div>
+                                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                                      <span className="text-[9px] text-slate-500 uppercase font-sans">DISPONIBILIDADES</span>
+                                      <span className="block text-xs font-black text-white mt-1">
+                                        {formatCurrency(previewFinancials.balance_sheet?.find((n: any) => n.id === 'assets.current.cash')?.value || 0, selectedPreviewTemplate.config?.currency)}
+                                      </span>
+                                    </div>
+                                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                                      <span className="text-[9px] text-slate-500 uppercase font-sans">IMOBILIZADO NET</span>
+                                      <span className="block text-xs font-black text-pink-400 mt-1">
+                                        {formatCurrency(previewFinancials.balance_sheet?.find((n: any) => n.id === 'assets.noncurrent.fixed')?.value || 0, selectedPreviewTemplate.config?.currency)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
                               {/* Dica Contábil do Modo */}
                               <div className="p-6 bg-slate-950 rounded-2xl border border-white/5 flex items-center gap-4 text-xs text-slate-400 font-sans">
                                 <Info size={24} className="text-orange-500 shrink-0" />
@@ -1228,6 +1295,18 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12 pb-20">
                  <WizardStepTitle icon={<Cpu size={32}/>} title="3. PARQUE INDUSTRIAL & ENGENHARIA" desc="Dimensione e configure a frota produtiva de máquinas e idade depreciativa." />
                  
+                 {tutorConfig.starting_mode === 'start_from_zero' && (
+                   <div className="p-8 bg-orange-600/10 border border-orange-500/30 rounded-[3rem] flex items-center gap-6 shadow-2xl text-left">
+                     <div className="w-16 h-16 bg-orange-600/20 text-orange-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg animate-pulse"><Award size={32}/></div>
+                     <div>
+                       <h4 className="text-xl font-black text-white italic tracking-tight uppercase">MODO GREENFIELD ATIVO — PLANTA INICIADA DO ABSOLUTO ZERO ($0.00)</h4>
+                       <p className="text-xs text-slate-400 leading-relaxed mt-2 font-medium font-sans">
+                         A simulação está configurada como <strong>START FROM ZERO</strong>. A frota produtiva inicia zerada no Round 0, impedindo custos de depreciação ou manutenção inicial fantasmas. As máquinas, idades e parâmetros de engenharia abaixo foram desativados e travados fiduciariamente. Os alunos/equipes deverão comprar, alavancar e instalar suas próprias máquinas no <strong>Round 1</strong> como primeira ação estrutural de fomento!
+                       </p>
+                     </div>
+                   </div>
+                 )}
+
                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left animate-in fade-in slide-in-from-bottom-5 duration-300">
                     {/* Config Máquina Alfa */}
                     <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
@@ -1238,17 +1317,17 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <span className="text-[9px] text-slate-500 font-mono text-left block mt-1">Acquisição: $500k • Cap: 2K un</span>
                         </div>
                       </div>
-                      <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" val={tutorConfig.machines[0].qty} onChange={(v:any)=>{
+                      <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.machines[0].qty} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[0].qty = Math.max(0, parseInt(v) || 0);
                         setTutorConfig({...tutorConfig, machines: mac});
                       }} />
-                      <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[0].age} onChange={(v:any)=>{
+                      <WizardField label="IDADE INICIAL (ANOS)" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.machines[0].age} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[0].age = Math.min(25, Math.max(0, parseInt(v) || 0));
                         setTutorConfig({...tutorConfig, machines: mac});
                       }} />
-                      <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={Math.round(tutorConfig.machines[0].efficiency * 100)} onChange={(v:any)=>{
+                      <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 100 : Math.round(tutorConfig.machines[0].efficiency * 100)} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[0].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
                         setTutorConfig({...tutorConfig, machines: mac});
@@ -1264,17 +1343,17 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <span className="text-[9px] text-slate-500 font-mono text-left block mt-1">Acquisição: $1.5M • Cap: 6K un</span>
                         </div>
                       </div>
-                      <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" val={tutorConfig.machines[1].qty} onChange={(v:any)=>{
+                      <WizardField label="QUANTIDADE INICIAL EM FROTA" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.machines[1].qty} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[1].qty = Math.max(0, parseInt(v) || 0);
                         setTutorConfig({...tutorConfig, machines: mac});
                       }} />
-                      <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[1].age} onChange={(v:any)=>{
+                      <WizardField label="IDADE INICIAL (ANOS)" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.machines[1].age} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[1].age = Math.min(25, Math.max(0, parseInt(v) || 0));
                         setTutorConfig({...tutorConfig, machines: mac});
                       }} />
-                      <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={Math.round(tutorConfig.machines[1].efficiency * 100)} onChange={(v:any)=>{
+                      <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 100 : Math.round(tutorConfig.machines[1].efficiency * 100)} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[1].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
                         setTutorConfig({...tutorConfig, machines: mac});
@@ -1290,17 +1369,17 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <span className="text-[9px] text-slate-500 font-mono text-left block mt-1">Acquisição: $3.0M • Cap: 12K un</span>
                         </div>
                       </div>
-                      <WizardField label="QUANTIDADE INICIAL IN FROTA" type="number" val={tutorConfig.machines[2].qty} onChange={(v:any)=>{
+                      <WizardField label="QUANTIDADE INICIAL IN FROTA" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.machines[2].qty} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[2].qty = Math.max(0, parseInt(v) || 0);
                         setTutorConfig({...tutorConfig, machines: mac});
                       }} />
-                      <WizardField label="IDADE INICIAL (ANOS)" type="number" val={tutorConfig.machines[2].age} onChange={(v:any)=>{
+                      <WizardField label="IDADE INICIAL (ANOS)" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.machines[2].age} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[2].age = Math.min(25, Math.max(0, parseInt(v) || 0));
                         setTutorConfig({...tutorConfig, machines: mac});
                       }} />
-                      <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" val={Math.round(tutorConfig.machines[2].efficiency * 100)} onChange={(v:any)=>{
+                      <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 100 : Math.round(tutorConfig.machines[2].efficiency * 100)} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[2].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
                         setTutorConfig({...tutorConfig, machines: mac});
@@ -1430,25 +1509,32 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     {/* LIQUIDEZ E CAPITAL */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative">
                        <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Capitalização de Entrada</h4>
-                       <WizardField label="CAPITAL SOCIAL FIDUCIÁRIO ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.capital_social} onChange={(v:any)=>setTutorConfig({...tutorConfig, capital_social: v})} />
-                       <WizardField label="CAIXA / BANCO INICIAL ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.caixa_inicial} onChange={(v:any)=>setTutorConfig({...tutorConfig, caixa_inicial: v})} />
-                       <WizardField label="APLICAÇÕES FINANCEIRAS ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.financial_investments} onChange={(v:any)=>setTutorConfig({...tutorConfig, financial_investments: v})} />
+                       <WizardField label="CAPITAL SOCIAL FIDUCIÁRIO ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.capital_social} onChange={(v:any)=> {
+                         const valNum = parseFloat(v) || 0;
+                         if (tutorConfig.starting_mode === 'start_from_zero') {
+                           setTutorConfig({...tutorConfig, capital_social: valNum, caixa_inicial: valNum});
+                         } else {
+                           setTutorConfig({...tutorConfig, capital_social: valNum});
+                         }
+                       }} />
+                       <WizardField label="CAIXA / BANCO INICIAL ($)" type="currency" isLocked={tutorConfig.starting_mode === 'start_from_zero'} currency={tutorConfig.currency} val={tutorConfig.starting_mode === 'start_from_zero' ? tutorConfig.capital_social : tutorConfig.caixa_inicial} onChange={(v:any)=>setTutorConfig({...tutorConfig, caixa_inicial: v})} />
+                       <WizardField label="APLICAÇÕES FINANCEIRAS ($)" type="currency" isLocked={tutorConfig.starting_mode === 'start_from_zero'} currency={tutorConfig.currency} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.financial_investments} onChange={(v:any)=>setTutorConfig({...tutorConfig, financial_investments: v})} />
                     </div>
 
                     {/* VALOR DE MATÉRIA PRIMA */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative">
                        <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Carga De Estoques P0</h4>
                        <div className="grid grid-cols-2 gap-4">
-                         <WizardField label="QTD MP-A" type="number" val={tutorConfig.inventories.mpa_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpa_qty: parseInt(v) || 0}})} />
-                         <WizardField label="PREÇO UN MPA" type="number" val={tutorConfig.inventories.mpa_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpa_unit_val: parseFloat(v) || 0}})} />
+                         <WizardField label="QTD MP-A" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpa_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpa_qty: parseInt(v) || 0}})} />
+                         <WizardField label="PREÇO UN MPA" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpa_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpa_unit_val: parseFloat(v) || 0}})} />
                        </div>
                        <div className="grid grid-cols-2 gap-4">
-                         <WizardField label="QTD MP-B" type="number" val={tutorConfig.inventories.mpb_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpb_qty: parseInt(v) || 0}})} />
-                         <WizardField label="PREÇO UN MPB" type="number" val={tutorConfig.inventories.mpb_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpb_unit_val: parseFloat(v) || 0}})} />
+                         <WizardField label="QTD MP-B" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpb_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpb_qty: parseInt(v) || 0}})} />
+                         <WizardField label="PREÇO UN MPB" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpb_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpb_unit_val: parseFloat(v) || 0}})} />
                        </div>
                        <div className="grid grid-cols-2 gap-4">
-                         <WizardField label="PA ACABADO" type="number" val={tutorConfig.inventories.finished_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, finished_qty: parseInt(v) || 0}})} />
-                         <WizardField label="CUSTO UN PA" type="number" val={tutorConfig.inventories.finished_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, finished_unit_val: parseFloat(v) || 0}})} />
+                         <WizardField label="PA ACABADO" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.finished_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, finished_qty: parseInt(v) || 0}})} />
+                         <WizardField label="CUSTO UN PA" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.finished_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, finished_unit_val: parseFloat(v) || 0}})} />
                        </div>
                     </div>
 

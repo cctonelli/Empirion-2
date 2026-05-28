@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.23 Obsidian Diamond Enterprise (Final P0 Architecture Closure - Auditor Fiduciário Reativo em Tempo Real, 6 Pilares E-SDS, Variáveis Multi-Modelo Contábil no Wizard, Controle de Privacidade de Templates no Supabase)
+- **Versão Ativa:** v19.27 Obsidian Diamond Enterprise (Greenfield Lock de Parque Industrial, Estocagem e Autofill Contábil de Caixa/Capital)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -216,6 +216,14 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.27 Obsidian Diamond Enterprise - Greenfield Lock de Parque Industrial, Estocagem e Autofill Contábil de Caixa/Capital
+- **Data:** 28 de Maio de 2026
+- **Motivo:** Travar e bloquear inputs redundantes e reajustados de forma fiduciária quando no modo "Start from Zero", assegurando coerência e garantindo que o usuário não consiga modificar ou deixar discrepante as contas de balanço de abertura.
+- **Diferenças:**
+  - *Bloqueio e Greenfield Active Warning Banner (Step 3):* Inserção de painel informativo premium descrevendo o modo Greenfield ativo no Step 3, informando tutor de que as máquinas começam zeradas no Round 0 e impedindo custos de depreciação fantasmas, travando todos os inputs do parque industrial com a propriedade `isLocked={tutorConfig.starting_mode === 'start_from_zero'}`.
+  - *Autofill Contábil e Liquidez Coerente (Step 6):* Vinculação direta do Capital Social Fiduciário com o Caixa/Banco Inicial no modo "Start from Zero" para manter a equação fundamental da contabilidade perfeitamente equilibrada (Ativo = Passivo + PL). Travamento de aplicações financeiras e quantitativo/preço padrão de todos os estoques de suprimentos como zerados.
+- **Status:** Em Produção (Conformidade Completa & Auditoria Fiduciária Suprema).
 
 ### v19.26 Obsidian Diamond Enterprise - Sincronização Fiduciária Pura "Start from Zero" e Consolidação Horizontal de DRE/DFC
 - **Data:** 28 de Maio de 2026
