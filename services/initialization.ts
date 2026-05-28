@@ -1,6 +1,55 @@
 import { AccountNode, CurrencyType, KPIs, MachineInstance, MachineModel } from '../types';
 import { INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00 } from '../constants';
 
+export interface AccountingModelTemplate {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  branch: 'industrial' | 'commercial' | 'services' | 'agro' | 'construction';
+  countryCode: string;
+  version: string;
+}
+
+export const SUPPORTED_ACCOUNTING_MODELS: AccountingModelTemplate[] = [
+  {
+    id: 'industrial_br_v1',
+    code: 'INDUSTRIAL_BR',
+    name: 'Template Industrial Brasil (Custeio Absorção CPC 16)',
+    description: 'Estrutura padrão industrial brasileira com custeio por absorção real, contas de faturamento industrial BRL/USD.',
+    branch: 'industrial',
+    countryCode: 'BR',
+    version: 'v19.23'
+  },
+  {
+    id: 'commercial_retail_v1',
+    code: 'COMMERCIAL_RETAIL',
+    name: 'Template Comercial Varejo (Custo Médio / PEPS)',
+    description: 'Estrutura de varejo comercial com impostos sobre circulação de mercadorias (ICMS) e CMV flutuante.',
+    branch: 'commercial',
+    countryCode: 'BR',
+    version: 'v19.23'
+  },
+  {
+    id: 'services_tech_v1',
+    code: 'SERVICES_TECH',
+    name: 'Template Serviços e Tecnologia (SaaS & Assinaturas)',
+    description: 'Contabilidade SaaS para prestadoras de serviços focadas em LTV/CAC e reconhecimento diferido de receita líquida.',
+    branch: 'services',
+    countryCode: 'BR',
+    version: 'v19.23'
+  },
+  {
+    id: 'agrocooperative_v1',
+    code: 'AGRO_COOPERATIVE',
+    name: 'Template Cooperativa Agropecuária (CPR)',
+    description: 'Estrutura fiduciária baseada em armazenagem cooperada de grãos, valuation de safras e derivativos agrícolas.',
+    branch: 'agro',
+    countryCode: 'BR',
+    version: 'v19.23'
+  }
+];
+
 export interface MachineConfig {
   model: MachineModel;
   qty: number;

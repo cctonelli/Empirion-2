@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.21 Sapphire Obsidian Masterclass (Accounting & Tutor Experience Patch - Monitor Fiduciário no Wizard, Sincronismo Físico e Exclusão Completa no Supabase/Local Storage)
+- **Versão Ativa:** v19.23 Obsidian Diamond Enterprise (Final P0 Architecture Closure - Auditor Fiduciário Reativo em Tempo Real, 6 Pilares E-SDS, Variáveis Multi-Modelo Contábil no Wizard, Controle de Privacidade de Templates no Supabase)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -456,6 +456,24 @@ project-root/
   - **Monitor Fiduciário Real-Time Drawer:** Desenvolvimento de um painel lateral retrátil (slide-over) impulsionado por animações fluidas de `framer-motion`. Ele permite ao Tutor simular e prever o fechamento completo do Balanço Patrimonial, DRE e Demonstração do Fluxo de Caixa do P0 instantaneamente na tela enquanto altera campos operacionais nos Steps 2 a 7 (com recalculo automático fiduciário a cada digitação).
   - **Exclusão Física de Templates (`deleteP0Template`):** Suporte completo para exclusão definitiva de templates personalizados nas nuvens Supabase com sincronismo e limpeza imediata no fallback do `localStorage`. Botão de lixeira vermelha adicionado na listagem de cenários de Step 2 do configurador para a robustez do ciclo CRUD de templates de campeonatos.
 - **Status:** Em produção.
+
+### v19.23 - Obsidian Diamond Enterprise (Final P0 Architecture Closure)
+- **Data:** Maio de 2026
+- **Motivo:** Fechamento e consolidação técnica final da arquitetura P0 no Wizard de criação de arenas. Implementação de auditoria detalhada reativa em tempo real com ledger cards, cálculo real dos 6 pilares do E-SDS, controle de privacidade de templates no Supabase e multi-modelos contábeis.
+- **Principais Diferenças na v19.23:**
+  - **Auditor Fiduciário Reativo (Tabs Detail):** No Step 8, criação de um dashboard de auditoria operacional dinâmico baseado em abas contábeis fiduciárias estruturadas: 'E-SDS 6 Pilares', 'Sub-Contas & Liquidez', 'Laudo do Imobilizado', e 'Governança & Imutabilidade'.
+  - **Cálculo Real dos 6 Pilares E-SDS:** Um robusto hook `useMemo` recalcula instantaneamente os pilares fiduciários com base nas métricas reais, além dos índices Altman Z''-Score e solvência pelo índice de Kanitz integrados para as mudanças de variáveis dinâmicas do Tutor.
+  - **Multi-Modelo Contábil no Wizard:** Inclusão de seleção ativa e flexível baseada em `AccountingModelTemplate` na etapa 1 (Industrial, Comercial, Serviços, Agropecuário) que alimenta o respectivo `accounting_template_id`.
+  - **Privacidade de Templates no Supabase:** Integração e controle do flag de estado `templateIsPublic` durante as ações de salvamento de templates no banco de dados e local storage fallback.
+- **Status:** Ativo e em Produção.
+
+### v19.21 - Sapphire Obsidian Masterclass (Accounting & Tutor Experience Patch)
+- **Data:** Maio de 2026
+- **Motivo:** Melhoria profunda na UX contábil do Tutor e no compilador fiduciário.
+- **Principais Diferenças na v19.21:**
+  - **Real-Time Drawer (Monitor Fiduciário):** Painel lateral interativo que recalcula e exibe Balanço, DRE e DFC conforme alterações nas configurações operacionais.
+  - **Deleção Física e Sincronismo Físico de Templates:** Eliminação completa de configurações salvas no banco Supabase ou local storage através de um botão de exclusão fiduciária segura.
+- **Status:** Planejado e Integrado.
 
 ### v19.20 - Obsidian Diamond Enterprise (Database Performance Indices)
 - **Data:** Maio de 2026

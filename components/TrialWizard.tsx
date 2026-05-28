@@ -11,7 +11,7 @@ import {
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import { createChampionshipWithTeams, getP0Templates, saveP0Template, deleteP0Template } from '../services/supabase';
-import { generatePureP0, TutorP0Config, P0Template } from '../services/initialization';
+import { generatePureP0, TutorP0Config, P0Template, SUPPORTED_ACCOUNTING_MODELS } from '../services/initialization';
 import { DEFAULT_INITIAL_SHARE_PRICE, DEFAULT_MACRO, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import FinancialStructureEditor from './FinancialStructureEditor';
 import EmpireParticles from './EmpireParticles';
@@ -303,6 +303,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [showSaveTplModal, setShowSaveTplModal] = useState(false);
   const [templateIsPublic, setTemplateIsPublic] = useState(true);
   const [tplLoading, setTplLoading] = useState(false);
+  const [activeAuditTab, setActiveAuditTab] = useState<'esds' | 'liquidity' | 'assets' | 'governance'>('esds');
 
   // Teams counts and state
   const [humanTeamsCount, setHumanTeamsCount] = useState(1);
@@ -556,6 +557,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       capBeta,
       capGama,
       capTotal,
+      imobilizado,
+      total_assets,
       total_operators,
       payroll_round,
       total_deprec_round,
@@ -718,26 +721,122 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   // Estimativa do E-SDS base do P0
   const estimatedESDS = useMemo(() => {
-    let score = 75;
-    let zone: 'Azul' | 'Verde' | 'Amarelo' | 'Laranja' | 'Vermelho' = 'Verde';
-    let insights = 'A empresa inicia com sólida saúde fiduciária. Ausência de gargalos imediatos.';
-    
-    if (tutorConfig.starting_mode === 'start_from_zero') {
-      score = 95;
-      zone = 'Azul';
-      insights = 'Modo Start-From-Zero: Alavancagem bancária nula e máxima flexibilidade de ativos.';
-    } else if (tutorConfig.starting_mode === 'start_with_base') {
-      score = 80;
-      zone = 'Verde';
-      insights = 'Estrutura industrial básica integrada. Carga financeira de deprec. de máquinas moderada.';
-    } else {
-      score = 65;
-      zone = 'Amarelo';
-      insights = 'Running Company: A empresa possui compromissos de empréstimos anteriores e custos de depreciação ativos.';
+    const isZeroMode = tutorConfig.starting_mode === 'start_from_zero';
+    const isBaseMode = tutorConfig.starting_mode === 'start_with_base';
+    const isRunningMode = tutorConfig.starting_mode === 'start_with_running';
+
+    // Obter contas chave do fiduciaryMetrics
+    const ca = fiduciaryMetrics.current_assets;
+    const cl = fiduciaryMetrics.current_liabilities || 1;
+    const tl = fiduciaryMetrics.total_liabilities || 1;
+    const cash = tutorConfig.caixa_inicial;
+
+    const workingCapital = ca - cl;
+    const x1 = workingCapital / (totalAssets || 1);
+    const x2 = isZeroMode ? 0.0 : (isBaseMode ? 0.05 : 0.12);
+    const x3 = 0.08; // Retorno do Ativo implícito histórico do P0
+    const x4 = totalEquity / tl;
+
+    // Altman Z''-score (fórmula armada de mercado emergente)
+    const altmanVal = 3.25 + 6.56 * x1 + 3.26 * x2 + 6.72 * x3 + 1.05 * Math.min(10, x4);
+    const altman = parseFloat(altmanVal.toFixed(2));
+
+    // Kanitz (Solvência Geral fiduciária)
+    const kanitzVal = (ca / cl) * 0.8 + (totalEquity / tl) * 0.4;
+    const kanitz = parseFloat(kanitzVal.toFixed(2));
+
+    // Rating de Crédito dinâmico
+    let rating = 'BBB';
+    if (altman >= 6.5 && cl > 0) rating = 'AAA';
+    else if (altman >= 4.5) rating = 'AA';
+    else if (altman >= 2.8) rating = 'A';
+    else if (altman >= 1.5) rating = 'BBB';
+    else rating = 'BB';
+
+    // Pilares de Integridade E-SDS (v19.23)
+    // Pillar 1: Fluxo de Caixa Livre Operacional (FCF / FCO)
+    let p1 = 100;
+    if (isBaseMode) p1 = 82;
+    if (isRunningMode) p1 = 61;
+    if (cash < 200000) p1 = Math.max(15, p1 - 30);
+
+    // Pillar 2: Crescimento Sustentável (Dívida / PL)
+    const alavancagem = tl / totalEquity;
+    let p2 = Math.max(10, Math.min(100, 100 - alavancagem * 85));
+
+    // Pillar 3: DuPont & Margens
+    let p3 = 75;
+    if (isBaseMode) p3 = 85;
+    if (isRunningMode) p3 = 94;
+    const avgEfficiency = tutorConfig.machines.length > 0
+      ? tutorConfig.machines.reduce((acc, m) => acc + m.efficiency, 0) / tutorConfig.machines.length
+      : 1;
+    p3 = Math.round(p3 * avgEfficiency);
+
+    // Pillar 4: Cobertura de Giro e Dias de Caixa (Liquidez Corrente)
+    const lc = ca / cl;
+    let p4 = Math.max(10, Math.min(100, (lc / 3.0) * 100));
+
+    // Pillar 5: Alavancagem e Concentração (Depreciação acumulada sobre imobilizado bruto)
+    let p5 = 100;
+    let machAcqu = 0;
+    let machDeprec = 0;
+    const actualMachines = isZeroMode ? [] : tutorConfig.machines;
+    actualMachines.forEach((mac) => {
+      const modelPrice = mac.model === 'alfa' ? 500000 : mac.model === 'beta' ? 1500000 : 3000000;
+      machAcqu += modelPrice * mac.qty;
+      machDeprec += modelPrice * mac.qty * mac.age * 0.025 * mac.efficiency;
+    });
+    if (machAcqu > 0) {
+      const deprecRatio = machDeprec / machAcqu;
+      p5 = Math.max(12, Math.min(100, 100 - deprecRatio * 150));
     }
-    
-    return { score, zone, insights };
-  }, [tutorConfig.starting_mode]);
+
+    // Pillar 6: Volatilidade Cambial (risco macro / inadimplência)
+    const macroDefault = roundRules[0]?.customer_default_rate ?? 3.5;
+    let p6 = Math.max(10, Math.min(100, 100 - macroDefault * 9));
+
+    // Média ponderada com pesos
+    const scoreVal = (p1 * 0.22 + p2 * 0.15 + p3 * 0.15 + p4 * 0.20 + p5 * 0.14 + p6 * 0.14) / 10;
+    const score = parseFloat(scoreVal.toFixed(1));
+
+    let zone: 'Azul' | 'Verde' | 'Amarelo' | 'Laranja' | 'Vermelho' = 'Verde';
+    let insights = '';
+
+    if (score >= 8.0) {
+      zone = 'Azul';
+      insights = 'Soberania patrimonial e fiduciária absoluta. Planta industrial e caixa perfeitamente calibrados.';
+    } else if (score >= 5.5) {
+      zone = 'Verde';
+      insights = 'Ambiente de negócios sustentável. Níveis adequados de alavancagem e liquidez operacional.';
+    } else if (score >= 3.0) {
+      zone = 'Amarelo';
+      insights = 'Sinal de Alerta Contábil. A empresa possui passivos pesados de fomento histórico exigindo calibração imediata.';
+    } else if (score >= 1.5) {
+      zone = 'Laranja';
+      insights = 'Situação Crítica. Elevado endividamento, depreciação acelerada dos ativos e liquidez deteriorada.';
+    } else {
+      zone = 'Vermelho';
+      insights = 'Alerta de Insolvência Imediata fiduciária. Recomenda-se capitalização urgente por parte dos sócios.';
+    }
+
+    return {
+      score,
+      zone,
+      insights,
+      altman,
+      kanitz,
+      rating,
+      pillars: {
+        p1: Math.round(p1),
+        p2: Math.round(p2),
+        p3: Math.round(p3),
+        p4: Math.round(p4),
+        p5: Math.round(p5),
+        p6: Math.round(p6)
+      }
+    };
+  }, [tutorConfig, totalAssets, totalEquity, roundRules, fiduciaryMetrics]);
 
   return (
     <div id="trial_wizard_shell" className="wizard-shell bg-slate-950/95 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative">
@@ -787,6 +886,12 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <WizardSelect label="IDENTIDADE GAZETA" val={tutorConfig.gazeta_mode} onChange={(v:any)=>setTutorConfig({...tutorConfig, gazeta_mode: v as any})} options={[{v:'anonymous',l:'ANÔNIMA'},{v:'identified',l:'IDENTIFICADA'}]} />
                     
                     <WizardField label="TOTAL DE ROUNDS" type="number" val={tutorConfig.total_rounds} onChange={(v:any)=>setTutorConfig({...tutorConfig, total_rounds: Math.min(12, Math.max(1, parseInt(v) || 0))})} />
+                    <WizardSelect 
+                       label="MODELO CONTÁBIL / SETORIAL" 
+                       val={tutorConfig.accounting_template_id} 
+                       onChange={(v: any) => setTutorConfig({ ...tutorConfig, accounting_template_id: v })} 
+                       options={SUPPORTED_ACCOUNTING_MODELS.map(m => ({ v: m.id, l: `${m.name} (${m.version})` }))} 
+                    />
                  </div>
               </motion.div>
             )}
@@ -1594,43 +1699,43 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  {/* DASHBOARD DE AUDITORIA OPERACIONAL E KPIs DO P00 (v19.18) */}
                  <div id="p00_audit_dashboard_fiduciary_v18" className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left bg-slate-900/40 p-10 rounded-[3rem] border border-white/5 shadow-2xl relative">
                     <div className="lg:col-span-3 border-b border-white/5 pb-4 mb-2">
-                       <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic leading-none mb-1 block">DASHBOARD DE AUDITORIA OPERACIONAL & KPIs DO P00</span>
-                       <h4 className="text-xl font-black text-white italic mt-1">Soberania dos Indicadores Contábeis e Industriais (v19.18)</h4>
-                       <p className="text-xs text-slate-500 mt-1">Breakdown fiduciário analítico de liquidez, estrutura predial, capacidades teóricas de faturamento e saúde socioambiental calculados em tempo real na v19.18.</p>
+                       <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic leading-none mb-1 block">DASHBOARD DE AUDITORIA OPERACIONAL & KPIs DO P00 (V19.23 REAL-TIME)</span>
+                       <h4 className="text-xl font-black text-white italic mt-1">Soberania dos Indicadores Contábeis e Industriais</h4>
+                       <p className="text-xs text-slate-500 mt-1">Breakdown fiduciário analítico de liquidez, estrutura predial, capacidades teóricas de faturamento e saúde socioambiental recalculados dinamicamente.</p>
                     </div>
 
-                    {/* Bloco 1: Liquidez & Alavancagem */}
+                    {/* Bloco 1: Saúde Contábil Reativa */}
                     <div className="space-y-6 bg-slate-950/60 p-8 rounded-[2rem] border border-white/5 shadow-inner">
                        <h5 className="text-[10px] font-black text-sky-400 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">Saúde Contábil</h5>
                        <div className="space-y-4 font-mono text-xs">
                           <div className="flex justify-between items-center text-slate-400">
                              <span>Liquidez Corrente:</span>
                              <span className="text-sm font-black text-white">
-                                {tutorConfig.starting_mode === 'start_from_zero' ? '12.50' : (tutorConfig.starting_mode === 'start_with_base' ? '3.00' : '1.81')} <span className="text-[10px] text-slate-500">(Giro/Passivo)</span>
+                                {fiduciaryMetrics.liquidity_current.toFixed(2)}x <span className="text-[10px] text-slate-500">(Giro/Passivo)</span>
                              </span>
                           </div>
                           <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
                              <span>Solvência Geral (Kanitz):</span>
-                             <span className="text-sm font-black text-emerald-400">
-                                {tutorConfig.starting_mode === 'start_from_zero' ? '5.40' : (tutorConfig.starting_mode === 'start_with_base' ? '2.10' : '1.50')}
+                             <span className={`text-sm font-black ${estimatedESDS.kanitz >= 1.0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {estimatedESDS.kanitz.toFixed(2)}
                              </span>
                           </div>
                           <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
                              <span>Altman Z-Score:</span>
                              <span className="text-sm font-black text-white">
-                                {tutorConfig.starting_mode === 'start_from_zero' ? '8.50' : (tutorConfig.starting_mode === 'start_with_base' ? '5.80' : '3.20')} <span className="text-[9px] text-emerald-500">(Zona Segura)</span>
+                                {estimatedESDS.altman.toFixed(2)} <span className={`text-[9px] px-2 py-0.5 rounded font-black ${estimatedESDS.altman > 2.6 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>{estimatedESDS.altman > 2.6 ? 'Zona Segura' : 'Alerta'}</span>
                              </span>
                           </div>
                           <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
                              <span>Rating de Crédito:</span>
-                             <span className="text-sm font-black text-emerald-400 font-sans tracking-wide">
-                                {tutorConfig.starting_mode === 'start_from_zero' ? 'AAA' : (tutorConfig.starting_mode === 'start_with_base' ? 'AA' : 'A')}
+                             <span className={`text-lg font-black font-sans tracking-wide ${estimatedESDS.rating.startsWith('A') ? 'text-emerald-400' : 'text-sky-400'}`}>
+                                {estimatedESDS.rating}
                              </span>
                           </div>
                        </div>
                     </div>
 
-                    {/* Bloco 2: Parque Industrial & Capacidades */}
+                    {/* Bloco 2: Parque Industrial Reativo */}
                     <div className="space-y-6 bg-slate-950/60 p-8 rounded-[2rem] border border-white/5 shadow-inner">
                        <h5 className="text-[10px] font-black text-purple-400 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">Capacidade Produtiva</h5>
                        <div className="space-y-4 font-mono text-xs">
@@ -1641,7 +1746,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
                              <span>Capacidade Máxima Teórica:</span>
                              <span className="text-sm font-black text-white">
-                                {tutorConfig.starting_mode === 'start_from_zero' ? '0' : (tutorConfig.machines.reduce((acc, current) => acc + (current.qty * (current.model === 'alfa' ? 2000 : current.model === 'beta' ? 7000 : 15000)), 0)).toLocaleString('pt-BR')} <span className="text-[10px] text-slate-500">un/rodada</span>
+                                {fiduciaryMetrics.capTotal.toLocaleString('pt-BR')} <span className="text-[10px] text-slate-500 font-sans">un/rodada</span>
                              </span>
                           </div>
                           <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
@@ -1653,13 +1758,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-2">
                              <span>Imobilizado Net Total:</span>
                              <span className="text-sm font-black text-white">
-                                {formatCurrency((p0StatementsResult.kpis.fixed_assets_value || 0) - (p0StatementsResult.kpis.fixed_assets_depreciation || 0), tutorConfig.currency)}
+                                {formatCurrency(fiduciaryMetrics.imobilizado, tutorConfig.currency)}
                              </span>
                           </div>
                        </div>
                     </div>
 
-                    {/* Bloco 3: Breakdown de Estoques Iniciais */}
+                    {/* Bloco 3: Estoques Reais */}
                     <div className="space-y-6 bg-slate-950/60 p-8 rounded-[2rem] border border-white/5 shadow-inner">
                        <h5 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">Estoques de Abertura</h5>
                        <div className="space-y-4 font-mono text-xs">
@@ -1690,6 +1795,267 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        </div>
                     </div>
                  </div>
+
+                 {/* COMPONENTE INTERATIVO DE ABAS DE AUDITORIA PATRIMONIAL DETALHADA v19.23 */}
+                 <div id="p00_interactive_audi_ledger_tabs_v23" className="space-y-6 bg-slate-900/20 border border-white/5 p-8 rounded-[3rem] shadow-xl text-left">
+                    {/* Linha das Abas */}
+                    <div className="flex flex-wrap gap-3 border-b border-white/5 pb-4">
+                       <button 
+                          onClick={() => setActiveAuditTab('esds')} 
+                          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeAuditTab === 'esds' ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/20' : 'bg-slate-900 text-slate-400 hover:text-white border border-white/5'}`}
+                       >
+                          <Gauge size={12}/> E-SDS 6 Pilares
+                       </button>
+                       <button 
+                          onClick={() => setActiveAuditTab('liquidity')} 
+                          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeAuditTab === 'liquidity' ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/20' : 'bg-slate-900 text-slate-400 hover:text-white border border-white/5'}`}
+                       >
+                          <Landmark size={12}/> Sub-Contas & Liquidez
+                       </button>
+                       <button 
+                          onClick={() => setActiveAuditTab('assets')} 
+                          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeAuditTab === 'assets' ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/20' : 'bg-slate-900 text-slate-400 hover:text-white border border-white/5'}`}
+                       >
+                          <Cpu size={12}/> Laudo do Imobilizado
+                       </button>
+                       <button 
+                          onClick={() => setActiveAuditTab('governance')} 
+                          className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeAuditTab === 'governance' ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/20' : 'bg-slate-900 text-slate-400 hover:text-white border border-white/5'}`}
+                        >
+                          <ShieldCheck size={12}/> Governança & Imutabilidade
+                       </button>
+                    </div>
+
+                    {/* Conteúdo das Abas com Animação Fiduciária */}
+                    <AnimatePresence mode="wait">
+                       {activeAuditTab === 'esds' && (
+                          <motion.div key="tab-esds" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                             <div className="md:col-span-2 space-y-4">
+                                <h5 className="text-xs font-black text-white uppercase tracking-wider">Métricas de Resiliência dos 6 Pilares E-SDS</h5>
+                                <div className="space-y-4 bg-slate-950/40 p-6 rounded-2xl border border-white/5">
+                                   {/* P1 */}
+                                   <div className="space-y-1">
+                                      <div className="flex justify-between text-[11px] font-mono text-slate-400 font-semibold">
+                                         <span>P1. FLUXO DE CAIXA LIVRE OPERACIONAL (FCF)</span>
+                                         <span className="font-black text-white">{estimatedESDS.pillars.p1}%</span>
+                                      </div>
+                                      <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                                         <div className="h-full bg-sky-500 rounded-full" style={{ width: `${estimatedESDS.pillars.p1}%` }}/>
+                                      </div>
+                                   </div>
+                                   {/* P2 */}
+                                   <div className="space-y-1 border-t border-white/5 pt-2">
+                                      <div className="flex justify-between text-[11px] font-mono text-slate-400 font-semibold">
+                                         <span>P2. CRESCIMENTO SUSTENTÁVEL (DÍVIDA / PL)</span>
+                                         <span className="font-black text-white">{estimatedESDS.pillars.p2}%</span>
+                                      </div>
+                                      <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                                         <div className="h-full bg-orange-500 rounded-full" style={{ width: `${estimatedESDS.pillars.p2}%` }}/>
+                                      </div>
+                                   </div>
+                                   {/* P3 */}
+                                   <div className="space-y-1 border-t border-white/5 pt-2">
+                                      <div className="flex justify-between text-[11px] font-mono text-slate-400 font-semibold">
+                                         <span>P3. ANÁLISE DUPONT E MARGENS TÁTICAS</span>
+                                         <span className="font-black text-white">{estimatedESDS.pillars.p3}%</span>
+                                      </div>
+                                      <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                                         <div className="h-full bg-purple-500 rounded-full" style={{ width: `${estimatedESDS.pillars.p3}%` }}/>
+                                      </div>
+                                   </div>
+                                   {/* P4 */}
+                                   <div className="space-y-1 border-t border-white/5 pt-2">
+                                      <div className="flex justify-between text-[11px] font-mono text-slate-400 font-semibold">
+                                         <span>P4. COBERTURA DE GIRO E DIAS DE CAIXA</span>
+                                         <span className="font-black text-white">{estimatedESDS.pillars.p4}%</span>
+                                      </div>
+                                      <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                                         <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${estimatedESDS.pillars.p4}%` }}/>
+                                      </div>
+                                   </div>
+                                   {/* P5 */}
+                                   <div className="space-y-1 border-t border-white/5 pt-2">
+                                      <div className="flex justify-between text-[11px] font-mono text-slate-400 font-semibold">
+                                         <span>P5. ALAVANCAGEM & CONCENTRAÇÃO DE ATIVOS</span>
+                                         <span className="font-black text-white">{estimatedESDS.pillars.p5}%</span>
+                                      </div>
+                                      <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                                         <div className="h-full bg-rose-500 rounded-full" style={{ width: `${estimatedESDS.pillars.p5}%` }}/>
+                                      </div>
+                                   </div>
+                                   {/* P6 */}
+                                   <div className="space-y-1 border-t border-white/5 pt-2">
+                                      <div className="flex justify-between text-[11px] font-mono text-slate-400 font-semibold">
+                                         <span>P6. ESTABILIDADE DE RECEITA & RISCO MACRO</span>
+                                         <span className="font-black text-white">{estimatedESDS.pillars.p6}%</span>
+                                      </div>
+                                      <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                                         <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${estimatedESDS.pillars.p6}%` }}/>
+                                      </div>
+                                   </div>
+                                </div>
+                             </div>
+                             {/* Insights do Piloto */}
+                             <div className="bg-gradient-to-br from-indigo-950/30 to-slate-950 p-6 rounded-2xl border border-indigo-500/10 flex flex-col justify-between text-left">
+                                <div className="space-y-4">
+                                   <span className="text-[9px] font-black tracking-widest text-[#22c55e] uppercase">Sonda de Solvência</span>
+                                   <div className="flex items-baseline gap-2">
+                                      <span className="text-4xl font-black text-white">{estimatedESDS.score}</span>
+                                      <span className="text-sm font-bold text-slate-400 font-semibold">/ 10.0</span>
+                                   </div>
+                                   <div className="flex items-center gap-2 mt-2">
+                                      <span className="text-[10px] font-bold uppercase py-1 px-3 bg-white/5 text-slate-300 rounded-full">Zona de Risco:</span>
+                                      <span className="text-[10px] font-black uppercase py-1 px-3 bg-emerald-500/20 text-emerald-400 rounded-full">{estimatedESDS.zone}</span>
+                                   </div>
+                                   <p className="text-xs text-slate-400 leading-relaxed pt-3 border-t border-white/5 font-sans font-medium">{estimatedESDS.insights}</p>
+                                </div>
+                                <span className="text-[9px] text-slate-600 font-mono italic block pt-6">E-SDS v1.2 Ponderado Setorial</span>
+                             </div>
+                          </motion.div>
+                       )}
+
+                       {activeAuditTab === 'liquidity' && (
+                          <motion.div key="tab-liq" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-xs text-left">
+                                {/* Ativo Circulante */}
+                                <div className="space-y-4 bg-slate-950/50 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                   <h5 className="text-[10px] font-black text-sky-400 uppercase tracking-widest font-sans border-b border-white/5 pb-2">Ativo Circulante (Foco Liquidez)</h5>
+                                   <div className="flex justify-between">
+                                      <span className="text-slate-500">Caixa e Equivalentes de Caixa:</span>
+                                      <span className="text-white font-bold">{formatCurrency(tutorConfig.caixa_inicial, tutorConfig.currency)}</span>
+                                   </div>
+                                   <div className="flex justify-between border-t border-white/5 pt-2">
+                                      <span className="text-slate-500">Aplicações Financeiras CP:</span>
+                                      <span className="text-white font-bold">{formatCurrency(tutorConfig.financial_investments || 0, tutorConfig.currency)}</span>
+                                   </div>
+                                   <div className="flex justify-between border-t border-white/5 pt-2">
+                                      <span className="text-slate-500">Contas a Receber (Vendas):</span>
+                                      <span className="text-white font-bold">
+                                         {formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.clients_initial ?? 300000), tutorConfig.currency)}
+                                      </span>
+                                   </div>
+                                   <div className="flex justify-between border-t border-white/5 pt-2 text-rose-400">
+                                      <span>(-) PECLD Provisão Devedores:</span>
+                                      <span className="font-bold font-mono">
+                                         -{formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.custom_pecld_val ?? 4500), tutorConfig.currency)}
+                                      </span>
+                                   </div>
+                                </div>
+
+                                {/* Passivo Circulante e Dívida */}
+                                <div className="space-y-4 bg-slate-950/50 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                   <h5 className="text-[10px] font-black text-purple-400 uppercase tracking-widest font-sans border-b border-white/5 pb-2">Passivos Exigíveis e Financiamentos</h5>
+                                   <div className="flex justify-between">
+                                      <span className="text-slate-500">Fornecedores (Contas a Pagar):</span>
+                                      <span className="text-white font-bold">
+                                         {formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.suppliers_initial ?? 100000), tutorConfig.currency)}
+                                      </span>
+                                   </div>
+                                   <div className="flex justify-between border-t border-white/5 pt-2">
+                                      <span className="text-slate-500">Impostos e Provisões Fiscais:</span>
+                                      <span className="text-white font-bold">
+                                         {formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.taxes_initial ?? 15000), tutorConfig.currency)}
+                                      </span>
+                                   </div>
+                                   <div className="flex justify-between border-t border-white/5 pt-2 text-yellow-400 font-bold">
+                                      <span>Empréstimos Curto Prazo (ST):</span>
+                                      <span>
+                                         {formatCurrency(fiduciaryMetrics.current_liabilities > 0 ? (fiduciaryMetrics.current_liabilities - (tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.suppliers_initial ?? 100000) + (tutorConfig.taxes_initial ?? 15000) + (tutorConfig.dividends_initial ?? 5000))) : 0, tutorConfig.currency)}
+                                      </span>
+                                   </div>
+                                   <div className="flex justify-between border-t border-white/5 pt-2 text-orange-500 font-bold">
+                                      <span>Obrigações Longo Prazo (LT):</span>
+                                      <span>
+                                         {formatCurrency(fiduciaryMetrics.total_liabilities - fiduciaryMetrics.current_liabilities, tutorConfig.currency)}
+                                      </span>
+                                   </div>
+                                </div>
+                              </div>
+                              <div className="p-4 bg-orange-600/10 border border-orange-500/20 rounded-2xl text-[11px] text-slate-300 flex items-center gap-3 font-sans font-medium text-left">
+                                 <Info size={16} className="text-orange-500 flex-shrink-0"/>
+                                 <span>A PECLD (Provisão para Perdas em Créditos de Liquidação Duvidosa) mitiga inadimplências do comércio regional histórico, retendo {((tutorConfig.custom_pecld_val ?? 4500) / ((tutorConfig.clients_initial ?? 300000) || 1) * 100).toFixed(1)}% do contas a receber bruto.</span>
+                              </div>
+                           </motion.div>
+                        )}
+
+                        {activeAuditTab === 'assets' && (
+                           <motion.div key="tab-assets" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 text-left">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-xs font-mono font-medium">
+                                 {/* Imobiliário */}
+                                 <div className="space-y-4 bg-slate-950/50 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                    <h5 className="text-[10px] font-black text-rose-500 uppercase tracking-widest font-sans border-b border-white/5 pb-2 font-semibold">Imóvel & Espaço Físico (Prédio)</h5>
+                                    <div className="flex justify-between">
+                                       <span className="text-slate-500">Regime Imobiliário:</span>
+                                       <span className="text-white font-bold uppercase">{tutorConfig.building_mode === 'rented' ? 'LOCADO (ALUGADO)' : 'PRÓPRIO (INTEGRALIZADO)'}</span>
+                                    </div>
+                                    <div className="flex justify-between border-t border-white/5 pt-2">
+                                       <span className="text-slate-500">Valor Imóvel (Prédio):</span>
+                                       <span className="text-white font-bold">{formatCurrency(tutorConfig.building_mode === 'owned' ? (tutorConfig.building_value ?? 2000000) : 0, tutorConfig.currency)}</span>
+                                    </div>
+                                    <div className="flex justify-between border-t border-white/5 pt-2">
+                                       <span className="text-slate-500">Valor do Terreno:</span>
+                                       <span className="text-white font-bold">{formatCurrency(tutorConfig.building_mode === 'owned' ? (tutorConfig.land_value ?? 1000000) : 0, tutorConfig.currency)}</span>
+                                    </div>
+                                    <div className="flex justify-between border-t border-white/5 pt-2">
+                                       <span className="text-slate-500 font-sans">Benfeitorias & Instalações:</span>
+                                       <span className="text-white font-bold">{formatCurrency(tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 250000 : tutorConfig.starting_mode === 'start_with_base' ? 500000 : 1000000), tutorConfig.currency)}</span>
+                                    </div>
+                                 </div>
+
+                                 {/* Maquinas */}
+                                 <div className="space-y-4 bg-slate-950/50 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                    <h5 className="text-[10px] font-black text-purple-400 uppercase tracking-widest font-sans border-b border-white/5 pb-2 font-semibold">Frota de Máquinas e Modelos</h5>
+                                    <div className="flex justify-between">
+                                       <span className="text-slate-500">Máquina Alpha (2k capacidade):</span>
+                                       <span className="text-white font-bold">{tutorConfig.starting_mode === 'start_from_zero' ? '0' : tutorConfig.machines[0]?.qty} un <span className="text-[9px] text-slate-500 font-sans font-semibold">({tutorConfig.machines[0]?.age} anos, {Math.round(tutorConfig.machines[0]?.efficiency * 100)}% ef)</span></span>
+                                    </div>
+                                    <div className="flex justify-between border-t border-white/5 pt-1">
+                                       <span className="text-slate-500">Máquina Beta (7k capacidade):</span>
+                                       <span className="text-white font-bold">{tutorConfig.starting_mode === 'start_from_zero' ? '0' : tutorConfig.machines[1]?.qty} un <span className="text-[9px] text-slate-500 font-sans font-semibold font-semibold">({tutorConfig.machines[1]?.age} anos, {Math.round(tutorConfig.machines[1]?.efficiency * 100)}% ef)</span></span>
+                                    </div>
+                                    <div className="flex justify-between border-t border-white/5 pt-1">
+                                       <span className="text-slate-500">Máquina Gama (15k capacidade):</span>
+                                       <span className="text-white font-bold">{tutorConfig.starting_mode === 'start_from_zero' ? '0' : tutorConfig.machines[2]?.qty} un <span className="text-[9px] text-slate-500 font-sans font-semibold">({tutorConfig.machines[2]?.age} anos, {Math.round(tutorConfig.machines[2]?.efficiency * 100)}% ef)</span></span>
+                                    </div>
+                                    <div className="flex justify-between border-t border-white/5 pt-2 text-purple-400 font-bold">
+                                       <span className="font-sans">Capacidade Agregada Total:</span>
+                                       <span>{fiduciaryMetrics.capTotal.toLocaleString('pt-BR')} un/rodada</span>
+                                    </div>
+                                 </div>
+                              </div>
+                           </motion.div>
+                        )}
+
+                        {activeAuditTab === 'governance' && (
+                           <motion.div key="tab-gov" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+                              <div className="bg-slate-950/60 p-8 rounded-2xl border border-white/5 space-y-4">
+                                 <h5 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2 text-left text-orange-500 font-sans font-semibold"><ShieldCheck size={16}/> Compromisso fiduciário de imutabilidade do P00</h5>
+                                 <p className="text-xs text-slate-400 leading-relaxed font-sans font-medium text-left text-semibold">
+                                    Em conformidade rigorosa com os princípios do **Empirion Cooperativo**, uma vez implantados esses dados fiduciários, a simulação inicial (P00 / Rodada 0) de cada competidor será congelada e persistida permanently no banco de dados. Qualquer alteração ou reinício no painel do Tutor só poderá ser disparado via reset global da arena para preservar a igualdade fiduciária.
+                                 </p>
+                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono font-bold text-left pt-4 border-t border-white/5">
+                                    <div>
+                                       <span className="block text-[8px] text-slate-500 font-sans">NÍVEL DE GOVERNANÇA:</span>
+                                       <span className="text-white uppercase">{tutorConfig.transparency_level === 'low' ? 'SIGILOSA' : tutorConfig.transparency_level === 'medium' ? 'PADRÃO' : tutorConfig.transparency_level === 'high' ? 'TRANSPARENTE' : 'OPEN DATA'}</span>
+                                    </div>
+                                    <div>
+                                       <span className="block text-[8px] text-slate-500 font-sans">MOEDA DE EXIBIÇÃO:</span>
+                                       <span className="text-white">{tutorConfig.currency}</span>
+                                    </div>
+                                    <div>
+                                       <span className="block text-[8px] text-slate-500 font-sans">ROUNDS PROGRAMADOS:</span>
+                                       <span className="text-white">{tutorConfig.total_rounds}</span>
+                                    </div>
+                                    <div>
+                                       <span className="block text-[8px] text-slate-500 font-sans">VERSÃO DO COMPILADOR:</span>
+                                       <span className="text-emerald-400 font-semibold">v19.23 GOLDEN PATCH</span>
+                                    </div>
+                                 </div>
+                              </div>
+                           </motion.div>
+                        )}
+                     </AnimatePresence>
+                  </div>
             {/* Top indicators */}
                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <SummaryCard label="ATIVO TOTAL" val={totalAssets} currency={tutorConfig.currency} icon={<PieChart size={20}/>} color="orange" />
