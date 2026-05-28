@@ -121,6 +121,10 @@ export interface BaseP0Config {
   installations_value?: number;
   land_value?: number;
   real_estate_acquisition_funding?: 'capital' | 'debt';
+  monthly_rent_value?: number;
+  rent_allocation_productive?: number;
+  rent_allocation_administrative?: number;
+  rent_allocation_sales?: number;
 
   // Parâmetros Contábeis Avançados de P0 (v19.17-v19.18)
   clients_initial?: number;
@@ -480,20 +484,47 @@ export function generatePureP0(config: TutorP0Config): {
       node.value = 0;
       if (node.children) node.children.forEach((c: any) => c.value = 0);
     });
+
+    if (buildingMode === 'rented') {
+      const rentVal = config.monthly_rent_value ?? 35000.00;
+      const pProd = config.rent_allocation_productive ?? 65;
+      const pAdm = config.rent_allocation_administrative ?? 25;
+      const pSales = config.rent_allocation_sales ?? 10;
+
+      const valCif = rentVal * (pProd / 100);
+      const valAdm = rentVal * (pAdm / 100);
+      const valSales = rentVal * (pSales / 100);
+
+      updateNodeValue(dre, 'dre.cif', -valCif);
+      updateNodeValue(dre, 'opex.adm', -valAdm);
+      updateNodeValue(dre, 'opex.sales', -valSales);
+
+      updateNodeValue(cf, 'cf.outflow.rent', -rentVal);
+    }
+
     updateNodeValue(cf, 'cf.start', cash);
-    updateNodeValue(cf, 'cf.final', cash);
+    updateNodeValue(cf, 'cf.final', cash - (buildingMode === 'rented' ? (config.monthly_rent_value ?? 35000.00) : 0));
     
   } else if (isBaseMode) {
     // DRE e Fluxos de Caixa coerentes de PME
+    const rentVal = buildingMode === 'rented' ? (config.monthly_rent_value ?? 35000.00) : 0;
+    const pProd = config.rent_allocation_productive ?? 65;
+    const pAdm = config.rent_allocation_administrative ?? 25;
+    const pSales = config.rent_allocation_sales ?? 10;
+
+    const valCif = rentVal * (pProd / 100);
+    const valAdm = rentVal * (pAdm / 100);
+    const valSales = rentVal * (pSales / 100);
+
     updateNodeValue(dre, 'rev', 1255000.00);
     updateNodeValue(dre, 'vat_sales', -125500.00);
     
     updateNodeValue(dre, 'dre.mod', -380000.00);
-    updateNodeValue(dre, 'dre.cif', -105000.00);
+    updateNodeValue(dre, 'dre.cif', -(105000.00 + valCif));
     updateNodeValue(dre, 'dre.cpv_mp', -400000.00);
     
-    updateNodeValue(dre, 'opex.sales', -95000.00);
-    updateNodeValue(dre, 'opex.adm', -85000.00);
+    updateNodeValue(dre, 'opex.sales', -(95000.00 + valSales));
+    updateNodeValue(dre, 'opex.adm', -(85000.00 + valAdm));
     updateNodeValue(dre, 'opex.bad_debt', -15000.00);
     updateNodeValue(dre, 'opex.rd', -20000.00);
     
@@ -511,23 +542,33 @@ export function generatePureP0(config: TutorP0Config): {
     updateNodeValue(cf, 'cf.outflow.distribution', -70000.00);
     updateNodeValue(cf, 'cf.outflow.storage', -10000.00);
     updateNodeValue(cf, 'cf.outflow.suppliers', -540000.00);
+    updateNodeValue(cf, 'cf.outflow.rent', -rentVal);
     updateNodeValue(cf, 'cf.outflow.maintenance', -20000.00);
     updateNodeValue(cf, 'cf.outflow.amortization', -25000.00);
     updateNodeValue(cf, 'cf.outflow.interest', -1500.00);
     updateNodeValue(cf, 'cf.outflow.taxes', -3420.00);
     
-    updateNodeValue(cf, 'cf.final', cash);
+    updateNodeValue(cf, 'cf.final', cash - rentVal);
     
   } else {
     // S.A. Running: Restaura o DRE complexo histórico herdado do Simulador Sênior
+    const rentVal = buildingMode === 'rented' ? (config.monthly_rent_value ?? 35000.00) : 0;
+    const pProd = config.rent_allocation_productive ?? 65;
+    const pAdm = config.rent_allocation_administrative ?? 25;
+    const pSales = config.rent_allocation_sales ?? 10;
+
+    const valCif = rentVal * (pProd / 100);
+    const valAdm = rentVal * (pAdm / 100);
+    const valSales = rentVal * (pSales / 100);
+
     updateNodeValue(dre, 'rev', 4184440.05);
     updateNodeValue(dre, 'vat_sales', 0.00);
     updateNodeValue(dre, 'dre.mod', -1269000.00);
-    updateNodeValue(dre, 'dre.cif', -330502.50);
+    updateNodeValue(dre, 'dre.cif', -(330502.50 + valCif));
     updateNodeValue(dre, 'dre.cpv_mp', -1373328.43);
     
-    updateNodeValue(dre, 'opex.sales', -873250.00);
-    updateNodeValue(dre, 'opex.adm', -216000.00);
+    updateNodeValue(dre, 'opex.sales', -(873250.00 + valSales));
+    updateNodeValue(dre, 'opex.adm', -(216000.00 + valAdm));
     updateNodeValue(dre, 'opex.bad_debt', -18529.46);
     updateNodeValue(dre, 'opex.rd', -41844.40);
     updateNodeValue(dre, 'fin.exp', -2500.00);
@@ -542,10 +583,11 @@ export function generatePureP0(config: TutorP0Config): {
     updateNodeValue(cf, 'cf.outflow.marketing', -450000.00);
     updateNodeValue(cf, 'cf.outflow.distribution', -423250.00);
     updateNodeValue(cf, 'cf.outflow.suppliers', -1100000.00);
+    updateNodeValue(cf, 'cf.outflow.rent', -rentVal);
     updateNodeValue(cf, 'cf.outflow.interest', -2500.00);
     updateNodeValue(cf, 'cf.outflow.taxes', -14871.31);
     
-    updateNodeValue(cf, 'cf.final', cash);
+    updateNodeValue(cf, 'cf.final', cash - rentVal);
   }
 
   // Recalcular as outras demonstrações

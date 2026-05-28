@@ -24,12 +24,12 @@ const OFFICIAL_PRESETS: any[] = [
     name: 'Greenfield Purista (Galpão Alugado)',
     description: 'Empresa começa do absoluto zero em galpão locada. Capital Social de $1.2M focado 100% em Giro e Ativos de curto prazo.',
     config: {
-      tutorName: 'Prof. Silas Silveira',
-      institutionName: 'Fundação Dom Cabral (FDC)',
+      tutorName: 'PROF. CLAUDIO TONELLI',
+      institutionName: 'UNIVERSIDADE EMPIRION',
       tournamentName: 'COPA GREENFIELD PURISTA',
       currency: 'BRL',
-      round_duration: 12,
-      total_rounds: 8,
+      round_duration: 1,
+      total_rounds: 6,
       transparency_level: 'medium',
       gazeta_mode: 'identified',
       activity_type: 'industrial',
@@ -37,16 +37,20 @@ const OFFICIAL_PRESETS: any[] = [
       starting_mode: 'start_from_zero',
       building_mode: 'rented',
       real_estate_acquisition_funding: 'capital',
-      installations_value: 200000,
+      installations_value: 500000,
+      monthly_rent_value: 35000,
+      rent_allocation_productive: 65,
+      rent_allocation_administrative: 25,
+      rent_allocation_sales: 10,
       machines: [
         { model: 'alfa', qty: 0, age: 0, efficiency: 1.0 },
         { model: 'beta', qty: 0, age: 0, efficiency: 1.0 },
         { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
       ],
       workforce: {
-        operatorsPerAlpha: 4,
-        operatorsPerBeta: 6,
-        operatorsPerGamma: 10,
+        operatorsPerAlpha: 94,
+        operatorsPerBeta: 235,
+        operatorsPerGamma: 445,
         baseSalary: 2500,
         trainingLevel: 1
       },
@@ -55,8 +59,8 @@ const OFFICIAL_PRESETS: any[] = [
         { id: 2, name: 'Sul', currency: 'BRL', demand_weight: 30, suggested_price: 185, distribution_cost: 15, marketing_cost: 15000 },
         { id: 3, name: 'Nordeste', currency: 'BRL', demand_weight: 20, suggested_price: 195, distribution_cost: 22, marketing_cost: 10000 }
       ],
-      capital_social: 1200000,
-      caixa_inicial: 1200000,
+      capital_social: 10000000,
+      caixa_inicial: 10000000,
       inventories: { mpa_qty: 0, mpa_unit_val: 20, mpb_qty: 0, mpb_unit_val: 40, finished_qty: 0, finished_unit_val: 0 },
       financial_investments: 0,
       share_price_initial: 100,
@@ -76,8 +80,8 @@ const OFFICIAL_PRESETS: any[] = [
     name: 'Greenfield Real Estate (Prédio Próprio)',
     description: 'Galpão industrial próprio integralizado no Balanço de P0 ($2.25M bruto). Financiamento via Capital Próprio expandido.',
     config: {
-      tutorName: 'Prof. Silas Silveira',
-      institutionName: 'Fundação Dom Cabral (FDC)',
+      tutorName: 'PROF. CLAUDIO TONELLI',
+      institutionName: 'UNIVERSIDADE EMPIRION',
       tournamentName: 'COPA GREENFIELD REAL ESTATE',
       currency: 'BRL',
       round_duration: 12,
@@ -1562,7 +1566,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              onChange={(v: any) => setTutorConfig({ ...tutorConfig, installations_value: v })} 
                           />
 
-                          {(tutorConfig.building_mode ?? (tutorConfig.starting_mode === 'start_from_zero' ? 'rented' : 'owned')) === 'owned' ? (
+                          {tutorConfig.building_mode === 'owned' ? (
                              <>
                                 <WizardField 
                                    label="Valor do Prédio ($)" 
@@ -1585,7 +1589,35 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                    onChange={(v: any) => setTutorConfig({ ...tutorConfig, building_age: parseInt(v) || 0 })} 
                                 />
                              </>
-                          ) : null}
+                          ) : (
+                              <>
+                                 <WizardField 
+                                    label="Aluguel Mensal ($)" 
+                                    type="currency" 
+                                    currency={tutorConfig.currency} 
+                                    val={tutorConfig.monthly_rent_value ?? 35000.00} 
+                                    onChange={(v: any) => setTutorConfig({ ...tutorConfig, monthly_rent_value: v })} 
+                                 />
+                                 <WizardField 
+                                    label="Rateio CIF (Área Produtiva) (%)" 
+                                    type="number" 
+                                    val={tutorConfig.rent_allocation_productive ?? 65} 
+                                    onChange={(v: any) => setTutorConfig({ ...tutorConfig, rent_allocation_productive: parseInt(v) || 0 })} 
+                                 />
+                                 <WizardField 
+                                    label="Rateio Adm (Área Administrativa) (%)" 
+                                    type="number" 
+                                    val={tutorConfig.rent_allocation_administrative ?? 25} 
+                                    onChange={(v: any) => setTutorConfig({ ...tutorConfig, rent_allocation_administrative: parseInt(v) || 0 })} 
+                                 />
+                                 <WizardField 
+                                    label="Rateio Vendas (Área Comercial) (%)" 
+                                    type="number" 
+                                    val={tutorConfig.rent_allocation_sales ?? 10} 
+                                    onChange={(v: any) => setTutorConfig({ ...tutorConfig, rent_allocation_sales: parseInt(v) || 0 })} 
+                                 />
+                              </>
+                           )}
                        </div>
                     </div>
                  </div>
@@ -2295,7 +2327,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         <div className="flex justify-between items-center border-t border-white/5 pt-2">
                           <span className="text-slate-500 font-sans">Aluguel / Manutenção Predial:</span>
                           <span className="text-slate-300 font-bold">
-                            {tutorConfig.building_mode === 'rented' ? 'R$ 35.000,00 (Locado)' : 'Livre (Próprio)'}
+                            {tutorConfig.building_mode === 'rented' ? `${formatCurrency(tutorConfig.monthly_rent_value ?? 35000.00, tutorConfig.currency)} (Aluguel)` : 'Isento (Prédio Próprio)'}
                           </span>
                         </div>
                      </div>

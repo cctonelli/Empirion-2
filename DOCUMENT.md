@@ -172,6 +172,16 @@ $$\text{E-SDS} = w_1 P_1 + w_2 P_2 + w_3 P_3 + w_4 P_4 + w_5 P_5 + w_6 P_6$$
   - 🟠 **Laranja (Crítico):** $1.5 \le Score < 3.0$
   - 🔴 **Vermelho (Insolvência):** $Score < 1.5$
 
+### 7.6 Tratamento de Prédio Alugado (Modo Start from Zero)
+Quando o Tutor seleciona "Prédio Locado" como modalidade de estabelecimento, o sistema exige a definição do valor de aluguel mensal básico e as devidas diretrizes de rateio pelo Custeio por Absorção. O aluguel é distribuído proporcionalmente:
+- **Área Produtiva (cif):** Ativado temporariamente como Custo Indireto de Fabricação (CIF), integrando o custo de produção do período (CPP) mantido no estoque de Produtos Acabados até que seja devidamente baixado como Custo do Produto Vendido (CPV) nas vendas.
+- **Área Administrativa (adm):** Classificado de forma imediata como Despesa Administrativa Operacional na DRE (`opex.adm`).
+- **Área Comercial/Vendas (sales):** Classificado de forma imediata como Despesa de Vendas na DRE (`opex.sales`).
+
+*Nota de Rateio Sugerido:* O sistema sugere o rateio padrão industrial de **65% Produtivo / 25% Administrativo / 10% Comercial**, cabendo ao Tutor a livre customização no Step 6 do Wizard, cujo somatório deve corresponder a 100%.
+
+Ao nível de Fluxo de Caixa (DFC), a quitação mensal do aluguel representa desembolso real do período, sendo registrada unificadamente sob a rubrica própria de saída contábil `cf.outflow.rent`. No Balanço Patrimonial, a operação de aluguel de terceiros não gera registro de imobilizado de Edificação ou Terreno, mas os investimentos em melhorias e instalações efetuados pelas equipes são ativados no Ativo Não Circulante sob a rubrica regulamentar de "Benfeitorias em Imóveis de Terceiros".
+
 ---
 
 ## 8. Decisões Arquiteturais e Padrão de Diretório
@@ -206,6 +216,17 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.24 Sapphire Diamond Enterprise - Custeio por Absorção de Prédio Locado e Rateio Dinâmico no P00
+- **Data:** 28 de Maio de 2026
+- **Motivo:** Introduzir o tratamento contábil e fiduciário de absorção regulamentar para prédios industriais locados no início de Campeonatos e arenas (P0), possibilitando a correta distribuição pró-rata dos aluguéis e ativando-os no CIF ou despesas correspondentes a partir das escolhas dinâmicas de rateio do Tutor.
+- **Diferenças:**
+  - *Inputs de Aluguel e Rateio (Step 6):* Adicionados campos de customização reativa na interface do Wizard do Tutor para cadastrar o Aluguel Mensal básico e os percentuais específicos de rateios: Produtivo (CIF), Administrativo e Comercial.
+  - *Painel Validador do Custeio por Absorção:* Injeção de uma barreira fiduciária visual no Step 6 que soma as taxas configuradas em tempo real e emite alertas amarelos/vermelhos caso a destinação dos gastos de locação divirja de 100%.
+  - *Ativação e Rateio no generatePureP0:* Refatorada a orquestração de geração de demonstrativos patrimoniais fiduciários (`generatePureP0` em `initialization.ts`) para os três modos operacionais ("Start from Zero", "Start with Base" e "Start with Running"). Quando operando no modo locado (`building_mode === 'rented'`), o valor mensal do aluguel é pro-rateado e ativado no Ativo de Estocagem de Produção via CIF, ou abatido de imediato nos demonstrativos administrativos ou comerciais.
+  - *Fluxo de Caixa Dedicado (cf.outflow.rent):* Inserida a conta contábil própria para controle de aluguéis dentro do DFC para controle preciso de saídas financeiras operacionais.
+  - *Apresentação Dinâmica do Aluguel:* O painel resumo de custos de implantação de fábrica foi transformado para reletir dinamicamente a cotação e valor em moeda local do aluguel ativo.
+- **Status:** Em Produção (Estabilidade e Compilação 100% Homologada no Linter).
 
 ### v19.17 Sapphire Diamond Enterprise - Modos Contábeis Parametrizados, Estoques WIP, PECLD Histórica e Presets de Fábrica
 - **Data:** 27 de Maio de 2026

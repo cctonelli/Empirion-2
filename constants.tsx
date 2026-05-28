@@ -121,6 +121,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 489850.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 70700.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.suppliers', label: 'PAGAMENTO A FORNECEDORES', value: 1414000.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.rent', label: 'ALUGUEL DE IMÓVEIS (EDIFÍCIO)', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.machine_buy', label: 'COMPRA DE MÁQUINAS', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO DE MÁQUINAS', value: 146402.50, type: 'expense', isEditable: true },
         { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 125000.00, type: 'expense', isEditable: true },
