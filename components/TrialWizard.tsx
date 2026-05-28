@@ -297,6 +297,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   // Salvar/Carregar templates
   const [savedTemplates, setSavedTemplates] = useState<P0Template[]>([]);
   const [showFiduciaryMonitor, setShowFiduciaryMonitor] = useState(false);
+  const [selectedPreviewTemplate, setSelectedPreviewTemplate] = useState<any | null>(null);
   const [templateName, setTemplateName] = useState('');
   const [templateDesc, setTemplateDesc] = useState('');
   const [showSaveTplModal, setShowSaveTplModal] = useState(false);
@@ -418,6 +419,150 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   // Gerar P0 determinístico com base no editor ou estado
   const p0StatementsResult = useMemo(() => {
     return generatePureP0(tutorConfig);
+  }, [tutorConfig]);
+
+  // Metricas fiduciárias e subnotas de auditoria do Tutor calculados em tempo real (v19.22)
+  const fiduciaryMetrics = useMemo(() => {
+    const isZeroMode = tutorConfig.starting_mode === 'start_from_zero';
+    const isBaseMode = tutorConfig.starting_mode === 'start_with_base';
+    const isRunningMode = tutorConfig.starting_mode === 'start_with_running';
+
+    // 1. Estoques
+    const mpa_val = isZeroMode ? 0 : (tutorConfig.inventories.mpa_qty * tutorConfig.inventories.mpa_unit_val);
+    const mpb_val = isZeroMode ? 0 : (tutorConfig.inventories.mpb_qty * tutorConfig.inventories.mpb_unit_val);
+    const finished_val = isZeroMode ? 0 : (tutorConfig.inventories.finished_qty * tutorConfig.inventories.finished_unit_val);
+    const wip_stock = isZeroMode ? 0 : (tutorConfig.wip_stock_value !== undefined ? tutorConfig.wip_stock_value : (isBaseMode ? 50000 : 250000));
+    const total_stock = mpa_val + mpb_val + finished_val + wip_stock;
+
+    // 2. Contas a receber e a pagar
+    const clients = isZeroMode ? 0 : (tutorConfig.clients_initial !== undefined ? tutorConfig.clients_initial : (isBaseMode ? 300000 : 2092193));
+    const pecld = isZeroMode ? 0 : (tutorConfig.custom_pecld_val !== undefined ? tutorConfig.custom_pecld_val : (isBaseMode ? 4500 : 18529.46));
+    const clients_net = Math.max(0, clients - pecld);
+
+    // Ativo Circulante
+    const cash = tutorConfig.caixa_inicial;
+    const investments = tutorConfig.financial_investments || 0;
+    const current_assets = cash + investments + clients_net + total_stock;
+
+    // Passivos
+    const suppliers = isZeroMode ? 0 : (tutorConfig.suppliers_initial !== undefined ? tutorConfig.suppliers_initial : (isBaseMode ? 100000 : 717605));
+    const taxes = isZeroMode ? 0 : (tutorConfig.taxes_initial !== undefined ? tutorConfig.taxes_initial : (isBaseMode ? 15000 : 14871.31));
+    const dividends = isZeroMode ? 0 : (tutorConfig.dividends_initial !== undefined ? tutorConfig.dividends_initial : (isBaseMode ? 5000 : 11153.49));
+    const ppr = isZeroMode ? 0 : (isBaseMode ? 0 : 25000);
+
+    const buildingMode = tutorConfig.building_mode ?? (isZeroMode ? 'rented' : 'owned');
+    const bValDefault = isZeroMode ? 2000000 : (isBaseMode ? 2000000 : 5440000);
+    const buildingBaseValue = buildingMode === 'owned' ? (tutorConfig.building_value ?? bValDefault) : 0;
+    const bAgeDefault = isZeroMode ? 0 : (isBaseMode ? 2 : 10);
+    const buildingAge = tutorConfig.building_age ?? bAgeDefault;
+    const landValDefault = isZeroMode ? 1000000 : (isBaseMode ? 1000000 : 1200000);
+    const calculatedLand = buildingMode === 'owned' ? (tutorConfig.land_value ?? landValDefault) : 0;
+    const installValDefault = isZeroMode ? 200000 : (isBaseMode ? 500000 : 1000000);
+    const installationsVal = tutorConfig.installations_value ?? installValDefault;
+
+    let bAsset = 0;
+    let bDeprec = 0;
+    let land = 0;
+    if (buildingMode === 'owned') {
+      land = calculatedLand;
+      bAsset = buildingBaseValue + installationsVal;
+      bDeprec = buildingBaseValue * 0.04 * buildingAge;
+    } else {
+      bAsset = installationsVal;
+      bDeprec = installationsVal * 0.10 * buildingAge;
+    }
+    const buildingNet = land + bAsset - bDeprec;
+
+    let machAcqu = 0;
+    let machDeprec = 0;
+    const actualMachines = isZeroMode ? [] : tutorConfig.machines;
+    actualMachines.forEach((mac) => {
+      const modelPrice = mac.model === 'alfa' ? 500000 : mac.model === 'beta' ? 1500000 : 3000000;
+      const acc = modelPrice * mac.qty * mac.age * 0.025 * mac.efficiency;
+      machAcqu += modelPrice * mac.qty;
+      machDeprec += acc;
+    });
+    const machinesNet = machAcqu - machDeprec;
+    const imobilizado = buildingNet + machinesNet;
+    const total_assets = current_assets + imobilizado;
+
+    // Passivos Curtos e Longos
+    const subtotal_liab = suppliers + taxes + dividends + ppr;
+    let excess = total_assets - (subtotal_liab + tutorConfig.capital_social + (isZeroMode ? 0 : isBaseMode ? 25080 : 52171.74));
+    let loans_st = 0;
+    let loans_lt = 0;
+    let capital = tutorConfig.capital_social;
+
+    if (isZeroMode) {
+      if (buildingNet + land > 0) {
+        const funding = tutorConfig.real_estate_acquisition_funding ?? 'capital';
+        if (funding === 'capital') {
+          capital = tutorConfig.capital_social + buildingNet + land;
+        } else {
+          loans_lt = buildingNet + land;
+        }
+      }
+    } else {
+      if (excess > 0) {
+        if (isBaseMode) {
+          loans_st = excess * 0.3;
+          loans_lt = excess * 0.7;
+        } else {
+          loans_st = excess * 0.6;
+          loans_lt = excess * 0.4;
+        }
+      } else {
+         capital = tutorConfig.capital_social + excess;
+      }
+    }
+
+    const current_liabilities = suppliers + taxes + dividends + loans_st + ppr;
+    const total_liabilities = current_liabilities + loans_lt;
+
+    const liquidity_current = current_liabilities > 0 ? (current_assets / current_liabilities) : 99.9;
+    const leverage = total_assets > 0 ? (total_liabilities / total_assets) : 0;
+
+    const capAlpha = isZeroMode ? 0 : (tutorConfig.machines[0]?.qty || 0) * 2000;
+    const capBeta = isZeroMode ? 0 : (tutorConfig.machines[1]?.qty || 0) * 7000;
+    const capGama = isZeroMode ? 0 : (tutorConfig.machines[2]?.qty || 0) * 15000;
+    const capTotal = capAlpha + capBeta + capGama;
+
+    const m_deprec_round = actualMachines.reduce((acc, m) => {
+      const price = m.model === 'alfa' ? 500000 : m.model === 'beta' ? 1500000 : 3000000;
+      return acc + (price * m.qty * 0.025 * m.efficiency);
+    }, 0);
+
+    const b_deprec_round = buildingMode === 'owned' ? (buildingBaseValue * 0.04) : (installationsVal * 0.10);
+    const total_deprec_round = m_deprec_round + b_deprec_round;
+
+    const total_operators = isZeroMode ? 0 : (
+      (tutorConfig.machines[0]?.qty || 0) * tutorConfig.workforce.operatorsPerAlpha +
+      (tutorConfig.machines[1]?.qty || 0) * tutorConfig.workforce.operatorsPerBeta +
+      (tutorConfig.machines[2]?.qty || 0) * tutorConfig.workforce.operatorsPerGamma
+    );
+    const payroll_round = total_operators * tutorConfig.workforce.baseSalary;
+
+    const scoreLiquidity = liquidity_current >= 2.5 ? 10 : liquidity_current >= 1.5 ? 8.5 : liquidity_current >= 1.0 ? 7 : 4;
+    const scoreLeverage = leverage <= 0.2 ? 10 : leverage <= 0.4 ? 8.5 : leverage <= 0.6 ? 7 : 3;
+    const scoreOperators = tutorConfig.workforce.baseSalary >= 2500 ? 10 : tutorConfig.workforce.baseSalary >= 1800 ? 8 : 5;
+
+    return {
+      current_assets,
+      current_liabilities,
+      total_liabilities,
+      liquidity_current,
+      leverage,
+      capAlpha,
+      capBeta,
+      capGama,
+      capTotal,
+      total_operators,
+      payroll_round,
+      total_deprec_round,
+      scoreLiquidity,
+      scoreLeverage,
+      scoreOperators
+    };
   }, [tutorConfig]);
 
   const [editableFinancials, setEditableFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }>(() => {
@@ -712,7 +857,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                </div>
                                <button 
                                  onClick={() => {
-                                   setTutorConfig(JSON.parse(JSON.stringify(t.config)));
+                                   setSelectedPreviewTemplate({ ...t, isPreset: true });
                                  }} 
                                  className="px-4 py-2 bg-sky-600/80 hover:bg-sky-500 text-white rounded-xl text-[9px] font-black uppercase transition-colors"
                                >
@@ -738,7 +883,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                   </div>
                                   <div className="flex gap-2">
                                     <button 
-                                      onClick={() => handleLoadTpl(t)} 
+                                      onClick={() => setSelectedPreviewTemplate({ ...t, isPreset: false })} 
                                       className="px-3 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase transition-all"
                                     >
                                       Carregar
@@ -767,6 +912,179 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       >
                         <Save size={16}/> Salvar Ajustes Atuais
                       </button>
+
+                      {/* MODAL DE PREVIEW E AUDITORIA DE TEMPLATE ANTES DE CARREGAR v19.22 */}
+                      <AnimatePresence>
+                        {selectedPreviewTemplate && (
+                          <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
+                            <motion.div 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              onClick={() => setSelectedPreviewTemplate(null)}
+                              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                              id="preview_template_backdrop"
+                            />
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                              className="relative w-full max-w-3xl bg-slate-900 border border-white/10 rounded-[2.5rem] p-10 shadow-[0_0_80px_rgba(0,0,0,0.8)] max-h-[90vh] overflow-y-auto custom-scrollbar text-left z-[610] space-y-8"
+                              id="preview_template_modal"
+                            >
+                              {/* Header */}
+                              <div className="flex justify-between items-start border-b border-white/5 pb-6">
+                                <div>
+                                  <div className="flex items-center gap-3">
+                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider leading-none ${selectedPreviewTemplate.isPreset ? 'bg-sky-500/20 text-sky-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                                      {selectedPreviewTemplate.isPreset ? 'Template de Fábrica' : 'Template Personalizado'}
+                                    </span>
+                                    <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider leading-none bg-white/5 text-slate-400 font-mono">
+                                      {selectedPreviewTemplate.config?.starting_mode === 'start_from_zero' ? 'GREENFIELD' : selectedPreviewTemplate.config?.starting_mode === 'start_with_base' ? 'PME BASE' : 'RUNNING S.A.'}
+                                    </span>
+                                  </div>
+                                  <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mt-3">{selectedPreviewTemplate.name}</h3>
+                                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">{selectedPreviewTemplate.description || 'Nenhuma descrição fornecida.'}</p>
+                                </div>
+                                <button 
+                                  onClick={() => setSelectedPreviewTemplate(null)}
+                                  className="p-3 bg-white/5 border border-white/5 text-slate-400 hover:text-white rounded-2xl transition-all"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+
+                              {/* Informações detalhadas */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Lado Contábil e Regras */}
+                                <div className="p-6 bg-slate-950/80 rounded-2xl border border-white/5 space-y-4 shadow-inner font-sans">
+                                  <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-widest italic border-b border-white/5 pb-2 font-sans">Regras Contábeis da Arena</h4>
+                                  <div className="space-y-3 font-mono text-[11px] text-slate-400">
+                                    <div className="flex justify-between">
+                                      <span>Moeda Exibição:</span>
+                                      <span className="font-bold text-white uppercase">{selectedPreviewTemplate.config?.currency}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Total de Rodadas:</span>
+                                      <span className="font-bold text-white">{selectedPreviewTemplate.config?.total_rounds} rounds</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Duração Rodada:</span>
+                                      <span className="font-bold text-white">{selectedPreviewTemplate.config?.round_duration} horas</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Nível Transparência:</span>
+                                      <span className="font-bold text-white uppercase">{selectedPreviewTemplate.config?.transparency_level}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Caixa e Recursos Iniciais */}
+                                <div className="p-6 bg-slate-950/80 rounded-2xl border border-white/5 space-y-4 shadow-inner font-sans">
+                                  <h4 className="text-[10px] font-black text-sky-400 uppercase tracking-widest italic border-b border-white/5 pb-2 font-sans">Capitais de Abertura</h4>
+                                  <div className="space-y-3 font-mono text-[11px] text-slate-400">
+                                    <div className="flex justify-between">
+                                      <span>Capital Social:</span>
+                                      <span className="font-bold text-white">{formatCurrency(selectedPreviewTemplate.config?.capital_social || 0, selectedPreviewTemplate.config?.currency)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Caixa Inicial:</span>
+                                      <span className="font-bold text-white">{formatCurrency(selectedPreviewTemplate.config?.caixa_inicial || 0, selectedPreviewTemplate.config?.currency)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Aplicações Financ.:</span>
+                                      <span className="font-bold text-white">{formatCurrency(selectedPreviewTemplate.config?.financial_investments || 0, selectedPreviewTemplate.config?.currency)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Estrutura Imóvel:</span>
+                                      <span className="font-bold text-sky-400 uppercase">{selectedPreviewTemplate.config?.building_mode === 'owned' ? 'Próprio' : 'Locado (Alugado)'}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Parque Industrial */}
+                                <div className="p-6 bg-slate-950/80 rounded-2xl border border-white/5 space-y-4 shadow-inner font-sans">
+                                  <h4 className="text-[10px] font-black text-purple-400 uppercase tracking-widest italic border-b border-white/5 pb-2 font-sans">Parque de Ativos Físicos</h4>
+                                  <div className="space-y-3 font-mono text-[11px] text-slate-400">
+                                    <div className="flex justify-between">
+                                      <span>Máquinas ALFA:</span>
+                                      <span className="font-bold text-white">{selectedPreviewTemplate.config?.machines?.[0]?.qty || 0} un (Eficiência {Math.round((selectedPreviewTemplate.config?.machines?.[0]?.efficiency || 1) * 100)}%)</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Máquinas BETA:</span>
+                                      <span className="font-bold text-white">{selectedPreviewTemplate.config?.machines?.[1]?.qty || 0} un (Eficiência {Math.round((selectedPreviewTemplate.config?.machines?.[1]?.efficiency || 1) * 100)}%)</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Máquinas GAMA:</span>
+                                      <span className="font-bold text-white">{selectedPreviewTemplate.config?.machines?.[2]?.qty || 0} un</span>
+                                    </div>
+                                    <div className="flex justify-between text-purple-400">
+                                      <span>Salário Base Operador:</span>
+                                      <span className="font-bold">{formatCurrency(selectedPreviewTemplate.config?.workforce?.baseSalary || 2000, selectedPreviewTemplate.config?.currency)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Praças de Venda e Estoques */}
+                                <div className="p-6 bg-slate-950/80 rounded-2xl border border-white/5 space-y-4 shadow-inner font-sans">
+                                  <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic border-b border-white/5 pb-2 font-sans">Praças e Estoque MPA/MPB</h4>
+                                  <div className="space-y-3 font-mono text-[11px] text-slate-400">
+                                    <div className="flex justify-between">
+                                      <span>Praças Comerciais:</span>
+                                      <span className="font-bold text-white">{selectedPreviewTemplate.config?.regions?.length || 0} regiões</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Estoque MP Alfa:</span>
+                                      <span className="font-bold text-white">{(selectedPreviewTemplate.config?.inventories?.mpa_qty || 0).toLocaleString('pt-BR')} un</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Estoque MP Beta:</span>
+                                      <span className="font-bold text-white">{(selectedPreviewTemplate.config?.inventories?.mpb_qty || 0).toLocaleString('pt-BR')} un</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Estoque Pronto (PA):</span>
+                                      <span className="font-bold text-white">{(selectedPreviewTemplate.config?.inventories?.finished_qty || 0).toLocaleString('pt-BR')} un</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Dica Contábil do Modo */}
+                              <div className="p-6 bg-slate-950 rounded-2xl border border-white/5 flex items-center gap-4 text-xs text-slate-400 font-sans">
+                                <Info size={24} className="text-orange-500 shrink-0" />
+                                <p>
+                                  {selectedPreviewTemplate.config?.starting_mode === 'start_from_zero' 
+                                    ? 'Este cenário é do tipo Greenfield Purista (Começo do Zero). Ele exige dos times alto foco em investimentos de infraestrutura no primeiro round (compra de máquinas, contratação total de operadores, estruturação fabril).'
+                                    : selectedPreviewTemplate.config?.starting_mode === 'start_with_base'
+                                    ? 'Este cenário começa com infraestrutura de Base Ativa (PME). É recomendado para simulações acadêmicas clássicas onde o foco inicial é calibrar marketing, produção de matéria prima imediata e vendas nas praças.'
+                                    : 'Cenário Running Company (Operação Plena). Las empresas já iniciam maduras, de grande porte, contendo estoques elevados de produtos acabados, contas comerciais em andamento e obrigações passadas que precisarão ser liquidadas.'
+                                  }
+                                </p>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+                                <button 
+                                  onClick={() => setSelectedPreviewTemplate(null)}
+                                  className="px-6 py-3 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl text-[10px] font-black uppercase transition-all"
+                                >
+                                  Cancelar Revisão
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    setTutorConfig(JSON.parse(JSON.stringify(selectedPreviewTemplate.config)));
+                                    setSelectedPreviewTemplate(null);
+                                    alert(`Template "${selectedPreviewTemplate.name}" carregado com soberania contábil!`);
+                                  }}
+                                  className="px-8 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(249,115,22,0.3)]"
+                                >
+                                  <FolderOpen size={12}/> Confirmar & Carregar Template
+                                </button>
+                              </div>
+                            </motion.div>
+                          </div>
+                        )}
+                      </AnimatePresence>
                     </div>
                  </div>
 
@@ -1529,26 +1847,110 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   </p>
                 </div>
 
-                {/* KPI Breakdown */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-5 bg-slate-950/60 rounded-2xl border border-white/5 flex flex-col justify-between">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">E-SDS Provisório</span>
-                    <div className="flex items-baseline gap-2 mt-2">
-                      <span className="text-2xl font-black text-emerald-400">{estimatedESDS.score} / 100</span>
-                      <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-black font-mono">{estimatedESDS.zone}</span>
+                {/* KPI Breakdown expandido com subnotas de auditoria e capacidades produtivas v19.22 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-6 bg-slate-950/80 rounded-3xl border border-white/5 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-600/5 rounded-full blur-2xl" />
+                    <div>
+                      <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest block mb-2">Audit Status & E-SDS</span>
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className="text-3xl font-black text-white">{estimatedESDS.score}</span>
+                        <span className="text-xs text-slate-500 font-bold">/ 100</span>
+                        <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded font-black font-mono leading-none">{estimatedESDS.zone}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-3 font-medium leading-relaxed">{estimatedESDS.insights || 'Sólida solidez patrimonial.'}</p>
                     </div>
                   </div>
-                  <div className="p-5 bg-slate-950/60 rounded-2xl border border-white/5 flex flex-col justify-between">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Ativos Calculados</span>
-                    <span className="text-2xl font-mono font-black text-white mt-1">
-                      {formatCurrency(totalAssets, tutorConfig.currency)}
-                    </span>
+
+                  <div className="p-6 bg-slate-950/80 rounded-3xl border border-white/5 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-sky-600/5 rounded-full blur-2xl" />
+                    <div>
+                      <span className="text-[9px] font-black text-sky-400 uppercase tracking-widest block mb-1">Métricas Fiduciárias</span>
+                      <div className="space-y-2 mt-3 font-mono text-[10px]">
+                        <div className="flex justify-between items-center text-slate-400">
+                          <span>Liquidez Corrente:</span>
+                          <span className="font-bold text-white">
+                            {fiduciaryMetrics.liquidity_current.toFixed(2)}x
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-1">
+                          <span>Endividamento:</span>
+                          <span className="font-bold text-slate-300">
+                            {(fiduciaryMetrics.leverage * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-1">
+                          <span>Conciliação:</span>
+                          <span className="font-bold text-emerald-400 flex items-center gap-1">
+                            <ShieldCheck size={10}/> 100% OK
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-5 bg-slate-950/60 rounded-2xl border border-white/5 flex flex-col justify-between">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Conciliação Patrimonial</span>
-                    <span className="text-sm font-black text-emerald-400 mt-2 flex items-center gap-1.5 font-sans">
-                      <ShieldCheck size={14} /> 100% Equalizado
-                    </span>
+
+                  <div className="p-6 bg-slate-950/80 rounded-3xl border border-white/5 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/5 rounded-full blur-2xl" />
+                    <div>
+                      <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest block mb-1">Capacidade Produtiva</span>
+                      <div className="space-y-2 mt-3 font-mono text-[10px]">
+                        <div className="flex justify-between items-center text-slate-400">
+                          <span>Capacidade Total:</span>
+                          <span className="font-bold text-white">{fiduciaryMetrics.capTotal.toLocaleString('pt-BR')} un</span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-1">
+                          <span>Alfa, Beta, Gama:</span>
+                          <span className="font-bold text-slate-400">
+                            {tutorConfig.starting_mode === 'start_from_zero' ? '0' : `${tutorConfig.machines[0]?.qty || 0}/${tutorConfig.machines[1]?.qty || 0}/${tutorConfig.machines[2]?.qty || 0}`} un
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-1">
+                          <span>Ativos Totais:</span>
+                          <span className="font-bold text-sky-400">{formatCurrency(totalAssets, tutorConfig.currency)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subnotas Detalhadas de Custos Previstos, Ociosidades de P0 (v19.22) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/40 p-6 rounded-3xl border border-white/5 shadow-inner">
+                  <div className="space-y-4">
+                     <h5 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] italic border-b border-white/5 pb-2">Projeção Base de Gastos Fixos por Período</h5>
+                     <div className="space-y-3 text-xs font-mono">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500 font-sans">Mão de Obra ({fiduciaryMetrics.total_operators} op.):</span>
+                          <span className="text-white font-bold">{formatCurrency(fiduciaryMetrics.payroll_round, tutorConfig.currency)}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-white/5 pt-2">
+                          <span className="text-slate-500 font-sans">Depreciação Provisória:</span>
+                          <span className="text-rose-400 font-bold">{formatCurrency(fiduciaryMetrics.total_deprec_round, tutorConfig.currency)}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-white/5 pt-2">
+                          <span className="text-slate-500 font-sans">Aluguel / Manutenção Predial:</span>
+                          <span className="text-slate-300 font-bold">
+                            {tutorConfig.building_mode === 'rented' ? 'R$ 35.000,00 (Locado)' : 'Livre (Próprio)'}
+                          </span>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="space-y-4 border-l border-white/5 pl-6">
+                     <h5 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] italic border-b border-white/5 pb-2">Capacidade Nominal por Modelo de Máquina</h5>
+                     <div className="space-y-3 text-xs font-mono">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500 font-sans">Linha ALFA ({tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.machines[0]?.qty || 0)} un):</span>
+                          <span className="text-white font-bold">{fiduciaryMetrics.capAlpha.toLocaleString('pt-BR')} un/rodada</span>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-white/5 pt-2">
+                          <span className="text-slate-500 font-sans">Linha BETA ({tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.machines[1]?.qty || 0)} un):</span>
+                          <span className="text-white font-bold">{fiduciaryMetrics.capBeta.toLocaleString('pt-BR')} un/rodada</span>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-white/5 pt-2">
+                          <span className="text-slate-500 font-sans">Linha GAMA ({tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.machines[2]?.qty || 0)} un):</span>
+                          <span className="text-white font-bold">{fiduciaryMetrics.capGama.toLocaleString('pt-BR')} un/rodada</span>
+                        </div>
+                     </div>
                   </div>
                 </div>
 
