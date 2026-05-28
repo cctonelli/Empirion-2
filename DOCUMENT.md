@@ -217,6 +217,25 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.26 Obsidian Diamond Enterprise - Sincronização Fiduciária Pura "Start from Zero" e Consolidação Horizontal de DRE/DFC
+- **Data:** 28 de Maio de 2026
+- **Motivo:** Sanar por completo o vazamento de saldos complexos antigos remanescentes de `constants.tsx` quando arenas e torneios são criados no modo Greenfield purista ("Start from Zero"), garantindo integridade matemática estrita na DRE e Fluxo de Caixa fiduciários.
+- **Diferenças:**
+  - *Sincronização Pura no generatePureP0:* Implementação do helper recursivo profundo `clearFinancialTree` em `initialization.ts` que zera por completo todos as contas-folha e totalizadores das árvores contábeis clonadas de DRE e DFC no modo "Start from Zero", assegurando um ponto de partida fiduciário verdadeiramente limpo a partir de zero.
+  - *Recálculo Horizontal Aritmético e Preciso:* Substituição do método genérico de totalizações verticais da DRE e DFC por um sistema de rotina fiduciária horizontal aritmética explícita. Isso impede o efeito colateral onde despesas de produção industrial como MOD e CIF passavam indevidamente a valor absoluto positivo, sintonizando rigorosamente as contas de Lucro Bruto, Lucro Operacional (EBIT), LAIR, Lucro Líquido e Variação de Caixa com os rateios reais.
+  - *Otimização do findAccountValue em Supabase:* O motor fiduciário de extração de KPIs no `services/supabase.ts` foi aprimorado com uma busca recursiva inteligente (`findAccountInTree`) capaz de resolver caminhos de IDs compostos contendo pontos literais (como no Passivo Circulante `liabilities.current`). Isso elimina o fallback para dados legados de SA nos presets do Round 0.
+  - *Preservação de Modo fiduciária no Lançamento:* Correção do objeto de payload enviado em `TrialWizard.tsx` para passar reativamente a flag `starting_mode`, garantindo o correto setup lógico das rotas histórico-contábeis em Round 0 nos bancos do Supabase.
+- **Status:** Em Produção (Build 100% verde com integridade fiduciária de transação homologada).
+
+### v19.25 Obsidian Diamond Enterprise - Validador de Rateio e Apresentação Analítica de Aluguel
+- **Data:** 28 de Maio de 2026
+- **Motivo:** Implementar refinamentos operacionais essenciais sugeridos pela auditoria contábil "Oracle Accounting Strategos" para garantir consistência algorítmica inquebrável nos rateios de aluguel e visibilidade detalhada dos dispêndios de locação para os alunos e tutores.
+- **Diferenças:**
+  - *Validador Rígido de Rateio:* Introdução de trava operacional e fiduciária reativa no Wizard (Step 6). O botão de navegação "Avançar" é completamente bloqueado, impedindo a progressão se a soma de Rateio Produtivo (CIF), Administrativo (OPEX) e Comercial (OPEX) não totalizar rigorosamente 100%. Exibição de banner de alerta com cálculo dinâmico da diferença (sobra/falta) em design de alta fidelidade reativo (vermelho/verde).
+  - *Detalhamento Fiduciário no Preview:* O painel flutuante ("Real-Time Monitor Fiduciário") e gavetas de pré-visualização foram aprimorados para exibir analiticamente a dissecção do aluguel. Agora expressa separadamente a parcela ativada como "Aluguel Produtivo (CIF)" (incorporada ao custo do estoque industrial) e a parcela debitada diretamente no resultado como "Aluguel OPEX" (Consolidação de Despesas Administrativas e de Vendas).
+  - *Atualização de Diretrizes Oficiais:* Inclusão da Seção 11 em `docs/BUSINESS_RULES.md` regulamentando a contabilidade de prédios locados.
+- **Status:** Em Produção (Linter 100% verde, compilação de produção homologada).
+
 ### v19.24 Sapphire Diamond Enterprise - Custeio por Absorção de Prédio Locado e Rateio Dinâmico no P00
 - **Data:** 28 de Maio de 2026
 - **Motivo:** Introduzir o tratamento contábil e fiduciário de absorção regulamentar para prédios industriais locados no início de Campeonatos e arenas (P0), possibilitando a correta distribuição pró-rata dos aluguéis e ativando-os no CIF ou despesas correspondentes a partir das escolhas dinâmicas de rateio do Tutor.

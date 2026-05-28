@@ -1,7 +1,7 @@
 # Regras de Negócio Core - EMPIRION
 
-**Versão:** v19.9 Obsidian Diamond Enterprise II  
-**Data:** 24 de Maio de 2026  
+**Versão:** v19.25 Obsidian Diamond Enterprise  
+**Data:** 28 de Maio de 2026  
 **Método Contábil:** Custeio por Absorção Completo (Full Absorption Costing)  
 **Referências:** CPC 16 (R1) / IAS 2 / SAP & Oracle Best Practices
 
@@ -338,8 +338,34 @@ Para mitigar o acionamento indesejado do traumático Empréstimo Compulsório e 
 
 ---
 
+## 11. Regime de Prédio Locado e Rateio de Aluguel (v19.25)
+
+Sempre que a equipe / campeonato optar por operar no modelo de **Prédio Locado** (alugado/terceirizado) em vez de Prédio Próprio, aplica-se o tratamento fiduciário rigoroso de rateio do aluguel mensal básico pelo regime de Custeio por Absorção:
+
+1. **Parâmetros de Entrada (Step 6 do Wizard):**
+   - **Valor do Aluguel Mensal ($):** O valor nominal mensal a ser pago pelo estabelecimento arrendado.
+   - **Percentual de Rateio Produtivo (CIF) (%):** A fração do espaço correspondente às linhas industriais.
+   - **Percentual de Rateio Administrativo (Adm) (%):** A fração correspondente às dependências de backoffice.
+   - **Percentual de Rateio de Vendas (Sales) (%):** A fração correspondente às estruturas de showroom/comercial.
+
+2. **Validador de Consistência Fiduciária (Bloqueio Fiduciário):**
+   - Para garantir correspondência perfeita nas demonstrações, **a soma desses três percentuais de rateio deve totalizar rigorosamente 100%**.
+   - É apresentada uma verificação visual reativa e o avanço no Wizard do Tutor (Step 6) é estritamente **bloqueado** caso a soma resulte em qualquer valor divergente de 100%.
+
+3. **Tratamento no Custeio por Absorção:**
+   - **Rateio Produtivo (CIF):** Injetado no parque fabril de imediato como Custo Indireto de Fabricação (CIF), somando-se ao Custo de Produção do Período (CPP). Consequentemente, essa porção é capitalizada no Estoque de Produtos Acabados (Kardex) no Balanço Patrimonial e só deduzida como perda de competência (CPV) na DRE no momento da venda.
+   - **Rateio Administrativo:** Reconhecido integralmente no round como despesa operacional de administração imediata na DRE (`dre.opex.adm`).
+   - **Rateio Comercial:** Reconhecido integralmente no round como despesa de vendas imediata na DRE (`dre.opex.sales`).
+
+4. **Trânsito por Fluxo de Caixa e Balanço Patrimonial:**
+   - **DFC:** O desembolso real integral do aluguel mensal é executado sob uma rubrica unificada própria de saídas contábeis (`cf.outflow.rent`).
+   - **Balanço Patrimonial:** Não resulta no reconhecimento de nenhum Ativo Imobilizado material para Edificação ou Terreno (não gera depreciação do prédio na demonstração), sendo eventual cap de instalações adicionais ativadas estritamente em "Benfeitorias em Imóveis de Terceiros".
+
+---
+
 **Histórico de Versões**
 
+- **v19.25** (28/05/2026) – Introdução de travas fiduciárias reativas com validador de rateio (soma = 100% mandatória), breakdown analítico expandido de aluguel por CIF x OPEX no drawer de preview e documentação oficial completa de locação em BUSINESS_RULES.md.
 - **v19.12** (25/05/2026) – Harmonização completa do Fluxo de Caixa pelo Comitê Contábil (v19.12), introdução da Redoma de Caixa (resgate preventivo de aplicações financeiras para preservação de rating de crédito) e ativação rigorosa de Treinamento e Estocagem no CIF contábil (Absorção).
 - **v19.10** (25/05/2026) – Diferenciação analítica de Empréstimos Normais vs. Compulsórios, taxas por Rating Spreads, cap punitivo no rating corporativo e novo Cronograma de Amortização de Dívidas projetado (3 rounds).
 - **v19.9** (24/05/2026) – Desmembramento completo de MOD e CIF + regras de Absorção.

@@ -28,7 +28,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const isTestMode = true;
 
+const findAccountInTree = (nodes: AccountNode[], id: string): AccountNode | null => {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    if (node.children && node.children.length > 0) {
+      const found = findAccountInTree(node.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
 const findAccountValue = (nodes: AccountNode[], path: string): number => {
+  const node = findAccountInTree(nodes, path);
+  if (node) return node.value;
+
   const parts = path.split('.');
   let current: AccountNode[] | undefined = nodes;
   

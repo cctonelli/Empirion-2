@@ -201,6 +201,16 @@ export function recalculateTotalizers(nodes: AccountNode[]): number {
   return sum;
 }
 
+// Zera recursivamente todos os nós folha e totalizadores de uma árvore contábil
+export function clearFinancialTree(nodes: AccountNode[]) {
+  nodes.forEach(node => {
+    node.value = 0;
+    if (node.children && node.children.length > 0) {
+      clearFinancialTree(node.children);
+    }
+  });
+}
+
 export const INDUSTRIAL_BR_TEMPLATE = {
   id: 'industrial_br_v1',
   code: 'INDUSTRIAL_BR',
@@ -475,15 +485,9 @@ export function generatePureP0(config: TutorP0Config): {
 
   // 6. Atualização de DRE e DFC Históricas para P00
   if (isZeroMode) {
-    // Greenfield purista começa do zero absoluto comercial
-    dre.forEach((node: any) => {
-      node.value = 0;
-      if (node.children) node.children.forEach((c: any) => c.value = 0);
-    });
-    cf.forEach((node: any) => {
-      node.value = 0;
-      if (node.children) node.children.forEach((c: any) => c.value = 0);
-    });
+    // Greenfield purista começa de uma árvore fiduciária 100% limpa recursivamente
+    clearFinancialTree(dre);
+    clearFinancialTree(cf);
 
     if (buildingMode === 'rented') {
       const rentVal = config.monthly_rent_value ?? 35000.00;
@@ -590,9 +594,86 @@ export function generatePureP0(config: TutorP0Config): {
     updateNodeValue(cf, 'cf.final', cash - rentVal);
   }
 
-  // Recalcular as outras demonstrações
-  recalculateTotalizers(dre);
-  recalculateTotalizers(cf);
+  // Helper interno de busca de valor para o rateio e consolidação horizontal fiduciária
+  const getTreeValue = (nodes: AccountNode[], id: string): number => {
+    for (const n of nodes) {
+      if (n.id === id) return n.value;
+      if (n.children && n.children.length > 0) {
+        const v = getTreeValue(n.children, id);
+        if (v !== 0) return v;
+      }
+    }
+    return 0;
+  };
+
+  // --- RECALCULO HORIZONTAL INTEGRAL E ARITMÉTICO DA DRE ---
+  const val_rev = getTreeValue(dre, 'rev');
+  const val_vat_sales = getTreeValue(dre, 'vat_sales');
+  
+  const val_mod = getTreeValue(dre, 'dre.mod');
+  const val_cif = getTreeValue(dre, 'dre.cif');
+  const val_cpv_mp = getTreeValue(dre, 'dre.cpv_mp');
+  const total_cpv = val_mod + val_cif + val_cpv_mp;
+  updateNodeValue(dre, 'cpv', total_cpv);
+
+  const total_gross = val_rev + val_vat_sales + total_cpv;
+  updateNodeValue(dre, 'gross_profit', total_gross);
+
+  const val_opex_sales = getTreeValue(dre, 'opex.sales');
+  const val_opex_adm = getTreeValue(dre, 'opex.adm');
+  const val_opex_bad = getTreeValue(dre, 'opex.bad_debt');
+  const val_opex_rd = getTreeValue(dre, 'opex.rd');
+  const total_opex = val_opex_sales + val_opex_adm + val_opex_bad + val_opex_rd;
+  updateNodeValue(dre, 'opex', total_opex);
+
+  const operating_profit = total_gross + total_opex;
+  updateNodeValue(dre, 'operating_profit', operating_profit);
+
+  const val_fin_rev = getTreeValue(dre, 'fin.rev');
+  const val_fin_exp = getTreeValue(dre, 'fin.exp');
+  const total_fin = val_fin_rev + val_fin_exp;
+  updateNodeValue(dre, 'fin_res', total_fin);
+
+  const val_non_op_rev = getTreeValue(dre, 'non_op.rev');
+  const val_non_op_exp = getTreeValue(dre, 'non_op.exp');
+  const total_non_op = val_non_op_rev + val_non_op_exp;
+  updateNodeValue(dre, 'non_op_res', total_non_op);
+
+  const lair_val = operating_profit + total_fin + total_non_op;
+  updateNodeValue(dre, 'lair', lair_val);
+
+  const val_tax_prov = getTreeValue(dre, 'tax_prov');
+  const val_ppr_dre = getTreeValue(dre, 'ppr');
+  const total_tax_ppr = val_tax_prov + val_ppr_dre;
+  updateNodeValue(dre, 'tax_ppr_group', total_tax_ppr);
+
+  const final_profit_val = lair_val + total_tax_ppr;
+  updateNodeValue(dre, 'final_profit', final_profit_val);
+
+  // --- RECALCULO HORIZONTAL INTEGRAL DO SFC/DFC (FLUXO DE CAIXA) ---
+  const cf_start_val = getTreeValue(cf, 'cf.start');
+  const cf_cash_sales = getTreeValue(cf, 'cf.inflow.cash_sales');
+  const cf_term_sales = getTreeValue(cf, 'cf.inflow.term_sales');
+  const total_inflow = cf_cash_sales + cf_term_sales;
+  updateNodeValue(cf, 'cf.inflow', total_inflow);
+
+  const cf_payroll = getTreeValue(cf, 'cf.outflow.payroll');
+  const cf_charges = getTreeValue(cf, 'cf.outflow.social_charges');
+  const cf_vat_payable = getTreeValue(cf, 'cf.outflow.vat_payable');
+  const cf_marketing = getTreeValue(cf, 'cf.outflow.marketing');
+  const cf_dist = getTreeValue(cf, 'cf.outflow.distribution');
+  const cf_storage = getTreeValue(cf, 'cf.outflow.storage');
+  const cf_suppliers = getTreeValue(cf, 'cf.outflow.suppliers');
+  const cf_rent = getTreeValue(cf, 'cf.outflow.rent');
+  const cf_maint = getTreeValue(cf, 'cf.outflow.maintenance');
+  const cf_amort = getTreeValue(cf, 'cf.outflow.amortization');
+  const cf_interest = getTreeValue(cf, 'cf.outflow.interest');
+  const cf_taxes = getTreeValue(cf, 'cf.outflow.taxes');
+  const total_outflow = cf_payroll + cf_charges + cf_vat_payable + cf_marketing + cf_dist + cf_storage + cf_suppliers + cf_rent + cf_maint + cf_amort + cf_interest + cf_taxes;
+  updateNodeValue(cf, 'cf.outflow', total_outflow);
+
+  const cf_final_val = cf_start_val + total_inflow + total_outflow;
+  updateNodeValue(cf, 'cf.final', cf_final_val);
 
   const finalAssetsVal = assetsNode?.value || 0;
   const finalEquityVal = bs.find((n: any) => n.id === 'equity')?.value || 0;
