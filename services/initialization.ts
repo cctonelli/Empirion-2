@@ -409,22 +409,34 @@ export function generatePureP0(config: TutorP0Config): {
     taxes = 0;
     dividends = 0;
     ppr = 0;
+    profit_accum = 0;
 
-    // Funding do Setup Imobiliário Greenfield
-    const realEstateNet = land + buildingsAssetValue - buildingAccDeprecOrAmort;
-    if (realEstateNet > 0) {
-      const funding = config.real_estate_acquisition_funding ?? 'capital';
-      if (funding === 'capital') {
-        // Integralização total dos Sócios
-        capital = config.capital_social + realEstateNet;
-        loans_lt = 0;
-      } else {
-        // Alavancagem Imobiliária via Dívida de Longo Prazo
-        loans_lt = realEstateNet;
+    // O PL (capital social) deve refletir exatamente o valor parametrizado pelo Tutor
+    capital = config.capital_social;
+
+    if (buildingMode === 'rented') {
+      // No Greenfield de Aluguel, o Ativo possui o Direito de Uso de instalações/benfeitorias (installationsVal)
+      // e o Passivo possui uma obrigação de Arrendamento correspondente (loans_lt)
+      buildingsAssetValue = installationsVal;
+      buildingAccDeprecOrAmort = 0;
+      land = 0;
+      loans_lt = installationsVal;
+    } else {
+      // Greenfield Próprio (Owned)
+      const realEstateNet = land + buildingsAssetValue - buildingAccDeprecOrAmort;
+      if (realEstateNet > 0) {
+        const funding = config.real_estate_acquisition_funding ?? 'capital';
+        if (funding === 'capital') {
+          // Integralização adicional dos sócios para aquisição do imóvel
+          capital = config.capital_social + realEstateNet;
+          loans_lt = 0;
+        } else {
+          // Financiamento imobiliário / Dívida de longo prazo
+          loans_lt = realEstateNet;
+        }
       }
     }
     loans_st = 0;
-    profit_accum = 0;
     
   } else if (isBaseMode) {
     // Cenário PME - Indústria de Base (Pequena/Média Empresa em Movimento)
@@ -549,29 +561,12 @@ export function generatePureP0(config: TutorP0Config): {
 
   // 6. Atualização de DRE e DFC Históricas para P00
   if (isZeroMode) {
-    // Greenfield purista começa de uma árvore fiduciária 100% limpa recursivamente
+    // Greenfield purista começa de uma árvore fiduciária 100% limpa recursivamente, sem qualquer aluguel no DRE/DFC de P0
     clearFinancialTree(dre);
     clearFinancialTree(cf);
 
-    if (buildingMode === 'rented') {
-      const rentVal = config.monthly_rent_value ?? 35000.00;
-      const pProd = config.rent_allocation_productive ?? 65;
-      const pAdm = config.rent_allocation_administrative ?? 25;
-      const pSales = config.rent_allocation_sales ?? 10;
-
-      const valCif = rentVal * (pProd / 100);
-      const valAdm = rentVal * (pAdm / 100);
-      const valSales = rentVal * (pSales / 100);
-
-      updateNodeValue(dre, 'dre.cif', -valCif);
-      updateNodeValue(dre, 'opex.adm', -valAdm);
-      updateNodeValue(dre, 'opex.sales', -valSales);
-
-      updateNodeValue(cf, 'cf.outflow.rent', -rentVal);
-    }
-
     updateNodeValue(cf, 'cf.start', cash);
-    updateNodeValue(cf, 'cf.final', cash - (buildingMode === 'rented' ? (config.monthly_rent_value ?? 35000.00) : 0));
+    updateNodeValue(cf, 'cf.final', cash);
     
   } else if (isBaseMode) {
     // DRE e Fluxos de Caixa coerentes de PME
@@ -760,6 +755,7 @@ export function generatePureP0(config: TutorP0Config): {
       finished_goods: isZeroMode ? 0 : config.inventories.finished_qty
     },
     last_price: config.share_price_initial,
+    share_price: config.share_price_initial,
     last_units_sold: 0,
     ebitda: isZeroMode ? 0 : (isBaseMode ? 62000.00 : 208387.77),
     interest_coverage: isZeroMode ? 1000 : (loans_st + loans_lt > 0 ? 50 : 100),

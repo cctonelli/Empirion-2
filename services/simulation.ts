@@ -451,12 +451,23 @@ export const calculateProjections = (
                       (Math.max(0, currentMPAStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0))) + 
                       (Math.max(0, currentMPBStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0)));
 
+  // --- 4.0 ANÁLISE E RATEIO DE ALUGUEL ---
+  const isRented = (ecosystem as any).building_mode === 'rented';
+  const rentVal = isRented ? ((ecosystem as any).monthly_rent_value ?? 35000.00) : 0;
+  const pProd = (ecosystem as any).rent_allocation_productive ?? 65;
+  const pAdm = (ecosystem as any).rent_allocation_administrative ?? 25;
+  const pSales = (ecosystem as any).rent_allocation_sales ?? 10;
+
+  const valCif = rentVal * (pProd / 100);
+  const valAdm = rentVal * (pAdm / 100);
+  const valSales = rentVal * (pSales / 100);
+
   // --- 4.1 COMPOSIÇÃO DE CUSTO MOD E CIF (SISTEMÁTICA REAL DE ABSORÇÃO) ---
   // MOD COMPLETA: Salário-Base + Encargos Sociais + Indenização (Rescisão) + Hora-Extra + Prêmio Produtividade
   const finalMOD = totalMOD + extraProductionCost + (custoIndenizacao + pprProporcional);
 
-  // CIF COMPLETO: Despesas de Treinamento + Manutenção + Estocagem de MP/PA + Depreciação de Prédios + Depreciação de Máquinas
-  const finalCIF = periodDepreciation + maintenance + trainingCost + storageCost;
+  // CIF COMPLETO: Despesas de Treinamento + Manutenção + Estocagem de MP/PA + Depreciação de Prédios + Depreciação de Máquinas + Rateio Aluguel
+  const finalCIF = periodDepreciation + maintenance + trainingCost + storageCost + valCif;
 
   // CPP TOTAL: MP Consumida + MOD Completa + CIF Completo
   const totalCPP = totalMP + finalMOD + finalCIF;
@@ -513,8 +524,8 @@ export const calculateProjections = (
 
   // NOTA SÊNIOR: Como storageCost e trainingCost foram capitalizados no CIF contábil e incorporados ao CPP,
   // eles NÃO transitam de forma duplicada no OPEX de vendas/adm operacional imediato do DRE.
-  const currentOpexSales = (prevOpexSales * inflationMult) + totalMarketingExp + distributionCost + totalPayrollSales;
-  const currentOpexAdm = (prevOpexAdm * inflationMult) + totalPayrollAdm;
+  const currentOpexSales = (prevOpexSales * inflationMult) + totalMarketingExp + distributionCost + totalPayrollSales + valSales;
+  const currentOpexAdm = (prevOpexAdm * inflationMult) + totalPayrollAdm + valAdm;
   
   // P&D Investimento dinâmico (% da Receita)
   const rdInvestmentPercent = sanitize(decision.production?.rd_investment, 0);
@@ -665,7 +676,7 @@ export const calculateProjections = (
   // Total Outflows para cálculo de caixa
   // Inclui: Pagamento do PPR anterior (totalPprPayment) + Indenização de demissões (custoIndenizacao) + Dividendos anteriores + IVA anterior + Imposto de Renda do período anterior (prevTaxes)
   // NOTA SÊNIOR: Trocamos 'taxProv' por 'prevTaxes' nas saídas de caixa para preservar o regime de caixa correto dos tributos federais de rodada a rodada.
-  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + prevTaxes + prevDividends + trainingCost + vatPayment + applicationAmount;
+  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + prevTaxes + prevDividends + trainingCost + vatPayment + applicationAmount + rentVal;
 
   // NOTA SÊNIOR: Adicionamos o 'newBdiLoanAmount' nas entradas de caixa para anular o desembolso à vista de Capex que foi integralmente financiado.
   let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + newBdiLoanAmount + totalFinancialRevenue - totalOutflows;
@@ -834,6 +845,7 @@ export const calculateProjections = (
         'cf.outflow.distribution': -distributionCost,
         'cf.outflow.storage': -storageCost,
         'cf.outflow.suppliers': -(cashOutflowSuppliers + prevSuppliers),
+        'cf.outflow.rent': -rentVal,
         'cf.outflow.misc': 0, 
         'cf.outflow.machine_buy': -machinePurchaseOutflow,
         'cf.outflow.maintenance': -maintenance,

@@ -65,6 +65,10 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
   currentMacro,
   isReadOnly,
 }) => {
+  const isZeroMode = activeArena?.config?.starting_mode === 'start_from_zero' || activeArena?.starting_mode === 'start_from_zero';
+  const isRoundZeroAndZeroMode = isZeroMode && round === 0;
+  const isAllowedToBuy = currentMacro?.allow_machine_sale && !isRoundZeroAndZeroMode;
+
   return (
     <div className="space-y-12 lg:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Cabeçalho do passo */}
@@ -120,7 +124,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
           <div className="space-y-2">
             <span className="font-semibold text-slate-300">Disponibilidade</span>
             <p className="leading-relaxed">
-              Nem todo round permite compra. Status atual: <strong>{currentMacro?.allow_machine_sale ? 'Disponível' : 'Bloqueado neste round'}</strong>.
+              Nem todo round permite compra. Status atual: <strong>{isAllowedToBuy ? 'Disponível' : 'Bloqueado neste round'}</strong>.
             </p>
           </div>
         </div>
@@ -139,84 +143,91 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {(activeTeam?.kpis?.machines || []).map((m: MachineInstance, idx: number) => {
-            const isSold = decisions.machinery.sell_ids?.includes(m.id);
-            const spec = currentMacro?.machine_specs?.[m.model];
-            const currentDeprec = m.accumulated_depreciation + (m.acquisition_value / (spec?.useful_life_years || 40));
-            const currentValue = Math.max(0, m.acquisition_value - currentDeprec);
-            const desagio = currentMacro?.machine_sale_discount || 0;
-            const valorVendaLiquida = currentValue * (1 - desagio / 100);
+          {(!activeTeam?.kpis?.machines || activeTeam.kpis.machines.length === 0) ? (
+            <div className="col-span-full bg-slate-900/40 border border-white/5 p-10 rounded-[2rem] text-center space-y-4">
+              <Warehouse size={40} className="text-slate-600 mx-auto animate-bounce" />
+              <p className="text-sm text-slate-400 font-medium italic">Nenhuma máquina instalada no seu parque operacional ainda. Como você está iniciando no modo Greenfield (Começo do Zero), adquira novas unidades abaixo para iniciar a sua linha de produção no Ciclo 1.</p>
+            </div>
+          ) : (
+            (activeTeam?.kpis?.machines || []).map((m: MachineInstance, idx: number) => {
+              const isSold = decisions.machinery.sell_ids?.includes(m.id);
+              const spec = currentMacro?.machine_specs?.[m.model];
+              const currentDeprec = m.accumulated_depreciation + (m.acquisition_value / (spec?.useful_life_years || 40));
+              const currentValue = Math.max(0, m.acquisition_value - currentDeprec);
+              const desagio = currentMacro?.machine_sale_discount || 0;
+              const valorVendaLiquida = currentValue * (1 - desagio / 100);
 
-            return (
-              <motion.div
-                key={m.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.06 }}
-                className={`
-                  bg-slate-900/70 backdrop-blur-sm p-6 rounded-3xl border transition-all duration-300
-                  ${isSold 
-                    ? 'border-rose-500/50 bg-rose-950/20' 
-                    : 'border-white/10 hover:border-blue-500/30'}
-                `}
-              >
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <span className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1 font-mono">
-                      Unidade #{m.id}
-                    </span>
-                    <h5 className="text-lg font-black text-white uppercase tracking-tight font-sans">
-                      {m.model.toUpperCase()}
-                    </h5>
-                    <span className="text-sm text-slate-400 italic">
-                      Idade: {m.age + 1} round{m.age + 1 !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div className={`p-4 rounded-2xl ${isSold ? 'bg-rose-600/20' : 'bg-blue-600/10'}`}>
-                    <Settings2 size={24} className={isSold ? 'text-rose-400' : 'text-blue-400'} />
-                  </div>
-                </div>
-
-                <div className="space-y-4 text-sm">
-                  <div className="flex justify-between border-t border-white/5 pt-3">
-                    <span className="text-slate-300">Valor Contábil Residual</span>
-                    <span className={`font-mono font-bold ${isSold ? 'text-rose-400 line-through opacity-70' : 'text-emerald-400'}`}>
-                      {formatCurrency(currentValue, activeArena?.currency || 'BRL')}
-                    </span>
-                  </div>
-
-                  {isSold && (
-                    <div className="flex justify-between text-rose-300">
-                      <span>Valor Líquido Após Deságio ({desagio}%)</span>
-                      <span className="font-bold font-mono">{formatCurrency(valorVendaLiquida, activeArena?.currency || 'BRL')}</span>
+              return (
+                <motion.div
+                  key={m.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.06 }}
+                  className={`
+                    bg-slate-900/70 backdrop-blur-sm p-6 rounded-3xl border transition-all duration-300
+                    ${isSold 
+                      ? 'border-rose-500/50 bg-rose-950/20' 
+                      : 'border-white/10 hover:border-blue-500/30'}
+                  `}
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <span className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1 font-mono">
+                        Unidade #{m.id}
+                      </span>
+                      <h5 className="text-lg font-black text-white uppercase tracking-tight font-sans">
+                        {m.model.toUpperCase()}
+                      </h5>
+                      <span className="text-sm text-slate-400 italic">
+                        Idade: {m.age + 1} round{m.age + 1 !== 1 ? 's' : ''}
+                      </span>
                     </div>
-                  )}
+                    <div className={`p-4 rounded-2xl ${isSold ? 'bg-rose-600/20' : 'bg-blue-600/10'}`}>
+                      <Settings2 size={24} className={isSold ? 'text-rose-400' : 'text-blue-400'} />
+                    </div>
+                  </div>
 
-                  <label className="flex items-center justify-end gap-3 cursor-pointer group pt-2 select-none">
-                    <span className={`text-sm font-semibold uppercase transition-colors ${isSold ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}`}>
-                      {isSold ? 'Marcada para Venda' : 'Marcar para Venda'}
-                    </span>
-                    <input
-                      type="checkbox"
-                      disabled={isReadOnly}
-                      checked={isSold}
-                      onChange={(e) => {
-                        const ids = [...(decisions.machinery.sell_ids || [])];
-                        if (e.target.checked) {
-                          if (!ids.includes(m.id)) ids.push(m.id);
-                        } else {
-                          const index = ids.indexOf(m.id);
-                          if (index > -1) ids.splice(index, 1);
-                        }
-                        updateDecision('machinery.sell_ids', ids);
-                      }}
-                      className="w-5 h-5 rounded border-2 border-slate-600 accent-rose-600 bg-slate-950 cursor-pointer"
-                    />
-                  </label>
-                </div>
-              </motion.div>
-            );
-          })}
+                  <div className="space-y-4 text-sm">
+                    <div className="flex justify-between border-t border-white/5 pt-3">
+                      <span className="text-slate-300">Valor Contábil Residual</span>
+                      <span className={`font-mono font-bold ${isSold ? 'text-rose-400 line-through opacity-70' : 'text-emerald-400'}`}>
+                        {formatCurrency(currentValue, activeArena?.currency || 'BRL')}
+                      </span>
+                    </div>
+
+                    {isSold && (
+                      <div className="flex justify-between text-rose-300">
+                        <span>Valor Líquido Após Deságio ({desagio}%)</span>
+                        <span className="font-bold font-mono">{formatCurrency(valorVendaLiquida, activeArena?.currency || 'BRL')}</span>
+                      </div>
+                    )}
+
+                    <label className="flex items-center justify-end gap-3 cursor-pointer group pt-2 select-none">
+                      <span className={`text-sm font-semibold uppercase transition-colors ${isSold ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}`}>
+                        {isSold ? 'Marcada para Venda' : 'Marcar para Venda'}
+                      </span>
+                      <input
+                        type="checkbox"
+                        disabled={isReadOnly}
+                        checked={isSold}
+                        onChange={(e) => {
+                          const ids = [...(decisions.machinery.sell_ids || [])];
+                          if (e.target.checked) {
+                            if (!ids.includes(m.id)) ids.push(m.id);
+                          } else {
+                            const index = ids.indexOf(m.id);
+                            if (index > -1) ids.splice(index, 1);
+                          }
+                          updateDecision('machinery.sell_ids', ids);
+                        }}
+                        className="w-5 h-5 rounded border-2 border-slate-600 accent-rose-600 bg-slate-950 cursor-pointer"
+                      />
+                    </label>
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -227,13 +238,13 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             <Plus size={28} className="text-emerald-400" />
             Novas Ordens de Compra
           </h4>
-          {currentMacro?.allow_machine_sale ? (
+          {isAllowedToBuy ? (
             <span className="px-5 py-2 bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-sm font-semibold text-emerald-300 font-sans">
               Mercado Aberto
             </span>
           ) : (
             <span className="px-5 py-2 bg-rose-600/20 border border-rose-500/30 rounded-xl text-sm font-semibold text-rose-300 font-sans">
-              Compras Bloqueadas neste Round
+              {isRoundZeroAndZeroMode ? 'Estágio de Planejamento (Apenas P-0)' : 'Compras Bloqueadas neste Round'}
             </span>
           )}
         </div>
@@ -271,7 +282,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             price={getAdjustedPrice(currentMacro?.machinery_values?.alfa || 215000, 'machine_alpha_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
             currency={activeArena?.currency || 'BRL'}
             spec={currentMacro?.machine_specs?.alfa}
-            disabled={isReadOnly || !currentMacro?.allow_machine_sale}
+            disabled={isReadOnly || !isAllowedToBuy}
           />
           <AssetCard
             model="beta"
@@ -280,7 +291,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             price={getAdjustedPrice(currentMacro?.machinery_values?.beta || 310000, 'machine_beta_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
             currency={activeArena?.currency || 'BRL'}
             spec={currentMacro?.machine_specs?.beta}
-            disabled={isReadOnly || !currentMacro?.allow_machine_sale}
+            disabled={isReadOnly || !isAllowedToBuy}
           />
           <AssetCard
             model="gama"
@@ -289,7 +300,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             price={getAdjustedPrice(currentMacro?.machinery_values?.gama || 480000, 'machine_gamma_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
             currency={activeArena?.currency || 'BRL'}
             spec={currentMacro?.machine_specs?.gama}
-            disabled={isReadOnly || !currentMacro?.allow_machine_sale}
+            disabled={isReadOnly || !isAllowedToBuy}
           />
         </div>
       </div>

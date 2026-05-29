@@ -217,6 +217,17 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.31 Obsidian Diamond Enterprise - Alinhamento Total Greenfield (Start from Zero), Omissão de Aluguel em P0, Bloqueio Condicional de Compras de Ativos em P0, Sincronização fiduciária de Share Price e Redirecionamentos Universais por SPA Navigation (Livre de Erros 404)
+- **Data:** 29 de Maio de 2026
+- **Motivo:** Solucionar em caráter definitivo e absoluto as dores críticas do modo "Start from Zero" no Balanço e DFC, omitindo aluguel no P0, bloqueando aquisição de novas máquinas no primeiro round de planejamento (P0), mantendo sincronia do Share Price e direcionando de forma 100% segura usando o sistema de rotas do React-Router-Dom (`useNavigate`) livres de qualquer risco de 404 por hard reloads em subdiretórios de proxies.
+- **Diferenças:**
+  - *Omissão Absoluta de Aluguel em P0 Greenfield (`generatePureP0`):* Correção cirúrgica na DRE e DFC de P0 em modo Greenfield para garantir que nenhum encargo de aluguel transitório reduza o caixa inicial. O caixa final em P0 agora é mantido exatamente equivalente ao caixa inicial ditado pelo Tutor contido em `caixa_inicial` / `capital_social`.
+  - *Ajuste e Sincronização Absoluta de Balanço (Arrendamento e Capital Social):* No Greenfield alugado, o Balanço Patrimonial inicia de forma balanceada computando o valor fiduciário de "Direito de Uso de Instalações" (Ativo) e a respectiva obrigação de "Arrendamento de Longo Prazo" (Passivo) de forma linear e transparente, mantendo o Patrimônio Líquido perfeitamente igual ao Capital Social nominal.
+  - *Mapeamento Sincronizado de Share Price Contábil:* Introduzido o suporte para `share_price` na inicialização do P00 em `p0Kpis` de `/services/initialization.ts` e `initialKpis` de `/services/supabase.ts`, assegurando coerência integral entre o valor inicial ditado pelo Tutor e os relatórios do Aluno já no ciclo zero.
+  - *Bloqueio Coerente de Capex em P0 Greenfield:* Adaptação refinada sob o componente `/components/steps/AssetsStep.tsx` introduzindo uma flag inteligente de permissões baseada no modo Greenfield e no ciclo de processamento (`isAllowedToBuy`). Quando no round zero Greenfield, o input e cards de compra são desativados de modo que as equipes se concentrem unicamente no planejamento estratégico antes do ciclo produtivo começar.
+  - *Navegação Universal Livre de 404:* Substituição definitiva das chamadas obsoletas de alteração de barra de endereços física (`window.location.href = '/app'`) por navegações reativas via SPA utilizando o hook `useNavigate()` (`navigate('/app')`) em `ChampionshipWizard.tsx` e `TrialWizard.tsx`. Isso mantém o tráfego restrito e emulado no cliente, evitando colisões com caminhos proxies de iframes e garantindo estabilidade imediata.
+- **Status:** Homologado, Testado com Sucesso e 100% Compilado (Zero Warnings & Sem Erros de Linter).
+
 ### v19.30 Obsidian Diamond Enterprise - Camada Unificada de Gráficos ApexCharts, BI do Tutor e Erradicação Definitiva do Erro 404 de Reload
 - **Data:** 29 de Maio de 2026
 - **Motivo:** Introduzir uma camada de abstração sólida e padronizada para componentes visuais de IA, mercado e finanças usando **ApexCharts** para o cockpit do Aluno e do Tutor. Além disso, erradicar em caráter definitivo o erro 404 gerado ao recarregar a visualização após a criação de campeonatos/sessões Sandbox, direcionando o fluxo do Tutor seguramente para `/app` ao invés de forçar o reload na própria URL filha.

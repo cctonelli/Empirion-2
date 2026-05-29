@@ -14,8 +14,10 @@ import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
 import FinancialStructureEditor from './FinancialStructureEditor';
 import { formatCurrency, getCurrencySymbol } from '../utils/formatters';
+import { useNavigate } from 'react-router-dom';
 
 const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }> = ({ onComplete, isTrial = false }) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -88,7 +90,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       onComplete();
       // Força um refresh após a criação para garantir que o cache de todos os estados seja reiniciado
       setTimeout(() => {
-         window.location.href = '/app';
+         navigate('/app');
       }, 500);
     } catch (e: any) { alert(`FALHA: ${e.message}`); }
     finally { setIsSubmitting(false); }

@@ -17,6 +17,7 @@ import FinancialStructureEditor from './FinancialStructureEditor';
 import EmpireParticles from './EmpireParticles';
 import { Branch, SalesMode, AccountNode, DeadlineUnit, CurrencyType, MacroIndicators, RegionConfig, TransparencyLevel, GazetaMode, StrategicProfile } from '../types';
 import { formatCurrency, getCurrencySymbol } from '../utils/formatters';
+import { useNavigate } from 'react-router-dom';
 
 const OFFICIAL_PRESETS: any[] = [
   {
@@ -243,6 +244,7 @@ const OFFICIAL_PRESETS: any[] = [
 ];
 
 const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const navigate = useNavigate();
   // Ajustado para 8 passos claros e didáticos de acordo com os requisitos Sapphire v19.14
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -728,7 +730,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       onComplete();
       
       setTimeout(() => {
-         window.location.href = '/app';
+         navigate('/app');
       }, 500);
     } catch (e: any) { 
       alert(`FALHA NA SOLDA DA ARENA: ${e.message}`); 

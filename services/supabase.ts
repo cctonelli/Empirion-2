@@ -258,6 +258,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     fixed_assets_depreciation: totalDepreciation,
     rating: 'AAA',
     last_price: config.initial_share_price || 425,
+    share_price: config.initial_share_price || 425,
     last_units_sold: 0,
     ebitda: ebitda, 
     tsr: 0,
