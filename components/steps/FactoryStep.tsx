@@ -7,6 +7,7 @@ interface FactoryStepProps {
   decisions: DecisionData;
   updateDecision: (path: string, val: any) => void;
   activeArena: Championship | null;
+  currentMacro?: any;
   isReadOnly: boolean;
 }
 
@@ -14,8 +15,12 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
   decisions,
   updateDecision,
   activeArena,
+  currentMacro,
   isReadOnly,
 }) => {
+  const maxShifts = currentMacro?.max_shifts || 1;
+  const selectedShifts = decisions.production?.shifts ?? 1;
+
   return (
     <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Cabeçalho do passo */}
@@ -23,7 +28,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
         icon={<Factory size={32} strokeWidth={2.5} />} 
         title="Chão de Fábrica & Operações" 
         desc="Configure o nível de utilização da capacidade instalada, turnos extras e investimento em P&D. Essas decisões definem o volume produzido, custos operacionais e ganhos de eficiência de longo prazo." 
-        help="Atenção: Turno extra aumenta custos de mão de obra em 50%. P&D reduz custo unitário progressivamente."
+        help="Atenção: Turnos extras multiplicam a capacidade operacional sem exigir investimentos adicionais em máquinas (CapEx), mas aumentam custos de mão de obra direta (OpEx) por conta de encargos noturnos."
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
@@ -72,15 +77,15 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           </div>
         </div>
 
-        {/* 2. Turno Extra */}
+        {/* 2. Turnos de Operação */}
         <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
           <div className="flex justify-between items-start mb-8">
             <div>
               <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2 font-sans">
-                Turno Extra / Horas Adicionais
+                Regime Operacional de Turnos
               </h5>
               <p className="text-sm text-slate-400 leading-relaxed font-sans">
-                Produção além da capacidade normal. Aumenta a folha de pagamento em 50% sobre as horas extras e pode gerar fadiga da equipe.
+                Selecione o número de turnos ativos. Ativar turnos extras permite aumentar de forma massiva a sua capacidade de produção sem novos investimentos em máquinas (CapEx), mas eleva a folha de pagamento de MOD (OpEx) por conta de encargos noturnos.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-rose-600/10 group-hover:bg-rose-600/20 transition-colors shrink-0">
@@ -91,27 +96,49 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
-                Percentual de Turno Extra
+                Turnos Ativos Selecionados
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
               <span className="text-2xl lg:text-3xl font-mono font-bold text-rose-400">
-                {decisions.production.extraProductionPercent}%
+                {selectedShifts} {selectedShifts === 1 ? 'Turno' : 'Turnos'}
               </span>
             </div>
 
-            <input
-              type="range"
-              min="0"
-              max="50"
-              step="5"
-              disabled={isReadOnly}
-              value={decisions.production.extraProductionPercent}
-              onChange={e => updateDecision('production.extraProductionPercent', parseInt(e.target.value) || 0)}
-              className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-rose-500 [&::-webkit-slider-thumb]:shadow-lg hover:accent-rose-500 transition-all cursor-pointer"
-            />
+            {maxShifts > 1 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {[1, 2, 3].map((num) => {
+                  const isBlocked = num > maxShifts;
+                  const isActive = selectedShifts === num;
+                  return (
+                    <button
+                      key={num}
+                      type="button"
+                      disabled={isReadOnly || isBlocked}
+                      onClick={() => updateDecision('production.shifts', num)}
+                      className={`
+                        py-3 px-1 rounded-xl text-xs font-black uppercase transition-all border flex flex-col items-center justify-center gap-1
+                        ${isBlocked 
+                          ? 'bg-slate-950/40 border-white/5 text-slate-600 cursor-not-allowed opacity-30' 
+                          : isActive 
+                            ? 'bg-rose-600/20 border-rose-500 text-white font-black shadow-lg scale-[1.02]' 
+                            : 'bg-slate-950 border-white/5 text-slate-400 hover:border-rose-500/30 hover:text-white'}
+                      `}
+                    >
+                      <span className="text-base font-mono">{num}T</span>
+                      <span className="text-[9px] opacity-80">{num === 1 ? 'Regular' : num === 2 ? 'Dobrado' : 'Contínuo'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-4 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-medium text-slate-400 italic">
+                Regime restrito pelo regulamento: Turno Único (1T) Obrigatório.
+              </div>
+            )}
 
-            <div className="text-xs text-rose-300 italic pt-2 font-sans">
-              Custo adicional estimado: +50% sobre MOD das horas extras
+            <div className="text-xs text-rose-300 space-y-1.5 pt-2 border-t border-white/5 font-sans">
+              <div className="flex justify-between"><span>Capacidade Produtiva:</span> <strong className="font-mono text-white">{selectedShifts === 1 ? '100%' : selectedShifts === 2 ? '180% (+80%)' : '230% (+130%)'}</strong></div>
+              <div className="flex justify-between"><span>Impacto do Custo MOD:</span> <strong className="font-mono text-white">{selectedShifts === 1 ? 'Base (1.0x)' : selectedShifts === 2 ? 'Acrescido (1.5x)' : 'Dobrado (2.0x)'}</strong></div>
             </div>
           </div>
         </div>

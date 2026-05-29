@@ -63,6 +63,8 @@ export interface WorkforceConfig {
   operatorsPerGamma: number;
   baseSalary: number;
   trainingLevel: number; // 1 a 5
+  production_hours_period?: number;
+  max_shifts?: number;
 }
 
 export interface RegionP0Config {
@@ -93,6 +95,7 @@ export interface BaseP0Config {
   total_rounds: number;
   transparency_level: 'low' | 'medium' | 'high' | 'full';
   gazeta_mode: 'anonymous' | 'identified';
+  buildings_depreciation_rate?: number;
 
   // Configurações de Atividade e Início
   activity_type: string; // "industrial"
@@ -401,15 +404,17 @@ export function generatePureP0(config: TutorP0Config): {
   let buildingAccDeprecOrAmort = 0;
   let land = 0;
 
+  const parsed_deprec_rate = (config.buildings_depreciation_rate !== undefined ? config.buildings_depreciation_rate : 10) / 100;
+
   if (buildingMode === 'owned') {
     land = calculatedLand;
     buildingsAssetValue = buildingBaseValue + installationsVal;
-    buildingAccDeprecOrAmort = parseFloat((buildingBaseValue * 0.04 * buildingAge).toFixed(2));
+    buildingAccDeprecOrAmort = parseFloat((buildingBaseValue * 0.04 * buildingAge + installationsVal * parsed_deprec_rate * buildingAge).toFixed(2));
   } else {
-    // Alugada: Sem terreno próprio. Valor ativo em benfeitorias físicas. Amortização de 10% a.a. sobre instalações
+    // Alugada: Sem terreno próprio. Valor ativo em benfeitorias físicas. Amortização correspondente à taxa de instalações s/ instalações
     land = 0;
     buildingsAssetValue = installationsVal;
-    buildingAccDeprecOrAmort = parseFloat((installationsVal * 0.10 * buildingAge).toFixed(2));
+    buildingAccDeprecOrAmort = parseFloat((installationsVal * parsed_deprec_rate * buildingAge).toFixed(2));
   }
 
   // 3. Calibração e Diferenciação dos Modos Contábeis

@@ -130,8 +130,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         }
 
         if (team) {
-           // Injeção de segurança do parque P00 se estiver no Round 1 e vazio
-           if (round === 1 && (!team.kpis?.machines || team.kpis.machines.length === 0)) {
+           // Injeção de segurança do parque P00 se estiver no Round 1 e vazio (exceto se for modo Start from Zero)
+           const isZeroMode = found?.config?.starting_mode === 'start_from_zero' || found?.starting_mode === 'start_from_zero';
+           if (round === 1 && (!team.kpis?.machines || team.kpis.machines.length === 0) && !isZeroMode) {
               team.kpis = { ...team.kpis, machines: INITIAL_MACHINES_P00 as MachineInstance[] };
            }
            setActiveTeam(team);
@@ -496,7 +497,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                               {/* PASSO 5 - CHÃO DE FÁBRICA & OPERAÇÕES */}
                               {activeStep === 4 && (
-                                <FactoryStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} isReadOnly={isReadOnly} />
+                                <FactoryStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} currentMacro={currentMacro} isReadOnly={isReadOnly} />
                               )}
 
                               {/* PASSO 6 - GESTÃO DE TALENTOS & RH */}

@@ -68,7 +68,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
   const isZeroMode = activeArena?.config?.starting_mode === 'start_from_zero' || activeArena?.starting_mode === 'start_from_zero';
   const isRoundZeroAndZeroMode = isZeroMode && round === 0;
   const isAllowedToBuy = currentMacro?.allow_machine_sale && !isRoundZeroAndZeroMode;
-  const machinesList = isRoundZeroAndZeroMode ? [] : (activeTeam?.kpis?.machines || []);
+  const machinesList = (isZeroMode && (round === 0 || round === 1)) ? [] : (activeTeam?.kpis?.machines || []);
 
   return (
     <div className="space-y-12 lg:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">

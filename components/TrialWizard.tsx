@@ -19,6 +19,17 @@ import { Branch, SalesMode, AccountNode, DeadlineUnit, CurrencyType, MacroIndica
 import { formatCurrency, getCurrencySymbol } from '../utils/formatters';
 import { useNavigate } from 'react-router-dom';
 
+const translateTransparency = (level?: string) => {
+  if (!level) return 'MÉDIA (PADRÃO)';
+  switch (level.toLowerCase()) {
+    case 'low': return 'BAIXA (SIGILOSA)';
+    case 'medium': return 'MÉDIA (PADRÃO)';
+    case 'high': return 'ALTA (TRANSPARENTE)';
+    case 'full': return 'TOTAL (OPEN DATA)';
+    default: return level.toUpperCase();
+  }
+};
+
 const OFFICIAL_PRESETS: any[] = [
   {
     id: 'preset-greenfield-rented',
@@ -260,6 +271,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     total_rounds: 12,
     transparency_level: 'medium',
     gazeta_mode: 'anonymous',
+    buildings_depreciation_rate: 10,
     
     starting_mode: 'start_with_base',
     activity_type: 'industrial',
@@ -275,7 +287,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       operatorsPerBeta: 235,
       operatorsPerGamma: 445,
       baseSalary: 2000.00,
-      trainingLevel: 3
+      trainingLevel: 3,
+      production_hours_period: 976,
+      max_shifts: 1
     },
     regions: [
       { id: 1, name: 'BRASIL (LOCAL)', currency: 'BRL', demand_weight: 40, suggested_price: 425.00, distribution_cost: 50.00, marketing_cost: 10000.00 },
@@ -1141,7 +1155,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                     </div>
                                     <div className="flex justify-between">
                                       <span>Nível Transparência:</span>
-                                      <span className="font-bold text-white uppercase">{selectedPreviewTemplate.config?.transparency_level}</span>
+                                      <span className="font-bold text-white uppercase">{translateTransparency(selectedPreviewTemplate.config?.transparency_level)}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -1426,6 +1440,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     
                     <WizardField label="SALÁRIO BASE RECRUTA ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.workforce.baseSalary} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, baseSalary: v}})}/>
                     <WizardSelect label="NÍVEL DE TREINAMENTO INICIAL" val={tutorConfig.workforce.trainingLevel} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, trainingLevel: parseInt(v)}})} options={[{v:'1',l:'NÍVEL 1 (BÁSICO)'},{v:'2',l:'NÍVEL 2 (OPERACIONAL)'},{v:'3',l:'NÍVEL 3 (ESPECIALIZADO)'},{v:'4',l:'NÍVEL 4 (MASTER)'},{v:'5',l:'NÍVEL 5 (ORACLE ENGINE)'}]} />
+                    
+                    <WizardField label="HORAS DE PRODUÇÃO DO PERÍODO" type="number" val={tutorConfig.workforce.production_hours_period ?? 976} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, production_hours_period: parseInt(v) || 0}})}/>
+                    <WizardSelect label="MÁXIMO DE TURNOS PERMITIDOS" val={tutorConfig.workforce.max_shifts ?? 1} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, max_shifts: parseInt(v) || 1}})} options={[{v:'1',l:'1 TURNO (REGULAMENTO)'},{v:'2',l:'MÁXIMO DE 2 TURNOS'},{v:'3',l:'MÁXIMO DE 3 TURNOS'}]} />
                     
                     {/* Resumos de RH */}
                     <div className="p-8 bg-slate-900 border border-white/5 rounded-[2.5rem] flex flex-col justify-center shadow-xl">

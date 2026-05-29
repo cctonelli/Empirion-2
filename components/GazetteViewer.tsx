@@ -17,6 +17,17 @@ import { supabase } from '../services/supabase';
 import { getCumulativeAdjust, getAdjustedPrice } from '../services/simulation';
 import { formatCurrency } from '../utils/formatters';
 
+const translateTransparency = (level?: string) => {
+  if (!level) return 'MÉDIA (PADRÃO)';
+  switch (level.toLowerCase()) {
+    case 'low': return 'BAIXA (SIGILOSA)';
+    case 'medium': return 'MÉDIA (PADRÃO)';
+    case 'high': return 'ALTA (TRANSPARENTE)';
+    case 'full': return 'TOTAL (OPEN DATA)';
+    default: return level.toUpperCase();
+  }
+};
+
 interface GazetteViewerProps {
   arena: Championship;
   aiNews: string;
@@ -214,7 +225,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                      <div className="space-y-4">
                         <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Comparativo de Unidades</h3>
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-                           Protocolo de Governança: <span className="text-indigo-400">{arena.transparency_level.toUpperCase()}</span> • <span className="text-blue-400">{arena.gazeta_mode.toUpperCase()}</span>
+                           Protocolo de Governança: <span className="text-indigo-400">{translateTransparency(arena.transparency_level)}</span> • <span className="text-blue-400">{arena.gazeta_mode.toUpperCase()}</span>
                         </p>
                      </div>
                      <div className="p-5 bg-indigo-600 rounded-3xl text-white shadow-xl"><Monitor size={40}/></div>
