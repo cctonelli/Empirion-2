@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.32 Obsidian Diamond Enterprise II (Start from Zero Saneamiento, Busca Resiliente no Motor Contábil e Rótulo de Amortização Harmonizada com Tutor)
+- **Versão Ativa:** v19.33 Obsidian Diamond Enterprise III (Saneamento de Parque Fabril no Greenfield no AssetsStep.tsx e Controle Estrito de Ativos)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -216,6 +216,14 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.33 Obsidian Diamond Enterprise III - Saneamento e Blindagem do Parque Fabril Greenfield e Remoção de Disponibilidade de Venda Fantasma no Cocpkit do Aluno
+- **Data:** 29 de Maio de 2026
+- **Motivo:** Evitar a exibição errônea de máquinas instaladas ou prontas para alienação (venda) na aba de Ativos e CapEx (`AssetsStep.tsx`) quando uma arena competitiva estiver rodando em regime Greenfield ("Start from Zero" / Começo do Zero) no Ciclo de Planejamento (P-0), garantindo um alinhamento realista impecável com a premissa de nascimento sem parque fabril.
+- **Diferenças:**
+  - *Saneamento do Parque no AssetsStep.tsx:* Introdução da variável reativa `machinesList` no cockpit de decisões de ativos. Se o campeonato rodar sob o modo Greenfield (`isZeroMode`), a lista de máquinas instaladas em P-0 é forçada a vazio (`[]`), suprimindo de modo absoluto qualquer herança obsoleta de máquinas herdadas ou botões de venda fantasma.
+  - *Sincronismo com o Banco de Dados:* Complementa a governança e higienização já introduzidas em `/services/supabase.ts` e `/services/initialization.ts`, onde as máquinas e quantidades de insumos de partida são salvos como vazios de fábrica.
+- **Status:** Disponível em Produção, Compilação 100% Homologada (Zero Warnings).
 
 ### v19.32 Obsidian Diamond Enterprise II - Sanidade Greenfield Total, Resiliência e Hierarquia Contábil no Balanceamento de P0, Retirada de Estoques Mockados no Kardex e Alinhamento de Rótulo de Depreciação de Instalações
 - **Data:** 29 de Maio de 2026

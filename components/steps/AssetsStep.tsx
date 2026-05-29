@@ -68,6 +68,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
   const isZeroMode = activeArena?.config?.starting_mode === 'start_from_zero' || activeArena?.starting_mode === 'start_from_zero';
   const isRoundZeroAndZeroMode = isZeroMode && round === 0;
   const isAllowedToBuy = currentMacro?.allow_machine_sale && !isRoundZeroAndZeroMode;
+  const machinesList = isRoundZeroAndZeroMode ? [] : (activeTeam?.kpis?.machines || []);
 
   return (
     <div className="space-y-12 lg:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -138,18 +139,18 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             Parque Operacional Atual (P-{round})
           </h4>
           <span className="text-sm font-medium text-slate-400 italic">
-            {activeTeam?.kpis?.machines?.length || 0} unidades instaladas
+            {machinesList.length} unidades instaladas
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {(!activeTeam?.kpis?.machines || activeTeam.kpis.machines.length === 0) ? (
+          {machinesList.length === 0 ? (
             <div className="col-span-full bg-slate-900/40 border border-white/5 p-10 rounded-[2rem] text-center space-y-4">
               <Warehouse size={40} className="text-slate-600 mx-auto animate-bounce" />
               <p className="text-sm text-slate-400 font-medium italic">Nenhuma máquina instalada no seu parque operacional ainda. Como você está iniciando no modo Greenfield (Começo do Zero), adquira novas unidades abaixo para iniciar a sua linha de produção no Ciclo 1.</p>
             </div>
           ) : (
-            (activeTeam?.kpis?.machines || []).map((m: MachineInstance, idx: number) => {
+            machinesList.map((m: MachineInstance, idx: number) => {
               const isSold = decisions.machinery.sell_ids?.includes(m.id);
               const spec = currentMacro?.machine_specs?.[m.model];
               const currentDeprec = m.accumulated_depreciation + (m.acquisition_value / (spec?.useful_life_years || 40));
