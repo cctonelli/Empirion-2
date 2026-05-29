@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.29 Obsidian Diamond Enterprise (Fechamento Definitivo - Zeragem Greenfield Pura, Invalidação Forte de Cache e Fallbacks de Cockpit Blindados)
+- **Versão Ativa:** v19.30 Obsidian Diamond Enterprise (Camada Unificada de Gráficos ApexCharts, BI do Tutor e Erradicação Definitiva do Erro 404 de Reload)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -216,6 +216,22 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.30 Obsidian Diamond Enterprise - Camada Unificada de Gráficos ApexCharts, BI do Tutor e Erradicação Definitiva do Erro 404 de Reload
+- **Data:** 29 de Maio de 2026
+- **Motivo:** Introduzir uma camada de abstração sólida e padronizada para componentes visuais de IA, mercado e finanças usando **ApexCharts** para o cockpit do Aluno e do Tutor. Além disso, erradicar em caráter definitivo o erro 404 gerado ao recarregar a visualização após a criação de campeonatos/sessões Sandbox, direcionando o fluxo do Tutor seguramente para `/app` ao invés de forçar o reload na própria URL filha.
+- **Diferenças:**
+  - *Abstração Unificada de Gráficos (`/components/charts/`):* Desenvolvimento de um ecossistema nativo de gráficos premium altamente responsivos na paleta Obsidian & Sapphire (azul, laranja, verde, roxo/índigo):
+    - `EmpirionLineChart`: Plotagem de evolução temporal com linhas suaves suavizadas (curves) e formatações numéricas e contábeis integradas de milhões (M) e milhares (k) em BRL/USD.
+    - `EmpirionAreaChart`: Visualizador degradê com preenchimento sutil de opacidade para fluxos volumétricos de fundos e análise de caixa.
+    - `EmpirionGauge`: Semicírculo interativo responsivo com preenchimentos de cor inteligentes e adaptáveis de acordo com a zona de valor (vermelho para scores baixos, amarelo, verde, e azul para excelência) ideal para scores de solvência e sustentabilidade.
+    - `EmpirionBarComparison`: Colunas agrupadas verticais para comparar lado a lado métricas chave das marcas na arena contendo dataLabels sob formato mono.
+    - `TrendSparkline`: Linhas de tendência ultraleves, compactas e isentas de eixos ou grids para visualização rápida em cards ou tabelas.
+    - `DashboardGrid`: Bento Grid responsivo sofisticado contendo espaçamentos, sombras e animações sutis de entrada (Framer Motion).
+  - *Enriquecimento do Cockpit do Aluno (`Dashboard.tsx`):* Mapeamento completo dos dados reais da equipe. Substituição de gráficos rudimentares na aba de histórico por uma belíssima composição com `DashboardGrid` contendo a evolução de Patrimônio Líquido (`EmpirionAreaChart` em azul), evolução da Liquidez Corrente (`EmpirionAreaChart` em verde esmeralda) e o Gauge de E-SDS dinâmico (`EmpirionGauge`) com cálculo real-time. Substituição também do gráfico do menu lateral por um widget minimalista `TrendSparkline` compacto e elegante de tendências.
+  - *BI Analítico do Tutor (`TutorDecisionMonitor.tsx`):* Expansão analítica com seção dedicada denominada "Business Intelligence Comparativo". Ela exibe dinamicamente no final do Command Center o ranking de concorrência real-time das equipes da arena em Market Share (%) e Total Shareholder Return (TSR, %), fornecendo dados e analytics completos com componentes de alta performance.
+  - *Reset Seguro Fiduciário (Correção 404):* Substituição preventivas das chamadas de `window.location.reload()` em `ChampionshipWizard.tsx` e `TrialWizard.tsx` por `window.location.href = '/app'`. Em SPAs, tentar recarregar diretamente em sub-rotas como `/app/admin?mode=new_trial` induz erros de 404 clássicos em proxies ou servidores estáticos que não possuem roteamento wildcard no reload; direcionar para `/app` bate com total garantia no `index.html`, zerando todo o cache/estado antigo de forma limpa antes que o roteador jogue o Tutor ou o Aluno corretamente no seu painel fiduciário em milissegundos.
+- **Status:** Homologado e 100% Compilado (Zero Warnings & Sem Erros de Linter).
 
 ### v19.29 Obsidian Diamond Enterprise - Fechamento Definitivo (Zeragem Greenfield Pura, Invalidação Forte de Cache e Fallbacks de Cockpit Blindados)
 - **Data:** 28 de Maio de 2026

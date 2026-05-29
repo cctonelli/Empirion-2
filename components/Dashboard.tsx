@@ -28,6 +28,10 @@ import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, K
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO, INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00 } from '../constants';
 import { generatePureP0 } from '../services/initialization';
 
+import { EmpirionAreaChart } from './charts/EmpirionAreaChart';
+import { EmpirionGauge } from './charts/EmpirionGauge';
+import { DashboardGrid } from './charts/DashboardGrid';
+import { TrendSparkline } from './charts/TrendSparkline';
 import FinancialReportMatrix from './FinancialReportMatrix';
 import { calculateProjections } from '../services/simulation';
 
@@ -369,15 +373,20 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     <button onClick={() => setShowBP(true)} className="w-full py-1 bg-white/5 hover:bg-orange-600 text-white rounded-lg text-[8px] font-black uppercase tracking-[0.1em] transition-all shadow-xl border border-white/5 hover:border-transparent active:scale-95">{t('Editar BP')}</button>
                   </div>
 
-                  <div className="bg-slate-950/60 p-4 rounded-2xl border border-white/5 space-y-3 shadow-2xl group">
+                  <div id="side-equity-history-card" className="bg-slate-950/60 p-4 rounded-2xl border border-white/5 space-y-3 shadow-2xl group">
                     <div className="flex items-center justify-between">
                         <h4 className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
                           <TrendingUp size={10} className="text-blue-500" /> {t('Equity History')}
                         </h4>
                         <Maximize2 size={8} className="text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" />
                     </div>
-                    <div className="h-28 -mx-1">
-                        <Chart options={trendOptions} series={trendSeries} type="area" height="100%" />
+                    <div className="h-28 -mx-1 flex items-center justify-center">
+                        <TrendSparkline
+                          id="sidebar-equity-spark"
+                          data={visibleHistory.map(h => h.equity)}
+                          color="#f97316"
+                          height={80}
+                        />
                     </div>
                   </div>
 
@@ -516,27 +525,34 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     )}
 
                     {activeTab === 'historico' && (
-                      <div className="space-y-6 pb-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 space-y-3 shadow-2xl">
-                             <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-2">
-                               <TrendingUp size={14} className="text-blue-500" /> Evolução do Patrimônio Líquido
-                             </h4>
-                             <div className="h-64">
-                                <Chart options={{...trendOptions, chart: { ...trendOptions.chart, sparkline: { enabled: false } }}} series={[{ name: 'Equity', data: visibleHistory.map(h => h.equity) }]} type="area" height="100%" />
-                             </div>
-                          </div>
-                          <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 space-y-3 shadow-2xl">
-                             <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-2">
-                               <Activity size={14} className="text-emerald-500" /> Índice de Liquidez Corrente
-                             </h4>
-                             <div className="h-64">
-                                <Chart options={{...trendOptions, colors: ['#10b981']}} series={[{ name: 'Liquidez', data: visibleHistory.map(h => h.kpis?.liquidity_current || 0) }]} type="area" height="100%" />
-                             </div>
-                          </div>
-                        </div>
+                      <div id="historico-tab-content" className="space-y-6 pb-6">
+                        <DashboardGrid id="aluno-historico" columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          <EmpirionAreaChart
+                            id="equity-evolution"
+                            title="Evolução do Patrimônio Líquido"
+                            categories={visibleHistory.map(h => `P${h.round < 10 ? '0' : ''}${h.round}`)}
+                            series={[{ name: 'Patrimônio Líquido', data: visibleHistory.map(h => h.equity) }]}
+                            color="#3b82f6"
+                            currency={activeArena?.currency || 'BRL'}
+                          />
+                          <EmpirionAreaChart
+                            id="liquidity-evolution"
+                            title="Índice de Liquidez Corrente"
+                            categories={visibleHistory.map(h => `P${h.round < 10 ? '0' : ''}${h.round}`)}
+                            series={[{ name: 'Liquidez Corrente', data: visibleHistory.map(h => h.kpis?.liquidity_current || 0) }]}
+                            color="#10b981"
+                            currency={activeArena?.currency || 'BRL'}
+                          />
+                          <EmpirionGauge
+                            id="esds-indicator"
+                            title="Sustentabilidade Socioambiental (E-SDS)"
+                            value={currentKpis.esds?.esds_display ?? 78}
+                            label="E-SDS Index"
+                            formatter={(val) => `${val.toFixed(0)}%`}
+                          />
+                        </DashboardGrid>
 
-                        <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 space-y-4 shadow-2xl">
+                        <div id="alerts-gargalos-container" className="bg-slate-900/60 p-6 rounded-[2rem] border border-white/5 space-y-4 shadow-2xl animate-in fade-in slide-in-from-bottom duration-500">
                            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-2">
                              <AlertTriangle size={14} className="text-orange-500" /> Alertas de Gargalos Estratégicos (E-SDS)
                            </h4>

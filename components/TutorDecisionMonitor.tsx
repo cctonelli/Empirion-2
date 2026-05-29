@@ -22,6 +22,8 @@ import { Newspaper, PackagePlus, FileEdit } from 'lucide-react';
 import { getApiKey } from '../services/gemini';
 
 import FinancialReportMatrix from './FinancialReportMatrix';
+import { EmpirionBarComparison } from './charts/EmpirionBarComparison';
+import { DashboardGrid } from './charts/DashboardGrid';
 
 interface MonitorProps {
   championshipId: string;
@@ -233,6 +235,35 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           ))}
         </Reorder.Group>
       </div>
+
+      {teams.length > 0 && (
+        <div id="tutor-bi-analytics-section" className="px-4 mt-12 space-y-6">
+          <div className="flex items-center gap-4">
+             <div className="w-8 h-8 rounded-xl bg-orange-600/20 text-orange-400 flex items-center justify-center font-black italic"><TrendingUp size={16}/></div>
+             <div>
+                <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Business Intelligence Comparativo</h3>
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mt-1">Comparativo de performance agregada entre equipes concorrentes.</p>
+             </div>
+          </div>
+          
+          <DashboardGrid id="tutor-comparison-graphs" columns="grid-cols-1 md:grid-cols-2">
+            <EmpirionBarComparison
+              id="market-share-comparison"
+              title="Market Share das Equipes (%)"
+              teams={teams.map(t => t.name)}
+              series={[{ name: 'Market Share', data: teams.map(t => (t.market_share || 0) * 100) }]}
+              height={280}
+            />
+            <EmpirionBarComparison
+              id="tsr-comparison"
+              title="Total Shareholder Return (TSR) (%)"
+              teams={teams.map(t => t.name)}
+              series={[{ name: 'TSR', data: teams.map(t => t.tsr || 0) }]}
+              height={280}
+            />
+          </DashboardGrid>
+        </div>
+      )}
 
       <footer className="fixed bottom-0 left-0 right-0 h-32 bg-slate-950/90 backdrop-blur-3xl border-t border-white/10 z-[3000] flex items-center justify-center px-12">
          <div className="max-w-7xl w-full flex items-center justify-between relative">

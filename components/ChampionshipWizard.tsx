@@ -88,7 +88,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       onComplete();
       // Força um refresh após a criação para garantir que o cache de todos os estados seja reiniciado
       setTimeout(() => {
-        window.location.reload();
+         window.location.href = '/app';
       }, 500);
     } catch (e: any) { alert(`FALHA: ${e.message}`); }
     finally { setIsSubmitting(false); }

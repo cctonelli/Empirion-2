@@ -728,7 +728,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       onComplete();
       
       setTimeout(() => {
-        window.location.reload();
+         window.location.href = '/app';
       }, 500);
     } catch (e: any) { 
       alert(`FALHA NA SOLDA DA ARENA: ${e.message}`); 
