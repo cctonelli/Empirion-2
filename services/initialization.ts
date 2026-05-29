@@ -211,6 +211,18 @@ export function clearFinancialTree(nodes: AccountNode[]) {
   });
 }
 
+// Busca recursivamente um nó por ID na árvore contábil
+export function findNodeInTree(nodes: AccountNode[], id: string): AccountNode | null {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    if (node.children && node.children.length > 0) {
+      const found = findNodeInTree(node.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 export const INDUSTRIAL_BR_TEMPLATE = {
   id: 'industrial_br_v1',
   code: 'INDUSTRIAL_BR',
@@ -269,7 +281,7 @@ export function validateCleanP0(
     const liabPLVal = balance_sheet.find(n => n.id === 'liabilities_pl')?.value || 0;
     if (assetsVal !== liabPLVal) {
       const diff = assetsVal - liabPLVal;
-      const eqGroup = balance_sheet.find(n => n.id === 'equity');
+      const eqGroup = findNodeInTree(balance_sheet, 'equity');
       const capVal = eqGroup?.children?.find(c => c.id === 'equity.capital')?.value || 0;
       updateNodeValue(balance_sheet, 'equity.capital', capVal + diff);
       recalculateTotalizers(balance_sheet);
@@ -527,7 +539,7 @@ export function generatePureP0(config: TutorP0Config): {
   updateNodeValue(bs, 'assets.noncurrent.fixed.land', land);
   
   const labelImovel = buildingMode === 'rented' ? 'Benfeitorias em Imóveis de Terceiros (Locado)' : 'Prédios e Instalações (Próprio)';
-  const labelAmort = buildingMode === 'rented' ? '(-) Amortização de Benfeitorias Terceiros' : '(-) Deprec. Acum. Prédios/Inst.';
+  const labelAmort = buildingMode === 'rented' ? '(-) Depreciação de Instalações' : '(-) Deprec. Acum. Prédios/Inst.';
   
   updateNodeValue(bs, 'assets.noncurrent.fixed.buildings', buildingsAssetValue, labelImovel);
   updateNodeValue(bs, 'assets.noncurrent.fixed.buildings_deprec', -buildingAccDeprecOrAmort, labelAmort);

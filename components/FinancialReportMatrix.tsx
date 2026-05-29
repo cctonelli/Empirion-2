@@ -8,9 +8,10 @@ interface MatrixProps {
   history: any[]; 
   projection: any; 
   currency: CurrencyType;
+  startingMode?: string;
 }
 
-const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projection, currency }) => {
+const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projection, currency, startingMode }) => {
   const getTitle = () => {
     if (type === 'balance') return 'Balanço Patrimonial Auditado (v18.0)';
     if (type === 'dre') return 'DRE - Demonstrativo de Resultados (Competência)';
@@ -310,6 +311,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                   let val: any = undefined;
                   const isProj = p.isProjection;
                   const isRound0 = p.round === 0 || p.round === '0' || p.round === '00';
+                  const isZeroMode = startingMode === 'start_from_zero';
                   
                   if (row.key?.startsWith('cpv.')) {
                     const subKey = row.key.split('.')[1];
@@ -333,27 +335,27 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                     
                     if (val === undefined || val === null) {
                       if (prodKey === 'mpa') {
-                        if (statKey === 'saldoInicialQtd') val = 30150;
-                        else if (statKey === 'saldoInicialValor') val = 603000;
-                        else if (statKey === 'saldoInicialUnitario') val = 20;
+                        if (statKey === 'saldoInicialQtd') val = isZeroMode ? 0 : 30150;
+                        else if (statKey === 'saldoInicialValor') val = isZeroMode ? 0 : 603000;
+                        else if (statKey === 'saldoInicialUnitario') val = isZeroMode ? 0 : 20;
                         else if (statKey === 'entradasQtd') val = isRound0 ? 0 : 126000;
                         else if (statKey === 'entradasValor') val = isRound0 ? 0 : 2520000;
                         else if (statKey === 'saidasQtd') val = isRound0 ? 0 : 126000;
                         else if (statKey === 'saidasValor') val = isRound0 ? 0 : 2520000;
-                        else if (statKey === 'saldoFinalQtd') val = 30150;
-                        else if (statKey === 'saldoFinalValor') val = 603000;
-                        else if (statKey === 'saldoFinalUnitario') val = 20;
+                        else if (statKey === 'saldoFinalQtd') val = isZeroMode ? 0 : 30150;
+                        else if (statKey === 'saldoFinalValor') val = isZeroMode ? 0 : 603000;
+                        else if (statKey === 'saldoFinalUnitario') val = isZeroMode ? 0 : 20;
                       } else if (prodKey === 'mpb') {
-                        if (statKey === 'saldoInicialQtd') val = 20100;
-                        else if (statKey === 'saldoInicialValor') val = 804000;
-                        else if (statKey === 'saldoInicialUnitario') val = 40;
+                        if (statKey === 'saldoInicialQtd') val = isZeroMode ? 0 : 20100;
+                        else if (statKey === 'saldoInicialValor') val = isZeroMode ? 0 : 804000;
+                        else if (statKey === 'saldoInicialUnitario') val = isZeroMode ? 0 : 40;
                         else if (statKey === 'entradasQtd') val = isRound0 ? 0 : 84000;
                         else if (statKey === 'entradasValor') val = isRound0 ? 0 : 3360000;
                         else if (statKey === 'saidasQtd') val = isRound0 ? 0 : 84000;
                         else if (statKey === 'saidasValor') val = isRound0 ? 0 : 3360000;
-                        else if (statKey === 'saldoFinalQtd') val = 20100;
-                        else if (statKey === 'saldoFinalValor') val = 804000;
-                        else if (statKey === 'saldoFinalUnitario') val = 40;
+                        else if (statKey === 'saldoFinalQtd') val = isZeroMode ? 0 : 20100;
+                        else if (statKey === 'saldoFinalValor') val = isZeroMode ? 0 : 804000;
+                        else if (statKey === 'saldoFinalUnitario') val = isZeroMode ? 0 : 40;
                       } else if (prodKey === 'pa') {
                         if (statKey === 'saldoInicialQtd') val = 0;
                         else if (statKey === 'saldoInicialValor') val = 0;

@@ -248,9 +248,9 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   // Initial KPIs for Round 0 (Individualized)
   const initialKpis = {
     statements: financials,
-    machines: config.initial_machines || INITIAL_MACHINES_P00,
+    machines: isZeroMode ? [] : (config.initial_machines || INITIAL_MACHINES_P00),
     current_cash: currentCash,
-    stock_quantities: config.initial_stock_quantities || { mp_a: 30150, mp_b: 20100, finished_goods: 0 },
+    stock_quantities: isZeroMode ? { mp_a: 0, mp_b: 0, finished_goods: 0 } : (config.initial_stock_quantities || { mp_a: 30150, mp_b: 20100, finished_goods: 0 }),
     equity: equity,
     total_assets: totalAssets,
     stock_value: stockValue,

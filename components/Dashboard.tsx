@@ -519,6 +519,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                             history={visibleHistory} 
                             projection={selectedRound === currentRound ? projections : null} 
                             currency={activeArena?.currency || 'BRL'} 
+                            startingMode={activeArena?.config?.starting_mode || activeArena?.starting_mode}
                           />
                         </div>
                       </div>

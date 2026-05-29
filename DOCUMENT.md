@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.30 Obsidian Diamond Enterprise (Camada Unificada de Gráficos ApexCharts, BI do Tutor e Erradicação Definitiva do Erro 404 de Reload)
+- **Versão Ativa:** v19.32 Obsidian Diamond Enterprise II (Start from Zero Saneamiento, Busca Resiliente no Motor Contábil e Rótulo de Amortização Harmonizada com Tutor)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -216,6 +216,16 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.32 Obsidian Diamond Enterprise II - Sanidade Greenfield Total, Resiliência e Hierarquia Contábil no Balanceamento de P0, Retirada de Estoques Mockados no Kardex e Alinhamento de Rótulo de Depreciação de Instalações
+- **Data:** 29 de Maio de 2026
+- **Motivo:** Sanar por definitivo dores críticas de relatórios no modo "Start from Zero/Greenfield" corrigindo a exibição de dados mockados de estoques remanescentes no Kardex/CPP em P0, aplicando busca recursiva profunda na árvore do Balanço para recalcular perfeitamente o Capital Social (sem zerar PASSIVO+PL), assegurando o saldo correto de cash/bank e harmonizando os rótulos de amortizações para imóveis de terceiros locados a pedido do Tutor.
+- **Diferenças:**
+  - *Extirpação de Estoques Mockados no Kardex:* Ajuste dinâmico na renderização do Kardex (`FinancialReportMatrix.tsx`) introduzindo controle sobre o modo Greenfield (`startingMode`). Quando o campeonato é inicializado em "Start from Zero", o saldo inicial, unitário e final de MP-A e MP-B em P0 é rigorosamente forçado para `0`, limpando o layout de quaisquer dados pré-calculados.
+  - *Correção de Mapeamento Inicial de KPIs no Supabase:* Refinamento cirúrgico no arquivo `/services/supabase.ts` (`createChampionshipWithTeams`) forçando `machines` para `[]` e `stock_quantities` para valores nulos/zero se o campeonato rodar sob o modo Greenfield, garantindo que o banco registre os estados perfeitamente limpos.
+  - *Busca Resiliente e Balanceamento do Capital Social:* Implementação da função fiduciária `findNodeInTree()` em `/services/initialization.ts` para busca recursiva e profunda de nós de contas do Balanço Patrimonial. Com isso, evitou-se a sobrecarga ou perda de nós na contabilização, e o bug na conciliação do Capital Social Greenfield em `equity` foi sanado em definitivo, garantindo que o Passivo + PL acompanhe milimetricamente o montante total do Ativo sem desequilíbrios.
+  - *Harmonização do Rótulo de Depreciação de Benfeitorias:* Adequação do rótulo contábil contido em `/services/initialization.ts` alterando "Amortização de Benfeitorias Terceiros" para "(-) Depreciação de Instalações" em casos onde o imóvel configurado é Alugado (`buildingMode === 'rented'`), alinhando com a nomenclatura contábil estrita solicitada pelo Tutor e acumulando corretamente as taxas sob as melhorias investidas.
+- **Status:** Homologado, Testado e Inteiramente Integrado em Produção.
 
 ### v19.31 Obsidian Diamond Enterprise - Alinhamento Total Greenfield (Start from Zero), Omissão de Aluguel em P0, Bloqueio Condicional de Compras de Ativos em P0, Sincronização fiduciária de Share Price e Redirecionamentos Universais por SPA Navigation (Livre de Erros 404)
 - **Data:** 29 de Maio de 2026

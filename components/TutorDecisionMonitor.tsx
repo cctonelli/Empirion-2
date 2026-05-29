@@ -230,7 +230,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
         <Reorder.Group axis="x" values={teams} onReorder={setTeams} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
           {teams.map((team, idx) => (
             <Reorder.Item key={team.id} value={team}>
-              <TeamCardDetailed team={team} index={idx} isLive={activeTimelineNode >= round} />
+              <TeamCardDetailed team={team} index={idx} isLive={activeTimelineNode >= round} arena={arena} />
             </Reorder.Item>
           ))}
         </Reorder.Group>
@@ -322,7 +322,7 @@ const QuickIndicator = ({ label, val, highlight }: any) => (
   </div>
 );
 
-const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, index: number, isLive: boolean }) => {
+const TeamCardDetailed = memo(({ team, index, isLive, arena }: { team: TutorTeamView, index: number, isLive: boolean, arena: Championship | null }) => {
    const [isAuditing, setIsAuditing] = useState(false);
    const [aiVerdict, setAiVerdict] = useState<string | null>(null);
    const [showReports, setShowReports] = useState(false);
@@ -463,6 +463,7 @@ const TeamCardDetailed = memo(({ team, index, isLive }: { team: TutorTeamView, i
                            history={teamHistory} 
                            projection={{ kpis: { statements: team.statements, cpv_details: team.cpv_details } } as any} 
                            currency="BRL" 
+                           startingMode={arena?.config?.starting_mode || arena?.starting_mode} 
                         />
                      </div>
                      {aiVerdict && (
