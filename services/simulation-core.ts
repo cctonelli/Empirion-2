@@ -740,7 +740,18 @@ export function processRoundWithValidation(
     currentMachines = currentMachines.filter(m => !sellIds.includes(m.id));
   }
 
-  const capacity = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0);
+  const selectedShifts = sanitize(decision.production?.shifts, 1);
+  let capMult = 1.0;
+  let modMult = 1.0;
+  if (selectedShifts === 2) {
+    capMult = 1.8;
+    modMult = 1.5;
+  } else if (selectedShifts === 3) {
+    capMult = 2.3;
+    modMult = 2.0;
+  }
+
+  const capacity = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0) * capMult;
   const activityLevel = sanitize(decision.production?.activityLevel, 100) / 100;
   const operatorsAvailable = (team.kpis?.staffing?.production || 470) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
   const operatorsRequired = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.operators_required || 0), 0);
@@ -792,7 +803,7 @@ export function processRoundWithValidation(
   const currentSalary = decisionSalary > 0 ? decisionSalary : (indicators.hr_base.salary * inflationMult);
   const socialChargesAttr = 1 + (sanitize(indicators.social_charges, 35) / 100);
 
-  const payrollMOD = operatorsRequired * currentSalary * activityLevel;
+  const payrollMOD = operatorsRequired * currentSalary * activityLevel * modMult;
   const socialChargesMOD = payrollMOD * (socialChargesAttr - 1);
   const productivityBonus = payrollMOD * (sanitize(decision.hr?.productivityBonusPercent, 0) / 100);
   const totalMOD = payrollMOD + socialChargesMOD + productivityBonus;

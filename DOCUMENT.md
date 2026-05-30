@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.33 Obsidian Diamond Enterprise III (Saneamento de Parque Fabril no Greenfield no AssetsStep.tsx e Controle Estrito de Ativos)
+- **Versão Ativa:** v19.40 Obsidian Diamond Enterprise IV (Regime Operacional de Turnos, Depreciação de Instalações Customizada e Campanhas de Marketing Regionais de Precisão)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -91,15 +91,19 @@ As equipes gerenciam sua planta fabril através de três modelos padrão de maqu
 | **Depreciação Periódica** | Linear (2.5% ao round) | Linear (2.5% ao round) | Linear (2.5% ao round) |
 
 - **Aquisição de Equipamentos (Efeito Imediato):** Compras de maquinários efetuadas no período $T$ já integram a capacidade industrial ativa para produção no próprio período $T$.
-- **Depreciação Contábil:**
+- **Depreciação Contábil Customizada:**
   - *Prédios:* Desgaste faturado em 0.2% por período sobre o valor histórico.
+  - *Instalações / Benfeitorias:* Depreciação ou Amortização de instalações e benfeitorias físicas parametrizada manualmente pelo Arena Tutor no Step 6 do Wizard (`buildings_depreciation_rate`), com default regulamentar de 10% a.a. incidindo sobre a conta de instalações.
   - *Máquinas:* Linear baseada na vida útil de 40 rounds (2.5% p.p.).
 - **Venda de Equipamentos:** Aplica-se deságio depreciativo lançado diretamente como Despesa Não Operacional no DRE e gerando reflexo de entrada de caixa líquido no DFC.
 
-### 6.2 Gestão de Mão de Obra (Operadores) e Turno Extra
+### 6.2 Gestão de Mão de Obra e Regime Operacional de Turnos (Capacidade x MOD)
 - **Gargalo Técnico (Capas Operacionais):** O processamento de produção é limitado pelo menor valor entre a capacidade nominal instalada do par de máquinas e o contingente de operadores ativos devidamente contratados de forma prévia.
 - **Padrão de Produtividade & Treinamento:** Equipamentos novos adquiridos demandam um treinamento correspondente a no mínimo **5% do valor total do CapEx** investido. Caso o investimento seja inferior a este patamar, aplica-se uma penalização imediata de **25% na produtividade** industrial da planta naquela rodada.
-- **Turno Extra (Overtime):** Permite fabricar até **50% adicionais sobre a capacidade nominal** ativa das máquinas, de forma a absorver picos de demanda. Contudo, incide um acréscimo estatutário punitivo de **50% sobre o custo-hora padrão da Mão de Obra Direta (MOD)** apenas para as unidades adicionais excedentes operadas.
+- **Regime Operacional de Turnos (Capacidade x MOD):** O Arena Tutor pode liberar a ativação de regimes contínuos contábeis (1T, 2T ou 3T) que modificam drasticamente o OpEx e a escala industrial das equipes de forma seletiva:
+  - *1 Turno (Regular):* Capacidade operacional de 100%, multiplicador de custos da Mão de Obra Direta (MOD) de 1.0x.
+  - *2 Turnos (Dobrado):* Capacidade operacional de 180% (+80% de ganho de espaço produtivo sem investimento em capital CapEx), multiplicador de custos da MOD com cargos noturnos e adicionais de turnos de 1.5x.
+  - *3 Turnos (Contínuo):* Capacidade operacional de 230% (+130% de ganho produtivo em escala máxima), multiplicador de custos da MOD com periculosidade e interrupção de 2.0x.
 - **Encargos Sociais:** Encargos trabalhistas e previdenciários fixados em **35% sobre a folha total de pagamento**.
 
 ### 6.3 Fisiologia de Suprimentos (M matéria-Prima e Estoque)
@@ -118,6 +122,7 @@ As equipes gerenciam sua planta fabril através de três modelos padrão de maqu
   - *AV + 33% + 33%:* 33.3% liquidação à vista, restante distribuído em recebimentos a prazo futuros (PMP 30 dias).
 - **Provisão para Devedores Duvidosos (PECLD):** O percentual de inadimplência estimado incide **única e exclusivamente sob a parcela de vendas a prazo** (Credit Sales), sem onerar a receita recebida à vista.
 - **Custos de Distribuição:** Encargo logístico unitário calculado por unidade efetivamente comercializada na respectiva região.
+- **Campanhas de Marketing Regionais Customizáveis:** O Arena Tutor pode modular e customizar o custo inicial base por rodada de cada campanha promocional e publicitária por região comercializada (`marketing_cost`), saindo do padrão global de $10.000 para uma configuração territorializada e tática mais realista.
 
 ---
 

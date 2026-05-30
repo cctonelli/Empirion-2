@@ -1506,7 +1506,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                    }} className="w-full bg-slate-950 border border-white/10 rounded-xl p-4 text-center text-lg font-mono font-black text-orange-500 outline-none" />
                                 </div>
                              </div>
-                             <div className="grid grid-cols-2 gap-6 pt-3 border-t border-white/5">
+                             <div className="grid grid-cols-3 gap-4 pt-3 border-t border-white/5">
                                 <div className="space-y-2">
                                    <label className="text-[8px] font-black text-slate-500 uppercase">Preço Venda Sugerido</label>
                                    <input type="number" value={r.suggested_price} onChange={e => {
@@ -1516,10 +1516,18 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                    }} className="w-full p-2 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-mono font-bold text-white hover:border-orange-500 focus:border-orange-500 outline-none" />
                                 </div>
                                 <div className="space-y-2">
-                                   <label className="text-[8px] font-black text-slate-500 uppercase">Custo Distribuição (Frete un.)</label>
+                                   <label className="text-[8px] font-black text-slate-500 uppercase">Frete Unitário ($)</label>
                                    <input type="number" value={r.distribution_cost} onChange={e => {
                                       const reg = [...tutorConfig.regions];
                                       reg[i].distribution_cost = parseFloat(e.target.value) || 0;
+                                      setTutorConfig({...tutorConfig, regions: reg});
+                                   }} className="w-full p-2 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-mono font-bold text-white hover:border-orange-500 focus:border-orange-500 outline-none" />
+                                </div>
+                                <div className="space-y-2">
+                                   <label className="text-[8px] font-black text-slate-500 uppercase">Marketing ($/reg)</label>
+                                   <input type="number" value={r.marketing_cost} onChange={e => {
+                                      const reg = [...tutorConfig.regions];
+                                      reg[i].marketing_cost = parseFloat(e.target.value) || 0;
                                       setTutorConfig({...tutorConfig, regions: reg});
                                    }} className="w-full p-2 bg-slate-950 border border-white/5 rounded-xl text-center text-xs font-mono font-bold text-white hover:border-orange-500 focus:border-orange-500 outline-none" />
                                 </div>
@@ -1586,6 +1594,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="PREÇO DA AÇÃO INICIAL ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.share_price_initial} onChange={(v:any)=>setTutorConfig({...tutorConfig, share_price_initial: v})} />
                        <WizardField label="DISTRIBUIÇÃO DIVIDENDOS (%)" type="number" val={tutorConfig.dividend_percent} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_percent: parseFloat(v) || 0})} />
                        <WizardSelect label="PAGAR DIVIDENDOS A CADA" val={tutorConfig.dividend_frequency} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_frequency: parseInt(v)})} options={[{v:'1',l:'TODO PERÍODO (ROUNDS)'},{v:'2',l:'A CADA 2 ROUNDS'},{v:'4',l:'A CADA 4 ROUNDS (QUADRIMESTRE)'}]} />
+                       <WizardField label="TAXA DEPRECIAÇÃO INSTALAÇÕES (% a.a.)" type="number" val={tutorConfig.buildings_depreciation_rate ?? 10} onChange={(v:any)=>setTutorConfig({...tutorConfig, buildings_depreciation_rate: parseFloat(v) || 0})} />
                      </div>
 
                      {/* CONTAS PATRIMONIAIS RETROATIVAS (CLIENTES, FORNECEDORES, WIP) */}

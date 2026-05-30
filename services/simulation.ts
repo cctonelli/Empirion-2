@@ -245,15 +245,26 @@ export const calculateProjections = (
   periodDepreciation += buildingDepPeriod;
 
   // --- 3. CÁLCULO DO CPP (CUSTO DO PRODUTO PRODUZIDO) ---
-  const capacity = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0);
+  const selectedShifts = sanitize(decision.production?.shifts, 1);
+  let capMult = 1.0;
+  let modMult = 1.0;
+  if (selectedShifts === 2) {
+    capMult = 1.8;
+    modMult = 1.5;
+  } else if (selectedShifts === 3) {
+    capMult = 2.3;
+    modMult = 2.0;
+  }
+
+  const capacity = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0) * capMult;
   const activityLevel = sanitize(decision.production?.activityLevel, 100) / 100;
 
   // Verificação de Operadores vs Capacidade
   const operatorsAvailable = (team.kpis?.staffing?.production || 470) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
   const operatorsRequired = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.operators_required || 0), 0);
   
-  // Mão de Obra Direta (MOD) reajustada por inflação ou decisão
-  const payrollMOD = operatorsRequired * currentSalary * activityLevel;
+  // Mão de Obra Direta (MOD) reajustada por inflação ou decisão e pelos turnos extras
+  const payrollMOD = operatorsRequired * currentSalary * activityLevel * modMult;
   const socialChargesMOD = payrollMOD * (socialChargesAttr - 1);
   const productivityBonus = payrollMOD * (sanitize(decision.hr?.productivityBonusPercent, 0) / 100);
   const totalMOD = payrollMOD + socialChargesMOD + productivityBonus;
