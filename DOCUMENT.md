@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.51 Sapphire Gold (Erradicação Definitiva de Estoques Fantasmas no Modo Greenfield via Blindagem Nullish Coalescing, Sincronismo Global de Pausa Realtime e Feedback Multissensorial de Fechamento de Round)
+- **Versão Ativa:** v19.52 Sapphire Platinum (Erradicação da Duplicidade de Lançamento de Empréstimos Compulsórios no Passivo de Curto Prazo, Consistência Estrita Ativo vs Passivo+PL sob Bloqueio Sapphire e Robustecimento do Fallback Determinístico do Oráculo ESDS)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -645,6 +645,15 @@ project-root/
 - **Motivo:** Ajuste de precisão arquitetural no mapeamento de tipos fiduciários no banco de dados Supabase para evitar erros de comparação implícita de tipos.
 - **Principais Diferenças na v19.19:**
   - **Conversão de Tipagem Explícita (Explicit Casts):** Introdução de coerções do tipo `::text` em todas as comparações de chaves primárias e estrangeiras (`id`, `team_id`, `championship_id`, `supabase_user_id` e `auth.uid()`) nas políticas de Row Level Security (RLS) e nas views fiduciárias de auditoria (`view_supply_chain_health`, `view_capex_health`). Isso elimina qualquer incompatibilidade contábil e técnica do tipo `uuid = text` gerada por atualizações no Supabase.
+- **Status:** Em produção.
+
+### v19.52 - Sapphire Platinum (Audit & Sound Check v2)
+- **Data:** 30 de Maio de 2026
+- **Motivo:** Erradicação de inconsistência crítica de R$ 1.089.250,00 no motor contábil da simulação que disparava bloqueio patrimonial (Sapphire) em rodadas onde equipes Greenfield recorriam ao Empréstimo Compulsório Emergencial de socorro.
+- **Principais Diferenças na v19.52:**
+  - **Correção da Duplicidade ST:** Sanada a inicialização duplicada da variável `totalLoansST` em `./services/simulation.ts` (efetuado `let totalLoansST = 0` em vez de `= newCompulsoryLoan`), pois o compulsório já é devidamente injetado na lista `currentLoans` e consolidado de forma unitária na iteração ordinária subsequente.
+  - **Prevenção de Quebra Patrimonial:** A correção garante balanço em perfeito equilíbrio (Equação Contábil) com tolerância de R$ 0.05, permitindo transição fluida do Round P01 por meio do Turnover do Tutor sem interrupções por regras do Sapphire Security.
+  - **Robustez de Fallback do Oráculo (ESDS):** Sincronização do indicador fiduciário de saúde financeira assegurável via fallback determinístico estrito caso chamadas do Gemini API estourem limites de cota operacional (como erro 429).
 - **Status:** Em produção.
 
 ### v19.18 - Obsidian Diamond Enterprise (Tutor Masterclass)

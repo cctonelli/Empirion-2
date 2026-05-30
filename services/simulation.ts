@@ -825,7 +825,7 @@ export const calculateProjections = (
   const finalCash = cashBeforeCompulsory;
 
   // --- 6. ATUALIZAÇÃO DA ESTRUTURA CONTÁBIL ---
-  let totalLoansST = newCompulsoryLoan;
+  let totalLoansST = 0;
   let totalLoansLT = 0;
 
   currentLoans.forEach(l => {
