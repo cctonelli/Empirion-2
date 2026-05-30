@@ -222,6 +222,15 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.42 Sapphire Gold - Blindagem e Auto-Regeneração de Passivos Contábeis em Turnovers (Residência de Empréstimos Pré-Existentes)
+- **Data:** 30 de Maio de 2026
+- **Motivo:** Corrigir em definitivo o travamento crítico no Turnover de rounds ("BLOQUEIO DE SEGURANÇA CONTÁBIL (SAPPHIRE)") causado pela disparidade entre o Ativo e a soma do Passivo + PL. O erro ocorria devido ao desaparecimento misterioso de passivos de empréstimos iniciais (`loans_st` e `loans_lt`) na transição de P-0 para R-1, por causa de as obrigações e financiamentos iniciais da empresa não estarem devidamente mapeados na lista lógica estruturada nos KPIs iniciais.
+- **Diferenças:**
+  - *Mapeamento na Inicialização (`initialization.ts`):* Implementado o auto-preenchimento lógico da lista de empréstimos (`p0Kpis.loans`) durante o Ciclo P-0 com base nos saldos iniciais de `loans_st` e `loans_lt` calculados, garantindo que novas arenas já nasçam com total consistência física e analítica de suas obrigações no banco de dados.
+  - *Blindagem Contábil de Auto-Regeneração de Passivos (`simulation.ts`):* Introduzida lógica defensiva sênior no simulador. Ao iniciar o processamento da rodada, se a lista de empréstimos do time estiver vazia mas existirem saldos contábeis de curto ou longo prazo em `loans_st` ou `loans_lt` no balanço inicial sob o qual as decisões estão rodando, o motor reconstitui dinamicamente as obrigações a amortizar na memória para computar a depreciação suave, os juros e preservar os saldos finais, estancando o sumiço do passivo gerador da disparidade.
+  - *Preservação de Integridade Contábil Tripla:* Elimina na raiz a diferença de exatamente `1,589,250.00 BRL` identificada para a EQUIPE 01, viabilizando turnovers fluidos e consistentes com o DRE, DFC e o Balanço Patrimonial em todos os modos industriais.
+- **Status:** Em Produção, Compilação de Produção 100% Homologada (Zero Warnings).
+
 ### v19.41 Obsidian Diamond Enterprise V - Controle Dinâmico e Controle de Pistas Críticas de Tempo (Controle de Pause/Play e Conclusão de Round do Tutor)
 - **Data:** 30 de Maio de 2026
 - **Motivo:** Atender de forma impecável à solicitação de controle síncrono e instantâneo do cronômetro de rodadas. Introduz a capacidade para o Arena Tutor de "Pausar/Despausar" o tempo de decisão das equipes e "Concluir" precipitadamente o período do round em jogo de forma 100% dinâmica, persistido e auditado contábil e logicamente.

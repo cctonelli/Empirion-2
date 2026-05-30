@@ -757,6 +757,28 @@ export function generatePureP0(config: TutorP0Config): {
   const finalAssetsVal = assetsNode?.value || 0;
   const finalEquityVal = bs.find((n: any) => n.id === 'equity')?.value || 0;
 
+  const initialLoansList: any[] = [];
+  if (loans_st > 0) {
+    initialLoansList.push({
+      id: 'L-INIT-ST',
+      type: 'normal',
+      amount: loans_st,
+      interest_rate: isBaseMode ? 14.5 : 12.0,
+      term: 1,
+      remaining_rounds: 1
+    });
+  }
+  if (loans_lt > 0) {
+    initialLoansList.push({
+      id: 'L-INIT-LT',
+      type: 'normal',
+      amount: loans_lt,
+      interest_rate: isBaseMode ? 12.5 : 10.0,
+      term: 8,
+      remaining_rounds: 8
+    });
+  }
+
   // 7. Consolidação de KPIs de P00 e Capacidades Produtivas para a Arena
   const p0Kpis: Partial<KPIs> = {
     rating: isZeroMode ? 'AAA' : (isBaseMode ? 'AA' : 'A'),
@@ -771,6 +793,7 @@ export function generatePureP0(config: TutorP0Config): {
       mp_b: isZeroMode ? 0 : config.inventories.mpb_qty,
       finished_goods: isZeroMode ? 0 : config.inventories.finished_qty
     },
+    loans: initialLoansList,
     last_price: config.share_price_initial,
     share_price: config.share_price_initial,
     last_units_sold: 0,

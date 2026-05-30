@@ -545,7 +545,38 @@ export const calculateProjections = (
   const opex = currentOpexSales + currentOpexAdm + currentOpexRd + badDebtExp;
   
   // Juros e Amortização (Diferenciação Normal vs Compulsório vs BDI)
-  const prevLoans = (team.kpis?.loans || []) as any[];
+  let prevLoans = (team.kpis?.loans || []) as any[];
+
+  // BLINDAGEM DE INTEGRIDADE CONTÁBIL (SAPPHIRE v19.5):
+  // Se a lista lógica de empréstimos (loans) nos KPIs estiver vazia, mas existirem passivos de empréstimos de curto (loans_st) ou
+  // de longo prazo (loans_lt) no balanço patrimonial anterior, regeneramos os objetos de empréstimos correspondentes
+  // de forma que não haja o desaparecimento misterioso da dívida projetada.
+  if (prevLoans.length === 0) {
+    const bsStVal = findAccountValue(prevBS, 'liabilities.current.loans_st') || 0;
+    const bsLtVal = findAccountValue(prevBS, 'liabilities.longterm.loans_lt') || 0;
+
+    if (bsStVal > 0) {
+      prevLoans.push({
+        id: 'L-INIT-ST-AUTO',
+        type: 'normal',
+        amount: bsStVal,
+        interest_rate: branch === 'industrial' ? 12.0 : 14.5,
+        term: 1,
+        remaining_rounds: 1
+      });
+    }
+    if (bsLtVal > 0) {
+      prevLoans.push({
+        id: 'L-INIT-LT-AUTO',
+        type: 'normal',
+        amount: bsLtVal,
+        interest_rate: branch === 'industrial' ? 10.0 : 12.5,
+        term: 8,
+        remaining_rounds: 8
+      });
+    }
+  }
+
   let totalInterestExp = 0;
   let totalAmortization = 0;
   const currentLoans: any[] = [];
