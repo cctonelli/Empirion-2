@@ -313,7 +313,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Activity size={12}/>} />
          <CockpitStat label={t('Rating')} val={currentKpis.rating} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Shield size={12}/>} />
          <div className="px-2 flex items-center justify-center border-l border-white/5 bg-gradient-to-br from-orange-600/10 to-transparent">
-            <ChampionshipTimer variant="compact" roundStartedAt={activeArena?.round_started_at} createdAt={activeArena?.created_at} deadlineValue={activeArena?.deadline_value} deadlineUnit={activeArena?.deadline_unit} />
+            <ChampionshipTimer 
+              variant="compact" 
+              roundStartedAt={activeArena?.round_started_at} 
+              createdAt={activeArena?.created_at} 
+              deadlineValue={activeArena?.deadline_value} 
+              deadlineUnit={activeArena?.deadline_unit}
+              isPaused={activeArena?.config?.is_paused}
+              remainingMsAtPause={activeArena?.config?.remaining_ms_at_pause}
+            />
          </div>
       </section>
  

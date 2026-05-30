@@ -98,6 +98,8 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                   <ChampionshipTimer 
                     variant="compact"
                     roundStartedAt={championship.round_started_at}
+                    isPaused={championship.config?.is_paused}
+                    remainingMsAtPause={championship.config?.remaining_ms_at_pause}
                     deadlineValue={championship.deadline_value}
                     deadlineUnit={championship.deadline_unit}
                     createdAt={championship.created_at}

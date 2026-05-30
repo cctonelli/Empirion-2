@@ -92,7 +92,7 @@ const LandingPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
            </h1>
 
            <p className="text-xl md:text-3xl text-slate-300 font-medium max-w-4xl mx-auto italic leading-relaxed opacity-90">
-              EMPIRION: A arena definitiva onde inteligência neural Gemini e estratégia humana colidem em simulações multiplayer de alta fidelidade.
+              A arena definitiva onde inteligência neural Gemini e estratégia humana colidem em simulações multiplayer de alta fidelidade.
            </p>
 
            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 pt-8">

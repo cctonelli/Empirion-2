@@ -8,7 +8,7 @@ import {
   Trophy, Settings, ShieldAlert, Sparkles, Landmark, ArrowRight, Activity, LayoutDashboard,
   PenTool, Newspaper, History, Settings2, Rocket, Lock, ChevronLeft, ChevronRight, Zap, CheckCircle2,
   RefreshCw, Loader2, User, AlertOctagon, Flame, Factory, ShoppingCart, Briefcase, Tractor, DollarSign, Hammer,
-  LayoutGrid, FileJson, Languages, Database
+  LayoutGrid, FileJson, Languages, Database, Play, Pause, CheckSquare
 } from 'lucide-react';
 import { 
   getChampionships, 
@@ -181,6 +181,101 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
     } catch (err: any) { alert(`ERRO CRÍTICO: ${err.message}`); } finally { setIsProcessing(false); }
   };
 
+  const handleTogglePause = async () => {
+    if (!selectedArena) return;
+    const isPaused = !!selectedArena.config?.is_paused;
+    const config = selectedArena.config || {};
+    
+    // Calcular a duração atual em ms para achar o targetDate
+    let durationMs = 0;
+    const deadlineVal = selectedArena.deadline_value ?? 7;
+    const deadlineUnit = selectedArena.deadline_unit ?? 'days';
+    
+    switch(deadlineUnit) {
+      case 'hours': durationMs = deadlineVal * 60 * 60 * 1000; break;
+      case 'days': durationMs = deadlineVal * 24 * 60 * 60 * 1000; break;
+      case 'weeks': durationMs = deadlineVal * 7 * 24 * 60 * 60 * 1000; break;
+      case 'months': durationMs = deadlineVal * 30 * 24 * 60 * 60 * 1000; break;
+      default: durationMs = 7 * 24 * 60 * 60 * 1000;
+    }
+
+    if (!isPaused) {
+      // Pausar: calcular quanto tempo restava para salvar no banco
+      const start = new Date(selectedArena.round_started_at || selectedArena.created_at || '').getTime();
+      const targetDate = start + durationMs;
+      const remainingMs = Math.max(0, targetDate - Date.now());
+      
+      const updatedConfig = {
+        ...config,
+        is_paused: true,
+        paused_at: new Date().toISOString(),
+        remaining_ms_at_pause: remainingMs
+      };
+      
+      await updateEcosystem(selectedArena.id, { config: updatedConfig }, !!selectedArena.is_trial);
+      setSelectedArena({ ...selectedArena, config: updatedConfig });
+    } else {
+      // Despausar: ajustar a data inicial para alinhar com o tempo restante salvo
+      const remainingMs = config.remaining_ms_at_pause || 0;
+      const newRoundStartedAt = new Date(Date.now() + remainingMs - durationMs).toISOString();
+      
+      const updatedConfig = {
+        ...config,
+        is_paused: false,
+        paused_at: null,
+        remaining_ms_at_pause: null
+      };
+
+      await updateEcosystem(selectedArena.id, { 
+        round_started_at: newRoundStartedAt,
+        config: updatedConfig 
+      }, !!selectedArena.is_trial);
+      
+      setSelectedArena({ 
+        ...selectedArena, 
+        round_started_at: newRoundStartedAt,
+        config: updatedConfig 
+      });
+    }
+  };
+
+  const handleForceExpire = async () => {
+    if (!selectedArena) return;
+    if (!confirm("Tem certeza que deseja antecipar o término do tempo deste round? O temporizador será fechado imediatamente para todas as equipes, impossibilitando novas decisões.")) return;
+    
+    let durationMs = 0;
+    const deadlineVal = selectedArena.deadline_value ?? 7;
+    const deadlineUnit = selectedArena.deadline_unit ?? 'days';
+    
+    switch(deadlineUnit) {
+      case 'hours': durationMs = deadlineVal * 60 * 60 * 1000; break;
+      case 'days': durationMs = deadlineVal * 24 * 60 * 60 * 1000; break;
+      case 'weeks': durationMs = deadlineVal * 7 * 24 * 60 * 60 * 1000; break;
+      case 'months': durationMs = deadlineVal * 30 * 24 * 60 * 60 * 1000; break;
+      default: durationMs = 7 * 24 * 60 * 60 * 1000;
+    }
+
+    const expiredRoundStartedAt = new Date(Date.now() - durationMs - 5000).toISOString();
+    const config = selectedArena.config || {};
+    const updatedConfig = {
+      ...config,
+      is_paused: false,
+      paused_at: null,
+      remaining_ms_at_pause: null
+    };
+
+    await updateEcosystem(selectedArena.id, { 
+      round_started_at: expiredRoundStartedAt,
+      config: updatedConfig 
+    }, !!selectedArena.is_trial);
+
+    setSelectedArena({ 
+      ...selectedArena, 
+      round_started_at: expiredRoundStartedAt,
+      config: updatedConfig 
+    });
+  };
+
   const selectBranchTemplate = (branch: Branch) => {
     if (branch === 'industrial') { setIsPickingTemplate(false); setShowWizard(true); } 
     else { alert(`PROTOCOLO ${branch.toUpperCase()} BLOQUEADO: Utilize o Template Industrial no momento.`); }
@@ -195,13 +290,39 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
               <button onClick={() => { setSelectedArena(null); setIsCreatingTrial(false); navigate('/app/admin'); }} className="text-slate-500 hover:text-white transition-all flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><ArrowLeft size={14}/> Sair</button>
               <div className="h-4 w-px bg-white/10" />
               {selectedArena && (
-                 <ChampionshipTimer 
-                   variant="compact"
-                   roundStartedAt={selectedArena.round_started_at}
-                   deadlineValue={selectedArena.deadline_value}
-                   deadlineUnit={selectedArena.deadline_unit}
-                   createdAt={selectedArena.created_at}
-                 />
+                <div className="flex items-center gap-3">
+                  <ChampionshipTimer 
+                    variant="compact"
+                    roundStartedAt={selectedArena.round_started_at}
+                    deadlineValue={selectedArena.deadline_value}
+                    deadlineUnit={selectedArena.deadline_unit}
+                    createdAt={selectedArena.created_at}
+                    isPaused={selectedArena.config?.is_paused}
+                    remainingMsAtPause={selectedArena.config?.remaining_ms_at_pause}
+                  />
+                  
+                  {/* Botões do Tutor para Pausar e Concluir / Terminar o Round */}
+                  <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-white/5 shadow-inner">
+                    <button 
+                       onClick={handleTogglePause}
+                       title={selectedArena.config?.is_paused ? "Retomar contagem de tempo" : "Pausar contagem de tempo"}
+                       className={`p-2 rounded-lg transition-all active:scale-90 flex items-center justify-center cursor-pointer ${
+                         selectedArena.config?.is_paused 
+                           ? 'bg-amber-500 text-amber-950 shadow-[0_0_15px_rgba(245,158,11,0.5)] hover:bg-amber-400' 
+                           : 'text-slate-400 hover:text-white hover:bg-white/5'
+                       }`}
+                    >
+                       {selectedArena.config?.is_paused ? <Play size={12} fill="currentColor" /> : <Pause size={12} fill="currentColor" />}
+                    </button>
+                    <button 
+                       onClick={handleForceExpire}
+                       title="Concluir tempo (Zerar Temporizador)"
+                       className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all active:scale-90 flex items-center justify-center cursor-pointer"
+                    >
+                       <CheckSquare size={12} />
+                    </button>
+                  </div>
+                </div>
               )}
               <h1 className="text-xs font-black text-white uppercase italic tracking-widest">Arena <span className="text-orange-500">{arenaName}</span></h1>
            </div>

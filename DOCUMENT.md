@@ -222,6 +222,16 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.41 Obsidian Diamond Enterprise V - Controle Dinâmico e Controle de Pistas Críticas de Tempo (Controle de Pause/Play e Conclusão de Round do Tutor)
+- **Data:** 30 de Maio de 2026
+- **Motivo:** Atender de forma impecável à solicitação de controle síncrono e instantâneo do cronômetro de rodadas. Introduz a capacidade para o Arena Tutor de "Pausar/Despausar" o tempo de decisão das equipes e "Concluir" precipitadamente o período do round em jogo de forma 100% dinâmica, persistido e auditado contábil e logicamente.
+- **Diferenças:**
+  - *Função "Pause/Play" Inteligente:* Permite ao Tutor congelar a contagem de tempo de decisões. O tempo restante exato em milissegundos é computado e persistido no banco no campo de configuração da arena (`config.is_paused` e `config.remaining_ms_at_pause`). Ao despausar, o sistema recalcula e retroalimenta sutilmente a data inicial do round no banco para conciliar o tempo real decorrido de forma síncrona.
+  - *Função "Concluir" Precípite:* Adiciona um botão para liquidar instantaneamente o cronômetro do round ativo, forçando o tempo a zero de forma síncrona para todas as equipes da arena competitiva ao avançar a data de início para o limite de expiração correspondente.
+  - *Estética "Congelado/Ativo" sutil:* O componente de contagem regressiva `ChampionshipTimer` recebeu visualizações em degradê âmbar/ouro e aviso "CONGELADO" ou "DECISÕES CONGELADAS" quando a contagem de tempo é interrompida.
+  - *Sincronismo Global nos Cockpits:* As telas reativas de visualização de Alunos (`Dashboard.tsx`), o Cockpit de Intervenções do Tutor (`TutorArenaControl.tsx`) e o monitor principal de decisões das marcas (`TutorDecisionMonitor.tsx`) agora assinam e herdam as flags de pausado diretamente do banco de dados, prevenindo qualquer reflesh indesejado ou visualização assíncrona discrepante.
+- **Status:** Em Produção, Compilação de Produção 100% Homologada (Zero Warnings).
+
 ### v19.33 Obsidian Diamond Enterprise III - Saneamento e Blindagem do Parque Fabril Greenfield e Remoção de Disponibilidade de Venda Fantasma no Cocpkit do Aluno
 - **Data:** 29 de Maio de 2026
 - **Motivo:** Evitar a exibição errônea de máquinas instaladas ou prontas para alienação (venda) na aba de Ativos e CapEx (`AssetsStep.tsx`) quando uma arena competitiva estiver rodando em regime Greenfield ("Start from Zero" / Começo do Zero) no Ciclo de Planejamento (P-0), garantindo um alinhamento realista impecável com a premissa de nascimento sem parque fabril.

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, AlertCircle, Hourglass } from 'lucide-react';
+import { Clock, AlertCircle, Hourglass, Pause } from 'lucide-react';
 import { DeadlineUnit } from '../types';
 
 interface ChampionshipTimerProps {
@@ -10,6 +10,8 @@ interface ChampionshipTimerProps {
   onExpire?: () => void;
   createdAt?: string; // Fallback absoluto para arenas recém-criadas sem turnover
   variant?: 'default' | 'compact';
+  isPaused?: boolean;
+  remainingMsAtPause?: number;
 }
 
 const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ 
@@ -18,7 +20,9 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
   deadlineUnit = 'days', 
   onExpire, 
   createdAt,
-  variant = 'default'
+  variant = 'default',
+  isPaused = false,
+  remainingMsAtPause
 }) => {
   const [timeLeft, setTimeLeft] = useState<string>('Sincronizando...');
   const [isCritical, setIsCritical] = useState(false);
@@ -27,6 +31,30 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
   const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (isPaused && remainingMsAtPause !== undefined && remainingMsAtPause !== null) {
+      const diff = remainingMsAtPause;
+      if (diff <= 0) {
+        setTimeLeft('ENCERRADO');
+        setIsCritical(true);
+        setIsUrgent(true);
+        return;
+      }
+
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+      let formatted = "";
+      if (d > 0) formatted += `${d}d `;
+      formatted += `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      
+      setTimeLeft(formatted);
+      setIsCritical(diff < 12 * 60 * 60 * 1000);
+      setIsUrgent(diff < 2 * 60 * 60 * 1000);
+      return;
+    }
+
     // FIX: Se não houver round_started_at, tenta usar a data de criação da arena. 
     // Isso evita o reset visual se o turnover ainda não ocorreu no ciclo 0.
     const effectiveStart = roundStartedAt || createdAt;
@@ -77,13 +105,15 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit, onExpire]);
+  }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit, onExpire, isPaused, remainingMsAtPause]);
 
   if (variant === 'compact') {
     return (
       <div 
         className={`px-4 py-1.5 rounded-xl border flex items-center gap-4 transition-all duration-500 shadow-lg ${
-          isUrgent 
+          isPaused 
+            ? 'bg-amber-950/80 border-amber-500/50 text-amber-200'
+            : isUrgent 
             ? 'bg-rose-700/90 border-rose-400 text-white animate-pulse' 
             : isCritical 
             ? 'bg-orange-700/90 border-orange-400 text-white' 
@@ -91,17 +121,20 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
         }`}
       >
         <div className="flex flex-col min-w-[80px]">
-          <span className={`text-[7px] font-black uppercase tracking-[0.2em] mb-0.5 leading-none ${isUrgent || isCritical ? 'text-white/90' : 'text-orange-400'}`}>
-            {isUrgent ? 'URGENTE' : isCritical ? 'PRAZO FINAL' : 'RESTA'}
+          <span className={`text-[7px] font-black uppercase tracking-[0.2em] mb-0.5 leading-none ${
+            isPaused ? 'text-amber-400' : isUrgent || isCritical ? 'text-white/90' : 'text-orange-400'
+          }`}>
+            {isPaused ? 'CONGELADO' : isUrgent ? 'URGENTE' : isCritical ? 'PRAZO FINAL' : 'RESTA'}
           </span>
           <span className="text-xl font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
         </div>
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-md flex-shrink-0 ${
+          isPaused ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30' :
           isUrgent ? 'bg-white text-rose-700' : 
           isCritical ? 'bg-white text-orange-700' : 
           'bg-white/10 text-orange-400 border border-white/10'
         }`}>
-          {isUrgent ? <AlertCircle size={22} strokeWidth={2.5} /> : <Clock size={22} strokeWidth={2} className={!isCritical ? 'animate-pulse' : ''} />}
+          {isPaused ? <Pause size={20} strokeWidth={2.5} /> : isUrgent ? <AlertCircle size={22} strokeWidth={2.5} /> : <Clock size={22} strokeWidth={2} className={!isCritical ? 'animate-pulse' : ''} />}
         </div>
       </div>
     );
@@ -109,24 +142,26 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
 
   return (
     <div className={`px-8 py-4 rounded-[2rem] shadow-2xl border transition-all duration-700 flex items-center gap-6 ${
+      isPaused ? 'bg-amber-950/85 border-amber-600/30 text-amber-200' :
       isUrgent ? 'bg-rose-600 border-white text-white animate-pulse scale-105' :
       isCritical ? 'bg-orange-600 border-orange-400 text-white' : 
       'bg-slate-900 border-white/10 text-slate-100'
     }`}>
       <div className="flex flex-col">
         <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-1 ${
-          isUrgent || isCritical ? 'text-white' : 'text-orange-500'
+          isPaused ? 'text-amber-400' : isUrgent || isCritical ? 'text-white' : 'text-orange-500'
         }`}>
-          {isUrgent ? 'URGENTE: TRANSMITA' : isCritical ? 'PRAZO FINAL' : 'RESTA PARA DECIDIR'}
+          {isPaused ? 'DECISÕES CONGELADAS' : isUrgent ? 'URGENTE: TRANSMITA' : isCritical ? 'PRAZO FINAL' : 'RESTA PARA DECIDIR'}
         </span>
         <span className="text-2xl font-mono font-black tracking-tighter leading-none">{timeLeft}</span>
       </div>
       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-lg ${
+        isPaused ? 'bg-amber-600/25 text-amber-400 border border-amber-500/20' :
         isUrgent ? 'bg-white text-rose-600' : 
         isCritical ? 'bg-white text-orange-600' : 
         'bg-white/5 text-orange-500 border border-white/5'
       }`}>
-        {isUrgent ? <AlertCircle size={32} /> : <Clock size={32} className={!isCritical ? 'animate-pulse' : ''} />}
+        {isPaused ? <Pause size={28} /> : isUrgent ? <AlertCircle size={32} /> : <Clock size={32} className={!isCritical ? 'animate-pulse' : ''} />}
       </div>
     </div>
   );

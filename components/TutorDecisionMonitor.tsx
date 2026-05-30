@@ -165,6 +165,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
                   <ChampionshipTimer 
                     variant="compact"
                     roundStartedAt={arena.round_started_at}
+                    isPaused={arena.config?.is_paused}
+                    remainingMsAtPause={arena.config?.remaining_ms_at_pause}
                     deadlineValue={arena.deadline_value}
                     deadlineUnit={arena.deadline_unit}
                     createdAt={arena.created_at}
