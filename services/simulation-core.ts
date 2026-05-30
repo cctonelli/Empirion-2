@@ -690,9 +690,9 @@ export function processRoundWithValidation(
   const initialMpbQty = sanitize(team.kpis?.stock_quantities?.mp_b, 20100);
   const initialPaQty = sanitize(team.kpis?.stock_quantities?.finished_goods, 0);
 
-  const initialMpaValue = findAccountValue(prevBS, 'assets.current.stock.mpa') || 603000.00;
-  const initialMpbValue = findAccountValue(prevBS, 'assets.current.stock.mpb') || 804000.00;
-  const initialPaValue = findAccountValue(prevBS, 'assets.current.stock.pa') || 0.00;
+  const initialMpaValue = findAccountValue(prevBS, 'assets.current.stock.mpa') ?? 603000.00;
+  const initialMpbValue = findAccountValue(prevBS, 'assets.current.stock.mpb') ?? 804000.00;
+  const initialPaValue = findAccountValue(prevBS, 'assets.current.stock.pa') ?? 0.00;
 
   const initialMpaUnitCost = initialMpaQty > 0 ? (initialMpaValue / initialMpaQty) : 20.00;
   const initialMpbUnitCost = initialMpbQty > 0 ? (initialMpbValue / initialMpbQty) : 40.00;
@@ -915,7 +915,7 @@ export function processRoundWithValidation(
     periodDepreciation += depVal;
   });
 
-  const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || 5440000;
+  const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') ?? 5440000;
   const buildingDepPeriod = buildingsCost * 0.002;
   periodDepreciation += buildingDepPeriod;
 

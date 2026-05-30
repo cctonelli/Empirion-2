@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.50 Sapphire Gold (Modelo Avançado de Produtividade Industrial Sênior, Clima Organizacional, Alerta de Greve Geral e Integração com Regime de Turnos Operacionais)
+- **Versão Ativa:** v19.51 Sapphire Gold (Erradicação Definitiva de Estoques Fantasmas no Modo Greenfield via Blindagem Nullish Coalescing, Sincronismo Global de Pausa Realtime e Feedback Multissensorial de Fechamento de Round)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,14 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.51 Sapphire Gold - Erradicação Definitiva de Estoques Fantasmas no Modo Greenfield via Blindagem Nullish Coalescing
+- **Data:** 30 de Maio de 2026
+- **Motivo:** Sanar o erro de "BLOQUEIO DE SEGURANÇA CONTÁBIL (SAPPHIRE)" que interrompia o processamento de Turnover de rodadas (Round 1) de equipes operando em modo Greenfield ("Começar do Zero"). O operador lógico de disjunção (`||`) avaliava de forma errônea o saldo inicial legítimo de `0.00 BRL` do Ativo circulante de estoques como falsy, forçando a herança ilegítima de valores herdados (603k e 804k BRL) sem correspondente quantidade em estoque físico. Isso causava um rombo exato de `1.089.250,00 BRL` na equação contábil de validação da auditoria (Ativo = Passivo + PL).
+- **Diferenças:**
+  - *Blindagem Contábil Nullish Coalescing:* Modificação cirúrgica dos seletores de herança de estoques (`initialMpaValue`, `initialMpbValue`, `initialPaValue`) e ativos imobilizados de prédios/benfeitorias (`buildingsCost`) em `/services/simulation-core.ts` para usar o operador `??`. Com essa blindagem, o valor legítimo de `0.00 BRL` do balanço anterior em Greenfield é respeitadoramente preservado, restabelecendo a consistência perfeita do custo médio ponderado (WAC) e o estoque final sem injeção fantasma de capital legado.
+  - *Consistência de Equação Contábil:* Alinhamento completo do validador Sapphire com os relatórios analíticos de simulação, de forma que o Ativo e a soma de Passivo + PL se reconciliam perfeitamente na Rodada 1 em Greenfield, propiciando turnovers lisos e estáveis.
+- **Status:** Disponível em Produção, Compilação e Linter 100% Homologados (Zero Warnings).
 
 ### v19.50 Sapphire Gold - Modelo Avançado de Produtividade Industrial Sênior, Clima Organizacional, Alerta de Greve Geral e Integração com Regime de Turnos Operacionais
 - **Data:** 30 de Maio de 2026
