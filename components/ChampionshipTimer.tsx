@@ -3,6 +3,38 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Clock, AlertCircle, Hourglass, Pause } from 'lucide-react';
 import { DeadlineUnit } from '../types';
 
+// Sintetizador nativo de alertas sonoros (Fidelidade do Oráculo de Contagem Regressiva)
+const playCountdownBeep = (secondsRemaining: number) => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    const isFinalSec = secondsRemaining <= 3;
+    // Eleva o tom nos segundos finais (3, 2, 1) para efeito cinematográfico de cockpit sênior
+    const frequency = isFinalSec ? 1200 : 880; 
+    const duration = isFinalSec ? 0.20 : 0.08; 
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+    
+    // Conecta com rampa exponencial de ganho suave para eliminar estalos
+    gainNode.gain.setValueAtTime(0.06, ctx.currentTime); 
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+    
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (err) {
+    console.debug('Aviso fiduciário de áudio bloqueado pelas políticas de interação do navegador:', err);
+  }
+};
+
 interface ChampionshipTimerProps {
   roundStartedAt?: string; 
   deadlineValue?: number;
@@ -29,6 +61,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
   const [isUrgent, setIsUrgent] = useState(false);
   
   const startTimeRef = useRef<number | null>(null);
+  const lastBeepSec = useRef<number | null>(null);
 
   useEffect(() => {
     if (isPaused && remainingMsAtPause !== undefined && remainingMsAtPause !== null) {
@@ -88,6 +121,15 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
         clearInterval(timer);
         if (onExpire) onExpire();
         return;
+      }
+
+      // Alerta Sonoro de 10 segundos antes do limite da rodada
+      if (diff <= 10000 && diff > 0) {
+        const sec = Math.ceil(diff / 1000);
+        if (lastBeepSec.current !== sec) {
+          lastBeepSec.current = sec;
+          playCountdownBeep(sec);
+        }
       }
 
       const d = Math.floor(diff / (1000 * 60 * 60 * 24));

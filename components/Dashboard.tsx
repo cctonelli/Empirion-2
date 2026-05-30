@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
@@ -23,6 +23,7 @@ import DecisionForm from './DecisionForm';
 import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
 import AuditLogViewer from './AuditLogViewer';
+import { RoundSummaryModal } from './RoundSummaryModal';
 import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getTeamSimulationHistory } from '../services/supabase';
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO, INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00 } from '../constants';
@@ -52,6 +53,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic' | 'commitments' | 'kardex'>('dre');
   const [decisions, setDecisions] = useState<any>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const [showRoundSummaryModal, setShowRoundSummaryModal] = useState(false);
+  const [summaryRoundNumber, setSummaryRoundNumber] = useState<number>(0);
+  const [isExpiredWaiting, setIsExpiredWaiting] = useState(false);
+  const prevRoundRef = useRef<number | null>(null);
 
   const visibleHistory = useMemo(() => {
     return history.filter(h => h.round <= selectedRound);
@@ -227,6 +233,122 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     };
   }, [activeArena?.id, activeArena?.is_trial]);
 
+  useEffect(() => {
+    if (activeArena?.current_round !== undefined && activeArena?.current_round !== null) {
+      const currentRoundVal = activeArena.current_round;
+      
+      if (prevRoundRef.current !== null && currentRoundVal > prevRoundRef.current) {
+        console.log(`[Fiduciary Oráculo Realtime] Rodada avançada detectada: de P-${prevRoundRef.current} para P-${currentRoundVal}`);
+        
+        const triggerReload = async () => {
+          try {
+            const teamId = localStorage.getItem('active_team_id');
+            const champId = localStorage.getItem('active_champ_id');
+            if (teamId && champId) {
+              const teamHistory = await getTeamSimulationHistory(teamId);
+              const hasP0 = teamHistory.some((h: any) => h.round === 0);
+              let activeHistory = [...teamHistory];
+              if (!hasP0 && activeTeam) {
+                const kpis = activeTeam?.kpis || {};
+                const isZeroMode = activeArena.starting_mode === 'start_from_zero';
+                const defaultCash = kpis.current_cash ?? (isZeroMode ? (activeArena.config?.caixa_inicial ?? 0) : 111163.54);
+                let statementsFallback = kpis.statements;
+                if (!statementsFallback) {
+                  if (isZeroMode) {
+                    statementsFallback = generatePureP0({
+                      starting_mode: 'start_from_zero',
+                      caixa_inicial: activeArena.config?.caixa_inicial ?? 0,
+                      capital_social: activeArena.config?.capital_social ?? 0,
+                      inventories: { mpa_qty: 0, mpb_qty: 0, mpa_unit_val: 0, mpb_unit_val: 0, finished_qty: 0, finished_unit_val: 0 },
+                      machines: [],
+                      building_mode: 'rented'
+                    } as any);
+                  } else {
+                    statementsFallback = INITIAL_FINANCIAL_TREE;
+                  }
+                }
+                const initialP0Fallback = {
+                  team_id: teamId,
+                  championship_id: champId,
+                  round: 0,
+                  state: {},
+                  equity: kpis.equity ?? (isZeroMode ? (activeArena.config?.caixa_inicial ?? 0) : 7252171.74),
+                  total_assets: kpis.total_assets ?? (isZeroMode ? (activeArena.config?.caixa_inicial ?? 0) : 9493163.54),
+                  stock_value: kpis.stock_value ?? (isZeroMode ? 0 : 1407000.00),
+                  fixed_assets_value: kpis.fixed_assets_value ?? (isZeroMode ? 0 : 6012500.00),
+                  revenue: 0,
+                  net_profit: 0,
+                  kpis: {
+                    statements: statementsFallback,
+                    machines: kpis.machines || (isZeroMode ? [] : INITIAL_MACHINES_P00),
+                    current_cash: defaultCash,
+                    stock_quantities: kpis.stock_quantities || (isZeroMode ? { mp_a: 0, mp_b: 0, finished_goods: 0 } : { mp_a: 30150, mp_b: 20100, finished_goods: 0 }),
+                    equity: kpis.equity ?? (isZeroMode ? (activeArena.config?.caixa_inicial ?? 0) : 7252171.74),
+                    total_assets: kpis.total_assets ?? (isZeroMode ? (activeArena.config?.caixa_inicial ?? 0) : 9493163.54),
+                    stock_value: kpis.stock_value ?? (isZeroMode ? 0 : 1407000.00),
+                    fixed_assets_value: kpis.fixed_assets_value ?? (isZeroMode ? 0 : 6012500.00),
+                    fixed_assets_depreciation: kpis.fixed_assets_depreciation ?? (isZeroMode ? 0 : 75000),
+                    rating: kpis.rating || 'AAA',
+                    last_price: kpis.last_price || ((activeArena as any).initial_share_price || 100),
+                    last_units_sold: 0,
+                    ebitda: kpis.ebitda ?? 0,
+                    tsr: 0,
+                    ccc: 0,
+                    interest_coverage: kpis.interest_coverage ?? 100,
+                    nlcdg: kpis.nlcdg ?? 0,
+                    solvency_score_kanitz: kpis.solvency_score_kanitz ?? (isZeroMode ? 10.0 : 1.5),
+                    altman_z_score: kpis.altman_z_score ?? (isZeroMode ? 99.9 : 6.25),
+                    dcf_valuation: kpis.dcf_valuation ?? (isZeroMode ? 1.0 : 1.7),
+                    scissors_effect: kpis.scissors_effect ?? 0,
+                    liquidity_current: kpis.liquidity_current ?? (isZeroMode ? 99.9 : 1.5),
+                    solvency_index: kpis.solvency_index ?? (isZeroMode ? 99.9 : 2.0),
+                    inventory_turnover: kpis.inventory_turnover ?? 0,
+                    carbon_footprint: kpis.carbon_footprint ?? 0,
+                    avg_receivable_days: kpis.avg_receivable_days ?? (isZeroMode ? 0 : 45),
+                    avg_payable_days: kpis.avg_payable_days ?? (isZeroMode ? 0 : 30),
+                    esds: kpis.esds || {
+                      esds_display: 78,
+                      zone: 'Verde',
+                      gargalo_principal: 'Nenhum',
+                      gemini_insights: 'Empresa em perfeito equilíbrio contábil inicial...',
+                      top_gargalos: [],
+                      main_drivers: []
+                    },
+                  }
+                };
+                activeHistory = [initialP0Fallback, ...activeHistory];
+              }
+              setHistory(activeHistory);
+              
+              const newRound = currentRoundVal + 1;
+              setSelectedRound(newRound);
+              setIsExpiredWaiting(false);
+              setSummaryRoundNumber(prevRoundRef.current ?? 0);
+              setShowRoundSummaryModal(true);
+
+              const table = activeArena.is_trial ? 'trial_decisions' : 'current_decisions';
+              const { data: draft } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', newRound).maybeSingle();
+              if (draft?.data) {
+                setDecisions(draft.data);
+              } else {
+                setDecisions(null);
+              }
+            }
+          } catch (e) {
+            console.error("Erro recarregando dados para resumo fiduciário de rodada:", e);
+          }
+        };
+
+        triggerReload();
+      }
+      prevRoundRef.current = currentRoundVal;
+    } else {
+      if (activeArena?.current_round !== undefined && activeArena?.current_round !== null) {
+        prevRoundRef.current = activeArena.current_round;
+      }
+    }
+  }, [activeArena?.current_round, activeArena?.is_trial, activeTeam]);
+
   const projections = useMemo(() => {
     if (!decisions || !activeArena || !activeTeam) return null;
     const currentRound = (activeArena.current_round || 0) + 1;
@@ -360,6 +482,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               deadlineUnit={activeArena?.deadline_unit}
               isPaused={activeArena?.config?.is_paused}
               remainingMsAtPause={activeArena?.config?.remaining_ms_at_pause}
+              onExpire={() => {
+                setIsExpiredWaiting(true);
+                setSummaryRoundNumber(activeArena?.current_round || 0);
+                setShowRoundSummaryModal(true);
+              }}
             />
          </div>
       </section>
@@ -673,6 +800,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </main>
       </div>
       <AnimatePresence>
+        {showRoundSummaryModal && (
+          <RoundSummaryModal
+            isOpen={showRoundSummaryModal}
+            onClose={() => setShowRoundSummaryModal(false)}
+            roundNumber={summaryRoundNumber}
+            history={history}
+            isLockedWaiting={isExpiredWaiting}
+          />
+        )}
         {showBP && (
           <div className="fixed inset-0 z-[6000] bg-slate-950/98 backdrop-blur-2xl overflow-y-auto">
              <button onClick={() => setShowBP(false)} className="fixed top-10 right-10 p-5 bg-white/5 hover:bg-rose-600 text-white rounded-full z-[7000] shadow-2xl transition-all"><X size={28}/></button>
