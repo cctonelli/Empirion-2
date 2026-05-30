@@ -758,12 +758,91 @@ export function processRoundWithValidation(
   const operatorConstraint = operatorsRequired > 0 ? Math.min(1, operatorsAvailable / operatorsRequired) : 1;
   const effectiveCapacity = capacity * operatorConstraint;
   
-  const boughtNew = Object.values(decision.machinery?.buy || {}).some(qty => (qty as number) > 0);
+  // --- MODELO APERFEIÇOADO DE PRODUTIVIDADE E MOTIVAÇÃO (STRATEGOS v19.5 - SAPPHIRE) ---
   const trainingPercent = sanitize(decision.hr?.trainingPercent, 0);
-  const trainingPenalty = (boughtNew && trainingPercent < 5) ? 0.75 : 1;
+  const boughtNew = Object.values(decision.machinery?.buy || {}).some(qty => (qty as number) > 0);
   
-  let unitsProduced = Math.floor(effectiveCapacity * activityLevel * trainingPenalty);
+  // 1. Training Factor (0.75 ~ 1.35)
+  const hired = sanitize(decision.hr?.hired, 0);
+  const hiredFraction = hired / (operatorsAvailable || 1);
+  let trainingFactor = 1.0;
+  if (hiredFraction > 0 || boughtNew) {
+    const pressure = (hiredFraction * 0.9) + (boughtNew ? 0.25 : 0);
+    trainingFactor = 1.0 - pressure + (trainingPercent / 10) * 0.55;
+  } else {
+    trainingFactor = 1.0 + (trainingPercent - 3) * 0.04; // Baseline ao redor de 3%
+  }
+  trainingFactor = Math.max(0.75, Math.min(1.35, trainingFactor));
+
+  // 2. Motivation Factor (0.60 ~ 1.30)
+  const avgMarketSalary = indicators.hr_base.salary * inflationMult;
+  const decisionSalary = sanitize(decision.hr?.salary, 0);
+  const currentSalary = decisionSalary > 0 ? decisionSalary : (indicators.hr_base.salary * inflationMult);
+  const salaryIndex = currentSalary / avgMarketSalary;
+  const pprRate = sanitize(decision.hr?.participationPercent, 10) / 100;
+  const pprIndex = 1 + (pprRate * 1.5);
+  const prodBonusPercent = sanitize(decision.hr?.productivityBonusPercent, 0) / 100;
+  const prodBonusIndex = 1 + (prodBonusPercent * 1.25);
+  let motivationFactor = (0.5 * salaryIndex * pprIndex * prodBonusIndex) + 0.5;
+  motivationFactor = Math.max(0.60, Math.min(1.30, motivationFactor));
+
+  // 3. Fatigue Factor (0.75 ~ 1.00)
   const extraProductionPercent = sanitize(decision.production?.extraProductionPercent, 0);
+  let fatigueFactor = 1.0;
+  if (extraProductionPercent > 0) {
+    fatigueFactor -= (extraProductionPercent / 100) * 0.5;
+  }
+  if (selectedShifts === 3) {
+    fatigueFactor -= 0.10;
+  } else if (selectedShifts === 2) {
+    fatigueFactor -= 0.04;
+  }
+  fatigueFactor = Math.max(0.75, Math.min(1.00, fatigueFactor));
+
+  // 4. Demission Insecurity Factor (0.65 ~ 1.00)
+  const fired = sanitize(decision.hr?.fired, 0);
+  const previousStaff = team.kpis?.staffing?.production || 470;
+  const firedFraction = fired / (previousStaff || 1);
+  let demissionInsecurityFactor = 1.0;
+  if (firedFraction > 0) {
+    demissionInsecurityFactor = 1.0 - (firedFraction * 1.5);
+  }
+  demissionInsecurityFactor = Math.max(0.65, Math.min(1.00, demissionInsecurityFactor));
+
+  // 5. Machine Age Factor (0.70 ~ 1.00)
+  const totalAge = currentMachines.reduce((acc, m) => acc + m.age, 0);
+  const avgAge = currentMachines.length > 0 ? (totalAge / currentMachines.length) : 0;
+  let machineAgeFactor = 1.0;
+  if (avgAge > 1) {
+    machineAgeFactor -= (avgAge - 1) * 0.06;
+  }
+  machineAgeFactor = Math.max(0.70, Math.min(1.00, machineAgeFactor));
+
+  // --- RENDIMENTO DE MOTIVAÇÃO E CLIMA (CÁLCULO E GREVE SÊNIOR) ---
+  const motivationIndex = (motivationFactor + (1.0 - demissionInsecurityFactor)) / 2.0;
+  
+  let motivationLevel: 'ALTO' | 'BOM' | 'REGULAR' | 'RUIM' = 'REGULAR';
+  if (motivationIndex >= 1.15) {
+    motivationLevel = 'ALTO';
+  } else if (motivationIndex >= 0.95) {
+    motivationLevel = 'BOM';
+  } else if (motivationIndex >= 0.75) {
+    motivationLevel = 'REGULAR';
+  } else {
+    motivationLevel = 'RUIM';
+  }
+
+  const prevConsecutiveRuim = team.kpis?.consecutive_ruim_rounds || 0;
+  const consecutiveRuimRounds = motivationLevel === 'RUIM' ? (prevConsecutiveRuim + 1) : 0;
+  const strikeActive = consecutiveRuimRounds >= 2;
+  const strikeFactor = strikeActive ? 0.50 : 1.0;
+
+  // Índice Combina todos os modificadores
+  const productivityIndex = trainingFactor * motivationFactor * fatigueFactor * demissionInsecurityFactor * machineAgeFactor;
+
+  // Unidades produzidas efetivamente
+  let unitsProduced = Math.floor(effectiveCapacity * activityLevel * productivityIndex * strikeFactor);
+
   if (extraProductionPercent > 0) {
     unitsProduced += Math.floor(unitsProduced * (extraProductionPercent / 100));
   }
@@ -799,8 +878,6 @@ export function processRoundWithValidation(
 
   const totalMPConsumida = mpaConsumidaValor + mpbConsumidaValor;
 
-  const decisionSalary = sanitize(decision.hr?.salary, 0);
-  const currentSalary = decisionSalary > 0 ? decisionSalary : (indicators.hr_base.salary * inflationMult);
   const socialChargesAttr = 1 + (sanitize(indicators.social_charges, 35) / 100);
 
   const payrollMOD = operatorsRequired * currentSalary * activityLevel * modMult;
@@ -958,9 +1035,16 @@ export function processRoundWithValidation(
     custoUnitarioProducao: unitCPP
   };
 
-  // 1. Validando consistência de estoques físicos
+  // 1. Validando consistência de estoques físicos e alertas de greve
   if (emergencyMPA > 0 || emergencyMPB > 0) {
     warnings.push(`Cisne de Estoque Ativado: A quantidade de produção de ${unitsProduced} un exigiu compras de emergência de MP A (+${emergencyMPA} un) e MP B (+${emergencyMPB} un) gerando penalização de ágio de especial premium.`);
+  }
+
+  // Alertas de Gestão de Pessoas Sênior (v19.5 Sapphire Gold)
+  if (strikeActive) {
+    warnings.push(`ATENÇÃO CRÍTICA: GREVE ATIVA NA FÁBRICA! Devido a dois rounds consecutivos com Índice de Motivação RUIM (< 0.75), a produção de sua empresa foi paralisada em 50%! Melhore salários e PPR imediatamente para acabar com a paralisação.`);
+  } else if (consecutiveRuimRounds === 1) {
+    warnings.push(`ALERTA DE GREVE: O clima organizacional caiu para nível RUIM (Índice de Motivação = ${motivationIndex.toFixed(2)} < 0.75). Se mantiver esse nível insatisfatório na próxima rodada, os operários entrarão em GREVE imediata no próximo período!`);
   }
 
   // 2. Auditoria Contábil de Consistência Tripla Rígida se o resultado calculado for fornecido

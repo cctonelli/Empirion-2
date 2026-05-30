@@ -120,7 +120,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ championship, onBack }) =
                       </div>
                       <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                          <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Motivation</span>
-                         <span className="text-lg font-black text-slate-900">{report.kpis?.motivation || 'Regular'}</span>
+                         <span className="text-lg font-black text-slate-900">{report.kpis?.motivation_level || report.kpis?.motivation || 'REGULAR'}</span>
                       </div>
                       <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                          <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">EBITDA</span>

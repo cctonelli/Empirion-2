@@ -1,12 +1,13 @@
 import React from 'react';
-import { Factory, Zap, HelpCircle, Hammer, Cpu, AlertTriangle } from 'lucide-react';
+import { Factory, Zap, HelpCircle, Hammer, Cpu, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { WizardStepHeader } from './shared';
-import { DecisionData, Championship } from '../../types';
+import { DecisionData, Championship, Team } from '../../types';
 
 interface FactoryStepProps {
   decisions: DecisionData;
   updateDecision: (path: string, val: any) => void;
   activeArena: Championship | null;
+  activeTeam?: Team | null;
   currentMacro?: any;
   isReadOnly: boolean;
 }
@@ -15,11 +16,16 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
   decisions,
   updateDecision,
   activeArena,
+  activeTeam,
   currentMacro,
   isReadOnly,
 }) => {
   const maxShifts = currentMacro?.max_shifts || 1;
   const selectedShifts = decisions.production?.shifts ?? 1;
+
+  const kpis: any = activeTeam?.kpis || {};
+  const strikeActivated = kpis.strike_activated || 'NÃO';
+  const prodIndex = kpis.productivity_index !== undefined ? kpis.productivity_index : 100;
 
   return (
     <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -30,6 +36,21 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
         desc="Configure o nível de utilização da capacidade instalada, turnos extras e investimento em P&D. Essas decisões definem o volume produzido, custos operacionais e ganhos de eficiência de longo prazo." 
         help="Atenção: Turnos extras multiplicam a capacidade operacional sem exigir investimentos adicionais em máquinas (CapEx), mas aumentam custos de mão de obra direta (OpEx) por conta de encargos noturnos."
       />
+
+      {/* Alerta Crítico de Greve no Chão de Fábrica */}
+      {strikeActivated === 'SIM' && (
+        <div className="bg-rose-500/10 border-2 border-rose-500/30 rounded-3xl p-8 flex items-start gap-5 max-w-4xl mx-auto shadow-xl shadow-rose-500/5">
+          <ShieldAlert className="text-rose-500 shrink-0 mt-1 animate-bounce" size={32} />
+          <div>
+            <h6 className="font-extrabold text-rose-400 uppercase tracking-wider mb-2 font-sans text-lg">
+              OPERÁRIOS EM GREVE (PRODUÇÃO RESTRITA EM 50%)
+            </h6>
+            <p className="text-sm text-slate-300 font-sans leading-relaxed">
+              O sindicato decretou **Greve Geral** devido ao clima organizacional desfavorável em dois períodos consecutivos. O Índice de Produtividade industrial está limitado a 50%, reduzindo a eficiência fabril drasticamente. Regularize o Piso Salarial e aumente a Participação nos Lucros (PPR) no painel de Clima/RH para retomar as operações normais.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
         {/* 1. Uso da Capacidade */}
@@ -69,6 +90,11 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
               onChange={e => updateDecision('production.activityLevel', parseInt(e.target.value) || 0)}
               className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:shadow-lg hover:accent-orange-500 transition-all cursor-pointer"
             />
+
+            <div className="flex justify-between items-center bg-slate-950/60 p-4 rounded-xl border border-white/5 text-sm font-sans my-4">
+              <span className="text-slate-400 font-medium">Produtividade Efetiva (P-1):</span>
+              <span className={`font-black font-mono ${prodIndex >= 100 ? 'text-emerald-400' : prodIndex >= 85 ? 'text-blue-400' : 'text-rose-400'}`}>{prodIndex}%</span>
+            </div>
 
             <div className="grid grid-cols-2 gap-4 text-xs text-slate-500 font-sans">
               <div>Baixo: Menor custo, menor produção</div>

@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.40 Obsidian Diamond Enterprise IV (Regime Operacional de Turnos, Depreciação de Instalações Customizada e Campanhas de Marketing Regionais de Precisão)
+- **Versão Ativa:** v19.50 Sapphire Gold (Modelo Avançado de Produtividade Industrial Sênior, Clima Organizacional, Alerta de Greve Geral e Integração com Regime de Turnos Operacionais)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,15 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.50 Sapphire Gold - Modelo Avançado de Produtividade Industrial Sênior, Clima Organizacional, Alerta de Greve Geral e Integração com Regime de Turnos Operacionais
+- **Data:** 30 de Maio de 2026
+- **Motivo:** Implementação fiduciária do novo Modelo de Produtividade Industrial Sênior elaborado pelo Strategos de Operações. Substitui a penalidade binária simples de treinamento por uma equação multifatorial contínua, introduz as mecânicas de Clima Organizacional, Risco de Greve Geral e alertas sindicais no cockpit, assegurando o alinhamento com a dinâmica fabril de turnos e horas extras reais.
+- **Diferenças:**
+  - *Novo Índice de Produtividade e Modificadores:* O cálculo de `unitsProduced` e a validação do CPV adotam a fórmula oficial: `Capacidade Nominal × TrainingFactor × MotivationFactor × FatigueFactor × DemissionInsecurityFactor × MachineAgeFactor`.
+  - *Índice de Motivação & Mecânica Sênior de Greve:* Criado o KPI `motivation_index` como média de `(MotivationFactor + (1 - DemissionInsecurityFactor)) / 2.0`. Caso o clima caia para `RUIM` (< 0.75), um alerta de greve reativo é disparado; se persistir por 2 períodos consecutivos, a fábrica entra em paralisação grave reduzindo o output industrial em 50%.
+  - *Feedbacks Visuais e Alertas:* O cockpit de decisões recebeu intervenções de feedback nas abas de RH (`HRStep.tsx`) e Fábrica (`FactoryStep.tsx`), englobando avisos vibrantes de paralisação industrial, andamento do sindicato e detalhamento de fatores de eficiência (auditoria de produtividade).
+- **Status:** Disponível em Produção, Compilação e Linter 100% Homologados (Zero Warnings).
 
 ### v19.42 Sapphire Gold - Blindagem e Auto-Regeneração de Passivos Contábeis em Turnovers (Residência de Empréstimos Pré-Existentes)
 - **Data:** 30 de Maio de 2026

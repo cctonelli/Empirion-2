@@ -1,13 +1,14 @@
 import React from 'react';
-import { Users2, UserPlus, UserMinus, DollarSign, Coins, TrendingUp, HeartPulse, HelpCircle, Zap } from 'lucide-react';
+import { Users2, UserPlus, UserMinus, DollarSign, Coins, TrendingUp, HeartPulse, HelpCircle, Zap, ShieldAlert, CheckCircle2, AlertTriangle, Smile } from 'lucide-react';
 import { WizardStepHeader } from './shared';
-import { DecisionData, Championship } from '../../types';
+import { DecisionData, Championship, Team } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 
 interface HRStepProps {
   decisions: DecisionData;
   updateDecision: (path: string, val: any) => void;
   activeArena: Championship | null;
+  activeTeam?: Team | null;
   currentMacro: any;
   isReadOnly: boolean;
 }
@@ -16,18 +17,179 @@ export const HRStep: React.FC<HRStepProps> = ({
   decisions,
   updateDecision,
   activeArena,
+  activeTeam,
   currentMacro,
   isReadOnly,
 }) => {
+  const kpis: any = activeTeam?.kpis || {};
+  
+  // Extração amigável dos novos KPIs de Clima e Greve (v19.5 Sapphire)
+  const currentMotivationIndex = kpis.motivation_index !== undefined ? kpis.motivation_index : 1.00;
+  const currentMotivationLevel = kpis.motivation_level || 'REGULAR';
+  const strikeActivated = kpis.strike_activated || 'NÃO';
+  const strikeAlert = kpis.strike_alert_active || false;
+  
+  const tf = kpis.training_factor !== undefined ? kpis.training_factor : 1.00;
+  const mf = kpis.motivation_factor !== undefined ? kpis.motivation_factor : 1.00;
+  const ff = kpis.fatigue_factor !== undefined ? kpis.fatigue_factor : 1.00;
+  const dif = kpis.demission_insecurity_factor !== undefined ? kpis.demission_insecurity_factor : 1.00;
+  const maf = kpis.machine_age_factor !== undefined ? kpis.machine_age_factor : 1.00;
+  const prodIndex = kpis.productivity_index !== undefined ? kpis.productivity_index : 100;
+
+  // Helpers para estilização das bolhas de clima
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'ALTO': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+      case 'BOM': return 'text-sky-400 bg-sky-500/10 border-sky-500/30';
+      case 'REGULAR': return 'text-amber-400 bg-amber-500/10 border-amber-500/30';
+      case 'RUIM': return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+      default: return 'text-slate-400 bg-slate-500/10 border-slate-500/30';
+    }
+  };
+
   return (
     <div className="space-y-16 lg:space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Cabeçalho do passo */}
       <WizardStepHeader 
         icon={<Users2 size={32} strokeWidth={2.5} />} 
-        title="Gestão de Talentos & RH" 
+        title="Gestão de Talentos & Clima" 
         desc="Defina contratações, demissões, piso salarial e incentivos. Essas decisões afetam diretamente a produtividade, motivação da equipe, custos fixos e risco de greves ou turnover elevado." 
-        help="Salário baixo + pouca motivação pode gerar queda de produtividade e eventos negativos. Treinamento e bônus são investimentos de retorno médio/longo prazo."
+        help="Salário baixo + pouca coordenação pode gerar queda de produtividade e eventos negativos. Treinamento e bônus são investimentos de retorno médio/longo prazo."
       />
+
+      {/* PAINEL AVANÇADO DE CLIMA ORGANIZACIONAL (Oracle Accounting Strategos) */}
+      <div className="bg-slate-950/80 border-2 border-slate-800/80 p-8 lg:p-12 rounded-3xl shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-5">
+          <Smile size={120} className="text-slate-100" />
+        </div>
+        
+        <h4 className="text-xl lg:text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-3">
+          <HeartPulse className="text-rose-500 animate-pulse" size={28} />
+          Oráculo de Clima Organizacional & Sindicato (Período Anterior)
+        </h4>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8">
+          {/* Índice de Motivação */}
+          <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5 flex flex-col justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Índice de Motivação
+            </span>
+            <div className="flex items-baseline gap-2 my-2">
+              <span className="text-3xl lg:text-4xl font-mono font-black text-white">
+                {currentMotivationIndex.toFixed(2)}
+              </span>
+              <span className={`text-xs px-2.5 py-1 rounded-full border font-bold uppercase ${getLevelColor(currentMotivationLevel)}`}>
+                {currentMotivationLevel}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+              Score baseado em salário de mercado e PPR.
+            </p>
+          </div>
+
+          {/* Índice de Produtividade */}
+          <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5 flex flex-col justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Rendimento de Produtividade
+            </span>
+            <div className="flex items-baseline gap-2 my-2">
+              <span className="text-3xl lg:text-4xl font-mono font-black text-emerald-400">
+                {prodIndex}%
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+              Multiplicador das horas produtivas das máquinas.
+            </p>
+          </div>
+
+          {/* Ativação de Greve */}
+          <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5 flex flex-col justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Ativação de Greve
+            </span>
+            <div className="flex items-center gap-3 my-2">
+              {strikeActivated === 'SIM' ? (
+                <>
+                  <ShieldAlert size={28} className="text-rose-500 animate-bounce" />
+                  <span className="text-2xl font-black text-rose-500 uppercase tracking-wider font-mono">
+                    SIM
+                  </span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={28} className="text-emerald-400" />
+                  <span className="text-2xl font-black text-emerald-400 uppercase tracking-wider font-mono">
+                    NÃO
+                  </span>
+                </>
+              )}
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+              Dois rounds consecutivos em 'RUIM' ativam greve.
+            </p>
+          </div>
+
+          {/* Eventos da Rodada */}
+          <div className="bg-slate-900/50 rounded-2xl p-6 border border-white/5 flex flex-col justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Risco Sindical
+            </span>
+            <div className="my-2">
+              {strikeAlert ? (
+                <div className="flex items-center gap-2 text-yellow-400">
+                  <AlertTriangle size={24} className="animate-pulse" />
+                  <span className="text-sm font-extrabold uppercase font-sans tracking-tight">
+                    ALERTA DE GREVE!
+                  </span>
+                </div>
+              ) : strikeActivated === 'SIM' ? (
+                <div className="flex items-center gap-2 text-rose-500">
+                  <ShieldAlert size={24} className="animate-pulse" />
+                  <span className="text-sm font-extrabold uppercase font-sans tracking-tight">
+                    EM PARALISAÇÃO!
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <span className="text-sm font-medium font-sans">Sindicato sob Controle</span>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+              Controle o clima de trabalho.
+            </p>
+          </div>
+        </div>
+
+        {/* Fatores Detalhados */}
+        <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6">
+          <h5 className="text-sm font-bold text-slate-300 uppercase tracking-wide mb-4">
+            Auditoria de Fatores da Equação de Produtividade (%)
+          </h5>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+            <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5">
+              <span className="text-xxs text-slate-400 uppercase block font-sans mb-1">Treinamento</span>
+              <span className="text-lg font-bold font-mono text-blue-400">x{tf.toFixed(2)}</span>
+            </div>
+            <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5">
+              <span className="text-xxs text-slate-400 uppercase block font-sans mb-1">Salário & Bônus</span>
+              <span className="text-lg font-bold font-mono text-emerald-400">x{mf.toFixed(2)}</span>
+            </div>
+            <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5">
+              <span className="text-xxs text-slate-400 uppercase block font-sans mb-1">Fadiga (Horas)</span>
+              <span className="text-lg font-bold font-mono text-amber-500">x{ff.toFixed(2)}</span>
+            </div>
+            <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5">
+              <span className="text-xxs text-slate-400 uppercase block font-sans mb-1">Insegurança</span>
+              <span className="text-lg font-bold font-mono text-rose-400">x{dif.toFixed(2)}</span>
+            </div>
+            <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 col-span-2 md:col-span-1">
+              <span className="text-xxs text-slate-400 uppercase block font-sans mb-1">Idade Máquinas</span>
+              <span className="text-lg font-bold font-mono text-purple-400">x{maf.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
         {/* 1. Novas Admissões */}

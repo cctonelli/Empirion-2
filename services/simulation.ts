@@ -299,25 +299,98 @@ export const calculateProjections = (
   const operatorConstraint = operatorsRequired > 0 ? Math.min(1, operatorsAvailable / operatorsRequired) : 1;
   const effectiveCapacity = capacity * operatorConstraint;
   
-  // Impacto de Treinamento na Produtividade
-  // Se comprou máquinas novas e investiu pouco em treinamento (< 5%), penaliza produtividade
-  const boughtNew = machinePurchaseOutflow > 0;
+  // --- MODELO APERFEIÇOADO DE PRODUTIVIDADE E MOTIVAÇÃO (STRATEGOS v19.5 - SAPPHIRE) ---
   const trainingPercent = sanitize(decision.hr?.trainingPercent, 0);
-  const trainingPenalty = (boughtNew && trainingPercent < 5) ? 0.75 : 1; // 25% de perda se não treinar
+  const boughtNew = machinePurchaseOutflow > 0;
   
-  // Custo de Treinamento (Baseado na folha da fábrica)
+  // 1. Training Factor (0.75 ~ 1.35)
+  const hired = sanitize(decision.hr?.hired, 0);
+  const hiredFraction = hired / (operatorsAvailable || 1);
+  let trainingFactor = 1.0;
+  if (hiredFraction > 0 || boughtNew) {
+    const pressure = (hiredFraction * 0.9) + (boughtNew ? 0.25 : 0);
+    trainingFactor = 1.0 - pressure + (trainingPercent / 10) * 0.55;
+  } else {
+    trainingFactor = 1.0 + (trainingPercent - 3) * 0.04; // Baseline ao redor de 3%
+  }
+  trainingFactor = Math.max(0.75, Math.min(1.35, trainingFactor));
+
+  // 2. Motivation Factor (0.60 ~ 1.30)
+  const avgMarketSalary = indicators.hr_base.salary * inflationMult;
+  const salaryIndex = currentSalary / avgMarketSalary;
+  const pprRate = sanitize(decision.hr?.participationPercent, 10) / 100;
+  const pprIndex = 1 + (pprRate * 1.5); // PPR até 20% aumenta a motivação
+  const prodBonusPercent = sanitize(decision.hr?.productivityBonusPercent, 0) / 100;
+  const prodBonusIndex = 1 + (prodBonusPercent * 1.25); // Prêmio por Produtividade (até 20%) aumenta motivação
+  let motivationFactor = (0.5 * salaryIndex * pprIndex * prodBonusIndex) + 0.5;
+  motivationFactor = Math.max(0.60, Math.min(1.30, motivationFactor));
+
+  // 3. Fatigue Factor (0.75 ~ 1.00)
+  const extraProductionPercent = sanitize(decision.production?.extraProductionPercent, 0);
+  let fatigueFactor = 1.0;
+  if (extraProductionPercent > 0) {
+    fatigueFactor -= (extraProductionPercent / 100) * 0.5; // Mutação severa de hora extra prolongada
+  }
+  if (selectedShifts === 3) {
+    fatigueFactor -= 0.10;
+  } else if (selectedShifts === 2) {
+    fatigueFactor -= 0.04;
+  }
+  fatigueFactor = Math.max(0.75, Math.min(1.00, fatigueFactor));
+
+  // 4. Demission Insecurity Factor (0.65 ~ 1.00)
+  const fired = sanitize(decision.hr?.fired, 0);
+  const previousStaff = team.kpis?.staffing?.production || 470;
+  const firedFraction = fired / (previousStaff || 1);
+  let demissionInsecurityFactor = 1.0;
+  if (firedFraction > 0) {
+    demissionInsecurityFactor = 1.0 - (firedFraction * 1.5);
+  }
+  demissionInsecurityFactor = Math.max(0.65, Math.min(1.00, demissionInsecurityFactor));
+
+  // 5. Machine Age Factor (0.70 ~ 1.00)
+  const totalAge = currentMachines.reduce((acc, m) => acc + m.age, 0);
+  const avgAge = currentMachines.length > 0 ? (totalAge / currentMachines.length) : 0;
+  let machineAgeFactor = 1.0;
+  if (avgAge > 1) {
+    machineAgeFactor -= (avgAge - 1) * 0.06;
+  }
+  machineAgeFactor = Math.max(0.70, Math.min(1.00, machineAgeFactor));
+
+  // --- RENDIMENTO DE MOTIVAÇÃO E CLIMA (CÁLCULO E GREVE SÊNIOR) ---
+  const motivationIndex = (motivationFactor + (1.0 - demissionInsecurityFactor)) / 2.0;
+  
+  let motivationLevel: 'ALTO' | 'BOM' | 'REGULAR' | 'RUIM' = 'REGULAR';
+  if (motivationIndex >= 1.15) {
+    motivationLevel = 'ALTO';
+  } else if (motivationIndex >= 0.95) {
+    motivationLevel = 'BOM';
+  } else if (motivationIndex >= 0.75) {
+    motivationLevel = 'REGULAR';
+  } else {
+    motivationLevel = 'RUIM';
+  }
+
+  // Lógica de Greve persistida por rodadas consecutivas ruins
+  const prevConsecutiveRuim = team.kpis?.consecutive_ruim_rounds || 0;
+  const consecutiveRuimRounds = motivationLevel === 'RUIM' ? (prevConsecutiveRuim + 1) : 0;
+  const strikeActive = consecutiveRuimRounds >= 2;
+  const strikeFactor = strikeActive ? 0.50 : 1.0; // Paralisação severa de 50%
+  const strikeAlertActive = consecutiveRuimRounds === 1;
+
+  // Índice Combina todos os modificadores
+  const productivityIndex = trainingFactor * motivationFactor * fatigueFactor * demissionInsecurityFactor * machineAgeFactor;
+
+  // Custo de Treinamento (Folha industrial afetada de treinamento)
   const trainingCost = payrollMOD * (trainingPercent / 100);
 
-  let unitsProduced = Math.floor(effectiveCapacity * activityLevel * trainingPenalty);
+  // Unidades produzidas efetivamente
+  let unitsProduced = Math.floor(effectiveCapacity * activityLevel * productivityIndex * strikeFactor);
 
   // Produção Extra (Hora Extra) - Custo MOD 50% superior para o excedente
-  const extraProductionPercent = sanitize(decision.production?.extraProductionPercent, 0);
   if (extraProductionPercent > 0) {
     const extraUnits = Math.floor(unitsProduced * (extraProductionPercent / 100));
-    const extraModCost = (extraUnits / (unitsProduced || 1)) * totalMOD * 1.5;
     unitsProduced += extraUnits;
-    // O custo extra é adicionado ao totalMOD para compor o CPP
-    // totalMOD += extraModCost; // Não alteramos a variável totalMOD aqui para não duplicar no DFC, mas somamos no CPP
   }
   const extraProductionCost = extraProductionPercent > 0 ? (Math.floor(unitsProduced * (extraProductionPercent / (100 + extraProductionPercent))) / (unitsProduced || 1)) * totalMOD * 0.5 : 0;
 
@@ -690,7 +763,6 @@ export const calculateProjections = (
   const lair = operatingProfit - interestExp + totalFinancialRevenue - machineSalesLoss;
   
   // PPR (Participação nos Lucros) - Dinâmico conforme decisão (0-20%)
-  const pprRate = sanitize(decision.hr?.participationPercent, 10) / 100;
   const ppr = lair > 0 ? lair * pprRate : 0;
   const lairAfterPpr = lair - ppr;
 
@@ -701,12 +773,8 @@ export const calculateProjections = (
   const dividendPercent = (sanitize(indicators.dividend_percent, 25) / 100);
   const dividends = netProfit > 0 ? netProfit * dividendPercent : 0;
   
-  // --- 4.6 MOTIVAÇÃO E CLIMA ORGANIZACIONAL (PPR IMPACT) ---
-  // O PPR provisionado (currentPpr) e o salário influenciam a motivação
-  const avgMarketSalary = indicators.hr_base.salary * inflationMult;
-  const salaryIndex = currentSalary / avgMarketSalary;
-  const pprIndex = 1 + (pprRate * 2); // PPR de 10% aumenta motivação em 20%
-  const motivation = Math.min(1.2, salaryIndex * pprIndex);
+  // --- 4.6 MOTIVAÇÃO E CLIMA ORGANIZACIONAL (v19.5 SAPPHIRE) ---
+  const motivation = motivationIndex;
 
   // Fluxo de Caixa (DFC)
   // Recebimento = Vendas à Vista (Atual) + Recebimento Líquido de Clientes (Anterior)
@@ -994,7 +1062,20 @@ export const calculateProjections = (
     kpis: {
       ...team.kpis,
       ...kpis,
-      market_share: projectedMarketShare
+      market_share: projectedMarketShare,
+      // --- CAPÍTULO DE PRODUTIVIDADE E RECURSOS HUMANOS (v19.5 SAPPHIRE) ---
+      productivity_index: Math.round(productivityIndex * 100),
+      motivation_index: parseFloat(motivationIndex.toFixed(3)),
+      motivation_level: motivationLevel,
+      consecutive_ruim_rounds: consecutiveRuimRounds,
+      strike_active: strikeActive,
+      strike_activated: strikeActive ? 'SIM' : 'NÃO',
+      strike_alert_active: strikeAlertActive,
+      training_factor: parseFloat(trainingFactor.toFixed(3)),
+      motivation_factor: parseFloat(motivationFactor.toFixed(3)),
+      fatigue_factor: parseFloat(fatigueFactor.toFixed(3)),
+      demission_insecurity_factor: parseFloat(demissionInsecurityFactor.toFixed(3)),
+      machine_age_factor: parseFloat(machineAgeFactor.toFixed(3))
     }
   };
 

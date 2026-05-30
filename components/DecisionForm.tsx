@@ -497,12 +497,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                               {/* PASSO 5 - CHÃO DE FÁBRICA & OPERAÇÕES */}
                               {activeStep === 4 && (
-                                <FactoryStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                                <FactoryStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} />
                               )}
 
                               {/* PASSO 6 - GESTÃO DE TALENTOS & RH */}
                               {activeStep === 5 && (
-                                <HRStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                                <HRStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} />
                               )}
 
                               {/* PASSO 7 - FINANÇAS & MERCADO DE CAPITAIS */}
