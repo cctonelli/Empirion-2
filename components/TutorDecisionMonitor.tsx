@@ -136,8 +136,15 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
     fetchLiveState(activeTimelineNode);
     if (activeTimelineNode >= round) {
       const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
+      const champTable = isTrial ? 'trial_championships' : 'championships';
       const channel = supabase.channel(`tutor-monitor-${championshipId}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: decisionsTable, filter: `championship_id=eq.${championshipId}` }, () => fetchLiveState(activeTimelineNode))
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: champTable, filter: `id=eq.${championshipId}` }, (payload) => {
+          console.log(`[Tutor Monitor Realtime] Arena atualizada:`, payload.new);
+          if (payload.new) {
+            setArena(prev => prev ? { ...prev, ...payload.new } : (payload.new as Championship));
+          }
+        })
         .subscribe();
       return () => { channel.unsubscribe(); };
     }

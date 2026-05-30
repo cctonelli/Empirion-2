@@ -188,6 +188,45 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     fetchAll();
   }, [navigate]);
 
+  useEffect(() => {
+    if (!activeArena?.id) return;
+
+    const isTrial = activeArena.is_trial;
+    const table = isTrial ? 'trial_championships' : 'championships';
+    const champId = activeArena.id;
+
+    const channel = supabase.channel(`arena-realtime-timer-${champId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: table,
+          filter: `id=eq.${champId}`
+        },
+        (payload) => {
+          console.log(`[Oracle Realtime] Mudança capturada na Arena (${table}):`, payload.new);
+          if (!payload.new) return;
+          setActiveArena(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              ...payload.new,
+              // Preserva as propriedades relacionais locais que não vêm no payload bruto
+              teams: prev.teams,
+              round_rules: (payload.new as any).round_rules || prev.round_rules,
+              market_indicators: (payload.new as any).market_indicators || prev.market_indicators
+            };
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [activeArena?.id, activeArena?.is_trial]);
+
   const projections = useMemo(() => {
     if (!decisions || !activeArena || !activeTeam) return null;
     const currentRound = (activeArena.current_round || 0) + 1;
