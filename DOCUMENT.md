@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.52 Sapphire Platinum (Erradicação da Duplicidade de Lançamento de Empréstimos Compulsórios no Passivo de Curto Prazo, Consistência Estrita Ativo vs Passivo+PL sob Bloqueio Sapphire e Robustecimento do Fallback Determinístico do Oráculo ESDS)
+- **Versão Ativa:** v19.54 Sapphire Amber (Sincronização de PCP e Regulamento de Horas Extras e Turno Adicional em Cenário de Multiturnos no Wizard Industrial)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,25 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.54 Sapphire Amber - Regulamento Dinâmico de Turnos Extras/Horas Adicionais sob Multiturnos e Otimização do Grid Industrial
+- **Data:** 31 de Maio de 2026, 16:15 UTC
+- **Motivo:** Atender ao regulamento do Torneio onde a extensão de produção por Horas Extras (Turno Extra / Horas Adicionais) é exclusiva do regime de Turno Único (1T). Sob múltiplos turnos (multiturnos), as horas extras devem ser desativadas sob a perspectiva de RH e Planejamento e Controle de Produção (PCP), e seu percentual forçado a zero.
+- **Diferenças:**
+  - *Lógica de PCP / Turno Extra Dinâmico:* Reintrodução no Wizard `FactoryStep.tsx` da possibilidade das equipes extenderem capacidade operacional via Turnos Extras quando sob Turno Único (`shifts` = 1). Caso a equipe passe a operar sob multiturnos (`shifts` > 1), o componente desativa automaticamente as configurações de Turno Extra e zera o percentual de horas extras (`extraProductionPercent` = 0) de forma automática.
+  - *Arquitetura Visual Responsiva:* Ajuste do container para uma estrutura de grid fluida de 4 colunas em desktops amplos (`grid-cols-1 md:grid-cols-2 xl:grid-cols-4`), organizando perfeitamente a Jornada Operacional da Fábrica em quatro cards equilibrados: (1) Utilização de Capacidade, (2) Regime de Turnos Ativos, (3) Turno Extra / Horas Adicionais e (4) Investimentos de Longo Prazo em P&D.
+- **Impactos:** Interface de decisões perfeitamente integrada aos regulamentos configurados pelos tutores, forçando estrita obediência às restrições de PCP e RH sem incongruências no estado final enviado para turnover.
+- **Status:** Disponível em Produção, Compilação e Linter 100% Homologados (Zero Warnings).
+
+### v19.53 Sapphire Gold - Consistência Estrita Ativo vs Passivo+PL via Reconhecimento de Overheads de Vendas e Administrativos no DFC e Sincronismo Sênior da Capacidade Industrial
+- **Data:** 31 de Maio de 2026, 15:30 UTC
+- **Motivo:** Sanar por completo a disparidade da equação contábil de validação da auditoria tripla (exatamente 1.089.250,00 BRL) e habilitar a computabilidade correta dos estoques físicos produzidos (`unitsProduced`), WAC unitário, custos e CPV dentro da auditoria `processRoundWithValidation`.
+- **Diferenças:**
+  - *Sincronismo Sênior de Capacidade/Kardex:* Correção na orquestração de `processRoundWithValidation` (em `services/simulation-core.ts`) para ler as máquinas instaladas diretamente do snapshot calculado na projeção atual (`calculatedResult.machines`) em vez de herdar vazias do round anterior da equipe, sanando o bug de produção zerada (`unitsProduced` = 0) na auditoria que causava Kardex e CPV em branco e zerados na Rodada 1.
+  - *Lançamento de Overheads de Vendas e Administrativos no DFC:* Correção no alinhamento do Fluxo de Caixa (em `services/simulation.ts`), integrando as despesas fixas recorrentes de overhead administrativo e de vendas (`prevOpexAdm * inflationMult` e `prevOpexSales * inflationMult`) como desembolsos reais de caixa (`totalOutflows`, `cf.outflow.misc` e `cf.outflow.marketing`), preenchendo a lacuna financeira de 1.089.250,00 BRL e restabelecendo o equilíbrio perfeito do balanço de abertura da Rodada 1.
+  - *Tipagem de Prédio e Maquinários:* Inclusão de tipagem estrita para compatibilidade TypeScript na varredura iterativa do imobilizado fabril.
+- **Impactos:** Sem breaking changes; o motor passa a emitir relatórios integrados completos do Kardex, CPV, Balanço Patrimonial equilibrado e Fluxo de Caixa reconciliado, resultando em validação tripla contábil estrita 100% válida e íntegra (isValid: true).
+- Status: Disponível em Produção, Compilação e Linter 100% Homologados (Zero Warnings).
 
 ### v19.51 Sapphire Gold - Erradicação Definitiva de Estoques Fantasmas no Modo Greenfield via Blindagem Nullish Coalescing
 - **Data:** 30 de Maio de 2026

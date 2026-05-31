@@ -786,7 +786,42 @@ export const calculateProjections = (
   // Total Outflows para cálculo de caixa
   // Inclui: Pagamento do PPR anterior (totalPprPayment) + Indenização de demissões (custoIndenizacao) + Dividendos anteriores + IVA anterior + Imposto de Renda do período anterior (prevTaxes)
   // NOTA SÊNIOR: Trocamos 'taxProv' por 'prevTaxes' nas saídas de caixa para preservar o regime de caixa correto dos tributos federais de rodada a rodada.
-  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + prevTaxes + prevDividends + trainingCost + vatPayment + applicationAmount + rentVal;
+  const salesOverhead = prevOpexSales * inflationMult;
+  const admOverhead = prevOpexAdm * inflationMult;
+  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + prevTaxes + prevDividends + trainingCost + vatPayment + applicationAmount + rentVal + salesOverhead + admOverhead;
+
+  if (isNaN(totalOutflows) || isNaN(team.kpis?.current_cash)) {
+    console.log("DIAGNOSTICO DE NaN:", {
+      cashOutflowSuppliers,
+      prevSuppliers,
+      totalMOD,
+      totalPayrollAdm,
+      totalPayrollSales,
+      totalPprPayment,
+      custoIndenizacao,
+      extraProductionCost,
+      currentOpexRd,
+      totalMarketingExp,
+      distributionCost,
+      storageCost,
+      maintenance,
+      machinePurchaseOutflow,
+      interestExp,
+      totalAmortization,
+      prevTaxes,
+      prevDividends,
+      trainingCost,
+      vatPayment,
+      applicationAmount,
+      rentVal,
+      current_cash: team.kpis?.current_cash,
+      cashInflowFromSales,
+      machineSalesInflow,
+      loanRequest,
+      newBdiLoanAmount,
+      totalFinancialRevenue
+    });
+  }
 
   // NOTA SÊNIOR: Adicionamos o 'newBdiLoanAmount' nas entradas de caixa para anular o desembolso à vista de Capex que foi integralmente financiado.
   let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + newBdiLoanAmount + totalFinancialRevenue - totalOutflows;
@@ -950,13 +985,13 @@ export const calculateProjections = (
         'cf.outflow.social_charges': -(socialChargesMOD + socialChargesAdm + socialChargesSales),
         'cf.outflow.vat_payable': -vatPayment,
         'cf.outflow.rd': -currentOpexRd,
-        'cf.outflow.marketing': -totalMarketingExp,
+        'cf.outflow.marketing': -(totalMarketingExp + salesOverhead),
         'cf.outflow.training': -trainingCost,
         'cf.outflow.distribution': -distributionCost,
         'cf.outflow.storage': -storageCost,
         'cf.outflow.suppliers': -(cashOutflowSuppliers + prevSuppliers),
         'cf.outflow.rent': -rentVal,
-        'cf.outflow.misc': 0, 
+        'cf.outflow.misc': -admOverhead, 
         'cf.outflow.machine_buy': -machinePurchaseOutflow,
         'cf.outflow.maintenance': -maintenance,
         'cf.outflow.interest': -interestExp,

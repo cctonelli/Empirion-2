@@ -166,7 +166,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
   vat_purchases_rate: 0.0, 
   vat_sales_rate: 0.0,     
   dividend_percent: 25.0, 
-  production_hours_period: 976, 
+  production_hours_period: 176, 
   
   raw_material_a_adjust: 1.0,
   raw_material_b_adjust: 1.0,

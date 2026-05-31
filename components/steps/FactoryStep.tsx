@@ -1,5 +1,5 @@
 import React from 'react';
-import { Factory, Zap, HelpCircle, Hammer, Cpu, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Factory, Zap, HelpCircle, Hammer, Cpu, AlertTriangle, ShieldAlert, Clock } from 'lucide-react';
 import { WizardStepHeader } from './shared';
 import { DecisionData, Championship, Team } from '../../types';
 
@@ -52,7 +52,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-8">
         {/* 1. Uso da Capacidade */}
         <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
           <div className="flex justify-between items-start mb-8">
@@ -140,7 +140,12 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
                       key={num}
                       type="button"
                       disabled={isReadOnly || isBlocked}
-                      onClick={() => updateDecision('production.shifts', num)}
+                      onClick={() => {
+                        updateDecision('production.shifts', num);
+                        if (num > 1) {
+                          updateDecision('production.extraProductionPercent', 0);
+                        }
+                      }}
                       className={`
                         py-3 px-1 rounded-xl text-xs font-black uppercase transition-all border flex flex-col items-center justify-center gap-1
                         ${isBlocked 
@@ -169,7 +174,62 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           </div>
         </div>
 
-        {/* 3. Investimento em P&D */}
+        {/* 3. Turno Extra / Horas Adicionais */}
+        <div className={`bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl transition-all duration-300 group ${selectedShifts > 1 ? 'opacity-50 hover:border-white/10' : 'hover:border-orange-500/30 hover:shadow-orange-500/10'}`}>
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2 font-sans">
+                Turno Extra / Horas Adicionais
+              </h5>
+              <p className="text-sm text-slate-400 leading-relaxed font-sans">
+                Produção além da capacidade normal. Aumenta a folha de pagamento em 50% sobre as horas extras e pode gerar fadiga da equipe.
+              </p>
+            </div>
+            <div className="p-4 rounded-2xl bg-orange-600/10 group-hover:bg-orange-600/20 transition-colors shrink-0">
+              <Clock size={28} className="text-orange-400" />
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
+                Percentual de Turno Extra
+                <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
+              </label>
+              <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400">
+                {selectedShifts > 1 ? 0 : (decisions.production.extraProductionPercent ?? 0)}%
+              </span>
+            </div>
+
+            {selectedShifts > 1 ? (
+              <div className="p-4 bg-slate-950 border border-white/5 rounded-xl text-xs font-medium text-slate-400 italic font-sans animate-in fade-in duration-300">
+                Indisponível: Horas extras desativadas em regime de múltiplos turnos (multiturnos).
+              </div>
+            ) : (
+              <input
+                type="range"
+                min="0"
+                max="50"
+                step="5"
+                disabled={isReadOnly}
+                value={decisions.production.extraProductionPercent ?? 0}
+                onChange={e => updateDecision('production.extraProductionPercent', parseInt(e.target.value) || 0)}
+                className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:shadow-lg hover:accent-orange-500 transition-all cursor-pointer"
+              />
+            )}
+
+            <div className="text-xs text-orange-300 space-y-1.5 pt-2 border-t border-white/5 font-sans">
+              <div className="text-center font-medium italic">
+                {selectedShifts > 1 
+                  ? "Utilize múltiplos turnos para expandir a capacidade sem horas-extras."
+                  : "Custo adicional estimado: +50% sobre MOD das horas extras"
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Investimento em P&D */}
         <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
           <div className="flex justify-between items-start mb-8">
             <div>

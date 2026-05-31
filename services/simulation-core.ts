@@ -734,7 +734,7 @@ export function processRoundWithValidation(
   const netPlannedMpbPrice = netMpbPrice * supplierInterestFactor;
 
   // Calculando capacidade e operadores
-  let currentMachines: MachineInstance[] = [...(team.kpis?.machines || [])];
+  let currentMachines: MachineInstance[] = [...(calculatedResult?.machines || team.kpis?.machines || [])];
   const sellIds = decision.machinery?.sell_ids || [];
   if (sellIds.length > 0) {
     currentMachines = currentMachines.filter(m => !sellIds.includes(m.id));
@@ -907,10 +907,10 @@ export function processRoundWithValidation(
     }
   });
 
-  const existingMachineIds = (team.kpis?.machines || []).map(m => m.id);
-  const tempMachines = [...(team.kpis?.machines || [])];
-  tempMachines.forEach(m => {
-    const spec = indicators.machine_specs[m.model];
+  const existingMachineIds = (calculatedResult?.machines || team.kpis?.machines || []).map((m: any) => m.id);
+  const tempMachines = [...(calculatedResult?.machines || team.kpis?.machines || [])];
+  tempMachines.forEach((m: any) => {
+    const spec = indicators.machine_specs[m.model as MachineModel];
     const depVal = m.acquisition_value / (spec?.useful_life_years || 40);
     periodDepreciation += depVal;
   });
