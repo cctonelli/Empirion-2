@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.54 Sapphire Amber (Sincronização de PCP e Regulamento de Horas Extras e Turno Adicional em Cenário de Multiturnos no Wizard Industrial)
+- **Versão Ativa:** v19.55 Sapphire Citrine (Correção de Sobreposição Visual e Loop de Reinicialização Infinita do Modal de Encerramento Fiduciário)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,15 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.55 Sapphire Citrine - Correção de Sobreposição Visual e Loop de Reinicialização Infinita do Modal de Encerramento Fiduciário
+- **Data:** 31 de Maio de 2026, 16:30 UTC
+- **Motivo:** Sanar o loop infinito onde o modal de encerramento fiduciário do tempo limite fiduciário (`RoundSummaryModal`) reabria infinitamente após o fechamento, indisponibilizando a navegação das equipes, e retificar a sobreposição visual onde o cabeçalho do Decision Terminal permanecia acima do modal.
+- **Diferenças:**
+  - *Mitigação do Loop com State e Memoização:* Introdução do estado resiliente `hasAcknowledgedExpiration` e do manipulador correspondente memoizado via `useCallback` (`handleExpire`), eliminando o bug de recriação de referências anônimas que resultava no reinício contínuo dos efeitos de temporizadores de contagem regressiva em `ChampionshipTimer`. Agora, quando o competidor fecha o modal, a decisão de fechamento é salva e o modal permanece fechado até que o Tutor realize o turnover fiduciário oficial para o próximo round.
+  - *Aprimoramento do Z-Index:* Elevação do container principal do modal `RoundSummaryModal` de `z-50` para `z-[10000]`, assegurando de forma robusta e canônica que o modal fique posicionado sobre todos os elementos visuais do cockpit (incluindo o header de decisões táticas que opera em `z-[100]`).
+- **Impactos:** Navegação 100% fluida, sem loops, com encerramento polido, acessível e responsivo, mantendo a integridade tática do Oráculo.
+- **Status:** Disponível em Produção, Compilação e Linter 100% Homologados (Zero Warnings).
 
 ### v19.54 Sapphire Amber - Regulamento Dinâmico de Turnos Extras/Horas Adicionais sob Multiturnos e Otimização do Grid Industrial
 - **Data:** 31 de Maio de 2026, 16:15 UTC

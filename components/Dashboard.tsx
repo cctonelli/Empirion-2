@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Chart from 'react-apexcharts';
 import { 
   TrendingUp, Activity, DollarSign, Target, BarChart3, 
@@ -57,6 +57,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [showRoundSummaryModal, setShowRoundSummaryModal] = useState(false);
   const [summaryRoundNumber, setSummaryRoundNumber] = useState<number>(0);
   const [isExpiredWaiting, setIsExpiredWaiting] = useState(false);
+  const [hasAcknowledgedExpiration, setHasAcknowledgedExpiration] = useState(false);
   const prevRoundRef = useRef<number | null>(null);
 
   const visibleHistory = useMemo(() => {
@@ -349,6 +350,17 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     }
   }, [activeArena?.current_round, activeArena?.is_trial, activeTeam]);
 
+  useEffect(() => {
+    setHasAcknowledgedExpiration(false);
+  }, [activeArena?.current_round]);
+
+  const handleExpire = useCallback(() => {
+    if (hasAcknowledgedExpiration) return;
+    setIsExpiredWaiting(true);
+    setSummaryRoundNumber(activeArena?.current_round || 0);
+    setShowRoundSummaryModal(true);
+  }, [hasAcknowledgedExpiration, activeArena?.current_round]);
+
   const projections = useMemo(() => {
     if (!decisions || !activeArena || !activeTeam) return null;
     const currentRound = (activeArena.current_round || 0) + 1;
@@ -482,11 +494,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               deadlineUnit={activeArena?.deadline_unit}
               isPaused={activeArena?.config?.is_paused}
               remainingMsAtPause={activeArena?.config?.remaining_ms_at_pause}
-              onExpire={() => {
-                setIsExpiredWaiting(true);
-                setSummaryRoundNumber(activeArena?.current_round || 0);
-                setShowRoundSummaryModal(true);
-              }}
+              onExpire={handleExpire}
             />
          </div>
       </section>
@@ -803,7 +811,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         {showRoundSummaryModal && (
           <RoundSummaryModal
             isOpen={showRoundSummaryModal}
-            onClose={() => setShowRoundSummaryModal(false)}
+            onClose={() => {
+              setShowRoundSummaryModal(false);
+              setHasAcknowledgedExpiration(true);
+            }}
             roundNumber={summaryRoundNumber}
             history={history}
             isLockedWaiting={isExpiredWaiting}
