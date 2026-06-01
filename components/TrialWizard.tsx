@@ -375,8 +375,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     setTutorConfig(prev => {
       const updated = { ...prev, starting_mode: mode } as any;
       if (mode === 'start_from_zero') {
-        updated.caixa_inicial = 1000000.00;
-        updated.capital_social = 1000000.00;
+        updated.caixa_inicial = 10000000.00;
+        updated.capital_social = 10000000.00;
         updated.financial_investments = 0;
         updated.inventories = {
           mpa_qty: 0,
@@ -488,9 +488,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const buildingBaseValue = buildingMode === 'owned' ? (tutorConfig.building_value ?? bValDefault) : 0;
     const bAgeDefault = isZeroMode ? 0 : (isBaseMode ? 2 : 10);
     const buildingAge = tutorConfig.building_age ?? bAgeDefault;
-    const landValDefault = isZeroMode ? 1000000 : (isBaseMode ? 1000000 : 1200000);
+    const landValDefault = isZeroMode ? 10000000 : (isBaseMode ? 10000000 : 12000000);
     const calculatedLand = buildingMode === 'owned' ? (tutorConfig.land_value ?? landValDefault) : 0;
-    const installValDefault = isZeroMode ? 200000 : (isBaseMode ? 500000 : 1000000);
+    const installValDefault = isZeroMode ? 200000 : (isBaseMode ? 500000 : 10000000);
     const installationsVal = tutorConfig.installations_value ?? installValDefault;
 
     let bAsset = 0;
@@ -792,7 +792,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     // se não achar pelo ID, pega o PL acumulador
     const liabilitiesPLNode = editableFinancials.balance_sheet.find(n => n.id === 'liabilities_pl');
     const plSub = liabilitiesPLNode?.children?.find(c => c.id === 'equity');
-    return plSub?.value || totalAssets - 1000000;
+    return plSub?.value || totalAssets - 10000000;
   }, [editableFinancials.balance_sheet, totalAssets]);
 
   // Estimativa do E-SDS base do P0
@@ -1267,7 +1267,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                     <div className="p-3 bg-white/5 rounded-xl border border-white/5">
                                       <span className="text-[9px] text-slate-500 uppercase font-sans font-sans">PATR. LÍQUIDO</span>
                                       <span className="block text-xs font-black text-emerald-400 mt-1">
-                                        {formatCurrency(previewFinancials.balance_sheet?.find((n: any) => n.id === 'equity' || n.id === 'equity_group')?.value || (previewFinancials.balance_sheet?.find((n: any) => n.id === 'assets')?.value ?? 1000000) - (previewFinancials.balance_sheet?.find((n: any) => n.id === 'liabilities')?.value ?? 0), selectedPreviewTemplate.config?.currency)}
+                                        {formatCurrency(previewFinancials.balance_sheet?.find((n: any) => n.id === 'equity' || n.id === 'equity_group')?.value || (previewFinancials.balance_sheet?.find((n: any) => n.id === 'assets')?.value ?? 10000000) - (previewFinancials.balance_sheet?.find((n: any) => n.id === 'liabilities')?.value ?? 0), selectedPreviewTemplate.config?.currency)}
                                       </span>
                                     </div>
                                     <div className="p-3 bg-white/5 rounded-xl border border-white/5">
@@ -1721,7 +1721,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              label="Benfeitorias & Instalações ($)" 
                              type="currency" 
                              currency={tutorConfig.currency} 
-                             val={tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 500000.00 : tutorConfig.starting_mode === 'start_with_base' ? 500000.00 : 1000000.00)} 
+                             val={tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 500000.00 : tutorConfig.starting_mode === 'start_with_base' ? 500000.00 : 10000000.00)} 
                              onChange={(v: any) => setTutorConfig({ ...tutorConfig, installations_value: v })} 
                           />
 
@@ -1738,7 +1738,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                    label="Valor do Terreno ($)" 
                                    type="currency" 
                                    currency={tutorConfig.currency} 
-                                   val={tutorConfig.land_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 1000000.00 : tutorConfig.starting_mode === 'start_with_base' ? 1000000.00 : 1200000.00)} 
+                                   val={tutorConfig.land_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 10000000.00 : tutorConfig.starting_mode === 'start_with_base' ? 10000000.00 : 1200000.00)} 
                                    onChange={(v: any) => setTutorConfig({ ...tutorConfig, land_value: v })} 
                                 />
                                 <WizardField 
@@ -2333,11 +2333,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                     </div>
                                     <div className="flex justify-between border-t border-white/5 pt-2">
                                        <span className="text-slate-500">Valor do Terreno:</span>
-                                       <span className="text-white font-bold">{formatCurrency(tutorConfig.building_mode === 'owned' ? (tutorConfig.land_value ?? 1000000) : 0, tutorConfig.currency)}</span>
+                                       <span className="text-white font-bold">{formatCurrency(tutorConfig.building_mode === 'owned' ? (tutorConfig.land_value ?? 10000000) : 0, tutorConfig.currency)}</span>
                                     </div>
                                     <div className="flex justify-between border-t border-white/5 pt-2">
                                        <span className="text-slate-500 font-sans">Benfeitorias & Instalações:</span>
-                                       <span className="text-white font-bold">{formatCurrency(tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 500000 : tutorConfig.starting_mode === 'start_with_base' ? 500000 : 1000000), tutorConfig.currency)}</span>
+                                       <span className="text-white font-bold">{formatCurrency(tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 500000 : tutorConfig.starting_mode === 'start_with_base' ? 500000 : 10000000), tutorConfig.currency)}</span>
                                     </div>
                                  </div>
 
