@@ -308,7 +308,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       finished_unit_val: 0.00
     },
     financial_investments: 0.00 as any, // asserts for starting modes compatibility
-    share_price_initial: 425.00,
+    share_price_initial: 100.00,
     dividend_percent: 25.0,
     dividend_frequency: 1,
     macroOverrides: {}
@@ -1764,7 +1764,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                     onChange={(v: any) => setTutorConfig({ ...tutorConfig, rent_allocation_productive: parseInt(v) || 0 })} 
                                  />
                                  <WizardField 
-                                    label="Rateio Aluguel (Administração) (%)" 
+                                    label="Rateio Aluguel (Admin) (%)" 
                                     type="number" 
                                     val={tutorConfig.rent_allocation_administrative ?? 10} 
                                     onChange={(v: any) => setTutorConfig({ ...tutorConfig, rent_allocation_administrative: parseInt(v) || 0 })} 
