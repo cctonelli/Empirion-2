@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.55 Sapphire Citrine (Correção de Sobreposição Visual e Loop de Reinicialização Infinita do Modal de Encerramento Fiduciário)
+- **Versão Ativa:** v19.56 Sapphire Citrine (Blindagem Contábil Greenfield "Start from Zero", Correções das Demostrações Contábeis e Correção do Trigger do Temporizador do Dashboard)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -749,3 +749,14 @@ project-root/
 - **Data:** Outubro de 2025
 - **Motivo:** Proteção contra quebra de caixas e solvência imediata com juros TR automáticos.
 - **Status:** Em produção.
+
+### v2026-06.1 - Blindagem Greenfield "Start from Zero" e Resolução do Loop de Timer
+- **Data:** Junho de 2026
+- **Motivo:** Correção de inconsistências nas demonstrações contábeis e na Agenda Financeira para campeonatos criados no modo "Start from Zero", além da prevenção de loops de popups de timer expirado.
+- **Diferenças:**
+  - *Balanço Patrimonial Greenfield:* Forçada a zeragem absoluta de todas as contas do Ativo Não Circulante (Imobilizado / Terrenos / Edificações / Benfeitorias e Depreciação Acumulada) e passivos correspondentes de arrendamento de longo prazo (`loans_lt`). Totalizadores recalculados para que Pl (Capital Social) e Ativo Total (Caixa Inicial) coincidam perfeitamente ao centavo.
+  - *Fluxo de Caixa Greenfield:* Zeragem profunda e inicialização fiduciária do DFC com saldo inicial (`cf.start`) e final (`cf.final`) de caixa iguais ao valor parametrizado pelo Tutor, com entradas e saídas operacionais zeradas.
+  - *Agenda Financeira Sem Empréstimos Fantasmas:* Inserção explícita do array `loans: []` em KPIs de inicialização no banco Supabase e em fallbacks locais fiduciários do Dashboard, prevenindo a regeneração automática de empréstimos antigos padrões de S.A. Running em campeonatos iniciados do zero absoluto.
+  - *Resolução de Loop de Popups:* Refatoração do `ChampionshipTimer` para usar referências persistentes (`hasFiredExpire` e `prevTargetDate`) e debouncing interno de transição para o estado expirado. O gatilho de expiração de rodada (`onExpire`) agora se ativa exatamente uma única vez por ciclo fiduciário, eliminando loops infinitos de abertura e fechamento caso o cockpit seja re-renderizado sob tempo corrido nulo ou negativo.
+- **Status:** Em produção.
+

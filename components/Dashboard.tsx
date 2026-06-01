@@ -130,6 +130,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               net_profit: 0,
               kpis: {
                 statements: statementsFallback,
+                loans: isZeroMode ? [] : (kpis.loans || []),
                 machines: kpis.machines || (isZeroMode ? [] : INITIAL_MACHINES_P00),
                 current_cash: defaultCash,
                 stock_quantities: kpis.stock_quantities || (isZeroMode ? { mp_a: 0, mp_b: 0, finished_goods: 0 } : { mp_a: 30150, mp_b: 20100, finished_goods: 0 }),
@@ -281,6 +282,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   net_profit: 0,
                   kpis: {
                     statements: statementsFallback,
+                    loans: isZeroMode ? [] : (kpis.loans || []),
                     machines: kpis.machines || (isZeroMode ? [] : INITIAL_MACHINES_P00),
                     current_cash: defaultCash,
                     stock_quantities: kpis.stock_quantities || (isZeroMode ? { mp_a: 0, mp_b: 0, finished_goods: 0 } : { mp_a: 30150, mp_b: 20100, finished_goods: 0 }),

@@ -62,6 +62,8 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
   
   const startTimeRef = useRef<number | null>(null);
   const lastBeepSec = useRef<number | null>(null);
+  const hasFiredExpire = useRef<boolean>(false);
+  const prevTargetDate = useRef<number | null>(null);
 
   useEffect(() => {
     if (isPaused && remainingMsAtPause !== undefined && remainingMsAtPause !== null) {
@@ -109,8 +111,14 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
     }
 
     const targetDate = startTimeRef.current + durationMs;
+    
+    // Se mudamos de data limite, destrava o disparador
+    if (prevTargetDate.current !== targetDate) {
+      prevTargetDate.current = targetDate;
+      hasFiredExpire.current = false;
+    }
 
-    const timer = setInterval(() => {
+    const updateTick = () => {
       const now = Date.now();
       const diff = targetDate - now;
 
@@ -118,9 +126,11 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
         setTimeLeft('ENCERRADO');
         setIsCritical(true);
         setIsUrgent(true);
-        clearInterval(timer);
-        if (onExpire) onExpire();
-        return;
+        if (onExpire && !hasFiredExpire.current) {
+          hasFiredExpire.current = true;
+          onExpire();
+        }
+        return false; // timer finalizado
       }
 
       // Alerta Sonoro de 10 segundos antes do limite da rodada
@@ -144,6 +154,19 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
       setTimeLeft(formatted);
       setIsCritical(diff < 12 * 60 * 60 * 1000); // 12h para alerta crítico
       setIsUrgent(diff < 2 * 60 * 60 * 1000);    // 2h para pulsante
+      return true;
+    };
+
+    // Executa e calcula sincronamente o primeiro tick logo ao montar
+    const isRunning = updateTick();
+
+    if (!isRunning) return;
+
+    const timer = setInterval(() => {
+      const isStillRunning = updateTick();
+      if (!isStillRunning) {
+        clearInterval(timer);
+      }
     }, 1000);
 
     return () => clearInterval(timer);

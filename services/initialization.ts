@@ -250,7 +250,10 @@ export function validateCleanP0(
   const isZeroMode = starting_mode === 'start_from_zero';
 
   if (isZeroMode) {
-    // 1. Forçar zeragem de todas as contas do Ativo Circulante exceto Caixa Inicial e Aplicações
+    // 1. Forçar caixa ao valor inicial fiduciário parametrizado
+    updateNodeValue(balance_sheet, 'assets.current.cash', initial_cash);
+
+    // 2. Forçar zeragem de todas as contas do Ativo Circulante exceto Caixa Inicial
     updateNodeValue(balance_sheet, 'assets.current.clients', 0);
     updateNodeValue(balance_sheet, 'assets.current.pecld', 0);
     updateNodeValue(balance_sheet, 'assets.current.stock.pa', 0);
@@ -264,31 +267,39 @@ export function validateCleanP0(
       stockNode.children = stockNode.children.filter(c => c.id !== 'assets.current.stock.wip');
     }
 
-    // 2. Forçar zeragem das contas do Passivo Circulante
+    // 3. Forçar zeragem das contas do Passivo Circulante
     updateNodeValue(balance_sheet, 'liabilities.current.suppliers', 0);
+    updateNodeValue(balance_sheet, 'liabilities.current.vat_payable', 0);
     updateNodeValue(balance_sheet, 'liabilities.current.taxes', 0);
     updateNodeValue(balance_sheet, 'liabilities.current.dividends', 0);
     updateNodeValue(balance_sheet, 'liabilities.current.ppr_payable', 0);
     updateNodeValue(balance_sheet, 'liabilities.current.loans_st', 0);
 
-    // 3. Lucros acumulados iniciais devem ser estritamente zero no Greenfield
-    updateNodeValue(balance_sheet, 'equity.profit', 0);
-    
-    // 4. Máquinas no Ativo Imobilizado devem ser rigorosamente 0
+    // 4. Forçar zeragem do Ativo Não Circulante (Imobilizado / Benfeitorias) e Arrendamento de Longo Prazo
+    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.land', 0);
+    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.buildings', 0);
+    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.buildings_deprec', 0);
     updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.machines', 0);
     updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.machines_deprec', 0);
+    updateNodeValue(balance_sheet, 'liabilities.longterm.loans_lt', 0);
 
-    // 5. Recalcular e Reconciliar Ativo = Passivo + PL
+    // 5. Lucros acumulados iniciais devem ser estritamente zero no Greenfield
+    updateNodeValue(balance_sheet, 'equity.profit', 0);
+    
+    // 6. Recalcular e Reconciliar Ativo = Passivo + PL
     recalculateTotalizers(balance_sheet);
-    const assetsVal = balance_sheet.find(n => n.id === 'assets')?.value || 0;
-    const liabPLVal = balance_sheet.find(n => n.id === 'liabilities_pl')?.value || 0;
-    if (assetsVal !== liabPLVal) {
-      const diff = assetsVal - liabPLVal;
-      const eqGroup = findNodeInTree(balance_sheet, 'equity');
-      const capVal = eqGroup?.children?.find(c => c.id === 'equity.capital')?.value || 0;
-      updateNodeValue(balance_sheet, 'equity.capital', capVal + diff);
-      recalculateTotalizers(balance_sheet);
-    }
+    const assetsVal = balance_sheet.find(n => n.id === 'assets')?.value || initial_cash;
+    
+    // Sincronizar o Capital Social ao Ativo Total (Caixa Inicial), garantindo fechamento perfeito
+    updateNodeValue(balance_sheet, 'equity.capital', assetsVal);
+    updateNodeValue(balance_sheet, 'equity.profit', 0);
+    recalculateTotalizers(balance_sheet);
+
+    // 7. Forçar zeragem total e higienização para DRE e Fluxo de Caixa no Greenfield
+    clearFinancialTree(dre);
+    clearFinancialTree(cash_flow);
+    updateNodeValue(cash_flow, 'cf.start', initial_cash);
+    updateNodeValue(cash_flow, 'cf.final', initial_cash);
   }
 
   return { balance_sheet, dre, cash_flow };
@@ -431,30 +442,13 @@ export function generatePureP0(config: TutorP0Config): {
     // O PL (capital social) deve refletir exatamente o valor parametrizado pelo Tutor
     capital = config.capital_social;
 
-    if (buildingMode === 'rented') {
-      // No Greenfield de Aluguel, o Ativo possui o Direito de Uso de instalações/benfeitorias (installationsVal)
-      // e o Passivo possui uma obrigação de Arrendamento correspondente (loans_lt)
-      buildingsAssetValue = installationsVal;
-      buildingAccDeprecOrAmort = 0;
-      land = 0;
-      loans_lt = installationsVal;
-    } else {
-      // Greenfield Próprio (Owned)
-      const realEstateNet = land + buildingsAssetValue - buildingAccDeprecOrAmort;
-      if (realEstateNet > 0) {
-        const funding = config.real_estate_acquisition_funding ?? 'capital';
-        if (funding === 'capital') {
-          // Integralização adicional dos sócios para aquisição do imóvel
-          capital = config.capital_social + realEstateNet;
-          loans_lt = 0;
-        } else {
-          // Financiamento imobiliário / Dívida de longo prazo
-          loans_lt = realEstateNet;
-        }
-      }
-    }
+    // No modo "Start from Zero" absoluto, começamos sem ativos imobilizados ou obrigações de arrendamento/arrendamentos
+    land = 0;
+    buildingsAssetValue = 0;
+    buildingAccDeprecOrAmort = 0;
+    loans_lt = 0;
     loans_st = 0;
-    
+
   } else if (isBaseMode) {
     // Cenário PME - Indústria de Base (Pequena/Média Empresa em Movimento)
     clients = config.clients_initial !== undefined ? config.clients_initial : 300000.00;
@@ -672,14 +666,8 @@ export function generatePureP0(config: TutorP0Config): {
 
   // Helper interno de busca de valor para o rateio e consolidação horizontal fiduciária
   const getTreeValue = (nodes: AccountNode[], id: string): number => {
-    for (const n of nodes) {
-      if (n.id === id) return n.value;
-      if (n.children && n.children.length > 0) {
-        const v = getTreeValue(n.children, id);
-        if (v !== 0) return v;
-      }
-    }
-    return 0;
+    const found = findNodeInTree(nodes, id);
+    return found ? found.value : 0;
   };
 
   // --- RECALCULO HORIZONTAL INTEGRAL E ARITMÉTICO DA DRE ---
