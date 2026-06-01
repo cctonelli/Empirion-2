@@ -96,8 +96,8 @@ const OFFICIAL_PRESETS: any[] = [
       institutionName: 'UNIVERSIDADE EMPIRION',
       tournamentName: 'COPA GREENFIELD REAL ESTATE',
       currency: 'BRL',
-      round_duration: 12,
-      total_rounds: 8,
+      round_duration: 1,
+      total_rounds: 6,
       transparency_level: 'medium',
       gazeta_mode: 'identified',
       activity_type: 'industrial',
@@ -151,8 +151,8 @@ const OFFICIAL_PRESETS: any[] = [
       institutionName: 'UNIVERSIDADE EMPIRION',
       tournamentName: 'COPA BASE SAUDÁVEL',
       currency: 'BRL',
-      round_duration: 12,
-      total_rounds: 8,
+      round_duration: 1,
+      total_rounds: 6,
       transparency_level: 'medium',
       gazeta_mode: 'identified',
       activity_type: 'industrial',
@@ -206,8 +206,8 @@ const OFFICIAL_PRESETS: any[] = [
       institutionName: 'UNIVERSIDADE EMPIRION',
       tournamentName: 'ARENA RUNNING PLENA',
       currency: 'BRL',
-      round_duration: 12,
-      total_rounds: 8,
+      round_duration: 1,
+      total_rounds: 6,
       transparency_level: 'medium',
       gazeta_mode: 'identified',
       activity_type: 'industrial',
@@ -267,8 +267,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     institutionName: 'UNIVERSIDADE EMPIRION',
     tournamentName: 'COPA EMPIRION',
     currency: 'BRL',
-    round_duration: 12,
-    total_rounds: 12,
+    round_duration: 1,
+    total_rounds: 6,
     transparency_level: 'medium',
     gazeta_mode: 'anonymous',
     buildings_depreciation_rate: 10,
@@ -951,7 +951,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <WizardSelect label="MOEDA DE EXIBIÇÃO" val={tutorConfig.currency} onChange={(v:any)=>setTutorConfig({...tutorConfig, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <WizardField label="TEMPO DO ROUND" type="number" val={tutorConfig.round_duration} onChange={(v:any)=>setTutorConfig({...tutorConfig, round_duration: parseInt(v) || 12})} />
+                      <WizardField label="TEMPO DO ROUND" type="number" val={tutorConfig.round_duration} onChange={(v:any)=>setTutorConfig({...tutorConfig, round_duration: parseInt(v) || 1})} />
                       <div className="space-y-4 text-left group">
                         <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 italic">UNIDADE TEMPO</label>
                         <input className="w-full bg-slate-950/40 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-slate-500 outline-none cursor-not-allowed" value="HORAS" readOnly />
