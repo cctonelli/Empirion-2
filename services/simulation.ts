@@ -51,14 +51,18 @@ export const getCumulativeAdjust = (chronogram: any, round: number, key: string)
 
 // Busca valor de conta recursivamente na árvore financeira
 export const findAccountValue = (nodes: AccountNode[], id: string): number => {
-  for (const node of nodes) {
-    if (node.id === id) return node.value;
-    if (node.children && node.children.length > 0) {
-      const val = findAccountValue(node.children, id);
-      if (val !== 0) return val;
+  const findNode = (tree: AccountNode[]): AccountNode | null => {
+    for (const node of tree) {
+      if (node.id === id) return node;
+      if (node.children && node.children.length > 0) {
+        const found = findNode(node.children);
+        if (found) return found;
+      }
     }
-  }
-  return 0;
+    return null;
+  };
+  const target = findNode(nodes);
+  return target ? target.value : 0;
 };
 
 // Injeta novos valores na árvore, recalculando totalizadores
@@ -326,7 +330,9 @@ export const calculateProjections = (
   motivationFactor = Math.max(0.60, Math.min(1.30, motivationFactor));
 
   // 3. Fatigue Factor (0.75 ~ 1.00)
-  const extraProductionPercent = sanitize(decision.production?.extraProductionPercent, 0);
+  const maxShifts = indicators?.max_shifts || 1;
+  const isMultiShiftEnabled = maxShifts > 1;
+  const extraProductionPercent = isMultiShiftEnabled ? 0 : sanitize(decision.production?.extraProductionPercent, 0);
   let fatigueFactor = 1.0;
   if (extraProductionPercent > 0) {
     fatigueFactor -= (extraProductionPercent / 100) * 0.5; // Mutação severa de hora extra prolongada

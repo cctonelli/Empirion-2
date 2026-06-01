@@ -407,14 +407,18 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
             {periods.map((p: any, idx) => {
               const periodData = Array.isArray(p.data) ? p.data : [];
               const findVal = (list: any[]): number => {
-                for (const n of list) {
-                  if (n.id === node.id) return n.value;
-                  if (n.children) {
-                    const v = findVal(n.children);
-                    if (v !== undefined) return v;
+                const search = (subList: any[]): any => {
+                  for (const n of subList) {
+                    if (n.id === node.id) return n.value;
+                    if (n.children && n.children.length > 0) {
+                      const v = search(n.children);
+                      if (v !== undefined) return v;
+                    }
                   }
-                }
-                return 0;
+                  return undefined;
+                };
+                const finalVal = search(list);
+                return finalVal !== undefined ? finalVal : 0;
               };
               
               const val = findVal(periodData);

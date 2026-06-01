@@ -35,7 +35,7 @@ const STEPS = [
   { id: 'review', label: '8. ORÁCULO', icon: ShieldCheck },
 ];
 
-const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean; onDecisionsChange?: (d: DecisionData) => void }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false, onDecisionsChange }) => {
+const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean; isExpiredWaiting?: boolean; onDecisionsChange?: (d: DecisionData) => void }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false, isExpiredWaiting = false, onDecisionsChange }) => {
   const [activeStep, setActiveStep] = useState(0);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
@@ -353,8 +353,17 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
          </div>
 
          <div className="flex items-center gap-4">
-            <button type="button" onClick={handleTransmit} disabled={isSaving || isReadOnly} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.15em] shadow-2xl shadow-emerald-600/20 hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-2 active:scale-95 group cursor-pointer">
-               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Rocket size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} Transmitir Protocolo
+            <button
+               type="button"
+               onClick={handleTransmit}
+               disabled={isSaving || isReadOnly || isExpiredWaiting}
+               className={`px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-[0.15em] transition-all flex items-center gap-2 active:scale-95 group ${
+                 (isReadOnly || isExpiredWaiting)
+                   ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed shadow-none'
+                   : 'bg-emerald-600 text-white hover:bg-white hover:text-emerald-950 shadow-2xl shadow-emerald-600/20 cursor-pointer'
+               }`}
+            >
+               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Rocket size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} {isExpiredWaiting ? 'Aguardando Turnover' : 'Transmitir Protocolo'}
             </button>
          </div>
       </header>

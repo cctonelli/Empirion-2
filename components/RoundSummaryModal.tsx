@@ -176,9 +176,8 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-        {/* Backdrop de vidro desfocado */}
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+      {/* Backdrop de vidro desfocado */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -496,6 +495,5 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
   );
 };

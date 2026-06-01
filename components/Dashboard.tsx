@@ -54,10 +54,40 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [decisions, setDecisions] = useState<any>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+  const isRoundExpired = useMemo(() => {
+    if (!activeArena) return false;
+    const isPaused = activeArena.config?.is_paused;
+    const remainingMsAtPause = activeArena.config?.remaining_ms_at_pause;
+    
+    if (isPaused && remainingMsAtPause !== undefined && remainingMsAtPause !== null) {
+      return remainingMsAtPause <= 0;
+    }
+    
+    const effectiveStart = activeArena.round_started_at || activeArena.created_at;
+    if (!effectiveStart) return false;
+    
+    const deadlineValue = activeArena.deadline_value ?? 7;
+    const deadlineUnit = activeArena.deadline_unit ?? 'days';
+    
+    let durationMs = 0;
+    switch (deadlineUnit) {
+      case 'hours': durationMs = deadlineValue * 60 * 60 * 1000; break;
+      case 'days': durationMs = deadlineValue * 24 * 60 * 60 * 1000; break;
+      case 'weeks': durationMs = deadlineValue * 7 * 24 * 60 * 60 * 1000; break;
+      case 'months': durationMs = deadlineValue * 30 * 24 * 60 * 60 * 1000; break;
+      default: durationMs = 7 * 24 * 60 * 60 * 1000;
+    }
+    
+    const startTime = new Date(effectiveStart).getTime();
+    const targetDate = startTime + durationMs;
+    return Date.now() >= targetDate;
+  }, [activeArena]);
+
   const [showRoundSummaryModal, setShowRoundSummaryModal] = useState(false);
   const [summaryRoundNumber, setSummaryRoundNumber] = useState<number>(0);
   const [isExpiredWaiting, setIsExpiredWaiting] = useState(false);
   const [hasAcknowledgedExpiration, setHasAcknowledgedExpiration] = useState(false);
+  const hasAcknowledgedRef = useRef(false);
   const prevRoundRef = useRef<number | null>(null);
 
   const visibleHistory = useMemo(() => {
@@ -354,14 +384,15 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
   useEffect(() => {
     setHasAcknowledgedExpiration(false);
+    hasAcknowledgedRef.current = false;
   }, [activeArena?.current_round]);
 
   const handleExpire = useCallback(() => {
-    if (hasAcknowledgedExpiration) return;
+    if (hasAcknowledgedRef.current) return;
     setIsExpiredWaiting(true);
     setSummaryRoundNumber(activeArena?.current_round || 0);
     setShowRoundSummaryModal(true);
-  }, [hasAcknowledgedExpiration, activeArena?.current_round]);
+  }, [activeArena?.current_round]);
 
   const projections = useMemo(() => {
     if (!decisions || !activeArena || !activeTeam) return null;
@@ -681,7 +712,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           champId={activeArena?.id} 
                           round={selectedRound} 
                           branch={activeArena?.branch}
-                          isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound}
+                          isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound || isExpiredWaiting || isRoundExpired}
+                          isExpiredWaiting={isExpiredWaiting || isRoundExpired}
                           onDecisionsChange={(d) => setDecisions(d)}
                         />
                       </div>
@@ -816,6 +848,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             onClose={() => {
               setShowRoundSummaryModal(false);
               setHasAcknowledgedExpiration(true);
+              hasAcknowledgedRef.current = true;
             }}
             roundNumber={summaryRoundNumber}
             history={history}
