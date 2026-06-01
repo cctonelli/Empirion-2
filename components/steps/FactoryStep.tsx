@@ -175,7 +175,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
         </div>
 
         {/* 3. Turno Extra / Horas Adicionais */}
-        <div className={`bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl transition-all duration-300 group ${maxShifts > 1 ? 'opacity-50 hover:border-white/10' : 'hover:border-orange-500/30 hover:shadow-orange-500/10'}`}>
+        <div className={`bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl transition-all duration-300 group ${selectedShifts > 1 ? 'opacity-50 hover:border-white/10' : 'hover:border-orange-500/30 hover:shadow-orange-500/10'}`}>
           <div className="flex justify-between items-start mb-8">
             <div>
               <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2 font-sans">
@@ -197,32 +197,32 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
               <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400">
-                {maxShifts > 1 ? 0 : (decisions.production.extraProductionPercent ?? 0)}%
+                {selectedShifts > 1 ? 0 : (decisions.production.extraProductionPercent ?? 0)}%
               </span>
             </div>
 
-            {maxShifts > 1 ? (
+            {selectedShifts > 1 ? (
               <div className="p-4 bg-slate-950 border border-white/5 rounded-xl text-xs font-medium text-slate-400 italic font-sans animate-in fade-in duration-300">
-                Indisponível: Horas extras desativadas em regime de múltiplos turnos (multiturnos) ou torneio configurado para tal.
+                Indisponível: Horas extras só podem ser ativadas operando em Turno Único (1T).
               </div>
             ) : (
               <input
                 type="range"
                 min="0"
-                max="50"
+                max="25"
                 step="5"
                 disabled={isReadOnly}
-                value={decisions.production.extraProductionPercent ?? 0}
-                onChange={e => updateDecision('production.extraProductionPercent', parseInt(e.target.value) || 0)}
+                value={Math.min(25, decisions.production.extraProductionPercent ?? 0)}
+                onChange={e => updateDecision('production.extraProductionPercent', Math.min(25, parseInt(e.target.value) || 0))}
                 className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:shadow-lg hover:accent-orange-500 transition-all cursor-pointer"
               />
             )}
 
             <div className="text-xs text-orange-300 space-y-1.5 pt-2 border-t border-white/5 font-sans">
               <div className="text-center font-medium italic">
-                {maxShifts > 1 
-                  ? "Utilize múltiplos turnos para expandir a capacidade sem horas-extras."
-                  : "Custo adicional estimado: +50% sobre MOD das horas extras"
+                {selectedShifts > 1 
+                  ? "Desativado em regime de múltiplos turnos (multiturnos)."
+                  : "Custo adicional estimado: +50% sobre MOD das horas extras (Máximo 25%)"
                 }
               </div>
             </div>
