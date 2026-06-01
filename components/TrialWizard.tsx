@@ -948,10 +948,10 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <div className="lg:col-span-2">
                       <WizardField label="NOME DO TORNEIO / ARENA" val={tutorConfig.tournamentName} onChange={(v:any)=>setTutorConfig({...tutorConfig, tournamentName: v})} placeholder="Ex: COPA GLOBAL DE SIMULAÇÃO" />
                     </div>
-                    <WizardSelect label="MOEDA DE EXIBIÇÃO" val={tutorConfig.currency} onChange={(v:any)=>setTutorConfig({...tutorConfig, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
+                    <WizardSelect label="MOEDA PADRÃO" val={tutorConfig.currency} onChange={(v:any)=>setTutorConfig({...tutorConfig, currency: v as CurrencyType})} options={[{v:'BRL',l:'REAL (R$)'},{v:'USD',l:'DÓLAR ($)'},{v:'EUR',l:'EURO (€)'},{v:'CNY',l:'YUAN (¥)'},{v:'BTC',l:'BITCOIN (₿)'}]} />
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <WizardField label="TEMPO DO ROUND" type="number" val={tutorConfig.round_duration} onChange={(v:any)=>setTutorConfig({...tutorConfig, round_duration: parseInt(v) || 1})} />
+                      <WizardField label="TEMPO ROUND" type="number" val={tutorConfig.round_duration} onChange={(v:any)=>setTutorConfig({...tutorConfig, round_duration: parseInt(v) || 1})} />
                       <div className="space-y-4 text-left group">
                         <label className="text-[12px] font-black uppercase text-slate-500 tracking-[0.3em] ml-2 italic">UNIDADE TEMPO</label>
                         <input className="w-full bg-slate-950/40 border-4 border-white/5 rounded-3xl px-10 py-7 text-xl font-bold text-slate-500 outline-none cursor-not-allowed" value="HORAS" readOnly />
@@ -1764,7 +1764,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                     onChange={(v: any) => setTutorConfig({ ...tutorConfig, rent_allocation_productive: parseInt(v) || 0 })} 
                                  />
                                  <WizardField 
-                                    label="Rateio Aluguel (Admin) (%)" 
+                                    label="Rateio Aluguel (Administração) (%)" 
                                     type="number" 
                                     val={tutorConfig.rent_allocation_administrative ?? 10} 
                                     onChange={(v: any) => setTutorConfig({ ...tutorConfig, rent_allocation_administrative: parseInt(v) || 0 })} 
