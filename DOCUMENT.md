@@ -222,6 +222,17 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.56 Sapphire Strategos - Turnos Múltiplos e Ativação de Benfeitorias/Imobilizado Fiduciário em Greenfield (P0)
+- **Data:** 01 de Junho de 2026, 15:05 UTC
+- **Motivo:** (1) Corrigir a restrição na tomada de decisão onde as equipes ficavam presas por regulamento ao Turno Único (1T) e não conseguiam selecionar e simular Turnos Múltiplos (2T ou 3T), mesmo quando o Tutor houvera parametrizado no Wizard do P0 o limite de turnos múltiplos. (2) Corrigir a incoerência contábil fiduciária onde o imobilizado do imobiliário (como Benfeitorias e Instalações em Prédio alugado de $500.000) era zerado no motor de inicialização de P0 (`generatePureP0` em modo Greenfield / "Start from Zero") restando apenas em caixa, enquanto o preview de simulação do Tutor (Step 8) o exibia ativo.
+- **Diferenças:**
+  - *Sincronização de Parâmetros de Recursos Humanos:* Refatoração das variáveis enviadas à simulação em `TrialWizard.tsx` (`createChampionshipWithTeams`), sincronizando e injetando as configurações do Tutor (`workforce.max_shifts`, `workforce.production_hours_period`, `workforce.baseSalary` de piso e o quantitativo de operadores por máquina para os modelos Alfa, Beta e Gama) de forma canônica dentro dos indicators (`market_indicators`) de campeonato.
+  - *Desbloqueio Inteligente sob Demanda:* O seletor de regime de turnos em `FactoryStep.tsx` agora lê o parâmetro dinâmico `max_shifts` gravado pelo Tutor. Se configurado para até 2 ou 3 turnos, os botões correspondentes são liberados reativamente para seleção instantânea com o default inicial restrito a 1 Turno (T1).
+  - *Mecânica e Equações Operacionais dos Turnos:* O motor contábil e de planejamento em `simulation.ts` foi validado, confirmando os multiplicadores de capacidade (1.8x para 2T, 2.3x para 3T) e reajustes calculados diretos sobre a folha e Mão de Obra Direta (1.5x para 2T, 2.0x para 3T).
+  - *Ativação e Equilíbrio de Imobilizado Greenfield em P0:* No motor `services/initialization.ts`, a inicialização no modo `isZeroMode` (Greenfield) foi totalmente integrada com as opções imobiliárias e de benfeitorias. O Ativo Imobilizado correspondente (Benfeitorias e Instalações em Prédios de Terceiros se alugado, ou Prédio e Terreno se próprio) é ativado de forma idêntica à do preview, e o equilíbrio patrimonial fiduciário é estabelecido reativamente conforme a origem de recursos escolhida pelo Tutor (`real_estate_acquisition_funding`): via ampliação do Capital Social (funding próprio) ou via Passivo de Financiamentos de Longo Prazo (funding terceiros), mantendo Lucros Acumulados em zero de forma fiduciária.
+- **Impactos:** Desbloqueio e funcionamento impecável de regimes com 2 e 3 turnos e preenchimento 100% simétrico das demonstrações contábeis de abertura de P0 entre o simulador do Tutor e o cockpit dos alunos, garantindo integridade e transparência pedagógica e eliminando perdas inexplicáveis de ativos físicos.
+- **Status:** Disponível em Produção, Compilação e Linter 100% Homologados (Zero Warnings).
+
 ### v19.55 Sapphire Citrine - Correção de Sobreposição Visual e Loop de Reinicialização Infinita do Modal de Encerramento Fiduciário
 - **Data:** 31 de Maio de 2026, 16:30 UTC
 - **Motivo:** Sanar o loop infinito onde o modal de encerramento fiduciário do tempo limite fiduciário (`RoundSummaryModal`) reabria infinitamente após o fechamento, indisponibilizando a navegação das equipes, e retificar a sobreposição visual onde o cabeçalho do Decision Terminal permanecia acima do modal.

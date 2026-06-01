@@ -241,6 +241,7 @@ export interface MacroIndicators {
   vat_sales_rate: number;
   dividend_percent: number;
   production_hours_period: number;
+  max_shifts?: number;
   
   is_black_swan?: boolean;
   black_swan_title?: string;

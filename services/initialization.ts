@@ -442,12 +442,21 @@ export function generatePureP0(config: TutorP0Config): {
     // O PL (capital social) deve refletir exatamente o valor parametrizado pelo Tutor
     capital = config.capital_social;
 
-    // No modo "Start from Zero" absoluto, começamos sem ativos imobilizados ou obrigações de arrendamento/arrendamentos
-    land = 0;
-    buildingsAssetValue = 0;
-    buildingAccDeprecOrAmort = 0;
-    loans_lt = 0;
+    // No modo "Start from Zero", o imobilizado do imobiliário (land, buildingsAssetValue, buildingAccDeprecOrAmort)
+    // NÃO é zerado se houver configurações parametrizadas pelo Tutor. Ele é mantido e contra-balançado por Capital ou Dívida.
+    const netBuilding = land + buildingsAssetValue - buildingAccDeprecOrAmort;
     loans_st = 0;
+    if (netBuilding > 0) {
+      const funding = config.real_estate_acquisition_funding ?? 'capital';
+      if (funding === 'capital') {
+        capital = config.capital_social + netBuilding;
+        loans_lt = 0;
+      } else {
+        loans_lt = netBuilding;
+      }
+    } else {
+      loans_lt = 0;
+    }
 
   } else if (isBaseMode) {
     // Cenário PME - Indústria de Base (Pequena/Média Empresa em Movimento)

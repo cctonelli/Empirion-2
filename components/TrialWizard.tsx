@@ -712,6 +712,27 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         market_indicators: { 
           ...DEFAULT_MACRO, 
           dividend_percent: tutorConfig.dividend_percent, 
+          max_shifts: tutorConfig.workforce.max_shifts ?? 1,
+          production_hours_period: tutorConfig.workforce.production_hours_period ?? 176,
+          hr_base: { 
+            ...DEFAULT_MACRO.hr_base, 
+            salary: tutorConfig.workforce.baseSalary ?? 2000.00 
+          },
+          machine_specs: {
+            ...DEFAULT_MACRO.machine_specs,
+            alfa: {
+              ...DEFAULT_MACRO.machine_specs.alfa,
+              operators_required: tutorConfig.workforce.operatorsPerAlpha ?? 94
+            },
+            beta: {
+              ...DEFAULT_MACRO.machine_specs.beta,
+              operators_required: tutorConfig.workforce.operatorsPerBeta ?? 235
+            },
+            gama: {
+              ...DEFAULT_MACRO.machine_specs.gama,
+              operators_required: tutorConfig.workforce.operatorsPerGamma ?? 445
+            }
+          },
           region_configs: tutorConfig.regions.map(r => ({ id: r.id, name: r.name, currency: r.currency, demand_weight: r.demand_weight }))
         },
         round_rules: roundRules, 
