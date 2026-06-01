@@ -279,14 +279,14 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     
     machines: [
       { model: 'alfa', qty: 3, age: 3, efficiency: 1.0 },
-      { model: 'beta', qty: 2, age: 5, efficiency: 0.95 },
+      { model: 'beta', qty: 2, age: 5, efficiency: 1.0 },
       { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
     ],
     workforce: {
       operatorsPerAlpha: 94,
       operatorsPerBeta: 235,
       operatorsPerGamma: 445,
-      baseSalary: 2000.00,
+      baseSalary: 2500.00,
       trainingLevel: 3,
       production_hours_period: 176,
       max_shifts: 1
