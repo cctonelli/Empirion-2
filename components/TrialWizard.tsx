@@ -38,7 +38,7 @@ const OFFICIAL_PRESETS: any[] = [
     config: {
       tutorName: 'PROF. CLAUDIO TONELLI',
       institutionName: 'UNIVERSIDADE EMPIRION',
-      tournamentName: 'COPA GREENFIELD PURISTA',
+      tournamentName: 'COPA GREENFIELD DO ZERO',
       currency: 'BRL',
       round_duration: 1,
       total_rounds: 6,
@@ -50,10 +50,10 @@ const OFFICIAL_PRESETS: any[] = [
       building_mode: 'rented',
       real_estate_acquisition_funding: 'capital',
       installations_value: 500000,
-      monthly_rent_value: 35000,
-      rent_allocation_productive: 65,
-      rent_allocation_administrative: 25,
-      rent_allocation_sales: 10,
+      monthly_rent_value: 50000,
+      rent_allocation_productive: 70,
+      rent_allocation_administrative: 10,
+      rent_allocation_sales: 20,
       machines: [
         { model: 'alfa', qty: 0, age: 0, efficiency: 1.0 },
         { model: 'beta', qty: 0, age: 0, efficiency: 1.0 },
@@ -147,8 +147,8 @@ const OFFICIAL_PRESETS: any[] = [
     name: 'Cenário PME - Indústria de Base',
     description: 'Estrutura tradicional balanceada e de menor risco contendo 3 máquinas Alfa físicas, estoques ativos e Contas a Receber.',
     config: {
-      tutorName: 'Prof. Silas Silveira',
-      institutionName: 'Fundação Dom Cabral (FDC)',
+      tutorName: 'PROF. CLAUDIO TONELLI',
+      institutionName: 'UNIVERSIDADE EMPIRION',
       tournamentName: 'COPA BASE SAUDÁVEL',
       currency: 'BRL',
       round_duration: 12,
@@ -202,8 +202,8 @@ const OFFICIAL_PRESETS: any[] = [
     name: 'Cenário S.A. - Corporação running',
     description: 'Nível Avançado. Operação com alto volume financeiro acumulado, obrigações, dividendos pré-declarados e estoque em processamento pleno.',
     config: {
-      tutorName: 'Prof. Silas Silveira',
-      institutionName: 'Fundação Dom Cabral (FDC)',
+      tutorName: 'PROF. CLAUDIO TONELLI',
+      institutionName: 'UNIVERSIDADE EMPIRION',
       tournamentName: 'ARENA RUNNING PLENA',
       currency: 'BRL',
       round_duration: 12,
@@ -248,7 +248,7 @@ const OFFICIAL_PRESETS: any[] = [
       suppliers_initial: 717605.00,
       taxes_initial: 14871.31,
       dividends_initial: 11153.49,
-      wip_stock_value: 250000.00,
+      wip_stock_value: 50000.00,
       macroOverrides: {}
     }
   }
@@ -263,9 +263,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   // v19.14 Tutor Controller Config
   const [tutorConfig, setTutorConfig] = useState<TutorP0Config>({
-    tutorName: 'Prof. Silas Silveira',
-    institutionName: 'Fundação Dom Cabral (FDC)',
-    tournamentName: 'COPA EMPIRION CHAMPIONSHIP',
+    tutorName: 'PROF. CLAUDIO TONELLI',
+    institutionName: 'UNIVERSIDADE EMPIRION',
+    tournamentName: 'COPA EMPIRION',
     currency: 'BRL',
     round_duration: 12,
     total_rounds: 12,
@@ -288,7 +288,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       operatorsPerGamma: 445,
       baseSalary: 2000.00,
       trainingLevel: 3,
-      production_hours_period: 976,
+      production_hours_period: 176,
       max_shifts: 1
     },
     regions: [
@@ -443,7 +443,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         updated.suppliers_initial = 717605.00;
         updated.taxes_initial = 14871.31;
         updated.dividends_initial = 11153.49;
-        updated.wip_stock_value = 250000.00;
+        updated.wip_stock_value = 500000.00;
       }
       return updated as TutorP0Config;
     });
@@ -464,7 +464,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const mpa_val = isZeroMode ? 0 : (tutorConfig.inventories.mpa_qty * tutorConfig.inventories.mpa_unit_val);
     const mpb_val = isZeroMode ? 0 : (tutorConfig.inventories.mpb_qty * tutorConfig.inventories.mpb_unit_val);
     const finished_val = isZeroMode ? 0 : (tutorConfig.inventories.finished_qty * tutorConfig.inventories.finished_unit_val);
-    const wip_stock = isZeroMode ? 0 : (tutorConfig.wip_stock_value !== undefined ? tutorConfig.wip_stock_value : (isBaseMode ? 50000 : 250000));
+    const wip_stock = isZeroMode ? 0 : (tutorConfig.wip_stock_value !== undefined ? tutorConfig.wip_stock_value : (isBaseMode ? 50000 : 500000));
     const total_stock = mpa_val + mpb_val + finished_val + wip_stock;
 
     // 2. Contas a receber e a pagar
@@ -941,7 +941,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  <WizardStepTitle icon={<Globe size={32}/>} title="1. IDENTIDADE DA COMPETIÇÃO" desc="Configurações globais de identidade pedagógica externa." />
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
                     <div className="lg:col-span-2">
-                      <WizardField label="NOME DO TUTOR ADMINISTRADOR" val={tutorConfig.tutorName} onChange={(v:any)=>setTutorConfig({...tutorConfig, tutorName: v})} placeholder="Ex: Prof. Silas Silveira" />
+                      <WizardField label="NOME DO TUTOR ADMINISTRADOR" val={tutorConfig.tutorName} onChange={(v:any)=>setTutorConfig({...tutorConfig, tutorName: v})} placeholder="Ex: PROF. CLAUDIO TONELLI" />
                     </div>
                     <WizardField label="NOME DA FACULDADE / ENTIDADE" val={tutorConfig.institutionName} onChange={(v:any)=>setTutorConfig({...tutorConfig, institutionName: v})} placeholder="Ex: FGV / FDC" />
                     
@@ -1462,7 +1462,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <WizardField label="SALÁRIO BASE RECRUTA ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.workforce.baseSalary} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, baseSalary: v}})}/>
                     <WizardSelect label="NÍVEL DE TREINAMENTO INICIAL" val={tutorConfig.workforce.trainingLevel} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, trainingLevel: parseInt(v)}})} options={[{v:'1',l:'NÍVEL 1 (BÁSICO)'},{v:'2',l:'NÍVEL 2 (OPERACIONAL)'},{v:'3',l:'NÍVEL 3 (ESPECIALIZADO)'},{v:'4',l:'NÍVEL 4 (MASTER)'},{v:'5',l:'NÍVEL 5 (ORACLE ENGINE)'}]} />
                     
-                    <WizardField label="HORAS DE PRODUÇÃO DO PERÍODO" type="number" val={tutorConfig.workforce.production_hours_period ?? 976} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, production_hours_period: parseInt(v) || 0}})}/>
+                    <WizardField label="HORAS DE PRODUÇÃO DO PERÍODO" type="number" val={tutorConfig.workforce.production_hours_period ?? 176} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, production_hours_period: parseInt(v) || 0}})}/>
                     <WizardSelect label="MÁXIMO DE TURNOS PERMITIDOS" val={tutorConfig.workforce.max_shifts ?? 1} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, max_shifts: parseInt(v) || 1}})} options={[{v:'1',l:'1 TURNO (REGULAMENTO)'},{v:'2',l:'MÁXIMO DE 2 TURNOS'},{v:'3',l:'MÁXIMO DE 3 TURNOS'}]} />
                     
                     {/* Resumos de RH */}
@@ -1673,7 +1673,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              label="Estoque WIP ($)" 
                              type="currency" 
                              currency={tutorConfig.currency} 
-                             val={tutorConfig.wip_stock_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 50000.00 : 250000.00)} 
+                             val={tutorConfig.wip_stock_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 50000.00 : 500000.00)} 
                              onChange={(v:any)=>setTutorConfig({...tutorConfig, wip_stock_value: parseFloat(v) || 0})}
                              isLocked={tutorConfig.starting_mode === 'start_from_zero'}
                           />
@@ -1721,7 +1721,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              label="Benfeitorias & Instalações ($)" 
                              type="currency" 
                              currency={tutorConfig.currency} 
-                             val={tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 250000.00 : tutorConfig.starting_mode === 'start_with_base' ? 500000.00 : 1000000.00)} 
+                             val={tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 500000.00 : tutorConfig.starting_mode === 'start_with_base' ? 500000.00 : 1000000.00)} 
                              onChange={(v: any) => setTutorConfig({ ...tutorConfig, installations_value: v })} 
                           />
 
@@ -1754,7 +1754,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                     label="Aluguel Mensal ($)" 
                                     type="currency" 
                                     currency={tutorConfig.currency} 
-                                    val={tutorConfig.monthly_rent_value ?? 35000.00} 
+                                    val={tutorConfig.monthly_rent_value ?? 50000.00} 
                                     onChange={(v: any) => setTutorConfig({ ...tutorConfig, monthly_rent_value: v })} 
                                  />
                                  <WizardField 
@@ -2039,7 +2039,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <div className="flex justify-between items-center text-slate-400 border-t border-white/5 pt-1">
                              <span>Estoque em Processo (WIP):</span>
                              <span className="text-sm font-black text-yellow-400">
-                                {formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.wip_stock_value ?? (tutorConfig.starting_mode === 'start_with_base' ? 50000 : 250000)), tutorConfig.currency)}
+                                {formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.wip_stock_value ?? (tutorConfig.starting_mode === 'start_with_base' ? 50000 : 500000)), tutorConfig.currency)}
                              </span>
                           </div>
                        </div>
@@ -2337,7 +2337,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                     </div>
                                     <div className="flex justify-between border-t border-white/5 pt-2">
                                        <span className="text-slate-500 font-sans">Benfeitorias & Instalações:</span>
-                                       <span className="text-white font-bold">{formatCurrency(tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 250000 : tutorConfig.starting_mode === 'start_with_base' ? 500000 : 1000000), tutorConfig.currency)}</span>
+                                       <span className="text-white font-bold">{formatCurrency(tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 500000 : tutorConfig.starting_mode === 'start_with_base' ? 500000 : 1000000), tutorConfig.currency)}</span>
                                     </div>
                                  </div>
 
@@ -2638,7 +2638,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                               {tutorConfig.building_mode === 'rented' ? (
                                 <>
                                   <span className="text-xs font-mono font-bold bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded border border-orange-500/20">LOCADO</span>
-                                  {formatCurrency(tutorConfig.monthly_rent_value ?? 35000.00, tutorConfig.currency)}
+                                  {formatCurrency(tutorConfig.monthly_rent_value ?? 50000.00, tutorConfig.currency)}
                                 </>
                               ) : (
                                 <span className="text-xs font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded border border-white/10">PRÓPRIO (ISENTO)</span>
@@ -2649,11 +2649,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                             <div className="mt-2 pl-4 border-l border-orange-500/20 space-y-1.5 text-[11px] text-slate-400">
                               <div className="flex justify-between">
                                 <span className="text-slate-500">├── Aluguel Produtivo (CIF) ({tutorConfig.rent_allocation_productive ?? 65}%):</span>
-                                <span className="text-emerald-400 font-bold">{formatCurrency(((tutorConfig.monthly_rent_value ?? 35000.00) * (tutorConfig.rent_allocation_productive ?? 65)) / 100, tutorConfig.currency)}</span>
+                                <span className="text-emerald-400 font-bold">{formatCurrency(((tutorConfig.monthly_rent_value ?? 50000.00) * (tutorConfig.rent_allocation_productive ?? 65)) / 100, tutorConfig.currency)}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-slate-500">└── Aluguel OPEX (Adm+Sales) ({((tutorConfig.rent_allocation_administrative ?? 25) + (tutorConfig.rent_allocation_sales ?? 10))}%):</span>
-                                <span className="text-sky-400 font-bold">{formatCurrency(((tutorConfig.monthly_rent_value ?? 35000.00) * ((tutorConfig.rent_allocation_administrative ?? 25) + (tutorConfig.rent_allocation_sales ?? 10))) / 100, tutorConfig.currency)}</span>
+                                <span className="text-sky-400 font-bold">{formatCurrency(((tutorConfig.monthly_rent_value ?? 50000.00) * ((tutorConfig.rent_allocation_administrative ?? 25) + (tutorConfig.rent_allocation_sales ?? 10))) / 100, tutorConfig.currency)}</span>
                               </div>
                             </div>
                           )}
