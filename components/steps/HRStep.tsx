@@ -275,7 +275,7 @@ export const HRStep: React.FC<HRStepProps> = ({
             />
 
             <p className="text-xs text-rose-300 italic font-sans">
-              Custo estimado de rescisão: ~{formatCurrency((decisions.hr.fired || 0) * (decisions.hr.salary || 2000) * 1.5, 'BRL')}
+              Custo estimado de rescisão: ~{formatCurrency((decisions.hr.fired || 0) * (decisions.hr.salary || 2500) * 1.5, 'BRL')}
             </p>
           </div>
         </div>
@@ -313,13 +313,13 @@ export const HRStep: React.FC<HRStepProps> = ({
               step="100"
               disabled={isReadOnly}
               value={decisions.hr.salary}
-              onChange={e => updateDecision('hr.salary', parseInt(e.target.value) || 2000)}
+              onChange={e => updateDecision('hr.salary', parseInt(e.target.value) || 2500)}
               className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-6 py-5 text-2xl lg:text-3xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all font-mono"
-              placeholder="2000"
+              placeholder="2500"
             />
 
             <p className="text-xs text-orange-300 italic font-sans">
-              Mínimo regional sugerido: R$ {currentMacro?.min_salary || 2000}
+              Mínimo regional sugerido: R$ {currentMacro?.min_salary || 2500}
             </p>
           </div>
         </div>
