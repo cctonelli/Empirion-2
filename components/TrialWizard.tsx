@@ -660,7 +660,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           production_hours_period: tutorConfig.workforce.production_hours_period ?? 176,
           hr_base: { 
             ...DEFAULT_MACRO.hr_base, 
-            salary: tutorConfig.workforce.baseSalary ?? 2000.00 
+            salary: tutorConfig.workforce.baseSalary ?? 2500.00 
           },
           machine_specs: {
             ...DEFAULT_MACRO.machine_specs,
@@ -1189,7 +1189,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                     </div>
                                     <div className="flex justify-between text-purple-400">
                                       <span>Salário Base Operador:</span>
-                                      <span className="font-bold">{formatCurrency(selectedPreviewTemplate.config?.workforce?.baseSalary || 2000, selectedPreviewTemplate.config?.currency)}</span>
+                                      <span className="font-bold">{formatCurrency(selectedPreviewTemplate.config?.workforce?.baseSalary || 2500, selectedPreviewTemplate.config?.currency)}</span>
                                     </div>
                                   </div>
                                 </div>
