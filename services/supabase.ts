@@ -637,10 +637,19 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         // Atualiza o preço médio de mercado para o próximo round baseado na realidade deste round
         const nextIndicators = { ...indicatorsForRound, ...nextRules, avg_selling_price: avgPrice };
 
+        // v19.59: Limpeza fiduciária de variáveis de pausa ao realizar Turnover de Rodada
+        const updatedConfig = {
+            ...(champ.config || {}),
+            is_paused: false,
+            paused_at: null,
+            remaining_ms_at_pause: null
+        };
+
         await supabase.from(champTable).update({ 
             current_round: nextRound, 
             market_indicators: nextIndicators,
-            round_started_at: new Date().toISOString() 
+            round_started_at: new Date().toISOString(),
+            config: updatedConfig
         }).eq('id', id);
         
         return { success: true };

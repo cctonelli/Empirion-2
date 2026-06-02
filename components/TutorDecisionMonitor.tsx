@@ -167,19 +167,6 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
     <div className="space-y-12 animate-in fade-in duration-700 pb-40">
       <header className="px-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
          <div className="flex flex-col md:flex-row md:items-end gap-6">
-            {arena && (
-               <div className="mb-2">
-                  <ChampionshipTimer 
-                    variant="compact"
-                    roundStartedAt={arena.round_started_at}
-                    isPaused={arena.config?.is_paused}
-                    remainingMsAtPause={arena.config?.remaining_ms_at_pause}
-                    deadlineValue={arena.deadline_value}
-                    deadlineUnit={arena.deadline_unit}
-                    createdAt={arena.created_at}
-                  />
-               </div>
-            )}
             <div>
                <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">
                   Dashboard do Tutor: <span className="text-orange-500">Comando Estratégico</span>

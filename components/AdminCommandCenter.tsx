@@ -85,7 +85,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
          const isCreatingNew = params.get('mode') === 'new_trial' || isPickingTemplate || showWizard;
          if (!isCreatingNew) {
            const storedArenaId = localStorage.getItem('active_champ_id');
-           if (storedArenaId && !selectedArena) {
+           if (storedArenaId) {
               const found = data.find(c => c.id === storedArenaId);
               if (found) setSelectedArena(found);
            }

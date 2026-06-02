@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.57 Obsidian Diamond (Ajuste Fiduciário e Reconciliação Perfeita de Balanço Patrimonial e Fluxo de Caixa Greenfield "Start from Zero")
+- **Versão Ativa:** v19.59 Obsidian Diamond (Ajustes de Sincronia de Timer, Saneamento Fiduciário de Pausa de Rodadas e Otimização Visual do Dashboard)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -486,7 +486,16 @@ project-root/
 - **Status:** Em Produção (Fidelidade Fiduciária de 100% e Simulação Limpa).
 
 
-### v19.58 Obsidian Diamond - Resolução de Consistência Fiduciária de Dividendos & Mutação Contábil Sênior P0 (Versão Ativa)
+### v19.59 Obsidian Diamond - Sincronia Resiliente de Gestão de Tempo do Cockpit & Saneamento de Pausa (Versão Ativa)
+- **Data:** 02 de Junho de 2026
+- **Motivo:** Corrigir defeito de flutuação temporal do temporizador após comandos consecutivos de Turnover e Pausa de rodadas pelo Tutor, além de remover redundâncias estéticas do monitor de comando estratégico.
+- **Diferenças:**
+  - *Sincronização de Estado de Arena em Tempo de Execução:* Ajuste crítico no método de sincronização do cockpit do Tutor (`fetchData` do `/components/AdminCommandCenter.tsx`) para atualizar dinamicamente o objeto `selectedArena` em memória a cada recarga ou conclusão de turnover. Isso evita referências a carimbos de data (`round_started_at`) depreciados provenientes de rodadas passadas que levavam a erros no cálculo de tempo restante (`remainingMsAtPause`) zerado ("ENCERRADO") no momento da pausa.
+  - *Saneamento Automático de Pause-Config no Turnover:* Injeção de lógica fiduciária na atualização de estado do banco de dados no fechamento de cada round (`processRoundTurnover` em `/services/supabase.ts`) para resetar e limpar as variáveis de interrupção (ex: definindo `is_paused: false` e limpando `remaining_ms_at_pause`), blindando o novo ciclo de cronometragem contra resquícios e sobras de pausas ocorridas no round anterior.
+  - *Otimização Visual de Redundâncias:* Remoção cirúrgica do widget de contagem regressiva `ChampionshipTimer` redundante exibido no interior da tela "Dashboard do Tutor: Comando Estratégico", consolidando a atenção do orador sob o temporizador mestre unificado de topo na barra de ferramentas administrativo.
+- **Status:** Em Produção (Consistência Temporal de 100% e Dashboard Elegante).
+
+### v19.58 Obsidian Diamond - Resolução de Consistência Fiduciária de Dividendos & Mutação Contábil Sênior P0
 - **Data:** 02 de Junho de 2026
 - **Motivo:** Sanar inconsistência crítica de divergência na equação contábil (Ativo diverge de Passivo + PL) gerada pelo provisionamento de dividendos não compensado nos lucros acumulados, e estabilizar a Mutação Contábil Sênior por frequência de período.
 - **Diferenças:**
