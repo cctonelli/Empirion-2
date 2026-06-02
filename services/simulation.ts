@@ -221,20 +221,19 @@ export const calculateProjections = (
     }
   });
 
-  // C. ATUALIZAR IDADE E DEPRECIAÇÃO DAS MÁQUINAS QUE FICARAM (Apenas as que já existiam no início do round)
+  // NOTA SÊNIOR: Cálculo da saída fiduciária real de caixa próprio para compra de máquinas.
+  // Se houver financiamento de fomento (BDI), a saída líquida imediata de caixa próprio é zero.
+  const cashFlowMachBuy = Math.max(0, machinePurchaseOutflow - newBdiLoanAmount);
+
+  // C. ATUALIZAR IDADE E DEPRECIAÇÃO DE TODAS AS MÁQUINAS (Computadas de imediato a partir do período de aquisição)
   const existingMachineIds = (team.kpis?.machines || []).map(m => m.id);
   currentMachines = currentMachines.map(m => {
-    const isNew = !existingMachineIds.includes(m.id);
     const spec = indicators.machine_specs[m.model];
     const depVal = m.acquisition_value / (spec?.useful_life_years || 40);
     
-    // Depreciação já começa a ser computada sobre a nova aquisição a partir do PRÓXIMO período
-    // Então aqui só depreciamos se NÃO for nova
-    if (!isNew) {
-      periodDepreciation += depVal;
-      return { ...m, age: m.age + 1, accumulated_depreciation: m.accumulated_depreciation + depVal };
-    }
-    return { ...m, age: m.age + 1 };
+    // NOTA SÊNIOR / CPC 27: A depreciação é computada de imediato sobre todas as máquinas ativas (existentes e novas)
+    periodDepreciation += depVal;
+    return { ...m, age: m.age + 1, accumulated_depreciation: m.accumulated_depreciation + depVal };
   });
 
   // D. VALOR TOTAL DO IMOBILIZADO (MÁQUINAS)
@@ -692,8 +691,12 @@ export const calculateProjections = (
     }
   });
 
-  // Adicionar Novo Empréstimo BDI se houve compra
+  // Adicionar Novo Empréstimo BDI se houve compra e cobrar juros dele de imediato
+  let newBdiInterest = 0;
   if (newBdiLoanAmount > 0) {
+    newBdiInterest = newBdiLoanAmount * (sanitize(indicators.interest_rate_tr, 2) / 100) * rjInterestAgio;
+    totalInterestExp += newBdiInterest;
+
     currentLoans.push({
       id: `L-BDI-${Math.random().toString(36).substr(2, 5)}`,
       type: 'bdi',
@@ -792,7 +795,7 @@ export const calculateProjections = (
   // NOTA SÊNIOR: Trocamos 'taxProv' por 'prevTaxes' nas saídas de caixa para preservar o regime de caixa correto dos tributos federais de rodada a rodada.
   const salesOverhead = prevOpexSales * inflationMult;
   const admOverhead = prevOpexAdm * inflationMult;
-  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + machinePurchaseOutflow + interestExp + totalAmortization + prevTaxes + prevDividends + trainingCost + vatPayment + applicationAmount + rentVal + salesOverhead + admOverhead;
+  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + cashFlowMachBuy + interestExp + totalAmortization + prevTaxes + prevDividends + trainingCost + vatPayment + applicationAmount + rentVal + salesOverhead + admOverhead;
 
   if (isNaN(totalOutflows) || isNaN(team.kpis?.current_cash)) {
     console.log("DIAGNOSTICO DE NaN:", {
@@ -809,7 +812,7 @@ export const calculateProjections = (
       distributionCost,
       storageCost,
       maintenance,
-      machinePurchaseOutflow,
+      cashFlowMachBuy,
       interestExp,
       totalAmortization,
       prevTaxes,
@@ -827,8 +830,8 @@ export const calculateProjections = (
     });
   }
 
-  // NOTA SÊNIOR: Adicionamos o 'newBdiLoanAmount' nas entradas de caixa para anular o desembolso à vista de Capex que foi integralmente financiado.
-  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + newBdiLoanAmount + totalFinancialRevenue - totalOutflows;
+  // NOTA SÊNIOR: O desembolso de Capex financiado já foi neteado via cashFlowMachBuy, portanto, não adicionamos newBdiLoanAmount nas entradas de caixa para manter a DFC operacional pura.
+  let cashBeforeCompulsory = sanitize(team.kpis?.current_cash, 0) + cashInflowFromSales + machineSalesInflow + loanRequest + totalFinancialRevenue - totalOutflows;
   
   // NOTA SÊNIOR: Mecanismo Inteligente de Resgate Automático de Aplicações Financeiras (v19.11)
   // Se o caixa operacional projetado for ficar negativo, resgatamos os investimentos temporários acumulados
@@ -982,7 +985,7 @@ export const calculateProjections = (
         'cf.inflow.machine_sales': machineSalesInflow,
         'cf.inflow.awards': totalAwards,
         'cf.inflow.investment_withdrawal': investmentWithdrawal, 
-        'cf.inflow.loans_normal': loanRequest + newBdiLoanAmount,
+        'cf.inflow.loans_normal': loanRequest,
         'cf.inflow.compulsory': newCompulsoryLoan,
         'cf.inflow.fin_rev': totalFinancialRevenue,
         'cf.outflow.payroll': -(payrollMOD + payrollAdm + payrollSales + totalPprPayment + custoIndenizacao + productivityBonus + extraProductionCost),
@@ -996,7 +999,7 @@ export const calculateProjections = (
         'cf.outflow.suppliers': -(cashOutflowSuppliers + prevSuppliers),
         'cf.outflow.rent': -rentVal,
         'cf.outflow.misc': -admOverhead, 
-        'cf.outflow.machine_buy': -machinePurchaseOutflow,
+        'cf.outflow.machine_buy': -cashFlowMachBuy,
         'cf.outflow.maintenance': -maintenance,
         'cf.outflow.interest': -interestExp,
         'cf.outflow.amortization': -totalAmortization,

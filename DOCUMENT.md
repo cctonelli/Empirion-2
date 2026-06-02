@@ -401,6 +401,25 @@ project-root/
   - *Atualização de Diretrizes Oficiais:* Inclusão da Seção 11 em `docs/BUSINESS_RULES.md` regulamentando a contabilidade de prédios locados.
 - **Status:** Em Produção (Linter 100% verde, compilação de produção homologada).
 
+### v19.26 Sapphire Diamond Enterprise - Correção de Depreciação Imediata de Novas Máquinas e Integração CPP/CIF
+- **Data:** 02 de Junho de 2026
+- **Motivo:** Garantir a conformidade com as regras contábeis brasileiras (CPC 27) e as melhores práticas contábeis, computando a depreciação de máquinas adquiridas no período a partir do próprio período de aquisição (P1 em diante), além de validar a formação do CPP (CIF) e do Balanço Patrimonial contemplando todas as depreciações (máquinas, prédios e instalações).
+- **Diferenças:**
+  - *Retirada da Carência para Depreciação de Máquinas em P1:* Removida a barreira antiga que excluía novas aquisições da conta de depreciação do período atual no `services/simulation.ts`. Agora, todas as máquinas ativas na rodada (novas e existentes) passam a acumular desgaste de forma justa e oportuna, atualizando o campo `accumulated_depreciation` no Ativo Imobilizado e alimentando a despesa de depreciação no período do fechamento.
+  - *Conformação e Validação do CPP/CIF:* Garantido que o valor total de depreciações acumuladas na rodada englobe máquinas, edifícios e instalações no `periodDepreciation`, o qual integra diretamente a conta final de Custos Indiretos de Fabricação (**CIF Completo**) e consequentemente o Custo do Produto Produzido (**CPP**).
+  - *Sincronia Patrimonial:* Alinhamento completo com o módulo de validação e auditoria sênior no `services/simulation-core.ts` para que todas as demonstrações contábeis se mostrem de forma perfeitamente batida e transparente para os usuários e tutores.
+- **Status:** Em Produção (Compilação e Linter 100% Verificados e Verdes).
+
+### v19.25 Sapphire Diamond Enterprise - Sincronização Patrimonial Fiduciária de P0 e Regra de Fomento BDI Capex no P1
+- **Data:** 02 de Junho de 2026
+- **Motivo:** Corrigir de forma definitiva as inconsistências na visualização de Balanço/DFC de P0 apresentadas no Step 8 do TrialWizard e garantir as corretas regras operacionais e contratuais de fomento BDI de novas máquinas no P1 (carência de principal e juros).
+- **Diferenças:**
+  - *Sintonização de landValDefault e installValDefault:* Sincronizados os valores padrões de Terreno e Instalações no `TrialWizard.tsx` (que antes possuíam disparidades) com os valores reais gerados e processados pelo kernel determinístico fiduciário (`generatePureP0`).
+  - *Equação Patrimonial de Abertura:* Adicionado algoritmo de auto-harmonização e dedução de PL baseando-se no Ativo Circulante real (`initial_cash`) e no Ativo Não Circulante preservado de abertura (`validateCleanP0` do `services/initialization.ts`), blindando as demonstrações contra desbalanço ou resíduos contábeis no Step 8.
+  - *Neteamento de Capex Financiado:* Nova propriedade `cashFlowMachBuy` parametrizada no simulador (`services/simulation.ts`). Para compras financiadas através de empréstimos automáticos de fomento (BDI ou similar), o débito imediato de caixa fiduciário na conta operativa de compras de maquinários (`cf.outflow.machine_buy`) passa a ser estritamente zero, evitando a falsa queima de recursos do caixa próprio da equipe.
+  - *Carga de Juros da Contratação em P1:* Os juros relativos à contratação da parcela fiduciária BDI em P1 (com taxa TR) são cobrados e pagos de imediato na rodada através da despesa financeira (`interestExp`), afetando de forma transparente e oportuna o Fluxo de Caixa no campo de juros (`cf.outflow.interest`). A amortização do principal obedece estritamente ao período de fomento, iniciando-se somente após decorridos os 4 períodos regulamentares de carência.
+- **Status:** Em Produção (Estabilidade e Compilação 100% Homologada no Linter).
+
 ### v19.24 Sapphire Diamond Enterprise - Custeio por Absorção de Prédio Locado e Rateio Dinâmico no P00
 - **Data:** 28 de Maio de 2026
 - **Motivo:** Introduzir o tratamento contábil e fiduciário de absorção regulamentar para prédios industriais locados no início de Campeonatos e arenas (P0), possibilitando a correta distribuição pró-rata dos aluguéis e ativando-os no CIF ou despesas correspondentes a partir das escolhas dinâmicas de rateio do Tutor.

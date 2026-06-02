@@ -113,7 +113,7 @@ Os Custos Indiretos de Fabricação acumulam todos os serviços corporativos nec
     $$\text{Estocagem} = (\text{Qtd Final PA} \times \text{Preço Unit. Armaz. PA}) + (\text{Qtd Final MPA} \times \text{Preço Unit. Armaz. MP}) + (\text{Qtd Final MPB} \times \text{Preço Unit. Armaz. MP})$$
 
 4.  **Depreciação Industrial (Imobilizado do Parque):**
-    *   **Depreciação de Máquinas:** Custo financeiro calculado individualmente para as máquinas operacionais ativas baseado no custo de aquisição e tempo de vida útil econômica útil.
+    *   **Depreciação de Máquinas:** Custo financeiro calculado individualmente para as máquinas operacionais ativas (incluindo as adquiridas no período vigente) baseado no custo de aquisição e vida útil comercial. A depreciação se inicia de imediato no próprio período de aquisição (P1 em diante).
     *   **Depreciação Predial:** Desgaste linear estipulado em 0.2% do valor contábil histórico das edificações de galpões fabris:
         $$\text{Depreciação Predial} = \text{Valor Histórico das Instalações} \times 0.002$$
 

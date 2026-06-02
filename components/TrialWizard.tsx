@@ -477,9 +477,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const buildingBaseValue = buildingMode === 'owned' ? (tutorConfig.building_value ?? bValDefault) : 0;
     const bAgeDefault = isZeroMode ? 0 : (isBaseMode ? 2 : 10);
     const buildingAge = tutorConfig.building_age ?? bAgeDefault;
-    const landValDefault = isZeroMode ? 10000000 : (isBaseMode ? 10000000 : 12000000);
+    const landValDefault = isZeroMode ? 1000000 : (isBaseMode ? 1000000 : 1200000);
     const calculatedLand = buildingMode === 'owned' ? (tutorConfig.land_value ?? landValDefault) : 0;
-    const installValDefault = isZeroMode ? 500000 : (isBaseMode ? 500000 : 10000000);
+    const installValDefault = isZeroMode ? 500000 : (isBaseMode ? 500000 : 1000000);
     const installationsVal = tutorConfig.installations_value ?? installValDefault;
 
     let bAsset = 0;

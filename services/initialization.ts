@@ -255,7 +255,7 @@ export function validateCleanP0(
     const originalBuildings = findNodeInTree(balance_sheet, 'assets.noncurrent.fixed.buildings')?.value || 0;
     const originalBuildingsDeprec = findNodeInTree(balance_sheet, 'assets.noncurrent.fixed.buildings_deprec')?.value || 0;
     const originalLoansLt = findNodeInTree(balance_sheet, 'liabilities.longterm.loans_lt')?.value || 0;
-    const originalCapital = findNodeInTree(balance_sheet, 'equity.capital')?.value || initial_cash;
+    const originalCapital = findNodeInTree(balance_sheet, 'equity.capital')?.value || (initial_cash + originalLand + originalBuildings + originalBuildingsDeprec - originalLoansLt);
 
     // 1. Forçar caixa ao valor inicial fiduciário parametrizado
     updateNodeValue(balance_sheet, 'assets.current.cash', initial_cash);
