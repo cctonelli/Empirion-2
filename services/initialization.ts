@@ -116,6 +116,7 @@ export interface BaseP0Config {
   share_price_initial: number;
   dividend_percent: number;
   dividend_frequency: number; // A cada X rounds
+  profit_incorporation_frequency?: number; // A cada X rounds a contabilidade irá incorporar o saldo de lucros no capital social
   
   // Propriedades Imobiliárias Fiduciárias (v19.16)
   building_mode?: 'rented' | 'owned';

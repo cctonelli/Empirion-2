@@ -78,6 +78,7 @@ const OFFICIAL_PRESETS: any[] = [
       share_price_initial: 100,
       dividend_percent: 25,
       dividend_frequency: 2,
+      profit_incorporation_frequency: 2,
       clients_initial: 0,
       custom_pecld_val: 0,
       suppliers_initial: 0,
@@ -133,6 +134,7 @@ const OFFICIAL_PRESETS: any[] = [
       share_price_initial: 100,
       dividend_percent: 25,
       dividend_frequency: 2,
+      profit_incorporation_frequency: 2,
       clients_initial: 0,
       custom_pecld_val: 0,
       suppliers_initial: 0,
@@ -188,6 +190,7 @@ const OFFICIAL_PRESETS: any[] = [
       share_price_initial: 100,
       dividend_percent: 25,
       dividend_frequency: 2,
+      profit_incorporation_frequency: 2,
       clients_initial: 300000.00,
       custom_pecld_val: 4500.00,
       suppliers_initial: 100000.00,
@@ -243,6 +246,7 @@ const OFFICIAL_PRESETS: any[] = [
       share_price_initial: 100,
       dividend_percent: 25,
       dividend_frequency: 2,
+      profit_incorporation_frequency: 2,
       clients_initial: 2092193.00,
       custom_pecld_val: 18529.46,
       suppliers_initial: 717605.00,
@@ -311,6 +315,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     share_price_initial: 100.00,
     dividend_percent: 25.0,
     dividend_frequency: 1,
+    profit_incorporation_frequency: 2,
     macroOverrides: {}
   });
 
@@ -460,109 +465,30 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const isBaseMode = tutorConfig.starting_mode === 'start_with_base';
     const isRunningMode = tutorConfig.starting_mode === 'start_with_running';
 
-    // 1. Estoques
-    const mpa_val = isZeroMode ? 0 : (tutorConfig.inventories.mpa_qty * tutorConfig.inventories.mpa_unit_val);
-    const mpb_val = isZeroMode ? 0 : (tutorConfig.inventories.mpb_qty * tutorConfig.inventories.mpb_unit_val);
-    const finished_val = isZeroMode ? 0 : (tutorConfig.inventories.finished_qty * tutorConfig.inventories.finished_unit_val);
-    const wip_stock = isZeroMode ? 0 : (tutorConfig.wip_stock_value !== undefined ? tutorConfig.wip_stock_value : (isBaseMode ? 50000 : 500000));
-    const total_stock = mpa_val + mpb_val + finished_val + wip_stock;
+    const bs = p0StatementsResult.balance_sheet;
 
-    // 2. Contas a receber e a pagar
-    const clients = isZeroMode ? 0 : (tutorConfig.clients_initial !== undefined ? tutorConfig.clients_initial : (isBaseMode ? 300000 : 2092193));
-    const pecld = isZeroMode ? 0 : (tutorConfig.custom_pecld_val !== undefined ? tutorConfig.custom_pecld_val : (isBaseMode ? 4500 : 18529.46));
-    const clients_net = Math.max(0, clients - pecld);
-
-    const buildingMode = tutorConfig.building_mode ?? (isZeroMode ? 'rented' : 'owned');
-    const bValDefault = isZeroMode ? 2000000 : (isBaseMode ? 2000000 : 5440000);
-    const buildingBaseValue = buildingMode === 'owned' ? (tutorConfig.building_value ?? bValDefault) : 0;
-    const bAgeDefault = isZeroMode ? 0 : (isBaseMode ? 2 : 10);
-    const buildingAge = tutorConfig.building_age ?? bAgeDefault;
-    const landValDefault = isZeroMode ? 1000000 : (isBaseMode ? 1000000 : 1200000);
-    const calculatedLand = buildingMode === 'owned' ? (tutorConfig.land_value ?? landValDefault) : 0;
-    const installValDefault = isZeroMode ? 500000 : (isBaseMode ? 500000 : 1000000);
-    const installationsVal = tutorConfig.installations_value ?? installValDefault;
-
-    let bAsset = 0;
-    let bDeprec = 0;
-    let land = 0;
-    if (buildingMode === 'owned') {
-      land = calculatedLand;
-      bAsset = buildingBaseValue + installationsVal;
-      bDeprec = buildingBaseValue * 0.04 * buildingAge;
-    } else {
-      bAsset = installationsVal;
-      bDeprec = installationsVal * 0.10 * buildingAge;
-    }
-    const buildingNet = land + bAsset - bDeprec;
-
-    // Ativo Circulante (Caixa ajustado fiduciariamente no Greenfield dependendo da contratação)
-    let cash = tutorConfig.caixa_inicial;
-    let capital = tutorConfig.capital_social;
-    let loans_lt = 0;
-
-    if (isZeroMode) {
-      if (buildingNet > 0) {
-        const funding = tutorConfig.real_estate_acquisition_funding ?? 'capital';
-        if (funding === 'capital') {
-          cash = Math.max(0, tutorConfig.capital_social - buildingNet);
-          capital = tutorConfig.capital_social;
-          loans_lt = 0;
-        } else {
-          cash = tutorConfig.caixa_inicial;
-          capital = tutorConfig.capital_social;
-          loans_lt = buildingNet;
+    // Helper para extrair qualquer ID de conta de forma robusta e recursiva
+    const findNodeValue = (nodes: any[], targetId: string): number => {
+      const search = (list: any[]): { found: boolean; value: number } => {
+        for (const n of list) {
+          if (n.id === targetId) return { found: true, value: n.value };
+          if (n.children && n.children.length > 0) {
+            const res = search(n.children);
+            if (res.found) return res;
+          }
         }
-      } else {
-        cash = tutorConfig.caixa_inicial;
-        loans_lt = 0;
-      }
-    }
+        return { found: false, value: 0 };
+      };
+      return search(nodes).value;
+    };
 
-    const investments = tutorConfig.financial_investments || 0;
-    const current_assets = cash + investments + clients_net + total_stock;
-
-    // Passivos
-    const suppliers = isZeroMode ? 0 : (tutorConfig.suppliers_initial !== undefined ? tutorConfig.suppliers_initial : (isBaseMode ? 100000 : 717605));
-    const taxes = isZeroMode ? 0 : (tutorConfig.taxes_initial !== undefined ? tutorConfig.taxes_initial : (isBaseMode ? 15000 : 14871.31));
-    const dividends = isZeroMode ? 0 : (tutorConfig.dividends_initial !== undefined ? tutorConfig.dividends_initial : (isBaseMode ? 5000 : 11153.49));
-    const ppr = isZeroMode ? 0 : (isBaseMode ? 0 : 25000);
-
-    let machAcqu = 0;
-    let machDeprec = 0;
-    const actualMachines = isZeroMode ? [] : tutorConfig.machines;
-    actualMachines.forEach((mac) => {
-      const modelPrice = mac.model === 'alfa' ? 500000 : mac.model === 'beta' ? 1500000 : 3000000;
-      const acc = modelPrice * mac.qty * mac.age * 0.025 * mac.efficiency;
-      machAcqu += modelPrice * mac.qty;
-      machDeprec += acc;
-    });
-    const machinesNet = machAcqu - machDeprec;
-    const imobilizado = buildingNet + machinesNet;
-    const total_assets = current_assets + imobilizado;
-
-    // Passivos Curtos e Longos
-    const subtotal_liab = suppliers + taxes + dividends + ppr;
-    let excess = total_assets - (subtotal_liab + tutorConfig.capital_social + (isZeroMode ? 0 : isBaseMode ? 25080 : 52171.74));
-    let loans_st = 0;
-
-    if (isZeroMode) {
-      // Já calculado loans_lt e capital
-    } else {
-      if (excess > 0) {
-        if (isBaseMode) {
-          loans_st = excess * 0.3;
-          loans_lt = excess * 0.7;
-        } else {
-          loans_st = excess * 0.6;
-          loans_lt = excess * 0.4;
-        }
-      } else {
-         capital = tutorConfig.capital_social + excess;
-      }
-    }
-
-    const current_liabilities = suppliers + taxes + dividends + loans_st + ppr;
+    // Extração direta do Balanço Patrimonial sênior recalculado de forma reativa
+    const current_assets = findNodeValue(bs, 'assets.current') || 10000000;
+    const current_liabilities = findNodeValue(bs, 'liabilities.current') || 0;
+    const loans_lt = findNodeValue(bs, 'liabilities.longterm.loans_lt') || 0;
     const total_liabilities = current_liabilities + loans_lt;
+    const imobilizado = findNodeValue(bs, 'assets.noncurrent.fixed') || 0;
+    const total_assets = findNodeValue(bs, 'assets') || 10000000;
 
     const liquidity_current = current_liabilities > 0 ? (current_assets / current_liabilities) : 99.9;
     const leverage = total_assets > 0 ? (total_liabilities / total_assets) : 0;
@@ -572,12 +498,18 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const capGama = isZeroMode ? 0 : (tutorConfig.machines[2]?.qty || 0) * 15000;
     const capTotal = capAlpha + capBeta + capGama;
 
-    const m_deprec_round = actualMachines.reduce((acc, m) => {
+    const m_deprec_round = (isZeroMode ? [] : tutorConfig.machines).reduce((acc, m) => {
       const price = m.model === 'alfa' ? 500000 : m.model === 'beta' ? 1500000 : 3000000;
       return acc + (price * m.qty * 0.025 * m.efficiency);
     }, 0);
 
-    const b_deprec_round = buildingMode === 'owned' ? (buildingBaseValue * 0.04) : (installationsVal * 0.10);
+    const buildingMode = tutorConfig.building_mode ?? (isZeroMode ? 'rented' : 'owned');
+    const bValDefault = isZeroMode ? 2000000 : (isBaseMode ? 2000000 : 5440000);
+    const buildingBaseValue = buildingMode === 'owned' ? (tutorConfig.building_value ?? bValDefault) : 0;
+    const installationsVal = tutorConfig.installations_value ?? (isZeroMode ? 500000 : (isBaseMode ? 500000 : 1000000));
+    const parsed_deprec_rate = (tutorConfig.buildings_depreciation_rate !== undefined ? tutorConfig.buildings_depreciation_rate : 10) / 100;
+
+    const b_deprec_round = buildingMode === 'owned' ? (buildingBaseValue * 0.04) : (installationsVal * parsed_deprec_rate);
     const total_deprec_round = m_deprec_round + b_deprec_round;
 
     const total_operators = isZeroMode ? 0 : (
@@ -610,7 +542,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       scoreLeverage,
       scoreOperators
     };
-  }, [tutorConfig]);
+  }, [tutorConfig, p0StatementsResult]);
 
   const [editableFinancials, setEditableFinancials] = useState<{ balance_sheet: AccountNode[], dre: AccountNode[], cash_flow: AccountNode[] }>(() => {
     return {
@@ -795,17 +727,40 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const totalPeriods = tutorConfig.total_rounds + 1;
 
   const totalAssets = useMemo(() => {
-    const assetsFound = editableFinancials.balance_sheet.find(n => n.id === 'assets')?.value;
+    const findNodeValue = (nodes: any[], targetId: string): number => {
+      const search = (list: any[]): { found: boolean; value: number } => {
+        for (const n of list) {
+          if (n.id === targetId) return { found: true, value: n.value };
+          if (n.children && n.children.length > 0) {
+            const res = search(n.children);
+            if (res.found) return res;
+          }
+        }
+        return { found: false, value: 0 };
+      };
+      return search(nodes).value;
+    };
+    const assetsFound = findNodeValue(p0StatementsResult.balance_sheet, 'assets');
     return assetsFound || 9493163.54;
-  }, [editableFinancials.balance_sheet]);
+  }, [p0StatementsResult.balance_sheet]);
 
   const totalEquity = useMemo(() => {
-    const plFound = editableFinancials.balance_sheet.find(n => n.id === 'equity' || n.id === 'equity_group')?.value;
-    // se não achar pelo ID, pega o PL acumulador
-    const liabilitiesPLNode = editableFinancials.balance_sheet.find(n => n.id === 'liabilities_pl');
-    const plSub = liabilitiesPLNode?.children?.find(c => c.id === 'equity');
-    return plSub?.value || totalAssets - 10000000;
-  }, [editableFinancials.balance_sheet, totalAssets]);
+    const findNodeValue = (nodes: any[], targetId: string): number => {
+      const search = (list: any[]): { found: boolean; value: number } => {
+        for (const n of list) {
+          if (n.id === targetId) return { found: true, value: n.value };
+          if (n.children && n.children.length > 0) {
+            const res = search(n.children);
+            if (res.found) return res;
+          }
+        }
+        return { found: false, value: 0 };
+      };
+      return search(nodes).value;
+    };
+    const plFound = findNodeValue(p0StatementsResult.balance_sheet, 'equity');
+    return plFound || totalAssets - 10000000;
+  }, [p0StatementsResult.balance_sheet, totalAssets]);
 
   // Estimativa do E-SDS base do P0
   const estimatedESDS = useMemo(() => {
@@ -1627,6 +1582,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardField label="PREÇO DA AÇÃO INICIAL ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.share_price_initial} onChange={(v:any)=>setTutorConfig({...tutorConfig, share_price_initial: v})} />
                        <WizardField label="DISTRIBUIÇÃO DIVIDENDOS (%)" type="number" val={tutorConfig.dividend_percent} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_percent: parseFloat(v) || 0})} />
                        <WizardSelect label="PAGAR DIVIDENDOS A CADA" val={tutorConfig.dividend_frequency} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_frequency: parseInt(v)})} options={[{v:'1',l:'TODO PERÍODO (ROUNDS)'},{v:'2',l:'A CADA 2 ROUNDS'},{v:'4',l:'A CADA 4 ROUNDS (QUADRIMESTRE)'}]} />
+                       <WizardSelect label="INCORPORAR LUCRO/PREJUÍZO NO CAPITAL SOCIAL" val={tutorConfig.profit_incorporation_frequency ?? 2} onChange={(v:any)=>setTutorConfig({...tutorConfig, profit_incorporation_frequency: parseInt(v)})} options={[{v:'1',l:'TODO PERÍODO (ROUNDS)'},{v:'2',l:'A CADA 2 ROUNDS'},{v:'4',l:'A CADA 4 ROUNDS'}]} />
                        <WizardField label="TAXA DEPRECIAÇÃO INSTALAÇÕES (% a.a.)" type="number" val={tutorConfig.buildings_depreciation_rate ?? 10} onChange={(v:any)=>setTutorConfig({...tutorConfig, buildings_depreciation_rate: parseFloat(v) || 0})} />
                      </div>
 

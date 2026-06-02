@@ -333,6 +333,8 @@ export interface EcosystemConfig {
   market_volatility: number;
   scenario_type: ScenarioType;
   modality_type: ModalityType;
+  profit_incorporation_frequency?: number;
+  dividend_frequency?: number;
 }
 
 export interface ProjectionResult {

@@ -222,6 +222,25 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.59 Obsidian Diamond - Incorporação Automática de Lucros no Capital Social
+- **Data:** 02 de Junho de 2026, 13:20 UTC
+- **Motivo:** Implementação da diretriz contábil e de governança corporativa que permite ao Tutor estipular a frequência com que a contabilidade do simulador irá incorporar de forma automática o saldo de lucros/prejuízos acumulados no Capital Social (ambos do Patrimônio Líquido) das equipes, facilitando a análise e capitalização empresarial ao longo dos rounds do simulador.
+- **Diferenças:**
+  - *Parametrização Flexível do Prazo no Step 6:* Incluído o novo seletor `"INCORPORAR LUCRO/PREJUÍZO NO CAPITAL SOCIAL"` no bloco "ACIONISTA & IPO" logo abaixo do agendamento de dividendos no TrialWizard, munido de três opções sênior de frequência: "TODO PERÍODO (ROUNDS)" (frequência 1), "A CADA 2 ROUNDS" (frequência 2, default) e "A CADA 4 ROUNDS" (frequência 4).
+  - *Mapeamento de Presets:* Todas as configurações padrão e presets de simulação fiduciária de Greenfield e PME (start from zero, start with base, complex SA) foram estendidas para suportar a nova configuração inicial com fallback estável de 2 períodos.
+  - *Motor Contábil de Mutação Patrimonial Automático:* Desenvolvido o algoritmo de transferência permutativa dentro do Patrimônio Líquido em `services/simulation.ts`. Quando o período da rodada atual simulada é um múltiplo do prazo configurado (`currentRound % profitIncFreq === 0`), o balanço patrimonial realiza instantaneamente a transferência agregadora do saldo da conta `"equity.profit"` (Lucro/Prejuízo Acumulado) para a conta `"equity.capital"` (Capital Social), zerando o saldo subsequente de lucros acumulados daquele ciclo de forma fiduciária.
+- **Impactos:** Mutação contábil imediata refletida diretamente no Balanço Patrimonial e painel de demonstrativos das equipes, com validação matemática e preservação automática de igualdade fiduciária absoluta (`Ativo = Passivo + Patrimônio Líquido`).
+- **Status:** Implementado, homologado sob conformidade de linter e compilação em produção.
+
+### v19.58 Obsidian Diamond - Sincronização em Tempo Real das Métricas Fiduciárias no TrialWizard (Step 8)
+- **Data:** 02 de Junho de 2026, 13:00 UTC
+- **Motivo:** Garantir que as métricas do Monitor Fiduciário (`fiduciaryMetrics`) e os demonstrativos contábeis (Balanço, DRE, DFC) apresentados em tempo real na etapa final do Wizard (Step 8) de parametrização do Tutor reflitam instantaneamente e de forma 100% simétrica qualquer modificação orquestrada pelas equipes nos passos anteriores, erradicando qualquer atraso na renderização e discrepâncias no estoque de produtos acabados ou de matérias-primas comuns.
+- **Diferenças:**
+  - *Consolidação da Fonte Única de Verdade:* Redesenhada a lógica de cálculo do hook `fiduciaryMetrics` em `/components/TrialWizard.tsx` para derivar as variáveis patrimoniais e de liquidez (Ativo Circulante, Ativo Total, Exigível a Curto e Longo Prazo, e Imobilizado Comercial/Industrial bruto e líquido) diretamente da estrutura contábil compilada deterministicamente em `p0StatementsResult.balance_sheet`, ao invés de recalcular fórmulas espelhadas offline que divergiam nos valores-padrão de estoque de elaboração (WIP Stock) entre os cômputos de simulação e a interface de monitoramento (p. ex. divergência histórica de $500.000 vs $250.000).
+  - *Sincronismo Síncrono de Ativos e Patrimônio:* Atualizadas as propriedades globais `totalAssets` e `totalEquity` para ler do mesmo feed da árvore do `p0StatementsResult.balance_sheet`, resultando no cálculo imediato sem folga de tempo (single-frame rendering pipeline) de todos os rácios de solvência, Altman Z''-Score, Kanitz, Rating de Crédito, Pilares de Integridade E-SDS (v19.23), e alertas de auditoria corporativa.
+- **Impactos:** Sincronização reativa fiduciária milimétrica e em tempo real de todo o ecossistema financeiro no Step 8, permitindo que alterações de CapEx de máquinas, aluguel vs posse predial, ou compra de insumos reflitam instantaneamente nas notas e demonstrativos.
+- **Status:** Disponível em Produção, Compilação e Linter homologados.
+
 ### v19.57 Obsidian Diamond - Reconciliação Perfeita de Balanço Patrimonial e Fluxo de Caixa Greenfield "Start from Zero"
 - **Data:** 02 de Junho de 2026, 12:15 UTC
 - **Motivo:** Sanar a falha de reconciliação contábil em modo Greenfield ("Start from Zero") onde o investimento em benfeitorias, terreno e construções não ajustava o caixa inicial fiduciário ou o capital social quando financiado por capital próprio, gerando um descolamento do Balanço Patrimonial e Fluxo de Caixa que apresentavam distorções nos saldos finais. Além disso, o "Imobilizado Net Total" exibia valor distorcido de $200.000 devido ao valor padrão incorreto ao invés do parametrizado de $500.000 do Tutor.

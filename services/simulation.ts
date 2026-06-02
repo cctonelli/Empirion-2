@@ -1054,6 +1054,26 @@ export const calculateProjections = (
             'equity.profit': currentProfit + accountingDiff
           });
         }
+
+        // --- MUTAÇÃO CONTÁBIL SÊNIOR: INCORPORAÇÃO AUTOMÁTICA DO LUCRO/PREJUÍZO ACUMULADO NO CAPITAL SOCIAL ---
+        // Recuperamos a frequência parametrizada pelo Tutor em seu ecossistema
+        const profitIncFreq = (ecosystem as any).profit_incorporation_frequency ?? (ecosystem as any).config?.profit_incorporation_frequency;
+        if (profitIncFreq && (profitIncFreq === 1 || profitIncFreq === 2 || profitIncFreq === 4)) {
+          const currentRound = round ?? 0;
+          // Se estamos em um período múltiplo do prazo determinado pelo Tutor
+          if (currentRound > 0 && currentRound % profitIncFreq === 0) {
+            const currentCapital = findAccountValue(bsFinal, 'equity.capital') || 0;
+            const currentProfit = findAccountValue(bsFinal, 'equity.profit') || 0;
+            
+            // Fato Permutativo Contábil do Patrimônio Líquido:
+            // Incorpora o saldo acumulado de Lucro/Prejuízo no Capital Social e zera a conta de Lucro Acumulado
+            bsFinal = injectValues(bsFinal, {
+              'equity.capital': parseFloat((currentCapital + currentProfit).toFixed(2)),
+              'equity.profit': 0
+            });
+          }
+        }
+
         return bsFinal;
       })()
     },
