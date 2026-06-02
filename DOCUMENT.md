@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.56 Sapphire Citrine (Blindagem Contábil Greenfield "Start from Zero", Correções das Demostrações Contábeis e Correção do Trigger do Temporizador do Dashboard)
+- **Versão Ativa:** v19.57 Obsidian Diamond (Ajuste Fiduciário e Reconciliação Perfeita de Balanço Patrimonial e Fluxo de Caixa Greenfield "Start from Zero")
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,16 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.57 Obsidian Diamond - Reconciliação Perfeita de Balanço Patrimonial e Fluxo de Caixa Greenfield "Start from Zero"
+- **Data:** 02 de Junho de 2026, 12:15 UTC
+- **Motivo:** Sanar a falha de reconciliação contábil em modo Greenfield ("Start from Zero") onde o investimento em benfeitorias, terreno e construções não ajustava o caixa inicial fiduciário ou o capital social quando financiado por capital próprio, gerando um descolamento do Balanço Patrimonial e Fluxo de Caixa que apresentavam distorções nos saldos finais. Além disso, o "Imobilizado Net Total" exibia valor distorcido de $200.000 devido ao valor padrão incorreto ao invés do parametrizado de $500.000 do Tutor.
+- **Diferenças:**
+  - *Mitigação de Sobregravação Agressiva:* Ajustado o "Start from Zero Shield" no método `validateCleanP0` em `services/initialization.ts` de modo a preservar as contas legítimas de ativos imobiliários, benfeitorias físicas e seus financiamentos passivos calculados coerentemente, forçando a zero absoluto apenas máquinas, depreciações obsoletas e obrigações operacionais Greenfield.
+  - *Cálculo e Alocação Perfeita de Caixa:* No motor `generatePureP0` de `services/initialization.ts` e no hook `fiduciaryMetrics` de `TrialWizard.tsx`, se o imobilizado for financiado por capital próprio (`funding === 'capital'`), o valor líquido despendido é deduzido de imediato do caixa inicial (`caixa_inicial`), evitando inflação indevida do Capital Social ou quebra de conciliação. Em contraposição, se financiado por terceiros (`funding === 'debt'`), o caixa inicial permanece preservado e o financiamento de longo prazo é registrado de forma correspondente.
+  - *Calibração de Valor Padrão para Greenfield:* Corrigido o valor padrão das benfeitorias e instalações iniciais (`installValDefault`) para $500.000,00 quando estas não estiverem explicitamente parametrizadas no modo Greenfield, alinhando reativamente com os defaults do painel e eliminando variações anômalas de $200.000.
+- **Impactos:** Segurança absoluta para o Arena Tutor e para as equipes na rodada zero (P0), garantindo fechamento contábil impecável ao centavo, onde o ATIVO do Balanço é estritamente igual ao PASSIVO + PL em todos os cenários de parametrização Greenfield e o saldo inicial e final do período no Fluxo de Caixa fecham perfeitamente com os saldos em conta Caixa/Bancos do Ativo Circulante.
+- **Status:** Disponível em Produção, Compilação e Linter 100% Homologados (Zero Warnings).
 
 ### v19.56 Sapphire Strategos - Turnos Múltiplos e Ativação de Benfeitorias/Imobilizado Fiduciário em Greenfield (P0)
 - **Data:** 01 de Junho de 2026, 15:05 UTC

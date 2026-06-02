@@ -250,10 +250,17 @@ export function validateCleanP0(
   const isZeroMode = starting_mode === 'start_from_zero';
 
   if (isZeroMode) {
+    // Preservar os valores do imobilizado do imobiliário e do financiamento calculados no generatePureP0
+    const originalLand = findNodeInTree(balance_sheet, 'assets.noncurrent.fixed.land')?.value || 0;
+    const originalBuildings = findNodeInTree(balance_sheet, 'assets.noncurrent.fixed.buildings')?.value || 0;
+    const originalBuildingsDeprec = findNodeInTree(balance_sheet, 'assets.noncurrent.fixed.buildings_deprec')?.value || 0;
+    const originalLoansLt = findNodeInTree(balance_sheet, 'liabilities.longterm.loans_lt')?.value || 0;
+    const originalCapital = findNodeInTree(balance_sheet, 'equity.capital')?.value || initial_cash;
+
     // 1. Forçar caixa ao valor inicial fiduciário parametrizado
     updateNodeValue(balance_sheet, 'assets.current.cash', initial_cash);
 
-    // 2. Forçar zeragem de todas as contas do Ativo Circulante exceto Caixa Inicial
+    // 2. Forçar zeragem de todas as contas do Ativo Circulante exceto Caixa Inicial e Aplicações
     updateNodeValue(balance_sheet, 'assets.current.clients', 0);
     updateNodeValue(balance_sheet, 'assets.current.pecld', 0);
     updateNodeValue(balance_sheet, 'assets.current.stock.pa', 0);
@@ -275,23 +282,22 @@ export function validateCleanP0(
     updateNodeValue(balance_sheet, 'liabilities.current.ppr_payable', 0);
     updateNodeValue(balance_sheet, 'liabilities.current.loans_st', 0);
 
-    // 4. Forçar zeragem do Ativo Não Circulante (Imobilizado / Benfeitorias) e Arrendamento de Longo Prazo
-    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.land', 0);
-    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.buildings', 0);
-    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.buildings_deprec', 0);
+    // 4. Forçar zeragem do Ativo Não Circulante exceto imobiliário preservado, e do Passivo LP
+    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.land', originalLand);
+    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.buildings', originalBuildings);
+    updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.buildings_deprec', originalBuildingsDeprec);
     updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.machines', 0);
     updateNodeValue(balance_sheet, 'assets.noncurrent.fixed.machines_deprec', 0);
-    updateNodeValue(balance_sheet, 'liabilities.longterm.loans_lt', 0);
+    updateNodeValue(balance_sheet, 'liabilities.longterm.loans_lt', originalLoansLt);
 
     // 5. Lucros acumulados iniciais devem ser estritamente zero no Greenfield
     updateNodeValue(balance_sheet, 'equity.profit', 0);
     
-    // 6. Recalcular e Reconciliar Ativo = Passivo + PL
+    // 6. Recalcular e Reconciliar
     recalculateTotalizers(balance_sheet);
-    const assetsVal = balance_sheet.find(n => n.id === 'assets')?.value || initial_cash;
     
-    // Sincronizar o Capital Social ao Ativo Total (Caixa Inicial), garantindo fechamento perfeito
-    updateNodeValue(balance_sheet, 'equity.capital', assetsVal);
+    // Sincronizar o Capital Social de forma coerente e precisa
+    updateNodeValue(balance_sheet, 'equity.capital', originalCapital);
     updateNodeValue(balance_sheet, 'equity.profit', 0);
     recalculateTotalizers(balance_sheet);
 
@@ -405,7 +411,7 @@ export function generatePureP0(config: TutorP0Config): {
   const calculatedLand = buildingMode === 'owned' ? (config.land_value ?? landValDefault) : 0;
 
   // Benfeitorias/Instalações: sempre existente para montagem de linha de montagem
-  const installValDefault = isZeroMode ? 200000.00 : (isBaseMode ? 500000.00 : 1000000.00);
+  const installValDefault = isZeroMode ? 500000.00 : (isBaseMode ? 500000.00 : 1000000.00);
   const installationsVal = config.installations_value ?? installValDefault;
 
   // Cálculo de Depreciação ou Amortização acumulada:
@@ -449,12 +455,16 @@ export function generatePureP0(config: TutorP0Config): {
     if (netBuilding > 0) {
       const funding = config.real_estate_acquisition_funding ?? 'capital';
       if (funding === 'capital') {
-        capital = config.capital_social + netBuilding;
+        cash = Math.max(0, config.capital_social - netBuilding);
+        capital = config.capital_social;
         loans_lt = 0;
       } else {
+        cash = config.caixa_inicial;
+        capital = config.capital_social;
         loans_lt = netBuilding;
       }
     } else {
+      cash = config.caixa_inicial;
       loans_lt = 0;
     }
 

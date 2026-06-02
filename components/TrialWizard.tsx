@@ -472,17 +472,6 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const pecld = isZeroMode ? 0 : (tutorConfig.custom_pecld_val !== undefined ? tutorConfig.custom_pecld_val : (isBaseMode ? 4500 : 18529.46));
     const clients_net = Math.max(0, clients - pecld);
 
-    // Ativo Circulante
-    const cash = tutorConfig.caixa_inicial;
-    const investments = tutorConfig.financial_investments || 0;
-    const current_assets = cash + investments + clients_net + total_stock;
-
-    // Passivos
-    const suppliers = isZeroMode ? 0 : (tutorConfig.suppliers_initial !== undefined ? tutorConfig.suppliers_initial : (isBaseMode ? 100000 : 717605));
-    const taxes = isZeroMode ? 0 : (tutorConfig.taxes_initial !== undefined ? tutorConfig.taxes_initial : (isBaseMode ? 15000 : 14871.31));
-    const dividends = isZeroMode ? 0 : (tutorConfig.dividends_initial !== undefined ? tutorConfig.dividends_initial : (isBaseMode ? 5000 : 11153.49));
-    const ppr = isZeroMode ? 0 : (isBaseMode ? 0 : 25000);
-
     const buildingMode = tutorConfig.building_mode ?? (isZeroMode ? 'rented' : 'owned');
     const bValDefault = isZeroMode ? 2000000 : (isBaseMode ? 2000000 : 5440000);
     const buildingBaseValue = buildingMode === 'owned' ? (tutorConfig.building_value ?? bValDefault) : 0;
@@ -490,7 +479,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const buildingAge = tutorConfig.building_age ?? bAgeDefault;
     const landValDefault = isZeroMode ? 10000000 : (isBaseMode ? 10000000 : 12000000);
     const calculatedLand = buildingMode === 'owned' ? (tutorConfig.land_value ?? landValDefault) : 0;
-    const installValDefault = isZeroMode ? 200000 : (isBaseMode ? 500000 : 10000000);
+    const installValDefault = isZeroMode ? 500000 : (isBaseMode ? 500000 : 10000000);
     const installationsVal = tutorConfig.installations_value ?? installValDefault;
 
     let bAsset = 0;
@@ -505,6 +494,38 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       bDeprec = installationsVal * 0.10 * buildingAge;
     }
     const buildingNet = land + bAsset - bDeprec;
+
+    // Ativo Circulante (Caixa ajustado fiduciariamente no Greenfield dependendo da contratação)
+    let cash = tutorConfig.caixa_inicial;
+    let capital = tutorConfig.capital_social;
+    let loans_lt = 0;
+
+    if (isZeroMode) {
+      if (buildingNet > 0) {
+        const funding = tutorConfig.real_estate_acquisition_funding ?? 'capital';
+        if (funding === 'capital') {
+          cash = Math.max(0, tutorConfig.capital_social - buildingNet);
+          capital = tutorConfig.capital_social;
+          loans_lt = 0;
+        } else {
+          cash = tutorConfig.caixa_inicial;
+          capital = tutorConfig.capital_social;
+          loans_lt = buildingNet;
+        }
+      } else {
+        cash = tutorConfig.caixa_inicial;
+        loans_lt = 0;
+      }
+    }
+
+    const investments = tutorConfig.financial_investments || 0;
+    const current_assets = cash + investments + clients_net + total_stock;
+
+    // Passivos
+    const suppliers = isZeroMode ? 0 : (tutorConfig.suppliers_initial !== undefined ? tutorConfig.suppliers_initial : (isBaseMode ? 100000 : 717605));
+    const taxes = isZeroMode ? 0 : (tutorConfig.taxes_initial !== undefined ? tutorConfig.taxes_initial : (isBaseMode ? 15000 : 14871.31));
+    const dividends = isZeroMode ? 0 : (tutorConfig.dividends_initial !== undefined ? tutorConfig.dividends_initial : (isBaseMode ? 5000 : 11153.49));
+    const ppr = isZeroMode ? 0 : (isBaseMode ? 0 : 25000);
 
     let machAcqu = 0;
     let machDeprec = 0;
@@ -523,18 +544,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const subtotal_liab = suppliers + taxes + dividends + ppr;
     let excess = total_assets - (subtotal_liab + tutorConfig.capital_social + (isZeroMode ? 0 : isBaseMode ? 25080 : 52171.74));
     let loans_st = 0;
-    let loans_lt = 0;
-    let capital = tutorConfig.capital_social;
 
     if (isZeroMode) {
-      if (buildingNet + land > 0) {
-        const funding = tutorConfig.real_estate_acquisition_funding ?? 'capital';
-        if (funding === 'capital') {
-          capital = tutorConfig.capital_social + buildingNet + land;
-        } else {
-          loans_lt = buildingNet + land;
-        }
-      }
+      // Já calculado loans_lt e capital
     } else {
       if (excess > 0) {
         if (isBaseMode) {

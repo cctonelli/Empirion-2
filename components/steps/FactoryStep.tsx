@@ -179,7 +179,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           <div className="flex justify-between items-start mb-8">
             <div>
               <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2 font-sans">
-                Hora Extra 
+                Horas Extras 
               </h5>
               <p className="text-sm text-slate-400 leading-relaxed font-sans">
                 Produção além da capacidade normal. Aumenta a folha de pagamento em 50% sobre as horas extras e pode gerar fadiga da equipe.
@@ -193,7 +193,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
-                Percentual de Turno Extra
+                % de Turno Extra
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
               <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400">
@@ -248,7 +248,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
-                Percentual do Faturamento Bruto
+                % do Faturamento Bruto
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
               <span className="text-2xl lg:text-3xl font-mono font-bold text-blue-400">
