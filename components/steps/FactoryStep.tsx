@@ -179,7 +179,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           <div className="flex justify-between items-start mb-8">
             <div>
               <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2 font-sans">
-                Turno Extra / Horas Adicionais
+                Hora Extra 
               </h5>
               <p className="text-sm text-slate-400 leading-relaxed font-sans">
                 Produção além da capacidade normal. Aumenta a folha de pagamento em 50% sobre as horas extras e pode gerar fadiga da equipe.
