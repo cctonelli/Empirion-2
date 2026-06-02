@@ -485,6 +485,15 @@ project-root/
   - *Mitigação de Juros e Compromissos Fantasmas:* Limpeza cirúrgica nos arrays de `commitments` de contas a pagar (`payables`) e contas a receber (`receivables`) no Round 0 de cada equipe, evitando a imposição fiduciária de dívidas antigas a equipes de arenas iniciadas inteiramente do zero.
 - **Status:** Em Produção (Fidelidade Fiduciária de 100% e Simulação Limpa).
 
+
+### v19.58 Obsidian Diamond - Resolução de Consistência Fiduciária de Dividendos & Mutação Contábil Sênior P0 (Versão Ativa)
+- **Data:** 02 de Junho de 2026
+- **Motivo:** Sanar inconsistência crítica de divergência na equação contábil (Ativo diverge de Passivo + PL) gerada pelo provisionamento de dividendos não compensado nos lucros acumulados, e estabilizar a Mutação Contábil Sênior por frequência de período.
+- **Diferenças:**
+  - *Dedução de Dividendos em equity.profit:* Ao apropriar dividendos no Passivo Circulante (`liabilities.current.dividends`), o montante correspondente é agora deduzido da conta de Lucros Acumulados (`equity.profit`) na mesma proporção em ambos os blocos de cálculo (`bsValues` e a reconciliação do `balance_sheet` com premiações), blindando a Equação Fundamental Contábil (Ativo = Passivo + PL) contra lacunas bilaterais.
+  - *Mutação Contábil Parametrizada:* Consolidação formal do comportamento automático de mutação do PL baseada no campo "INCORPORAR LUCRO/PREJUÍZO NO CAPITAL SOCIAL" (`profit_incorporation_frequency` de prazos 1, 2 ou 4 rounds), efetuando o fato permutativo fiduciário de integralização automática e zeramento de lucro acumulado.
+- **Status:** Em Produção (Consistência Absoluta AA+ com validação Z-Guard integrada).
+
 ### v19.14 Sapphire Diamond Enterprise - P0 Pro Configurator & Interactive Real-Time Preview
 - **Data:** 26 de Maio de 2026
 - **Motivo:** Implementação robusta do P0 Configurator focado na autonomia estratégica do Tutor e no deploy preciso de arenas. Garantir a consistência dos 3 modos estruturais e auditoria dinâmica em tempo real antes da inicialização do torneio.

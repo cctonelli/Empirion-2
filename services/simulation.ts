@@ -911,7 +911,7 @@ export const calculateProjections = (
     'liabilities.current.dividends': dividends, // Provisiona os novos dividendos, os anteriores (prevDividends) foram pagos
     'liabilities.current.ppr_payable': ppr, // Provisiona o PPR calculado nesta rodada para pagar na próxima
     'liabilities.longterm.loans_lt': totalLoansLT,
-    'equity.profit': findAccountValue(prevBS, 'equity.profit') + netProfit
+    'equity.profit': findAccountValue(prevBS, 'equity.profit') + netProfit - dividends
   };
 
   const finalBS = injectValues(JSON.parse(JSON.stringify(prevBS)), bsValues);
@@ -1012,7 +1012,7 @@ export const calculateProjections = (
       balance_sheet: (() => {
         let bsFinal = injectValues(JSON.parse(JSON.stringify(finalBS)), {
           'assets.current.cash': finalCashWithAwards,
-          'equity.profit': findAccountValue(prevBS, 'equity.profit') + finalNetProfit
+          'equity.profit': findAccountValue(prevBS, 'equity.profit') + finalNetProfit - dividends
         });
 
         // NOTA SÊNIOR: Reconciliação Científica de Float Precision (Ativo vs Passivo + PL)
