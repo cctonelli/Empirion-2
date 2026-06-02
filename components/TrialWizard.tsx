@@ -344,7 +344,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
   // Teams counts and state
   const [humanTeamsCount, setHumanTeamsCount] = useState(1);
-  const [botsCount, setBotsCount] = useState(2);
+  const [botsCount, setBotsCount] = useState(0);
   const [teamNames, setTeamNames] = useState<string[]>(['EQUIPE TRIAL 01']);
 
   // Chronogram parameters of rounds
