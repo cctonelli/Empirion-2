@@ -222,7 +222,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
               <div className="text-center font-medium italic">
                 {selectedShifts > 1 
                   ? "Desativado em regime de múltiplos turnos (multiturnos)."
-                  : "Custo adicional estimado: +50% sobre MOD das horas extras (Máximo 25%)"
+                  : "Custo adicional estimado: +50% sobre custo-hora da MOD das horas extras (Máximo 25%)"
                 }
               </div>
             </div>

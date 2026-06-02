@@ -216,7 +216,7 @@ export const DEFAULT_MACRO: MacroIndicators = {
     sales: { count: 10, salaries: 4 },
     production: { count: 470, salaries: 1 }
   },
-  hr_base: { salary: 2000.00 },
+  hr_base: { salary: 2500.00 },
   exchange_rates: { 
     BRL: 1.0, 
     USD: 5.25, 

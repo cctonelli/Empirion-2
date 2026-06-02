@@ -175,7 +175,7 @@ const OFFICIAL_PRESETS: any[] = [
         operatorsPerAlpha: 94,
         operatorsPerBeta: 235,
         operatorsPerGamma: 445,
-        baseSalary: 2800,
+        baseSalary: 2500,
         trainingLevel: 2
       },
       regions: [
@@ -231,7 +231,7 @@ const OFFICIAL_PRESETS: any[] = [
         operatorsPerAlpha: 94,
         operatorsPerBeta: 235,
         operatorsPerGamma: 445,
-        baseSalary: 3200,
+        baseSalary: 2500,
         trainingLevel: 3
       },
       regions: [
