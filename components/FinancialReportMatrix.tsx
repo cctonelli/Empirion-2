@@ -323,6 +323,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       { key: 'cpv.totalCPP', label: '(=) CUSTO DE PRODUÇÃO DO PERÍODO (CPP)', desc: 'Custo real empregado na produção da rodada', formatter: (v: number) => formatCurrency(v || 0, currency), isClass: 'bg-white/5 font-bold border-y border-white/10 text-white' },
       { key: 'cpv.estoqueInicialPA', label: '(+) Estoque Inicial de PA', desc: 'Estoque físico valorado de abertura na rodada', formatter: (v: number) => formatCurrency(v || 0, currency) },
       { key: 'cpv.estoqueFinalPA', label: '(-) Estoque Final de PA', desc: 'Estoque físico valorado de encerramento na rodada', formatter: (v: number) => formatCurrency(v || 0, currency) },
+      { key: 'cpv.custoUnitarioProducao', label: 'Custo Unitário de PA', desc: 'Custo unitário do Produto Acabado', formatter: (v: number) => formatCurrency(v || 0, currency) },
       { key: 'cpv.totalCPV', label: '(=) CUSTO DO PRODUTO VENDIDO (CPV)', desc: 'Custo direcionado para confrontação de receita no DRE', formatter: (v: number) => formatCurrency(v || 0, currency), isClass: 'bg-orange-950/20 text-orange-400 font-black border-y border-orange-500/20' }
     ];
 

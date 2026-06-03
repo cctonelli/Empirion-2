@@ -300,6 +300,7 @@ const mapKardexReport = (periods: any[], startingMode?: string): TableData => {
     { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.totalCPP', label: '(=) CUSTO DE PRODUÇÃO DO PERÍODO (CPP)' },
     { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.estoqueInicialPA', label: '(+) Estoque Inicial de PA' },
     { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.estoqueFinalPA', label: '(-) Estoque Final de PA' },
+    { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'custoUnitarioProducao', label: 'Custo Unitário de PA' },
     { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.totalCPV', label: '(=) CUSTO DO PRODUTO VENDIDO (CPV)' }
   ];
   
