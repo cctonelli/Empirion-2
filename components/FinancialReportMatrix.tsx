@@ -1,7 +1,9 @@
-import React from 'react';
-import { ChevronRight, TrendingUp, Activity, Landmark, Calculator, ArrowRight, CornerDownRight, Target } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronRight, TrendingUp, Activity, Landmark, Calculator, ArrowRight, CornerDownRight, Target, Download, FileSpreadsheet, Copy, Check, ChevronDown } from 'lucide-react';
 import { AccountNode, CurrencyType } from '../types';
 import { formatCurrency } from '../utils/formatters';
+import { exportToCSV, copyToClipboardTSV, exportToExcelXML } from '../analise-gerencial/export-to-spreadsheet';
+import { mapFinancialToTable } from '../analise-gerencial/spreadsheet-mappers';
 
 interface MatrixProps {
   type: 'balance' | 'dre' | 'cashflow' | 'strategic' | 'commitments' | 'kardex';
@@ -12,6 +14,43 @@ interface MatrixProps {
 }
 
 const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projection, currency, startingMode }) => {
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  const handleExportCSV = () => {
+    const tableData = mapFinancialToTable(type, history, projection, currency, startingMode);
+    exportToCSV(tableData, ';');
+    setShowExportMenu(false);
+  };
+
+  const handleCopySheets = async () => {
+    const tableData = mapFinancialToTable(type, history, projection, currency, startingMode);
+    const success = await copyToClipboardTSV(tableData);
+    if (success) {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    }
+    setShowExportMenu(false);
+  };
+
+  const handleExportExcelFull = () => {
+    const reportsToExport: { type: 'balance' | 'dre' | 'cashflow' | 'strategic' | 'commitments' | 'kardex'; name: string }[] = [
+      { type: 'dre', name: 'DRE' },
+      { type: 'balance', name: 'Balanço Patrimonial' },
+      { type: 'cashflow', name: 'Fluxo de Caixa' },
+      { type: 'kardex', name: 'Kardex e CPV' },
+      { type: 'commitments', name: 'Agenda Financeira' },
+      { type: 'strategic', name: 'Comando Estratégico' }
+    ];
+
+    const tables = reportsToExport.map(r => 
+      mapFinancialToTable(r.type, history, projection, currency, startingMode)
+    );
+
+    exportToExcelXML(tables, 'matriz_financeira_oracular_completa.xls');
+    setShowExportMenu(false);
+  };
+
   const getTitle = () => {
     if (type === 'balance') return 'Balanço Patrimonial Auditado (v18.0)';
     if (type === 'dre') return 'DRE - Demonstrativo de Resultados (Competência)';
@@ -456,10 +495,69 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
           </div>
         </div>
         <div className="flex items-center gap-4">
-           <div className="px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center gap-2 shadow-lg">
-              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Controles de Integridade</span>
-           </div>
+          <div className="relative">
+             <button
+               id="btn-exportar-dados"
+               onClick={() => setShowExportMenu(!showExportMenu)}
+               className="px-4 py-1.5 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white border border-orange-500/30 rounded-lg flex items-center gap-2 text-[8px] font-black uppercase tracking-widest transition-all cursor-pointer shadow-lg hover:shadow-orange-600/10"
+             >
+               <Download size={10} />
+               <span>Exportar Dados</span>
+               <ChevronDown size={10} className={`transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} />
+             </button>
+
+             {showExportMenu && (
+               <>
+                 <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
+                 <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-white/10 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50 overflow-hidden shrink-0 animate-in fade-in slide-in-from-top-2 duration-150">
+                   <div className="p-2 border-b border-white/5 bg-slate-950/45">
+                     <span className="text-[7px] font-black uppercase tracking-widest text-slate-500 block">Opções para Matriz Financeira</span>
+                   </div>
+                   <div className="p-1 flex flex-col gap-0.5">
+                     <button
+                       onClick={handleExportCSV}
+                       className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg flex items-center gap-2.5 transition-colors text-[9px] font-bold uppercase tracking-wider"
+                     >
+                       <FileSpreadsheet size={12} className="text-orange-400 font-bold" />
+                       <div className="flex flex-col">
+                         <span>Exportar Aba Atual (.csv)</span>
+                         <span className="text-[6px] text-slate-500 font-normal normal-case">Delimitador ponto-e-vírgula para Excel PT-BR</span>
+                       </div>
+                     </button>
+                     
+                     <button
+                       onClick={handleCopySheets}
+                       className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg flex items-center gap-2.5 transition-colors text-[9px] font-bold uppercase tracking-wider"
+                     >
+                       {copySuccess ? <Check size={12} className="text-emerald-400 animate-bounce" /> : <Copy size={12} className="text-emerald-400" />}
+                       <div className="flex flex-col">
+                         <span>{copySuccess ? 'Copiado!' : 'Copiar para Google Sheets'}</span>
+                         <span className="text-[6px] text-slate-500 font-normal normal-case">Copiar dados tabulados para colar direto com Ctrl+V</span>
+                       </div>
+                     </button>
+
+                     <div className="my-1 border-t border-white/5" />
+
+                     <button
+                       onClick={handleExportExcelFull}
+                       className="w-full text-left px-3 py-2 text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg flex items-center gap-2.5 transition-colors text-[9px] font-bold uppercase tracking-wider"
+                     >
+                       <FileSpreadsheet size={12} className="text-emerald-500" />
+                       <div className="flex flex-col">
+                         <span>Exportar Matriz Completa (.xls)</span>
+                         <span className="text-[6px] text-emerald-500/70 font-black tracking-widest">MÚLTIPLAS ABAS CONSOLIDADAS</span>
+                       </div>
+                     </button>
+                   </div>
+                 </div>
+               </>
+             )}
+          </div>
+
+          <div className="px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center gap-2 shadow-lg">
+             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+             <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Controles de Integridade</span>
+          </div>
         </div>
       </header>
 

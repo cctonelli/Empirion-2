@@ -18,6 +18,6 @@
     "baseUrl": ".",
     "types": ["vite/client"]
   },
-  "include": ["App.tsx", "index.tsx", "types.ts", "constants.tsx", "i18n.ts", "services", "components", "pages", "hooks", "utils"],
+  "include": ["App.tsx", "index.tsx", "types.ts", "constants.tsx", "i18n.ts", "services", "components", "pages", "hooks", "utils", "analise-gerencial"],
   "exclude": ["node_modules"]
 }

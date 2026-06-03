@@ -222,6 +222,18 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.60 Obsidian Blue Sapphire - Engine Mestre de Exportação Contábil Multi-Abas
+- **Data:** 03 de Junho de 2026, 12:06 UTC
+- **Motivo:** Implementação de motor de exportação de dados analíticos completo para a Matriz Financeira do Simulador, oferecendo inteligência de exportação nas extensões CSV, Excel e Google Sheets direto pelo cockpit, otimizando o workflow de análise para diretores e tutores.
+- **Diferenças:**
+  - *Estrutura de Código Dedicada:* Criação do diretório `/analise-gerencial` contendo arquivos separados para mapeamento matricial (`spreadsheet-mappers.ts`) e exportação real (`export-to-spreadsheet.ts`), promovendo acoplamento baixíssimo e separação estrita de interesses (Separation of Concerns).
+  - *Exportação do Dashboard Financeiro em Múltiplas Abas:* Desenvolvido gerador nativo client-side de arquivos XML SpreadsheetML 2003 compatíveis com Microsoft Excel. Ao selecionar "Exportar Matriz Completa", as abas DRE, Balanço Patrimonial, Fluxo de Caixa (DFC), Kardex e CPV, Agenda Financeira e Comando Estratégico são fundidas dinamicamente em um único arquivo de múltiplas planilhas, com formatação monetária e de percentuais preservada para cálculos imediatos no Excel.
+  - *Copiar para Google Sheets:* Adicionado botão de exportação rápida para Área de Transferência em formato TSV estruturado. Competidores conseguem instantaneamente com `Ctrl+V` colar todo o grid de dados ativos com recuos hierárquicos e separadores de decimais brasileiros direto no Google Sheets.
+  - *Formato CSV com codificação UTF-8 BOM:* O download das abas individuais em formato CSV de forma estática adota o delimitador de ponto-e-vírgula (;) e cabeçalho BOM para evitar quebras de codificação de texto e formatação de decimais e acentos em sistemas operacionais nacionais.
+  - *Aprimoramento Visual do Cockpit:* Inserido seletor do botão reativo e popover suspenso de "EXPORTAR DADOS" com transições fluidas no cabeçalho de `FinancialReportMatrix.tsx` imediatamente à esquerda de "Controles de Integridade".
+- **Impactos Esperados:** Zero breaking changes. Melhora expressiva na experiência do usuário (UX) e do desenvolvedor (DX), elevando a produtividade do processo de decisões em rounds complexos do simulador.
+- **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
+
 ### v19.59 Obsidian Diamond - Incorporação Automática de Lucros no Capital Social
 - **Data:** 02 de Junho de 2026, 13:20 UTC
 - **Motivo:** Implementação da diretriz contábil e de governança corporativa que permite ao Tutor estipular a frequência com que a contabilidade do simulador irá incorporar de forma automática o saldo de lucros/prejuízos acumulados no Capital Social (ambos do Patrimônio Líquido) das equipes, facilitando a análise e capitalização empresarial ao longo dos rounds do simulador.
