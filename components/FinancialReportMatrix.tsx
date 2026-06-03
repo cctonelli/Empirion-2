@@ -77,12 +77,12 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       raw: h,
       isProjection: false 
     })),
-    { 
-      round: 'PROJ (T+1)', 
+    ...(projection ? [{ 
+      round: (history.length > 0 ? (history[history.length - 1]?.round ?? 0) + 1 : 1), 
       data: (type === 'strategic' || type === 'kardex' || type === 'commitments') ? projection?.kpis : projection?.kpis?.statements?.[type === 'balance' ? 'balance_sheet' : (type === 'dre' ? 'dre' : 'cash_flow')], 
       raw: projection,
       isProjection: true 
-    }
+    }] : [])
   ];
 
   // Helper para buscar valor com fallback
@@ -572,7 +572,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                     <span className="opacity-50 text-[5px]">{p.isProjection ? 'PRÓXIMO CICLO' : 'HISTÓRICO'}</span>
                     <span className="text-[9px] tracking-tighter">
                       {p.isProjection 
-                        ? 'PROJEÇÃO T+1' 
+                        ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` 
                         : (p.round === 0 || p.round === '0' || p.round === '00' ? 'INICIAL (P0)' : `ROUND 0${p.round}`)}
                     </span>
                   </div>

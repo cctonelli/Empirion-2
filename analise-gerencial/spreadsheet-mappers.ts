@@ -104,7 +104,7 @@ const mapRecursiveReport = (
   const headers = [
     'Contas Contábeis de Movimento',
     ...periods.map((p) => {
-      if (p.isProjection) return 'PROJEÇÃO T+1';
+      if (p.isProjection) return `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}`;
       return p.round === 0 || p.round === '0' || p.round === '00' ? 'INICIAL (P0)' : `ROUND 0${p.round}`;
     })
   ];
@@ -126,7 +126,7 @@ const mapStrategicReport = (periods: any[]): TableData => {
   const headers = [
     'Indicador Sapiens',
     'Descrição / Detalhe Técnico',
-    ...periods.map((p) => (p.isProjection ? 'PROJEÇÃO T+1' : `ROUND 0${p.round}`))
+    ...periods.map((p) => (p.isProjection ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` : `ROUND 0${p.round}`))
   ];
   
   const kpiDefinitions = [
@@ -174,7 +174,7 @@ const mapCommitmentsReport = (periods: any[]): TableData => {
   const title = 'Agenda de Compromissos Financeiros (Direitos e Deveres)';
   const headers = [
     'Compromisso / Fluxo do Período',
-    ...periods.map((p) => (p.isProjection ? 'PROJEÇÃO T+1' : `ROUND 0${p.round}`))
+    ...periods.map((p) => (p.isProjection ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` : `ROUND 0${p.round}`))
   ];
   
   const rows: (string | number)[][] = [];
@@ -238,7 +238,7 @@ const mapKardexReport = (periods: any[], startingMode?: string): TableData => {
   const title = 'Kardex de Estoques & Detalhamento do CPV (Absorção WAC)';
   const headers = [
     'Movimentação Física e Financeira de Estoque',
-    ...periods.map((p) => (p.isProjection ? 'PROJEÇÃO T+1' : `ROUND 0${p.round}`))
+    ...periods.map((p) => (p.isProjection ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` : `ROUND 0${p.round}`))
   ];
   
   // Estrutura padrão de linhas do Kardex
@@ -400,8 +400,8 @@ export const mapFinancialToTable = (
       raw: h,
       isProjection: false
     })),
-    {
-      round: 'PROJ (T+1)',
+    ...(projection ? [{
+      round: (history.length > 0 ? (history[history.length - 1]?.round ?? 0) + 1 : 1),
       data:
         type === 'strategic' || type === 'kardex' || type === 'commitments'
           ? projection?.kpis
@@ -410,7 +410,7 @@ export const mapFinancialToTable = (
             ],
       raw: projection,
       isProjection: true
-    }
+    }] : [])
   ];
 
   if (type === 'strategic') {

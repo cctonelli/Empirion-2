@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.63 Obsidian Emerald Shield (Trava de Segurança e Proteção Fiduciária contra Cliques Acidentais de Turnover pelo Tutor)
+- **Versão Ativa:** v19.64 Obsidian Emerald Dynamic Headers (Cabeçalhos Dinâmicos e Simetria Perfeita na Matriz Financeira e Exportações)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,16 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.64 Obsidian Emerald Dynamic Headers - Cabeçalhos Dinâmicos e Simetria Perfeita na Matriz Financeira e Exportações
+- **Data:** 03 de Junho de 2026, 14:18 UTC
+- **Motivo:** Sanar o problema em que a Matriz Financeira exibia um cabeçalho estático "INICIAL (P0)" ou "PROJEÇÃO T+1", mesmo quando se estava avaliando outros períodos do simulador ou exportando planilhas consolidadas. A equipe precisa de clareza absoluta de qual round específico está acompanhando e projetando no cockpit fiduciário.
+- **Diferenças:**
+  - *Identificação Dinâmica da Rodada Projetada:* A coluna de Projeção agora calcula dinamicamente o número exato do round que está sendo projetado (`(history[history.length - 1]?.round || 0) + 1`). Exibe com precisão `PROJEÇÃO P01`, `PROJEÇÃO P02`, etc., sincronizado perfeitamente com os dados reais de simulação.
+  - *Condicionalização da Projeção:* A coluna de Projeção passa a ser condicionalmente adicionada ao array `periods` somente se os dados de projeção não forem nulos. Isso remove colunas nulas/fantasma cheias de valores `N/A` ou $0.00 ao navegar em rodadas históricas anteriores.
+  - *Simetria entre UI e Exportação:* Atualizadas as funções de mapeamento de planilhas (`mapRecursiveReport`, `mapStrategicReport`, `mapCommitmentsReport`, `mapKardexReport` e `mapFinancialToTable`) em `/analise-gerencial/spreadsheet-mappers.ts` para que todas as abas exportadas em formato .xlsx ou copiadas para o Google Sheets tragam exatamente o mesmo cabeçalho dinâmico e representação polida.
+- **Impactos Esperados:** Sincronização impecável entre o cockpit visual do estudante e os relatórios exportados. Eliminação total de cabeçalhos genéricos "PROJEÇÃO T+1", proporcionando legibilidade impecável sobre as rodadas de planejamento ativo e histórico.
+- **Status:** Disponível e Ativa em Produção, Compilação e Linter 100% Homologados.
 
 ### v19.63 Obsidian Emerald Shield - Trava de Segurança e Proteção Fiduciária contra Cliques Acidentais de Turnover pelo Tutor
 - **Data:** 03 de Junho de 2026, 13:50 UTC
