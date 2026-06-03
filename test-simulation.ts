@@ -88,7 +88,7 @@ function runTest() {
       hired: 0,
       fired: 0,
       salary: 2200,
-      salary_sales: 1800,
+      salary_sales: 2000,
       salary_adm: 3000,
       trainingPercent: 0,
       pprTarget: 0

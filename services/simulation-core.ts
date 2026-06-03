@@ -916,7 +916,8 @@ export function processRoundWithValidation(
   });
 
   const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') ?? 5440000;
-  const buildingDepPeriod = buildingsCost * 0.002;
+  const buildingsDepRateAnnual = (ecosystem as any).buildings_depreciation_rate !== undefined ? Number((ecosystem as any).buildings_depreciation_rate) : 10;
+  const buildingDepPeriod = buildingsCost * (buildingsDepRateAnnual / 100) / 4;
   periodDepreciation += buildingDepPeriod;
 
   const maintenance = capacity * 2.5 * inflationMult;

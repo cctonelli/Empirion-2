@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.59 Obsidian Diamond (Ajustes de Sincronia de Timer, Saneamento Fiduciário de Pausa de Rodadas e Otimização Visual do Dashboard)
+- **Versão Ativa:** v19.61 Obsidian Emerald (Correção Fiduciária de Sinais de Passivos, Herança de OPEX Greenfield e Calibração de Depreciação)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,17 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.61 Obsidian Emerald - Correção Fiduciária de Sinais de Passivos, Herança de OPEX Greenfield e Calibração de Depreciação
+- **Data:** 03 de Junho de 2026, 13:10 UTC
+- **Motivo:** Sanar três anomalias graves que impactavam a tomada de decisão das equipes em modos de partida Greenfield: (1) Sinais negativos nos totais de Passivo Circulante/Não Circulante que corrompiam o somatório do totalizador de 'PASSIVO + PL'; (2) Herança indevida de despesas comerciais e administrativas fixas estimadas em US$ 873.250 e US$ 216.000 em rodadas de início Greenfield (Start from Zero); (3) Depreciação estática de instalações descolada da diretriz regulamentar de 10% a.a. do Tutor.
+- **Diferenças:**
+  - *Soma de Passivo + PL Consistente no Balanço:* Ajustado o algoritmo de recálculo recursivo de totalizadores em `injectValues()` no motor `services/simulation.ts` para que as contas de passivo (com type `'liability'`) não tenham seus sinais invertidos para negativo ao consolidar os subtotais patrimoniais. Com isso, os totalizadores de Passivo Circulante e Passivo Não Circulante agora computam com o sinal contábil correto e a equação de fechamento contábil `PASSIVO + PL` e `ATIVO` é milimetricamente reconciliada de forma aditiva.
+  - *Mitigação de OPEX Fantasma em Partida Greenfield:* Implementada lógica condicional blindada ("Greenfield Shield") que zera de forma rigorosa as despesas acumuladas operacionais de rodadas anteriores de venda, administração e P&D na transição de P0 para P1 sob o regime de partidas de "começar do zero" (`starting_mode === 'start_from_zero'`). Isso removeu a sobrecarga espúria de custos administrativos de $216k, que causava perdas fiduciárias inexplicáveis, e garantiu que o preço de campanhas de marketing em P1 reflita única e estritamente os investimentos do participante ($120.000 pelas 12 campanhas contratadas).
+  - *Depreciação Dinâmica Amortizada com Taxa do Tutor:* Desenvolvido o algoritmo de depreciação de bens instalados (Benfeitorias em Imóveis de Terceiros - Locado se Prédio alugado e Prédios/Terrenos se próprio) em `services/simulation.ts` e `services/simulation-core.ts`. Em substituição à amortização fixa e defasada de `0.2%` por round (período), a depreciação adota a taxa anual configurável do Tutor (`buildings_depreciation_rate`, por padrão 10% a.a.) convertida para taxa trimestral equivalente (`(rate / 100) / 4`), resultando em depreciação de US$ 12.500 no período sobre as benfeitorias ativas de US$ 500.000.
+  - *Padronização de Valores de Aluguel:* Alinhado o aluguel padrão do simulador com o Step 6 do `TrialWizard.tsx` (US$ 50.000 com rateios padrões de 70% Produção, 10% Administração e 20% Vendas), corrigindo disparidades em rounds onde o tutor não preenchia as configurações de trial.
+- **Impactos Esperados:** Consistência fiduciária e lógica impecável em simulações corporativas Greenfield. Fim de rombos e disparidades de caixa, garantindo que equipes com posturas otimizadoras de lucros e custos consigam alcançar excelentes índices E-SDS e saúde financeira equilibrada.
+- **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
 
 ### v19.60 Obsidian Blue Sapphire - Engine Mestre de Exportação Contábil Multi-Abas
 - **Data:** 03 de Junho de 2026, 12:06 UTC

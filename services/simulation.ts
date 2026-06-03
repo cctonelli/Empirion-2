@@ -73,8 +73,9 @@ const injectValues = (tree: AccountNode[], values: Record<string, number>, zeroO
     
     if (node.type === 'totalizer' && newChildren) {
       newVal = newChildren.reduce((sum, child) => {
-        // Se for despesa ou passivo na árvore DRE/DFC, subtrai do totalizador
-        if (child.type === 'expense' || child.type === 'liability') return sum - Math.abs(child.value);
+        // Se for despesa na árvore DRE/DFC, subtrai do totalizador
+        // OBS: as contas de liability no Balanço Patrimonial devem somar positivamente
+        if (child.type === 'expense') return sum - Math.abs(child.value);
         return sum + child.value;
       }, 0);
     }
@@ -240,10 +241,11 @@ export const calculateProjections = (
   const totalMachineryCost = currentMachines.reduce((acc, m) => acc + m.acquisition_value, 0);
   const totalMachineryDeprec = currentMachines.reduce((acc, m) => acc + m.accumulated_depreciation, 0);
 
-  // Depreciação de Prédios (Stateful) - 0.2% por período
+  // Depreciação de Prédios/Instalações (Stateful) com taxa parametrizada pelo Tutor (a.a.) convertida para o trimestre (round)
   const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || 5440000;
   const prevBuildingsDeprec = Math.abs(findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings_deprec'));
-  const buildingDepPeriod = buildingsCost * 0.002;
+  const buildingsDepRateAnnual = (ecosystem as any).buildings_depreciation_rate !== undefined ? Number((ecosystem as any).buildings_depreciation_rate) : 10;
+  const buildingDepPeriod = buildingsCost * (buildingsDepRateAnnual / 100) / 4;
   const newBuildingsDeprecAccum = prevBuildingsDeprec + buildingDepPeriod;
   periodDepreciation += buildingDepPeriod;
 
@@ -539,11 +541,12 @@ export const calculateProjections = (
                       (Math.max(0, currentMPBStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0)));
 
   // --- 4.0 ANÁLISE E RATEIO DE ALUGUEL ---
-  const isRented = (ecosystem as any).building_mode === 'rented';
-  const rentVal = isRented ? ((ecosystem as any).monthly_rent_value ?? 35000.00) : 0;
-  const pProd = (ecosystem as any).rent_allocation_productive ?? 65;
-  const pAdm = (ecosystem as any).rent_allocation_administrative ?? 25;
-  const pSales = (ecosystem as any).rent_allocation_sales ?? 10;
+  const isZeroMode = (ecosystem as any).starting_mode === 'start_from_zero';
+  const isRented = ((ecosystem as any).building_mode ?? (isZeroMode ? 'rented' : 'owned')) === 'rented';
+  const rentVal = isRented ? ((ecosystem as any).monthly_rent_value !== undefined ? Number((ecosystem as any).monthly_rent_value) : 50000.00) : 0;
+  const pProd = (ecosystem as any).rent_allocation_productive !== undefined ? Number((ecosystem as any).rent_allocation_productive) : 70;
+  const pAdm = (ecosystem as any).rent_allocation_administrative !== undefined ? Number((ecosystem as any).rent_allocation_administrative) : 10;
+  const pSales = (ecosystem as any).rent_allocation_sales !== undefined ? Number((ecosystem as any).rent_allocation_sales) : 20;
 
   const valCif = rentVal * (pProd / 100);
   const valAdm = rentVal * (pAdm / 100);
@@ -605,9 +608,13 @@ export const calculateProjections = (
   }
   
   // OPEX reajustado + Marketing + Inadimplência
-  const prevOpexSales = Math.abs(findAccountValue(prevStatements.dre, 'opex.sales') || 873250);
-  const prevOpexAdm = Math.abs(findAccountValue(prevStatements.dre, 'opex.adm') || 216000);
-  const prevOpexRd = Math.abs(findAccountValue(prevStatements.dre, 'opex.rd') || 41844);
+  const currentRoundNum = round ?? 1;
+  const zeroOpexInP1 = isZeroMode && currentRoundNum === 1;
+
+  // No modo Start From Zero, as despesas operacionais anteriores são rigorosamente zeradas no round P1
+  const prevOpexSales = zeroOpexInP1 ? 0 : Math.abs(findAccountValue(prevStatements.dre, 'opex.sales') || 873250);
+  const prevOpexAdm = zeroOpexInP1 ? 0 : Math.abs(findAccountValue(prevStatements.dre, 'opex.adm') || 216000);
+  const prevOpexRd = zeroOpexInP1 ? 0 : Math.abs(findAccountValue(prevStatements.dre, 'opex.rd') || 41844);
 
   // NOTA SÊNIOR: Como storageCost e trainingCost foram capitalizados no CIF contábil e incorporados ao CPP,
   // eles NÃO transitam de forma duplicada no OPEX de vendas/adm operacional imediato do DRE.
