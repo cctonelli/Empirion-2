@@ -510,7 +510,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
     const m_deprec_round = (isZeroMode ? [] : tutorConfig.machines).reduce((acc, m) => {
       const price = m.model === 'alfa' ? 500000 : m.model === 'beta' ? 1500000 : 3000000;
-      return acc + (price * m.qty * 0.025 * m.efficiency);
+      return acc + (price * m.qty * 0.10 * m.efficiency);
     }, 0);
 
     const buildingMode = tutorConfig.building_mode ?? (isZeroMode ? 'rented' : 'owned');
@@ -519,7 +519,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const installationsVal = tutorConfig.installations_value ?? (isZeroMode ? 500000 : (isBaseMode ? 500000 : 1000000));
     const parsed_deprec_rate = (tutorConfig.buildings_depreciation_rate !== undefined ? tutorConfig.buildings_depreciation_rate : 10) / 100;
 
-    const b_deprec_round = buildingMode === 'owned' ? (buildingBaseValue * 0.04) : (installationsVal * parsed_deprec_rate);
+    const b_deprec_round = buildingMode === 'owned' 
+      ? (buildingBaseValue * 0.04 + installationsVal * parsed_deprec_rate) 
+      : (installationsVal * parsed_deprec_rate);
     const total_deprec_round = m_deprec_round + b_deprec_round;
 
     const total_operators = isZeroMode ? 0 : (
@@ -852,7 +854,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     actualMachines.forEach((mac) => {
       const modelPrice = mac.model === 'alfa' ? 500000 : mac.model === 'beta' ? 1500000 : 3000000;
       machAcqu += modelPrice * mac.qty;
-      machDeprec += modelPrice * mac.qty * mac.age * 0.025 * mac.efficiency;
+      machDeprec += modelPrice * mac.qty * mac.age * 0.10 * mac.efficiency;
     });
     if (machAcqu > 0) {
       const deprecRatio = machDeprec / machAcqu;

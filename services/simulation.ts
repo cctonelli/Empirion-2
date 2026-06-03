@@ -230,7 +230,8 @@ export const calculateProjections = (
   const existingMachineIds = (team.kpis?.machines || []).map(m => m.id);
   currentMachines = currentMachines.map(m => {
     const spec = indicators.machine_specs[m.model];
-    const depVal = m.acquisition_value / (spec?.useful_life_years || 40);
+    // Regra do CPC 27: Máquinas e Equipamentos com vida útil de 10 Anos (10% ao ano sobre o valor de aquisição)
+    const depVal = m.acquisition_value / (spec?.useful_life_years || 10);
     
     // NOTA SÊNIOR / CPC 27: A depreciação é computada de imediato sobre todas as máquinas ativas (existentes e novas)
     periodDepreciation += depVal;
@@ -241,11 +242,30 @@ export const calculateProjections = (
   const totalMachineryCost = currentMachines.reduce((acc, m) => acc + m.acquisition_value, 0);
   const totalMachineryDeprec = currentMachines.reduce((acc, m) => acc + m.accumulated_depreciation, 0);
 
-  // Depreciação de Prédios/Instalações (Stateful) com taxa parametrizada pelo Tutor (a.a.) convertida para o trimestre (round)
-  const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || 5440000;
+  // Regra do CPC 27 Fiduciária de Real Estate (Patrimonial) - Ajuste Recorrente de Depreciação:
+  // - Prédio Próprio: Edifício deprecia a 4% ao ano. Terreno não deprecia.
+  // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de 10% ao ano (buildingsDepRateAnnual).
+  const ecoConfig = (ecosystem as any).ecosystem_config || (ecosystem as any).config?.ecosystem_config || {};
+  const isZeroModeLocal = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
+  const buildMode = ecoConfig.building_mode ?? 'owned';
+  const installationsVal = ecoConfig.installations_value ?? 500000.00;
+  const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;
+  const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || (buildingBaseValue + installationsVal);
+  const buildingsDepRateAnnual = ecoConfig.buildings_depreciation_rate !== undefined 
+    ? Number(ecoConfig.buildings_depreciation_rate) 
+    : ((ecosystem as any).buildings_depreciation_rate !== undefined 
+        ? Number((ecosystem as any).buildings_depreciation_rate) 
+        : 10);
+
   const prevBuildingsDeprec = Math.abs(findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings_deprec'));
-  const buildingsDepRateAnnual = (ecosystem as any).buildings_depreciation_rate !== undefined ? Number((ecosystem as any).buildings_depreciation_rate) : 10;
-  const buildingDepPeriod = buildingsCost * (buildingsDepRateAnnual / 100) / 4;
+  
+  let buildingDepPeriod = 0;
+  if (buildMode === 'owned') {
+    buildingDepPeriod = (buildingBaseValue * 0.04) + (installationsVal * (buildingsDepRateAnnual / 100));
+  } else {
+    buildingDepPeriod = installationsVal * (buildingsDepRateAnnual / 100);
+  }
+
   const newBuildingsDeprecAccum = prevBuildingsDeprec + buildingDepPeriod;
   periodDepreciation += buildingDepPeriod;
 

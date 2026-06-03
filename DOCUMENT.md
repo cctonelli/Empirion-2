@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.67 Obsidian Sapphire Rent Alignment (Alinhamento e Sincronização dos Valores de Locação de Imóvel e Rateios Contábeis)
+- **Versão Ativa:** v19.69 Obsidian Diamond Amortization CPC 27 (Realinhamento Integral de Depreciação e Vida Útil sob CPC 27)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -87,14 +87,14 @@ As equipes gerenciam sua planta fabril através de três modelos padrão de maqu
 | :--- | :--- | :--- | :--- |
 | **Capacidade de Produção/Ciclo** | 2.000 Unidades | 6.000 Unidades | 12.000 Unidades |
 | **Quadro Operacional Requerido** | 94 Operadores | 235 Operadores | 445 Operadores |
-| **Vida Útil Declarada** | 40 Ciclos (Rounds) | 40 Ciclos (Rounds) | 40 Ciclos (Rounds) |
-| **Depreciação Periódica** | Linear (2.5% ao round) | Linear (2.5% ao round) | Linear (2.5% ao round) |
+| **Vida Útil Declarada** | 10 Ciclos (Rounds/Anos) | 10 Ciclos (Rounds/Anos) | 10 Ciclos (Rounds/Anos) |
+| **Depreciação Periódica** | Linear (10% ao round/ano) | Linear (10% ao round/ano) | Linear (10% ao round/ano) |
 
 - **Aquisição de Equipamentos (Efeito Imediato):** Compras de maquinários efetuadas no período $T$ já integram a capacidade industrial ativa para produção no próprio período $T$.
-- **Depreciação Contábil Customizada:**
-  - *Prédios:* Desgaste faturado em 0.2% por período sobre o valor histórico.
-  - *Instalações / Benfeitorias:* Depreciação ou Amortização de instalações e benfeitorias físicas parametrizada manualmente pelo Arena Tutor no Step 6 do Wizard (`buildings_depreciation_rate`), com default regulamentar de 10% a.a. incidindo sobre a conta de instalações.
-  - *Máquinas:* Linear baseada na vida útil de 40 rounds (2.5% p.p.).
+- **Depreciação Contábil Customizada (Regras Fiduciárias do CPC 27):**
+  - *Prédios:* Desgaste faturado de forma fiduciária em 4.0% por round/ano sobre o valor histórico (Vida útil de 25 anos). Terrenos possuem vida útil indeterminada e não sofrem depreciação.
+  - *Instalações / Benfeitorias:* Depreciação ou Amortização de instalações e benfeitorias físicas parametrizada manualmente pelo Arena Tutor em "TAXA DEPRECIAÇÃO INSTALAÇÕES" do Wizard (`buildings_depreciation_rate`), com padrão de 10% a.a. incidentes linearmente sobre o valor das instalações (Vida útil de 10 anos).
+  - *Máquinas:* Depreciação linear de 10% por round/ano baseada na vida útil de 10 Ciclos em conformidade com as quotas constantes do CPC 27.
 - **Venda de Equipamentos:** Aplica-se deságio depreciativo lançado diretamente como Despesa Não Operacional no DRE e gerando reflexo de entrada de caixa líquido no DFC.
 
 ### 6.2 Gestão de Mão de Obra e Regime Operacional de Turnos (Capacidade x MOD)
@@ -221,6 +221,25 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.69 Obsidian Diamond Amortization CPC 27 - Realinhamento Integral de Depreciação e Vida Útil de Ativos sob CPC 27
+- **Data:** 03 de Junho de 2026, 17:05 UTC
+- **Motivo:** Corrigir de forma definitiva as taxas e fórmulas de depreciação do Ativo Imobilizado em todo o sistema (simulador ordinário e preditivo), padronizando o simulador de forma estrita em conformidade com as diretrizes do CPC 27 e IFRS para períodos anuais (1 round/período = 1 ano). Anteriormente, o motor aplicava uma taxa trimestralizada (divida por 4, esticando a amortização de instalações para 40 rounds em vez do limite de 10 rounds do projeto), além de usar taxas legadas de 2.5% ao round (40 rounds de vida útil) para maquinários, divergindo do padrão de 10 anos requisitado.
+- **Diferenças:**
+  - *Taxa de Depreciação de Máquinas:* Alterada de 2.5% ao round (vida útil de 40 rounds) para 10% ao round (vida útil de 10 rounds) nos arquivos de parametrização `constants.tsx` (campo `depreciation_rate: 0.10` e `useful_life_years: 10`), inicializador fiduciário em `services/initialization.ts`, na lógica de cálculo pré-visualizada de p5 de alavancagem de ativo imobilizado bruto em `components/TrialWizard.tsx` (fórmula de depreciação de maquinário atualizada para 10%), e no simulador preditivo de imobilizados no cockpit em `components/steps/AssetsStep.tsx`.
+  - *Remoção do Redutor Trimestral em Real Estate:* Removeu-se a divisão por 4 (`/ 4`) estática nas rotinas de Turnover em `services/simulation.ts` e `services/simulation-core.ts`. Agora, a depreciação de Benfeitorias e Instalações Industriais incide linearmente sobre o valor histórico com taxa anual regulamentar configurada pelo Tutor (padrão 10% ao round/ano, equivalendo a 10 anos de útil).
+  - *Fórmula de Depreciação de Real Estate em Propriedade Própria:* O calculo reativo da depreciação periódica de Real Estate consolidado (prédios + instalações) em modo próprio (`owned`) agora separa fiduciariamente a quota do Prédio (4% a.a. contínuos de útil de 25 anos sob CPC 27) da quota de Instalações (taxa parametrizada do Tutor de 10% a.a. sobre benfeitorias físicas). No modo alugado (`rented`), apenas a quota de amortização de instalações de terceiros (10% a.a.) é descontada.
+- **Impactos Esperados:** Sincronismo contábil regulamentar irrestrito e perfeita aderência às regras do CPC 27 e IFRS. O Balanço e o DRE mostram as saídas operacionais e os saldos finais correspondentes às projeções reais de exaustão útil dos bens tangíveis sob o regime anual de rounds.
+- **Status:** Disponível e Ativa em Produção, Compilação e Linter 100% homologados.
+
+### v19.68 Obsidian Emerald Amortization Realignment - Alinhamento Greenfield e Blindagem de Amortização de Abertura
+- **Data:** 03 de Junho de 2026, 16:50 UTC
+- **Motivo:** Sanar um grave desalinhamento contábil no modo "Start from Zero" (Greenfield), onde o investimento selecionado de $500.000 em Instalações estava sendo indevidamente depreciado/amortizado em $100.000 logo na abertura (P0 Inicial), apresentando Imobilizado Net de apenas $400.000 e distorcendo a igualdade patrimonial de largada. Uma empresa recém-formada que parte do zero não deve possuir qualquer idade de depreciação de imóvel na formação do Balanço Inicial.
+- **Diferenças:**
+  - *Blindagem Greenfield de Idade:* Ajustada a fórmula de definição da idade do imóvel amortizável em `services/initialization.ts` (variável `buildingAge`) de forma que ela seja forçada de forma rigorosa para `0` quando o torneio for configurado no modo `start_from_zero`.
+  - *Preservação do Ativo Net:* Com a idade blindada em `0`, o valor total depreciado acumulado de abertura do imobilizado cai instantaneamente para `$0`, assegurando que o Imobilizado Net total inicial seja rigorosa e exatamente igual ao valor do parque industrial investido pelo Tutor (ex: $500.000,00 de instalações).
+- **Impactos Esperados:** Igualdade patrimonial fiduciária perfeita no Step 8 do `TrialWizard.tsx` (Balanço Inicial de Abertura). Os tutores agora conseguem definir investimentos sem sofrer abatimentos indevidos ou distorções de depreciação anteriores à rodada zero. O Ativo Imobilizado abre limpo, condizente com a teoria contábil padrão e o manual do usuário.
+- **Status:** Disponível e Ativa em Produção, Compilação e Linter 100% homologados.
 
 ### v19.67 Obsidian Sapphire Rent Alignment - Alinhamento e Sincronização dos Valores de Locação de Imóvel e Rateios Contábeis
 - **Data:** 03 de Junho de 2026, 16:25 UTC

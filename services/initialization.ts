@@ -355,8 +355,8 @@ export function generatePureP0(config: TutorP0Config): {
     const modelPrice = mac.model === 'alfa' ? ALPHA_PRICE : mac.model === 'beta' ? BETA_PRICE : GAMMA_PRICE;
     for (let q = 0; q < mac.qty; q++) {
       const uniqueId = `m-${mac.model}-${index}-${q}`;
-      // Deprecação: linear consistente de máquinas: 2.5% por ano
-      const deprecRate = 0.025;
+      // Deprecação: linear consistente de máquinas: 10% por ano/período (CPC 27)
+      const deprecRate = 0.10;
       const accDeprec = modelPrice * mac.age * deprecRate * mac.efficiency;
       
       generatedMachines.push({
@@ -406,7 +406,7 @@ export function generatePureP0(config: TutorP0Config): {
   const buildingBaseValue = buildingMode === 'owned' ? (config.building_value ?? bValDefault) : 0;
   
   const bAgeDefault = isZeroMode ? 0 : (isBaseMode ? 2 : 10);
-  const buildingAge = config.building_age ?? bAgeDefault;
+  const buildingAge = isZeroMode ? 0 : (config.building_age ?? bAgeDefault);
 
   const landValDefault = isZeroMode ? 1000000.00 : (isBaseMode ? 1000000.00 : 1200000.00);
   const calculatedLand = buildingMode === 'owned' ? (config.land_value ?? landValDefault) : 0;

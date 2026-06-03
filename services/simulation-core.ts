@@ -911,13 +911,31 @@ export function processRoundWithValidation(
   const tempMachines = [...(calculatedResult?.machines || team.kpis?.machines || [])];
   tempMachines.forEach((m: any) => {
     const spec = indicators.machine_specs[m.model as MachineModel];
-    const depVal = m.acquisition_value / (spec?.useful_life_years || 40);
+    // Regra do CPC 27: Máquinas e Equipamentos com vida útil de 10 Anos (10% ao ano sobre o valor de aquisição)
+    const depVal = m.acquisition_value / (spec?.useful_life_years || 10);
     periodDepreciation += depVal;
   });
 
-  const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') ?? 5440000;
-  const buildingsDepRateAnnual = (ecosystem as any).buildings_depreciation_rate !== undefined ? Number((ecosystem as any).buildings_depreciation_rate) : 10;
-  const buildingDepPeriod = buildingsCost * (buildingsDepRateAnnual / 100) / 4;
+  // Regra do CPC 27 Fiduciária de Real Estate (Patrimonial):
+  // - Prédio Próprio: Edifício deprecia a 4% ao ano. Terreno não deprecia.
+  // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de 10% ao ano (buildingsDepRateAnnual).
+  const ecoConfig = (ecosystem as any).ecosystem_config || (ecosystem as any).config?.ecosystem_config || {};
+  const isZeroMode = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
+  const buildMode = ecoConfig.building_mode ?? 'owned';
+  const installationsVal = ecoConfig.installations_value ?? 500000.00;
+  const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;
+  const buildingsDepRateAnnual = ecoConfig.buildings_depreciation_rate !== undefined 
+    ? Number(ecoConfig.buildings_depreciation_rate) 
+    : ((ecosystem as any).buildings_depreciation_rate !== undefined 
+        ? Number((ecosystem as any).buildings_depreciation_rate) 
+        : 10);
+
+  let buildingDepPeriod = 0;
+  if (buildMode === 'owned') {
+    buildingDepPeriod = (buildingBaseValue * 0.04) + (installationsVal * (buildingsDepRateAnnual / 100));
+  } else {
+    buildingDepPeriod = installationsVal * (buildingsDepRateAnnual / 100);
+  }
   periodDepreciation += buildingDepPeriod;
 
   const maintenance = capacity * 2.5 * inflationMult;
