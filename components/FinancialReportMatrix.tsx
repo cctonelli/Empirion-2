@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronRight, TrendingUp, Activity, Landmark, Calculator, ArrowRight, CornerDownRight, Target, Download, FileSpreadsheet, Copy, Check, ChevronDown } from 'lucide-react';
 import { AccountNode, CurrencyType } from '../types';
 import { formatCurrency } from '../utils/formatters';
-import { exportToCSV, copyToClipboardTSV, exportToExcelXML } from '../analise-gerencial/export-to-spreadsheet';
+import { exportToCSV, copyToClipboardTSV, exportToExcelXLSX } from '../analise-gerencial/export-to-spreadsheet';
 import { mapFinancialToTable } from '../analise-gerencial/spreadsheet-mappers';
 
 interface MatrixProps {
@@ -47,7 +47,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       mapFinancialToTable(r.type, history, projection, currency, startingMode)
     );
 
-    exportToExcelXML(tables, 'matriz_financeira_oracular_completa.xls');
+    exportToExcelXLSX(tables, 'matriz_financeira_oracular_completa.xlsx');
     setShowExportMenu(false);
   };
 

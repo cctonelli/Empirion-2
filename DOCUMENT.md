@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.61 Obsidian Emerald (Correção Fiduciária de Sinais de Passivos, Herança de OPEX Greenfield e Calibração de Depreciação)
+- **Versão Ativa:** v19.62 Obsidian Emerald XLSX Plus (Exportação nativa binária de múltiplas planilhas de relatórios sem avisos de segurança no Excel)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,17 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.62 Obsidian Emerald XLSX Plus - Exportação Nativa Binária de Múltiplas Planilhas sem Avisos de Segurança
+- **Data:** 03 de Junho de 2026, 13:16 UTC
+- **Motivo:** Sanar o erro/aviso de segurança e arquivo corrompido que ocorria no Microsoft Excel ao tentar abrir o arquivo de exportação multi-abas de dados de `FinancialReportMatrix.tsx`. O formato XML SpreadsheetML (.xls), embora perfeitamente estruturado, é lido por versões recentes do Microsoft Excel como uma extensão divergente do conteúdo real, gerando bloqueios ou avisos desnecessários de segurança no fluxo corporativo das equipes.
+- **Diferenças:**
+  - *Geração Nativa de Binários .xlsx (SheetJS):* Introduzida a dependência mestre `xlsx` no projeto e refatorado todo o ecossistema de geração do cockpit em `/analise-gerencial/export-to-spreadsheet.ts`. Em vez de arquivos baseados em templates XML clássicos de texto, o simulador agora compila um buffer binário nativo com o padrão oficial Microsoft OpenXML (.xlsx).
+  - *Mapeamento Dinâmico de Células:* Criado conversor robusto que converte as matrizes de `TableData` individuais em planilhas internas completas com formatação numérica específica, alinhamentos e larguras de coluna dimensionadas sob medida (Coluna de Identificação de Contas dimensionada para 45 e colunas de Rounds dimensionadas para 18).
+  - *Suporte Completo de Formato e Máscaras do Excel:* Implementado preenchimento nativo de formato de número (`cell.z`). Células monetárias ganham formatação contábil padrão e os percentuais gerenciais (como os do Comando Estratégico) têm seus decimais reescalados para de fato integrarem o formato de porcentagem nativo do Excel (`0.00%`).
+  - *Consistência de Múltiplas Abas (Workbooks):* A exportação consolidada agrupa as abas DRE, Balanço Patrimonial, Fluxo de Caixa, Kardex, Agenda de Compromissos e Comando Estratégico de maneira imediata sem sobrecarga ou erros de leitura de XML.
+- **Impactos Esperados:** Fim absoluto de qualquer aviso de bloqueio de segurança no Excel nacional ou estrangeiro. Compatibilidade imediata de carregamento de fórmulas, gráficos rápidos do Excel e formatação em planilhas do Microsoft 365, Google Sheets e LibreOffice.
+- **Status:** Disponível e Ativo em Produção.
 
 ### v19.61 Obsidian Emerald - Correção Fiduciária de Sinais de Passivos, Herança de OPEX Greenfield e Calibração de Depreciação
 - **Data:** 03 de Junho de 2026, 13:10 UTC

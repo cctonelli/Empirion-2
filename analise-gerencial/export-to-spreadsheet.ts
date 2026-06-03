@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx';
 import { TableData } from './spreadsheet-mappers';
 
 /**
@@ -102,95 +103,11 @@ export const copyToClipboardTSV = async (table: TableData): Promise<boolean> => 
 };
 
 /**
- * Gera um arquivo XML Spreadsheet 2003 (SpreadsheetML) compatível com Excel e Google Sheets.
- * Permite múltiplas planilhas (Worksheets) em um único download, perfeitamente estruturado.
+ * Gera um arquivo binário XLSX (.xlsx) oficial compatível com Excel e Google Sheets.
+ * Permite múltiplas abas (Worksheets) sem alertas de segurança ou arquivos corrompidos ao abrir.
  */
-export const exportToExcelXML = (tables: TableData[], filename = 'matriz_financeira_completa.xls') => {
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-          xmlns:o="urn:schemas-microsoft-com:office:office"
-          xmlns:x="urn:schemas-microsoft-com:office:excel"
-          xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-          xmlns:html="http://www.w3.org/TR/REC-html40">
-  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-    <Author>Oracle Engine Sapphire</Author>
-    <LastAuthor>Oracle Engine Sapphire</LastAuthor>
-    <Created>${new Date().toISOString()}</Created>
-    <Version>16.00</Version>
-  </DocumentProperties>
-  <Styles>
-    <Style ss:ID="Default" ss:Name="Normal">
-      <Alignment ss:Vertical="Center" ss:WrapText="1"/>
-      <Borders/>
-      <Font ss:FontName="Segoe UI" x:CharSet="1" x:Family="Swiss" ss:Size="10" ss:Color="#1E293B"/>
-      <Interior/>
-      <NumberFormat/>
-      <Protection/>
-    </Style>
-    <Style ss:ID="ReportTitle">
-      <Alignment ss:Vertical="Center" ss:Horizontal="Left"/>
-      <Font ss:FontName="Segoe UI" ss:Size="14" ss:Bold="1" ss:Color="#0F172A" ss:Italic="1"/>
-    </Style>
-    <Style ss:ID="Header">
-      <Alignment ss:Vertical="Center" ss:Horizontal="Center"/>
-      <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#475569"/>
-      </Borders>
-      <Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/>
-      <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
-    </Style>
-    <Style ss:ID="SubHeader">
-      <Alignment ss:Vertical="Center" ss:Horizontal="Left"/>
-      <Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1" ss:Color="#0F172A"/>
-      <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
-    </Style>
-    <Style ss:ID="CellNormal">
-      <Alignment ss:Vertical="Center"/>
-      <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-      </Borders>
-    </Style>
-    <Style ss:ID="CellBold">
-      <Alignment ss:Vertical="Center"/>
-      <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
-      </Borders>
-      <Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1" ss:Color="#0F172A"/>
-      <Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/>
-    </Style>
-    <Style ss:ID="Currency">
-      <Alignment ss:Vertical="Center" ss:Horizontal="Right"/>
-      <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-      </Borders>
-      <NumberFormat ss:Format="&quot;R$&quot;\ #,##0.00;[Red]\-&quot;R$&quot;\ #,##0.00;&quot;R$&quot;\ \-"/>
-    </Style>
-    <Style ss:ID="CurrencyBold">
-      <Alignment ss:Vertical="Center" ss:Horizontal="Right"/>
-      <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
-      </Borders>
-      <Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1" ss:Color="#0F172A"/>
-      <Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/>
-      <NumberFormat ss:Format="&quot;R$&quot;\ #,##0.00;[Red]\-&quot;R$&quot;\ #,##0.00;&quot;R$&quot;\ \-"/>
-    </Style>
-    <Style ss:ID="Percentage">
-      <Alignment ss:Vertical="Center" ss:Horizontal="Right"/>
-      <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-      </Borders>
-      <NumberFormat ss:Format="0.00%"/>
-    </Style>
-    <Style ss:ID="NumberGeneral">
-      <Alignment ss:Vertical="Center" ss:Horizontal="Right"/>
-      <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-      </Borders>
-      <NumberFormat ss:Format="#,##0.00"/>
-    </Style>
-  </Styles>
-`;
+export const exportToExcelXLSX = (tables: TableData[], filename = 'matriz_financeira_completa.xlsx') => {
+  const wb = XLSX.utils.book_new();
 
   tables.forEach((table) => {
     // Sanitiza o nome da aba (máximo 30 caracteres, sem []?*:\/)
@@ -199,99 +116,94 @@ export const exportToExcelXML = (tables: TableData[], filename = 'matriz_finance
       .split(' - ')[0]
       .substring(0, 30) || 'Planilha';
 
-    // Cria a aba (Worksheet)
-    xml += `  <Worksheet ss:Name="${tabName}">
-    <Table ss:ExpandedColumnCount="${table.headers.length + 2}" ss:DefaultRowHeight="20">
-      <Column ss:Width="260"/>
-      <Column ss:Width="160"/>
-      <Column ss:Width="130"/>
-      <Column ss:Width="130"/>
-      <Column ss:Width="130"/>
-      <Column ss:Width="130"/>
-      <Column ss:Width="130"/>
-      
-      <!-- Título de Cabeçalho do Relatório -->
-      <Row ss:Height="30">
-        <Cell ss:StyleID="ReportTitle" ss:MergeAcross="${table.headers.length - 1}">
-          <Data ss:Type="String">${table.title.toUpperCase()}</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="10"></Row>
-      
-      <!-- Cabeçalho das Colunas -->
-      <Row ss:Height="24">
-    `;
+    const ws_rows: any[][] = [];
     
-    table.headers.forEach((h) => {
-      xml += `    <Cell ss:StyleID="Header"><Data ss:Type="String">${h}</Data></Cell>\n`;
-    });
-    
-    xml += `  </Row>\n`;
+    // Título do Relatório
+    ws_rows.push([table.title.toUpperCase()]);
+    // Linha de espaçamento
+    ws_rows.push([]);
+    // Cabeçalhos
+    ws_rows.push(table.headers);
 
     // Linhas de dados
     table.rows.forEach((row) => {
       const isSubSection = row.length === 1;
-      
       if (isSubSection) {
-        xml += `  <Row ss:Height="22">
-          <Cell ss:StyleID="SubHeader" ss:MergeAcross="${table.headers.length - 1}">
-            <Data ss:Type="String">${row[0]}</Data>
-          </Cell>
-        </Row>\n`;
+        ws_rows.push([row[0].toString().toUpperCase()]);
+      } else {
+        ws_rows.push(row);
+      }
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(ws_rows);
+
+    // Configura merges das duas primeiras linhas para o título mesclar
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: table.headers.length - 1 } }
+    ];
+
+    // Colunas de largura customizada
+    const cols = [{ wch: 45 }];
+    for (let c = 1; c < table.headers.length; c++) {
+      cols.push({ wch: 18 });
+    }
+    ws['!cols'] = cols;
+
+    // Função auxiliar para codificar referências do Excel (ex: r:0, c:0 -> A1)
+    const getCellRef = (r: number, c: number) => XLSX.utils.encode_cell({ r, c });
+
+    // Pula o título (linhas 0 e 1) e o cabeçalho (linha 2)
+    // Os dados começam na linha 3
+    let currentRowIdx = 3;
+    table.rows.forEach((row) => {
+      const isSubSection = row.length === 1;
+      if (isSubSection) {
+        // Se for uma subseção fiduciária, mescla as colunas
+        if (!ws['!merges']) ws['!merges'] = [];
+        ws['!merges'].push({
+          s: { r: currentRowIdx, c: 0 },
+          e: { r: currentRowIdx, c: table.headers.length - 1 }
+        });
+        currentRowIdx++;
         return;
       }
-      
-      // Linha normal de dados
-      const isRowBold = row[0].toString().includes('(=)') || row[0].toString().includes('TOTAL') || row[0].toString().includes('ESTOQUE FINAL') || row[0].toString().includes('CUSTO DO PRODUTO VENDIDO');
-      const styleText = isRowBold ? 'CellBold' : 'CellNormal';
-      
-      xml += `  <Row ss:Height="20">\n`;
-      
+
       row.forEach((cellVal, cellIdx) => {
-        if (cellIdx === 0) {
-          // Primeira coluna: Nome da conta / KPI
-          xml += `    <Cell ss:StyleID="${styleText}"><Data ss:Type="String">${cellVal}</Data></Cell>\n`;
-        } else {
-          // Colunas numéricas
-          if (typeof cellVal === 'number') {
+        const cellRef = getCellRef(currentRowIdx, cellIdx);
+        const cell = ws[cellRef];
+
+        if (cell && typeof cellVal === 'number') {
+          cell.v = cellVal;
+          cell.t = 'n';
+
+          if (cellIdx > 0) {
+            const rowLabel = row[0].toString();
+            // Verifica se é % ou se é do Comando Estratégico e deve ser tratado como %
             const isPct = table.title.toLowerCase().includes('comando estratégico') && 
-                          (row[0].toString().includes('%') || row[0].toString().includes('DuPont') && !row[0].toString().includes('Giro') && !row[0].toString().includes('Alavancagem'));
+                          (rowLabel.includes('%') || (rowLabel.includes('DuPont') && !rowLabel.includes('Giro') && !rowLabel.includes('Alavancagem')));
             
             const isGeneralNum = table.title.toLowerCase().includes('comando estratégico') && 
-                                (row[0].toString().includes('Qtd') || row[0].toString().includes('Físico') || row[0].toString().includes('Carbono') || row[0].toString().includes('dias') || row[0].toString().includes('x'));
-            
-            let customStyle = isRowBold ? 'CurrencyBold' : 'Currency';
-            let dataType = 'Number';
-            let finalVal = cellVal;
-            
+                                (rowLabel.includes('Qtd') || rowLabel.includes('Físico') || rowLabel.includes('Carbono') || rowLabel.includes('dias') || rowLabel.includes('x'));
+
             if (isPct) {
-              customStyle = 'Percentage';
-              finalVal = cellVal / 100; // O Excel espera percentuais representados de 0 a 1 (0.15 = 15%)
+              cell.v = cellVal / 100; // Converte para escala de decimal para o percentual do Excel (ex: 0.15 = 15%)
+              cell.z = '0.00%';
             } else if (isGeneralNum) {
-              customStyle = 'NumberGeneral';
+              cell.z = '#,##0'; // Inteiro sem decimais para quantidades físicas/indicadores discretos
+            } else {
+              // Valores contábeis em formato de Moeda Mestre amigável
+              cell.z = '"$"#,##0.00;[Red]\("$"#,##0.00\);"-"';
             }
-            
-            xml += `    <Cell ss:StyleID="${customStyle}"><Data ss:Type="${dataType}">${finalVal}</Data></Cell>\n`;
-          } else {
-            // Se for "N/A" ou outro texto representativo
-            xml += `    <Cell ss:StyleID="${styleText}"><Data ss:Type="String">${cellVal}</Data></Cell>\n`;
           }
         }
       });
-      
-      xml += `  </Row>\n`;
+
+      currentRowIdx++;
     });
-    
-    xml += `    </Table>
-    <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
-      <Selected/>
-      <ProtectObjects>False</ProtectObjects>
-      <ProtectScenarios>False</ProtectScenarios>
-    </WorksheetOptions>
-  </Worksheet>\n`;
+
+    XLSX.utils.book_append_sheet(wb, ws, tabName);
   });
 
-  xml += `</Workbook>`;
-  
-  downloadFile(xml, 'application/vnd.ms-excel;charset=utf-8;', filename);
+  // Salva o arquivo final binário com extensão legítima .xlsx
+  XLSX.writeFile(wb, filename);
 };
