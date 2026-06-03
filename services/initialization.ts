@@ -601,10 +601,10 @@ export function generatePureP0(config: TutorP0Config): {
     
   } else if (isBaseMode) {
     // DRE e Fluxos de Caixa coerentes de PME
-    const rentVal = buildingMode === 'rented' ? (config.monthly_rent_value ?? 35000.00) : 0;
-    const pProd = config.rent_allocation_productive ?? 65;
-    const pAdm = config.rent_allocation_administrative ?? 25;
-    const pSales = config.rent_allocation_sales ?? 10;
+    const rentVal = buildingMode === 'rented' ? (config.monthly_rent_value ?? 50000.00) : 0;
+    const pProd = config.rent_allocation_productive ?? 70;
+    const pAdm = config.rent_allocation_administrative ?? 10;
+    const pSales = config.rent_allocation_sales ?? 20;
 
     const valCif = rentVal * (pProd / 100);
     const valAdm = rentVal * (pAdm / 100);
@@ -646,10 +646,10 @@ export function generatePureP0(config: TutorP0Config): {
     
   } else {
     // S.A. Running: Restaura o DRE complexo histórico herdado do Simulador Sênior
-    const rentVal = buildingMode === 'rented' ? (config.monthly_rent_value ?? 35000.00) : 0;
-    const pProd = config.rent_allocation_productive ?? 65;
-    const pAdm = config.rent_allocation_administrative ?? 25;
-    const pSales = config.rent_allocation_sales ?? 10;
+    const rentVal = buildingMode === 'rented' ? (config.monthly_rent_value ?? 50000.00) : 0;
+    const pProd = config.rent_allocation_productive ?? 70;
+    const pAdm = config.rent_allocation_administrative ?? 10;
+    const pSales = config.rent_allocation_sales ?? 20;
 
     const valCif = rentVal * (pProd / 100);
     const valAdm = rentVal * (pAdm / 100);

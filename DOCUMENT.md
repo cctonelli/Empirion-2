@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.65 Obsidian Emerald Period Alignment (Alinhamento Técnico das Nomenclaturas de Período e Projeções)
+- **Versão Ativa:** v19.67 Obsidian Sapphire Rent Alignment (Alinhamento e Sincronização dos Valores de Locação de Imóvel e Rateios Contábeis)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,26 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.67 Obsidian Sapphire Rent Alignment - Alinhamento e Sincronização dos Valores de Locação de Imóvel e Rateios Contábeis
+- **Data:** 03 de Junho de 2026, 16:25 UTC
+- **Motivo:** Corrigir a divergência de valores-padrão de aluguel e rateio entre a interface interativa do `TrialWizard.tsx` (que defaultava o aluguel para $50000.00 e rateios para CIF: 70%, ADM: 10% e VENDAS: 20%) e o gerador de P0 fiduciário `services/initialization.ts` (que defaultava para $35000.00 e rateio CIF: 65%, ADM: 25% e VENDAS: 10%). Além disso, garantir que os valores-padrão inseridos no Wizard sejam persistidos fiel e explicitamente na coluna `ecosystem_config` e `config` da tabela `trial_championships` no Supabase ao despachar a criação da arena de simulação.
+- **Diferenças:**
+  - *Sincronização de Fallbacks:* Atualizados os reajustes de aluguel em `services/initialization.ts` para que utilizem estritamente os valores fiduciários sintonizados com o Wizard: aluguel de `$50000.00`, e rateios CIF (`70%`), ADM (`10%`) e Vendas (`20%`).
+  - *Explicitando Propriedades de Estocagem e Aluguel:* Acrescentadas as definições padrão de real estate diretamente no estado inicializado no `useState` do `tutorConfig` no `TrialWizard.tsx`.
+  - *Sincronização de Persistência no Banco:* Integramos os objetos `config` e `ecosystem_config` no payload de persistência fiduciária disparado ao chamar `createChampionshipWithTeams` no terminal do wizard, garantindo que a tabela `trial_championships` possua todos os metadados corretos resgatados de forma transparente pelo motor do simulador do Cockpit (`Dashboard.tsx`/`simulation.ts`).
+- **Impactos Esperados:** Total eliminação de quaisquer descompassos em centavos ou valores inteiros nas demonstrações contábeis de saída (DFC/DRE) pós-turno do simulador. O cockpit e o simulador agora conversam perfeitamente na mesma frequência de valores que o usuário configura no Wizard. Os dados guardados no Supabase tornam-se redundantes, seguros e transparentes.
+- **Status:** Disponível e Ativa em Produção, Compilação e Linter 100% homologados.
+
+### v19.66 Obsidian Fiduciary Marketing Realignment - Realinhamento Fiduciário de Campanhas de Marketing e Alocação de Overheads
+- **Data:** 03 de Junho de 2026, 16:04 UTC
+- **Motivo:** Sanar a grave inconsistência financeira onde o valor total de saídas na conta de "Campanhas de Marketing" no DFC vinha sendo inflada por custos de overhead comercial fixo de herança (`salesOverhead = prevOpexSales * inflationMult`), distorcendo a conciliação do que de fato as equipes decidiram gastar com publicidade direta (ex: 2 campanhas de $10K em 4 regiões deveria resultar em $80K de despesa real de marketing, mas estava sendo mostrado como $954K).
+- **Diferenças:**
+  - *Mapeamento Puro de Marketing:* Refatorada a conta `'cf.outflow.marketing'` em `services/simulation.ts` para assumir de forma estrita apenas o custo físico e financeiro real de marketing contratado pelas equipes: `-(totalMarketingExp)`.
+  - *Agregação Coerente de Outflows de Fornecedores Sênior:* Os custos fixos de overhead comercial e administrativo (`salesOverhead` e `admOverhead`) correspondentes a contratos estáticos operacionais, serviços faturados gerais e taxas administrativas corporativas foram agrupados e lançados na conta `'cf.outflow.suppliers'` ("PAGAMENTO A FORNECEDORES") que originalmente centraliza os desembolsos de bens e serviços operacionais terceirizados contratados.
+  - *Sanidade Fiduciária:* A conta `'cf.outflow.misc'` foi zerada de forma a blindar o balanço patrimonial e o fluxo de caixa contra duplicidade ou lacunas contábeis nas arenas de simulação tradicionais que não a incluíam em seus esquemas básicos de dados, mantendo congruência absoluta centavo a centavo.
+- **Impactos Esperados:** Sincronismo perfeito na Matriz Financeira (Cockpit DFC) apresentando o valor exato gasto com marketing focado na autonomia decisoria das equipes. Equação Fundamental do Balanço (Ativos = Passivos + PL) preservada integralmente com altíssima consistência acadêmica e contábil.
+- **Status:** Disponível e Ativa em Produção, Compilação e Linter 100% homologados.
 
 ### v19.65 Obsidian Emerald Period Alignment - Alinhamento Técnico das Nomenclaturas de Período e Projeções
 - **Data:** 03 de Junho de 2026, 15:20 UTC

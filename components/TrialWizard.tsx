@@ -316,6 +316,16 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     dividend_percent: 25.0,
     dividend_frequency: 1,
     profit_incorporation_frequency: 2,
+    building_mode: 'owned',
+    real_estate_acquisition_funding: 'capital',
+    installations_value: 500000.00,
+    building_value: 2000000.00,
+    land_value: 10000000.00,
+    building_age: 2,
+    monthly_rent_value: 50000.00,
+    rent_allocation_productive: 70,
+    rent_allocation_administrative: 10,
+    rent_allocation_sales: 20,
     macroOverrides: {}
   });
 
@@ -653,6 +663,20 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         initial_machines: p0StatementsResult.machines,
         initial_stock_quantities: initialStockQty,
         is_trial: true, 
+        config: tutorConfig,
+        ecosystem_config: {
+          starting_mode: tutorConfig.starting_mode,
+          building_mode: tutorConfig.building_mode ?? (tutorConfig.starting_mode === 'start_from_zero' ? 'rented' : 'owned'),
+          building_value: tutorConfig.building_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 2000000.00 : tutorConfig.starting_mode === 'start_with_base' ? 2000000.00 : 5440000.00),
+          building_age: tutorConfig.building_age ?? (tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.starting_mode === 'start_with_base' ? 2 : 10),
+          installations_value: tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 500000.00 : tutorConfig.starting_mode === 'start_with_base' ? 500000.00 : 10000000.00),
+          land_value: tutorConfig.land_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 10000000.00 : tutorConfig.starting_mode === 'start_with_base' ? 10000000.00 : 1200000.00),
+          real_estate_acquisition_funding: tutorConfig.real_estate_acquisition_funding ?? 'capital',
+          monthly_rent_value: tutorConfig.monthly_rent_value ?? 50000.00,
+          rent_allocation_productive: tutorConfig.rent_allocation_productive ?? 70,
+          rent_allocation_administrative: tutorConfig.rent_allocation_administrative ?? 10,
+          rent_allocation_sales: tutorConfig.rent_allocation_sales ?? 20
+        },
         market_indicators: { 
           ...DEFAULT_MACRO, 
           dividend_percent: tutorConfig.dividend_percent, 
