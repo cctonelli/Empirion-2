@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.62 Obsidian Emerald XLSX Plus (Exportação nativa binária de múltiplas planilhas de relatórios sem avisos de segurança no Excel)
+- **Versão Ativa:** v19.63 Obsidian Emerald Shield (Trava de Segurança e Proteção Fiduciária contra Cliques Acidentais de Turnover pelo Tutor)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,17 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.63 Obsidian Emerald Shield - Trava de Segurança e Proteção Fiduciária contra Cliques Acidentais de Turnover pelo Tutor
+- **Data:** 03 de Junho de 2026, 13:50 UTC
+- **Motivo:** Introduzir salvaguarda de processo fiduciário na interface do Tutor, desabilitando o botão "TURNOVER P0X" enquanto o timer de contagem regressiva oficial do round estiver transcorrendo normalmente. Isso impede cliques acidentais e avanço indesejado de período por parte do Tutor, preservando as decisões e dados industriais ativos das equipes competidoras.
+- **Diferenças:**
+  - *Monitoramento Reativo de Estado de Timer:* Adicionado o callback reativo `onStatusChange` nas propriedades do sensor `<ChampionshipTimer>` e conectado de forma síncrona ao painel central `/components/AdminCommandCenter.tsx`.
+  - *Habilitação sob Demanda:* O estado `isTimerExpired` rastreia dinamicamente a contagem do cronômetro. O botão "TURNOVER P0X" agora fica bloqueado em modo leitura enquanto houver tempo restante ativo do round.
+  - *Indução a Workflow Inteligente:* O botão "TURNOVER P0X" só é reabilitado quando o status do timer muda categoricamente para "ENCERRADO" (pelo fim do tempo oficial ou quando o Tutor aciona manualmente o botão "CONCLUIR TEMPO / ZERAR TEMPORIZADOR" localizado ao lado de PLAY/PAUSA do cronômetro).
+  - *Aprimoramento de UX:* O botão Turnover desativado adota agora um design adaptativo com opacidade suavizada, cursor `not-allowed`, remoção ativa de sombreado e um tooltip descritivo informativo (`title`) que instrui o Tutor sobre a dependência temporal do round para prosseguir.
+- **Impactos Esperados:** Eliminação integral de saltos acidentais de ciclo na arena competitiva. Maior segurança fiduciária e fluidez de mediação pedagógica para o Tutor, garantindo o fiel do cronograma estipulado.
+- **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
 
 ### v19.62 Obsidian Emerald XLSX Plus - Exportação Nativa Binária de Múltiplas Planilhas sem Avisos de Segurança
 - **Data:** 03 de Junho de 2026, 13:16 UTC

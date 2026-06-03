@@ -44,6 +44,7 @@ interface ChampionshipTimerProps {
   variant?: 'default' | 'compact';
   isPaused?: boolean;
   remainingMsAtPause?: number;
+  onStatusChange?: (isExpired: boolean) => void;
 }
 
 const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({ 
@@ -54,7 +55,8 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
   createdAt,
   variant = 'default',
   isPaused = false,
-  remainingMsAtPause
+  remainingMsAtPause,
+  onStatusChange
 }) => {
   const [timeLeft, setTimeLeft] = useState<string>('Sincronizando...');
   const [isCritical, setIsCritical] = useState(false);
@@ -72,6 +74,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
         setTimeLeft('ENCERRADO');
         setIsCritical(true);
         setIsUrgent(true);
+        onStatusChange?.(true);
         return;
       }
 
@@ -87,6 +90,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
       setTimeLeft(formatted);
       setIsCritical(diff < 12 * 60 * 60 * 1000);
       setIsUrgent(diff < 2 * 60 * 60 * 1000);
+      onStatusChange?.(false);
       return;
     }
 
@@ -96,6 +100,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
     
     if (!effectiveStart) {
        setTimeLeft('Aguardando...');
+       onStatusChange?.(true);
        return;
     }
 
@@ -130,6 +135,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
           hasFiredExpire.current = true;
           onExpire();
         }
+        onStatusChange?.(true);
         return false; // timer finalizado
       }
 
@@ -154,6 +160,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
       setTimeLeft(formatted);
       setIsCritical(diff < 12 * 60 * 60 * 1000); // 12h para alerta crítico
       setIsUrgent(diff < 2 * 60 * 60 * 1000);    // 2h para pulsante
+      onStatusChange?.(false);
       return true;
     };
 
@@ -170,7 +177,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit, onExpire, isPaused, remainingMsAtPause]);
+  }, [roundStartedAt, createdAt, deadlineValue, deadlineUnit, onExpire, isPaused, remainingMsAtPause, onStatusChange]);
 
   if (variant === 'compact') {
     return (

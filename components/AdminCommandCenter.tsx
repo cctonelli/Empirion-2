@@ -61,6 +61,11 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
   const [isCreatingTrial, setIsCreatingTrial] = useState(false);
   
   const [tutorView, setTutorView] = useState<TutorView>('dashboard');
+  const [isTimerExpired, setIsTimerExpired] = useState(false);
+
+  useEffect(() => {
+    setIsTimerExpired(false);
+  }, [selectedArena?.id]);
 
   const isAdmin = profile?.role === 'admin';
 
@@ -299,6 +304,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                     createdAt={selectedArena.created_at}
                     isPaused={selectedArena.config?.is_paused}
                     remainingMsAtPause={selectedArena.config?.remaining_ms_at_pause}
+                    onStatusChange={setIsTimerExpired}
                   />
                   
                   {/* Botões do Tutor para Pausar e Concluir / Terminar o Round */}
@@ -336,7 +342,12 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
               <button onClick={handleBlackSwan} disabled={isGeneratingEvent} className="px-6 py-2 bg-rose-600/10 border border-rose-500/30 text-rose-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all flex items-center gap-2 active:scale-95">
                 {isGeneratingEvent ? <Loader2 size={12} className="animate-spin"/> : <AlertOctagon size={12}/>} Cisne Negro (IA)
               </button>
-              <button onClick={handleTurnover} disabled={isProcessing} className="px-6 py-2 bg-orange-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 flex items-center gap-2 active:scale-95">
+              <button 
+                onClick={handleTurnover} 
+                disabled={isProcessing || !isTimerExpired} 
+                title={!isTimerExpired ? "O turnover só pode ser processado após o encerramento ou a conclusão (zeramento) do temporizador de round." : "Processar a virada de round e inicializar o próximo ciclo"}
+                className="px-6 py-2 bg-orange-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 flex items-center gap-2 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none"
+              >
                 {isProcessing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>} Turnover P0{(selectedArena?.current_round ?? 0) + 1}
               </button>
            </div>
