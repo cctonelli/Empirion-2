@@ -104,8 +104,10 @@ const mapRecursiveReport = (
   const headers = [
     'Contas Contábeis de Movimento',
     ...periods.map((p) => {
-      if (p.isProjection) return `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}`;
-      return p.round === 0 || p.round === '0' || p.round === '00' ? 'INICIAL (P0)' : `ROUND 0${p.round}`;
+      const nextRound = p.round + 1;
+      const pad = nextRound < 10 ? '0' : '';
+      if (p.isProjection) return `PROJEÇÃO P${pad}${nextRound}`;
+      return `PERÍODO ${pad}${nextRound}`;
     })
   ];
   
@@ -126,7 +128,11 @@ const mapStrategicReport = (periods: any[]): TableData => {
   const headers = [
     'Indicador Sapiens',
     'Descrição / Detalhe Técnico',
-    ...periods.map((p) => (p.isProjection ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` : `ROUND 0${p.round}`))
+    ...periods.map((p) => {
+      const nextRound = p.round + 1;
+      const pad = nextRound < 10 ? '0' : '';
+      return p.isProjection ? `PROJEÇÃO P${pad}${nextRound}` : `PERÍODO ${pad}${nextRound}`;
+    })
   ];
   
   const kpiDefinitions = [
@@ -174,7 +180,11 @@ const mapCommitmentsReport = (periods: any[]): TableData => {
   const title = 'Agenda de Compromissos Financeiros (Direitos e Deveres)';
   const headers = [
     'Compromisso / Fluxo do Período',
-    ...periods.map((p) => (p.isProjection ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` : `ROUND 0${p.round}`))
+    ...periods.map((p) => {
+      const nextRound = p.round + 1;
+      const pad = nextRound < 10 ? '0' : '';
+      return p.isProjection ? `PROJEÇÃO P${pad}${nextRound}` : `PERÍODO ${pad}${nextRound}`;
+    })
   ];
   
   const rows: (string | number)[][] = [];
@@ -238,7 +248,11 @@ const mapKardexReport = (periods: any[], startingMode?: string): TableData => {
   const title = 'Kardex de Estoques & Detalhamento do CPV (Absorção WAC)';
   const headers = [
     'Movimentação Física e Financeira de Estoque',
-    ...periods.map((p) => (p.isProjection ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` : `ROUND 0${p.round}`))
+    ...periods.map((p) => {
+      const nextRound = p.round + 1;
+      const pad = nextRound < 10 ? '0' : '';
+      return p.isProjection ? `PROJEÇÃO P${pad}${nextRound}` : `PERÍODO ${pad}${nextRound}`;
+    })
   ];
   
   // Estrutura padrão de linhas do Kardex

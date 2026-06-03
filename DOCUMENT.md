@@ -2,7 +2,7 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.64 Obsidian Emerald Dynamic Headers (Cabeçalhos Dinâmicos e Simetria Perfeita na Matriz Financeira e Exportações)
+- **Versão Ativa:** v19.65 Obsidian Emerald Period Alignment (Alinhamento Técnico das Nomenclaturas de Período e Projeções)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md
 
@@ -221,6 +221,17 @@ project-root/
 ---
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
+
+### v19.65 Obsidian Emerald Period Alignment - Alinhamento Técnico das Nomenclaturas de Período e Projeções
+- **Data:** 03 de Junho de 2026, 15:20 UTC
+- **Motivo:** Corrigir de forma definitiva as divergências de nomenclatura do simulador na Matriz Financeira e nas planilhas exportadas (Kardex, Balanço, DRE, DFC). Os usuários/estudantes atuavam na rodada de tomadas de decisões de P2 enxergando "INICIAL (P0)" e "PROJEÇÃO P1", enquanto os conceitos acadêmicos e do manual exigem o correspondente a "PERÍODO 01" e "PROJEÇÃO P02" a partir das decisões do primeiro ciclo.
+- **Diferenças:**
+  - *Mapeamento Dinâmico Deslocado (+1):* Ajustados os displays e loops das colunas tanto na interface reativa (`FinancialReportMatrix.tsx`) quanto nas rotinas de exportação do backend fiduciário de planilhas (`/analise-gerencial/spreadsheet-mappers.ts`).
+  - *Sincronização Histórica:* O round base `round = 0` (historicamente a largada do campeonato) passa a ser renderizado de forma elegante como `PERÍODO 01`.
+  - *Sincronização de Projeções:* O round `round = 1` (a primeira projeção) é exibido como `PROJEÇÃO P02`, avançando sequencialmente (`PERÍODO 02`, `PROJEÇÃO P03`, etc.) conforme o turnover progride na arena de simulação.
+  - *Sincronização entre Abas:* As alterações cobrem de forma uniforme a Matriz Financeira do Cockpit (DRE, Ativo/Passivo, DFC, Strategic KPIs, Compromissos, Kardex) e todos os relatórios correspondentes clonados ou exportados em lote binário excel.
+- **Impactos Esperados:** Total eliminação de confusão cognitiva por parte dos alunos sobre em qual round de decisões se encontram. Simetria conceitual acadêmica 100% preservada de forma reativa e consistente.
+- **Status:** Disponível e Ativa em Produção, Compilação e Linter 100% homologados.
 
 ### v19.64 Obsidian Emerald Dynamic Headers - Cabeçalhos Dinâmicos e Simetria Perfeita na Matriz Financeira e Exportações
 - **Data:** 03 de Junho de 2026, 14:18 UTC

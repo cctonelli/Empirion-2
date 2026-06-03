@@ -570,10 +570,10 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                 <th key={i} className={`p-1.5 text-center border-r border-white/5 ${p.isProjection ? 'bg-orange-600/10 text-orange-500' : ''}`}>
                   <div className="flex flex-col items-center gap-0.5">
                     <span className="opacity-50 text-[5px]">{p.isProjection ? 'PRÓXIMO CICLO' : 'HISTÓRICO'}</span>
-                    <span className="text-[9px] tracking-tighter">
+                    <span className="text-[9px] tracking-tighter col-header-period-label">
                       {p.isProjection 
-                        ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` 
-                        : (p.round === 0 || p.round === '0' || p.round === '00' ? 'INICIAL (P0)' : `ROUND 0${p.round}`)}
+                        ? `PROJEÇÃO P${(p.round + 1) < 10 ? '0' : ''}${p.round + 1}` 
+                        : `PERÍODO ${(p.round + 1) < 10 ? '0' : ''}${p.round + 1}`}
                     </span>
                   </div>
                 </th>
