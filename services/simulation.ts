@@ -454,14 +454,15 @@ export const calculateProjections = (
   const plannedPurchaseCost = (purchaseMPA * mpaPrice * supplierInterestFactor) + 
                                 (purchaseMPB * mpbPrice * supplierInterestFactor);
                                 
-  const emergencyPurchaseCost = (emergencyMPA * mpaPrice * supplierInterestFactor * specialPremium) + 
-                                (emergencyMPB * mpbPrice * supplierInterestFactor * specialPremium);
+  const emergencyPurchaseCost = (emergencyMPA * mpaPrice * specialPremium) + 
+                                (emergencyMPB * mpbPrice * specialPremium);
 
   const totalPurchaseMP = plannedPurchaseCost + emergencyPurchaseCost;
 
   // Matéria-Prima Consumida (Com reajuste, juros e ágio se aplicável) - VALOR LÍQUIDO (sem IVA)
-  const netEmergencyMpaPrice = netMpaPrice * supplierInterestFactor * specialPremium;
-  const netEmergencyMpbPrice = netMpbPrice * supplierInterestFactor * specialPremium;
+  // COMPRAS ESPECIAIS (Emergenciais) são pagas imediatamente (a vista) e não sofrem acréscimo de juros de financiamento do fornecedor (supplierInterestFactor)
+  const netEmergencyMpaPrice = netMpaPrice * specialPremium;
+  const netEmergencyMpbPrice = netMpbPrice * specialPremium;
   const netPlannedMpaPrice = netMpaPrice * supplierInterestFactor;
   const netPlannedMpbPrice = netMpbPrice * supplierInterestFactor;
 
@@ -612,24 +613,25 @@ export const calculateProjections = (
   const badDebtExp = totalCreditSales * defaultRate;
 
   // Suprimentos (Pagamento a Fornecedores - v19.12)
-  // Custo nominal base sem juros do fornecedor para fracionamento de caixa e passivos fidedignos
-  const basePurchaseCost = (purchaseMPA * mpaPrice) + 
-                            (purchaseMPB * mpbPrice) + 
-                            (emergencyMPA * mpaPrice * specialPremium) + 
-                            (emergencyMPB * mpbPrice * specialPremium);
+  // COMPRAS ESPECIAIS (Emergenciais) são pagas 100% no mesmo período (à vista), enquanto as compras planejadas podem ser financiadas.
+  const normalPurchaseCost = (purchaseMPA * mpaPrice) + (purchaseMPB * mpbPrice);
+  const emergencyPurchaseCostCombined = (emergencyMPA * mpaPrice * specialPremium) + (emergencyMPB * mpbPrice * specialPremium);
 
-  let cashOutflowSuppliers = basePurchaseCost;
+  let cashOutflowSuppliers = normalPurchaseCost;
   let newAccountsPayable = 0;
   
   if (supplierPaymentType === 1) {
     // A VISTA 50% (sem juros) + 50% no próximo período (com juros de 1 período: i)
-    cashOutflowSuppliers = basePurchaseCost * 0.5;
-    newAccountsPayable = basePurchaseCost * 0.5 * (1 + supplierInterestRate);
+    cashOutflowSuppliers = normalPurchaseCost * 0.5;
+    newAccountsPayable = normalPurchaseCost * 0.5 * (1 + supplierInterestRate);
   } else if (supplierPaymentType === 2) {
     // À vista 34% (sem juros) + 33% em T+1 (com juros sobre 66%) + 33% em T+2 (com juros sobre 33%)
-    cashOutflowSuppliers = basePurchaseCost * 0.34;
-    newAccountsPayable = basePurchaseCost * (0.66 + 0.99 * supplierInterestRate);
+    cashOutflowSuppliers = normalPurchaseCost * 0.34;
+    newAccountsPayable = normalPurchaseCost * (0.66 + 0.99 * supplierInterestRate);
   }
+
+  // Compras de emergência são adicionas integralmente (100%) nas saídas de caixa deste período
+  cashOutflowSuppliers += emergencyPurchaseCostCombined;
   
   // OPEX reajustado + Marketing + Inadimplência
   const currentRoundNum = round ?? 1;

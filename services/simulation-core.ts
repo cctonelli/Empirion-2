@@ -871,8 +871,9 @@ export function processRoundWithValidation(
   if (requiredMPB > availableMPB) emergencyMPB = requiredMPB - availableMPB;
 
   const specialPremium = 1 + (sanitize(indicators.special_purchase_premium, 5) / 100);
-  const netEmergencyMpaPrice = netMpaPrice * supplierInterestFactor * specialPremium;
-  const netEmergencyMpbPrice = netMpbPrice * supplierInterestFactor * specialPremium;
+  // COMPRAS ESPECIAIS (Emergenciais) são pagas imediatamente (a vista) e não sofrem acréscimo de juros de financiamento do fornecedor (supplierInterestFactor)
+  const netEmergencyMpaPrice = netMpaPrice * specialPremium;
+  const netEmergencyMpbPrice = netMpbPrice * specialPremium;
 
   // Custo Médio Ponderado (WAC) de Suprimentos
   const totalMpaQtyAvailable = initialMpaQty + purchaseMPA + emergencyMPA;
