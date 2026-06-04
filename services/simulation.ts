@@ -432,8 +432,8 @@ export const calculateProjections = (
     (1 + 0.99 * supplierInterestRate);
 
   // Verificação de Necessidade de Compra de Emergência
-  const initialMPAStock = team.kpis?.stock_quantities?.mp_a || 0;
-  const initialMPBStock = team.kpis?.stock_quantities?.mp_b || 0;
+  const initialMPAStock = Math.max(0, team.kpis?.stock_quantities?.mp_a || 0);
+  const initialMPBStock = Math.max(0, team.kpis?.stock_quantities?.mp_b || 0);
   
   const requiredMPA = unitsProduced * 3;
   const requiredMPB = unitsProduced * 2;
@@ -1142,8 +1142,8 @@ export const calculateProjections = (
     currentMachines,
     currentLoans,
     stockQuantities: { 
-      mp_a: (team.kpis?.stock_quantities?.mp_a || 0) + sanitize(decision.production?.purchaseMPA, 0) - (unitsProduced * 3), 
-      mp_b: (team.kpis?.stock_quantities?.mp_b || 0) + sanitize(decision.production?.purchaseMPB, 0) - (unitsProduced * 2), 
+      mp_a: Math.max(0, closingMpaQty), 
+      mp_b: Math.max(0, closingMpbQty), 
       finished_goods: closingStockPA 
     }
   });

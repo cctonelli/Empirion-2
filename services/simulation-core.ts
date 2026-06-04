@@ -123,7 +123,20 @@ export function validateTripleConsistency(statements: any): { isValid: boolean; 
   const accountingDiff = Math.abs(roundedAssets - roundedLiabPl);
 
   if (accountingDiff > 0.05) {
-    errors.push(`Disparidade crítica de Equação Contábil detectada: O total do Ativo (${roundedAssets.toFixed(2)} BRL) diverge da soma do Passivo + PL (${roundedLiabPl.toFixed(2)} BRL) por ${accountingDiff.toFixed(2)} BRL.`);
+    const currentAssetsVal = cashVal + investmentsVal + clientsVal + pecldVal + vatRecoverableVal + stockPaVal + stockMpaVal + stockMpbVal;
+    const nonCurrentAssetsVal = landVal + buildingsVal + buildingsDeprecVal + machinesVal + machinesDeprecVal;
+    const currentLiabsVal = suppliersVal + vatPayableVal + taxesVal + dividendsVal + pprPayableVal + loansStVal;
+
+    errors.push(`Disparidade crítica de Equação Contábil detectada: O total do Ativo (${roundedAssets.toFixed(2)} BRL) diverge da soma do Passivo + PL (${roundedLiabPl.toFixed(2)} BRL) por ${accountingDiff.toFixed(2)} BRL. ` +
+      `[DETALHAMENTO AUDITORIA (SAPPHIRE)]: ` +
+      `ATIVO: ${roundedAssets.toFixed(2)} BRL ` +
+      `(Circulante: ${currentAssetsVal.toFixed(2)} BRL [Caixa: ${cashVal.toFixed(2)}, Aplicacao: ${investmentsVal.toFixed(2)}, Clientes: ${clientsVal.toFixed(2)}, PECLD: ${pecldVal.toFixed(2)}, IVA_Rec: ${vatRecoverableVal.toFixed(2)}, PA: ${stockPaVal.toFixed(2)}, MPA: ${stockMpaVal.toFixed(2)}, MPB: ${stockMpbVal.toFixed(2)}], ` +
+      `Nao Circulante: ${nonCurrentAssetsVal.toFixed(2)} BRL [Terrenos: ${landVal.toFixed(2)}, Edificios: ${buildingsVal.toFixed(2)}, Depr_Edif: ${buildingsDeprecVal.toFixed(2)}, Maquinas: ${machinesVal.toFixed(2)}, Depr_Maq: ${machinesDeprecVal.toFixed(2)}]); ` +
+      `PASSIVO + PL: ${roundedLiabPl.toFixed(2)} BRL ` +
+      `(Circulante: ${currentLiabsVal.toFixed(2)} BRL [Fornecedores: ${suppliersVal.toFixed(2)}, IVA_Recolher: ${vatPayableVal.toFixed(2)}, Impostos: ${taxesVal.toFixed(2)}, Dividendos: ${dividendsVal.toFixed(2)}, PPR: ${pprPayableVal.toFixed(2)}, Emprestimos_CP: ${loansStVal.toFixed(2)}], ` +
+      `Nao Circulante: ${loansLtVal.toFixed(2)} BRL [Emprestimos_LP: ${loansLtVal.toFixed(2)}], ` +
+      `Patrimonio Liquido: ${totalEquityVal.toFixed(2)} BRL [Capital: ${capitalVal.toFixed(2)}, Lucros: ${profitVal.toFixed(2)}]).`
+    );
   }
 
   // 2. CONSISTÊNCIA DO CAIXA COM DFC
@@ -686,8 +699,8 @@ export function processRoundWithValidation(
   const prevStatements = team.kpis?.statements || INITIAL_FINANCIAL_TREE;
   const prevBS = prevStatements.balance_sheet || [];
   
-  const initialMpaQty = sanitize(team.kpis?.stock_quantities?.mp_a, 30150);
-  const initialMpbQty = sanitize(team.kpis?.stock_quantities?.mp_b, 20100);
+  const initialMpaQty = Math.max(0, sanitize(team.kpis?.stock_quantities?.mp_a, 30150));
+  const initialMpbQty = Math.max(0, sanitize(team.kpis?.stock_quantities?.mp_b, 20100));
   const initialPaQty = sanitize(team.kpis?.stock_quantities?.finished_goods, 0);
 
   const initialMpaValue = findAccountValue(prevBS, 'assets.current.stock.mpa') ?? 603000.00;
