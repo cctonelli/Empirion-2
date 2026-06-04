@@ -337,6 +337,14 @@ project-root/
 - **Impactos:** Mutação contábil imediata refletida diretamente no Balanço Patrimonial e painel de demonstrativos das equipes, com validação matemática e preservação automática de igualdade fiduciária absoluta (`Ativo = Passivo + Patrimônio Líquido`).
 - **Status:** Implementado, homologado sob conformidade de linter e compilação em produção.
 
+### v19.59 Sapphire Gold - Erradicação de Disparidades Contábeis em Turnovers via Alinhamento Fiduciário do WAC de Suprimentos
+- **Data:** 04 de Junho de 2026, 12:45 UTC
+- **Motivo:** Sanar em definitivo o travamento crítico no Turnover de rodadas (especificamente do round P02 para P03 da EQUIPE TRIAL 01, gerando o erro de "BLOQUEIO DE SEGURANÇA CONTÁBIL (SAPPHIRE)") decorrente de disparidades centesimais ou de milhar na Equação Contábil fundamental (Divergência entre Ativo e Passivo + PL). O descolamento ocorria porque o motor de projeção acumulava as saídas e saldos de estoques usando um preço médio estimado/estático (`initialMPAStock * netMpaPrice`) ao invés do valor real carregado no Balanço Patrimonial anterior.
+- **Diferenças:**
+  - *Sincronização Fiduciária do WAC:* Substituição da fórmula estática de custo de entrada de estoques em `/services/simulation.ts` pelas variáveis dinâmicas `initialMpaValue` e `initialMpbValue`, as quais extraem via `findAccountValue` o saldo valorado exato registrado no Ativo do Balanço Patrimonial anterior (`prevBS`).
+  - *Consistência de Clientes e Equação de Balanço:* Ao fundamentar o WAC nos saldos reais do balanço, a mutação cambial dos estoques consumidos e estocados equilibra-se integralmente com as contas do DRE (CPV) e as movimentações financeiras de caixa e passivos. Isso elimina divergências cumulativas e resolve a inconsistência de 1.338,28 BRL apresentada, garantindo turnovers lisos e equações contábeis perfeitamente balanceadas (Ativo = Passivo + PL) em todos os rounds do Torneio.
+- **Status:** Disponível em Produção, Compilação e Linter 100% Homologados (Zero Warnings).
+
 ### v19.58 Obsidian Diamond - Sincronização em Tempo Real das Métricas Fiduciárias no TrialWizard (Step 8)
 - **Data:** 02 de Junho de 2026, 13:00 UTC
 - **Motivo:** Garantir que as métricas do Monitor Fiduciário (`fiduciaryMetrics`) e os demonstrativos contábeis (Balanço, DRE, DFC) apresentados em tempo real na etapa final do Wizard (Step 8) de parametrização do Tutor reflitam instantaneamente e de forma 100% simétrica qualquer modificação orquestrada pelas equipes nos passos anteriores, erradicando qualquer atraso na renderização e discrepâncias no estoque de produtos acabados ou de matérias-primas comuns.

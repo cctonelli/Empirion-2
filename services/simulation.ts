@@ -469,8 +469,12 @@ export const calculateProjections = (
   const totalUnitsMPA = Math.max(requiredMPA, availableMPA);
   const totalUnitsMPB = Math.max(requiredMPB, availableMPB);
   
-  const avgNetMpaPrice = ((initialMPAStock * netMpaPrice) + (purchaseMPA * netPlannedMpaPrice) + (emergencyMPA * netEmergencyMpaPrice)) / (totalUnitsMPA || 1);
-  const avgNetMpbPrice = ((initialMPBStock * netMpbPrice) + (purchaseMPB * netPlannedMpbPrice) + (emergencyMPB * netEmergencyMpbPrice)) / (totalUnitsMPB || 1);
+  // WAC fidedigno usando saldos reais do balanço patrimonial anterior (v19.14 Gold Standard)
+  const initialMpaValue = findAccountValue(prevBS, 'assets.current.stock.mpa') || (initialMPAStock * netMpaPrice);
+  const initialMpbValue = findAccountValue(prevBS, 'assets.current.stock.mpb') || (initialMPBStock * netMpbPrice);
+
+  const avgNetMpaPrice = (initialMpaValue + (purchaseMPA * netPlannedMpaPrice) + (emergencyMPA * netEmergencyMpaPrice)) / (totalUnitsMPA || 1);
+  const avgNetMpbPrice = (initialMpbValue + (purchaseMPB * netPlannedMpbPrice) + (emergencyMPB * netEmergencyMpbPrice)) / (totalUnitsMPB || 1);
 
   const totalMP = (unitsProduced * 3 * avgNetMpaPrice) + (unitsProduced * 2 * avgNetMpbPrice);
 
