@@ -353,9 +353,24 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                   const isRound0 = p.round === 0 || p.round === '0' || p.round === '00';
                   const isZeroMode = startingMode === 'start_from_zero';
                   
+                  // Busca defensiva e resiliente de KPIs (v19.12 Gold Standard)
+                  let targetKpis = p.data;
+                  if (!targetKpis && p.raw?.kpis) {
+                    targetKpis = typeof p.raw.kpis === 'string' ? JSON.parse(p.raw.kpis) : p.raw.kpis;
+                  } else if (typeof targetKpis === 'string') {
+                    try {
+                      targetKpis = JSON.parse(targetKpis);
+                    } catch (e) {
+                      console.error("Erro ao parsear kpis no histórico:", e);
+                    }
+                  }
+
+                  const targetKardex = targetKpis?.kardex ?? targetKpis?.statements?.kardex ?? p.raw?.kardex;
+                  const targetCpv = targetKpis?.cpv_details ?? targetKpis?.statements?.cpv_details ?? p.raw?.cpv_details;
+                  
                   if (row.key?.startsWith('cpv.')) {
                     const subKey = row.key.split('.')[1];
-                    val = p.data?.cpv_details?.[subKey];
+                    val = targetCpv?.[subKey];
                     
                     if (val === undefined || val === null) {
                       if (subKey === 'mpConsumida') val = isRound0 ? 0 : 2520000;
@@ -371,7 +386,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                     }
                   } else {
                     const [prodKey, statKey] = (row.key || '').split('.');
-                    val = p.data?.kardex?.[prodKey]?.[statKey];
+                    val = targetKardex?.[prodKey]?.[statKey];
                     
                     if (val === undefined || val === null) {
                       if (prodKey === 'mpa') {

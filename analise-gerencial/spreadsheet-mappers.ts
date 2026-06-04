@@ -300,7 +300,7 @@ const mapKardexReport = (periods: any[], startingMode?: string): TableData => {
     { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.totalCPP', label: '(=) CUSTO DE PRODUÇÃO DO PERÍODO (CPP)' },
     { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.estoqueInicialPA', label: '(+) Estoque Inicial de PA' },
     { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.estoqueFinalPA', label: '(-) Estoque Final de PA' },
-    { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'custoUnitarioProducao', label: 'Custo Unitário de PA' },
+    { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.custoUnitarioProducao', label: 'Custo Unitário de PA' },
     { category: 'Demonstrativo de Formação do CPV (Absorção Industrial)', key: 'cpv.totalCPV', label: '(=) CUSTO DO PRODUTO VENDIDO (CPV)' }
   ];
   
@@ -320,9 +320,24 @@ const mapKardexReport = (periods: any[], startingMode?: string): TableData => {
       const isRound0 = p.round === 0 || p.round === '0' || p.round === '00';
       const isZeroMode = startingMode === 'start_from_zero';
       
+      // Busca defensiva e resiliente de KPIs (v19.12 Gold Standard)
+      let targetKpis = p.data;
+      if (!targetKpis && p.raw?.kpis) {
+        targetKpis = typeof p.raw.kpis === 'string' ? JSON.parse(p.raw.kpis) : p.raw.kpis;
+      } else if (typeof targetKpis === 'string') {
+        try {
+          targetKpis = JSON.parse(targetKpis);
+        } catch (e) {
+          console.error("Erro ao parsear kpis no histórico export:", e);
+        }
+      }
+
+      const targetKardex = targetKpis?.kardex ?? targetKpis?.statements?.kardex ?? p.raw?.kardex;
+      const targetCpv = targetKpis?.cpv_details ?? targetKpis?.statements?.cpv_details ?? p.raw?.cpv_details;
+
       if (def.key.startsWith('cpv.')) {
         const subKey = def.key.split('.')[1];
-        val = p.data?.cpv_details?.[subKey];
+        val = targetCpv?.[subKey];
         if (val === undefined || val === null) {
           // Fallbacks idênticos aos da UI
           if (subKey === 'mpConsumida') val = isRound0 ? 0 : 2520000;
@@ -334,11 +349,12 @@ const mapKardexReport = (periods: any[], startingMode?: string): TableData => {
           else if (subKey === 'totalCPP') val = isRound0 ? 0 : 3177000;
           else if (subKey === 'estoqueInicialPA') val = 0;
           else if (subKey === 'estoqueFinalPA') val = 0;
+          else if (subKey === 'custoUnitarioProducao') val = isRound0 ? 0 : 75.64;
           else if (subKey === 'totalCPV') val = isRound0 ? 0 : 3177000;
         }
       } else {
         const [prodKey, statKey] = def.key.split('.');
-        val = p.data?.kardex?.[prodKey]?.[statKey];
+        val = targetKardex?.[prodKey]?.[statKey];
         if (val === undefined || val === null) {
           // Fallbacks idênticos aos da UI
           if (prodKey === 'mpa') {
