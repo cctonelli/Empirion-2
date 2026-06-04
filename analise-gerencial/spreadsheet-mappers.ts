@@ -104,10 +104,9 @@ const mapRecursiveReport = (
   const headers = [
     'Contas Contábeis de Movimento',
     ...periods.map((p) => {
-      const nextRound = p.round + 1;
-      const pad = nextRound < 10 ? '0' : '';
-      if (p.isProjection) return `PROJEÇÃO P${pad}${nextRound}`;
-      return `PERÍODO ${pad}${nextRound}`;
+      const pad = p.round < 10 ? '0' : '';
+      if (p.isProjection) return `PROJEÇÃO P${pad}${p.round}`;
+      return `PERÍODO ${pad}${p.round}`;
     })
   ];
   
@@ -129,9 +128,8 @@ const mapStrategicReport = (periods: any[]): TableData => {
     'Indicador Sapiens',
     'Descrição / Detalhe Técnico',
     ...periods.map((p) => {
-      const nextRound = p.round + 1;
-      const pad = nextRound < 10 ? '0' : '';
-      return p.isProjection ? `PROJEÇÃO P${pad}${nextRound}` : `PERÍODO ${pad}${nextRound}`;
+      const pad = p.round < 10 ? '0' : '';
+      return p.isProjection ? `PROJEÇÃO P${pad}${p.round}` : `PERÍODO ${pad}${p.round}`;
     })
   ];
   
@@ -181,9 +179,8 @@ const mapCommitmentsReport = (periods: any[]): TableData => {
   const headers = [
     'Compromisso / Fluxo do Período',
     ...periods.map((p) => {
-      const nextRound = p.round + 1;
-      const pad = nextRound < 10 ? '0' : '';
-      return p.isProjection ? `PROJEÇÃO P${pad}${nextRound}` : `PERÍODO ${pad}${nextRound}`;
+      const pad = p.round < 10 ? '0' : '';
+      return p.isProjection ? `PROJEÇÃO P${pad}${p.round}` : `PERÍODO ${pad}${p.round}`;
     })
   ];
   
@@ -249,9 +246,8 @@ const mapKardexReport = (periods: any[], startingMode?: string): TableData => {
   const headers = [
     'Movimentação Física e Financeira de Estoque',
     ...periods.map((p) => {
-      const nextRound = p.round + 1;
-      const pad = nextRound < 10 ? '0' : '';
-      return p.isProjection ? `PROJEÇÃO P${pad}${nextRound}` : `PERÍODO ${pad}${nextRound}`;
+      const pad = p.round < 10 ? '0' : '';
+      return p.isProjection ? `PROJEÇÃO P${pad}${p.round}` : `PERÍODO ${pad}${p.round}`;
     })
   ];
   
