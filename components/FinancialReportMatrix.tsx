@@ -348,88 +348,41 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                   </div>
                 </td>
                 {periods.map((p: any, idx2) => {
-                  let val: any = undefined;
-                  const isProj = p.isProjection;
-                  const isRound0 = p.round === 0 || p.round === '0' || p.round === '00';
-                  const isZeroMode = startingMode === 'start_from_zero';
-                  
-                  // Busca defensiva e resiliente de KPIs (v19.12 Gold Standard)
-                  let targetKpis = p.data;
-                  if (!targetKpis && p.raw?.kpis) {
-                    targetKpis = typeof p.raw.kpis === 'string' ? JSON.parse(p.raw.kpis) : p.raw.kpis;
-                  } else if (typeof targetKpis === 'string') {
+                  // Extração robusta
+                  // Extração robusta e defensiva
+                  let rawKpis = p.data || p.raw?.kpis;
+                  if (typeof rawKpis === 'string') {
                     try {
-                      targetKpis = JSON.parse(targetKpis);
+                      rawKpis = JSON.parse(rawKpis);
                     } catch (e) {
-                      console.error("Erro ao parsear kpis no histórico:", e);
+                      console.error("Erro ao fazer parse do kpis:", e);
+                      rawKpis = {};
                     }
                   }
+                  const kpis = rawKpis || {};
 
-                  const targetKardex = targetKpis?.kardex ?? targetKpis?.statements?.kardex ?? p.raw?.kardex;
-                  const targetCpv = targetKpis?.cpv_details ?? targetKpis?.statements?.cpv_details ?? p.raw?.cpv_details;
-                  
+                  const targetKardex = kpis.kardex || kpis.statements?.kardex || {};
+                  const targetCpv = kpis.cpv_details || kpis.statements?.cpv_details || {};
+
+                  let val: any = undefined;
+
                   if (row.key?.startsWith('cpv.')) {
                     const subKey = row.key.split('.')[1];
-                    val = targetCpv?.[subKey];
-                    
-                    if (val === undefined || val === null) {
-                      if (subKey === 'mpConsumida') val = isRound0 ? 0 : 2520000;
-                      else if (subKey === 'maoDeObraDireta') val = isRound0 ? 0 : 540000;
-                      else if (subKey === 'depreciacaoFabril') val = isRound0 ? 0 : 92000;
-                      else if (subKey === 'manutencaoFabril') val = isRound0 ? 0 : 25000;
-                      else if (subKey === 'indenizacoesRescisorias') val = 0;
-                      else if (subKey === 'pprProporcional') val = 0;
-                      else if (subKey === 'totalCPP') val = isRound0 ? 0 : 3177000;
-                      else if (subKey === 'estoqueInicialPA') val = 0;
-                      else if (subKey === 'estoqueFinalPA') val = 0;
-                      else if (subKey === 'totalCPV') val = isRound0 ? 0 : 3177000;
-                    }
+                    val = targetCpv[subKey];
                   } else {
                     const [prodKey, statKey] = (row.key || '').split('.');
-                    val = targetKardex?.[prodKey]?.[statKey];
-                    
-                    if (val === undefined || val === null) {
-                      if (prodKey === 'mpa') {
-                        if (statKey === 'saldoInicialQtd') val = isZeroMode ? 0 : 30150;
-                        else if (statKey === 'saldoInicialValor') val = isZeroMode ? 0 : 603000;
-                        else if (statKey === 'saldoInicialUnitario') val = isZeroMode ? 0 : 20;
-                        else if (statKey === 'entradasQtd') val = isRound0 ? 0 : 126000;
-                        else if (statKey === 'entradasValor') val = isRound0 ? 0 : 2520000;
-                        else if (statKey === 'saidasQtd') val = isRound0 ? 0 : 126000;
-                        else if (statKey === 'saidasValor') val = isRound0 ? 0 : 2520000;
-                        else if (statKey === 'saldoFinalQtd') val = isZeroMode ? 0 : 30150;
-                        else if (statKey === 'saldoFinalValor') val = isZeroMode ? 0 : 603000;
-                        else if (statKey === 'saldoFinalUnitario') val = isZeroMode ? 0 : 20;
-                      } else if (prodKey === 'mpb') {
-                        if (statKey === 'saldoInicialQtd') val = isZeroMode ? 0 : 20100;
-                        else if (statKey === 'saldoInicialValor') val = isZeroMode ? 0 : 804000;
-                        else if (statKey === 'saldoInicialUnitario') val = isZeroMode ? 0 : 40;
-                        else if (statKey === 'entradasQtd') val = isRound0 ? 0 : 84000;
-                        else if (statKey === 'entradasValor') val = isRound0 ? 0 : 3360000;
-                        else if (statKey === 'saidasQtd') val = isRound0 ? 0 : 84000;
-                        else if (statKey === 'saidasValor') val = isRound0 ? 0 : 3360000;
-                        else if (statKey === 'saldoFinalQtd') val = isZeroMode ? 0 : 20100;
-                        else if (statKey === 'saldoFinalValor') val = isZeroMode ? 0 : 804000;
-                        else if (statKey === 'saldoFinalUnitario') val = isZeroMode ? 0 : 40;
-                      } else if (prodKey === 'pa') {
-                        if (statKey === 'saldoInicialQtd') val = 0;
-                        else if (statKey === 'saldoInicialValor') val = 0;
-                        else if (statKey === 'saldoInicialUnitario') val = 0;
-                        else if (statKey === 'entradasQtd') val = isRound0 ? 0 : 42000;
-                        else if (statKey === 'entradasValor') val = isRound0 ? 0 : 3177000;
-                        else if (statKey === 'entradasUnitario') val = isRound0 ? 0 : 75.64;
-                        else if (statKey === 'saidasQtd') val = isRound0 ? 0 : 42000;
-                        else if (statKey === 'saidasValor') val = isRound0 ? 0 : 3177000;
-                        else if (statKey === 'saldoFinalQtd') val = 0;
-                        else if (statKey === 'saldoFinalValor') val = 0;
-                        else if (statKey === 'saldoFinalUnitario') val = 0;
-                      }
-                    }
+                    val = targetKardex[prodKey]?.[statKey];
                   }
 
-                  const displayStr = row.formatter(val);
+                  if (val === undefined || val === null) {
+                    console.warn(`Kardex/CPV missing → key: ${row.key} | round: ${p.round}`);
+                    val = 0;
+                  }
+
+                  const displayStr = row.formatter ? row.formatter(val) : String(val);
+
                   return (
-                    <td key={idx2} className={`p-1.5 text-center font-mono text-[9px] ${isProj ? 'bg-orange-600/5 text-orange-400 font-extrabold' : 'text-slate-300'}`}>
+                    <td key={idx2} className={`p-1.5 text-center font-mono text-[9px] ${p.isProjection ? 'bg-orange-600/5 text-orange-400 font-extrabold' : 'text-slate-300'}`}>
                       {displayStr}
                     </td>
                   );
