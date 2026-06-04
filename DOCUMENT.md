@@ -968,3 +968,11 @@ project-root/
   - *Resolução de Loop de Popups:* Refatoração do `ChampionshipTimer` para usar referências persistentes (`hasFiredExpire` e `prevTargetDate`) e debouncing interno de transição para o estado expirado. O gatilho de expiração de rodada (`onExpire`) agora se ativa exatamente uma única vez por ciclo fiduciário, eliminando loops infinitos de abertura e fechamento caso o cockpit seja re-renderizado sob tempo corrido nulo ou negativo.
 - **Status:** Em produção.
 
+### v2026-06.2 - Sincronização Fiduciária de KPIs de Histórico (Kardex & CPV)
+- **Data:** 4 de Junho de 2026
+- **Motivo:** Resolução de inconsistência de exibição no relatório "KARDEX & CPV" na matriz financeira do cockpit, que apresentava valores zerados para o Período 1 consolidado (histórico).
+- **Diferenças:**
+  - *Fusão de KPIs de Banco:* Implementação de fusão transparente que recupera os KPIs reais consolidados do time diretamente da tabela de equipes (`trial_teams`/`teams`), que preserva o estado íntegro dos cálculos contábeis do motor, e os mescla sobre o registro histórico correspondente lido de `trial_companies`/`companies` para a rodada concluída (`arena.current_round`).
+  - *Sincronização em Tempo Real (WebSocket):* Refatorado o gatilho `triggerReload` disparado em tempo real ao avançar de rodada, de modo a consultar o registro de equipes atualizado e injetá-lo no histórico de forma simbiótica, garantindo consistência total de exibição contábil.
+- **Status:** Em produção.
+

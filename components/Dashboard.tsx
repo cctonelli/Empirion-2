@@ -122,6 +122,26 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           
           let teamHistory = await getTeamSimulationHistory(teamId);
           
+          // v19.15 Sincronização Fiduciária de KPIs de Histórico na inicialização do Cockpit
+          // Mescla os dados do campo kpis do time (trial_teams/teams) para o registro histórico correspondente,
+          // de forma a garantir que Kardex e CPV estejam sempre 100% integrados no dashboard.
+          if (team && team.kpis) {
+            teamHistory = teamHistory.map((h: any) => {
+              if (h.round === arena.current_round) {
+                return {
+                  ...h,
+                  kpis: {
+                    ...h.kpis,
+                    ...team.kpis,
+                    kardex: team.kpis.kardex || h.kpis?.kardex,
+                    cpv_details: team.kpis.cpv_details || h.kpis?.cpv_details
+                  }
+                };
+              }
+              return h;
+            });
+          }
+          
           // Se o histórico estiver vazio ou não contiver a Rodada 0 (P0), geramos um Fallback Local robusto do P0
           const hasP0 = teamHistory.some((h: any) => h.round === 0);
           if (!hasP0) {
@@ -277,11 +297,41 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             const teamId = localStorage.getItem('active_team_id');
             const champId = localStorage.getItem('active_champ_id');
             if (teamId && champId) {
-              const teamHistory = await getTeamSimulationHistory(teamId);
+              // v19.15: Atualização e Auditoria Simbiótica de KPIs de forma fiduciária
+              const isTrial = activeArena.is_trial;
+              const teamsTable = isTrial ? 'trial_teams' : 'teams';
+              const { data: updatedTeam } = await supabase.from(teamsTable).select('*').eq('id', teamId).single();
+              
+              let currentTeamForKpis = activeTeam;
+              if (updatedTeam) {
+                setActiveTeam(updatedTeam);
+                currentTeamForKpis = updatedTeam;
+              }
+
+              let teamHistory = await getTeamSimulationHistory(teamId);
+              
+              // Sincroniza o Kardex e o CPV Details do time do banco sobre a linha de histórico correspondente
+              if (currentTeamForKpis?.kpis) {
+                teamHistory = teamHistory.map((h: any) => {
+                  if (h.round === currentRoundVal) {
+                    return {
+                      ...h,
+                      kpis: {
+                        ...h.kpis,
+                        ...currentTeamForKpis.kpis,
+                        kardex: currentTeamForKpis.kpis.kardex || h.kpis?.kardex,
+                        cpv_details: currentTeamForKpis.kpis.cpv_details || h.kpis?.cpv_details
+                      }
+                    };
+                  }
+                  return h;
+                });
+              }
+
               const hasP0 = teamHistory.some((h: any) => h.round === 0);
               let activeHistory = [...teamHistory];
-              if (!hasP0 && activeTeam) {
-                const kpis = activeTeam?.kpis || {};
+              if (!hasP0 && currentTeamForKpis) {
+                const kpis = currentTeamForKpis?.kpis || {};
                 const isZeroMode = activeArena.starting_mode === 'start_from_zero';
                 const defaultCash = kpis.current_cash ?? (isZeroMode ? (activeArena.config?.caixa_inicial ?? 0) : 111163.54);
                 let statementsFallback = kpis.statements;
