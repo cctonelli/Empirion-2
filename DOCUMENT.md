@@ -976,12 +976,3 @@ project-root/
   - *Sincronização em Tempo Real (WebSocket):* Refatorado o gatilho `triggerReload` disparado em tempo real ao avançar de rodada, de modo a consultar o registro de equipes atualizado e injetá-lo no histórico de forma simbiótica, garantindo consistência total de exibição contábil.
 - **Status:** Em produção.
 
-### v2026-06.3 - Alinhamento Cronológico de Períodos da Matriz Financeira (v19.5 Sapphire)
-- **Data:** 4 de Junho de 2026
-- **Motivo:** Alinhamento exato de rótulos de colunas e dados contábeis exibidos nos relatórios gerenciais e exportados para CSV/Sheets. Anteriormente, as colunas apresentavam um deslocamento de (+1), rotulando a Rodada Inicial 0 (P00) como "PERÍODO 01" e a projeção do Período 1 como "PROJEÇÃO P02", o que causava a ilusão de dados faturados do Período 1 zerados.
-- **Diferenças:**
-  - *Sincronia de Indexadores (React & Excel):* Removida a adição indevida de (+1) nos cabeçalhos gerados pelo componente `FinancialReportMatrix.tsx` e pelos mappers de exportação de planilha em `/analise-gerencial/spreadsheet-mappers.ts`.
-  - *Integridade Fiduciária:* A Rodada Inicial de abertura Greenfield (P00) é agora exibida corretamente sob a coluna "PERÍODO 00" no histórico, exibindo legitimamente seu estoque inicial zero. As decisões tomadas ativamente na Rodada 1 correspondendo à projeção faturável do período são agora exibidas com exatidão sob a coluna "PROJEÇÃO P01" (e já não "PROJEÇÃO P02").
-  - *Evolução de Turnover:* Ao realizar o turnover do Período 1, a rodada concluída se torna `1` (`current_round: 1`), e a coluna correspondente no histórico passa a exibir de forma correta e automática o "PERÍODO 01" com os dados do Kardex e CPV faturados integrados à perfeição do Supabase.
-- **Status:** Em produção.
-
