@@ -192,15 +192,15 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               {/* Informações fidedignas de parâmetros estipulados pelo Tutor */}
               <div className="mt-8 pt-4 border-t border-white/5 space-y-2 font-sans">
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Min. Recomendado:</span>
+                  <span>$ Venda Min. Recomendado:</span>
                   <span className="text-orange-400 font-bold">{currency} {sugPrice.toLocaleString('pt-BR')}</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Custo Logística:</span>
+                  <span>$ Custo Logística:</span>
                   <span className="text-slate-400 font-semibold">{currency} {distCost.toLocaleString('pt-BR')} /un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Custo Campanha:</span>
+                  <span>$ Custo unit. Campanha:</span>
                   <span className="text-slate-400 font-semibold">{currency} {mktCost.toLocaleString('pt-BR')}</span>
                 </div>
               </div>

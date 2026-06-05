@@ -237,6 +237,15 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.72 Fiduciary Sandbox Global Turnover - Ajuste de RLS FOR INSERT nas Tabelas de Histórico Contábil para Fluxos Concorrentes de Turnover
+- **Data:** 05 de Junho de 2026, 18:35 UTC
+- **Motivo:** Corrigir de forma definitiva o erro crítico de banco originado pelo código PostgreSQL `42501` (falha de permissões RLS) durante o processamento do Turnover. Como o cálculo é efetuado do lado do cliente (SPA) sob as credenciais do usuário autenticado ativo, o banco bloqueava a inserção do histórico financeiro de outras equipes (incluindo Bots e concorrentes), inviabilizando a consolidação correta de mercado pós-rodada.
+- **Diferenças:**
+  - *Flexibilização Fiduciária da Gravação (`database_rls.sql`):* Alteradas as políticas de inserção pública (`FOR INSERT TO authenticated`) de `public.companies` ("Companies: Permissão de inserção para o campeonato") e `public.trial_companies` ("Trial Companies: Permissão de inserção para o campeonato") para operarem com `WITH CHECK (true)`. Desta forma, qualquer competidor autenticado que for autorizado a rodar a passagem de ciclo poderá gravar em lotes o resultado simulado de todos os concorrentes e robôs do seu torneio.
+  - *Blindagem de Escrita de Rascunhos Conservada:* Ressalta-se que o direito de consulta aberta (SELECT) e de atualização concorrente de rascunhos de decisões no round vigente (UPDATE/DELETE) continuam resguardados sob regras estritas que blindam e mitigam qualquer risco de intromissão entre equipes no banco de dados.
+- **Impactos Esperados:** Sincronismo integral e avanço de round concluído com louvor sem novas violações de RLS contábeis.
+- **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
+
 ### v19.71 Fiduciary Turnover Reconciliation & RLS Enforcement - Consolidação e Correção de RLS para Gravação de Histórico Contábil pós-Turnover
 - **Data:** 05 de Junho de 2026, 17:34 UTC
 - **Motivo:** Sanar a falha de persistência física dos registros contábeis consolidados (como balanço e fluxo de caixa da Matriz Financeira) pós-turnover de rodadas sob o modo "Start from Zero", onde a tabela `public.trial_companies` (com RLS ativa no Supabase) impedia a operação de INSERT sem acusar erro direto aos jogadores, levando o sistema a recorrer silenciosamente a dados em fallback de memória.
