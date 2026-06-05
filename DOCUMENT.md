@@ -237,6 +237,16 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.73 Fiduciary Anonymous MVP Sandbox Integration - Ajuste de RLS de Inserção de trial_companies para Sessões Livres e Sem Login
+- **Data:** 05 de Junho de 2026, 19:05 UTC
+- **Motivo:** Sanar de forma terminal e fiduciária o erro de RLS `42501` pós-turnover no modo "Start from Zero" sob sessões experimentais (Modo Trial Sandbox). Como o modo de testes de torneios rápidos e treinos do MVP de estudantes é totalmente autônomo e focado em alta usabilidade sem obrigatoriedade de login de participantes (credencial de API anônima `anon`/`public`), a restrição das políticas anteriores que operavam apenas em escopo `TO authenticated` causava recusa instantânea do banco nas operações em lote que gravavam o histórico corporativo.
+- **Diferenças:**
+  - *Mitigação Anônima de Escrita em Modo Trial (`database_rls.sql`):* Reconfiguradas as políticas de inserção da tabela central de históricos de rascunhos temporários `public.trial_companies` ("Trial Companies: Permissão de inserção para o campeonato") alterando a diretiva restritiva de `TO authenticated` para o escopo ampliado **`TO public`**, de modo a abarcar sessões anônimas, autenticadas ou robôs concorrentes indiscriminadamente na simulação de carga real de MVP.
+  - *Blindagem Coletada e Preservada em Campeonatos Oficiais:* A tabela principal fiduciária `public.companies` mantém suas políticas de barreira territorializada de escrita atrelada estritamente aos membros de liga logados, mantendo as defesas intactas em competições de prestígio.
+  - *Mapeamento Dinâmico de Agenda Financeira, Comando Estratégico e Kardex:* Validada a persistência integral destas três macro-entidades (Dados de DRE do ERP, as decisões de comando armazenadas em formato JSON no campo `state`, as alocações fiscais e o controle volumétrico e WAC de Kardex em `kpis`). O motor garante a integridade e gravação robustas dessas colunas.
+- **Impactos Esperados:** Turnover perfeito e persistência sem fricção de agendas, kardex e decisões de comando na tabela física, possibilitando à Matriz Financeira ler dados puramente fiduciários do Supabase sem recorrer a fallbacks em memória.
+- **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
+
 ### v19.72 Fiduciary Sandbox Global Turnover - Ajuste de RLS FOR INSERT nas Tabelas de Histórico Contábil para Fluxos Concorrentes de Turnover
 - **Data:** 05 de Junho de 2026, 18:35 UTC
 - **Motivo:** Corrigir de forma definitiva o erro crítico de banco originado pelo código PostgreSQL `42501` (falha de permissões RLS) durante o processamento do Turnover. Como o cálculo é efetuado do lado do cliente (SPA) sob as credenciais do usuário autenticado ativo, o banco bloqueava a inserção do histórico financeiro de outras equipes (incluindo Bots e concorrentes), inviabilizando a consolidação correta de mercado pós-rodada.

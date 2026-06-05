@@ -429,7 +429,7 @@ CREATE POLICY "Trial Companies: Jogadores atualizam sua própria empresa" ON pub
 
 DROP POLICY IF EXISTS "Trial Companies: Permissão de inserção para o campeonato" ON public.trial_companies;
 CREATE POLICY "Trial Companies: Permissão de inserção para o campeonato" ON public.trial_companies
-    FOR INSERT TO authenticated
+    FOR INSERT TO public
     WITH CHECK (true);
 
 -- 8. TABELA DE SEGREDOS DO SISTEMA (API KEYS)
