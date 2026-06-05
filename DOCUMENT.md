@@ -8,6 +8,21 @@
 
 ---
 
+## Versionamento de Infraestrutura - v2026-06-04
+
+**Data:** 04/06/2026  
+**Motivo:** Conexão oficial do agente Grok com GitHub (cctonelli/Empirion-2) e Vercel (prj_jZXZ6mdbIL54W1qj8TJbkSGbHUtn) para automação de CI/CD, deployments e gestão de código.  
+**Principais diferenças:**  
+- Integração direta via ferramentas conectadas (list branches, create/update files, deploy_to_vercel, etc.).  
+- Automação de commits, PRs e deploys sem intervenção manual excessiva.  
+**Impactos:**  
+- Melhora replicabilidade e DX.  
+- Exige documentação rigorosa de mudanças (já alinhado às regras do projeto).  
+**Status:** Ativo / v1 em uso.  
+**Migração:** Nenhuma (nova integração).
+
+---
+
 ## 1. Visão Geral e Missão do Produto
 
 O **EMPIRION ORACLE** é um simulador de "Digital Twin" de gestão contábil, industrial e financeira voltado para cenários de alta competitividade e capacitação corporativa de alto nível (MBA/Corporate Training). Através de um motor sequencial robusto de rodadas (Turnover Engine), as equipes tomam decisões operacionais e competem em mercados dinâmicos regulados por inteligência artificial e indexadores econômicos globais.
