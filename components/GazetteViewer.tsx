@@ -336,16 +336,16 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                                     </div>
                                     <div className="space-y-1.5 text-[10px] font-mono leading-tight">
                                        <div className="flex justify-between text-slate-500">
-                                          <span>Sugerido:</span>
+                                          <span>$ Sugerido Venda:</span>
                                           <span className="text-orange-400 font-bold">{rCurrency} {baseSugPrice.toLocaleString('pt-BR')}</span>
                                        </div>
                                        <div className="flex justify-between text-slate-500">
-                                          <span>Logística:</span>
-                                          <span className="text-slate-300">{rCurrency} {getAdjustedPrice(baseDist, 'distribution_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM).toLocaleString('pt-BR')}*</span>
+                                          <span>$ Frete PA (unid):</span>
+                                          <span className="text-slate-300">{rCurrency} {getAdjustedPrice(baseDist, 'distribution_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM).toLocaleString('pt-BR')}</span>
                                        </div>
                                        <div className="flex justify-between text-slate-500">
-                                          <span>MKT Campanha:</span>
-                                          <span className="text-slate-300">{rCurrency} {getAdjustedPrice(baseMkt, 'marketing_campaign_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM).toLocaleString('pt-BR')}*</span>
+                                          <span>$ Campanha MKT:</span>
+                                          <span className="text-slate-300">{rCurrency} {getAdjustedPrice(baseMkt, 'marketing_campaign_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM).toLocaleString('pt-BR')}</span>
                                        </div>
                                        <div className="flex justify-between text-slate-500">
                                           <span>Peso Demanda:</span>
