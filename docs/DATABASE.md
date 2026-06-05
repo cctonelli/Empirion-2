@@ -15,3 +15,9 @@
 ## Protocolo de Integridade
 - A `INITIAL_FINANCIAL_TREE` define a estrutura imutável de contas contábeis.
 - Chaves estrangeiras com `ON DELETE RESTRICT` para evitar órfãos em dados históricos.
+
+### Versionamento de Infraestrutura & RLS - 05/06/2026
+* **Motivo:** Restabelecimento da persistência das demonstrações contábeis e Matriz Financeira (DRE, Balaço, Fluxo de Caixa, KPIs) em simulações Sandbox/Trial que retornavam registros vazios.
+* **Diagnóstico:** Row Level Security (RLS) habilitado sem diretivas de `FOR INSERT` para conexões autenticadas do Tutor, ativando o comportamento default deny do PostgreSQL.
+* **Ajuste:** Adicionadas políticas RLS sob medida mapeadoras do direito de inserção (`FOR INSERT`) para as tabelas `public.trial_companies` e `public.companies`, restringindo escritas contábeis exclusivamente aos perfis de Membros Autênticos da equipe respectiva, Tutores ou Admins do campeonato.
+
