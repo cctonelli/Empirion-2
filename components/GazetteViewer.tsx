@@ -311,7 +311,6 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                            <CostUnit label="Armazenagem MP" val={getAdjustedPrice(currentMacro.prices.storage_mp, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" currency={arena.currency || '$'} />
                            <CostUnit label="Armazenagem PA" val={getAdjustedPrice(currentMacro.prices.storage_finished, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" currency={arena.currency || '$'} />
-                           // <CostUnit label="Distribuição PA" val={getAdjustedPrice(currentMacro.prices.distribution_unit, 'distribution_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-orange-400" currency={arena.currency || '$'} />
                         </div>
                      </div>
                   </div>
