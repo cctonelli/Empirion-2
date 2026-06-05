@@ -579,7 +579,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 throw new Error(`BLOQUEIO DE SEGURANÇA CONTÁBIL (SAPPHIRE): Inconsistência crítica identificada para ${item.team.name}: ${checkErrors.join(' | ')}`);
             }
 
-            const { error: insertErr } = await supabase.from(historyTable).insert({
+            const payload = {
                 team_id: item.team.id, 
                 championship_id: id, 
                 round: nextRound, 
@@ -624,14 +624,34 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 market_share: Math.round(competitiveShare),
                 supplier_interest_expenses: item.res.kpis.supplier_interest_expenses || 0,
                 emergency_purchase_expenses: item.res.kpis.emergency_purchase_expenses || 0,
-                emergency_units_total: item.res.kpis.emergency_units_total || 0,
-                avg_receivable_days: item.res.kpis.avg_receivable_days || 0,
-                avg_payable_days: item.res.kpis.avg_payable_days || 0
-            });
+                emergency_units_total: Math.round(item.res.kpis.emergency_units_total || 0),
+                avg_receivable_days: Math.round(item.res.kpis.avg_receivable_days || 0),
+                avg_payable_days: Math.round(item.res.kpis.avg_payable_days || 0)
+            };
+
+            const { error: insertErr } = await supabase.from(historyTable).insert(payload);
 
             if (insertErr) {
-                console.error(`Erro ao inserir histórico contábil para ${item.team.name}:`, insertErr);
-                throw new Error(`[ERRO HISTÓRICO] Não foi possível salvar o histórico em ${historyTable} para ${item.team.name}: ${insertErr.message} (Código: ${insertErr.code || 'N/A'})`);
+                // Auditoria forense de tipos para nossa equipe de engenharia e banco de dados
+                const suspeitos = Object.entries(payload)
+                  .filter(([_, val]) => typeof val === 'number' && !Number.isInteger(val))
+                  .map(([key, val]) => `${key}: float(${val})`)
+                  .join(' | ');
+                
+                console.error(`[AUDITORIA ESTRETA SUPABASE] Erro crítico no insert para ${item.team.name}. Suspeitos (Floats):`, suspeitos);
+                console.error("Payload completo enviado:", JSON.stringify(payload, null, 2));
+                
+                throw new Error(
+                  `[ERRO HISTÓRICO] Erro Supabase no insert de ${historyTable} para ${item.team.name}.\n` +
+                  `Mensagem: ${insertErr.message} (Código: ${insertErr.code || 'N/A'})\n` +
+                  `Valores Decimais Suspeitos: [${suspeitos || 'Nenhum'}]\n` +
+                  `Payload Compacto para análise: ${JSON.stringify({ 
+                     avg_receivable_days: payload.avg_receivable_days, 
+                     avg_payable_days: payload.avg_payable_days, 
+                     emergency_units_total: payload.emergency_units_total,
+                     market_share: payload.market_share 
+                  })}`
+                );
             }
 
             const { error: teamUpdateErr } = await supabase.from(teamsTable).update({ 

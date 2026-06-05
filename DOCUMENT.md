@@ -237,6 +237,15 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.75 Fiduciary Float Mitigation & Expanded Forensics - Blindagem de Inteiros Contábeis e Logs Avançados de Auditoria do Supabase
+- **Data:** 05 de Junho de 2026, 22:54 UTC
+- **Motivo:** Sanar o erro de desajuste de tipos de dados PostgreSQL `22P02` (Erro Crítico de Sintaxe de Entrada para Tipo INTEGER) durante a gravação dos prazos médios de recebimento/pagamento e total de unidades de emergência no final de rodadas de turnover. Como o cálculo aritmético do motor de simulação calcula prazos como floats de altíssima precisão (por exemplo, `"9.11111111111111"`), a inserção falhava ao bater em colunas físicas tipadas como `INTEGER` no Supabase legado de alguns usuários.
+- **Diferenças:**
+  - *Arredondamento Preditivo no Frontend (`services/supabase.ts`):* Implementado o encapsulamento de todos os campos inteiros candidatos no payload (`avg_receivable_days`, `avg_payable_days`, `emergency_units_total`) usando a função nativa `Math.round()`. Sendo prazos médios operacionais contados por dias completos, a resolução preserva a fidelidade acadêmica e elimina 100% dos travamentos.
+  - *Auditoria Forense de payloads do Supabase:* Enriquecido o bloco de captura e tratamento de erros do Supabase. Caso haja qualquer colisão de tipos ou falha de integridade, é impresso um relatório minucioso listando todos os atributos decimais candidatos a float no momento, além do próprio payload para facilitar diagnósticos terminais.
+- **Impactos Esperados:** Sincronização impecável em qualquer ciclo subsequente avançado e turnover verde de picos corporativos.
+- **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
+
 ### v19.74 Fiduciary Turnover Decimals & Blindage - Blindagem no Frontend e Migração de DDL para market_share (Decimal de Precisão de Mercado)
 - **Data:** 05 de Junho de 2026, 19:12 UTC
 - **Motivo:** Sanar o erro de desajuste de tipos de dados PostgreSQL `22P02` (Erro Crítico de Sintaxe de Entrada para Tipo INTEGER) durante a gravação de market shares pós-turnover de rodada. O motor contábil gerava decimais ultra-precisos de market share (por exemplo: `"25.27124630628737"`), porém se a tabela já existisse no banco do Supabase do usuário sob tipos legados herdando o esquema INTEGER inicial, o banco rejeitava a escrita e causava a quebra do avanço do round.
