@@ -6,6 +6,12 @@
 
 BEGIN;
 
+-- 0.0 AJUSTE DE TIPOS DE DADOS PARA COMPATIBILIDADE DE TURN OVER (v19.74)
+-- Caso as colunas existissem como INTEGER no banco de dados físico original do usuário,
+-- este comando força a reclassificação para aceitação fidedigna de casas decimais na simulação contábil.
+ALTER TABLE public.companies ALTER COLUMN market_share TYPE NUMERIC(10,2) USING market_share::numeric;
+ALTER TABLE public.trial_companies ALTER COLUMN market_share TYPE NUMERIC(10,2) USING market_share::numeric;
+
 -- 0. ATUALIZAÇÃO DE TELEMETRIA EM COMPANIES (LIVE & HISTÓRICO)
 ALTER TABLE public.companies 
 ADD COLUMN IF NOT EXISTS supplier_interest_expenses NUMERIC(20,2) DEFAULT 0,

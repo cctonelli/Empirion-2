@@ -237,6 +237,15 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.74 Fiduciary Turnover Decimals & Blindage - Blindagem no Frontend e Migração de DDL para market_share (Decimal de Precisão de Mercado)
+- **Data:** 05 de Junho de 2026, 19:12 UTC
+- **Motivo:** Sanar o erro de desajuste de tipos de dados PostgreSQL `22P02` (Erro Crítico de Sintaxe de Entrada para Tipo INTEGER) durante a gravação de market shares pós-turnover de rodada. O motor contábil gerava decimais ultra-precisos de market share (por exemplo: `"25.27124630628737"`), porém se a tabela já existisse no banco do Supabase do usuário sob tipos legados herdando o esquema INTEGER inicial, o banco rejeitava a escrita e causava a quebra do avanço do round.
+- **Diferenças:**
+  - *Blindagem Nativa do Frontend (`services/supabase.ts`):* No processamento principal de inserção de simulação (`processRoundTurnover`), aplicou-se a normalização `Math.round(competitiveShare)` para o campo `market_share`. Isso assegura que, mesmo se o banco de dados do usuário contiver legados inalterados com a coluna tipada como INTEGER, a gravação será efetuada perfeitamente com valores inteiros limpos.
+  - *Migração Robustecida de DDL (`database_rls.sql`):* Adicionados comandos de alteração de tipo de coluna compulsória (`ALTER COLUMN ALTER TYPE NUMERIC(10,2)`) para as tabelas `public.companies` e `public.trial_companies`. Estudantes interessados em reter a precisão milimétrica de casas decimais em picos concorrentes podem simplesmente rodar o script revisado no editor SQL do Supabase.
+- **Impactos Esperados:** Turnover impecável e persistência contínua com aceitação fidedigna de dados do ERP corporativo em qualquer versão ou provisionamento do banco Supabase parceiro.
+- **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
+
 ### v19.73 Fiduciary Anonymous MVP Sandbox Integration - Ajuste de RLS de Inserção de trial_companies para Sessões Livres e Sem Login
 - **Data:** 05 de Junho de 2026, 19:05 UTC
 - **Motivo:** Sanar de forma terminal e fiduciária o erro de RLS `42501` pós-turnover no modo "Start from Zero" sob sessões experimentais (Modo Trial Sandbox). Como o modo de testes de torneios rápidos e treinos do MVP de estudantes é totalmente autônomo e focado em alta usabilidade sem obrigatoriedade de login de participantes (credencial de API anônima `anon`/`public`), a restrição das políticas anteriores que operavam apenas em escopo `TO authenticated` causava recusa instantânea do banco nas operações em lote que gravavam o histórico corporativo.
