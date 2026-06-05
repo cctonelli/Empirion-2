@@ -379,6 +379,31 @@ CREATE POLICY "Jogadores atualizam sua propria empresa_v2" ON public.companies
         )
     );
 
+DROP POLICY IF EXISTS "Companies: Permissão de inserção para o campeonato" ON public.companies;
+CREATE POLICY "Companies: Permissão de inserção para o campeonato" ON public.companies
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.role IN ('tutor', 'admin')
+        )
+        OR EXISTS (
+            -- O usuário pertence a um time do mesmo campeonato (integrante da liga)
+            SELECT 1 FROM public.team_members tm
+            JOIN public.users u ON tm.user_id::text = u.id::text
+            WHERE u.supabase_user_id::text = auth.uid()::text
+            AND tm.championship_id::text = companies.championship_id::text
+        )
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND companies.championship_id::text IN (
+                SELECT t.championship_id::text FROM public.teams t WHERE t.id::text = up.id::text
+            )
+        )
+    );
+
 -- ==============================================================================
 -- POLÍTICAS PARA MACRO RULES
 -- ==============================================================================
@@ -419,6 +444,24 @@ CREATE POLICY "Trial Companies: Jogadores atualizam sua própria empresa" ON pub
             SELECT 1 FROM public.user_profiles up
             WHERE up.supabase_user_id::text = auth.uid()::text
             AND (up.id::text = trial_companies.team_id::text OR up.role IN ('tutor', 'admin'))
+        )
+    );
+
+DROP POLICY IF EXISTS "Trial Companies: Permissão de inserção para o campeonato" ON public.trial_companies;
+CREATE POLICY "Trial Companies: Permissão de inserção para o campeonato" ON public.trial_companies
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.role IN ('tutor', 'admin')
+        )
+        OR EXISTS (
+            -- O usuário pertence a um time do mesmo campeonato (integrante da liga)
+            SELECT 1 FROM public.trial_teams student_team
+            JOIN public.user_profiles up ON student_team.id::text = up.id::text
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND student_team.championship_id::text = trial_companies.championship_id::text
         )
     );
 

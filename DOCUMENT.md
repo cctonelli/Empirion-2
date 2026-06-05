@@ -237,6 +237,15 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.71 Fiduciary Turnover Reconciliation & RLS Enforcement - Consolidação e Correção de RLS para Gravação de Histórico Contábil pós-Turnover
+- **Data:** 05 de Junho de 2026, 17:34 UTC
+- **Motivo:** Sanar a falha de persistência física dos registros contábeis consolidados (como balanço e fluxo de caixa da Matriz Financeira) pós-turnover de rodadas sob o modo "Start from Zero", onde a tabela `public.trial_companies` (com RLS ativa no Supabase) impedia a operação de INSERT sem acusar erro direto aos jogadores, levando o sistema a recorrer silenciosamente a dados em fallback de memória.
+- **Diferenças:**
+  - *Interrupção de Silêncio Operacional (`services/supabase.ts`):* Modificada a função principal de consolidação `processRoundTurnover`. Toda rotina que interage com o Supabase via PostgREST (como `insert` para bots e equipes, e `update` para dados gerais de campeonatos) agora possui captura e análise explícita de erro (`const { error: insertErr }`). Caso ocorra qualquer falha, o erro é impresso no console e propagado via `throw new Error([ERRO BANCO DE DADOS])`, abortando a "falsa transação de sucesso".
+  - *Mitigação de Segurança RLS com Escrita Territorializada (`database_rls.sql`):* Desenvolvidas e aplicadas as políticas de inserção `FOR INSERT` na tabela principal de históricos contábeis públicos `public.companies` ("Companies: Permissão de inserção para o campeonato") e de torneios temporários `public.trial_companies` ("Trial Companies: Permissão de inserção para o campeonato") destinadas aos perfis autenticados. Estas políticas autorizam o tutor, o administrador ou qualquer competidor devidamente inscrito na liga a efetuar inserções contábeis de histórico para si e para os concorrentes do mesmo campeonato (exigência do motor para processar o balanceamento de mercado consolidado).
+- **Impactos Esperados:** Persistência impecável pós-turnover com eliminação definitiva de falhas mudas, garantindo que a Matriz Financeira leia dados fiduciários exclusivamente do banco Supabase em vez de fallbacks efêmeros em memória.
+- **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
+
 ### v19.70 Obsidian Dynamic Region Synchronization - Integração Dinâmica de Custos e Preços Industriais e Comerciais por Região (Supabase Config)
 - **Data:** 05 de Junho de 2026, 15:00 UTC
 - **Motivo:** Sanar o desalinhamento de dados e erro de auditoria na simulação, onde o Tutor customizava os valores regionais de "Preço Venda Sugerido", "Custo Unitário de Distribuição" e "Custo Orçamentário de Marketing" no Wizard e no banco Supabase (coluna JSON `config` na tabela `trial_championships`), porém o frontend exibia valores estáticos hardcoded (R$ 425 e custos estáticos) e o backend de simulação recalculava despesas com base em indicadores macro globais não-coincidentes, gerando distorções de demanda e CPV.

@@ -509,12 +509,16 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 team.strategic_profile,
                 lastHistory?.kpis
               );
-              await supabase.from(decisionsTable).insert({
+              const { error: botDecErr } = await supabase.from(decisionsTable).insert({
                 team_id: team.id,
                 championship_id: id,
                 round: nextRound,
                 data: finalDecision
               });
+              if (botDecErr) {
+                console.error(`Erro ao inserir decisão para o bot ${team.name}:`, botDecErr);
+                throw new Error(`[ERRO BANCO DE DADOS] Falha ao registrar decisão automática do Bot ${team.name} em ${decisionsTable}: ${botDecErr.message}`);
+              }
             }
             marketDecisions[team.id] = finalDecision;
         }
@@ -575,7 +579,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 throw new Error(`BLOQUEIO DE SEGURANÇA CONTÁBIL (SAPPHIRE): Inconsistência crítica identificada para ${item.team.name}: ${checkErrors.join(' | ')}`);
             }
 
-            await supabase.from(historyTable).insert({
+            const { error: insertErr } = await supabase.from(historyTable).insert({
                 team_id: item.team.id, 
                 championship_id: id, 
                 round: nextRound, 
@@ -625,10 +629,20 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 avg_payable_days: item.res.kpis.avg_payable_days || 0
             });
 
-            await supabase.from(teamsTable).update({ 
+            if (insertErr) {
+                console.error(`Erro ao inserir histórico contábil para ${item.team.name}:`, insertErr);
+                throw new Error(`[ERRO HISTÓRICO] Não foi possível salvar o histórico em ${historyTable} para ${item.team.name}: ${insertErr.message} (Código: ${insertErr.code || 'N/A'})`);
+            }
+
+            const { error: teamUpdateErr } = await supabase.from(teamsTable).update({ 
                 equity: item.res.kpis.equity, 
                 kpis: item.res.kpis 
             }).eq('id', item.team.id);
+
+            if (teamUpdateErr) {
+                console.error(`Erro ao atualizar KPIs para equipe ${item.team.name}:`, teamUpdateErr);
+                throw new Error(`[ERRO KPIs] Não foi possível atualizar os KPIs em ${teamsTable} para ${item.team.name}: ${teamUpdateErr.message}`);
+            }
         }
 
         // 5. Preparar indicadores para o PRÓXIMO round (round + 2)
@@ -645,12 +659,17 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             remaining_ms_at_pause: null
         };
 
-        await supabase.from(champTable).update({ 
+        const { error: champUpdateErr } = await supabase.from(champTable).update({ 
             current_round: nextRound, 
             market_indicators: nextIndicators,
             round_started_at: new Date().toISOString(),
             config: updatedConfig
         }).eq('id', id);
+
+        if (champUpdateErr) {
+            console.error(`Erro ao atualizar campeonato:`, champUpdateErr);
+            throw new Error(`[ERRO CAMPEONATO] Não foi possível atualizar os dados do campeonato em ${champTable}: ${champUpdateErr.message}`);
+        }
         
         return { success: true };
     } catch (err: any) { return { success: false, error: err.message }; }

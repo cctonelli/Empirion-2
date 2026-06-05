@@ -307,7 +307,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                         </div>
                      </div>
                      <div className="bg-slate-900/60 p-12 rounded-[5rem] border border-white/10 shadow-3xl">
-                        <h3 className="text-2xl font-black text-white uppercase italic mb-10 flex items-center gap-4"><Package className="text-blue-500"/> Custos com Estocagem e Distribuição (unid)</h3>
+                        <h3 className="text-2xl font-black text-white uppercase italic mb-10 flex items-center gap-4"><Package className="text-blue-500"/> Custos de Estocagem MP/PA (un)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                            <CostUnit label="Armazenagem MP" val={getAdjustedPrice(currentMacro.prices.storage_mp, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" currency={arena.currency || '$'} />
                            <CostUnit label="Armazenagem PA" val={getAdjustedPrice(currentMacro.prices.storage_finished, 'storage_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)} color="text-slate-400" currency={arena.currency || '$'} />
