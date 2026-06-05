@@ -507,19 +507,29 @@ export const calculateProjections = (
   const regionCount = regions.length || 1;
   const baseDemandPerRegion = (capacity * 0.8) / regionCount;
 
+  // Dicionário para guardar as demandas calculadas por região para ponderar a distribuição se necessário
+  const regionalDemands: Record<string, number> = {};
+
   regions.forEach(([id, reg]: [string, any]) => {
     const regPrice = sanitize(reg.price, 425);
     const regMarketing = sanitize(reg.marketing, 0);
     const regTerm = sanitize(reg.term, 0); // 0: A VISTA, 1: A VISTA + 50%, 2: A VISTA + 33% + 33%
 
-    totalMarketingExp += regMarketing * indicators.prices.marketing_campaign * (sanitize(indicators.marketing_campaign_adjust, 0) / 100 + 1);
+    const regId = Number(id);
+    const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
+    
+    const baseSuggestedPrice = regConfig?.suggested_price !== undefined ? Number(regConfig.suggested_price) : (indicators.avg_selling_price || 425);
+    const baseMarketingCost = regConfig?.marketing_cost !== undefined ? Number(regConfig.marketing_cost) : (indicators.prices.marketing_campaign || 10000);
 
-    const priceIndex = indicators.avg_selling_price / regPrice;
+    totalMarketingExp += regMarketing * baseMarketingCost * (sanitize(indicators.marketing_campaign_adjust, 0) / 100 + 1);
+
+    const priceIndex = baseSuggestedPrice / regPrice;
     const marketingIndex = 1 + (regMarketing * 0.08);
     const termIndex = 1 + (regTerm * 0.05);
     
     let regDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (indicators.demand_variation / 100)) * rjDemandPenalty);
-    
+    regionalDemands[id] = regDemand;
+
     const regUnitsSold = Math.min(regDemand, Math.floor(totalQtyForSale / regionCount)); 
     totalUnitsSold += regUnitsSold;
 
@@ -544,16 +554,34 @@ export const calculateProjections = (
 
   const pmr = totalRevenue > 0 ? weightedPmrSum / totalRevenue : 0;
 
+  // Ajuste proporcional pelas quantidades disponíveis
+  let scaleRatio = 1;
   if (totalUnitsSold > totalQtyForSale) {
-    const ratio = totalQtyForSale / totalUnitsSold;
+    scaleRatio = totalQtyForSale / totalUnitsSold;
     totalUnitsSold = totalQtyForSale;
-    totalRevenue *= ratio;
-    totalCashSales *= ratio;
-    totalCreditSales *= ratio;
+    totalRevenue *= scaleRatio;
+    totalCashSales *= scaleRatio;
+    totalCreditSales *= scaleRatio;
   }
 
-  // Custo de Distribuição comercial
-  const distributionCost = totalUnitsSold * indicators.prices.distribution_unit * getAdjust('distribution_cost_adjust', sanitize(indicators.distribution_cost_adjust, 0));
+  // Custo de Distribuição comercial regionalizado e fidedigno
+  let totalDistributionCost = 0;
+  regions.forEach(([id, reg]: [string, any]) => {
+    const regId = Number(id);
+    const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
+    const baseDistributionUnitCost = regConfig?.distribution_cost !== undefined ? Number(regConfig.distribution_cost) : (indicators.prices.distribution_unit || 50);
+
+    const regDemand = regionalDemands[id] || 0;
+    let regUnitsSold = Math.min(regDemand, Math.floor(totalQtyForSale / regionCount));
+    
+    if (scaleRatio < 1) {
+      regUnitsSold *= scaleRatio;
+    }
+
+    totalDistributionCost += regUnitsSold * baseDistributionUnitCost * getAdjust('distribution_cost_adjust', sanitize(indicators.distribution_cost_adjust, 0));
+  });
+
+  const distributionCost = totalDistributionCost;
 
   // Estoque Final de Produto Acabado e Matéria-Prima Físicos
   const closingStockPA = totalQtyForSale - totalUnitsSold;

@@ -982,7 +982,11 @@ export function processRoundWithValidation(
       const regTerm = sanitize(reg.term, 0);
       const rjDemandPenalty = decision.judicial_recovery === true ? 0.85 : 1.0;
 
-      const priceIndex = indicators.avg_selling_price / regPrice;
+      const regId = Number(id);
+      const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
+      const baseSuggestedPrice = regConfig?.suggested_price !== undefined ? Number(regConfig.suggested_price) : (indicators.avg_selling_price || 425);
+
+      const priceIndex = baseSuggestedPrice / regPrice;
       const marketingIndex = 1 + (regMarketing * 0.08);
       const termIndex = 1 + (regTerm * 0.05);
       

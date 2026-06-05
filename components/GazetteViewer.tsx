@@ -315,6 +315,50 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                         </div>
                      </div>
                   </div>
+
+                  {/* Parâmetros Específicos das Praças de Venda por Região */}
+                  {arena?.config?.regions && arena.config.regions.length > 0 && (
+                     <div className="bg-slate-900/60 p-12 rounded-[5rem] border border-white/10 shadow-3xl">
+                        <h3 className="text-2xl font-black text-white uppercase italic mb-10 flex items-center gap-4">
+                           <Globe className="text-orange-500" /> Parâmetros de Demanda, Logística e Margens por Região
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                           {arena.config.regions.map((r: any) => {
+                              const baseDist = r.distribution_cost !== undefined ? r.distribution_cost : 50;
+                              const baseSugPrice = r.suggested_price !== undefined ? r.suggested_price : 425;
+                              const baseMkt = r.marketing_cost !== undefined ? r.marketing_cost : 10000;
+                              const rCurrency = r.currency || arena.currency || 'BRL';
+                              return (
+                                 <div key={r.id} className="bg-slate-950/60 p-6 rounded-3xl border border-white/5 space-y-4 hover:border-orange-500/20 transition-all">
+                                    <div className="pb-2 border-b border-white/5 flex justify-between items-center">
+                                       <span className="text-xs font-black text-orange-400 uppercase italic tracking-tight">{r.name}</span>
+                                       <span className="text-[8px] font-black bg-white/5 px-2 py-0.5 rounded text-slate-400">{rCurrency}</span>
+                                    </div>
+                                    <div className="space-y-1.5 text-[10px] font-mono leading-tight">
+                                       <div className="flex justify-between text-slate-500">
+                                          <span>Sugerido:</span>
+                                          <span className="text-orange-400 font-bold">{rCurrency} {baseSugPrice.toLocaleString('pt-BR')}</span>
+                                       </div>
+                                       <div className="flex justify-between text-slate-500">
+                                          <span>Logística:</span>
+                                          <span className="text-slate-300">{rCurrency} {getAdjustedPrice(baseDist, 'distribution_cost_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM).toLocaleString('pt-BR')}*</span>
+                                       </div>
+                                       <div className="flex justify-between text-slate-500">
+                                          <span>MKT Campanha:</span>
+                                          <span className="text-slate-300">{rCurrency} {getAdjustedPrice(baseMkt, 'marketing_campaign_adjust', round, arena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM).toLocaleString('pt-BR')}*</span>
+                                       </div>
+                                       <div className="flex justify-between text-slate-500">
+                                          <span>Peso Demanda:</span>
+                                          <span className="text-slate-300 font-bold">{r.demand_weight || 20}%</span>
+                                       </div>
+                                    </div>
+                                 </div>
+                              );
+                           })}
+                        </div>
+                        <p className="text-[9px] font-mono text-slate-500 mt-6 leading-relaxed">* Valores base parametrizados pelo Tutor reajustados de forma fiduciária pelos coeficientes econômicos vigentes no Ciclo P-{round}.</p>
+                     </div>
+                  )}
                </motion.div>
             )}
 

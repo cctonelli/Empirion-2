@@ -122,63 +122,91 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
       {/* Cards de regiões */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-        {Object.entries(decisions.regions).map(([id, reg]: [string, any]) => (
-          <div
-            key={id}
-            className="bg-slate-900/70 backdrop-blur-sm p-6 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 transition-all duration-300 group"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h4 className="text-lg font-black text-orange-400 uppercase italic tracking-tight font-sans">
-                {activeArena?.region_names?.[Number(id) - 1] || `Região ${id}`}
-              </h4>
-              <Globe size={20} className="text-slate-600 group-hover:text-orange-400 transition-colors" />
+        {Object.entries(decisions.regions).map(([id, reg]: [string, any]) => {
+          const regId = Number(id);
+          const regionConf = activeArena?.config?.regions?.find((r: any) => r.id === regId) || activeArena?.config?.region_configs?.find((r: any) => r.id === regId);
+          
+          const sugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : (activeArena?.market_indicators?.avg_selling_price || 425);
+          const distCost = regionConf?.distribution_cost !== undefined ? Number(regionConf.distribution_cost) : (activeArena?.market_indicators?.prices?.distribution_unit || 50);
+          const mktCost = regionConf?.marketing_cost !== undefined ? Number(regionConf.marketing_cost) : (activeArena?.market_indicators?.prices?.marketing_campaign || 10000);
+          const currency = regionConf?.currency || activeArena?.currency || 'BRL';
+
+          return (
+            <div
+              key={id}
+              className="bg-slate-900/70 backdrop-blur-sm p-6 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 transition-all duration-300 group flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h4 className="text-lg font-black text-orange-400 uppercase italic tracking-tight font-sans">
+                    {activeArena?.region_names?.[Number(id) - 1] || `Região ${id}`}
+                  </h4>
+                  <Globe size={20} className="text-slate-600 group-hover:text-orange-400 transition-colors" />
+                </div>
+
+                <div className="space-y-6">
+                  {/* Preço */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-sans">Preço Unitário</label>
+                    <CurrencyInput
+                      value={reg.price}
+                      onChange={v => updateDecision(`regions.${id}.price`, v)}
+                      currency={currency}
+                    />
+                  </div>
+
+                  {/* Prazo */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-sans">Prazo de Recebimento</label>
+                    <select
+                      disabled={isReadOnly}
+                      value={reg.term}
+                      onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-base text-white outline-none focus:border-orange-500 transition-all appearance-none cursor-pointer"
+                    >
+                      <option value={0}>A VISTA</option>
+                      <option value={1}>A VISTA + 50%</option>
+                      <option value={2}>A VISTA + 33% + 33%</option>
+                    </select>
+                  </div>
+
+                  {/* Marketing */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-sans">Marketing (0–9)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="9"
+                      disabled={isReadOnly}
+                      value={reg.marketing}
+                      onChange={e => {
+                        const val = Math.min(9, Math.max(0, parseInt(e.target.value) || 0));
+                        updateDecision(`regions.${id}.marketing`, val);
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-base font-mono text-white outline-none focus:border-orange-500 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Informações fidedignas de parâmetros estipulados pelo Tutor */}
+              <div className="mt-8 pt-4 border-t border-white/5 space-y-2 font-sans">
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Min. Recomendado:</span>
+                  <span className="text-orange-400 font-bold">{currency} {sugPrice.toLocaleString('pt-BR')}</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Custo Logística:</span>
+                  <span className="text-slate-400 font-semibold">{currency} {distCost.toLocaleString('pt-BR')} /un</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Custo Campanha:</span>
+                  <span className="text-slate-400 font-semibold">{currency} {mktCost.toLocaleString('pt-BR')}</span>
+                </div>
+              </div>
             </div>
-
-            <div className="space-y-6">
-              {/* Preço */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-sans">Preço Unitário</label>
-                <CurrencyInput
-                  value={reg.price}
-                  onChange={v => updateDecision(`regions.${id}.price`, v)}
-                  currency={activeArena?.currency || 'BRL'}
-                />
-              </div>
-
-              {/* Prazo */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-sans">Prazo de Recebimento</label>
-                <select
-                  disabled={isReadOnly}
-                  value={reg.term}
-                  onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-base text-white outline-none focus:border-orange-500 transition-all appearance-none cursor-pointer"
-                >
-                  <option value={0}>A VISTA</option>
-                  <option value={1}>A VISTA + 50%</option>
-                  <option value={2}>A VISTA + 33% + 33%</option>
-                </select>
-              </div>
-
-              {/* Marketing */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-sans">Marketing (0–9)</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="9"
-                  disabled={isReadOnly}
-                  value={reg.marketing}
-                  onChange={e => {
-                    const val = Math.min(9, Math.max(0, parseInt(e.target.value) || 0));
-                    updateDecision(`regions.${id}.marketing`, val);
-                  }}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-base font-mono text-white outline-none focus:border-orange-500 transition-all"
-                />
-              </div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="h-20 lg:h-28" />

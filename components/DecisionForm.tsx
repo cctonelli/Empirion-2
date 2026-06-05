@@ -156,7 +156,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
         const initialRegions: any = {};
         for (let i = 1; i <= (found?.regions_count || 1); i++) {
-          initialRegions[i] = finalData?.regions?.[i] || { price: 425, term: 0, marketing: 0 };
+          const regId = i;
+          const regionConf = found?.config?.regions?.find((r: any) => r.id === regId) || found?.config?.region_configs?.find((r: any) => r.id === regId);
+          const defaultSugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : 425;
+          initialRegions[i] = finalData?.regions?.[i] || { price: defaultSugPrice, term: 0, marketing: 0 };
         }
 
         if (finalData) {
