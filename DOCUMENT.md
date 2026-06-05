@@ -991,3 +991,13 @@ project-root/
   - *Sincronização em Tempo Real (WebSocket):* Refatorado o gatilho `triggerReload` disparado em tempo real ao avançar de rodada, de modo a consultar o registro de equipes atualizado e injetá-lo no histórico de forma simbiótica, garantindo consistência total de exibição contábil.
 - **Status:** Em produção.
 
+### v2026-06.3 - Alinhamento Fiduciário de Cabeçalhos e Fallback de Estoque de Abertura do Kardex & CPV (P0)
+- **Data:** 5 de Junho de 2026
+- **Motivo:** Eliminar a defasagem matemática de `+1` nos cabeçalhos das colunas de períodos da Matriz Financeira (DRE, Balanço, Fluxo de Caixa, Kardex, etc.) que induzia as equipes a erro na visualização das rodadas históricas e projetadas. Também visa prover consistência contábil na aba "KARDEX & CPV" para o Período de Abertura (Round 0) quando o torneio acaba de ser criado no Supabase, diferenciando os modos de partida.
+- **Diferenças:**
+  - *Correção de Defasagem de Colunas:* Ajustada a fórmula de renderização do rótulo das colunas em `FinancialReportMatrix.tsx` para usar de forma literal os numerais reais dos rounds (`p.round`) das rodadas concluídas (histórico) e rodadas ativas de tomada de decisão (projeções), erradicando decaloque defasado e exibindo com rigor `PERÍODO 0x` e `PROJEÇÃO P0x`.
+  - *Balanço de Entrada de Estoque no Kardex Condicionada ao Modo (Abertura):* Implementado fallback estrito, elegante e adaptativo em `FinancialReportMatrix.tsx` para o Período de Abertura (Round 0). A exibição do Kardex é condicionado à propriedade `startingMode`:
+    - **No modo "Start from Zero" (`starting_mode === 'start_from_zero'`):** Os saldos iniciais e finais de Kardex iniciam-se com 0 de forma estricta, uma vez que a fábrica começa absolutamente do zero absoluto, conforme planejado pelo Tutor.
+    - **Nos modos base/rodando (`'start_with_base'` / `'start_with_running'`):** O sistema assume fisicamente os saldos de estoque iniciais herdados (30.150 un de MP A a R$ 15,00/un, total R$ 452.250,00 e 20.100 un de MP B a R$ 10,00/un, total R$ 201.000,00), garantindo alinhamento fiduciário perfeito e mantendo as saídas e DRE/CPV zerados conforme as normas do CPC para balanços de entrada.
+- **Status:** Em produção.
+

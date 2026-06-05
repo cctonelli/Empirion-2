@@ -361,8 +361,119 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                   }
                   const kpis = rawKpis || {};
 
-                  const targetKardex = kpis.kardex || kpis.statements?.kardex || {};
-                  const targetCpv = kpis.cpv_details || kpis.statements?.cpv_details || {};
+                  let targetKardex = kpis.kardex || kpis.statements?.kardex || {};
+                  let targetCpv = kpis.cpv_details || kpis.statements?.cpv_details || {};
+
+                  if (p.round === 0 && Object.keys(targetKardex).length === 0) {
+                    // Fallback contábil de integridade para o Balanço de Entrada (Abertura P00)
+                    const isZeroMode = startingMode === 'start_from_zero';
+                    if (isZeroMode) {
+                      // No modo Greenfield "Start from Zero", o estoque inicial de matéria-prima é totalmente zerado
+                      targetKardex = {
+                        mpa: {
+                          saldoInicialQtd: 0,
+                          saldoInicialValor: 0,
+                          saldoInicialUnitario: 0,
+                          entradasQtd: 0,
+                          entradasValor: 0,
+                          entradasUnitario: 0,
+                          saidasQtd: 0,
+                          saidasValor: 0,
+                          saidasUnitario: 0,
+                          saldoFinalQtd: 0,
+                          saldoFinalValor: 0,
+                          saldoFinalUnitario: 0
+                        },
+                        mpb: {
+                          saldoInicialQtd: 0,
+                          saldoInicialValor: 0,
+                          saldoInicialUnitario: 0,
+                          entradasQtd: 0,
+                          entradasValor: 0,
+                          entradasUnitario: 0,
+                          saidasQtd: 0,
+                          saidasValor: 0,
+                          saidasUnitario: 0,
+                          saldoFinalQtd: 0,
+                          saldoFinalValor: 0,
+                          saldoFinalUnitario: 0
+                        },
+                        pa: {
+                          saldoInicialQtd: 0,
+                          saldoInicialValor: 0,
+                          saldoInicialUnitario: 0,
+                          entradasQtd: 0,
+                          entradasValor: 0,
+                          entradasUnitario: 0,
+                          saidasQtd: 0,
+                          saidasValor: 0,
+                          saidasUnitario: 0,
+                          saldoFinalQtd: 0,
+                          saldoFinalValor: 0,
+                          saldoFinalUnitario: 0
+                        }
+                      };
+                    } else {
+                      // Nos modos "Start with Base" e "Start with Running Company", iniciamos estritamente com estoque de MPA e MPB pré-entrados no Balanço de Entrada
+                      targetKardex = {
+                        mpa: {
+                          saldoInicialQtd: 0,
+                          saldoInicialValor: 0,
+                          saldoInicialUnitario: 0,
+                          entradasQtd: 30150,
+                          entradasValor: 452250,
+                          entradasUnitario: 15,
+                          saidasQtd: 0,
+                          saidasValor: 0,
+                          saidasUnitario: 15,
+                          saldoFinalQtd: 30150,
+                          saldoFinalValor: 452250,
+                          saldoFinalUnitario: 15
+                        },
+                        mpb: {
+                          saldoInicialQtd: 0,
+                          saldoInicialValor: 0,
+                          saldoInicialUnitario: 0,
+                          entradasQtd: 20100,
+                          entradasValor: 201000,
+                          entradasUnitario: 10,
+                          saidasQtd: 0,
+                          saidasValor: 0,
+                          saidasUnitario: 10,
+                          saldoFinalQtd: 20100,
+                          saldoFinalValor: 201000,
+                          saldoFinalUnitario: 10
+                        },
+                        pa: {
+                          saldoInicialQtd: 0,
+                          saldoInicialValor: 0,
+                          saldoInicialUnitario: 0,
+                          entradasQtd: 0,
+                          entradasValor: 0,
+                          entradasUnitario: 0,
+                          saidasQtd: 0,
+                          saidasValor: 0,
+                          saidasUnitario: 0,
+                          saldoFinalQtd: 0,
+                          saldoFinalValor: 0,
+                          saldoFinalUnitario: 0
+                        }
+                      };
+                    }
+                    targetCpv = {
+                      mpConsumida: 0,
+                      maoDeObraDireta: 0,
+                      depreciacaoFabril: 0,
+                      manutencaoFabril: 0,
+                      indenizacoesRescisorias: 0,
+                      pprProporcional: 0,
+                      totalCPP: 0,
+                      estoqueInicialPA: 0,
+                      estoqueFinalPA: 0,
+                      totalCPV: 0,
+                      custoUnitarioProducao: 0
+                    };
+                  }
 
                   let val: any = undefined;
 
@@ -541,8 +652,8 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                     <span className="opacity-50 text-[5px]">{p.isProjection ? 'PRÓXIMO CICLO' : 'HISTÓRICO'}</span>
                     <span className="text-[9px] tracking-tighter col-header-period-label">
                       {p.isProjection 
-                        ? `PROJEÇÃO P${(p.round + 1) < 10 ? '0' : ''}${p.round + 1}` 
-                        : `PERÍODO ${(p.round + 1) < 10 ? '0' : ''}${p.round + 1}`}
+                        ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` 
+                        : (p.round === 0 ? 'P00 (Abertura)' : `PERÍODO ${p.round < 10 ? '0' : ''}${p.round}`)}
                     </span>
                   </div>
                 </th>

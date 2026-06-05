@@ -178,12 +178,18 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
 
   const handleTurnover = async () => {
     if (!selectedArena || isProcessing) return;
-    if (!confirm(`CONFIRMAR TURNOVER: Processar fechamento do Ciclo 0${(selectedArena?.current_round ?? 0) + 1}?`)) return;
+    const currentRoundLabel = (selectedArena?.current_round ?? 0) + 1;
+    if (!confirm(`CONFIRMAR TURNOVER: Processar fechamento do Ciclo 0${currentRoundLabel}?`)) return;
     setIsProcessing(true);
     try {
       const res = await processRoundTurnover(selectedArena.id, selectedArena.current_round, !!selectedArena.is_trial);
-      if (res.success) { alert("TURNOVER CONCLUÍDO."); fetchData(); } else { throw new Error(res.error); }
-    } catch (err: any) { alert(`ERRO CRÍTICO: ${err.message}`); } finally { setIsProcessing(false); }
+      if (res.success) { 
+        alert(`TURNOVER DO PERÍODO ${currentRoundLabel} REALIZADO COM SUCESSO! DADOS CONSOLIDADOS E COMITADOS NO SUPABASE COM SUCESSO.`); 
+        fetchData(); 
+      } else { 
+        throw new Error(res.error); 
+      }
+    } catch (err: any) { alert(`ERRO CRÍTICO NO SUPABASE: ${err.message}`); } finally { setIsProcessing(false); }
   };
 
   const handleTogglePause = async () => {
