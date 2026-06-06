@@ -10,14 +10,16 @@
 
 ## Versionamento Contábil & Regras de Imobilizado - v2026-06-06
 
-**Data:** 06/06/2026 às 18:20 UTC  
-**Motivo:** Alinhamento absoluto do Ativo Imobilizado sob CPC 27, erradicando discrepâncias onde o Tutor definia um valor manual arbitrário global de Setup de Instalações prediais (R$ 500.000,00) que causava descasamento de depreciação e dupla contagem com os investimentos e custos marginais de montagem de cada máquina de frota ativa.  
+**Data:** 06/06/2026 às 18:40 UTC  
+**Motivo:** Alinhamento absoluto do Ativo Imobilizado sob CPC 27, erradicando discrepancies de configuração e melhorando a visibilidade tática das equipes de alunos sobre Capex e Setup de Instalações industriais.  
 **Principais diferenças:**  
 - **Cálculo de Instalações Amarrado:** Substituição do valor arbitrário e digitável de instalações de setup por um cálculo determinístico e linear em tempo real baseado estritamente na composição da frota de máquinas ativa (`quantidade de máquinas * custo individual de instalação por modelo`).  
 - **Eliminação de Input Duplicado:** O campo *"Instalações (Calculadas por Máquina)"* no Wizard do Tutor foi bloqueado para edição manual (`isLocked={true}`) e passa a renderizar em tempo real o valor correspondente fiduciário inicial somado a partir da frota de P0 (ou R$ 0,00 no modo Greenfield / "Start from Zero").  
 - **Nenhum Investimento Extra na Abertura:** Esclarecimento definitivo de que as instalações prediais de montagem não cobram do player um valor redundante e arbitrário inicial. Todo o capex de instalações prediais fiduciárias passa a ser derivado e integrado à frota industrial real.  
+- **Visibilidade de CapEx no AssetCard:** Adicionado no `AssetsStep.tsx` do Aluno a informação explícita do valor de investimento de instalação despencado em cada modelo de máquina individualmente (Alfa: R$ 150 mil, Beta: R$ 600 mil, Gama: R$ 1.5M), posicionada organicamente antes do item de "operadores req." trazendo clareza decisória imediata ao estrategista do projeto.  
 **Impactos:**  
 - **Sincronismo Fiduciário Perfeito:** Sincronização impecável de valores do Ativo de Abertura em P0 com a depreciação calculada em rodadas subsequentes na DRE e Balanço da simulação.  
+- **Legibilidade Decisória:** Transparência de ponta a ponta sobre capex marginal para planejamento de fluxo de caixa operacional.  
 - **Eliminação de Lixo Contábil:** No modo "Start from Zero", o P0 inicia com instalações perfeitamente zeradas e apenas adiciona esses saldos na DFC e Balanço do P1 em conformidade com as máquinas efetivamente fabricadas ou montadas no Round 1.  
 **Status:** Ativo / v2.0 em uso.
 

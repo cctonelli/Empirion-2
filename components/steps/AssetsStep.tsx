@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Info, Warehouse, Settings2, Plus, Users, Zap } from 'lucide-react';
+import { Cpu, Info, Warehouse, Settings2, Plus, Users, Zap, Wrench } from 'lucide-react';
 import { WizardStepHeader } from './shared';
 import { DecisionData, Championship, Team, MachineInstance } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -17,7 +17,7 @@ interface AssetsStepProps {
   isReadOnly: boolean;
 }
 
-const AssetCard = ({ model, val, onChange, price, currency, spec, disabled }: any) => (
+const AssetCard = ({ model, val, onChange, price, currency, spec, disabled, installationCost }: any) => (
   <div className={`bg-slate-900/80 p-3 rounded-xl border transition-all shadow-xl ${disabled ? 'opacity-40 grayscale pointer-events-none border-white/5' : 'border-white/5 group hover:border-blue-500/30'}`}>
      <div className="flex justify-between items-center mb-2">
         <h4 className="text-lg font-black text-white uppercase italic tracking-tight font-sans">Machine {model.toUpperCase()}</h4>
@@ -31,6 +31,10 @@ const AssetCard = ({ model, val, onChange, price, currency, spec, disabled }: an
         
         {spec && (
            <div className="grid grid-cols-1 gap-1 pt-1 border-t border-white/5">
+              <div className="flex items-center gap-2">
+                 <Wrench size={10} className="text-amber-500" />
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instalação: <span className="text-amber-400 font-mono">{formatCurrency(installationCost, currency)}</span></span>
+              </div>
               <div className="flex items-center gap-2">
                  <Users size={10} className="text-slate-500 animate-pulse" />
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operadores req.</span>
@@ -69,6 +73,19 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
   const isRoundZeroAndZeroMode = isZeroMode && round === 0;
   const isAllowedToBuy = currentMacro?.allow_machine_sale && !isRoundZeroAndZeroMode;
   const machinesList = (isZeroMode && (round === 0 || round === 1)) ? [] : (activeTeam?.kpis?.machines || []);
+
+  const getInstallationCost = (modelName: string) => {
+    const ecoConfig = activeArena?.config || (activeArena as any)?.ecosystem_config || {};
+    const machines = ecoConfig.machines || [];
+    const found = machines.find((m: any) => m.model === modelName);
+    if (found && found.installation_cost !== undefined) {
+      return found.installation_cost;
+    }
+    if (modelName === 'alfa') return 150000;
+    if (modelName === 'beta') return 600000;
+    if (modelName === 'gama') return 1500000;
+    return 0;
+  };
 
   return (
     <div className="space-y-12 lg:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -284,6 +301,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             currency={activeArena?.currency || 'BRL'}
             spec={currentMacro?.machine_specs?.alfa}
             disabled={isReadOnly || !isAllowedToBuy}
+            installationCost={getInstallationCost('alfa')}
           />
           <AssetCard
             model="beta"
@@ -293,6 +311,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             currency={activeArena?.currency || 'BRL'}
             spec={currentMacro?.machine_specs?.beta}
             disabled={isReadOnly || !isAllowedToBuy}
+            installationCost={getInstallationCost('beta')}
           />
           <AssetCard
             model="gama"
@@ -302,6 +321,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             currency={activeArena?.currency || 'BRL'}
             spec={currentMacro?.machine_specs?.gama}
             disabled={isReadOnly || !isAllowedToBuy}
+            installationCost={getInstallationCost('gama')}
           />
         </div>
       </div>
