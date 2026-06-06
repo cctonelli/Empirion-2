@@ -906,11 +906,11 @@ export function processRoundWithValidation(
   const buyDecisions = decision.machinery?.buy || { alfa: 0, beta: 0, gama: 0 };
   Object.entries(buyDecisions).forEach(([model, qty]: [any, any]) => {
     if (qty > 0) {
-      const basePrice = indicators.machinery_values[model as 'alfa' | 'beta' | 'gama'];
-      const adjustKey = model === 'alfa' ? 'machine_alpha_price_adjust' : 
+      const basePrice = indicators.machinery_values[model as 'alpha' | 'beta' | 'gamma'];
+      const adjustKey = model === 'alpha' ? 'machine_alpha_price_adjust' : 
                         model === 'beta' ? 'machine_beta_price_adjust' : 
                         'machine_gamma_price_adjust';
-      const fallbackAdjust = model === 'alfa' ? indicators.machine_alpha_price_adjust : 
+      const fallbackAdjust = model === 'alpha' ? indicators.machine_alpha_price_adjust : 
                              model === 'beta' ? indicators.machine_beta_price_adjust : 
                              indicators.machine_gamma_price_adjust;
       const unitPrice = basePrice * getAdjust(adjustKey, sanitize(fallbackAdjust, 0));
@@ -921,19 +921,24 @@ export function processRoundWithValidation(
     }
   });
 
+  const ecoConfig = (ecosystem as any).ecosystem_config || (ecosystem as any).config?.ecosystem_config || {};
+  const machinesDepRateAnnual = ecoConfig.machines_depreciation_rate !== undefined 
+    ? Number(ecoConfig.machines_depreciation_rate) 
+    : ((ecosystem as any).config?.machines_depreciation_rate !== undefined 
+        ? Number((ecosystem as any).config.machines_depreciation_rate) 
+        : 10);
+
   const existingMachineIds = (calculatedResult?.machines || team.kpis?.machines || []).map((m: any) => m.id);
   const tempMachines = [...(calculatedResult?.machines || team.kpis?.machines || [])];
   tempMachines.forEach((m: any) => {
-    const spec = indicators.machine_specs[m.model as MachineModel];
-    // Regra do CPC 27: Máquinas e Equipamentos com vida útil de 10 Anos (10% ao ano sobre o valor de aquisição)
-    const depVal = m.acquisition_value / (spec?.useful_life_years || 10);
+    // Calculo dinâmico de depreciação de máquina (CPC 27) com base na taxa parametrizada pelo Tutor em % a.a.
+    const depVal = m.acquisition_value * (machinesDepRateAnnual / 100);
     periodDepreciation += depVal;
   });
 
   // Regra do CPC 27 Fiduciária de Real Estate (Patrimonial):
   // - Prédio Próprio: Edifício deprecia a taxa parametrizável (property_depreciation_rate, padrão 4% ao ano). Terreno não deprecia.
   // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de taxa parametrizável (buildingsDepRateAnnual, padrão 10% ao ano).
-  const ecoConfig = (ecosystem as any).ecosystem_config || (ecosystem as any).config?.ecosystem_config || {};
   const isZeroMode = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
   const buildMode = ecoConfig.building_mode ?? 'owned';
   
@@ -945,9 +950,9 @@ export function processRoundWithValidation(
   // Calcular instalações atuais com base nas máquinas em auditoria
   let currentInstallationsVal = 0;
   tempMachines.forEach((m: any) => {
-    if (m.model === 'alfa' || m.model === 'alpha') currentInstallationsVal += alphaInstallCost;
+    if (m.model === 'alpha' || m.model === 'alpha') currentInstallationsVal += alphaInstallCost;
     else if (m.model === 'beta') currentInstallationsVal += betaInstallCost;
-    else if (m.model === 'gama' || m.model === 'gamma') currentInstallationsVal += gammaInstallCost;
+    else if (m.model === 'gamma' || m.model === 'gamma') currentInstallationsVal += gammaInstallCost;
   });
 
   const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;

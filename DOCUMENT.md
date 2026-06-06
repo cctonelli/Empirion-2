@@ -8,6 +8,36 @@
 
 ---
 
+---
+
+## Versionamento Contábil & Regras de Depreciação de Máquinas - v19.80
+
+**Data:** 06/06/2026 às 20:50 UTC  
+**Motivo:** Implementação da parametrização dinâmica da taxa de depreciação de máquinas pelo Tutor no modo "Greenfield" (Start From Zero/Starting Base) e erradicação definitiva do erro de "depreciação em dobro" na interface de decisão do aluno.  
+**Principais diferenças:**  
+- **Taxa Dinâmica de Depreciação de Ativos (CPC 27):** Introdução da propriedade `machines_depreciation_rate` no estado `tutorConfig` e persistência em banco (`config` e `ecosystem_config`). Agora, em substituição ao cálculo de depreciação fixo de `10%` a.a. (`0.10`), os motores de cálculo do Balanço de Abertura (P00) em `initialization.ts`, simulação financeira em `simulation.ts`, simulação preditiva em `simulation-core.ts` e projeções contábeis do Wizard em `TrialWizard.tsx` passam a adotar dinamicamente a taxa cadastrada pelo Arena Tutor (padrão `10%`).  
+- **Erradicação de Duplicidade de Depreciação (AssetsStep):** Identificou-se que a tela do aluno (`AssetsStep.tsx`) projetava incorretamente a depreciação do próximo round somada à depreciação acumulada do balanço de abertura, diminuindo artificialmente o valor residual do imobilizado na mesa de decisão. A fórmula de cálculo de valor contábil residual foi simplificada para `Math.max(0, m.acquisition_value - m.accumulated_depreciation)`, correspondendo exatamente à realidade do início do round de decisão.  
+- **Desvinculação e Separação de Informações (AssetsStep):** O Valor Contábil Residual (patrimonial) e o Valor Líquido Após Deságio (financeiro sob desinvestimento, aplicando-se o deságio cadastrado do round) agora são exibidos em formato separado e permanente para todas as máquinas do parque fabril ativo, permitindo planejamento exato do fluxo de caixa e impacto no balanço em caso de alienação do ativo imobilizado.  
+**Impactos:**  
+- **Total Integridade com CPC 27 / IFRS:** A depreciação é dinâmica, ajustável pelo orquestrador e calculada sobre os valores patrimoniais reais sem redundâncias ou dupla contagem.  
+- **Transparência de Cenários:** O Aluno consegue visualizar com precisão tanto o impacto patrimonial (valor residual do ativo) quanto o financeiro (caixa líquido a receber na venda).  
+**Status:** Ativo / v2.2 em produção / testado e compilado com sucesso.
+
+---
+
+## Versionamento Contábil & Regras de Financiamento BDI - v19.77
+
+**Data:** 06/06/2026 às 19:35 UTC  
+**Motivo:** Corrigir a contagem da carência do financiamento BDI de ativos fabris (CAPEX) e anular duplicidades ou decrementos de carência espúrios no motor de simulação por meio de isolamento de estado não-mutante.  
+**Principais diferenças:**  
+- **Isolamento de Estado (Não-Mutável):** Substituição do decremento direto inline (`loan.grace_period_remaining -= 1`) por uma variável local `graceRemaining` na rotina de empréstimos em `services/simulation.ts`. Isso evita a mutação colateral dos objetos de empréstimo em memória durante re-execuções ou chamadas múltiplas de preview/simulação em uma mesma rodada.  
+- **Sincronismo de Períodos de Carência:** Ajuste na inicialização do novo financiamento BDI adicionando juros imediatos no P1 de aquisição, restando 3 períodos de carência de juros adicionais e 7 rounds de termo total. Ao amortizar na rodada subsequente de forma linear em P5, consolida-se exatamente 4 períodos fiduciários de carência (P1, P2, P3, P4) contendo apenas pagamento de juros. Em P5, inicia-se corretiva e elegantemente a amortização de principal + juros em 4 parcelas.  
+- **Seeding Consistente do Balanço Inicial:** Alteração do semeador em `services/supabase.ts` para conceder `grace_period_remaining: 0` explicitamente à linha de financiamento de longo prazo `L-INIT-LT` (tipo `'bdi'`), garantindo que amortizações se iniciem tempestiva e diretamente pós-abertura de forma previsível e sem falhas em tempo de execução.  
+**Impactos:**  
+- **Exatidão Financeira:** Amortizações de financiamentos respeitam rigorosamente a agenda do contrato fiduciário de forma replicável.  
+- **Zero Erros de Estado Colaterais:** O motor de simulação torna-se imune às re-trigações do simulador sem alterar as propriedades do cache e do histórico de rascunhos.  
+**Status:** Ativo / v2.1 em produção / testado e compilado com sucesso.
+
 ## Versionamento Contábil & Regras de Imobilizado - v2026-06-06
 
 **Data:** 06/06/2026 às 18:40 UTC  

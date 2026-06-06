@@ -288,9 +288,9 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                        </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                       <MacroInput label="Preço ALFA" val={macro.machinery_values.alfa} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, alfa: v}})} />
+                       <MacroInput label="Preço ALFA" val={macro.machinery_values.alpha} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, alpha: v}})} />
                        <MacroInput label="Preço BETA" val={macro.machinery_values.beta} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, beta: v}})} />
-                       <MacroInput label="Preço GAMA" val={macro.machinery_values.gama} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, gama: v}})} />
+                       <MacroInput label="Preço GAMA" val={macro.machinery_values.gamma} dark onChange={(v: number) => setMacro({...macro, machinery_values: {...macro.machinery_values, gamma: v}})} />
                     </div>
                  </div>
               </div>

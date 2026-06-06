@@ -184,7 +184,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
                   </div>
                   <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 space-y-6">
                      <h4 className="text-[10px] font-black text-blue-500 uppercase italic border-b border-white/5 pb-4">Maquinário ({getCurrencySymbol(formData.currency)})</h4>
-                     <WizardField label="Preço Alfa" type="number" val={marketIndicators.machinery_values.alfa} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alfa: parseFloat(v)}})} isCurrency currency={formData.currency} />
+                     <WizardField label="Preço Alfa" type="number" val={marketIndicators.machinery_values.alpha} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, alpha: parseFloat(v)}})} isCurrency currency={formData.currency} />
                      <WizardField label="Preço Beta" type="number" val={marketIndicators.machinery_values.beta} onChange={(v:any)=>setMarketIndicators({...marketIndicators, machinery_values: {...marketIndicators.machinery_values, beta: parseFloat(v)}})} isCurrency currency={formData.currency} />
                   </div>
                   <div className="bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 space-y-6">

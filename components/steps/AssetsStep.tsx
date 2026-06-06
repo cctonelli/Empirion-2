@@ -33,15 +33,15 @@ const AssetCard = ({ model, val, onChange, price, currency, spec, disabled, inst
            <div className="grid grid-cols-1 gap-1 pt-1 border-t border-white/5">
               <div className="flex items-center gap-2">
                  <Wrench size={10} className="text-amber-500" />
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instalação: <span className="text-amber-400 font-mono">{formatCurrency(installationCost, currency)}</span></span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Invest. em instalação: <span className="text-amber-400 font-mono">{formatCurrency(installationCost, currency)}</span></span>
               </div>
               <div className="flex items-center gap-2">
                  <Users size={10} className="text-slate-500 animate-pulse" />
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operadores req.</span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.operators_required} operadores necessários</span>
               </div>
               <div className="flex items-center gap-2">
                  <Zap size={10} className="text-slate-500" />
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} un. capacidade</span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{spec.production_capacity} unid. a 100% de capacidade</span>
               </div>
            </div>
         )}
@@ -81,9 +81,9 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
     if (found && found.installation_cost !== undefined) {
       return found.installation_cost;
     }
-    if (modelName === 'alfa') return 150000;
+    if (modelName === 'alpha') return 150000;
     if (modelName === 'beta') return 600000;
-    if (modelName === 'gama') return 1500000;
+    if (modelName === 'gamma') return 1500000;
     return 0;
   };
 
@@ -169,9 +169,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
           ) : (
             machinesList.map((m: MachineInstance, idx: number) => {
               const isSold = decisions.machinery.sell_ids?.includes(m.id);
-              const spec = currentMacro?.machine_specs?.[m.model];
-              const currentDeprec = m.accumulated_depreciation + (m.acquisition_value / (spec?.useful_life_years || 10));
-              const currentValue = Math.max(0, m.acquisition_value - currentDeprec);
+              const currentValue = Math.max(0, m.acquisition_value - m.accumulated_depreciation);
               const desagio = currentMacro?.machine_sale_discount || 0;
               const valorVendaLiquida = currentValue * (1 - desagio / 100);
 
@@ -207,18 +205,18 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
 
                   <div className="space-y-4 text-sm">
                     <div className="flex justify-between border-t border-white/5 pt-3">
-                      <span className="text-slate-300">Valor Contábil Residual</span>
+                      <span className="text-slate-300 font-medium">Valor Contábil Residual</span>
                       <span className={`font-mono font-bold ${isSold ? 'text-rose-400 line-through opacity-70' : 'text-emerald-400'}`}>
                         {formatCurrency(currentValue, activeArena?.currency || 'BRL')}
                       </span>
                     </div>
 
-                    {isSold && (
-                      <div className="flex justify-between text-rose-300">
-                        <span>Valor Líquido Após Deságio ({desagio}%)</span>
-                        <span className="font-bold font-mono">{formatCurrency(valorVendaLiquida, activeArena?.currency || 'BRL')}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between text-slate-300">
+                      <span>Valor Líquido Após Deságio ({desagio}%)</span>
+                      <span className={`font-bold font-mono ${isSold ? 'text-rose-400 font-extrabold' : 'text-orange-400'}`}>
+                        {formatCurrency(valorVendaLiquida, activeArena?.currency || 'BRL')}
+                      </span>
+                    </div>
 
                     <label className="flex items-center justify-end gap-3 cursor-pointer group pt-2 select-none">
                       <span className={`text-sm font-semibold uppercase transition-colors ${isSold ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}`}>
@@ -272,7 +270,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
           <h6 className="text-orange-400 font-semibold mb-4 font-sans">Reajustes acumulados atuais (para novas compras):</h6>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <span className="text-slate-400">Alfa:</span>{' '}
+              <span className="text-slate-400">Alpha:</span>{' '}
               <span className="font-mono text-orange-300 font-bold">
                 +{((getAdjustedPrice(1, 'machine_alpha_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM) - 1) * 100).toFixed(1)}%
               </span>
@@ -284,7 +282,7 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
               </span>
             </div>
             <div>
-              <span className="text-slate-400">Gama:</span>{' '}
+              <span className="text-slate-400">Gamma:</span>{' '}
               <span className="font-mono text-orange-300 font-bold">
                 +{((getAdjustedPrice(1, 'machine_gamma_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM) - 1) * 100).toFixed(1)}%
               </span>
@@ -294,14 +292,14 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           <AssetCard
-            model="alfa"
+            model="alpha"
             val={decisions.machinery.buy.alfa}
             onChange={(v: number) => updateDecision('machinery.buy.alfa', v)}
             price={getAdjustedPrice(currentMacro?.machinery_values?.alfa || 215000, 'machine_alpha_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
             currency={activeArena?.currency || 'BRL'}
             spec={currentMacro?.machine_specs?.alfa}
             disabled={isReadOnly || !isAllowedToBuy}
-            installationCost={getInstallationCost('alfa')}
+            installationCost={getInstallationCost('alpha')}
           />
           <AssetCard
             model="beta"
@@ -314,14 +312,14 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
             installationCost={getInstallationCost('beta')}
           />
           <AssetCard
-            model="gama"
+            model="gamma"
             val={decisions.machinery.buy.gama}
             onChange={(v: number) => updateDecision('machinery.buy.gama', v)}
             price={getAdjustedPrice(currentMacro?.machinery_values?.gama || 480000, 'machine_gamma_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
             currency={activeArena?.currency || 'BRL'}
             spec={currentMacro?.machine_specs?.gama}
             disabled={isReadOnly || !isAllowedToBuy}
-            installationCost={getInstallationCost('gama')}
+            installationCost={getInstallationCost('gamma')}
           />
         </div>
       </div>

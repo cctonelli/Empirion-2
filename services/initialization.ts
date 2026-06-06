@@ -98,6 +98,7 @@ export interface BaseP0Config {
   gazeta_mode: 'anonymous' | 'identified';
   buildings_depreciation_rate?: number;
   property_depreciation_rate?: number; // taxa de depreciação do imóvel próprio (% a.a.)
+  machines_depreciation_rate?: number; // taxa de depreciação das máquinas (% a.a.)
 
   // Configurações de Atividade e Início
   activity_type: string; // "industrial"
@@ -354,11 +355,11 @@ export function generatePureP0(config: TutorP0Config): {
   const actualMachines = isZeroMode ? [] : config.machines;
 
   actualMachines.forEach((mac, index) => {
-    const modelPrice = mac.model === 'alfa' ? ALPHA_PRICE : mac.model === 'beta' ? BETA_PRICE : GAMMA_PRICE;
+    const modelPrice = mac.model === 'alpha' ? ALPHA_PRICE : mac.model === 'beta' ? BETA_PRICE : GAMMA_PRICE;
     for (let q = 0; q < mac.qty; q++) {
       const uniqueId = `m-${mac.model}-${index}-${q}`;
-      // Deprecação: linear consistente de máquinas: 10% por ano/período (CPC 27)
-      const deprecRate = 0.10;
+      // Deprecação: linear consistente de máquinas baseada na taxa parametrizada (CPC 27)
+      const deprecRate = (config.machines_depreciation_rate !== undefined ? config.machines_depreciation_rate : 10) / 100;
       const accDeprec = modelPrice * mac.age * deprecRate * mac.efficiency;
       
       generatedMachines.push({
@@ -419,7 +420,7 @@ export function generatePureP0(config: TutorP0Config): {
   let installationsVal = 0;
   if (!isZeroMode) {
     actualMachines.forEach(mac => {
-      const macInstallCost = mac.model === 'alfa' ? alphaInstallCost : mac.model === 'beta' ? betaInstallCost : gammaInstallCost;
+      const macInstallCost = mac.model === 'alpha' ? alphaInstallCost : mac.model === 'beta' ? betaInstallCost : gammaInstallCost;
       installationsVal += macInstallCost * mac.qty;
     });
   }

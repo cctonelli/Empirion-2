@@ -280,7 +280,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     dcf_valuation: isZeroMode ? 1.0 : 1.7,
     loans: isZeroMode ? [] : (config.initial_loans || [
       { id: 'L-INIT-ST', type: 'normal', amount: isBaseMode ? 500000 : 1372362.00, interest_rate: isBaseMode ? 14.5 : 12.0, term: 1, remaining_rounds: 1 },
-      { id: 'L-INIT-LT', type: 'bdi', amount: isBaseMode ? 1000000 : 868629.80, interest_rate: isBaseMode ? 11.5 : 10.0, term: 8, remaining_rounds: 8 }
+      { id: 'L-INIT-LT', type: 'bdi', amount: isBaseMode ? 1000000 : 868629.80, interest_rate: isBaseMode ? 11.5 : 10.0, term: 8, remaining_rounds: 8, grace_period_remaining: 0 }
     ]),
     scissors_effect: 0,
     liquidity_current: isZeroMode ? 99.9 : (passivoCirculante > 0 ? ((totalAssets - fixedAssetsValue) / passivoCirculante) : 99.9),

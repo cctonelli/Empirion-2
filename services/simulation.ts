@@ -189,11 +189,11 @@ export const calculateProjections = (
   Object.entries(buyDecisions).forEach(([model, qty]: [any, any]) => {
     if (qty > 0) {
       const basePrice = indicators.machinery_values[model as MachineModel];
-      const adjustKey = model === 'alfa' ? 'machine_alpha_price_adjust' : 
+      const adjustKey = model === 'alpha' ? 'machine_alpha_price_adjust' : 
                         model === 'beta' ? 'machine_beta_price_adjust' : 
                         'machine_gamma_price_adjust';
       
-      const fallbackAdjust = model === 'alfa' ? indicators.machine_alpha_price_adjust : 
+      const fallbackAdjust = model === 'alpha' ? indicators.machine_alpha_price_adjust : 
                              model === 'beta' ? indicators.machine_beta_price_adjust : 
                              indicators.machine_gamma_price_adjust;
 
@@ -227,15 +227,21 @@ export const calculateProjections = (
   const cashFlowMachBuy = Math.max(0, machinePurchaseOutflow - newBdiLoanAmount);
 
   // C. ATUALIZAR IDADE E DEPRECIAÇÃO DE TODAS AS MÁQUINAS (Computadas de imediato a partir do período de aquisição)
+  const ecoConfig = (ecosystem as any).ecosystem_config || (ecosystem as any).config?.ecosystem_config || {};
+  const machinesDepRateAnnual = ecoConfig.machines_depreciation_rate !== undefined 
+    ? Number(ecoConfig.machines_depreciation_rate) 
+    : ((ecosystem as any).config?.machines_depreciation_rate !== undefined 
+        ? Number((ecosystem as any).config.machines_depreciation_rate) 
+        : 10);
+
   const existingMachineIds = (team.kpis?.machines || []).map(m => m.id);
   currentMachines = currentMachines.map(m => {
-    const spec = indicators.machine_specs[m.model];
-    // Regra do CPC 27: Máquinas e Equipamentos com vida útil de 10 Anos (10% ao ano sobre o valor de aquisição)
-    const depVal = m.acquisition_value / (spec?.useful_life_years || 10);
+    // Calculo dinâmico de depreciação de máquina (CPC 27) com base na taxa parametrizada pelo Tutor em % a.a.
+    const depVal = m.acquisition_value * (machinesDepRateAnnual / 100);
     
     // NOTA SÊNIOR / CPC 27: A depreciação é computada de imediato sobre todas as máquinas ativas (existentes e novas)
     periodDepreciation += depVal;
-    return { ...m, age: m.age + 1, accumulated_depreciation: m.accumulated_depreciation + depVal };
+    return { ...m, age: m.age + 1, accumulated_depreciation: parseFloat((m.accumulated_depreciation + depVal).toFixed(2)) };
   });
 
   // D. VALOR TOTAL DO IMOBILIZADO (MÁQUINAS)
@@ -245,7 +251,6 @@ export const calculateProjections = (
   // Regra do CPC 27 Fiduciária de Real Estate (Patrimonial) - Ajuste Recorrente de Depreciação:
   // - Prédio Próprio: Edifício deprecia a taxa parametrizável (property_depreciation_rate, padrão 4% ao ano). Terreno não deprecia.
   // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de taxa parametrizável (buildingsDepRateAnnual, padrão 10% ao ano).
-  const ecoConfig = (ecosystem as any).ecosystem_config || (ecosystem as any).config?.ecosystem_config || {};
   const isZeroModeLocal = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
   const buildMode = ecoConfig.building_mode ?? 'owned';
   
@@ -258,17 +263,17 @@ export const calculateProjections = (
   const prevMachines = team.kpis?.machines || [];
   let prevInstallationsVal = 0;
   prevMachines.forEach((m: any) => {
-    if (m.model === 'alfa') prevInstallationsVal += alphaInstallCost * (m.qty || 0);
+    if (m.model === 'alpha') prevInstallationsVal += alphaInstallCost * (m.qty || 0);
     else if (m.model === 'beta') prevInstallationsVal += betaInstallCost * (m.qty || 0);
-    else if (m.model === 'gama') prevInstallationsVal += gammaInstallCost * (m.qty || 0);
+    else if (m.model === 'gamma') prevInstallationsVal += gammaInstallCost * (m.qty || 0);
   });
 
   // Obter instalações fiduciárias atuais com base nas máquinas reais ativas
   let currentInstallationsVal = 0;
   currentMachines.forEach((m: any) => {
-    if (m.model === 'alfa') currentInstallationsVal += alphaInstallCost;
+    if (m.model === 'alpha') currentInstallationsVal += alphaInstallCost;
     else if (m.model === 'beta') currentInstallationsVal += betaInstallCost;
-    else if (m.model === 'gama') currentInstallationsVal += gammaInstallCost;
+    else if (m.model === 'gamma') currentInstallationsVal += gammaInstallCost;
   });
 
   const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;
@@ -775,12 +780,13 @@ export const calculateProjections = (
   prevLoans.forEach(loan => {
     let interest = loan.amount * (loan.interest_rate / 100) * rjInterestAgio;
     let amort = 0;
+    let graceRemaining = loan.grace_period_remaining !== undefined ? loan.grace_period_remaining : 0;
 
     if (loan.type === 'bdi') {
-      if (loan.grace_period_remaining > 0) {
+      if (graceRemaining > 0) {
         // Carência: paga apenas juros
         amort = 0;
-        loan.grace_period_remaining -= 1;
+        graceRemaining -= 1;
       } else {
         // Amortização: principal + juros (Amortização Constante baseada nos rounds restantes)
         amort = loan.amount / loan.remaining_rounds;
@@ -800,6 +806,7 @@ export const calculateProjections = (
       currentLoans.push({
         ...loan,
         amount: remaining,
+        grace_period_remaining: graceRemaining,
         remaining_rounds: Math.max(1, loan.remaining_rounds - 1)
       });
     }
@@ -817,8 +824,8 @@ export const calculateProjections = (
       amount: newBdiLoanAmount,
       interest_rate: sanitize(indicators.interest_rate_tr, 2),
       term: 8,
-      remaining_rounds: 8,
-      grace_period_remaining: 4
+      remaining_rounds: 7, // Como já cobrou a 1ª rodada de juros no P1, restam 7 rodadas no total
+      grace_period_remaining: 3 // Como já cobrou o 1º período de carência (juros) no P1, restam 3 períodos de carência
     });
   }
 

@@ -139,11 +139,11 @@ export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;
 
 // MÁQUINAS INICIAIS P00 - FIDELIDADE ORACLE
 export const INITIAL_MACHINES_P00 = [
-  { id: 'm1', model: 'alfa', age: 6, acquisition_value: 500000, accumulated_depreciation: 75000 },
-  { id: 'm2', model: 'alfa', age: 11, acquisition_value: 480000, accumulated_depreciation: 132000 },
-  { id: 'm3', model: 'alfa', age: 11, acquisition_value: 480000, accumulated_depreciation: 132000 },
-  { id: 'm4', model: 'alfa', age: 21, acquisition_value: 450000, accumulated_depreciation: 236250 },
-  { id: 'm5', model: 'alfa', age: 21, acquisition_value: 450000, accumulated_depreciation: 236250 },
+  { id: 'm1', model: 'alpha', age: 6, acquisition_value: 500000, accumulated_depreciation: 75000 },
+  { id: 'm2', model: 'alpha', age: 11, acquisition_value: 480000, accumulated_depreciation: 132000 },
+  { id: 'm3', model: 'alpha', age: 11, acquisition_value: 480000, accumulated_depreciation: 132000 },
+  { id: 'm4', model: 'alpha', age: 21, acquisition_value: 450000, accumulated_depreciation: 236250 },
+  { id: 'm5', model: 'alpha', age: 21, acquisition_value: 450000, accumulated_depreciation: 236250 },
 ];
 
 export const DEFAULT_MACRO: MacroIndicators = {
@@ -196,18 +196,18 @@ export const DEFAULT_MACRO: MacroIndicators = {
     storage_mp: 1.40,
     storage_finished: 20.00
   },
-  machinery_values: { alfa: 500000.00, beta: 1500000.00, gama: 3000000.00 },
+  machinery_values: { alpha: 500000.00, beta: 1500000.00, gamma: 3000000.00 },
   machine_specs: {
-    alfa: { 
-      model: 'alfa', initial_value: 500000.00, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.10,
+    alpha: { 
+      model: 'alpha', initial_value: 500000.00, production_capacity: 2000, operators_required: 94, depreciation_rate: 0.10,
       overload_coef: 1.4, aging_coef: 0.8, useful_life_years: 10, overload_extra_rate: 0.001 
     },
     beta: { 
       model: 'beta', initial_value: 1500000.00, production_capacity: 6000, operators_required: 235, depreciation_rate: 0.10,
       overload_coef: 1.2, aging_coef: 0.6, useful_life_years: 10, overload_extra_rate: 0.0007 
     },
-    gama: { 
-      model: 'gama', initial_value: 3000000.00, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.10,
+    gamma: { 
+      model: 'gamma', initial_value: 3000000.00, production_capacity: 12000, operators_required: 445, depreciation_rate: 0.10,
       overload_coef: 1.0, aging_coef: 0.5, useful_life_years: 10, overload_extra_rate: 0.0005 
     }
   },
