@@ -653,7 +653,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                     <span className="text-[9px] tracking-tighter col-header-period-label">
                       {p.isProjection 
                         ? `PROJEÇÃO P${p.round < 10 ? '0' : ''}${p.round}` 
-                        : (p.round === 0 ? 'P00 (Abertura)' : `PERÍODO ${p.round < 10 ? '0' : ''}${p.round}`)}
+                        : (p.round === 0 ? 'P00 (INICIAL)' : `PERÍODO ${p.round < 10 ? '0' : ''}${p.round}`)}
                     </span>
                   </div>
                 </th>
