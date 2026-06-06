@@ -106,7 +106,7 @@ const mapRecursiveReport = (
     ...periods.map((p) => {
       const pad = p.round < 10 ? '0' : '';
       if (p.isProjection) return `PROJEÇÃO P${pad}${p.round}`;
-      return p.round === 0 ? 'P00 (INICIAL)' : `PERÍODO ${pad}${p.round}`;
+      return p.round === 0 ? 'P-0 (INICIAL)' : `P- ${pad}${p.round}`;
     })
   ];
   
@@ -131,7 +131,7 @@ const mapStrategicReport = (periods: any[]): TableData => {
       const pad = p.round < 10 ? '0' : '';
       return p.isProjection
         ? `PROJEÇÃO P${pad}${p.round}`
-        : p.round === 0 ? 'P00 (INICIAL)' : `PERÍODO ${pad}${p.round}`;
+        : p.round === 0 ? 'P-0 (INICIAL)' : `P- ${pad}${p.round}`;
     })
   ];
   
@@ -184,7 +184,7 @@ const mapCommitmentsReport = (periods: any[]): TableData => {
       const pad = p.round < 10 ? '0' : '';
       return p.isProjection
         ? `PROJEÇÃO P${pad}${p.round}`
-        : p.round === 0 ? 'P00 (INICIAL)' : `PERÍODO ${pad}${p.round}`;
+        : p.round === 0 ? 'P-0 (INICIAL)' : `P- ${pad}${p.round}`;
     })
   ];
   
@@ -253,7 +253,7 @@ const mapKardexReport = (periods: any[], startingMode?: string): TableData => {
       const pad = p.round < 10 ? '0' : '';
       return p.isProjection
         ? `PROJEÇÃO P${pad}${p.round}`
-        : p.round === 0 ? 'P00 (INICIAL)' : `PERÍODO ${pad}${p.round}`;
+        : p.round === 0 ? 'P-0 (INICIAL)' : `P- ${pad}${p.round}`;
     })
   ];
   
