@@ -55,6 +55,7 @@ export interface MachineConfig {
   qty: number;
   age: number; // em anos (ex: 0-20), impacta depreciação e eficiência
   efficiency: number; // de 0.0 a 1.0 (ex: 0.95 = 95%)
+  installation_cost?: number; // custo de instalação individual para formação do imobilizado
 }
 
 export interface WorkforceConfig {
@@ -96,6 +97,7 @@ export interface BaseP0Config {
   transparency_level: 'low' | 'medium' | 'high' | 'full';
   gazeta_mode: 'anonymous' | 'identified';
   buildings_depreciation_rate?: number;
+  property_depreciation_rate?: number; // taxa de depreciação do imóvel próprio (% a.a.)
 
   // Configurações de Atividade e Início
   activity_type: string; // "industrial"
@@ -400,36 +402,43 @@ export function generatePureP0(config: TutorP0Config): {
   let loans_lt = 0;
   let profit_accum = 0;
 
+  // Custos de instalação por máquina das configurações do Tutor
+  const alphaInstallCost = config.machines?.[0]?.installation_cost !== undefined ? Number(config.machines[0].installation_cost) : 150000.00;
+  const betaInstallCost = config.machines?.[1]?.installation_cost !== undefined ? Number(config.machines[1].installation_cost) : 600000.00;
+  const gammaInstallCost = config.machines?.[2]?.installation_cost !== undefined ? Number(config.machines[2].installation_cost) : 1500000.00;
+
   // Imobiliário Fiduciário: Prédio Locado vs Próprio
   const buildingMode = config.building_mode ?? (isZeroMode ? 'rented' : 'owned');
-  const bValDefault = isZeroMode ? 2000000.00 : (isBaseMode ? 2000000.00 : 5440000.00);
-  const buildingBaseValue = buildingMode === 'owned' ? (config.building_value ?? bValDefault) : 0;
   
-  const bAgeDefault = isZeroMode ? 0 : (isBaseMode ? 2 : 10);
-  const buildingAge = isZeroMode ? 0 : (config.building_age ?? bAgeDefault);
+  // No modo Greenfield (Start from Zero), as instalações e edificações começam ZERADAS no P0
+  const buildingBaseValue = isZeroMode ? 0 : (buildingMode === 'owned' ? (config.building_value ?? (isBaseMode ? 2000000.00 : 5440000.00)) : 0);
+  const buildingAge = isZeroMode ? 0 : (config.building_age ?? (isBaseMode ? 2 : 10));
+  const calculatedLand = isZeroMode ? 0 : (buildingMode === 'owned' ? (config.land_value ?? (isBaseMode ? 1000000.00 : 1200000.00)) : 0);
 
-  const landValDefault = isZeroMode ? 1000000.00 : (isBaseMode ? 1000000.00 : 1200000.00);
-  const calculatedLand = buildingMode === 'owned' ? (config.land_value ?? landValDefault) : 0;
+  // Instalações de abertura: ZERADAS no Greenfield, calculadas dinamicamente com base nas máquinas em frota para outros modos
+  let installationsVal = 0;
+  if (!isZeroMode) {
+    actualMachines.forEach(mac => {
+      const macInstallCost = mac.model === 'alfa' ? alphaInstallCost : mac.model === 'beta' ? betaInstallCost : gammaInstallCost;
+      installationsVal += macInstallCost * mac.qty;
+    });
+  }
 
-  // Benfeitorias/Instalações: sempre existente para montagem de linha de montagem
-  const installValDefault = isZeroMode ? 500000.00 : (isBaseMode ? 500000.00 : 1000000.00);
-  const installationsVal = config.installations_value ?? installValDefault;
-
-  // Cálculo de Depreciação ou Amortização acumulada:
-  // - Prédio Próprio: Depreciação em edificação (vida útil útil 25 anos = 4.0% ao ano sobre prédio físico)
-  // - Prédio Locado: Amortização em Benfeitorias em Imóveis de Terceiros (linear 10 anos = 10% s/ instalações)
+  // Cálculo de Depreciação ou Amortização acumulada em P0:
+  // - Prédio Próprio: Depreciação em edificação (taxa parametrizável property_depreciation_rate, default 4% ao ano s/ prédio)
+  // - Instalações Industriais / Benfeitorias: taxa parametrizável buildings_depreciation_rate (default 10% s/ instalações)
   let buildingsAssetValue = 0;
   let buildingAccDeprecOrAmort = 0;
   let land = 0;
 
   const parsed_deprec_rate = (config.buildings_depreciation_rate !== undefined ? config.buildings_depreciation_rate : 10) / 100;
+  const property_deprec_rate = (config.property_depreciation_rate !== undefined ? config.property_depreciation_rate : 4) / 100;
 
   if (buildingMode === 'owned') {
     land = calculatedLand;
     buildingsAssetValue = buildingBaseValue + installationsVal;
-    buildingAccDeprecOrAmort = parseFloat((buildingBaseValue * 0.04 * buildingAge + installationsVal * parsed_deprec_rate * buildingAge).toFixed(2));
+    buildingAccDeprecOrAmort = parseFloat((buildingBaseValue * property_deprec_rate * buildingAge + installationsVal * parsed_deprec_rate * buildingAge).toFixed(2));
   } else {
-    // Alugada: Sem terreno próprio. Valor ativo em benfeitorias físicas. Amortização correspondente à taxa de instalações s/ instalações
     land = 0;
     buildingsAssetValue = installationsVal;
     buildingAccDeprecOrAmort = parseFloat((installationsVal * parsed_deprec_rate * buildingAge).toFixed(2));

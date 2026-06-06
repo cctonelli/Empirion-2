@@ -243,27 +243,80 @@ export const calculateProjections = (
   const totalMachineryDeprec = currentMachines.reduce((acc, m) => acc + m.accumulated_depreciation, 0);
 
   // Regra do CPC 27 Fiduciária de Real Estate (Patrimonial) - Ajuste Recorrente de Depreciação:
-  // - Prédio Próprio: Edifício deprecia a 4% ao ano. Terreno não deprecia.
-  // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de 10% ao ano (buildingsDepRateAnnual).
+  // - Prédio Próprio: Edifício deprecia a taxa parametrizável (property_depreciation_rate, padrão 4% ao ano). Terreno não deprecia.
+  // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de taxa parametrizável (buildingsDepRateAnnual, padrão 10% ao ano).
   const ecoConfig = (ecosystem as any).ecosystem_config || (ecosystem as any).config?.ecosystem_config || {};
   const isZeroModeLocal = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
   const buildMode = ecoConfig.building_mode ?? 'owned';
-  const installationsVal = ecoConfig.installations_value ?? 500000.00;
+  
+  // Custos padrão de instalação por sofisticação de máquina
+  const alphaInstallCost = ecoConfig.machines?.[0]?.installation_cost !== undefined ? Number(ecoConfig.machines[0].installation_cost) : 150000.00;
+  const betaInstallCost = ecoConfig.machines?.[1]?.installation_cost !== undefined ? Number(ecoConfig.machines[1].installation_cost) : 600000.00;
+  const gammaInstallCost = ecoConfig.machines?.[2]?.installation_cost !== undefined ? Number(ecoConfig.machines[2].installation_cost) : 1500000.00;
+
+  // Obter instalações fiduciárias anteriores
+  const prevMachines = team.kpis?.machines || [];
+  let prevInstallationsVal = 0;
+  prevMachines.forEach((m: any) => {
+    if (m.model === 'alfa') prevInstallationsVal += alphaInstallCost * (m.qty || 0);
+    else if (m.model === 'beta') prevInstallationsVal += betaInstallCost * (m.qty || 0);
+    else if (m.model === 'gama') prevInstallationsVal += gammaInstallCost * (m.qty || 0);
+  });
+
+  // Obter instalações fiduciárias atuais com base nas máquinas reais ativas
+  let currentInstallationsVal = 0;
+  currentMachines.forEach((m: any) => {
+    if (m.model === 'alfa') currentInstallationsVal += alphaInstallCost;
+    else if (m.model === 'beta') currentInstallationsVal += betaInstallCost;
+    else if (m.model === 'gama') currentInstallationsVal += gammaInstallCost;
+  });
+
   const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;
-  const buildingsCost = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || (buildingBaseValue + installationsVal);
+  const calculatedLand = buildMode === 'owned' ? (ecoConfig.land_value ?? 1000000.00) : 0;
+  
+  // O valor do prédio/instalações e terrenos acompanha dinamicamente a frota e instalações formadas
+  const buildingsCost = (buildMode === 'owned' ? buildingBaseValue : 0) + currentInstallationsVal;
+  const land = buildMode === 'owned' ? calculatedLand : 0;
+
+  // No Start from Zero, no round P1 (onde o imobilizado anterior acumulado em P0 era zero),
+  // se prédio próprio, é feita a aquisição do imóvel e terreno em tempo de rodada, gerando desembolso ou dívida.
+  const prevBuildingsVal = findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings') || 0;
+  const isRealEstateFormedNow = prevBuildingsVal === 0 && buildMode === 'owned' && isZeroModeLocal;
+  let realEstateCashOutflow = 0;
+  let realEstateLoanLTAdded = 0;
+
+  if (isRealEstateFormedNow) {
+    const realEstateCost = buildingBaseValue + calculatedLand;
+    const funding = ecoConfig.real_estate_acquisition_funding ?? 'capital';
+    if (funding === 'capital') {
+      realEstateCashOutflow = realEstateCost;
+    } else {
+      realEstateLoanLTAdded = realEstateCost;
+    }
+  }
+
+  // Variação operacional nas instalações (investimento em novas montagens ou perdas de desinstalação)
+  const installationsChange = currentInstallationsVal - prevInstallationsVal;
+  const installationsInvest = installationsChange > 0 ? installationsChange : 0;
+
+  // Taxas de depreciação de imóveis e benfeitorias
   const buildingsDepRateAnnual = ecoConfig.buildings_depreciation_rate !== undefined 
     ? Number(ecoConfig.buildings_depreciation_rate) 
     : ((ecosystem as any).buildings_depreciation_rate !== undefined 
         ? Number((ecosystem as any).buildings_depreciation_rate) 
         : 10);
 
+  const propertyDepRateAnnual = ecoConfig.property_depreciation_rate !== undefined 
+    ? Number(ecoConfig.property_depreciation_rate) 
+    : 4;
+
   const prevBuildingsDeprec = Math.abs(findAccountValue(prevBS, 'assets.noncurrent.fixed.buildings_deprec'));
   
   let buildingDepPeriod = 0;
   if (buildMode === 'owned') {
-    buildingDepPeriod = (buildingBaseValue * 0.04) + (installationsVal * (buildingsDepRateAnnual / 100));
+    buildingDepPeriod = (buildingBaseValue * (propertyDepRateAnnual / 100)) + (currentInstallationsVal * (buildingsDepRateAnnual / 100));
   } else {
-    buildingDepPeriod = installationsVal * (buildingsDepRateAnnual / 100);
+    buildingDepPeriod = currentInstallationsVal * (buildingsDepRateAnnual / 100);
   }
 
   const newBuildingsDeprecAccum = prevBuildingsDeprec + buildingDepPeriod;
@@ -856,7 +909,7 @@ export const calculateProjections = (
   // NOTA SÊNIOR: Trocamos 'taxProv' por 'prevTaxes' nas saídas de caixa para preservar o regime de caixa correto dos tributos federais de rodada a rodada.
   const salesOverhead = prevOpexSales * inflationMult;
   const admOverhead = prevOpexAdm * inflationMult;
-  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + cashFlowMachBuy + interestExp + totalAmortization + prevTaxes + prevDividends + trainingCost + vatPayment + applicationAmount + rentVal + salesOverhead + admOverhead;
+  const totalOutflows = cashOutflowSuppliers + prevSuppliers + totalMOD + totalPayrollAdm + totalPayrollSales + totalPprPayment + custoIndenizacao + extraProductionCost + currentOpexRd + totalMarketingExp + distributionCost + storageCost + maintenance + cashFlowMachBuy + interestExp + totalAmortization + prevTaxes + prevDividends + trainingCost + vatPayment + applicationAmount + rentVal + salesOverhead + admOverhead + realEstateCashOutflow + installationsInvest;
 
   if (isNaN(totalOutflows) || isNaN(team.kpis?.current_cash)) {
     console.log("DIAGNOSTICO DE NaN:", {
@@ -948,6 +1001,9 @@ export const calculateProjections = (
     }
   });
 
+  // Somar o funding via empréstimo longo prazo para aquisição do imóvel ou terreno no Greenfield
+  totalLoansLT += realEstateLoanLTAdded;
+
   const closingMpaQty = (team.kpis?.stock_quantities?.mp_a || 0) + purchaseMPA + emergencyMPA - (unitsProduced * 3);
   const closingMpbQty = (team.kpis?.stock_quantities?.mp_b || 0) + purchaseMPB + emergencyMPB - (unitsProduced * 2);
   const closingMpaValue = Math.max(0, closingMpaQty) * avgNetMpaPrice;
@@ -962,6 +1018,8 @@ export const calculateProjections = (
     'assets.current.clients': totalCreditSales,
     'assets.current.pecld': -badDebtExp,
     'assets.current.vat_recoverable': finalVatRecoverable,
+    'assets.noncurrent.fixed.buildings': buildingsCost,
+    'assets.noncurrent.fixed.land': land,
     'assets.noncurrent.fixed.machines': totalMachineryCost,
     'assets.noncurrent.fixed.machines_deprec': -totalMachineryDeprec,
     'assets.noncurrent.fixed.buildings_deprec': -newBuildingsDeprecAccum,
@@ -1033,7 +1091,7 @@ export const calculateProjections = (
         'fin.rev': totalFinancialRevenue,
         'fin.exp': -interestExp,
         'non_op.rev': totalAwards,
-        'non_op.exp': -machineSalesLoss,
+        'non_op.exp': -(machineSalesLoss + (installationsChange < 0 ? Math.abs(installationsChange) : 0)),
         'lair': lair,
         'tax_prov': -taxProv,
         'ppr': -ppr,

@@ -55,9 +55,9 @@ const OFFICIAL_PRESETS: any[] = [
       rent_allocation_administrative: 10,
       rent_allocation_sales: 20,
       machines: [
-        { model: 'alfa', qty: 0, age: 0, efficiency: 1.0 },
-        { model: 'beta', qty: 0, age: 0, efficiency: 1.0 },
-        { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+        { model: 'alfa', qty: 0, age: 0, efficiency: 1.0, installation_cost: 150000 },
+        { model: 'beta', qty: 0, age: 0, efficiency: 1.0, installation_cost: 600000 },
+        { model: 'gama', qty: 0, age: 0, efficiency: 1.0, installation_cost: 1500000 }
       ],
       workforce: {
         operatorsPerAlpha: 94,
@@ -111,9 +111,9 @@ const OFFICIAL_PRESETS: any[] = [
       installations_value: 250000,
       building_age: 0,
       machines: [
-        { model: 'alfa', qty: 0, age: 0, efficiency: 1.0 },
-        { model: 'beta', qty: 0, age: 0, efficiency: 1.0 },
-        { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+        { model: 'alfa', qty: 0, age: 0, efficiency: 1.0, installation_cost: 150000 },
+        { model: 'beta', qty: 0, age: 0, efficiency: 1.0, installation_cost: 600000 },
+        { model: 'gama', qty: 0, age: 0, efficiency: 1.0, installation_cost: 1500000 }
       ],
       workforce: {
         operatorsPerAlpha: 4,
@@ -167,9 +167,9 @@ const OFFICIAL_PRESETS: any[] = [
       installations_value: 500000,
       building_age: 2,
       machines: [
-        { model: 'alfa', qty: 3, age: 3, efficiency: 1.0 },
-        { model: 'beta', qty: 2, age: 5, efficiency: 0.95 },
-        { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+        { model: 'alfa', qty: 3, age: 3, efficiency: 1.0, installation_cost: 150000 },
+        { model: 'beta', qty: 2, age: 5, efficiency: 0.95, installation_cost: 600000 },
+        { model: 'gama', qty: 0, age: 0, efficiency: 1.0, installation_cost: 1500000 }
       ],
       workforce: {
         operatorsPerAlpha: 94,
@@ -223,9 +223,9 @@ const OFFICIAL_PRESETS: any[] = [
       installations_value: 1000000,
       building_age: 10,
       machines: [
-        { model: 'alfa', qty: 5, age: 6, efficiency: 1.0 },
-        { model: 'beta', qty: 1, age: 4, efficiency: 0.98 },
-        { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+        { model: 'alfa', qty: 5, age: 6, efficiency: 1.0, installation_cost: 150000 },
+        { model: 'beta', qty: 1, age: 4, efficiency: 0.98, installation_cost: 600000 },
+        { model: 'gama', qty: 0, age: 0, efficiency: 1.0, installation_cost: 1500000 }
       ],
       workforce: {
         operatorsPerAlpha: 94,
@@ -276,15 +276,16 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     transparency_level: 'medium',
     gazeta_mode: 'anonymous',
     buildings_depreciation_rate: 10,
+    property_depreciation_rate: 4,
     
     starting_mode: 'start_with_base',
     activity_type: 'industrial',
     accounting_template_id: 'industrial_br_v1',
     
     machines: [
-      { model: 'alfa', qty: 3, age: 3, efficiency: 1.0 },
-      { model: 'beta', qty: 2, age: 5, efficiency: 1.0 },
-      { model: 'gama', qty: 0, age: 0, efficiency: 1.0 }
+      { model: 'alfa', qty: 3, age: 3, efficiency: 1.0, installation_cost: 150000 },
+      { model: 'beta', qty: 2, age: 5, efficiency: 1.0, installation_cost: 600000 },
+      { model: 'gama', qty: 0, age: 0, efficiency: 1.0, installation_cost: 1500000 }
     ],
     workforce: {
       operatorsPerAlpha: 94,
@@ -516,12 +517,24 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const buildingMode = tutorConfig.building_mode ?? (isZeroMode ? 'rented' : 'owned');
     const bValDefault = isZeroMode ? 2000000 : (isBaseMode ? 2000000 : 5440000);
     const buildingBaseValue = buildingMode === 'owned' ? (tutorConfig.building_value ?? bValDefault) : 0;
-    const installationsVal = tutorConfig.installations_value ?? (isZeroMode ? 500000 : (isBaseMode ? 500000 : 1000000));
+    
+    const alphaInstallCost = 150000;
+    const betaInstallCost = 600000;
+    const gammaInstallCost = 1500000;
+    
+    const installationsVal = isZeroMode ? 0 : (
+      (tutorConfig.machines[0]?.qty || 0) * alphaInstallCost +
+      (tutorConfig.machines[1]?.qty || 0) * betaInstallCost +
+      (tutorConfig.machines[2]?.qty || 0) * gammaInstallCost
+    );
+    
     const parsed_deprec_rate = (tutorConfig.buildings_depreciation_rate !== undefined ? tutorConfig.buildings_depreciation_rate : 10) / 100;
+    const property_deprec_rate_local = (tutorConfig.property_depreciation_rate !== undefined ? tutorConfig.property_depreciation_rate : 4) / 100;
 
-    const b_deprec_round = buildingMode === 'owned' 
-      ? (buildingBaseValue * 0.04 + installationsVal * parsed_deprec_rate) 
-      : (installationsVal * parsed_deprec_rate);
+    const building_deprec_only = buildingMode === 'owned' ? (buildingBaseValue * property_deprec_rate_local) : 0;
+    const installations_deprec_only = installationsVal * parsed_deprec_rate;
+    
+    const b_deprec_round = building_deprec_only + installations_deprec_only;
     const total_deprec_round = m_deprec_round + b_deprec_round;
 
     const total_operators = isZeroMode ? 0 : (
@@ -550,6 +563,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       total_operators,
       payroll_round,
       total_deprec_round,
+      building_deprec_only,
+      installations_deprec_only,
+      m_deprec_round,
+      buildings_depreciation_rate_pct: (tutorConfig.buildings_depreciation_rate ?? 10),
+      property_depreciation_rate_pct: (tutorConfig.property_depreciation_rate ?? 4),
       scoreLiquidity,
       scoreLeverage,
       scoreOperators
@@ -1385,6 +1403,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         mac[0].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
                         setTutorConfig({...tutorConfig, machines: mac});
                       }} />
+                      <WizardField label="INVESTIMENTO INSTALAÇÃO ($)" type="currency" currency={tutorConfig.currency} isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.machines[0].installation_cost ?? 150000.00} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[0].installation_cost = parseFloat(v) || 0;
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
                     </div>
 
                     {/* Config Máquina Beta */}
@@ -1411,6 +1434,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         mac[1].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
                         setTutorConfig({...tutorConfig, machines: mac});
                       }} />
+                      <WizardField label="INVESTIMENTO INSTALAÇÃO ($)" type="currency" currency={tutorConfig.currency} isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.machines[1].installation_cost ?? 600000.00} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[1].installation_cost = parseFloat(v) || 0;
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
                     </div>
 
                     {/* Config Máquina Gama */}
@@ -1435,6 +1463,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       <WizardField label="EFICIÊNCIA MOTOR (%)" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 100 : Math.round(tutorConfig.machines[2].efficiency * 100)} onChange={(v:any)=>{
                         const mac = [...tutorConfig.machines];
                         mac[2].efficiency = (Math.min(100, Math.max(0, parseFloat(v) || 0)) / 100);
+                        setTutorConfig({...tutorConfig, machines: mac});
+                      }} />
+                      <WizardField label="INVESTIMENTO INSTALAÇÃO ($)" type="currency" currency={tutorConfig.currency} isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.machines[2].installation_cost ?? 1500000.00} onChange={(v:any)=>{
+                        const mac = [...tutorConfig.machines];
+                        mac[2].installation_cost = parseFloat(v) || 0;
                         setTutorConfig({...tutorConfig, machines: mac});
                       }} />
                     </div>
@@ -1610,6 +1643,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardSelect label="PAGAR DIVIDENDOS A CADA" val={tutorConfig.dividend_frequency} onChange={(v:any)=>setTutorConfig({...tutorConfig, dividend_frequency: parseInt(v)})} options={[{v:'1',l:'TODO PERÍODO (ROUNDS)'},{v:'2',l:'A CADA 2 ROUNDS'},{v:'4',l:'A CADA 4 ROUNDS (QUADRIMESTRE)'}]} />
                        <WizardSelect label="INCORPORAR LUCRO/PREJUÍZO NO CAPITAL SOCIAL" val={tutorConfig.profit_incorporation_frequency ?? 2} onChange={(v:any)=>setTutorConfig({...tutorConfig, profit_incorporation_frequency: parseInt(v)})} options={[{v:'1',l:'TODO PERÍODO (ROUNDS)'},{v:'2',l:'A CADA 2 ROUNDS'},{v:'4',l:'A CADA 4 ROUNDS'}]} />
                        <WizardField label="TAXA DEPRECIAÇÃO INSTALAÇÕES (% a.a.)" type="number" val={tutorConfig.buildings_depreciation_rate ?? 10} onChange={(v:any)=>setTutorConfig({...tutorConfig, buildings_depreciation_rate: parseFloat(v) || 0})} />
+                       <WizardField label="TAXA DEPRECIAÇÃO IMÓVEL (% a.a.)" type="number" val={tutorConfig.property_depreciation_rate ?? 4} onChange={(v:any)=>setTutorConfig({...tutorConfig, property_depreciation_rate: parseFloat(v) || 0})} />
                      </div>
 
                      {/* CONTAS PATRIMONIAIS RETROATIVAS (CLIENTES, FORNECEDORES, WIP) */}
@@ -1712,7 +1746,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           />
 
                           <WizardField 
-                             label="Benfeitorias & Instalações ($)" 
+                             label="Instalações (Calculadas por Máquina)" 
                              type="currency" 
                              currency={tutorConfig.currency} 
                              val={tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 500000.00 : tutorConfig.starting_mode === 'start_with_base' ? 500000.00 : 10000000.00)} 
@@ -2622,8 +2656,24 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <span className="text-white font-bold">{formatCurrency(fiduciaryMetrics.payroll_round, tutorConfig.currency)}</span>
                         </div>
                         <div className="flex justify-between items-center border-t border-white/5 pt-2">
-                          <span className="text-slate-500 font-sans">Depreciação Provisória:</span>
+                          <span className="text-slate-500 font-sans">Depreciação Provisória (Total):</span>
                           <span className="text-rose-400 font-bold">{formatCurrency(fiduciaryMetrics.total_deprec_round, tutorConfig.currency)}</span>
+                        </div>
+                        <div className="pl-4 flex justify-between items-center text-[11px] text-slate-500">
+                           <span>└ Deprec. Máquinas:</span>
+                           <span>{formatCurrency(fiduciaryMetrics.m_deprec_round, tutorConfig.currency)}</span>
+                        </div>
+                        <div className="pl-4 flex justify-between items-center text-[11px] text-slate-500">
+                           <span>└ Deprec. Instalações ({fiduciaryMetrics.buildings_depreciation_rate_pct}%):</span>
+                           <span>{formatCurrency(fiduciaryMetrics.installations_deprec_only, tutorConfig.currency)}</span>
+                        </div>
+                        {tutorConfig.building_mode === 'owned' && (
+                          <div className="pl-4 flex justify-between items-center text-[11px] text-slate-500">
+                             <span>└ Deprec. Imóvel Próprio ({fiduciaryMetrics.property_depreciation_rate_pct}%):</span>
+                             <span>{formatCurrency(fiduciaryMetrics.building_deprec_only, tutorConfig.currency)}</span>
+                          </div>
+                        )}
+                        <div className="hidden">
                         </div>
                         <div className="flex flex-col border-t border-white/5 pt-2">
                           <div className="flex justify-between items-center">

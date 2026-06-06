@@ -931,24 +931,42 @@ export function processRoundWithValidation(
   });
 
   // Regra do CPC 27 Fiduciária de Real Estate (Patrimonial):
-  // - Prédio Próprio: Edifício deprecia a 4% ao ano. Terreno não deprecia.
-  // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de 10% ao ano (buildingsDepRateAnnual).
+  // - Prédio Próprio: Edifício deprecia a taxa parametrizável (property_depreciation_rate, padrão 4% ao ano). Terreno não deprecia.
+  // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de taxa parametrizável (buildingsDepRateAnnual, padrão 10% ao ano).
   const ecoConfig = (ecosystem as any).ecosystem_config || (ecosystem as any).config?.ecosystem_config || {};
   const isZeroMode = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
   const buildMode = ecoConfig.building_mode ?? 'owned';
-  const installationsVal = ecoConfig.installations_value ?? 500000.00;
+  
+  // Custos padrão de instalação por sofisticação de máquina
+  const alphaInstallCost = ecoConfig.machines?.[0]?.installation_cost !== undefined ? Number(ecoConfig.machines[0].installation_cost) : 150000.00;
+  const betaInstallCost = ecoConfig.machines?.[1]?.installation_cost !== undefined ? Number(ecoConfig.machines[1].installation_cost) : 600000.00;
+  const gammaInstallCost = ecoConfig.machines?.[2]?.installation_cost !== undefined ? Number(ecoConfig.machines[2].installation_cost) : 1500000.00;
+
+  // Calcular instalações atuais com base nas máquinas em auditoria
+  let currentInstallationsVal = 0;
+  tempMachines.forEach((m: any) => {
+    if (m.model === 'alfa' || m.model === 'alpha') currentInstallationsVal += alphaInstallCost;
+    else if (m.model === 'beta') currentInstallationsVal += betaInstallCost;
+    else if (m.model === 'gama' || m.model === 'gamma') currentInstallationsVal += gammaInstallCost;
+  });
+
   const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;
+  
   const buildingsDepRateAnnual = ecoConfig.buildings_depreciation_rate !== undefined 
     ? Number(ecoConfig.buildings_depreciation_rate) 
     : ((ecosystem as any).buildings_depreciation_rate !== undefined 
         ? Number((ecosystem as any).buildings_depreciation_rate) 
         : 10);
 
+  const propertyDepRateAnnual = ecoConfig.property_depreciation_rate !== undefined 
+    ? Number(ecoConfig.property_depreciation_rate) 
+    : 4;
+
   let buildingDepPeriod = 0;
   if (buildMode === 'owned') {
-    buildingDepPeriod = (buildingBaseValue * 0.04) + (installationsVal * (buildingsDepRateAnnual / 100));
+    buildingDepPeriod = (buildingBaseValue * (propertyDepRateAnnual / 100)) + (currentInstallationsVal * (buildingsDepRateAnnual / 100));
   } else {
-    buildingDepPeriod = installationsVal * (buildingsDepRateAnnual / 100);
+    buildingDepPeriod = currentInstallationsVal * (buildingsDepRateAnnual / 100);
   }
   periodDepreciation += buildingDepPeriod;
 
