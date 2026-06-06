@@ -566,6 +566,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       building_deprec_only,
       installations_deprec_only,
       m_deprec_round,
+      installationsVal,
       buildings_depreciation_rate_pct: (tutorConfig.buildings_depreciation_rate ?? 10),
       property_depreciation_rate_pct: (tutorConfig.property_depreciation_rate ?? 4),
       scoreLiquidity,
@@ -1749,8 +1750,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                              label="Instalações (Calculadas por Máquina)" 
                              type="currency" 
                              currency={tutorConfig.currency} 
-                             val={tutorConfig.installations_value ?? (tutorConfig.starting_mode === 'start_from_zero' ? 500000.00 : tutorConfig.starting_mode === 'start_with_base' ? 500000.00 : 10000000.00)} 
-                             onChange={(v: any) => setTutorConfig({ ...tutorConfig, installations_value: v })} 
+                             isLocked={true}
+                             val={fiduciaryMetrics.installationsVal} 
+                             onChange={() => {}} 
                           />
 
                           {tutorConfig.building_mode === 'owned' ? (
