@@ -47,6 +47,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [projectedESDS, setProjectedESDS] = useState<any>(null);
   const [isLeftNavCollapsed, setIsLeftNavCollapsed] = useState(false);
   const [isRightPreviewCollapsed, setIsRightPreviewCollapsed] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [decisions, setDecisions] = useState<DecisionData>({
     judicial_recovery: false,
@@ -204,9 +205,14 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     setIsSaving(true);
     try {
       const res = await saveDecisions(teamId, champId, round, decisions) as any;
-      if (res.success) alert("PROTOCOLO SELADO: Suas decisões foram transmitidas ao Oráculo.");
-      else throw new Error(res.error);
-    } catch (err: any) { alert(`FALHA NA TRANSMISSÃO: ${err.message}`); } 
+      if (res.success) {
+        setShowSuccessModal(true);
+      } else {
+        throw new Error(res.error);
+      }
+    } catch (err: any) {
+      alert(`FALHA NA TRANSMISSÃO: ${err.message}`);
+    } 
     finally { setIsSaving(false); }
   };
 
@@ -560,6 +566,71 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         isCalculatingESDS={isCalculatingESDS}
                         handleSimulateESDS={handleSimulateESDS}
                      />
+
+                      {/* Modal de Sucesso após Transmissão */}
+                      <AnimatePresence>
+                        {showSuccessModal && (
+                           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+                             {/* Backdrop de vidro desfocado */}
+                             <motion.div 
+                               initial={{ opacity: 0 }}
+                               animate={{ opacity: 1 }}
+                               exit={{ opacity: 0 }}
+                               onClick={() => setShowSuccessModal(false)}
+                               className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                               id="transmit_success_backdrop"
+                             />
+
+                             {/* Card do Modal */}
+                             <motion.div
+                               initial={{ scale: 0.9, y: 30, opacity: 0 }}
+                               animate={{ scale: 1, y: 0, opacity: 1 }}
+                               exit={{ scale: 0.9, y: 30, opacity: 0 }}
+                               transition={{ type: "spring", damping: 25, stiffness: 180 }}
+                               className="relative w-full max-w-md bg-slate-900 border-2 border-white/5 rounded-[2rem] shadow-3xl overflow-hidden z-[100000] p-8 text-center space-y-6"
+                               id="transmit_success_modal_card"
+                             >
+                               {/* Decoração superior verde esmeralda brilhante */}
+                               <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-600" />
+                               
+                               {/* Botão de fechar no canto superior direito */}
+                               <button 
+                                 type="button" 
+                                 onClick={() => setShowSuccessModal(false)}
+                                 className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors cursor-pointer p-1.5 hover:bg-white/5 rounded-xl border border-transparent"
+                               >
+                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                 </svg>
+                               </button>
+
+                               {/* Ícone de sucesso animado */}
+                               <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner shadow-emerald-500/10 animate-pulse">
+                                 <ShieldCheck size={36} className="text-emerald-500" />
+                               </div>
+                               
+                               <div className="space-y-3">
+                                 <h3 className="text-xl font-black text-white uppercase italic tracking-tight font-sans">
+                                   DECISÕES TRANSMITIDAS COM SUCESSO!
+                                 </h3>
+                                 <p className="text-slate-300 text-xs font-semibold leading-relaxed">
+                                   VOCÊ PODE ALTERAR QUALQUER DECISÃO ANTES QUE O PRAZO DO ROUND SEJA ENCERRADO.
+                                 </p>
+                               </div>
+
+                               <div className="pt-2">
+                                 <button 
+                                   type="button"
+                                   onClick={() => setShowSuccessModal(false)}
+                                   className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg hover:shadow-emerald-500/10 active:scale-95 cursor-pointer flex items-center justify-center gap-2 border border-emerald-500/30"
+                                 >
+                                   <ShieldCheck size={14} /> Confirmar e Continuar
+                                 </button>
+                               </div>
+                             </motion.div>
+                           </div>
+                        )}
+                      </AnimatePresence>
 
                  </div>
               </motion.div>

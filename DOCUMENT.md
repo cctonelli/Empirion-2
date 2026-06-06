@@ -8,6 +8,23 @@
 
 ---
 
+## Versionamento de Interface & UX - v2026-06-06
+
+**Data:** 06/06/2026 às 13:20h UTC  
+**Motivo:** Transição de diálogos bloqueantes nativos (`window.alert`) de sucesso de envio de decisões operacionais por ciclo (rounds) para caixa de diálogo modal moderna no Cockpit de Competição das Equipes, melhorando o feedback fiduciário e robustez de processos.  
+**Principais diferenças:**  
+- Substituição do `alert("PROTOCOLO SELADO...")` síncrono por uma caixa de mensagem de sucesso modal rica, centralizada e animada em React via Framer Motion.  
+- Incorporação da mensagem de conformidade operacional: *"DECISÕES TRANSMITIDAS COM SUCESSO! <br> VOCÊ PODE ALTERAR QUALQUER DECISÃO ANTES QUE O PRAZO DO ROUND SEJA ENCERRADO."*.  
+- Preservação de layouts e fechamentos estruturais assíncronos das telas de suporte técnico e preview.  
+- Redução de interrupções bruscas de fluxo de trabalho do estrategista corporativo.  
+**Impactos:**  
+- Sem quebras de retrocompatibilidade (Sem breaking changes).  
+- Layout com suporte a backdrop desfocado (Glassmorphism leve), ícone pulsante do selo protetivo (`ShieldCheck`) e acessibilidade de foco.  
+**Status:** Ativo / v1 em uso.  
+**Migração:** Substituição de chamada síncrona nativa por estado reativo no componente `DecisionForm.tsx`.
+
+---
+
 ## Versionamento de Infraestrutura - v2026-06-04
 
 **Data:** 04/06/2026  
