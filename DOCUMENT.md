@@ -237,6 +237,14 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.76 Financial Export Period Alignment - Correção da Sequência e Rotulagem de Períodos de Exportação Excel (Matriz Financeira)
+- **Data:** 06 de Junho de 2026, 14:30 UTC
+- **Motivo:** Sanar a defasagem e o desalinhamento de rótulos de rodadas nos relatórios exportados nos formatos Excel/Google Sheets a partir da Matriz Financeira do aplicativo. Originalmente, as rotinas de mapeamento adicionavam incorretamente `+1` ao número original do round (`p.round`), rotulando o round de abertura `P00 (INICIAL)` como `PERÍODO 01` e gerando um desvio acumulado em cascata nas colunas subsequentes de histórico e projeções.
+- **Diferenças:**
+  - *Sincronismo de Rótulos na Exportação (`/analise-gerencial/spreadsheet-mappers.ts`):* Atualizados os 4 cabeçalhos dos geradores de planilhas (`mapRecursiveReport`, `mapStrategicReport`, `mapCommitmentsReport`, `mapKardexReport`) para consumirem o valor real do round `p.round` (sem a adição arbitrária do offset de `+ 1`), aplicando a mesma regra visual de alta fidelidade do frontend: se o round for `0`, assume o rótulo fiduciário `"P00 (INICIAL)"`, caso contrário assume `"PERÍODO XX"` e `"PROJEÇÃO PXX"`.
+- **Impactos Esperados:** Exportações de matrizes perfeitamente idênticas às tabelas renderizadas na tela, gerando relatórios corporativos auditados transparentes para a diretoria financeira e investidores concorrentes.
+- **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.
+
 ### v19.75 Fiduciary Float Mitigation & Expanded Forensics - Blindagem de Inteiros Contábeis e Logs Avançados de Auditoria do Supabase
 - **Data:** 05 de Junho de 2026, 22:54 UTC
 - **Motivo:** Sanar o erro de desajuste de tipos de dados PostgreSQL `22P02` (Erro Crítico de Sintaxe de Entrada para Tipo INTEGER) durante a gravação dos prazos médios de recebimento/pagamento e total de unidades de emergência no final de rodadas de turnover. Como o cálculo aritmético do motor de simulação calcula prazos como floats de altíssima precisão (por exemplo, `"9.11111111111111"`), a inserção falhava ao bater em colunas físicas tipadas como `INTEGER` no Supabase legado de alguns usuários.
