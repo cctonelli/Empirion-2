@@ -699,18 +699,32 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          {/* Conteúdo central – tabs ou seções */}
          <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-slate-950">
             <div className="w-full flex-1 flex flex-col p-1 lg:p-2">
-               {/* Sub-header: Protocolo v18.0 • Cycle 0X + Oracle Gazette botão */}
-               <header className="shrink-0 flex justify-between items-center mb-1 border-b border-white/10 pb-1">
-                  <div className="space-y-0.5">
+               {/* Sub-header: Protocolo v18.0 • ROUND 0X + Oracle Gazette botão */}
+               <header className="shrink-0 flex justify-between items-center mb-1 border-b border-white/10 pb-1" id="cockpit_header">
+                  <div className="space-y-0.5" id="cockpit_left_info">
                     <h2 className="text-lg font-black text-white uppercase italic tracking-tighter leading-none">
                       COCKPIT <span className="text-orange-600 drop-shadow-[0_0_20px_rgba(234,88,12,0.4)]">OPERACIONAL</span>
                     </h2>
                     <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] italic flex items-center gap-1.5">
                       <Cpu size={10} className="text-orange-600/50" />
-                      Protocolo v18.0 • {selectedRound === currentRound ? `${t('cycle')} 0${selectedRound}` : selectedRound < currentRound ? `Histórico P-${selectedRound}` : `Planejamento P-${selectedRound}`}
+                      Protocolo v18.0 Sincronizado
                     </p>
                   </div>
-                  <div className="flex gap-2">
+
+                  {/* Bloco Centralizado para melhor visibilidade do Round disputado */}
+                  <div className="flex-1 flex justify-center items-center px-4" id="cockpit_round_center">
+                    <div className="px-5 py-1 bg-gradient-to-r from-orange-600/10 via-orange-500/25 to-orange-600/10 border border-orange-500/30 rounded-2xl shadow-xl flex items-center gap-2.5 backdrop-blur-md animate-pulse">
+                      <div className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                        DISPUTANDO:
+                      </span>
+                      <span className="text-lg lg:text-xl font-black text-orange-500 uppercase italic tracking-tight font-sans drop-shadow-[0_0_15px_rgba(249,115,22,0.4)]">
+                        {selectedRound === currentRound ? `ROUND 0${selectedRound}` : selectedRound < currentRound ? `HISTÓRICO P-${selectedRound}` : `PLANEJAMENTO P-${selectedRound}`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 items-center" id="cockpit_right_actions">
                     {isPastRound && (
                       <div className="px-3 py-1.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-lg font-black text-[8px] uppercase tracking-[0.1em] flex items-center gap-1.5 shadow-2xl backdrop-blur-md">
                         <History size={12} className="animate-pulse" /> Modo Consulta

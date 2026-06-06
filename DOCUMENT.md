@@ -10,18 +10,18 @@
 
 ## Versionamento de Interface & UX - v2026-06-06
 
-**Data:** 06/06/2026 às 13:20h UTC  
-**Motivo:** Transição de diálogos bloqueantes nativos (`window.alert`) de sucesso de envio de decisões operacionais por ciclo (rounds) para caixa de diálogo modal moderna no Cockpit de Competição das Equipes, melhorando o feedback fiduciário e robustez de processos.  
+**Data:** 06/06/2026 às 17:10h UTC  
+**Motivo:** Transição de diálogos bloqueantes síncronos e melhoria na visibilidade tática do estágio de competição (estratégia esportiva) no Cockpit do Aluno, consolidando termos operacionais e fáceis pontos de atenção visual para o estrategista.  
 **Principais diferenças:**  
-- Substituição do `alert("PROTOCOLO SELADO...")` síncrono por uma caixa de mensagem de sucesso modal rica, centralizada e animada em React via Framer Motion.  
-- Incorporação da mensagem de conformidade operacional: *"DECISÕES TRANSMITIDAS COM SUCESSO! <br> VOCÊ PODE ALTERAR QUALQUER DECISÃO ANTES QUE O PRAZO DO ROUND SEJA ENCERRADO."*.  
-- Preservação de layouts e fechamentos estruturais assíncronos das telas de suporte técnico e preview.  
-- Redução de interrupções bruscas de fluxo de trabalho do estrategista corporativo.  
+- **Modificação Termino-Operacional:** Substituição do termo "CYCLE" pelo termo padrão internacional altamente intuitivo "ROUND".  
+- **Aperfeiçoamento Estético de Visibilidade:** Reposicionamento e centralização da dinâmica de exibição de rodadas em um bloco flutuante dotado de *glassmorphism* e pulsante (`animate-pulse`), exatamente entre o título estrutural *"COCKPIT OPERACIONAL"* (bloco esquerdo) e as transições de visualização *"ORACLE GAZETTE"* (bloco direito).  
+- **Consolidação de Decisões via Modais:** Substituição do `alert("PROTOCOLO SELADO...")` por uma caixa reativa moderna em React via Framer Motion com a mensagem: *"DECISÕES TRANSMITIDAS COM SUCESSO! <br> VOCÊ PODE ALTERAR QUALQUER DECISÃO ANTES QUE O PRAZO DO ROUND SEJA ENCERRADO."*.  
+- **Suporte Multiedição e Preservação:** Coexistência pacífica de consultas e layouts de históricos/planejamentos sem interrupções.  
 **Impactos:**  
 - Sem quebras de retrocompatibilidade (Sem breaking changes).  
-- Layout com suporte a backdrop desfocado (Glassmorphism leve), ícone pulsante do selo protetivo (`ShieldCheck`) e acessibilidade de foco.  
-**Status:** Ativo / v1 em uso.  
-**Migração:** Substituição de chamada síncrona nativa por estado reativo no componente `DecisionForm.tsx`.
+- Redução expressiva na fadiga operacional e melhora na legibilidade contextual contra envios incorretos de decisões.  
+**Status:** Ativo / v1.1 em produção.  
+**Migração:** Conversão direta de elementos estruturais e tipográficos no cabeçalho em `Dashboard.tsx` e lógica de aviso em `DecisionForm.tsx`.
 
 ---
 
