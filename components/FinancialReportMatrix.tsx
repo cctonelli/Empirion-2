@@ -248,7 +248,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                         <div className="flex flex-wrap gap-2">
                           {sch.installments.map((inst: any, idx: number) => (
                             <div key={idx} className="bg-slate-900/60 border border-white/5 p-1.5 rounded-lg text-left text-[8px] font-sans min-w-[124px]">
-                              <div className="text-slate-500 text-[6px] font-mono uppercase">Instalment r{idx + 1}</div>
+                              <div className="text-slate-500 text-[6px] font-mono uppercase">Vencimento R-{String((periods[periods.length - 1]?.round || 0) + idx + 1).padStart(2, '0')}</div>
                               <div className="text-orange-400 font-mono font-bold">{formatCurrency(inst.total, currency)}</div>
                               <div className="text-[6px] text-slate-400 leading-none mt-0.5 font-mono">
                                 Amort: {formatCurrency(inst.amort, currency)}<br />

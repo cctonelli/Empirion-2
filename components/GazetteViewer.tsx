@@ -178,7 +178,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
             <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-xl border border-orange-400/30"><Newspaper size={32} /></div>
             <div>
                <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Oracle Gazette</h1>
-               <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.5em] italic mt-2">Ciclo de Auditoria: P-{round}</p>
+               <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.5em] italic mt-2">Ciclo de Auditoria: R-{round}</p>
             </div>
          </div>
          <div className="flex items-center gap-6">

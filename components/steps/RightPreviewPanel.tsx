@@ -550,7 +550,7 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
                             <div className="grid grid-cols-3 gap-1">
                               {loan.installments?.map((inst: any, instIdx: number) => (
                                 <div key={instIdx} className="bg-slate-950/60 p-1.5 rounded border border-white/5 flex flex-col justify-between">
-                                  <span className="text-slate-500 text-[6px] uppercase font-mono block">Inst. r{instIdx + 1}</span>
+                                  <span className="text-slate-500 text-[6px] uppercase font-mono block">Vencimento R-{String(round + instIdx + 1).padStart(2, '0')}</span>
                                   <span className="text-[8px] font-black text-orange-400 font-mono mt-0.5">{formatCurrency(inst.total, activeArena?.currency || 'BRL')}</span>
                                   <div className="text-[5px] text-slate-600 font-mono mt-0.5 leading-none">
                                     Amort: {formatCurrency(inst.amort, activeArena?.currency || 'BRL')}<br />

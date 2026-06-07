@@ -1212,3 +1212,18 @@ project-root/
     - **Nos modos base/rodando (`'start_with_base'` / `'start_with_running'`):** O sistema assume fisicamente os saldos de estoque iniciais herdados (30.150 un de MP A a R$ 15,00/un, total R$ 452.250,00 e 20.100 un de MP B a R$ 10,00/un, total R$ 201.000,00), garantindo alinhamento fiduciário perfeito e mantendo as saídas e DRE/CPV zerados conforme as normas do CPC para balanços de entrada.
 - **Status:** Em produção.
 
+---
+
+## Decisão Arquitetural & Versionamento - Correção de Nomenclatura do Cronograma de Amortização (Carência BDI) e Resolução do ecoConfig no cálculo de Depreciação - v2026.104
+
+**Data:** 07 de Junho de 2026 às 19:10 UTC  
+**Motivo:** Sanar a falsa percepção de redução do período de carência do financiamento BDI de novas máquinas (4 rodadas de carência) causada por nomenclatura ambígua no front-end, além de corrigir o desvio que fazia com que a depreciação de máquinas desconsiderasse a parametrização do Tutor de 5% e calculasse 10%.  
+**Principais diferenças:**  
+- **Estabilização Metodológica de Carência (BDI):** Foi comprovado que o cálculo de amortização amortiza de forma precisa o principal no Round 5 (4 rodadas completas de carência: R1, R2, R3, R4) e juros TR regulares. No entanto, os cartões de parcelas no cockpit e na aba de detalhamento eram identificados fixamente como `INSTALMENT R1`, `INSTALMENT R2`, `INSTALMENT R3`. Isso levou alunos e tutores a erro, deduzindo que "R3" representava "Round 3" (onde o principal estaria sendo amortizado indevidamente ao invés de Round 5).
+- **Adequação de Nomenclatura para Rodadas Dinâmicas:** Re-etiquetamos o cabeçalho dos cartões para referenciar de forma literal os numerais reais dos vencimentos fiduciários das rodadas calculados via `p.round + idx + 1` no Balanço e `round + instIdx + 1` nas visões de simulação e tomada de decisão, exibindo com rigor `Vencimento R-03`, `Vencimento R-04` e `Vencimento R-05`.
+- **Resolução de Aninhamento das Variáveis do ecoConfig:** O motor `simulation.ts` e o arquivo auxiliar `simulation-core.ts` resolviam configurações de campeonato sob a premissa de que a propriedade `machines_depreciation_rate` viria estritamente dentro de uma chave filha `ecosystem_config`. Contudo, ao customizar arenas de campeonato, o Supabase armazena e repassa estas configurações no primeiro nível (`root`) do JSON de campeonato. Criamos uma resolução polimórfica e robusta de `ecoConfig` para buscar propriedades dinamicamente de forma retrocompatível tanto no root de configuração quanto no nível aninhado, aplicando de forma fidedigna a taxa de depreciação customizada (5% a.a.) ao invés do fallback padrão geral (10% a.a.).
+**Impactos esperados:**  
+- Clareza absoluta sobre o período de carência BDI de 4 rounds a contar das aquisições de maquinários.  
+- Alinhamento em 100% da depreciação contábil do balanço com a alíquota parametrizada pelo Tutor.
+**Status:** ATIVO, implantado e homologado para compilação.
+

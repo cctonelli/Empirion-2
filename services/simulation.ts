@@ -232,12 +232,21 @@ export const calculateProjections = (
   const cashFlowMachBuy = Math.max(0, machinePurchaseOutflow - newBdiLoanAmount);
 
   // C. ATUALIZAR IDADE E DEPRECIAÇÃO DE TODAS AS MÁQUINAS (Computadas de imediato a partir do período de aquisição)
-  const ecoConfig = (ecosystem as any).ecosystem_config || (ecosystem as any).config?.ecosystem_config || {};
+  const rawEco = ecosystem as any || {};
+  const ecoConfig = {
+    machines_depreciation_rate: rawEco.machines_depreciation_rate ?? rawEco.ecosystem_config?.machines_depreciation_rate ?? rawEco.config?.machines_depreciation_rate ?? rawEco.config?.ecosystem_config?.machines_depreciation_rate,
+    building_mode: rawEco.building_mode ?? rawEco.ecosystem_config?.building_mode ?? rawEco.config?.building_mode ?? rawEco.config?.ecosystem_config?.building_mode,
+    machines: rawEco.machines ?? rawEco.ecosystem_config?.machines ?? rawEco.config?.machines ?? rawEco.config?.ecosystem_config?.machines,
+    building_value: rawEco.building_value ?? rawEco.ecosystem_config?.building_value ?? rawEco.config?.building_value ?? rawEco.config?.ecosystem_config?.building_value,
+    land_value: rawEco.land_value ?? rawEco.ecosystem_config?.land_value ?? rawEco.config?.land_value ?? rawEco.config?.ecosystem_config?.land_value,
+    real_estate_acquisition_funding: rawEco.real_estate_acquisition_funding ?? rawEco.ecosystem_config?.real_estate_acquisition_funding ?? rawEco.config?.real_estate_acquisition_funding ?? rawEco.config?.ecosystem_config?.real_estate_acquisition_funding,
+    buildings_depreciation_rate: rawEco.buildings_depreciation_rate ?? rawEco.ecosystem_config?.buildings_depreciation_rate ?? rawEco.config?.buildings_depreciation_rate ?? rawEco.config?.ecosystem_config?.buildings_depreciation_rate,
+    property_depreciation_rate: rawEco.property_depreciation_rate ?? rawEco.ecosystem_config?.property_depreciation_rate ?? rawEco.config?.property_depreciation_rate ?? rawEco.config?.ecosystem_config?.property_depreciation_rate,
+    starting_mode: rawEco.starting_mode ?? rawEco.ecosystem_config?.starting_mode ?? rawEco.config?.starting_mode ?? rawEco.config?.ecosystem_config?.starting_mode,
+  };
   const machinesDepRateAnnual = ecoConfig.machines_depreciation_rate !== undefined 
     ? Number(ecoConfig.machines_depreciation_rate) 
-    : ((ecosystem as any).config?.machines_depreciation_rate !== undefined 
-        ? Number((ecosystem as any).config.machines_depreciation_rate) 
-        : 10);
+    : 10;
 
   const existingMachineIds = (team.kpis?.machines || []).map(m => m.id);
   currentMachines = currentMachines.map(m => {
