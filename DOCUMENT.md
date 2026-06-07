@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.102 Machine Model Standardization (Alpha & Gamma Retrocompatibility)
+- **Versão Ativa:** v2026.103 PrevInstallationsVal Fixed Assets Sync (Sapphire Audit Guard Compliance)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Correção Contábil - Sincronização do Ativo Fixo (Instalações Operacionais) - v2026.103
+
+**Data:** 07 de Junho de 2026 às 16:30 UTC  
+**Motivo:** Erradicar o travamento impeditivo contábil "BLOQUEIO DE SEGURANÇA CONTÁBIL (SAPPHIRE)" no turnover do período 1 (P1) para o P2 decorrente de um descompasso de R$ 749.999,99 (exatos R$ 750.000,00) causado pelo cálculo inconsistente de instalações fiduciárias anteriores (`prevInstallationsVal`).  
+**Principais diferenças:**  
+- **Anulação de Investimento "Fantasma" de Instalações:** No motor principal (`simulation.ts`), ao computar o valor de instalações fiduciárias das máquinas herdadas do período anterior (`prevInstallationsVal`), o mapeamento executava uma multiplicação redundante pela propriedade `.qty`: `prevInstallationsVal += alphaInstallCost * (m.qty || 0)`. Como as máquinas no array de frotas ativas (`team.kpis?.machines`) são registradas como instâncias individuais e unitárias sob as diretrizes do **CPC 27** (com ID e depreciação acumulada individualizada) sem campo `.qty`, a expressão `(m.qty || 0)` resultava em `0` para todas as máquinas legadas, calculando falsamente as instalações anteriores como `0,00 BRL`. No entanto, o `currentInstallationsVal` (instalações do período atual) era corretamente computado sem a multiplicação fictícia por quantidade, resultando nas instalações totais reais (ex: 5 Alphas * R$ 150.000,00 = R$ 750.000,00 BRL).
+- **Inconsistência de Caixa por Capex Inexistente:** O desbalanceamento gerava uma variação positiva contábil em benfeitorias industriais de R$ 750.000,00 (`currentInstallationsVal - prevInstallationsVal`). O simulador interpretava isso como um desembolso por novos investimentos em máquinas no período corrente (`installationsInvest`), reduzindo de forma indevida o saldo do Caixa do Ativo em R$ 750.000,00 na DFC.
+- **Divergência Patrimonial Sanada:** Como o caixa do Ativo sofria este desembolso fictício, enquanto o Ativo Imobilizado (`Edificios`, que inclui instalações históricas) permanecia no mesmo patamar legado, o Ativo Total fechava R$ 750.000,00 abaixo da soma real do Passivo + PL (que representava com exatidão o resultado lícito e dívidas fiscais).
+- **Correção Fiduciária Definitiva:** O loop de mapeamento das frotas brutas anteriores (`prevMachines`) foi simplificado e pareado com as regras das frotas correntes, somando o valor de instalação de forma unitária direta sobre a coleção de instâncias corporativas.
+**Impactos esperados:**  
+- **Estabilidade em Turnovers de Clientes de Produção:** Campeonatos transitarão suavemente de P1 a P2 e seguintes na base de dados Supabase mantendo 100% de consistência contábil e auditoria Sapphire validada (Ativo = Passivo + PL).
+- **Conformidade à Excelência de Auditoria:** Erradicação total do buraco fiduciário de Capex de instalações nas planilhas, DFC e Balanço Patrimonial das equipes ativas.
+**Status:** ATIVO, homologado, compilado com sucesso e promovido em produção.
 
 ---
 

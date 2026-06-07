@@ -268,9 +268,9 @@ export const calculateProjections = (
   const prevMachines = team.kpis?.machines || [];
   let prevInstallationsVal = 0;
   prevMachines.forEach((m: any) => {
-    if (m.model === 'alpha' || m.model === 'alfa') prevInstallationsVal += alphaInstallCost * (m.qty || 0);
-    else if (m.model === 'beta') prevInstallationsVal += betaInstallCost * (m.qty || 0);
-    else if (m.model === 'gamma' || m.model === 'gama') prevInstallationsVal += gammaInstallCost * (m.qty || 0);
+    if (m.model === 'alpha' || m.model === 'alfa') prevInstallationsVal += alphaInstallCost;
+    else if (m.model === 'beta') prevInstallationsVal += betaInstallCost;
+    else if (m.model === 'gamma' || m.model === 'gama') prevInstallationsVal += gammaInstallCost;
   });
 
   // Obter instalações fiduciárias atuais com base nas máquinas reais ativas
