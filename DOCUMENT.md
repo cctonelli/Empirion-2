@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.100 Multi-Sector Ecosystem Integration (CPC 29 & CPC 48 Framework)
+- **Versão Ativa:** v2026.102 Machine Model Standardization (Alpha & Gamma Retrocompatibility)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Versionamento - Padronização Global de Maquinário (Alpha / Gamma Parity + Retrocompatibilidade) - v2026.102
+
+**Data:** 07 de Junho de 2026 às 15:15 UTC  
+**Motivo:** Conclusão da padronização de nomenclatura de "Alfa/Gama" para "Alpha/Gamma", estirpando inconsistências de renderização de parque de maquinários e orçamentos do Aluno e Oráculo mantendo 100% de retrocompatibilidade com frotas já gravadas no banco de dados.  
+**Principais diferenças:**  
+- **Visualização das Especificações Técnicas no Aluno:** Os cartões de compra de ativos em `AssetsStep.tsx` agora puxam dados e especificações técnicas de forma híbrida e retrocompatível (usando campos `alpha/gamma` ou `alfa/gama`), sanando o desaparecimento de dados de modelos para os usuários após a alteração.
+- **Normalização Dinâmica nos Motores de Simulação:** O motor principal (`simulation.ts`) e o pré-calculador analítico (`simulation-core.ts`) foram parametrizados para aceitar ambos os conjuntos de chaves (`alpha`/`gamma` e `alfa`/`gama`) para processar compras sem interrupções.
+- **Mitigação Estrita de Tipos de Dados:** Foram aplicados casts explícitos de string em loops de redução de capacidade contra a união literal do TypeScript (`MachineModel`), prevenindo quaisquer panes de compilação sem restringir a expansão contínua.
+- **Estruturação de Fallback em Estado React e Gemini:** Inicializações do formulário em `DecisionForm.tsx` e o gerador de decisões de emergência por IA em `gemini.ts` foram guarnecidos para povoar ambos os campos unificadamente.
+**Impactos esperados:**  
+- Visualização de especificações técnicas e preços reajustados restaurada perfeitamente na interface.
+- Campeonatos ativos ou históricos contendo dados com strings antigas (legadas) fluirão sem travar e contabilizarão perfeitamente o CPV, capex e depreciações industriais.
+**Status:** ATIVO, compilado de forma estável e homologado em produção.
 
 ---
 

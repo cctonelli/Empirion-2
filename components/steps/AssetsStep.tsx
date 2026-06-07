@@ -293,11 +293,14 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           <AssetCard
             model="alpha"
-            val={decisions.machinery.buy.alfa}
-            onChange={(v: number) => updateDecision('machinery.buy.alfa', v)}
-            price={getAdjustedPrice(currentMacro?.machinery_values?.alfa || 215000, 'machine_alpha_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
+            val={decisions.machinery.buy.alpha ?? decisions.machinery.buy.alfa ?? 0}
+            onChange={(v: number) => {
+              updateDecision('machinery.buy.alpha', v);
+              updateDecision('machinery.buy.alfa', v);
+            }}
+            price={getAdjustedPrice(currentMacro?.machinery_values?.alpha ?? currentMacro?.machinery_values?.alfa ?? 215000, 'machine_alpha_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
             currency={activeArena?.currency || 'BRL'}
-            spec={currentMacro?.machine_specs?.alfa}
+            spec={currentMacro?.machine_specs?.alpha ?? currentMacro?.machine_specs?.alfa}
             disabled={isReadOnly || !isAllowedToBuy}
             installationCost={getInstallationCost('alpha')}
           />
@@ -313,11 +316,14 @@ export const AssetsStep: React.FC<AssetsStepProps> = ({
           />
           <AssetCard
             model="gamma"
-            val={decisions.machinery.buy.gama}
-            onChange={(v: number) => updateDecision('machinery.buy.gama', v)}
-            price={getAdjustedPrice(currentMacro?.machinery_values?.gama || 480000, 'machine_gamma_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
+            val={decisions.machinery.buy.gamma ?? decisions.machinery.buy.gama ?? 0}
+            onChange={(v: number) => {
+              updateDecision('machinery.buy.gamma', v);
+              updateDecision('machinery.buy.gama', v);
+            }}
+            price={getAdjustedPrice(currentMacro?.machinery_values?.gamma ?? currentMacro?.machinery_values?.gama ?? 480000, 'machine_gamma_price_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM)}
             currency={activeArena?.currency || 'BRL'}
-            spec={currentMacro?.machine_specs?.gama}
+            spec={currentMacro?.machine_specs?.gamma ?? currentMacro?.machine_specs?.gama}
             disabled={isReadOnly || !isAllowedToBuy}
             installationCost={getInstallationCost('gamma')}
           />

@@ -764,10 +764,16 @@ export function processRoundWithValidation(
     modMult = 2.0;
   }
 
-  const capacity = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0) * capMult;
+  const capacity = currentMachines.reduce((acc, m) => {
+    const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
+    return acc + (indicators.machine_specs[normModel as 'alpha' | 'beta' | 'gamma']?.production_capacity || 0);
+  }, 0) * capMult;
   const activityLevel = sanitize(decision.production?.activityLevel, 100) / 100;
   const operatorsAvailable = (team.kpis?.staffing?.production || 470) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
-  const operatorsRequired = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.operators_required || 0), 0);
+  const operatorsRequired = currentMachines.reduce((acc, m) => {
+    const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
+    return acc + (indicators.machine_specs[normModel as 'alpha' | 'beta' | 'gamma']?.operators_required || 0);
+  }, 0);
   const operatorConstraint = operatorsRequired > 0 ? Math.min(1, operatorsAvailable / operatorsRequired) : 1;
   const effectiveCapacity = capacity * operatorConstraint;
   
@@ -903,7 +909,12 @@ export function processRoundWithValidation(
 
   let periodDepreciation = 0;
   let machinePurchaseOutflow = 0;
-  const buyDecisions = decision.machinery?.buy || { alfa: 0, beta: 0, gama: 0 };
+  const rawBuy = decision.machinery?.buy || {};
+  const buyDecisions = {
+    alpha: rawBuy.alpha ?? rawBuy.alfa ?? 0,
+    beta: rawBuy.beta ?? 0,
+    gamma: rawBuy.gamma ?? rawBuy.gama ?? 0
+  };
   Object.entries(buyDecisions).forEach(([model, qty]: [any, any]) => {
     if (qty > 0) {
       const basePrice = indicators.machinery_values[model as 'alpha' | 'beta' | 'gamma'];
@@ -950,9 +961,9 @@ export function processRoundWithValidation(
   // Calcular instalações atuais com base nas máquinas em auditoria
   let currentInstallationsVal = 0;
   tempMachines.forEach((m: any) => {
-    if (m.model === 'alpha' || m.model === 'alpha') currentInstallationsVal += alphaInstallCost;
+    if (m.model === 'alpha' || m.model === 'alfa') currentInstallationsVal += alphaInstallCost;
     else if (m.model === 'beta') currentInstallationsVal += betaInstallCost;
-    else if (m.model === 'gamma' || m.model === 'gamma') currentInstallationsVal += gammaInstallCost;
+    else if (m.model === 'gamma' || m.model === 'gama') currentInstallationsVal += gammaInstallCost;
   });
 
   const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;

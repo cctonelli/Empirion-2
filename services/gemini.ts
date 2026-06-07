@@ -163,7 +163,7 @@ export const generateBotDecision = async (
       regions,
       hr: { hired: 0, fired: 0, salary: 2000 + Math.floor(Math.random() * 100), trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
       production: { purchaseMPA: 5000, purchaseMPB: 5000, activityLevel: 100, paymentType: 0, rd_investment: 0, term_interest_rate: 1.5, extraProductionPercent: 0 },
-      machinery: { buy: { alfa: 0, beta: 0, gama: 0 }, sell: { alfa: 0, beta: 0, gama: 0 }, sell_ids: [] },
+      machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
       finance: { loanRequest: 0, loanTerm: 1, application: 0 },
       estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
     } as any;

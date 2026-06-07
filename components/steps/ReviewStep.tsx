@@ -10,7 +10,9 @@ interface ReviewStepProps {
 export const ReviewStep: React.FC<ReviewStepProps> = ({ decisions, round }) => {
   const avgPrice = Object.values(decisions.regions).reduce((a: any, b: any) => a + (b.price || 0), 0) / Math.max(1, Object.keys(decisions.regions).length);
   const totalMkt = Object.values(decisions.regions).reduce((a: any, b: any) => a + (b.marketing || 0), 0);
-  const totalBuy = (decisions.machinery?.buy?.alfa || 0) + (decisions.machinery?.buy?.beta || 0) + (decisions.machinery?.buy?.gama || 0);
+  const totalBuy = (decisions.machinery?.buy?.alpha ?? decisions.machinery?.buy?.alfa ?? 0) + 
+                   (decisions.machinery?.buy?.beta || 0) + 
+                   (decisions.machinery?.buy?.gamma ?? decisions.machinery?.buy?.gama ?? 0);
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">

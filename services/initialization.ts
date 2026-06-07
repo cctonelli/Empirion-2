@@ -355,16 +355,17 @@ export function generatePureP0(config: TutorP0Config): {
   const actualMachines = isZeroMode ? [] : config.machines;
 
   actualMachines.forEach((mac, index) => {
-    const modelPrice = mac.model === 'alpha' ? ALPHA_PRICE : mac.model === 'beta' ? BETA_PRICE : GAMMA_PRICE;
+    const normalizedModel = (mac.model as string) === 'alfa' ? 'alpha' : (mac.model as string) === 'gama' ? 'gamma' : mac.model;
+    const modelPrice = normalizedModel === 'alpha' ? ALPHA_PRICE : normalizedModel === 'beta' ? BETA_PRICE : GAMMA_PRICE;
     for (let q = 0; q < mac.qty; q++) {
-      const uniqueId = `m-${mac.model}-${index}-${q}`;
+      const uniqueId = `m-${normalizedModel}-${index}-${q}`;
       // Deprecação: linear consistente de máquinas baseada na taxa parametrizada (CPC 27)
       const deprecRate = (config.machines_depreciation_rate !== undefined ? config.machines_depreciation_rate : 5) / 100;
       const accDeprec = modelPrice * mac.age * deprecRate * mac.efficiency;
       
       generatedMachines.push({
         id: uniqueId,
-        model: mac.model,
+        model: normalizedModel as MachineModel,
         age: mac.age,
         acquisition_value: modelPrice,
         accumulated_depreciation: parseFloat(accDeprec.toFixed(2))
@@ -420,7 +421,8 @@ export function generatePureP0(config: TutorP0Config): {
   let installationsVal = 0;
   if (!isZeroMode) {
     actualMachines.forEach(mac => {
-      const macInstallCost = mac.model === 'alpha' ? alphaInstallCost : mac.model === 'beta' ? betaInstallCost : gammaInstallCost;
+      const normalizedModel = (mac.model as string) === 'alfa' ? 'alpha' : (mac.model as string) === 'gama' ? 'gamma' : mac.model;
+      const macInstallCost = normalizedModel === 'alpha' ? alphaInstallCost : normalizedModel === 'beta' ? betaInstallCost : gammaInstallCost;
       installationsVal += macInstallCost * mac.qty;
     });
   }

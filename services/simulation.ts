@@ -184,8 +184,13 @@ export const calculateProjections = (
     });
   }
 
-  // B. PROCESSAR COMPRAS
-  const buyDecisions = decision.machinery?.buy || { alfa: 0, beta: 0, gama: 0 };
+  // B. PROCESSAR COMPRAS (Normalizado com suporte retrocompatível e chaves padronizadas)
+  const rawBuy = decision.machinery?.buy || {};
+  const buyDecisions = {
+    alpha: rawBuy.alpha ?? rawBuy.alfa ?? 0,
+    beta: rawBuy.beta ?? 0,
+    gamma: rawBuy.gamma ?? rawBuy.gama ?? 0
+  };
   Object.entries(buyDecisions).forEach(([model, qty]: [any, any]) => {
     if (qty > 0) {
       const basePrice = indicators.machinery_values[model as MachineModel];
@@ -263,17 +268,17 @@ export const calculateProjections = (
   const prevMachines = team.kpis?.machines || [];
   let prevInstallationsVal = 0;
   prevMachines.forEach((m: any) => {
-    if (m.model === 'alpha') prevInstallationsVal += alphaInstallCost * (m.qty || 0);
+    if (m.model === 'alpha' || m.model === 'alfa') prevInstallationsVal += alphaInstallCost * (m.qty || 0);
     else if (m.model === 'beta') prevInstallationsVal += betaInstallCost * (m.qty || 0);
-    else if (m.model === 'gamma') prevInstallationsVal += gammaInstallCost * (m.qty || 0);
+    else if (m.model === 'gamma' || m.model === 'gama') prevInstallationsVal += gammaInstallCost * (m.qty || 0);
   });
 
   // Obter instalações fiduciárias atuais com base nas máquinas reais ativas
   let currentInstallationsVal = 0;
   currentMachines.forEach((m: any) => {
-    if (m.model === 'alpha') currentInstallationsVal += alphaInstallCost;
+    if (m.model === 'alpha' || m.model === 'alfa') currentInstallationsVal += alphaInstallCost;
     else if (m.model === 'beta') currentInstallationsVal += betaInstallCost;
-    else if (m.model === 'gamma') currentInstallationsVal += gammaInstallCost;
+    else if (m.model === 'gamma' || m.model === 'gama') currentInstallationsVal += gammaInstallCost;
   });
 
   const buildingBaseValue = buildMode === 'owned' ? (ecoConfig.building_value ?? 2000000.00) : 0;
@@ -339,12 +344,18 @@ export const calculateProjections = (
     modMult = 2.0;
   }
 
-  const capacity = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.production_capacity || 0), 0) * capMult;
+  const capacity = currentMachines.reduce((acc, m) => {
+    const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
+    return acc + (indicators.machine_specs[normModel as MachineModel]?.production_capacity || 0);
+  }, 0) * capMult;
   const activityLevel = sanitize(decision.production?.activityLevel, 100) / 100;
 
   // Verificação de Operadores vs Capacidade
   const operatorsAvailable = (team.kpis?.staffing?.production || 470) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
-  const operatorsRequired = currentMachines.reduce((acc, m) => acc + (indicators.machine_specs[m.model]?.operators_required || 0), 0);
+  const operatorsRequired = currentMachines.reduce((acc, m) => {
+    const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
+    return acc + (indicators.machine_specs[normModel as MachineModel]?.operators_required || 0);
+  }, 0);
   
   // Mão de Obra Direta (MOD) reajustada por inflação ou decisão e pelos turnos extras
   const payrollMOD = operatorsRequired * currentSalary * activityLevel * modMult;
