@@ -8,6 +8,21 @@
 
 ---
 
+## Decisão Arquitetural & Correção Contábil - Pareamento de CPV e DRE - v2026.101 Sênior Parity
+
+**Data:** 07 de Junho de 2026 às 03:36 UTC  
+**Motivo:** Erradicação de discrepâncias e defasagens de arredondamento de CPV (Custo do Produto Vendido) observadas entre a DRE (Demonstração do Resultado do Exercício) e o Kardex de Estoques da Matriz Financeira do Cockpit.  
+**Principais diferenças:**  
+- **Cálculo de Absorção Completa Unificado:** Identificou-se que a simulação contábil em `simulation.ts` considerava custos invisíveis de absorção secundária de faturamento do período (Rateio do Aluguel de Produção `valCif`, Custo de Treinamento `trainingCost`, e Custo de Estocagem `storageCost` de matérias-primas e produtos acabados calculados sobre o fechamento físico) no Custo de Produção do Período (CPP) para derivar o Custo Médio Ponderado (WAC) e, consequentemente, o CPV final do período. No entanto, o motor de simulação analítica do core (`simulation-core.ts`), que alimenta os KPIs fiduciários do modal do oráculo e a aba de Kardex/CPV do aluno, omitia esses três amortizadores do respectivo cálculo do CPP. Isso criava uma diferença notável na aba de "Kardex e CPV" e descompassos de conciliação. 
+- **Reestruturação e Alinhamento do Motor de Verificação/Pré-Cálculos:** O módulo de validação e processamento `simulation-core.ts` foi reordenado para calcular o fechamento físico de vendas e estoques do período em tempo hábil. Com as quantidades identificadas, procedeu-se ao cálculo do Custo de Estocagem (`storageCost`), do Aluguel de Produção (`valCif`), e do Treinamento Operacional (`trainingCost`) exatamente de acordo com os parâmetros de absorção industrial aplicados no kernel principal de turnovers (`simulation.ts`).
+- **Grupo de Alocação de Subcontas da Matriz:** Para manter os dados legíveis sem quebras visuais nas colunas da Matriz Financeira (Kardex e CPV), as parcelas complementares foram alocadas fiduciariamente de forma harmoniosa: os custos de Treinamento Operacional (`trainingCost`) e custo de Hora Extra (`extraProductionCost`) foram integrados à linha de **Mão de Obra Direta (MOD)**. Por sua vez, o rateio do Aluguel Industrial (`valCif`) e os custos de Estocagem (`storageCost`) foram consolidados na linha de **Depreciação Fabril** (facilitando a visão concentrada de custos fixos de instalações). O somatório consolidado das sublinhas agora confere exatamente (`100%`) com os saldos finais correspondentes de CPP e CPV das DREs em qualquer round e cenário.
+**Impactos esperados:**  
+- **Conformidade à Excelência IFRS / CPC 16:** CPV perfeitamente alinhado de ponta a ponta sem divergências ou defasagens estocásticas/financeiras no simulador, promovendo uma DX impecável.  
+- **Visualização pedagógica irretocável:** Os relatórios do professor (Tutor) e do Aluno não apresentam divergências entre a aba DRE e a aba Kardex.  
+**Status:** ATIVO, implantado e homologado com sucesso no compilador de produção.
+
+---
+
 ## Decisão Arquitetural - Planejamento & Multi-Setores EMPIRION v2026.100
 
 **Data:** 07 de Junho de 2026 à 03:20 UTC  

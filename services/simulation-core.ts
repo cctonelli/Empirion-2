@@ -983,15 +983,9 @@ export function processRoundWithValidation(
   const pprProporcional = (firedTotal > 0 && totalStaff > 0) ? prevPprPayable * (firedTotal / totalStaff) : 0;
   const custoIndenizacao = firedTotal * currentSalary * 2;
 
-  const totalCIF = totalMOD + extraProductionCost + periodDepreciation + maintenance + custoIndenizacao + pprProporcional;
-  const totalCPP = totalMPConsumida + totalCIF;
-  const unitCPP = unitsProduced > 0 ? (totalCPP / unitsProduced) : 0;
-
   const totalQtyPaForSale = initialPaQty + unitsProduced;
-  const totalValuePaForSale = initialPaValue + totalCPP;
-  const wacPaUnit = totalQtyPaForSale > 0 ? (totalValuePaForSale / totalQtyPaForSale) : unitCPP;
 
-  // Calculas de vendas de acordo com o pre-calculado para auditar
+  // Calculas de vendas de acordo com o pre-calculado para auditar (movido precocemente para computar custos de estocagem final de absorção)
   let totalUnitsSold = calculatedResult?.last_units_sold ?? 0;
   if (!calculatedResult) {
     let tempUnitsSold = 0;
@@ -1020,6 +1014,32 @@ export function processRoundWithValidation(
 
     totalUnitsSold = Math.min(tempUnitsSold, totalQtyPaForSale);
   }
+
+  // --- CUSTOS OCULTOS DE ABSORÇÃO (v19.5 SAPPHIRE GOLD COMPATIBILITY PARITY) ---
+  // 1. Custo de Treinamento
+  const trainingCost = payrollMOD * (trainingPercent / 100);
+
+  // 2. Aluguel de Produção (Rateio)
+  const isRentedRoom = ((ecosystem as any).building_mode ?? (isZeroMode ? 'rented' : 'owned')) === 'rented';
+  const rentVal = isRentedRoom ? ((ecosystem as any).monthly_rent_value !== undefined ? Number((ecosystem as any).monthly_rent_value) : 50000.00) : 0;
+  const pProd = (ecosystem as any).rent_allocation_productive !== undefined ? Number((ecosystem as any).rent_allocation_productive) : 70;
+  const valCif = rentVal * (pProd / 100);
+
+  // 3. Custo de Estocagem (Holding Costs)
+  const closingStockPA = totalQtyPaForSale - totalUnitsSold;
+  const currentMPAStock = totalMpaQtyAvailable - mpaConsumidaQty;
+  const currentMPBStock = totalMpbQtyAvailable - mpbConsumidaQty;
+  const storageCost = (closingStockPA * indicators.prices.storage_finished * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0))) + 
+                      (Math.max(0, currentMPAStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0))) + 
+                      (Math.max(0, currentMPBStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0)));
+
+  // CIF COMPLETO contendo todos os elementos de rateio e estocagem física
+  const totalCIF = totalMOD + extraProductionCost + periodDepreciation + maintenance + custoIndenizacao + pprProporcional + trainingCost + storageCost + valCif;
+  const totalCPP = totalMPConsumida + totalCIF;
+  const unitCPP = unitsProduced > 0 ? (totalCPP / unitsProduced) : 0;
+
+  const totalValuePaForSale = initialPaValue + totalCPP;
+  const wacPaUnit = totalQtyPaForSale > 0 ? (totalValuePaForSale / totalQtyPaForSale) : unitCPP;
 
   const totalCPV = totalUnitsSold * wacPaUnit;
 
@@ -1083,8 +1103,8 @@ export function processRoundWithValidation(
 
   const cpvDetails: CPVDetails = {
     mpConsumida: totalMPConsumida,
-    maoDeObraDireta: totalMOD,
-    depreciacaoFabril: periodDepreciation,
+    maoDeObraDireta: totalMOD + extraProductionCost + trainingCost,
+    depreciacaoFabril: periodDepreciation + valCif + storageCost,
     manutencaoFabril: maintenance,
     indenizacoesRescisorias: custoIndenizacao,
     pprProporcional: pprProporcional,
