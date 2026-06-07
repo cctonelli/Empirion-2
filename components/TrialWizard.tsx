@@ -275,9 +275,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     total_rounds: 6,
     transparency_level: 'medium',
     gazeta_mode: 'anonymous',
-    buildings_depreciation_rate: 10,
-    property_depreciation_rate: 4,
-    machines_depreciation_rate: 10,
+    buildings_depreciation_rate: 5,
+    property_depreciation_rate: 5,
+    machines_depreciation_rate: 5,
     
     starting_mode: 'start_with_base',
     activity_type: 'industrial',
@@ -512,7 +512,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
     const m_deprec_round = (isZeroMode ? [] : tutorConfig.machines).reduce((acc, m) => {
       const price = m.model === 'alpha' ? 500000 : m.model === 'beta' ? 1500000 : 3000000;
-      const rate = (tutorConfig.machines_depreciation_rate !== undefined ? tutorConfig.machines_depreciation_rate : 10) / 100;
+      const rate = (tutorConfig.machines_depreciation_rate !== undefined ? tutorConfig.machines_depreciation_rate : 5) / 100;
       return acc + (price * m.qty * rate * m.efficiency);
     }, 0);
 
@@ -699,9 +699,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           rent_allocation_productive: tutorConfig.rent_allocation_productive ?? 70,
           rent_allocation_administrative: tutorConfig.rent_allocation_administrative ?? 10,
           rent_allocation_sales: tutorConfig.rent_allocation_sales ?? 20,
-          buildings_depreciation_rate: tutorConfig.buildings_depreciation_rate ?? 10,
-          property_depreciation_rate: tutorConfig.property_depreciation_rate ?? 4,
-          machines_depreciation_rate: tutorConfig.machines_depreciation_rate ?? 10
+          buildings_depreciation_rate: tutorConfig.buildings_depreciation_rate ?? 5,
+          property_depreciation_rate: tutorConfig.property_depreciation_rate ?? 5,
+          machines_depreciation_rate: tutorConfig.machines_depreciation_rate ?? 5
         },
         market_indicators: { 
           ...DEFAULT_MACRO, 
@@ -1650,7 +1650,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                        <WizardSelect label="INCORPORAR LUCRO/PREJUÍZO NO CAPITAL SOCIAL" val={tutorConfig.profit_incorporation_frequency ?? 2} onChange={(v:any)=>setTutorConfig({...tutorConfig, profit_incorporation_frequency: parseInt(v)})} options={[{v:'1',l:'TODO PERÍODO (ROUNDS)'},{v:'2',l:'A CADA 2 ROUNDS'},{v:'4',l:'A CADA 4 ROUNDS'}]} />
                        <WizardField label="TAXA DEPRECIAÇÃO INSTALAÇÕES (% a.a.)" type="number" val={tutorConfig.buildings_depreciation_rate ?? 5} onChange={(v:any)=>setTutorConfig({...tutorConfig, buildings_depreciation_rate: parseFloat(v) || 0})} />
                        <WizardField label="TAXA DEPRECIAÇÃO IMÓVEL (% a.a.)" type="number" val={tutorConfig.property_depreciation_rate ?? 5} onChange={(v:any)=>setTutorConfig({...tutorConfig, property_depreciation_rate: parseFloat(v) || 0})} />
-                       <WizardField label="TAXA DEPRECIAÇÃO MÁQUINAS (% a.a.)" type="number" val={tutorConfig.machines_depreciation_rate ?? 10} onChange={(v:any)=>setTutorConfig({...tutorConfig, machines_depreciation_rate: parseFloat(v) || 0})} />
+                       <WizardField label="TAXA DEPRECIAÇÃO MÁQUINAS (% a.a.)" type="number" val={tutorConfig.machines_depreciation_rate ?? 5} onChange={(v:any)=>setTutorConfig({...tutorConfig, machines_depreciation_rate: parseFloat(v) || 0})} />
                      </div>
 
                      {/* CONTAS PATRIMONIAIS RETROATIVAS (CLIENTES, FORNECEDORES, WIP) */}

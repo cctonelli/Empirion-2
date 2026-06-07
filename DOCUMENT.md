@@ -2,11 +2,46 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v19.70 Fiduciary Installations CPC 27 (Cálculo Dinâmico de Instalações Amarrado à Frota Ativa)
+- **Versão Ativa:** v2026.100 Multi-Sector Ecosystem Integration (CPC 29 & CPC 48 Framework)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
-- **Status da Documentação:** Sincronizado com o PRD.md
+- **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
 
 ---
+
+## Decisão Arquitetural - Planejamento & Multi-Setores EMPIRION v2026.100
+
+**Data:** 07 de Junho de 2026 à 03:20 UTC  
+**Motivo:** Planejamento e organização de infraestrutura fiduciária multi-competidores e múltiplos setores (Indústria, Agronegócio, Mercado de Capitais, Serviços Recorrentes SaaS) disputando suas Arenas independentes ou integradas.  
+**Principais diferenças:**  
+- **Desacoplamento e Abstração de Domínio (Pattern Strategy):** Criação das regras básicas estruturais no arquivo de tipificação modular de infraestrutura de futuros setores em `/types/sector.ts`.  
+- **Sincronia Estrita com Visões IFRS e CPC:** Mapeamento de arcabouços regulatórios completos para dar base aos novos motores de cálculo de novos Trials de setores:  
+  - *Agronegócio:* Mapeado sob as exigências do **CPC 29 (Ativos Biológicos e Produtos Agrícolas)** e **IAS 41**. Permite colheita escalonada, carências de crescimento e valuation por Valor Justo líquido de despesas de venda.  
+  - *Mercado de Capitais:* Regido sob as diretivas do **CPC 48 (Instrumentos Financeiros)**, introduzindo regras fiduciárias para IPOs de ações baseadas em Valuation por DCF e captação de Debêntures conversíveis de longo prazo junto a investidores institucionais.  
+  - *Serviços SaaS:* Regrado sob o **CPC 47 (Receita de Contratos)** garantindo faturamento e caixa imediatos, porém amortizados por competência temporal linear de licenças SaaS do simulador.  
+- **Especificidade de Banco e Segregação:** Integração do roteamento polimórfico de metadados em coluna `sector_metadata: JSONB` para armazenamento rápido de históricos e RLS (Row Level Security) segregando times por Arenas de atuação do respectivo setor.  
+- **Guia Técnico de Suporte ao Futuro:** Criação do documento oficial `/docs/ROADMAP.md` servindo de norte para todos os engenheiros seniores do time de desenvolvimento.  
+**Impactos:**  
+- **Independência de Domínio:** O EMPIRION consolida-se como o motor definitivo de múltiplos simuladores corporativos integrados fiduciariamente.  
+- **Sustentabilidade a Longo Prazo:** O compilador TypeScript valida nativamente as interfaces contratuais sem causar acoplamento com o core existente de desenvolvimento.  
+**Status:** Planejado / Tipagens implantadas / Documentações de Roadmap e Arquitetura ativas em produção.
+
+---
+
+## Decisão Arquitetural - Estrutura de Pastas EMPIRION v2026-06-07
+
+**Data:** 07/06/2026  
+**Motivo:** Definir árvore definitiva para escalabilidade, modularidade por setores e adoção de Clean Architecture + DDD.  
+**Principais diferenças em relação à anterior:**  
+- Core centralizado e imutável.  
+- Sectors como bounded contexts independentes.  
+- Separação clara layers (domain, application, infra).  
+- Suporte nativo a múltiplos simuladores empresariais.  
+**Impactos:**  
+- Facilita adição de novos setores (ex: capital-markets) sem quebrar existentes.  
+- Melhora manutenção, testes e onboarding.  
+- Breaking change mínimo (migração gradual via aliases).  
+**Status:** v1 aprovada / Em implementação.  
+**Referência:** `docs/ARCHITECTURE.md` (detalhes completos).
 
 ---
 

@@ -359,7 +359,7 @@ export function generatePureP0(config: TutorP0Config): {
     for (let q = 0; q < mac.qty; q++) {
       const uniqueId = `m-${mac.model}-${index}-${q}`;
       // Deprecação: linear consistente de máquinas baseada na taxa parametrizada (CPC 27)
-      const deprecRate = (config.machines_depreciation_rate !== undefined ? config.machines_depreciation_rate : 10) / 100;
+      const deprecRate = (config.machines_depreciation_rate !== undefined ? config.machines_depreciation_rate : 5) / 100;
       const accDeprec = modelPrice * mac.age * deprecRate * mac.efficiency;
       
       generatedMachines.push({

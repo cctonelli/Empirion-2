@@ -1,6 +1,6 @@
 # Regras de Negócio Core - EMPIRION
 
-**Versão:** v19.25 Obsidian Diamond Enterprise  
+**Versão:** v19.82 Obsidian Diamond Enterprise  
 **Data:** 28 de Maio de 2026  
 **Método Contábil:** Custeio por Absorção Completo (Full Absorption Costing)  
 **Referências:** CPC 16 (R1) / IAS 2 / SAP & Oracle Best Practices
@@ -363,8 +363,32 @@ Sempre que a equipe / campeonato optar por operar no modelo de **Prédio Locado*
 
 ---
 
+## 12. Mecanismo de Greve e Gestão de Clima Organizacional (v19.82)
+
+O sistema de simulação do Empirion incorpora uma lógica estrita de comportamento humano e clima organizacional para os operários fabris (MOD). O acionamento de greves segue regras de tolerância social e inteligência de relações trabalhistas rígidas:
+
+1. **Índice de Motivação & Nível "RUIM":**
+   - O clima organizacional da fábrica é determinado pelo **Índice de Motivação** (`motivationIndex`) calculado em cada ciclo.
+   - Sempre que o Índice de Motivação for inferior a **0.75**, o status de clima da força de trabalho é classificado como **"RUIM"** (`motivation_level = 'RUIM'`).
+
+2. **Gatilho de Ativação Consecutivo (Regra de Dois Rounds):**
+   - **Rodada 1 em Nível "RUIM":** Dispara apenas o **Alerta de Greve** (`strike_alert_active = true`). Não há perda produtiva imediata. É emitido um aviso preventivo categórico no cockpit do aluno: *"ALERTA DE GREVE: O clima organizacional caiu para nível RUIM. Se mantiver esse nível insatisfatório na próxima rodada, os operários entrarão em GREVE imediata no próximo período!"*
+   - **Rodada 2 (ou mais) Consecutivas em Nível "RUIM":** Ativa integralmente a **Greve na Fábrica** (`strike_active = true`). Os trabalhadores paralisam as atividades de forma severa.
+
+3. **Impacto Econômico e Operacional da Greve Ativa:**
+   - **Paralisação de 50%:** Incide um fator de corte de **50% sobre toda a força produtiva** (`strikeFactor = 0.50`), afetando diretamente a equação de unidades fabricadas na rodada:
+     $$\text{unitsProduced} = \text{Math.floor}(\text{effectiveCapacity} \times \text{activityLevel} \times \text{productivityIndex} \times 0.50)$$
+   - **Placa de Atenção Crítica:** O cockpit exibe o aviso urgente no painel de avisos de Gestão de Pessoas Sênior: *"ATENÇÃO CRÍTICA: GREVE ATIVA NA FÁBRICA! Devido a dois rounds consecutivos com Índice de Motivação RUIM (< 0.75), a produção de sua empresa foi paralisada em 50%! Melhore salários e PPR imediatamente para acabar com a paralisação."*
+
+4. **Resolução e Encerramento da Greve:**
+   - Para encerrar a greve, a gestão precisa elevar o Clima Organizacional / Índice de Motivação para patamares superiores ou iguais a **0.75** (saindo do nível "RUIM") por meio de aumentos salariais efetivos ou melhoria na participação de resultados (PPR).
+   - Quando o índice sobe para $\ge 0.75$, a contagem consecutiva de rounds ruins é zerada (`consecutive_ruim_rounds = 0`), levantando imediatamente a paralisação no processamento do próximo período e restaurando 100% da produtividade original.
+
+---
+
 **Histórico de Versões**
 
+- **v19.82** (06/06/2026) – Documentação das regras de ativação de greves para operários baseadas no Índice de Motivação consecutivos (< 0.75 por 2 rounds) e o respectivo impacto operacional de 50% de redução na fabricação.
 - **v19.25** (28/05/2026) – Introdução de travas fiduciárias reativas com validador de rateio (soma = 100% mandatória), breakdown analítico expandido de aluguel por CIF x OPEX no drawer de preview e documentação oficial completa de locação em BUSINESS_RULES.md.
 - **v19.12** (25/05/2026) – Harmonização completa do Fluxo de Caixa pelo Comitê Contábil (v19.12), introdução da Redoma de Caixa (resgate preventivo de aplicações financeiras para preservação de rating de crédito) e ativação rigorosa de Treinamento e Estocagem no CIF contábil (Absorção).
 - **v19.10** (25/05/2026) – Diferenciação analítica de Empréstimos Normais vs. Compulsórios, taxas por Rating Spreads, cap punitivo no rating corporativo e novo Cronograma de Amortização de Dívidas projetado (3 rounds).
@@ -372,5 +396,5 @@ Sempre que a equipe / campeonato optar por operar no modelo de **Prédio Locado*
 - **v19.8** – Implementação do Kardex-WAC.
 - **v19.5** – Validação tripla contábil.
 
-**Aprovado por:** Oracle Accounting Strategos  
+**Aprovado por:** Oracle Accounting Strategos & Gestor de Gente & Gestão Sênior  
 **Status:** Regra Viva do Sistema Empirion-2
