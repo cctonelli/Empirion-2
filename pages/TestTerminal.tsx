@@ -73,9 +73,9 @@ const TestTerminal: React.FC = () => {
               >
                  <Rocket size={12} className="animate-pulse" /> Sandbox Arena Master Node 08
               </motion.div>
-              <h1 className="text-6xl md:text-7xl font-black text-white uppercase tracking-tighter italic leading-[0.85]">
+              <h1 className="text-6xl md:text-7xl font-black text-white uppercase tracking-tighter italic leading-[0.85] pr-6 md:pr-10 pb-1 select-none">
                  Campeonatos <br/>
-                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-orange-400">Trial Ativos</span>
+                 <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-orange-400 pr-4 pb-1">Trial Ativos</span>
               </h1>
               <p className="text-slate-400 font-medium italic text-lg max-w-2xl">
                  "Ambiente sandbox aberto: experimente, orquestre e lidere o mercado industrial sem barreiras v13.2."

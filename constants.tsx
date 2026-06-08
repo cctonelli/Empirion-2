@@ -270,7 +270,7 @@ export const CHAMPIONSHIP_TEMPLATES: ChampionshipTemplate[] = [
 
 export const DEFAULT_PAGE_CONTENT: Record<string, any> = {
   landing: {
-    hero: { title: 'Forje Seu Império', subtitle: 'Com Insight Estratégico IA' }
+    hero: { title: 'EMPIRION', subtitle: 'O SIMULADOR DEFINITIVO DE NEGÓCIOS' }
   },
   rewards: {
     subtitle: 'O seu desempenho estratégico gera Empire Points e Badges de prestígio.',

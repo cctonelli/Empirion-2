@@ -1227,3 +1227,17 @@ project-root/
 - Alinhamento em 100% da depreciação contábil do balanço com a alíquota parametrizada pelo Tutor.
 **Status:** ATIVO, implantado e homologado para compilação.
 
+---
+
+## Decisão Arquitetural & Versionamento - Ajuste Global de Layout e Prevenção de Truncamento Itálico - v2026.105
+
+**Data:** 08 de Junho de 2026 às 00:54 UTC  
+**Motivo:** Evitar o truncamento sutil da última letra em títulos formatados com estilo itálico e espaçamento condensado (`italic tracking-tighter`). Esse efeito visual indesejado costumava ocorrer nas extremidades da caixa delimitadora do texto de cabeçalhos devido à inclinação das fontes.  
+**Principais diferenças:**  
+- **Ajuste na Sandbox Arena Master Node (TestTerminal.tsx):** Inclusão de preenchimento lateral (`pr-6 md:pr-10`) e margem de segurança no elemento `<h1>`. O elemento `<span>` interno contendo o degradê foi convertido em `inline-block` com espaçamento de segurança adicional (`pr-4 pb-1`), assegurando que a última letra (como "s" em "Ativos") seja exibida inteiramente em qualquer resolução de tela.
+- **Ajuste na Landing Page (LandingPage.tsx):** Anteriormente, o mesmo padrão de contenção foi devidamente estabelecido no título principal "EMPIRION - O SIMULADOR DEFINITIVO DE NEGÓCIOS", assegurando que nenhuma letra sofra desbaste na ponta direita das letras inclinadas.
+**Impactos esperados:**  
+- **Excelência em UI/UX de nível AA:** Legibilidade plena de todos os títulos, sem caracteres truncados ou cortados lateralmente.
+- **Visualização perfeitamente responsiva:** Conforto visual em telas mobile, tablets e ultra-wide.
+**Status:** ATIVO, implantado e homologado com sucesso.
+
