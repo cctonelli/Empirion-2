@@ -155,6 +155,51 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
           }
         }
 
+        // Se o rascunho ou decisões para este round atual forem vazios, vamos carregar as decisões do round anterior (se existir)
+        // porém, ZERANDO as decisões descasadas / de única ocorrência (como CAPEX / Maquinário, RH contratações etc.)
+        if (!finalData && round > 1) {
+          try {
+            const prevRound = round - 1;
+            const { data: prevDraft } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', prevRound).maybeSingle();
+            
+            if (prevDraft?.data) {
+              const baseDecisions = JSON.parse(JSON.stringify(prevDraft.data));
+              
+              // Sanitizar Maquinário (CAPEX): Zera compras e vendas pontuais, e esvazia ids marcados para venda
+              baseDecisions.machinery = {
+                buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
+                sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
+                sell_ids: []
+              };
+              
+              // Sanitizar Recursos Humanos: Zera novas contratações e novas demissões
+              if (baseDecisions.hr) {
+                baseDecisions.hr.hired = 0;
+                baseDecisions.hr.fired = 0;
+              }
+              
+              // Sanitizar Finanças: Zera solicitações pontuais de empréstimo e seus prazos correspondentes
+              if (baseDecisions.finance) {
+                baseDecisions.finance.loanRequest = 0;
+                baseDecisions.finance.loanTerm = 0;
+                baseDecisions.finance.application = 0;
+              }
+              
+              // Sanitizar Estimativas do oráculo para recálculo fresco
+              if (baseDecisions.estimates) {
+                baseDecisions.estimates.forecasted_unit_cost = 0;
+                baseDecisions.estimates.forecasted_revenue = 0;
+                baseDecisions.estimates.forecasted_net_profit = 0;
+              }
+
+              finalData = baseDecisions;
+              console.log(`[DECISÕES COCKPIT] Carregou base anterior e sanitizou CAPEX do Round ${prevRound} para o Round ${round}`);
+            }
+          } catch (prevErr) {
+            console.error("Falha ao recuperar decisão do round anterior para carry-forward fiduciário:", prevErr);
+          }
+        }
+
         const initialRegions: any = {};
         for (let i = 1; i <= (found?.regions_count || 1); i++) {
           const regId = i;
@@ -166,7 +211,16 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         if (finalData) {
           setDecisions({ ...finalData, regions: initialRegions });
         } else {
-          setDecisions(prev => ({ ...prev, regions: initialRegions }));
+          // Reset completo do estado para evitar contaminação cross-state em switches de rodadas/equipes
+          setDecisions({
+            judicial_recovery: false,
+            regions: initialRegions,
+            hr: { hired: 0, fired: 0, salary: 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
+            production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 100, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
+            machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
+            finance: { loanRequest: 0, loanTerm: 0, application: 0 },
+            estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
+          });
         }
       } catch (err) { console.error("Cockpit Error:", err); } 
       finally { setIsLoadingDraft(false); }

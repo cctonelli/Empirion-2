@@ -398,6 +398,16 @@ project-root/
 
 ## 9. Registro de Versionamento Histórico (Evolução Contínua)
 
+### v19.77 Fiduciary State Leakage Resolution & CAPEX Carry-Forward Sanitization - Erradicação de Vazamento de Decisões e Inicialização Segura de Novos Períodos
+- **Data:** 08 de Junho de 2026, 15:00 UTC
+- **Motivo:** Corrigir em regime de urgência o comportamento anômalo onde decisões do Round anterior (CAPEX, compras, empréstimos e contratações/demissões) vazavam ou eram trazidas inalteradas para o formulário de decisão do round subsequente recém-avançado pelo Tutor (especialmente em ambientes Trial com 4 ou mais equipes no modo "START FROM ZERO"), reativando indevidamente compras de maquinário e contratações em períodos onde estas ações poderiam estar bloqueadas ou não eram desejadas.
+- **Diferenças:**
+  - *Mitigação de Retenção de Estado do React (`/components/DecisionForm.tsx`):* Corrigida a função `initializeForm`. Quando não existia um rascunho salvo no banco ou no localStorage para o round recém-aberto, a rotina utilizava a cláusula de retorno `prev` que mantinha em memória todo o estado do formulário anterior (vazamento cruzado de contexto). Agora, se nenhum registro atual for localizado, ela zera em massa todas as propriedades para seu template original fiduciário, eliminando resíduos de memória.
+  - *Carregamento Seguro de Períodos Anteriores ("Carry-Forward" Inteligente):* Desenvolvido um mecanismo fiduciário que, quando não existirem rascunhos para o round atual ativo, busca a última decisão enviada no período imediatamente anterior (`round - 1`), clonando-a profundamente para ser usada como baseline amigável.
+  - *Sanitização Cirúrgica de Ações de Única Ocorrência:* Ao clonar a decisão anterior para o novo round, a rotina aplica a sanitização cirúrgica obrigatória dos campos de fluxo pontual: zera as decisões de compra e venda de maquinário (`machinery.buy` e `machinery.sell` zerados), limpa o grid de imobilizados marcados para desinvestimento (`machinery.sell_ids = []`), zera novos processos admissionais ou demissionais de RH (`hr.hired = 0`, `hr.fired = 0`), e recalibra solicitações pontuais de crédito (`finance.loanRequest = 0`, `finance.loanTerm = 0`). Mantêm-se fidedignas as decisões recorrentes (salário, preços, prazos concedidos e compras de insumos).
+- **Impactos:** Nenhuma breaking change introduzida. Saneamento automático e instantâneo nas telas de preenchimento de jogadores e painéis de controle do tutor.
+- **Status:** v19.77 ativo em produção e totalmente testado.
+
 ### v19.76 Financial Export Period Alignment - Correção da Sequência e Rotulagem de Períodos de Exportação Excel (Matriz Financeira)
 - **Data:** 06 de Junho de 2026, 14:30 UTC
 - **Motivo:** Sanar a defasagem e o desalinhamento de rótulos de rodadas nos relatórios exportados nos formatos Excel/Google Sheets a partir da Matriz Financeira do aplicativo. Originalmente, as rotinas de mapeamento adicionavam incorretamente `+1` ao número original do round (`p.round`), rotulando o round de abertura `P00 (INICIAL)` como `PERÍODO 01` e gerando um desvio acumulado em cascata nas colunas subsequentes de histórico e projeções.
