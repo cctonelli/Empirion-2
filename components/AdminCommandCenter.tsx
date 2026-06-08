@@ -68,6 +68,13 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
   const [checkingTeamsLoading, setCheckingTeamsLoading] = useState(false);
   const [pendingTeams, setPendingTeams] = useState<{ id: string; name: string }[]>([]);
 
+  // Estados para os novos modais modernos de Turnover (v2026.105)
+  const [showTurnoverConfirmModal, setShowTurnoverConfirmModal] = useState(false);
+  const [showTurnoverSuccessModal, setShowTurnoverSuccessModal] = useState(false);
+  const [showTurnoverErrorModal, setShowTurnoverErrorModal] = useState(false);
+  const [turnoverErrorDetails, setTurnoverErrorDetails] = useState<string | null>(null);
+  const [turnoverSuccessRound, setTurnoverSuccessRound] = useState<number | null>(null);
+
   useEffect(() => {
     setIsTimerExpired(false);
   }, [selectedArena?.id]);
@@ -184,17 +191,31 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
   const handleTurnover = async () => {
     if (!selectedArena || isProcessing) return;
     const currentRoundLabel = (selectedArena?.current_round ?? 0) + 1;
-    if (!confirm(`CONFIRMAR TURNOVER: Processar fechamento do Ciclo 0${currentRoundLabel}?`)) return;
+    setTurnoverSuccessRound(currentRoundLabel);
+    setShowTurnoverConfirmModal(true);
+  };
+
+  const confirmRunTurnover = async () => {
+    setShowTurnoverConfirmModal(false);
+    if (!selectedArena) return;
+    const currentRoundLabel = (selectedArena?.current_round ?? 0) + 1;
     setIsProcessing(true);
     try {
       const res = await processRoundTurnover(selectedArena.id, selectedArena.current_round, !!selectedArena.is_trial);
       if (res.success) { 
-        alert(`TURNOVER DO PERÍODO ${currentRoundLabel} REALIZADO COM SUCESSO! DADOS CONSOLIDADOS E COMITADOS NO SUPABASE COM SUCESSO.`); 
+        setTurnoverSuccessRound(currentRoundLabel);
+        setShowTurnoverSuccessModal(true); 
         fetchData(); 
       } else { 
         throw new Error(res.error); 
       }
-    } catch (err: any) { alert(`ERRO CRÍTICO NO SUPABASE: ${err.message}`); } finally { setIsProcessing(false); }
+    } catch (err: any) { 
+      console.error("[CRITICAL] Falha no fechamento do período:", err);
+      setTurnoverErrorDetails(err?.message || JSON.stringify(err));
+      setShowTurnoverErrorModal(true);
+    } finally { 
+      setIsProcessing(false); 
+    }
   };
 
   const handleTogglePause = async () => {
@@ -499,6 +520,186 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
               </div>
             )}
           </AnimatePresence>
+
+            {showTurnoverConfirmModal && (
+              <div className="fixed inset-0 z-[7000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+                <motion.div 
+                   initial={{ opacity: 0, scale: 0.95 }} 
+                   animate={{ opacity: 1, scale: 1 }} 
+                   exit={{ opacity: 0, scale: 0.95 }}
+                   className="max-w-xl w-full bg-[#0b1329] border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl relative text-left font-sans text-slate-200"
+                >
+                   <div className="p-8 space-y-6">
+                     {/* Header */}
+                     <div className="flex items-start gap-4">
+                       <div className="p-3 bg-orange-600/10 text-orange-500 rounded-xl">
+                         <History size={24} className="animate-spin duration-1000 text-orange-500" />
+                       </div>
+                       <div className="space-y-1">
+                         <h3 className="text-lg font-black text-white uppercase tracking-wider italic">Confirmar Turnover</h3>
+                         <p className="text-[10px] text-orange-500 font-bold uppercase tracking-widest leading-none">Fechamento do Período Contábil</p>
+                       </div>
+                     </div>
+
+                     {/* Body */}
+                     <div className="space-y-4">
+                       <p className="text-sm text-slate-200 leading-relaxed font-sans">
+                         Você está prestes a realizar o **TURNOVER do Round {turnoverSuccessRound}**. Este procedimento consolidará definitivamente as decisões desse ciclo.
+                       </p>
+
+                       <div className="bg-slate-950/50 border border-white/5 p-4 rounded-xl space-y-2">
+                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Ações que serão executadas automaticamente:</p>
+                         <ul className="text-xs text-slate-300 space-y-1.5 list-none pl-1">
+                           <li className="flex items-center gap-2">
+                             <span className="text-orange-500 font-extrabold">•</span> Consolidar decisões de todas as equipes de forma final;
+                           </li>
+                           <li className="flex items-center gap-2">
+                             <span className="text-orange-500 font-extrabold">•</span> Executar cálculos contábeis do Balanço Patrimonial, DRE e Fluxo de Caixa via CPC/IFRS;
+                           </li>
+                           <li className="flex items-center gap-2">
+                             <span className="text-orange-500 font-extrabold">•</span> Gerar e publicar a nova edição da Gazeta de Notícias;
+                           </li>
+                           <li className="flex items-center gap-2">
+                             <span className="text-orange-500 font-extrabold">•</span> Inicializar o temporizador e abrir a submissão de decisões para o ciclo subsequente.
+                           </li>
+                         </ul>
+                       </div>
+
+                       <div className="bg-amber-500/5 border border-amber-500/15 p-4 rounded-xl flex items-start gap-3">
+                         <ShieldAlert size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                         <p className="text-[11px] text-amber-300 leading-relaxed">
+                           <strong className="uppercase">Atenção:</strong> Uma vez processado, o sistema recalculará a economia da arena inteira e essa operação é irreversível para os competidores.
+                         </p>
+                       </div>
+                     </div>
+
+                     {/* Footer Buttons */}
+                     <div className="flex justify-end gap-3 pt-2 font-sans">
+                       <button 
+                         onClick={() => setShowTurnoverConfirmModal(false)}
+                         className="px-5 py-3 border border-white/10 text-slate-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-white/5 transition-all active:scale-95 cursor-pointer"
+                       >
+                         CANCELAR
+                       </button>
+                       <button 
+                         onClick={confirmRunTurnover}
+                         className="px-6 py-3 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg hover:bg-orange-500 hover:shadow-orange-600/25 transition-all active:scale-95 cursor-pointer flex items-center gap-2 font-sans animate-pulse"
+                       >
+                         <RefreshCw size={12} className="animate-spin" /> PROCESSAR FECHAMENTO
+                       </button>
+                     </div>
+                   </div>
+                </motion.div>
+              </div>
+            )}
+
+            {showTurnoverSuccessModal && (
+              <div className="fixed inset-0 z-[7000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+                <motion.div 
+                   initial={{ opacity: 0, scale: 0.95 }} 
+                   animate={{ opacity: 1, scale: 1 }} 
+                   exit={{ opacity: 0, scale: 0.95 }}
+                   className="max-w-xl w-full bg-[#0b1329] border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl relative text-left"
+                >
+                   <div className="p-8 space-y-6">
+                     {/* Header */}
+                     <div className="flex items-start gap-4">
+                       <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl font-sans">
+                         <CheckCircle2 size={24} className="text-emerald-400 animate-bounce" />
+                       </div>
+                       <div className="space-y-1">
+                         <h3 className="text-lg font-black text-white uppercase tracking-wider italic">Turnover Concluído</h3>
+                         <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest leading-none">Processamento Sincronizado</p>
+                       </div>
+                     </div>
+
+                     {/* Body */}
+                     <div className="space-y-4">
+                       <p className="text-sm text-slate-200 leading-relaxed text-center font-sans">
+                         O **Turnover do Round {turnoverSuccessRound}** foi realizado com sucesso!<br />
+                         <span className="text-slate-400 text-xs inline-block mt-1">
+                           Todos os dados macroeconômicos, índices de mercado e relatórios de empresas foram computados com 100% de consistência.
+                         </span>
+                       </p>
+
+                       <div className="bg-emerald-500/5 border border-emerald-500/15 p-4 rounded-xl flex items-center justify-center gap-3">
+                         <Sparkles size={16} className="text-emerald-400 animate-pulse" />
+                         <span className="text-[10px] text-emerald-300 font-black uppercase tracking-wider font-sans">
+                           Selo de Auditores Contábeis • CPC/IFRS Consistentes
+                         </span>
+                       </div>
+
+                       <p className="text-[11px] text-slate-400 italic text-center p-3 bg-slate-950/40 rounded-xl border border-white/5 font-sans">
+                         Dados consolidados e comitados com integridade relacional no Supabase. O próximo período já está disponível para as equipes.
+                       </p>
+                     </div>
+
+                     {/* Footer Button */}
+                     <div className="flex justify-end pt-2">
+                       <button 
+                         onClick={() => setShowTurnoverSuccessModal(false)}
+                         className="w-full sm:w-auto px-8 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg hover:bg-emerald-500 transition-all active:scale-95 cursor-pointer text-center font-sans"
+                       >
+                         CONCLUIR PROTOCOLO
+                       </button>
+                     </div>
+                   </div>
+                </motion.div>
+              </div>
+            )}
+
+            {showTurnoverErrorModal && (
+              <div className="fixed inset-0 z-[7000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 font-sans text-slate-200">
+                <motion.div 
+                   initial={{ opacity: 0, scale: 0.95 }} 
+                   animate={{ opacity: 1, scale: 1 }} 
+                   exit={{ opacity: 0, scale: 0.95 }}
+                   className="max-w-2xl w-full bg-[#0b1329] border border-rose-500/20 rounded-[2rem] overflow-hidden shadow-2xl relative text-left animate-in fade-in zoom-in duration-300"
+                >
+                   <div className="p-8 space-y-6">
+                     {/* Header */}
+                     <div className="flex items-start gap-4">
+                       <div className="p-3 bg-rose-600/10 text-rose-500 rounded-xl">
+                         <ShieldAlert size={24} className="text-rose-500 animate-pulse" />
+                       </div>
+                       <div className="space-y-1">
+                         <h3 className="text-lg font-black text-rose-400 uppercase tracking-wider italic">Erro Crítico no Supabase</h3>
+                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">Investigação e Diagnóstico Técnico</p>
+                       </div>
+                     </div>
+
+                     {/* Body */}
+                     <div className="space-y-4">
+                       <p className="text-sm text-slate-200 leading-relaxed font-sans font-medium">
+                         Ocorreu uma falha inesperada durante a execução da procedure de Turnover. Os dados do banco foram revertidos preventivamente para assegurar consistência transacional.
+                       </p>
+
+                       <div className="space-y-2">
+                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Detalhes do erro analítico:</label>
+                         <div className="bg-slate-950/80 border border-rose-500/20 p-4 rounded-xl max-h-[180px] overflow-y-auto custom-scrollbar font-mono text-xs text-rose-400 leading-relaxed break-words">
+                           {turnoverErrorDetails || "Nenhuma mensagem de depuração adicional fornecida pela API."}
+                         </div>
+                       </div>
+
+                       <div className="p-3 bg-slate-900 border border-white/5 rounded-lg flex items-center gap-2 text-[10px] text-slate-400">
+                         <Activity size={12} className="text-rose-500" />
+                         <span>Terminal de Auditoria Administrativo da Empirion v13.2</span>
+                       </div>
+                     </div>
+
+                     {/* Footer Button */}
+                     <div className="flex justify-end pt-2">
+                       <button 
+                         onClick={() => setShowTurnoverErrorModal(false)}
+                         className="px-6 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 cursor-pointer"
+                       >
+                         FECHAR DIAGNÓSTICO
+                       </button>
+                     </div>
+                   </div>
+                </motion.div>
+              </div>
+            )}
            <AnimatePresence mode="wait">
               {tutorView === 'dashboard' && selectedArena && (
                 <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-12">

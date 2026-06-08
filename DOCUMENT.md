@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.105 Tutor Force Expire UX Safeguards (Gold Compliance)
+- **Versão Ativa:** v2026.106 Tutor Turnover UX & Analytical Supabase Error Diagnosis
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Interface do Usuário - Protocolo Moderno de Turnover com Diagnóstico de Erros - v2026.106
+
+**Data:** 08 de Junho de 2026 às 18:20 UTC  
+**Motivo:** Substituir diálogos bloqueantes síncronos da API nativa (`confirm` e `alert`) no processamento de Turnover de Round por um ecossistema de modais premium, escuros e imersivos na identidade visual da EMPIRION ORACLE, com detalhamento analítico e diagnóstico completo em caso de erros no Supabase.  
+**Principais diferenças:**  
+- **Modal de Confirmação do Turnover (`showTurnoverConfirmModal`):** Antes de iniciar o fechamento do round, exibe um modal centralizado de layout escuro sofisticado com animações de entrada e rotação de engrenagens do tempo, listando detalhadamente os procedimentos automáticos que o sistema executará (consolidação de decisões, cálculos contábeis do Balanço, DRE e DFC via CPC/IFRS, publicação da nova edição da Gazeta e inicialização de temporizador subsequente).
+- **Modal de Sucesso de Turnover (`showTurnoverSuccessModal`):** Uma vez que o processamento do turnover seja comitado no Supabase sem erros, exibe uma janela verde esmeralda com o selo de auditores contábeis carimbando conformidade estrita com o CPC/IFRS, permitindo liberação de ritos com um único clique de comando.
+- **Modal de Erro Crítico Analítico (`showTurnoverErrorModal`):** Em caso de falha da procedure PL/SQL ou erro relacional de conexões do Supabase, exibe um modal vermelho vibrante com diagnóstico analítico minucioso, apresentando a mensagem de depuração real emitida pela retaguarda em console de terminal de auditoria integrado a fim de facilitar investigações imediatas.
+- **Micro-Animações Dedicadas:** Uso do motor `framer-motion` integrado com Tailwind para promover suavidade cirúrgica nas aparições de overlay com desfoque de fundo (`backdrop-blur-md`).
+**Impactos esperados:**  
+- **Excelência em Segurança da Informação:** Chaves de API e fluxos de reversão preservados sem expor vulnerabilidades, mas mantendo rastreabilidade total para o Tutor.
+- **UX Nível Elite:** Alinhamento perfeito com a identidade visual sóbria, elegante e de altíssima qualidade de 2026.
+**Status:** ATIVO, compilado, testado e comitado em produção.
 
 ---
 
