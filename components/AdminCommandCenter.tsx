@@ -405,6 +405,100 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
            </div>
         </header>
         <main className="flex-1 overflow-y-auto custom-scrollbar p-10 max-w-[1600px] mx-auto w-full relative z-10">
+          <AnimatePresence>
+            {showForceExpireModal && (
+              <div className="fixed inset-0 z-[7000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+                <motion.div 
+                   initial={{ opacity: 0, scale: 0.95 }} 
+                   animate={{ opacity: 1, scale: 1 }} 
+                   exit={{ opacity: 0, scale: 0.95 }}
+                   className="max-w-xl w-full bg-[#0b1329] border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl relative text-left"
+                >
+                   <div className="p-8 space-y-6">
+                     {/* Header com Ícone e Título */}
+                     <div className="flex items-start gap-4">
+                       <div className="p-3 bg-orange-600/10 text-orange-500 rounded-xl">
+                         <AlertOctagon size={24} className="animate-pulse" />
+                       </div>
+                       <div className="space-y-1">
+                         <h3 className="text-lg font-black text-white uppercase tracking-wider italic">Antecipar Término do Round</h3>
+                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Protocolo de Emergência do Tutor</p>
+                       </div>
+                     </div>
+
+                     {/* Corpo do Texto Dinâmico */}
+                     <div className="space-y-4">
+                       {pendingTeams.length > 0 ? (
+                         <div className="space-y-4">
+                           <p className="text-sm text-slate-100 leading-relaxed text-center">
+                             Tem certeza que deseja antecipar o término do tempo do round?<br />
+                             <span className="text-rose-400 font-extrabold uppercase mt-1 inline-block">
+                               {pendingTeams.length === 1 
+                                 ? `A Equipe "${pendingTeams[0].name}"`
+                                 : `As Equipes ${pendingTeams.map(t => `"${t.name}"`).join(', ')}`
+                               } não concluiu suas decisões!
+                             </span><br />
+                             <span className="text-slate-400 text-xs mt-1 inline-block">
+                               O temporizador será fechado imediatamente para todas as equipes, impossibilitando novas decisões.
+                             </span>
+                           </p>
+
+                           <div className="bg-rose-500/5 border border-rose-500/20 p-4 rounded-xl space-y-2">
+                             <p className="text-[10px] text-rose-400 font-black uppercase tracking-wider text-center">Equipes Pendentes:</p>
+                             <div className="flex flex-wrap gap-2 justify-center">
+                               {pendingTeams.map((team) => (
+                                 <span 
+                                   key={team.id} 
+                                   className="px-2.5 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[10px] font-black uppercase rounded-lg animate-pulse"
+                                 >
+                                   ● {team.name}
+                                 </span>
+                               ))}
+                             </div>
+                           </div>
+                         </div>
+                       ) : (
+                         <div className="space-y-4">
+                           <p className="text-sm text-slate-100 leading-relaxed text-center">
+                             Tem certeza que deseja antecipar o término do tempo do round?<br />
+                             <span className="text-emerald-400 font-extrabold uppercase mt-1 inline-block">
+                               Todas as Equipes já entregaram suas decisões para este round.
+                             </span><br />
+                             <span className="text-slate-400 text-xs mt-1 inline-block">
+                               O temporizador será fechado imediatamente para todas as equipes, impossibilitando novas decisões.
+                             </span>
+                           </p>
+
+                           <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-xl flex items-center justify-center gap-2">
+                             <CheckCircle2 size={16} className="text-emerald-400 animate-bounce" />
+                             <span className="text-[10px] text-emerald-400 font-black uppercase tracking-wider">
+                               Selo de Conformidade Geral • 100% de Conclusão IP
+                             </span>
+                           </div>
+                         </div>
+                       )}
+                     </div>
+
+                     {/* Botões de Ação */}
+                     <div className="flex justify-end gap-3 pt-2">
+                       <button 
+                         onClick={() => setShowForceExpireModal(false)}
+                         className="px-5 py-3 border border-white/10 text-slate-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-white/5 transition-all active:scale-95"
+                       >
+                         CANCELAR
+                       </button>
+                       <button 
+                         onClick={confirmForceExpire}
+                         className="px-6 py-3 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg hover:bg-orange-500 hover:shadow-orange-600/25 transition-all active:scale-95"
+                       >
+                         CONTINUAR
+                       </button>
+                     </div>
+                   </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
            <AnimatePresence mode="wait">
               {tutorView === 'dashboard' && selectedArena && (
                 <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-12">

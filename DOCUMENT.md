@@ -2,9 +2,27 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.104 R-00 Greenfield Isolation & Union Strike Demissions (Sapphire Compliance)
+- **Versão Ativa:** v2026.105 Tutor Force Expire UX Safeguards (Gold Compliance)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Interface do Usuário - Modal Seletivo de Término do Round para o Tutor - v2026.105
+
+**Data:** 08 de Junho de 2026 às 17:30 UTC  
+**Motivo:** Implementar um modal de confirmação enriquecido, altamente interativo e com comportamento de texto seletivo quando o Tutor decide antecipar o término do tempo do round (zerar o temporizador de round) no cockpit administrativo.  
+**Principais diferenças:**  
+- **Análise Dinâmica de Submissões:** Ao clicar no botão de encerramento do round (zerar temporizador), o sistema realiza um pré-fetch em tempo real na tabela de decisões (`trial_decisions` ou `current_decisions` dependendo do tipo de campeonato) para comparar as equipes ativas inscritas contra as submissões de decisões reais registradas para o round em andamento.
+- **Microcopy Seletivo para Pendências:**
+  - *Com Equipes Pendentes:* Exibe o texto exato: `"Tem certeza que deseja antecipar o término do tempo do round? A Equipe XX não concluiu suas decisões! O temporizador será fechado imediatamente para todas as equipes, impossibilitando novas decisões."` acompanhado de um box estilizado de alerta em tom avermelhado (rose) listando individualmente com marcadores todas as frentes de competidores que ainda não definiram suas rodadas.
+  - *Com Todas as Equipes em Conformidade (100%):* Adapta automaticamente o micro-texto para: `"Tem certeza que deseja antecipar o término do tempo do round? Todas as Equipes já entregaram suas decisões para este round. O temporizador será fechado imediatamente para todas as equipes, impossibilitando novas decisões."` selado com badge verde vibrante indicando conformidade geral de submissões.
+- **Botões Padronizados:** Implementação das ações claras `CANCELAR` (para manter o round em curso normal) e `CONTINUAR` (para confirmar a antecipação e fechar o temporizador para as equipes).
+- **Correção de Montagem Visível:** Correção do ciclo de vida de renderização da variável de estado `showForceExpireModal` injetada agora diretamente como filha do controle `<main>` dentro do bloco de retorno antecipado de renderização de Arena (`if (selectedArena ...)`), erradicando invisibilidade durante interações diretas no Cockpit do Tutor.
+**Impactos esperados:**  
+- **Zero erros por encerramento precoce acidental:** Tutores agora têm visão cirúrgica de quem ficará prejudicado antes de decretar o turnover forçado de round.
+- **Fidelidade Operacional Sênior:** Interface extremamente profissional, robusta e alinhada às melhores práticas modernas de UX de 2026.
+**Status:** ATIVO, compilado, testado e promovido em produção.
 
 ---
 
