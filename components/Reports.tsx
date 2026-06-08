@@ -247,7 +247,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Salários, encargos, indenizações, horas-extras e prêmios</p>
                                  </div>
                                  <div className="text-right">
-                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">Total na Rodada</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Total na Rodada</span>
                                     <span className="text-lg font-mono font-black text-orange-500">{fmt(Math.abs(dre.mod || 0))}</span>
                                  </div>
                               </div>
@@ -265,7 +265,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                               </div>
 
                               <div className="space-y-2 pt-2">
-                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Breakdown dos Custos Reais</span>
+                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Breakdown dos Custos Reais</span>
                                  <div className="grid grid-cols-2 gap-3">
                                     <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col gap-1">
                                        <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Base & Encargos</span>
@@ -289,7 +289,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Manutenção, estocagem, treinamento e depreciação</p>
                                  </div>
                                  <div className="text-right">
-                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">Total na Rodada</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Total na Rodada</span>
                                     <span className="text-lg font-mono font-black text-indigo-400">{fmt(Math.abs(dre.cif || 0))}</span>
                                  </div>
                               </div>
@@ -307,7 +307,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                               </div>
 
                               <div className="space-y-2 pt-2">
-                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Breakdown dos Custos Reais</span>
+                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Breakdown dos Custos Reais</span>
                                  <div className="grid grid-cols-2 gap-3">
                                     <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col gap-1">
                                        <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Manutenção Corretiva</span>
@@ -378,10 +378,10 @@ const KpiCard = ({ label, val, desc, icon, color }: any) => (
   <div className="bg-slate-950/50 border border-white/5 p-8 rounded-[2.5rem] space-y-4 hover:border-white/10 transition-all group">
     <div className="flex justify-between items-center">
       <div className={`p-4 bg-white/5 rounded-2xl ${color} group-hover:scale-110 transition-transform`}>{icon}</div>
-      <span className="text-3xl font-mono font-black text-white">{val}</span>
+      <span className="text-2xl font-mono font-black text-white">{val}</span>
     </div>
     <div>
-      <h4 className="text-[12px] font-black uppercase text-slate-400 tracking-widest">{label}</h4>
+      <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</h4>
       <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-1">{desc}</p>
     </div>
   </div>
@@ -403,7 +403,7 @@ const AccountRow = ({ node, fmt, level = 0 }: { node: AccountNode, fmt: (v: numb
       <div className={`flex justify-between p-4 rounded-2xl border transition-all ${isParent ? 'bg-white/5 border-white/10' : 'bg-slate-950/40 border-white/5 opacity-80'}`} style={{ marginLeft: level * 20 }}>
         <div className="flex items-center gap-3">
           {isParent && <ChevronDown size={14} className="text-slate-600" />}
-          <span className={`text-[13px] uppercase tracking-wider ${isParent ? 'font-black text-white' : 'font-bold text-slate-400'}`}>{node.label}</span>
+          <span className={`text-[11px] uppercase tracking-wider ${isParent ? 'font-black text-white' : 'font-bold text-slate-400'}`}>{node.label}</span>
         </div>
         <span className="text-base font-mono font-black text-slate-200">{fmt(node.value)}</span>
       </div>
@@ -418,7 +418,7 @@ const ReportLine = ({ label, val, neg, bold, total, highlight, indent, color, ic
   <div className={`flex justify-between p-3 rounded-xl transition-all ${total ? 'bg-orange-600/10 border border-orange-500/20 mt-4' : highlight ? 'bg-white/5' : ''} ${indent ? 'pl-12 opacity-70' : ''}`}>
     <div className="flex items-center gap-3">
        {icon && <span className="text-slate-600">{icon}</span>}
-       <span className={`text-[12px] uppercase tracking-wider ${bold || total ? 'font-black' : 'text-slate-500'} ${color || ''}`}>{label}</span>
+       <span className={`text-[10px] uppercase tracking-wider ${bold || total ? 'font-black' : 'text-slate-500'} ${color || ''}`}>{label}</span>
     </div>
     <span className={`text-base font-black ${neg ? 'text-rose-500' : total ? 'text-orange-500' : color || 'text-slate-200'}`}>
       {neg ? '(' : ''}{val}{neg ? ')' : ''}
