@@ -32,6 +32,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const { t } = useTranslation('common');
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedMobileMenu, setExpandedMobileMenu] = useState<string | null>(null);
 
   return (
     <motion.header 
@@ -65,7 +66,13 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 onMouseLeave={() => setActiveMenu(null)}
               >
                 <Link 
-                  to={item.path} 
+                  to={item.sub ? '#' : item.path} 
+                  onClick={(e: React.MouseEvent) => {
+                    if (item.sub) {
+                      e.preventDefault();
+                      setActiveMenu(activeMenu === item.label ? null : item.label);
+                    }
+                  }}
                   className={`relative z-10 px-5 py-2.5 font-black uppercase text-[10px] tracking-[0.15em] transition-all flex items-center gap-2 rounded-full ${isActive || isHovered ? 'text-white' : 'text-slate-500'}`}
                 >
                   {translatedLabel as any}
@@ -93,6 +100,7 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                            <Link 
                              key={sub.id} 
                              to={sub.path} 
+                             onClick={() => setActiveMenu(null)}
                              className="flex items-center gap-4 px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-orange-600/10 rounded-2xl transition-all group/sub"
                            >
                              <div className="p-3 bg-white/5 rounded-xl text-orange-500 group-hover/sub:bg-orange-600 group-hover/sub:text-white transition-all border border-white/5">
@@ -147,9 +155,68 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
              </div>
              <div className="flex flex-col gap-6">
                <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.4em] mb-2">{t('navigation') as any}</span>
-               {MENU_STRUCTURE.map(item => (
-                 <Link key={item.path} to={item.path} onClick={() => setIsMobileMenuOpen(false)} className="text-3xl font-black text-white uppercase italic tracking-tighter">{t(`nav.${item.label.toLowerCase()}`, item.label) as any}</Link>
-               ))}
+               {MENU_STRUCTURE.map(item => {
+                 const hasSub = !!item.sub;
+                 const isExpanded = expandedMobileMenu === item.label;
+                 const translatedLabel = t(`nav.${item.label.toLowerCase()}`, item.label);
+
+                 if (hasSub) {
+                   return (
+                     <div key={item.label} className="flex flex-col gap-2">
+                       <button 
+                         onClick={() => setExpandedMobileMenu(isExpanded ? null : item.label)}
+                         className="flex items-center justify-between text-3xl font-black text-white uppercase italic tracking-tighter w-full text-left py-1"
+                       >
+                         {translatedLabel as any}
+                         <ChevronDown size={24} className={`text-orange-500 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                       </button>
+                       
+                       <AnimatePresence>
+                         {isExpanded && (
+                           <motion.div 
+                             initial={{ opacity: 0, height: 0 }}
+                             animate={{ opacity: 1, height: 'auto' }}
+                             exit={{ opacity: 0, height: 0 }}
+                             className="overflow-hidden bg-white/5 border border-white/10 rounded-3xl p-3 flex flex-col gap-1.5 mt-1"
+                           >
+                             {item.sub?.map((sub: any) => (
+                               <Link 
+                                 key={sub.id} 
+                                 to={sub.path} 
+                                 onClick={() => {
+                                   setIsMobileMenuOpen(false);
+                                   setExpandedMobileMenu(null);
+                                 }}
+                                 className="flex items-center gap-4 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-orange-600/10 rounded-2xl transition-all group/sub-mobile"
+                               >
+                                 <div className="p-2.5 bg-white/5 rounded-xl text-orange-500 group-hover/sub-mobile:bg-orange-600 group-hover/sub-mobile:text-white transition-all border border-white/5">
+                                    {getIcon(sub.icon)}
+                                 </div>
+                                 <div className="flex flex-col">
+                                   <span>{t(`branches:${sub.id}.name`, { defaultValue: sub.label }) as any}</span>
+                                   <span className="text-[7px] opacity-30 group-hover/sub-mobile:opacity-60">{t('active_module') as any}</span>
+                                 </div>
+                                 <ChevronRight size={12} className="ml-auto opacity-0 group-hover/sub-mobile:opacity-100 transition-all" />
+                               </Link>
+                             ))}
+                           </motion.div>
+                         )}
+                       </AnimatePresence>
+                     </div>
+                   );
+                 }
+
+                 return (
+                   <Link 
+                     key={item.path} 
+                     to={item.path} 
+                     onClick={() => setIsMobileMenuOpen(false)} 
+                     className="text-3xl font-black text-white uppercase italic tracking-tighter py-1"
+                   >
+                     {translatedLabel as any}
+                   </Link>
+                 );
+               })}
              </div>
              <button onClick={() => { onLogin(); setIsMobileMenuOpen(false); }} className="mt-auto w-full py-6 bg-orange-600 text-white rounded-3xl font-black uppercase tracking-widest italic">{t('login') as any}</button>
           </motion.div>

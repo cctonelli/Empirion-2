@@ -1243,3 +1243,32 @@ project-root/
 - **Visualização perfeitamente responsiva:** Conforto visual em telas mobile, tablets e ultra-wide.
 **Status:** ATIVO, implantado e homologado com sucesso.
 
+---
+
+## Decisão Arquitetural & Versionamento - Intercepção de Direcionamento em Menus com Sub-Menus - v2026.106
+
+**Data:** 08 de Junho de 2026 às 01:25 UTC  
+**Motivo:** Atender à nova diretriz de usabilidade que restringe a navegação de itens pai que contêm sub-menus nas barras de cabeçalho públicas e móveis. Em vez de direcionar imediatamente o usuário para um link genérico, o clique ativa e exibe/alterna o sub-menu correspondente para que a escolha seja mais precisa e intuitiva.  
+**Principais diferenças:**  
+- **Componente PublicHeader (PublicHeader.tsx):** 
+  - **Em telas Desktop:** Subprodutos de `MENU_STRUCTURE` que possuem a propriedade `sub` têm sua propriedade `to` chaveada para `#`. Ao serem clicados, disparam `e.preventDefault()` e alternam o estado de abertura (`activeMenu`), impedindo transições indesejadas e garantindo que o usuário interaja fidedignamente com os itens suspensos. Clicar em qualquer sub-item agora limpa e fecha o menu imediatamente via `setActiveMenu(null)`.
+  - **Em telas Mobile / Responsivas:** Criou-se o estado persistente `expandedMobileMenu` controlado localmente. Caso o item pai possua sub-itens, o clique renderiza de forma dinâmica um sanfonado (`accordion`) amparado em animações de transição do `framer-motion` (`AnimatePresence` / `animate={{ height: "auto" }}`). O usuário visualiza com elegância os módulos ativos com seus ícones e rótulos específicos em vez de carregar rotas pai não persistentes, fechando a aba principal ao selecionar o sub-menu correspondente.
+**Impactos esperados:**  
+- **Usabilidade Otimizada:** Fluxo de navegação extremamente polido, intuitivo e à prova de falhas táticas (sem links quebrados ou telas vazias de seções agrupadoras).
+- **Consistência Cross-Device:** O mesmo comportamento fluído e livre de comportamentos abruptos em navegadores móveis e desktop.
+**Status:** ATIVO, implantado e homologado em produção.
+
+---
+
+## Decisão Arquitetural & Versionamento - Estilização em Itálico no Cabeçalho de Funcionalidades (FeaturesPage.tsx) - v2026.107
+
+**Data:** 08 de Junho de 2026 às 01:40 UTC  
+**Motivo:** Alinhamento estético entre as páginas principais do sistema de simulador. Ao aplicar o estilo `italic` no cabeçalho principal da FeaturesPage, o design reflete o dinamismo e sofisticação das arenas e dashboards de negócios.  
+**Principais diferenças:**  
+- **FeaturesPage (FeaturesPage.tsx):** Aplicação de classe `italic`, `pr-4` e `select-none` no cabeçalho. Para evitar o truncamento das pontas das fontes inclinadas sob o estilo compacto condensado (`tracking-tighter`), a última seção de palavras ("Inteligência Artificial") recebeu uma encapsulação `inline-block` com folga à direita (`pr-3 pb-1`).
+**Impactos esperados:**  
+- **Identidade Coesa:** Sintonia fina com a identidade de marca da Empirion.
+- **Acabamento Premium sem Cortes Visuais:** Prevenção confiável contra cortes mecânicos de pontas de caracteres em todas as mídias.
+**Status:** ATIVO, implantado e compilado com sucesso.
+
+

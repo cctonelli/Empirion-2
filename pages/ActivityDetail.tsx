@@ -44,7 +44,7 @@ const ActivityDetail: React.FC = () => {
           setContent({
             name: slug?.toUpperCase() || 'ARENA',
             heroImage: "/images/hero/generic-hero-fallback.jpg",
-            titlePrefix: "SIMULAÇÕES INDUSTRIAIS",
+            titlePrefix: "SIMULAÇÕES EMPRESARIAIS",
             titleHighlight: "DE ALTO NÍVEL ESTRATÉGICO",
             body: "Aguardando sincronização de briefing regional...",
             description: "Este setor estratégico está em fase de mapeamento para simulações de alta performance.",
@@ -68,7 +68,7 @@ const ActivityDetail: React.FC = () => {
     </div>
   );
 
-  // Governança de Ativação do Nodo
+  // Governança de Ativação do Módulo
   const isTemplateActive = content.isActive === true;
 
   const getIcon = (iconName?: string) => {
@@ -124,7 +124,7 @@ const ActivityDetail: React.FC = () => {
                <div className="flex justify-center">
                   <span className={`inline-flex items-center gap-3 px-6 py-2 rounded-full text-sm font-black uppercase tracking-[0.4em] border ${isTemplateActive ? `${bgAccent}/20 ${borderAccent} ${accentColor}` : 'bg-rose-600/20 border-rose-500/30 text-rose-500'}`}>
                     {isTemplateActive ? <Sparkles size={16}/> : <Lock size={16}/>}
-                    {isTemplateActive ? (content.badge || `Template ${content.name} – Ativo`) : `Nodo ${content.name} – Desativado pelo Admin`}
+                    {isTemplateActive ? (content.badge || `Template ${content.name} – Ativo`) : `Módulo ${content.name} – Desativado pelo Admin`}
                   </span>
                </div>
 
@@ -142,7 +142,7 @@ const ActivityDetail: React.FC = () => {
                   <div className="max-w-2xl mx-auto p-8 bg-rose-600/10 border border-rose-500/30 rounded-[2.5rem] backdrop-blur-xl space-y-4">
                      <h4 className="text-xl font-black text-rose-500 uppercase italic">Protocolo Bloqueado</h4>
                      <p className="text-sm text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-                        Este nodo estratégico foi inativado pelo Administrador Geral através do Content Management System (CMS). <br/>
+                        Este módulo estratégico foi inativado pelo Administrador Geral através do Content Management System (CMS). <br/>
                         A ativação requer a atualização do status 'isActive' para 'true' na nuvem.
                      </p>
                   </div>
@@ -249,7 +249,7 @@ const ActivityDetail: React.FC = () => {
       <section className="py-40 relative z-10 overflow-hidden">
          <div className="container mx-auto px-8 lg:px-24 text-center space-y-12">
             <h2 className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter mb-10 leading-none">
-               {isTemplateActive ? <>Pronto para forjar seu <br/> <span className={accentColor}>Império {content.name}</span>?</> : <>Aguardando Ativação do Nodo <br/> <span className="text-rose-500">{content.name}</span></>}
+               {isTemplateActive ? <>Pronto para forjar seu <br/> <span className={accentColor}>Império {content.name}</span>?</> : <>Aguardando Ativação do Módulo <br/> <span className="text-rose-500">{content.name}</span></>}
             </h2>
             
             {isTemplateActive ? (
@@ -268,7 +268,7 @@ const ActivityDetail: React.FC = () => {
             )}
             
             <div className="pt-8 space-y-4">
-               <p className="text-2xl text-slate-400 italic font-medium">{isTemplateActive ? 'Protocolo Elite v15.25 Sincronizado' : 'Consulte o Administrador Geral para habilitação de nodos secundários.'}</p>
+               <p className="text-2xl text-slate-400 italic font-medium">{isTemplateActive ? 'Protocolo Elite v15.25 Sincronizado' : 'Consulte o Administrador Geral para habilitação de módulos secundários.'}</p>
             </div>
          </div>
       </section>

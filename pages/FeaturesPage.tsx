@@ -42,8 +42,8 @@ const FeaturesPage: React.FC = () => {
         
         {/* HEADER PRINCIPAL (Fiel à imagem) */}
         <header className="text-center mb-20 space-y-4">
-           <h1 className="text-4xl md:text-6xl font-black text-slate-900 uppercase tracking-tighter leading-none">
-              Empirion: A Nova Era da Simulação Empresarial com<span className="text-orange-600">Inteligência Artificial</span>
+           <h1 className="text-4xl md:text-6xl font-black text-slate-900 uppercase tracking-tighter leading-none italic pr-4 select-none">
+              Empirion: A Nova Era da Simulação Empresarial com <span className="inline-block text-orange-600 pr-3 pb-1">Inteligência Artificial</span>
            </h1>
            <p className="text-lg md:text-xl text-slate-600 font-medium max-w-4xl mx-auto leading-relaxed">
               O Empirion é um ecossistema de simulação multiplayer onde equipes gerenciam impérios empresariais em cenários econômicos dinâmicos.
