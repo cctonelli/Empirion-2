@@ -179,7 +179,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
               onClick={() => setShowGazette(true)}
               className="px-6 py-2 bg-white/5 border border-white/10 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center gap-2"
             >
-              <Newspaper size={14} /> Gazeta P0{activeTimelineNode}
+              <Newspaper size={14} /> Gazeta R-{activeTimelineNode}
             </button>
             <div className="flex items-center gap-3 px-6 py-2 bg-slate-900 border border-white/10 rounded-2xl">
                <div className={`w-2 h-2 rounded-full ${activeTimelineNode >= round ? 'bg-orange-500 animate-pulse' : 'bg-blue-500'}`} />
