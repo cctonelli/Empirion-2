@@ -31,7 +31,92 @@ const findValueInTree = (list: any[], nodeId: string): number => {
 /**
  * Helper para buscar múltiplos níveis de chaves em um objeto ou retornar fallback do raw
  */
-const getKpiValue = (p: any, kpiId: string) => {
+const getKpiValue = (p: any, kpiId: string, periods?: any[]): any => {
+  // Calculador ROE
+  if (kpiId === 'roe') {
+    const margin = getKpiValue(p, 'dupont.margin');
+    const turnover = getKpiValue(p, 'dupont.turnover');
+    const leverage = getKpiValue(p, 'dupont.leverage');
+    if (typeof margin === 'number' && typeof turnover === 'number' && typeof leverage === 'number') {
+      return margin * turnover * leverage;
+    }
+    return null;
+  }
+
+  // Calculador Ponto de Equilíbrio (BEP)
+  if (kpiId === 'bep') {
+    const dreTree = p.raw?.kpis?.statements?.dre || p.data?.statements?.dre;
+    if (dreTree) {
+      const rev = findValueInTree(dreTree, 'rev');
+      const cpv = Math.abs(findValueInTree(dreTree, 'cpv'));
+      const mod = Math.abs(findValueInTree(dreTree, 'dre.mod'));
+      const cif = Math.abs(findValueInTree(dreTree, 'dre.cif'));
+      const opex = Math.abs(findValueInTree(dreTree, 'opex'));
+      const vat = Math.abs(findValueInTree(dreTree, 'vat_sales'));
+      
+      const custosFixos = mod + cif + opex;
+      const custosVariaveis = Math.max(0, cpv - mod - cif) + vat;
+      const mc = rev - custosVariaveis;
+      const mcPercent = rev > 0 ? (mc / rev) : 0;
+      
+      return mcPercent > 0.01 ? (custosFixos / mcPercent) : 0;
+    }
+    return 0;
+  }
+
+  // Calculador TIR / IRR
+  if (kpiId === 'irr') {
+    if (p.round === 0 || !periods) return 0;
+    
+    const flows: number[] = [];
+    
+    // Fluxo 0 (Investimento): PL de abertura do round 0
+    const periodR00 = periods.find(per => per.round === 0);
+    let plR00 = 0;
+    if (periodR00) {
+      const bsR00 = periodR00.raw?.kpis?.statements?.balance_sheet || periodR00.data?.statements?.balance_sheet;
+      if (bsR00) {
+        plR00 = findValueInTree(bsR00, 'equity.capital') + findValueInTree(bsR00, 'equity.profit');
+      }
+    }
+    
+    if (plR00 <= 0) {
+      const periodR01 = periods.find(per => per.round === 1) || periods[0];
+      const bsR01 = periodR01?.raw?.kpis?.statements?.balance_sheet || periodR01?.data?.statements?.balance_sheet;
+      if (bsR01) {
+        plR00 = findValueInTree(bsR01, 'equity.capital');
+      }
+    }
+    
+    if (plR00 <= 0) plR00 = 12000000; // Fallback regulamentar Greenfield de R$ 12M
+    flows.push(-plR00);
+    
+    // Fluxos operacionais livres subsequentes (fco_livre) até p.round
+    for (let r = 1; r <= p.round; r++) {
+      const per = periods.find(p_item => p_item.round === r);
+      if (per) {
+        let fcoLivre = per.raw?.kpis?.fco_livre ?? per.data?.fco_livre;
+        if (fcoLivre === undefined || fcoLivre === null) {
+          const dre = per.raw?.kpis?.statements?.dre || per.data?.statements?.dre;
+          const dfc = per.raw?.kpis?.statements?.cash_flow || per.data?.statements?.cash_flow;
+          const opProfit = findValueInTree(dre, 'operating_profit');
+          const cifVal = Math.abs(findValueInTree(dre, 'dre.cif'));
+          const depr = cifVal * 0.4;
+          const ebitda = opProfit + depr;
+          const capex = Math.abs(findValueInTree(dfc, 'cf.outflow.maintenance'));
+          const juros = Math.abs(findValueInTree(dre, 'fin.exp'));
+          const impostos = Math.abs(findValueInTree(dre, 'tax_prov'));
+          fcoLivre = ebitda - capex - juros - impostos;
+        }
+        flows.push(fcoLivre || 0);
+      } else {
+        flows.push(0);
+      }
+    }
+    
+    return calculateIRRLocal(flows);
+  }
+
   const keys = kpiId.split('.');
   let val = p.data;
   for (const key of keys) {
@@ -42,6 +127,76 @@ const getKpiValue = (p: any, kpiId: string) => {
   }
   return val;
 };
+
+/**
+ * Função numérica robusta para o cálculo da TIR em exportações de planilha
+ */
+function calculateIRRLocal(flows: number[], guess = 0.1): number | null {
+  const maxIterations = 100;
+  const precision = 1e-7;
+  
+  if (flows.length < 2) return null;
+  
+  const hasNegative = flows.some(f => f < 0);
+  const hasPositive = flows.some(f => f > 0);
+  if (!hasNegative || !hasPositive) return 0;
+  
+  let r = guess;
+  for (let i = 0; i < maxIterations; i++) {
+    let fValue = 0;
+    let fDerivative = 0;
+    
+    for (let t = 0; t < flows.length; t++) {
+      const discount = Math.pow(1 + r, t);
+      if (Math.abs(discount) < 1e-15) continue; 
+      fValue += flows[t] / discount;
+      fDerivative -= (t * flows[t]) / (discount * (1 + r));
+    }
+    
+    if (Math.abs(fDerivative) < 1e-15) {
+      break; 
+    }
+    
+    const nextR = r - fValue / fDerivative;
+    if (Math.abs(nextR - r) < precision) {
+      if (nextR > -0.99 && nextR < 10.0) {
+        return nextR;
+      }
+    }
+    r = nextR;
+  }
+  
+  let low = -0.99;
+  let high = 5.0;
+  for (let i = 0; i < 60; i++) {
+    const mid = (low + high) / 2;
+    let valAndMid = 0;
+    for (let t = 0; t < flows.length; t++) {
+      valAndMid += flows[t] / Math.pow(1 + mid, t);
+    }
+    
+    if (Math.abs(valAndMid) < 1e-6) {
+      return mid;
+    }
+    
+    let valLow = 0;
+    for (let t = 0; t < flows.length; t++) {
+      valLow += flows[t] / Math.pow(1 + low, t);
+    }
+    
+    if (valLow * valAndMid < 0) {
+      high = mid;
+    } else {
+      low = mid;
+    }
+  }
+  
+  if (Math.abs(low - high) < 0.01) {
+    return (low + high) / 2;
+  }
+  
+  return null;
+}
 
 /**
  * Processamento recursivo para achatar a estrutura em árvore das demonstrações financeiras (DRE, BP, DFC)
@@ -148,14 +303,17 @@ const mapStrategicReport = (periods: any[]): TableData => {
     { id: 'carbon_footprint', label: 'Pegada de Carbono Unitária (kg CO2)', desc: 'Impacto ambiental projetado' },
     { id: 'dupont.margin', label: 'Margem Líquida (DuPont) (%)', desc: 'Eficiência de lucro', isPercent: true },
     { id: 'dupont.turnover', label: 'Giro do Ativo (DuPont) (x)', desc: 'Eficiência operacional' },
-    { id: 'dupont.leverage', label: 'Alavancagem (DuPont) (x)', desc: 'Multiplicador de patrimônio' }
+    { id: 'dupont.leverage', label: 'Alavancagem (DuPont) (x)', desc: 'Multiplicador de patrimônio' },
+    { id: 'roe', label: 'Retorno s/ Patrimônio Líquido (ROE) (%)', desc: 'Rentabilidade real do capital próprio (DuPont)', isPercent: true },
+    { id: 'bep', label: 'Ponto de Equilíbrio (Break-Even) ($)', desc: 'Faturamento mínimo operacional exigido para lucro operacional zero' },
+    { id: 'irr', label: 'Taxa Interna de Retorno (TIR / IRR) (%)', desc: 'Retorno econômico acumulado baseado no PL de abertura', isPercent: true }
   ];
   
   const rows = kpiDefinitions.map((kpi) => {
     const row: (string | number)[] = [kpi.label, kpi.desc];
     
     periods.forEach((p) => {
-      const val = getKpiValue(p, kpi.id);
+      const val = getKpiValue(p, kpi.id, periods);
       if (typeof val === 'number') {
         row.push(kpi.isPercent ? val * 100 : val);
       } else {

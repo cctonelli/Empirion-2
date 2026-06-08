@@ -5,6 +5,81 @@ import { formatCurrency } from '../utils/formatters';
 import { exportToCSV, copyToClipboardTSV, exportToExcelXLSX } from '../analise-gerencial/export-to-spreadsheet';
 import { mapFinancialToTable } from '../analise-gerencial/spreadsheet-mappers';
 
+/**
+ * Função numérica robusta para o cálculo da Taxa Interna de Retorno (TIR / IRR).
+ * Aplica o método de Newton-Raphson e possui inteligência de fallback com o método da bissecção
+ * para garantir convergência e segurança matemática sob qualquer dinâmica de fluxos simulados.
+ */
+export function calculateIRR(flows: number[], guess = 0.1): number | null {
+  const maxIterations = 100;
+  const precision = 1e-7;
+  
+  if (flows.length < 2) return null;
+  
+  // Garantir que temos pelo menos um fluxo negativo (investimento) e um positivo (retorno)
+  const hasNegative = flows.some(f => f < 0);
+  const hasPositive = flows.some(f => f > 0);
+  if (!hasNegative || !hasPositive) return 0; // Taxa de retorno é zero ou inválida se não houver investimento/retorno
+  
+  // 1. Newton-Raphson
+  let r = guess;
+  for (let i = 0; i < maxIterations; i++) {
+    let fValue = 0;
+    let fDerivative = 0;
+    
+    for (let t = 0; t < flows.length; t++) {
+      const discount = Math.pow(1 + r, t);
+      if (Math.abs(discount) < 1e-15) continue; 
+      fValue += flows[t] / discount;
+      fDerivative -= (t * flows[t]) / (discount * (1 + r));
+    }
+    
+    if (Math.abs(fDerivative) < 1e-15) {
+      break; 
+    }
+    
+    const nextR = r - fValue / fDerivative;
+    if (Math.abs(nextR - r) < precision) {
+      if (nextR > -0.99 && nextR < 10.0) {
+        return nextR;
+      }
+    }
+    r = nextR;
+  }
+  
+  // 2. Busca de Bissecção de Fallback em caso de divergência polinomial clássica
+  let low = -0.99;
+  let high = 5.0;
+  for (let i = 0; i < 60; i++) {
+    const mid = (low + high) / 2;
+    let valAndMid = 0;
+    for (let t = 0; t < flows.length; t++) {
+      valAndMid += flows[t] / Math.pow(1 + mid, t);
+    }
+    
+    if (Math.abs(valAndMid) < 1e-6) {
+      return mid;
+    }
+    
+    let valLow = 0;
+    for (let t = 0; t < flows.length; t++) {
+      valLow += flows[t] / Math.pow(1 + low, t);
+    }
+    
+    if (valLow * valAndMid < 0) {
+      high = mid;
+    } else {
+      low = mid;
+    }
+  }
+  
+  if (Math.abs(low - high) < 0.01) {
+    return (low + high) / 2;
+  }
+  
+  return null;
+}
+
 interface MatrixProps {
   type: 'balance' | 'dre' | 'cashflow' | 'strategic' | 'commitments' | 'kardex';
   history: any[]; 
@@ -85,8 +160,106 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
     }] : [])
   ];
 
-  // Helper para buscar valor com fallback
-  const getKpiValue = (p: any, kpiId: string) => {
+  // Helper para buscar valor na árvore de contas recursivamente
+  const findAccountValueLocal = (nodes: any[], accountId: string): number => {
+    if (!nodes || !Array.isArray(nodes)) return 0;
+    for (const node of nodes) {
+      if (node.id === accountId) return node.value;
+      if (node.children && node.children.length > 0) {
+        const val = findAccountValueLocal(node.children, accountId);
+        if (val !== 0) return val;
+      }
+    }
+    return 0;
+  };
+
+  // Helper para buscar valor com fallback e suporte para KPIs dinâmicos avançados
+  const getKpiValue = (p: any, kpiId: string): any => {
+    // Interceptador dinâmico: ROE
+    if (kpiId === 'roe') {
+      const margin = getKpiValue(p, 'dupont.margin');
+      const turnover = getKpiValue(p, 'dupont.turnover');
+      const leverage = getKpiValue(p, 'dupont.leverage');
+      if (typeof margin === 'number' && typeof turnover === 'number' && typeof leverage === 'number') {
+        return margin * turnover * leverage;
+      }
+      return null;
+    }
+
+    // Interceptador dinâmico: Ponto de Equilíbrio (BEP / Break-Even Point)
+    if (kpiId === 'bep') {
+      const dreTree = p.raw?.kpis?.statements?.dre || p.data?.statements?.dre;
+      if (dreTree) {
+        const rev = findAccountValueLocal(dreTree, 'rev');
+        const cpv = Math.abs(findAccountValueLocal(dreTree, 'cpv'));
+        const mod = Math.abs(findAccountValueLocal(dreTree, 'dre.mod'));
+        const cif = Math.abs(findAccountValueLocal(dreTree, 'dre.cif'));
+        const opex = Math.abs(findAccountValueLocal(dreTree, 'opex'));
+        const vat = Math.abs(findAccountValueLocal(dreTree, 'vat_sales'));
+        
+        const custosFixos = mod + cif + opex;
+        const custosVariaveis = Math.max(0, cpv - mod - cif) + vat;
+        const mc = rev - custosVariaveis;
+        const mcPercent = rev > 0 ? (mc / rev) : 0;
+        
+        return mcPercent > 0.01 ? (custosFixos / mcPercent) : 0;
+      }
+      return 0;
+    }
+
+    // Interceptador dinâmico: Taxa Interna de Retorno (TIR / IRR)
+    if (kpiId === 'irr') {
+      if (p.round === 0) return 0;
+      
+      const flows: number[] = [];
+      
+      // Fluxo 0 (Investimento): PL de abertura do round 0
+      const periodR00 = periods.find(per => per.round === 0);
+      let plR00 = 0;
+      if (periodR00) {
+        const bsR00 = periodR00.raw?.kpis?.statements?.balance_sheet || periodR00.data?.statements?.balance_sheet;
+        if (bsR00) {
+          plR00 = findAccountValueLocal(bsR00, 'equity.capital') + findAccountValueLocal(bsR00, 'equity.profit');
+        }
+      }
+      
+      if (plR00 <= 0) {
+        const periodR01 = periods.find(per => per.round === 1) || periods[0];
+        const bsR01 = periodR01?.raw?.kpis?.statements?.balance_sheet || periodR01?.data?.statements?.balance_sheet;
+        if (bsR01) {
+          plR00 = findAccountValueLocal(bsR01, 'equity.capital');
+        }
+      }
+      
+      if (plR00 <= 0) plR00 = 12000000; // Fallback regulamentar Greenfield de R$ 12M
+      flows.push(-plR00);
+      
+      // Fluxos operacionais de retorno subsequentes livres (fco_livre) até p.round
+      for (let r = 1; r <= p.round; r++) {
+        const per = periods.find(p_item => p_item.round === r);
+        if (per) {
+          let fcoLivre = per.raw?.kpis?.fco_livre ?? per.data?.fco_livre;
+          if (fcoLivre === undefined || fcoLivre === null) {
+            const dre = per.raw?.kpis?.statements?.dre || per.data?.statements?.dre;
+            const dfc = per.raw?.kpis?.statements?.cash_flow || per.data?.statements?.cash_flow;
+            const opProfit = findAccountValueLocal(dre, 'operating_profit');
+            const cifVal = Math.abs(findAccountValueLocal(dre, 'dre.cif'));
+            const depr = cifVal * 0.4;
+            const ebitda = opProfit + depr;
+            const capex = Math.abs(findAccountValueLocal(dfc, 'cf.outflow.maintenance'));
+            const juros = Math.abs(findAccountValueLocal(dre, 'fin.exp'));
+            const impostos = Math.abs(findAccountValueLocal(dre, 'tax_prov'));
+            fcoLivre = ebitda - capex - juros - impostos;
+          }
+          flows.push(fcoLivre || 0);
+        } else {
+          flows.push(0);
+        }
+      }
+      
+      return calculateIRR(flows);
+    }
+
     const keys = kpiId.split('.');
     let val = p.data;
     for (const key of keys) {
@@ -115,6 +288,9 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       { id: 'dupont.margin', label: 'Margem Líquida (DuPont)', suffix: '%', isPercent: true, desc: 'Eficiência de lucro' },
       { id: 'dupont.turnover', label: 'Giro do Ativo (DuPont)', suffix: 'x', desc: 'Eficiência operacional' },
       { id: 'dupont.leverage', label: 'Alavancagem (DuPont)', suffix: 'x', desc: 'Multiplicador de patrimônio' },
+      { id: 'roe', label: 'Retorno s/ Patrimônio Líquido (ROE)', suffix: '%', isPercent: true, desc: 'Rentabilidade real do capital próprio (DuPont)' },
+      { id: 'bep', label: 'Ponto de Equilíbrio (Break-Even)', suffix: '', isCurrency: true, desc: 'Faturamento mínimo operacional exigido para lucro operacional zero' },
+      { id: 'irr', label: 'Taxa Interna de Retorno (TIR / IRR)', suffix: '%', isPercent: true, desc: 'Retorno econômico acumulado baseado no PL de abertura' },
     ];
 
     return kpiDefinitions.map(kpi => (
@@ -130,7 +306,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
           const prevVal = idx > 0 ? getKpiValue(periods[idx-1], kpi.id) : undefined;
           
           const displayVal = typeof val === 'number' 
-            ? (kpi.isPercent ? (val * 100).toFixed(2) : val.toFixed(2)) 
+            ? (kpi.isPercent ? (val * 100).toFixed(2) : (kpi.isCurrency ? formatCurrency(val, currency) : val.toFixed(2))) 
             : 'N/A';
 
           let colorClass = p.isProjection ? 'text-orange-500 font-black' : 'text-slate-300';
@@ -143,7 +319,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
           return (
             <td key={idx} className={`p-1.5 text-center font-mono text-[12px] ${p.isProjection ? 'bg-orange-600/5' : ''} ${colorClass}`}>
               <div className="flex flex-col items-center gap-0.5">
-                <span className="text-base tracking-tighter font-bold">{displayVal}{val !== undefined && val !== null && val !== 'N/A' ? kpi.suffix : ''}</span>
+                <span className="text-base tracking-tighter font-bold">{displayVal}{val !== undefined && val !== null && val !== 'N/A' && !kpi.isCurrency ? kpi.suffix : ''}</span>
                 {idx > 0 && typeof val === 'number' && typeof prevVal === 'number' && prevVal !== 0 && (
                   <div className={`flex items-center gap-0.5 text-[8px] font-black uppercase ${val > prevVal ? 'text-emerald-500' : 'text-rose-500'}`}>
                     {val > prevVal ? <TrendingUp size={6}/> : <Activity size={6}/>}

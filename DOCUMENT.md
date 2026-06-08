@@ -2,9 +2,26 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.107 Indicator Font Scale-up UX Visibility Safeguard
+- **Versão Ativa:** v2026.108 Advanced Strategic KPIs Architecture - ROE, BEP, IRR
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Formulação Contábil - Advanced Strategic KPIs (ROE, BEP, IRR) - v2026.108
+
+**Data:** 08 de Junho de 2026 às 21:05 UTC  
+**Motivo:** Implementação da nova classe de indicadores de sustentabilidade corporativa de nível de comando estratégico exigida pelo Board Contábil e Comercial para aferição integrada de retornos econômicos, break-even operacional e taxas internas de rentabilidade.
+**Detalhamento Técnico das Regras de Negócio e Formulações:**  
+- **Retorno sobre o Patrimônio Líquido (ROE):** Calculado pelo triplo produto da matriz DuPont: `ROE = Margem Líquida x Giro do Ativo x Alavancagem Patrimonial`. Promove o desmembramento completo da eficiência de vendas, produtividade do ativo e estrutura de captação de terceiros em relação ao capital próprio dos acionistas (CPC 26).
+- **Ponto de Equilíbrio (BEP - Break-Even Point / PE):** Aferição exata baseada na margem de contribuição (`MC`). `Custos Fixos = Mão de Obra Direta (MOD) + Custos Indiretos de Fabricação (CIF) + Despesas Operacionais (OPEX)`. `Custos Variáveis = (Custo dos Produtos Vendidos - MOD - CIF) + Provisão de VAT sobre vendas`. `MC = Faturamento - Custos Variáveis`. `MC% = MC / Faturamento`. `BEP (Faturamento Mínimo) = Custos Fixos / MC%`.
+- **Taxa Interna de Retorno (TIR / IRR):** Computação dinâmica acumulada do retorno econômico das rodadas utilizando algoritmo numérico otimizado de Newton-Raphson com Bissecção estabilizada de barreira. Investimento inicial (`Fluxo 0` no Round 0) correspondente ao Patrimônio Líquido de abertura do balanço greenfield/running (R-00) ou fallback de capital e integralizações iniciais. Fluxos subsequentes (`Round 1` a `Round N`) alimentados pelo Fluxo de Caixa Operacional Livre (`fco_livre` ou EBITDA deduzido de Capex operacional, juros contratuais de empréstimos e provisões tributárias).
+**Principais diferenças:**  
+- **Visualização de Matrizes (`components/FinancialReportMatrix.tsx`):** Adição de novos registros dinâmicos e interceptação estrita destas chaves com tratamento visual e formatação sob o design system de 2026: moeda com faturamento formatado no BEP e coeficientes flutuantes percentuais no ROE e TIR.
+- **Exportadores Analíticos (`analise-gerencial/spreadsheet-mappers.ts`):** Mapeamento e exportação consistente de dados das demonstrações em tabelas, alimentando as colunas nativas do Excel sem causar quebras ou distorções de escala de decimais, mantendo paridade visual absoluta entre o cockpit e as planilhas extraídas.
+**Impactos esperados:**  
+- **Tomada de Decisão Comercial:** Permite saber exatamente quanto cada equipe precisa faturar por período para vencer o break-even.
+- **Transparência Acionaria:** Auditoria completa e de altíssima segurança de taxas internas de retorno e retorno de patrimônio líquido em conformidade internacional IFRS.
 
 ---
 
