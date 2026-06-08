@@ -938,7 +938,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         <div className="flex items-center gap-8">
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-xl"><Rocket size={32} /></div>
            <div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">P0 COOPERATIVE CONFIGURATOR</h2>
+              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">R-00 COOPERATIVE CONFIGURATOR</h2>
               <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">v19.14 SAPPHIRE DIAMOND • MOEDA: {tutorConfig.currency}</p>
            </div>
         </div>
