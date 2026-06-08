@@ -28,6 +28,7 @@ import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getT
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO, INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00 } from '../constants';
 import { generatePureP0 } from '../services/initialization';
+import { TournamentSummary } from './AdminCommandCenter';
 
 import { EmpirionAreaChart } from './charts/EmpirionAreaChart';
 import { EmpirionGauge } from './charts/EmpirionGauge';
@@ -747,7 +748,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   <div className="flex-1">
                     {activeTab === 'decisoes' && (
                       <div className="h-full">
-                        {selectedRound === currentRound && requireBP && bpStatus !== 'submitted' && (
+                        {activeArena && activeArena.current_round >= (activeArena.total_rounds || 6) && (
+                          <div className="py-6 overflow-y-auto max-h-[85vh] custom-scrollbar text-slate-100">
+                            <TournamentSummary championship={activeArena} teams={activeArena.teams || []} />
+                          </div>
+                        )}
+                        {selectedRound === currentRound && requireBP && bpStatus !== 'submitted' && !(activeArena && activeArena.current_round >= (activeArena.total_rounds || 6)) && (
                           <motion.div 
                             initial={{ height: 0, opacity: 0 }} 
                             animate={{ height: 'auto', opacity: 1 }}
@@ -778,7 +784,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           branch={activeArena?.branch}
                           isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound || isExpiredWaiting || isRoundExpired}
                           isExpiredWaiting={isExpiredWaiting || isRoundExpired}
-                          onDecisionsChange={(d) => setDecisions(d)}
+                          onDecisionsChange={(d) => setDecisions(d)} isTournamentFinished={!!(activeArena && activeArena.current_round >= (activeArena.total_rounds || 6))}
                         />
                       </div>
                     )}

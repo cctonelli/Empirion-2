@@ -35,7 +35,7 @@ const STEPS = [
   { id: 'review', label: '8. ORÁCULO', icon: ShieldCheck },
 ];
 
-const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean; isExpiredWaiting?: boolean; onDecisionsChange?: (d: DecisionData) => void }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false, isExpiredWaiting = false, onDecisionsChange }) => {
+const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean; isExpiredWaiting?: boolean; onDecisionsChange?: (d: DecisionData) => void; isTournamentFinished?: boolean }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false, isExpiredWaiting = false, onDecisionsChange, isTournamentFinished = false }) => {
   const [activeStep, setActiveStep] = useState(0);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
@@ -374,6 +374,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     </div>
   );
 
+  if (isTournamentFinished) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col h-full bg-[#020617] rounded-xl border border-white/5 overflow-hidden shadow-3xl">
       {/* HEADER TÁTICO FIXO */}
@@ -591,7 +595,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                               {/* PASSO 6 - GESTÃO DE TALENTOS & RH */}
                               {activeStep === 5 && (
-                                <HRStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                                <HRStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} round={round} />
                               )}
 
                               {/* PASSO 7 - FINANÇAS & MERCADO DE CAPITAIS */}

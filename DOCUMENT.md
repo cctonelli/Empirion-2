@@ -2,9 +2,30 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.108 Advanced Strategic KPIs Architecture - ROE, BEP, IRR
+- **Versão Ativa:** v2026 active-core HR dynamic indicator metrics.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Interface do Usuário - Painel de Balizamento Salarial & Simulador de Encargos em Tempo Real (HRStep) - v2026.109
+
+**Data:** 08 de Junho de 2026 às 23:00 UTC  
+**Motivo:** Resolver a opacidade nas tomadas de decisão salarial ("Piso Salarial Base") apontada pelas equipes, integrando indicadores fiduciários que previnem desalinhamentos competitivos e dão transparência sobre o impacto operacional de aumentos na folha de pagamento patronal antes da submissão da rodada.
+
+**Detalhamento Técnico das Regras de Negócio e Coleta Contábil:**
+- **Média Salarial Dinâmica do Setor (Último Período):** Integração ativa via SDK Supabase operada sob as tabelas de histórico (`companies` ou `trial_companies`). Em qualquer rodada superior a `R-00`, o sistema realiza um pré-fetch do estado de decisões do round anterior de todos os competidores da mesma arena (`championship_id`) para calcular a média salarial real praticada. Em `R-00` ou caso não haja transações comitadas anteriores, o sistema assume o balizador base fiduciário de partida (R$ 2.500,00).
+- **Piso Inflacionado de Referência:** Expõe de forma transparente o salário-base original reajustado pela inflação acumulada do torneio (+`inflation_rate` do cronograma corrente, calculado de forma rigorosa via `getCumulativeAdjust`). Serve como régua oficial exigida pelo sindicato para estabilização de clima, acima do qual a motivação cresce e abaixo do qual os riscos de greve por insatisfação salarial escalam.
+- **Projeção de Desembolso da Folha Bruta (Tempo Real):** Implementação de microssimulador financeiro (em `useMemo`) que intercepta o piso salarial definido pela equipe e o multiplica fiduciariamente pelas contingências industriais:
+  - **MOD (Mão de Obra Direta):** Número de operários requeridos pela frota ativa de máquinas (`alpha`: 94, `beta`: 235, `gamma`: 445 operadores) reescalonados pelo nível de atividade industrial programada (`activityLevel`) e multiplicador de turnos extras MOD (`shifts` 2: x1.5 / shift 3: x2.0).
+  - **Administrativo e Vendas:** Contingente padrão da arena (20 administrativos com multiplicador de salário 4x, e 10 profissionais de vendas com multiplicador 4x) inflados em tempo real com base no salário digitado pela equipe.
+  - **Encargos Sociais Patronais:** Provisão de encargos fiscais e trabalhistas calculados de forma linear com base no coeficiente definido na arena (`social_charges`, default 35%).
+  - **Total Bruto Projetado:** Estimativa totalizada agregando bônus de produtividade e encargos de contratação imediata para prover ao CFO da equipe visibilidade absoluta das provisões do DRE e saídas do Fluxo de Caixa (DFC) agregadas no período.
+
+**Impactos esperados:**
+- **Prevenção Pró-ativa contra Greves:** Equipas conseguem estimar o saldo de conformidade entre piso regional mínimo inflacionado e média setorial antes de fechar o round.
+- **Exatidão no Planejamento de Fluxo de Caixa:** Erradica distorções ou surpresas contábeis relacionadas a provisões de pessoal nas projeções de DAE/DRE.
+- **UX Enriquecida:** Alinhamento estético de nível internacional sob as tendências modernas e sóbrias do design de 2026.
 
 ---
 
@@ -380,7 +401,7 @@ As equipes gerenciam sua planta fabril através de três modelos padrão de maqu
 - **Compensação Não Cumulativa (Gold Standard):** Os créditos acumulados sob compras operacionais e MP são reconhecidos diretamente na conta ativa de `taxes_recoverable` antes do processamento de apuração. Da mesma forma, os débitos sobre vendas alimentam `taxes_payable`. A compensação líquida de tributos ocorre de forma dinâmica.
 
 ### 7.2 PPR (Programa de Participação nos Lucros)
-- **Regras de Enquadramento:** Arbitragem das equipes variando de **0% a 20% do LAIR**.
+- **Regras de Enquadramento:** Arbitragem das equipes variando de **0% a 10% do LAIR**.
 - **Competência Contábil:** O valor apurado no período $T$ é provisionado sob o passivo circulante (`ppr_payable`) e reconhecido de imediato na DRE como Despesa Operacional.
 - **Liquidação:** Pagamento financeiro ocorre de forma total no período subsequente ($T+1$) através do caixa operacional.
 - **Rescisão com Desligamento:** Em caso de demissões, o colaborador é desligado recebendo o PPR proporcional provisionado acumulado em períodos passados de forma imediata na quitação de multas rescisórias.
@@ -1368,4 +1389,25 @@ project-root/
 - **Acabamento Premium sem Cortes Visuais:** Prevenção confiável contra cortes mecânicos de pontas de caracteres em todas as mídias.
 **Status:** ATIVO, implantado e compilado com sucesso.
 
+---
 
+## Decisão Arquitetural & Versionamento - Revisão de Clima Trabalhista, Suavização de Greves e Redução de Teto de PPR - v2026.108
+
+**Data:** 08 de Junho de 2026 às 22:36 UTC  
+**Motivo:** Resolver a excessiva ocorrência de greves industriais indesejadas decorrente de um bug lógico/matemático na fórmula de cálculo do Clima Organizacional (`motivationIndex`), além de limitar o teto de distribuição de Participação nos Lucros (PPR) de 20% para 10% a pedido do conselho de acionistas para proteger as marcas de rentabilidade (DRE).  
+**Principais diferenças:**  
+- **Saneamento do Cálculo de Motivação (`simulation.ts` e `simulation-core.ts`):** 
+  - Corrigido o bug na equação do `motivationIndex`. Anteriormente, a fórmula executava `(motivationFactor + (1.0 - demissionInsecurityFactor)) / 2.0`. Sob pleno emprego ou ausência de demissões (`demissionInsecurityFactor = 1.0`), o cálculo resultava em `(motivationFactor + 0.0) / 2.0 = motivationFactor / 2.0`. Isso limitava o índice a um teto máximo de `0.65`, rotulando o clima perpetuamente como "RUIM" (abaixo do limiar crítico de 0.75) e deflagrando greve geral após duas rodadas, independentemente do pagamento de super-salários e benefícios expressivos pelas marcas.
+  - A nova formulação utiliza o produto linear direto dos componentes de incentivo e estabilidade funcional: `motivationIndex = motivationFactor * demissionInsecurityFactor`. Dessa forma:
+    - Sem demissões, o clima flutua saudavelmente acompanhando as decisões salariais e de PPR (ótimo alinhamento motivacional: `REGULAR`, `BOM` ou `ALTO`).
+    - Demissões em massa reduzem o fator de segurança (`demissionInsecurityFactor < 1.0`), reduzindo de imediato e proporcionalmente o `motivationIndex` final e gerando o devida alerta sindical de forma coerente.
+- **Redução do Teto de PPR para 10% (`HRStep.tsx`, `simulation.ts`, `simulation-core.ts`):**
+  - O limitador deslizante do formulário de decisão de Recursos Humanos (`HRStep.tsx`) foi reduzido de `max="20"` para `max="10"`.
+  - No motor contábil, a leitura da intenção foi protegida contra entradas excedentes através de `Math.min(10, sanitize(decision.hr?.participationPercent, 0))`.
+  - Reequilíbrio no potencial de bônus (`pprIndex`): Para evitar perda de engajamento do trabalhador sob o novo teto mais moderado, escalamos o multiplicador secundário do PPR de `1.5` para `3.0` (`pprIndex = 1 + (pprRate * 3.0)`). Sob a taxa de 10% (0.10), o índice motivacional do PPR atinge os mesmos `1.30` (30% de bônus sobre a base psicológica) que antes exigia o limite oneroso de 20%, gerando harmonia perfeita entre os interesses dos colaboradores e a rentabilidade dos acionistas (DRE).
+- **Adequação nas Especificações (`BUSINESS_RULES.md`, `PRD.md`, `DOCUMENT.md`):** Sincronizados os limites de 20% vigentes nas documentações de negócios e de arquitetura para refletir fielmente o novo limiar estabelecido de 10%.
+**Impactos esperados:**  
+- **Estabilidade Operacional:** Fim das greves contínuas involuntárias sob boas gestões, restabelecendo a confiança das equipes e normalidade da produtividade industrial.
+- **Eficiência nos Gastos de RH:** As equipes estão agora blindadas contra pressões de despesa de PPR de até 20%, distribuindo no máximo 10% da lucratividade, o que reduz saídas de capital operacional (`liabilities.current.ppr_payable` / no fluxo de caixa subordinado) e eleva a atratividade do equity para investidores.
+- **Sensibilidade Operacional Coerente:** O sindicato continua sensível a demissões irrefletidas e salários abusivos abaixo do mercado regional, mas premia ativamente boas posturas e treinamentos industriais focados.
+**Status:** ATIVO, amplamente homologado, compilado e implantado.

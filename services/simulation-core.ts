@@ -798,8 +798,9 @@ export function processRoundWithValidation(
   const decisionSalary = sanitize(decision.hr?.salary, 0);
   const currentSalary = decisionSalary > 0 ? decisionSalary : (indicators.hr_base.salary * inflationMult);
   const salaryIndex = currentSalary / avgMarketSalary;
-  const pprRate = sanitize(decision.hr?.participationPercent, 10) / 100;
-  const pprIndex = 1 + (pprRate * 1.5);
+  const pprPercent = Math.min(10, sanitize(decision.hr?.participationPercent, 0));
+  const pprRate = pprPercent / 100;
+  const pprIndex = 1 + (pprRate * 3.0); // No novo teto de 10%, confere o mesmo impacto de motivação do limite anterior de 20% (0.10 * 3.0 = 0.30)
   const prodBonusPercent = sanitize(decision.hr?.productivityBonusPercent, 0) / 100;
   const prodBonusIndex = 1 + (prodBonusPercent * 1.25);
   let motivationFactor = (0.5 * salaryIndex * pprIndex * prodBonusIndex) + 0.5;
@@ -838,7 +839,7 @@ export function processRoundWithValidation(
   machineAgeFactor = Math.max(0.70, Math.min(1.00, machineAgeFactor));
 
   // --- RENDIMENTO DE MOTIVAÇÃO E CLIMA (CÁLCULO E GREVE SÊNIOR / DESIGN MULTIDISCIPLINAR CR) ---
-  const motivationIndex = (motivationFactor + (1.0 - demissionInsecurityFactor)) / 2.0;
+  const motivationIndex = motivationFactor * demissionInsecurityFactor;
   
   let motivationLevel: 'ALTO' | 'BOM' | 'REGULAR' | 'RUIM' = 'REGULAR';
   if (motivationIndex >= 1.15) {

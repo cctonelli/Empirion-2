@@ -477,6 +477,11 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const { data: teams } = await supabase.from(teamsTable).select('*').eq('championship_id', id);
         if (!champ) throw new Error("Arena não encontrada.");
 
+        const maxRounds = champ.total_rounds || 6;
+        if (champ.current_round >= maxRounds) {
+            throw new Error(`BLOQUEIO DE SEGURANÇA: Esta arena já atingiu o final do torneio (${maxRounds} "rounds" planejados). Não é permitido efetuar turnovers adicionais.`);
+        }
+
         const nextRound = round + 1;
         // Get indicators for the round being processed (Round 1, 2, etc.)
         const currentRules = champ.round_rules?.[nextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound] || champ.market_indicators;

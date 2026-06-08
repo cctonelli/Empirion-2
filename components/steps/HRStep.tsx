@@ -1,8 +1,11 @@
-import React from 'react';
-import { Users2, UserPlus, UserMinus, DollarSign, Coins, TrendingUp, HeartPulse, HelpCircle, Zap, ShieldAlert, CheckCircle2, AlertTriangle, Smile } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Users2, UserPlus, UserMinus, DollarSign, Coins, TrendingUp, HeartPulse, HelpCircle, Zap, ShieldAlert, CheckCircle2, AlertTriangle, Smile, Calculator, Loader2, Users } from 'lucide-react';
 import { WizardStepHeader } from './shared';
 import { DecisionData, Championship, Team } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { supabase } from '../../services/supabase';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../../constants';
+import { getCumulativeAdjust } from '../../services/simulation';
 
 interface HRStepProps {
   decisions: DecisionData;
@@ -11,6 +14,7 @@ interface HRStepProps {
   activeTeam?: Team | null;
   currentMacro: any;
   isReadOnly: boolean;
+  round?: number;
 }
 
 export const HRStep: React.FC<HRStepProps> = ({
@@ -20,9 +24,135 @@ export const HRStep: React.FC<HRStepProps> = ({
   activeTeam,
   currentMacro,
   isReadOnly,
+  round,
 }) => {
   const kpis: any = activeTeam?.kpis || {};
   
+  // 1. Número da Rodada
+  const currentRound = round !== undefined ? round : (activeArena?.current_round || 1);
+
+  // 2. Salário-base reajustado por inflação (para a rodada atual)
+  const adjustedBaseSalary = useMemo(() => {
+    if (!activeArena) return 2500;
+    const chronogram = activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
+    // O reajuste acumulado aplicado ao round atual
+    const inflationMult = getCumulativeAdjust(chronogram, currentRound - 1, 'inflation_rate');
+    const baseSal = activeArena.market_indicators?.hr_base?.salary || 2500;
+    return baseSal * inflationMult;
+  }, [activeArena, currentRound]);
+
+  // 3. Busca de salário médio do setor no Supabase (Rodada anterior)
+  const [sectorAvgSalary, setSectorAvgSalary] = useState<number | null>(null);
+  const [loadingSectorSalary, setLoadingSectorSalary] = useState(false);
+
+  useEffect(() => {
+    const fetchSectorAvg = async () => {
+      if (!activeArena) return;
+      setLoadingSectorSalary(true);
+      try {
+        const targetRound = Math.max(0, currentRound - 1);
+        if (targetRound === 0) {
+          setSectorAvgSalary(activeArena.market_indicators?.hr_base?.salary || 2500);
+          setLoadingSectorSalary(false);
+          return;
+        }
+
+        const historyTable = activeArena.is_trial ? 'trial_companies' : 'companies';
+        const { data, error } = await supabase
+          .from(historyTable)
+          .select('state')
+          .eq('championship_id', activeArena.id)
+          .eq('round', targetRound);
+
+        if (data && data.length > 0) {
+          let total = 0;
+          let count = 0;
+          data.forEach((item: any) => {
+            const sal = item.state?.hr?.salary;
+            if (sal && sal > 0) {
+              total += sal;
+              count++;
+            }
+          });
+          if (count > 0) {
+            setSectorAvgSalary(total / count);
+            setLoadingSectorSalary(false);
+            return;
+          }
+        }
+
+        const chronogram = activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
+        const lastRoundCumulative = getCumulativeAdjust(chronogram, targetRound - 1, 'inflation_rate');
+        const baseSal = activeArena.market_indicators?.hr_base?.salary || 2500;
+        setSectorAvgSalary(baseSal * lastRoundCumulative);
+      } catch (err) {
+        console.error("Erro ao carregar média salarial do setor:", err);
+      } finally {
+        setLoadingSectorSalary(false);
+      }
+    };
+
+    fetchSectorAvg();
+  }, [activeArena, currentRound]);
+
+  // 4. Projeções de Folha de Pagamento em Tempo Real
+  const payrollProjection = useMemo(() => {
+    const currentSalary = parseFloat(decisions.hr?.salary) || 2500;
+    const socialChargesRate = (currentMacro?.social_charges !== undefined ? currentMacro.social_charges : 35) / 100;
+
+    // --- MOD ---
+    const currentMachines = kpis.machines || [];
+    const operatorsRequired = currentMachines.reduce((acc: number, m: any) => {
+      const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
+      const sReq = normModel === 'alpha' ? 94 : normModel === 'beta' ? 235 : 445;
+      return acc + sReq;
+    }, 0) || 376;
+
+    const activityLevel = (decisions.production?.activityLevel !== undefined ? decisions.production?.activityLevel : 100) / 100;
+    const selectedShifts = parseInt(decisions.production?.shifts) || 1;
+    let modMult = 1.0;
+    if (selectedShifts === 2) modMult = 1.5;
+    else if (selectedShifts === 3) modMult = 2.0;
+
+    const payrollMOD = operatorsRequired * currentSalary * activityLevel * modMult;
+    const socialChargesMOD = payrollMOD * socialChargesRate;
+    const productivityBonus = payrollMOD * ((decisions.hr?.productivityBonusPercent || 0) / 100);
+    const totalMOD = payrollMOD + socialChargesMOD + productivityBonus;
+
+    // --- ADMIN ---
+    const staffAdmin = currentMacro?.staffing?.admin?.count || 20;
+    const salariesMultiplierAdm = currentMacro?.staffing?.admin?.salaries || 4;
+    const payrollAdm = staffAdmin * currentSalary * salariesMultiplierAdm;
+    const socialChargesAdm = payrollAdm * socialChargesRate;
+    const totalPayrollAdm = payrollAdm + socialChargesAdm;
+
+    // --- VENDAS ---
+    const staffSales = currentMacro?.staffing?.sales?.count || 10;
+    const salariesMultiplierSales = currentMacro?.staffing?.sales?.salaries || 4;
+    const payrollSales = staffSales * currentSalary * salariesMultiplierSales;
+    const socialChargesSales = payrollSales * socialChargesRate;
+    const totalPayrollSales = payrollSales + socialChargesSales;
+
+    // --- TOTAL ---
+    const totalPayrollWithCharges = totalMOD + totalPayrollAdm + totalPayrollSales;
+
+         return {
+      operatorsRequired,
+      activityLevel,
+      modMult,
+      payrollMOD,
+      socialChargesMOD,
+      productivityBonus,
+      totalMOD,
+      staffAdmin,
+      totalPayrollAdm,
+      staffSales,
+      totalPayrollSales,
+      totalPayrollWithCharges,
+      socialChargesRate
+    };
+  }, [decisions, kpis, currentMacro]);
+
   // Extração amigável dos novos KPIs de Clima e Greve (v19.5 Sapphire)
   const currentMotivationIndex = kpis.motivation_index !== undefined ? kpis.motivation_index : 1.00;
   const currentMotivationLevel = kpis.motivation_level || 'REGULAR';
@@ -186,6 +316,102 @@ export const HRStep: React.FC<HRStepProps> = ({
             <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 col-span-2 md:col-span-1">
               <span className="text-xxs text-slate-400 uppercase block font-sans mb-1">Idade Máquinas</span>
               <span className="text-lg font-bold font-mono text-purple-400">x{maf.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* QUADRO-RESUMO DE INDICADORES TRABALHISTAS (Contabilidade & Clima de Alta Performance) */}
+      <div className="bg-slate-950/40 border-2 border-slate-900 p-8 rounded-3xl shadow-xl relative overflow-hidden">
+        <h4 className="text-lg lg:text-xl font-extrabold text-white uppercase tracking-tight mb-6 flex items-center gap-3">
+          <Calculator className="text-amber-500 animate-pulse" size={24} />
+          Painel de Balizamento Salarial & Simulador de Encargos em Tempo Real
+        </h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          {/* Card 1: Salário Médio do Setor */}
+          <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Users size={16} className="text-zinc-400" />
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Média Salarial do Setor
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-4">
+                Valor médio praticado pelas empresas concorrentes na última rodada apurada (Rodada {Math.max(0, currentRound - 1)}).
+              </p>
+            </div>
+            <div className="my-2 select-none">
+              {loadingSectorSalary ? (
+                <div className="flex items-center gap-2 text-zinc-500 font-mono">
+                  <Loader2 className="animate-spin" size={16} />
+                  <span>Calculando...</span>
+                </div>
+              ) : (
+                <span className="text-2.5xl font-mono font-black text-emerald-400 block pb-1">
+                  {formatCurrency(sectorAvgSalary || 2500, 'BRL')}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] text-zinc-500 uppercase font-bold block mt-1">
+              * R-00 é inicial e fixo para todos.
+            </span>
+          </div>
+
+          {/* Card 2: Salário-Base Reajustado */}
+          <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp size={16} className="text-zinc-400" />
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Piso Inflacionado de Referência
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-4">
+                Salário base original (R$ 2.500,00) corrigido pela inflação acumulada do torneio (+{currentMacro?.inflation_rate || 0}% nesta rodada).
+              </p>
+            </div>
+            <div className="my-2 select-none">
+              <span className="text-2.5xl font-mono font-black text-orange-400 block">
+                {formatCurrency(adjustedBaseSalary, 'BRL')}
+              </span>
+            </div>
+            <span className="text-[10px] text-orange-300/80 font-medium block mt-1">
+              Pagar menos que isso reduz a motivação final.
+            </span>
+          </div>
+
+          {/* Card 3: Projetação de Cargos & Salários em Tempo Real */}
+          <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Coins size={16} className="text-zinc-400" />
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Projeção de Desembolso da Folha
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-3">
+                Previsão de desembolso para o ciclo corrente com base no salário editado (Piso Base e encargos patronais de {(payrollProjection.socialChargesRate * 100).toFixed(0)}%).
+              </p>
+            </div>
+            <div className="space-y-1.5 border-t border-white/10 pt-2 text-xxs font-mono text-zinc-400">
+              <div className="flex justify-between">
+                <span>Pessoal Fabril (MOD):</span>
+                <span className="text-white font-bold">{formatCurrency(payrollProjection.totalMOD, 'BRL')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Administração ({payrollProjection.staffAdmin} profs):</span>
+                <span className="text-white font-bold">{formatCurrency(payrollProjection.totalPayrollAdm, 'BRL')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Vendas ({payrollProjection.staffSales} profs):</span>
+                <span className="text-white font-bold">{formatCurrency(payrollProjection.totalPayrollSales, 'BRL')}</span>
+              </div>
+              <div className="flex justify-between border-t border-white/5 pt-1 text-xs">
+                <span className="text-zinc-300 font-bold">Folha Bruta Total:</span>
+                <span className="text-amber-400 font-extrabold">{formatCurrency(payrollProjection.totalPayrollWithCharges, 'BRL')}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -364,7 +590,7 @@ export const HRStep: React.FC<HRStepProps> = ({
           <input
             type="range"
             min="0"
-            max="20"
+            max="10"
             step="0.5"
             disabled={isReadOnly}
             value={decisions.hr.participationPercent}

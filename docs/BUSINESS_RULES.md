@@ -271,7 +271,7 @@ Empresas que incorrerem em quebra de caixa e requererem **Empréstimo Compulsór
   - Imposto de Renda Provisão (IR): Alíquota nominal de 25% calculada sobre o lucro do período (LAIR).
   - Impostos Indiretos (IVA): Mecanismo de crédito/débito incidente na circulação comercial de produtos e insumos.
   - Dividendos Obrigatórios: Distribuição legal prioritária fixada em 25% do lucro líquido gerado.
-- **Participação nos Resultados (PPR):** Estipulada pela governança corporativa na faixa de 0% a 20% aplicados sobre o Lucro Antes do IR (LAIR).
+- **Participação nos Resultados (PPR):** Estipulada pela governança corporativa na faixa de 0% a 10% aplicados sobre o Lucro Antes do IR (LAIR).
 
 ---
 

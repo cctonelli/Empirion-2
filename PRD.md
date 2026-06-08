@@ -101,7 +101,7 @@ As empresas gerenciam a infraestrutura fabril adquirindo e operando três modelo
 
 ### 4.2 Arquitetura Contábil das Emissões Fiscais (IVA e PPR)
 - **Tributo sobre Valor Agregado (IVA):** Sistema de compensação não-cumulativa onde os créditos fiscais referentes a compras com incidência tributária são devidamente registrados sob contas do ativo circulante e abatidos na apuração e apuração periódica de obrigações tributárias.
-- **PPR (Programa de Participação nos Lucros):** Definição arbitrária das equipes variando de **0 a 20% do LAIR**.
+- **PPR (Programa de Participação nos Lucros):** Definição arbitrária das equipes variando de **0 a 10% do LAIR**.
   - **Provisão Contábil:** O valor apurado no período $T$ é provisionado no passivo circulante em `liabilities.current.ppr_payable` e registrado como despesa do DRE.
   - **Efetividade Contábil:** A liquidação financeira da provisão de PPR se dá compulsoriamente no período subsequente ($T+1$), exceto em casos de desligamento operacional, onde o montante proporcional provisionado do colaborador demitido é liquidado com a rescisão em $T$.
 
