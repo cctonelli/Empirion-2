@@ -48,6 +48,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [isLeftNavCollapsed, setIsLeftNavCollapsed] = useState(false);
   const [isRightPreviewCollapsed, setIsRightPreviewCollapsed] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
   const [decisions, setDecisions] = useState<DecisionData>({
     judicial_recovery: false,
@@ -101,9 +102,12 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   // Persistência em memória local para evitar perda ao navegar entre abas
   useEffect(() => {
     if (!teamId || !champId || isLoadingDraft) return;
+    const currentKey = `${champId}_${teamId}_${round}`;
+    if (loadedKey !== currentKey) return; // Impede gravação de estado sujo/antigo antes do carregamento fresco terminar
+
     const key = `draft_decisions_${champId}_${teamId}_${round}`;
     localStorage.setItem(key, JSON.stringify(decisions));
-  }, [decisions, teamId, champId, round, isLoadingDraft]);
+  }, [decisions, teamId, champId, round, isLoadingDraft, loadedKey]);
 
   useEffect(() => {
     const initializeForm = async () => {
@@ -112,6 +116,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
         return;
       }
       setIsLoadingDraft(true);
+      setLoadedKey(null); // Resetar chave carregada para evitar gravação prematura
       try {
         const champsRes = await getChampionships();
         const historyRes = await getTeamSimulationHistory(teamId);
@@ -200,6 +205,17 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
           }
         }
 
+        // Sanidade Extra: Se a compra de máquinas é bloqueada neste round, forçar buy zerado no finalData
+        const currentRulesForRound = found?.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || found?.market_indicators || {};
+        const isAllowedToBuyMachines = currentRulesForRound.allow_machine_sale;
+        const isRoundZeroAndZeroMode = (found?.config?.starting_mode === 'start_from_zero' || found?.starting_mode === 'start_from_zero') && round === 0;
+
+        if (finalData && (!isAllowedToBuyMachines || isRoundZeroAndZeroMode)) {
+          if (finalData.machinery) {
+            finalData.machinery.buy = { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 };
+          }
+        }
+
         const initialRegions: any = {};
         for (let i = 1; i <= (found?.regions_count || 1); i++) {
           const regId = i;
@@ -222,6 +238,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
             estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
           });
         }
+        setLoadedKey(`${champId}_${teamId}_${round}`);
       } catch (err) { console.error("Cockpit Error:", err); } 
       finally { setIsLoadingDraft(false); }
     };
