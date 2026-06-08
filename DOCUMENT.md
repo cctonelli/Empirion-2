@@ -2,9 +2,30 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.106 Tutor Turnover UX & Analytical Supabase Error Diagnosis
+- **Versão Ativa:** v2026.107 Indicator Font Scale-up UX Visibility Safeguard
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Interface do Usuário - Ampliação de Legibilidade de Indicadores e KPIs - v2026.107
+
+**Data:** 08 de Junho de 2026 às 19:12 UTC  
+**Motivo:** Resolver gargalo de acessibilidade visual apontado pelas equipes operantes, expandindo em aproximadamente 20% o tamanho das fontes dos principais KPIs operacionais, descrições e células de valores tabulados para maximizar a escaneabilidade do cockpit.
+**Principais diferenças:**  
+- **Painéis de Reports (`components/Reports.tsx`):**
+  - KPI Cards: Ampliação do tamanho da fonte do valor principal de `text-2xl` para `text-3xl` (~+25%), o título descritivo (`label`) de `text-[10px]` para `text-[12px]` (+20%) e o texto de apoio de `text-[8px]` para `text-[10px]` (+25%).
+  - ReportLines (DRE e Fluxo de Caixa): Elevação dos rótulos de `text-[10px]` para `text-[12px]` e dos valores contábeis de `text-sm` para `text-base` (+20%).
+  - AccountRows (Balanço Patrimonial): Elevação dos títulos de contas sob `text-[11px]` para `text-[13px]`, e os valores absolutos de `text-sm` para `text-base`.
+- **Matriz Financeira Oracular (`components/FinancialReportMatrix.tsx`):**
+  - Strategic KPIs: Elevação do nome dos KPIs de `text-[8px]` para `text-[10px]`, descrições de `text-[7px]` para `text-[9px]`, e os valores principais nas colunas de `text-sm` para `text-base` (+14-20%).
+  - Commitment Rows (Direitos/Deveres): Elevação das fontes de `text-[10px]` para `text-[12px]` no corpo da tabela.
+  - Kardex Rows: Uniformização do fluxo físico e financeiro WAC, elevando os displays numéricos em 20%.
+  - Standard dynamic rows: redimensionamento dos títulos de `text-[10px]` para `text-[12px]` e valores de `text-xs` para `text-sm font-medium`.
+**Impactos esperados:**  
+- **Acessibilidade & Ergonomia Cognitiva:** Menor fadiga visual na leitura crítica de balancetes de simulação.
+- **Sincronia Estética:** Equilíbrio tipográfico mantido com a malha estrutural predefinida das tabelas.
+**Status:** ATIVO, compilado, testado e em produção.
 
 ---
 

@@ -121,8 +121,8 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       <tr key={kpi.id} className="border-b border-white/5 transition-all hover:bg-white/[0.03] group">
         <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
           <div className="flex flex-col">
-            <span className="text-[8px] uppercase tracking-[0.15em] text-white font-black group-hover:text-orange-500 transition-colors">{kpi.label}</span>
-            <span className="text-[7px] text-slate-500 uppercase tracking-widest mt-0.5 italic font-medium">{kpi.desc}</span>
+            <span className="text-[10px] uppercase tracking-[0.15em] text-white font-black group-hover:text-orange-500 transition-colors">{kpi.label}</span>
+            <span className="text-[9px] text-slate-500 uppercase tracking-widest mt-0.5 italic font-medium">{kpi.desc}</span>
           </div>
         </td>
         {periods.map((p: any, idx) => {
@@ -141,11 +141,11 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
           }
 
           return (
-            <td key={idx} className={`p-1.5 text-center font-mono text-[10px] ${p.isProjection ? 'bg-orange-600/5' : ''} ${colorClass}`}>
+            <td key={idx} className={`p-1.5 text-center font-mono text-[12px] ${p.isProjection ? 'bg-orange-600/5' : ''} ${colorClass}`}>
               <div className="flex flex-col items-center gap-0.5">
-                <span className="text-sm tracking-tighter">{displayVal}{val !== undefined && val !== null && val !== 'N/A' ? kpi.suffix : ''}</span>
+                <span className="text-base tracking-tighter font-bold">{displayVal}{val !== undefined && val !== null && val !== 'N/A' ? kpi.suffix : ''}</span>
                 {idx > 0 && typeof val === 'number' && typeof prevVal === 'number' && prevVal !== 0 && (
-                  <div className={`flex items-center gap-0.5 text-[6px] font-black uppercase ${val > prevVal ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  <div className={`flex items-center gap-0.5 text-[8px] font-black uppercase ${val > prevVal ? 'text-emerald-500' : 'text-rose-500'}`}>
                     {val > prevVal ? <TrendingUp size={6}/> : <Activity size={6}/>}
                     {Math.abs(((val / prevVal) - 1) * 100).toFixed(1)}%
                   </div>
@@ -173,12 +173,12 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
         {receivables.map((item: any) => (
           <tr key={item.id} className="border-b border-white/5 transition-all hover:bg-white/[0.03] group">
             <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
-              <span className="text-[8px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
+              <span className="text-[10px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
             </td>
             {periods.map((p: any, idx: number) => {
               const val = p.data?.commitments?.receivables?.find((r: any) => r.id === item.id)?.value || 0;
               return (
-                <td key={idx} className={`p-1.5 text-center font-mono text-[10px] ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
+                <td key={idx} className={`p-1.5 text-center font-mono text-[12px] ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
                   <span className="tracking-tighter">{formatCurrency(val, currency)}</span>
                 </td>
               );
@@ -193,12 +193,12 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
         {payables.map((item: any) => (
           <tr key={item.id} className="border-b border-white/5 transition-all hover:bg-white/[0.03] group">
             <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
-              <span className="text-[8px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
+              <span className="text-[10px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{item.label}</span>
             </td>
             {periods.map((p: any, idx: number) => {
               const val = p.data?.commitments?.payables?.find((r: any) => r.id === item.id)?.value || 0;
               return (
-                <td key={idx} className={`p-1.5 text-center font-mono text-[10px] ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
+                <td key={idx} className={`p-1.5 text-center font-mono text-[12px] ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
                   <span className="tracking-tighter">{formatCurrency(val, currency)}</span>
                 </td>
               );
@@ -343,8 +343,8 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
               <tr className={`border-b border-white/5 transition-all hover:bg-white/[0.03] group ${row.isClass || ''}`}>
                 <td className="p-1.5 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[200px] shadow-xl">
                   <div className="flex flex-col">
-                    <span className="text-[8px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{row.label}</span>
-                    <span className="text-[6px] text-slate-500 uppercase tracking-widest mt-0.5 italic">{row.desc}</span>
+                    <span className="text-[10px] uppercase tracking-[0.1em] text-slate-300 group-hover:text-white">{row.label}</span>
+                    <span className="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5 italic">{row.desc}</span>
                   </div>
                 </td>
                 {periods.map((p: any, idx2) => {
@@ -493,7 +493,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
                   const displayStr = row.formatter ? row.formatter(val) : String(val);
 
                   return (
-                    <td key={idx2} className={`p-1.5 text-center font-mono text-[9px] ${p.isProjection ? 'bg-orange-600/5 text-orange-400 font-extrabold' : 'text-slate-300'}`}>
+                    <td key={idx2} className={`p-1.5 text-center font-mono text-[11px] ${p.isProjection ? 'bg-orange-600/5 text-orange-400 font-extrabold' : 'text-slate-300'}`}>
                       {displayStr}
                     </td>
                   );
@@ -518,7 +518,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
             <td className="p-3 sticky left-0 bg-slate-900 z-30 border-r border-white/10 min-w-[280px] shadow-xl">
               <div className="flex items-center gap-2" style={{ paddingLeft: `${level * 16}px` }}>
                 {level > 0 && <CornerDownRight size={10} className="text-slate-600" />}
-                <span className={`text-[10px] uppercase tracking-[0.1em] transition-colors ${isTotalizer ? 'text-white group-hover:text-orange-500' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                <span className={`text-[12px] uppercase tracking-[0.1em] transition-colors ${isTotalizer ? 'text-white group-hover:text-orange-500' : 'text-slate-400 group-hover:text-slate-200'}`}>
                   {node.label}
                 </span>
               </div>
@@ -542,8 +542,8 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
               
               const val = findVal(periodData);
               return (
-                <td key={idx} className={`p-3 text-center font-mono text-xs ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
-                  <span className="tracking-tighter">{formatCurrency(val, currency)}</span>
+                <td key={idx} className={`p-3 text-center font-mono text-sm ${p.isProjection ? 'bg-orange-600/5 text-orange-500 font-black' : 'text-slate-300'}`}>
+                  <span className="tracking-tighter font-medium">{formatCurrency(val, currency)}</span>
                 </td>
               );
             })}

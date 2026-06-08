@@ -378,11 +378,11 @@ const KpiCard = ({ label, val, desc, icon, color }: any) => (
   <div className="bg-slate-950/50 border border-white/5 p-8 rounded-[2.5rem] space-y-4 hover:border-white/10 transition-all group">
     <div className="flex justify-between items-center">
       <div className={`p-4 bg-white/5 rounded-2xl ${color} group-hover:scale-110 transition-transform`}>{icon}</div>
-      <span className="text-2xl font-mono font-black text-white">{val}</span>
+      <span className="text-3xl font-mono font-black text-white">{val}</span>
     </div>
     <div>
-      <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</h4>
-      <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest mt-1">{desc}</p>
+      <h4 className="text-[12px] font-black uppercase text-slate-400 tracking-widest">{label}</h4>
+      <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-1">{desc}</p>
     </div>
   </div>
 );
@@ -403,9 +403,9 @@ const AccountRow = ({ node, fmt, level = 0 }: { node: AccountNode, fmt: (v: numb
       <div className={`flex justify-between p-4 rounded-2xl border transition-all ${isParent ? 'bg-white/5 border-white/10' : 'bg-slate-950/40 border-white/5 opacity-80'}`} style={{ marginLeft: level * 20 }}>
         <div className="flex items-center gap-3">
           {isParent && <ChevronDown size={14} className="text-slate-600" />}
-          <span className={`text-[11px] uppercase tracking-wider ${isParent ? 'font-black text-white' : 'font-bold text-slate-400'}`}>{node.label}</span>
+          <span className={`text-[13px] uppercase tracking-wider ${isParent ? 'font-black text-white' : 'font-bold text-slate-400'}`}>{node.label}</span>
         </div>
-        <span className="text-sm font-mono font-black text-slate-200">{fmt(node.value)}</span>
+        <span className="text-base font-mono font-black text-slate-200">{fmt(node.value)}</span>
       </div>
       {isParent && node.children?.map(child => (
         <AccountRow key={child.id} node={child} fmt={fmt} level={level + 1} />
@@ -418,9 +418,9 @@ const ReportLine = ({ label, val, neg, bold, total, highlight, indent, color, ic
   <div className={`flex justify-between p-3 rounded-xl transition-all ${total ? 'bg-orange-600/10 border border-orange-500/20 mt-4' : highlight ? 'bg-white/5' : ''} ${indent ? 'pl-12 opacity-70' : ''}`}>
     <div className="flex items-center gap-3">
        {icon && <span className="text-slate-600">{icon}</span>}
-       <span className={`text-[10px] uppercase tracking-wider ${bold || total ? 'font-black' : 'text-slate-500'} ${color || ''}`}>{label}</span>
+       <span className={`text-[12px] uppercase tracking-wider ${bold || total ? 'font-black' : 'text-slate-500'} ${color || ''}`}>{label}</span>
     </div>
-    <span className={`text-sm font-black ${neg ? 'text-rose-500' : total ? 'text-orange-500' : color || 'text-slate-200'}`}>
+    <span className={`text-base font-black ${neg ? 'text-rose-500' : total ? 'text-orange-500' : color || 'text-slate-200'}`}>
       {neg ? '(' : ''}{val}{neg ? ')' : ''}
     </span>
   </div>
