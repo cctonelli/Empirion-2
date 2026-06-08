@@ -1231,13 +1231,15 @@ project-root/
 
 ## Decisão Arquitetural & Versionamento - Ajuste Global de Layout e Prevenção de Truncamento Itálico - v2026.105
 
-**Data:** 08 de Junho de 2026 às 00:54 UTC  
-**Motivo:** Evitar o truncamento sutil da última letra em títulos formatados com estilo itálico e espaçamento condensado (`italic tracking-tighter`). Esse efeito visual indesejado costumava ocorrer nas extremidades da caixa delimitadora do texto de cabeçalhos devido à inclinação das fontes.  
+**Data:** 08 de Junho de 2026 às 01:15 UTC  
+**Motivo:** Evitar o truncamento sutil da última letra em títulos formatados com estilo itálico e espaçamento condensado (`italic tracking-tighter`). Esse efeito visual indesejado costumava ocorrer nas extremidades da caixa delimitadora do texto de cabeçalhos devido à inclinação das fontes. Além disso, reequilibrar proporções de texto em telas de grandes dimensões reduzindo tamanhos de fonte gigantistas em até 50%.  
 **Principais diferenças:**  
 - **Ajuste na Sandbox Arena Master Node (TestTerminal.tsx):** Inclusão de preenchimento lateral (`pr-6 md:pr-10`) e margem de segurança no elemento `<h1>`. O elemento `<span>` interno contendo o degradê foi convertido em `inline-block` com espaçamento de segurança adicional (`pr-4 pb-1`), assegurando que a última letra (como "s" em "Ativos") seja exibida inteiramente em qualquer resolução de tela.
 - **Ajuste na Landing Page (LandingPage.tsx):** Anteriormente, o mesmo padrão de contenção foi devidamente estabelecido no título principal "EMPIRION - O SIMULADOR DEFINITIVO DE NEGÓCIOS", assegurando que nenhuma letra sofra desbaste na ponta direita das letras inclinadas.
+- **Ajuste e Redução Volumétrica de Escala na Detalhe da Atividade (ActivityDetail.tsx):** Redução do H1 original em 50% (passando de `text-6xl md:text-8xl lg:text-9xl` para `text-3xl md:text-5xl lg:text-5xl` respectivamente) para melhor adaptabilidade e legibilidade de tela, acompanhado da adição de margens laterais (`pr-8 md:pr-12`) no contêiner-pai e conversão do degradê interno à estilização `inline-block pr-6 pb-1` para respiro e prevenção de truncamento do itálico.
 **Impactos esperados:**  
 - **Excelência em UI/UX de nível AA:** Legibilidade plena de todos os títulos, sem caracteres truncados ou cortados lateralmente.
+- **Equilíbrio de Contraste e Escala Visual:** Um visual muito mais elegante, focado em minimalismo premium com espaçamento generoso e proporções harmônicas de tipografia.
 - **Visualização perfeitamente responsiva:** Conforto visual em telas mobile, tablets e ultra-wide.
 **Status:** ATIVO, implantado e homologado com sucesso.
 

@@ -44,8 +44,8 @@ const ActivityDetail: React.FC = () => {
           setContent({
             name: slug?.toUpperCase() || 'ARENA',
             heroImage: "/images/hero/generic-hero-fallback.jpg",
-            titlePrefix: "Inicie o Comando",
-            titleHighlight: "Master Node Arena",
+            titlePrefix: "SIMULAÇÕES INDUSTRIAIS",
+            titleHighlight: "DE ALTO NÍVEL ESTRATÉGICO",
             body: "Aguardando sincronização de briefing regional...",
             description: "Este setor estratégico está em fase de mapeamento para simulações de alta performance.",
             features: ["Módulo Alpha Ready", "Real-time Metrics", "AI Powered"],
@@ -128,9 +128,9 @@ const ActivityDetail: React.FC = () => {
                   </span>
                </div>
 
-               <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white uppercase italic tracking-tighter leading-[0.85]">
+               <h1 className="text-3xl md:text-5xl lg:text-5xl font-black text-white uppercase italic tracking-tighter leading-[0.85] pr-8 md:pr-12 select-none">
                   {content.titlePrefix || 'Forje Seu'} <br/>
-                  <span className={`text-transparent bg-clip-text bg-gradient-to-r ${content.accent === 'orange' ? 'from-orange-600 via-orange-400 to-white' : 'from-blue-600 via-blue-400 to-white'}`}>
+                  <span className={`inline-block text-transparent bg-clip-text bg-gradient-to-r ${content.accent === 'orange' ? 'from-orange-600 via-orange-400 to-white' : 'from-blue-600 via-blue-400 to-white'} pr-6 pb-1`}>
                      {content.titleHighlight || content.name}
                   </span>
                </h1>
