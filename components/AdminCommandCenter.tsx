@@ -63,6 +63,11 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
   const [tutorView, setTutorView] = useState<TutorView>('dashboard');
   const [isTimerExpired, setIsTimerExpired] = useState(false);
 
+  // Custom force expire modal states
+  const [showForceExpireModal, setShowForceExpireModal] = useState(false);
+  const [checkingTeamsLoading, setCheckingTeamsLoading] = useState(false);
+  const [pendingTeams, setPendingTeams] = useState<{ id: string; name: string }[]>([]);
+
   useEffect(() => {
     setIsTimerExpired(false);
   }, [selectedArena?.id]);
@@ -250,9 +255,49 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
     }
   };
 
-  const handleForceExpire = async () => {
+  const openForceExpireConfirmation = async () => {
     if (!selectedArena) return;
-    if (!confirm("Tem certeza que deseja antecipar o término do tempo deste round? O temporizador será fechado imediatamente para todas as equipes, impossibilitando novas decisões.")) return;
+    setCheckingTeamsLoading(true);
+    try {
+      const isTrial = !!selectedArena.is_trial;
+      const teamsTable = isTrial ? 'trial_teams' : 'teams';
+      const decisionsTable = isTrial ? 'trial_decisions' : 'current_decisions';
+      const targetRound = selectedArena.current_round + 1;
+
+      // Buscar as equipes inscritas nesta arena
+      const { data: teamsData } = await supabase
+        .from(teamsTable)
+        .select('id, name, is_bot')
+        .eq('championship_id', selectedArena.id);
+
+      // Buscar decisões registradas para este round atual
+      const { data: decisionsData } = await supabase
+        .from(decisionsTable)
+        .select('team_id')
+        .eq('championship_id', selectedArena.id)
+        .eq('round', targetRound);
+
+      const submittedTeamIds = new Set((decisionsData || []).map(d => d.team_id));
+
+      // Filtrar as equipes (por convenção, apenas equipes de jogadores humanos, is_bot !== true) que não entregaram
+      const pending = (teamsData || [])
+        .filter(t => !t.is_bot && !submittedTeamIds.has(t.id))
+        .map(t => ({ id: t.id, name: t.name }));
+
+      setPendingTeams(pending);
+      setShowForceExpireModal(true);
+    } catch (err) {
+      console.error("[CRITICAL] Falha ao verificar decisões pendentes:", err);
+      setPendingTeams([]);
+      setShowForceExpireModal(true);
+    } finally {
+      setCheckingTeamsLoading(false);
+    }
+  };
+
+  const confirmForceExpire = async () => {
+    setShowForceExpireModal(false);
+    if (!selectedArena) return;
     
     let durationMs = 0;
     const deadlineVal = selectedArena.deadline_value ?? 7;
@@ -327,11 +372,12 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                        {selectedArena.config?.is_paused ? <Play size={12} fill="currentColor" /> : <Pause size={12} fill="currentColor" />}
                     </button>
                     <button 
-                       onClick={handleForceExpire}
+                       onClick={openForceExpireConfirmation}
+                       disabled={checkingTeamsLoading}
                        title="Concluir tempo (Zerar Temporizador)"
-                       className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all active:scale-90 flex items-center justify-center cursor-pointer"
+                       className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 disabled:opacity-35 rounded-lg transition-all active:scale-90 flex items-center justify-center cursor-pointer"
                     >
-                       <CheckSquare size={12} />
+                       {checkingTeamsLoading ? <Loader2 size={12} className="animate-spin text-orange-500" /> : <CheckSquare size={12} />}
                     </button>
                   </div>
                 </div>
@@ -527,6 +573,83 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
         {showWizard && (
           <div className="fixed inset-0 z-[5000] bg-slate-950 p-4 md:p-10 flex items-center justify-center overflow-hidden">
              <TrialWizard onComplete={() => { setShowWizard(false); fetchData(); }} />
+          </div>
+        )}
+        {showForceExpireModal && (
+          <div className="fixed inset-0 z-[7000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0, scale: 0.95 }} 
+               animate={{ opacity: 1, scale: 1 }} 
+               exit={{ opacity: 0, scale: 0.95 }}
+               className="max-w-xl w-full bg-[#0b1329] border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl relative"
+            >
+               <div className="p-8 space-y-6">
+                 {/* Header com Ícone e Título */}
+                 <div className="flex items-start gap-4">
+                   <div className="p-3 bg-orange-600/10 text-orange-500 rounded-xl">
+                     <AlertOctagon size={24} className="animate-pulse" />
+                   </div>
+                   <div className="space-y-1">
+                     <h3 className="text-lg font-black text-white uppercase tracking-wider italic">Antecipar Término do Round</h3>
+                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Protocolo de Emergência do Tutor</p>
+                   </div>
+                 </div>
+
+                 {/* Corpo do Texto */}
+                 <div className="space-y-4">
+                   <p className="text-sm text-slate-100 leading-relaxed">
+                     Tem certeza que deseja antecipar o término do tempo do round?
+                   </p>
+
+                   {pendingTeams.length > 0 ? (
+                     <div className="space-y-3 bg-rose-500/5 border border-rose-500/20 p-4 rounded-xl">
+                       <p className="text-xs text-rose-400 font-bold uppercase tracking-wider leading-relaxed">
+                         {pendingTeams.length === 1 
+                           ? `A Equipe "${pendingTeams[0].name}" não concluiu suas decisões!`
+                           : `As seguintes equipes não concluíram as decisões:`
+                         }
+                       </p>
+                       <div className="flex flex-wrap gap-2 pt-1">
+                         {pendingTeams.map((team) => (
+                           <span 
+                             key={team.id} 
+                             className="px-2.5 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[10px] font-black uppercase rounded-lg"
+                           >
+                             ● {team.name}
+                           </span>
+                         ))}
+                       </div>
+                     </div>
+                   ) : (
+                     <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-xl">
+                       <p className="text-xs text-emerald-400 font-bold uppercase tracking-wider">
+                         Todas as Equipes já entregaram suas decisões para este round.
+                       </p>
+                     </div>
+                   )}
+
+                   <p className="text-[11px] text-slate-400 leading-relaxed italic bg-slate-950/40 p-3 border border-white/5 rounded-lg">
+                     O temporizador será fechado imediatamente para todas as equipes, impossibilitando novas decisões.
+                   </p>
+                 </div>
+
+                 {/* Botões de Ação */}
+                 <div className="flex justify-end gap-3 pt-2">
+                   <button 
+                     onClick={() => setShowForceExpireModal(false)}
+                     className="px-5 py-3 border border-white/10 text-slate-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-white/5 transition-all active:scale-95"
+                   >
+                     CANCELAR
+                   </button>
+                   <button 
+                     onClick={confirmForceExpire}
+                     className="px-6 py-3 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg hover:bg-orange-500 hover:shadow-orange-600/25 transition-all active:scale-95"
+                   >
+                     CONTINUAR
+                   </button>
+                 </div>
+               </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>
