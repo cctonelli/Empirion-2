@@ -116,7 +116,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
       BP_STEPS[stepIdx].label, 
       "Design de Modelo de Negócio", 
       JSON.stringify({ step: formData[stepIdx], canvas: canvasData, empathy: empathyData }), 
-      `Com base no framework de Osterwalder, gere uma análise para ${BP_STEPS[stepIdx].label}. Considere o histórico P00-P${currentRound-1}: ${JSON.stringify(simHistory.map(h => ({ round: h.round, kpis: h.kpis })))}. Analise a coesão entre os blocos do canvas.`, 
+      `Com base no framework de Osterwalder, gere uma análise para ${BP_STEPS[stepIdx].label}. Considere o histórico R-00 (INICIAL) - R-${currentRound-1}: ${JSON.stringify(simHistory.map(h => ({ round: h.round, kpis: h.kpis })))}. Analise a coesão entre os blocos do canvas.`, 
       branch
     );
     setFormData(prev => ({ ...prev, [stepIdx]: { ...prev[stepIdx], text: suggestion } }));

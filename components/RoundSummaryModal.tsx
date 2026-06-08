@@ -486,7 +486,7 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
                     onClick={onClose}
                     className="px-8 py-3.5 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-extrabold text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
                   >
-                    Excelente, Ir para decisões de P-{(roundNumber < 10 ? '0' : '') + (roundNumber + 1)}
+                    Excelente, Ir para decisões de R-{(roundNumber < 10 ? '0' : '') + (roundNumber + 1)}
                   </button>
                 </div>
               </div>

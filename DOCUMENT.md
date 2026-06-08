@@ -2,9 +2,24 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.103 PrevInstallationsVal Fixed Assets Sync (Sapphire Audit Guard Compliance)
+- **Versão Ativa:** v2026.104 R-00 Greenfield Isolation & Union Strike Demissions (Sapphire Compliance)
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Regra de Negócio - Isolamento do R-00 Greenfield & Gatilho de Demissões Consecutivas - v2026.104
+
+**Data:** 08 de Junho de 2026 às 13:30 UTC  
+**Motivo:** Assegurar que Campeonatos iniciados em modo Greenfield "START FROM ZERO" não tenham disparos acidentais ou falsos positivos de greves operacionais baseados na rodada fiduciária R-00 (onde as decisões dos alunos de fato ainda não foram jogadas). Paralelamente, atende-se a uma demanda sênior do setor de Clima Organizacional para punir demissões em excesso que prejudicam gravemente a estabilidade laboral e instabilidade fabril por meio de um gatilho direto de greve para desligamentos recorrentes de operários (2 rodadas de demissões consecutivas base).  
+**Principais diferenças:**  
+- **Desconsideração Contábil de R-00 para Greves:** No motor principal (`simulation.ts`) e no pré-calculador analítico (`simulation-core.ts`), caso o Campeonato seja jogado com o modo `start_from_zero` ativo, se estivermos simulando o período 1 (`currentRound <= 1`), a contagem histórica de rounds ruins em motivação (`consecutive_ruim_rounds`) e de rounds com desligamentos operacionais (`consecutive_fired_rounds`) é forçada a `0`, bloqueando qualquer ativação indevida e garantindo a devida isonomia para frotas industriais na rodada inaugural de jogo.
+- **Regulamento Trabalhista de Dupla Contingência:** Implementação do KPI `consecutive_fired_rounds` e salvamento nos KPIs da equipe. O sindicato dos operários decreta paralisação total de 50% (`strike_active = true`) se a liderança da empresa executar de forma continuada demissões na linha fabril de produção (`fired > 0`) em duas rodadas consecutivas.
+- **Microcopy de Instrução Atualizado:** Atualizada a legenda em `HRStep.tsx` da tomada de decisões das equipes indicando que tanto o clima "RUIM" ($\le 0.75$) por dois rounds seguidos quanto demissões em dois períodos contínuos decretam greve na fábrica automática.
+- **Alertas Claros e Dinâmicos:** O motor do Simulador gera mensagens de erro e alertas de acordo com o fator iniciador específico (motivacional, desligamentos sucessivos ou ambos acumulados) para que a equipe saiba exatamente o que deve corrigir.
+**Impactos esperados:**  
+- **Saneamento de Falsos Alertas Greenfield:** Zero problemas contábeis e estabilidade no onboarding de times na primeira rodada jogada de novos simuladores.
+- **Estreitamento Estratégico Humano:** Maior realismo econômico e planejamento das equipes na redução do quadro profissional (MOD).
 
 ---
 

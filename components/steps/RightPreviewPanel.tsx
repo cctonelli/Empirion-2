@@ -314,7 +314,7 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
       <div className="p-4 bg-[#090d16] border-b border-white/10 shrink-0 flex justify-between items-center gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <Activity size={16} className="text-orange-500 animate-pulse shrink-0" />
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white font-mono truncate">Piloto Imperial (T+1)</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white font-mono truncate">Real-time Analysis</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Badge Global de Integridade Contábil Z-Guard */}

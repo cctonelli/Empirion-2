@@ -363,7 +363,7 @@ Sempre que a equipe / campeonato optar por operar no modelo de **Prédio Locado*
 
 ---
 
-## 12. Mecanismo de Greve e Gestão de Clima Organizacional (v19.82)
+## 12. Mecanismo de Greve e Gestão de Clima Organizacional (v19.83)
 
 O sistema de simulação do Empirion incorpora uma lógica estrita de comportamento humano e clima organizacional para os operários fabris (MOD). O acionamento de greves segue regras de tolerância social e inteligência de relações trabalhistas rígidas:
 
@@ -371,23 +371,32 @@ O sistema de simulação do Empirion incorpora uma lógica estrita de comportame
    - O clima organizacional da fábrica é determinado pelo **Índice de Motivação** (`motivationIndex`) calculado em cada ciclo.
    - Sempre que o Índice de Motivação for inferior a **0.75**, o status de clima da força de trabalho é classificado como **"RUIM"** (`motivation_level = 'RUIM'`).
 
-2. **Gatilho de Ativação Consecutivo (Regra de Dois Rounds):**
-   - **Rodada 1 em Nível "RUIM":** Dispara apenas o **Alerta de Greve** (`strike_alert_active = true`). Não há perda produtiva imediata. É emitido um aviso preventivo categórico no cockpit do aluno: *"ALERTA DE GREVE: O clima organizacional caiu para nível RUIM. Se mantiver esse nível insatisfatório na próxima rodada, os operários entrarão em GREVE imediata no próximo período!"*
-   - **Rodada 2 (ou mais) Consecutivas em Nível "RUIM":** Ativa integralmente a **Greve na Fábrica** (`strike_active = true`). Os trabalhadores paralisam as atividades de forma severa.
+2. **Gatilhos de Ativação Consecutivos (Regra de Dois Rounds / Dupla Contingência):**
+   - **Gatilho de Motivação RUIM:** Se a força de trabalho persistir por **2 rounds consecutivos** em clima **"RUIM"**, os trabalhadores iniciam greve.
+     - *Rodada 1:* Dispara apenas o **Alerta de Greve**.
+     - *Rodada 2:* Ativa a **Greve na Fábrica** (`strike_active = true`).
+   - **Gatilho de Demissões Operacionais Consecutivas:** Caso a gestão realize demissões de operários da produção (`fired > 0`) em **2 rounds consecutivos**, o sindicato decreta greve imediata (`strike_active = true`) devido à acentuada instabilidade organizacional e clima severo de insegurança no trabalho.
+     - *Rodada 1 com demissões:* Dispara um **Alerta de Insegurança**.
+     - *Rodada 2 consecutiva com demissões:* Ativa a **Greve na Fábrica** (`strike_active = true`).
+   - **Tratamento Fiduciário do Modo "START FROM ZERO" (Regra de Exclusão R-00):** 
+     - No modo *Start from Zero*, o round inicial R-00 (Período de Abertura) é um round administrativo estruturante de setup e **não conta como rodada jogada**. 
+     - Portanto, as contagens consecutivas tanto de motivação RUIM quanto de demissões são **reiniciadas em 0** quando se simula o Round 1 fiduciário. Não há sob qualquer hipótese ativação de greve imediata no Round 1 derivada de eventos simulados em R-00.
 
 3. **Impacto Econômico e Operacional da Greve Ativa:**
    - **Paralisação de 50%:** Incide um fator de corte de **50% sobre toda a força produtiva** (`strikeFactor = 0.50`), afetando diretamente a equação de unidades fabricadas na rodada:
      $$\text{unitsProduced} = \text{Math.floor}(\text{effectiveCapacity} \times \text{activityLevel} \times \text{productivityIndex} \times 0.50)$$
-   - **Placa de Atenção Crítica:** O cockpit exibe o aviso urgente no painel de avisos de Gestão de Pessoas Sênior: *"ATENÇÃO CRÍTICA: GREVE ATIVA NA FÁBRICA! Devido a dois rounds consecutivos com Índice de Motivação RUIM (< 0.75), a produção de sua empresa foi paralisada em 50%! Melhore salários e PPR imediatamente para acabar com a paralisação."*
+   - **Placas de Avisos Segmentadas:** O cockpit exibe o aviso do sindicato correspondente ao gatilho ativo (Seja motivacional, por demissões, ou ambos).
 
 4. **Resolução e Encerramento da Greve:**
-   - Para encerrar a greve, a gestão precisa elevar o Clima Organizacional / Índice de Motivação para patamares superiores ou iguais a **0.75** (saindo do nível "RUIM") por meio de aumentos salariais efetivos ou melhoria na participação de resultados (PPR).
-   - Quando o índice sobe para $\ge 0.75$, a contagem consecutiva de rounds ruins é zerada (`consecutive_ruim_rounds = 0`), levantando imediatamente a paralisação no processamento do próximo período e restaurando 100% da produtividade original.
+   - Para encerrar a greve imposta por motivação RUIM, a gestão precisa elevar a motivação $\ge 0.75$ por meio de salários competitivos ou melhores taxas de PPR.
+   - Para encerrar a greve imposta por demissões operacionais, a gestão deve suspender novos desligamentos por pelo menos 1 rodada. 
+   - A superação do fator causador zera as respectivas contagens (`consecutive_ruim_rounds = 0` / `consecutive_fired_rounds = 0`), restabelecendo imediatamente 100% da capacidade industrial.
 
 ---
 
 **Histórico de Versões**
 
+- **v19.83** (08/06/2026) – Correção de isolamento fiduciário do R-00 Greenfield no "START FROM ZERO" e ativação de dupla contingência sindical por demissões operacionais consecutivas (2 rodadas de demissões consecutivas) regulamentada em BUSINESS_RULES.md e DOCUMENT.md.
 - **v19.82** (06/06/2026) – Documentação das regras de ativação de greves para operários baseadas no Índice de Motivação consecutivos (< 0.75 por 2 rounds) e o respectivo impacto operacional de 50% de redução na fabricação.
 - **v19.25** (28/05/2026) – Introdução de travas fiduciárias reativas com validador de rateio (soma = 100% mandatória), breakdown analítico expandido de aluguel por CIF x OPEX no drawer de preview e documentação oficial completa de locação em BUSINESS_RULES.md.
 - **v19.12** (25/05/2026) – Harmonização completa do Fluxo de Caixa pelo Comitê Contábil (v19.12), introdução da Redoma de Caixa (resgate preventivo de aplicações financeiras para preservação de rating de crédito) e ativação rigorosa de Treinamento e Estocagem no CIF contábil (Absorção).

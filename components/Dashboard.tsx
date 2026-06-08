@@ -510,7 +510,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05 } },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
     xaxis: { 
-      categories: visibleHistory.map(h => `P${h.round < 10 ? '0' : ''}${h.round}`), 
+      categories: visibleHistory.map(h => `R-${h.round < 10 ? '0' : ''}${h.round}`), 
       labels: { style: { colors: '#64748b', fontSize: '10px', fontWeight: 800 } } 
     },
     yaxis: { labels: { style: { colors: '#64748b', fontSize: '10px' } } },
@@ -811,7 +811,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           <EmpirionAreaChart
                             id="equity-evolution"
                             title="Evolução do Patrimônio Líquido"
-                            categories={visibleHistory.map(h => `P${h.round < 10 ? '0' : ''}${h.round}`)}
+                            categories={visibleHistory.map(h => `R-${h.round < 10 ? '0' : ''}${h.round}`)}
                             series={[{ name: 'Patrimônio Líquido', data: visibleHistory.map(h => h.equity) }]}
                             color="#3b82f6"
                             currency={activeArena?.currency || 'BRL'}
@@ -819,7 +819,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           <EmpirionAreaChart
                             id="liquidity-evolution"
                             title="Índice de Liquidez Corrente"
-                            categories={visibleHistory.map(h => `P${h.round < 10 ? '0' : ''}${h.round}`)}
+                            categories={visibleHistory.map(h => `R-${h.round < 10 ? '0' : ''}${h.round}`)}
                             series={[{ name: 'Liquidez Corrente', data: visibleHistory.map(h => h.kpis?.liquidity_current || 0) }]}
                             color="#10b981"
                             currency={activeArena?.currency || 'BRL'}

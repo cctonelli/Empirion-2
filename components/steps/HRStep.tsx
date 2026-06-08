@@ -125,7 +125,7 @@ export const HRStep: React.FC<HRStepProps> = ({
               )}
             </div>
             <p className="text-xs text-slate-400 mt-2">
-              Dois rounds consecutivos em 'RUIM' ativam greve.
+              Dois rounds consecutivos em 'RUIM' ou com demissões operacionais ativam greve.
             </p>
           </div>
 

@@ -460,7 +460,7 @@ export const calculateProjections = (
   }
   machineAgeFactor = Math.max(0.70, Math.min(1.00, machineAgeFactor));
 
-  // --- RENDIMENTO DE MOTIVAÇÃO E CLIMA (CÁLCULO E GREVE SÊNIOR) ---
+  // --- RENDIMENTO DE MOTIVAÇÃO E CLIMA (CÁLCULO E GREVE SÊNIOR / DESIGN MULTIDISCIPLINAR CR) ---
   const motivationIndex = (motivationFactor + (1.0 - demissionInsecurityFactor)) / 2.0;
   
   let motivationLevel: 'ALTO' | 'BOM' | 'REGULAR' | 'RUIM' = 'REGULAR';
@@ -474,12 +474,33 @@ export const calculateProjections = (
     motivationLevel = 'RUIM';
   }
 
-  // Lógica de Greve persistida por rodadas consecutivas ruins
+  // Lógica de Greve persistida por rodadas consecutivas ruins ou demissões consecutivas (v19.82+)
   const prevConsecutiveRuim = team.kpis?.consecutive_ruim_rounds || 0;
-  const consecutiveRuimRounds = motivationLevel === 'RUIM' ? (prevConsecutiveRuim + 1) : 0;
-  const strikeActive = consecutiveRuimRounds >= 2;
+  const prevConsecutiveFires = team.kpis?.consecutive_fired_rounds || 0;
+  let adjustedPrevConsecutiveRuim = prevConsecutiveRuim;
+  let adjustedPrevConsecutiveFires = prevConsecutiveFires;
+
+  // No modo "START FROM ZERO", o round R-00 (Inicial) não é considerado como round jogado para fins de greve.
+  // Logo, se estivermos simulando o round 1 (onde o round logo anterior era o R-00), as contagens consecutivas prévias devem ser desconsideradas.
+  const isGreenfieldZero = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
+  if (isGreenfieldZero && currentRound <= 1) {
+    adjustedPrevConsecutiveRuim = 0;
+    adjustedPrevConsecutiveFires = 0;
+  }
+
+  let consecutiveRuimRounds = motivationLevel === 'RUIM' ? (adjustedPrevConsecutiveRuim + 1) : 0;
+  let consecutiveFiredRounds = fired > 0 ? (adjustedPrevConsecutiveFires + 1) : 0;
+
+  // No próprio período inicial (Round 0 ou inferior), as contagens também permanecem zeradas por definição
+  if (currentRound <= 0) {
+    consecutiveRuimRounds = 0;
+    consecutiveFiredRounds = 0;
+  }
+
+  // A greve é ativada se acumularmos 2 rounds consecutivos com motivação RUIM OU 2 rounds consecutivos com demissões operacionais
+  const strikeActive = consecutiveRuimRounds >= 2 || consecutiveFiredRounds >= 2;
   const strikeFactor = strikeActive ? 0.50 : 1.0; // Paralisação severa de 50%
-  const strikeAlertActive = consecutiveRuimRounds === 1;
+  const strikeAlertActive = (consecutiveRuimRounds === 1 || consecutiveFiredRounds === 1) && !strikeActive;
 
   // Índice Combina todos os modificadores
   const productivityIndex = trainingFactor * motivationFactor * fatigueFactor * demissionInsecurityFactor * machineAgeFactor;
@@ -1276,6 +1297,7 @@ export const calculateProjections = (
       motivation_index: parseFloat(motivationIndex.toFixed(3)),
       motivation_level: motivationLevel,
       consecutive_ruim_rounds: consecutiveRuimRounds,
+      consecutive_fired_rounds: consecutiveFiredRounds,
       strike_active: strikeActive,
       strike_activated: strikeActive ? 'SIM' : 'NÃO',
       strike_alert_active: strikeAlertActive,

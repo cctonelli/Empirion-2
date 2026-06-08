@@ -837,7 +837,7 @@ export function processRoundWithValidation(
   }
   machineAgeFactor = Math.max(0.70, Math.min(1.00, machineAgeFactor));
 
-  // --- RENDIMENTO DE MOTIVAÇÃO E CLIMA (CÁLCULO E GREVE SÊNIOR) ---
+  // --- RENDIMENTO DE MOTIVAÇÃO E CLIMA (CÁLCULO E GREVE SÊNIOR / DESIGN MULTIDISCIPLINAR CR) ---
   const motivationIndex = (motivationFactor + (1.0 - demissionInsecurityFactor)) / 2.0;
   
   let motivationLevel: 'ALTO' | 'BOM' | 'REGULAR' | 'RUIM' = 'REGULAR';
@@ -851,10 +851,33 @@ export function processRoundWithValidation(
     motivationLevel = 'RUIM';
   }
 
+  // Lógica de Greve persistida por rodadas consecutivas ruins ou demissões consecutivas (v19.82+)
   const prevConsecutiveRuim = team.kpis?.consecutive_ruim_rounds || 0;
-  const consecutiveRuimRounds = motivationLevel === 'RUIM' ? (prevConsecutiveRuim + 1) : 0;
-  const strikeActive = consecutiveRuimRounds >= 2;
+  const prevConsecutiveFires = team.kpis?.consecutive_fired_rounds || 0;
+  let adjustedPrevConsecutiveRuim = prevConsecutiveRuim;
+  let adjustedPrevConsecutiveFires = prevConsecutiveFires;
+
+  // No modo "START FROM ZERO", o round R-00 (Inicial) não é considerado como round jogado para fins de greve.
+  // Logo, se estivermos simulando o round 1 (onde o round logo anterior era o R-00), as contagens consecutivas prévias devem ser desconsideradas.
+  const isGreenfieldZero = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
+  if (isGreenfieldZero && currentRound <= 1) {
+    adjustedPrevConsecutiveRuim = 0;
+    adjustedPrevConsecutiveFires = 0;
+  }
+
+  let consecutiveRuimRounds = motivationLevel === 'RUIM' ? (adjustedPrevConsecutiveRuim + 1) : 0;
+  let consecutiveFiredRounds = fired > 0 ? (adjustedPrevConsecutiveFires + 1) : 0;
+
+  // No próprio período inicial (Round 0 ou inferior), as contagens também permanecem zeradas por definição
+  if (currentRound <= 0) {
+    consecutiveRuimRounds = 0;
+    consecutiveFiredRounds = 0;
+  }
+
+  // A greve é ativada se acumularmos 2 rounds consecutivos com motivação RUIM OU 2 rounds consecutivos com demissões operacionais
+  const strikeActive = consecutiveRuimRounds >= 2 || consecutiveFiredRounds >= 2;
   const strikeFactor = strikeActive ? 0.50 : 1.0;
+  const strikeAlertActive = (consecutiveRuimRounds === 1 || consecutiveFiredRounds === 1) && !strikeActive;
 
   // Índice Combina todos os modificadores
   const productivityIndex = trainingFactor * motivationFactor * fatigueFactor * demissionInsecurityFactor * machineAgeFactor;
@@ -1140,11 +1163,23 @@ export function processRoundWithValidation(
     warnings.push(`Cisne de Estoque Ativado: A quantidade de produção de ${unitsProduced} un exigiu compras de emergência de MP A (+${emergencyMPA} un) e MP B (+${emergencyMPB} un) gerando penalização de ágio de especial premium.`);
   }
 
-  // Alertas de Gestão de Pessoas Sênior (v19.5 Sapphire Gold)
+  // Alertas de Gestão de Pessoas Sênior (v19.5 Sapphire Gold / v19.82+)
   if (strikeActive) {
-    warnings.push(`ATENÇÃO CRÍTICA: GREVE ATIVA NA FÁBRICA! Devido a dois rounds consecutivos com Índice de Motivação RUIM (< 0.75), a produção de sua empresa foi paralisada em 50%! Melhore salários e PPR imediatamente para acabar com a paralisação.`);
-  } else if (consecutiveRuimRounds === 1) {
-    warnings.push(`ALERTA DE GREVE: O clima organizacional caiu para nível RUIM (Índice de Motivação = ${motivationIndex.toFixed(2)} < 0.75). Se mantiver esse nível insatisfatório na próxima rodada, os operários entrarão em GREVE imediata no próximo período!`);
+    if (consecutiveRuimRounds >= 2 && consecutiveFiredRounds >= 2) {
+      warnings.push(`ATENÇÃO CRÍTICA: GREVE ATIVA NA FÁBRICA! Devido a dois rounds consecutivos com Índice de Motivação RUIM (< 0.75) e demissões operacionais consecutivas, a produção foi paralisada em 50%! Melhore o Clima Organizacional e interrompa as demissões para retomar a operação normal.`);
+    } else if (consecutiveRuimRounds >= 2) {
+      warnings.push(`ATENÇÃO CRÍTICA: GREVE ATIVA NA FÁBRICA! Devido a dois rounds consecutivos com Índice de Motivação RUIM (< 0.75), a produção de sua empresa foi paralisada em 50%! Melhore salários e PPR imediatamente para acabar com a paralisação.`);
+    } else {
+      warnings.push(`ATENÇÃO CRÍTICA: GREVE ATIVA NA FÁBRICA! Devido a demissões consecutivas de operários em dois rounds seguidos, o sindicato decretou greve geral e a produção foi paralisada em 50%! Interrompa as demissões consecutivas imediatamente para retomar a atividade normal.`);
+    }
+  } else {
+    if (consecutiveRuimRounds === 1 && consecutiveFiredRounds === 1) {
+      warnings.push(`ALERTA DE GREVE: O clima organizacional caiu para nível RUIM (< 0.75) e ocorreram demissões operacionais neste período. Se mantiver qualquer um desses fatores na próxima rodada, os operários entrarão em GREVE imediata no próximo período!`);
+    } else if (consecutiveRuimRounds === 1) {
+      warnings.push(`ALERTA DE GREVE: O clima organizacional caiu para nível RUIM (Índice de Motivação = ${motivationIndex.toFixed(2)} < 0.75). Se mantiver esse nível insatisfatório na próxima rodada, os operários entrarão em GREVE imediata no próximo período!`);
+    } else if (consecutiveFiredRounds === 1) {
+      warnings.push(`ALERTA DE GREVE: Ocorreram demissões operacionais neste período. Caso ocorra nova demissão na próxima rodada (dois rounds seguidos), o sindicato decretará GREVE imediata no próximo período por instabilidade organizacional!`);
+    }
   }
 
   // 2. Auditoria Contábil de Consistência Tripla Rígida se o resultado calculado for fornecido
