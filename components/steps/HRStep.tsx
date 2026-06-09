@@ -101,15 +101,19 @@ export const HRStep: React.FC<HRStepProps> = ({
     const socialChargesRate = (currentMacro?.social_charges !== undefined ? currentMacro.social_charges : 35) / 100;
 
     // --- MOD ---
+    const startingMode = activeArena?.config?.starting_mode || activeArena?.starting_mode;
+    const defaultRequired = startingMode === 'start_from_zero' ? 0 : 376;
+    const defaultPrevMOD = startingMode === 'start_from_zero' ? 0 : 470;
+
     const currentMachines = kpis.machines || [];
     const operatorsRequired = currentMachines.reduce((acc: number, m: any) => {
       const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
       const sReq = normModel === 'alpha' ? 94 : normModel === 'beta' ? 235 : 445;
       return acc + sReq;
-    }, 0) || 376;
+    }, 0) || defaultRequired;
 
     // Quadro real de pessoal MOD (contratações e demissões do round e base anterior)
-    const prevMOD = kpis.staffing?.production !== undefined ? kpis.staffing.production : 470;
+    const prevMOD = kpis.staffing?.production !== undefined ? kpis.staffing.production : defaultPrevMOD;
     const hired = parseInt(decisions.hr?.hired) || 0;
     const fired = parseInt(decisions.hr?.fired) || 0;
     const operatorsAvailable = Math.max(0, prevMOD + hired - fired);

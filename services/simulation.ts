@@ -266,6 +266,7 @@ export const calculateProjections = (
   // - Prédio Próprio: Edifício deprecia a taxa parametrizável (property_depreciation_rate, padrão 4% ao ano). Terreno não deprecia.
   // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de taxa parametrizável (buildingsDepRateAnnual, padrão 10% ao ano).
   const isZeroModeLocal = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
+  const defaultStaff = isZeroModeLocal ? 0 : 470;
   const buildMode = ecoConfig.building_mode ?? 'owned';
   
   // Custos padrão de instalação por sofisticação de máquina
@@ -360,7 +361,7 @@ export const calculateProjections = (
   const activityLevel = sanitize(decision.production?.activityLevel, 100) / 100;
 
   // Verificação de Operadores vs Capacidade
-  const operatorsAvailable = (team.kpis?.staffing?.production || 470) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
+  const operatorsAvailable = (team.kpis?.staffing?.production !== undefined ? team.kpis.staffing.production : defaultStaff) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
   const operatorsRequired = currentMachines.reduce((acc, m) => {
     const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
     return acc + (indicators.machine_specs[normModel as MachineModel]?.operators_required || 0);
@@ -385,7 +386,7 @@ export const calculateProjections = (
   const totalPayrollSales = payrollSales + socialChargesSales;
 
   // --- 3.1 CÁLCULO DE RESCISÃO E PPR PROPORCIONAL (USER REQUEST) ---
-  const totalStaff = (team.kpis?.staffing?.production || 470) + staffAdmin + staffSales;
+  const totalStaff = (team.kpis?.staffing?.production !== undefined ? team.kpis.staffing.production : defaultStaff) + staffAdmin + staffSales;
   const firedTotal = sanitize(decision.hr?.fired, 0);
   
   // PPR proporcional aos demitidos (liquidado na rescisão)
@@ -444,7 +445,7 @@ export const calculateProjections = (
 
   // 4. Demission Insecurity Factor (0.65 ~ 1.00)
   const fired = sanitize(decision.hr?.fired, 0);
-  const previousStaff = team.kpis?.staffing?.production || 470;
+  const previousStaff = team.kpis?.staffing?.production !== undefined ? team.kpis.staffing.production : defaultStaff;
   const firedFraction = fired / (previousStaff || 1);
   let demissionInsecurityFactor = 1.0;
   if (firedFraction > 0) {

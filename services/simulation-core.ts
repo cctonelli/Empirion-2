@@ -747,6 +747,9 @@ export function processRoundWithValidation(
   const netPlannedMpbPrice = netMpbPrice * supplierInterestFactor;
 
   // Calculando capacidade e operadores
+  const isZeroMode = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
+  const defaultStaff = isZeroMode ? 0 : 470;
+
   let currentMachines: MachineInstance[] = [...(calculatedResult?.machines || team.kpis?.machines || [])];
   const sellIds = decision.machinery?.sell_ids || [];
   if (sellIds.length > 0) {
@@ -769,7 +772,7 @@ export function processRoundWithValidation(
     return acc + (indicators.machine_specs[normModel as 'alpha' | 'beta' | 'gamma']?.production_capacity || 0);
   }, 0) * capMult;
   const activityLevel = sanitize(decision.production?.activityLevel, 100) / 100;
-  const operatorsAvailable = (team.kpis?.staffing?.production || 470) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
+  const operatorsAvailable = (team.kpis?.staffing?.production !== undefined ? team.kpis.staffing.production : defaultStaff) + sanitize(decision.hr?.hired, 0) - sanitize(decision.hr?.fired, 0);
   const operatorsRequired = currentMachines.reduce((acc, m) => {
     const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
     return acc + (indicators.machine_specs[normModel as 'alpha' | 'beta' | 'gamma']?.operators_required || 0);
@@ -821,7 +824,7 @@ export function processRoundWithValidation(
 
   // 4. Demission Insecurity Factor (0.65 ~ 1.00)
   const fired = sanitize(decision.hr?.fired, 0);
-  const previousStaff = team.kpis?.staffing?.production || 470;
+  const previousStaff = team.kpis?.staffing?.production !== undefined ? team.kpis.staffing.production : defaultStaff;
   const firedFraction = fired / (previousStaff || 1);
   let demissionInsecurityFactor = 1.0;
   if (firedFraction > 0) {
@@ -983,7 +986,6 @@ export function processRoundWithValidation(
   // Regra do CPC 27 Fiduciária de Real Estate (Patrimonial):
   // - Prédio Próprio: Edifício deprecia a taxa parametrizável (property_depreciation_rate, padrão 4% ao ano). Terreno não deprecia.
   // - Instalações Industriais / Benfeitorias: Amortização/Depreciação de taxa parametrizável (buildingsDepRateAnnual, padrão 10% ao ano).
-  const isZeroMode = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
   const buildMode = ecoConfig.building_mode ?? 'owned';
   
   // Custos padrão de instalação por sofisticação de máquina
@@ -1021,7 +1023,7 @@ export function processRoundWithValidation(
 
   const maintenance = capacity * 2.5 * inflationMult;
 
-  const totalStaff = (team.kpis?.staffing?.production || 470) + (indicators.staffing?.admin?.count || 20) + (indicators.staffing?.sales?.count || 10);
+  const totalStaff = (team.kpis?.staffing?.production !== undefined ? team.kpis.staffing.production : defaultStaff) + (indicators.staffing?.admin?.count || 20) + (indicators.staffing?.sales?.count || 10);
   const firedTotal = sanitize(decision.hr?.fired, 0);
   const prevPprPayable = findAccountValue(prevBS, 'liabilities.current.ppr_payable') || 0;
   const pprProporcional = (firedTotal > 0 && totalStaff > 0) ? prevPprPayable * (firedTotal / totalStaff) : 0;

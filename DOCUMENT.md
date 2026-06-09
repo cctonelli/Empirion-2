@@ -2,9 +2,26 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.110 active-core Dynamic Staffing Payroll.
+- **Versão Ativa:** v2026.111 Greenfield MOD Zero Verification.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Correção Greenfield ("Start From Zero") de Mão de Obra Direta (MOD) - v2026.111
+
+**Data:** 09 de Junho de 2026 às 17:35 UTC  
+**Motivo:** No modo "Start From Zero" (Greenfield), o sistema trazia uma inconsistência urgente: pré-inicializava uma força de trabalho fantasma de 470 funcionários na MOD (Mão de Obra Direta), mesmo antes de qualquer aquisição de maquinário na rodada inicial (R-01). Corrigimos isso de forma unificada no kernel de simulação (`simulation-core.ts` e `simulation.ts`) e no cockpit visual do painel (`HRStep.tsx`), garantindo uma experiência 100% de partida zerada fidedigna.
+
+**Detalhamento Técnico:**
+- **Inexistência de Operários no Início:** Se `starting_mode === 'start_from_zero'`, a equipe inicia rigorosamente com 0 operários operacionais na MOD (`defaultStaff = 0` em vez do padrão `470`).
+- **Zeramento de Operators Required:** Com frota de maquinários vazia (`machines = []`), os operadores necessários (`operatorsRequired`) agora começam devidamente em 0 no cockpit de gestão, impedindo a exigência fantasma de tripulação.
+- **Liberdade de Contratação Manual:** A aquisição de máquinas não gera contratação automatizada no round atual. Em consonância com a regra de gerenciamento de talentos do simulador, a equipe deve decidir e planejar manualmente o número de admissões no painel de contratação ("Número de Admissões"). Todas as admissões vêm do rascunho de decisões com o valor padrão `0`.
+- **Integridade de Auditoria Tripla:** As correções integraram as constantes globais e fórmulas de faturamento de simulação tanto em tempo real de visualização quanto na virada efetiva da rodada operada pela engine no Supabase.
+
+**Impactos:**
+- Erradicação de custos salariais injustificados e operários falsos em partidas de faturamento zero.
+- Preservação da conformidade de partidas "Start From Zero".
 
 ---
 
