@@ -447,7 +447,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                    : 'bg-emerald-600 text-white hover:bg-white hover:text-emerald-950 shadow-2xl shadow-emerald-600/20 cursor-pointer'
                }`}
             >
-               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Rocket size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} {isExpiredWaiting ? 'Aguardando Turnover' : 'Transmitir Protocolo'}
+               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Rocket size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} {isExpiredWaiting ? 'Aguardando Turnover' : 'Transmitir Decisão'}
             </button>
          </div>
       </header>
