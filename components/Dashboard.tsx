@@ -579,6 +579,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               isPaused={activeArena?.config?.is_paused}
               remainingMsAtPause={activeArena?.config?.remaining_ms_at_pause}
               onExpire={handleExpire}
+              isTournamentFinished={!!(activeArena && activeArena.current_round >= (activeArena.total_rounds || 6))}
             />
          </div>
       </section>

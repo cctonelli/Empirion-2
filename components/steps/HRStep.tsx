@@ -108,13 +108,19 @@ export const HRStep: React.FC<HRStepProps> = ({
       return acc + sReq;
     }, 0) || 376;
 
+    // Quadro real de pessoal MOD (contratações e demissões do round e base anterior)
+    const prevMOD = kpis.staffing?.production !== undefined ? kpis.staffing.production : 470;
+    const hired = parseInt(decisions.hr?.hired) || 0;
+    const fired = parseInt(decisions.hr?.fired) || 0;
+    const operatorsAvailable = Math.max(0, prevMOD + hired - fired);
+
     const activityLevel = (decisions.production?.activityLevel !== undefined ? decisions.production?.activityLevel : 100) / 100;
     const selectedShifts = parseInt(decisions.production?.shifts) || 1;
     let modMult = 1.0;
     if (selectedShifts === 2) modMult = 1.5;
     else if (selectedShifts === 3) modMult = 2.0;
 
-    const payrollMOD = operatorsRequired * currentSalary * activityLevel * modMult;
+    const payrollMOD = operatorsAvailable * currentSalary * activityLevel * modMult;
     const socialChargesMOD = payrollMOD * socialChargesRate;
     const productivityBonus = payrollMOD * ((decisions.hr?.productivityBonusPercent || 0) / 100);
     const totalMOD = payrollMOD + socialChargesMOD + productivityBonus;
@@ -138,6 +144,7 @@ export const HRStep: React.FC<HRStepProps> = ({
 
          return {
       operatorsRequired,
+      operatorsAvailable,
       activityLevel,
       modMult,
       payrollMOD,
@@ -396,11 +403,24 @@ export const HRStep: React.FC<HRStepProps> = ({
               </p>
             </div>
             <div className="space-y-1.5 border-t border-white/10 pt-2 text-xxs font-mono text-zinc-400">
-              <div className="flex justify-between">
-                <span>Pessoal Fabril (MOD):</span>
+              <div className="flex justify-between text-zinc-300 font-semibold mb-0.5">
+                <span>Pessoal Fabril (MOD - {payrollProjection.operatorsAvailable} operários):</span>
                 <span className="text-white font-bold">{formatCurrency(payrollProjection.totalMOD, 'BRL')}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="pl-3 flex justify-between text-[10px] text-zinc-500">
+                <span>├ Salários Base & Turnos:</span>
+                <span>{formatCurrency(payrollProjection.payrollMOD, 'BRL')}</span>
+              </div>
+              <div className="pl-3 flex justify-between text-[10px] text-zinc-500">
+                <span>├ Encargos Patronais ({(payrollProjection.socialChargesRate * 100).toFixed(0)}%):</span>
+                <span>{formatCurrency(payrollProjection.socialChargesMOD, 'BRL')}</span>
+              </div>
+              <div className="pl-3 flex justify-between text-[10px] text-zinc-500 mb-1">
+                <span>└ Prêmio Produtividade:</span>
+                <span>{formatCurrency(payrollProjection.productivityBonus, 'BRL')}</span>
+              </div>
+
+              <div className="flex justify-between border-t border-white/5 pt-1">
                 <span>Administração ({payrollProjection.staffAdmin} profs):</span>
                 <span className="text-white font-bold">{formatCurrency(payrollProjection.totalPayrollAdm, 'BRL')}</span>
               </div>

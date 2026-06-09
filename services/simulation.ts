@@ -367,7 +367,7 @@ export const calculateProjections = (
   }, 0);
   
   // Mão de Obra Direta (MOD) reajustada por inflação ou decisão e pelos turnos extras
-  const payrollMOD = operatorsRequired * currentSalary * activityLevel * modMult;
+  const payrollMOD = Math.max(0, operatorsAvailable) * currentSalary * activityLevel * modMult;
   const socialChargesMOD = payrollMOD * (socialChargesAttr - 1);
   const productivityBonus = payrollMOD * (sanitize(decision.hr?.productivityBonusPercent, 0) / 100);
   const totalMOD = payrollMOD + socialChargesMOD + productivityBonus;

@@ -1,7 +1,7 @@
 # Regras de Negócio Core - EMPIRION
 
-**Versão:** v19.82 Obsidian Diamond Enterprise  
-**Data:** 28 de Maio de 2026  
+**Versão:** v19.84 Obsidian Diamond Enterprise  
+**Data:** 09 de Junho de 2026  
 **Método Contábil:** Custeio por Absorção Completo (Full Absorption Costing)  
 **Referências:** CPC 16 (R1) / IAS 2 / SAP & Oracle Best Practices
 
@@ -67,9 +67,9 @@ Reflete o custo líquido (expurgado do IVA recuperável) de todos os insumos con
 ### B. Mão de Obra Direta (MOD)
 Compreende todos os salários, encargos, benefícios e indenizações diretamente vinculados aos operadores responsáveis pela manufatura dos produtos.
 
-1.  **Mão de Obra de Fábrica Base:**
-    Calculada partir dos operadores requeridos (`operatorsRequired`), salário-base atual (`currentSalary`) e nível de atividade de produção (`activityLevel`):
-    $$\text{payrollMOD} = \text{operatorsRequired} \times \text{currentSalary} \times \text{activityLevel}$$
+1.  **Mão de Obra de Fábrica Base (alinhamento dinâmico de equipe real v19.84):**
+    Calculada a partir dos operadores REAIS disponíveis de fato no ciclo (`operatorsAvailable = anterior + contratados - demitidos`), salário-base atual (`currentSalary`), nível de atividade de produção (`activityLevel`) e multiplicador de turnos extras (`modMult`):
+    $$\text{payrollMOD} = \text{operatorsAvailable} \times \text{currentSalary} \times \text{activityLevel} \times \text{modMult}$$
 
 2.  **Encargos Sociais e Benefícios:**
     *   **Encargos Sociais:** Incidência tributária programática sobre a folha de pagamento base:
@@ -396,6 +396,7 @@ O sistema de simulação do Empirion incorpora uma lógica estrita de comportame
 
 **Histórico de Versões**
 
+- **v19.84** (09/06/2026) – Alinhamento dinâmico contábil da folha de pagamento e encargos MOD com base na equipe real disponível (contratadas e desligadas do período) no kernel simulador, core preditivo e projeções em tempo real do HUD (HRStep.tsx).
 - **v19.83** (08/06/2026) – Correção de isolamento fiduciário do R-00 Greenfield no "START FROM ZERO" e ativação de dupla contingência sindical por demissões operacionais consecutivas (2 rodadas de demissões consecutivas) regulamentada em BUSINESS_RULES.md e DOCUMENT.md.
 - **v19.82** (06/06/2026) – Documentação das regras de ativação de greves para operários baseadas no Índice de Motivação consecutivos (< 0.75 por 2 rounds) e o respectivo impacto operacional de 50% de redução na fabricação.
 - **v19.25** (28/05/2026) – Introdução de travas fiduciárias reativas com validador de rateio (soma = 100% mandatória), breakdown analítico expandido de aluguel por CIF x OPEX no drawer de preview e documentação oficial completa de locação em BUSINESS_RULES.md.

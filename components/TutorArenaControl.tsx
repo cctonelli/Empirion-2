@@ -103,6 +103,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                     deadlineValue={championship.deadline_value}
                     deadlineUnit={championship.deadline_unit}
                     createdAt={championship.created_at}
+                    isTournamentFinished={championship.current_round >= (championship.total_rounds || 6)}
                   />
                </div>
                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic flex items-center gap-2">

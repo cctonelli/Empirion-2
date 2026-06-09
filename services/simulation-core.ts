@@ -924,7 +924,7 @@ export function processRoundWithValidation(
 
   const socialChargesAttr = 1 + (sanitize(indicators.social_charges, 35) / 100);
 
-  const payrollMOD = operatorsRequired * currentSalary * activityLevel * modMult;
+  const payrollMOD = Math.max(0, operatorsAvailable) * currentSalary * activityLevel * modMult;
   const socialChargesMOD = payrollMOD * (socialChargesAttr - 1);
   const productivityBonus = payrollMOD * (sanitize(decision.hr?.productivityBonusPercent, 0) / 100);
   const totalMOD = payrollMOD + socialChargesMOD + productivityBonus;

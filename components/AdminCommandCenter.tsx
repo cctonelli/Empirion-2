@@ -206,6 +206,10 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
         setTurnoverSuccessRound(currentRoundLabel);
         setShowTurnoverSuccessModal(true); 
         fetchData(); 
+        const maxRounds = selectedArena.total_rounds || 6;
+        if (currentRoundLabel >= maxRounds) {
+          setTutorView('dashboard');
+        }
       } else { 
         throw new Error(res.error); 
       }
@@ -377,6 +381,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                     isPaused={selectedArena.config?.is_paused}
                     remainingMsAtPause={selectedArena.config?.remaining_ms_at_pause}
                     onStatusChange={setIsTimerExpired}
+                    isTournamentFinished={selectedArena.current_round >= (selectedArena.total_rounds || 6)}
                   />
                   
                   {/* Botões do Tutor para Pausar e Concluir / Terminar o Round */}
@@ -1007,63 +1012,63 @@ export const TournamentSummary: React.FC<{ championship: Championship; teams: Te
   }, [teams]);
 
   return (
-    <div className="bg-slate-950/85 border border-orange-500/30 p-8 md:p-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden backdrop-blur-xl font-sans text-slate-100 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 text-left">
+    <div className="bg-slate-950/90 border border-orange-500/30 p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden backdrop-blur-xl font-sans text-slate-100 max-w-6xl w-full mx-auto space-y-6 animate-in fade-in duration-500 text-left">
       <div className="absolute top-0 right-0 w-64 h-64 bg-orange-600/10 blur-[100px] rounded-full -mr-20 -mt-20 animate-pulse pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-yellow-500/5 blur-[100px] rounded-full -ml-20 -mb-20 animate-pulse pointer-events-none" />
 
       {/* Header com os Troféus e Título */}
-      <div className="text-center space-y-4 relative z-10">
-        <div className="inline-flex p-4 bg-orange-600/10 text-orange-500 rounded-3xl border border-orange-500/20 mb-2">
-          <Trophy size={48} className="animate-bounce" />
+      <div className="text-center space-y-2 relative z-10">
+        <div className="inline-flex p-3 bg-orange-600/10 text-orange-500 rounded-2xl border border-orange-500/20 mb-1">
+          <Trophy size={40} className="animate-bounce" />
         </div>
-        <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-yellow-300 to-amber-500">
+        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-yellow-300 to-amber-500">
           PARABÉNS!
         </h2>
-        <div className="text-sm md:text-base font-medium max-w-2xl mx-auto text-slate-300 uppercase tracking-widest leading-relaxed">
+        <div className="text-xs md:text-sm font-medium max-w-2xl mx-auto text-slate-300 uppercase tracking-widest leading-relaxed">
           CHEGAMOS AO FINAL DO TORNEIO <span className="text-orange-500 font-extrabold">{championship.name}</span>
         </div>
-        <p className="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-[0.2em] leading-relaxed">
+        <p className="text-[9px] md:text-xs font-black text-slate-500 uppercase tracking-[0.15em] leading-relaxed">
           ABAIXO LISTAMOS AS EQUIPES PARTICIPANTES E SUAS COLOCAÇÕES POR ORDEM DO MELHOR AO PIOR CLASSIFICADO NO TORNEIO
         </p>
       </div>
 
       {/* Destaque para os 3 Primeiros Colocados (Pódio) */}
       {sortedTeams.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 relative z-10 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 relative z-10 items-end">
           {/* Segundo Lugar */}
           {sortedTeams[1] ? (
-            <div className="order-2 md:order-1 bg-slate-900/60 border border-slate-700/30 p-6 rounded-[2rem] text-center space-y-4 flex flex-col items-center justify-center min-h-[220px] shadow-lg hover:border-slate-500/30 transition-all">
-              <div className="w-14 h-14 bg-slate-300/10 border-2 border-slate-400 text-slate-300 rounded-2xl flex items-center justify-center text-xl font-black italic">
+            <div className="order-2 md:order-1 bg-slate-900/60 border border-slate-700/30 p-4 rounded-[1.5rem] text-center space-y-2 flex flex-col items-center justify-center min-h-[160px] shadow-lg hover:border-slate-500/30 transition-all">
+              <div className="w-10 h-10 bg-slate-300/10 border-2 border-slate-400 text-slate-300 rounded-xl flex items-center justify-center text-sm font-black italic">
                 2º
               </div>
-              <div className="space-y-1 w-full">
-                <h4 className="font-extrabold text-lg text-slate-100 uppercase tracking-tight italic truncate max-w-full px-2">
+              <div className="space-y-0.5 w-full">
+                <h4 className="font-extrabold text-base text-slate-100 uppercase tracking-tight italic truncate max-w-full px-2">
                   {sortedTeams[1].name}
                 </h4>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Segunda Colocada</p>
               </div>
-              <div className="px-4 py-1.5 bg-slate-950/60 rounded-xl border border-white/5 font-mono text-xs text-slate-300">
+              <div className="px-3 py-1 bg-slate-950/60 rounded-lg border border-white/5 font-mono text-xs text-slate-300">
                 $ {parseFloat(String(sortedTeams[1].equity ?? sortedTeams[1].kpis?.equity ?? 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
           ) : (
-            <div className="order-2 md:order-1 md:block hidden min-h-[220px]" />
+            <div className="order-2 md:order-1 md:block hidden min-h-[160px]" />
           )}
 
           {/* Primeiro Lugar (Destaque Central) */}
           {sortedTeams[0] && (
-            <div className="order-1 md:order-2 bg-gradient-to-b from-yellow-500/15 to-slate-900/60 border-2 border-yellow-500/40 p-8 rounded-[2.5rem] text-center space-y-4 flex flex-col items-center justify-center min-h-[260px] shadow-2xl relative overflow-hidden group">
+            <div className="order-1 md:order-2 bg-gradient-to-b from-yellow-500/15 to-slate-900/60 border-2 border-yellow-500/40 p-5 rounded-[1.75rem] text-center space-y-2 flex flex-col items-center justify-center min-h-[190px] shadow-2xl relative overflow-hidden group">
               <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity animate-pulse duration-1000 pointer-events-none" />
-              <div className="w-18 h-18 bg-yellow-500/10 border-2 border-yellow-500 text-yellow-400 rounded-3xl flex items-center justify-center text-3xl font-black italic animate-bounce">
+              <div className="w-12 h-12 bg-yellow-500/10 border-2 border-yellow-500 text-yellow-400 rounded-2xl flex items-center justify-center text-xl font-black italic animate-bounce">
                 1º
               </div>
-              <div className="space-y-1 w-full">
-                <h4 className="font-black text-2xl text-yellow-300 uppercase tracking-tight italic truncate max-w-full px-2">
+              <div className="space-y-0.5 w-full">
+                <h4 className="font-black text-xl text-yellow-300 uppercase tracking-tight italic truncate max-w-full px-2">
                   {sortedTeams[0].name}
                 </h4>
-                <p className="text-[10px] text-yellow-400 font-black uppercase tracking-[0.25em]">SUPREMA CAMPEÃ</p>
+                <p className="text-[9px] text-yellow-400 font-black uppercase tracking-[0.25em]">SUPREMA CAMPEÃ</p>
               </div>
-              <div className="px-5 py-2 bg-yellow-950/40 rounded-2xl border border-yellow-500/25 font-mono text-sm text-yellow-400 font-black">
+              <div className="px-4 py-1.5 bg-yellow-950/40 rounded-xl border border-yellow-500/25 font-mono text-xs text-yellow-400 font-black font-mono">
                 $ {parseFloat(String(sortedTeams[0].equity ?? sortedTeams[0].kpis?.equity ?? 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
@@ -1071,38 +1076,38 @@ export const TournamentSummary: React.FC<{ championship: Championship; teams: Te
 
           {/* Terceiro Lugar */}
           {sortedTeams[2] ? (
-            <div className="order-3 md:order-3 bg-slate-900/60 border border-amber-900/20 p-6 rounded-[2rem] text-center space-y-4 flex flex-col items-center justify-center min-h-[200px] shadow-lg hover:border-amber-700/20 transition-all">
-              <div className="w-12 h-12 bg-amber-700/10 border-2 border-amber-700 text-amber-600 rounded-2xl flex items-center justify-center text-lg font-black italic">
+            <div className="order-3 md:order-3 bg-slate-900/60 border border-amber-900/20 p-4 rounded-[1.5rem] text-center space-y-2 flex flex-col items-center justify-center min-h-[150px] shadow-lg hover:border-amber-700/20 transition-all">
+              <div className="w-10 h-10 bg-amber-700/10 border-2 border-amber-700 text-amber-600 rounded-xl flex items-center justify-center text-sm font-black italic">
                 3º
               </div>
-              <div className="space-y-1 w-full">
-                <h4 className="font-extrabold text-base text-slate-100 uppercase tracking-tight italic truncate max-w-full px-2">
+              <div className="space-y-0.5 w-full">
+                <h4 className="font-extrabold text-sm text-slate-100 uppercase tracking-tight italic truncate max-w-full px-2">
                   {sortedTeams[2].name}
                 </h4>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Terceira Colocada</p>
               </div>
-              <div className="px-4 py-1.5 bg-slate-950/60 rounded-xl border border-white/5 font-mono text-xs text-slate-300">
+              <div className="px-3 py-1 bg-slate-950/60 rounded-lg border border-white/5 font-mono text-xs text-slate-300">
                 $ {parseFloat(String(sortedTeams[2].equity ?? sortedTeams[2].kpis?.equity ?? 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
           ) : (
-            <div className="order-3 md:order-3 md:block hidden min-h-[200px]" />
+            <div className="order-3 md:order-3 md:block hidden min-h-[150px]" />
           )}
         </div>
       )}
 
       {/* Tabela de Colocações com os demais classificados (4º em diante) */}
       {sortedTeams.length > 3 && (
-        <div className="bg-slate-950/60 border border-white/5 rounded-[2rem] p-6 relative z-10 space-y-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Outros competidores ranqueados:</p>
-          <div className="divide-y divide-white/5">
+        <div className="bg-slate-950/60 border border-white/5 rounded-[1.5rem] p-4 relative z-10 space-y-2">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1 font-mono">Outros competidores ranqueados:</p>
+          <div className="divide-y divide-white/5 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
             {sortedTeams.slice(3).map((team, idx) => {
               const position = idx + 4;
               return (
-                <div key={team.id} className="flex items-center justify-between py-3.5 px-2 hover:bg-white/5 rounded-xl transition-all">
-                  <div className="flex items-center gap-4">
+                <div key={team.id} className="flex items-center justify-between py-2 px-2 hover:bg-white/5 rounded-lg transition-all">
+                  <div className="flex items-center gap-3">
                     <span className="font-mono font-bold text-slate-500 text-xs w-6">#{position}</span>
-                    <span className="font-bold text-sm text-slate-300 uppercase tracking-tight truncate max-w-[250px]">{team.name}</span>
+                    <span className="font-bold text-xs text-slate-300 uppercase tracking-tight truncate max-w-[250px]">{team.name}</span>
                   </div>
                   <span className="font-mono text-xs text-slate-400 font-bold">
                     $ {parseFloat(String(team.equity ?? team.kpis?.equity ?? 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

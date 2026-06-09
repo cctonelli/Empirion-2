@@ -2,9 +2,26 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026 active-core HR dynamic indicator metrics.
+- **Versão Ativa:** v2026.110 active-core Dynamic Staffing Payroll.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Alinhamento de Folha Dinâmica (MOD baseada em Equipe Real) - v2026.110
+
+**Data:** 09 de Junho de 2026 às 12:00 UTC  
+**Motivo:** Alinhar as provisões salariais brutas e simulações de Mão de Obra Direta (MOD) com o quadro de pessoal efetivamente disponível e contratado (antigos + novas admissões - demissões) em vez de paralisar os cálculos no quantitativo exigido por especificações industriais. Isso é elementar para rodar simulações de RH coerentes e Greenfield (Start From Zero) e detalha o provimento de encargos sociais de forma cirúrgica.
+
+**Detalhamento Técnico das Regras de Negócio e Coleta Contábil:**
+- **Atribuição de Equipe Real para Folha (`payrollMOD`):** O volume de pessoal do time de operadores que realmente aufere salários e encargos trabalhistas foi ajustado nos motores de simulação (`services/simulation.ts` e `services/simulation-core.ts`) para adotar o quadro disponível real (`operatorsAvailable`), eliminando o uso de `operatorsRequired` (que trazia custos de operários teóricos mesmo com admissões zeradas).
+- **Projeção em Tempo Real de Pessoal no HUD (HRStep):** A estrutura de `payrollProjection` em `/components/steps/HRStep.tsx` foi atualizada para expor de forma detalhada o cálculo das linhas de folha de pagamento MOD (`payrollMOD`, `socialChargesMOD` etc.), criando um mini-balancete analítico no visual que divide o valor bruto do pessoal de MOD por salários base, encargos dinâmicos e bônus com base no quantitativo real.
+- **Isolamento de Greenfield e Ampliação de Máquinas:** No onboarding de novos campeonatos Greenfield, sem frotas registradas e com 0 operários iniciais, o quantitativo e folha do quadro resumo de MOD inicia devidamente em 0. À medida em que o jogador preenche "NOVAS ADMISSÕES", o salário-base é multiplicado em tempo real no resumo. Na expansão marginalizada de máquinas em rounds futuros, a equipe real se soma linearmente aos novos ingressantes, escalonando de forma uniforme e pedagógica.
+
+**Impactos esperados:**
+- **Eliminação de Custos Fantasmas:** A empresa inicia com despesas salariais reais correspondentes aos contratos ativados de fato.
+- **Decisão Tática Clássica de RH:** Visibilidade detalhada de como cada percentual fiduciário de encargos patronais (social_charges) infla a folha de pagamento patronal antes do turnover de rounds.
+- **Consistência Sapphire de Auditoria:** Correção unificada no kernel do simulador e pré-calculadores preditivos garante 100% de consistência contábil.
 
 ---
 
