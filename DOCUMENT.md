@@ -2,9 +2,30 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.112 Graphic Floating Precision Fix.
+- **Versão Ativa:** v2026.113 Interactive Multi-Metric Liquidity Chart.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Gráfico de Linhas de Tripla Liquidez (Quick, Current, General) - v2026.113
+
+**Data:** 09 de Junho de 2026 às 20:42 UTC  
+**Motivo:** Implementação de suporte visual completo e fidedigno aos três principais indicadores de liquidez clássicos (Liquidez Seca, Liquidez Corrente e Liquidez Geral) do simulador, em conformidade com o gráfico proposto em anexo, de padrão EMPIRION de alta fidelidade e em Dark Mode.
+
+**Detalhamento Técnico:**
+- **Exclusão de Rodada Inicial (P-00):** O histórico visual ignora o round fiduciário `P-00` de modo que a volatilidade artificial da largada não destrua a representação da escala de tendências estratégicas operadas pelas equipes.
+- **Busca Resiliente na Árvore de Contas:** Em vez de depender apenas de KPIs parciais pré-calculados, a nova classe modular `EmpirionLiquidityChart.tsx` extrai em tempo de execução os saldos de Ativos Circulantes, Passivos Circulantes, Estoques Agrupados (MP A, MP B, PA, WIP) e Passivos de Longo Prazo da árvore financeira do Balanço Patrimonial de cada round no banco de dados (`history.kpis.statements.balance_sheet`).
+- **Acabamento Visual de Premium Grade:**
+  - Estilização em linhas suavizadas em curvas (`smooth`) de espessura 3.5.
+  - Paleta de cores de alta visibilidade e contraste: Azul (`#3b82f6`) para Liquidez Seca, Verde (`#10b981`) para Liquidez Corrente e Laranja (`#f97316`) para Liquidez Geral.
+  - Legendas inferiores com ícones arredondados.
+  - Habilitação de balões de rótulos diretos (`dataLabels`) em formato de badges sobre os pontos de dados no gráfico, permitindo legibilidade instantânea dos ratios (com no máximo duas casas decimais separadas por vírgula no padrão regional brasileiro).
+  - Maximização do uso do espaço interno da div através de ajustes no espaçamento de amortecimento (`padding`) do grid interno do componente ApexCharts.
+
+**Impactos:**
+- Visualização consolidada imediata da integridade de endividamento da empresa, auxiliando diretamente o planejamento contábil da diretoria fiduciária.
+- 100% responsivo e alinhado com a identidade estilística do painel do aluno.
 
 ---
 

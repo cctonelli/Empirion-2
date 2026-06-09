@@ -31,6 +31,7 @@ import { generatePureP0 } from '../services/initialization';
 import { TournamentSummary } from './AdminCommandCenter';
 
 import { EmpirionAreaChart } from './charts/EmpirionAreaChart';
+import { EmpirionLiquidityChart } from './charts/EmpirionLiquidityChart';
 import { EmpirionGauge } from './charts/EmpirionGauge';
 import { DashboardGrid } from './charts/DashboardGrid';
 import { TrendSparkline } from './charts/TrendSparkline';
@@ -837,13 +838,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                             color="#3b82f6"
                             currency={activeArena?.currency || 'BRL'}
                           />
-                          <EmpirionAreaChart
+                          <EmpirionLiquidityChart
                             id="liquidity-evolution"
-                            title="Índice de Liquidez Corrente"
-                            categories={visibleHistory.map(h => `R-${h.round < 10 ? '0' : ''}${h.round}`)}
-                            series={[{ name: 'Liquidez Corrente', data: visibleHistory.map(h => h.kpis?.liquidity_current || 0) }]}
-                            color="#10b981"
-                            currency={activeArena?.currency || 'BRL'}
+                            visibleHistory={visibleHistory}
+                            height={320}
                           />
                           <EmpirionGauge
                             id="esds-indicator"
