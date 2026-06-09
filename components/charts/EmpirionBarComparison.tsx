@@ -106,6 +106,10 @@ export const EmpirionBarComparison: React.FC<EmpirionBarComparisonProps> = ({
           colors: '#64748b',
           fontSize: '10px',
           fontFamily: 'JetBrains Mono, monospace'
+        },
+        formatter: (val: number) => {
+          if (val === undefined || isNaN(val)) return '';
+          return parseFloat(val.toFixed(2)).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
         }
       }
     },

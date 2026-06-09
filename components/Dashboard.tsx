@@ -514,7 +514,21 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       categories: visibleHistory.map(h => `R-${h.round < 10 ? '0' : ''}${h.round}`), 
       labels: { style: { colors: '#64748b', fontSize: '10px', fontWeight: 800 } } 
     },
-    yaxis: { labels: { style: { colors: '#64748b', fontSize: '10px' } } },
+    yaxis: {
+      labels: {
+        style: { colors: '#64748b', fontSize: '10px' },
+        formatter: (val: number) => {
+          if (val === undefined || isNaN(val)) return '';
+          if (Math.abs(val) >= 1e6) {
+            return `${(val / 1e6).toFixed(2).replace(/\.00$/, '')}M`;
+          }
+          if (Math.abs(val) >= 1e3) {
+            return `${(val / 1e3).toFixed(1).replace(/\.0$/, '')}k`;
+          }
+          return parseFloat(val.toFixed(2)).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+        }
+      }
+    },
     tooltip: { theme: 'dark' },
     legend: { show: false }
   };

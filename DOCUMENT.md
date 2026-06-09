@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.111 Greenfield MOD Zero Verification.
+- **Versão Ativa:** v2026.112 Graphic Floating Precision Fix.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Refatoração de Formatação do Eixo Gráfico (Floating-Point Precision) - v2026.112
+
+**Data:** 09 de Junho de 2026 às 19:16 UTC  
+**Motivo:** Corrigir a falta de formatadores nos eixos Y (`yaxis`) dos componentes ApexCharts, cujo comportamento padrão pelo motor do navegador renderiza marcações imprecisas geradas por cálculos booleanos de ponto flutuante em JavaScript (ex: `3000.0000000000005%` ou `2500.0000000000000`).
+
+**Detalhamento Técnico:**
+- **Injeção de Formatação de Duas Casas Decimais:** Adicionado o atributo `formatter` sob as chaves `yaxis.labels` nos arquivos `EmpirionBarComparison.tsx` (que desenha o gráfico de comparação de Market Share e TSR), `LandingCharts.tsx` (que ilustra as visualizações fakes de onboarding) e `Dashboard.tsx` (gráfico de progresso de Equity/Liquidez).
+- **Adequação Regional Monitória (pt-BR):** Criada uma lógica de formatação avançada que converte os valores flutuantes fracionados em Strings amigáveis no padrão brasileiro (`pt-BR`) que remove automaticamente dízimas repetitivas através de `.toLocaleString('pt-BR', { maximumFractionDigits: 2 })` — mantendo inteiros (como `3.000` ou `3000`) perfeitamente representados e limitando flutuantes a no máximo duas casas decimais (ex: `2,85`).
+- **Escalabilidade:** Valores superiores a 1 milhão (1M) ou mil (1k) são formatados de modo abreviado no gráfico de patrimônio, salvaguardando a responsividade lateral do eixo Y.
+
+**Impactos:**
+- Eliminação completa de caixas de números extensas e ilegíveis que poluíam ou quebravam a diagramação do dashboard.
+- Apresentação visual limpa, fidedigna e de interpretação instantânea para os tutores e equipes de análise fiscal.
 
 ---
 

@@ -19,7 +19,13 @@ const LandingCharts: React.FC = () => {
       labels: { style: { colors: '#475569', fontSize: '10px', fontWeight: 800 } }
     },
     yaxis: {
-      labels: { style: { colors: '#475569', fontSize: '10px', fontWeight: 800 } }
+      labels: {
+        style: { colors: '#475569', fontSize: '10px', fontWeight: 800 },
+        formatter: (val: number) => {
+          if (val === undefined || isNaN(val)) return '';
+          return parseFloat(val.toFixed(2)).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+        }
+      }
     },
     legend: { show: false },
     tooltip: { theme: 'dark' }
