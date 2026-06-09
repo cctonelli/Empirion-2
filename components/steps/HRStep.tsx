@@ -404,7 +404,7 @@ export const HRStep: React.FC<HRStepProps> = ({
             </div>
             <div className="space-y-1.5 border-t border-white/10 pt-2 text-xxs font-mono text-zinc-400">
               <div className="flex justify-between text-zinc-300 font-semibold mb-0.5">
-                <span>Pessoal Fabril (MOD - {payrollProjection.operatorsAvailable} operários):</span>
+                <span>MOD ({payrollProjection.operatorsAvailable} operários):</span>
                 <span className="text-white font-bold">{formatCurrency(payrollProjection.totalMOD, 'BRL')}</span>
               </div>
               <div className="pl-3 flex justify-between text-[10px] text-zinc-500">
@@ -421,7 +421,7 @@ export const HRStep: React.FC<HRStepProps> = ({
               </div>
 
               <div className="flex justify-between border-t border-white/5 pt-1">
-                <span>Administração ({payrollProjection.staffAdmin} profs):</span>
+                <span>Admin ({payrollProjection.staffAdmin} profs):</span>
                 <span className="text-white font-bold">{formatCurrency(payrollProjection.totalPayrollAdm, 'BRL')}</span>
               </div>
               <div className="flex justify-between">
