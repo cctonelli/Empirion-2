@@ -1,13 +1,17 @@
 import React from 'react';
 import { Megaphone, Info, HelpCircle, RefreshCw, Globe } from 'lucide-react';
 import { WizardStepHeader, CurrencyInput } from './shared';
-import { DecisionData, Championship } from '../../types';
+import { DecisionData, Championship, Team } from '../../types';
+import { supabase } from '../../services/supabase';
+import { getAdjustedPrice } from '../../services/simulation';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../../constants';
 
 interface MarketingStepProps {
   decisions: DecisionData;
   updateDecision: (path: string, val: any) => void;
   replicateInCluster: () => void;
   activeArena: Championship | null;
+  activeTeam?: Team | null;
   isReadOnly: boolean;
 }
 
@@ -16,8 +20,138 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
   updateDecision,
   replicateInCluster,
   activeArena,
+  activeTeam,
   isReadOnly,
 }) => {
+  const [competitorsLog, setCompetitorsLog] = React.useState<any[]>([]);
+  const [loadingIntel, setLoadingIntel] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchCompetitors = async () => {
+      if (!activeArena) return;
+      setLoadingIntel(true);
+      try {
+        const historyTable = activeArena.is_trial ? 'trial_companies' : 'companies';
+        const targetRound = activeArena.current_round || 0;
+        const { data, error } = await supabase
+          .from(historyTable)
+          .select('*')
+          .eq('championship_id', activeArena.id)
+          .eq('round', targetRound);
+        
+        if (error) {
+          console.error("Error fetching competitor history:", error);
+        } else if (data) {
+          setCompetitorsLog(data);
+        }
+      } catch (err) {
+        console.error("Intel fetch err:", err);
+      } finally {
+        setLoadingIntel(false);
+      }
+    };
+
+    fetchCompetitors();
+  }, [activeArena]);
+
+  const getTeamCapacity = (c: any) => {
+    const kpis = c.kpis || {};
+    const machines = kpis.machines || [];
+    const shifts = c.state?.production?.shifts || 1;
+    let capMult = 1.0;
+    if (shifts === 2) capMult = 1.7;
+    else if (shifts === 3) capMult = 2.3;
+
+    const specs = activeArena?.market_indicators?.machine_specs || {
+      alpha: { production_capacity: 10000 },
+      beta: { production_capacity: 18000 },
+      gamma: { production_capacity: 30000 }
+    };
+
+    const baseCap = machines.reduce((acc: number, m: any) => {
+      const model = m.model === 'alfa' ? 'alpha' : m.model === 'gama' ? 'gamma' : m.model;
+      const modelKey = (model as string) === 'alpha' ? 'alpha' : (model as string) === 'beta' ? 'beta' : 'gamma';
+      const cap = specs[modelKey]?.production_capacity || 0;
+      return acc + cap;
+    }, 0);
+
+    const totalCap = (baseCap > 0 ? baseCap : 40000) * capMult;
+    return totalCap;
+  };
+
+  const calculateRegionStats = (regionId: number) => {
+    const rows = competitorsLog.length > 0 ? competitorsLog : (activeArena?.teams || []).map(t => ({
+      team_id: t.id,
+      state: (t as any).current_decision || {},
+      kpis: t.kpis || {}
+    }));
+
+    // 1. Preço médio regiao anterior
+    const prevPrices = rows
+      .map(c => {
+        const regDec = c.state?.regions?.[regionId] || c.state?.regions?.[String(regionId)];
+        return regDec ? Number(regDec.price) : null;
+      })
+      .filter((p): p is number => p !== null && p > 0);
+    const avgPriceRegion = prevPrices.length > 0
+      ? prevPrices.reduce((sum, p) => sum + p, 0) / prevPrices.length
+      : 0;
+
+    // 2. Parâmetros de contexto
+    const regionConf = activeArena?.config?.regions?.find((r: any) => r.id === regionId) || activeArena?.config?.region_configs?.find((r: any) => r.id === regionId);
+    const baseSuggestedPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : (activeArena?.market_indicators?.avg_selling_price || 425);
+    const demandVariation = activeArena?.market_indicators?.demand_variation || 0;
+
+    const regionCount = Object.keys(decisions.regions).length || 1;
+
+    let totalRegionDemand = 0;
+    let totalRegionUnitsSold = 0;
+    let activeTeamUnitsSold = 0;
+
+    const storedTeamId = activeTeam?.id || localStorage.getItem('active_team_id');
+
+    rows.forEach((c: any) => {
+      const regDec = c.state?.regions?.[regionId] || c.state?.regions?.[String(regionId)];
+      if (!regDec) return;
+
+      const regPrice = Number(regDec.price) || baseSuggestedPrice;
+      const regMarketing = Number(regDec.marketing) || 0;
+      const regTerm = Number(regDec.term) || 0;
+      const rjDemandPenalty = c.state?.judicial_recovery === true ? 0.85 : 1.0;
+
+      const capacity = getTeamCapacity(c);
+      const baseDemandPerRegion = (capacity * 0.8) / regionCount;
+
+      const priceIndex = regPrice > 0 ? baseSuggestedPrice / regPrice : 1;
+      const marketingIndex = 1 + (regMarketing * 0.08);
+      const termIndex = 1 + (regTerm * 0.05);
+
+      const regDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (demandVariation / 100)) * rjDemandPenalty);
+      
+      const unitsProduced = Number(c.kpis?.statements?.dre?.find((item: any) => item.id === 'dre.cpv')?.quantity) || Number(c.kpis?.finished_goods_produced) || (capacity * 0.8);
+      const prevStockQty = Number(c.kpis?.statements?.balance_sheet?.find((item: any) => item.id === 'assets.current.stock.pa')?.quantity) || Number(c.kpis?.stock_quantities?.finished_goods) || 0;
+      const totalQtyPaForSale = prevStockQty + unitsProduced;
+
+      const regUnitsSold = Math.min(regDemand, Math.floor(totalQtyPaForSale / regionCount));
+
+      totalRegionDemand += regDemand;
+      totalRegionUnitsSold += regUnitsSold;
+
+      if (c.team_id === storedTeamId) {
+        activeTeamUnitsSold = regUnitsSold;
+      }
+    });
+
+    const activeWeight = regionConf?.demand_weight || 20;
+
+    return {
+      avgPriceRegion,
+      totalRegionDemand,
+      totalRegionUnitsSold,
+      weight: activeWeight,
+      relativeSalesShare: totalRegionUnitsSold > 0 ? (activeTeamUnitsSold / totalRegionUnitsSold) * 100 : 0
+    };
+  };
   return (
     <div className="space-y-12 lg:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Cabeçalho do passo */}
@@ -131,23 +265,29 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
           const mktCost = regionConf?.marketing_cost !== undefined ? Number(regionConf.marketing_cost) : (activeArena?.market_indicators?.prices?.marketing_campaign || 10000);
           const currency = regionConf?.currency || activeArena?.currency || 'BRL';
 
+          const round = (activeArena?.current_round || 0) + 1;
+          const adjustedDistCost = getAdjustedPrice(distCost, 'distribution_cost_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+          const adjustedMktCost = getAdjustedPrice(mktCost, 'marketing_campaign_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+          const totalMktCost = reg.marketing * adjustedMktCost;
+          const stats = calculateRegionStats(regId);
+
           return (
             <div
               key={id}
-              className="bg-slate-900/70 backdrop-blur-sm p-6 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 transition-all duration-300 group flex flex-col justify-between"
+              className="bg-slate-900/70 backdrop-blur-sm p-5 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 transition-all duration-300 group flex flex-col justify-between"
             >
               <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h4 className="text-lg font-black text-orange-400 uppercase italic tracking-tight font-sans">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-base font-black text-orange-400 uppercase italic tracking-tight font-sans">
                     {activeArena?.region_names?.[Number(id) - 1] || `Região ${id}`}
                   </h4>
-                  <Globe size={20} className="text-slate-600 group-hover:text-orange-400 transition-colors" />
+                  <Globe size={18} className="text-slate-600 group-hover:text-orange-400 transition-colors" />
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {/* Preço */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-sans">Preço Unitário</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Preço Unitário</label>
                     <CurrencyInput
                       value={reg.price}
                       onChange={v => updateDecision(`regions.${id}.price`, v)}
@@ -156,13 +296,13 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   </div>
 
                   {/* Prazo */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-sans">Prazo de Recebimento</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Prazo de Recebimento</label>
                     <select
                       disabled={isReadOnly}
                       value={reg.term}
                       onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-base text-white outline-none focus:border-orange-500 transition-all appearance-none cursor-pointer"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500 transition-all appearance-none cursor-pointer"
                     >
                       <option value={0}>A VISTA</option>
                       <option value={1}>A VISTA + 50%</option>
@@ -171,8 +311,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   </div>
 
                   {/* Marketing */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide font-sans">Marketing (0–9)</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Marketing (0–9)</label>
                     <input
                       type="number"
                       min="0"
@@ -183,25 +323,45 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                         const val = Math.min(9, Math.max(0, parseInt(e.target.value) || 0));
                         updateDecision(`regions.${id}.marketing`, val);
                       }}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-base font-mono text-white outline-none focus:border-orange-500 transition-all"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-mono text-white outline-none focus:border-orange-500 transition-all"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Informações fidedignas de parâmetros estipulados pelo Tutor */}
-              <div className="mt-8 pt-4 border-t border-white/5 space-y-2 font-sans">
+              <div className="mt-5 pt-3 border-t border-white/5 space-y-1.5 font-sans">
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Preço Venda Min. Recomendado:</span>
-                  <span className="text-orange-400 font-bold">{currency} {sugPrice.toLocaleString('pt-BR')}</span>
+                  <span>Preço Médio Região:</span>
+                  <span className="text-amber-400 font-bold">{currency} {stats.avgPriceRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Market Share Total (qtde):</span>
+                  <span className="text-slate-300 font-semibold">{stats.totalRegionDemand.toLocaleString('pt-BR')} un</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Demanda Atingida Total:</span>
+                  <span className="text-slate-300 font-semibold">{stats.totalRegionUnitsSold.toLocaleString('pt-BR')} un</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Peso Demanda Total (%):</span>
+                  <span className="text-slate-300 font-semibold">{stats.weight}%</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Venda Relativa (%):</span>
+                  <span className="text-emerald-400 font-bold">{stats.relativeSalesShare.toFixed(1)}%</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Valor Custo unit. Logística:</span>
-                  <span className="text-slate-400 font-semibold">{currency} {distCost.toLocaleString('pt-BR')} /un</span>
+                  <span className="text-slate-400 font-semibold">{currency} {adjustedDistCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Valor Custo unit. Campanha:</span>
-                  <span className="text-slate-400 font-semibold">{currency} {mktCost.toLocaleString('pt-BR')}</span>
+                  <span className="text-slate-400 font-semibold">{currency} {adjustedMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between mt-1 pt-1 border-t border-white/5 text-[10px] text-slate-400 uppercase tracking-wide font-mono leading-none">
+                  <span>Valor Total Campanhas:</span>
+                  <span className="text-orange-400 font-black">{currency} {totalMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             </div>

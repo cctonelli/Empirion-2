@@ -575,7 +575,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
 
                               {/* PASSO 2 - COMERCIAL / MARKETING */}
                               {activeStep === 1 && (
-                                <MarketingStep decisions={decisions} updateDecision={updateDecision} replicateInCluster={replicateInCluster} activeArena={activeArena} isReadOnly={isReadOnly} />
+                                <MarketingStep decisions={decisions} updateDecision={updateDecision} replicateInCluster={replicateInCluster} activeArena={activeArena} activeTeam={activeTeam} isReadOnly={isReadOnly} />
                               )}
 
                               {/* PASSO 3 - GESTÃO DE ATIVOS & CAPEX */}
