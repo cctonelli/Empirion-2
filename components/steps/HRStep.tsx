@@ -332,6 +332,67 @@ export const HRStep: React.FC<HRStepProps> = ({
         </div>
       </div>
 
+      {/* CARD DE DIMENSIONAMENTO DA FORÇA DE TRABALHO (MOD vs Demanda de Copas/Máquinas) */}
+      {payrollProjection.operatorsRequired > 0 && (
+        <div className={`p-6 lg:p-8 rounded-3xl border-2 transition-all duration-300 shadow-xl ${
+          payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
+            ? 'bg-rose-950/20 border-rose-500/30 hover:border-rose-500/50 shadow-rose-950/10'
+            : 'bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-500/50 shadow-emerald-950/10'
+        }`}>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex gap-4 items-start">
+              <div className={`p-3.5 rounded-2xl shrink-0 ${
+                payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
+                  ? 'bg-rose-500/10 text-rose-400'
+                  : 'bg-emerald-500/10 text-emerald-400'
+              }`}>
+                {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired ? (
+                  <AlertTriangle size={28} className="text-rose-400 animate-pulse" />
+                ) : (
+                  <CheckCircle2 size={28} className="text-emerald-400" />
+                )}
+              </div>
+              <div>
+                <h5 className={`text-base lg:text-lg font-black uppercase tracking-tight ${
+                  payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
+                    ? 'text-rose-400'
+                    : 'text-emerald-400'
+                }`}>
+                  {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
+                    ? 'AVISO: Alerta de Capacidade Paralisada (Defasagem de MOD)'
+                    : 'Excelência: Mão de Obra Plena & Eficiência Garantida'}
+                </h5>
+                <p className="text-sm text-slate-300 mt-1 max-w-2xl font-sans leading-relaxed">
+                  {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
+                    ? `Seu parque fabril ativo exige ${payrollProjection.operatorsRequired} operários, mas seu planejamento conta com apenas ${payrollProjection.operatorsAvailable} disponíveis para esta rodada. Por falta de operadores, a produção real da empresa sofrerá um gargalo de tripulação e parte de suas máquinas ficará paralisada.`
+                    : `Sua tripulação de ${payrollProjection.operatorsAvailable} operários disponíveis cobre perfeitamente os ${payrollProjection.operatorsRequired} necessários exigidos pelas máquinas configuradas. Suas máquinas operarão totalmente integradas e livres de ociosidade forçada por pessoal.`}
+                </p>
+              </div>
+            </div>
+
+            <div className="text-right shrink-0 bg-slate-900/50 border border-white/5 rounded-2xl px-6 py-4 w-full md:w-auto flex md:flex-col justify-between items-center md:items-end gap-2">
+              <span className="text-xxs text-slate-400 uppercase tracking-widest font-bold">
+                Eficiência Máxima das Máquinas
+              </span>
+              <span className={`text-3xl font-mono font-black ${
+                payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
+                  ? 'text-rose-500'
+                  : 'text-emerald-400'
+              }`}>
+                {payrollProjection.operatorsRequired > 0
+                  ? `${Math.min(100, Math.floor((payrollProjection.operatorsAvailable / payrollProjection.operatorsRequired) * 100))}%`
+                  : '100%'}
+              </span>
+              {payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired && (
+                <span className="text-[10px] text-rose-300 font-semibold block uppercase">
+                  Paralisia Industrial Ativa
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* QUADRO-RESUMO DE INDICADORES TRABALHISTAS (Contabilidade & Clima de Alta Performance) */}
       <div className="bg-slate-950/40 border-2 border-slate-900 p-8 rounded-3xl shadow-xl relative overflow-hidden">
         <h4 className="text-lg lg:text-xl font-extrabold text-white uppercase tracking-tight mb-6 flex items-center gap-3">
