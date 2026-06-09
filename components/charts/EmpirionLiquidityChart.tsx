@@ -117,10 +117,10 @@ export const EmpirionLiquidityChart: React.FC<EmpirionLiquidityChartProps> = ({
         }
       },
       padding: {
-        left: 10,
-        right: 15,
-        top: 20,
-        bottom: 5
+        left: 2,
+        right: 2,
+        top: 2,
+        bottom: 0
       }
     },
     xaxis: {
@@ -155,23 +155,7 @@ export const EmpirionLiquidityChart: React.FC<EmpirionLiquidityChartProps> = ({
       }
     },
     dataLabels: {
-      enabled: true,
-      style: {
-        fontSize: '10px',
-        fontWeight: '900',
-        fontFamily: 'JetBrains Mono, monospace',
-        colors: ['#ffffff', '#ffffff', '#ffffff']
-      },
-      background: {
-        enabled: true,
-        foreColor: '#0f172a',
-        padding: 5,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        opacity: 0.95
-      },
-      offsetY: -8
+      enabled: false
     },
     markers: {
       size: 5,
@@ -208,7 +192,7 @@ export const EmpirionLiquidityChart: React.FC<EmpirionLiquidityChartProps> = ({
   };
 
   return (
-    <div id={`chart-container-area-${id}`} className="bg-slate-900/40 border border-white/5 p-6 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl group hover:border-white/15 transition-all w-full h-full flex flex-col justify-between">
+    <div id={`chart-container-area-${id}`} className="bg-slate-900/40 border border-white/5 p-3 pb-1 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl group hover:border-white/15 transition-all w-full h-full flex flex-col justify-between">
       <div id={`apex-chart-wrapper-area-${id}`} className="w-full flex-1 min-h-[300px]">
         {chartData.categories.length > 0 ? (
           <Chart

@@ -65,8 +65,10 @@ export const EmpirionGauge: React.FC<EmpirionGaugeProps> = ({
     },
     grid: {
       padding: {
-        top: -10,
-        bottom: 10
+        top: -15,
+        bottom: 0,
+        left: 2,
+        right: 2
       }
     },
     fill: {
@@ -87,7 +89,7 @@ export const EmpirionGauge: React.FC<EmpirionGaugeProps> = ({
   };
 
   return (
-    <div id={`chart-container-gauge-${id}`} className="bg-slate-900/40 border border-white/5 p-6 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl flex flex-col justify-between items-center group hover:border-white/15 transition-all min-h-[190px]">
+    <div id={`chart-container-gauge-${id}`} className="bg-slate-900/40 border border-white/5 p-3 pb-1 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl flex flex-col justify-between items-center group hover:border-white/15 transition-all min-h-[190px]">
       <h3 id={`gauge-title-${id}`} className="text-white text-xs font-black uppercase tracking-widest text-center italic mb-4 w-full">{title}</h3>
       <div id={`apex-chart-wrapper-gauge-${id}`} className="w-full flex justify-center items-center">
         <Chart

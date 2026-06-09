@@ -2,9 +2,28 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.113 Interactive Multi-Metric Liquidity Chart.
+- **Versão Ativa:** v2026.114 Compact Fiduciary Grid & Liquidity Sentinel.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Sentinela Fiduciária & Compactação Máxima de Gráficos e Gaps - v2026.114
+
+**Data:** 09 de Junho de 2026 às 21:04 UTC  
+**Motivo:** Implementação de layout ultracompacto para toda a malha de dashboards de gráficos, eliminação de rótulos estáticos flutuantes (mantendo e focando apenas nos tooltips interativos ao passar o ponteiro do mouse) e criação do Sentinela Fiduciário de Liquidez do aluno para identificação imediata de insolvência (< 1,00).
+
+**Detalhamento Técnico:**
+- **Zero Rótulos Estáticos (Keep Tooltips Only):** Desativação do recurso `dataLabels: { enabled: true }` nos arquivos `EmpirionLiquidityChart.tsx`, `EmpirionBarComparison.tsx` e demais módulos visuais. Agora, os números são apresentados somente em hover dinâmico através do tooltip, garantindo máxima limpeza na interface e evitando sobreposição indesejada.
+- **Eliminação de Espaço Inútil (Borda & foreignobject):** Redução do padding geral de todos os containers de gráficos e do grid de espaçamento dos eixos internos (ApexCharts `grid.padding` zerado/minimizado para lateralidade de 2px e teto de 2px). Os cartões dos gráficos foram reduzidos de um amortecimento redundante de `p-6` para um espaçamento responsivo e denso de `p-3 pb-1`.
+- **Disfarce de Grid Gap (Compact Grid):** Redução do distanciamento interno do Bento de dashboards (`DashboardGrid.tsx`) de `gap-8` (32px) para `gap-3` (12px), aproximando os cartões de dados fiduciários e multiplicando o espaço disponível em resoluções desktop e mobile.
+- **Sentinela Crítico de Liquidez Operacional:** Injeção de banner fiduciário condicional e reativo à propriedade `currentKpis.liquidity_current < 1.0` de forma flutuante glassmorphism com gradiente de perigo (tonalidade `rose-950/40` e borda `rose-500/30`), alertando a equipe sobre a incapacidade potencial de cobrir obrigações de curto prazo.
+
+**Impactos:**
+- Dashboard extremamente focado em densidade analítica de mercado e alta gerência corporativa fiduciária ("Premium Compactado").
+- Melhor aproveitamento horizontal e vertical de tela para resoluções de notebooks e tablets de alunos.
+- Mitigação de sobreposição de números.
+- Alerta visual proativo sobre a integridade financeira das tomadas de decisões.
 
 ---
 

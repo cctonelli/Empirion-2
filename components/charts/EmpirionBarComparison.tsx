@@ -43,17 +43,7 @@ export const EmpirionBarComparison: React.FC<EmpirionBarComparisonProps> = ({
     },
     colors: ['#f97316', '#3b82f6', '#10b981', '#a855f7'],
     dataLabels: {
-      enabled: true,
-      formatter: (val: number) => {
-        return val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val.toFixed(1);
-      },
-      offsetY: -20,
-      style: {
-        fontSize: '10px',
-        fontFamily: 'JetBrains Mono, monospace',
-        colors: ['#ffffff'],
-        fontWeight: 'bold'
-      }
+      enabled: false
     },
     stroke: {
       show: true,
@@ -81,6 +71,12 @@ export const EmpirionBarComparison: React.FC<EmpirionBarComparisonProps> = ({
         lines: {
           show: true
         }
+      },
+      padding: {
+        left: 2,
+        right: 2,
+        top: 2,
+        bottom: 0
       }
     },
     xaxis: {
@@ -128,7 +124,7 @@ export const EmpirionBarComparison: React.FC<EmpirionBarComparisonProps> = ({
   };
 
   return (
-    <div id={`chart-container-bar-${id}`} className="bg-slate-900/40 border border-white/5 p-6 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl group hover:border-white/15 transition-all">
+    <div id={`chart-container-bar-${id}`} className="bg-slate-900/40 border border-white/5 p-3 pb-1 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl group hover:border-white/15 transition-all">
       <div id={`apex-chart-wrapper-bar-${id}`} className="w-full">
         <Chart
           options={chartOptions}

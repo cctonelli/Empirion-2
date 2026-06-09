@@ -76,7 +76,13 @@ export const EmpirionRadarChart: React.FC<EmpirionRadarChartProps> = ({
       fontSize: '11px'
     },
     grid: {
-      borderColor: 'rgba(255, 255, 255, 0.05)'
+      borderColor: 'rgba(255, 255, 255, 0.05)',
+      padding: {
+        left: 2,
+        right: 2,
+        top: 2,
+        bottom: 0
+      }
     },
     tooltip: {
       theme: 'dark'
@@ -84,7 +90,7 @@ export const EmpirionRadarChart: React.FC<EmpirionRadarChartProps> = ({
   };
 
   return (
-    <div id={`chart-container-radar-${id}`} className="bg-slate-900/40 border border-white/5 p-6 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl group hover:border-white/15 transition-all">
+    <div id={`chart-container-radar-${id}`} className="bg-slate-900/40 border border-white/5 p-3 pb-1 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl group hover:border-white/15 transition-all">
       <div id={`apex-chart-wrapper-radar-${id}`} className="w-full">
         <Chart
           options={chartOptions}

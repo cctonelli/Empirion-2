@@ -19,7 +19,7 @@ export const DashboardGrid: React.FC<DashboardGridProps> = ({
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={`grid ${columns} gap-8 w-full`}
+      className={`grid ${columns} gap-3 w-full`}
     >
       {React.Children.map(children, (child, index) => {
         if (!child) return null;

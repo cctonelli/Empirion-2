@@ -829,6 +829,23 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
                     {activeTab === 'historico' && (
                       <div id="historico-tab-content" className="space-y-6 pb-6">
+                        {currentKpis?.liquidity_current !== undefined && currentKpis.liquidity_current < 1.0 && (
+                          <div id="fiduciary-liquidity-alert" className="p-5 bg-rose-950/40 border border-rose-500/30 rounded-[2.5rem] shadow-xl relative overflow-hidden backdrop-blur-3xl animate-in fade-in slide-in-from-top duration-500 flex flex-col md:flex-row items-center gap-5 justify-between">
+                            <div className="flex gap-4">
+                              <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-500 flex shrink-0 items-center justify-center">
+                                <AlertTriangle size={24} className="stroke-[2.5]" />
+                              </div>
+                              <div className="space-y-1">
+                                <span className="block text-[9px] font-black tracking-[0.2em] uppercase text-rose-500 italic">ALERTA FIDUCIÁRIO DE INSOLVABILIDADE</span>
+                                <h4 className="text-sm font-black text-white uppercase italic tracking-tight">LIQUIDEZ CORRENTE COM ALTO RISCO OPERACIONAL</h4>
+                                <p className="text-[10px] text-slate-400 font-medium">A liquidez corrente da empresa de <strong>{currentKpis.liquidity_current.toFixed(2).replace('.', ',')}</strong> encontra-se abaixo da zona mínima prudencial de 1,00. Isso indica que os Ativos Circulantes são insuficientes para adimplir as obrigações imediatas e de Curto Prazo, exigindo readequação urgente de capital de giro ou refinanciamento fiduciário.</p>
+                              </div>
+                            </div>
+                            <div className="shrink-0">
+                              <span className="inline-block px-4 py-2 bg-rose-500/10 text-rose-500 text-[9px] font-black uppercase rounded-full border border-rose-500/20 italic">Risco Crítico</span>
+                            </div>
+                          </div>
+                        )}
                         <DashboardGrid id="aluno-historico" columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                           <EmpirionAreaChart
                             id="equity-evolution"

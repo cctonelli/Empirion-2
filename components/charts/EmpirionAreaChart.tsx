@@ -70,7 +70,16 @@ export const EmpirionAreaChart: React.FC<EmpirionAreaChartProps> = ({
         lines: {
           show: true
         }
+      },
+      padding: {
+        left: 2,
+        right: 2,
+        top: 2,
+        bottom: 0
       }
+    },
+    dataLabels: {
+      enabled: false
     },
     xaxis: {
       categories: categories,
@@ -127,7 +136,7 @@ export const EmpirionAreaChart: React.FC<EmpirionAreaChartProps> = ({
   };
 
   return (
-    <div id={`chart-container-area-${id}`} className="bg-slate-900/40 border border-white/5 p-6 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl group hover:border-white/15 transition-all">
+    <div id={`chart-container-area-${id}`} className="bg-slate-900/40 border border-white/5 p-3 pb-1 rounded-[2rem] shadow-xl relative overflow-hidden backdrop-blur-3xl group hover:border-white/15 transition-all">
       <div id={`apex-chart-wrapper-area-${id}`} className="w-full">
         <Chart
           options={chartOptions}
