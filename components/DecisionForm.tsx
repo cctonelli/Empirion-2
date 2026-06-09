@@ -617,7 +617,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        <button 
                          type="button"
                          onClick={() => setIsRightPreviewCollapsed(false)}
-                         className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-40 bg-orange-600/90 hover:bg-orange-600 text-white py-6 px-1.5 rounded-l-xl border-l border-y border-orange-400/30 flex-col items-center gap-3 shadow-2xl transition-all transform hover:-translate-x-0.5 duration-200 cursor-pointer animate-in slide-in-from-right-10 shrink-0"
+                         className="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-orange-600/90 hover:bg-orange-600 text-white py-6 px-1.5 rounded-l-xl border-l border-y border-orange-400/30 flex-col items-center gap-3 shadow-2xl transition-all transform hover:-translate-x-0.5 duration-200 cursor-pointer animate-in slide-in-from-right-10 shrink-0"
                          title="Expandir Painel de Simulação Real-Time"
                        >
                          <Activity size={12} className="text-white animate-pulse" />

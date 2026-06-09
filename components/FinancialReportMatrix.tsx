@@ -122,7 +122,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       mapFinancialToTable(r.type, history, projection, currency, startingMode)
     );
 
-    exportToExcelXLSX(tables, 'matriz_financeira_oracular_completa.xlsx');
+    exportToExcelXLSX(tables, 'matriz_financeira_completa.xlsx');
     setShowExportMenu(false);
   };
 
