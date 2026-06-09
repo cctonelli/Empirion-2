@@ -332,15 +332,15 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               {/* Informações fidedignas de parâmetros estipulados pelo Tutor */}
               <div className="mt-5 pt-3 border-t border-white/5 space-y-1.5 font-sans">
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Preço Médio:</span>
+                  <span>Preço Médio ($):</span>
                   <span className="text-amber-400 font-bold">{currency} {stats.avgPriceRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Share Total (qtde):</span>
+                  <span>Market Share Total (un):</span>
                   <span className="text-slate-300 font-semibold">{stats.totalRegionDemand.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Demanda Atingida Total:</span>
+                  <span>Demanda Atingida Total (un):</span>
                   <span className="text-slate-300 font-semibold">{stats.totalRegionUnitsSold.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
@@ -352,15 +352,15 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   <span className="text-emerald-400 font-bold">{stats.relativeSalesShare.toFixed(1)}%</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Custo unit. Logística:</span>
+                  <span>Custo Logística (un):</span>
                   <span className="text-slate-400 font-semibold">{currency} {adjustedDistCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Custo unit. Campanha:</span>
+                  <span>Custo Campanha (un):</span>
                   <span className="text-slate-400 font-semibold">{currency} {adjustedMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between mt-1 pt-1 border-t border-white/5 text-[10px] text-slate-400 uppercase tracking-wide font-mono leading-none">
-                  <span>Valor Total Campanhas:</span>
+                  <span>Total Campanhas ($):</span>
                   <span className="text-orange-400 font-black">{currency} {totalMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
