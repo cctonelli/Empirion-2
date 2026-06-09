@@ -488,7 +488,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                       : 'bg-slate-800 text-slate-500 border-white/5 cursor-not-allowed opacity-40 shadow-none'
                   }`}
                 >
-                  {isProcessing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>} Turnover P0{(selectedArena?.current_round ?? 0) + 1}
+                  {isProcessing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>} Turnover P-{(selectedArena?.current_round ?? 0) + 1}
                 </button>
               )}
            </div>

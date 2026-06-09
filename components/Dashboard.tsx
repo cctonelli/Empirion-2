@@ -144,10 +144,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             });
           }
           
-          // Se o histórico estiver vazio ou não contiver a Rodada 0 (P0), geramos um Fallback Local robusto do P0
+          // Se o histórico estiver vazio ou não contiver a Rodada 0 (R0), geramos um Fallback Local robusto do R0
           const hasP0 = teamHistory.some((h: any) => h.round === 0);
           if (!hasP0) {
-            console.warn("Oracle Shield – P0 não encontrado no histórico do Supabase. Injetando Fallback Local do estado inicial...");
+            console.warn("Oracle Shield – R-0 não encontrado no histórico do Supabase. Injetando Fallback Local do estado inicial...");
             const kpis = team?.kpis || {};
             const isZeroMode = arena.starting_mode === 'start_from_zero';
             const defaultCash = kpis.current_cash ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 111163.54); // default do caixa inicial
