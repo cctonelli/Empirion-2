@@ -1802,13 +1802,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                  <WizardField 
                                     label="Rateio Aluguel (Administração) (%)" 
                                     type="number" 
-                                    val={tutorConfig.rent_allocation_administrative ?? 10} 
+                                    val={tutorConfig.rent_allocation_administrative ?? 20} 
                                     onChange={(v: any) => setTutorConfig({ ...tutorConfig, rent_allocation_administrative: parseInt(v) || 0 })} 
                                  />
                                  <WizardField 
                                     label="Rateio Aluguel (Vendas) (%)" 
                                     type="number" 
-                                    val={tutorConfig.rent_allocation_sales ?? 20} 
+                                    val={tutorConfig.rent_allocation_sales ?? 10} 
                                     onChange={(v: any) => setTutorConfig({ ...tutorConfig, rent_allocation_sales: parseInt(v) || 0 })} 
                                  />
                               </>
@@ -1818,22 +1818,22 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         {tutorConfig.building_mode === 'rented' && (
                            <div className={`mt-8 p-6 rounded-[2rem] border transition-all duration-300 flex flex-col md:flex-row items-center justify-between gap-6 ${
                               ((tutorConfig.rent_allocation_productive ?? 70) + 
-                               (tutorConfig.rent_allocation_administrative ?? 10) + 
-                               (tutorConfig.rent_allocation_sales ?? 20)) === 100 
+                               (tutorConfig.rent_allocation_administrative ?? 20) + 
+                               (tutorConfig.rent_allocation_sales ?? 10)) === 100 
                               ? 'bg-emerald-500/5 border-emerald-500/20 shadow-[0_0_50px_rgba(16,185,129,0.05)] text-emerald-300' 
                               : 'bg-rose-500/5 border-rose-500/20 shadow-[0_0_50px_rgba(244,63,94,0.05)] text-rose-300 animate-pulse'
                            }`}>
                               <div className="flex items-center gap-4 text-left">
                                  <div className={`p-3 rounded-2xl ${
                                     ((tutorConfig.rent_allocation_productive ?? 70) + 
-                                     (tutorConfig.rent_allocation_administrative ?? 10) + 
-                                     (tutorConfig.rent_allocation_sales ?? 20)) === 100 
+                                     (tutorConfig.rent_allocation_administrative ?? 20) + 
+                                     (tutorConfig.rent_allocation_sales ?? 10)) === 100 
                                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                                     : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                                  }`}>
                                     {((tutorConfig.rent_allocation_productive ?? 70) + 
-                                      (tutorConfig.rent_allocation_administrative ?? 10) + 
-                                      (tutorConfig.rent_allocation_sales ?? 20)) === 100 ? (
+                                      (tutorConfig.rent_allocation_administrative ?? 20) + 
+                                      (tutorConfig.rent_allocation_sales ?? 10)) === 100 ? (
                                        <CheckCircle2 size={24} />
                                     ) : (
                                        <ShieldAlert size={24} />
@@ -1845,30 +1845,30 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                     </span>
                                     <span className="text-sm font-black text-white font-mono">
                                        Produtivo: <span className="text-emerald-400">{tutorConfig.rent_allocation_productive ?? 70}%</span>
-                                       {' '} + Adm: <span className="text-sky-400">{tutorConfig.rent_allocation_administrative ?? 10}%</span>
-                                       {' '} + Vendas: <span className="text-indigo-400">{tutorConfig.rent_allocation_sales ?? 20}%</span>
+                                       {' '} + Adm: <span className="text-sky-400">{tutorConfig.rent_allocation_administrative ?? 20}%</span>
+                                       {' '} + Vendas: <span className="text-indigo-400">{tutorConfig.rent_allocation_sales ?? 10}%</span>
                                        {' '} = {' '}
                                        <span className={
                                           ((tutorConfig.rent_allocation_productive ?? 70) + 
-                                           (tutorConfig.rent_allocation_administrative ?? 10) + 
-                                           (tutorConfig.rent_allocation_sales ?? 20)) === 100 
+                                           (tutorConfig.rent_allocation_administrative ?? 20) + 
+                                           (tutorConfig.rent_allocation_sales ?? 10)) === 100 
                                           ? 'text-emerald-400' 
                                           : 'text-rose-400'
                                        }>
                                           {((tutorConfig.rent_allocation_productive ?? 70) + 
-                                            (tutorConfig.rent_allocation_administrative ?? 10) + 
-                                            (tutorConfig.rent_allocation_sales ?? 20))}%
+                                            (tutorConfig.rent_allocation_administrative ?? 20) + 
+                                            (tutorConfig.rent_allocation_sales ?? 10))}%
                                        </span>
                                     </span>
                                  </div>
                               </div>
                               <div className="text-xs text-slate-400 md:max-w-md text-left md:text-right">
                                  {((tutorConfig.rent_allocation_productive ?? 70) + 
-                                   (tutorConfig.rent_allocation_administrative ?? 10) + 
-                                   (tutorConfig.rent_allocation_sales ?? 20)) === 100 ? (
+                                   (tutorConfig.rent_allocation_administrative ?? 20) + 
+                                   (tutorConfig.rent_allocation_sales ?? 10)) === 100 ? (
                                     <span className="text-emerald-400 font-bold">✓ Conformidade confirmada (Soma de 100%). O progresso está desbloqueado para o passo seguinte.</span>
                                  ) : (
-                                    <span className="text-rose-400 font-extrabold font-mono">⚠ ERRO DE CONFORMIDADE: O rateio total deve ser rigidamente igual a 100% para continuar (Falta/Sobra de {(100 - ((tutorConfig.rent_allocation_productive ?? 70) + (tutorConfig.rent_allocation_administrative ?? 10) + (tutorConfig.rent_allocation_sales ?? 20)))}%).</span>
+                                    <span className="text-rose-400 font-extrabold font-mono">⚠ ERRO DE CONFORMIDADE: O rateio total deve ser rigidamente igual a 100% para continuar (Falta/Sobra de {(100 - ((tutorConfig.rent_allocation_productive ?? 70) + (tutorConfig.rent_allocation_administrative ?? 20) + (tutorConfig.rent_allocation_sales ?? 10)))}%).</span>
                                  )}
                               </div>
                            </div>
@@ -2704,8 +2704,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 <span className="text-emerald-400 font-bold">{formatCurrency(((tutorConfig.monthly_rent_value ?? 50000.00) * (tutorConfig.rent_allocation_productive ?? 70)) / 100, tutorConfig.currency)}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-slate-500">└── Aluguel OPEX (Adm+Sales) ({((tutorConfig.rent_allocation_administrative ?? 10) + (tutorConfig.rent_allocation_sales ?? 20))}%):</span>
-                                <span className="text-sky-400 font-bold">{formatCurrency(((tutorConfig.monthly_rent_value ?? 50000.00) * ((tutorConfig.rent_allocation_administrative ?? 10) + (tutorConfig.rent_allocation_sales ?? 20))) / 100, tutorConfig.currency)}</span>
+                                <span className="text-slate-500">└── Aluguel OPEX (Adm+Sales) ({((tutorConfig.rent_allocation_administrative ?? 10) + (tutorConfig.rent_allocation_sales ?? 10))}%):</span>
+                                <span className="text-sky-400 font-bold">{formatCurrency(((tutorConfig.monthly_rent_value ?? 50000.00) * ((tutorConfig.rent_allocation_administrative ?? 20) + (tutorConfig.rent_allocation_sales ?? 10))) / 100, tutorConfig.currency)}</span>
                               </div>
                             </div>
                           )}
@@ -2775,8 +2775,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
       {(() => {
         const rentAllocProd = tutorConfig.rent_allocation_productive ?? 70;
-        const rentAllocAdm = tutorConfig.rent_allocation_administrative ?? 10;
-        const rentAllocSales = tutorConfig.rent_allocation_sales ?? 20;
+        const rentAllocAdm = tutorConfig.rent_allocation_administrative ?? 20;
+        const rentAllocSales = tutorConfig.rent_allocation_sales ?? 10;
         const isRentSumValid = tutorConfig.building_mode !== 'rented' || (rentAllocProd + rentAllocAdm + rentAllocSales) === 100;
         const canGoNext = step !== 6 || isRentSumValid;
 
