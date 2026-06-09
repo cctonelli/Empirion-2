@@ -2,9 +2,28 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.114 Compact Fiduciary Grid & Liquidity Sentinel.
+- **Versão Ativa:** v2026.115 Active Redundant Time Sentinel & Emerald Pulsing CTA.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Sentinela Temporal Redundante & Feedback Verde Esmeralda Pulsante - v2026.115
+
+**Data:** 09 de Junho de 2026 às 21:30 UTC  
+**Motivo:** Correção de descompasso visual no cockpit de comando onde o término do round ("ENCERRADO") não habilitava ou não sinalizava adequadamente a liberação do botão de "TURNOVER PXX" para o tutor clicar, além de falta de destaque chamativo no botão de liberação.
+
+**Detalhamento Técnico:**
+- **Sentinela Temporal Redundante:** Implementação de sonda de varredura periódica (`setInterval` com frequência de 2000ms) executada de forma síncrona diretamente no cockpit de admin (`AdminCommandCenter.tsx`). Essa sonda valida o relógio de sistema contra a data de início (`round_started_at` ou `created_at`), prazos limites, estados de pausa e tempos pendentes, chamando preventivamente e garantindo a ativação confiável do status `isTimerExpired(true)`.
+- **Botão Esmeralda Pulsante (Emerald Pulsing CTA):** Reestilização cirúrgica do botão de fechamento de ciclo (Turnover) na barra superior do tutor. Quando o temporizador expira e o Turnover torna-se realizável:
+  - O botão abandona a cor laranja neutra e assume cor Verde Esmeralda brilhante (`bg-emerald-600 hover:bg-emerald-500` com borda e sombra correspondentes).
+  - Recebe um efeito contínuo cinematográfico de pulsação suave em micro-interações (`animate-[pulse_2s_infinite]`), induzindo visualmente a chamada para ação (Call to Action).
+  - Quando bloqueado, adquire visual sofisticado com opacidade reduzida e estados de cursor desativados.
+
+**Impactos:**
+- Eliminação completa de descompassos ou race conditions temporais após o zeramento natural dos prazos da arena.
+- Facilidade tátil e cognitiva inconfundível para o tutor identificar o exato momento em que o Turnover foi liberado no sistema.
+- Estética moderna alinhada às tendências visuais exigentes de 2026.
 
 ---
 

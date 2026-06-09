@@ -79,6 +79,55 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
     setIsTimerExpired(false);
   }, [selectedArena?.id]);
 
+  // Sentinela fiduciário redundante que verifica a integridade temporal do round a cada 2 segundos
+  useEffect(() => {
+    if (!selectedArena) return;
+    
+    const verificarExpiracaoTempo = () => {
+      // Se a arena terminou todas as rodadas, quem cuida é o painel de torneio concluído
+      const isFinished = selectedArena.current_round >= (selectedArena.total_rounds || 6);
+      if (isFinished) {
+        setIsTimerExpired(true);
+        return;
+      }
+
+      if (selectedArena.config?.is_paused) {
+        const remaining = selectedArena.config?.remaining_ms_at_pause ?? 0;
+        if (remaining <= 0) {
+          setIsTimerExpired(true);
+        }
+        return;
+      }
+      
+      const start = selectedArena.round_started_at || selectedArena.created_at;
+      if (!start) return;
+      
+      const startTime = new Date(start).getTime();
+      let durationMs = 0;
+      const value = selectedArena.deadline_value ?? 7;
+      const unit = selectedArena.deadline_unit ?? 'days';
+      
+      switch (unit) {
+        case 'hours': durationMs = value * 60 * 60 * 1000; break;
+        case 'days': durationMs = value * 24 * 60 * 60 * 1000; break;
+        case 'weeks': durationMs = value * 7 * 24 * 60 * 60 * 1000; break;
+        case 'months': durationMs = value * 30 * 24 * 60 * 60 * 1000; break;
+        default: durationMs = 7 * 24 * 60 * 60 * 1000;
+      }
+      
+      const hasPassed = Date.now() >= (startTime + durationMs);
+      if (hasPassed) {
+        setIsTimerExpired(true);
+      }
+    };
+
+    verificarExpiracaoTempo();
+
+    // Sonda periódica ativa no cockpit do tutor para liberar o turnover de forma reativa
+    const intervalId = setInterval(verificarExpiracaoTempo, 2000);
+    return () => clearInterval(intervalId);
+  }, [selectedArena]);
+
   const isAdmin = profile?.role === 'admin';
 
   const fetchData = async () => {
@@ -433,7 +482,11 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                   onClick={handleTurnover} 
                   disabled={isProcessing || !isTimerExpired} 
                   title={!isTimerExpired ? "O turnover só pode ser processado após o encerramento ou a conclusão (zeramento) do temporizador de round." : "Processar a virada de round e inicializar o próximo ciclo"}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 flex items-center gap-2 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none"
+                  className={`px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95 border ${
+                    isTimerExpired && !isProcessing
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/50 shadow-xl shadow-emerald-500/20 animate-[pulse_2s_infinite] cursor-pointer'
+                      : 'bg-slate-800 text-slate-500 border-white/5 cursor-not-allowed opacity-40 shadow-none'
+                  }`}
                 >
                   {isProcessing ? <Loader2 size={12} className="animate-spin"/> : <RefreshCw size={12}/>} Turnover P0{(selectedArena?.current_round ?? 0) + 1}
                 </button>
