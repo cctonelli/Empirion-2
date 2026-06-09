@@ -13,15 +13,17 @@
 **Data:** 09 de Junho de 2026 às 17:35 UTC  
 **Motivo:** No modo "Start From Zero" (Greenfield), o sistema trazia uma inconsistência urgente: pré-inicializava uma força de trabalho fantasma de 470 funcionários na MOD (Mão de Obra Direta), mesmo antes de qualquer aquisição de maquinário na rodada inicial (R-01). Corrigimos isso de forma unificada no kernel de simulação (`simulation-core.ts` e `simulation.ts`) e no cockpit visual do painel (`HRStep.tsx`), garantindo uma experiência 100% de partida zerada fidedigna.
 
-**Detalhamento Técnico:**
+**Detalhamento Técnico & Regra de Negócio Crucial de Paralisia Industrial:**
 - **Inexistência de Operários no Início:** Se `starting_mode === 'start_from_zero'`, a equipe inicia rigorosamente com 0 operários operacionais na MOD (`defaultStaff = 0` em vez do padrão `470`).
 - **Zeramento de Operators Required:** Com frota de maquinários vazia (`machines = []`), os operadores necessários (`operatorsRequired`) agora começam devidamente em 0 no cockpit de gestão, impedindo a exigência fantasma de tripulação.
 - **Liberdade de Contratação Manual:** A aquisição de máquinas não gera contratação automatizada no round atual. Em consonância com a regra de gerenciamento de talentos do simulador, a equipe deve decidir e planejar manualmente o número de admissões no painel de contratação ("Número de Admissões"). Todas as admissões vêm do rascunho de decisões com o valor padrão `0`.
+- **Regra Fiduciária de Paralisia de Ativos:** Como a contratação não é automática, se a equipe adquirir ativos físicos (novas máquinas) ou configurar multurnos em qualquer rodada, mas não efetuar o planejamento de recursos humanos correspondente (adicionando trabalhadores no campo manual de contratações do painel de RH), as máquinas ficarão paralisadas por falta de operadores. Essa escassez de recursos impactará diretamente a capacidade operacional prática e o limite máximo de produção real da rodada.
 - **Integridade de Auditoria Tripla:** As correções integraram as constantes globais e fórmulas de faturamento de simulação tanto em tempo real de visualização quanto na virada efetiva da rodada operada pela engine no Supabase.
 
 **Impactos:**
 - Erradicação de custos salariais injustificados e operários falsos em partidas de faturamento zero.
 - Preservação da conformidade de partidas "Start From Zero".
+- Introdução de risco operacional realista: subutilização de ativos por ausência de planejamento tático de pessoal.
 
 ---
 
