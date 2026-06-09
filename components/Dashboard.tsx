@@ -736,7 +736,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                         DISPUTANDO:
                       </span>
                       <span className="text-lg lg:text-xl font-black text-orange-500 uppercase italic tracking-tight font-sans drop-shadow-[0_0_15px_rgba(249,115,22,0.4)]">
-                        {selectedRound === currentRound ? `ROUND 0${selectedRound}` : selectedRound < currentRound ? `HISTÓRICO P-${selectedRound}` : `PLANEJAMENTO P-${selectedRound}`}
+                        {selectedRound === currentRound ? `ROUND ${selectedRound}` : selectedRound < currentRound ? `HISTÓRICO P-${selectedRound}` : `PLANEJAMENTO P-${selectedRound}`}
                       </span>
                     </div>
                   </div>
