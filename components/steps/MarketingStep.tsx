@@ -148,6 +148,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       avgPriceRegion,
       totalRegionDemand,
       totalRegionUnitsSold,
+      activeTeamUnitsSold,
       weight: activeWeight,
       relativeSalesShare: totalRegionUnitsSold > 0 ? (activeTeamUnitsSold / totalRegionUnitsSold) * 100 : 0
     };
@@ -340,8 +341,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   <span className="text-slate-300 font-semibold">{stats.totalRegionDemand.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Demanda Atingida Total (un):</span>
-                  <span className="text-slate-300 font-semibold">{stats.totalRegionUnitsSold.toLocaleString('pt-BR')} un</span>
+                  <span>Vendas na Região (un):</span>
+                  <span className="text-slate-300 font-semibold">{stats.activeTeamUnitsSold.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Peso Demanda Total (%):</span>
