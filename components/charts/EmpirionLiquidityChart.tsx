@@ -66,9 +66,9 @@ export const EmpirionLiquidityChart: React.FC<EmpirionLiquidityChartProps> = ({
     return {
       categories,
       series: [
-        { name: 'Liquidez Seca', data: dryData },
-        { name: 'Liquidez Corrente', data: currentData },
-        { name: 'Liquidez Geral', data: generalData }
+        { name: 'Seca', data: dryData },
+        { name: 'Corrente', data: currentData },
+        { name: 'Geral', data: generalData }
       ]
     };
   }, [visibleHistory]);
