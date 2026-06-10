@@ -1087,8 +1087,6 @@ export function processRoundWithValidation(
   const totalValuePaForSale = initialPaValue + totalCPP;
   const wacPaUnit = totalQtyPaForSale > 0 ? (totalValuePaForSale / totalQtyPaForSale) : unitCPP;
 
-  const totalCPV = totalUnitsSold * wacPaUnit;
-
   const finalMpaQty = Math.max(0, totalMpaQtyAvailable - mpaConsumidaQty);
   const finalMpaValue = finalMpaQty * wacMpaUnit;
 
@@ -1097,6 +1095,9 @@ export function processRoundWithValidation(
 
   const finalPaQty = Math.max(0, totalQtyPaForSale - totalUnitsSold);
   const finalPaValue = finalPaQty * wacPaUnit;
+
+  // Equação Dinâmica e Integrada de Estoques para Garantia Contábil de Integridade (Absorção e Ociosidade CPC 16)
+  const totalCPV = totalValuePaForSale - finalPaValue;
 
   // CONSTRUÇÃO COMPLETA DO KARDEX
   const mpaAvgEntrada = (purchaseMPA + emergencyMPA) > 0 ? ((purchaseMPA * netPlannedMpaPrice) + (emergencyMPA * netEmergencyMpaPrice)) / (purchaseMPA + emergencyMPA) : 0;

@@ -722,8 +722,9 @@ export const calculateProjections = (
   const wacUnit = totalQtyForSale > 0 ? totalValueInInventory / totalQtyForSale : unitCPP;
 
   // CPV (Custo do Produto Vendido)
-  const totalCPV = totalUnitsSold * wacUnit;
   const closingStockValuePA = closingStockPA * wacUnit;
+  // Equação Dinâmica e Integrada de Estoques para Garantia Contábil de Integridade (Absorção e Ociosidade CPC 16)
+  const totalCPV = totalValueInInventory - closingStockValuePA;
 
   // Desmembramento de Proporções Industriais do CPV
   const currentCppMpRatio = totalCPP > 0 ? totalMP / totalCPP : 0.6;

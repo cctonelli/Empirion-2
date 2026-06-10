@@ -1522,3 +1522,22 @@ project-root/
 - **Eficiência nos Gastos de RH:** As equipes estão agora blindadas contra pressões de despesa de PPR de até 20%, distribuindo no máximo 10% da lucratividade, o que reduz saídas de capital operacional (`liabilities.current.ppr_payable` / no fluxo de caixa subordinado) e eleva a atratividade do equity para investidores.
 - **Sensibilidade Operacional Coerente:** O sindicato continua sensível a demissões irrefletidas e salários abusivos abaixo do mercado regional, mas premia ativamente boas posturas e treinamentos industriais focados.
 **Status:** ATIVO, amplamente homologado, compilado e implantado.
+
+---
+
+## Decisão Arquitetural & Versionamento - Erradicação de Inconsistências de Equação Contábil sob Ociosidade de Produção (Modo Start From Zero) - v2026.109
+
+**Data:** 10 de Junho de 2026 às 11:15 UTC  
+**Motivo:** Resolver o erro crítico de bloqueio contábil Sapphire ocorrido na transição de R-1 para R-2 sob o modo "START FROM ZERO" (Greenfield), onde o total do Ativo divergia do Passivo + PL. A divergência correspondia a custos de transformação industriais (como depreciações de máquinas e benfeitorias físicas do período) incorridos que sumiam do Balanço e do DRE quando a produção física era nula (por exemplo, no round 1 do Greenfield, onde o time inicia com zero operários e não produz nenhuma unidade fiduciária).  
+**Principais diferenças:**  
+- **Custeio por Absorção conforme CPC 16 (Estoques / IFRS) (`simulation.ts` e `simulation-core.ts`):** 
+  - Anteriormente, o CPV (`totalCPV`) e o estoque final de produtos acabados (`closingStockValuePA`) eram calculados multiplicando as respectivas quantidades pelo custo unitário médio ponderado (`wacUnit` / `wacPaUnit`). Sob produção zerada, sem estoque anterior, `wacUnit` e `wacPaUnit` eram forçados a zero pelas travas de divisão por zero. Consequentemente, as depreciações (e outros custos de cif) que diminuíram o imobilizado líquido pelas depreciações acumuladas não se convertiam em valor de estoque final e também não transitavam no CPV para a DRE! Esse saldo desprovido simplesmente desaparecia do balanço contábil, causando o descompasso na equação do Sapphire.
+  - A nova formulação utiliza a equação de resíduos clássica da contabilidade de custos: `totalCPV = totalValueInInventory - closingStockValuePA` (e respectivamente no core: `totalCPV = totalValuePaForSale - finalPaValue`). 
+  - Dessa forma:
+    - Se a produção for zero, os custos industriais (incluindo depreciações fixas, contratos recorrentes e amortização física) não puderam ser estocados (visto que `closingStockValuePA` is 0). Assim, a totalidade de `totalValueInInventory` (que é igual a `totalCPP`) transita integralmente no `totalCPV` do período, debitando a DRE de forma direta como perda por ociosidade/capacidade insatisfatória nos termos estritos do CPC 16.
+    - Se a produção for positiva, qualquer fragmento centesimal de arredondamento de dízima ou resíduo de float no custo médio ponderado (`WAC`) é harmonizado de forma autônoma na equação de estoque, zerando o risco de instabilidades para qualquer equipe.
+**Impactos esperados:**  
+- **Saneamento e Fluidez do Greenfield:** Erradicação definitiva do loop de inconsistência de fecho do Sapphire no turnover de R-1 para R-2 sob modo "START FROM ZERO", assegurando integridade na equivalência contábil (Ativo = Passivo + PL) em termos matemáticos finos de até duas casas decimais.
+- **Aderência às Práticas do CRC/CPC:** Lançamento direto e transparente no DRE de custos fixos industriais ociosos (capacidade ociosa), sem risco de ocultação ou estufamento fraudulento dos custos de bens manufaturados.
+**Status:** ATIVO, compilado com sucesso e homologado via linter.
+
