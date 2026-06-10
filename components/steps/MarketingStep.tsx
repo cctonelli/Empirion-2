@@ -100,79 +100,149 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       ? prevPrices.reduce((sum, p) => sum + p, 0) / prevPrices.length
       : 0;
 
-    // 2. Parâmetros de contexto
+    // 2. Parâmetros de contexto e regiões
     const regionConf = activeArena?.config?.regions?.find((r: any) => r.id === regionId) || activeArena?.config?.region_configs?.find((r: any) => r.id === regionId);
     const baseSuggestedPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : (activeArena?.market_indicators?.avg_selling_price || 425);
     const demandVariation = activeArena?.market_indicators?.demand_variation || 0;
 
-    const regionCount = Object.keys(decisions.regions).length || 1;
+    let regionConfigs: any[] = activeArena?.region_configs || activeArena?.config?.regions || activeArena?.config?.region_configs || [];
+    if (!regionConfigs || regionConfigs.length === 0) {
+      const regCount = activeArena?.regions_count || Object.keys(decisions.regions || {}).length || 1;
+      regionConfigs = Array.from({ length: regCount }, (_, i) => ({
+        id: i + 1,
+        name: `Região ${i + 1}`,
+        demand_weight: 100 / regCount,
+        suggested_price: baseSuggestedPrice
+      }));
+    }
 
-    let totalRegionDemand = 0;
-    let totalRegionUnitsSold = 0;
-    let activeTeamUnitsSold = 0;
+    // 3. Capacidade Nominal a 100% e estoque de cada equipe concorrente
+    const teamCapacities: Record<string, number> = {};
+    const teamStockPA: Record<string, number> = {};
 
     rows.forEach((c: any) => {
       const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
       const stateToUse = isCurrentActiveTeam ? decisions : (c.state || {});
       
-      const capacity = getTeamCapacity(isCurrentActiveTeam ? { team_id: c.team_id, state: decisions, kpis: c.kpis } : c);
-      const baseDemandPerRegion = (capacity * 0.8) / regionCount;
-      
+      const capacity = getTeamCapacity({ team_id: c.team_id, state: stateToUse, kpis: c.kpis });
+      teamCapacities[String(c.team_id)] = capacity;
+
       const unitsProduced = Number(c.kpis?.statements?.dre?.find((item: any) => item.id === 'dre.cpv')?.quantity) || Number(c.kpis?.finished_goods_produced) || (capacity * 0.8);
       const prevStockQty = Number(c.kpis?.statements?.balance_sheet?.find((item: any) => item.id === 'assets.current.stock.pa')?.quantity) || Number(c.kpis?.stock_quantities?.finished_goods) || 0;
-      const totalQtyPaForSale = prevStockQty + unitsProduced;
+      teamStockPA[String(c.team_id)] = prevStockQty + unitsProduced;
+    });
 
-      // Calcular demanda que este competidor atrai em TODAS as regiões ativas
-      let competitorTotalDemand = 0;
-      let targetRegionDemandForCompetitor = 0;
+    const totalCapacityAllTeamsRaw = Object.values(teamCapacities).reduce((sum, cap) => sum + cap, 0);
+    const nominalTeamCapacity = 10000;
+    const totalCapacityAllTeams = totalCapacityAllTeamsRaw > 0 ? totalCapacityAllTeamsRaw : (nominalTeamCapacity * (rows || []).length);
 
-      const regionKeys = Object.keys(decisions.regions);
-      regionKeys.forEach((keyStr) => {
-        const rId = Number(keyStr);
-        const rDec = stateToUse?.regions?.[keyStr] || stateToUse?.regions?.[rId];
-        if (!rDec) return;
+    // 4. Demanda de mercado da região (Market Size por Região)
+    const regionalMarketSizes: Record<string, number> = {};
+    regionConfigs.forEach((r: any) => {
+      const rIdStr = String(r.id);
+      const rWeight = Number(r.demand_weight || r.weight || r.demand_percent || 0);
+      const baseRegDemand = totalCapacityAllTeams * (rWeight / 100);
+      const regDemand = Math.floor(baseRegDemand * (1 + (demandVariation / 100)));
+      regionalMarketSizes[rIdStr] = regDemand;
+    });
 
-        const rConf = activeArena?.config?.regions?.find((r: any) => r.id === rId) || activeArena?.config?.region_configs?.find((r: any) => r.id === rId);
-        const rSuggestedPrice = rConf?.suggested_price !== undefined ? Number(rConf.suggested_price) : baseSuggestedPrice;
+    // 5. Pontuação competitiva das equipes regionais
+    const teamRegionScores: Record<string, Record<string, number>> = {};
+    rows.forEach((c: any) => {
+      const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
+      const stateToUse = isCurrentActiveTeam ? decisions : (c.state || {});
+      const tIdStr = String(c.team_id);
+      teamRegionScores[tIdStr] = {};
 
+      regionConfigs.forEach((r: any) => {
+        const rIdStr = String(r.id);
+        const rDec = stateToUse?.regions?.[rIdStr] || stateToUse?.regions?.[r.id] || {};
+
+        const rSuggestedPrice = r.suggested_price !== undefined ? Number(r.suggested_price) : baseSuggestedPrice;
         const regPrice = Number(rDec.price) || rSuggestedPrice;
         const regMarketing = Number(rDec.marketing) || 0;
         const regTerm = Number(rDec.term) || 0;
-        const rjDemandPenalty = stateToUse?.judicial_recovery === true ? 0.85 : 1.0;
+        const isRJ = stateToUse?.judicial_recovery === true;
+        const rjDemandPenalty = isRJ ? 0.85 : 1.0;
 
-        const priceIndex = regPrice > 0 ? rSuggestedPrice / regPrice : 1;
+        const priceIndex = regPrice > 0 ? (rSuggestedPrice / regPrice) : 1;
         const marketingIndex = 1 + (regMarketing * 0.08);
         const termIndex = 1 + (regTerm * 0.05);
 
-        const currentRegDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (demandVariation / 100)) * rjDemandPenalty);
-
-        competitorTotalDemand += currentRegDemand;
-        if (rId === regionId) {
-          targetRegionDemandForCompetitor = currentRegDemand;
-        }
+        teamRegionScores[tIdStr][rIdStr] = priceIndex * marketingIndex * termIndex * rjDemandPenalty;
       });
-
-      // Coeficiente de rateio de estoque deste competidor
-      const competitorStockRatio = competitorTotalDemand > totalQtyPaForSale && competitorTotalDemand > 0
-        ? totalQtyPaForSale / competitorTotalDemand
-        : 1;
-
-      // Vendas reais fidedignas na região selecionada
-      const regUnitsSold = Math.min(targetRegionDemandForCompetitor, Math.floor(targetRegionDemandForCompetitor * competitorStockRatio));
-
-      totalRegionDemand += targetRegionDemandForCompetitor;
-      totalRegionUnitsSold += regUnitsSold;
-
-      if (isCurrentActiveTeam) {
-        activeTeamUnitsSold = regUnitsSold;
-      }
     });
 
+    // 6. Aloca a demanda para cada equipe (Market Share Concorrencial)
+    const competitiveDemandsPerTeamReg: Record<string, Record<string, number>> = {};
+    rows.forEach((c: any) => {
+      competitiveDemandsPerTeamReg[String(c.team_id)] = {};
+    });
+
+    regionConfigs.forEach((r: any) => {
+      const rIdStr = String(r.id);
+      const regDemand = regionalMarketSizes[rIdStr] || 0;
+
+      const scoresWithTeams = rows.map((c: any) => ({
+        teamId: String(c.team_id),
+        score: teamRegionScores[String(c.team_id)]?.[rIdStr] ?? 0
+      }));
+
+      const totalScoreReg = scoresWithTeams.reduce((sum, item) => sum + item.score, 0);
+
+      scoresWithTeams.forEach(item => {
+        const shareReg = totalScoreReg > 0 ? (item.score / totalScoreReg) : (1 / rows.length);
+        const teamCapturedDemand = Math.floor(regDemand * shareReg);
+        competitiveDemandsPerTeamReg[item.teamId][rIdStr] = teamCapturedDemand;
+      });
+    });
+
+    // 7. Vender proporcionalmente ao estoque disponível de cada time
+    const teamUnitsSoldPerReg: Record<string, Record<string, number>> = {};
+    rows.forEach((c: any) => {
+      const tIdStr = String(c.team_id);
+      teamUnitsSoldPerReg[tIdStr] = {};
+
+      const totalQtyForSale = teamStockPA[tIdStr] || 0;
+      const demands = competitiveDemandsPerTeamReg[tIdStr] || {};
+      const teamTotalDemand = Object.values(demands).reduce((sz, val) => sz + val, 0);
+
+      const teamStockRatio = teamTotalDemand > totalQtyForSale && teamTotalDemand > 0
+        ? totalQtyForSale / teamTotalDemand
+        : 1;
+
+      let runningUnitsSold = 0;
+      regionConfigs.forEach((r: any, idx: number) => {
+        const rIdStr = String(r.id);
+        const regDemand = demands[rIdStr] || 0;
+
+        let regUnitsSold = 0;
+        if (idx === regionConfigs.length - 1) {
+          regUnitsSold = Math.min(totalQtyForSale, Math.min(teamTotalDemand, totalQtyForSale) - runningUnitsSold);
+        } else {
+          regUnitsSold = Math.min(regDemand, Math.floor(regDemand * teamStockRatio));
+        }
+        regUnitsSold = Math.max(0, regUnitsSold);
+        teamUnitsSoldPerReg[tIdStr][rIdStr] = regUnitsSold;
+        runningUnitsSold += regUnitsSold;
+      });
+    });
+
+    // 8. Selecionar estatísticas para a região que está sendo consultada
+    const rIdStr = String(regionId);
+    const rMarketSizeVal = regionalMarketSizes[rIdStr] || 0;
+
+    let totalRegionUnitsSold = 0;
+    rows.forEach((c: any) => {
+      totalRegionUnitsSold += teamUnitsSoldPerReg[String(c.team_id)]?.[rIdStr] || 0;
+    });
+
+    const activeTeamUnitsSold = teamUnitsSoldPerReg[String(storedTeamId)]?.[rIdStr] || 0;
     const activeWeight = regionConf?.demand_weight || 20;
 
     return {
       avgPriceRegion,
-      totalRegionDemand,
+      totalRegionDemand: rMarketSizeVal,
       totalRegionUnitsSold,
       activeTeamUnitsSold,
       weight: activeWeight,
@@ -363,7 +433,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   <span className="text-amber-400 font-bold">{currency} {stats.avgPriceRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Share Regional (un):</span>
+                  <span>Demanda do Mercado (Market Size):</span>
                   <span className="text-slate-300 font-semibold">{stats.totalRegionDemand.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">

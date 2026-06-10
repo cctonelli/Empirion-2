@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.116 Proportional Regional Stock Allocation & Sales Synchronizer.
+- **Versão Ativa:** v2026.117 Demographic Market Size & Perfect Competitor Simulator.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Cálculo de Mercado Demográfico & Market Size Concorrencial - v2026.117
+
+**Data:** 10 de Junho de 2026 às 20:15 UTC  
+**Motivo:** Corrigir a divergência conceitual e de valores no cálculo de demanda de mercado exibido para as equipes concorrentes no Cockpit visual no Round 1, onde o "Market Share Regional" (antigo `totalRegionDemand`) expressava valores isolados e estáticos baseados exclusivamente na capacidade física de cada empresa individualmente, desconsiderando a soma da capacidade competitiva total de mercado e os pesos parametrizados pelo Tutor (ex: SUL = 40%, SUDESTE = 30%, etc.).
+
+**Detalhamento Técnico:**
+- **Modelo de Tamanho de Mercado Demográfico (Market Size por Região)**: A demanda total de cada região é agora redefinida e calculada de forma 100% sincrônica com a matemática do Tutor e com o processador central do banco. Ela passa a ser computada como:  
+  `Demanda da Região = (Capacidade de Produção 100% de Todas as Equipes Somadas) * (Peso de Demanda de cada Região / 100) * (1 + Variação de Demanda / 100)`.
+- **Competição Dinâmica por Participação de Mercado (Market Share)**: O cálculo de fatiamento do mercado em tempo real no Cockpit foi unificado para que as demandas capturadas flutuem proporcionalmente com base ao score competitivo individual de cada concorrente na região (composto por elasticidade-preço, marketing e termos de prazo de recebimento).
+- **Rótulo Visual de Usabilidade de Negócio**: Mudança do rótulo confuso `Market Share Regional (un)` na interface de marketing (`MarketingStep.tsx`) para `Demanda do Mercado (Market Size)` para representar adequadamente a realidade estatística de mercado (TAM).
+
+**Impactos:**
+- **Sincronia Total de Regras de Negócio**: Sincronia perfeita entre a simulação real de fechamento de round e os dados mostrados aos alunos em tempo de planejamento estratégico de vendas. No SUL, por exemplo, o aluno passa a visualizar de fato os 19.200 un previstos no modelo macro.
 
 ---
 
