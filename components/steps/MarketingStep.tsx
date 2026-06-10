@@ -1,5 +1,5 @@
 import React from 'react';
-import { Megaphone, Info, HelpCircle, RefreshCw, Globe } from 'lucide-react';
+import { Megaphone, Info, HelpCircle, RefreshCw, Globe, ChevronDown, ChevronUp, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { WizardStepHeader, CurrencyInput } from './shared';
 import { DecisionData, Championship, Team } from '../../types';
 import { supabase } from '../../services/supabase';
@@ -25,6 +25,31 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 }) => {
   const [competitorsLog, setCompetitorsLog] = React.useState<any[]>([]);
   const [loadingIntel, setLoadingIntel] = React.useState(false);
+  const [expandedRegionProfitability, setExpandedRegionProfitability] = React.useState<Record<string, boolean>>({});
+
+  const toggleRegionProfitability = (idStr: string) => {
+    setExpandedRegionProfitability(prev => ({
+      ...prev,
+      [idStr]: !prev[idStr]
+    }));
+  };
+
+  const getActiveTeamUnitCPV = () => {
+    const dre = activeTeam?.kpis?.statements?.dre;
+    if (dre && Array.isArray(dre)) {
+      const cpvItem = dre.find((item: any) => item.id === 'cpv');
+      if (cpvItem) {
+        const value = Math.abs(Number(cpvItem.value) || 0);
+        const qty = Number(cpvItem.quantity) || Number(activeTeam?.kpis?.finished_goods_produced) || 0;
+        if (qty > 0) return value / qty;
+      }
+    }
+    const mpaPrice = activeArena?.market_indicators?.prices?.mp_a || 20;
+    const mpbPrice = activeArena?.market_indicators?.prices?.mp_b || 40;
+    const baseMPCost = (3 * mpaPrice) + (2 * mpbPrice);
+    const standardOverhead = 150;
+    return baseMPCost + standardOverhead;
+  };
 
   React.useEffect(() => {
     const fetchCompetitors = async () => {
@@ -463,6 +488,89 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                 <div className="flex justify-between mt-1 pt-1 border-t border-white/5 text-[10px] text-slate-400 uppercase tracking-wide font-mono leading-none">
                   <span>Total Campanhas ($):</span>
                   <span className="text-orange-400 font-black">{currency} {totalMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+
+                {/* Accordion de Lucratividade Regional */}
+                <div className="mt-4 pt-3 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => toggleRegionProfitability(id)}
+                    className="w-full flex justify-between items-center text-[10px] font-extrabold text-slate-400 hover:text-orange-400 uppercase tracking-wider transition-all focus:outline-none"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <DollarSign size={13} className="text-emerald-400" />
+                      DRE &amp; Lucratividade
+                    </span>
+                    {expandedRegionProfitability[id] ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  </button>
+
+                  {expandedRegionProfitability[id] && (
+                    <div className="mt-3 space-y-2 bg-slate-950/50 p-3 rounded-2xl border border-white/5 text-[10px] font-mono leading-relaxed">
+                      {(() => {
+                        const unitCPV = getActiveTeamUnitCPV();
+                        const soldQty = stats.activeTeamUnitsSold;
+                        const regionPrice = Number(reg.price) || 0;
+                        const grossRev = soldQty * regionPrice;
+                        
+                        const vatSalesRate = activeArena?.market_indicators?.vat_sales_rate !== undefined 
+                          ? Number(activeArena.market_indicators.vat_sales_rate) 
+                          : (activeArena?.config?.vat_sales_rate !== undefined ? Number(activeArena.config.vat_sales_rate) : 0);
+                        const taxes = grossRev * (vatSalesRate / 100);
+                        const netRev = grossRev - taxes;
+                        
+                        const cpvAllocated = soldQty * unitCPV;
+                        const mktAllocated = totalMktCost;
+                        const distAllocated = soldQty * adjustedDistCost;
+                        
+                        const netProfitRegion = netRev - cpvAllocated - mktAllocated - distAllocated;
+                        const profitMarginRegion = netRev > 0 ? (netProfitRegion / netRev) * 100 : 0;
+                        
+                        return (
+                          <>
+                            <div className="flex justify-between text-slate-500">
+                              <span>Receita Bruta:</span>
+                              <span className="text-slate-300">{currency} {grossRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-500">
+                              <span>(-) Impostos ({vatSalesRate}%):</span>
+                              <span className="text-red-400/80">-{currency} {taxes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-400 border-b border-white/5 pb-1 font-bold">
+                              <span>Receita Líquida:</span>
+                              <span className="text-slate-200">{currency} {netRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-500">
+                              <span>(-) CPV Alocado (WAC):</span>
+                              <span className="text-red-400/70">-{currency} {cpvAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-500">
+                              <span>(-) Mkt Local:</span>
+                              <span className="text-red-400/70">-{currency} {mktAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-500 border-b border-white/5 pb-1 font-sans">
+                              <span>(-) Logística:</span>
+                              <span className="text-red-400/70">-{currency} {distAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-slate-400 text-[9px] pt-1 font-sans">
+                              <span>Custo Unit. CPV (WAC):</span>
+                              <span className="text-slate-300">{currency} {unitCPV.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
+                            </div>
+                            <div className={`flex justify-between items-center mt-1 pt-2 border-t border-dashed border-white/10 text-[10px] font-bold ${netProfitRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              <span className="flex items-center gap-1 uppercase tracking-wider text-slate-400 text-[9px]">
+                                {netProfitRegion >= 0 ? <TrendingUp size={11} className="text-emerald-400" /> : <TrendingDown size={11} className="text-red-400" />}
+                                Lucro Líq. Reg:
+                              </span>
+                              <span>{currency} {netProfitRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className={`flex justify-between items-center text-[10px] font-bold ${profitMarginRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              <span className="uppercase tracking-wider text-slate-400 text-[9px]">Margem Líq. Reg:</span>
+                              <span>{profitMarginRegion.toFixed(1)}%</span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

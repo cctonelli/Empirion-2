@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.117
+- **Versão Ativa de Regras:** v2026.118
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **10/06/2026** | `v2026.118` | *PMP & Equipe* | **Cálculo de DRE e Lucratividade Regional.** Adicionada a seção de custeio proporcional direto para medição de margem de contribuição e lucratividade líquida de vendas segregadas geograficamente. |
 | **10/06/2026** | `v2026.117` | *PMP & Equipe* | **Criação do Documento.** Inclusão das regras de produtividade reduzida no round de aquisição de novas máquinas e detalhamento da fórmula do Market Size Dinâmico com variação conjuntural. |
 
 ---
@@ -47,7 +48,7 @@ O **Market Size Regional** (Tamanho Total de Endereçamento de Mercado) não é 
 
 ### Fórmula de Cálculo Centralizada
 
-Para cada região do torneio, o cálculo do Market Size é estruturado a partir das seguintes variáveis:
+Para cada região do torneio, o cálculo do Market Size is estruturado a partir das seguintes variáveis:
 
 $$\text{Tamanho do Mercado Geográfico (Market Size)} = \left[ \sum \text{Capacidade Nominal 100\% de Todas as Equipes} \right] \times \frac{\text{Peso da Região \%}}{100} \times \left(1 + \frac{\text{Variação de Demanda do Turno \%}}{100}\right)$$
 
@@ -80,8 +81,40 @@ Com base nos parâmetros da rodada atual e os pesos definidos pelo Tutor:
 
 ---
 
-## 3. 🎯 Próximos Passos e Verificação de Sincronia
+## 3. 🗺️ DRE por Geolocalização & Lucratividade Líquida Regional
+
+Com o objetivo de dotar as equipes com alta capacidade analítica de inteligência de negócios, o Cockpit simula e apresenta uma Demonstração de Resultado do Exercício (DRE) setorial baseada na geolocalização dos volumes físicos faturados. 
+
+### Modelo Analítico de Margem Geográfica (CPC / IFRS)
+
+Para cada região $R$, as linhas contábeis são estruturadas em tempo de cockpit da seguinte forma:
+
+1. **Receita Bruta Regional ($R_B$):**
+   $$R_B = Q \times P_{\text{regional}}$$
+   *(Unidades Físicas alocadas à equipe na região pelo motor de simulação $\times$ Preço estipulado na decisão).*
+2. **(-) Deduções de IVA de Vendas ($T_{\text{IVA}}$):**
+   $$T_{\text{IVA}} = R_B \times \frac{\text{Aliquota do IVA do Turno \%}}{100}$$
+3. **(=) Receita Líquida Regional ($R_L$):**
+   $$R_L = R_B - T_{\text{IVA}}$$
+4. **(-) Custo do Produto Vendido Alocado (CPV via WAC):**
+   $$CPV_{\text{regional}} = Q \times \text{Custo Unitário Histórico do Período (WAC)}$$
+   *O Custo Unitário (WAC) de estocagem PA é uniforme para a planta industrial, mas o CPV total é fatiado proporcionalmente ao volume de demanda real entregue em cada praça.*
+5. **(-) Despesas de Marketing Local ($Mkt$):**
+   $$Mkt = \text{Campanhas locais parametrizadas (0-9)} \times \text{Custo Unitário da Campanha Ajustado pelo Turno}$$
+6. **(-) Demanda de Logística / Frete de Distribuição ($Log$):**
+   $$Log = Q \times \text{Custo de Transporte Unitário Ajustado da Região}$$
+7. **(=) Lucro Líquido Regional ($LL_{\text{regional}}$):**
+   $$LL_{\text{regional}} = R_L - CPV_{\text{regional}} - Mkt - Log$$
+8. **Margem Líquida Geográfica (\%):**
+   $$\text{Margem Líquida Regional \%} = \frac{LL_{\text{regional}}}{R_L} \times 100$$
+
+> 📈 **Importância de Negócio:** Esta análise permite detectar se a acidez competitiva de uma praça de mercado (ex: guerra de preços ou marketing massivo no SUL) está canibalizando o capital operacional da marca, subsidiando fretes elevados, ou se praças menores de menor concorrência (ex: NORTE) estão sustentando o EBITDA real do grupo empresarial.
+
+---
+
+## 4. 🎯 Próximos Passos e Verificação de Sincronia
 
 - [x] Unificação dos cálculos de estatísticas do Cockpit (`MarketingStep.tsx`) para usar o modelo demográfico dinâmico unindo com o peso estipulado pelo Tutor.
 - [x] Unificação dos rótulos visuais para fins de usabilidade corporativa e facilidade de estudo dos alunos concorrentes.
+- [x] Construção e deploy do painel interativo de DRE e Lucratividade Regional expandido por card de decisão para uso síncrono das marcas.
 - [ ] Monitoramento constante de novas decisões de compra no Turno 2 pelas equipes para avaliar o impacto imediato na calibragem dos novos equipamentos instalados.

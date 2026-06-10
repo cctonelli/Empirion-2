@@ -2,9 +2,24 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.117 Demographic Market Size & Perfect Competitor Simulator.
+- **Versão Ativa:** v2026.118 Regional Direct Costing Ledger & DRE Analítico.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
-- **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+- **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Margem por Geolocalização & DRE Regional de Vendas - v2026.118
+
+**Data:** 10 de Junho de 2026 às 21:20 UTC  
+**Motivo:** Implementar a capacidade analítica de Inteligência Comercial e Controladoria Contábil solicitada pela equipe multidisciplinar, integrando uma Demonstração de Resultado do Exercício (DRE) expandida por praça de vendas (DRE por Geolocalização) no Cockpit do Aluno. Isso soluciona o gap estratégico de incapacidade de visualização de margens líquidas e lucros brutos/líquidos diretos agregados regionalmente.
+
+**Detalhamento Técnico:**
+- **Modelo de Custeio Geográfico por Absorção Focal (CPC / IFRS)**: Estruturou-se uma sub-DRE em cada Card regional que desconta da Receita Bruta: os impostos faturados por região (flutuante conforme alíquotas de IVA por round), os Custos de Produtos Vendidos Alocados (WAC global da equipe multiplicado por vendas físicas da praça), despesas regionais de campanhas de marketing local e custos de transporte/frete logístico da praça.
+- **Micro-interação de Controladoria**: Adição de Disclosure/Accordion expansível ("DRE & Lucratividade") com indicação visual de tendências positiva e negativa (`lucro >= 0 ? TrendingUp : TrendingDown`), permitindo simular faturamento líquido e margem líquida percentual em tempo real com base nas variações de decisões do cockpit de vendas.
+- **Motor de Custo Médio (WAC Estimator)**: Implementação de estimador contábil para o custo de estocagem PA (`wac`) recuperando dados reais do DRE histórico ou deduzindo pelo custeio padrão de entradas de matéria-prima (3x MP A + 2x MP B) acrescido de overhead fabril direto.
+
+**Impactos:**
+- **Incentivo à Visão de Gestão de Margem**: Os concorrentes abandonam a precificação puramente linear e passam a analisar a rentabilidade isolada por região de frete, mitigando riscos de prejuízo de importação/distribuição.
 
 ---
 
