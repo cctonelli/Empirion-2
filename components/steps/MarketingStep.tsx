@@ -433,7 +433,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   <span className="text-amber-400 font-bold">{currency} {stats.avgPriceRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Demanda do Mercado (Market Size):</span>
+                  <span>Market Size (un):</span>
                   <span className="text-slate-300 font-semibold">{stats.totalRegionDemand.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
