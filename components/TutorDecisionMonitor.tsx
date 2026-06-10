@@ -169,7 +169,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
          <div className="flex flex-col md:flex-row md:items-end gap-6">
             <div>
                <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">
-                  Tutor's Cockpit: <span className="text-orange-500">Strategic Command</span>
+                  Tutor Cockpit: <span className="text-orange-500">Strategic Command</span>
                </h1>
                <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Arena Empirion Oracle v18.0 • IA Telemetry Control</p>
             </div>
