@@ -1606,4 +1606,20 @@ project-root/
 - **Alinhamento Contábil de Alta Precisão:** Estrita eliminação de divergências matemáticas no balanço patrimonial e equações fiduciárias pós-faturamento.  
 **Status:** ATIVO, compilado com sucesso e homologado via dev server.
 
+---
+
+## Decisão Arquitetural & Versionamento - Visualização de Demanda Regional de Mercado e Sincronismo de Vendas em Tempo Real no Cockpit de Marketing - v2026.113
+
+**Data:** 10 de Junho de 2026 às 18:15 UTC  
+**Motivo:** Aprimorar as métricas mostradas na aba de Estratégia Comercial (Marketing) para dar suporte à modelagem concorrencial, substituindo o rótulo de Market Share global por um indicador perfeitamente restrito de demanda regional ("Market Share Regional"). Adicionalmente, sintonizar o cálculo de "Vendas na Região" para responder em tempo real às decisões dinâmicas que o aluno altera no cockpit (preço, marketing e prazo), em vez de estagnar nas decisões antigas do banco de dados.  
+**Principais diferenças:**  
+- **Substituição Visual:** O rótulo "Market Share Total (un)" foi refinado para "Market Share Regional (un)", exibindo com precisão fiduciária a demanda agregada configurada ou gerada especificamente para aquela região geográfica selecionada.
+- **Cálculo Reativo e Dinâmico do Cockpit (`components/steps/MarketingStep.tsx`):**
+  - Implementado tratamento reativo na função `calculateRegionStats`. Se o item na iteração de competidores for a própria equipe ativa ativa, o motor de estatísticas intercepta o estado estático do banco e utiliza o objeto `decisions` das decisões que estão sendo editadas localmente e em tempo real.
+  - A capacidade de turnos de trabalho (`shifts`) e as configurações de inadimplência/recuperação judicial passam a ser consultadas de forma 100% viva e atualizada.
+- **Exibição Fidedigna:** O valor de "Vendas na Região (un)" da equipe ativa passa a acompanhar ao vivo toda modificação de preço, marketing regional (0-9) e prazo de venda, oferecendo uma experiência de feedback (DX) instantânea e precisa.
+**Impactos esperados:**  
+- **Decisões Estratégicas Conscientes:** Maior clareza para as equipes sobre a proporção da sua capacidade que está sendo absorvida em cada região comparada com os rivais.
+- **Sincronismo Operacional de Alta Fidelidade:** Alinhamento matemático do preview instantâneo de vendas do cockpit com o motor de transição de rounds.  
+**Status:** ATIVO, compilado com sucesso e homologado via linter.
 

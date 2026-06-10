@@ -80,6 +80,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
   };
 
   const calculateRegionStats = (regionId: number) => {
+    const storedTeamId = activeTeam?.id || localStorage.getItem('active_team_id');
     const rows = competitorsLog.length > 0 ? competitorsLog : (activeArena?.teams || []).map(t => ({
       team_id: t.id,
       state: (t as any).current_decision || {},
@@ -89,7 +90,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     // 1. Preço médio regiao anterior
     const prevPrices = rows
       .map(c => {
-        const regDec = c.state?.regions?.[regionId] || c.state?.regions?.[String(regionId)];
+        const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
+        const stateToUse = isCurrentActiveTeam ? decisions : (c.state || {});
+        const regDec = stateToUse?.regions?.[regionId] || stateToUse?.regions?.[String(regionId)];
         return regDec ? Number(regDec.price) : null;
       })
       .filter((p): p is number => p !== null && p > 0);
@@ -108,18 +111,18 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     let totalRegionUnitsSold = 0;
     let activeTeamUnitsSold = 0;
 
-    const storedTeamId = activeTeam?.id || localStorage.getItem('active_team_id');
-
     rows.forEach((c: any) => {
-      const regDec = c.state?.regions?.[regionId] || c.state?.regions?.[String(regionId)];
+      const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
+      const stateToUse = isCurrentActiveTeam ? decisions : (c.state || {});
+      const regDec = stateToUse?.regions?.[regionId] || stateToUse?.regions?.[String(regionId)];
       if (!regDec) return;
 
       const regPrice = Number(regDec.price) || baseSuggestedPrice;
       const regMarketing = Number(regDec.marketing) || 0;
       const regTerm = Number(regDec.term) || 0;
-      const rjDemandPenalty = c.state?.judicial_recovery === true ? 0.85 : 1.0;
+      const rjDemandPenalty = stateToUse?.judicial_recovery === true ? 0.85 : 1.0;
 
-      const capacity = getTeamCapacity(c);
+      const capacity = getTeamCapacity(isCurrentActiveTeam ? { team_id: c.team_id, state: decisions, kpis: c.kpis } : c);
       const baseDemandPerRegion = (capacity * 0.8) / regionCount;
 
       const priceIndex = regPrice > 0 ? baseSuggestedPrice / regPrice : 1;
@@ -137,7 +140,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       totalRegionDemand += regDemand;
       totalRegionUnitsSold += regUnitsSold;
 
-      if (c.team_id === storedTeamId) {
+      if (isCurrentActiveTeam) {
         activeTeamUnitsSold = regUnitsSold;
       }
     });
@@ -337,7 +340,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   <span className="text-amber-400 font-bold">{currency} {stats.avgPriceRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Share Total (un):</span>
+                  <span>Market Share Regional (un):</span>
                   <span className="text-slate-300 font-semibold">{stats.totalRegionDemand.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
