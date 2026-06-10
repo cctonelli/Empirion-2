@@ -107,7 +107,8 @@ export const calculateProjections = (
   team: Team,
   history: any[] = [],
   round?: number,
-  round_rules?: Record<number, any>
+  round_rules?: Record<number, any>,
+  competitiveDemands?: Record<string, number>
 ): ProjectionResult => {
   // 0. RECUPERAR ESTADO ANTERIOR
   const prevStatements = team.kpis?.statements || INITIAL_FINANCIAL_TREE;
@@ -628,7 +629,9 @@ export const calculateProjections = (
     const marketingIndex = 1 + (regMarketing * 0.08);
     const termIndex = 1 + (regTerm * 0.05);
     
-    let regDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (indicators.demand_variation / 100)) * rjDemandPenalty);
+    let regDemand = competitiveDemands && competitiveDemands[id.toString()] !== undefined
+      ? competitiveDemands[id.toString()]
+      : Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (indicators.demand_variation / 100)) * rjDemandPenalty);
     regionalDemands[id] = regDemand;
 
     const regUnitsSold = Math.min(regDemand, Math.floor(totalQtyForSale / regionCount)); 

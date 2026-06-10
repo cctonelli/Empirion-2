@@ -537,14 +537,134 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const totalMarketing = validDecisions.reduce((acc, d) => acc + (Object.values(d.regions || {})[0] as any)?.marketing || 0, 0);
         const avgMarketing = validDecisions.length > 0 ? totalMarketing / validDecisions.length : 0;
 
-        // 3. Processar cada equipe com o contexto competitivo
+        // --- MODELO CONCORRENCIAL MULTIRREGIONAL DE MARKET SHARE (v19.5 Sapphire) ---
+        // 2.1 Configuração de Regiões do Campeonato
+        let regionConfigs: RegionConfig[] = champ.region_configs || champ.config?.regions || champ.config?.region_configs || [];
+        if (!regionConfigs || regionConfigs.length === 0) {
+            const regCount = champ.regions_count || 1;
+            regionConfigs = Array.from({ length: regCount }, (_, i) => ({
+                id: i + 1,
+                name: `Região ${i + 1}`,
+                currency: 'BRL' as CurrencyType,
+                demand_weight: 100 / regCount,
+                suggested_price: indicatorsForRound.avg_selling_price || 425,
+                distribution_cost: 50,
+                marketing_cost: 10000
+            }));
+        }
+
+        // 2.2 Passo Inicial (Standalone): Coletar Capacidades e Scores Competitivos Regionais de cada Equipe
+        const teamCapacities: Record<string, number> = {};
+        const teamRegionScores: Record<string, Record<string, number>> = {};
+
+        for (const team of (teams || [])) {
+            const finalDecision = marketDecisions[team.id];
+            if (finalDecision) {
+                const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, indicatorsForRound, team, [], nextRound, champ.round_rules);
+                
+                // Obter Turnos e multiplicador
+                const selectedShifts = finalDecision?.production?.shifts ?? 1;
+                const capMult = selectedShifts === 2 ? 1.8 : selectedShifts === 3 ? 2.3 : 1.0;
+                const teamMachines = res.kpis?.machines || [];
+                const capacity = teamMachines.reduce((acc: number, m: any) => {
+                    const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
+                    return acc + (indicatorsForRound.machine_specs[normModel as 'alpha' | 'beta' | 'gamma']?.production_capacity || 0);
+                }, 0) * capMult;
+
+                teamCapacities[team.id] = capacity;
+
+                // Calcular score competitivo da equipe para cada região base
+                teamRegionScores[team.id] = {};
+                regionConfigs.forEach((r: any) => {
+                    const regIdStr = r.id.toString();
+                    const reg = finalDecision.regions?.[regIdStr] || finalDecision.regions?.[r.id] || {};
+
+                    const baseSuggestedPrice = r.suggested_price !== undefined ? Number(r.suggested_price) : (indicatorsForRound.avg_selling_price || 425);
+                    const regPrice = reg.price > 0 ? reg.price : baseSuggestedPrice;
+                    const regMarketing = reg.marketing || 0;
+                    const regTerm = reg.term || 0;
+
+                    const isRJ = finalDecision.judicial_recovery === true;
+                    const rjDemandPenalty = isRJ ? 0.85 : 1.0;
+
+                    const priceIndex = regPrice > 0 ? (baseSuggestedPrice / regPrice) : 1;
+                    const marketingIndex = 1 + (regMarketing * 0.08);
+                    const termIndex = 1 + (regTerm * 0.05);
+
+                    teamRegionScores[team.id][regIdStr] = priceIndex * marketingIndex * termIndex * rjDemandPenalty;
+                });
+            }
+        }
+
+        // 2.3 Calcular Capacidade Total da Indústria e Demanda das Regiões
+        const totalCapacityAllTeamsRaw = Object.values(teamCapacities).reduce((sum, cap) => sum + cap, 0);
+        const nominalTeamCapacity = 10000;
+        const totalCapacityAllTeams = totalCapacityAllTeamsRaw > 0 ? totalCapacityAllTeamsRaw : (nominalTeamCapacity * (teams || []).length);
+
+        const regionalDemands: Record<string, number> = {};
+        let totalMarketDemandRound = 0;
+
+        regionConfigs.forEach((r: any) => {
+            const demandWeight = Number(r.demand_weight || r.weight || 0);
+            const baseRegDemand = totalCapacityAllTeams * (demandWeight / 100);
+            const varPercent = indicatorsForRound.demand_variation !== undefined ? Number(indicatorsForRound.demand_variation) : 0;
+            const regDemand = Math.floor(baseRegDemand * (1 + (varPercent / 100)));
+            regionalDemands[r.id.toString()] = regDemand;
+            totalMarketDemandRound += regDemand;
+        });
+
+        if (totalMarketDemandRound === 0) {
+            totalMarketDemandRound = 40000;
+        }
+
+        // 2.4 Alocar a Demanda das Regiões e Calcular os Market Shares Finais de cada Equipe
+        const competitiveDemandsPerTeamReg: Record<string, Record<string, number>> = {};
+        const teamOverallMarketShares: Record<string, number> = {};
+
+        for (const team of (teams || [])) {
+            competitiveDemandsPerTeamReg[team.id] = {};
+            teamOverallMarketShares[team.id] = 0;
+        }
+
+        regionConfigs.forEach((r: any) => {
+            const regIdStr = r.id.toString();
+            const regDemand = regionalDemands[regIdStr] || 0;
+
+            const scoresWithTeams = (teams || []).map(team => ({
+                teamId: team.id,
+                score: teamRegionScores[team.id]?.[regIdStr] ?? 0
+            }));
+
+            const totalScoreReg = scoresWithTeams.reduce((sum, item) => sum + item.score, 0);
+
+            scoresWithTeams.forEach(item => {
+                const shareReg = totalScoreReg > 0 ? (item.score / totalScoreReg) : (1 / (teams || []).length);
+                const teamCapturedDemand = Math.floor(regDemand * shareReg);
+                competitiveDemandsPerTeamReg[item.teamId][regIdStr] = teamCapturedDemand;
+
+                const shareContribution = (teamCapturedDemand / totalMarketDemandRound) * 100;
+                teamOverallMarketShares[item.teamId] += shareContribution;
+            });
+        });
+
+        // 3. Processar cada equipe com o contexto competitivo real
         for (const team of (teams || [])) {
             const finalDecision = marketDecisions[team.id];
 
             if (finalDecision) {
-                // Ajustar indicadores com a média real do mercado para este round
+                const teamCompDemands = competitiveDemandsPerTeamReg[team.id] || {};
                 const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
-                const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, competitiveIndicators, team, [], nextRound, champ.round_rules);
+                const res = calculateProjections(
+                    finalDecision, 
+                    champ.branch, 
+                    champ.config as EcosystemConfig, 
+                    competitiveIndicators, 
+                    team, 
+                    [], 
+                    nextRound, 
+                    champ.round_rules,
+                    teamCompDemands
+                );
                 
                 // 3.1 Calcular E-SDS v1.2 via Gemini
                 const { data: previousRounds } = await supabase
@@ -559,19 +679,15 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                   res.kpis.esds = esdsResult;
                 }
 
-                // Cálculo de Market Share Competitivo (Relativo aos outros)
-                const teamPrice = (Object.values(finalDecision.regions || {})[0] as any)?.price || avgPrice;
-                const teamMarketing = (Object.values(finalDecision.regions || {})[0] as any)?.marketing || 0;
+                const finalTeamMS = teamOverallMarketShares[team.id] || 0;
+                res.kpis.market_share = finalTeamMS;
+                res.marketShare = finalTeamMS;
                 
-                const priceWeight = teamPrice > 0 ? (avgPrice / teamPrice) : 1;
-                const marketingWeight = 1 + (teamMarketing > 0 ? Math.log10(teamMarketing + 1) / 10 : 0);
-                const rawScore = priceWeight * marketingWeight;
-                
-                teamResults.push({ team, res, rawScore });
+                teamResults.push({ team, res, rawScore: finalTeamMS });
             }
         }
 
-        // 4. Normalizar Market Share para somar 100%
+        // 4. Normalizar Market Share para somar 100% (com o teto/salvaguarda de arredondamento)
         const totalScore = teamResults.reduce((acc, r) => acc + r.rawScore, 0);
         for (const item of teamResults) {
             const competitiveShare = totalScore > 0 ? (item.rawScore / totalScore) * 100 : (100 / teams!.length);

@@ -1584,4 +1584,26 @@ project-root/
 - **Flexibilidade Multimodelo:** Suporte nativo à liberdade que o Tutor possui de reprogramar e simular as demandas intelectuais e de esforço de seus operários a fim de modelar múltiplos cenários de manufatura avançada e automação.
 **Status:** ATIVO, compilado com sucesso e homologado via linter.
 
+---
+
+## Decisão Arquitetural & Versionamento - Alocação Multirregional Concorrencial de Demanda e Market Share no Modo "Start From Zero" - v2026.112
+
+**Data:** 10 de Junho de 2026 às 17:50 UTC  
+**Motivo:** Implementar o cálculo unificado de Market Share Concorrencial e Demanda Multirregional no motor de simulação competitivo de rounds. Anteriormente, as demandas regionais das equipes concorrentes eram avaliadas de modo isolado no faturamento de transição. Agora, as decisões de cada equipe dentro de cada região (preço, prazo de venda e campanhas de marketing) são diretamente pitadas umas contra as outras para disputar a demanda fidedigna calibrada com as diretrizes do Tutor.  
+**Principais diferenças:**  
+- **Modelagem de Demanda Regida pelo Tutor:**
+  - `Demanda da Região = Capacidade Total do Mercado * (Peso de Demanda da Região / 100) * (1 + Variação de Demanda / 100)`.
+  - A capacidade total calculada reza a soma da capacidade operacional física (pós aquisições de máquinas e regimes de turno selecionados) de todas as equipes ativas. Adiciona-se uma proteção nominal para a hipótese de abertura limpa em rounds zerados (Start From Zero - Greenfield).
+  - A demanda adicional é tratada de forma elegante e transparente através do excedente na composição percentual de pesos (ex: soma de 115% de pesos em R1-R5).
+- **Competitividade e Disputa Regionalizada:**
+  - Dentro de cada região, é calculado um score individual concorrencial para cada equipe com base na atratividade de preço relativo (`suggested_price / team_price`), juros de prazo comercial e volume de marketing investido regionalmente.
+  - A demanda de cada região é rateada proporcionalmente aos scores competitivos de cada participante.
+  - O Market Share Global de cada equipe passa a refletir exatamente a proporção das suas vendas físicas faturadas em cima da demanda global do campeonato.
+- **Passagem de Parâmetros Concorrenciais no Motor de Projeções:**
+  - Inserido parâmetro opcional `competitiveDemands` na assinatura de `calculateProjections` em `services/simulation.ts`. Durante o turnover real, as demandas concorrenciais capturadas são injetadas diretamente no fôlego de cálculo contábil de cada equipe, forçando harmonia matemática de 100% no balanço. Em simulações pontuais (onde os participantes testam suas telas em tempo real de forma isolada), o motor retém de forma segura o fallback de estimativa estática pré-existente.
+**Impactos esperados:**  
+- **Concorrência Dinâmica Realista:** Estimulação do ambiente de mercado onde investimentos em marketing, preços competitivos e atratividades de prazos de recebimento decidem as fatias de mercado faturadas em cada região entre equipes humanas e bots.
+- **Alinhamento Contábil de Alta Precisão:** Estrita eliminação de divergências matemáticas no balanço patrimonial e equações fiduciárias pós-faturamento.  
+**Status:** ATIVO, compilado com sucesso e homologado via dev server.
+
 
