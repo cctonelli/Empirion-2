@@ -1494,7 +1494,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <WizardField label="SALÁRIO BASE RECRUTA ($)" type="currency" currency={tutorConfig.currency} val={tutorConfig.workforce.baseSalary} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, baseSalary: v}})}/>
                     <WizardSelect label="NÍVEL DE TREINAMENTO INICIAL" val={tutorConfig.workforce.trainingLevel} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, trainingLevel: parseInt(v)}})} options={[{v:'1',l:'NÍVEL 1 (BÁSICO)'},{v:'2',l:'NÍVEL 2 (OPERACIONAL)'},{v:'3',l:'NÍVEL 3 (ESPECIALIZADO)'},{v:'4',l:'NÍVEL 4 (MASTER)'},{v:'5',l:'NÍVEL 5 (ORACLE ENGINE)'}]} />
                     
-                    <WizardField label="HORAS DE PRODUÇÃO DO PERÍODO" type="number" val={tutorConfig.workforce.production_hours_period ?? 176} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, production_hours_period: parseInt(v) || 0}})}/>
+                    <WizardField label="HORAS PRODUÇÃO POR TURNO" type="number" val={tutorConfig.workforce.production_hours_period ?? 176} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, production_hours_period: parseInt(v) || 0}})}/>
                     <WizardSelect label="MÁXIMO DE TURNOS PERMITIDOS" val={tutorConfig.workforce.max_shifts ?? 1} onChange={(v:any)=>setTutorConfig({...tutorConfig, workforce: {...tutorConfig.workforce, max_shifts: parseInt(v) || 1}})} options={[{v:'1',l:'1 TURNO (REGULAMENTO)'},{v:'2',l:'MÁXIMO DE 2 TURNOS'},{v:'3',l:'MÁXIMO DE 3 TURNOS'}]} />
                     
                     {/* Resumos de RH */}
