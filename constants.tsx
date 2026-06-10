@@ -137,7 +137,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
 
 export const INITIAL_INDUSTRIAL_FINANCIALS = INITIAL_FINANCIAL_TREE;
 
-// MÁQUINAS INICIAIS P-0 - FIDELIDADE ORACLE
+// MÁQUINAS INICIAIS P00 - FIDELIDADE ORACLE
 export const INITIAL_MACHINES_P00 = [
   { id: 'm1', model: 'alpha', age: 6, acquisition_value: 500000, accumulated_depreciation: 75000 },
   { id: 'm2', model: 'alpha', age: 11, acquisition_value: 480000, accumulated_depreciation: 132000 },

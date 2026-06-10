@@ -91,7 +91,7 @@ const OFFICIAL_PRESETS: any[] = [
   {
     id: 'preset-greenfield-owned',
     name: 'Greenfield Real Estate (Prédio Próprio)',
-    description: 'Galpão industrial próprio integralizado no Balanço de P- ($2.25M bruto). Financiamento via Capital Próprio expandido.',
+    description: 'Galpão industrial próprio integralizado no Balanço de P0 ($2.25M bruto). Financiamento via Capital Próprio expandido.',
     config: {
       tutorName: 'PROF. CLAUDIO TONELLI',
       institutionName: 'UNIVERSIDADE EMPIRION',
@@ -1010,9 +1010,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       
                       <div className="mt-6 pt-4 border-t border-white/5 space-y-2 text-[10px] font-mono text-slate-400">
                         <div className="flex justify-between"><span className="text-slate-500">Complexidade:</span><span className="text-orange-500 font-bold">★ ★ ★ ★ ★ (Máxima)</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Liquidez R-0:</span><span className="text-orange-300">$1.0M (100% Caixa)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Liquidez P00:</span><span className="text-orange-300">$1.0M (100% Caixa)</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Frota Máquinas:</span><span className="text-slate-400 font-semibold">0 (Zero Absoluto)</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Fluxo R-1:</span><span className="text-slate-400 font-medium font-semibold">Instalar tudo do zero</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Fluxo P01:</span><span className="text-slate-400 font-medium font-semibold">Instalar tudo do zero</span></div>
                       </div>
                     </div>
 
@@ -1031,9 +1031,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       
                       <div className="mt-6 pt-4 border-t border-white/5 space-y-2 text-[10px] font-mono text-slate-400">
                         <div className="flex justify-between"><span className="text-slate-500">Complexidade:</span><span className="text-blue-500 font-bold">★ ★ ★ ☆ ☆ (Média)</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Liquidez R-0:</span><span className="text-blue-300">$1.5M Caixa • Balanceado</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Liquidez P00:</span><span className="text-blue-300">$1.5M Caixa • Balanceado</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Frota Máquinas:</span><span className="text-slate-400 font-semibold">3 Alfas, 2 Betas ($6.0M)</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Fluxo R-1:</span><span className="text-slate-400 font-medium font-semibold">Contas e estoques básicos</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Fluxo P01:</span><span className="text-slate-400 font-medium font-semibold">Contas e estoques básicos</span></div>
                       </div>
                     </div>
 
@@ -1052,9 +1052,9 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       
                       <div className="mt-6 pt-4 border-t border-white/5 space-y-2 text-[10px] font-mono text-slate-400">
                         <div className="flex justify-between"><span className="text-slate-500">Complexidade:</span><span className="text-emerald-500 font-bold">★ ★ ☆ ☆ ☆ (Fácil)</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Liquidez R-0:</span><span className="text-emerald-300">$2.1M (Contas complexas)</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Liquidez P00:</span><span className="text-emerald-300">$2.1M (Contas complexas)</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Frota Máquinas:</span><span className="text-slate-400 font-semibold">3 Alfas, 2 Betas ($8.5M)</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Fluxo R-1:</span><span className="text-slate-400 font-medium font-semibold">Demanda alta de manutenção</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Fluxo P01:</span><span className="text-slate-400 font-medium font-semibold">Demanda alta de manutenção</span></div>
                       </div>
                     </div>
                  </div>
@@ -1272,7 +1272,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                               {previewFinancials && (
                                 <div className="p-6 bg-slate-950/90 rounded-[2rem] border-2 border-orange-500/20 space-y-4">
                                   <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] italic border-b border-white/5 pb-2 flex items-center gap-2 font-sans">
-                                    <BarChart3 size={14} className="text-orange-500 animate-pulse" /> Balanço de Abertura Estimado (P-0 Calculado)
+                                    <BarChart3 size={14} className="text-orange-500 animate-pulse" /> Balanço de Abertura Estimado (P00 Calculado)
                                   </h4>
                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
                                     <div className="p-3 bg-white/5 rounded-xl border border-white/5">
@@ -1346,7 +1346,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  {showSaveTplModal && (
                    <div className="fixed inset-0 z-[999] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm">
                      <div className="bg-slate-900 border-2 border-white/10 p-10 rounded-[3rem] max-w-lg w-full space-y-8 shadow-[0_50px_100px_rgba(0,0,0,0.9)] animate-in fade-in zoom-in duration-200 text-left">
-                       <h3 className="text-2xl font-black text-white uppercase italic">Salvar P-0 como Template</h3>
+                       <h3 className="text-2xl font-black text-white uppercase italic">Salvar P0 como Template</h3>
                        <div className="space-y-4">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome do Template</label>
@@ -1626,7 +1626,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
                     {/* VALOR DE MATÉRIA PRIMA */}
                     <div className="space-y-6 bg-slate-900/60 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative">
-                       <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Carga De Estoques P-</h4>
+                       <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] italic border-b border-white/5 pb-4">Carga De Estoques P0</h4>
                        <div className="grid grid-cols-2 gap-4">
                          <WizardField label="QTD MP-A" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpa_qty} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpa_qty: parseInt(v) || 0}})} />
                          <WizardField label="PREÇO UN MPA" type="number" isLocked={tutorConfig.starting_mode === 'start_from_zero'} val={tutorConfig.starting_mode === 'start_from_zero' ? 0 : tutorConfig.inventories.mpa_unit_val} onChange={(v:any)=>setTutorConfig({...tutorConfig, inventories: {...tutorConfig.inventories, mpa_unit_val: parseFloat(v) || 0}})} />
@@ -1985,7 +1985,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                  {/* DASHBOARD DE AUDITORIA OPERACIONAL E KPIs DO P00 (v19.18) */}
                  <div id="p00_audit_dashboard_fiduciary_v18" className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left bg-slate-900/40 p-10 rounded-[3rem] border border-white/5 shadow-2xl relative">
                     <div className="lg:col-span-3 border-b border-white/5 pb-4 mb-2">
-                       <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic leading-none mb-1 block">DASHBOARD DE AUDITORIA OPERACIONAL & KPIs DO P-0 (V19.23 REAL-TIME)</span>
+                       <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] italic leading-none mb-1 block">DASHBOARD DE AUDITORIA OPERACIONAL & KPIs DO P00 (V19.23 REAL-TIME)</span>
                        <h4 className="text-xl font-black text-white italic mt-1">Soberania dos Indicadores Contábeis e Industriais</h4>
                        <p className="text-xs text-slate-500 mt-1">Breakdown fiduciário analítico de liquidez, estrutura predial, capacidades teóricas de faturamento e saúde socioambiental recalculados dinamicamente.</p>
                     </div>
@@ -2514,7 +2514,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
                  {/* Financial statements editor preview */}
                  <div className="space-y-4">
-                   <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><ClipboardList size={16} className="text-orange-500"/> Demonstrativos Fiduciários do P-</h4>
+                   <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><ClipboardList size={16} className="text-orange-500"/> Demonstrativos Fiduciários do P0</h4>
                    <FinancialStructureEditor 
                       initialBalance={editableFinancials.balance_sheet} 
                       initialDRE={editableFinancials.dre} 
@@ -2538,7 +2538,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         id="btn_floating_fiduciary_monitor"
       >
         <Activity size={14} className="animate-pulse text-white group-hover:scale-125 transition-transform" />
-        <span className="writing-mode-vertical uppercase tracking-wider font-mono">Monitor Fiduciário P-</span>
+        <span className="writing-mode-vertical uppercase tracking-wider font-mono">Monitor Fiduciário P0</span>
       </button>
 
       {/* DRAWER SLIDE-OVER DO MONITOR FIDUCIÁRIO REAL-TIME */}
@@ -2569,7 +2569,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   <div className="p-3 bg-orange-600/20 text-orange-400 rounded-xl"><Activity size={24} className="animate-pulse" /></div>
                   <div>
                     <h3 className="text-lg font-black text-white uppercase italic tracking-tight">Real-Time Fiduciary Monitor</h3>
-                    <p className="text-[10px] text-orange-500 font-mono uppercase tracking-widest mt-1">v19.21 • Simulação de Impacto Financeiro de P-0 em Tempo Real</p>
+                    <p className="text-[10px] text-orange-500 font-mono uppercase tracking-widest mt-1">v19.21 • Simulação de Impacto Financeiro de P00 em Tempo Real</p>
                   </div>
                 </div>
                 <button 
@@ -2654,7 +2654,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   </div>
                 </div>
 
-                {/* Subnotas Detalhadas de Custos Previstos, Ociosidades de P-0 (v19.22) */}
+                {/* Subnotas Detalhadas de Custos Previstos, Ociosidades de P0 (v19.22) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/40 p-6 rounded-3xl border border-white/5 shadow-inner">
                   <div className="space-y-4">
                      <h5 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] italic border-b border-white/5 pb-2">Projeção Base de Gastos Fixos por Período</h5>
@@ -2755,7 +2755,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                 <button 
                   onClick={() => {
                     handleRecalculate();
-                    alert("Dados do P- recalculados com sucesso das configurações fiduciárias!");
+                    alert("Dados do P0 recalculados com sucesso das configurações fiduciárias!");
                   }}
                   className="px-6 py-3 bg-slate-900 border border-white/10 hover:border-orange-500/30 text-white rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2"
                 >
