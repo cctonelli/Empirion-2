@@ -1295,6 +1295,10 @@ export const calculateProjections = (
       ...team.kpis,
       ...kpis,
       market_share: projectedMarketShare,
+      staffing: {
+        ...team.kpis?.staffing,
+        production: operatorsAvailable
+      },
       // --- CAPÍTULO DE PRODUTIVIDADE E RECURSOS HUMANOS (v19.5 SAPPHIRE) ---
       productivity_index: Math.round(productivityIndex * 100),
       motivation_index: parseFloat(motivationIndex.toFixed(3)),

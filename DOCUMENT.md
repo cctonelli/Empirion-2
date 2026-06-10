@@ -1541,3 +1541,26 @@ project-root/
 - **Aderência às Práticas do CRC/CPC:** Lançamento direto e transparente no DRE de custos fixos industriais ociosos (capacidade ociosa), sem risco de ocultação ou estufamento fraudulento dos custos de bens manufaturados.
 **Status:** ATIVO, compilado com sucesso e homologado via linter.
 
+---
+
+## Decisão Arquitetural & Versionamento - Controle Patrimonial e Histórico de Saldo de Mão de Obra Direta (MOD) no Turnover - v2026.110
+
+**Data:** 10 de Junho de 2026 às 11:32 UTC  
+**Motivo:** Sanar a falha sistêmica de perda de dados de equipe de operários fabris (Mão de Obra Direta / MOD) na transição de turnos (Turnover) no modo "START FROM ZERO" (e outros cenários). No round inicial (R-1), as equipes realizavam contratações (admitiam colaboradores, ex: 470 operadores), porém na simulação e transição de período para o round seguinte (R-2), a contagem do quadro fiduciário aparecia totalmente zerada, forçando o participante a admitir repetidamente o quadro inteiro ou sofrer de capacidade industrial nula inexplicável.  
+**Principais diferenças:**  
+- **Modelagem de Estoque/Ledger de Recursos Humanos (`services/simulation.ts`):** 
+  - Anteriormente, o motor calculava corretamente a força operacional real disponível no período (`operatorsAvailable` baseado em `saldo_anterior + hired - fired`). Entretanto, no fecho do período, a propriedade de KPI estrutural `kpis.staffing.production` da equipe não era atualizada com este valor de saldo final de pessoal no objeto persistido `result.kpis`. Assim, no turnover para o round subsequente, o sistema lia novamente o fallback inicial da base (que é zero no modo Greenfield/start_from_zero), resetando o quadro das equipes à revelia de suas decisões de contratação passadas.
+  - Implementado o sincronismo de estado persistente de Recursos Humanos nos KPIs de saída:
+    ```typescript
+    staffing: {
+      ...team.kpis?.staffing,
+      production: operatorsAvailable
+    }
+    ```
+  - Desta forma, o saldo de colaboradores passa a operar estritamente como um livro razão ou controle de estoques: `Saldo Inicial (anterior) + Admissões (hired) - Demissões (fired) = Saldo Final (conduzido para a abertura do período seguinte)`.
+**Impactos esperados:**  
+- **Estabilidade Fiduciária e Transparência:** Preservação estrita das estruturas de pessoal admitidas pelas equipes. Se uma equipe decide operar no modo Greenfield, contrata operários em R-1 e não escolhe demitir em R-2, os operários herdam sua legitimidade de permanência contratual aberta com saldo inicial correto no R-2.
+- **Reta de Crescimento Industrial Organizada:** Facilidade de expansão fabril (o participante pode simplesmente complementar seu time, contratando apenas a diferença necessária para colocar novas linhas de produção em atividade comercial, em vez de repactuar o quadro total).
+**Status:** ATIVO, compilado com sucesso e homologado via linter.
+
+
