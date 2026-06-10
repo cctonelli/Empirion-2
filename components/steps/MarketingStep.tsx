@@ -114,30 +114,53 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     rows.forEach((c: any) => {
       const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
       const stateToUse = isCurrentActiveTeam ? decisions : (c.state || {});
-      const regDec = stateToUse?.regions?.[regionId] || stateToUse?.regions?.[String(regionId)];
-      if (!regDec) return;
-
-      const regPrice = Number(regDec.price) || baseSuggestedPrice;
-      const regMarketing = Number(regDec.marketing) || 0;
-      const regTerm = Number(regDec.term) || 0;
-      const rjDemandPenalty = stateToUse?.judicial_recovery === true ? 0.85 : 1.0;
-
+      
       const capacity = getTeamCapacity(isCurrentActiveTeam ? { team_id: c.team_id, state: decisions, kpis: c.kpis } : c);
       const baseDemandPerRegion = (capacity * 0.8) / regionCount;
-
-      const priceIndex = regPrice > 0 ? baseSuggestedPrice / regPrice : 1;
-      const marketingIndex = 1 + (regMarketing * 0.08);
-      const termIndex = 1 + (regTerm * 0.05);
-
-      const regDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (demandVariation / 100)) * rjDemandPenalty);
       
       const unitsProduced = Number(c.kpis?.statements?.dre?.find((item: any) => item.id === 'dre.cpv')?.quantity) || Number(c.kpis?.finished_goods_produced) || (capacity * 0.8);
       const prevStockQty = Number(c.kpis?.statements?.balance_sheet?.find((item: any) => item.id === 'assets.current.stock.pa')?.quantity) || Number(c.kpis?.stock_quantities?.finished_goods) || 0;
       const totalQtyPaForSale = prevStockQty + unitsProduced;
 
-      const regUnitsSold = Math.min(regDemand, Math.floor(totalQtyPaForSale / regionCount));
+      // Calcular demanda que este competidor atrai em TODAS as regiões ativas
+      let competitorTotalDemand = 0;
+      let targetRegionDemandForCompetitor = 0;
 
-      totalRegionDemand += regDemand;
+      const regionKeys = Object.keys(decisions.regions);
+      regionKeys.forEach((keyStr) => {
+        const rId = Number(keyStr);
+        const rDec = stateToUse?.regions?.[keyStr] || stateToUse?.regions?.[rId];
+        if (!rDec) return;
+
+        const rConf = activeArena?.config?.regions?.find((r: any) => r.id === rId) || activeArena?.config?.region_configs?.find((r: any) => r.id === rId);
+        const rSuggestedPrice = rConf?.suggested_price !== undefined ? Number(rConf.suggested_price) : baseSuggestedPrice;
+
+        const regPrice = Number(rDec.price) || rSuggestedPrice;
+        const regMarketing = Number(rDec.marketing) || 0;
+        const regTerm = Number(rDec.term) || 0;
+        const rjDemandPenalty = stateToUse?.judicial_recovery === true ? 0.85 : 1.0;
+
+        const priceIndex = regPrice > 0 ? rSuggestedPrice / regPrice : 1;
+        const marketingIndex = 1 + (regMarketing * 0.08);
+        const termIndex = 1 + (regTerm * 0.05);
+
+        const currentRegDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (demandVariation / 100)) * rjDemandPenalty);
+
+        competitorTotalDemand += currentRegDemand;
+        if (rId === regionId) {
+          targetRegionDemandForCompetitor = currentRegDemand;
+        }
+      });
+
+      // Coeficiente de rateio de estoque deste competidor
+      const competitorStockRatio = competitorTotalDemand > totalQtyPaForSale && competitorTotalDemand > 0
+        ? totalQtyPaForSale / competitorTotalDemand
+        : 1;
+
+      // Vendas reais fidedignas na região selecionada
+      const regUnitsSold = Math.min(targetRegionDemandForCompetitor, Math.floor(targetRegionDemandForCompetitor * competitorStockRatio));
+
+      totalRegionDemand += targetRegionDemandForCompetitor;
       totalRegionUnitsSold += regUnitsSold;
 
       if (isCurrentActiveTeam) {
@@ -346,6 +369,10 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Vendas na Região (un):</span>
                   <span className="text-slate-300 font-semibold">{stats.activeTeamUnitsSold.toLocaleString('pt-BR')} un</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Vendas Totais na região (qtde):</span>
+                  <span className="text-purple-400 font-semibold">{stats.totalRegionUnitsSold.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Peso Demanda Total (%):</span>

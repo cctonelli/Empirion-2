@@ -1034,15 +1034,16 @@ export function processRoundWithValidation(
   // Calculas de vendas de acordo com o pre-calculado para auditar (movido precocemente para computar custos de estocagem final de absorção)
   let totalUnitsSold = calculatedResult?.last_units_sold ?? 0;
   if (!calculatedResult) {
-    let tempUnitsSold = 0;
     const regions = Object.entries(decision.regions || {});
     const regionCount = regions.length || 1;
     const baseDemandPerRegion = (capacity * 0.8) / regionCount;
 
+    let totalDemandAllRegions = 0;
+    const regionalDemands: Record<string, number> = {};
+
     regions.forEach(([id, reg]: [string, any]) => {
       const regPrice = sanitize(reg.price, 425);
       const regMarketing = sanitize(reg.marketing, 0);
-      const regTerm = sanitize(reg.term, 0);
       const rjDemandPenalty = decision.judicial_recovery === true ? 0.85 : 1.0;
 
       const regId = Number(id);
@@ -1051,14 +1052,31 @@ export function processRoundWithValidation(
 
       const priceIndex = baseSuggestedPrice / regPrice;
       const marketingIndex = 1 + (regMarketing * 0.08);
-      const termIndex = 1 + (regTerm * 0.05);
+      const termIndex = 1 + (sanitize(reg.term, 0) * 0.05);
       
       const regDemand = Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (indicators.demand_variation / 100)) * rjDemandPenalty);
-      const regUnitsSold = Math.min(regDemand, Math.floor(totalQtyPaForSale / regionCount));
-      tempUnitsSold += regUnitsSold;
+      regionalDemands[id] = regDemand;
+      totalDemandAllRegions += regDemand;
     });
 
-    totalUnitsSold = Math.min(tempUnitsSold, totalQtyPaForSale);
+    const teamStockRatio = totalDemandAllRegions > totalQtyPaForSale && totalDemandAllRegions > 0
+      ? totalQtyPaForSale / totalDemandAllRegions
+      : 1;
+
+    let runningUnitsSold = 0;
+    regions.forEach(([id, reg]: [string, any], index) => {
+      const regDemand = regionalDemands[id] || 0;
+      let regUnitsSold = 0;
+      if (index === regions.length - 1) {
+        regUnitsSold = Math.min(totalQtyPaForSale, Math.min(totalDemandAllRegions, totalQtyPaForSale) - runningUnitsSold);
+      } else {
+        regUnitsSold = Math.min(regDemand, Math.floor(regDemand * teamStockRatio));
+      }
+      regUnitsSold = Math.max(0, regUnitsSold);
+      runningUnitsSold += regUnitsSold;
+    });
+
+    totalUnitsSold = runningUnitsSold;
   }
 
   // --- CUSTOS OCULTOS DE ABSORÇÃO (v19.5 SAPPHIRE GOLD COMPATIBILITY PARITY) ---

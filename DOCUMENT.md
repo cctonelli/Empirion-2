@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.115 Active Redundant Time Sentinel & Emerald Pulsing CTA.
+- **Versão Ativa:** v2026.116 Proportional Regional Stock Allocation & Sales Synchronizer.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Rateio Proporcional de Estoque & Sincronismo de Vendas no Cockpit - v2026.116
+
+**Data:** 10 de Junho de 2026 às 19:15 UTC  
+**Motivo:** Sanar as três principais inconsistências do módulo de Marketing do round: a quantidade vendida (`Vendas na Região (un)`) e a participação de mercado (`Venda Relativa (%)`) apareciam idênticas em todas as regiões por conta de divisão estática do estoque contra demand_weight, divergindo também do montante real registrado nas fichas de Kardex e no Custo do Produto Vendido (CPV). Adicionalmente, implementar indicador de vendas agregadas concorrenciais por região.
+
+**Detalhamento Técnico:**
+- **Algoritmo de Alocação de Vendas via Rateio Proporcional (v19.6 Sapphire)**: Em vez de limitar de antemão o estoque em porções simétricas rígidas (`totalQtyForSale / regionCount`), o sistema agora calcula a demanda atraída individualmente em todas as regiões para cada participante. Se a demanda acumulada de todas as praças for maior do que o estoque total pronto para venda, aplica-se um coeficiente dinâmico proporcional de atendimento (`teamStockRatio = totalQtyForSale / totalDemandAllRegions`), garantindo que as vendas físicas regionais flutuem em estrita consonância com os esforços competitivos de precificação, marketing e prazos em cada praça.
+- **Paridade de Motores de Simulação**: A lógica de rateio dinâmico foi implementada de modo estritamente idêntico no simulador de turnovers base (`/services/simulation.ts`), no kernel de fallback (`/services/simulation-core.ts`) e no cockpit visual do estudante (`/components/steps/MarketingStep.tsx`).
+- **Novo Indicador Analítico "Vendas Totais na região (qtde)"**: Integrado na função `calculateRegionStats` de `MarketingStep.tsx` e exposto no HUD regional para representar a somatória de unidades faturadas por todas as equipes em atividade concorrencial naquela região específica.
+
+**Impactos:**
+- **Exatidão Contábil Total**: Alinhamento imediato e inabalável entre os painéis de projeção do Cockpit de Marketing e os registros definitivos do Kardex e Demonstrativo de Resultado do Exercício (DRE).
+- **Competição Dinâmica Realista**: Esforços adicionais de campanhas ou preços diferenciados passam a surtir efeito regional fluido, gerando vendas líquidas e taxas de venda relativa (`Venda Relativa (%)`) dinamicamente variadas por praça.
 
 ---
 

@@ -609,7 +609,8 @@ export const calculateProjections = (
   const regionCount = regions.length || 1;
   const baseDemandPerRegion = (capacity * 0.8) / regionCount;
 
-  // Dicionário para guardar as demandas calculadas por região para ponderar a distribuição se necessário
+  // 1. Calcular a demanda individual e somada de todas as regiões para esta equipe
+  let totalDemandAllRegions = 0;
   const regionalDemands: Record<string, number> = {};
 
   regions.forEach(([id, reg]: [string, any]) => {
@@ -633,9 +634,41 @@ export const calculateProjections = (
       ? competitiveDemands[id.toString()]
       : Math.floor(baseDemandPerRegion * priceIndex * marketingIndex * termIndex * (1 + (indicators.demand_variation / 100)) * rjDemandPenalty);
     regionalDemands[id] = regDemand;
+    totalDemandAllRegions += regDemand;
+  });
 
-    const regUnitsSold = Math.min(regDemand, Math.floor(totalQtyForSale / regionCount)); 
-    totalUnitsSold += regUnitsSold;
+  // 2. Determinar o coeficiente de rateio se faltar estoque para atender a demanda total da equipe
+  const teamStockRatio = totalDemandAllRegions > totalQtyForSale && totalDemandAllRegions > 0
+    ? totalQtyForSale / totalDemandAllRegions
+    : 1;
+
+  // 3. Distribuir as vendas regionais reais com base no rateio de demanda proporcional (sem teto igual estático)
+  let runningUnitsSold = 0;
+  const regionalUnitsSold: Record<string, number> = {};
+
+  regions.forEach(([id, reg]: [string, any], index) => {
+    const regDemand = regionalDemands[id] || 0;
+    
+    // Sobra matemática calculada na última região do loop para garantir perfeita exatidão contábil total
+    let regUnitsSold = 0;
+    if (index === regions.length - 1) {
+      regUnitsSold = Math.min(totalQtyForSale, Math.min(totalDemandAllRegions, totalQtyForSale) - runningUnitsSold);
+    } else {
+      regUnitsSold = Math.min(regDemand, Math.floor(regDemand * teamStockRatio));
+    }
+    
+    regUnitsSold = Math.max(0, regUnitsSold);
+    regionalUnitsSold[id] = regUnitsSold;
+    runningUnitsSold += regUnitsSold;
+  });
+
+  totalUnitsSold = runningUnitsSold;
+
+  // 4. Calcular receitas, PMR e prazos regionais reais baseados nas vendas finais reais
+  regions.forEach(([id, reg]: [string, any]) => {
+    const regPrice = sanitize(reg.price, 425);
+    const regTerm = sanitize(reg.term, 0);
+    const regUnitsSold = regionalUnitsSold[id] || 0;
 
     const regRevenue = regUnitsSold * regPrice;
     totalRevenue += regRevenue;
@@ -658,16 +691,6 @@ export const calculateProjections = (
 
   const pmr = totalRevenue > 0 ? weightedPmrSum / totalRevenue : 0;
 
-  // Ajuste proporcional pelas quantidades disponíveis
-  let scaleRatio = 1;
-  if (totalUnitsSold > totalQtyForSale) {
-    scaleRatio = totalQtyForSale / totalUnitsSold;
-    totalUnitsSold = totalQtyForSale;
-    totalRevenue *= scaleRatio;
-    totalCashSales *= scaleRatio;
-    totalCreditSales *= scaleRatio;
-  }
-
   // Custo de Distribuição comercial regionalizado e fidedigno
   let totalDistributionCost = 0;
   regions.forEach(([id, reg]: [string, any]) => {
@@ -675,12 +698,7 @@ export const calculateProjections = (
     const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
     const baseDistributionUnitCost = regConfig?.distribution_cost !== undefined ? Number(regConfig.distribution_cost) : (indicators.prices.distribution_unit || 50);
 
-    const regDemand = regionalDemands[id] || 0;
-    let regUnitsSold = Math.min(regDemand, Math.floor(totalQtyForSale / regionCount));
-    
-    if (scaleRatio < 1) {
-      regUnitsSold *= scaleRatio;
-    }
+    const regUnitsSold = regionalUnitsSold[id] || 0;
 
     totalDistributionCost += regUnitsSold * baseDistributionUnitCost * getAdjust('distribution_cost_adjust', sanitize(indicators.distribution_cost_adjust, 0));
   });
