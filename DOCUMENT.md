@@ -1559,8 +1559,29 @@ project-root/
     ```
   - Desta forma, o saldo de colaboradores passa a operar estritamente como um livro razão ou controle de estoques: `Saldo Inicial (anterior) + Admissões (hired) - Demissões (fired) = Saldo Final (conduzido para a abertura do período seguinte)`.
 **Impactos esperados:**  
-- **Estabilidade Fiduciária e Transparência:** Preservação estrita das estruturas de pessoal admitidas pelas equipes. Se uma equipe decide operar no modo Greenfield, contrata operários em R-1 e não escolhe demitir em R-2, os operários herdam sua legitimidade de permanência contratual aberta com saldo inicial correto no R-2.
+- **Estabilidade Fiduciária e Transparência:** Preservação estrita das estruturas de pessoal admitidas pelas equipes. Se uma equipe decide operar no modo Greenfield, contrata operários in R-1 e não escolhe demitir in R-2, os operários herdam sua legitimidade de permanência contratual aberta com saldo inicial correto no R-2.
 - **Reta de Crescimento Industrial Organizada:** Facilidade de expansão fabril (o participante pode simplesmente complementar seu time, contratando apenas a diferença necessária para colocar novas linhas de produção em atividade comercial, em vez de repactuar o quadro total).
+**Status:** ATIVO, compilado com sucesso e homologado via linter.
+
+---
+
+## Decisão Arquitetural & Versionamento - Sincronismo Dinâmico de Dimensionamento de MOD Mapeado do TrialWizard.tsx - v2026.111
+
+**Data:** 10 de Junho de 2026 às 12:15 UTC  
+**Motivo:** Garantir a total consistência entre as especificações parametrizadas pelo Tutor em `TrialWizard.tsx` (como quantidade de operadores necessários por modelo de máquina) e os cálculos em tempo real e de turnover que alertam os usuários e delimitam seu índice de ociosidade/produtividade industrial no formulário de decisões.  
+**Principais diferenças:**  
+- **Leitura Reativa de Parâmetros de Trabalho (`components/steps/HRStep.tsx`):**
+  - Anteriormente, o cálculo do somatório de `operatorsRequired` no componente visual `HRStep.tsx` trazia os valores físicos fixados de forma estática no código (`94` operários por Alpha, `235` por Beta e `445` por Gamma).
+  - Atualizado para buscar de forma prioritária e transparente as especificações dinâmicas provenientes das configurações fiduciárias do campeonato (`currentMacro?.machine_specs?.[normModel]?.operators_required`), aplicando o tratamento `??` de fallback para os padrões normativos estabelecidos na ausência operacional das chaves:
+    ```typescript
+    const sReq = currentMacro?.machine_specs?.[normModel]?.operators_required ?? (normModel === 'alpha' ? 94 : normModel === 'beta' ? 235 : 445);
+    ```
+  - Desta forma, o dimensionamento de pessoal opera de maneira 100% equivalente com a parametrização fiduciária do Tutor, reduzindo a discrepância entre a produtividade simulada final e os cálculos antecipados do aluno vistos na interface de simulação em tempo real.
+- **Modelo de Controle de Lançamento de Estoque de MOD:**
+  - O fluxo foi solidificado para operar estritamente como um livro razão ou controle de estoques: `Saldo Inicial (Anterior) + Admissões (hired no round) - Demissões (fired no round) = Saldo Final (levado ao round posterior)`.
+**Impactos esperados:**  
+- **Precisão Fiduciária:** Absolute convergência entre os multiplicadores de produtividade de pessoal calculados em tempo real na tela do participante (`HRStep.tsx`) e a orquestração do motor de transição no backend fiduciário.
+- **Flexibilidade Multimodelo:** Suporte nativo à liberdade que o Tutor possui de reprogramar e simular as demandas intelectuais e de esforço de seus operários a fim de modelar múltiplos cenários de manufatura avançada e automação.
 **Status:** ATIVO, compilado com sucesso e homologado via linter.
 
 
