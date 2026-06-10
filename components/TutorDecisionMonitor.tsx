@@ -184,7 +184,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
             <div className="flex items-center gap-3 px-6 py-2 bg-slate-900 border border-white/10 rounded-2xl">
                <div className={`w-2 h-2 rounded-full ${activeTimelineNode >= round ? 'bg-orange-500 animate-pulse' : 'bg-blue-500'}`} />
                <span className="text-[10px] font-black text-white uppercase tracking-widest">
-                  {activeTimelineNode >= round ? 'Monitorando Decisões Live' : `Visualizando Histórico P0${activeTimelineNode}`}
+                  {activeTimelineNode >= round ? 'Monitorando Decisões Live' : `Visualizando Histórico R-${activeTimelineNode}`}
                </span>
             </div>
          </div>
