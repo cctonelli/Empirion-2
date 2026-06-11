@@ -94,7 +94,7 @@ export const LegalStep: React.FC<LegalStepProps> = ({
           <div className="flex justify-between items-start mb-8">
             <div className="max-w-[75%]">
               <h5 className="text-2xl font-black text-rose-400 uppercase tracking-tight mb-4 font-sans">
-                Requer Recuperação Judicial (RJ)
+                Recuperação Judicial (RJ)
               </h5>
               <p className="text-base text-slate-300 leading-relaxed mb-6 font-sans">
                 Ativa regime especial de proteção contra credores. Permite reestruturação forçada, mas impõe restrições severas por vários rounds.

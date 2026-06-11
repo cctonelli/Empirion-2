@@ -401,8 +401,8 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
             return (
               <React.Fragment key={loan.id || lIdx}>
                 <tr className="bg-slate-950/20 font-bold border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                  <td className="p-1.5 pl-3 sticky left-0 bg-slate-900 border-r border-white/10 text-slate-200 text-[8px] uppercase tracking-wider font-sans">
-                    {loanName} <span className="text-slate-500 text-[7px] font-mono">[{loan.id?.slice(2, 7) || 'REQ'}]</span>
+                  <td className="p-1.5 pl-3 sticky left-0 bg-slate-900 border-r border-white/10 text-slate-200 text-[9px] uppercase tracking-wider font-sans">
+                    {loanName} <span className="text-slate-500 text-[9px] font-mono">[{loan.id?.slice(2, 7) || 'REQ'}]</span>
                   </td>
                   {periods.map((p: any, idx: number) => {
                     const lInP = p.data?.loans?.find((l: any) => l.id === loan.id);
