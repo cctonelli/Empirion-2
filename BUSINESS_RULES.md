@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.121
+- **Versão Ativa de Regras:** v2026.122
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,7 +18,8 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
-| **11/06/2026** | `v2026.121` | *PMP & Equipe* | **Aprimoramento do Rateio Regional FRAE v2.** Reformulação do mini-DRE do *MarketingStep* integrando custos diretos regionais (marketing de praça e logística/frete) para obtenção do *Lucro de Contribuição Regional*, seguido do rateio das despesas holding consolidando 100% com a matriz. Isso faz com que cada região tenha margens líquidas e lucratividades diferentes com base na eficiência das decisões comerciais. |
+| **11/06/2026** | `v2026.122` | *PMP & Equipe* | **Precificação Nominal Multi-moeda Regional.** Esclarecimento e documentação da regra de preenchimento de preços em praças de exportação/mercado externo. Fica estabelecido que o preço deve ser inserido sempre na moeda nominal de circulação configurada para a própria região (ex: USD), sem conversão prévia manual por parte da equipe, uma vez que o motor calcula os índices competitivos comparando com preços sugeridos expressos na mesma moeda e converge a receita total. |
+| **11/06/2026** | `v2026.121` | *PMP & Equipe* | **Aprimoramento do Rateio Regional FRAE v2.** Reformulação do mini-DRE do *MarketingStep* integrando custos diretos regionais (marketing de praça e logística/frete) para obtenção do *Lucro de Contribuição Regional*, seguido do rateio das despesas holding consolidando 100% com a matriz. |
 | **11/06/2026** | `v2026.120` | *PMP & Equipe* | **Sintetização da DRE Regional & Motor FRAE.** Simplificação do mini-DRE do *MarketingStep* com as 6 grandes linhas vitais de lucratividade e integração do método CPC 22 / IFRS 8 via *Motor de Rateio Regional Fiduciário* (FRAE) para reconciliação integral com o lucro consolidado e despesas comuns (folhas MOD/Adm/Vendas, P&D, PECLD, financeiro e tributário). |
 | **11/06/2026** | `v2026.119` | *PMP & Equipe* | **Governança de Privacidade de Rascunhos.** Implementação de Row-Level Security (RLS) restrito nas tabelas de decisões para vedar leitura de rascunhos entre equipes em rounds ativos. |
 | **10/06/2026** | `v2026.118` | *PMP & Equipe* | **Cálculo de DRE e Lucratividade Regional.** Adicionada a seção de custeio proporcional direto para medição de margem de contribuição e lucratividade líquida de vendas segregadas geograficamente. |
@@ -121,6 +122,11 @@ Para cada região $R$, as linhas contábeis são estruturadas em tempo de cockpi
    *Garante conciliação exata de $100\%$ entre a soma das regiões e a demonstração financeira consolidada na Matriz Holding.*
 9. **Margem Líquida Regional (\%):**
    $$\text{Margem Líquida Regional \%} = \frac{LL_{\text{regional}}}{R_L} \times 100$$
+
+### 💱 Governança Cambial: Tratamento de Moedas Locais de Praças de Exportação
+Em cenários onde o Tutor parametriza uma região com moeda de circulação estrangeira (ex: **USD - Dólar** ou **EUR - Euro**) em arenas cuja moeda corporativa padrão é **BRL**:
+- **Digitação Nominal Direta:** As equipes devem digitar o Preço Unitário de Venda no cockpit (`MarketingStep`) diretamente na **moeda nominal local** correspondente exibida pelo campo e sugerida para aquela praça de exportação (ex: digitar `120` se o preço nominal sugerido pelo mercado local for `USD 120,00`).
+- **Comportamento do Motor:** O motor de cálculo simula a atratividade do produto comparando diretamente o preço nominal digitado com o preço sugerido (ambas na mesma base monetária da região). A receita bruta local é apurada no mesmo número direto para manter a integridade operacional e de estudos acadêmicos das planilhas de rateio, evitando complexidades adicionais de hedge ou spread de câmbio nas decisões táticas de venda.
 
 > 📈 **Importância de Negócio:** Através desse rateio fiduciário estruturado em conformidade com o pronunciamento de relatórios segmentados (**CPC 22 / IFRS 8**), as marcas visualizam com exatidão a contribuição real líquida que cada praça traz para o grupo, sabendo se o volume de publicidade ou os fretes distantes de uma região específica estão de fato gerando fluxo de caixa líquido sadio de forma totalmente transparente e livre de ilusões de média consolidada.
 
