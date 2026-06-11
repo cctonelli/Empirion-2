@@ -644,74 +644,72 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                         const netRev = grossRev - taxes;
                         
                         const cpvAllocated = soldQty * unitCPV;
-                        
-                        // Busca custos parametrizados do round fechado
-                        const histAdjustedDistCost = getAdjustedPrice(distCost, 'distribution_cost_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
-                        const histAdjustedMktCost = getAdjustedPrice(mktCost, 'marketing_campaign_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
-                        
-                        const mktAllocated = (Number(histReg.marketing) || 0) * histAdjustedMktCost;
-                        const distAllocated = soldQty * histAdjustedDistCost;
-                        
-                        const netProfitRegion = netRev - cpvAllocated - mktAllocated - distAllocated;
+                        const grossProfitReg = netRev - cpvAllocated;
+
+                        // Motor de Rateio Regional Fiduciário (FRAE) para reconciliamento integral com a Matriz
+                        const dre = activeTeamHist?.kpis?.statements?.dre;
+                        const findDREValue = (nodes: any[] | null | undefined, targetId: string): number => {
+                          if (!nodes || !Array.isArray(nodes)) return 0;
+                          for (const node of nodes) {
+                            if (node.id === targetId) return node.value || 0;
+                            if (node.children && node.children.length > 0) {
+                              const val = findDREValue(node.children, targetId);
+                              if (val !== 0) return val;
+                            }
+                          }
+                          return 0;
+                        };
+
+                        const companyGross = Math.max(0, findDREValue(dre, 'rev'));
+                        const companyVat = Math.abs(findDREValue(dre, 'vat_sales'));
+                        const companyNetRev = companyGross - companyVat;
+                        const companyNetProfit = findDREValue(dre, 'final_profit');
+
+                        let netProfitRegion = 0;
+                        if (companyNetRev > 0) {
+                          const regionalShare = netRev / companyNetRev;
+                          netProfitRegion = companyNetProfit * regionalShare;
+                        } else {
+                          const totalRegionsCount = activeArena?.config?.regions?.length || activeArena?.config?.region_configs?.length || Object.keys(activeTeamHist?.state?.regions || {}).length || 4;
+                          netProfitRegion = totalRegionsCount > 0 ? (companyNetProfit / totalRegionsCount) : 0;
+                        }
+
                         const profitMarginRegion = netRev > 0 ? (netProfitRegion / netRev) * 100 : 0;
                         
                         return (
-                          <>
-                            <div className="flex justify-between text-slate-500">
-                              <span>Receita Bruta:</span>
-                              <span className="text-slate-300">{currency} {grossRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <div className="space-y-2 font-mono">
+                            <div className="flex justify-between items-center text-slate-500 py-1 border-b border-white/5">
+                              <span className="text-[10px] uppercase font-sans">Receita Bruta:</span>
+                              <span className="text-slate-300 font-bold">{currency} {grossRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between text-slate-500">
-                              <span>(-) Impostos ({vatSalesRate}%):</span>
-                              <span className="text-red-400/80">-{currency} {taxes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <div className="flex justify-between items-center text-slate-500 py-1 border-b border-white/5">
+                              <span className="text-[10px] uppercase font-sans">Receita Líquida:</span>
+                              <span className="text-slate-300 font-bold">{currency} {netRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between text-slate-400 border-b border-white/5 pb-1 font-bold">
-                              <span>Receita Líquida:</span>
-                              <span className="text-slate-200">{currency} {netRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <div className="flex justify-between items-center text-slate-500 py-1 border-b border-white/5">
+                              <span className="text-[10px] uppercase font-sans">CPV Alocado:</span>
+                              <span className="text-red-400/85 font-semibold">-{currency} {cpvAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between text-slate-500">
-                              <span>(-) CPV Alocado:</span>
-                              <span className="text-red-400/70">-{currency} {cpvAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-                            <div className="flex justify-between text-slate-500">
-                              <span>(-) Marketing Local:</span>
-                              <span className="text-red-400/70">-{currency} {mktAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-                            <div className="flex justify-between text-slate-500 border-b border-white/5 pb-1 font-sans">
-                              <span>(-) Distribuição / Logística:</span>
-                              <span className="text-red-400/70">-{currency} {distAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-                            
-                            <div className="mt-1 pt-1 space-y-0.5 text-slate-500 text-[9px] font-sans">
-                              <div className="flex justify-between">
-                                <span>Custo WAC Histórico:</span>
-                                <span>{currency} {unitCPV.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Frete Histórico:</span>
-                                <span>{currency} {histAdjustedDistCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Preço de Venda Histórico:</span>
-                                <span>{currency} {regionPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
-                              </div>
+                            <div className="flex justify-between items-center text-slate-400 py-1 border-b border-white/5 pb-1 font-bold">
+                              <span className="text-[10px] uppercase font-sans">Lucro Bruto:</span>
+                              <span className="text-amber-400 font-bold">{currency} {grossProfitReg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             
                             <div className={`flex justify-between items-center mt-2 pt-2 border-t border-dashed border-white/10 text-[10px] font-bold ${netProfitRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                              <span className="flex items-center gap-1 uppercase tracking-wider text-slate-400 text-[9px]">
+                              <span className="flex items-center gap-1 uppercase tracking-wider text-slate-450 text-[9px] font-sans">
                                 {netProfitRegion >= 0 ? <TrendingUp size={11} className="text-emerald-400" /> : <TrendingDown size={11} className="text-red-400" />}
                                 Lucro Líq. Reg:
                               </span>
-                              <span>{currency} {netProfitRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="font-extrabold">{currency} {netProfitRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className={`flex justify-between items-center text-[10px] font-bold ${profitMarginRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                              <span className="uppercase tracking-wider text-slate-400 text-[9px]">Margem Líq. Reg:</span>
-                              <span>{profitMarginRegion.toFixed(1)}%</span>
+                              <span className="uppercase tracking-wider text-slate-450 text-[9px] font-sans">Margem Líq. Reg:</span>
+                              <span className="font-extrabold">{profitMarginRegion.toFixed(1)}%</span>
                             </div>
-                            <div className="text-center text-[8px] text-slate-500 font-sans mt-2 pt-1 border-t border-white/5 uppercase">
-                              Valores reais conciliados com a Matriz Financeira
-                            </div>
-                          </>
+                            <p className="text-[8px] text-slate-500 font-sans mt-3 text-center leading-normal uppercase">
+                              (*) Rateio Fiduciário Integral (CPC 22 / IFRS 8): inclui despesas operacionais (Folha, P&D, PECLD), resultado financeiro/não op. e impostos consolidando 100% com a Matriz Financeira.
+                            </p>
+                          </div>
                         );
                       })()}
                     </div>

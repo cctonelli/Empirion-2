@@ -18,7 +18,8 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
-| **11/06/2026** | `v2026.120` | *PMP & Equipe* | **Governança de Privacidade de Rascunhos.** Implementação de Row-Level Security (RLS) restrito nas tabelas de decisões para vedar leitura de rascunhos entre equipes em rounds ativos. |
+| **11/06/2026** | `v2026.120` | *PMP & Equipe* | **Sintetização da DRE Regional & Motor FRAE.** Simplificação do mini-DRE do *MarketingStep* com as 6 grandes linhas vitais de lucratividade e integração do método CPC 22 / IFRS 8 via *Motor de Rateio Regional Fiduciário* (FRAE) para reconciliação integral com o lucro consolidado e despesas comuns (folhas MOD/Adm/Vendas, P&D, PECLD, financeiro e tributário). |
+| **11/06/2026** | `v2026.119` | *PMP & Equipe* | **Governança de Privacidade de Rascunhos.** Implementação de Row-Level Security (RLS) restrito nas tabelas de decisões para vedar leitura de rascunhos entre equipes em rounds ativos. |
 | **10/06/2026** | `v2026.118` | *PMP & Equipe* | **Cálculo de DRE e Lucratividade Regional.** Adicionada a seção de custeio proporcional direto para medição de margem de contribuição e lucratividade líquida de vendas segregadas geograficamente. |
 | **10/06/2026** | `v2026.117` | *PMP & Equipe* | **Criação do Documento.** Inclusão das regras de produtividade reduzida no round de aquisição de novas máquinas e detalhamento da fórmula do Market Size Dinâmico com variação conjuntural. |
 
@@ -82,34 +83,32 @@ Com base nos parâmetros da rodada atual e os pesos definidos pelo Tutor:
 
 ---
 
-## 3. 🗺️ DRE por Geolocalização & Lucratividade Líquida Regional
+## 3. 🗺️ DRE por Geolocalização & Lucratividade Líquida Regional (Método FRAE - CPC 22 / IFRS 8)
 
-Com o objetivo de dotar as equipes com alta capacidade analítica de inteligência de negócios, o Cockpit simula e apresenta uma Demonstração de Resultado do Exercício (DRE) setorial baseada na geolocalização dos volumes físicos faturados. 
+Com o objetivo de dotar as equipes com alta capacidade analítica de inteligência de negócios, o Cockpit simula e apresenta uma Demonstração de Resultado do Exercício (DRE) setorial simplificada baseada na geolocalização dos volumes físicos faturados. 
 
-### Modelo Analítico de Margem Geográfica (CPC / IFRS)
+### Modelo Analítico de Margem Geográfica Simplificada
 
-Para cada região $R$, as linhas contábeis são estruturadas em tempo de cockpit da seguinte forma:
+Para cada região $R$, as linhas contábeis são estruturadas em tempo de cockpit de forma compacta e com foco nos indicadores vitais exigidos:
 
 1. **Receita Bruta Regional ($R_B$):**
    $$R_B = Q \times P_{\text{regional}}$$
    *(Unidades Físicas alocadas à equipe na região pelo motor de simulação $\times$ Preço estipulado na decisão).*
-2. **(-) Deduções de IVA de Vendas ($T_{\text{IVA}}$):**
-   $$T_{\text{IVA}} = R_B \times \frac{\text{Aliquota do IVA do Turno \%}}{100}$$
-3. **(=) Receita Líquida Regional ($R_L$):**
-   $$R_L = R_B - T_{\text{IVA}}$$
-4. **(-) Custo do Produto Vendido Alocado (CPV via WAC):**
-   $$CPV_{\text{regional}} = Q \times \text{Custo Unitário Histórico do Período (WAC)}$$
-   *O Custo Unitário (WAC) de estocagem PA é uniforme para a planta industrial, mas o CPV total é fatiado proporcionalmente ao volume de demanda real entregue em cada praça.*
-5. **(-) Despesas de Marketing Local ($Mkt$):**
-   $$Mkt = \text{Campanhas locais parametrizadas (0-9)} \times \text{Custo Unitário da Campanha Ajustado pelo Turno}$$
-6. **(-) Demanda de Logística / Frete de Distribuição ($Log$):**
-   $$Log = Q \times \text{Custo de Transporte Unitário Ajustado da Região}$$
-7. **(=) Lucro Líquido Regional ($LL_{\text{regional}}$):**
-   $$LL_{\text{regional}} = R_L - CPV_{\text{regional}} - Mkt - Log$$
-8. **Margem Líquida Geográfica (\%):**
+2. **Receita Líquida Regional ($R_L$):**
+   $$R_L = R_B - T_{\text{IVA\_regional}}$$
+   *(Receita Bruta deduzida do imposto IVA faturado na própria praça).*
+3. **Custo do Produto Vendido (CPV) Alocado:**
+   $$CPV_{\text{alocado}} = Q \times \text{Custo Unitário Histórico do Período (WAC)}$$
+   *(Custo de produção amortizado por absorção sobre as unidades entregues).*
+4. **Lucro Bruto Regional:**
+   $$\text{Lucro Bruto} = R_L - CPV_{\text{alocado}}$$
+5. **(=) Lucro Líquido Regional ($LL_{\text{regional}}$):**
+   Calculado de forma 100% conciliada com a Matriz Financeira através do **Motor de Rateio Regional Fiduciário (FRAE)**. Em vez de simplesmente deduzir custos operacionais locais parciais, o motor faz a apropriação integral de todas as contas corporativas indiretas da empresa (como Folha de Pagamento ADM/Vendas, Inadimplência PECLD, P&D, resultado financeiro de juros/aplicações, resultado não operacional e tributos IRPJ/PPR) proporcionalmente à participação de Receita Líquida da região sobre o faturamento total da empresa:
+   $$LL_{\text{regional}} = LL_{\text{consolidadoMatriz}} \times \left( \frac{R_{L\_regional}}{R_{L\_consolidadoMatriz}} \right)$$
+6. **Margem Líquida Regional (\%):**
    $$\text{Margem Líquida Regional \%} = \frac{LL_{\text{regional}}}{R_L} \times 100$$
 
-> 📈 **Importância de Negócio:** Esta análise permite detectar se a acidez competitiva de uma praça de mercado (ex: guerra de preços ou marketing massivo no SUL) está canibalizando o capital operacional da marca, subsidiando fretes elevados, ou se praças menores de menor concorrência (ex: NORTE) estão sustentando o EBITDA real do grupo empresarial.
+> 📈 **Importância de Negócio:** Através desse rateio estruturado em conformidade com o pronunciamento de relatórios segmentados (**CPC 22 / IFRS 8**), as marcas visualizam a contribuição real líquida que cada praça traz para o caixa do grupo empresarial, incluindo o peso de despesas administrativas e decisões centralizadas de treinamento ou financiamento.
 
 ---
 
