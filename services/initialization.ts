@@ -727,7 +727,8 @@ export function generatePureP0(config: TutorP0Config): {
 
   const val_fin_rev = getTreeValue(dre, 'fin.rev');
   const val_fin_exp = getTreeValue(dre, 'fin.exp');
-  const total_fin = val_fin_rev + val_fin_exp;
+  const val_fx_var = getTreeValue(dre, 'fin.fx_variance') || 0;
+  const total_fin = val_fin_rev + val_fin_exp + val_fx_var;
   updateNodeValue(dre, 'fin_res', total_fin);
 
   const val_non_op_rev = getTreeValue(dre, 'non_op.rev');

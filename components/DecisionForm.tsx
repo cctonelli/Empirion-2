@@ -84,7 +84,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
     return calculateProjections(
       decisions,
       activeArena.branch || 'industrial',
-      (activeArena as any).ecosystem_config || {},
+      { ...(activeArena.config || (activeArena as any).ecosystem_config || {}), currency: activeArena.currency } as any,
       indicators,
       activeTeam,
       [],

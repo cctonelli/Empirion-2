@@ -66,7 +66,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
           const currentRules = arenaData?.round_rules?.[targetNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || arenaData?.market_indicators;
           const indicatorsForNode = { ...arenaData?.market_indicators, ...currentRules };
           
-          const proj = decision ? calculateProjections(decision.data, branch, eco, indicatorsForNode, t, [], targetNode, arenaData?.round_rules) : null;
+          const proj = decision ? calculateProjections(decision.data, branch, { ...eco, currency: arenaData?.currency } as any, indicatorsForNode, t, [], targetNode, arenaData?.round_rules) : null;
 
           return {
             id: t.id,

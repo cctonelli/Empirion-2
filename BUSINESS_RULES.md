@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.124
+- **Versão Ativa de Regras:** v2026.126
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,8 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **11/06/2026** | `v2026.126` | *PMP & Equipe* | **Generalização Multimoeda Dinâmica para Moeda-Base do Torneio.** Extensão do motor sob diretrizes do CPC 02 / IAS 21 para suportar qualquer moeda-base (BRL, USD, GBP, CNY) configurada pelo Tutor. O motor calcula dinamicamente as taxas de câmbio cruzadas (cross-rates) fallbacks e apura a variação cambial fiduciária (`fin.fx_variance`) para qualquer praça cuja moeda difira da moeda-base elegida consolidada. |
+| **11/06/2026** | `v2026.125` | *PMP & Equipe* | **Tratamento Cambial CPC 02 / IAS 21 e Reconciliação Fiduciária Multimoeda.** Detalhamento técnico da conversão monetária de transações no exterior. As vendas e marketing/fretes em USD são convertidos a BRL com câmbio do round de transação. Variações cambiais subsequentes de parcelas a receber pendentes são lançadas em Resultado Financeiro no DRE (`fin.fx_variance`). Os cartões regionais no cockpit (mini-DRE) efetuam a lógica inversa (divisão) para CPV e Share Corporativo, mantendo exatidão de 100%. |
 | **11/06/2026** | `v2026.124` | *PMP & Equipe* | **Saneamento Absoluto de Investimentos e CAPEX no Carry-Forward.** Alinhamento explícito exigindo que, no motor de recuperação por timeout automotivo, haja o zeramento absoluto de novas Aplicações Financeiras corporativas e toda a intenção de Compra de Máquinas de Qualquer Modelo (modelos Alfa, Beta e Gama) para resguardar a integridade de caixa físico disponível das marcas. |
 | **11/06/2026** | `v2026.123` | *PMP & Equipe* | **Governança de Decisão por Timeout (Carry-Forward Automático).** Implementação do motor de recuperação e tratamento automático síncrono para equipes que não enviarem a decisão tempestivamente em virtude de estouro do timer de contagem regressiva. O motor de turnover clona a decisão do round anterior, expurga gastos não recorrentes/específicos (como Capex de maquinário e contratações do RH/empréstimos) e injeta como rascunho oficial ativo de simulação do round para manter a consistência contábil e de concorrência. |
 | **11/06/2026** | `v2026.122` | *PMP & Equipe* | **Precificação Nominal Multi-moeda Regional.** Esclarecimento e documentação da regra de preenchimento de preços em praças de exportação/mercado externo. Fica estabelecido que o preço deve ser inserido sempre na moeda nominal de circulação configurada para a própria região (ex: USD), sem conversão prévia manual por parte da equipe, uma vez que o motor calcula os índices competitivos comparando com preços sugeridos expressos na mesma moeda e converge a receita total. |
@@ -115,22 +117,26 @@ Para cada região $R$, as linhas contábeis são estruturadas em tempo de cockpi
    $$LC_{\text{regional}} = \text{Lucro Bruto} - Mkt_{\text{regional}} - Log_{\text{regional}}$$
    *Este indicador revela a real eficiência física e comercial de precificação, marketing e penetração de cada praça, variando livremente de acordo com as campanhas e logística locais.*
 7. **(-) Despesas Holding Rateadas ($DCR_{\text{regional}}$):**
-   As despesas corporativas que não são associáveis diretamente às praças (como Folha Corporativa ADM/Vendas, PECLD, P&D, Resultado Financeiro, Resultado Não Operacional e Tributos Consolidados sobre a Renda) são rateadas fiduciariamente com base na representatividade de faturamento líquido de cada região:
-   $$DCR_{\text{regional}} = \text{Despesas Indiretas Holding} \times \left( \frac{R_{L\_regional}}{R_{L\_consolidado}} \right)$$
-   Onde:
-   $$\text{Despesas Indiretas Holding} = \sum_{r} LC_{r} - LL_{\text{consolidadoMatriz}}$$
+    As despesas corporativas que não são associáveis diretamente às praças (como Folha Corporativa ADM/Vendas, PECLD, P&D, Resultado Financeiro, Resultado Não Operacional e Tributos Consolidados sobre a Renda) são rateadas fiduciariamente com base na representatividade de faturamento líquido de cada região:
+    $$DCR_{\text{regional}} = \text{Despesas Indiretas Holding} \times \left( \frac{R_{L\_regional}}{R_{L\_consolidado}} \right)$$
+    Onde:
+    $$\text{Despesas Indiretas Holding} = \sum_{r} LC_{r} - LL_{\text{consolidadoMatriz}}$$
 8. **(=) Lucro Líquido Regional ($LL_{\text{regional}}$):**
-   $$LL_{\text{regional}} = LC_{\text{regional}} - DCR_{\text{regional}}$$
-   *Garante conciliação exata de $100\%$ entre a soma das regiões e a demonstração financeira consolidada na Matriz Holding.*
+    $$LL_{\text{regional}} = LC_{\text{regional}} - DCR_{\text{regional}}$$
+    *Garante conciliação exata de $100\%$ entre a soma das regiões e a demonstração financeira consolidada na Matriz Holding.*
 9. **Margem Líquida Regional (\%):**
-   $$\text{Margem Líquida Regional \%} = \frac{LL_{\text{regional}}}{R_L} \times 100$$
+    $$\text{Margem Líquida Regional \%} = \frac{LL_{\text{regional}}}{R_L} \times 100$$
 
-### 💱 Governança Cambial: Tratamento de Moedas Locais de Praças de Exportação
+### 💱 Governança Cambial: Tratamento de Moedas Locais de Praças de Exportação (CPC 02 / IAS 21)
 Em cenários onde o Tutor parametriza uma região com moeda de circulação estrangeira (ex: **USD - Dólar** ou **EUR - Euro**) em arenas cuja moeda corporativa padrão é **BRL**:
 - **Digitação Nominal Direta:** As equipes devem digitar o Preço Unitário de Venda no cockpit (`MarketingStep`) diretamente na **moeda nominal local** correspondente exibida pelo campo e sugerida para aquela praça de exportação (ex: digitar `120` se o preço nominal sugerido pelo mercado local for `USD 120,00`).
-- **Comportamento do Motor:** O motor de cálculo simula a atratividade do produto comparando diretamente o preço nominal digitado com o preço sugerido (ambas na mesma base monetária da região). A receita bruta local é apurada no mesmo número direto para manter a integridade operacional e de estudos acadêmicos das planilhas de rateio, evitando complexidades adicionais de hedge ou spread de câmbio nas decisões táticas de venda.
+- **Conversão de Transações:** No DRE e balanço consolidado em BRL, a conversão das receitas, impostos locais, e despesas de marketing/distribuição comercial locais da região correspondente é feita pela taxa de câmbio histórica da rodada em que ocorreu a transação (EMPIRION: cotação do período de decisão do round).
+- **Variações Cambiais de Saldo a Receber (Contas a Receber - Clientes):** Para vendas a prazo, a rubrica de Ativo Circulante (Clientes) é updated a cada rodada pela cotação de encerramento do novo período (câmbio de fechamento). A diferença decorrente da oscilação do câmbio sobre as parcelas já faturadas no passado e ainda pendentes de recebimento é reconhecida imediatamente no DRE sob a conta **`fin.fx_variance`** *(+/-) Variações Cambiais (Ativa/Passiva — Resultado Financeiro)*, refletindo com fidedignidade o impacto patrimonial na saúde financeira da holding. No caixa consolidado (DFC), essa variação também é acrescida/deduzida nos recebimentos de vendas (`cf.inflow.term_sales`).
+- **Modelagem de Rateio Fiduciário Reverso (FRAE v2 - Align):** Para assegurar que o mini-DRE de cada região no cockpit no *MarketingStep* exiba dados nominalmente coerentes com a moeda daquela praça (ex: tudo em USD para a região americana):
+  - Linhas de custo ou despesa originalmente calculadas na moeda base BRL da Matriz (como CPV/WAC de fabricação nacional e a fatia do rateio corporativo indireto corporativo) são convertidas de volta para a moeda regional local (dividindo pelo câmbio do round fechado).
+  - Com isso, garante-se impecável integridade matemática e aderência aos relatórios segmentados de desempenho por região geográfica, impedindo distorções onde somas ou subtrações combinassem moedas nominalmente diferentes.
 
-> 📈 **Importância de Negócio:** Através desse rateio fiduciário estruturado em conformidade com o pronunciamento de relatórios segmentados (**CPC 22 / IFRS 8**), as marcas visualizam com exatidão a contribuição real líquida que cada praça traz para o grupo, sabendo se o volume de publicidade ou os fretes distantes de uma região específica estão de fato gerando fluxo de caixa líquido sadio de forma totalmente transparente e livre de ilusões de média consolidada.
+> 📈 **Importância de Negócio:** Através desse rateio fiduciário estruturado em conformidade com o pronunciamento de relatórios segmentados (**CPC 22 / IFRS 8**) e conversão de moeda (**CPC 02**), as marcas visualizam com exatidão a contribuição real líquida que cada praça traz para o grupo, sabendo se o volume de publicidade ou os fretes distantes de uma região específica estão de fato gerando fluxo de caixa líquido sadio de forma totalmente transparente e livre de ilusões de média consolidada.
 
 ---
 

@@ -458,7 +458,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     return calculateProjections(
       decisions,
       activeArena.branch || 'industrial',
-      (activeArena as any).ecosystem_config || {},
+      { ...(activeArena.config || (activeArena as any).ecosystem_config || {}), currency: activeArena.currency } as any,
       indicators,
       activeTeam,
       history,

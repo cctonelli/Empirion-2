@@ -2,9 +2,24 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.120 Confidencialidade de Rascunhos de Decisão & Políticas RLS de Governança.
+- **Versão Ativa:** v2026.126 Expansão Multimoeda Dinâmica & Sincronização de Árvore Financeira Inicial com Variação Cambial.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Expansão Multimoeda Dinâmica para Moeda-base do Torneio (CPC 02) & Inclusão de Variação Cambial na Árvore Financeira Inicial - v2026.126
+
+**Data:** 11 de Junho de 2026 às 15:00 UTC  
+**Motivo:** Generalizar o motor de simulação cambial para aceitar qualquer moeda (BRL, USD, GBP, CNY) como moeda-base do torneio configurada pelo Tutor, salvaguardando a consistência e integridade das contas do DRE e reconciliação cambial de saldo de contas a receber (`fin.fx_variance`).
+
+**Detalhamento Técnico:**
+- **Generalização Multimoeda Dinâmica**: Extensão do motor em `services/simulation.ts` para computar a taxa de câmbio (cross-rates) tendo como âncora a moeda corporativa selecionada pelo Tutor do torneio. Se a moeda da praça de exportação é diferente da moeda-base consolidada, o sistema aciona a taxa de conversão cruzada correta e calcula a receita e despesas locais com extrema fidelidade.
+- **Sincronização de Árvore Inicial (`constants.tsx`)**: Inclusão explícita do nó `{ id: 'fin.fx_variance', label: '(+ / -) VARIAÇÃO CAMBIAL', value: 0.00, type: 'revenue', isEditable: true }` sob a conta `fin_res` no `INITIAL_FINANCIAL_TREE`, garantindo integridade e consistência imediata entre a estrutura do JSON estático e os resultados emitidos no motor e telas de rateio de faturamento.
+- **Acoplamento no Recálculo Síncrono de Inicialização**: Atualização em `services/initialization.ts` no procedimento `recalculateStatements` para agregar o potencial saldo inicial de `fin.fx_variance` dentro do totalizador `fin_res` de resultado financeiro consolidado, evitando desvios acumulados de round zero.
+
+**Impactos:**
+- **Flexibilidade Multimoeda Perfeita**: Tutores ganham liberdade absoluta de parametrizar campeonatos cujo balanço e moeda corporativa consolidada operem em USD, GBP, CNY ou BRL, mantendo conversão translacional segura sob os mandamentos do CPC 02 / IAS 21.
 
 ---
 

@@ -642,7 +642,8 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         for (const team of (teams || [])) {
             const finalDecision = marketDecisions[team.id];
             if (finalDecision) {
-                const res = calculateProjections(finalDecision, champ.branch, champ.config as EcosystemConfig, indicatorsForRound, team, [], nextRound, champ.round_rules);
+                const ecoWithCurrency = { ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
+                const res = calculateProjections(finalDecision, champ.branch, ecoWithCurrency, indicatorsForRound, team, [], nextRound, champ.round_rules);
                 
                 // Obter Turnos e multiplicador
                 const selectedShifts = finalDecision?.production?.shifts ?? 1;
@@ -736,10 +737,11 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             if (finalDecision) {
                 const teamCompDemands = competitiveDemandsPerTeamReg[team.id] || {};
                 const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
+                const ecoWithCurrency = { ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
                 const res = calculateProjections(
                     finalDecision, 
                     champ.branch, 
-                    champ.config as EcosystemConfig, 
+                    ecoWithCurrency, 
                     competitiveIndicators, 
                     team, 
                     [], 

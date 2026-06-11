@@ -1,6 +1,6 @@
 
 import { DecisionData, Branch, EcosystemConfig, MacroIndicators, Team, ProjectionResult, CreditRating, KPIs, MachineInstance, AccountNode, MachineModel, ESDSCalculation, ChampionshipConfig, CompanyState } from '../types';
-import { INITIAL_FINANCIAL_TREE } from '../constants';
+import { INITIAL_FINANCIAL_TREE, DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { supabase } from './supabase';
 import { validateTripleConsistency, computeESDSDeterministic as coreComputeESDS, calculateKpisFromStatements as coreCalculateKpis, processRoundWithValidation } from './simulation-core';
 
@@ -134,6 +134,93 @@ export const calculateProjections = (
       return getAdjustedPrice(1, key, round, round_rules);
     }
     return 1 + (fallback / 100);
+  };
+
+  const getExchangeRate = (currencyCode: string | undefined): number => {
+    const normCurrency = currencyCode || 'BRL';
+    const baseCurrency = (ecosystem as any)?.currency || 'BRL';
+    
+    // Se a moeda da região/transação for idêntica à moeda-base consolidada da Holding, o fator é sempre 1.0.
+    if (normCurrency === baseCurrency) return 1.0;
+    
+    // 1. Tentar buscar nas regras customizadas do round atual
+    if (round_rules && round_rules[currentRound]) {
+      if (round_rules[currentRound][normCurrency] !== undefined) {
+        return sanitize(round_rules[currentRound][normCurrency], 1.0);
+      }
+      if (round_rules[currentRound].exchange_rates && round_rules[currentRound].exchange_rates[normCurrency] !== undefined) {
+        return sanitize(round_rules[currentRound].exchange_rates[normCurrency], 1.0);
+      }
+    }
+    
+    // 2. Tentar buscar nos indicadores de mercado do round atual
+    if (indicators && (indicators as any).exchange_rates && (indicators as any).exchange_rates[normCurrency] !== undefined) {
+      return sanitize((indicators as any).exchange_rates[normCurrency], 1.0);
+    }
+    if (indicators && (indicators as any)[normCurrency] !== undefined) {
+      return sanitize((indicators as any)[normCurrency], 1.0);
+    }
+    
+    // 3. Mecanismo de Taxas de Câmbio Cruzadas Cruzadas (Base de Câmbio) para Fallbacks Seguros
+    const ratesInBrl: Record<string, number> = {
+      'BRL': 1.0,
+      'USD': 5.25,
+      'EUR': 5.60,
+      'GBP': 6.50,
+      'CNY': 0.72,
+      'BTC': 0.00002
+    };
+    
+    const fromRate = ratesInBrl[normCurrency] || 1.0;
+    const toRate = ratesInBrl[baseCurrency] || 1.0;
+    return fromRate / toRate;
+  };
+
+  const getExchangeRatePrev = (currencyCode: string | undefined, prevRound: number): number => {
+    const normCurrency = currencyCode || 'BRL';
+    const baseCurrency = (ecosystem as any)?.currency || 'BRL';
+    
+    if (normCurrency === baseCurrency) return 1.0;
+    
+    if (prevRound < 1) {
+      if (indicators && (indicators as any).exchange_rates && (indicators as any).exchange_rates[normCurrency] !== undefined) {
+        return sanitize((indicators as any).exchange_rates[normCurrency], 1.0);
+      }
+      const ratesInBrl: Record<string, number> = {
+        'BRL': 1.0,
+        'USD': 5.25,
+        'EUR': 5.60,
+        'GBP': 6.50,
+        'CNY': 0.72,
+        'BTC': 0.00002
+      };
+      const fromRate = ratesInBrl[normCurrency] || 1.0;
+      const toRate = ratesInBrl[baseCurrency] || 1.0;
+      return fromRate / toRate;
+    }
+    
+    // 1. Tentar buscar nas regras do round anterior
+    if (round_rules && round_rules[prevRound]) {
+      if (round_rules[prevRound][normCurrency] !== undefined) {
+        return sanitize(round_rules[prevRound][normCurrency], 1.0);
+      }
+      if (round_rules[prevRound].exchange_rates && round_rules[prevRound].exchange_rates[normCurrency] !== undefined) {
+        return sanitize(round_rules[prevRound].exchange_rates[normCurrency], 1.0);
+      }
+    }
+    
+    // 2. Tentar buscar no Cronograma Industrial Padrão historizado
+    const DEFAULT_CHRONO = DEFAULT_INDUSTRIAL_CHRONOGRAM as any;
+    if (DEFAULT_CHRONO[prevRound]) {
+      if (DEFAULT_CHRONO[prevRound][normCurrency] !== undefined) {
+        return sanitize(DEFAULT_CHRONO[prevRound][normCurrency], 1.0);
+      }
+      if (DEFAULT_CHRONO[prevRound].exchange_rates && DEFAULT_CHRONO[prevRound].exchange_rates[normCurrency] !== undefined) {
+        return sanitize(DEFAULT_CHRONO[prevRound].exchange_rates[normCurrency], 1.0);
+      }
+    }
+    
+    return getExchangeRate(normCurrency);
   };
 
   // Inflação geral afeta Manutenção e Despesas Fixas
@@ -609,6 +696,37 @@ export const calculateProjections = (
   const regionCount = regions.length || 1;
   const baseDemandPerRegion = (capacity * 0.8) / regionCount;
 
+  // Cálculo da Variação Cambial Ativa/Passiva de Contas a Receber (CPC 02)
+  let totalFxVarianceBrl = 0;
+  const prevRegionalUnitsSold = team.kpis?.regional_units_sold || {};
+  const prevPrices = team.kpis?.regional_prices || {};
+  const prevTerms = team.kpis?.regional_terms || {};
+
+  regions.forEach(([id, reg]: [string, any]) => {
+    const regId = Number(id);
+    const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
+    const currencyCode = regConfig?.currency || 'BRL';
+
+    const baseCurrency = (ecosystem as any)?.currency || 'BRL';
+    if (currencyCode !== baseCurrency) {
+      const prevUnits = Number(prevRegionalUnitsSold[id] || prevRegionalUnitsSold[String(id)] || 0);
+      const prevPrice = Number(prevPrices[id] || prevPrices[String(id)] || 0);
+      const prevTerm = Number(prevTerms[id] || prevTerms[String(id)] || 0);
+
+      let prevCashPercent = 1.0;
+      if (prevTerm === 1) prevCashPercent = 0.5;
+      if (prevTerm === 2) prevCashPercent = 0.3333;
+
+      const prevCreditsRegional = prevUnits * prevPrice * (1 - prevCashPercent);
+      if (prevCreditsRegional > 0) {
+        const rateToday = getExchangeRate(currencyCode);
+        const rateYesterday = getExchangeRatePrev(currencyCode, currentRound - 1);
+        const variance = prevCreditsRegional * (rateToday - rateYesterday);
+        totalFxVarianceBrl += variance;
+      }
+    }
+  });
+
   // 1. Calcular a demanda individual e somada de todas as regiões para esta equipe
   let totalDemandAllRegions = 0;
   const regionalDemands: Record<string, number> = {};
@@ -620,11 +738,14 @@ export const calculateProjections = (
 
     const regId = Number(id);
     const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
-    
+    const currencyCode = regConfig?.currency || 'BRL';
+    const rate = getExchangeRate(currencyCode);
+
     const baseSuggestedPrice = regConfig?.suggested_price !== undefined ? Number(regConfig.suggested_price) : (indicators.avg_selling_price || 425);
     const baseMarketingCost = regConfig?.marketing_cost !== undefined ? Number(regConfig.marketing_cost) : (indicators.prices.marketing_campaign || 10000);
 
-    totalMarketingExp += regMarketing * baseMarketingCost * (sanitize(indicators.marketing_campaign_adjust, 0) / 100 + 1);
+    const mktCostLocal = regMarketing * baseMarketingCost * (sanitize(indicators.marketing_campaign_adjust, 0) / 100 + 1);
+    totalMarketingExp += mktCostLocal * rate;
 
     const priceIndex = baseSuggestedPrice / regPrice;
     const marketingIndex = 1 + (regMarketing * 0.08);
@@ -670,8 +791,14 @@ export const calculateProjections = (
     const regTerm = sanitize(reg.term, 0);
     const regUnitsSold = regionalUnitsSold[id] || 0;
 
-    const regRevenue = regUnitsSold * regPrice;
-    totalRevenue += regRevenue;
+    const regId = Number(id);
+    const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
+    const currencyCode = regConfig?.currency || 'BRL';
+    const rate = getExchangeRate(currencyCode);
+
+    const regRevenueLocal = regUnitsSold * regPrice;
+    const regRevenueBase = regRevenueLocal * rate;
+    totalRevenue += regRevenueBase;
 
     let cashPercent = 1;
     let avgDays = 0;
@@ -684,9 +811,9 @@ export const calculateProjections = (
       avgDays = 30;
     }
 
-    totalCashSales += regRevenue * cashPercent;
-    totalCreditSales += regRevenue * (1 - cashPercent);
-    weightedPmrSum += avgDays * regRevenue;
+    totalCashSales += regRevenueBase * cashPercent;
+    totalCreditSales += regRevenueBase * (1 - cashPercent);
+    weightedPmrSum += avgDays * regRevenueBase;
   });
 
   const pmr = totalRevenue > 0 ? weightedPmrSum / totalRevenue : 0;
@@ -697,10 +824,13 @@ export const calculateProjections = (
     const regId = Number(id);
     const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
     const baseDistributionUnitCost = regConfig?.distribution_cost !== undefined ? Number(regConfig.distribution_cost) : (indicators.prices.distribution_unit || 50);
+    const currencyCode = regConfig?.currency || 'BRL';
+    const rate = getExchangeRate(currencyCode);
 
     const regUnitsSold = regionalUnitsSold[id] || 0;
+    const distCostLocal = regUnitsSold * baseDistributionUnitCost * getAdjust('distribution_cost_adjust', sanitize(indicators.distribution_cost_adjust, 0));
 
-    totalDistributionCost += regUnitsSold * baseDistributionUnitCost * getAdjust('distribution_cost_adjust', sanitize(indicators.distribution_cost_adjust, 0));
+    totalDistributionCost += distCostLocal * rate;
   });
 
   const distributionCost = totalDistributionCost;
@@ -953,7 +1083,7 @@ export const calculateProjections = (
   }
 
   const operatingProfit = (revenue - ivaOnSales) - totalCPV - opex;
-  const lair = operatingProfit - interestExp + totalFinancialRevenue - machineSalesLoss;
+  const lair = operatingProfit - interestExp + totalFinancialRevenue + totalFxVarianceBrl - machineSalesLoss;
   
   // PPR (Participação nos Lucros) - Dinâmico conforme decisão (0-20%)
   const ppr = lair > 0 ? lair * pprRate : 0;
@@ -971,7 +1101,7 @@ export const calculateProjections = (
 
   // Fluxo de Caixa (DFC)
   // Recebimento = Vendas à Vista (Atual) + Recebimento Líquido de Clientes (Anterior)
-  const cashInflowFromSales = totalCashSales + (prevClients - prevPecld);
+  const cashInflowFromSales = totalCashSales + (prevClients - prevPecld) + totalFxVarianceBrl;
   
   // Aplicação Financeira (Saída de Caixa)
   const applicationAmount = sanitize(decision.finance?.application, 0);
@@ -1162,6 +1292,7 @@ export const calculateProjections = (
         'operating_profit': operatingProfit,
         'fin.rev': totalFinancialRevenue,
         'fin.exp': -interestExp,
+        'fin.fx_variance': totalFxVarianceBrl,
         'non_op.rev': totalAwards,
         'non_op.exp': -(machineSalesLoss + (installationsChange < 0 ? Math.abs(installationsChange) : 0)),
         'lair': lair,
@@ -1172,7 +1303,7 @@ export const calculateProjections = (
       cash_flow: injectValues(JSON.parse(JSON.stringify(prevStatements.cash_flow)), { 
         'cf.start': sanitize(team.kpis?.current_cash, 0),
         'cf.inflow.cash_sales': totalCashSales,
-        'cf.inflow.term_sales': prevClients - prevPecld,
+        'cf.inflow.term_sales': prevClients - prevPecld + totalFxVarianceBrl,
         'cf.inflow.machine_sales': machineSalesInflow,
         'cf.inflow.awards': totalAwards,
         'cf.inflow.investment_withdrawal': investmentWithdrawal, 
@@ -1335,7 +1466,13 @@ export const calculateProjections = (
       demission_insecurity_factor: parseFloat(demissionInsecurityFactor.toFixed(3)),
       machine_age_factor: parseFloat(machineAgeFactor.toFixed(3)),
       regional_units_sold: regionalUnitsSold,
-      regional_demands: regionalDemands
+      regional_demands: regionalDemands,
+      regional_prices: Object.fromEntries(
+        regions.map(([id, reg]) => [id, sanitize(reg.price, 425)])
+      ),
+      regional_terms: Object.fromEntries(
+        regions.map(([id, reg]) => [id, sanitize(reg.term, 0)])
+      )
     }
   };
 

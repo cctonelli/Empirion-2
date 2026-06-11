@@ -38,7 +38,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       return calculateProjections(
         decisions,
         activeArena.branch,
-        activeArena.config as any,
+        { ...(activeArena.config || {}), currency: activeArena.currency } as any,
         activeArena.market_indicators || (activeArena as any).indicators || {} as any,
         activeTeam,
         competitorsLog || [],
@@ -631,6 +631,33 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                         const histStats = calculateRegionStats(regId, true);
                         const histReg = activeTeamHist?.state?.regions?.[id] || activeTeamHist?.state?.regions?.[String(id)] || {};
                         
+                        const getExchangeRateForRoundLocal = (curr: string | undefined): number => {
+                          if (!curr || curr === 'BRL') return 1.0;
+                          
+                          const closedRound = activeArena?.current_round || 0;
+                          if (activeArena?.round_rules?.[closedRound]?.[curr] !== undefined) {
+                            return Number(activeArena.round_rules[closedRound][curr]);
+                          }
+                          
+                          if (activeArena?.market_indicators?.exchange_rates?.[curr] !== undefined) {
+                            return Number(activeArena.market_indicators.exchange_rates[curr]);
+                          }
+                          
+                          if (activeArena?.market_indicators?.[curr] !== undefined) {
+                            return Number(activeArena.market_indicators[curr]);
+                          }
+                          
+                          switch (curr) {
+                            case 'USD': return 5.25;
+                            case 'EUR': return 5.60;
+                            case 'GBP': return 6.50;
+                            case 'CNY': return 0.72;
+                            case 'BTC': return 0.00002;
+                            default: return 1.0;
+                          }
+                        };
+                        
+                        const rate = getExchangeRateForRoundLocal(currency);
                         const unitCPV = getHistoricalActiveTeamUnitCPV(activeTeamHist);
                         const soldQty = histStats.activeTeamUnitsSold;
                         const regionPrice = Number(histReg.price) || 0;
@@ -643,7 +670,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                         const taxes = grossRev * (vatSalesRate / 100);
                         const netRev = grossRev - taxes;
                         
-                        const cpvAllocated = soldQty * unitCPV;
+                        const cpvAllocated = soldQty * (unitCPV / rate);
                         const grossProfitReg = netRev - cpvAllocated;
 
                         // Custos operacionais específicos da região na rodada fechada (realizado)
@@ -674,50 +701,68 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                         // Calculamos em tempo de execução a soma das margens de contribuição de todas as regiões operadas.
                         const allRegions = activeArena?.config?.regions || activeArena?.config?.region_configs || [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
                         
-                        let totalCompanyNetRev = 0;
-                        let totalCompanyContributionProfit = 0;
+                        let totalCompanyNetRevBrl = 0;
+                        let totalCompanyContributionProfitBrl = 0;
 
                         allRegions.forEach((r: any) => {
                           const rId = Number(r.id);
                           const rStats = calculateRegionStats(rId, true);
                           const rReg = activeTeamHist?.state?.regions?.[rId] || activeTeamHist?.state?.regions?.[String(rId)] || {};
                           
+                          const rRegionConf = activeArena?.config?.regions?.find((x: any) => x.id === rId) || activeArena?.config?.region_configs?.find((x: any) => x.id === rId);
+                          const rCurrency = rRegionConf?.currency || activeArena?.currency || 'BRL';
+                          const rRate = getExchangeRateForRoundLocal(rCurrency);
+
                           const rSoldQty = rStats.activeTeamUnitsSold;
                           const rPrice = Number(rReg.price) || 0;
-                          const rGrossRev = rSoldQty * rPrice;
-                          const rTaxes = rGrossRev * (vatSalesRate / 100);
-                          const rNetRev = rGrossRev - rTaxes;
-                          const rCpvAllocated = rSoldQty * unitCPV;
+                          const rGrossRevLocal = rSoldQty * rPrice;
+                          const rTaxesLocal = rGrossRevLocal * (vatSalesRate / 100);
+                          const rNetRevLocal = rGrossRevLocal - rTaxesLocal;
+                          const rNetRevBrl = rNetRevLocal * rRate;
                           
-                          const rRegionConf = activeArena?.config?.regions?.find((x: any) => x.id === rId) || activeArena?.config?.region_configs?.find((x: any) => x.id === rId);
-                          const rDistCost = rRegionConf?.distribution_cost !== undefined ? Number(rRegionConf.distribution_cost) : (activeArena?.market_indicators?.prices?.distribution_unit || 50);
-                          const rMktCost = rRegionConf?.marketing_cost !== undefined ? Number(rRegionConf.marketing_cost) : (activeArena?.market_indicators?.prices?.marketing_campaign || 10000);
+                          const rCpvAllocatedBrl = rSoldQty * unitCPV;
                           
-                          const rAdjustedDistCost = getAdjustedPrice(rDistCost, 'distribution_cost_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
-                          const rAdjustedMktCost = getAdjustedPrice(rMktCost, 'marketing_campaign_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+                          const rDistCostLocal = rRegionConf?.distribution_cost !== undefined ? Number(rRegionConf.distribution_cost) : (activeArena?.market_indicators?.prices?.distribution_unit || 50);
+                          const rMktCostLocal = rRegionConf?.marketing_cost !== undefined ? Number(rRegionConf.marketing_cost) : (activeArena?.market_indicators?.prices?.marketing_campaign || 10000);
                           
-                          const rMktAllocated = (Number(rReg.marketing) || 0) * rAdjustedMktCost;
-                          const rDistAllocated = rSoldQty * rAdjustedDistCost;
+                          const rAdjustedDistCostLocal = getAdjustedPrice(rDistCostLocal, 'distribution_cost_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+                          const rAdjustedMktCostLocal = getAdjustedPrice(rMktCostLocal, 'marketing_campaign_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
                           
-                          const rGrossProfit = rNetRev - rCpvAllocated;
-                          const rContributionProfit = rGrossProfit - rMktAllocated - rDistAllocated;
+                          const rMktAllocatedLocal = (Number(rReg.marketing) || 0) * rAdjustedMktCostLocal;
+                          const rDistAllocatedLocal = rSoldQty * rAdjustedDistCostLocal;
 
-                          totalCompanyNetRev += rNetRev;
-                          totalCompanyContributionProfit += rContributionProfit;
+                          const rMktAllocatedBrl = rMktAllocatedLocal * rRate;
+                          const rDistAllocatedBrl = rDistAllocatedLocal * rRate;
+                          
+                          const rGrossProfitBrl = rNetRevBrl - rCpvAllocatedBrl;
+                          const rContributionProfitBrl = rGrossProfitBrl - rMktAllocatedBrl - rDistAllocatedBrl;
+
+                          totalCompanyNetRevBrl += rNetRevBrl;
+                          totalCompanyContributionProfitBrl += rContributionProfitBrl;
                         });
 
-                        // Despesas corporativas indiretas da holding (Soma contribuições regionais - Lucro líquido real)
-                        const indirectCorporateExpenses = totalCompanyContributionProfit - companyNetProfit;
+                        // Despesas corporativas indiretas da holding em BRL
+                        const indirectCorporateExpensesBrl = totalCompanyContributionProfitBrl - companyNetProfit;
 
-                        let netProfitRegion = 0;
                         let regionalCorporateShare = 0;
-                        if (totalCompanyNetRev > 0) {
-                          regionalCorporateShare = indirectCorporateExpenses * (netRev / totalCompanyNetRev);
-                          netProfitRegion = contributionProfitReg - regionalCorporateShare;
+                        let netProfitRegion = 0;
+                        const netRevBrl = netRev * rate;
+
+                        if (totalCompanyNetRevBrl > 0) {
+                          const regionalCorporateShareBrl = indirectCorporateExpensesBrl * (netRevBrl / totalCompanyNetRevBrl);
+                          const grossProfitRegBrl = netRevBrl - (soldQty * unitCPV);
+                          const contributionProfitRegBrl = grossProfitRegBrl - (mktAllocated * rate) - (distAllocated * rate);
+                          const netProfitRegionBrl = contributionProfitRegBrl - regionalCorporateShareBrl;
+
+                          regionalCorporateShare = regionalCorporateShareBrl / rate;
+                          netProfitRegion = netProfitRegionBrl / rate;
                         } else {
                           const totalRegionsCount = allRegions.length;
-                          netProfitRegion = totalRegionsCount > 0 ? (companyNetProfit / totalRegionsCount) : 0;
-                          regionalCorporateShare = totalRegionsCount > 0 ? (indirectCorporateExpenses / totalRegionsCount) : 0;
+                          const regionalCorporateShareBrl = totalRegionsCount > 0 ? (indirectCorporateExpensesBrl / totalRegionsCount) : 0;
+                          const netProfitRegionBrl = totalRegionsCount > 0 ? (companyNetProfit / totalRegionsCount) : 0;
+
+                          regionalCorporateShare = regionalCorporateShareBrl / rate;
+                          netProfitRegion = netProfitRegionBrl / rate;
                         }
 
                         const profitMarginRegion = netRev > 0 ? (netProfitRegion / netRev) * 100 : 0;
