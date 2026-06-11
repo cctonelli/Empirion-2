@@ -778,7 +778,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                               <span className="text-slate-300 font-bold">{currency} {netRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">CPV Alocado (WAC):</span>
+                              <span className="text-[10px] uppercase font-sans">CPV (WAC):</span>
                               <span className="text-red-400/85 font-semibold">-{currency} {cpvAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
