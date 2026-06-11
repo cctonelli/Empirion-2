@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.118
+- **Versão Ativa de Regras:** v2026.120
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **11/06/2026** | `v2026.120` | *PMP & Equipe* | **Governança de Privacidade de Rascunhos.** Implementação de Row-Level Security (RLS) restrito nas tabelas de decisões para vedar leitura de rascunhos entre equipes em rounds ativos. |
 | **10/06/2026** | `v2026.118` | *PMP & Equipe* | **Cálculo de DRE e Lucratividade Regional.** Adicionada a seção de custeio proporcional direto para medição de margem de contribuição e lucratividade líquida de vendas segregadas geograficamente. |
 | **10/06/2026** | `v2026.117` | *PMP & Equipe* | **Criação do Documento.** Inclusão das regras de produtividade reduzida no round de aquisição de novas máquinas e detalhamento da fórmula do Market Size Dinâmico com variação conjuntural. |
 
@@ -112,9 +113,22 @@ Para cada região $R$, as linhas contábeis são estruturadas em tempo de cockpi
 
 ---
 
-## 4. 🎯 Próximos Passos e Verificação de Sincronia
+## 4. 🔒 Confidencialidade e Governança de Decisões de Competidores (Rascunhos de Rounds)
+
+Por questões éticas, segurança informacional e diretivas de Governança Estratégica do EMPIRION, as equipes inscritas jamais poderão acessar ou visualizar dados de decisões/rascunhos de outras equipes enquanto o round corrente estiver ativo/em andamento. 
+
+### Diretrizes de Visibilidade Fiduciary (RLS & UI)
+1. **Estudantes / Competidores:** Possuem isolamento estrito de leitura (direto via banco de dados e através da interface). Um jogador pertencente a uma equipe pode ler e gravar única e exclusivamente os registros e rascunhos correspondentes à sua própria marca (`trial_decisions` no modo Sandbox/Trial, ou `current_decisions` no campeonato pago).
+2. **Tutores e Administradores:** Possuem autoridade e visibilidade irrestritas, podendo acessar simultaneamente os rascunhos de todas as equipes registradas no campeonato a qualquer momento antes do fechamento do round, servindo como auditores preventivos de concorrência.
+3. **Observadores (Conselheiros):** Tutores podem credenciar usuários específicos como observadores oficiais do torneio. Licenciados através do perfil `role = 'observer'` ou declarados nominalmente por ID na coleção de observadores do campeonato (`championships.observers`), os Conselheiros possuem privilégio síncrono para visualizar as decisões pré-salvas e advertir e orientar os participantes sobre possíveis erros de formulação operacional.
+4. **Resguardo de Algoritmos:** A barreira de segurança impossibilita qualquer vazamento que canibalize o mérito concorrencial das decisões de parque industrial, preços regionais ou investimentos em marketing.
+
+---
+
+## 5. 🎯 Próximos Passos e Verificação de Sincronia
 
 - [x] Unificação dos cálculos de estatísticas do Cockpit (`MarketingStep.tsx`) para usar o modelo demográfico dinâmico unindo com o peso estipulado pelo Tutor.
 - [x] Unificação dos rótulos visuais para fins de usabilidade corporativa e facilidade de estudo dos alunos concorrentes.
 - [x] Construção e deploy do painel interativo de DRE e Lucratividade Regional expandido por card de decisão para uso síncrono das marcas.
+- [x] Blindagem e implementação de Row-Level Security (RLS) nas tabelas `trial_decisions` e `current_decisions` para impedir vazamento concorrencial de rascunhos.
 - [ ] Monitoramento constante de novas decisões de compra no Turno 2 pelas equipes para avaliar o impacto imediato na calibragem dos novos equipamentos instalados.

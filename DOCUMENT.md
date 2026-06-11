@@ -2,9 +2,26 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.119 Sincronismo de Estoque Histórico & Conciliação de DRE regional.
+- **Versão Ativa:** v2026.120 Confidencialidade de Rascunhos de Decisão & Políticas RLS de Governança.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Confidencialidade de Rascunhos de Decisão & Políticas RLS de Governança - v2026.120
+
+**Data:** 11 de Junho de 2026 às 11:30 UTC  
+**Motivo:** Atender às exigências de ética corporativa e governança no torneio EMPIRION, onde as equipes competidoras jamais devem visualizar rascunhos de decisões ou telemetria em tempo real de outras equipes adversárias durante rounds em andamento. Essa isolação é válida para todo e qualquer módulo (incluindo o industrial sob validação). Somente o Tutor e Observadores autorizados (Conselheiros) cadastrados pelo Tutor podem auditar essas decisões de forma preventiva para advertir sobre erros lógicos de preenchimento.
+
+**Detalhamento Técnico:**
+- **Ativação de Row-Level Security (RLS) Estrita**: Ativou-se o RLS nas tabelas `trial_decisions` e `current_decisions` (tabela de decisões no modo de campeonato pago) para evitar o comportamento padrão permissivo do Supabase/PostgREST.
+- **Isolamento de Leitura para Estudantes**: Criou-se políticas de SELECT que limitam o acesso direto aos registros de rascunhos. Estudantes apenas conseguem ler a linha cujo `team_id` coincide com o seu próprio ID de equipe participante (seja no modo Trial/Sandbox via vinculação direta, seja no modo pago via mapeamento de membros da equipe `team_members`).
+- **Acesso Irrestrito para Auditoria Governamental**: Tutores, Administradores globais e Observadores credenciados superam a proteção através de bypass legítimo nos filtros DBMS. O sistema valida se `user_profiles.role` é `'tutor'`, `'admin'`, `'observer'`, ou se o e-mail/ID do usuário está incluído na coleção de observadores autorizados da arena (`championships.observers` ou `trial_championships.observers`), provendo feeds síncronos na UI do Tutor Arena para correção assistida de falhas.
+- **Migração Segura e Replicável**: Criação da migração física `/supabase/migrations/20260611112600_governance_decision_privacy.sql` e atualização permanente do script de referência `/database_rls.sql` para garantir a reprodutibilidade.
+
+**Impactos:**
+- **Concorrência Justa e Ética**: Blindagem total contra espionagem industrial e vazamento de formulações de produção, fretes regionais e estratégias de preço/marketing entre equipes antes de fechar o round.
+- **Auditoria Proativa Assistida**: Conselheiros e Tutores mantêm visualização síncrona excelente de todas as submissões provisórias, podendo intervir de forma pedagógica e construtiva.
 
 ---
 

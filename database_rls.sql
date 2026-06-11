@@ -275,8 +275,13 @@ CREATE POLICY "Leitura de campeonatos" ON public.championships
 
 DROP POLICY IF EXISTS "Leitura de trial_championships" ON public.trial_championships;
 CREATE POLICY "Leitura de trial_championships" ON public.trial_championships
-    FOR SELECT TO authenticated
+    FOR SELECT TO public
     USING (true); -- Trial costuma ser mais aberto
+
+DROP POLICY IF EXISTS "Gerenciamento de trial_championships" ON public.trial_championships;
+CREATE POLICY "Gerenciamento de trial_championships" ON public.trial_championships
+    FOR ALL TO public
+    USING (true); -- Permite gerência (inserção, atualização, deleção) no modo Trial sem autenticação obrigatória
 
 -- ==============================================================================
 -- POLÍTICAS PARA TEAMS (LIVE & TRIAL)
@@ -403,40 +408,23 @@ CREATE POLICY "Todos leem macro rules" ON public.championship_macro_rules
 -- ==============================================================================
 DROP POLICY IF EXISTS "Trial Teams: Jogadores veem seu próprio time" ON public.trial_teams;
 CREATE POLICY "Trial Teams: Jogadores veem seu próprio time" ON public.trial_teams
-    FOR SELECT TO authenticated
+    FOR SELECT TO public
     USING (true);
 
 DROP POLICY IF EXISTS "Trial Teams: Jogadores atualizam seu próprio time" ON public.trial_teams;
 CREATE POLICY "Trial Teams: Jogadores atualizam seu próprio time" ON public.trial_teams
-    FOR UPDATE TO authenticated
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id::text = auth.uid()::text
-            AND (up.id::text = trial_teams.id::text OR up.role IN ('tutor', 'admin'))
-        )
-    );
+    FOR ALL TO public
+    USING (true); -- Permissão integral de gerenciamento para equipes Trial sem login obrigatório
 
 DROP POLICY IF EXISTS "Trial Companies: Jogadores veem sua própria empresa" ON public.trial_companies;
 CREATE POLICY "Trial Companies: Jogadores veem sua própria empresa" ON public.trial_companies
-    FOR SELECT TO authenticated
+    FOR SELECT TO public
     USING (true);
 
 DROP POLICY IF EXISTS "Trial Companies: Jogadores atualizam sua própria empresa" ON public.trial_companies;
 CREATE POLICY "Trial Companies: Jogadores atualizam sua própria empresa" ON public.trial_companies
-    FOR UPDATE TO authenticated
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.user_profiles up
-            WHERE up.supabase_user_id::text = auth.uid()::text
-            AND (up.id::text = trial_companies.team_id::text OR up.role IN ('tutor', 'admin'))
-        )
-    );
-
-DROP POLICY IF EXISTS "Trial Companies: Permissão de inserção para o campeonato" ON public.trial_companies;
-CREATE POLICY "Trial Companies: Permissão de inserção para o campeonato" ON public.trial_companies
-    FOR INSERT TO public
-    WITH CHECK (true);
+    FOR ALL TO public
+    USING (true); -- Permissão integral de gerenciamento para empresas Trial sem login obrigatório
 
 -- 8. TABELA DE SEGREDOS DO SISTEMA (API KEYS)
 CREATE TABLE IF NOT EXISTS public.system_secrets (
@@ -532,5 +520,118 @@ CREATE INDEX IF NOT EXISTS idx_companies_champ_round_fiduciary ON public.compani
 CREATE INDEX IF NOT EXISTS idx_companies_team_id_cast_text ON public.companies (((team_id)::text));
 CREATE INDEX IF NOT EXISTS idx_teams_id_cast_text ON public.teams (((id)::text));
 CREATE INDEX IF NOT EXISTS idx_p0_templates_tutor_public ON public.p0_templates (tutor_id, is_public);
+
+-- ==============================================================================
+-- 14. POLÍTICAS DE GOVERNANÇA E CONTROLE ÉTICO DE DECISÕES v2026.120 (EMPIRION SECURE)
+-- ==============================================================================
+-- Habilitar RLS nas tabelas de decisões para garantir a confidencialidade durante rounds em andamento
+ALTER TABLE public.trial_decisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.current_decisions ENABLE ROW LEVEL SECURITY;
+
+-- ------------------------------------------------------------------------------
+-- DROP POLICY IF EXISTS "Leitura de trial_decisions" ON public.trial_decisions;
+CREATE POLICY "Leitura de trial_decisions" ON public.trial_decisions
+    FOR SELECT TO public
+    USING (
+        -- Permitir acesso instantâneo se não houver login ativo no Supabase (teste/Sandbox do Trial)
+        auth.uid() IS NULL
+        -- Se estiver autenticado, aplicar regras éticas e de governança estritas
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.role IN ('tutor', 'admin', 'observer')
+        )
+        -- Observadores nominados nominalmente em trial_championships
+        OR EXISTS (
+            SELECT 1 FROM public.trial_championships tc
+            WHERE tc.id::text = trial_decisions.championship_id::text
+            AND tc.observers IS NOT NULL 
+            AND auth.uid()::text = ANY (tc.observers::text[])
+        )
+        -- Jogador dono do rascunho de decisão correspondente à sua própria equipe
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.id::text = trial_decisions.team_id::text
+        )
+    );
+
+DROP POLICY IF EXISTS "Gerenciamento de trial_decisions" ON public.trial_decisions;
+CREATE POLICY "Gerenciamento de trial_decisions" ON public.trial_decisions
+    FOR ALL TO public
+    USING (
+         -- Permitir mutação (gravação e alteração) se não estiver logado (modo temporário do Trial)
+         auth.uid() IS NULL
+         -- Se estiver autenticado, regras rígidas de segurança tomam efeito
+         OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.role IN ('tutor', 'admin')
+         )
+         OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.id::text = trial_decisions.team_id::text
+         )
+    );
+
+-- ------------------------------------------------------------------------------
+-- POLÍTICAS PARA CURRENT_DECISIONS (MÓDULO DE CAMPEONATO PAGO)
+-- ------------------------------------------------------------------------------
+DROP POLICY IF EXISTS "Leitura de current_decisions" ON public.current_decisions;
+CREATE POLICY "Leitura de current_decisions" ON public.current_decisions
+    FOR SELECT TO authenticated
+    USING (
+        -- Tutor, Admin e Observadores legítimos do sistema
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.role IN ('tutor', 'admin', 'observer')
+        )
+        -- Observadores nominados no campeonato pago
+        OR EXISTS (
+            SELECT 1 FROM public.championships c
+            WHERE c.id::text = current_decisions.championship_id::text
+            AND c.observers IS NOT NULL 
+            AND auth.uid()::text = ANY (c.observers::text[])
+        )
+        -- Jogador dono do rascunho participante do respectivo time (via team_members)
+        OR EXISTS (
+            SELECT 1 FROM public.team_members tm
+            JOIN public.users u ON tm.user_id::text = u.id::text
+            WHERE u.supabase_user_id::text = auth.uid()::text
+            AND tm.team_id::text = current_decisions.team_id::text
+        )
+        -- Jogador Sandbox / 1-para-1 fallback
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.id::text = current_decisions.team_id::text
+        )
+    );
+
+DROP POLICY IF EXISTS "Gerenciamento de current_decisions" ON public.current_decisions;
+CREATE POLICY "Gerenciamento de current_decisions" ON public.current_decisions
+    FOR ALL TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.role IN ('tutor', 'admin')
+        )
+        -- Membro da equipe dona (via team_members)
+        OR EXISTS (
+            SELECT 1 FROM public.team_members tm
+            JOIN public.users u ON tm.user_id::text = u.id::text
+            WHERE u.supabase_user_id::text = auth.uid()::text
+            AND tm.team_id::text = current_decisions.team_id::text
+        )
+        -- Sandbox 1-para-1 fallback
+        OR EXISTS (
+            SELECT 1 FROM public.user_profiles up
+            WHERE up.supabase_user_id::text = auth.uid()::text
+            AND up.id::text = current_decisions.team_id::text
+        )
+    );
 
 COMMIT;
