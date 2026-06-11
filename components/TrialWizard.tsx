@@ -2310,7 +2310,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                       </span>
                                    </div>
                                    <div className="flex justify-between border-t border-white/5 pt-2 text-rose-400">
-                                      <span>(-) PECLD Provisão Devedores:</span>
+                                      <span>(-) PECLD (iNADIMPLÊNCIA):</span>
                                       <span className="font-bold font-mono">
                                          -{formatCurrency(tutorConfig.starting_mode === 'start_from_zero' ? 0 : (tutorConfig.custom_pecld_val ?? 4500), tutorConfig.currency)}
                                       </span>
@@ -2348,7 +2348,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                               </div>
                               <div className="p-4 bg-orange-600/10 border border-orange-500/20 rounded-2xl text-[11px] text-slate-300 flex items-center gap-3 font-sans font-medium text-left">
                                  <Info size={16} className="text-orange-500 flex-shrink-0"/>
-                                 <span>A PECLD (Provisão para Perdas em Créditos de Liquidação Duvidosa) mitiga inadimplências do comércio regional histórico, retendo {((tutorConfig.custom_pecld_val ?? 4500) / ((tutorConfig.clients_initial ?? 300000) || 1) * 100).toFixed(1)}% do contas a receber bruto.</span>
+                                 <span>A PECLD (Perdas Estimadas com Créditos de Liquidação Duvidosa) mitiga inadimplências do comércio regional histórico, retendo {((tutorConfig.custom_pecld_val ?? 4500) / ((tutorConfig.clients_initial ?? 300000) || 1) * 100).toFixed(1)}% do contas a receber bruto.</span>
                               </div>
                            </motion.div>
                         )}

@@ -71,7 +71,7 @@ const ChampionshipTimer: React.FC<ChampionshipTimerProps> = ({
 
   useEffect(() => {
     if (isTournamentFinished) {
-      setTimeLeft('TOURN END');
+      setTimeLeft('TOURNEND');
       setIsCritical(false);
       setIsUrgent(false);
       onStatusChange?.(true);

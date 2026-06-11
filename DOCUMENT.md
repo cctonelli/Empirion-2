@@ -594,7 +594,7 @@ As equipes gerenciam sua planta fabril através de três modelos padrão de maqu
   - *A VISTA:* 100% liquidação em caixa no round da venda.
   - *AV + 50%: * 50% em caixa operacional, 50% provisionado no contas a receber (prazo médio PMP 15 dias).
   - *AV + 33% + 33%:* 33.3% liquidação à vista, restante distribuído em recebimentos a prazo futuros (PMP 30 dias).
-- **Provisão para Devedores Duvidosos (PECLD):** O percentual de inadimplência estimado incide **única e exclusivamente sob a parcela de vendas a prazo** (Credit Sales), sem onerar a receita recebida à vista.
+- **Perdas Estimadas com Créditos de Liquidação Duvidosa (PECLD):** O percentual de inadimplência estimado incide **única e exclusivamente sob a parcela de vendas a prazo** (Credit Sales), sem onerar a receita recebida à vista.
 - **Custos de Distribuição:** Encargo logístico unitário calculado por unidade efetivamente comercializada na respectiva região.
 - **Campanhas de Marketing Regionais Customizáveis:** O Arena Tutor pode modular e customizar o custo inicial base por rodada de cada campanha promocional e publicitária por região comercializada (`marketing_cost`), saindo do padrão global de $10.000 para uma configuração territorializada e tática mais realista.
 
