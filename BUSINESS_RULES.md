@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.120
+- **Versão Ativa de Regras:** v2026.121
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **11/06/2026** | `v2026.121` | *PMP & Equipe* | **Aprimoramento do Rateio Regional FRAE v2.** Reformulação do mini-DRE do *MarketingStep* integrando custos diretos regionais (marketing de praça e logística/frete) para obtenção do *Lucro de Contribuição Regional*, seguido do rateio das despesas holding consolidando 100% com a matriz. Isso faz com que cada região tenha margens líquidas e lucratividades diferentes com base na eficiência das decisões comerciais. |
 | **11/06/2026** | `v2026.120` | *PMP & Equipe* | **Sintetização da DRE Regional & Motor FRAE.** Simplificação do mini-DRE do *MarketingStep* com as 6 grandes linhas vitais de lucratividade e integração do método CPC 22 / IFRS 8 via *Motor de Rateio Regional Fiduciário* (FRAE) para reconciliação integral com o lucro consolidado e despesas comuns (folhas MOD/Adm/Vendas, P&D, PECLD, financeiro e tributário). |
 | **11/06/2026** | `v2026.119` | *PMP & Equipe* | **Governança de Privacidade de Rascunhos.** Implementação de Row-Level Security (RLS) restrito nas tabelas de decisões para vedar leitura de rascunhos entre equipes em rounds ativos. |
 | **10/06/2026** | `v2026.118` | *PMP & Equipe* | **Cálculo de DRE e Lucratividade Regional.** Adicionada a seção de custeio proporcional direto para medição de margem de contribuição e lucratividade líquida de vendas segregadas geograficamente. |
@@ -83,17 +84,17 @@ Com base nos parâmetros da rodada atual e os pesos definidos pelo Tutor:
 
 ---
 
-## 3. 🗺️ DRE por Geolocalização & Lucratividade Líquida Regional (Método FRAE - CPC 22 / IFRS 8)
+## 3. 🗺️ DRE por Geolocalização & Lucratividade Líquida Regional (Método FRAE v2 - CPC 22 / IFRS 8)
 
-Com o objetivo de dotar as equipes com alta capacidade analítica de inteligência de negócios, o Cockpit simula e apresenta uma Demonstração de Resultado do Exercício (DRE) setorial simplificada baseada na geolocalização dos volumes físicos faturados. 
+Com o objetivo de dotar as equipes com alta capacidade analítica de inteligência de negócios, o Cockpit simula e apresenta uma Demonstração de Resultado do Exercício (DRE) regionalizada e conciliada baseada na geolocalização dos volumes físicos faturados e nas contas corporativas unificadas.
 
-### Modelo Analítico de Margem Geográfica Simplificada
+### Modelo Analítico de Margem Geográfica (FRAE v2)
 
-Para cada região $R$, as linhas contábeis são estruturadas em tempo de cockpit de forma compacta e com foco nos indicadores vitais exigidos:
+Para cada região $R$, as linhas contábeis são estruturadas em tempo de cockpit de forma a diferenciar despesas locais diretas das despesas gerais da holding:
 
 1. **Receita Bruta Regional ($R_B$):**
    $$R_B = Q \times P_{\text{regional}}$$
-   *(Unidades Físicas alocadas à equipe na região pelo motor de simulação $\times$ Preço estipulado na decisão).*
+   *(Unidades Físicas vendidas na região $\times$ Preço estipulado na decisão).*
 2. **Receita Líquida Regional ($R_L$):**
    $$R_L = R_B - T_{\text{IVA\_regional}}$$
    *(Receita Bruta deduzida do imposto IVA faturado na própria praça).*
@@ -102,13 +103,26 @@ Para cada região $R$, as linhas contábeis são estruturadas em tempo de cockpi
    *(Custo de produção amortizado por absorção sobre as unidades entregues).*
 4. **Lucro Bruto Regional:**
    $$\text{Lucro Bruto} = R_L - CPV_{\text{alocado}}$$
-5. **(=) Lucro Líquido Regional ($LL_{\text{regional}}$):**
-   Calculado de forma 100% conciliada com a Matriz Financeira através do **Motor de Rateio Regional Fiduciário (FRAE)**. Em vez de simplesmente deduzir custos operacionais locais parciais, o motor faz a apropriação integral de todas as contas corporativas indiretas da empresa (como Folha de Pagamento ADM/Vendas, Inadimplência PECLD, P&D, resultado financeiro de juros/aplicações, resultado não operacional e tributos IRPJ/PPR) proporcionalmente à participação de Receita Líquida da região sobre o faturamento total da empresa:
-   $$LL_{\text{regional}} = LL_{\text{consolidadoMatriz}} \times \left( \frac{R_{L\_regional}}{R_{L\_consolidadoMatriz}} \right)$$
-6. **Margem Líquida Regional (\%):**
+5. **(-) Despesas Diretas Regionais de Operação:**
+   - **Marketing Local ($Mkt_{\text{regional}}$):**
+     $$Mkt_{\text{regional}} = \text{Campanhas locais} \times \text{Custo Unitário Ajustado pelo Turno}$$
+   - **Logística e Frete ($Log_{\text{regional}}$):**
+     $$Log_{\text{regional}} = Q \times \text{Custo de Transporte Unitário Ajustado da Região}$$
+6. **(=) Lucro de Contribuição Regional ($LC_{\text{regional}}$):**
+   $$LC_{\text{regional}} = \text{Lucro Bruto} - Mkt_{\text{regional}} - Log_{\text{regional}}$$
+   *Este indicador revela a real eficiência física e comercial de precificação, marketing e penetração de cada praça, variando livremente de acordo com as campanhas e logística locais.*
+7. **(-) Despesas Holding Rateadas ($DCR_{\text{regional}}$):**
+   As despesas corporativas que não são associáveis diretamente às praças (como Folha Corporativa ADM/Vendas, PECLD, P&D, Resultado Financeiro, Resultado Não Operacional e Tributos Consolidados sobre a Renda) são rateadas fiduciariamente com base na representatividade de faturamento líquido de cada região:
+   $$DCR_{\text{regional}} = \text{Despesas Indiretas Holding} \times \left( \frac{R_{L\_regional}}{R_{L\_consolidado}} \right)$$
+   Onde:
+   $$\text{Despesas Indiretas Holding} = \sum_{r} LC_{r} - LL_{\text{consolidadoMatriz}}$$
+8. **(=) Lucro Líquido Regional ($LL_{\text{regional}}$):**
+   $$LL_{\text{regional}} = LC_{\text{regional}} - DCR_{\text{regional}}$$
+   *Garante conciliação exata de $100\%$ entre a soma das regiões e a demonstração financeira consolidada na Matriz Holding.*
+9. **Margem Líquida Regional (\%):**
    $$\text{Margem Líquida Regional \%} = \frac{LL_{\text{regional}}}{R_L} \times 100$$
 
-> 📈 **Importância de Negócio:** Através desse rateio estruturado em conformidade com o pronunciamento de relatórios segmentados (**CPC 22 / IFRS 8**), as marcas visualizam a contribuição real líquida que cada praça traz para o caixa do grupo empresarial, incluindo o peso de despesas administrativas e decisões centralizadas de treinamento ou financiamento.
+> 📈 **Importância de Negócio:** Através desse rateio fiduciário estruturado em conformidade com o pronunciamento de relatórios segmentados (**CPC 22 / IFRS 8**), as marcas visualizam com exatidão a contribuição real líquida que cada praça traz para o grupo, sabendo se o volume de publicidade ou os fretes distantes de uma região específica estão de fato gerando fluxo de caixa líquido sadio de forma totalmente transparente e livre de ilusões de média consolidada.
 
 ---
 

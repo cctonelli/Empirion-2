@@ -646,7 +646,15 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                         const cpvAllocated = soldQty * unitCPV;
                         const grossProfitReg = netRev - cpvAllocated;
 
-                        // Motor de Rateio Regional Fiduciário (FRAE) para reconciliamento integral com a Matriz
+                        // Custos operacionais específicos da região na rodada fechada (realizado)
+                        const histAdjustedDistCost = getAdjustedPrice(distCost, 'distribution_cost_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+                        const histAdjustedMktCost = getAdjustedPrice(mktCost, 'marketing_campaign_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+                        
+                        const mktAllocated = (Number(histReg.marketing) || 0) * histAdjustedMktCost;
+                        const distAllocated = soldQty * histAdjustedDistCost;
+                        const contributionProfitReg = grossProfitReg - mktAllocated - distAllocated;
+
+                        // Motor de Rateio Regional Fiduciário (FRAE v2) para reconciliamento integral com a Matriz
                         const dre = activeTeamHist?.kpis?.statements?.dre;
                         const findDREValue = (nodes: any[] | null | undefined, targetId: string): number => {
                           if (!nodes || !Array.isArray(nodes)) return 0;
@@ -660,54 +668,108 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                           return 0;
                         };
 
-                        const companyGross = Math.max(0, findDREValue(dre, 'rev'));
-                        const companyVat = Math.abs(findDREValue(dre, 'vat_sales'));
-                        const companyNetRev = companyGross - companyVat;
                         const companyNetProfit = findDREValue(dre, 'final_profit');
 
+                        // Para o rateio fiduciário das despesas corporativas não-alocáveis (irpj/csll, folha adm, inadimplência, juros, etc).
+                        // Calculamos em tempo de execução a soma das margens de contribuição de todas as regiões operadas.
+                        const allRegions = activeArena?.config?.regions || activeArena?.config?.region_configs || [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+                        
+                        let totalCompanyNetRev = 0;
+                        let totalCompanyContributionProfit = 0;
+
+                        allRegions.forEach((r: any) => {
+                          const rId = Number(r.id);
+                          const rStats = calculateRegionStats(rId, true);
+                          const rReg = activeTeamHist?.state?.regions?.[rId] || activeTeamHist?.state?.regions?.[String(rId)] || {};
+                          
+                          const rSoldQty = rStats.activeTeamUnitsSold;
+                          const rPrice = Number(rReg.price) || 0;
+                          const rGrossRev = rSoldQty * rPrice;
+                          const rTaxes = rGrossRev * (vatSalesRate / 100);
+                          const rNetRev = rGrossRev - rTaxes;
+                          const rCpvAllocated = rSoldQty * unitCPV;
+                          
+                          const rRegionConf = activeArena?.config?.regions?.find((x: any) => x.id === rId) || activeArena?.config?.region_configs?.find((x: any) => x.id === rId);
+                          const rDistCost = rRegionConf?.distribution_cost !== undefined ? Number(rRegionConf.distribution_cost) : (activeArena?.market_indicators?.prices?.distribution_unit || 50);
+                          const rMktCost = rRegionConf?.marketing_cost !== undefined ? Number(rRegionConf.marketing_cost) : (activeArena?.market_indicators?.prices?.marketing_campaign || 10000);
+                          
+                          const rAdjustedDistCost = getAdjustedPrice(rDistCost, 'distribution_cost_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+                          const rAdjustedMktCost = getAdjustedPrice(rMktCost, 'marketing_campaign_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+                          
+                          const rMktAllocated = (Number(rReg.marketing) || 0) * rAdjustedMktCost;
+                          const rDistAllocated = rSoldQty * rAdjustedDistCost;
+                          
+                          const rGrossProfit = rNetRev - rCpvAllocated;
+                          const rContributionProfit = rGrossProfit - rMktAllocated - rDistAllocated;
+
+                          totalCompanyNetRev += rNetRev;
+                          totalCompanyContributionProfit += rContributionProfit;
+                        });
+
+                        // Despesas corporativas indiretas da holding (Soma contribuições regionais - Lucro líquido real)
+                        const indirectCorporateExpenses = totalCompanyContributionProfit - companyNetProfit;
+
                         let netProfitRegion = 0;
-                        if (companyNetRev > 0) {
-                          const regionalShare = netRev / companyNetRev;
-                          netProfitRegion = companyNetProfit * regionalShare;
+                        let regionalCorporateShare = 0;
+                        if (totalCompanyNetRev > 0) {
+                          regionalCorporateShare = indirectCorporateExpenses * (netRev / totalCompanyNetRev);
+                          netProfitRegion = contributionProfitReg - regionalCorporateShare;
                         } else {
-                          const totalRegionsCount = activeArena?.config?.regions?.length || activeArena?.config?.region_configs?.length || Object.keys(activeTeamHist?.state?.regions || {}).length || 4;
+                          const totalRegionsCount = allRegions.length;
                           netProfitRegion = totalRegionsCount > 0 ? (companyNetProfit / totalRegionsCount) : 0;
+                          regionalCorporateShare = totalRegionsCount > 0 ? (indirectCorporateExpenses / totalRegionsCount) : 0;
                         }
 
                         const profitMarginRegion = netRev > 0 ? (netProfitRegion / netRev) * 100 : 0;
                         
                         return (
-                          <div className="space-y-2 font-mono">
-                            <div className="flex justify-between items-center text-slate-500 py-1 border-b border-white/5">
+                          <div className="space-y-1.5 font-mono">
+                            <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
                               <span className="text-[10px] uppercase font-sans">Receita Bruta:</span>
                               <span className="text-slate-300 font-bold">{currency} {grossRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between items-center text-slate-500 py-1 border-b border-white/5">
+                            <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
                               <span className="text-[10px] uppercase font-sans">Receita Líquida:</span>
                               <span className="text-slate-300 font-bold">{currency} {netRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between items-center text-slate-500 py-1 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">CPV Alocado:</span>
+                            <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
+                              <span className="text-[10px] uppercase font-sans">CPV Alocado (WAC):</span>
                               <span className="text-red-400/85 font-semibold">-{currency} {cpvAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between items-center text-slate-400 py-1 border-b border-white/5 pb-1 font-bold">
-                              <span className="text-[10px] uppercase font-sans">Lucro Bruto:</span>
-                              <span className="text-amber-400 font-bold">{currency} {grossProfitReg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
+                              <span className="text-[10px] uppercase font-sans">Lucro Bruto Reg.:</span>
+                              <span className="text-amber-500 font-bold">{currency} {grossProfitReg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
+                              <span className="text-[10px] uppercase font-sans">(-) Marketing Local:</span>
+                              <span className="text-red-400/80">-{currency} {mktAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
+                              <span className="text-[10px] uppercase font-sans">(-) Logística/Frete Local:</span>
+                              <span className="text-red-400/80">-{currency} {distAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-slate-400 py-1 border-b border-white/5 font-extrabold bg-white/[0.02] px-1.5 rounded-lg">
+                              <span className="text-[10px] uppercase font-sans text-orange-400">Lucro de Contribuição:</span>
+                              <span className="text-orange-400">{currency} {contributionProfitReg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
+                              <span className="text-[10px] uppercase font-sans">(-) Despesas Holding (Rateio):</span>
+                              <span className="text-red-400/70">-{currency} {regionalCorporateShare.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             
-                            <div className={`flex justify-between items-center mt-2 pt-2 border-t border-dashed border-white/10 text-[10px] font-bold ${netProfitRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                              <span className="flex items-center gap-1 uppercase tracking-wider text-slate-450 text-[9px] font-sans">
+                            <div className={`flex justify-between items-center mt-2.5 pt-1.5 border-t border-dashed border-white/10 text-[10px] font-bold ${netProfitRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              <span className="flex items-center gap-1 uppercase tracking-wider text-slate-400 text-[9px] font-sans">
                                 {netProfitRegion >= 0 ? <TrendingUp size={11} className="text-emerald-400" /> : <TrendingDown size={11} className="text-red-400" />}
                                 Lucro Líq. Reg:
                               </span>
                               <span className="font-extrabold">{currency} {netProfitRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className={`flex justify-between items-center text-[10px] font-bold ${profitMarginRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                              <span className="uppercase tracking-wider text-slate-450 text-[9px] font-sans">Margem Líq. Reg:</span>
+                              <span className="uppercase tracking-wider text-slate-400 text-[9px] font-sans">Margem Líq. Reg:</span>
                               <span className="font-extrabold">{profitMarginRegion.toFixed(1)}%</span>
                             </div>
-                            <p className="text-[8px] text-slate-500 font-sans mt-3 text-center leading-normal uppercase">
-                              (*) Rateio Fiduciário Integral (CPC 22 / IFRS 8): inclui despesas operacionais (Folha, P&D, PECLD), resultado financeiro/não op. e impostos consolidando 100% com a Matriz Financeira.
+                            <p className="text-[8.5px] text-slate-500 font-sans mt-3 text-center leading-relaxed uppercase">
+                              (*) Rateio Fiduciário Integral (CPC 22 / IFRS 8): inclui dedução precisa de custos industriais e comerciais locais, além de apropriação proporcional de despesas comuns indiretas da Matriz (Folha Geral, P&D, PECLD, Financeiro, IR).
                             </p>
                           </div>
                         );
