@@ -3,7 +3,7 @@ import { Megaphone, Info, HelpCircle, RefreshCw, Globe, ChevronDown, ChevronUp, 
 import { WizardStepHeader, CurrencyInput } from './shared';
 import { DecisionData, Championship, Team } from '../../types';
 import { supabase } from '../../services/supabase';
-import { getAdjustedPrice } from '../../services/simulation';
+import { getAdjustedPrice, calculateProjections } from '../../services/simulation';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../../constants';
 
 interface MarketingStepProps {
@@ -34,16 +34,61 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     }));
   };
 
+  // Cálculo do Projeções em tempo real da equipe ativa com base nas decisões correntes
+  const projection = React.useMemo(() => {
+    if (!activeArena || !activeTeam) return null;
+    try {
+      return calculateProjections(
+        decisions,
+        activeArena.branch,
+        activeArena.config as any,
+        activeArena.market_indicators || (activeArena as any).indicators || {} as any,
+        activeTeam,
+        competitorsLog || [],
+        activeArena.current_round,
+        activeArena.round_rules
+      );
+    } catch (err) {
+      console.error("Error calculating active team projections: ", err);
+      return null;
+    }
+  }, [decisions, activeArena, activeTeam, competitorsLog]);
+
   const getActiveTeamUnitCPV = () => {
+    // 1. Prioriza custo de produção direto da projeção em tempo real ativa
+    if (projection?.kpis?.cpv_details?.custoUnitarioProducao) {
+      return projection.kpis.cpv_details.custoUnitarioProducao;
+    }
+    if (projection?.kpis?.kardex?.pa?.saldoFinalUnitario) {
+      return projection.kpis.kardex.pa.saldoFinalUnitario;
+    }
+    if (projection?.kpis?.kardex?.pa?.saidasUnitario) {
+      return projection.kpis.kardex.pa.saidasUnitario;
+    }
+
+    // 2. Fallback no histórico imediato (kpis do activeTeam)
+    if (activeTeam?.kpis?.cpv_details?.custoUnitarioProducao) {
+      return activeTeam.kpis.cpv_details.custoUnitarioProducao;
+    }
+    if (activeTeam?.kpis?.kardex?.pa?.saldoFinalUnitario) {
+      return activeTeam.kpis.kardex.pa.saldoFinalUnitario;
+    }
+    if (activeTeam?.kpis?.kardex?.pa?.saidasUnitario) {
+      return activeTeam.kpis.kardex.pa.saidasUnitario;
+    }
+
+    // 3. Fallback clássico a partir de declarações no DRE histórico
     const dre = activeTeam?.kpis?.statements?.dre;
     if (dre && Array.isArray(dre)) {
       const cpvItem = dre.find((item: any) => item.id === 'cpv');
       if (cpvItem) {
         const value = Math.abs(Number(cpvItem.value) || 0);
-        const qty = Number(cpvItem.quantity) || Number(activeTeam?.kpis?.finished_goods_produced) || 0;
+        const qty = Number(activeTeam?.kpis?.finished_goods_produced) || 0;
         if (qty > 0) return value / qty;
       }
     }
+
+    // 4. Parâmetros nominais de reajuste inicial
     const mpaPrice = activeArena?.market_indicators?.prices?.mp_a || 20;
     const mpbPrice = activeArena?.market_indicators?.prices?.mp_b || 40;
     const baseMPCost = (3 * mpaPrice) + (2 * mpbPrice);
@@ -84,7 +129,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     const machines = kpis.machines || [];
     const shifts = c.state?.production?.shifts || 1;
     let capMult = 1.0;
-    if (shifts === 2) capMult = 1.7;
+    if (shifts === 2) capMult = 1.8; // Match real backend multiplier 1.8
     else if (shifts === 3) capMult = 2.3;
 
     const specs = activeArena?.market_indicators?.machine_specs || {
@@ -104,7 +149,38 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     return totalCap;
   };
 
-  const calculateRegionStats = (regionId: number) => {
+  const getHistoricalActiveTeamUnitCPV = (activeTeamRecord: any) => {
+    if (!activeTeamRecord) return 0;
+    
+    // 1. Prioriza custo da empresa histórica
+    if (activeTeamRecord.kpis?.cpv_details?.custoUnitarioProducao) {
+      return activeTeamRecord.kpis.cpv_details.custoUnitarioProducao;
+    }
+    if (activeTeamRecord.kpis?.kardex?.pa?.saidasUnitario) {
+      return activeTeamRecord.kpis.kardex.pa.saidasUnitario;
+    }
+    if (activeTeamRecord.kpis?.kardex?.pa?.saldoFinalUnitario) {
+      return activeTeamRecord.kpis.kardex.pa.saldoFinalUnitario;
+    }
+    
+    // 2. Fallback DRE histórico
+    const dre = activeTeamRecord.kpis?.statements?.dre;
+    if (dre && Array.isArray(dre)) {
+      const cpvItem = dre.find((item: any) => item.id === 'cpv');
+      if (cpvItem) {
+        const value = Math.abs(Number(cpvItem.value) || 0);
+        const qty = Number(activeTeamRecord.kpis?.finished_goods_produced) || 0;
+        if (qty > 0) return value / qty;
+      }
+    }
+    
+    // 3. Parâmetros nominais clássicos se nada houver
+    const mpaPrice = activeArena?.market_indicators?.prices?.mp_a || 20;
+    const mpbPrice = activeArena?.market_indicators?.prices?.mp_b || 40;
+    return (3 * mpaPrice) + (2 * mpbPrice) + 40; // custo base mp + mod/cif
+  };
+
+  const calculateRegionStats = (regionId: number, useHistoricalOnly = false) => {
     const storedTeamId = activeTeam?.id || localStorage.getItem('active_team_id');
     const rows = competitorsLog.length > 0 ? competitorsLog : (activeArena?.teams || []).map(t => ({
       team_id: t.id,
@@ -116,7 +192,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     const prevPrices = rows
       .map(c => {
         const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
-        const stateToUse = isCurrentActiveTeam ? decisions : (c.state || {});
+        const stateToUse = (isCurrentActiveTeam && !useHistoricalOnly) ? decisions : (c.state || {});
         const regDec = stateToUse?.regions?.[regionId] || stateToUse?.regions?.[String(regionId)];
         return regDec ? Number(regDec.price) : null;
       })
@@ -147,13 +223,22 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
     rows.forEach((c: any) => {
       const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
-      const stateToUse = isCurrentActiveTeam ? decisions : (c.state || {});
+      const stateToUse = (isCurrentActiveTeam && !useHistoricalOnly) ? decisions : (c.state || {});
       
       const capacity = getTeamCapacity({ team_id: c.team_id, state: stateToUse, kpis: c.kpis });
       teamCapacities[String(c.team_id)] = capacity;
 
-      const unitsProduced = Number(c.kpis?.statements?.dre?.find((item: any) => item.id === 'dre.cpv')?.quantity) || Number(c.kpis?.finished_goods_produced) || (capacity * 0.8);
-      const prevStockQty = Number(c.kpis?.statements?.balance_sheet?.find((item: any) => item.id === 'assets.current.stock.pa')?.quantity) || Number(c.kpis?.stock_quantities?.finished_goods) || 0;
+      // Unidades disponíveis para venda com sincronização fiduciária reativa em tempo real
+      let unitsProduced = 0;
+      let prevStockQty = 0;
+
+      if (isCurrentActiveTeam && !useHistoricalOnly) {
+        unitsProduced = projection?.kpis?.finished_goods_produced ?? 0;
+        prevStockQty = Number(activeTeam?.kpis?.stock_quantities?.finished_goods) || 0;
+      } else {
+        unitsProduced = Number(c.kpis?.finished_goods_produced) || (capacity * 0.8);
+        prevStockQty = Number(c.kpis?.stock_quantities?.finished_goods) || 0;
+      }
       teamStockPA[String(c.team_id)] = prevStockQty + unitsProduced;
     });
 
@@ -175,7 +260,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     const teamRegionScores: Record<string, Record<string, number>> = {};
     rows.forEach((c: any) => {
       const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
-      const stateToUse = isCurrentActiveTeam ? decisions : (c.state || {});
+      const stateToUse = (isCurrentActiveTeam && !useHistoricalOnly) ? decisions : (c.state || {});
       const tIdStr = String(c.team_id);
       teamRegionScores[tIdStr] = {};
 
@@ -391,7 +476,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
           const adjustedDistCost = getAdjustedPrice(distCost, 'distribution_cost_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
           const adjustedMktCost = getAdjustedPrice(mktCost, 'marketing_campaign_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
           const totalMktCost = reg.marketing * adjustedMktCost;
-          const stats = calculateRegionStats(regId);
+          
+          // Estatísticas históricas (apuradas) da rodada fechada
+          const stats = calculateRegionStats(regId, true);
 
           return (
             <div
@@ -409,7 +496,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                 <div className="space-y-4">
                   {/* Preço */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Preço Unitário</label>
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Preço Unitário (Rodada {round})</label>
                     <CurrencyInput
                       value={reg.price}
                       onChange={v => updateDecision(`regions.${id}.price`, v)}
@@ -419,7 +506,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
                   {/* Prazo */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Prazo de Recebimento</label>
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Prazo de Recebimento (Rodada {round})</label>
                     <select
                       disabled={isReadOnly}
                       value={reg.term}
@@ -434,7 +521,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
                   {/* Marketing */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Marketing (0–9)</label>
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Marketing (0–9) (Rodada {round})</label>
                     <input
                       type="number"
                       min="0"
@@ -451,46 +538,55 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                 </div>
               </div>
 
-              {/* Informações fidedignas de parâmetros estipulados pelo Tutor */}
+              {/* Informações fidedignas do Período Anterior Fechado */}
               <div className="mt-5 pt-3 border-t border-white/5 space-y-1.5 font-sans">
+                <div className="flex justify-between items-center pb-1">
+                  <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider font-sans flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/15">
+                    ● Realizado Rodada {activeArena?.current_round}
+                  </span>
+                  <span className="text-[8px] font-mono text-slate-500">APURADO</span>
+                </div>
+                
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Preço Médio ($):</span>
+                  <span>Preço Médio Regional:</span>
                   <span className="text-amber-400 font-bold">{currency} {stats.avgPriceRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Size Regional (un):</span>
+                  <span>Market Size Regional:</span>
                   <span className="text-slate-300 font-semibold">{stats.totalRegionDemand.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Share Regional (un):</span>
-                  <span className="text-slate-300 font-semibold">{stats.activeTeamUnitsSold.toLocaleString('pt-BR')} un</span>
+                  <span>Seu Volume Vendido:</span>
+                  <span className="text-slate-300 font-bold">{stats.activeTeamUnitsSold.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Vendas Totais na região (qtde):</span>
+                  <span>Vendas Globais Região:</span>
                   <span className="text-purple-400 font-semibold">{stats.totalRegionUnitsSold.toLocaleString('pt-BR')} un</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Peso Demanda Total (%):</span>
-                  <span className="text-slate-300 font-semibold">{stats.weight}%</span>
-                </div>
-                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Venda Relativa (%):</span>
+                  <span>Sua Participação Região:</span>
                   <span className="text-emerald-400 font-bold">{stats.relativeSalesShare.toFixed(1)}%</span>
                 </div>
-                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Custo Logística (un):</span>
-                  <span className="text-slate-400 font-semibold">{currency} {adjustedDistCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
-                </div>
-                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Custo Campanha (un):</span>
-                  <span className="text-slate-400 font-semibold">{currency} {adjustedMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between mt-1 pt-1 border-t border-white/5 text-[10px] text-slate-400 uppercase tracking-wide font-mono leading-none">
-                  <span>Total Campanhas ($):</span>
-                  <span className="text-orange-400 font-black">{currency} {totalMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                
+                <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
+                  <div className="flex justify-between text-[9px] text-slate-500 uppercase tracking-wider font-mono">
+                    <span>Parâmetros Esperados Rodada {round}:</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                    <span>Custo Logística Un:</span>
+                    <span className="text-slate-400 font-semibold">{currency} {adjustedDistCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                    <span>Custo Campanha Mkt:</span>
+                    <span className="text-slate-400 font-semibold">{currency} {adjustedMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                    <span>Total Mkt Projetado:</span>
+                    <span className="text-orange-400 font-black">{currency} {totalMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
                 </div>
 
-                {/* Accordion de Lucratividade Regional */}
+                {/* Accordion de Lucratividade Regional Realizada */}
                 <div className="mt-4 pt-3 border-t border-white/10">
                   <button
                     type="button"
@@ -499,7 +595,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   >
                     <span className="flex items-center gap-1.5">
                       <DollarSign size={13} className="text-emerald-400" />
-                      DRE &amp; Lucratividade
+                      DRE Histórico Realizado
                     </span>
                     {expandedRegionProfitability[id] ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   </button>
@@ -507,20 +603,41 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   {expandedRegionProfitability[id] && (
                     <div className="mt-3 space-y-2 bg-slate-950/50 p-3 rounded-2xl border border-white/5 text-[10px] font-mono leading-relaxed">
                       {(() => {
-                        const unitCPV = getActiveTeamUnitCPV();
-                        const soldQty = stats.activeTeamUnitsSold;
-                        const regionPrice = Number(reg.price) || 0;
+                        const activeTeamHist = competitorsLog.find(c => String(c.team_id) === String(activeTeam?.id));
+                        
+                        if (!activeArena || activeArena.current_round === 0) {
+                          return (
+                            <div className="text-center py-4 text-slate-500 font-sans text-xs leading-normal">
+                              <p className="font-bold text-amber-500">START FROM ZERO</p>
+                              <p className="text-[10px] mt-1 text-slate-600">Sem faturamento apurado na rodada de início (Rodada 0).</p>
+                            </div>
+                          );
+                        }
+
+                        // Use 100% historical statistics and decisions from closed round
+                        const histStats = calculateRegionStats(regId, true);
+                        const histReg = activeTeamHist?.state?.regions?.[id] || activeTeamHist?.state?.regions?.[String(id)] || {};
+                        
+                        const unitCPV = getHistoricalActiveTeamUnitCPV(activeTeamHist);
+                        const soldQty = histStats.activeTeamUnitsSold;
+                        const regionPrice = Number(histReg.price) || 0;
                         const grossRev = soldQty * regionPrice;
                         
-                        const vatSalesRate = activeArena?.market_indicators?.vat_sales_rate !== undefined 
-                          ? Number(activeArena.market_indicators.vat_sales_rate) 
-                          : (activeArena?.config?.vat_sales_rate !== undefined ? Number(activeArena.config.vat_sales_rate) : 0);
+                        const vatSalesRate = activeTeamHist?.kpis?.vat_sales_rate !== undefined 
+                          ? Number(activeTeamHist.kpis.vat_sales_rate) 
+                          : (activeArena?.market_indicators?.vat_sales_rate !== undefined ? Number(activeArena.market_indicators.vat_sales_rate) : 0);
+                        
                         const taxes = grossRev * (vatSalesRate / 100);
                         const netRev = grossRev - taxes;
                         
                         const cpvAllocated = soldQty * unitCPV;
-                        const mktAllocated = totalMktCost;
-                        const distAllocated = soldQty * adjustedDistCost;
+                        
+                        // Busca custos parametrizados do round fechado
+                        const histAdjustedDistCost = getAdjustedPrice(distCost, 'distribution_cost_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+                        const histAdjustedMktCost = getAdjustedPrice(mktCost, 'marketing_campaign_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+                        
+                        const mktAllocated = (Number(histReg.marketing) || 0) * histAdjustedMktCost;
+                        const distAllocated = soldQty * histAdjustedDistCost;
                         
                         const netProfitRegion = netRev - cpvAllocated - mktAllocated - distAllocated;
                         const profitMarginRegion = netRev > 0 ? (netProfitRegion / netRev) * 100 : 0;
@@ -540,22 +657,34 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                               <span className="text-slate-200">{currency} {netRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between text-slate-500">
-                              <span>(-) CPV Alocado (WAC):</span>
+                              <span>(-) CPV Alocado:</span>
                               <span className="text-red-400/70">-{currency} {cpvAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between text-slate-500">
-                              <span>(-) Mkt Local:</span>
+                              <span>(-) Marketing Local:</span>
                               <span className="text-red-400/70">-{currency} {mktAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between text-slate-500 border-b border-white/5 pb-1 font-sans">
-                              <span>(-) Logística:</span>
+                              <span>(-) Distribuição / Logística:</span>
                               <span className="text-red-400/70">-{currency} {distAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between items-center text-slate-400 text-[9px] pt-1 font-sans">
-                              <span>Custo Unit. CPV (WAC):</span>
-                              <span className="text-slate-300">{currency} {unitCPV.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
+                            
+                            <div className="mt-1 pt-1 space-y-0.5 text-slate-500 text-[9px] font-sans">
+                              <div className="flex justify-between">
+                                <span>Custo WAC Histórico:</span>
+                                <span>{currency} {unitCPV.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Frete Histórico:</span>
+                                <span>{currency} {histAdjustedDistCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Preço de Venda Histórico:</span>
+                                <span>{currency} {regionPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
+                              </div>
                             </div>
-                            <div className={`flex justify-between items-center mt-1 pt-2 border-t border-dashed border-white/10 text-[10px] font-bold ${netProfitRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            
+                            <div className={`flex justify-between items-center mt-2 pt-2 border-t border-dashed border-white/10 text-[10px] font-bold ${netProfitRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                               <span className="flex items-center gap-1 uppercase tracking-wider text-slate-400 text-[9px]">
                                 {netProfitRegion >= 0 ? <TrendingUp size={11} className="text-emerald-400" /> : <TrendingDown size={11} className="text-red-400" />}
                                 Lucro Líq. Reg:
@@ -565,6 +694,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             <div className={`flex justify-between items-center text-[10px] font-bold ${profitMarginRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                               <span className="uppercase tracking-wider text-slate-400 text-[9px]">Margem Líq. Reg:</span>
                               <span>{profitMarginRegion.toFixed(1)}%</span>
+                            </div>
+                            <div className="text-center text-[8px] text-slate-500 font-sans mt-2 pt-1 border-t border-white/5 uppercase">
+                              Valores reais conciliados com a Matriz Financeira
                             </div>
                           </>
                         );
