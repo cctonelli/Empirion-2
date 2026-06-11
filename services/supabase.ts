@@ -490,11 +490,93 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const teamResults: any[] = [];
         const marketDecisions: Record<string, any> = {};
 
-        // 1. Coletar todas as decisões e gerar para bots
+        // 1. Coletar todas as decisões e gerar para bots ou carregar carry-forward sanitizado para humanos ausentes (timeout de timer)
         for (const team of (teams || [])) {
             const { data: dec } = await supabase.from(decisionsTable).select('*').eq('team_id', team.id).eq('round', nextRound).maybeSingle();
             let finalDecision = dec?.data;
             
+            if (!team.is_bot && !finalDecision) {
+              // Time humano não enviou decisão (por timeout de timer ou inação do round)
+              // Recuperamos a decisão do round anterior (se houver) e sanitizamos
+              let baseDecisions: any = null;
+              if (round >= 1) {
+                const { data: prevDec } = await supabase
+                  .from(decisionsTable)
+                  .select('*')
+                  .eq('team_id', team.id)
+                  .eq('round', round)
+                  .maybeSingle();
+                if (prevDec?.data) {
+                  baseDecisions = JSON.parse(JSON.stringify(prevDec.data));
+                  
+                  // Sanitizar Maquinário (CAPEX): Zera compras e vendas pontuais, e esvazia ids marcados para venda
+                  baseDecisions.machinery = {
+                    buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
+                    sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
+                    sell_ids: []
+                  };
+                  
+                  // Sanitizar Recursos Humanos: Zera novas contratações e demissões espontâneas
+                  if (baseDecisions.hr) {
+                    baseDecisions.hr.hired = 0;
+                    baseDecisions.hr.fired = 0;
+                  }
+                  
+                  // Sanitizar Finanças: Zera solicitações de empréstimos táticos / aplicações
+                  if (baseDecisions.finance) {
+                    baseDecisions.finance.loanRequest = 0;
+                    baseDecisions.finance.loanTerm = 0;
+                    baseDecisions.finance.application = 0;
+                  }
+                  
+                  // Sanitizar Estimativas do Oráculo
+                  if (baseDecisions.estimates) {
+                    baseDecisions.estimates.forecasted_unit_cost = 0;
+                    baseDecisions.estimates.forecasted_revenue = 0;
+                    baseDecisions.estimates.forecasted_net_profit = 0;
+                  }
+                }
+              }
+
+              // Se não existir nenhuma decisão anterior (ou se for o round inicial), criamos a estrutura padrão
+              if (!baseDecisions) {
+                const initialRegions: any = {};
+                const regionsCount = champ.regions_count || 1;
+                const regionConfigsList = champ.region_configs || champ.config?.regions || champ.config?.region_configs || [];
+                
+                for (let i = 1; i <= regionsCount; i++) {
+                  const regionConf = regionConfigsList.find((r: any) => r.id === i);
+                  const defaultSugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : 425;
+                  initialRegions[i] = { price: defaultSugPrice, term: 0, marketing: 0 };
+                }
+
+                baseDecisions = {
+                  judicial_recovery: false,
+                  regions: initialRegions,
+                  hr: { hired: 0, fired: 0, salary: 2500, trainingPercent: 0, participationPercent: 0, productivityBonusPercent: 0, misc: 0 },
+                  production: { purchaseMPA: 0, purchaseMPB: 0, paymentType: 0, activityLevel: 100, extraProductionPercent: 0, rd_investment: 0, term_interest_rate: 0.00 },
+                  machinery: { buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 }, sell_ids: [] },
+                  finance: { loanRequest: 0, loanTerm: 0, application: 0 },
+                  estimates: { forecasted_unit_cost: 0, forecasted_revenue: 0, forecasted_net_profit: 0 }
+                };
+              }
+
+              finalDecision = baseDecisions;
+
+              // Salva a decisão simulada por timeout no banco de dados para auditoria posterior das equipes e fidedignidade contábil
+              const { error: insertDecErr } = await supabase.from(decisionsTable).insert({
+                team_id: team.id,
+                championship_id: id,
+                round: nextRound,
+                data: finalDecision
+              });
+
+              if (insertDecErr) {
+                console.error(`Erro ao inserir decisão de carry-forward fiduciário para ${team.name}:`, insertDecErr);
+                throw new Error(`[ERRO BANCO DE DADOS] Falha ao registrar decisão automática (carry-forward) para ${team.name} em ${decisionsTable}: ${insertDecErr.message}`);
+              }
+            }
+
             if (team.is_bot && !finalDecision) {
               // Buscar KPIs atuais do BOT para decisão contextualizada
               const { data: lastHistory } = await supabase

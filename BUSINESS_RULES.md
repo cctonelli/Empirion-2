@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.122
+- **Versão Ativa de Regras:** v2026.123
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **11/06/2026** | `v2026.123` | *PMP & Equipe* | **Governança de Decisão por Timeout (Carry-Forward Automático).** Implementação do motor de recuperação e tratamento automático síncrono para equipes que não enviarem a decisão tempestivamente em virtude de estouro do timer de contagem regressiva. O motor de turnover clona a decisão do round anterior, expurga gastos não recorrentes/específicos (como Capex de maquinário e contratações do RH/empréstimos) e injeta como rascunho oficial ativo de simulação do round para manter a consistência contábil e de concorrência. |
 | **11/06/2026** | `v2026.122` | *PMP & Equipe* | **Precificação Nominal Multi-moeda Regional.** Esclarecimento e documentação da regra de preenchimento de preços em praças de exportação/mercado externo. Fica estabelecido que o preço deve ser inserido sempre na moeda nominal de circulação configurada para a própria região (ex: USD), sem conversão prévia manual por parte da equipe, uma vez que o motor calcula os índices competitivos comparando com preços sugeridos expressos na mesma moeda e converge a receita total. |
 | **11/06/2026** | `v2026.121` | *PMP & Equipe* | **Aprimoramento do Rateio Regional FRAE v2.** Reformulação do mini-DRE do *MarketingStep* integrando custos diretos regionais (marketing de praça e logística/frete) para obtenção do *Lucro de Contribuição Regional*, seguido do rateio das despesas holding consolidando 100% com a matriz. |
 | **11/06/2026** | `v2026.120` | *PMP & Equipe* | **Sintetização da DRE Regional & Motor FRAE.** Simplificação do mini-DRE do *MarketingStep* com as 6 grandes linhas vitais de lucratividade e integração do método CPC 22 / IFRS 8 via *Motor de Rateio Regional Fiduciário* (FRAE) para reconciliação integral com o lucro consolidado e despesas comuns (folhas MOD/Adm/Vendas, P&D, PECLD, financeiro e tributário). |
@@ -144,10 +145,28 @@ Por questões éticas, segurança informacional e diretivas de Governança Estra
 
 ---
 
-## 5. 🎯 Próximos Passos e Verificação de Sincronia
+## 5. ⏱️ Governança de Decisão por Timeout (Carry-Forward Automático)
+
+Para resguardar os resultados contábeis, a concorrência leal de mercado e a fluidez do torneio acadêmico, o motor de turnover (`processRoundTurnover`) foi aperfeiçoado com um mecanismo resiliente de **Fiduciary Carry-Forward** caso alguma equipe humana atinja o timeout do cronômetro síncrono ou negligencie o envio final do formulário.
+
+### Protocolo Operacional de Salvação por Inação:
+1. **Intercepção de Ausência:** No início da rodada de simulação de turnover, caso a tabela (`trial_decisions` ou `current_decisions`) não possua nenhum registro submetido para a respectiva equipe no round sendo encerrado (`nextRound`), o motor inicia o protocolo automático.
+2. **Clonagem e Higienização de Decisão:**
+   - **Clonagem:** O motor busca na tabela de decisões o registro do round de origem anterior (`nextRound - 1`).
+   - **Sanitização de CAPEX:** Zera todas as compras/vendas incidentais ou programadas de equipamentos/maquinário (parques de Alfa, Beta e Gama).
+   - **Sanitização de RH:** Zera novos pedidos de contratação e demissões espontâneas (retornando a $0$ contratações/demissões líquidas).
+   - **Sanitização de Finanças:** Anula pedidos novos de empréstimos e aportes em aplicações financeiras corporativas.
+   - **Sanitização de Prospecções:** Limpa as estimativas (forecasts) do oráculo para compelir recalibragem posterior no cockpit.
+   - **Manutenção Comercial e de Operações:** Mantém os preços praticados por região (na moeda local nominal), níveis de publicidade da rodada anterior, e taxas de prazos concedidos que ditaram a saúde financeira do caixa.
+3. **Persistência de Registro Oficial:** Se a equipe não possuir nenhuma decisão anterior (ex: ausente no Round 1), uma matriz padrão com preços unitários de mercado recomendados nas moedas das regiões é sintetizada. Em ambos os casos, a decisão hipotética higienizada é **persistida no banco de dados**, disponibilizando o registro de auditoria para que os discentes compreendam detalhadamente quais métricas subsidiaram o resultado do novo round.
+
+---
+
+## 6. 🎯 Próximos Passos e Verificação de Sincronia
 
 - [x] Unificação dos cálculos de estatísticas do Cockpit (`MarketingStep.tsx`) para usar o modelo demográfico dinâmico unindo com o peso estipulado pelo Tutor.
 - [x] Unificação dos rótulos visuais para fins de usabilidade corporativa e facilidade de estudo dos alunos concorrentes.
 - [x] Construção e deploy do painel interativo de DRE e Lucratividade Regional expandido por card de decisão para uso síncrono das marcas.
 - [x] Blindagem e implementação de Row-Level Security (RLS) nas tabelas `trial_decisions` e `current_decisions` para impedir vazamento concorrencial de rascunhos.
+- [x] Implementação integral do protocolo de Fiduciary Carry-Forward para salvação de decisões por estouro de timer (Timeout) síncrono.
 - [ ] Monitoramento constante de novas decisões de compra no Turno 2 pelas equipes para avaliar o impacto imediato na calibragem dos novos equipamentos instalados.
