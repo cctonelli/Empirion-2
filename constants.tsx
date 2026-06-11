@@ -17,7 +17,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
             { id: 'assets.current.investments', label: 'Aplicação Financeira', value: 0.00, type: 'asset', isEditable: true },
             { id: 'assets.current.clients_group', label: 'CONTAS A RECEBER', value: 2073663.54, type: 'totalizer', children: [
                 { id: 'assets.current.clients', label: 'Clientes', value: 2092193.00, type: 'asset', isEditable: true },
-                { id: 'assets.current.pecld', label: '(-) PECLD Inadimplência Clientes', value: -18529.46, type: 'asset', isEditable: true },
+                { id: 'assets.current.pecld', label: '(-) PECLD (Inadimplência)', value: -18529.46, type: 'asset', isEditable: true },
                 { id: 'assets.current.vat_recoverable', label: 'IVA a recuperar', value: 0.00, type: 'asset', isEditable: true }
             ]},
             { id: 'assets.current.stock', label: 'ESTOQUE', value: 1407000.00, type: 'totalizer', children: [
@@ -79,7 +79,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
     { id: 'opex', label: '(-) DESPESAS OPERACIONAIS', value: -1149623.86, type: 'totalizer', children: [
         { id: 'opex.sales', label: 'DE VENDAS', value: 873250.00, type: 'expense', isEditable: true },
         { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 216000.00, type: 'expense', isEditable: true },
-        { id: 'opex.bad_debt', label: 'INADIMPLÊNCIA S/ SALDO CLIENTES', value: 18529.46, type: 'expense', isEditable: true },
+        { id: 'opex.bad_debt', label: 'PECLD (INADIMPLÊNCIA)', value: 18529.46, type: 'expense', isEditable: true },
         { id: 'opex.rd', label: 'P&D-PESQ. E DESENV.', value: 41844.40, type: 'expense', isEditable: true }
     ]},
     { id: 'operating_profit', label: '(=) RESULTADO OPERACIONAL', value: 61985.27, type: 'totalizer', isReadOnly: true },
@@ -104,7 +104,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
     { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 0.00, type: 'revenue', isEditable: true },
     { id: 'cf.inflow', label: '(+) ENTRADAS', value: 4158696.90, type: 'totalizer', children: [
         { id: 'cf.inflow.cash_sales', label: 'VENDAS À VISTA', value: 2092193.00, type: 'revenue', isEditable: true },
-        { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO (-) PERDAS)', value: 694141.90, type: 'revenue', isEditable: true },
+        { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO (-) PECLD', value: 694141.90, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.investment_withdrawal', label: 'RESGATE DE APLICAÇÕES', value: 0.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.machine_sales', label: 'VENDA DE MÁQUINAS', value: 0.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.awards', label: 'PREMIAÇÕES RECEBIDAS', value: 0.00, type: 'revenue', isEditable: true },
