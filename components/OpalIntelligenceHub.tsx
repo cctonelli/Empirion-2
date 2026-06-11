@@ -266,7 +266,7 @@ const OpalIntelligenceHub: React.FC<OpalHubProps> = ({ isPremium, onUpgrade, con
         ],
         balance: [
           { label: 'Caixa e equivalentes', value: finalCash },
-          { label: 'Contas a Receber (Clientes)', value: clientsBalance },
+          { label: 'Contas a Receber', value: clientsBalance },
           { label: 'Estoque Matéria-Prima A', value: finalMpaValue },
           { label: 'Estoque Matéria-Prima B', value: finalMpbValue },
           { label: 'Estoque Produtos Acabados (PA)', value: finalPaValue },

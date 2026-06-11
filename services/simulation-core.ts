@@ -588,7 +588,7 @@ export const calculateKpisFromStatements = (params: {
     current_cash: finalCash,
     commitments: {
       receivables: [
-        { id: 'clients', label: 'Contas a Receber (Clientes)', value: findAccountValue(finalBS, 'assets.current.clients') },
+        { id: 'clients', label: 'Contas a Receber', value: findAccountValue(finalBS, 'assets.current.clients') },
         { id: 'investments', label: 'Aplicações Financeiras', value: findAccountValue(finalBS, 'assets.current.investments') },
         { id: 'vat_recoverable', label: 'IVA a Recuperar', value: findAccountValue(finalBS, 'assets.current.vat_recoverable') }
       ],

@@ -219,7 +219,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                 },
                 commitments: kpis.commitments || {
                   receivables: [
-                    { id: 'clients', label: 'Contas a Receber (Clientes)', value: 0 },
+                    { id: 'clients', label: 'Contas a Receber', value: 0 },
                     { id: 'investments', label: 'Aplicações Financeiras', value: 0 },
                     { id: 'vat_recoverable', label: 'IVA a Recuperar', value: 0 }
                   ],

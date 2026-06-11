@@ -310,7 +310,7 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
     percentual_divida_curto_prazo: passivoTotal > 0 ? ((passivoCirculante / passivoTotal) * 100) : 100,
     commitments: {
       receivables: [
-        { id: 'clients', label: 'Contas a Receber (Clientes)', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'assets.current.clients')?.value ?? 1407000.00) },
+        { id: 'clients', label: 'Contas a Receber', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'assets.current.clients')?.value ?? 1407000.00) },
         { id: 'investments', label: 'Aplicações Financeiras', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'assets.current.investments')?.value ?? 0) },
         { id: 'vat_recoverable', label: 'IVA a Recuperar', value: isZeroMode ? 0 : (findAccount(balanceSheet, 'assets.current.vat_recoverable')?.value ?? 0) }
       ],
