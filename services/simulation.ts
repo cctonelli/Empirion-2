@@ -1333,7 +1333,9 @@ export const calculateProjections = (
       motivation_factor: parseFloat(motivationFactor.toFixed(3)),
       fatigue_factor: parseFloat(fatigueFactor.toFixed(3)),
       demission_insecurity_factor: parseFloat(demissionInsecurityFactor.toFixed(3)),
-      machine_age_factor: parseFloat(machineAgeFactor.toFixed(3))
+      machine_age_factor: parseFloat(machineAgeFactor.toFixed(3)),
+      regional_units_sold: regionalUnitsSold,
+      regional_demands: regionalDemands
     }
   };
 

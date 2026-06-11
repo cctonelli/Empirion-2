@@ -25,13 +25,10 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 }) => {
   const [competitorsLog, setCompetitorsLog] = React.useState<any[]>([]);
   const [loadingIntel, setLoadingIntel] = React.useState(false);
-  const [expandedRegionProfitability, setExpandedRegionProfitability] = React.useState<Record<string, boolean>>({});
+  const [allRegionsExpanded, setAllRegionsExpanded] = React.useState(false);
 
-  const toggleRegionProfitability = (idStr: string) => {
-    setExpandedRegionProfitability(prev => ({
-      ...prev,
-      [idStr]: !prev[idStr]
-    }));
+  const toggleRegionProfitability = () => {
+    setAllRegionsExpanded(prev => !prev);
   };
 
   // Cálculo do Projeções em tempo real da equipe ativa com base nas decisões correntes
@@ -236,8 +233,16 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         unitsProduced = projection?.kpis?.finished_goods_produced ?? 0;
         prevStockQty = Number(activeTeam?.kpis?.stock_quantities?.finished_goods) || 0;
       } else {
-        unitsProduced = Number(c.kpis?.finished_goods_produced) || (capacity * 0.8);
-        prevStockQty = Number(c.kpis?.stock_quantities?.finished_goods) || 0;
+        if (useHistoricalOnly) {
+          // No histórico já finalizado e consolidado, o estoque de partida do ciclo é kpis.kardex.pa.saldoInicialQtd
+          prevStockQty = Number(c.kpis?.kardex?.pa?.saldoInicialQtd ?? 0);
+          unitsProduced = Number(c.kpis?.kardex?.pa?.entradasQtd ?? c.kpis?.finished_goods_produced ?? 0);
+        } else {
+          // Projeção futura para bots/concorrência na rodada de simulação atual
+          unitsProduced = Number(c.kpis?.finished_goods_produced) || (capacity * 0.8);
+          // O estoque de partida para o ciclo futuro é o estoque final do ciclo que acabou de fechar
+          prevStockQty = Number(c.kpis?.stock_quantities?.finished_goods) || 0;
+        }
       }
       teamStockPA[String(c.team_id)] = prevStockQty + unitsProduced;
     });
@@ -301,8 +306,14 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       const totalScoreReg = scoresWithTeams.reduce((sum, item) => sum + item.score, 0);
 
       scoresWithTeams.forEach(item => {
-        const shareReg = totalScoreReg > 0 ? (item.score / totalScoreReg) : (1 / rows.length);
-        const teamCapturedDemand = Math.floor(regDemand * shareReg);
+        const companyRecord = rows.find((co: any) => String(co.team_id) === String(item.teamId));
+        let teamCapturedDemand = 0;
+        if (useHistoricalOnly && companyRecord?.kpis?.regional_demands?.[rIdStr] !== undefined) {
+          teamCapturedDemand = Number(companyRecord.kpis.regional_demands[rIdStr]);
+        } else {
+          const shareReg = totalScoreReg > 0 ? (item.score / totalScoreReg) : (1 / rows.length);
+          teamCapturedDemand = Math.floor(regDemand * shareReg);
+        }
         competitiveDemandsPerTeamReg[item.teamId][rIdStr] = teamCapturedDemand;
       });
     });
@@ -327,7 +338,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         const regDemand = demands[rIdStr] || 0;
 
         let regUnitsSold = 0;
-        if (idx === regionConfigs.length - 1) {
+        if (useHistoricalOnly && c.kpis?.regional_units_sold?.[rIdStr] !== undefined) {
+          regUnitsSold = Number(c.kpis.regional_units_sold[rIdStr]);
+        } else if (idx === regionConfigs.length - 1) {
           regUnitsSold = Math.min(totalQtyForSale, Math.min(teamTotalDemand, totalQtyForSale) - runningUnitsSold);
         } else {
           regUnitsSold = Math.min(regDemand, Math.floor(regDemand * teamStockRatio));
@@ -590,17 +603,17 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                 <div className="mt-4 pt-3 border-t border-white/10">
                   <button
                     type="button"
-                    onClick={() => toggleRegionProfitability(id)}
+                    onClick={toggleRegionProfitability}
                     className="w-full flex justify-between items-center text-[10px] font-extrabold text-slate-400 hover:text-orange-400 uppercase tracking-wider transition-all focus:outline-none"
                   >
                     <span className="flex items-center gap-1.5">
                       <DollarSign size={13} className="text-emerald-400" />
                       DRE Histórico Realizado
                     </span>
-                    {expandedRegionProfitability[id] ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    {allRegionsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   </button>
 
-                  {expandedRegionProfitability[id] && (
+                  {allRegionsExpanded && (
                     <div className="mt-3 space-y-2 bg-slate-950/50 p-3 rounded-2xl border border-white/5 text-[10px] font-mono leading-relaxed">
                       {(() => {
                         const activeTeamHist = competitorsLog.find(c => String(c.team_id) === String(activeTeam?.id));

@@ -2,9 +2,24 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.118 Regional Direct Costing Ledger & DRE Analítico.
+- **Versão Ativa:** v2026.119 Sincronismo de Estoque Histórico & Conciliação de DRE regional.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Sincronismo de Estoque Histórico & Conciliação de DRE no MarketingStep - v2026.119
+
+**Data:** 11 de Junho de 2026 às 00:28 UTC  
+**Motivo:** Corrigir a inconsistência crítica onde a quantidade acumulada de "Seu Volume Vendido" e os lucros/margens líquidas por região na sub-DRE do `MarketingStep.tsx` (histórico do round anterior) apareciam inflados em relação à saída física real de Produto Acabado (PA) auditada no Kardex. Por exemplo, a Equipe 1 exibia 10.272 unidades vendidas em vez de 8.532 reais, devido a um descompasso fiduciário onde o saldo final do período anterior era somado indevidamente com a produção do ciclo, mimetizando uma dupla-contagem disponível para venda.
+
+**Detalhamento Técnico:**
+- **Readequação do Estoque de Partida Histórico (Kardex Alignment)**: Ajustou-se o extrator de estatísticas históricas passadas (`calculateRegionStats` com `useHistoricalOnly = true`) para colher de forma estrita o estoque fiduciário real de início da rodada (`c.kpis?.kardex?.pa?.saldoInicialQtd`) e a produção exata da rodada (`c.kpis?.kardex?.pa?.entradasQtd`). Isso elimina a dupla contagem que usava o estoque de fechamento (`stock_quantities.finished_goods`) somado à produção do ciclo.
+- **Integração das Chaves Geográficas nos Resultados do Banco (v19.7 Sapphire Gold)**: Adicionou-se persistência explícita das vendas por região reais (`regional_units_sold`) e demandas regionais computadas (`regional_demands`) dentro do payload de KPIs gerado na simulação central de turnovers (`calculateProjections` em `services/simulation.ts`).
+- **Resiliência de Backup e Fallback**: O processador visual do Cockpit do estudante prioriza o faturamento real e as demandas armazenadas diretamente no banco de dados (`c.kpis?.regional_units_sold` e `c.kpis?.regional_demands`) caso já existam (novos turnovers), e recai sobre a back-calculation corrigida alinhada ao estoque inicial fiduciário para campeonatos legados em andamento, blindando 100% o sistema contra distorções matemáticas.
+
+**Impactos:**
+- **Fidelidade Analítica e Confiança de Decisão**: As equipas de estudantes visualizam agora dados de lucros históricos regionais perfeitamente congruentes com os relatórios contábeis oficiais e Kardex de PA, prevenindo falsas interpretações de volume excedente de faturamento.
 
 ---
 
