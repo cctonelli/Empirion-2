@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.126 Expansão Multimoeda Dinâmica & Sincronização de Árvore Financeira Inicial com Variação Cambial.
+- **Versão Ativa:** v2026.127 Planejamento de Arquitetura de Internacionalização (i18n) & Sincronização de Árvore Financeira Inicial.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Planejamento e Design de Arquitetura de Internacionalização (i18n) - v2026.127
+
+**Data:** 11 de Junho de 2026 às 16:15 UTC  
+**Motivo:** Planejar a expansão pedagógica e metodológica do EMPIRION ORACLE para atender equipes e tutores de outras nacionalidades (foco em Inglês e Espanhol), estruturando um i18n leve, de alto desempenho, robusto e compatível com as regras contábeis internacionais (IFRS / IAS 21) sem impactar negativamente a experiência de desenvolvimento (DX).
+
+**Detalhamento Técnico de Planejamento:**
+- **Centralização de Dicionários Estáticos (`/src/locales/`)**: Delimitação preliminar das chaves estáticas de interface organizadas sob arquivos JSON dedicados por localidade (`pt.json`, `en.json`, `es.json`).
+- **Provedor Contextual de Internacionalização (`I18nProvider`)**: Design de um contexto React que gerencia o idioma ativo e disponibiliza a função utilitária do tradutor tipo-seguro `t(path)`.
+- **Estratégia de Banco de Dados Híbrido (`JSONB`)**: Persistência de dados cadastrais dinâmicos originados pelo Tutor (Gazetas de notícias, regras do cronograma, descrições regionalizadas) no Supabase de forma flexível através de colunas JSONB estruturadas, evitando redundância e duplicação de tabelas.
+- **Conformidade Contábil no Glossário (CPC 02 / IAS 21)**: Mapeamento de termos contábeis de partida entre a nomenclatura nacional clássica brasileira e seus sinônimos oficiais nos padrões americanos e latinos (DRE -> Income Statement -> Estado de Resultados, etc.) validados pelo Contador Sênior.
+
+**Impactos:**
+- **Plano Arquitetural Consolidado**: Registro de diretrizes multilíngues em `/docs/I18N_PLAN.md` que guiarão a futura implementação prática de tradução, permitindo ao Product Owner revisar os layouts, impactos de volume de palavras e migração de banco antes de comutar chaves físicas de código de simulação.
 
 ---
 
@@ -219,7 +235,7 @@
 **Motivo:** Resolver a opacidade nas tomadas de decisão salarial ("Piso Salarial Base") apontada pelas equipes, integrando indicadores fiduciários que previnem desalinhamentos competitivos e dão transparência sobre o impacto operacional de aumentos na folha de pagamento patronal antes da submissão da rodada.
 
 **Detalhamento Técnico das Regras de Negócio e Coleta Contábil:**
-- **Média Salarial Dinâmica do Setor (Último Período):** Integração ativa via SDK Supabase operada sob as tabelas de histórico (`companies` ou `trial_companies`). Em qualquer rodada superior a `R-00`, o sistema realiza um pré-fetch do estado de decisões do round anterior de todos os competidores da mesma arena (`championship_id`) para calcular a média salarial real praticada. Em `R-00` ou caso não haja transações comitadas anteriores, o sistema assume o balizador base fiduciário de partida (R$ 2.500,00).
+- **Média Salarial Dinâmica do Setor (Último Período):** Integração ativa via SDK Supabase operada sob as tabelas de histórico (`companies` ou `trial_companies`). Em qualquer rodada superior a `R-0`, o sistema realiza um pré-fetch do estado de decisões do round anterior de todos os competidores da mesma arena (`championship_id`) para calcular a média salarial real praticada. Em `R-0` ou caso não haja transações comitadas anteriores, o sistema assume o balizador base fiduciário de partida (R$ 2.500,00).
 - **Piso Inflacionado de Referência:** Expõe de forma transparente o salário-base original reajustado pela inflação acumulada do torneio (+`inflation_rate` do cronograma corrente, calculado de forma rigorosa via `getCumulativeAdjust`). Serve como régua oficial exigida pelo sindicato para estabilização de clima, acima do qual a motivação cresce e abaixo do qual os riscos de greve por insatisfação salarial escalam.
 - **Projeção de Desembolso da Folha Bruta (Tempo Real):** Implementação de microssimulador financeiro (em `useMemo`) que intercepta o piso salarial definido pela equipe e o multiplica fiduciariamente pelas contingências industriais:
   - **MOD (Mão de Obra Direta):** Número de operários requeridos pela frota ativa de máquinas (`alpha`: 94, `beta`: 235, `gamma`: 445 operadores) reescalonados pelo nível de atividade industrial programada (`activityLevel`) e multiplicador de turnos extras MOD (`shifts` 2: x1.5 / shift 3: x2.0).
@@ -241,7 +257,7 @@
 **Detalhamento Técnico das Regras de Negócio e Formulações:**  
 - **Retorno sobre o Patrimônio Líquido (ROE):** Calculado pelo triplo produto da matriz DuPont: `ROE = Margem Líquida x Giro do Ativo x Alavancagem Patrimonial`. Promove o desmembramento completo da eficiência de vendas, produtividade do ativo e estrutura de captação de terceiros em relação ao capital próprio dos acionistas (CPC 26).
 - **Ponto de Equilíbrio (BEP - Break-Even Point / PE):** Aferição exata baseada na margem de contribuição (`MC`). `Custos Fixos = Mão de Obra Direta (MOD) + Custos Indiretos de Fabricação (CIF) + Despesas Operacionais (OPEX)`. `Custos Variáveis = (Custo dos Produtos Vendidos - MOD - CIF) + Provisão de VAT sobre vendas`. `MC = Faturamento - Custos Variáveis`. `MC% = MC / Faturamento`. `BEP (Faturamento Mínimo) = Custos Fixos / MC%`.
-- **Taxa Interna de Retorno (TIR / IRR):** Computação dinâmica acumulada do retorno econômico das rodadas utilizando algoritmo numérico otimizado de Newton-Raphson com Bissecção estabilizada de barreira. Investimento inicial (`Fluxo 0` no Round 0) correspondente ao Patrimônio Líquido de abertura do balanço greenfield/running (R-00) ou fallback de capital e integralizações iniciais. Fluxos subsequentes (`Round 1` a `Round N`) alimentados pelo Fluxo de Caixa Operacional Livre (`fco_livre` ou EBITDA deduzido de Capex operacional, juros contratuais de empréstimos e provisões tributárias).
+- **Taxa Interna de Retorno (TIR / IRR):** Computação dinâmica acumulada do retorno econômico das rodadas utilizando algoritmo numérico otimizado de Newton-Raphson com Bissecção estabilizada de barreira. Investimento inicial (`Fluxo 0` no Round 0) correspondente ao Patrimônio Líquido de abertura do balanço greenfield/running (R-0) ou fallback de capital e integralizações iniciais. Fluxos subsequentes (`Round 1` a `Round N`) alimentados pelo Fluxo de Caixa Operacional Livre (`fco_livre` ou EBITDA deduzido de Capex operacional, juros contratuais de empréstimos e provisões tributárias).
 **Principais diferenças:**  
 - **Visualização de Matrizes (`components/FinancialReportMatrix.tsx`):** Adição de novos registros dinâmicos e interceptação estrita destas chaves com tratamento visual e formatação sob o design system de 2026: moeda com faturamento formatado no BEP e coeficientes flutuantes percentuais no ROE e TIR.
 - **Exportadores Analíticos (`analise-gerencial/spreadsheet-mappers.ts`):** Mapeamento e exportação consistente de dados das demonstrações em tabelas, alimentando as colunas nativas do Excel sem causar quebras ou distorções de escala de decimais, mantendo paridade visual absoluta entre o cockpit e as planilhas extraídas.
@@ -306,12 +322,12 @@
 
 ---
 
-## Decisão Arquitetural & Regra de Negócio - Isolamento do R-00 Greenfield & Gatilho de Demissões Consecutivas - v2026.104
+## Decisão Arquitetural & Regra de Negócio - Isolamento do R-0 Greenfield & Gatilho de Demissões Consecutivas - v2026.104
 
 **Data:** 08 de Junho de 2026 às 13:30 UTC  
-**Motivo:** Assegurar que Campeonatos iniciados em modo Greenfield "START FROM ZERO" não tenham disparos acidentais ou falsos positivos de greves operacionais baseados na rodada fiduciária R-00 (onde as decisões dos alunos de fato ainda não foram jogadas). Paralelamente, atende-se a uma demanda sênior do setor de Clima Organizacional para punir demissões em excesso que prejudicam gravemente a estabilidade laboral e instabilidade fabril por meio de um gatilho direto de greve para desligamentos recorrentes de operários (2 rodadas de demissões consecutivas base).  
+**Motivo:** Assegurar que Campeonatos iniciados em modo Greenfield "START FROM ZERO" não tenham disparos acidentais ou falsos positivos de greves operacionais baseados na rodada fiduciária R-0 (onde as decisões dos alunos de fato ainda não foram jogadas). Paralelamente, atende-se a uma demanda sênior do setor de Clima Organizacional para punir demissões em excesso que prejudicam gravemente a estabilidade laboral e instabilidade fabril por meio de um gatilho direto de greve para desligamentos recorrentes de operários (2 rodadas de demissões consecutivas base).  
 **Principais diferenças:**  
-- **Desconsideração Contábil de R-00 para Greves:** No motor principal (`simulation.ts`) e no pré-calculador analítico (`simulation-core.ts`), caso o Campeonato seja jogado com o modo `start_from_zero` ativo, se estivermos simulando o período 1 (`currentRound <= 1`), a contagem histórica de rounds ruins em motivação (`consecutive_ruim_rounds`) e de rounds com desligamentos operacionais (`consecutive_fired_rounds`) é forçada a `0`, bloqueando qualquer ativação indevida e garantindo a devida isonomia para frotas industriais na rodada inaugural de jogo.
+- **Desconsideração Contábil de R-0 para Greves:** No motor principal (`simulation.ts`) e no pré-calculador analítico (`simulation-core.ts`), caso o Campeonato seja jogado com o modo `start_from_zero` ativo, se estivermos simulando o período 1 (`currentRound <= 1`), a contagem histórica de rounds ruins em motivação (`consecutive_ruim_rounds`) e de rounds com desligamentos operacionais (`consecutive_fired_rounds`) é forçada a `0`, bloqueando qualquer ativação indevida e garantindo a devida isonomia para frotas industriais na rodada inaugural de jogo.
 - **Regulamento Trabalhista de Dupla Contingência:** Implementação do KPI `consecutive_fired_rounds` e salvamento nos KPIs da equipe. O sindicato dos operários decreta paralisação total de 50% (`strike_active = true`) se a liderança da empresa executar de forma continuada demissões na linha fabril de produção (`fired > 0`) em duas rodadas consecutivas.
 - **Microcopy de Instrução Atualizado:** Atualizada a legenda em `HRStep.tsx` da tomada de decisões das equipes indicando que tanto o clima "RUIM" ($\le 0.75$) por dois rounds seguidos quanto demissões em dois períodos contínuos decretam greve na fábrica automática.
 - **Alertas Claros e Dinâmicos:** O motor do Simulador gera mensagens de erro e alertas de acordo com o fator iniciador específico (motivacional, desligamentos sucessivos ou ambos acumulados) para que a equipe saiba exatamente o que deve corrigir.

@@ -427,7 +427,7 @@ export const HRStep: React.FC<HRStepProps> = ({
               )}
             </div>
             <span className="text-[10px] text-zinc-500 uppercase font-bold block mt-1">
-              * R-00 é inicial e fixo para todos.
+              * R-0 é inicial e fixo para todos.
             </span>
           </div>
 

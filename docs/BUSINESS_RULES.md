@@ -378,9 +378,9 @@ O sistema de simulação do Empirion incorpora uma lógica estrita de comportame
    - **Gatilho de Demissões Operacionais Consecutivas:** Caso a gestão realize demissões de operários da produção (`fired > 0`) em **2 rounds consecutivos**, o sindicato decreta greve imediata (`strike_active = true`) devido à acentuada instabilidade organizacional e clima severo de insegurança no trabalho.
      - *Rodada 1 com demissões:* Dispara um **Alerta de Insegurança**.
      - *Rodada 2 consecutiva com demissões:* Ativa a **Greve na Fábrica** (`strike_active = true`).
-   - **Tratamento Fiduciário do Modo "START FROM ZERO" (Regra de Exclusão R-00):** 
-     - No modo *Start from Zero*, o round inicial R-00 (Período de Abertura) é um round administrativo estruturante de setup e **não conta como rodada jogada**. 
-     - Portanto, as contagens consecutivas tanto de motivação RUIM quanto de demissões são **reiniciadas em 0** quando se simula o Round 1 fiduciário. Não há sob qualquer hipótese ativação de greve imediata no Round 1 derivada de eventos simulados em R-00.
+   - **Tratamento Fiduciário do Modo "START FROM ZERO" (Regra de Exclusão R-0):** 
+     - No modo *Start from Zero*, o round inicial R-0 (Período de Abertura) é um round administrativo estruturante de setup e **não conta como rodada jogada**. 
+     - Portanto, as contagens consecutivas tanto de motivação RUIM quanto de demissões são **reiniciadas em 0** quando se simula o Round 1 fiduciário. Não há sob qualquer hipótese ativação de greve imediata no Round 1 derivada de eventos simulados em R-0.
 
 3. **Impacto Econômico e Operacional da Greve Ativa:**
    - **Paralisação de 50%:** Incide um fator de corte de **50% sobre toda a força produtiva** (`strikeFactor = 0.50`), afetando diretamente a equação de unidades fabricadas na rodada:
@@ -397,7 +397,7 @@ O sistema de simulação do Empirion incorpora uma lógica estrita de comportame
 **Histórico de Versões**
 
 - **v19.84** (09/06/2026) – Alinhamento dinâmico contábil da folha de pagamento e encargos MOD com base na equipe real disponível (contratadas e desligadas do período) no kernel simulador, core preditivo e projeções em tempo real do HUD (HRStep.tsx).
-- **v19.83** (08/06/2026) – Correção de isolamento fiduciário do R-00 Greenfield no "START FROM ZERO" e ativação de dupla contingência sindical por demissões operacionais consecutivas (2 rodadas de demissões consecutivas) regulamentada em BUSINESS_RULES.md e DOCUMENT.md.
+- **v19.83** (08/06/2026) – Correção de isolamento fiduciário do R-0 Greenfield no "START FROM ZERO" e ativação de dupla contingência sindical por demissões operacionais consecutivas (2 rodadas de demissões consecutivas) regulamentada em BUSINESS_RULES.md e DOCUMENT.md.
 - **v19.82** (06/06/2026) – Documentação das regras de ativação de greves para operários baseadas no Índice de Motivação consecutivos (< 0.75 por 2 rounds) e o respectivo impacto operacional de 50% de redução na fabricação.
 - **v19.25** (28/05/2026) – Introdução de travas fiduciárias reativas com validador de rateio (soma = 100% mandatória), breakdown analítico expandido de aluguel por CIF x OPEX no drawer de preview e documentação oficial completa de locação em BUSINESS_RULES.md.
 - **v19.12** (25/05/2026) – Harmonização completa do Fluxo de Caixa pelo Comitê Contábil (v19.12), introdução da Redoma de Caixa (resgate preventivo de aplicações financeiras para preservação de rating de crédito) e ativação rigorosa de Treinamento e Estocagem no CIF contábil (Absorção).

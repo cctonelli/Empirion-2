@@ -261,7 +261,7 @@ const mapRecursiveReport = (
     ...periods.map((p) => {
       const pad = p.round < 10 ? '0' : '';
       if (p.isProjection) return `PROJEÇÃO R-${pad}${p.round}`;
-      return p.round === 0 ? 'R-00 (INICIAL)' : `R-${pad}${p.round}`;
+      return p.round === 0 ? 'R-0 (INICIAL)' : `R-${pad}${p.round}`;
     })
   ];
   

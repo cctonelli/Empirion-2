@@ -570,8 +570,8 @@ export const calculateProjections = (
   let adjustedPrevConsecutiveRuim = prevConsecutiveRuim;
   let adjustedPrevConsecutiveFires = prevConsecutiveFires;
 
-  // No modo "START FROM ZERO", o round R-00 (Inicial) não é considerado como round jogado para fins de greve.
-  // Logo, se estivermos simulando o round 1 (onde o round logo anterior era o R-00), as contagens consecutivas prévias devem ser desconsideradas.
+  // No modo "START FROM ZERO", o round R-0 (Inicial) não é considerado como round jogado para fins de greve.
+  // Logo, se estivermos simulando o round 1 (onde o round logo anterior era o R-0), as contagens consecutivas prévias devem ser desconsideradas.
   const isGreenfieldZero = (ecosystem as any).starting_mode === 'start_from_zero' || (ecosystem as any).config?.starting_mode === 'start_from_zero';
   if (isGreenfieldZero && currentRound <= 1) {
     adjustedPrevConsecutiveRuim = 0;
