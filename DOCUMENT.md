@@ -2,9 +2,28 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.127 Planejamento de Arquitetura de Internacionalização (i18n) & Sincronização de Árvore Financeira Inicial.
+- **Versão Ativa:** v2026.128 Planejamento de Ativação Multi-Setorial (Agronegócios, Cooperativas, Varejo, Mercado Financeiro e Construção Civil) & Tipos Extensíveis.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Planejamento de Ativação Multi-Setorial & Extensão de Tipos - v2026.128
+
+**Data:** 11 de Junho de 2026 às 16:45 UTC  
+**Motivo:** Garantir a prontidão absoluta e o desacoplamento arquitetural do EMPIRION ORACLE para receber múltiplos novos setores da economia global (reivindicados por tutores e organizadores de arenas do torneio), tais como Agronegócio, Cooperativismo, Varejo, Mercado Financeiro e Construção Civil, preservando a imutabilidade matemática e as regras contábeis transversais unificadas de partidas dobradas (IFRS/CPC).
+
+**Detalhamento Técnico de Planejamento:**
+- **Padrão de Strategy Polimórfico (`ISectorSimulationEngine`)**: Formulação do contrato de interface que extrai a física de cálculo e validações de cada Bounded Context (Setor) num namespace independente, liberando o orquestrador de turnover (`simulation-engine`) de acoplamentos táticos ou condicionais acachapantes.
+- **Expansão de Tipo Segura (`/types/sector.ts`)**: Introdução oficial das estruturas e interfaces com tipagem forte para cobrir:
+  - **Cooperativismo:** Atos Cooperativos, Sobras/Perdas redistribuídas e provisionamento para o Fundo de Assistência Técnica (FATES).
+  - **Comércio & Varejo:** Rastreamento de linhas de produto, CMV, taxas financeiras de adquirentes e incidentes de ruptura de estoque.
+  - **Construção Civil / Real Estate:** Controle de projetos ativos na planta, andamento físico-financeiro e apropriação de receitas/custos sob o método do POC (Percentage of Completion - CPC 47).
+- **Consistência Contábil Intacta**: Todas as transações específicas do domínio físico de cada setor são reduzidas a contrapartidas de débitos e créditos lançados no Razão via partidas duplas, reaproveitando sem restrições a biblioteca de balanço e auditorias triplas fiduciárias (`validateTripleConsistency`).
+
+**Impactos:**
+- **Altíssima DX e Concorrência de Times**: Engenheiros e analistas agem em concorrência produtiva (Sprint Slices), criando novos módulos setoriais sem intercorrências ou risco de quebras no simulador fabril principal (`v13.2+`).
+- **Plano de Ativação Operacional**: Documento tático unificado inserido em `/docs/MULTI_SECTOR_PLAN.md`.
 
 ---
 
