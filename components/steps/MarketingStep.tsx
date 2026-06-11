@@ -586,12 +586,12 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                     <span>Parâmetros Esperados Rodada {round}:</span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                    <span>Custo Logística Un:</span>
-                    <span className="text-slate-400 font-semibold">{currency} {adjustedDistCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un</span>
+                    <span>Custo Logística:</span>
+                    <span className="text-slate-400 font-semibold">{currency} {adjustedDistCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/un</span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                    <span>Custo Campanha Mkt:</span>
-                    <span className="text-slate-400 font-semibold">{currency} {adjustedMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>Custo Camp. Mkt:</span>
+                    <span className="text-slate-400 font-semibold">{currency} {adjustedMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/un</span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                     <span>Total Mkt Projetado:</span>
@@ -782,23 +782,23 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                               <span className="text-red-400/85 font-semibold">-{currency} {cpvAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">Lucro Bruto Reg.:</span>
+                              <span className="text-[10px] uppercase font-sans">Lucro Bruto:</span>
                               <span className="text-amber-500 font-bold">{currency} {grossProfitReg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">(-) Marketing Local:</span>
+                              <span className="text-[10px] uppercase font-sans">(-) Marketing:</span>
                               <span className="text-red-400/80">-{currency} {mktAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">(-) Logística/Frete Local:</span>
+                              <span className="text-[10px] uppercase font-sans">(-) Logística:</span>
                               <span className="text-red-400/80">-{currency} {distAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-slate-400 py-1 border-b border-white/5 font-extrabold bg-white/[0.02] px-1.5 rounded-lg">
-                              <span className="text-[10px] uppercase font-sans text-orange-400">Lucro de Contribuição:</span>
+                              <span className="text-[10px] uppercase font-sans text-orange-400">Margem Contribuição:</span>
                               <span className="text-orange-400">{currency} {contributionProfitReg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">(-) Despesas Operacionais:</span>
+                              <span className="text-[10px] uppercase font-sans">(-) Desp. Operacionais:</span>
                               <span className="text-red-400/70">-{currency} {regionalCorporateShare.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             
@@ -810,7 +810,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                               <span className="font-extrabold">{currency} {netProfitRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className={`flex justify-between items-center text-[10px] font-bold ${profitMarginRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                              <span className="uppercase tracking-wider text-slate-400 text-[9px] font-sans">Margem Líq. Reg:</span>
+                              <span className="uppercase tracking-wider text-slate-400 text-[9px] font-sans">Margem Líquida:</span>
                               <span className="font-extrabold">{profitMarginRegion.toFixed(1)}%</span>
                             </div>
                             <p className="text-[8.5px] text-slate-500 font-sans mt-3 text-center leading-relaxed uppercase">

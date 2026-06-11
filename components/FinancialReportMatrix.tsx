@@ -496,11 +496,11 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({ type, history, projectio
       { key: 'cpv.manutencaoFabril', label: 'Manutenção de Máquinas', desc: 'Atividades corretivas de manutenção produtiva', formatter: (v: number) => formatCurrency(v || 0, currency) },
       { key: 'cpv.indenizacoesRescisorias', label: 'Indenizações Rescisórias', desc: 'Custos trabalhistas rescisórios no round', formatter: (v: number) => formatCurrency(v || 0, currency) },
       { key: 'cpv.pprProporcional', label: 'Provisão de PPR Proporcional', desc: 'Rateio do prêmio por resultados dos desligamentos', formatter: (v: number) => formatCurrency(v || 0, currency) },
-      { key: 'cpv.totalCPP', label: '(=) CUSTO DE PRODUÇÃO DO PERÍODO (CPP)', desc: 'Custo real empregado na produção da rodada', formatter: (v: number) => formatCurrency(v || 0, currency), isClass: 'bg-white/5 font-bold border-y border-white/10 text-white' },
+      { key: 'cpv.totalCPP', label: '(=) CPP-CUSTO PRODUÇÃO PERÍODO', desc: 'Custo real empregado na produção da rodada', formatter: (v: number) => formatCurrency(v || 0, currency), isClass: 'bg-white/5 font-bold border-y border-white/10 text-white' },
       { key: 'cpv.estoqueInicialPA', label: '(+) Estoque Inicial de PA', desc: 'Estoque físico valorado de abertura na rodada', formatter: (v: number) => formatCurrency(v || 0, currency) },
       { key: 'cpv.estoqueFinalPA', label: '(-) Estoque Final de PA', desc: 'Estoque físico valorado de encerramento na rodada', formatter: (v: number) => formatCurrency(v || 0, currency) },
       { key: 'cpv.custoUnitarioProducao', label: 'Custo Unitário de PA', desc: 'Custo unitário do Produto Acabado', formatter: (v: number) => formatCurrency(v || 0, currency) },
-      { key: 'cpv.totalCPV', label: '(=) CUSTO DO PRODUTO VENDIDO (CPV)', desc: 'Custo direcionado para confrontação de receita no DRE', formatter: (v: number) => formatCurrency(v || 0, currency), isClass: 'bg-orange-950/20 text-orange-400 font-black border-y border-orange-500/20' }
+      { key: 'cpv.totalCPV', label: '(=) CPV-CUSTO PRODUTO VENDIDO', desc: 'Custo direcionado para confrontação de receita no DRE', formatter: (v: number) => formatCurrency(v || 0, currency), isClass: 'bg-orange-950/20 text-orange-400 font-black border-y border-orange-500/20' }
     ];
 
     return (
