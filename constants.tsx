@@ -80,11 +80,11 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'opex.sales', label: 'DE VENDAS', value: 873250.00, type: 'expense', isEditable: true },
         { id: 'opex.adm', label: 'ADMINISTRATIVAS', value: 216000.00, type: 'expense', isEditable: true },
         { id: 'opex.bad_debt', label: 'INADIMPLÊNCIA S/ SALDO CLIENTES', value: 18529.46, type: 'expense', isEditable: true },
-        { id: 'opex.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 41844.40, type: 'expense', isEditable: true }
+        { id: 'opex.rd', label: 'P&D-PESQ. E DESENV.', value: 41844.40, type: 'expense', isEditable: true }
     ]},
     { id: 'operating_profit', label: '(=) RESULTADO OPERACIONAL', value: 61985.27, type: 'totalizer', isReadOnly: true },
     { id: 'fin_res', label: '(+/-) RESULTADO FINANCEIRO', value: -2500.00, type: 'totalizer', children: [
-        { id: 'fin.rev', label: '(+) RENDIMENTOS DE APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
+        { id: 'fin.rev', label: '(+) RENDIMENTOS APLICAÇÕES', value: 0, type: 'revenue', isEditable: true },
         { id: 'fin.exp', label: '(-) DESPESAS FINANCEIRAS', value: 2500.00, type: 'expense', isEditable: true },
         { id: 'fin.fx_variance', label: '(+/-) VARIAÇÃO CAMBIAL', value: 0.00, type: 'revenue', isEditable: true }
     ]},
@@ -116,7 +116,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'cf.outflow.payroll', label: 'FOLHA DE PAGAMENTO', value: 1180000.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.social_charges', label: 'ENCARGOS SOCIAIS', value: 413000.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.vat_payable', label: 'PAGAMENTO DE IVA', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.rd', label: 'P&D-PESQUISA E DESENVOLVIMENTO', value: 41844.40, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.rd', label: 'P&D-PESQ. E DESENV.', value: 41844.40, type: 'expense', isEditable: true },
         { id: 'cf.outflow.training', label: 'TREINAMENTO DE EQUIPE', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.marketing', label: 'CAMPANHAS DE MARKETING', value: 275400.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 489850.00, type: 'expense', isEditable: true },
