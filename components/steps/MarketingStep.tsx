@@ -808,7 +808,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                               <span className="text-red-400/80">-{currency} {distAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-slate-400 py-1 border-b border-white/5 font-extrabold bg-white/[0.02] px-1.5 rounded-lg">
-                              <span className="text-[10px] uppercase font-sans text-orange-400">Margem Contribuição:</span>
+                              <span className="text-[10px] uppercase font-sans text-orange-400">Margem Contrib.:</span>
                               <span className="text-orange-400">{currency} {contributionProfitReg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
