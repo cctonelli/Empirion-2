@@ -142,7 +142,11 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       return acc + cap;
     }, 0);
 
-    const totalCap = (baseCap > 0 ? baseCap : 40000) * capMult;
+    // No modo de início do zero (start_from_zero / Greenfield), se o parque da empresa está vazio,
+    // a capacidade é estritamente zero, sem fallbacks fictícios de 40.000 un.
+    const isZeroMode = activeArena?.starting_mode === 'start_from_zero' || activeArena?.config?.starting_mode === 'start_from_zero';
+    const defaultFallbackCap = isZeroMode ? 0 : 40000;
+    const totalCap = (baseCap > 0 ? baseCap : defaultFallbackCap) * capMult;
     return totalCap;
   };
 
@@ -247,9 +251,14 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       teamStockPA[String(c.team_id)] = prevStockQty + unitsProduced;
     });
 
+    const isZeroMode = activeArena?.starting_mode === 'start_from_zero' || activeArena?.config?.starting_mode === 'start_from_zero';
     const totalCapacityAllTeamsRaw = Object.values(teamCapacities).reduce((sum, cap) => sum + cap, 0);
     const nominalTeamCapacity = 10000;
-    const totalCapacityAllTeams = totalCapacityAllTeamsRaw > 0 ? totalCapacityAllTeamsRaw : (nominalTeamCapacity * (rows || []).length);
+    // No modo START FROM ZERO, ignoramos o fallback da capacidade nominal de mercado quando as equipes
+    // ainda não possuem máquinas ativas no Round 0, garantindo o dimensionamento rigoroso de mercado.
+    const totalCapacityAllTeams = isZeroMode
+      ? totalCapacityAllTeamsRaw
+      : (totalCapacityAllTeamsRaw > 0 ? totalCapacityAllTeamsRaw : (nominalTeamCapacity * (rows || []).length));
 
     // 4. Demanda de mercado da região (Market Size por Região)
     const regionalMarketSizes: Record<string, number> = {};
@@ -479,6 +488,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         {Object.entries(decisions.regions).map(([id, reg]: [string, any]) => {
           const regId = Number(id);
           const regionConf = activeArena?.config?.regions?.find((r: any) => r.id === regId) || activeArena?.config?.region_configs?.find((r: any) => r.id === regId);
+          const demandWeight = regionConf?.demand_weight !== undefined ? Number(regionConf.demand_weight) : (100 / (activeArena?.regions_count || 1));
           
           const sugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : (activeArena?.market_indicators?.avg_selling_price || 425);
           const distCost = regionConf?.distribution_cost !== undefined ? Number(regionConf.distribution_cost) : (activeArena?.market_indicators?.prices?.distribution_unit || 50);
@@ -567,6 +577,10 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Market Size Regional:</span>
                   <span className="text-slate-300 font-semibold">{stats.totalRegionDemand.toLocaleString('pt-BR')} un</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
+                  <span>Peso Demanda:</span>
+                  <span className="text-slate-300 font-semibold">{demandWeight.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Seu Volume Vendido:</span>

@@ -680,9 +680,14 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         }
 
         // 2.3 Calcular Capacidade Total da Indústria e Demanda das Regiões
+        const isZeroMode = champ.starting_mode === 'start_from_zero' || champ.config?.starting_mode === 'start_from_zero';
         const totalCapacityAllTeamsRaw = Object.values(teamCapacities).reduce((sum, cap) => sum + cap, 0);
         const nominalTeamCapacity = 10000;
-        const totalCapacityAllTeams = totalCapacityAllTeamsRaw > 0 ? totalCapacityAllTeamsRaw : (nominalTeamCapacity * (teams || []).length);
+        // No modo START FROM ZERO, se ainda não há capacidade real instalada (por exemplo, no Round 0),
+        // a capacidade global deve ser 0 em vez de forçar o fallback para capacidade nominal de 10.000 un por equipe.
+        const totalCapacityAllTeams = isZeroMode
+            ? totalCapacityAllTeamsRaw
+            : (totalCapacityAllTeamsRaw > 0 ? totalCapacityAllTeamsRaw : (nominalTeamCapacity * (teams || []).length));
 
         const regionalDemands: Record<string, number> = {};
         let totalMarketDemandRound = 0;
@@ -696,7 +701,8 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             totalMarketDemandRound += regDemand;
         });
 
-        if (totalMarketDemandRound === 0) {
+        // Só aplica o fallback para 40000 se não estiver no modo START FROM ZERO
+        if (totalMarketDemandRound === 0 && !isZeroMode) {
             totalMarketDemandRound = 40000;
         }
 
@@ -725,7 +731,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 const teamCapturedDemand = Math.floor(regDemand * shareReg);
                 competitiveDemandsPerTeamReg[item.teamId][regIdStr] = teamCapturedDemand;
 
-                const shareContribution = (teamCapturedDemand / totalMarketDemandRound) * 100;
+                const shareContribution = totalMarketDemandRound > 0 ? (teamCapturedDemand / totalMarketDemandRound) * 100 : 0;
                 teamOverallMarketShares[item.teamId] += shareContribution;
             });
         });
