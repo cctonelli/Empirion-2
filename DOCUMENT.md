@@ -2,9 +2,26 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.128 Planejamento de Ativação Multi-Setorial (Agronegócios, Cooperativas, Varejo, Mercado Financeiro e Construção Civil) & Tipos Extensíveis.
+- **Versão Ativa:** v2026.129 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Sandbox de Validação & Ideação de Negócios Reais para Empreendedores - v2026.129
+
+**Data:** 11 de Junho de 2026 às 17:05 UTC  
+**Motivo:** Transformar o simulador educacional corporativo e suas bases de concorrência ativa em uma plataforma estratégica de referência internacional onde novos empreendedores e fundadores de startups possam simular cenários, cadastrar hipóteses e testar a viabilidade econômica de suas ideias (Business Plan Playground) de forma assistida por inteligência de mercado e mentoria.
+
+**Detalhamento Técnico de Planejamento:**
+- **Wizard de Captação e Premissas**: Design de interface amigável para inputs corporativos simplificados (CAPEX inicial, OPEX estimado, margem variável, preços nominais e prazos de ciclo).
+- **Projeções Contábeis de Viabilidade (CPC/IFRS)**: Motor adaptado para resolver de forma nativa e automática os relatórios de Ponto de Equilíbrio (Break-Even), Valor Presente Líquido (VPL) e Taxa Interna de Retorno (TIR) fiduciários acumulados.
+- **Mentor Inteligente com Integração Gemini API**: Canalização estruturada de dados contábeis (balanços acumulados em rounds paralelos) para a API do Gemini, provendo diagnósticos e insights acionáveis de melhora operacional ao empreendedor.
+- **Sandbox Multi-Cenários Isolado**: Registro e replicação de hipóteses no banco de dados com isolamento estrito via RLS do Supabase, salvaguardando o sigilo comercial e a privacidade das patentes/pitches dos usuários.
+
+**Impactos:**
+- **Atração de Novo Nicho de Usuários (B2C & Startups)**: Elevada expansão do público-alvo, tornando o simulador útil não apenas para campeonatos universitários, mas para incubadoras de novos negócios e aceleradoras regionais.
+- **Plano de Sandbox Consolidado**: Registro de premissas, fórmulas e versionamento tático documentado em `/docs/ENTREPRENEUR_SANDBOX_PLAN.md`.
 
 ---
 
