@@ -389,7 +389,7 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                   <span className="text-[8px] font-black text-orange-500 uppercase tracking-[0.3em] italic leading-none">Decision Terminal v2026</span>
                </div>
                <h2 className="text-xl font-black text-white uppercase italic tracking-tighter mt-0.5">
-                  Team: <span className="text-slate-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{activeTeam?.name}</span>
+                  {activeArena?.name ? <span className="text-orange-500 font-extrabold">{activeArena.name}</span> : ''} {activeArena?.name ? '• ' : ''}Team: <span className="text-slate-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{activeTeam?.name}</span>
                </h2>
             </div>
             <div className="h-8 w-px bg-white/10 hidden md:block" />
