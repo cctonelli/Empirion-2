@@ -1719,7 +1719,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       <div className="flex justify-between">
                         <span className="text-slate-500">Liquidez P00:</span>
                         <span className="text-orange-300">
-                          $1.0M (100% Caixa)
+                          $10.0M (100% Caixa)
                         </span>
                       </div>
                       <div className="flex justify-between">
