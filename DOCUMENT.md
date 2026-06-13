@@ -157,7 +157,7 @@
 ## Decisão Arquitetural, Sentinela Temporal Redundante & Feedback Verde Esmeralda Pulsante - v2026.115
 
 **Data:** 09 de Junho de 2026 às 21:30 UTC  
-**Motivo:** Correção de descompasso visual no cockpit de comando onde o término do round ("ENCERRADO") não habilitava ou não sinalizava adequadamente a liberação do botão de "TURNOVER PXX" para o tutor clicar, além de falta de destaque chamativo no botão de liberação.
+**Motivo:** Correção de descompasso visual no cockpit de comando onde o término do round ("ENCERRADO") não habilitava ou não sinalizava adequadamente a liberação do botão de "RXX" para o tutor clicar, além de falta de destaque chamativo no botão de liberação.
 
 **Detalhamento Técnico:**
 - **Sentinela Temporal Redundante:** Implementação de sonda de varredura periódica (`setInterval` com frequência de 2000ms) executada de forma síncrona diretamente no cockpit de admin (`AdminCommandCenter.tsx`). Essa sonda valida o relógio de sistema contra a data de início (`round_started_at` ou `created_at`), prazos limites, estados de pausa e tempos pendentes, chamando preventivamente e garantindo a ativação confiável do status `isTimerExpired(true)`.
@@ -888,8 +888,8 @@ project-root/
 - **Motivo:** Introduzir salvaguarda de processo fiduciário na interface do Tutor, desabilitando o botão "TURNOVER P0X" enquanto o timer de contagem regressiva oficial do round estiver transcorrendo normalmente. Isso impede cliques acidentais e avanço indesejado de período por parte do Tutor, preservando as decisões e dados industriais ativos das equipes competidoras.
 - **Diferenças:**
   - *Monitoramento Reativo de Estado de Timer:* Adicionado o callback reativo `onStatusChange` nas propriedades do sensor `<ChampionshipTimer>` e conectado de forma síncrona ao painel central `/components/AdminCommandCenter.tsx`.
-  - *Habilitação sob Demanda:* O estado `isTimerExpired` rastreia dinamicamente a contagem do cronômetro. O botão "TURNOVER P0X" agora fica bloqueado em modo leitura enquanto houver tempo restante ativo do round.
-  - *Indução a Workflow Inteligente:* O botão "TURNOVER P0X" só é reabilitado quando o status do timer muda categoricamente para "ENCERRADO" (pelo fim do tempo oficial ou quando o Tutor aciona manualmente o botão "CONCLUIR TEMPO / ZERAR TEMPORIZADOR" localizado ao lado de PLAY/PAUSA do cronômetro).
+  - *Habilitação sob Demanda:* O estado `isTimerExpired` rastreia dinamicamente a contagem do cronômetro. O botão "TURNOVER R-0X" agora fica bloqueado em modo leitura enquanto houver tempo restante ativo do round.
+  - *Indução a Workflow Inteligente:* O botão "TURNOVER R-0X" só é reabilitado quando o status do timer muda categoricamente para "ENCERRADO" (pelo fim do tempo oficial ou quando o Tutor aciona manualmente o botão "CONCLUIR TEMPO / ZERAR TEMPORIZADOR" localizado ao lado de PLAY/PAUSA do cronômetro).
   - *Aprimoramento de UX:* O botão Turnover desativado adota agora um design adaptativo com opacidade suavizada, cursor `not-allowed`, remoção ativa de sombreado e um tooltip descritivo informativo (`title`) que instrui o Tutor sobre a dependência temporal do round para prosseguir.
 - **Impactos Esperados:** Eliminação integral de saltos acidentais de ciclo na arena competitiva. Maior segurança fiduciária e fluidez de mediação pedagógica para o Tutor, garantindo o fiel do cronograma estipulado.
 - **Status:** Ativo e Disponível em Produção, Compilação e Linter 100% Homologados.

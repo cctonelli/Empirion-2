@@ -197,7 +197,7 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
 
           {step === 5 && (
             <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
-               <WizardStepTitle icon={<BarChart3 size={48}/>} title="Matriz de Rounds" desc="Planejamento temporal da economia (P01-P12)." />
+               <WizardStepTitle icon={<BarChart3 size={48}/>} title="Matriz de Rounds" desc="Planejamento temporal da economia (R01-R12)." />
                <div className="matrix-container h-[580px] bg-slate-950/80 border-2 border-white/10 rounded-[3rem] overflow-hidden group">
                   <div className="overflow-auto h-full custom-scrollbar">
                      <table className="w-full text-left border-collapse font-mono">

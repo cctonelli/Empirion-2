@@ -938,7 +938,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         <div className="flex items-center gap-8">
            <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center text-white shadow-xl"><Rocket size={32} /></div>
            <div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">R-0 INITIAL CONFIGURATOR</h2>
+              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">INITIAL TOURNAMENT SETUP</h2>
               <p className="text-[11px] font-black uppercase text-orange-500 tracking-[0.5em] mt-2 italic">v19.14 SAPPHIRE DIAMOND • MOEDA: {tutorConfig.currency}</p>
            </div>
         </div>
@@ -989,6 +989,47 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
               </motion.div>
             )}
 
+                 {/* Configuração de Equipes de Lançamento */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
+                   <div>
+                     <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Users size={16} className="text-orange-500"/> Equipes Humanas ({humanTeamsCount})</h4>
+                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">Quantos times de alunos participarão dessa simulação simulada.</p>
+                     <div className="mt-4 flex gap-4 items-center">
+                       <button onClick={() => setHumanTeamsCount(h => Math.max(1, h - 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserMinus size={16}/></button>
+                       <span className="text-2xl font-black font-mono text-white px-4">{humanTeamsCount}</span>
+                       <button onClick={() => setHumanTeamsCount(h => Math.min(10, h + 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserPlus size={16}/></button>
+                     </div>
+                     <div className="mt-4 space-y-2">
+                       {teamNames.map((name, idx) => (
+                         <input 
+                           key={idx}
+                           value={name}
+                           onChange={e => {
+                             const next = [...teamNames];
+                             next[idx] = e.target.value.toUpperCase();
+                             setTeamNames(next);
+                           }} 
+                           className="w-full bg-slate-950 border border-white/5 rounded-xl px-4 py-2 text-xs font-bold text-white uppercase font-mono"
+                           placeholder={`NOME TIME ${idx + 1}`}
+                         />
+                       ))}
+                     </div>
+                   </div>
+                   <div>
+                     <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Bot size={16} className="text-blue-500"/> Competidores Virtuais ({botsCount})</h4>
+                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">Configure robôs inteligentes autônomos para concorrer no faturamento regional.</p>
+                     <div className="mt-4 flex gap-4 items-center">
+                       <button onClick={() => setBotsCount(b => Math.max(0, b - 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserMinus size={16}/></button>
+                       <span className="text-2xl font-black font-mono text-white px-4">{botsCount}</span>
+                       <button onClick={() => setBotsCount(b => Math.min(5, b + 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserPlus size={16}/></button>
+                     </div>
+                     <div className="p-4 bg-slate-950/80 border border-white/5 rounded-2xl mt-4 text-[11px] text-slate-400 font-medium">
+                       Os robôs assumem estratégias variadas (Conservadora, Agressiva, Equilibrada, etc.) utilizando inteligência gerada por IA na rodada.
+                     </div>
+                   </div>
+                 </div>
+
+
             {/* STEP 2: MODO DE INÍCIO & TEMPLATE */}
             {step === 2 && (
               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -25 }} className="space-y-12 pb-20">
@@ -1012,7 +1053,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         <div className="flex justify-between"><span className="text-slate-500">Complexidade:</span><span className="text-orange-500 font-bold">★ ★ ★ ★ ★ (Máxima)</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Liquidez P00:</span><span className="text-orange-300">$1.0M (100% Caixa)</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Frota Máquinas:</span><span className="text-slate-400 font-semibold">0 (Zero Absoluto)</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Fluxo P01:</span><span className="text-slate-400 font-medium font-semibold">Instalar tudo do zero</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Fluxo R01:</span><span className="text-slate-400 font-medium font-semibold">Instalar tudo do zero</span></div>
                       </div>
                     </div>
 
@@ -1054,7 +1095,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         <div className="flex justify-between"><span className="text-slate-500">Complexidade:</span><span className="text-emerald-500 font-bold">★ ★ ☆ ☆ ☆ (Fácil)</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Liquidez P00:</span><span className="text-emerald-300">$2.1M (Contas complexas)</span></div>
                         <div className="flex justify-between"><span className="text-slate-500">Frota Máquinas:</span><span className="text-slate-400 font-semibold">3 Alfas, 2 Betas ($8.5M)</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Fluxo P01:</span><span className="text-slate-400 font-medium font-semibold">Demanda alta de manutenção</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Fluxo R01:</span><span className="text-slate-400 font-medium font-semibold">Demanda alta de manutenção</span></div>
                       </div>
                     </div>
                  </div>
@@ -2472,45 +2513,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <span className="text-[10px] font-mono font-black text-emerald-500 uppercase">Fechamento Líquido</span>
                  </div>
 
-                 {/* Configuração de Equipes de Lançamento */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left bg-slate-900/40 p-8 rounded-[3rem] border border-white/5 shadow-xl">
-                   <div>
-                     <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Users size={16} className="text-orange-500"/> Equipes Humanas ({humanTeamsCount})</h4>
-                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">Quantos times de alunos participarão dessa simulação simulada.</p>
-                     <div className="mt-4 flex gap-4 items-center">
-                       <button onClick={() => setHumanTeamsCount(h => Math.max(1, h - 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserMinus size={16}/></button>
-                       <span className="text-2xl font-black font-mono text-white px-4">{humanTeamsCount}</span>
-                       <button onClick={() => setHumanTeamsCount(h => Math.min(10, h + 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserPlus size={16}/></button>
-                     </div>
-                     <div className="mt-4 space-y-2">
-                       {teamNames.map((name, idx) => (
-                         <input 
-                           key={idx}
-                           value={name}
-                           onChange={e => {
-                             const next = [...teamNames];
-                             next[idx] = e.target.value.toUpperCase();
-                             setTeamNames(next);
-                           }} 
-                           className="w-full bg-slate-950 border border-white/5 rounded-xl px-4 py-2 text-xs font-bold text-white uppercase font-mono"
-                           placeholder={`NOME TIME ${idx + 1}`}
-                         />
-                       ))}
-                     </div>
-                   </div>
-                   <div>
-                     <h4 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Bot size={16} className="text-blue-500"/> Competidores Virtuais ({botsCount})</h4>
-                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">Configure robôs inteligentes autônomos para concorrer no faturamento regional.</p>
-                     <div className="mt-4 flex gap-4 items-center">
-                       <button onClick={() => setBotsCount(b => Math.max(0, b - 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserMinus size={16}/></button>
-                       <span className="text-2xl font-black font-mono text-white px-4">{botsCount}</span>
-                       <button onClick={() => setBotsCount(b => Math.min(5, b + 1))} className="p-3 bg-slate-950 border border-white/5 text-white rounded-xl hover:bg-slate-900"><UserPlus size={16}/></button>
-                     </div>
-                     <div className="p-4 bg-slate-950/80 border border-white/5 rounded-2xl mt-4 text-[11px] text-slate-400 font-medium">
-                       Os robôs assumem estratégias variadas (Conservadora, Agressiva, Equilibrada, etc.) utilizando inteligência gerada por IA na rodada.
-                     </div>
-                   </div>
-                 </div>
+
 
                  {/* Financial statements editor preview */}
                  <div className="space-y-4">
