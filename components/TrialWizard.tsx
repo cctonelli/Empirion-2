@@ -4107,7 +4107,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       onClick={() => setShowSaveTplModal(true)}
                       className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
                     >
-                      <Save size={16} /> Salvar Ajustes Atuais
+                      <Save size={16} /> Salvar como Template
                     </button>
                     <button
                       onClick={handleRecalculate}
@@ -5653,7 +5653,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     PROCESSANDO...
                   </>
                 ) : (
-                  "LANÇAR SANDBOX COMPETITIVO"
+                  "INICIAR A COMPETIÇÃO!"
                 )}
               </button>
             ) : (
