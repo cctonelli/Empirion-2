@@ -1,10 +1,24 @@
-import React from 'react';
-import { Megaphone, Info, HelpCircle, RefreshCw, Globe, ChevronDown, ChevronUp, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { WizardStepHeader, CurrencyInput } from './shared';
-import { DecisionData, Championship, Team } from '../../types';
-import { supabase } from '../../services/supabase';
-import { getAdjustedPrice, calculateProjections } from '../../services/simulation';
-import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../../constants';
+import React from "react";
+import {
+  Megaphone,
+  Info,
+  HelpCircle,
+  RefreshCw,
+  Globe,
+  ChevronDown,
+  ChevronUp,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+} from "lucide-react";
+import { WizardStepHeader, CurrencyInput } from "./shared";
+import { DecisionData, Championship, Team } from "../../types";
+import { supabase } from "../../services/supabase";
+import {
+  getAdjustedPrice,
+  calculateProjections,
+} from "../../services/simulation";
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from "../../constants";
 
 interface MarketingStepProps {
   decisions: DecisionData;
@@ -28,7 +42,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
   const [allRegionsExpanded, setAllRegionsExpanded] = React.useState(false);
 
   const toggleRegionProfitability = () => {
-    setAllRegionsExpanded(prev => !prev);
+    setAllRegionsExpanded((prev) => !prev);
   };
 
   // Cálculo do Projeções em tempo real da equipe ativa com base nas decisões correntes
@@ -38,12 +52,17 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       return calculateProjections(
         decisions,
         activeArena.branch,
-        { ...(activeArena.config || {}), currency: activeArena.currency } as any,
-        activeArena.market_indicators || (activeArena as any).indicators || {} as any,
+        {
+          ...(activeArena.config || {}),
+          currency: activeArena.currency,
+        } as any,
+        activeArena.market_indicators ||
+          (activeArena as any).indicators ||
+          ({} as any),
         activeTeam,
         competitorsLog || [],
         activeArena.current_round,
-        activeArena.round_rules
+        activeArena.round_rules,
       );
     } catch (err) {
       console.error("Error calculating active team projections: ", err);
@@ -77,7 +96,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     // 3. Fallback clássico a partir de declarações no DRE histórico
     const dre = activeTeam?.kpis?.statements?.dre;
     if (dre && Array.isArray(dre)) {
-      const cpvItem = dre.find((item: any) => item.id === 'cpv');
+      const cpvItem = dre.find((item: any) => item.id === "cpv");
       if (cpvItem) {
         const value = Math.abs(Number(cpvItem.value) || 0);
         const qty = Number(activeTeam?.kpis?.finished_goods_produced) || 0;
@@ -88,7 +107,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     // 4. Parâmetros nominais de reajuste inicial
     const mpaPrice = activeArena?.market_indicators?.prices?.mp_a || 20;
     const mpbPrice = activeArena?.market_indicators?.prices?.mp_b || 40;
-    const baseMPCost = (3 * mpaPrice) + (2 * mpbPrice);
+    const baseMPCost = 3 * mpaPrice + 2 * mpbPrice;
     const standardOverhead = 150;
     return baseMPCost + standardOverhead;
   };
@@ -98,14 +117,16 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       if (!activeArena) return;
       setLoadingIntel(true);
       try {
-        const historyTable = activeArena.is_trial ? 'trial_companies' : 'companies';
+        const historyTable = activeArena.is_trial
+          ? "trial_companies"
+          : "companies";
         const targetRound = activeArena.current_round || 0;
         const { data, error } = await supabase
           .from(historyTable)
-          .select('*')
-          .eq('championship_id', activeArena.id)
-          .eq('round', targetRound);
-        
+          .select("*")
+          .eq("championship_id", activeArena.id)
+          .eq("round", targetRound);
+
         if (error) {
           console.error("Error fetching competitor history:", error);
         } else if (data) {
@@ -126,25 +147,56 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     const machines = kpis.machines || [];
     const shifts = c.state?.production?.shifts || 1;
     let capMult = 1.0;
-    if (shifts === 2) capMult = 1.8; // Match real backend multiplier 1.8
+    if (shifts === 2)
+      capMult = 1.8; // Match real backend multiplier 1.8
     else if (shifts === 3) capMult = 2.3;
 
     const specs = activeArena?.market_indicators?.machine_specs || {
       alpha: { production_capacity: 10000 },
       beta: { production_capacity: 18000 },
-      gamma: { production_capacity: 30000 }
+      gamma: { production_capacity: 30000 },
     };
 
-    const baseCap = machines.reduce((acc: number, m: any) => {
-      const model = m.model === 'alfa' ? 'alpha' : m.model === 'gama' ? 'gamma' : m.model;
-      const modelKey = (model as string) === 'alpha' ? 'alpha' : (model as string) === 'beta' ? 'beta' : 'gamma';
+    // 1. Somar capacidade das máquinas instaladas fisicamente no ciclo anterior
+    let baseCap = machines.reduce((acc: number, m: any) => {
+      const model =
+        m.model === "alfa" ? "alpha" : m.model === "gama" ? "gamma" : m.model;
+      const modelKey =
+        (model as string) === "alpha"
+          ? "alpha"
+          : (model as string) === "beta"
+            ? "beta"
+            : "gamma";
       const cap = specs[modelKey]?.production_capacity || 0;
       return acc + cap;
     }, 0);
 
-    // No modo de início do zero (start_from_zero / Greenfield), se o parque da empresa está vazio,
-    // a capacidade é estritamente zero, sem fallbacks fictícios de 40.000 un.
-    const isZeroMode = activeArena?.starting_mode === 'start_from_zero' || activeArena?.config?.starting_mode === 'start_from_zero';
+    // 2. Somar decisões de compra de máquinas sob análise no ciclo ativo (CAPEX do round)
+    const decideBuyAlpha = Number(
+      c.state?.machinery?.buy?.alpha ?? c.state?.machinery?.buy?.alfa ?? 0,
+    );
+    const decideBuyBeta = Number(c.state?.machinery?.buy?.beta ?? 0);
+    const decideBuyGamma = Number(
+      c.state?.machinery?.buy?.gamma ?? c.state?.machinery?.buy?.gama ?? 0,
+    );
+
+    const capBuyAlpha =
+      decideBuyAlpha * (specs.alpha?.production_capacity || 10000);
+    const capBuyBeta =
+      decideBuyBeta * (specs.beta?.production_capacity || 18000);
+    const capBuyGamma =
+      decideBuyGamma * (specs.gamma?.production_capacity || 30000);
+
+    baseCap += capBuyAlpha + capBuyBeta + capBuyGamma;
+
+    // Detecção segura do modo Start From Zero em todas as variações de payloads configurados
+    const isZeroMode =
+      activeArena?.starting_mode === "start_from_zero" ||
+      activeArena?.config?.starting_mode === "start_from_zero" ||
+      (activeArena as any)?.config?.startingMode === "start_from_zero" ||
+      (activeArena as any)?.startingMode === "start_from_zero" ||
+      (activeArena as any)?.mode === "start_from_zero";
+
     const defaultFallbackCap = isZeroMode ? 0 : 40000;
     const totalCap = (baseCap > 0 ? baseCap : defaultFallbackCap) * capMult;
     return totalCap;
@@ -152,7 +204,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
   const getHistoricalActiveTeamUnitCPV = (activeTeamRecord: any) => {
     if (!activeTeamRecord) return 0;
-    
+
     // 1. Prioriza custo da empresa histórica
     if (activeTeamRecord.kpis?.cpv_details?.custoUnitarioProducao) {
       return activeTeamRecord.kpis.cpv_details.custoUnitarioProducao;
@@ -163,58 +215,82 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     if (activeTeamRecord.kpis?.kardex?.pa?.saldoFinalUnitario) {
       return activeTeamRecord.kpis.kardex.pa.saldoFinalUnitario;
     }
-    
+
     // 2. Fallback DRE histórico
     const dre = activeTeamRecord.kpis?.statements?.dre;
     if (dre && Array.isArray(dre)) {
-      const cpvItem = dre.find((item: any) => item.id === 'cpv');
+      const cpvItem = dre.find((item: any) => item.id === "cpv");
       if (cpvItem) {
         const value = Math.abs(Number(cpvItem.value) || 0);
         const qty = Number(activeTeamRecord.kpis?.finished_goods_produced) || 0;
         if (qty > 0) return value / qty;
       }
     }
-    
+
     // 3. Parâmetros nominais clássicos se nada houver
     const mpaPrice = activeArena?.market_indicators?.prices?.mp_a || 20;
     const mpbPrice = activeArena?.market_indicators?.prices?.mp_b || 40;
-    return (3 * mpaPrice) + (2 * mpbPrice) + 40; // custo base mp + mod/cif
+    return 3 * mpaPrice + 2 * mpbPrice + 40; // custo base mp + mod/cif
   };
 
-  const calculateRegionStats = (regionId: number, useHistoricalOnly = false) => {
-    const storedTeamId = activeTeam?.id || localStorage.getItem('active_team_id');
-    const rows = competitorsLog.length > 0 ? competitorsLog : (activeArena?.teams || []).map(t => ({
-      team_id: t.id,
-      state: (t as any).current_decision || {},
-      kpis: t.kpis || {}
-    }));
+  const calculateRegionStats = (
+    regionId: number,
+    useHistoricalOnly = false,
+  ) => {
+    const storedTeamId =
+      activeTeam?.id || localStorage.getItem("active_team_id");
+    const rows =
+      competitorsLog.length > 0
+        ? competitorsLog
+        : (activeArena?.teams || []).map((t) => ({
+            team_id: t.id,
+            state: (t as any).current_decision || {},
+            kpis: t.kpis || {},
+          }));
 
     // 1. Preço médio regiao anterior
     const prevPrices = rows
-      .map(c => {
+      .map((c) => {
         const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
-        const stateToUse = (isCurrentActiveTeam && !useHistoricalOnly) ? decisions : (c.state || {});
-        const regDec = stateToUse?.regions?.[regionId] || stateToUse?.regions?.[String(regionId)];
+        const stateToUse =
+          isCurrentActiveTeam && !useHistoricalOnly ? decisions : c.state || {};
+        const regDec =
+          stateToUse?.regions?.[regionId] ||
+          stateToUse?.regions?.[String(regionId)];
         return regDec ? Number(regDec.price) : null;
       })
       .filter((p): p is number => p !== null && p > 0);
-    const avgPriceRegion = prevPrices.length > 0
-      ? prevPrices.reduce((sum, p) => sum + p, 0) / prevPrices.length
-      : 0;
+    const avgPriceRegion =
+      prevPrices.length > 0
+        ? prevPrices.reduce((sum, p) => sum + p, 0) / prevPrices.length
+        : 0;
 
     // 2. Parâmetros de contexto e regiões
-    const regionConf = activeArena?.config?.regions?.find((r: any) => r.id === regionId) || activeArena?.config?.region_configs?.find((r: any) => r.id === regionId);
-    const baseSuggestedPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : (activeArena?.market_indicators?.avg_selling_price || 425);
-    const demandVariation = activeArena?.market_indicators?.demand_variation || 0;
+    const regionConf =
+      activeArena?.config?.regions?.find((r: any) => r.id === regionId) ||
+      activeArena?.config?.region_configs?.find((r: any) => r.id === regionId);
+    const baseSuggestedPrice =
+      regionConf?.suggested_price !== undefined
+        ? Number(regionConf.suggested_price)
+        : activeArena?.market_indicators?.avg_selling_price || 425;
+    const demandVariation =
+      activeArena?.market_indicators?.demand_variation || 0;
 
-    let regionConfigs: any[] = activeArena?.region_configs || activeArena?.config?.regions || activeArena?.config?.region_configs || [];
+    let regionConfigs: any[] =
+      activeArena?.region_configs ||
+      activeArena?.config?.regions ||
+      activeArena?.config?.region_configs ||
+      [];
     if (!regionConfigs || regionConfigs.length === 0) {
-      const regCount = activeArena?.regions_count || Object.keys(decisions.regions || {}).length || 1;
+      const regCount =
+        activeArena?.regions_count ||
+        Object.keys(decisions.regions || {}).length ||
+        1;
       regionConfigs = Array.from({ length: regCount }, (_, i) => ({
         id: i + 1,
         name: `Região ${i + 1}`,
         demand_weight: 100 / regCount,
-        suggested_price: baseSuggestedPrice
+        suggested_price: baseSuggestedPrice,
       }));
     }
 
@@ -224,9 +300,14 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
     rows.forEach((c: any) => {
       const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
-      const stateToUse = (isCurrentActiveTeam && !useHistoricalOnly) ? decisions : (c.state || {});
-      
-      const capacity = getTeamCapacity({ team_id: c.team_id, state: stateToUse, kpis: c.kpis });
+      const stateToUse =
+        isCurrentActiveTeam && !useHistoricalOnly ? decisions : c.state || {};
+
+      const capacity = getTeamCapacity({
+        team_id: c.team_id,
+        state: stateToUse,
+        kpis: c.kpis,
+      });
       teamCapacities[String(c.team_id)] = capacity;
 
       // Unidades disponíveis para venda com sincronização fiduciária reativa em tempo real
@@ -235,15 +316,21 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
       if (isCurrentActiveTeam && !useHistoricalOnly) {
         unitsProduced = projection?.kpis?.finished_goods_produced ?? 0;
-        prevStockQty = Number(activeTeam?.kpis?.stock_quantities?.finished_goods) || 0;
+        prevStockQty =
+          Number(activeTeam?.kpis?.stock_quantities?.finished_goods) || 0;
       } else {
         if (useHistoricalOnly) {
           // No histórico já finalizado e consolidado, o estoque de partida do ciclo é kpis.kardex.pa.saldoInicialQtd
           prevStockQty = Number(c.kpis?.kardex?.pa?.saldoInicialQtd ?? 0);
-          unitsProduced = Number(c.kpis?.kardex?.pa?.entradasQtd ?? c.kpis?.finished_goods_produced ?? 0);
+          unitsProduced = Number(
+            c.kpis?.kardex?.pa?.entradasQtd ??
+              c.kpis?.finished_goods_produced ??
+              0,
+          );
         } else {
           // Projeção futura para bots/concorrência na rodada de simulação atual
-          unitsProduced = Number(c.kpis?.finished_goods_produced) || (capacity * 0.8);
+          unitsProduced =
+            Number(c.kpis?.finished_goods_produced) || capacity * 0.8;
           // O estoque de partida para o ciclo futuro é o estoque final do ciclo que acabou de fechar
           prevStockQty = Number(c.kpis?.stock_quantities?.finished_goods) || 0;
         }
@@ -251,22 +338,34 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       teamStockPA[String(c.team_id)] = prevStockQty + unitsProduced;
     });
 
-    const isZeroMode = activeArena?.starting_mode === 'start_from_zero' || activeArena?.config?.starting_mode === 'start_from_zero';
-    const totalCapacityAllTeamsRaw = Object.values(teamCapacities).reduce((sum, cap) => sum + cap, 0);
+    const isZeroMode =
+      activeArena?.starting_mode === "start_from_zero" ||
+      activeArena?.config?.starting_mode === "start_from_zero" ||
+      (activeArena as any)?.config?.startingMode === "start_from_zero" ||
+      (activeArena as any)?.startingMode === "start_from_zero" ||
+      (activeArena as any)?.mode === "start_from_zero";
+    const totalCapacityAllTeamsRaw = Object.values(teamCapacities).reduce(
+      (sum, cap) => sum + cap,
+      0,
+    );
     const nominalTeamCapacity = 10000;
     // No modo START FROM ZERO, ignoramos o fallback da capacidade nominal de mercado quando as equipes
     // ainda não possuem máquinas ativas no Round 0, garantindo o dimensionamento rigoroso de mercado.
     const totalCapacityAllTeams = isZeroMode
       ? totalCapacityAllTeamsRaw
-      : (totalCapacityAllTeamsRaw > 0 ? totalCapacityAllTeamsRaw : (nominalTeamCapacity * (rows || []).length));
+      : totalCapacityAllTeamsRaw > 0
+        ? totalCapacityAllTeamsRaw
+        : nominalTeamCapacity * (rows || []).length;
 
     // 4. Demanda de mercado da região (Market Size por Região)
     const regionalMarketSizes: Record<string, number> = {};
     regionConfigs.forEach((r: any) => {
       const rIdStr = String(r.id);
-      const rWeight = Number(r.demand_weight || r.weight || r.demand_percent || 0);
+      const rWeight = Number(
+        r.demand_weight || r.weight || r.demand_percent || 0,
+      );
       const baseRegDemand = totalCapacityAllTeams * (rWeight / 100);
-      const regDemand = Math.floor(baseRegDemand * (1 + (demandVariation / 100)));
+      const regDemand = Math.floor(baseRegDemand * (1 + demandVariation / 100));
       regionalMarketSizes[rIdStr] = regDemand;
     });
 
@@ -274,31 +373,40 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     const teamRegionScores: Record<string, Record<string, number>> = {};
     rows.forEach((c: any) => {
       const isCurrentActiveTeam = String(c.team_id) === String(storedTeamId);
-      const stateToUse = (isCurrentActiveTeam && !useHistoricalOnly) ? decisions : (c.state || {});
+      const stateToUse =
+        isCurrentActiveTeam && !useHistoricalOnly ? decisions : c.state || {};
       const tIdStr = String(c.team_id);
       teamRegionScores[tIdStr] = {};
 
       regionConfigs.forEach((r: any) => {
         const rIdStr = String(r.id);
-        const rDec = stateToUse?.regions?.[rIdStr] || stateToUse?.regions?.[r.id] || {};
+        const rDec =
+          stateToUse?.regions?.[rIdStr] || stateToUse?.regions?.[r.id] || {};
 
-        const rSuggestedPrice = r.suggested_price !== undefined ? Number(r.suggested_price) : baseSuggestedPrice;
+        const rSuggestedPrice =
+          r.suggested_price !== undefined
+            ? Number(r.suggested_price)
+            : baseSuggestedPrice;
         const regPrice = Number(rDec.price) || rSuggestedPrice;
         const regMarketing = Number(rDec.marketing) || 0;
         const regTerm = Number(rDec.term) || 0;
         const isRJ = stateToUse?.judicial_recovery === true;
         const rjDemandPenalty = isRJ ? 0.85 : 1.0;
 
-        const priceIndex = regPrice > 0 ? (rSuggestedPrice / regPrice) : 1;
-        const marketingIndex = 1 + (regMarketing * 0.08);
-        const termIndex = 1 + (regTerm * 0.05);
+        const priceIndex = regPrice > 0 ? rSuggestedPrice / regPrice : 1;
+        const marketingIndex = 1 + regMarketing * 0.08;
+        const termIndex = 1 + regTerm * 0.05;
 
-        teamRegionScores[tIdStr][rIdStr] = priceIndex * marketingIndex * termIndex * rjDemandPenalty;
+        teamRegionScores[tIdStr][rIdStr] =
+          priceIndex * marketingIndex * termIndex * rjDemandPenalty;
       });
     });
 
     // 6. Aloca a demanda para cada equipe (Market Share Concorrencial)
-    const competitiveDemandsPerTeamReg: Record<string, Record<string, number>> = {};
+    const competitiveDemandsPerTeamReg: Record<
+      string,
+      Record<string, number>
+    > = {};
     rows.forEach((c: any) => {
       competitiveDemandsPerTeamReg[String(c.team_id)] = {};
     });
@@ -309,18 +417,29 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
       const scoresWithTeams = rows.map((c: any) => ({
         teamId: String(c.team_id),
-        score: teamRegionScores[String(c.team_id)]?.[rIdStr] ?? 0
+        score: teamRegionScores[String(c.team_id)]?.[rIdStr] ?? 0,
       }));
 
-      const totalScoreReg = scoresWithTeams.reduce((sum, item) => sum + item.score, 0);
+      const totalScoreReg = scoresWithTeams.reduce(
+        (sum, item) => sum + item.score,
+        0,
+      );
 
-      scoresWithTeams.forEach(item => {
-        const companyRecord = rows.find((co: any) => String(co.team_id) === String(item.teamId));
+      scoresWithTeams.forEach((item) => {
+        const companyRecord = rows.find(
+          (co: any) => String(co.team_id) === String(item.teamId),
+        );
         let teamCapturedDemand = 0;
-        if (useHistoricalOnly && companyRecord?.kpis?.regional_demands?.[rIdStr] !== undefined) {
-          teamCapturedDemand = Number(companyRecord.kpis.regional_demands[rIdStr]);
+        if (
+          useHistoricalOnly &&
+          companyRecord?.kpis?.regional_demands?.[rIdStr] !== undefined
+        ) {
+          teamCapturedDemand = Number(
+            companyRecord.kpis.regional_demands[rIdStr],
+          );
         } else {
-          const shareReg = totalScoreReg > 0 ? (item.score / totalScoreReg) : (1 / rows.length);
+          const shareReg =
+            totalScoreReg > 0 ? item.score / totalScoreReg : 1 / rows.length;
           teamCapturedDemand = Math.floor(regDemand * shareReg);
         }
         competitiveDemandsPerTeamReg[item.teamId][rIdStr] = teamCapturedDemand;
@@ -335,11 +454,15 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
       const totalQtyForSale = teamStockPA[tIdStr] || 0;
       const demands = competitiveDemandsPerTeamReg[tIdStr] || {};
-      const teamTotalDemand = Object.values(demands).reduce((sz, val) => sz + val, 0);
+      const teamTotalDemand = Object.values(demands).reduce(
+        (sz, val) => sz + val,
+        0,
+      );
 
-      const teamStockRatio = teamTotalDemand > totalQtyForSale && teamTotalDemand > 0
-        ? totalQtyForSale / teamTotalDemand
-        : 1;
+      const teamStockRatio =
+        teamTotalDemand > totalQtyForSale && teamTotalDemand > 0
+          ? totalQtyForSale / teamTotalDemand
+          : 1;
 
       let runningUnitsSold = 0;
       regionConfigs.forEach((r: any, idx: number) => {
@@ -347,12 +470,21 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         const regDemand = demands[rIdStr] || 0;
 
         let regUnitsSold = 0;
-        if (useHistoricalOnly && c.kpis?.regional_units_sold?.[rIdStr] !== undefined) {
+        if (
+          useHistoricalOnly &&
+          c.kpis?.regional_units_sold?.[rIdStr] !== undefined
+        ) {
           regUnitsSold = Number(c.kpis.regional_units_sold[rIdStr]);
         } else if (idx === regionConfigs.length - 1) {
-          regUnitsSold = Math.min(totalQtyForSale, Math.min(teamTotalDemand, totalQtyForSale) - runningUnitsSold);
+          regUnitsSold = Math.min(
+            totalQtyForSale,
+            Math.min(teamTotalDemand, totalQtyForSale) - runningUnitsSold,
+          );
         } else {
-          regUnitsSold = Math.min(regDemand, Math.floor(regDemand * teamStockRatio));
+          regUnitsSold = Math.min(
+            regDemand,
+            Math.floor(regDemand * teamStockRatio),
+          );
         }
         regUnitsSold = Math.max(0, regUnitsSold);
         teamUnitsSoldPerReg[tIdStr][rIdStr] = regUnitsSold;
@@ -366,10 +498,12 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
     let totalRegionUnitsSold = 0;
     rows.forEach((c: any) => {
-      totalRegionUnitsSold += teamUnitsSoldPerReg[String(c.team_id)]?.[rIdStr] || 0;
+      totalRegionUnitsSold +=
+        teamUnitsSoldPerReg[String(c.team_id)]?.[rIdStr] || 0;
     });
 
-    const activeTeamUnitsSold = teamUnitsSoldPerReg[String(storedTeamId)]?.[rIdStr] || 0;
+    const activeTeamUnitsSold =
+      teamUnitsSoldPerReg[String(storedTeamId)]?.[rIdStr] || 0;
     const activeWeight = regionConf?.demand_weight || 20;
 
     return {
@@ -378,7 +512,10 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       totalRegionUnitsSold,
       activeTeamUnitsSold,
       weight: activeWeight,
-      relativeSalesShare: totalRegionUnitsSold > 0 ? (activeTeamUnitsSold / totalRegionUnitsSold) * 100 : 0
+      relativeSalesShare:
+        totalRegionUnitsSold > 0
+          ? (activeTeamUnitsSold / totalRegionUnitsSold) * 100
+          : 0,
     };
   };
   return (
@@ -406,7 +543,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               <HelpCircle size={14} className="text-slate-500" />
             </label>
             <p className="text-slate-400 leading-relaxed">
-              Taxa cobrada em vendas parceladas. Alto → mais receita financeira, mas menor atratividade e volume de vendas. Mantenha baixo (0.8–2.5%) em mercados competitivos.
+              Taxa cobrada em vendas parceladas. Alto → mais receita financeira,
+              mas menor atratividade e volume de vendas. Mantenha baixo
+              (0.8–2.5%) em mercados competitivos.
             </p>
           </div>
 
@@ -417,7 +556,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               <HelpCircle size={14} className="text-slate-500" />
             </label>
             <p className="text-slate-400 leading-relaxed">
-              Preço de venda na região. Alto → maior margem unitária, mas menor volume (elasticidade-preço). Baixo → ganha market share, mas comprime lucro. Alinhe com custo projetado + markup desejado.
+              Preço de venda na região. Alto → maior margem unitária, mas menor
+              volume (elasticidade-preço). Baixo → ganha market share, mas
+              comprime lucro. Alinhe com custo projetado + markup desejado.
             </p>
           </div>
 
@@ -428,7 +569,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               <HelpCircle size={14} className="text-slate-500" />
             </label>
             <p className="text-slate-400 leading-relaxed">
-              Parcelamento oferecido. Prazo longo → mais vendas, mas fluxo de caixa piora e risco de inadimplência cresce. À vista → preserva liquidez, mas pode limitar volume em regiões sensíveis.
+              Parcelamento oferecido. Prazo longo → mais vendas, mas fluxo de
+              caixa piora e risco de inadimplência cresce. À vista → preserva
+              liquidez, mas pode limitar volume em regiões sensíveis.
             </p>
           </div>
 
@@ -439,7 +582,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               <HelpCircle size={14} className="text-slate-500" />
             </label>
             <p className="text-slate-400 leading-relaxed">
-              Intensidade publicitária. Cada ponto aumenta demanda, mas consome verba fixa. Retorno decrescente: invista mais em regiões com alta elasticidade-preço. 0 = sem esforço, 9 = campanha agressiva.
+              Intensidade publicitária. Cada ponto aumenta demanda, mas consome
+              verba fixa. Retorno decrescente: invista mais em regiões com alta
+              elasticidade-preço. 0 = sem esforço, 9 = campanha agressiva.
             </p>
           </div>
         </div>
@@ -450,7 +595,10 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         <div className="w-full lg:w-80 space-y-4">
           <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-3">
             Juros de Venda a Prazo (%)
-            <HelpCircle size={16} className="text-slate-500 hover:text-orange-400 transition-colors cursor-help" />
+            <HelpCircle
+              size={16}
+              className="text-slate-500 hover:text-orange-400 transition-colors cursor-help"
+            />
           </label>
           <div className="relative">
             <input
@@ -460,11 +608,18 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               max="20"
               disabled={isReadOnly}
               value={decisions.production.term_interest_rate}
-              onChange={e => updateDecision('production.term_interest_rate', parseFloat(e.target.value) || 0)}
+              onChange={(e) =>
+                updateDecision(
+                  "production.term_interest_rate",
+                  parseFloat(e.target.value) || 0,
+                )
+              }
               className="w-full bg-slate-950 border-2 border-slate-700 rounded-2xl px-5 py-4 text-xl font-mono font-bold text-white outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all"
               placeholder="0.00"
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-bold text-orange-400">%</span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-bold text-orange-400">
+              %
+            </span>
           </div>
         </div>
 
@@ -473,9 +628,11 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
           disabled={isReadOnly || Object.keys(decisions.regions).length <= 1}
           className={`
             px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center gap-3 shadow-xl
-            ${Object.keys(decisions.regions).length <= 1 || isReadOnly
-              ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
-              : 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white border border-orange-400/30 active:scale-95'}
+            ${
+              Object.keys(decisions.regions).length <= 1 || isReadOnly
+                ? "bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700"
+                : "bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white border border-orange-400/30 active:scale-95"
+            }
           `}
         >
           <RefreshCw size={16} />
@@ -487,19 +644,47 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
         {Object.entries(decisions.regions).map(([id, reg]: [string, any]) => {
           const regId = Number(id);
-          const regionConf = activeArena?.config?.regions?.find((r: any) => r.id === regId) || activeArena?.config?.region_configs?.find((r: any) => r.id === regId);
-          const demandWeight = regionConf?.demand_weight !== undefined ? Number(regionConf.demand_weight) : (100 / (activeArena?.regions_count || 1));
-          
-          const sugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : (activeArena?.market_indicators?.avg_selling_price || 425);
-          const distCost = regionConf?.distribution_cost !== undefined ? Number(regionConf.distribution_cost) : (activeArena?.market_indicators?.prices?.distribution_unit || 50);
-          const mktCost = regionConf?.marketing_cost !== undefined ? Number(regionConf.marketing_cost) : (activeArena?.market_indicators?.prices?.marketing_campaign || 10000);
-          const currency = regionConf?.currency || activeArena?.currency || 'BRL';
+          const regionConf =
+            activeArena?.config?.regions?.find((r: any) => r.id === regId) ||
+            activeArena?.config?.region_configs?.find(
+              (r: any) => r.id === regId,
+            );
+          const demandWeight =
+            regionConf?.demand_weight !== undefined
+              ? Number(regionConf.demand_weight)
+              : 100 / (activeArena?.regions_count || 1);
+
+          const sugPrice =
+            regionConf?.suggested_price !== undefined
+              ? Number(regionConf.suggested_price)
+              : activeArena?.market_indicators?.avg_selling_price || 425;
+          const distCost =
+            regionConf?.distribution_cost !== undefined
+              ? Number(regionConf.distribution_cost)
+              : activeArena?.market_indicators?.prices?.distribution_unit || 50;
+          const mktCost =
+            regionConf?.marketing_cost !== undefined
+              ? Number(regionConf.marketing_cost)
+              : activeArena?.market_indicators?.prices?.marketing_campaign ||
+                10000;
+          const currency =
+            regionConf?.currency || activeArena?.currency || "BRL";
 
           const round = (activeArena?.current_round || 0) + 1;
-          const adjustedDistCost = getAdjustedPrice(distCost, 'distribution_cost_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
-          const adjustedMktCost = getAdjustedPrice(mktCost, 'marketing_campaign_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
+          const adjustedDistCost = getAdjustedPrice(
+            distCost,
+            "distribution_cost_adjust",
+            round,
+            activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM,
+          );
+          const adjustedMktCost = getAdjustedPrice(
+            mktCost,
+            "marketing_campaign_adjust",
+            round,
+            activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM,
+          );
           const totalMktCost = reg.marketing * adjustedMktCost;
-          
+
           // Estatísticas históricas (apuradas) da rodada fechada
           const stats = calculateRegionStats(regId, true);
 
@@ -511,29 +696,42 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-base font-black text-orange-400 uppercase italic tracking-tight font-sans">
-                    {activeArena?.region_names?.[Number(id) - 1] || `Região ${id}`}
+                    {activeArena?.region_names?.[Number(id) - 1] ||
+                      `Região ${id}`}
                   </h4>
-                  <Globe size={18} className="text-slate-600 group-hover:text-orange-400 transition-colors" />
+                  <Globe
+                    size={18}
+                    className="text-slate-600 group-hover:text-orange-400 transition-colors"
+                  />
                 </div>
 
                 <div className="space-y-4">
                   {/* Preço */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Preço Unitário (Rodada {round})</label>
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
+                      Preço Unitário (Rodada {round})
+                    </label>
                     <CurrencyInput
                       value={reg.price}
-                      onChange={v => updateDecision(`regions.${id}.price`, v)}
+                      onChange={(v) => updateDecision(`regions.${id}.price`, v)}
                       currency={currency}
                     />
                   </div>
 
                   {/* Prazo */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Prazo de Recebimento (Rodada {round})</label>
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
+                      Prazo de Recebimento (Rodada {round})
+                    </label>
                     <select
                       disabled={isReadOnly}
                       value={reg.term}
-                      onChange={e => updateDecision(`regions.${id}.term`, parseInt(e.target.value))}
+                      onChange={(e) =>
+                        updateDecision(
+                          `regions.${id}.term`,
+                          parseInt(e.target.value),
+                        )
+                      }
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500 transition-all appearance-none cursor-pointer"
                     >
                       <option value={0}>A VISTA</option>
@@ -544,15 +742,20 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
                   {/* Marketing */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">Marketing (0–9) (Rodada {round})</label>
+                    <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
+                      Marketing (0–9) (Rodada {round})
+                    </label>
                     <input
                       type="number"
                       min="0"
                       max="9"
                       disabled={isReadOnly}
                       value={reg.marketing}
-                      onChange={e => {
-                        const val = Math.min(9, Math.max(0, parseInt(e.target.value) || 0));
+                      onChange={(e) => {
+                        const val = Math.min(
+                          9,
+                          Math.max(0, parseInt(e.target.value) || 0),
+                        );
                         updateDecision(`regions.${id}.marketing`, val);
                       }}
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm font-mono text-white outline-none focus:border-orange-500 transition-all"
@@ -567,49 +770,91 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider font-sans flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/15">
                     ● Realizado Rodada {activeArena?.current_round}
                   </span>
-                  <span className="text-[8px] font-mono text-slate-500">APURADO</span>
+                  <span className="text-[8px] font-mono text-slate-500">
+                    APURADO
+                  </span>
                 </div>
-                
+
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Preço Médio Regional:</span>
-                  <span className="text-amber-400 font-bold">{currency} {stats.avgPriceRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-amber-400 font-bold">
+                    {currency}{" "}
+                    {stats.avgPriceRegion.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Market Size Regional:</span>
-                  <span className="text-slate-300 font-semibold">{stats.totalRegionDemand.toLocaleString('pt-BR')} un</span>
+                  <span className="text-slate-300 font-semibold">
+                    {stats.totalRegionDemand.toLocaleString("pt-BR")} un
+                  </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Peso Demanda:</span>
-                  <span className="text-slate-300 font-semibold">{demandWeight.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</span>
+                  <span className="text-slate-300 font-semibold">
+                    {demandWeight.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })}
+                    %
+                  </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Seu Volume Vendido:</span>
-                  <span className="text-slate-300 font-bold">{stats.activeTeamUnitsSold.toLocaleString('pt-BR')} un</span>
+                  <span className="text-slate-300 font-bold">
+                    {stats.activeTeamUnitsSold.toLocaleString("pt-BR")} un
+                  </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Vendas Globais Região:</span>
-                  <span className="text-purple-400 font-semibold">{stats.totalRegionUnitsSold.toLocaleString('pt-BR')} un</span>
+                  <span className="text-purple-400 font-semibold">
+                    {stats.totalRegionUnitsSold.toLocaleString("pt-BR")} un
+                  </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                   <span>Sua Participação Região:</span>
-                  <span className="text-emerald-400 font-bold">{stats.relativeSalesShare.toFixed(1)}%</span>
+                  <span className="text-emerald-400 font-bold">
+                    {stats.relativeSalesShare.toFixed(1)}%
+                  </span>
                 </div>
-                
+
                 <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
                   <div className="flex justify-between text-[9px] text-slate-500 uppercase tracking-wider font-mono">
                     <span>Parâmetros Esperados Rodada {round}:</span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                     <span>Custo Logística:</span>
-                    <span className="text-slate-400 font-semibold">{currency} {adjustedDistCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/un</span>
+                    <span className="text-slate-400 font-semibold">
+                      {currency}{" "}
+                      {adjustedDistCost.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      /un
+                    </span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                     <span>Custo Camp. Mkt:</span>
-                    <span className="text-slate-400 font-semibold">{currency} {adjustedMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/un</span>
+                    <span className="text-slate-400 font-semibold">
+                      {currency}{" "}
+                      {adjustedMktCost.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      /un
+                    </span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                     <span>Total Mkt Projetado:</span>
-                    <span className="text-orange-400 font-black">{currency} {totalMktCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-orange-400 font-black">
+                      {currency}{" "}
+                      {totalMktCost.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
                   </div>
                 </div>
 
@@ -624,80 +869,142 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                       <DollarSign size={13} className="text-emerald-400" />
                       DRE Histórico Realizado
                     </span>
-                    {allRegionsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    {allRegionsExpanded ? (
+                      <ChevronUp size={13} />
+                    ) : (
+                      <ChevronDown size={13} />
+                    )}
                   </button>
 
                   {allRegionsExpanded && (
                     <div className="mt-3 space-y-2 bg-slate-950/50 p-3 rounded-2xl border border-white/5 text-[10px] font-mono leading-relaxed">
                       {(() => {
-                        const activeTeamHist = competitorsLog.find(c => String(c.team_id) === String(activeTeam?.id));
-                        
+                        const activeTeamHist = competitorsLog.find(
+                          (c) => String(c.team_id) === String(activeTeam?.id),
+                        );
+
                         if (!activeArena || activeArena.current_round === 0) {
                           return (
                             <div className="text-center py-4 text-slate-500 font-sans text-xs leading-normal">
-                              <p className="font-bold text-amber-500">START FROM ZERO</p>
-                              <p className="text-[10px] mt-1 text-slate-600">Sem faturamento apurado na rodada de início (Rodada 0).</p>
+                              <p className="font-bold text-amber-500">
+                                START FROM ZERO
+                              </p>
+                              <p className="text-[10px] mt-1 text-slate-600">
+                                Sem faturamento apurado na rodada de início
+                                (Rodada 0).
+                              </p>
                             </div>
                           );
                         }
 
                         // Use 100% historical statistics and decisions from closed round
                         const histStats = calculateRegionStats(regId, true);
-                        const histReg = activeTeamHist?.state?.regions?.[id] || activeTeamHist?.state?.regions?.[String(id)] || {};
-                        
-                        const getExchangeRateForRoundLocal = (curr: string | undefined): number => {
-                          if (!curr || curr === 'BRL') return 1.0;
-                          
+                        const histReg =
+                          activeTeamHist?.state?.regions?.[id] ||
+                          activeTeamHist?.state?.regions?.[String(id)] ||
+                          {};
+
+                        const getExchangeRateForRoundLocal = (
+                          curr: string | undefined,
+                        ): number => {
+                          if (!curr || curr === "BRL") return 1.0;
+
                           const closedRound = activeArena?.current_round || 0;
-                          if (activeArena?.round_rules?.[closedRound]?.[curr] !== undefined) {
-                            return Number(activeArena.round_rules[closedRound][curr]);
+                          if (
+                            activeArena?.round_rules?.[closedRound]?.[curr] !==
+                            undefined
+                          ) {
+                            return Number(
+                              activeArena.round_rules[closedRound][curr],
+                            );
                           }
-                          
-                          if (activeArena?.market_indicators?.exchange_rates?.[curr] !== undefined) {
-                            return Number(activeArena.market_indicators.exchange_rates[curr]);
+
+                          if (
+                            activeArena?.market_indicators?.exchange_rates?.[
+                              curr
+                            ] !== undefined
+                          ) {
+                            return Number(
+                              activeArena.market_indicators.exchange_rates[
+                                curr
+                              ],
+                            );
                           }
-                          
-                          if (activeArena?.market_indicators?.[curr] !== undefined) {
+
+                          if (
+                            activeArena?.market_indicators?.[curr] !== undefined
+                          ) {
                             return Number(activeArena.market_indicators[curr]);
                           }
-                          
+
                           switch (curr) {
-                            case 'USD': return 5.25;
-                            case 'EUR': return 5.60;
-                            case 'GBP': return 6.50;
-                            case 'CNY': return 0.72;
-                            case 'BTC': return 0.00002;
-                            default: return 1.0;
+                            case "USD":
+                              return 5.25;
+                            case "EUR":
+                              return 5.6;
+                            case "GBP":
+                              return 6.5;
+                            case "CNY":
+                              return 0.72;
+                            case "BTC":
+                              return 0.00002;
+                            default:
+                              return 1.0;
                           }
                         };
-                        
+
                         const rate = getExchangeRateForRoundLocal(currency);
-                        const unitCPV = getHistoricalActiveTeamUnitCPV(activeTeamHist);
+                        const unitCPV =
+                          getHistoricalActiveTeamUnitCPV(activeTeamHist);
                         const soldQty = histStats.activeTeamUnitsSold;
                         const regionPrice = Number(histReg.price) || 0;
                         const grossRev = soldQty * regionPrice;
-                        
-                        const vatSalesRate = activeTeamHist?.kpis?.vat_sales_rate !== undefined 
-                          ? Number(activeTeamHist.kpis.vat_sales_rate) 
-                          : (activeArena?.market_indicators?.vat_sales_rate !== undefined ? Number(activeArena.market_indicators.vat_sales_rate) : 0);
-                        
+
+                        const vatSalesRate =
+                          activeTeamHist?.kpis?.vat_sales_rate !== undefined
+                            ? Number(activeTeamHist.kpis.vat_sales_rate)
+                            : activeArena?.market_indicators?.vat_sales_rate !==
+                                undefined
+                              ? Number(
+                                  activeArena.market_indicators.vat_sales_rate,
+                                )
+                              : 0;
+
                         const taxes = grossRev * (vatSalesRate / 100);
                         const netRev = grossRev - taxes;
-                        
+
                         const cpvAllocated = soldQty * (unitCPV / rate);
                         const grossProfitReg = netRev - cpvAllocated;
 
                         // Custos operacionais específicos da região na rodada fechada (realizado)
-                        const histAdjustedDistCost = getAdjustedPrice(distCost, 'distribution_cost_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
-                        const histAdjustedMktCost = getAdjustedPrice(mktCost, 'marketing_campaign_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
-                        
-                        const mktAllocated = (Number(histReg.marketing) || 0) * histAdjustedMktCost;
+                        const histAdjustedDistCost = getAdjustedPrice(
+                          distCost,
+                          "distribution_cost_adjust",
+                          activeArena.current_round,
+                          activeArena.round_rules ||
+                            DEFAULT_INDUSTRIAL_CHRONOGRAM,
+                        );
+                        const histAdjustedMktCost = getAdjustedPrice(
+                          mktCost,
+                          "marketing_campaign_adjust",
+                          activeArena.current_round,
+                          activeArena.round_rules ||
+                            DEFAULT_INDUSTRIAL_CHRONOGRAM,
+                        );
+
+                        const mktAllocated =
+                          (Number(histReg.marketing) || 0) *
+                          histAdjustedMktCost;
                         const distAllocated = soldQty * histAdjustedDistCost;
-                        const contributionProfitReg = grossProfitReg - mktAllocated - distAllocated;
+                        const contributionProfitReg =
+                          grossProfitReg - mktAllocated - distAllocated;
 
                         // Motor de Rateio Regional Fiduciário (FRAE v2) para reconciliamento integral com a Matriz
                         const dre = activeTeamHist?.kpis?.statements?.dre;
-                        const findDREValue = (nodes: any[] | null | undefined, targetId: string): number => {
+                        const findDREValue = (
+                          nodes: any[] | null | undefined,
+                          targetId: string,
+                        ): number => {
                           if (!nodes || !Array.isArray(nodes)) return 0;
                           for (const node of nodes) {
                             if (node.id === targetId) return node.value || 0;
@@ -709,126 +1016,288 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                           return 0;
                         };
 
-                        const companyNetProfit = findDREValue(dre, 'final_profit');
+                        const companyNetProfit = findDREValue(
+                          dre,
+                          "final_profit",
+                        );
 
                         // Para o rateio fiduciário das despesas corporativas não-alocáveis (irpj/csll, folha adm, inadimplência, juros, etc).
                         // Calculamos em tempo de execução a soma das margens de contribuição de todas as regiões operadas.
-                        const allRegions = activeArena?.config?.regions || activeArena?.config?.region_configs || [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
-                        
+                        const allRegions = activeArena?.config?.regions ||
+                          activeArena?.config?.region_configs || [
+                            { id: 1 },
+                            { id: 2 },
+                            { id: 3 },
+                            { id: 4 },
+                          ];
+
                         let totalCompanyNetRevBrl = 0;
                         let totalCompanyContributionProfitBrl = 0;
 
                         allRegions.forEach((r: any) => {
                           const rId = Number(r.id);
                           const rStats = calculateRegionStats(rId, true);
-                          const rReg = activeTeamHist?.state?.regions?.[rId] || activeTeamHist?.state?.regions?.[String(rId)] || {};
-                          
-                          const rRegionConf = activeArena?.config?.regions?.find((x: any) => x.id === rId) || activeArena?.config?.region_configs?.find((x: any) => x.id === rId);
-                          const rCurrency = rRegionConf?.currency || activeArena?.currency || 'BRL';
+                          const rReg =
+                            activeTeamHist?.state?.regions?.[rId] ||
+                            activeTeamHist?.state?.regions?.[String(rId)] ||
+                            {};
+
+                          const rRegionConf =
+                            activeArena?.config?.regions?.find(
+                              (x: any) => x.id === rId,
+                            ) ||
+                            activeArena?.config?.region_configs?.find(
+                              (x: any) => x.id === rId,
+                            );
+                          const rCurrency =
+                            rRegionConf?.currency ||
+                            activeArena?.currency ||
+                            "BRL";
                           const rRate = getExchangeRateForRoundLocal(rCurrency);
 
                           const rSoldQty = rStats.activeTeamUnitsSold;
                           const rPrice = Number(rReg.price) || 0;
                           const rGrossRevLocal = rSoldQty * rPrice;
-                          const rTaxesLocal = rGrossRevLocal * (vatSalesRate / 100);
+                          const rTaxesLocal =
+                            rGrossRevLocal * (vatSalesRate / 100);
                           const rNetRevLocal = rGrossRevLocal - rTaxesLocal;
                           const rNetRevBrl = rNetRevLocal * rRate;
-                          
+
                           const rCpvAllocatedBrl = rSoldQty * unitCPV;
-                          
-                          const rDistCostLocal = rRegionConf?.distribution_cost !== undefined ? Number(rRegionConf.distribution_cost) : (activeArena?.market_indicators?.prices?.distribution_unit || 50);
-                          const rMktCostLocal = rRegionConf?.marketing_cost !== undefined ? Number(rRegionConf.marketing_cost) : (activeArena?.market_indicators?.prices?.marketing_campaign || 10000);
-                          
-                          const rAdjustedDistCostLocal = getAdjustedPrice(rDistCostLocal, 'distribution_cost_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
-                          const rAdjustedMktCostLocal = getAdjustedPrice(rMktCostLocal, 'marketing_campaign_adjust', activeArena.current_round, activeArena.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
-                          
-                          const rMktAllocatedLocal = (Number(rReg.marketing) || 0) * rAdjustedMktCostLocal;
-                          const rDistAllocatedLocal = rSoldQty * rAdjustedDistCostLocal;
+
+                          const rDistCostLocal =
+                            rRegionConf?.distribution_cost !== undefined
+                              ? Number(rRegionConf.distribution_cost)
+                              : activeArena?.market_indicators?.prices
+                                  ?.distribution_unit || 50;
+                          const rMktCostLocal =
+                            rRegionConf?.marketing_cost !== undefined
+                              ? Number(rRegionConf.marketing_cost)
+                              : activeArena?.market_indicators?.prices
+                                  ?.marketing_campaign || 10000;
+
+                          const rAdjustedDistCostLocal = getAdjustedPrice(
+                            rDistCostLocal,
+                            "distribution_cost_adjust",
+                            activeArena.current_round,
+                            activeArena.round_rules ||
+                              DEFAULT_INDUSTRIAL_CHRONOGRAM,
+                          );
+                          const rAdjustedMktCostLocal = getAdjustedPrice(
+                            rMktCostLocal,
+                            "marketing_campaign_adjust",
+                            activeArena.current_round,
+                            activeArena.round_rules ||
+                              DEFAULT_INDUSTRIAL_CHRONOGRAM,
+                          );
+
+                          const rMktAllocatedLocal =
+                            (Number(rReg.marketing) || 0) *
+                            rAdjustedMktCostLocal;
+                          const rDistAllocatedLocal =
+                            rSoldQty * rAdjustedDistCostLocal;
 
                           const rMktAllocatedBrl = rMktAllocatedLocal * rRate;
                           const rDistAllocatedBrl = rDistAllocatedLocal * rRate;
-                          
+
                           const rGrossProfitBrl = rNetRevBrl - rCpvAllocatedBrl;
-                          const rContributionProfitBrl = rGrossProfitBrl - rMktAllocatedBrl - rDistAllocatedBrl;
+                          const rContributionProfitBrl =
+                            rGrossProfitBrl -
+                            rMktAllocatedBrl -
+                            rDistAllocatedBrl;
 
                           totalCompanyNetRevBrl += rNetRevBrl;
-                          totalCompanyContributionProfitBrl += rContributionProfitBrl;
+                          totalCompanyContributionProfitBrl +=
+                            rContributionProfitBrl;
                         });
 
                         // Despesas corporativas indiretas da holding em BRL
-                        const indirectCorporateExpensesBrl = totalCompanyContributionProfitBrl - companyNetProfit;
+                        const indirectCorporateExpensesBrl =
+                          totalCompanyContributionProfitBrl - companyNetProfit;
 
                         let regionalCorporateShare = 0;
                         let netProfitRegion = 0;
                         const netRevBrl = netRev * rate;
 
                         if (totalCompanyNetRevBrl > 0) {
-                          const regionalCorporateShareBrl = indirectCorporateExpensesBrl * (netRevBrl / totalCompanyNetRevBrl);
-                          const grossProfitRegBrl = netRevBrl - (soldQty * unitCPV);
-                          const contributionProfitRegBrl = grossProfitRegBrl - (mktAllocated * rate) - (distAllocated * rate);
-                          const netProfitRegionBrl = contributionProfitRegBrl - regionalCorporateShareBrl;
+                          const regionalCorporateShareBrl =
+                            indirectCorporateExpensesBrl *
+                            (netRevBrl / totalCompanyNetRevBrl);
+                          const grossProfitRegBrl =
+                            netRevBrl - soldQty * unitCPV;
+                          const contributionProfitRegBrl =
+                            grossProfitRegBrl -
+                            mktAllocated * rate -
+                            distAllocated * rate;
+                          const netProfitRegionBrl =
+                            contributionProfitRegBrl -
+                            regionalCorporateShareBrl;
 
-                          regionalCorporateShare = regionalCorporateShareBrl / rate;
+                          regionalCorporateShare =
+                            regionalCorporateShareBrl / rate;
                           netProfitRegion = netProfitRegionBrl / rate;
                         } else {
                           const totalRegionsCount = allRegions.length;
-                          const regionalCorporateShareBrl = totalRegionsCount > 0 ? (indirectCorporateExpensesBrl / totalRegionsCount) : 0;
-                          const netProfitRegionBrl = totalRegionsCount > 0 ? (companyNetProfit / totalRegionsCount) : 0;
+                          const regionalCorporateShareBrl =
+                            totalRegionsCount > 0
+                              ? indirectCorporateExpensesBrl / totalRegionsCount
+                              : 0;
+                          const netProfitRegionBrl =
+                            totalRegionsCount > 0
+                              ? companyNetProfit / totalRegionsCount
+                              : 0;
 
-                          regionalCorporateShare = regionalCorporateShareBrl / rate;
+                          regionalCorporateShare =
+                            regionalCorporateShareBrl / rate;
                           netProfitRegion = netProfitRegionBrl / rate;
                         }
 
-                        const profitMarginRegion = netRev > 0 ? (netProfitRegion / netRev) * 100 : 0;
-                        
+                        const profitMarginRegion =
+                          netRev > 0 ? (netProfitRegion / netRev) * 100 : 0;
+
                         return (
                           <div className="space-y-1.5 font-mono">
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">Receita Bruta:</span>
-                              <span className="text-slate-300 font-bold">{currency} {grossRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-[10px] uppercase font-sans">
+                                Receita Bruta:
+                              </span>
+                              <span className="text-slate-300 font-bold">
+                                {currency}{" "}
+                                {grossRev.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">Receita Líquida:</span>
-                              <span className="text-slate-300 font-bold">{currency} {netRev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-[10px] uppercase font-sans">
+                                Receita Líquida:
+                              </span>
+                              <span className="text-slate-300 font-bold">
+                                {currency}{" "}
+                                {netRev.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">CPV (WAC):</span>
-                              <span className="text-red-400/85 font-semibold">-{currency} {cpvAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-[10px] uppercase font-sans">
+                                CPV (WAC):
+                              </span>
+                              <span className="text-red-400/85 font-semibold">
+                                -{currency}{" "}
+                                {cpvAllocated.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">Lucro Bruto:</span>
-                              <span className="text-amber-500 font-bold">{currency} {grossProfitReg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-[10px] uppercase font-sans">
+                                Lucro Bruto:
+                              </span>
+                              <span className="text-amber-500 font-bold">
+                                {currency}{" "}
+                                {grossProfitReg.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">(-) Marketing:</span>
-                              <span className="text-red-400/80">-{currency} {mktAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-[10px] uppercase font-sans">
+                                (-) Marketing:
+                              </span>
+                              <span className="text-red-400/80">
+                                -{currency}{" "}
+                                {mktAllocated.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">(-) Logística:</span>
-                              <span className="text-red-400/80">-{currency} {distAllocated.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-[10px] uppercase font-sans">
+                                (-) Logística:
+                              </span>
+                              <span className="text-red-400/80">
+                                -{currency}{" "}
+                                {distAllocated.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
                             </div>
                             <div className="flex justify-between items-center text-slate-400 py-1 border-b border-white/5 font-extrabold bg-white/[0.02] px-1.5 rounded-lg">
-                              <span className="text-[10px] uppercase font-sans text-orange-400">Margem Contrib.:</span>
-                              <span className="text-orange-400">{currency} {contributionProfitReg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-[10px] uppercase font-sans text-orange-400">
+                                Margem Contrib.:
+                              </span>
+                              <span className="text-orange-400">
+                                {currency}{" "}
+                                {contributionProfitReg.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
-                              <span className="text-[10px] uppercase font-sans">(-) Desp. Operacionais:</span>
-                              <span className="text-red-400/70">-{currency} {regionalCorporateShare.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="text-[10px] uppercase font-sans">
+                                (-) Desp. Operacionais:
+                              </span>
+                              <span className="text-red-400/70">
+                                -{currency}{" "}
+                                {regionalCorporateShare.toLocaleString(
+                                  "pt-BR",
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  },
+                                )}
+                              </span>
                             </div>
-                            
-                            <div className={`flex justify-between items-center mt-2.5 pt-1.5 border-t border-dashed border-white/10 text-[10px] font-bold ${netProfitRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+
+                            <div
+                              className={`flex justify-between items-center mt-2.5 pt-1.5 border-t border-dashed border-white/10 text-[10px] font-bold ${netProfitRegion >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                            >
                               <span className="flex items-center gap-1 uppercase tracking-wider text-slate-400 text-[9px] font-sans">
-                                {netProfitRegion >= 0 ? <TrendingUp size={11} className="text-emerald-400" /> : <TrendingDown size={11} className="text-red-400" />}
+                                {netProfitRegion >= 0 ? (
+                                  <TrendingUp
+                                    size={11}
+                                    className="text-emerald-400"
+                                  />
+                                ) : (
+                                  <TrendingDown
+                                    size={11}
+                                    className="text-red-400"
+                                  />
+                                )}
                                 Lucro Líq. Reg:
                               </span>
-                              <span className="font-extrabold">{currency} {netProfitRegion.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span className="font-extrabold">
+                                {currency}{" "}
+                                {netProfitRegion.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
                             </div>
-                            <div className={`flex justify-between items-center text-[10px] font-bold ${profitMarginRegion >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                              <span className="uppercase tracking-wider text-slate-400 text-[9px] font-sans">Margem Líquida:</span>
-                              <span className="font-extrabold">{profitMarginRegion.toFixed(1)}%</span>
+                            <div
+                              className={`flex justify-between items-center text-[10px] font-bold ${profitMarginRegion >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                            >
+                              <span className="uppercase tracking-wider text-slate-400 text-[9px] font-sans">
+                                Margem Líquida:
+                              </span>
+                              <span className="font-extrabold">
+                                {profitMarginRegion.toFixed(1)}%
+                              </span>
                             </div>
                             <p className="text-[8.5px] text-slate-500 font-sans mt-3 text-center leading-relaxed uppercase">
-                              (*) Rateio Fiduciário Integral (CPC 22 / IFRS 8): inclui dedução precisa de custos industriais e comerciais locais, além de apropriação proporcional de despesas comuns indiretas da Matriz (Folha Geral, P&D, PECLD, Financeiro, IR).
+                              (*) Rateio Fiduciário Integral (CPC 22 / IFRS 8):
+                              inclui dedução precisa de custos industriais e
+                              comerciais locais, além de apropriação
+                              proporcional de despesas comuns indiretas da
+                              Matriz (Folha Geral, P&D, PECLD, Financeiro, IR).
                             </p>
                           </div>
                         );
