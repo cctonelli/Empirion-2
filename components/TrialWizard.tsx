@@ -4100,14 +4100,22 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   <WizardStepTitle
                     icon={<Calculator size={32} />}
                     title="8. REAL-TIME AUDITOR & PREVIEW"
-                    desc="Auditoria fiduciária e estruturação industrial final antes do deploy da arena."
+                    desc="Auditoria fiduciária e estruturação industrial final antes de salvar a arena."
                   />
-                  <button
-                    onClick={handleRecalculate}
-                    className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
-                  >
-                    <Activity size={16} /> Recalcular P0
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowSaveTplModal(true)}
+                      className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
+                    >
+                      <Save size={16} /> Salvar Ajustes Atuais
+                    </button>
+                    <button
+                      onClick={handleRecalculate}
+                      className="px-8 py-3 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-orange-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
+                    >
+                      <Activity size={16} /> Recalcular P0
+                    </button>
+                  </div>
                 </div>
 
                 {/* DASHBOARD DE AUDITORIA OPERACIONAL E KPIs DO P00 (v19.18) */}
