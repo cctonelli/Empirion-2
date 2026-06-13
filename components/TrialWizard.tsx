@@ -4104,7 +4104,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                   />
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => setShowSaveTplModal(true)}
+                      onClick={() => {
+                        setTemplateName("");
+                        setTemplateDesc("");
+                        setShowSaveTplModal(true);
+                      }}
                       className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-white hover:text-emerald-950 transition-all flex items-center gap-2 shadow-2xl active:scale-95"
                     >
                       <Save size={16} /> Salvar como Template
