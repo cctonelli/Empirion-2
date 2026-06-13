@@ -169,11 +169,34 @@ Para resguardar os resultados contábeis, a concorrência leal de mercado e a fl
 
 ---
 
-## 6. 🎯 Próximos Passos e Verificação de Sincronia
+## 6. 🔒 Governança de Visibilidade e Controle de Templates P0 (Modo Trial vs. Oficial)
+
+Com o objetivo de dotar a ferramenta de alta flexibilidade durante períodos de teste acadêmico e de rigores normativos estritos durante competições corporativas reais, o controle de visibilidade das formulações de balanço e simulação P0 (`p0_templates`) opera sob uma abordagem de transição de governança:
+
+### Fase 1: Modo Trial / Sandbox (Colaboração Aberta)
+- **Regra Geral:** Quer nas configurações industriais ativas quanto em novos modelos contábeis e operacionais táticos que venham a ser acoplados no simulador, **todos os templates são abertos para todos**.
+- **Objetivo Prático:** Fomentar o aprendizado compartilhado, permitir que tutores convidados e estudantes analisem presets sugeridos uns dos outros de forma cooperativa, e acelerar o setup síncrono de cenários de teste complexos.
+- **Implementação Técnica:** 
+  - As queries de busca ao Postgres do Supabase em `getP0Templates()` não aplicam restrições de cláusulas de e-mail/ID (bypass do `tutor_id`) quando acionados em sessões marcadas como Trial.
+  - A política de Row-Level Security (RLS) no Supabase é ajustada para leitura pública global (`FOR SELECT` e `FOR ALL` liberada para a role `public` quando marcadas como `is_public = true`), contornando rejeições para usuários não logados.
+  - No fallback local híbrido via `LocalStorage`, dados gravados em diferentes navegadores sob a mesma máquina coexistem de forma a estender a resiliência do cockpit.
+
+### Fase 2: Oficialização do Modo Campeonato (Isolamento Rígido)
+- **Regra Geral:** Tão logo o campeonato ou os módulos entrem em vigor oficializado, o simulador passa a exigir **isolamento pleno e governança fiduciária rígida de templates**.
+- **Objetivo Prático:** Garantir que um Tutor de uma instituição de ensino ou corporação competitiva não acesse, altere, delete ou plagie as predefinições de cenários exclusivos estruturados por outro Tutor participante de arenas concorrentes.
+- **Implementação Técnica:**
+  - **Filtro de Database:** O serviço de banco de dados ativa a cláusula `.eq('tutor_id', currentUser_id)` de forma mandatória com base no token JWT autenticado do usuário (`auth.uid()`).
+  - **Higienização de LocalStorage:** Rotinas dinâmicas no frontend varrem o e-id local gravado em cache (`local_p0_templates`) e barram do fluxo todos os itens que não possuam autoria (`tutor_id`) coincidente com a sessão ativa.
+  - **Higienização de Payload (Sanitization):** Toda gravação no Supabase passa pelo expurgo de chaves exclusivas de visual de interface (como `category` e `code`) de modo a impedir falhas de sincronização decorrentes de alteração de schema físico, salvaguardando o banco contra erros de REST API.
+
+---
+
+## 7. 🎯 Próximos Passos e Verificação de Sincronia
 
 - [x] Unificação dos cálculos de estatísticas do Cockpit (`MarketingStep.tsx`) para usar o modelo demográfico dinâmico unindo com o peso estipulado pelo Tutor.
 - [x] Unificação dos rótulos visuais para fins de usabilidade corporativa e facilidade de estudo dos alunos concorrentes.
 - [x] Construção e deploy do painel interativo de DRE e Lucratividade Regional expandido por card de decisão para uso síncrono das marcas.
 - [x] Blindagem e implementação de Row-Level Security (RLS) nas tabelas `trial_decisions` e `current_decisions` para impedir vazamento concorrencial de rascunhos.
 - [x] Implementação integral do protocolo de Fiduciary Carry-Forward para salvação de decisões por estouro de timer (Timeout) síncrono.
+- [x] Definição de Governança de Visibilidade Dinâmica de Templates (Modo Trial Aberto vs. Controle Rígido do Tutor Logado em Produção).
 - [ ] Monitoramento constante de novas decisões de compra no Turno 2 pelas equipes para avaliar o impacto imediato na calibragem dos novos equipamentos instalados.

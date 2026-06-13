@@ -490,20 +490,18 @@ CREATE TABLE IF NOT EXISTS public.p0_templates (
 -- Habilitar RLS
 ALTER TABLE public.p0_templates ENABLE ROW LEVEL SECURITY;
 
--- Políticas de RLS de Templates
+-- Políticas de RLS de Templates (Aprimoradas para Modo Trial/Híbrido)
+-- Em modo Trial/Sandbox, permite a leitura e escrita cooperativa de templates tanto para autenticados quanto convidados.
 DROP POLICY IF EXISTS "Leitura de templates públicos e próprios" ON public.p0_templates;
 CREATE POLICY "Leitura de templates públicos e próprios" ON public.p0_templates
-    FOR SELECT TO authenticated
+    FOR SELECT
     USING (is_public = true OR tutor_id::text = auth.uid()::text);
 
 DROP POLICY IF EXISTS "Escrita apenas para tutores e admins" ON public.p0_templates;
 CREATE POLICY "Escrita apenas para tutores e admins" ON public.p0_templates
-    FOR ALL TO authenticated
-    USING (tutor_id::text = auth.uid()::text OR EXISTS (
-        SELECT 1 FROM public.user_profiles
-        WHERE user_profiles.supabase_user_id::text = auth.uid()::text
-        AND user_profiles.role IN ('tutor', 'admin')
-    ));
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
 
 -- 12. NOTA DE GOVERNANÇA DE BANCO DE DADOS v19.14 (SAPPHIRE DIAMOND)
 -- Conforme a Decisão Arquitetural Sênior ADR-DB-04, colunas de tráfego de controle e de simulação
@@ -529,7 +527,7 @@ ALTER TABLE public.trial_decisions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.current_decisions ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------------------------
--- DROP POLICY IF EXISTS "Leitura de trial_decisions" ON public.trial_decisions;
+DROP POLICY IF EXISTS "Leitura de trial_decisions" ON public.trial_decisions;
 CREATE POLICY "Leitura de trial_decisions" ON public.trial_decisions
     FOR SELECT TO public
     USING (

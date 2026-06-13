@@ -909,17 +909,62 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
 
 export const getP0Templates = async (): Promise<any[]> => {
   try {
-    const { data, error } = await supabase
-      .from('p0_templates')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data: authData } = await supabase.auth.getUser();
+    const currentUser_id = authData?.user?.id || null;
+
+    // Se estiver no Trial ou Sandbox, trazemos tudo (aberto de forma colaborativa a todos)
+    // Se o modo Industrial/módulos for oficializado (isTrialSession é false e temos tutor de fato),
+    // aplicamos controle rígido filtrando apenas os templates correspondentes ao tutor logado.
+    const isTrialSession = localStorage.getItem('is_trial_session') === 'true' || !currentUser_id;
+
+    let query = supabase.from('p0_templates').select('*');
     
-    if (error) {
-      console.warn("Using local fallback for p0_templates:", error);
-      const local = localStorage.getItem('local_p0_templates');
-      return local ? JSON.parse(local) : [];
+    // Se não estiver em Trial (Modo Oficializado), filtramos rigidamente no banco pelo tutor logado
+    if (!isTrialSession && currentUser_id) {
+      query = query.eq('tutor_id', currentUser_id);
     }
-    return data || [];
+
+    const { data: dbData, error } = await query.order('created_at', { ascending: false });
+    
+    // Obter dados locais persistidos de forma híbrida
+    const local = localStorage.getItem('local_p0_templates');
+    const localList = local ? JSON.parse(local) : [];
+
+    if (error) {
+      console.warn("Using local fallback for p0_templates due to database response:", error);
+      // Filtramos também a lista local no modo oficializado
+      if (!isTrialSession && currentUser_id) {
+        return localList.filter((item: any) => item.tutor_id === currentUser_id);
+      }
+      return localList;
+    }
+
+    const remoteList = dbData || [];
+    
+    // Mesclar as duas fontes eliminando duplicatas por 'code' ou 'id' para consistência contábil
+    const combined = [...remoteList];
+    localList.forEach((localItem: any) => {
+      // Se estiver no Modo Oficializado, também filtramos o LocalStorage para segurança máxima
+      if (!isTrialSession && currentUser_id && localItem.tutor_id !== currentUser_id) {
+        return; // Pula templates locais de outros tutores
+      }
+
+      const exists = combined.some(
+        (dbItem: any) => dbItem.code === localItem.code || dbItem.id === localItem.id
+      );
+      if (!exists) {
+        combined.push(localItem);
+      }
+    });
+
+    // Ordenar decrescentemente por data de criação para excelente usabilidade (mais recentes primeiro)
+    combined.sort(
+      (a: any, b: any) =>
+        new Date(b.created_at || b.updated_at || 0).getTime() -
+        new Date(a.created_at || a.updated_at || 0).getTime()
+    );
+
+    return combined;
   } catch (err) {
     const local = localStorage.getItem('local_p0_templates');
     return local ? JSON.parse(local) : [];
@@ -929,32 +974,84 @@ export const getP0Templates = async (): Promise<any[]> => {
 export const saveP0Template = async (template: any) => {
   try {
     const { data: authData } = await supabase.auth.getUser();
+    
+    // HIGIENIZAÇÃO DE PAYLOAD (ADR-DB-04):
+    // Removemos 'category' e 'code' do payload de inserção no banco de dados,
+    // pois essas colunas de transporte não existem fisicamente na tabela 'p0_templates' de Supabase-PostgREST,
+    // o que causaria um erro de Bad Request (Coluna inexistente).
+    const { category, code, ...dbSafeTemplate } = template;
+
     const payload = {
-      ...template,
+      ...dbSafeTemplate,
       tutor_id: authData?.user?.id || null,
       updated_at: new Date().toISOString()
     };
     
-    const { data, error } = await supabase
+    // Identificador único local provisório (mantendo code e category para fallbacks em memória e LocalStorage)
+    const initialId = template.id || `tpl-${Math.random().toString(36).substr(2, 9)}`;
+    const payloadLocal = {
+      ...payload,
+      id: initialId,
+      code: code || `TPL_${initialId.toUpperCase()}`,
+      category: category || "industrial",
+      created_at: template.created_at || new Date().toISOString()
+    };
+
+    // 1. Tenta gravar no banco de dados Supabase
+    const { data: dbData, error } = await supabase
       .from('p0_templates')
       .insert(payload)
       .select();
       
     if (error) {
-      console.warn("Mocking save in LocalStorage as fallback:", error);
+      console.warn("Database storage failed, falling back to LocalStorage:", error);
+      // Fallback local robusto
       const local = localStorage.getItem('local_p0_templates');
       const list = local ? JSON.parse(local) : [];
-      const payloadFallback = { ...payload, id: `tpl-${Math.random().toString(36).substr(2, 9)}`, created_at: new Date().toISOString() };
-      list.push(payloadFallback);
+      const existsIdx = list.findIndex((x: any) => x.code === payloadLocal.code);
+      if (existsIdx >= 0) {
+        list[existsIdx] = payloadLocal;
+      } else {
+        list.push(payloadLocal);
+      }
       localStorage.setItem('local_p0_templates', JSON.stringify(list));
-      return { data: [payloadFallback], error: null };
+      return { data: [payloadLocal], error: null };
     }
-    return { data, error: null };
-  } catch (err) {
+
+    // 2. Com sucesso no banco, grava também localmente com o UUID gerado pelas nuvens
+    const dbRecord = dbData && dbData[0] ? dbData[0] : null;
+    const savedRecord = dbRecord ? {
+      ...dbRecord,
+      code: code || `TPL_${dbRecord.id}`,
+      category: category || "industrial"
+    } : payloadLocal;
+    
     const local = localStorage.getItem('local_p0_templates');
     const list = local ? JSON.parse(local) : [];
-    const payloadFallback = { ...template, id: `tpl-${Math.random().toString(36).substr(2, 9)}`, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-    list.push(payloadFallback);
+    
+    // Elimina qualquer duplicata local com o mesmo 'code' para consistência
+    const filteredList = list.filter((item: any) => item.code !== savedRecord.code);
+    filteredList.push(savedRecord);
+    localStorage.setItem('local_p0_templates', JSON.stringify(filteredList));
+
+    return { data: [savedRecord], error: null };
+  } catch (err) {
+    console.error("Exception during saveP0Template:", err);
+    const local = localStorage.getItem('local_p0_templates');
+    const list = local ? JSON.parse(local) : [];
+    const fallbackId = template.id || `tpl-${Math.random().toString(36).substr(2, 9)}`;
+    const payloadFallback = { 
+      ...template, 
+      id: fallbackId, 
+      created_at: new Date().toISOString(), 
+      updated_at: new Date().toISOString() 
+    };
+    const existsIdx = list.findIndex((x: any) => x.code === payloadFallback.code);
+    if (existsIdx >= 0) {
+      list[existsIdx] = payloadFallback;
+    } else {
+      list.push(payloadFallback);
+    }
     localStorage.setItem('local_p0_templates', JSON.stringify(list));
     return { data: [payloadFallback], error: null };
   }

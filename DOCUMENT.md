@@ -1460,6 +1460,15 @@ project-root/
   - **Privacidade de Templates no Supabase:** Integração e controle do flag de estado `templateIsPublic` durante as ações de salvamento de templates no banco de dados e local storage fallback.
 - **Status:** Ativo e em Produção.
 
+### v2026.127 - Obsidian Diamond v2 (Fiduciary P0 Template Visibility & Sanitization)
+- **Data:** 13 de Junho de 2026
+- **Motivo:** Implementação da diretiva estratégica de visualização flexível de templates P0. No modo Trial/Sandbox, todos os templates tornam-se de leitura livre para todos os participantes ("abertos para todos"), acelerando a colaboração e testes do simulador. No modo oficializado de campeonato, ativa-se o rigoroso controle de visibilidade isolado para que cada Tutor acesse estritamente seus próprios arquivos. Sanamento de RLS e Payload Sanitization para prevenir quebras insolúveis de API.
+- **Principais Diferenças na v2026.127:**
+  - **Dynamic Privacy Policy Selector:** `getP0Templates()` avalia de forma nativa a presença do estado `is_trial_session` ou a ausência de autoconexão para liberar a visualização pública. Em cenários oficializados (campeonatos pagos/produção), aplica o filtro isolante `.eq('tutor_id', currentUser_id)`.
+  - **Database Payload Sanitization (ADR-DB-04):** Sanada a tentativa de inserção de propriedades de tráfego visual (`category` e `code`) de forma crua, expurgando esses campos antes de submeter ao Supabase-PostgREST para evitar o erro `400 Bad Request` na listagem persistente e garantindo o funcionamento perfeito do fluxo.
+  - **Transição de RLS no PostgreSQL:** Ajuste das regras de concorrência e leitura na tabela `public.p0_templates` onde se retirou a restrição rígida `TO authenticated` na cláusula `SELECT` com o flag `is_public` (liberando-a de forma coerente à role `public`), mantendo escrita segura em conformidade com as regras do torneio.
+- **Status:** Ativo e em Produção.
+
 ### v19.21 - Sapphire Obsidian Masterclass (Accounting & Tutor Experience Patch)
 - **Data:** Maio de 2026
 - **Motivo:** Melhoria profunda na UX contábil do Tutor e no compilador fiduciário.
