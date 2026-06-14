@@ -54,8 +54,44 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [activeTab, setActiveTab] = useState<'decisoes' | 'financeiro' | 'historico'>('decisoes');
   const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic' | 'commitments' | 'kardex'>('dre');
   const [decisions, setDecisions] = useState<any>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('empirion_is_sidebar_collapsed') === 'true';
+    }
+    return false;
+  });
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+
+  const [isLeftNavCollapsed, setIsLeftNavCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('empirion_is_left_nav_collapsed') === 'true';
+    }
+    return false;
+  });
+  const [isRightPreviewCollapsed, setIsRightPreviewCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('empirion_is_right_preview_collapsed') === 'true';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('empirion_is_sidebar_collapsed', String(isSidebarCollapsed));
+    }
+  }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('empirion_is_left_nav_collapsed', String(isLeftNavCollapsed));
+    }
+  }, [isLeftNavCollapsed]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('empirion_is_right_preview_collapsed', String(isRightPreviewCollapsed));
+    }
+  }, [isRightPreviewCollapsed]);
 
   const isRoundExpired = useMemo(() => {
     if (!activeArena) return false;
@@ -609,9 +645,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          <aside 
             onMouseEnter={() => { if (isSidebarCollapsed) setIsSidebarHovered(true); }}
             onMouseLeave={() => { if (isSidebarCollapsed) setIsSidebarHovered(false); }}
-            className={`shrink-0 flex flex-col transition-all duration-300 z-30 ${
-               !isSidebarCollapsed ? 'relative w-[260px] bg-slate-900/40 backdrop-blur-xl border-r border-white/10' : 
-               isSidebarHovered ? 'absolute left-0 top-0 bottom-0 h-full w-[260px] bg-slate-950/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)]' : 'absolute left-0 top-0 bottom-0 h-full w-12 bg-slate-900/40 backdrop-blur-xl border-r border-white/15'
+            className={`shrink-0 flex flex-col transition-all duration-300 ${
+               !isSidebarCollapsed ? 'relative w-[260px] bg-slate-900/40 backdrop-blur-xl border-r border-white/10 z-30' : 
+               isSidebarHovered ? 'absolute left-0 top-0 bottom-0 h-full w-[260px] bg-slate-950/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] z-50' : 'absolute left-0 top-0 bottom-0 h-full w-12 bg-slate-900/40 backdrop-blur-xl border-r border-white/15 z-30'
             }`}
          >
             {/* Toggle Button / Retractable Checkbox */}
@@ -832,7 +868,12 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           branch={activeArena?.branch}
                           isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound || isExpiredWaiting || isRoundExpired}
                           isExpiredWaiting={isExpiredWaiting || isRoundExpired}
-                          onDecisionsChange={(d) => setDecisions(d)} isTournamentFinished={!!(activeArena && activeArena.current_round >= (activeArena.total_rounds || 6))}
+                          onDecisionsChange={(d) => setDecisions(d)} 
+                          isTournamentFinished={!!(activeArena && activeArena.current_round >= (activeArena.total_rounds || 6))}
+                          isLeftNavCollapsed={isLeftNavCollapsed}
+                          setIsLeftNavCollapsed={setIsLeftNavCollapsed}
+                          isRightPreviewCollapsed={isRightPreviewCollapsed}
+                          setIsRightPreviewCollapsed={setIsRightPreviewCollapsed}
                         />
                       </div>
                     )}

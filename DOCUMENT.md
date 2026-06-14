@@ -2,9 +2,45 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.130 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.132 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Elevação de Estado e Persistência de Preferências nos Cockpits - v2026.132
+
+**Data:** 13 de Junho de 2026 às 21:26 UTC  
+**Motivo:** Corrigir definitivamente o recolhimento indesejado de painéis retráteis secundários e perda de estado de "Modo Retrátil" (Cockpit de Controle e Cockpit Preview em `DecisionForm.tsx`) quando a equipe transita entre abas principais ("DECISÕES DA RODADA", "MATRIZ FINANCEIRA" ou "HISTÓRICO & PROJEÇÕES"). Por ser um componente que sofre unmount completo durante a navegação por abas em `Dashboard.tsx`, as variáveis locais do `DecisionForm.tsx` eram reinicializadas, o que gerava fricção na usabilidade.
+
+**Detalhamento Técnico de Planejamento:**
+- **Elevação de Estado (State Lifting)**: Elevou-se os estados de controle `isLeftNavCollapsed` e `isRightPreviewCollapsed` direto para o pai (`Dashboard.tsx`), sendo transmitidos via props customizáveis opcionais para o `DecisionForm.tsx`.
+- **Preservação por Montagem Ininterrupta**: Como o `Dashboard.tsx` permanece ativamente montado durante as trocas de abas secundárias, o estado da barra lateral de cockpit e do preview lateral permanece intacto no ciclo de vida do pai.
+- **Padrão de Fallback Híbrido**: O componente `DecisionForm.tsx` foi estruturado sob o padrão híbrido em que é compatível com injeção externa via props, mas opcionalmente instancia e sincroniza estados locais persistidos via `localStorage` caso renderizado autonomamente em outros contextos.
+- **Persistência Sincronizada local**: Ambas as pontas agora sincronizam imediatamente via reatividade no `localStorage` sob as chaves `empirion_is_left_nav_collapsed` e `empirion_is_right_preview_collapsed`.
+
+**Impactos:**
+- **Navegação Contínua de Alta Precisão**: Equipes podem examinar a demonstrativa financeira completa de DRE e DFC e, ao retornar às decisões, encontram os cockpits laterais flutuantes e painéis no exato estado visual em que os deixaram.
+- **Zero Flickering Visual**: Preservação estrita das dimensões de tela sem redesenhos ou reposicionamentos desnecessários durante a movimentação tática do empreendedor.
+
+---
+
+## Decisão Arquitetural, Persistência de Preferências de Visualização por Equipe & Sessão - v2026.131
+
+**Data:** 13 de Junho de 2026 às 21:15 UTC  
+**Motivo:** Evitar a perda ou redefinição dos estados de "Modo Retrátil" (sidebar e painéis laterais de cockpits) quando o usuário navega entre as abas do painel ("DECISÕES DA RODADA", "MATRIZ FINANCEIRA" e "HISTÓRICO & PROJEÇÕES"). Anteriormente, por serem estados estritamente locais e voláteis, a alternância de tela destruía a árvore do componente e forçava a re-inicialização do layout, gerando fricção aos diretores.
+
+**Detalhamento Técnico de Planejamento:**
+- **Armazenamento de Preferências Local (localStorage)**: Registros fiduciários das configurações sob chaves designadas e autocontidas:
+  - `empirion_is_sidebar_collapsed` para o Intel Pulse Sidebar (esquerda global).
+  - `empirion_is_left_nav_collapsed` para o Cockpit de Decisões (esquerda local).
+  - `empirion_is_right_preview_collapsed` para o Cockpit Preview (direita).
+- **Tratamento de Estado Lazy**: Inicialização assíncrona/lazy no `useState` para garantir ótimo tempo de carregamento de páginas: `() => { if (typeof window !== 'undefined') { ... } }`.
+- **Efeitos Colaterais Auto-Sincronizados**: Mapeamento via React `useEffect` reativo, persistindo mutações de estado nas chaves devidas no instante de sua ocorrência.
+
+**Impactos:**
+- **Navegação Contínua Ininterrupta**: Equipes podem mudar de tela para analisar o DRE ou gráficos do histórico sem precisar desativar/reativar o visual flutuante do cockpit repetidamente.
+- **Excelente DX e Robustez de Tela**: Comportamento estável e fluido mesmo sob recarregamento acidental do navegador.
 
 ---
 
@@ -15,7 +51,7 @@
 
 **Detalhamento Técnico de Planejamento:**
 - **Prevenção de Shifting via Placeholders Constantes**: Implementação de containers invisíveis funcionais (`72px` na esquerda e `12px` na direita) que ocupam espaço fixo constante no fluxo do documento (document flow), assegurando que o espaço alocado para os cockpits seja rigorosamente consistente sob qualquer estado hover.
-- **Flutuação de Estado via Posicionamento Absoluto**: Redefinição dos painéis reais expandidos dos cockpits para utilizar posicionamento absoluto (`absolute left-0` / `absolute right-0`) sobrepostos sob o viewport em z-index elevado (`z-30` / `z-40`), fazendo com que eles expandam flutuando sobre o conteúdo sutilmente, sem exercer pressão física ou comprimir as colunas internas dos Steps.
+- **Flutuação de Estado via Posicionamento Absoluto & Sobreposição Superior (z-50)**: Redefinição dos painéis reais expandidos dos cockpits para utilizar posicionamento absoluto (`absolute left-0` / `absolute right-0`) sobrepostos no viewport em z-index elevado (`z-50`) quando o mouse passa por cima. Isso impede que os menus retráteis fiquem por baixo dos cartões dos Steps de decisão ou de elementos e gráficos ativos nos painéis secundários.
 - **Unificação de Estados de Renderização no RightPreviewPanel**: Eliminação de retornos redundantes cindidos na árvore do DOM, estruturando o comportamento adaptativo sob uma única div pai com transições suaves sincronizadas de largura (`w-12` a `w-[410px]`) e animações nativas de CSS (Tailwind) orientadas por eventos de `onMouseEnter` e `onMouseLeave` síncronos.
 
 **Impactos:**

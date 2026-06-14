@@ -35,7 +35,33 @@ const STEPS = [
   { id: 'review', label: '8. ORÁCULO', icon: ShieldCheck },
 ];
 
-const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number; branch?: Branch; isReadOnly?: boolean; isExpiredWaiting?: boolean; onDecisionsChange?: (d: DecisionData) => void; isTournamentFinished?: boolean }> = ({ teamId, champId, round = 1, branch = 'industrial', isReadOnly = false, isExpiredWaiting = false, onDecisionsChange, isTournamentFinished = false }) => {
+const DecisionForm: React.FC<{ 
+  teamId?: string; 
+  champId?: string; 
+  round: number; 
+  branch?: Branch; 
+  isReadOnly?: boolean; 
+  isExpiredWaiting?: boolean; 
+  onDecisionsChange?: (d: DecisionData) => void; 
+  isTournamentFinished?: boolean;
+  isLeftNavCollapsed?: boolean;
+  setIsLeftNavCollapsed?: (c: boolean) => void;
+  isRightPreviewCollapsed?: boolean;
+  setIsRightPreviewCollapsed?: (c: boolean) => void;
+}> = ({ 
+  teamId, 
+  champId, 
+  round = 1, 
+  branch = 'industrial', 
+  isReadOnly = false, 
+  isExpiredWaiting = false, 
+  onDecisionsChange, 
+  isTournamentFinished = false,
+  isLeftNavCollapsed: isLeftNavCollapsedProp,
+  setIsLeftNavCollapsed: setIsLeftNavCollapsedProp,
+  isRightPreviewCollapsed: isRightPreviewCollapsedProp,
+  setIsRightPreviewCollapsed: setIsRightPreviewCollapsedProp
+}) => {
   const [activeStep, setActiveStep] = useState(0);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
@@ -45,10 +71,38 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [history, setHistory] = useState<any[]>([]);
   const [isCalculatingESDS, setIsCalculatingESDS] = useState(false);
   const [projectedESDS, setProjectedESDS] = useState<any>(null);
-  const [isLeftNavCollapsed, setIsLeftNavCollapsed] = useState(false);
+
+  const [localLeftNavCollapsed, setLocalLeftNavCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('empirion_is_left_nav_collapsed') === 'true';
+    }
+    return false;
+  });
+  const isLeftNavCollapsed = isLeftNavCollapsedProp !== undefined ? isLeftNavCollapsedProp : localLeftNavCollapsed;
+  const setIsLeftNavCollapsed = setIsLeftNavCollapsedProp !== undefined ? setIsLeftNavCollapsedProp : setLocalLeftNavCollapsed;
   const [isLeftNavHovered, setIsLeftNavHovered] = useState(false);
-  const [isRightPreviewCollapsed, setIsRightPreviewCollapsed] = useState(false);
+
+  const [localRightPreviewCollapsed, setLocalRightPreviewCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('empirion_is_right_preview_collapsed') === 'true';
+    }
+    return false;
+  });
+  const isRightPreviewCollapsed = isRightPreviewCollapsedProp !== undefined ? isRightPreviewCollapsedProp : localRightPreviewCollapsed;
+  const setIsRightPreviewCollapsed = setIsRightPreviewCollapsedProp !== undefined ? setIsRightPreviewCollapsedProp : setLocalRightPreviewCollapsed;
   const [isRightPreviewHovered, setIsRightPreviewHovered] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('empirion_is_left_nav_collapsed', String(isLeftNavCollapsed));
+    }
+  }, [isLeftNavCollapsed]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('empirion_is_right_preview_collapsed', String(isRightPreviewCollapsed));
+    }
+  }, [isRightPreviewCollapsed]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
@@ -474,9 +528,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                  <div 
                     onMouseEnter={() => { if (isLeftNavCollapsed) setIsLeftNavHovered(true); }}
                     onMouseLeave={() => { if (isLeftNavCollapsed) setIsLeftNavHovered(false); }}
-                    className={`hidden lg:flex flex-col bg-[#030712]/95 shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out z-30 ${
-                       !isLeftNavCollapsed ? 'relative w-64 p-4 border-r border-white/5' : 
-                       isLeftNavHovered ? 'absolute left-0 top-0 bottom-0 h-full w-64 p-4 shadow-[0_0_50px_rgba(0,0,0,0.8)] border-r border-white/15' : 'absolute left-0 top-0 bottom-0 h-full w-[72px] p-3 border-r border-white/10'
+                    className={`hidden lg:flex flex-col bg-[#030712]/95 shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out ${
+                       !isLeftNavCollapsed ? 'relative w-64 p-4 border-r border-white/5 z-30' : 
+                       isLeftNavHovered ? 'absolute left-0 top-0 bottom-0 h-full w-64 p-4 shadow-[0_0_50px_rgba(0,0,0,0.8)] border-r border-white/15 z-50' : 'absolute left-0 top-0 bottom-0 h-full w-[72px] p-3 border-r border-white/10 z-30'
                     }`}
                  >
                     <div className={`mb-4 flex items-center pb-3 border-b border-white/5 ${(!isLeftNavCollapsed || isLeftNavHovered) ? 'justify-between gap-1' : 'flex-col justify-center gap-2'}`}>
