@@ -24,9 +24,9 @@ ADD COLUMN IF NOT EXISTS supplier_interest_expenses NUMERIC(20,2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS emergency_purchase_expenses NUMERIC(20,2) DEFAULT 0,
 ADD COLUMN IF NOT EXISTS emergency_units_total INTEGER DEFAULT 0;
 
--- 2. ÍNDICES PARA MONITORAMENTO DE EFICIÊNCIA DE SUPRIMENTOS
-CREATE INDEX IF NOT EXISTS idx_companies_emergency_exp ON public.companies (emergency_purchase_expenses DESC);
-CREATE INDEX IF NOT EXISTS idx_companies_supplier_int ON public.companies (supplier_interest_expenses DESC);
+-- 2. ÍNDICES PARA MONITORAMENTO DE EFICIÊNCIA DE SUPRIMENTOS (Mapeamento JSONB)
+CREATE INDEX IF NOT EXISTS idx_companies_emergency_exp ON public.companies (((kpis->>'emergency_purchase_expenses')::numeric DESC));
+CREATE INDEX IF NOT EXISTS idx_companies_supplier_int ON public.companies (((kpis->>'supplier_interest_expenses')::numeric DESC));
 
 -- 3. VIEW DE AUDITORIA DE SUPRIMENTOS PARA O TUTOR (NOVA)
 DROP VIEW IF EXISTS public.view_supply_chain_health;
@@ -37,10 +37,10 @@ SELECT
     c.championship_id,
     c.round,
     t.name as team_name,
-    c.supplier_interest_expenses as interest_paid,
-    c.emergency_purchase_expenses as emergency_costs,
-    c.emergency_units_total as emergency_units,
-    (c.emergency_purchase_expenses + c.supplier_interest_expenses) as total_supply_overhead
+    COALESCE((c.kpis->>'supplier_interest_expenses')::numeric, 0) as interest_paid,
+    COALESCE((c.kpis->>'emergency_purchase_expenses')::numeric, 0) as emergency_costs,
+    COALESCE((c.kpis->>'emergency_units_total')::integer, 0) as emergency_units,
+    (COALESCE((c.kpis->>'emergency_purchase_expenses')::numeric, 0) + COALESCE((c.kpis->>'supplier_interest_expenses')::numeric, 0)) as total_supply_overhead
 FROM public.companies c
 JOIN public.teams t ON c.team_id::text = t.id::text;
 
@@ -206,11 +206,11 @@ ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS equity NUMERIC(20,2) DEF
 ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS insolvency_status TEXT DEFAULT 'SAUDAVEL';
 ALTER TABLE public.trial_teams ADD COLUMN IF NOT EXISTS locale TEXT DEFAULT 'pt-BR';
 
--- 7. ÍNDICES PARA MONITORAMENTO DE "SAÚDE DOS ATIVOS" E KPIs
-CREATE INDEX IF NOT EXISTS idx_companies_asset_vcl ON public.companies (fixed_assets_value DESC);
-CREATE INDEX IF NOT EXISTS idx_companies_ccc ON public.companies (ccc ASC);
-CREATE INDEX IF NOT EXISTS idx_companies_tsr ON public.companies (tsr DESC);
-CREATE INDEX IF NOT EXISTS idx_companies_esds ON public.companies (esds_score DESC);
+-- 7. ÍNDICES PARA MONITORAMENTO DE "SAÚDE DOS ATIVOS" E KPIs (Mapeamento JSONB)
+CREATE INDEX IF NOT EXISTS idx_companies_asset_vcl ON public.companies (((kpis->>'fixed_assets_value')::numeric DESC));
+CREATE INDEX IF NOT EXISTS idx_companies_ccc ON public.companies (((kpis->>'ccc')::numeric ASC));
+CREATE INDEX IF NOT EXISTS idx_companies_tsr ON public.companies (((kpis->>'tsr')::numeric DESC));
+CREATE INDEX IF NOT EXISTS idx_companies_esds ON public.companies (((kpis->'esds'->>'esds_display')::numeric DESC));
 
 -- 4. VIEW DE AUDITORIA DE CAPEX PARA O TUTOR (HELPER)
 -- Fix: DROP VIEW antes de recriar para permitir mudança na estrutura de colunas
@@ -222,13 +222,13 @@ SELECT
     c.championship_id,
     c.round,
     t.name as team_name,
-    c.fixed_assets_value as net_book_value,
-    c.fixed_assets_depreciation as accumulated_depreciation,
-    c.esds_score,
-    c.esds_zone,
+    COALESCE((c.kpis->>'fixed_assets_value')::numeric, 0) as net_book_value,
+    COALESCE((c.kpis->>'fixed_assets_depreciation')::numeric, 0) as accumulated_depreciation,
+    COALESCE((c.kpis->'esds'->>'esds_display')::numeric, (c.kpis->>'esds_score')::numeric, 0) as esds_score,
+    COALESCE(c.kpis->'esds'->>'zone', 'ALERTA') as esds_zone,
     CASE 
-        WHEN (c.fixed_assets_value + ABS(c.fixed_assets_depreciation)) = 0 THEN 0 
-        ELSE ABS(c.fixed_assets_depreciation) / (c.fixed_assets_value + ABS(c.fixed_assets_depreciation)) * 100 
+        WHEN (COALESCE((c.kpis->>'fixed_assets_value')::numeric, 0) + ABS(COALESCE((c.kpis->>'fixed_assets_depreciation')::numeric, 0))) = 0 THEN 0 
+        ELSE ABS(COALESCE((c.kpis->>'fixed_assets_depreciation')::numeric, 0)) / (COALESCE((c.kpis->>'fixed_assets_value')::numeric, 0) + ABS(COALESCE((c.kpis->>'fixed_assets_depreciation')::numeric, 0))) * 100 
     END as exhaustion_percentage
 FROM public.companies c
 JOIN public.teams t ON c.team_id::text = t.id::text;

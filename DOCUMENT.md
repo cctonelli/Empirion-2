@@ -2,9 +2,34 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.143 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.144 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Higienização do Histórico de Marcas e Reidratação Sintética de KPIs das Empresas - v2026.144
+
+**Data:** 14 de Junho de 2026 às 19:15 UTC  
+**Motivo:** Erradicação de dezenas de colunas acessórias que inflavam as tabelas `public.companies` e `public.trial_companies` no Supabase com KPIs flutuantes calculados, visando habilitar a expansão dinâmica dos novos dashboards setoriais (| **MACROECONOMICS** | **FINANCIAL & ACCOUNTING** | **LOGISTICS & MARKET** | **INDUSTRIAL & HR** |) sem travar a engenharia técnica e contábil. A unificação consolida os dados perfeitamente no objeto documentado `kpis` (JSONB) e garante compatibilidade perfeita aos componentes frontend existentes através de um Mapeador Sintético no cliente.
+
+**Detalhamento Técnico de Planejamento:**
+- **Merge de Conservação Fiduciária das Empresas (IFRS & CPC)**:
+  - O script de migração (`20260614191000_cop_companies_fiduciary_cleanup.sql`) realiza um update estrutural consolidado usando operadores de mesclagem (`||`) para injetar todas as 45 variáveis tecnocráticas calculadas de rounds passados (ex: `tsr`, `nlcdg`, `ebitda`, `solvency_score_kanitz`, `ccc`, `avg_payable_days`, etc.) diretamente dentro do documento JSONB `kpis` de cada marca, preservando o valor e o histórico financeiro dos torneios ativos na nuvem antes de prosseguir com as remoções físicas.
+- **Resolução de Dependências Fiduciárias de Banco de Dados (Views CASCADE & Reconstrução)**:
+  - Identificamos dependências relacionais nas views `public.view_supply_chain_health` and `public.view_capex_health` que consultavam colunas físicas de Capex e Logística. 
+  - Para erradicar o erro `2BP01: cannot drop column fixed_assets_value because other objects depend on it`, o script de migração executa `DROP VIEW IF EXISTS ... CASCADE` no início do lote atômico.
+  - Após a purificação das 45 colunas redundantes raiz, reconstrói-as como views fiduciárias dinâmicas extraindo e convertendo as propriedades diretamente do nó JSONB `kpis` (ex: `COALESCE((c.kpis->>'fixed_assets_value')::numeric, 0)`), mitigando interrupções.
+  - Atualizamos os índices de eficiência operacional no script principal `/database_rls.sql` para operarem de maneira performática usando índices de expressões JSONB do Postgres.
+- **Remoção de Colunas Tecnocráticas Obsoletas (Purificação de Dados)**:
+  - Após a fusão, são eliminadas da raiz física das tabelas 45 propriedades residuais redundantes. As tabelas ficam de posse somente da espinha dorsal relacional e das métricas indexadoras centrais de performance e liderança de mercado: `id`, `championship_id`, `team_id`, `round`, `state` (decisões), `kpis` (JSONB de subcontas), `equity` (capital + lucros para rankings de PL), `revenue` (faturamento), `net_profit` (lucro líquido) e `market_share` (participação de concorrência regional).
+- **Mapeamento Sintético Transparente (Zero DX Regression)**:
+  - No cliente do Supabase `/services/supabase.ts`, implementamos o helper `mapHistoryItemSynthetically`. Ao carregar o histórico de simulação via `getTeamSimulationHistory` ou gerar `getPublicReports`, o cliente intercepta o payload e de forma invisível reidrata qualquer propriedade plana consultada pelo frontend (ex: `h.solvency_score_kanitz` ou `h.fco_livre`) extraindo-a do nó `kpis` se não estiver presente na raiz física da tabela.
+  - Isso garante total retrocompatibilidade e impede qualquer quebra de visualização nos dashboards, sumários e assistentes do ERP.
+
+**Impactos:**
+- **Compactação e Desempenho Excepcional**: Uma modelagem física limpa acelera escritas, consultas analíticas e reduz drasticamente o tráfego do banco de dados no Supabase.
+- **Extensibilidade Ilimitada**: A adição de novos KPIs complexos de contabilidade e logística não exigirá mais alterações físicas no DDL do Supabase. Tudo será incorporado dinamicamente no nó `kpis` (JSONB), acelerando o desenvolvimento contínuo de dashboards de alta complexidade.
 
 ---
 

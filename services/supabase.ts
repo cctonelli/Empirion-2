@@ -139,6 +139,39 @@ export const saveBusinessPlan = async (payload: Partial<BusinessPlan>) => {
   return await supabase.from('business_plans').insert(payload);
 };
 
+export const mapHistoryItemSynthetically = (item: any) => {
+  if (!item) return item;
+  const accessorFields = [
+    'tsr', 'nlcdg', 'ebitda', 'solvency_score_kanitz', 'dcf_valuation',
+    'total_assets', 'fixed_assets_value', 'stock_value', 'fixed_assets_depreciation',
+    'ccc', 'interest_coverage', 'export_tariff_brazil', 'export_tariff_uk',
+    'brl_rate', 'gbp_rate', 'compulsory_loan_balance', 'compulsory_loan_interest_paid',
+    'scissors_effect', 'liquidity_current', 'solvency_index', 'inventory_turnover',
+    'avg_receivable_days', 'avg_payable_days', 'price_elasticity', 'carbon_footprint',
+    'credit_rating', 'altman_z_score', 'fco_livre', 'capex_manutencao', 'capex_estrategico',
+    'stock_mpa_value', 'stock_mpb_value', 'vat_recoverable', 'vat_payable',
+    'total_receivables', 'total_payables', 'supplier_interest_expenses',
+    'emergency_purchase_expenses', 'emergency_units_total'
+  ];
+  const mapped = { ...item };
+  if (mapped.kpis) {
+    accessorFields.forEach(field => {
+      if (mapped[field] === undefined || mapped[field] === null) {
+        mapped[field] = mapped.kpis[field];
+      }
+    });
+    if (mapped.kpis.esds) {
+      if (mapped.esds_score === undefined || mapped.esds_score === null) mapped.esds_score = mapped.kpis.esds.esds_display || mapped.kpis.esds.score || 0;
+      if (mapped.esds_zone === undefined || mapped.esds_zone === null) mapped.esds_zone = mapped.kpis.esds.zone || 'ALERTA';
+      if (mapped.esds_gargalo === undefined || mapped.esds_gargalo === null) mapped.esds_gargalo = mapped.kpis.esds.gargalo_principal || '';
+      if (mapped.esds_insights === undefined || mapped.esds_insights === null) mapped.esds_insights = mapped.kpis.esds.gemini_insights || '';
+      if (mapped.esds_top_gargalos === undefined || mapped.esds_top_gargalos === null) mapped.esds_top_gargalos = mapped.kpis.esds.top_gargalos || [];
+      if (mapped.esds_main_drivers === undefined || mapped.esds_main_drivers === null) mapped.esds_main_drivers = mapped.kpis.esds.main_drivers || [];
+    }
+  }
+  return mapped;
+};
+
 export const getTeamSimulationHistory = async (teamId: string, isTrial?: boolean) => {
   const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
   const historyTable = isTrialSession ? 'trial_companies' : 'companies';
@@ -147,7 +180,7 @@ export const getTeamSimulationHistory = async (teamId: string, isTrial?: boolean
     .select('*')
     .eq('team_id', teamId)
     .order('round', { ascending: true });
-  return data || [];
+  return (data || []).map(mapHistoryItemSynthetically);
 };
 
 export const saveDecisions = async (teamId: string, champId: string, round: number, data: any, isTrial?: boolean) => {
@@ -411,7 +444,11 @@ export const fetchPageContent = async (slug: string, lang: string) => {
 export const getPublicReports = async (champId: string, round: number) => {
   const isTrial = localStorage.getItem('is_trial_session') === 'true';
   const table = isTrial ? 'trial_companies' : 'companies';
-  return await supabase.from(table).select('*').eq('championship_id', champId).eq('round', round);
+  const res = await supabase.from(table).select('*').eq('championship_id', champId).eq('round', round);
+  if (res.data) {
+    res.data = res.data.map(mapHistoryItemSynthetically);
+  }
+  return res;
 };
 
 export const submitCommunityVote = async (voteData: any) => {
@@ -794,48 +831,10 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 round: nextRound, 
                 state: marketDecisions[item.team.id], 
                 kpis: item.res.kpis, 
-                equity: item.res.kpis.equity,
-                revenue: item.res.revenue,
-                net_profit: item.res.netProfit,
-                total_assets: item.res.kpis.total_assets,
-                stock_value: item.res.kpis.stock_value,
-                total_receivables: item.res.kpis.commitments?.receivables?.reduce((sum: number, r: any) => sum + r.value, 0) || 0,
-                total_payables: item.res.kpis.commitments?.payables?.reduce((sum: number, p: any) => sum + p.value, 0) || 0,
-                fixed_assets_value: item.res.kpis.fixed_assets_value,
-                fixed_assets_depreciation: item.res.kpis.fixed_assets_depreciation,
-                ccc: item.res.kpis.ccc,
-                interest_coverage: item.res.kpis.interest_coverage,
-                export_tariff_brazil: item.res.kpis.export_tariff_brazil,
-                export_tariff_uk: item.res.kpis.export_tariff_uk,
-                brl_rate: item.res.kpis.brl_rate,
-                gbp_rate: item.res.kpis.gbp_rate,
-                compulsory_loan_balance: item.res.kpis.compulsory_loan_balance || 0,
-                compulsory_loan_interest_paid: item.res.kpis.compulsory_loan_interest_paid || 0,
-                tsr: item.res.kpis.tsr || 0,
-                nlcdg: item.res.kpis.nlcdg || 0,
-                solvency_score_kanitz: item.res.kpis.solvency_score_kanitz || 0,
-                altman_z_score: item.res.kpis.altman_z_score || 0,
-                dcf_valuation: item.res.kpis.dcf_valuation || 0,
-                scissors_effect: item.res.kpis.scissors_effect || 0,
-                liquidity_current: item.res.kpis.liquidity_current || 0,
-                solvency_index: item.res.kpis.solvency_index || 0,
-                inventory_turnover: item.res.kpis.inventory_turnover || 0,
-                carbon_footprint: item.res.kpis.carbon_footprint || 0,
-                fco_livre: item.res.kpis.fco_livre || 0,
-                capex_manutencao: item.res.kpis.capex_manutencao || 0,
-                capex_estrategico: item.res.kpis.capex_estrategico || 0,
-                esds_score: item.res.kpis.esds?.esds_display || 0,
-                esds_zone: item.res.kpis.esds?.zone || 'ALERTA',
-                esds_gargalo: item.res.kpis.esds?.gargalo_principal,
-                esds_insights: item.res.kpis.esds?.gemini_insights,
-                esds_top_gargalos: item.res.kpis.esds?.top_gargalos || [],
-                esds_main_drivers: item.res.kpis.esds?.main_drivers || [],
-                market_share: Math.round(competitiveShare),
-                supplier_interest_expenses: item.res.kpis.supplier_interest_expenses || 0,
-                emergency_purchase_expenses: item.res.kpis.emergency_purchase_expenses || 0,
-                emergency_units_total: Math.round(item.res.kpis.emergency_units_total || 0),
-                avg_receivable_days: Math.round(item.res.kpis.avg_receivable_days || 0),
-                avg_payable_days: Math.round(item.res.kpis.avg_payable_days || 0)
+                equity: item.res.kpis.equity || 0,
+                revenue: item.res.revenue || 0,
+                net_profit: item.res.netProfit || 0,
+                market_share: Math.round(competitiveShare)
             };
 
             const { error: insertErr } = await supabase.from(historyTable).insert(payload);
@@ -855,9 +854,9 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                   `Mensagem: ${insertErr.message} (Código: ${insertErr.code || 'N/A'})\n` +
                   `Valores Decimais Suspeitos: [${suspeitos || 'Nenhum'}]\n` +
                   `Payload Compacto para análise: ${JSON.stringify({ 
-                     avg_receivable_days: payload.avg_receivable_days, 
-                     avg_payable_days: payload.avg_payable_days, 
-                     emergency_units_total: payload.emergency_units_total,
+                     avg_receivable_days: payload.kpis?.avg_receivable_days, 
+                     avg_payable_days: payload.kpis?.avg_payable_days, 
+                     emergency_units_total: payload.kpis?.emergency_units_total,
                      market_share: payload.market_share 
                   })}`
                 );
