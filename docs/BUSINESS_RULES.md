@@ -359,7 +359,7 @@ Sempre que a equipe / campeonato optar por operar no modelo de **Prédio Locado*
 
 4. **Trânsito por Fluxo de Caixa e Balanço Patrimonial:**
    - **DFC:** O desembolso real integral do aluguel mensal é executado sob uma rubrica unificada própria de saídas contábeis (`cf.outflow.rent`).
-   - **Balanço Patrimonial:** Não resulta no reconhecimento de nenhum Ativo Imobilizado material para Edificação ou Terreno (não gera depreciação do prédio na demonstração), sendo eventual cap de instalações adicionais ativadas estritamente em "Benfeitorias em Imóveis de Terceiros".
+   - **Balanço Patrimonial:** Não resulta no reconhecimento de nenhum Ativo Imobilizado material para Edificação ou Terreno (não gera depreciação do prédio na demonstração), sendo eventual cap de instalações adicionais ativadas estritamente em "Instalações Industriais (locado)".
 
 ---
 

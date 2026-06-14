@@ -569,7 +569,7 @@ export function generatePureP0(config: TutorP0Config): {
   // Injeção do Ativo Imobilizado
   updateNodeValue(bs, 'assets.noncurrent.fixed.land', land);
   
-  const labelImovel = buildingMode === 'rented' ? 'Benfeitorias em Imóveis de Terceiros (Locado)' : 'Prédios e Instalações (Próprio)';
+  const labelImovel = buildingMode === 'rented' ? 'Instalações Industriais (Locado)' : 'Prédios e Instalações (Próprio)';
   const labelAmort = buildingMode === 'rented' ? '(-) Depreciação de Instalações' : '(-) Deprec. Acum. Prédios/Inst.';
   
   updateNodeValue(bs, 'assets.noncurrent.fixed.buildings', buildingsAssetValue, labelImovel);

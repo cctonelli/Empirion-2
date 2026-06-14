@@ -21,7 +21,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
                 { id: 'assets.current.vat_recoverable', label: 'IVA a recuperar', value: 0.00, type: 'asset', isEditable: true }
             ]},
             { id: 'assets.current.stock', label: 'ESTOQUE', value: 1407000.00, type: 'totalizer', children: [
-				        { id: 'assets.current.stock.pa', label: 'Estoque Produto Acabado', value: 0.00, type: 'asset', isEditable: true },
+				        { id: 'assets.current.stock.pa', label: 'Estoque PA', value: 0.00, type: 'asset', isEditable: true },
                 { id: 'assets.current.stock.mpa', label: 'Estoque MP A', value: 603000.00, type: 'asset', isEditable: true },
                 { id: 'assets.current.stock.mpb', label: 'Estoque MP B', value: 804000.00, type: 'asset', isEditable: true }
             ]}
