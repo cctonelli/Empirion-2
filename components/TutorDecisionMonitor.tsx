@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { motion as _motion, AnimatePresence, Reorder } from 'framer-motion';
 const motion = _motion as any;
-import { supabase, getTeamSimulationHistory } from '../services/supabase';
+import { supabase, getTeamSimulationHistory, mapChampionshipSynthetically } from '../services/supabase';
 import { calculateProjections } from '../services/simulation';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { GoogleGenAI } from '@google/genai';
@@ -47,7 +47,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
       const historyTable = isTrial ? 'trial_companies' : 'companies';
 
       const { data: arenaData } = await supabase.from(champTable).select('*').eq('id', championshipId).single();
-      if (arenaData) setArena(arenaData);
+      if (arenaData) setArena(mapChampionshipSynthetically(arenaData));
 
       let processedTeams: TutorTeamView[] = [];
       const isLive = targetNode >= round;
@@ -142,7 +142,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: champTable, filter: `id=eq.${championshipId}` }, (payload) => {
           console.log(`[Tutor Monitor Realtime] Arena atualizada:`, payload.new);
           if (payload.new) {
-            setArena(prev => prev ? { ...prev, ...payload.new } : (payload.new as Championship));
+            setArena(prev => prev ? mapChampionshipSynthetically({ ...prev, ...payload.new }) : mapChampionshipSynthetically(payload.new));
           }
         })
         .subscribe();

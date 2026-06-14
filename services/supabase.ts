@@ -100,7 +100,7 @@ export const getChampionships = async (isPublicOnly: boolean = false, forceTable
     }
     const { data, error } = await query;
     if (error) return [];
-    return (data || []).map(c => ({ ...c, is_trial: type === 'trial' }));
+    return (data || []).map(c => mapChampionshipSynthetically({ ...c, is_trial: type === 'trial' }));
   };
 
   if (forceTable === 'live') return { data: await fetchFromTable('live'), error: null };
@@ -169,6 +169,43 @@ export const mapHistoryItemSynthetically = (item: any) => {
       if (mapped.esds_main_drivers === undefined || mapped.esds_main_drivers === null) mapped.esds_main_drivers = mapped.kpis.esds.main_drivers || [];
     }
   }
+  return mapped;
+};
+
+export const mapChampionshipSynthetically = (c: any) => {
+  if (!c) return c;
+  const config = c.config || {};
+  const mapped = { ...c };
+  
+  const compactFields = [
+    'regions_count', 'regions', 'region_names', 'region_configs', 'currency', 'sales_mode', 
+    'scenario_type', 'social_charges', 'compulsory_loan_agio', 
+    'production_hours_period', 'award_values', 'exchange_rates', 
+    'staffing', 'prices', 'machinery_values', 'round_rules', 
+    'brl_rate', 'gbp_rate'
+  ];
+
+  compactFields.forEach(field => {
+    if (mapped[field] === undefined || mapped[field] === null) {
+      if (config[field] !== undefined && config[field] !== null) {
+        mapped[field] = config[field];
+      }
+    }
+  });
+
+  if (mapped.regions_count === undefined || mapped.regions_count === null || mapped.regions_count === 0) {
+    const list = config.regions || config.region_configs || c.region_configs || [];
+    if (Array.isArray(list) && list.length > 0) {
+      mapped.regions_count = list.length;
+    } else {
+      mapped.regions_count = 1;
+    }
+  }
+
+  if (!mapped.currency && config.currency) {
+    mapped.currency = config.currency;
+  }
+
   return mapped;
 };
 
@@ -508,9 +545,10 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         const decisionsTable = isTrialSession ? 'trial_decisions' : 'current_decisions';
         const historyTable = isTrialSession ? 'trial_companies' : 'companies';
 
-        const { data: champ } = await supabase.from(champTable).select('*').eq('id', id).single();
+        let { data: rawChamp } = await supabase.from(champTable).select('*').eq('id', id).single();
+        if (!rawChamp) throw new Error("Arena não encontrada.");
+        const champ = mapChampionshipSynthetically(rawChamp);
         const { data: teams } = await supabase.from(teamsTable).select('*').eq('championship_id', id);
-        if (!champ) throw new Error("Arena não encontrada.");
 
         const maxRounds = champ.total_rounds || 6;
         if (champ.current_round >= maxRounds) {

@@ -24,7 +24,7 @@ import GazetteViewer from './GazetteViewer';
 import BusinessPlanWizard from './BusinessPlanWizard';
 import AuditLogViewer from './AuditLogViewer';
 import { RoundSummaryModal } from './RoundSummaryModal';
-import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getTeamSimulationHistory } from '../services/supabase';
+import { supabase, getChampionships, getUserProfile, getActiveBusinessPlan, getTeamSimulationHistory, mapChampionshipSynthetically } from '../services/supabase';
 import { Branch, Championship, UserRole, CreditRating, InsolvencyStatus, Team, KPIs } from '../types';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM, DEFAULT_MACRO, INITIAL_FINANCIAL_TREE, INITIAL_MACHINES_P00 } from '../constants';
 import { generatePureP0 } from '../services/initialization';
@@ -306,14 +306,14 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           if (!payload.new) return;
           setActiveArena(prev => {
             if (!prev) return null;
-            return {
+            return mapChampionshipSynthetically({
               ...prev,
               ...payload.new,
               // Preserva as propriedades relacionais locais que não vêm no payload bruto
               teams: prev.teams,
               round_rules: (payload.new as any).round_rules || prev.round_rules,
               market_indicators: (payload.new as any).market_indicators || prev.market_indicators
-            };
+            });
           });
         }
       )
