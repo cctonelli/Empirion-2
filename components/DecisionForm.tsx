@@ -437,7 +437,7 @@ const DecisionForm: React.FC<{
   return (
     <div className="flex flex-col h-full bg-[#020617] rounded-xl border border-white/5 overflow-hidden shadow-3xl">
       {/* HEADER TÁTICO FIXO */}
-      <header className="px-4 py-3 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0 z-[100] shadow-2xl">
+      <header className="px-4 py-3 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0 z-20 shadow-2xl">
          <div className="flex items-center gap-6">
             <div className="flex flex-col">
                <div className="flex items-center gap-2 mb-0.5">

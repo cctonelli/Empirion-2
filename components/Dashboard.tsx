@@ -647,7 +647,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
             onMouseLeave={() => { if (isSidebarCollapsed) setIsSidebarHovered(false); }}
             className={`shrink-0 flex flex-col transition-all duration-300 ${
                !isSidebarCollapsed ? 'relative w-[260px] bg-slate-900/40 backdrop-blur-xl border-r border-white/10 z-30' : 
-               isSidebarHovered ? 'absolute left-0 top-0 bottom-0 h-full w-[260px] bg-slate-950/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] z-50' : 'absolute left-0 top-0 bottom-0 h-full w-12 bg-slate-900/40 backdrop-blur-xl border-r border-white/15 z-30'
+               isSidebarHovered ? 'absolute left-0 top-0 bottom-0 h-full w-[260px] bg-slate-950/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] z-[150]' : 'absolute left-0 top-0 bottom-0 h-full w-12 bg-slate-900/40 backdrop-blur-xl border-r border-white/15 z-30'
             }`}
          >
             {/* Toggle Button / Retractable Checkbox */}

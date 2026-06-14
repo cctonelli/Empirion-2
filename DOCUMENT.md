@@ -2,9 +2,24 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.132 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.133 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Resolução de Stacking Context (Z-Index Overlap) do Cockpit - v2026.133
+
+**Data:** 13 de Junho de 2026 às 21:40 UTC  
+**Motivo:** Corrigir a sobreposição visual indesejada em que o "Header Tático Fixo" do `DecisionForm.tsx` (Decision Terminal) que sobrepõe e renderiza acima do "Intel Pulse Sidebar" do `Dashboard.tsx` quando este está expandido em hover. 
+
+**Detalhamento Técnico de Planejamento:**
+- **Readequação do Posicionamento do Sidebar**: O z-index da barra lateral principal Intel Pulse em `Dashboard.tsx` quando sob evento de hover ativo (`isSidebarHovered = true`) foi elevado de `z-50` para `z-[150]`.
+- **Prevenção de Invasão pelo Header Fixo**: O z-index do elemento `<header>` fixo táctico em `DecisionForm.tsx` (anteriormente `z-[100]`) foi atenuado de forma calibrada para `z-20`. Isto permite que ele continue flotando devidamente sobre o conteúdo scrollável nativo de sua própria div interna (que opera em `z-10` ou inferior) enquanto permanece posicionado abaixo do painel overlay global do sistema (agora em `z-[150]`).
+
+**Impactos:**
+- **Interface Flutuante Perfeita**: Restabelece uma hierarquia visual limpa e elegante, garantindo que o painel de navegação global sempre se posicione no topo do viewport ao ser aberto.
+- **Hierarquia Visual Coerente**: Respeita o empilhamento lógico estrito correspondente à função hierárquica dos elementos na aplicação.
 
 ---
 
