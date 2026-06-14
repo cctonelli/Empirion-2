@@ -2,9 +2,29 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.144 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.145 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Desativação do Comportamento Expand-on-Hover no Cockpit Preview (RightPreviewPanel) - v2026.145
+
+**Data:** 14 de Junho de 2026 às 20:00 UTC  
+**Motivo:** Otimização cognitiva e ergonômica da área de trabalho de decisões (Decision Terminal). Anteriormente, o painel de simulações em tempo real (`RightPreviewPanel.tsx`) expandia-se involuntariamente por meio de eventos de hover (`onMouseEnter`/`onMouseLeave`). Esse comportamento introduzia ruído na experiência de uso dos competidores ao interagir próximo às margens direitas da tela, provocando expansões indesejadas e ocultando inputs de preenchimento. A partir de agora, o painel obedece puramente a comandos manuais via checkbox ("Recolher Painel Lateral") e botões explícitos de toggling.
+
+**Detalhamento Técnico de Planejamento:**
+- **Remoção de Handlers de Sensor de Proximidade (Hover)**:
+  - Eliminado o estado `isHovered` e todas as chamadas `onMouseEnter`/`onMouseLeave` da div principal do `RightPreviewPanel.tsx`.
+- **Aperfeiçoamento da Ergonomia de Redimensionamento**:
+  - Quando em estado colapsado (`isRightPreviewCollapsed === true`), o painel de largura `w-12` é renderizado como um alvo estático clicável. Ao clicar em qualquer local desse "ribbon" (fita) vertical ou no botão explícito "Chevron", o painel expande-se imediatamente para os seus `410px` regulamentares.
+  - Atualizado o controle de checkbox interno para ler o estado real do painel e possuir rótulo literal e intuitivo: `"Recolher Painel Lateral"`, garantindo clareza total sobre o estado do Cockpit.
+- **Limpeza do Código**:
+  - Remoção de variáveis declaradas inativas (`isRightPreviewHovered` no componente pai) para conservar a saúde de re-renderização e reduzir empenhos computacionais.
+
+**Impactos:**
+- **Zero Atrito na Edição de Campos**: Competidores podem ajustar preços, suprimentos e recursos humanos com total estabilidade de layout.
+- **Controle Determinístico do Espaço de Trabalho**: O usuário dita precisamente quando o painel de análise preditiva financeira (T+1) e o Auditor Z-Guard devem ser exibidos ou mitigados.
 
 ---
 
