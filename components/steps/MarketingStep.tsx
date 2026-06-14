@@ -513,8 +513,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       activeTeamUnitsSold,
       weight: activeWeight,
       relativeSalesShare:
-        totalRegionUnitsSold > 0
-          ? (activeTeamUnitsSold / totalRegionUnitsSold) * 100
+        rMarketSizeVal > 0
+          ? (activeTeamUnitsSold / rMarketSizeVal) * 100
           : 0,
     };
   };

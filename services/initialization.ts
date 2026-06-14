@@ -545,7 +545,7 @@ export function generatePureP0(config: TutorP0Config): {
   updateNodeValue(bs, 'assets.current.clients', clients);
   updateNodeValue(bs, 'assets.current.pecld', pecld); // Inadimplência
   
-  updateNodeValue(bs, 'assets.current.stock.pa', finished_val, `Estoque Produto Acabado (${isZeroMode ? 0 : config.inventories.finished_qty} un)`);
+  updateNodeValue(bs, 'assets.current.stock.pa', finished_val, `Estoque PA (${isZeroMode ? 0 : config.inventories.finished_qty} un)`);
   updateNodeValue(bs, 'assets.current.stock.mpa', mpa_val, `Estoque MP A (${isZeroMode ? 0 : config.inventories.mpa_qty} un)`);
   updateNodeValue(bs, 'assets.current.stock.mpb', mpb_val, `Estoque MP B (${isZeroMode ? 0 : config.inventories.mpb_qty} un)`);
 

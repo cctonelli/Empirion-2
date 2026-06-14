@@ -2,9 +2,26 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.134 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.135 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural & Regra de Negócio, Correção da Participação Regional (Market Share vs Total Demanda) - v2026.135
+
+**Data:** 14 de Junho de 2026 às 12:48 UTC  
+**Motivo:** Corrigir a inconsistência de cálculo no indicador "SUA PARTICIPAÇÃO REGIÃO" em `MarketingStep.tsx` durante o planejamento de marketing/vendas das equipes. Anteriormente, a participação era calculada dividindo o volume vendido da empresa pelo somatório de vendas reais de todos os concorrentes daquela única praça (`totalRegionUnitsSold`). Esta abordagem, além de poder atingir 100% de forma enganosa caso apenas duas empresas estivessem competindo e vendendo, gerava simulações idênticas entre as regiões (visto que o market share concorrencial tendia a se estabilizar horizontalmente), em vez de focar no aproveitamento fiduciário do tamanho de demanda total planejado da região (Market Size Regional / `rMarketSizeVal`), frustrando a análise detalhada dos diretores.
+
+**Detalhamento Técnico de Planejamento:**
+- **Nova Formulação Fiduciária de Participação Regional**: Substituição da base de cálculo de total vendido regional concorrencial (`totalRegionUnitsSold`) pelo tamanho absoluto do Market Size configurado para aquela região (`rMarketSizeVal`).
+- **Nova Fórmula**: `Sua Participação Região = (Seu Volume Vendido / Market Size Regional) * 100`.
+- **Efeitos Fisiológicos**:
+  - Em um cenário de Market Size de 19.800 unidades e 1.756 unidades vendidas pela empresa, o indicador exibe de forma precisa e correta `8.9%` (ou 8.87% sem arredondamentos no teto), expressando realisticamente a penetração da empresa em relação às necessidades em escala de consumo bruto da região.
+
+**Impactos:**
+- **Cálculo Preciso por Praça**: Assegura consistência fiduciária contábil e de inteligência de mercado de forma totalmente isolada para cada praça analítica, superando o travamento estático do valor concorrencial anterior.
+- **Excelente UX e Tomada de Decisão**: Fornece um feedback cristalino sobre a fatia da região que está sendo atendida pela empresa em face de sua estratégia de produção e pricing.
 
 ---
 
