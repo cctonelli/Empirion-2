@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.133 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.134 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Re-render Sensível ao Layout (Auto-Redraw) do Sparkline de Equity - v2026.134
+
+**Data:** 13 de Junho de 2026 às 21:52 UTC  
+**Motivo:** Corrigir a renderização incompleta ("clipping" ou achatamento à largura de ~10px) do gráfico "Equity History" na barra lateral Intel Pulse no `Dashboard.tsx`. Este comportamento ocorria porque, no momento em que o usuário aciona o painel flutuante por hover ou expande o menu retrátil, o componente ApexCharts é montado de forma imediata antes que a transição de largura via CSS (`transition-all duration-300`) do elemento `<aside>` termine. Como resultado, o container é medido com dimensões reduzidas ou zeradas, travando a renderização interna do SVG.
+
+**Detalhamento Técnico de Planejamento:**
+- **Injeção de Ciclo de Vida Reativo (Lazy Redraw)**: Adicionou-se um estado de controle de renderização e montagem `renderKey` no componente genérico de sparkline `TrendSparkline.tsx`.
+- **Timer de Conclusão de Transição**: Criou-se um `useEffect` com timeout de `350ms` (tempo suficiente para garantir a conclusão de transição CSS de `300ms`). 
+- **Forçar Re-Análise de Container via Re-Keying e Resize**: Ao estourar o cronômetro, o componente incrementa sua `renderKey` para recriar o wrapper ApexCharts do zero, forçando uma medição limpa da largura do DOM já totalmente expandido (260px). Um evento sintético `window.dispatchEvent(new Event('resize'))` é disparado simultaneamente para sanear dependências ativas.
+
+**Impactos:**
+- **Gráficos Sempre Nítidos e Completos**: Garante que o sparkline de evolução de patrimônio líquido seja desenhado com 100% de preenchimento e resolução horizontal assim que o painel expande.
+- **Robustez Multi-Componente**: O patch protege qualquer outra inclusão futura de sparklines em painéis expansíveis dinâmicos.
 
 ---
 

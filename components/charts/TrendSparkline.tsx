@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 
 interface TrendSparklineProps {
@@ -16,6 +16,18 @@ export const TrendSparkline: React.FC<TrendSparklineProps> = ({
   height = 40,
   width = '100%'
 }) => {
+  const [renderKey, setRenderKey] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRenderKey(prev => prev + 1);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('resize'));
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, []);
+
   const chartOptions: any = {
     chart: {
       id: `sparkline-${id}`,
@@ -54,8 +66,9 @@ export const TrendSparkline: React.FC<TrendSparklineProps> = ({
   }];
 
   return (
-    <div id={`chart-container-sparkline-${id}`} className="inline-block" style={{ width: typeof width === 'number' ? `${width}px` : width, height: `${height}px` }}>
+    <div id={`chart-container-sparkline-${id}`} className="inline-block w-full" style={{ width: typeof width === 'number' ? `${width}px` : width, height: `${height}px` }}>
       <Chart
+        key={`${id}-${renderKey}`}
         options={chartOptions}
         series={series}
         type="line"
