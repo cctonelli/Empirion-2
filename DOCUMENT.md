@@ -2,9 +2,29 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.135 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.136 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Sincronização e Calibração dos Juros a Prazo como Diferencial de Demanda Regional - v2026.136
+
+**Data:** 14 de Junho de 2026 às 13:28 UTC  
+**Motivo:** Sanar o gap de diferenciação competitiva no cálculo aproximado de demandas regionais (`teamRegionScores` em `MarketingStep.tsx`). Embora a interface documentasse a taxa de juros como fator de elasticidade, a pontuação de concorrência computava apenas preço, prazo e marketing em suas elasticidades, ignorando o impacto da taxa de juro real a prazo que o empresário definia. Além disso, estruturar a explicação analítica de por que a taxa de conversão regional de Market Share aparenta se manter horizontalizada caso o usuário utilize replicação de decisões e sofra saturação de estoque (estrangulamento de entrega).
+
+**Detalhamento Técnico de Planejamento:**
+- **Injeção do Fator Juros (term_interest_rate)**: Introduziu-se o cálculo analítico do `interestIndex` no loop de simulação competitiva regional do frontend.
+- **Formulação de Atratividade por Juros**: 
+  - Se a venda for à vista (`regTerm === 0`), `interestIndex` is neutro (`1.0`).
+  - Se houver venda parcelada (`regTerm > 0`), compara-se o juro praticado (`term_interest_rate`) contra uma taxa padrão neutra de mercado de `2.0%`.
+  - Fórmula aplicada: `interestIndex = 1 + (2.0 - term_interest_rate) * 0.04 * (regTerm / 30)`.
+  - Aplicou-se um limitador (clamping) de proteção de `0.4` a `1.3` para preservar a coesão macroeconômica.
+- **Multiplicação de Força no Prazo**: O `termIndex` (que cresce linearmente com os dias de prazo oferecido) passa a ser calibrado e modulado diretamente pelo `interestIndex`.
+
+**Impactos:**
+- **Desempate Financeiro Consistente**: Se duas equipes oferecem a mesma configuração física de Preço, Prazo e Marketing, aquela com menor taxa de juros no prazo conquistará maior cota de demanda regional de forma automática.
+- **Transparência Científica de Rateio**: Soluciona a horizontalidade de dados idênticos de conversão ao esclarecer que, sob limitação física de estoques, o simulador rateia vendas de forma puramente proporcional ao Market Size.
 
 ---
 

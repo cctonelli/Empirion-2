@@ -397,8 +397,20 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         const marketingIndex = 1 + regMarketing * 0.08;
         const termIndex = 1 + regTerm * 0.05;
 
+        // Juros de Venda a Prazo: se houver venda parcelada (regTerm > 0), a taxa de juros praticada atua como diferencial competitivo.
+        // Quanto mais baixa a taxa em relação a um referencial neutro de mercado (2.0%), maior a atratividade do prazo oferecido.
+        let interestIndex = 1;
+        if (regTerm > 0) {
+          const termInterestRate = Number(stateToUse?.production?.term_interest_rate) ?? 0;
+          const baseRate = 2.0;
+          const diff = baseRate - termInterestRate;
+          interestIndex = 1 + diff * 0.04 * (regTerm / 30);
+          // Limitadores cautelares para manter a consistência matemática da simulação comercial
+          interestIndex = Math.max(0.4, Math.min(1.3, interestIndex));
+        }
+
         teamRegionScores[tIdStr][rIdStr] =
-          priceIndex * marketingIndex * termIndex * rjDemandPenalty;
+          priceIndex * marketingIndex * (termIndex * interestIndex) * rjDemandPenalty;
       });
     });
 
