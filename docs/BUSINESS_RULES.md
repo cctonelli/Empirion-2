@@ -392,9 +392,15 @@ O sistema de simulação do Empirion incorpora uma lógica estrita de comportame
    - Para encerrar a greve imposta por demissões operacionais, a gestão deve suspender novos desligamentos por pelo menos 1 rodada. 
    - A superação do fator causador zera as respectivas contagens (`consecutive_ruim_rounds = 0` / `consecutive_fired_rounds = 0`), restabelecendo imediatamente 100% da capacidade industrial.
 
+5. **Taxa de Juros sobre Vendas a Prazo vs. Inflação & PECLD:**
+   - **Mecanismo de Proteção Financeira:** Em cenários de inflação elevada (`inflation_rate`) e inadimplência crescente de clientes (`customer_default_rate`), a cobrança de taxa de juro real sobre as vendas parceladas (`term_interest_rate`) atua de forma fiduciária como um mecanismo de **hedge patrimonial**.
+   - **Compensação Contábil:** Conforme diretrizes do CPC 48 / IFRS 9, o prêmio decorrente das receitas de juros táticos a prazo (`termInterestRevenue`) compensa diretamente os custos decorrentes da provisão de devedores duvidosos (PECLD). Sob alta inflação e alta inadimplência, as equipes que aumentam moderadamente sua taxa de juros protegem as suas margens líquidas de capital e preservam o fluxo de caixa acumulado, independentemente da taxa de conversão regional de curtíssimo prazo no marketing.
+
 ---
 
 **Histórico de Versões**
+
+- **v19.85** (14/06/2026) – Integração analítica da taxa de juro real no cálculo do score competitivo de marketing (`MarketingStep.tsx`) e formalização da teoria fiduciária de hedge contra inadimplência (PECLD) sob ambiente inflacionário.
 
 - **v19.84** (09/06/2026) – Alinhamento dinâmico contábil da folha de pagamento e encargos MOD com base na equipe real disponível (contratadas e desligadas do período) no kernel simulador, core preditivo e projeções em tempo real do HUD (HRStep.tsx).
 - **v19.83** (08/06/2026) – Correção de isolamento fiduciário do R-0 Greenfield no "START FROM ZERO" e ativação de dupla contingência sindical por demissões operacionais consecutivas (2 rodadas de demissões consecutivas) regulamentada em BUSINESS_RULES.md e DOCUMENT.md.
