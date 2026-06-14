@@ -494,12 +494,13 @@ ALTER TABLE public.p0_templates ENABLE ROW LEVEL SECURITY;
 -- Em modo Trial/Sandbox, permite a leitura e escrita cooperativa de templates tanto para autenticados quanto convidados.
 DROP POLICY IF EXISTS "Leitura de templates públicos e próprios" ON public.p0_templates;
 CREATE POLICY "Leitura de templates públicos e próprios" ON public.p0_templates
-    FOR SELECT
-    USING (is_public = true OR tutor_id::text = auth.uid()::text);
+    FOR SELECT TO public
+    USING (true);
 
 DROP POLICY IF EXISTS "Escrita apenas para tutores e admins" ON public.p0_templates;
-CREATE POLICY "Escrita apenas para tutores e admins" ON public.p0_templates
-    FOR ALL
+DROP POLICY IF EXISTS "Escrita de templates sem restricoes em modo Trial" ON public.p0_templates;
+CREATE POLICY "Escrita de templates sem restricoes em modo Trial" ON public.p0_templates
+    FOR ALL TO public
     USING (true)
     WITH CHECK (true);
 

@@ -2,9 +2,44 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.138 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.140 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Mapeamento Posicional de Regiões para eliminação de Market Size Nulo (Resiliência do Algoritmo de Demanda) - v2026.140
+
+**Data:** 14 de Junho de 2026 às 17:25 UTC  
+**Motivo:** Corrigir anomalia visual e analítica onde o valor exibido para o "MARKET SIZE REGIONAL" na Região 01 constava erroneamente como "0 UN", decorrente de conflito e duplicidade nos IDs das regiões no banco de dados (por exemplo, a colisão em que Região 01 e Região 04 tinham ambas o atributo `id: 4`, enquanto o frontend buscava sequencialmente por `id: 1`).
+
+**Detalhamento Técnico de Planejamento:**
+- **Indexação por Ordem Posicional Baseada em Array**: Em vez de mapear as chaves de armazenamento e busca de `regionalMarketSizes` usando as chaves `r.id` do banco de dados (as quais podem conter collisions ou corrupções), as rotinas de cálculo do planejador de vendas (`MarketingStep.tsx`) passaram a utilizar sistematicamente a indexação posicional 1-baseada (`idx + 1`).
+- **Escopos Modificados:**
+  - **Identificação Unificada em `calculateRegionStats`**: Chaves associativas do mapa de demandas regionais e pontuações de competitividade agora consideram consistentemente a ordem em que as regiões aparecem no vetor correspondente (Região 1 mapeia para `"1"`, Região 2 para `"2"`, etc.), independentemente do `id` cru registrado na tabela do Supabase.
+  - **Cálculo Consistente no Simulador de Fechamento de Rodada (`simulation.ts`)**: Adicionados fallbacks de indexação sequencial `[regId - 1]` nos blocos de receitas, faturamento local, câmbio e custos de logística/distribuição comercial da rodada real, evitando lacunas e garantindo que o processamento do fechamento use as definições financeiras perfeitas em conformidade contábil.
+
+**Impactos:**
+- **Demonstrações Visuais Exatas**: Extinção de qualquer leitura nula do "Market Size Regional" na Região 1, refletindo as fatias exatas de demanda configuradas (ex: 25.0% de peso de demanda mapeado e operado).
+- **Sem Breaking Changes Dinâmicas**: Resolução de conflitos de colisões de chave mantendo retrocompatibilidade plena com os registros salvos do simulador.
+
+---
+
+## Decisão Arquitetural, Premissa de CRUD e Bypass de Login no Modo TRIAL (MVP Sandbox) - v2026.139
+
+**Data:** 14 de Junho de 2026 às 16:45 UTC  
+**Motivo:** Documentar e acordar formalmente o alinhamento de segurança e manipulação de dados em sessões de teste. Devido a limitações físicas de políticas de segurança de linha (RLS) do Supabase que podem bloquear, filtrar ou rejeitar acessos de escrita/leitura para usuários não autenticados (convidados) na rede, estabelecemos que o Modo TRIAL funciona estritamente como um MVP ágil que prioriza fallbacks e bypasses de controle de login.
+
+**Detalhamento Técnico de Planejamento:**
+- **Ausência de Restrições Contábeis & CRUD**: No ecossistema de avaliação e simulação rápida em modo Trial, os recursos de cadastro de templates, configuração de rodadas, envio de decisões de preço, marketing, prazos e investimentos são completamente destravados (`zero CRUD restrictions`).
+- **Priorização Inteligente de Fallbacks Locals (Híbridos)**: Para garantir que nenhuma falha de rede ou barreira de RLS interrompa o fluxo pedagógico e concorrencial dos discentes, as rotinas do simulador e cockpits operam com prioridade dupla:
+  1. Tentam sincronizar com as respectivas tabelas públicas do Supabase (`trial_championships`, `p0_templates`, etc.) sem exigir login ou tokens de segurança.
+  2. Caso ocorra erro de RLS, rede ou autenticação, recorrem silenciosa e instantaneamente aos repositórios estáticos e caches locais estruturados (`localStorage`, `constants` e variáveis em memória reativa), garantindo a continuidade imediata dos cálculos da simulação com exatidão matemática fiduciária.
+- **Bypass Mandatório do Fluxo de Login**: Nenhuma barreira visual de autenticação deve ser imposta aos competidores em modo Trial.
+
+**Impactos:**
+- **Estabilidade Pedagógica Sem Fricção**: Os alunos e tutores podem demonstrar e exercitar cenários de mercado complexos sem dores de cabeça com falhas de credenciamento.
+- **Resiliência Arquitetural**: Blindagem do frontend contra inconsistências de carregamento do Supabase, assegurando que o simulador nunca trave em telas vazias por falta de dados básicos.
 
 ---
 

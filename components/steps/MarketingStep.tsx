@@ -361,8 +361,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
     // 4. Demanda de mercado da região (Market Size por Região)
     const regionalMarketSizes: Record<string, number> = {};
-    regionConfigs.forEach((r: any) => {
-      const rIdStr = String(r.id);
+    regionConfigs.forEach((r: any, idx: number) => {
+      const rIdStr = String(idx + 1);
       const rWeight = Number(
         r.demand_weight || r.weight || r.demand_percent || 0,
       );
@@ -380,8 +380,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       const tIdStr = String(c.team_id);
       teamRegionScores[tIdStr] = {};
 
-      regionConfigs.forEach((r: any) => {
-        const rIdStr = String(r.id);
+      regionConfigs.forEach((r: any, idx: number) => {
+        const rIdStr = String(idx + 1);
         const rDec =
           stateToUse?.regions?.[rIdStr] || stateToUse?.regions?.[r.id] || {};
 
@@ -425,8 +425,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       competitiveDemandsPerTeamReg[String(c.team_id)] = {};
     });
 
-    regionConfigs.forEach((r: any) => {
-      const rIdStr = String(r.id);
+    regionConfigs.forEach((r: any, idx: number) => {
+      const rIdStr = String(idx + 1);
       const regDemand = regionalMarketSizes[rIdStr] || 0;
 
       const scoresWithTeams = rows.map((c: any) => ({
@@ -480,7 +480,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
       let runningUnitsSold = 0;
       regionConfigs.forEach((r: any, idx: number) => {
-        const rIdStr = String(r.id);
+        const rIdStr = String(idx + 1);
         const regDemand = demands[rIdStr] || 0;
 
         let regUnitsSold = 0;

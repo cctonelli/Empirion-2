@@ -796,7 +796,11 @@ export const calculateProjections = (
     const regUnitsSold = regionalUnitsSold[id] || 0;
 
     const regId = Number(id);
-    const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
+    const regConfig = 
+      (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || 
+      (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId) ||
+      (ecosystem as any)?.regions?.[regId - 1] ||
+      (ecosystem as any)?.region_configs?.[regId - 1];
     const currencyCode = regConfig?.currency || 'BRL';
     const rate = getExchangeRate(currencyCode);
 
@@ -826,7 +830,11 @@ export const calculateProjections = (
   let totalDistributionCost = 0;
   regions.forEach(([id, reg]: [string, any]) => {
     const regId = Number(id);
-    const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
+    const regConfig = 
+      (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || 
+      (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId) ||
+      (ecosystem as any)?.regions?.[regId - 1] ||
+      (ecosystem as any)?.region_configs?.[regId - 1];
     const baseDistributionUnitCost = regConfig?.distribution_cost !== undefined ? Number(regConfig.distribution_cost) : (indicators.prices.distribution_unit || 50);
     const currencyCode = regConfig?.currency || 'BRL';
     const rate = getExchangeRate(currencyCode);
