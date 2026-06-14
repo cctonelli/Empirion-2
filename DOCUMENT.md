@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.136 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.137 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Persistência de Cronograma Macroeconômico Customizado (DEFAULT_INDUSTRIAL_CHRONOGRAM) em Templates P0 - v2026.137
+
+**Data:** 14 de Junho de 2026 às 15:10 UTC  
+**Motivo:** Corrigir a ausência de persistência e hibridização do cronograma de indicadores do simulador (`DEFAULT_INDUSTRIAL_CHRONOGRAM` / `roundRules` customizados pelo Tutor na criação de torneios) no objeto JSON `config` da tabela `p0_templates` no Supabase ao salvar e recuperar modelos de P0. Anteriormente, as configurações financeiras de P0 eram devidamente transportadas, porém os ajustes cronológicos do Tutor nas réguas macroeconômicas eram descartados por desacoplamento de estado, retornando o cronograma estático genérico.
+
+**Detalhamento Técnico de Planejamento:**
+- **Consolidação na Persistência de Modelos (`handleSaveTpl`)**: No gatilho de gravação contábil de rascunhos de P0, o objeto `config` de `tplPayload` foi expandido para fundir o estado do parque industrial e premissas (`tutorConfig`) com as parametrizações do cronograma de rodadas (`DEFAULT_INDUSTRIAL_CHRONOGRAM: roundRules` e `round_rules: roundRules`).
+- **Resgate de Indicadores e Sincronismo (`handleLoadTpl` / `Confirm & Load`)**: Atualizou-se o fluxo de importação imediata e o botão de confirmação com inspeção para carregar preventivamente `tpl.config.DEFAULT_INDUSTRIAL_CHRONOGRAM` (ou `round_rules`) e instanciar reativamente na árvore React sob o estado local `roundRules`.
+- **Extensão de Tipagem Fiduciária (`/services/initialization.ts`)**: Inclusão opcional das propriedades de cronograma macroeconômico na interface `BaseP0Config` para assegurar conformidade do compilador do simulador.
+
+**Impactos:**
+- **Soberania Absoluta de Modelos**: Permite ao Tutor criar torneios de alta fidelidade, modificar taxas de inflação, câmbio, demanda, e imposto por round, e salvar o modelo de P0 no Supabase sabendo que todas as regras cronológicas de rounds serão recarregadas perfeitamente ao instanciar ou reutilizar o modelo.
+- **Alinhamento Multidisciplinar**: Garante a acurácia no planejamento tributário e financeiro auditado pelo Contador e inteligência comercial auditada pelo Coordenador de Inteligência de Mercado.
 
 ---
 

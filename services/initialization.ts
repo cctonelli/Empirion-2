@@ -143,6 +143,10 @@ export interface BaseP0Config {
 
   // Step 6: Overrides
   macroOverrides: Record<string, any>;
+
+  // Custom industrial chronogram indicators and round rules (v2026)
+  DEFAULT_INDUSTRIAL_CHRONOGRAM?: Record<number, any>;
+  round_rules?: Record<number, any>;
 }
 
 export interface StartFromZeroConfig extends BaseP0Config {
