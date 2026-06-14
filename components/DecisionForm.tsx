@@ -46,7 +46,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
   const [isCalculatingESDS, setIsCalculatingESDS] = useState(false);
   const [projectedESDS, setProjectedESDS] = useState<any>(null);
   const [isLeftNavCollapsed, setIsLeftNavCollapsed] = useState(false);
+  const [isLeftNavHovered, setIsLeftNavHovered] = useState(false);
   const [isRightPreviewCollapsed, setIsRightPreviewCollapsed] = useState(false);
+  const [isRightPreviewHovered, setIsRightPreviewHovered] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
@@ -465,15 +467,28 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                 key="inputs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="h-full flex flex-col lg:flex-row lg:overflow-hidden"
               >
-                 {/* COCKPIT DE CONTROLE - NAVEGAÇÃO LATERAL ESQUERDA (EXCLUSIVA DESKTOP) */}
-                 <div className={`hidden lg:flex flex-col bg-slate-950/80 border-r border-white/5 shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out ${isLeftNavCollapsed ? 'w-[72px] p-3' : 'w-64 p-4'}`}>
-                    <div className={`mb-4 flex items-center pb-3 border-b border-white/5 ${isLeftNavCollapsed ? 'flex-col justify-center gap-2' : 'justify-between gap-1'}`}>
-                       {!isLeftNavCollapsed ? (
+                 {/* COCKPIT DE CONTROLE - NAVEGAÇÃO LATERAL ESQUERDA */}
+                 {isLeftNavCollapsed && (
+                    <div className="hidden lg:block w-[72px] shrink-0 transition-all duration-300 pointer-events-none" />
+                 )}
+                 <div 
+                    onMouseEnter={() => { if (isLeftNavCollapsed) setIsLeftNavHovered(true); }}
+                    onMouseLeave={() => { if (isLeftNavCollapsed) setIsLeftNavHovered(false); }}
+                    className={`hidden lg:flex flex-col bg-[#030712]/95 shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out z-30 ${
+                       !isLeftNavCollapsed ? 'relative w-64 p-4 border-r border-white/5' : 
+                       isLeftNavHovered ? 'absolute left-0 top-0 bottom-0 h-full w-64 p-4 shadow-[0_0_50px_rgba(0,0,0,0.8)] border-r border-white/15' : 'absolute left-0 top-0 bottom-0 h-full w-[72px] p-3 border-r border-white/10'
+                    }`}
+                 >
+                    <div className={`mb-4 flex items-center pb-3 border-b border-white/5 ${(!isLeftNavCollapsed || isLeftNavHovered) ? 'justify-between gap-1' : 'flex-col justify-center gap-2'}`}>
+                       {(!isLeftNavCollapsed || isLeftNavHovered) ? (
                           <>
-                             <span className="text-[10px] font-black tracking-[0.2em] text-orange-500 uppercase font-mono truncate animate-in fade-in duration-300">Empire Cockpit v2.0</span>
+                             <span className="text-[10px] font-black tracking-[0.2em] text-orange-500 uppercase font-mono truncate animate-in fade-in duration-300 font-sans">Empire Cockpit v2.0</span>
                              <button 
                                 type="button"
-                                onClick={() => setIsLeftNavCollapsed(true)} 
+                                onClick={() => {
+                                   setIsLeftNavCollapsed(true);
+                                   setIsLeftNavHovered(false);
+                                }} 
                                 className="p-1 hover:bg-white/5 rounded-lg text-slate-500 hover:text-slate-300 transition-colors shrink-0 cursor-pointer"
                                 title="Recolher painel"
                              >
@@ -483,7 +498,10 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                        ) : (
                           <button 
                              type="button"
-                             onClick={() => setIsLeftNavCollapsed(false)} 
+                             onClick={() => {
+                                setIsLeftNavCollapsed(false);
+                                setIsLeftNavHovered(false);
+                             }} 
                              className="p-1 hover:bg-white/5 rounded-lg text-orange-500 hover:text-orange-400 transition-colors cursor-pointer"
                              title="Expandir painel"
                           >
@@ -491,29 +509,50 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                           </button>
                        )}
                     </div>
-                    <div className="flex flex-col gap-1.5 flex-1 animate-in fade-in duration-300">
+
+                    {/* Controle 1: O Checkbox de Operação Retrátil */}
+                    <div className="flex items-center gap-2 p-1.5 bg-white/5 border border-white/5 rounded-xl mb-4 w-full">
+                       <input 
+                          type="checkbox" 
+                          id="retractable-mode-leftnav"
+                          checked={isLeftNavCollapsed} 
+                          onChange={(e) => {
+                             setIsLeftNavCollapsed(e.target.checked);
+                             if (!e.target.checked) setIsLeftNavHovered(false);
+                          }}
+                          className="w-3.5 h-3.5 text-orange-600 bg-slate-950 border-white/10 rounded focus:ring-orange-500 focus:ring-offset-0 cursor-pointer shrink-0"
+                       />
+                       {(!isLeftNavCollapsed || isLeftNavHovered) && (
+                          <label htmlFor="retractable-mode-leftnav" className="text-[8px] font-black text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider select-none truncate">
+                             Modo Retrátil
+                          </label>
+                       )}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 flex-1 animate-in fade-in duration-300 w-full font-sans">
                        {STEPS.map((s, idx) => {
                           const Icon = s.icon;
+                          const isCurrentExpanded = !isLeftNavCollapsed || isLeftNavHovered;
                           return (
                             <button
                                type="button"
                                key={s.id}
                                onClick={() => setActiveStep(idx)}
-                               className={`w-full py-3.5 rounded-xl transition-all flex items-center border relative overflow-hidden group cursor-pointer ${isLeftNavCollapsed ? 'justify-center px-0 animate-pulse-subtle' : 'justify-between px-4 text-left'} ${activeStep === idx ? 'bg-orange-600/15 border-orange-500/40 text-white shadow-xl' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-                               title={isLeftNavCollapsed ? s.label : undefined}
+                               className={`w-full py-3.5 rounded-xl transition-all flex items-center border relative overflow-hidden group cursor-pointer ${!isCurrentExpanded ? 'justify-center px-0 animate-pulse-subtle' : 'justify-between px-4 text-left'} ${activeStep === idx ? 'bg-orange-600/15 border-orange-500/40 text-white shadow-xl' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+                               title={!isCurrentExpanded ? s.label : undefined}
                             >
                                {activeStep === idx && (
                                  <motion.div layoutId="activeStepVertical" className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500" />
                                )}
-                               <div className={`flex items-center ${isLeftNavCollapsed ? 'justify-center' : 'gap-2.5'}`}>
+                               <div className={`flex items-center ${!isCurrentExpanded ? 'justify-center' : 'gap-2.5'}`}>
                                   <Icon size={14} className={activeStep === idx ? 'text-orange-400' : 'group-hover:text-slate-300'} />
-                                  {!isLeftNavCollapsed && (
+                                  {isCurrentExpanded && (
                                      <span className="text-[9px] font-black uppercase tracking-wider animate-in fade-in duration-300">{s.label.split('. ')[1] || s.label}</span>
                                   )}
                                 </div>
-                               {!isLeftNavCollapsed && (
+                               {isCurrentExpanded && (
                                   <ChevronRight size={10} className={`opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0 ${activeStep === idx ? 'opacity-105 translate-x-0 text-orange-400' : ''}`} />
-                               )}
+                                )}
                             </button>
                           );
                        })}
@@ -618,20 +657,9 @@ const DecisionForm: React.FC<{ teamId?: string; champId?: string; round: number;
                         </div>
                      </div>
                      
-                     {/* ABA VERTICAL SE O PREVIEW ESTIVER COLAPSADO */}
+                     {/* Placeholder estrutural quando colapsado para não mexer nos inputs sob hover flutuante */}
                      {isRightPreviewCollapsed && (
-                       <button 
-                         type="button"
-                         onClick={() => setIsRightPreviewCollapsed(false)}
-                         className="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-orange-600/90 hover:bg-orange-600 text-white py-6 px-1.5 rounded-l-xl border-l border-y border-orange-400/30 flex-col items-center gap-3 shadow-2xl transition-all transform hover:-translate-x-0.5 duration-200 cursor-pointer animate-in slide-in-from-right-10 shrink-0"
-                         title="Expandir Painel de Simulação Real-Time"
-                       >
-                         <Activity size={12} className="text-white animate-pulse" />
-                         <span className="text-[8px] font-black uppercase tracking-widest select-none font-mono" style={{ writingMode: 'vertical-rl' }}>
-                           COCKPIT PREVIEW
-                         </span>
-                         <ChevronLeft size={10} className="text-white/80 animate-bounce mt-1" />
-                       </button>
+                        <div className="hidden lg:block w-12 shrink-0 transition-all duration-300 pointer-events-none" />
                      )}
                      
                      {/* COCKPIT PREVIEW: PAINEL LATERAL DIREITO COM ANÁLISE DE RISCO TÁTICO */}

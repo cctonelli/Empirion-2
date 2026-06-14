@@ -135,7 +135,8 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
   isCalculatingESDS,
   handleSimulateESDS,
 }) => {
-  const [activeTab, setActiveTab] = useState<'finance' | 'risks' | 'kardex'>('finance');
+  const [activeTab, setActiveTab ] = useState<'finance' | 'risks' | 'kardex'>('finance');
+  const [isHovered, setIsHovered] = useState(false);
 
   // Reconciliação Z-Guard (Auditoria)
   const validation = useMemo(() => {
@@ -306,10 +307,68 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
     return list;
   }, [finance, kardex, decisions, activeArena]);
 
-  if (isRightPreviewCollapsed) return null;
-
   return (
-    <div className="w-full bg-[#030712]/95 border-t lg:border-t-0 lg:border-l border-white/5 shrink-0 flex flex-col h-full overflow-hidden transition-all duration-300 ease-in-out lg:w-[410px] shadow-[0_0_80px_rgba(0,0,0,0.5)] z-40 relative">
+    <div 
+       onMouseEnter={() => { if (isRightPreviewCollapsed) setIsHovered(true); }}
+       onMouseLeave={() => { if (isRightPreviewCollapsed) setIsHovered(false); }}
+       className={`bg-[#030712]/95 shrink-0 flex flex-col h-full overflow-hidden transition-all duration-300 ease-in-out z-40 relative font-sans ${
+         !isRightPreviewCollapsed ? 'relative lg:w-[410px] w-full border-t lg:border-t-0 lg:border-l border-white/5 shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-in slide-in-from-right-10' :
+         isHovered 
+           ? 'absolute right-0 top-0 bottom-0 lg:w-[410px] w-[410px] border-l border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.85)]' 
+           : 'absolute right-0 top-0 bottom-0 w-12 border-l border-white/10 shadow-[0_0_15px_rgba(0,0,0,0.5)] cursor-pointer hover:bg-[#030712]/90'
+       }`}
+    >
+      {isRightPreviewCollapsed && !isHovered ? (
+        <div className="flex flex-col items-center gap-4 py-6 h-full w-full relative group">
+          <Activity size={14} className="text-orange-500 animate-pulse mt-4 shrink-0 mx-auto" />
+          <span className="text-[8px] font-black uppercase tracking-[0.2em] select-none font-mono text-slate-400 text-center whitespace-nowrap mt-4 mx-auto" style={{ writingMode: 'vertical-rl' }}>
+            COCKPIT PREVIEW
+          </span>
+          <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 shrink-0">
+             <button 
+                type="button"
+                onClick={(e) => {
+                   e.stopPropagation();
+                   setIsRightPreviewCollapsed(false);
+                }}
+                className="p-1 text-slate-500 hover:text-white bg-white/5 hover:bg-orange-600 rounded-lg transition-all shadow-md cursor-pointer"
+                title="Fixar Painel"
+             >
+                <ChevronRight className="rotate-180" size={12} />
+             </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Controle de Modo de Operação (Retrátil) - Controle 1 */}
+          <div className="px-4 py-2 bg-[#090d16]/50 border-b border-white/5 flex items-center justify-between gap-2 shrink-0">
+             <div className="flex items-center gap-2">
+                <input 
+                   type="checkbox" 
+                   id="retractable-mode-right"
+                   checked={isRightPreviewCollapsed} 
+                   onChange={(e) => {
+                      setIsRightPreviewCollapsed(e.target.checked);
+                      if (!e.target.checked) setIsHovered(false);
+                   }}
+                   className="w-3.5 h-3.5 text-orange-600 bg-slate-950 border-white/10 rounded focus:ring-orange-500 focus:ring-offset-0 cursor-pointer shrink-0"
+                />
+                <label htmlFor="retractable-mode-right" className="text-[8px] font-black text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider select-none truncate">
+                   Modo Retrátil (Hover Float)
+                </label>
+             </div>
+             <button 
+               type="button"
+               onClick={() => {
+                  setIsRightPreviewCollapsed(!isRightPreviewCollapsed);
+                  setIsHovered(false);
+               }}
+               className="text-slate-500 hover:text-white p-1 hover:bg-white/5 rounded transition-all cursor-pointer"
+               title="Toggle Retractable"
+             >
+               <ChevronRight size={14} className={isRightPreviewCollapsed ? '' : 'rotate-180'} />
+             </button>
+          </div>
       {/* Header do Preview */}
       <div className="p-4 bg-[#090d16] border-b border-white/10 shrink-0 flex justify-between items-center gap-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -836,6 +895,8 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
         )}
 
       </div>
+      </>
+      )}
     </div>
   );
 };

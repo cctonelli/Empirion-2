@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.129 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.130 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Layout Flutuante Retrátil nos Cockpits de Decisão & Prevenção de Shifting - v2026.130
+
+**Data:** 13 de Junho de 2026 às 21:00 UTC  
+**Motivo:** Corrigir de forma definitiva as imperfeições e micro-deslocamentos de interface (layout shifting) que ocorriam quando as barras laterais do Cockpit de Controle (esquerda) e Cockpit Preview (direita) estavam configuradas no "Modo Retrátil" e o usuário passava o mouse em cima. Anteriormente, a expansão dessas barras empurrava os campos de inputs e tabelas dos steps de decisões secundariamente, prejudicando o foco visual do usuário.
+
+**Detalhamento Técnico de Planejamento:**
+- **Prevenção de Shifting via Placeholders Constantes**: Implementação de containers invisíveis funcionais (`72px` na esquerda e `12px` na direita) que ocupam espaço fixo constante no fluxo do documento (document flow), assegurando que o espaço alocado para os cockpits seja rigorosamente consistente sob qualquer estado hover.
+- **Flutuação de Estado via Posicionamento Absoluto**: Redefinição dos painéis reais expandidos dos cockpits para utilizar posicionamento absoluto (`absolute left-0` / `absolute right-0`) sobrepostos sob o viewport em z-index elevado (`z-30` / `z-40`), fazendo com que eles expandam flutuando sobre o conteúdo sutilmente, sem exercer pressão física ou comprimir as colunas internas dos Steps.
+- **Unificação de Estados de Renderização no RightPreviewPanel**: Eliminação de retornos redundantes cindidos na árvore do DOM, estruturando o comportamento adaptativo sob uma única div pai com transições suaves sincronizadas de largura (`w-12` a `w-[410px]`) e animações nativas de CSS (Tailwind) orientadas por eventos de `onMouseEnter` e `onMouseLeave` síncronos.
+
+**Impactos:**
+- **Zero Squeeze em Steps de Decisões**: Conforto visual absoluto ao preencher formulações de compras, contratações de pessoal, e volumes de produção, eliminando movimentos involuntários de quebra de foco de interface.
+- **Fluidez em Displays de Alta Resolução**: Transições aceleradas por hardware das barras laterais mantendo a conformidade com as tendências estéticas de design moderno de 2026.
 
 ---
 

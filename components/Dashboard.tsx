@@ -55,6 +55,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
   const [hubTab, setHubTab] = useState<'dre' | 'balance' | 'cashflow' | 'strategic' | 'commitments' | 'kardex'>('dre');
   const [decisions, setDecisions] = useState<any>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
 
   const isRoundExpired = useMemo(() => {
     if (!activeArena) return false;
@@ -600,34 +601,65 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       </section>
  
       {/* 2. Área principal expansível */}
-      <div className="flex-1 flex min-h-0 overflow-hidden">
-         {/* Sidebar esquerda – Intel Pulse (fixa, scrollável) */}
-         <aside className={`${isSidebarCollapsed ? 'w-12' : 'w-[260px]'} shrink-0 bg-slate-900/40 backdrop-blur-xl border-r border-white/10 flex flex-col transition-all duration-300 z-10 relative`}>
-            {/* Toggle Button */}
+      <div className="flex-1 flex min-h-0 overflow-hidden relative">
+         {isSidebarCollapsed && (
+            <div className="w-12 shrink-0 transition-all duration-300 pointer-events-none" />
+         )}
+         {/* Sidebar esquerda – Intel Pulse (retrátil com super-poder hover) */}
+         <aside 
+            onMouseEnter={() => { if (isSidebarCollapsed) setIsSidebarHovered(true); }}
+            onMouseLeave={() => { if (isSidebarCollapsed) setIsSidebarHovered(false); }}
+            className={`shrink-0 flex flex-col transition-all duration-300 z-30 ${
+               !isSidebarCollapsed ? 'relative w-[260px] bg-slate-900/40 backdrop-blur-xl border-r border-white/10' : 
+               isSidebarHovered ? 'absolute left-0 top-0 bottom-0 h-full w-[260px] bg-slate-950/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)]' : 'absolute left-0 top-0 bottom-0 h-full w-12 bg-slate-900/40 backdrop-blur-xl border-r border-white/15'
+            }`}
+         >
+            {/* Toggle Button / Retractable Checkbox */}
             <button 
+              type="button"
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="absolute -right-2.5 top-16 w-5 h-5 bg-orange-600 rounded-full flex items-center justify-center text-white shadow-lg z-20 hover:bg-orange-500 transition-colors"
+              className="absolute -right-2.5 top-16 w-5 h-5 bg-orange-600 rounded-full flex items-center justify-center text-white shadow-lg z-40 hover:bg-orange-500 transition-colors cursor-pointer"
             >
-              <ChevronRight size={12} className={`transition-transform duration-300 ${isSidebarCollapsed ? '' : 'rotate-180'}`} />
+              <ChevronRight size={12} className={`transition-transform duration-300 ${!isSidebarCollapsed ? 'rotate-180' : ''}`} />
             </button>
 
-            <div className={`flex-1 flex flex-col overflow-y-auto custom-scrollbar p-3 space-y-4 ${isSidebarCollapsed ? 'items-center overflow-x-hidden' : ''}`}>
-              <header className={`flex items-center justify-between border-b border-white/5 pb-2 ${isSidebarCollapsed ? 'flex-col gap-2' : ''}`}>
-                {!isSidebarCollapsed && (
+            <div className={`flex-1 flex flex-col overflow-y-auto custom-scrollbar p-3 space-y-4 ${(!isSidebarCollapsed || isSidebarHovered) ? '' : 'items-center overflow-x-hidden'}`}>
+              
+              {/* Controle 1: O Checkbox de Operação Retrátil */}
+              <div className="flex items-center gap-2 p-1.5 bg-white/5 border border-white/5 rounded-xl w-full">
+                <input 
+                  type="checkbox" 
+                  id="retractable-mode-dashboard"
+                  checked={isSidebarCollapsed} 
+                  onChange={(e) => {
+                    setIsSidebarCollapsed(e.target.checked);
+                    if (!e.target.checked) setIsSidebarHovered(false);
+                  }}
+                  className="w-3.5 h-3.5 text-orange-600 bg-slate-950 border-white/10 rounded focus:ring-orange-500 focus:ring-offset-0 cursor-pointer shrink-0"
+                />
+                {(!isSidebarCollapsed || isSidebarHovered) && (
+                  <label htmlFor="retractable-mode-dashboard" className="text-[8px] font-black text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider select-none truncate">
+                    Modo Retrátil
+                  </label>
+                )}
+              </div>
+
+              <header className={`flex items-center justify-between border-b border-white/5 pb-2 w-full ${(!isSidebarCollapsed || isSidebarHovered) ? '' : 'flex-col gap-2'}`}>
+                {(!isSidebarCollapsed || isSidebarHovered) && (
                   <div className="flex flex-col">
-                    <h3 className="text-[8px] font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2 mb-0.5">
+                    <h3 className="text-[8px] font-black text-orange-500 uppercase tracking-[0.2em] flex items-center gap-2 mb-0.5 animate-in fade-in duration-300">
                       <Zap size={8} className="fill-orange-500" /> {t('intel_pulse')}
                     </h3>
-                    <span className="text-[6px] font-bold text-slate-500 uppercase tracking-widest italic">Monitoramento Live</span>
+                    <span className="text-[6px] font-bold text-slate-500 uppercase tracking-widest italic animate-in fade-in duration-300">Monitoramento Live</span>
                   </div>
                 )}
-                {isSidebarCollapsed && <Zap size={12} className="text-orange-500" />}
+                {(isSidebarCollapsed && !isSidebarHovered) && <Zap size={12} className="text-orange-500" />}
                 <button onClick={() => setShowAudit(true)} className="p-1.5 bg-white/5 hover:bg-orange-600 rounded-lg transition-all text-slate-500 hover:text-white group shadow-lg" title={t('audit_history')}>
                   <History size={10} className="group-hover:rotate-[-45deg] transition-transform" />
                 </button>
               </header>
 
-              {!isSidebarCollapsed ? (
+              {(!isSidebarCollapsed || isSidebarHovered) ? (
                 <>
                   <div className={`p-2.5 rounded-2xl border space-y-2 shadow-2xl transition-all relative overflow-hidden group ${requireBP && bpStatus !== 'submitted' ? 'bg-orange-600/10 border-orange-500/40' : 'bg-slate-950/80 border-white/5 hover:border-white/10'}`}>
                     {requireBP && bpStatus !== 'submitted' && (
