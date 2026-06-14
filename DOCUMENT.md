@@ -2,9 +2,28 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.137 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.138 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Resiliência na Sincronização de Preços Sugeridos por Próspera Regionalização (Mapeamento Resiliente de IDs de Regiões) - v2026.138
+
+**Data:** 14 de Junho de 2026 às 16:15 UTC  
+**Motivo:** Corrigir a divergência na apuração do preço sugerido (exibição de $425 em vez do valor de $1000 cadastrado pelo Tutor no banco de dados para a Região 01) causada por desalinhamento ou duplicidade de identificadores (`id` de região desalinhados com o índice numérico sequencial da listagem 1-baseada) oriundos do payload de canais do Supabase.
+
+**Detalhamento Técnico de Planejamento:**
+- **Inclusão de Múltiplos Fallbacks Sequenciais (Cockpit & Simulador)**: Fomos além do mapeamento sequencial rígido pautado no campo `id` da região e implementamos estratégias complementares de leitura (fallbacks baseados no índice indexado do vetor no array `regions_count` ou `[regId - 1]`).
+- **Escopo Corrigido Totalmente**:
+  - **Exibição nas Telas de Decisões (`/components/DecisionForm.tsx`)**: Correção do loop `initialRegions` permitindo recuperar as variáveis mesmo em caso de lacunas numéricas ou duplicidades de IDs.
+  - **Interpolação de Estampa Financeira e Estimativa (`/components/steps/MarketingStep.tsx`)**: Ajustados os buscadores de regiões de cockpit para computar consistentemente o `baseSuggestedPrice`, frete e custo de marketing territoriais.
+  - **Sincronismo com Room e Auditor (`/services/supabase.ts`)**: Corrigido o instanciador automático de decisões para torneios em andamento (`baseDecisions`).
+  - **Fórmula de Equilíbrio e Mecânica de Demanda (`/services/simulation.ts` e `/services/simulation-core.ts`)**: Injetada a resiliência por índice `regId - 1` para certificar que os preços no cálculo da matriz de vendas respeitem as especificidades físicas do simulador independentemente do array de ID do Supabase.
+
+**Impactos:**
+- **Zero Ruído Orçamentário**: Garantia absoluta de que preços sugeridos alterados pelo Tutor funcionem em sua totalidade no cálculo da atratividade comercial e na tela da equipe.
+- **Alinhamento do Time Contábil**: Nenhuma fresta de desalinhamento de auditoria e cálculo de KPIs financeiros de custos e preços.
 
 ---
 

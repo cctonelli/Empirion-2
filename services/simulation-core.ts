@@ -1048,7 +1048,11 @@ export function processRoundWithValidation(
       const rjDemandPenalty = decision.judicial_recovery === true ? 0.85 : 1.0;
 
       const regId = Number(id);
-      const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
+      const regConfig = 
+        (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || 
+        (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId) ||
+        (ecosystem as any)?.regions?.[regId - 1] ||
+        (ecosystem as any)?.region_configs?.[regId - 1];
       const baseSuggestedPrice = regConfig?.suggested_price !== undefined ? Number(regConfig.suggested_price) : (indicators.avg_selling_price || 425);
 
       const priceIndex = baseSuggestedPrice / regPrice;

@@ -737,7 +737,11 @@ export const calculateProjections = (
     const regTerm = sanitize(reg.term, 0); // 0: A VISTA, 1: A VISTA + 50%, 2: A VISTA + 33% + 33%
 
     const regId = Number(id);
-    const regConfig = (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId);
+    const regConfig = 
+      (ecosystem as any)?.regions?.find((r: any) => r.id === regId) || 
+      (ecosystem as any)?.region_configs?.find((r: any) => r.id === regId) ||
+      (ecosystem as any)?.regions?.[regId - 1] ||
+      (ecosystem as any)?.region_configs?.[regId - 1];
     const currencyCode = regConfig?.currency || 'BRL';
     const rate = getExchangeRate(currencyCode);
 

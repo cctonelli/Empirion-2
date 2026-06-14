@@ -275,7 +275,11 @@ const DecisionForm: React.FC<{
         const initialRegions: any = {};
         for (let i = 1; i <= (found?.regions_count || 1); i++) {
           const regId = i;
-          const regionConf = found?.config?.regions?.find((r: any) => r.id === regId) || found?.config?.region_configs?.find((r: any) => r.id === regId);
+          const regionConf = 
+            found?.config?.regions?.find((r: any) => r.id === regId) || 
+            found?.config?.region_configs?.find((r: any) => r.id === regId) ||
+            found?.config?.regions?.[i - 1] ||
+            found?.config?.region_configs?.[i - 1];
           const defaultSugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : 425;
           initialRegions[i] = finalData?.regions?.[i] || { price: defaultSugPrice, term: 0, marketing: 0 };
         }

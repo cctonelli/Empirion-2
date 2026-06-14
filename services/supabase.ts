@@ -546,7 +546,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                 const regionConfigsList = champ.region_configs || champ.config?.regions || champ.config?.region_configs || [];
                 
                 for (let i = 1; i <= regionsCount; i++) {
-                  const regionConf = regionConfigsList.find((r: any) => r.id === i);
+                  const regionConf = regionConfigsList.find((r: any) => r.id === i) || regionConfigsList[i - 1];
                   const defaultSugPrice = regionConf?.suggested_price !== undefined ? Number(regionConf.suggested_price) : 425;
                   initialRegions[i] = { price: defaultSugPrice, term: 0, marketing: 0 };
                 }

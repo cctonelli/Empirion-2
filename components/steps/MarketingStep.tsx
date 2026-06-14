@@ -268,7 +268,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
     // 2. Parâmetros de contexto e regiões
     const regionConf =
       activeArena?.config?.regions?.find((r: any) => r.id === regionId) ||
-      activeArena?.config?.region_configs?.find((r: any) => r.id === regionId);
+      activeArena?.config?.region_configs?.find((r: any) => r.id === regionId) ||
+      activeArena?.config?.regions?.[regionId - 1] ||
+      activeArena?.config?.region_configs?.[regionId - 1];
     const baseSuggestedPrice =
       regionConf?.suggested_price !== undefined
         ? Number(regionConf.suggested_price)
@@ -660,7 +662,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
             activeArena?.config?.regions?.find((r: any) => r.id === regId) ||
             activeArena?.config?.region_configs?.find(
               (r: any) => r.id === regId,
-            );
+            ) ||
+            activeArena?.config?.regions?.[regId - 1] ||
+            activeArena?.config?.region_configs?.[regId - 1];
           const demandWeight =
             regionConf?.demand_weight !== undefined
               ? Number(regionConf.demand_weight)
