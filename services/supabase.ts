@@ -176,12 +176,9 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   const validTrialCols = [
     'name', 'branch', 'status', 'current_round', 'total_rounds', 'config',
     'initial_financials', 'initial_market_data', 'market_indicators', 'tutor_id',
-    'deadline_value', 'deadline_unit', 'region_names', 'region_configs', 'currency',
-    'sales_mode', 'scenario_type', 'description', 'gazeta_mode', 'transparency_level',
+    'deadline_value', 'deadline_unit', 'description', 'gazeta_mode', 'transparency_level',
     'observers', 'round_started_at', 'is_public', 'dividend_percent', 'ecosystem_config',
-    'regions_count', 'social_charges', 'compulsory_loan_agio', 'production_hours_period',
-    'award_values', 'exchange_rates', 'staffing', 'prices', 'machinery_values',
-    'is_trial', 'round_rules', 'brl_rate', 'gbp_rate', 'initial_share_price', 'starting_mode'
+    'is_trial', 'initial_share_price', 'starting_mode'
   ];
   
   const validLiveCols = [...validTrialCols, 'products', 'resources', 'team_fee', 'start_date', 'end_date', 'sector', 'master_key_enabled', 'kpis'];
@@ -543,7 +540,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
               if (!baseDecisions) {
                 const initialRegions: any = {};
                 const regionsCount = champ.regions_count || 1;
-                const regionConfigsList = champ.region_configs || champ.config?.regions || champ.config?.region_configs || [];
+                const regionConfigsList = champ.config?.regions || champ.config?.region_configs || champ.region_configs || [];
                 
                 for (let i = 1; i <= regionsCount; i++) {
                   const regionConf = regionConfigsList.find((r: any) => r.id === i) || regionConfigsList[i - 1];
@@ -622,7 +619,7 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
 
         // --- MODELO CONCORRENCIAL MULTIRREGIONAL DE MARKET SHARE (v19.5 Sapphire) ---
         // 2.1 Configuração de Regiões do Campeonato
-        let regionConfigs: RegionConfig[] = champ.region_configs || champ.config?.regions || champ.config?.region_configs || [];
+        let regionConfigs: RegionConfig[] = champ.config?.regions || champ.config?.region_configs || champ.region_configs || [];
         if (!regionConfigs || regionConfigs.length === 0) {
             const regCount = champ.regions_count || 1;
             regionConfigs = Array.from({ length: regCount }, (_, i) => ({

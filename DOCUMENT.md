@@ -2,9 +2,70 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.140 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.143 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Higienização Estrutural de Tabelas no Supabase (Eliminação Completa de Redundância Plana) - v2026.143
+
+**Data:** 14 de Junho de 2026 às 19:00 UTC  
+**Motivo:** Erradicação sistemática de duplicidade estrutural de armazenamento de dados entre as colunas raiz redundantes e o nó encapsulado `config` JSONB das tabelas `championships` e `trial_championships` no Supabase. O desígnio é purificar o DDL unificando as parametrizações em um único repositório documental JSONB, garantindo a integridade dos dados históricos dos Tutores (IFRS/CPC Compliance) e protegendo a integridade operacional imediata contra quebras lógicas.
+
+**Detalhamento Técnico de Planejamento:**
+- **Estágio de Acoplamento e Backup Fiduciário**: 
+  - Antes de realizar qualquer exclusão física (drop) das colunas redundantes, o script de migração (`20260614190000_fiduciary_cleanup_redundancy.sql`) realiza um merge seguro de chaves usando `jsonb_set` e operadores lógicos de mesclagem (`||`) para garantir que todos os dados que estavam soltos nas colunas planas de moeda, taxas, preços regionais, maquinários e composições administrativas de equipes sejam consolidados permanentemente dentro do documento principal `config` de cada torneio de simulação registrado.
+- **Exclusão Física Controlada (DDL Purificado)**:
+  - Uma vez acoplado e consolidado no `config` (JSONB), o script executa com segurança a remoção física de 17 colunas obsoletas e em desuso da raiz das tabelas `championships` e `trial_championships`: `region_names`, `region_configs`, `regions_count`, `currency`, `sales_mode`, `scenario_type`, `social_charges`, `compulsory_loan_agio`, `production_hours_period`, `award_values`, `exchange_rates`, `staffing`, `prices`, `machinery_values`, `round_rules`, `brl_rate` e `gbp_rate`.
+  - Isso deixa a estrutura das tabelas limpa, com apenas 24 colunas de identidade essencial para mapeamento contábil fidedigno.
+- **Sincronia do Cliente de API (Database Payload Sanitization v2)**:
+  - Para evitar falhas de PostgREST `400 Bad Request (column not found)` no ato de criação dos campeonatos, atualizamos a lista de correspondência `validTrialCols` em `/services/supabase.ts` para que o frontend não envie payloads referenciando campos físicos obsoletos que foram limpos.
+
+**Impactos:**
+- **Consistência Absoluta Contra Conflitos de Demanda**: Erradica definitivamente qualquer discrepância de pesos de demanda regional, uma vez que a única fonte fidedigna passa a ser a árvore estrutural documentada no payload `config` do torneio.
+- **Otimização Contínua e DX Excepcional**: Uma tabelação compacta simplifica relatórios, queries de exportação, auditoria de banco de dados e assegura que futuros engenheiros entendam a fundo a modelagem do ERP empresarial sem poluição.
+
+---
+
+## Decisão Arquitetural, Fundação Patrimonial Sólida e Geração Autônoma de Market Size no Modo 'Start from Zero' - v2026.142
+
+**Data:** 14 de Junho de 2026 às 18:40 UTC  
+**Motivo:** Documentar e consolidar as regras de integridade patrimonial fiduciária no ecossistema de fundação ágil ("Start from Zero"). Validar que, diferentemente da herança imobilizada existente no modelo tradicional de herbário ("Start with Base"), no modo de início a partir do zero as empresas iniciam suas atividades munidas unicamente de Capital Social inicial integralizado em Caixa. O planejamento e a aprovação de CAPEX no Round 1 constitui-se no único nexus gerador de capacidade industrial e no gerador direto do Market Size dinâmico.
+
+**Detalhamento Técnico de Planejamento:**
+- **Ponto de Partida Desprovido de Ativos Fixos**: No ecossistema sob o marcador `current_mode === 'start_from_zero'`, as marcas competem sob igualdade absoluta de fundação:
+  1. No Round 0, o Ativo Imobilizado Fixo de Máquinas é nulo. Nenhum imobilizado preexistente (`INITIAL_MACHINES_P00`) é herdado no Balanço de abertura.
+  2. A conta de contabilidade Ativo Circulante (Disponibilidades / Caixa Geral) é inaugurada com a integralização inteira do Capital em dinheiro.
+- **CAPEX no Round 1 como Elemento Fundacional**: 
+  - Toda máquina adquirida e instalada através das decisões de CAPEX no Round 1 passa a ser o bloco mestre pioneiro de infraestrutura fabril.
+  - Para cada aquisição de maquinário promovida no cockpit, o Ativo Não Circulante registra o imobilizado líquido correspondente, as provisões de custos de instalação técnica por modelo (Alfa, Beta ou Gama), e inicia o cronograma de depreciações sistemáticas no fechamento.
+  - O motor de simulação (`simulation.ts` / `supabase.ts`) soma a capacidade total ativa correspondente a esse maquinário recém-implantado das marcas e aplica as fatias regionais do Tutor para modular dinamicamente o Market Size a ser fatiado. Isso assegura que no Round 1 a demanda geométrica do setor derive puramente da audácia do investimento inicial promovido pelas empresas, personificando de maneira límpida o ciclo real de concepção de indústrias.
+
+**Impactos:**
+- **Transparência Contábil Impecável**: Garante total conformidade contábil sob os princípios internacionais de relatórios financeiros (IFRS / CPC) ao separar as marcas herdadas das marcas fundadas do zero.
+- **Alinhamento do Motor de Demanda**: O motor econômico calcula o Market Size em tempo real com base no parque operacional acumulado, permitindo que a escassez ou excesso de capacidade agregada de CAPEX dite as oportunidades comerciais regionais.
+
+---
+
+## Decisão Arquitetural, Integridade na Priorização de Configurações Regionais e Nexus Causal do Market Size de 63.000 un - v2026.141
+
+**Data:** 14 de Junho de 2026 às 18:27 UTC  
+**Motivo:** Dirimir lacunas analíticas e duplicidades de controle entre as colunas da tabela `trial_championships` (conflito de fonte da verdade), especificamente onde o peso de demanda consolidada diferia entre o campo raiz `region_configs` (105% de peso total) e o nó `config.regions` (110% de peso total, que é o correto determinado pelo Tutor). Também auditar e explicar matematicamente a geração da demanda exata de 63.000 unidades disputadas no Round 1 sob o enfoque de conformidade estrutural.
+
+**Detalhamento Técnico de Planejamento:**
+- **Harmonização Relacional e Single Source of Truth**: Reestruturamos prioritariamente a cadeia de herança analítica de regiões nas engines de cockpit (`MarketingStep.tsx`) e fechamento de rodadas (`services/supabase.ts`). O código agora inspeciona e preenche as configurações regionais preferencialmente do nó `config.regions` ou `config.region_configs` (onde residem as modificações consistentes de 110% de peso do Tutor). Somente se estes nós estiverem ausentes, o sistema recorre de forma segura à coluna plana de raiz `region_configs`. Isso resolve definitivamente a assimetria corporativa de pesos.
+- **Auditoria e Desmistificação do Market Size Global (63.000 unidades)**:
+  1. No modo tradicional **Start with Base**, as 3 equipes iniciam o jogo em conformidade com o Balanço Patrimonial Herdado clássico contendo **5 máquinas Alpha** operacionais por equipe (`INITIAL_MACHINES_P00` como premissa de herança de ativos imobilizados no Round 0).
+  2. No decorrer do Round 1, todas as equipes executaram decisões corporativas de aprovação de CAPEX para a compra de **+5 máquinas Alpha** adicionais cada uma.
+  3. Portanto, a frota produtiva ativa no início das entregas do Round 1 totalizou **10 máquinas Alpha por equipe** (5 iniciais + 5 adquiridas por CAPEX).
+  4. Sabendo que a capacidade nominal de fabricação regulamentar de cada máquina Alpha é de **2.000 unidades físicas / ciclo**, a capacidade total instalada da indústria para as 3 equipes atingiu: `10 máquinas * 2.000 un/máquina * 3 equipes = 60.000 unidades globais` de capacidade acumulada.
+  5. Multiplicando essa capacidade de 100% instalada pelo peso acumulado de demanda das 5 regiões registradas na coluna residual de herança até a unificação (**105% / 100**), o motor econômico calculou de forma 100% impecável: `60.000 unidades * 1.05 = 63.000 unidades` de demanda consolidada.
+  6. Com a unificação em `v2026.141`, ao operar agora sobre o peso ajustado correto de **110%** contido no `config.regions`, a demanda do mercado sob o mesmo parque industrial expandido passará a ser de exatamente `60.000 * 1.10 = 66.000 unidades` físicas, correspondendo fiduciosamente à modelagem pretendida pelo Tutor.
+
+**Impactos:**
+- **Zero Inconsistência Contábil**: Mapeamento cristalino para o auditor financeiro e inteligência de mercado sobre o número de maquinário integrado e fatores multiplicadores (turnos de trabalho, etc.).
+- **Unificação Plena de Dados**: Eliminação da duplicidade conceitual de leitura de configurações de região, estabelecendo o campo `config` como repositório primário.
 
 ---
 

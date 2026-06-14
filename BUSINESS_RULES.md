@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.126
+- **Versão Ativa de Regras:** v2026.127
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,7 +18,8 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
-| **11/06/2026** | `v2026.126` | *PMP & Equipe* | **Generalização Multimoeda Dinâmica para Moeda-Base do Torneio.** Extensão do motor sob diretrizes do CPC 02 / IAS 21 para suportar qualquer moeda-base (BRL, USD, GBP, CNY) configurada pelo Tutor. O motor calcula dinamicamente as taxas de câmbio cruzadas (cross-rates) fallbacks e apura a variação cambial fiduciária (`fin.fx_variance`) para qualquer praça cuja moeda difira da moeda-base elegida consolidada. |
+| **14/06/2026** | `v2026.127` | *PMP & Equipe* | **Mapeamento Patrimonial e Delineação de CAPEX: Start from Zero vs. Start with Base.** Clarificação estrutural do comportamento do balanço e do market size sob abordagens táticas de fundação de empresas. No modo *Start from Zero*, as marcas iniciam exclusivamente com Capital Social e Caixa Física disponível — sem frota fabril inicial herdada do Round 0. Fica estabelecido o nexus de que o investimento e aprovação de CAPEX no Round 1 (adição de maquinário, custos de instalação técnica por modelo de máquina e amortizações de depreciação subsequentes) são os catalisadores soberanos e exclusivos que erguem o Ativo Imobilizado e constroem o Market Size de demanda regional na simulação. |
+| **11/06/2026** | `v2026.126` | *PMP & Equipe* | **Generalização Multimoeda Dinâmica para Moeda-Base do Torneio.** |Multimoeda Dinâmica para Moeda-Base do Torneio.** Extensão do motor sob diretrizes do CPC 02 / IAS 21 para suportar qualquer moeda-base (BRL, USD, GBP, CNY) configurada pelo Tutor. O motor calcula dinamicamente as taxas de câmbio cruzadas (cross-rates) fallbacks e apura a variação cambial fiduciária (`fin.fx_variance`) para qualquer praça cuja moeda difira da moeda-base elegida consolidada. |
 | **11/06/2026** | `v2026.125` | *PMP & Equipe* | **Tratamento Cambial CPC 02 / IAS 21 e Reconciliação Fiduciária Multimoeda.** Detalhamento técnico da conversão monetária de transações no exterior. As vendas e marketing/fretes em USD são convertidos a BRL com câmbio do round de transação. Variações cambiais subsequentes de parcelas a receber pendentes são lançadas em Resultado Financeiro no DRE (`fin.fx_variance`). Os cartões regionais no cockpit (mini-DRE) efetuam a lógica inversa (divisão) para CPV e Share Corporativo, mantendo exatidão de 100%. |
 | **11/06/2026** | `v2026.124` | *PMP & Equipe* | **Saneamento Absoluto de Investimentos e CAPEX no Carry-Forward.** Alinhamento explícito exigindo que, no motor de recuperação por timeout automotivo, haja o zeramento absoluto de novas Aplicações Financeiras corporativas e toda a intenção de Compra de Máquinas de Qualquer Modelo (modelos Alfa, Beta e Gama) para resguardar a integridade de caixa físico disponível das marcas. |
 | **11/06/2026** | `v2026.123` | *PMP & Equipe* | **Governança de Decisão por Timeout (Carry-Forward Automático).** Implementação do motor de recuperação e tratamento automático síncrono para equipes que não enviarem a decisão tempestivamente em virtude de estouro do timer de contagem regressiva. O motor de turnover clona a decisão do round anterior, expurga gastos não recorrentes/específicos (como Capex de maquinário e contratações do RH/empréstimos) e injeta como rascunho oficial ativo de simulação do round para manter a consistência contábil e de concorrência. |
@@ -47,6 +48,24 @@ Quando uma equipe adquire novas máquinas em um round (Turno $N$):
 4. **Produtividade Plena nos Rounds Posteriores:** A partir do turno imediatamente seguinte (Turno $N+1$), com a equipe devidamente treinada e os equipamentos de setup concluídos, as novas máquinas passam a produzir à sua taxa máxima nominal (limitada apenas por fatores globais de desgaste natural e investimento em manutenção).
 
 > ⚠️ **Alerta Estratégico:** As equipes devem estar cientes de que a decisão de comprar novas máquinas aumentará de imediato a capacidade instalada teórica e o Market Size global (TAM), mas o fluxo físico de entrada de mercadoria acabada (massa física estocada para venda imediata) no DRE/Caixa do round de compra sofrerá restrição pelo delay do setup físico do novo imobilizado.
+
+### 🚀 Diferenciação Estratégica: Zero Mode (Start from Zero) vs. Tradicional (Start with Base)
+
+O simulador suporta dois comportamentos distintos de infraestrutura e contabilidade no início do torneio:
+
+1. **Modo Tradicional (Start with Base / Start with Running):**
+   - As empresas herdam um balanço histórico consolidado (`INITIAL_MACHINES_P00`) contendo **5 máquinas Alpha** operacionais herdadas do Round 0.
+   - Existe uma base instalada de capacidade inicial ($10.000$ unidades por equipe) que garante a existência de um tamanho de mercado inicial no Round 1, mesmo que nenhuma equipe invista em CAPEX adicional.
+
+2. **Modo de Fundação (Start from Zero):**
+   - As empresas iniciam as suas atividades puramente com **Caixa e Ativo Circulante (Capital Social)** obtido dos acionistas ($5.000.000,00$ ou valor configurado).
+   - **Frota Inicial de Máquinas:** ZERADA. Nenhuma máquina Alfa, Beta ou Gama pré-existe no parque fabril das equipes concorrentes.
+   - **A Força do CAPEX no Round 1:** Sob este modo, os investimentos realizados em CAPEX durante o Round 1 são os **únicos catalisadores** que criam os Ativos Imobilizados tangíveis e erguem a capacidade industrial do mercado (consequentemente determinando e criando o Market Size físico de demanda). 
+   - **Custo de Instalação e Equipamentos:** Cada aquisição reverte em:
+     - Ativação do valor de compra das máquinas no Ativo Não Circulante Imobilizado.
+     - Prédios e Instalações Industriais adicionadas.
+     - Início das provisões de depreciação mensal sobre a frota instalada no encerramento do período.
+     - Alocação do fluxo financeiro como saída das Atividades de Investimento (Dfc / CAPEX) de forma isolada e limpa (sem heranças de passivos ou CAPEX residual de rounds passados).
 
 ---
 

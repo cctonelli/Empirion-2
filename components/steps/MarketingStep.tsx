@@ -279,9 +279,9 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
       activeArena?.market_indicators?.demand_variation || 0;
 
     let regionConfigs: any[] =
-      activeArena?.region_configs ||
       activeArena?.config?.regions ||
       activeArena?.config?.region_configs ||
+      activeArena?.region_configs ||
       [];
     if (!regionConfigs || regionConfigs.length === 0) {
       const regCount =
