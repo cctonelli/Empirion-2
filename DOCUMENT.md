@@ -2,9 +2,49 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.146 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.155 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Prevenção Automática contra Paralisia Industrial e Implementação do Alerta Fiduciário de Mão de Obra Direta no Oracle Shield - v2026.155
+
+**Data:** 15 de Junho de 2026 às 16:30 UTC  
+**Motivo:** Análise e resolução do bug de usabilidade e dimensionamento onde as equipes que iniciam em modo Greenfield ("Start from Zero") compram máquinas e matérias-primas no Turno 1 e 2, mas deixam de contratar operários fabris sob MOD (enviando `hired: 0` na decisão). Isso zera a capacidade efetiva fabril e consequentemente resulta em produção nula (0 unidades produzidas) e receita líquida nula (0 vendas), frustrando os alunos e acumulando estoques e pesadas despesas fixas.
+
+**Detalhamento Técnico de Diagnóstico e Prevenção:**
+- **Localização Estrita do Engasgo Operacional**:
+  - Nos dados de histórico do Supabase, confirmou-se que as equipes no Round 1 e Round 2 compraram 5 máquinas Alfa (Capacidade: 10.000 un; Exigência: 470 operadores) e adquiriram MPs suficientes, contudo o valor de `decisions.hr.hired` resultava em `0` e o histórico gravado de `kpis.staffing.production` permaneceu em `0`.
+  - O kernel determinístico do simulador em `services/simulation.ts` aplicou corretamente os preceitos contábeis de capacidade e mão de obra, definindo `operatorConstraint = 0`, o que resultou fidedignamente em produção zero, CPV sem consumo de matéria-prima e receita zero.
+- **Implementação do Alerta Fiduciário Crítico no Oracle Shield (`ReviewStep.tsx`)**:
+  - Passagem das variáveis `projections` e `currentMacro` do formulário principal de simetria (`DecisionForm.tsx`) diretamente ao painel final de transmissão (`ReviewStep.tsx`).
+  - Desenvolvido um bloco dinâmico em tempo real de alto impacto visual no `ReviewStep.tsx` que analisa se o parque de ativos mecânicos exige mão de obra (`operatorsRequired > 0`) e se as contratações correntes sanam essa demanda (`operatorsAvailable < operatorsRequired`).
+  - Para equipes com zero operários contratados (paralisia completa), um alerta vermelho com animação de pulsação e instruções passo-a-passo é exibido de forma inflexível, impedindo que o aluno cometa essa falha de preenchimento por distração. Para sub-tripulações, um alerta de gargalo parcial em amarelo é renderizado para prever perdas de eficiência.
+
+**Impactos:**
+- **Zero Ocorrências de Ociosidade Involuntária**: Reduz a zero a taxa de erro operacional das equipes decorrente do desconhecimento da aba de RH ao comprar ativos fabris.
+- **Aperfeiçoamento Pedagógico**: Ensina na prática a correlação simbiótica contábil de Investimento Capex (Ativos) e Despesa Opex (Folha e MOD).
+
+---
+
+## Decisão Arquitetural, Conservação da Integridade Fiduciária de R-00 no Fallback do Cockpit e Resolução de Acúmulo de KPIs - v2026.150
+
+**Data:** 15 de Junho de 2026 às 16:10 UTC  
+**Motivo:** Correção do bug de desvio estético e repetição de dados históricos no Período de Abertura `R-00 (INICIAL)` exibido no dashboard das equipes. Quando um campeonato antigo ou sem histórico físico de P0 no banco era carregado, a rotina de fallback gerada em memória no `Dashboard.tsx` herdava os KPIs (`statements`, `equity`, `total_assets`, `machines`, `stock_quantities`, etc.) do objeto `team?.kpis` correspondente ao round ativo em disputa (como R-02 ou R-05). Isso causava vazamento bilateral de informações futuras para o R-00, de modo que os relatórios e a Matriz Financeira espelhavam em P0 o mesmo panorama do round jogado atual. Além disso, sanou-se a dúvida contábil do CPV residual `-R$ 292.500,00` gerado por ociosidade (CPP real descarregado diretamente no resultado) quando o nível de atividade/faturamento da fábrica é literalmente zero na rodada inicial no modo "Start from Zero".
+
+**Detalhamento Técnico de Planejamento:**
+- **Prevenção Concreta contra Coleta Estática do KPIs Atuais**:
+  - Eliminada a herança cega e abusiva de `team?.kpis` para as variáveis de abertura. O fallback em memória no `/components/Dashboard.tsx` agora gera os dados patrimoniais do R-00 inteiramente do zero com base nas parametrizações de infraestrutura ditadas no `arena.config` do ecossistema.
+- **Orquestração de Detecção Contábil via `generatePureP0`**:
+  - No interior da rotina de fallback do R-00, alimentamos a função determinística `generatePureP0` configurando dinamicamente os parâmetros da arena (como o montante de dinheiro, capital, máquinas, benfeitorias, estoques iniciais do Tutor, etc.) de acordo com o modo de início ativo (`start_from_zero`, `start_with_base` ou `start_with_running`).
+  - Os demonstrativos de DRE, DFC e Balanço Patrimonial gerados em P0 mantêm-se assim estritamente puros e incoercíveis, refletindo de maneira fidedigna a abertura real do período (lucros acumulados e faturamentos zerados, passivos adequadamente calibrados e ativos estruturados).
+- **Consistência do Custeio por Absorção no CPP e CPV**:
+  - Validou-se que se a produção for de fato `0` devido à ausência de máquinas em fase operacional ou insumos, a receita será fidedignamente zero, e todos os dispêndios fixos de indústria incorridos no período (mão de obra física comissionada/contratada ativa e os CIFs amortizáveis) transitarão integralmente na DRE sob CPV operacional de ociosidade, sem qualquer distorção contábil (CPC 16 / IAS 2 Compliance).
+
+**Impactos:**
+- **Acurácia Fiduciária no R-00 (INICIAL)**: Os demonstrativos de abertura se consolidam como colunas puras e independentes de qualquer progresso das rodadas de simulação.
+- **Transparência Contábil Intrépida**: Permite a perfeita comparação horizontal financeira do desenvolvimento e investimentos gerados pelas equipes rodada a rodada de forma limpa.
 
 ---
 

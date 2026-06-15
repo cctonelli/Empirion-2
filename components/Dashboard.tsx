@@ -185,68 +185,80 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           const hasP0 = teamHistory.some((h: any) => h.round === 0);
           if (!hasP0) {
             console.warn("Oracle Shield – P0 não encontrado no histórico do Supabase. Injetando Fallback Local do estado inicial...");
-            const kpis = team?.kpis || {};
             const isZeroMode = arena.starting_mode === 'start_from_zero';
-            const defaultCash = kpis.current_cash ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 111163.54); // default do caixa inicial
-            
-            // Garantir as declarações corretas em tempo de inicialização Greenfield
-            let statementsFallback = kpis.statements;
-            if (!statementsFallback) {
-              if (isZeroMode) {
-                statementsFallback = generatePureP0({
-                  starting_mode: 'start_from_zero',
-                  caixa_inicial: arena.config?.caixa_inicial ?? 0,
-                  capital_social: arena.config?.capital_social ?? 0,
-                  inventories: { mpa_qty: 0, mpb_qty: 0, mpa_unit_val: 0, mpb_unit_val: 0, finished_qty: 0, finished_unit_val: 0 },
-                  machines: [],
-                  building_mode: 'rented'
-                } as any);
-              } else {
-                statementsFallback = INITIAL_FINANCIAL_TREE;
-              }
-            }
+            const isBaseMode = arena.starting_mode === 'start_with_base';
+            const isRunningMode = arena.starting_mode === 'start_with_running' || (!isZeroMode && !isBaseMode);
+            const modeResolved = isZeroMode ? 'start_from_zero' : isBaseMode ? 'start_with_base' : 'start_with_running';
+
+            const p0Config: any = {
+              starting_mode: modeResolved,
+              caixa_inicial: (arena.config as any)?.caixa_inicial ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 111163.54),
+              capital_social: (arena.config as any)?.capital_social ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 7252171.74),
+              financial_investments: (arena.config as any)?.financial_investments ?? 0,
+              inventories: (arena.config as any)?.inventories || (isZeroMode ? { mpa_qty: 0, mpb_qty: 0, mpa_unit_val: 0, mpb_unit_val: 0, finished_qty: 0, finished_unit_val: 0 } : { mpa_qty: 30150, mpb_qty: 20100, mpa_unit_val: 17.50, mpb_unit_val: 20.00, finished_qty: 0, finished_unit_val: 0 }),
+              machines: (arena.config as any)?.machines || (isZeroMode ? [] : [
+                { model: 'alpha', qty: 5, age: 6, efficiency: 1.0 },
+                { model: 'beta', qty: 0, age: 0, efficiency: 1.0 },
+                { model: 'gamma', qty: 0, age: 0, efficiency: 1.0 },
+              ]),
+              machines_depreciation_rate: (arena.config as any)?.machines_depreciation_rate ?? 5,
+              buildings_depreciation_rate: (arena.config as any)?.buildings_depreciation_rate ?? 10,
+              property_depreciation_rate: (arena.config as any)?.property_depreciation_rate ?? 4,
+              wip_stock_value: (arena.config as any)?.wip_stock_value ?? (isZeroMode ? 0 : isBaseMode ? 50000.00 : 250000.00),
+              building_mode: (arena.config as any)?.building_mode || (isZeroMode ? 'rented' : 'owned'),
+              building_value: (arena.config as any)?.building_value ?? (isZeroMode ? 0 : isBaseMode ? 2000000.00 : 5440000.00),
+              building_age: (arena.config as any)?.building_age ?? (isZeroMode ? 0 : isBaseMode ? 2 : 10),
+              land_value: (arena.config as any)?.land_value ?? (isZeroMode ? 0 : isBaseMode ? 1000000.00 : 1200000.00),
+            };
+
+            const p0Generated = generatePureP0(p0Config);
+            const defaultCash = p0Generated.kpis.current_cash ?? p0Config.caixa_inicial;
 
             const initialP0Fallback = {
               team_id: teamId,
               championship_id: champId,
               round: 0,
               state: {},
-              equity: kpis.equity ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 7252171.74),
-              total_assets: kpis.total_assets ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 9493163.54),
-              stock_value: kpis.stock_value ?? (isZeroMode ? 0 : 1407000.00),
-              fixed_assets_value: kpis.fixed_assets_value ?? (isZeroMode ? 0 : 6012500.00),
+              equity: p0Generated.kpis.equity ?? p0Config.capital_social,
+              total_assets: p0Generated.kpis.total_assets ?? p0Config.capital_social,
+              stock_value: p0Generated.kpis.stock_value ?? 0,
+              fixed_assets_value: p0Generated.kpis.fixed_assets_value ?? 0,
               revenue: 0,
               net_profit: 0,
               kpis: {
-                statements: statementsFallback,
-                loans: isZeroMode ? [] : (kpis.loans || []),
-                machines: kpis.machines || (isZeroMode ? [] : INITIAL_MACHINES_P00),
+                statements: {
+                  balance_sheet: p0Generated.balance_sheet,
+                  dre: p0Generated.dre,
+                  cash_flow: p0Generated.cash_flow
+                },
+                loans: isZeroMode ? [] : (p0Generated.kpis.loans || []),
+                machines: p0Generated.machines,
                 current_cash: defaultCash,
-                stock_quantities: kpis.stock_quantities || (isZeroMode ? { mp_a: 0, mp_b: 0, finished_goods: 0 } : { mp_a: 30150, mp_b: 20100, finished_goods: 0 }),
-                equity: kpis.equity ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 7252171.74),
-                total_assets: kpis.total_assets ?? (isZeroMode ? (arena.config?.caixa_inicial ?? 0) : 9493163.54),
-                stock_value: kpis.stock_value ?? (isZeroMode ? 0 : 1407000.00),
-                fixed_assets_value: kpis.fixed_assets_value ?? (isZeroMode ? 0 : 6012500.00),
-                fixed_assets_depreciation: kpis.fixed_assets_depreciation ?? (isZeroMode ? 0 : 75000),
-                rating: kpis.rating || 'AAA',
-                last_price: kpis.last_price || (arena.initial_share_price || 100),
+                stock_quantities: isZeroMode ? { mp_a: 0, mp_b: 0, finished_goods: 0 } : { mp_a: p0Config.inventories.mpa_qty, mp_b: p0Config.inventories.mpb_qty, finished_goods: 0 },
+                equity: p0Generated.kpis.equity ?? p0Config.capital_social,
+                total_assets: p0Generated.kpis.total_assets ?? p0Config.capital_social,
+                stock_value: p0Generated.kpis.stock_value ?? 0,
+                fixed_assets_value: p0Generated.kpis.fixed_assets_value ?? 0,
+                fixed_assets_depreciation: p0Generated.kpis.fixed_assets_depreciation ?? 0,
+                rating: 'AAA',
+                last_price: arena.initial_share_price || 100,
                 last_units_sold: 0,
-                ebitda: kpis.ebitda ?? 0,
+                ebitda: 0,
                 tsr: 0,
-                ccc: 0,
-                interest_coverage: kpis.interest_coverage ?? 100,
-                nlcdg: kpis.nlcdg ?? 0,
-                solvency_score_kanitz: kpis.solvency_score_kanitz ?? (isZeroMode ? 10.0 : 1.5),
-                altman_z_score: kpis.altman_z_score ?? (isZeroMode ? 99.9 : 6.25),
-                dcf_valuation: kpis.dcf_valuation ?? (isZeroMode ? 1.0 : 1.7),
-                scissors_effect: kpis.scissors_effect ?? 0,
-                liquidity_current: kpis.liquidity_current ?? (isZeroMode ? 99.9 : 1.5),
-                solvency_index: kpis.solvency_index ?? (isZeroMode ? 99.9 : 2.0),
-                inventory_turnover: kpis.inventory_turnover ?? 0,
-                carbon_footprint: kpis.carbon_footprint ?? 0,
-                avg_receivable_days: kpis.avg_receivable_days ?? (isZeroMode ? 0 : 45),
-                avg_payable_days: kpis.avg_payable_days ?? (isZeroMode ? 0 : 30),
-                esds: kpis.esds || {
+                ccc: isZeroMode ? 0 : 75,
+                interest_coverage: 100,
+                nlcdg: isZeroMode ? 0 : 158500,
+                solvency_score_kanitz: isZeroMode ? 10.0 : 1.5,
+                altman_z_score: isZeroMode ? 99.9 : 6.25,
+                dcf_valuation: isZeroMode ? 1.0 : 1.7,
+                scissors_effect: 0,
+                liquidity_current: isZeroMode ? 99.9 : 1.5,
+                solvency_index: isZeroMode ? 99.9 : 2.0,
+                inventory_turnover: 0,
+                carbon_footprint: 0,
+                avg_receivable_days: isZeroMode ? 0 : 45,
+                avg_payable_days: isZeroMode ? 0 : 30,
+                esds: p0Generated.kpis.esds || {
                   esds_display: 78,
                   zone: 'Verde',
                   gargalo_principal: 'Nenhum',
@@ -254,16 +266,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   top_gargalos: [],
                   main_drivers: []
                 },
-                commitments: kpis.commitments || {
+                commitments: {
                   receivables: [
                     { id: 'clients', label: 'Contas a Receber', value: 0 },
-                    { id: 'investments', label: 'Aplicações Financeiras', value: 0 },
+                    { id: 'investments', label: 'Aplicações Financeiras', value: p0Config.financial_investments },
                     { id: 'vat_recoverable', label: 'IVA a Recuperar', value: 0 }
                   ],
                   payables: [
                     { id: 'suppliers', label: 'Fornecedores', value: 0 },
                     { id: 'loans_st', label: 'Empréstimos (Curto Prazo)', value: 0 },
-                    { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: 0 },
+                    { id: 'loans_lt', label: 'Empréstimos (Longo Prazo)', value: isZeroMode ? 0 : (p0Config.starting_mode === 'start_with_base' ? 500000 : 1500000) },
                     { id: 'taxes', label: 'Imposto de Renda a Pagar', value: 0 },
                     { id: 'dividends', label: 'Dividendos a Pagar', value: 0 }
                   ]

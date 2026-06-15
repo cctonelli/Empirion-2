@@ -708,7 +708,7 @@ const DecisionForm: React.FC<{
 
                               {/* PASSO 8 - ORÁCULO DE REVISÃO E TRANSMISSÃO */}
                               {activeStep === 7 && (
-                                <ReviewStep decisions={decisions} round={round} />
+                                <ReviewStep decisions={decisions} round={round} projections={projections} currentMacro={currentMacro} />
                               )}
 
                            </div>
