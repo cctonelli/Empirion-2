@@ -2,9 +2,33 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.156 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.157 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Reestilização de UI/UX Focada em Densidade de Informação e Condensação Vertical de Componentes na Seleção de Equipes (P0) - v2026.157
+
+**Data:** 15 de Junho de 2026 às 17:45 UTC  
+**Motivo:** Atendimento imediato ao feedback de usabilidade para refinamento visual de cards e botões na tela de seleção de Campeonatos e Equipes (`ChampionshipsView.tsx`). O layout anterior possuía espaçamento excessivo, forçando scrolls verticais desnecessários e reduzindo a eficiência de navegação em telas médias e laptops de tutores e alunos. A alteração traz grande densidade de informação técnica respeitando o minimalismo futurista e a estética de alta precisão.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Compactação Estrutural do Card de Arena**:
+  - Redução do padding geral de `p-10 ` para `p-5 md:p-6` e cantos arredondados suavizados de `rounded-[3.5rem]` para `rounded-[2rem]` eliminando espaço em silêncio.
+  - Otimização do distanciamento interno vertical de `space-y-8` para `space-y-4` aproximando as seções.
+  - Compactação de tamanho do título de `text-3xl` para `text-2xl` e o distanciamento do subtítulo de `space-y-2` para `space-y-1`.
+- **Condensação Estrema de Botões de Equipe (Grid de Seleção)**:
+  - Redução drástica da distância vertical na listagem das equipes (`gap-3` alterado para `gap-1.5` de aproximação máxima).
+  - Redimensionamento de botões de equipe de `p-6 rounded-2xl` para `p-2.5 rounded-xl` compactos.
+  - Avatar interno e tags minimizados: de `w-10 h-10 rounded-xl` para `w-8 h-8 rounded-lg` com ícones internos `Bot` e `Shield` passando de `size={18/20}` para `size={14/16}`.
+  - Redisposição do texto e fontes (como o tamanho do nome do time ajustado para `text-xs`) com readequação das tags "AI OPERATING" e "Comandar" para layout microscópico de alta nitidez.
+
+**Impactos:**
+- **Produtividade Aprimorada (DX/UX)**: Navegação e visualização de equipes em paralelo ocorrem com visibilidade limpa de todos os elementos na primeira dobra de tela, otimizando o fluxo de controle de torneio (War Room) pelo Tutor.
+- **Identidade Estética Mantida**: O uso das classes do Tailwind CSS no espectro dark slate permanece com contraste impecável e feedback tátil/micro-animações originais.
+
+**Status atual:** v2026.157 - Em Produção / Sincronizado e Compilado perfeitamente com sucesso.
 
 ---
 
