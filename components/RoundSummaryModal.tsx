@@ -258,7 +258,7 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
                       <Trophy size={11} /> Turno Resolvido com Sucesso
                     </div>
                     <h3 className="text-3xl lg:text-4xl font-black text-white uppercase tracking-tight">
-                      Fechamento Fiduciário: Round R-{roundNumber < 10 ? '0' : ''}{roundNumber}
+                      Fechamento Fiduciário: Round {roundNumber < 10 ? '0' : ''}{roundNumber}
                     </h3>
                     <p className="text-sm text-slate-400">
                       O Oráculo e o conselho aprovaram os balanços contábeis, operacionais e fiscais.

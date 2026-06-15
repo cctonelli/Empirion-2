@@ -138,56 +138,87 @@ const TestTerminal: React.FC = () => {
                </button>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-               {filtered.map((champ, i) => (
-                 <motion.div 
-                   key={champ.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                   className="bg-slate-900/50 backdrop-blur-3xl p-10 rounded-[3.5rem] border border-white/5 hover:border-orange-500/40 transition-all group flex flex-col justify-between shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
-                 >
-                    <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:scale-110 transition-transform -rotate-12"><Building2 size={180}/></div>
-                    
-                    <div className="space-y-8 relative z-10">
-                       <div className="flex justify-between items-center">
-                          <div className="px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-3">
-                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                             <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest italic">Live Session</span>
-                          </div>
-                          <div className="flex gap-1.5">
-                             {[1,2,3,4,5].map(s => <Star key={s} size={12} className="text-amber-500" fill="currentColor" />)}
-                          </div>
-                       </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+               {filtered.map((champ, i) => {
+                 const isFinished = (champ as any).status === 'TOURNEND' || (champ as any).status === 'finished' || (champ as any).is_finished || false;
+                 const botsCount = champ.teams?.filter(t => t.is_bot).length ?? (champ as any).bots_count ?? champ.config?.bots_count ?? 0;
+                 const tutorName = (champ as any).tutor_name ?? champ.config?.tutor_name ?? champ.config?.tutorName ?? "Prof. Claudio Tonelli";
+                 const institutionName = (champ as any).institution_name ?? champ.config?.institution_name ?? champ.config?.institutionName ?? "UNIVERSIDADE EMPIRION";
+                 const startDateStr = champ.created_at ? new Date(champ.created_at).toLocaleDateString("pt-BR") : "15/06/2026";
 
-                       <div className="space-y-2">
-                          <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tight leading-none truncate group-hover:text-orange-500 transition-colors">{champ.name}</h3>
-                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic opacity-70">Cluster Industrial • Node 08-STREET</p>
-                       </div>
+                 return (
+                   <motion.div 
+                     key={champ.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                     className="bg-slate-900/50 backdrop-blur-3xl p-5 md:p-6 rounded-[2rem] border border-white/5 hover:border-orange-500/40 transition-all group flex flex-col justify-between shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
+                   >
+                     <div className="absolute top-0 right-0 p-5 opacity-[0.02] group-hover:scale-110 transition-transform -rotate-12 pointer-events-none"><Building2 size={120}/></div>
+                     
+                     <div className="space-y-4 relative z-10 w-full">
+                        <div className="flex justify-between items-center">
+                           {isFinished ? (
+                              <div className="px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full flex items-center gap-2">
+                                 <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                                 <span className="text-[9px] font-black text-red-500 uppercase tracking-widest italic">TOURNEND</span>
+                              </div>
+                           ) : (
+                              <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-2">
+                                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                 <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest italic">Live Session</span>
+                              </div>
+                           )}
+                           <div className="flex gap-1">
+                              {[1,2,3,4,5].map(s => <Star key={s} size={10} className="text-amber-500" fill="currentColor" />)}
+                           </div>
+                        </div>
 
-                       <div className="grid grid-cols-2 gap-6 pt-8 border-t border-white/5">
-                          <div className="bg-slate-950/60 p-5 rounded-3xl border border-white/5 shadow-inner">
-                             <span className="block text-[8px] font-black text-slate-600 uppercase mb-2 tracking-widest">Progressão</span>
-                             <div className="flex items-center gap-3 text-white font-black text-xl italic">
-                                <Timer size={18} className="text-orange-500" /> {champ.current_round}/{champ.total_rounds}
-                             </div>
-                          </div>
-                          <div className="bg-slate-950/60 p-5 rounded-3xl border border-white/5 shadow-inner">
-                             <span className="block text-[8px] font-black text-slate-600 uppercase mb-2 tracking-widest">Unidades IA</span>
-                             <div className="flex items-center gap-3 text-white font-black text-xl italic">
-                                <Users size={18} className="text-blue-500" /> {champ.teams?.length || 0}
-                             </div>
-                          </div>
-                       </div>
-                    </div>
+                        <div className="space-y-1">
+                           <h3 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tight leading-none truncate group-hover:text-orange-500 transition-colors">{champ.name}</h3>
+                           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] italic opacity-60 leading-none">Cluster Industrial • Node 08-STREET</p>
+                        </div>
 
-                    <div className="pt-10 flex flex-col gap-4 relative z-10">
-                       <button onClick={() => handlePlayTrial(champ)} className="w-full py-6 bg-white text-slate-950 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] hover:bg-orange-600 hover:text-white transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-4">
-                          <Play size={18} fill="currentColor" /> Entrar no Cockpit
-                       </button>
-                       <button onClick={() => { localStorage.setItem('active_champ_id', champ.id); navigate('/app/admin'); }} className="w-full py-5 bg-white/5 border border-white/10 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-3">
-                          <Monitor size={16} /> Painel do Tutor
-                       </button>
-                    </div>
-                 </motion.div>
-               ))}
+                        {/* PUBLIC TOURNAMENT METADATA */}
+                        <div className="space-y-1.5 border-t border-b border-white/5 py-3 my-1">
+                           <div className="flex justify-between text-[10px] uppercase font-bold text-slate-400">
+                              <span className="text-slate-500">Tutor:</span>
+                              <span className="text-white tracking-wide truncate max-w-[190px]">{tutorName}</span>
+                           </div>
+                           <div className="flex justify-between text-[10px] uppercase font-bold text-slate-400">
+                              <span className="text-slate-500">Entidade:</span>
+                              <span className="text-white tracking-wide truncate max-w-[190px]">{institutionName}</span>
+                           </div>
+                           <div className="flex justify-between text-[10px] uppercase font-bold text-slate-400">
+                              <span className="text-slate-500">Início:</span>
+                              <span className="text-white tracking-wide">{startDateStr}</span>
+                           </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 pt-1">
+                           <div className="bg-slate-950/60 p-3 rounded-2xl border border-white/5 shadow-inner">
+                              <span className="block text-[8px] font-black text-slate-600 uppercase mb-1 tracking-widest">Progressão</span>
+                              <div className="flex items-center gap-2 text-white font-black text-md md:text-lg italic">
+                                 <Timer size={14} className="text-orange-500" /> {champ.current_round}/{champ.total_rounds}
+                              </div>
+                           </div>
+                           <div className="bg-slate-950/60 p-3 rounded-2xl border border-white/5 shadow-inner">
+                              <span className="block text-[8px] font-black text-slate-600 uppercase mb-1 tracking-widest">Unidades IA</span>
+                              <div className="flex items-center gap-2 text-white font-black text-md md:text-lg italic">
+                                 <Users size={14} className="text-blue-500" /> {botsCount}
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="pt-5 flex flex-col gap-2 relative z-10 w-full">
+                        <button onClick={() => handlePlayTrial(champ)} className="w-full py-3 bg-white text-slate-950 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2">
+                           <Play size={14} fill="currentColor" /> Entrar no Cockpit
+                        </button>
+                        <button onClick={() => { localStorage.setItem('active_champ_id', champ.id); navigate('/app/admin'); }} className="w-full py-2.5 bg-white/5 border border-white/10 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2">
+                           <Monitor size={14} /> Painel do Tutor
+                        </button>
+                     </div>
+                   </motion.div>
+                 );
+               })}
             </div>
           )}
         </div>

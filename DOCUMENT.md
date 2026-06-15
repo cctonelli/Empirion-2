@@ -2,9 +2,35 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.157 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.158 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Reestilização de UI/UX Focada em Densidade de Informação, Saneamento Contábil de Equipes Bots ("Unidades IA") e Sincronismo de Metadados Públicos de Torneio Sandbox (P0) - v2026.158
+
+**Data:** 15 de Junho de 2026 às 18:15 UTC  
+**Motivo:** Atendimento imediato ao feedback de usabilidade para refinamento visual de cards e botões na tela de Sandbox Active Trial (`TestTerminal.tsx`). O layout anterior possuía espaçamento excessivo, gerando desconforto de visualização e desalinhamento estrutural comparado à visualização do cockpit. Foram introduzidas também correções lógicas de integridade contábil (saneando a soma de bots ativos de "Unidades IA", removendo a distorção que duplicava as equipes humanas no cálculo) e enriquecendo a visualização com metadados do Tutor, Entidade Universitária de Fomento e data de início do trial.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Compactação e Redução de Gaps do Card do Terminal**:
+  - Redução drástica das colunas do grid externo, substituindo o espaçamento de `gap-10` por `gap-6` na listagem de arenas trial ativas.
+  - Otimização do padding geral de `p-10 rounded-[3.5rem]` para `p-5 md:p-6 rounded-[2rem]` eliminando espaço em silêncio.
+  - Redução proporcional de fontes e títulos de campeonato de `text-3xl font-black md:text-4xl` para `text-xl font-black md:text-2xl` com espaçamento de cabeçalho reduzido para `space-y-1` e `space-y-4` no corpo re-estilizado.
+- **Exibição Dinâmica de Metadados de Torneio Público**:
+  - Mapeamento robusto de propriedades do campeonato para exibição do Tutor (`champ.tutor_name`), Universidade / Entidade Promotora (`champ.institution_name`) e Data de Início formatada em padrão local (`pt-BR`).
+  - Tratamento dinâmico e fallback automático para valores padrão representativos em cenários de rascunho de migração.
+- **Saneamento e Sincronização Contábil de "Unidades IA"**:
+  - Correção de bug de usabilidade que contabilizava o total bruto de equipes ao invés de equipes bots. Agora, a quantidade reflete unicamente equipes configuradas com o status `is_bot === true` em `champ.teams`.
+- **Sentinela Dinâmica de Status "TOURNEND"**:
+  - Condicional reativa para alterar o selo do cockpit de "Live Session" (verde e esmeralda pulsante) para "TOURNEND" (vermelho vivo e borda sem pulso) conforme o status do campeonato seja `'TOURNEND'` ou `'finished'`, fornecendo balizamento imediato de encerramento de atividades aos alunos.
+
+**Impactos:**
+- **Navegabilidade Aprimorada**: A visualização de arenas sandbox ocorre de forma extremamente densa, unificada e esteticamente fluida.
+- **Integridade de Informações**: Estudantes e tutores possuem visualização real do andamento, entidades de apoio e contagem fidedigna de robôs simulados.
+
+**Status atual:** v2026.158 - Em Produção / Sincronizado e Compilado perfeitamente com sucesso.
 
 ---
 
