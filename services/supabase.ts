@@ -405,51 +405,42 @@ export const createChampionshipWithTeams = async (config: any, teams: any[], isT
   if (teamsError) throw teamsError;
   
   // Insert Round 0 into history for each team (Individualized)
-  const historyEntries = (createdTeams || []).map(t => ({
-    team_id: t.id,
-    championship_id: champ.id,
-    round: 0,
-    state: {}, 
-    kpis: initialKpis,
-    equity: initialKpis.equity,
-    revenue: 0,
-    net_profit: 0,
-    total_assets: initialKpis.total_assets,
-    stock_value: initialKpis.stock_value,
-    total_receivables: initialKpis.commitments.receivables.reduce((sum: number, r: any) => sum + r.value, 0),
-    total_payables: initialKpis.commitments.payables.reduce((sum: number, p: any) => sum + p.value, 0),
-    fixed_assets_value: initialKpis.fixed_assets_value,
-    fixed_assets_depreciation: initialKpis.fixed_assets_depreciation,
-    ccc: 0,
-    interest_coverage: initialKpis.interest_coverage ?? 100,
-    brl_rate: 1,
-    gbp_rate: 0,
-    compulsory_loan_balance: 0,
-    compulsory_loan_interest_paid: 0,
-    tsr: 0,
-    nlcdg: 0,
-    solvency_score_kanitz: initialKpis.solvency_score_kanitz ?? (isZeroMode ? 10.0 : 1.5),
-    altman_z_score: initialKpis.altman_z_score ?? (isZeroMode ? 99.9 : 6.25),
-    dcf_valuation: initialKpis.dcf_valuation ?? (isZeroMode ? 1.0 : 1.7),
-    scissors_effect: 0,
-    liquidity_current: initialKpis.liquidity_current ?? (isZeroMode ? 99.9 : 1.5),
-    solvency_index: initialKpis.solvency_index ?? (isZeroMode ? 99.9 : 2.0),
-    inventory_turnover: 0,
-    carbon_footprint: 0,
-    avg_receivable_days: initialKpis.avg_receivable_days ?? (isZeroMode ? 0 : 45),
-    avg_payable_days: initialKpis.avg_payable_days ?? (isZeroMode ? 0 : 30),
-    esds_score: p0Esds?.esds_display || 0,
-    esds_zone: p0Esds?.zone || 'Verde',
-    esds_gargalo: p0Esds?.gargalo_principal,
-    esds_insights: p0Esds?.gemini_insights,
-    esds_top_gargalos: p0Esds?.top_gargalos || [],
-    esds_main_drivers: p0Esds?.main_drivers || [],
-    supplier_interest_expenses: 0,
-    emergency_purchase_expenses: 0,
-    emergency_units_total: 0
-  }));
+  const historyEntries = (createdTeams || []).map(t => {
+    const kpisPayload = {
+      ...initialKpis,
+      esds: p0Esds || (initialKpis as any).esds || {
+        esds_display: 78,
+        zone: 'Verde',
+        gargalo_principal: 'Nenhum',
+        gemini_insights: 'Empresa em perfeito equilíbrio contábil inicial. Ativos estruturados.',
+        top_gargalos: [],
+        main_drivers: []
+      },
+      total_receivables: initialKpis.commitments?.receivables?.reduce((sum: number, r: any) => sum + r.value, 0) || 0,
+      total_payables: initialKpis.commitments?.payables?.reduce((sum: number, p: any) => sum + p.value, 0) || 0,
+      supplier_interest_expenses: 0,
+      emergency_purchase_expenses: 0,
+      emergency_units_total: 0
+    };
+
+    return {
+      team_id: t.id,
+      championship_id: champ.id,
+      round: 0,
+      state: {}, 
+      kpis: kpisPayload,
+      equity: initialKpis.equity || 0,
+      revenue: 0,
+      net_profit: 0,
+      market_share: 0
+    };
+  });
   
-  await supabase.from(historyTable).insert(historyEntries);
+  const { error: historyError } = await supabase.from(historyTable).insert(historyEntries);
+  if (historyError) {
+    console.error(`[ERRO CRÍTICO SUPABASE] Falha ao inserir o histórico contábil de Abertura (R-00) em ${historyTable}:`, historyError);
+    throw new Error(`[ERRO BANCO DE DADOS] Não foi possível persistir o estado contábil inicial (R-00) para as equipes: ${historyError.message}`);
+  }
   
   return champ;
 };

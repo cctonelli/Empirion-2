@@ -725,7 +725,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   {/* Preço */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
-                      Preço Unitário (Rodada {round})
+                      Preço Unitário (Round {round})
                     </label>
                     <CurrencyInput
                       value={reg.price}
@@ -737,7 +737,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   {/* Prazo */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
-                      Prazo de Recebimento (Rodada {round})
+                      Prazo de Recebimento (Round {round})
                     </label>
                     <select
                       disabled={isReadOnly}
@@ -759,7 +759,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   {/* Marketing */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
-                      Marketing (0–9) (Rodada {round})
+                      Marketing (0–9) (Round {round})
                     </label>
                     <input
                       type="number"
@@ -784,7 +784,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               <div className="mt-5 pt-3 border-t border-white/5 space-y-1.5 font-sans">
                 <div className="flex justify-between items-center pb-1">
                   <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider font-sans flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/15">
-                    ● Realizado Rodada {activeArena?.current_round}
+                    ● Realizado Round {activeArena?.current_round}
                   </span>
                   <span className="text-[8px] font-mono text-slate-500">
                     APURADO
@@ -838,7 +838,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
 
                 <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
                   <div className="flex justify-between text-[9px] text-slate-500 uppercase tracking-wider font-mono">
-                    <span>Parâmetros Esperados Rodada {round}:</span>
+                    <span>Parâmetros Esperados Round {round}:</span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
                     <span>Custo Logística:</span>
@@ -906,8 +906,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                                 START FROM ZERO
                               </p>
                               <p className="text-[10px] mt-1 text-slate-600">
-                                Sem faturamento apurado na rodada de início
-                                (Rodada 0).
+                                Sem faturamento apurado no round inicial
+                                (Round 0).
                               </p>
                             </div>
                           );

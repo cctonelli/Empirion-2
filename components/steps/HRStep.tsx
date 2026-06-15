@@ -411,7 +411,7 @@ export const HRStep: React.FC<HRStepProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 mb-4">
-                Valor médio praticado pelas empresas concorrentes na última rodada apurada (Rodada {Math.max(0, currentRound - 1)}).
+                Valor médio praticado pelas empresas concorrentes na última rodada apurada (Round {Math.max(0, currentRound - 1)}).
               </p>
             </div>
             <div className="my-2 select-none">
@@ -441,7 +441,7 @@ export const HRStep: React.FC<HRStepProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 mb-4">
-                Salário base original (R$ 2.500,00) corrigido pela inflação acumulada do torneio (+{currentMacro?.inflation_rate || 0}% nesta rodada).
+                Salário base original (R$ 2.500,00) corrigido pela inflação acumulada do torneio (+{currentMacro?.inflation_rate || 0}% neste round).
               </p>
             </div>
             <div className="my-2 select-none">

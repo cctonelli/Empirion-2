@@ -40,12 +40,12 @@ export const TutorGuide: React.FC = () => (
       <div className="relative z-10 space-y-10">
         <div className="flex items-center gap-4">
           <PlayCircle size={32} className="text-blue-400" />
-          <h2 className="text-2xl font-black uppercase tracking-tight">O Fluxo da Rodada (The Cycle)</h2>
+          <h2 className="text-2xl font-black uppercase tracking-tight">O Fluxo do Round (The Cycle)</h2>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {[
-            { step: "01", title: "Setup", desc: "Tutor abre a rodada e define os parâmetros macro." },
+            { step: "01", title: "Setup", desc: "Tutor abre o round e define os parâmetros macro." },
             { step: "02", title: "War Room", desc: "Equipes colaboram e inserem decisões em tempo real." },
             { step: "03", title: "Deadline", desc: "O timer encerra e o sistema congela as submissões." },
             { step: "04", title: "Consolidation", desc: "O engine processa os resultados e gera novos relatórios." }

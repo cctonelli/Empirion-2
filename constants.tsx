@@ -97,11 +97,11 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
         { id: 'tax_prov', label: '(-) PROVISÃO PARA O IR', value: -14871.31, type: 'expense', isEditable: true },
         { id: 'ppr', label: '(-) PPR-PARTICIPAÇÃO NO LUCRO', value: 0.00, type: 'expense', isEditable: true },
     ]},
-    { id: 'final_profit', label: '(=) LUCRO LÍQUIDO DO EXERCÍCIO', value: 44613.95, type: 'totalizer', isReadOnly: true }
+    { id: 'final_profit', label: '(=) LUCRO/PREJUÍZO LÍQUIDO', value: 44613.95, type: 'totalizer', isReadOnly: true }
   ],
 
   cash_flow: [
-    { id: 'cf.start', label: '(=) SALDO INICIAL DO PERÍODO', value: 0.00, type: 'revenue', isEditable: true },
+    { id: 'cf.start', label: '(=) SALDO INICIAL', value: 0.00, type: 'revenue', isEditable: true },
     { id: 'cf.inflow', label: '(+) ENTRADAS', value: 4158696.90, type: 'totalizer', children: [
         { id: 'cf.inflow.cash_sales', label: 'VENDAS À VISTA', value: 2092193.00, type: 'revenue', isEditable: true },
         { id: 'cf.inflow.term_sales', label: 'VENDAS A PRAZO (-) PECLD', value: 694141.90, type: 'revenue', isEditable: true },
@@ -115,24 +115,24 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
     { id: 'cf.outflow', label: '(-) SAÍDAS', value: -4158696.90, type: 'totalizer', children: [
         { id: 'cf.outflow.payroll', label: 'FOLHA DE PAGAMENTO', value: 1180000.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.social_charges', label: 'ENCARGOS SOCIAIS', value: 413000.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.vat_payable', label: 'PAGAMENTO DE IVA', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.rd', label: 'P&D-PESQ. E DESENV.', value: 41844.40, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.training', label: 'TREINAMENTO DE EQUIPE', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.marketing', label: 'CAMPANHAS DE MARKETING', value: 275400.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO DE PRODUTOS', value: 489850.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.storage', label: 'GASTOS COM ESTOCAGEM', value: 70700.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.suppliers', label: 'PAGAMENTO A FORNECEDORES', value: 1414000.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.rent', label: 'ALUGUEL DE IMÓVEIS (EDIFÍCIO)', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.machine_buy', label: 'COMPRA DE MÁQUINAS', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO DE MÁQUINAS', value: 146402.50, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO DE EMPRÉSTIMOS', value: 125000.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.vat_payable', label: 'PAGAMENTO IVA', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.rd', label: 'P&D-PESQ. & DESENV.', value: 41844.40, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.training', label: 'TREINAMENTO EQUIPE', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.marketing', label: 'CAMPANHAS MARKETING', value: 275400.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.distribution', label: 'DISTRIBUIÇÃO PRODUTOS', value: 489850.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.storage', label: 'GASTOS ESTOCAGEM', value: 70700.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.suppliers', label: 'PAGAMENTO FORNECEDORES', value: 1414000.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.rent', label: 'ALUGUEL IMÓVEL (EDIFÍCIO)', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.machine_buy', label: 'COMPRA MÁQUINAS', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.maintenance', label: 'MANUTENÇÃO MÁQUINAS', value: 146402.50, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.amortization', label: 'AMORTIZAÇÃO EMPRÉSTIMOS', value: 125000.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.late_penalties', label: 'MULTAS POR ATRASO', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.interest', label: 'JUROS E ÁGIOS BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.interest', label: 'JUROS/SPREAD BANCÁRIOS', value: 2500.00, type: 'expense', isEditable: true },
         { id: 'cf.outflow.taxes', label: 'IMPOSTO DE RENDA', value: 0.00, type: 'expense', isEditable: true },
-        { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DE DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true },
+        { id: 'cf.outflow.dividends', label: 'DISTRIBUIÇÃO DIVIDENDOS', value: 0.00, type: 'expense', isEditable: true },
         { id: 'cf.investment_apply', label: 'APLICAÇÃO FINANCEIRA', value: 0.00, type: 'expense', isEditable: true }
     ]},
-    { id: 'cf.final', label: '(+) SALDO FINAL DO PERÍODO', value: 0.00, type: 'totalizer' }
+    { id: 'cf.final', label: '(+) SALDO FINAL', value: 0.00, type: 'totalizer' }
   ]
 };
 

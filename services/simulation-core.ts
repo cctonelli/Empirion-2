@@ -1205,7 +1205,7 @@ export function processRoundWithValidation(
     } else if (consecutiveRuimRounds === 1) {
       warnings.push(`ALERTA DE GREVE: O clima organizacional caiu para nível RUIM (Índice de Motivação = ${motivationIndex.toFixed(2)} < 0.75). Se mantiver esse nível insatisfatório na próxima rodada, os operários entrarão em GREVE imediata no próximo período!`);
     } else if (consecutiveFiredRounds === 1) {
-      warnings.push(`ALERTA DE GREVE: Ocorreram demissões operacionais neste período. Caso ocorra nova demissão na próxima rodada (dois rounds seguidos), o sindicato decretará GREVE imediata no próximo período por instabilidade organizacional!`);
+      warnings.push(`ALERTA DE GREVE: Ocorreram demissões operacionais neste período. Caso ocorra nova demissão no próximo round (dois rounds seguidos), o sindicato decretará GREVE imediata no próximo período por instabilidade organizacional!`);
     }
   }
 

@@ -54,7 +54,7 @@ export const StudentManual: React.FC = () => {
 
       <footer className="bg-orange-600 p-12 rounded-[4rem] text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
          <div className="space-y-2 text-center md:text-left">
-            <h3 className="text-3xl font-black uppercase italic tracking-tight">Pronto para a Rodada?</h3>
+            <h3 className="text-3xl font-black uppercase italic tracking-tight">Pronto para o Round?</h3>
             <p className="text-orange-100 font-bold uppercase text-[10px] tracking-widest">Recomenda-se manter o Rating acima de 'B' para estabilidade.</p>
          </div>
          <button className="px-12 py-6 bg-white text-slate-950 rounded-full font-black text-xs uppercase tracking-[0.3em] hover:bg-slate-900 hover:text-white transition-all">

@@ -1007,20 +1007,20 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
       {
         key: "cpv.totalCPP",
         label: "(=) CPP-CUSTO PRODUÇÃO PERÍODO",
-        desc: "Custo real empregado na produção da rodada",
+        desc: "Custo real empregado na produção do round",
         formatter: (v: number) => formatCurrency(v || 0, currency),
         isClass: "bg-white/5 font-bold border-y border-white/10 text-white",
       },
       {
         key: "cpv.estoqueInicialPA",
         label: "(+) Estoque Inicial de PA",
-        desc: "Estoque físico valorado de abertura na rodada",
+        desc: "Estoque físico valorado de abertura no round",
         formatter: (v: number) => formatCurrency(v || 0, currency),
       },
       {
         key: "cpv.estoqueFinalPA",
         label: "(-) Estoque Final de PA",
-        desc: "Estoque físico valorado de encerramento na rodada",
+        desc: "Estoque físico valorado de encerramento no round",
         formatter: (v: number) => formatCurrency(v || 0, currency),
       },
       {

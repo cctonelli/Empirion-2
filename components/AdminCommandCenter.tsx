@@ -472,7 +472,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
               {selectedArena && selectedArena.current_round >= (selectedArena.total_rounds || 6) ? (
                 <button 
                   disabled={true} 
-                  title="Torneio Finalizado! Todas as rodadas foram concluídas."
+                  title="Torneio Finalizado! Todosos rounds foram concluídos."
                   className="px-6 py-2 bg-slate-800 text-slate-500 border border-white/5 rounded-xl font-black text-[9px] uppercase tracking-widest cursor-not-allowed flex items-center gap-2"
                 >
                   <Trophy size={12} className="text-yellow-500 shrink-0"/> Torneio Concluído

@@ -1671,7 +1671,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <div className="p-4 bg-slate-950/80 border border-white/5 rounded-2xl mt-4 text-[11px] text-slate-400 font-medium">
                       Os robôs assumem estratégias variadas (Conservadora,
                       Agressiva, Equilibrada, etc.) utilizando inteligência
-                      gerada por IA na rodada.
+                      gerada por IA no round.
                     </div>
                   </div>
                 </div>
@@ -2026,7 +2026,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span>Total de Rodadas:</span>
+                                  <span>Total de Rounds:</span>
                                   <span className="font-bold text-white">
                                     {
                                       selectedPreviewTemplate.config
@@ -2036,7 +2036,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span>Duração Rodada:</span>
+                                  <span>Duração Rounds:</span>
                                   <span className="font-bold text-white">
                                     {
                                       selectedPreviewTemplate.config
@@ -4224,7 +4224,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         <span className="text-sm font-black text-white">
                           {fiduciaryMetrics.capTotal.toLocaleString("pt-BR")}{" "}
                           <span className="text-[10px] text-slate-500 font-sans">
-                            un/rodada
+                            un/round
                           </span>
                         </span>
                       </div>
@@ -4949,7 +4949,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 {fiduciaryMetrics.capTotal.toLocaleString(
                                   "pt-BR",
                                 )}{" "}
-                                un/rodada
+                                un/round
                               </span>
                             </div>
                           </div>
@@ -4973,7 +4973,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                           <p className="text-xs text-slate-400 leading-relaxed font-sans font-medium text-left text-semibold">
                             Em conformidade rigorosa com os princípios do
                             **Empirion Cooperativo**, uma vez implantados esses
-                            dados fiduciários, a simulação inicial (P00 / Rodada
+                            dados fiduciários, a simulação inicial (R-00 / Round
                             0) de cada competidor será congelada e persistida
                             permanently no banco de dados. Qualquer alteração ou
                             reinício no painel do Tutor só poderá ser disparado
@@ -5173,7 +5173,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     <div className="p-4 bg-slate-950/80 border border-white/5 rounded-2xl mt-4 text-[11px] text-slate-400 font-medium">
                       Os robôs assumem estratégias variadas (Conservadora,
                       Agressiva, Equilibrada, etc.) utilizando inteligência
-                      gerada por IA na rodada.
+                      gerada por IA no round.
                     </div>
                   </div>
                 </div>
@@ -5508,7 +5508,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         </span>
                         <span className="text-white font-bold">
                           {fiduciaryMetrics.capAlpha.toLocaleString("pt-BR")}{" "}
-                          un/rodada
+                          un/round
                         </span>
                       </div>
                       <div className="flex justify-between items-center border-t border-white/5 pt-2">
@@ -5521,7 +5521,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         </span>
                         <span className="text-white font-bold">
                           {fiduciaryMetrics.capBeta.toLocaleString("pt-BR")}{" "}
-                          un/rodada
+                          un/round
                         </span>
                       </div>
                       <div className="flex justify-between items-center border-t border-white/5 pt-2">
@@ -5534,7 +5534,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         </span>
                         <span className="text-white font-bold">
                           {fiduciaryMetrics.capGama.toLocaleString("pt-BR")}{" "}
-                          un/rodada
+                          un/round
                         </span>
                       </div>
                     </div>

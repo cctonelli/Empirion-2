@@ -329,7 +329,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
       const currentRoundVal = activeArena.current_round;
       
       if (prevRoundRef.current !== null && currentRoundVal > prevRoundRef.current) {
-        console.log(`[Fiduciary Oráculo Realtime] Rodada avançada detectada: de P-${prevRoundRef.current} para P-${currentRoundVal}`);
+        console.log(`[Fiduciary Oráculo Realtime] Round avançado detectado: de R-${prevRoundRef.current} para R-${currentRoundVal}`);
         
         const triggerReload = async () => {
           try {
@@ -457,7 +457,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               }
             }
           } catch (e) {
-            console.error("Erro recarregando dados para resumo fiduciário de rodada:", e);
+            console.error("Erro recarregando dados para resumo fiduciário do round:", e);
           }
         };
 
@@ -824,7 +824,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                {/* Tabs principais */}
                <div className="flex-1 flex flex-col">
                   <nav className="shrink-0 flex gap-1 border-b border-white/5 mb-1.5">
-                    <TabButton active={activeTab === 'decisoes'} onClick={() => setActiveTab('decisoes')} label="Decisões da Rodada" icon={<PenTool size={10}/>} />
+                    <TabButton active={activeTab === 'decisoes'} onClick={() => setActiveTab('decisoes')} label="Decisões do Round" icon={<PenTool size={10}/>} />
                     <TabButton active={activeTab === 'financeiro'} onClick={() => setActiveTab('financeiro')} label="Matriz Financeira" icon={<TableIcon size={10}/>} />
                     <TabButton active={activeTab === 'historico'} onClick={() => setActiveTab('historico')} label="Histórico & Projeções" icon={<BarChart3 size={10}/>} />
                   </nav>
@@ -849,7 +849,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                              <div className="flex-1">
                                 <h4 className="text-[9px] font-black text-white uppercase italic">Protocolo de Decisão Bloqueado</h4>
                                 <p className="text-[8px] font-bold text-orange-400 uppercase tracking-widest mt-0.5">
-                                   Esta rodada exige o envio do **Business Plan** antes da liberação do Cockpit Operacional.
+                                   Este round exige o envio do **Business Plan** antes da liberação do Cockpit Operacional.
                                 </p>
                              </div>
                              <button 

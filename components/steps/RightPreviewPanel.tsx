@@ -117,7 +117,7 @@ const TrendSparkline: React.FC<TrendSparklineProps> = ({ label, current, project
           <TrendingUp size={10} className="text-orange-400 animate-pulse" />
           Tendência: {label}
         </div>
-        Comparativo do Round Corrente (T) para a projeção da rodada (T+1). Atualmente {isUp ? 'subindo' : 'caindo'} <strong className={colorClass}>{Math.abs(percentChange).toFixed(1)}%</strong>.
+        Comparativo do Round Corrente (T) para a projeção do round (T+1). Atualmente {isUp ? 'subindo' : 'caindo'} <strong className={colorClass}>{Math.abs(percentChange).toFixed(1)}%</strong>.
       </div>
     </div>
   );

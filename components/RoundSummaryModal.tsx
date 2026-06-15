@@ -258,7 +258,7 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
                       <Trophy size={11} /> Turno Resolvido com Sucesso
                     </div>
                     <h3 className="text-3xl lg:text-4xl font-black text-white uppercase tracking-tight">
-                      Fechamento Fiduciário: Rodada P-{roundNumber < 10 ? '0' : ''}{roundNumber}
+                      Fechamento Fiduciário: Round R-{roundNumber < 10 ? '0' : ''}{roundNumber}
                     </h3>
                     <p className="text-sm text-slate-400">
                       O Oráculo e o conselho aprovaram os balanços contábeis, operacionais e fiscais.
@@ -327,7 +327,7 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
                     {/* CARD: Lucro Líquido */}
                     <div className="bg-slate-950/40 border border-white/5 rounded-3xl p-6 flex flex-col justify-between">
                       <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">Lucro Líquido da Rodada</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">Lucro Líquido do Round</span>
                         <div className={`text-2xl font-mono font-black ${(currentData?.net_profit ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                           {formatCurrency(currentData?.net_profit ?? 0)}
                         </div>

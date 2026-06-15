@@ -2,9 +2,28 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.145 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.146 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Reconciliação do Histórico Contábil de Abertura (R-00) contra o Novo Schema Sanitizado - v2026.146
+
+**Data:** 15 de Junho de 2026 às 09:12 UTC  
+**Motivo:** Correção do bug de persistência física do Período de Abertura `R-00 (INICIAL)` ao criar um novo campeonato/torneio a partir do Wizard de Tutor (`ChampionshipWizard` ou `TrialWizard`). Anteriormente, a migração recente de Higienização Fiduciária (`20260614191000_cop_companies_fiduciary_cleanup.sql`) extirpou 45 colunas acessórias que inflavam as tabelas `public.companies` e `public.trial_companies` do Supabase, migrando os seus dados para o documento unificado JSONB `kpis`. No entanto, a query de inicialização no método `createChampionshipWithTeams` ainda tentava efetuar o `insert` das colunas antiga fisicamente na raiz do payload (como `ccc`, `altman_z_score`, `liquidity_current`, etc.), o que provocava falha silenciosa de inserção do PostgREST devido a colunas ilegais. Isso deixava as novas arenas sem o histórico de Round 0 (R-00), quebrando as referências comparativas e relatórios ("Matriz Financeira") de todas as marcas.
+
+**Detalhamento Técnico de Planejamento:**
+- **Saneamento Unificado do Payload de Abertura (R-00)**:
+  - O payload gerado em `createChampionshipWithTeams` (`services/supabase.ts`) foi ajustado para obedecer rigorosamente às colunas permitidas no schema pós-purificação: `team_id`, `championship_id`, `round`, `state` (vazio em R-00), `kpis` (JSONB consolidado), `equity`, `revenue`, `net_profit` e `market_share`.
+  - Todas as 45 variáveis tecnocráticas calculadas de abertura e indicadores auxiliares foram encapsuladas perfeitamente para dentro do documento reidratado `kpis`.
+- **Integridade de Inserção com Detecção Ativa de Erros (Fail-Fast)**:
+  - Introduzido tratamento de erros síncrono com a desestruturação e propagação explícita de `error` em `supabase.from(historyTable).insert(historyEntries)`.
+  - Caso ocorra qualquer inconsistência de integridade relacional com o PostgREST ao nascer o torneio, o erro é impresso no console de auditoria forense do tutor e um erro contábil é arremessado de forma a evitar falsos positivos de criação.
+
+**Impactos:**
+- **Sincronismo Inexorável da Matriz Financeira**: O referencial de abertura R-00 se torna perfeitamente visível e imutável para as colunas de DRE, Balanço, Fluxo de Caixa, Kardex, Agenda e Comando Estratégico.
+- **Erradicação do Efeito Duplicidade**: Corrige a replicação e decaloque de dados de rounds ativos sobre o R-00, mantendo as análises horizontais estritamente coerentes (Greenfield ou Start with Base).
 
 ---
 

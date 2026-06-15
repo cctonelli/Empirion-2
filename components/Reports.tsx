@@ -108,7 +108,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       points = sortedHistory.map(h => {
         const dreTree = h.kpis?.statements?.dre || [];
         return {
-          round: `Rodada ${h.round}`,
+          round: `Round ${h.round}`,
           mod: Math.abs(findAccountVal(dreTree, 'dre.mod')),
           cif: Math.abs(findAccountVal(dreTree, 'dre.cif'))
         };
@@ -119,7 +119,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       if (!historyRounds.includes(currentRound) && activeTeam?.kpis?.statements?.dre) {
         const currentDre = activeTeam.kpis.statements.dre;
         points.push({
-          round: `Rodada ${currentRound} (Atual)`,
+          round: `Round ${currentRound} (Atual)`,
           mod: Math.abs(findAccountVal(currentDre, 'dre.mod')),
           cif: Math.abs(findAccountVal(currentDre, 'dre.cif'))
         });
@@ -129,7 +129,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
       const currentRound = activeArena?.current_round || 1;
       points = [
         {
-          round: `Rodada ${currentRound} (Atual)`,
+          round: `Round ${currentRound} (Atual)`,
           mod: Math.abs(findAccountVal(currentDre, 'dre.mod')),
           cif: Math.abs(findAccountVal(currentDre, 'dre.cif'))
         }
@@ -247,7 +247,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Salários, encargos, indenizações, horas-extras e prêmios</p>
                                  </div>
                                  <div className="text-right">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Total na Rodada</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Total no Round</span>
                                     <span className="text-lg font-mono font-black text-orange-500">{fmt(Math.abs(dre.mod || 0))}</span>
                                  </div>
                               </div>
@@ -289,7 +289,7 @@ const Reports: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
                                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Manutenção, estocagem, treinamento e depreciação</p>
                                  </div>
                                  <div className="text-right">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Total na Rodada</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Total no Round</span>
                                     <span className="text-lg font-mono font-black text-indigo-400">{fmt(Math.abs(dre.cif || 0))}</span>
                                  </div>
                               </div>
