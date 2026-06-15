@@ -971,6 +971,7 @@ export function processRoundWithValidation(
     buildings_depreciation_rate: rawEco.buildings_depreciation_rate ?? rawEco.ecosystem_config?.buildings_depreciation_rate ?? rawEco.config?.buildings_depreciation_rate ?? rawEco.config?.ecosystem_config?.buildings_depreciation_rate,
     property_depreciation_rate: rawEco.property_depreciation_rate ?? rawEco.ecosystem_config?.property_depreciation_rate ?? rawEco.config?.property_depreciation_rate ?? rawEco.config?.ecosystem_config?.property_depreciation_rate,
     starting_mode: rawEco.starting_mode ?? rawEco.ecosystem_config?.starting_mode ?? rawEco.config?.starting_mode ?? rawEco.config?.ecosystem_config?.starting_mode,
+    admin_sales_installations: rawEco.admin_sales_installations ?? rawEco.ecosystem_config?.admin_sales_installations ?? rawEco.config?.admin_sales_installations ?? rawEco.config?.ecosystem_config?.admin_sales_installations,
   };
   const machinesDepRateAnnual = ecoConfig.machines_depreciation_rate !== undefined 
     ? Number(ecoConfig.machines_depreciation_rate) 
@@ -994,8 +995,10 @@ export function processRoundWithValidation(
   const betaInstallCost = ecoConfig.machines?.[1]?.installation_cost !== undefined ? Number(ecoConfig.machines[1].installation_cost) : 600000.00;
   const gammaInstallCost = ecoConfig.machines?.[2]?.installation_cost !== undefined ? Number(ecoConfig.machines[2].installation_cost) : 1500000.00;
 
+  const adminSalesInstallations = Number(ecoConfig.admin_sales_installations || (ecosystem as any).config?.admin_sales_installations || 0);
+
   // Calcular instalações atuais com base nas máquinas em auditoria
-  let currentInstallationsVal = 0;
+  let currentInstallationsVal = adminSalesInstallations;
   tempMachines.forEach((m: any) => {
     if (m.model === 'alpha' || m.model === 'alfa') currentInstallationsVal += alphaInstallCost;
     else if (m.model === 'beta') currentInstallationsVal += betaInstallCost;

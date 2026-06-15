@@ -2,9 +2,32 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.155 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.156 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural, Parametrização Inicial de Instalações Administrativas/Vendas no Ativo Imobilizado (P0) - v2026.156
+
+**Data:** 15 de Junho de 2026 às 17:15 UTC  
+**Motivo:** Implementação de suporte para inserção manual editável de investimentos em instalações administrativas/vendas (por exemplo: instalações prediais, computadores, utilitários administrativos, ar condicionado) no Step 6 do Wizard de Tutor (`TrialWizard.tsx`). Anteriormente, o valor da conta "Benfeitorias & Instalações" em períodos Greenfield ("Start from Zero") baseava-se em taxas e fallbacks estáticos de R$ 500.000,00 que não se consolidavam fidedignamente no Ativo Imobilizado inicial de P0 (R-00). A parametrização introduzida no Wizard permite definir este valor de forma auditável e calculada com perfeição no balanço patrimonial de abertura e nas depreciações acumuladas contábeis de rounds de jogo subsequentes.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Injeção de Nova Atribuição Fiduciária no P0 ({`BaseP0Config`})**:
+  - Inserção da propriedade opcional `admin_sales_installations?: number;` na interface `BaseP0Config` presente in `/services/initialization.ts`.
+  - Mapeamento desse campo nas rotinas de simulação e auditamento fiduciário corporativo em `/services/simulation.ts` e `/services/simulation-core.ts` no escopo literal `ecoConfig`, garantindo que os cálculos de depreciação mensal e instalações correntes usem o montante como base de apoio.
+- **Sincronização de Fluxos de Métricas Computáveis em `TrialWizard.tsx`**:
+  - Criação da sub-métrica reativa `fiduciaryMetrics.installationsMachinesVal` para quantificar exclusivamente as instalações de máquinas na fábrica, mantendo o campo original `fiduciaryMetrics.installationsVal` como a consolidação matemática linear: `installationsMachinesVal + admin_sales_installations`.
+  - Inclusão do campo editável **Instalações Admin/Vendas ($)** de forma isolada ao lado do total de maquinário instalável de fábrica no Step 6 ("REGIME DE IMOBILIZADO & BENFEITORIAS"), com reatividade contábil instantânea.
+- **Resolução de Exibição Fidedigna no Step 8 (DRE/Patrimônio Inicial)**:
+  - Substituição da exibição baseada em fallback arbitrário estático pelo consumo dinâmico e auditado de `fiduciaryMetrics.installationsVal` no consolidado do resumo, refletindo matematicamente 100% de coerência com o balanço patrimonial que entra ativo no Round 1.
+
+**Impactos:**
+- **Zero Inconsistência Contábil Intrépida**: O montante parametrizado entra no balanço de abertura exatamente como descrito e começa a depreciar desde o primeiro round de jogo.
+- **Excelente Experiência do Tutor**: Elimina a confusão pedagógica dos fallbacks estáticos de 500k e estende a simulação de Capex de máquinas para benfeitorias administrativas/escritório de forma dinâmica e precisa.
+
+**Status atual:** v2026.156 - Em Produção / Sincronizado e Compilado perfeitamente com sucesso.
 
 ---
 

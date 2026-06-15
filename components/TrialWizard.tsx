@@ -555,6 +555,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     buildings_depreciation_rate: 5,
     property_depreciation_rate: 5,
     machines_depreciation_rate: 5,
+    admin_sales_installations: 0,
 
     starting_mode: "start_with_base",
     activity_type: "industrial",
@@ -877,11 +878,13 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     const betaInstallCost = 600000;
     const gammaInstallCost = 1500000;
 
-    const installationsVal = isZeroMode
+    const installationsMachinesVal = isZeroMode
       ? 0
       : (tutorConfig.machines[0]?.qty || 0) * alphaInstallCost +
         (tutorConfig.machines[1]?.qty || 0) * betaInstallCost +
         (tutorConfig.machines[2]?.qty || 0) * gammaInstallCost;
+
+    const installationsVal = installationsMachinesVal + (tutorConfig.admin_sales_installations || 0);
 
     const parsed_deprec_rate =
       (tutorConfig.buildings_depreciation_rate !== undefined
@@ -946,6 +949,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       building_deprec_only,
       installations_deprec_only,
       m_deprec_round,
+      installationsMachinesVal,
       installationsVal,
       buildings_depreciation_rate_pct:
         tutorConfig.buildings_depreciation_rate ?? 10,
@@ -3480,11 +3484,24 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                       />
 
                       <WizardField
-                        label="Instalações (Calculadas por Máquina)"
+                        label="Instalações Admin/Vendas ($)"
+                        type="currency"
+                        currency={tutorConfig.currency}
+                        val={tutorConfig.admin_sales_installations ?? 0}
+                        onChange={(v: any) =>
+                          setTutorConfig({
+                            ...tutorConfig,
+                            admin_sales_installations: parseFloat(v) || 0,
+                          })
+                        }
+                      />
+
+                      <WizardField
+                        label="Instalações Industriais (Fábrica)"
                         type="currency"
                         currency={tutorConfig.currency}
                         isLocked={true}
-                        val={fiduciaryMetrics.installationsVal}
+                        val={fiduciaryMetrics.installationsMachinesVal}
                         onChange={() => {}}
                       />
 
@@ -4868,14 +4885,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                               </span>
                               <span className="text-white font-bold">
                                 {formatCurrency(
-                                  tutorConfig.installations_value ??
-                                    (tutorConfig.starting_mode ===
-                                    "start_from_zero"
-                                      ? 500000
-                                      : tutorConfig.starting_mode ===
-                                          "start_with_base"
-                                        ? 500000
-                                        : 10000000),
+                                  fiduciaryMetrics.installationsVal,
                                   tutorConfig.currency,
                                 )}
                               </span>

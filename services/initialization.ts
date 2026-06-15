@@ -132,6 +132,7 @@ export interface BaseP0Config {
   rent_allocation_productive?: number;
   rent_allocation_administrative?: number;
   rent_allocation_sales?: number;
+  admin_sales_installations?: number;
 
   // Parâmetros Contábeis Avançados de P0 (v19.17-v19.18)
   clients_initial?: number;
@@ -421,8 +422,10 @@ export function generatePureP0(config: TutorP0Config): {
   const buildingAge = isZeroMode ? 0 : (config.building_age ?? (isBaseMode ? 2 : 10));
   const calculatedLand = isZeroMode ? 0 : (buildingMode === 'owned' ? (config.land_value ?? (isBaseMode ? 1000000.00 : 1200000.00)) : 0);
 
-  // Instalações de abertura: ZERADAS no Greenfield, calculadas dinamicamente com base nas máquinas em frota para outros modos
-  let installationsVal = 0;
+  const initialAdminSalesInstallations = Number(config.admin_sales_installations || 0);
+
+  // Instalações de abertura: iniciadas com os investimentos de admin/vendas, e incrementadas dinamicamente com base nas máquinas em frota para outros modos
+  let installationsVal = initialAdminSalesInstallations;
   if (!isZeroMode) {
     actualMachines.forEach(mac => {
       const normalizedModel = (mac.model as string) === 'alfa' ? 'alpha' : (mac.model as string) === 'gama' ? 'gamma' : mac.model;

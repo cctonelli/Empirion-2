@@ -331,6 +331,7 @@ export const calculateProjections = (
     buildings_depreciation_rate: rawEco.buildings_depreciation_rate ?? rawEco.ecosystem_config?.buildings_depreciation_rate ?? rawEco.config?.buildings_depreciation_rate ?? rawEco.config?.ecosystem_config?.buildings_depreciation_rate,
     property_depreciation_rate: rawEco.property_depreciation_rate ?? rawEco.ecosystem_config?.property_depreciation_rate ?? rawEco.config?.property_depreciation_rate ?? rawEco.config?.ecosystem_config?.property_depreciation_rate,
     starting_mode: rawEco.starting_mode ?? rawEco.ecosystem_config?.starting_mode ?? rawEco.config?.starting_mode ?? rawEco.config?.ecosystem_config?.starting_mode,
+    admin_sales_installations: rawEco.admin_sales_installations ?? rawEco.ecosystem_config?.admin_sales_installations ?? rawEco.config?.admin_sales_installations ?? rawEco.config?.ecosystem_config?.admin_sales_installations,
   };
   const machinesDepRateAnnual = ecoConfig.machines_depreciation_rate !== undefined 
     ? Number(ecoConfig.machines_depreciation_rate) 
@@ -362,9 +363,11 @@ export const calculateProjections = (
   const betaInstallCost = ecoConfig.machines?.[1]?.installation_cost !== undefined ? Number(ecoConfig.machines[1].installation_cost) : 600000.00;
   const gammaInstallCost = ecoConfig.machines?.[2]?.installation_cost !== undefined ? Number(ecoConfig.machines[2].installation_cost) : 1500000.00;
 
+  const adminSalesInstallations = Number(ecoConfig.admin_sales_installations || (ecosystem as any).config?.admin_sales_installations || 0);
+
   // Obter instalações fiduciárias anteriores
   const prevMachines = team.kpis?.machines || [];
-  let prevInstallationsVal = 0;
+  let prevInstallationsVal = adminSalesInstallations;
   prevMachines.forEach((m: any) => {
     if (m.model === 'alpha' || m.model === 'alfa') prevInstallationsVal += alphaInstallCost;
     else if (m.model === 'beta') prevInstallationsVal += betaInstallCost;
@@ -372,7 +375,7 @@ export const calculateProjections = (
   });
 
   // Obter instalações fiduciárias atuais com base nas máquinas reais ativas
-  let currentInstallationsVal = 0;
+  let currentInstallationsVal = adminSalesInstallations;
   currentMachines.forEach((m: any) => {
     if (m.model === 'alpha' || m.model === 'alfa') currentInstallationsVal += alphaInstallCost;
     else if (m.model === 'beta') currentInstallationsVal += betaInstallCost;
