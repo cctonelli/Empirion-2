@@ -52,7 +52,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 max-w-6xl mx-auto">
         {/* 1. Uso da Capacidade */}
         <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
           <div className="flex justify-between items-start mb-8">
@@ -70,12 +70,12 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
                 Nível de Utilização
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
-              <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400">
+              <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400 shrink-0 whitespace-nowrap pl-2">
                 {decisions.production.activityLevel}%
               </span>
             </div>
@@ -92,8 +92,8 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
             />
 
             <div className="flex justify-between items-center bg-slate-950/60 p-4 rounded-xl border border-white/5 text-sm font-sans my-4">
-              <span className="text-slate-400 font-medium">Produtividade Efetiva (P-1):</span>
-              <span className={`font-black font-mono ${prodIndex >= 100 ? 'text-emerald-400' : prodIndex >= 85 ? 'text-blue-400' : 'text-rose-400'}`}>{prodIndex}%</span>
+              <span className="text-slate-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis">Produtividade Efetiva (P-1):</span>
+              <span className={`font-black font-mono shrink-0 ${prodIndex >= 100 ? 'text-emerald-400' : prodIndex >= 85 ? 'text-blue-400' : 'text-rose-400'}`}>{prodIndex}%</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-xs text-slate-500 font-sans">
@@ -120,12 +120,12 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
-                Turnos Ativos Selecionados
+                Turnos Selecionados
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
-              <span className="text-2xl lg:text-3xl font-mono font-bold text-rose-400">
+              <span className="text-xl lg:text-2xl font-mono font-bold text-rose-400 shrink-0 whitespace-nowrap pl-2">
                 {selectedShifts} {selectedShifts === 1 ? 'Turno' : 'Turnos'}
               </span>
             </div>
@@ -156,7 +156,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
                       `}
                     >
                       <span className="text-base font-mono">{num}T</span>
-                      <span className="text-[9px] opacity-80">{num === 1 ? 'Regular' : num === 2 ? 'Dobrado' : 'Contínuo'}</span>
+                      <span className="text-[9px] opacity-80 whitespace-nowrap">{num === 1 ? 'Regular' : num === 2 ? 'Dobrado' : 'Contínuo'}</span>
                     </button>
                   );
                 })}
@@ -191,18 +191,18 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
-                % de Turno Extra
+                % de Horas Extras
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
-              <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400">
+              <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400 shrink-0 whitespace-nowrap pl-2">
                 {selectedShifts === 3 ? 0 : (decisions.production.extraProductionPercent ?? 0)}%
               </span>
             </div>
 
             {selectedShifts === 3 ? (
-              <div className="p-4 bg-slate-950 border border-white/5 rounded-xl text-xs font-medium text-slate-400 italic font-sans animate-in fade-in duration-300">
+              <div className="p-4 bg-slate-950 border border-white/5 rounded-xl text-xs font-medium text-slate-400 italic font-sans animate-in fade-in duration-300 mt-2">
                 Indisponível: Horas extras só podem ser ativadas operando em Turno Único (1T) ou Dobrado (2T).
               </div>
             ) : (
@@ -246,12 +246,12 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
-                % do Faturamento Bruto
+                % do Fat. Bruto (P&D)
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
-              <span className="text-2xl lg:text-3xl font-mono font-bold text-blue-400">
+              <span className="text-2xl lg:text-3xl font-mono font-bold text-blue-400 shrink-0 whitespace-nowrap pl-2">
                 {decisions.production.rd_investment}%
               </span>
             </div>

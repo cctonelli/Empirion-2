@@ -2,9 +2,30 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.163 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.164 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Reestruturação e Polimento Estético de Grades Responsivas e Elementos de Decisão (UI/UX) - v2026.164
+
+**Data:** 16 de Junho de 2026 às 16:20 UTC  
+**Motivo:** Saneamento de overflow de conteúdo e quebra de linhas indesejadas em resoluções de telas de médio a grande porte (laptops e desktops convencionais). Anteriormente, a grade de comandos do chão de fábrica (`FactoryStep.tsx`) e de mercados comerciais (`MarketingStep.tsx`) utilizava layout de 4 colunas estrito, o que restringia o espaço de cada card individual a menos de 280px em telas HD/FHD de estudantes. Isso resultava em sobreposições, wraps de linha indevidos de botões (como a etiqueta "REGULAR" abaixo do "1T") e quebra horizontal do valor das variáveis, prejudicando o requinte visual e legibilidade dentro do padrão de excelência EMPIRION.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Reconfiguração de Grades (Mecanismo Anti-esmagamento)**:
+  - No `FactoryStep.tsx`: Transição de `xl:grid-cols-4` para um grid confortável de 2 colunas amplas (`lg:grid-cols-2 lg:gap-10`). Agora, em resoluções desktop, as decisões operacionais (Uso de Capacidade, Turnos, Horas Extras, P&D) são expostas como uma grade simétrica 2x2, viabilizando respiro horizontal e conforto visual.
+  - No `MarketingStep.tsx`: Transição de `xl:grid-cols-4` para um grid proporcional de 3 colunas maximo (`xl:grid-cols-3` e `lg:grid-cols-3`). Desta forma, praças de vendas se comportam com elegância mesmo com resoluções ou densidades variadas.
+- **Micro-interações & Estilo Defensivo**:
+  - Incorporação do modificador de flex-layout `gap-3` acoplado ao `shrink-0`, `whitespace-nowrap` e `pl-2` em todas as tags e valores chaves (e.g., marcas de turnos selecionados `1 Turno`, bônus de contratação, demissão e salários da base `HRStep.tsx`). Isso impede que o navegador crie uma quebra de linha artificial no meio de um indicador financeiro ou textual.
+- **DX & Consistência**:
+  - Alinhamento de todos os textos das caixas de resumos rápidos e alertas das fábricas com fontes sanadas e contornadas por bordas de sutileza do design system.
+
+**Impactos:**
+- **Estética Visual Premium**: Encaixe fiduciário impecável, sem vazamento ou compressão de textos na interface, mantendo a ergonomia corporativa recomendada pelas diretrizes executivas de UI/UX.
+
+**Status atual:** v2026.164 - Em Produção / Compilado com Sucesso.
 
 ---
 

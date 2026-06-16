@@ -547,12 +547,12 @@ export const HRStep: React.FC<HRStepProps> = ({
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none truncate">
                 Número de Contratações
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-emerald-400 transition-colors cursor-help" />
               </label>
-              <span className="text-1.5xl lg:text-2xl font-mono font-bold text-emerald-400">
+              <span className="text-1.5xl lg:text-2xl font-mono font-bold text-emerald-400 shrink-0 whitespace-nowrap pl-2">
                 +{decisions.hr.hired}
               </span>
             </div>
@@ -591,12 +591,12 @@ export const HRStep: React.FC<HRStepProps> = ({
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none truncate">
                 Número de Demissões
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-rose-400 transition-colors cursor-help" />
               </label>
-              <span className="text-1.5xl lg:text-2xl font-mono font-bold text-rose-400 font-mono">
+              <span className="text-1.5xl lg:text-2xl font-mono font-bold text-rose-400 font-mono shrink-0 whitespace-nowrap pl-2">
                 -{decisions.hr.fired}
               </span>
             </div>
@@ -635,12 +635,12 @@ export const HRStep: React.FC<HRStepProps> = ({
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none">
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wide flex items-center gap-2 font-sans select-none truncate">
                 Salário Mensal Base
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
-              <span className="text-1.5xl lg:text-2xl font-mono font-bold text-orange-400">
+              <span className="text-1.5xl lg:text-2xl font-mono font-bold text-orange-400 shrink-0 whitespace-nowrap pl-2">
                 {formatCurrency(decisions.hr.salary, 'BRL')}
               </span>
             </div>
