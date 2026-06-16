@@ -2353,25 +2353,4 @@ project-root/
 - **DX Aprimorado:** Identificação imediata da liga em tela antes da submissão da estratégia comercial para o round.
 **Status:** ATIVO, amplamente homologado, compilado com sucesso e verificado via linter.
 
----
-
-## Decisão Arquitetural & Versionamento - Estabilidade Bi-lateral de Rolagem e Fixação Defensiva de Painéis de Controle (Steps & Cockpit Preview) - v2026.165
-
-**Data:** 16 de Junho de 2026 às 20:05 UTC  
-**Motivo:** Atendimento imediato ao feedback de usabilidade para garantir que o menu de etapas ("Steps") e o painel de análise preditiva ("COCKPIT PREVIEW") permaneçam 100% visíveis e fixados na tela à medida que o aluno rola e edita as decisões centrais no console. Anteriormente, o contêiner do `<main>` no `Dashboard.tsx` permitia rolamento vertical genérico livre (`overflow-y-auto`), fazendo com que o formulário inteiro do `DecisionForm` rolasse para fora do campo visível. Isso deprimia a usabilidade no desktop, fazendo o cabeçalho tático e os menus desaparecerem conforme o aluno preenchia sliders longos no centro.
-
-**Principais diferenças:**
-- **Contenção Estrita ao Viewport no Dashboard (`components/Dashboard.tsx`):**
-  - Ajuste inteligente na barra de rolagem do `<main>` do Dashboard: modificado para `overflow-hidden h-full flex flex-col` condicionalmente quando a aba ativa for `'decisoes'` ou `'financeiro'`.
-  - Desta forma, o `Dashboard` consome exatamente a altura útil da janela e elimina a rolagem dupla global do navegador.
-- **Transição de Scroll para Coluna Centralizada:**
-  - O contêiner pai do `DecisionForm` herda a altura perfeitamente delimitada, o que faz com que os seus elementos flexíveis laterais (Menu vertical da esquerda e o Cockpit Preview da direita) permaneçam fixos em relação à margem esquerda e direita do viewport.
-  - A rolagem vertical passa a ocorrer única e exclusivamente por dentro do contêiner central que renderiza os passos ativos (`scrollContainerRef` no `DecisionForm`), oferecendo uma ergonomia primorosa de edição para as equipes.
-
-**Impactos esperados:**
-- **Ergonomia Operacional Notável (UI/UX 2026):** Alunos nunca mais perdem o panorama dos KPIs previstos para o round seguinte (T+1) no Cockpit Preview ou o controle visual de qual etapa de decisão ativa estão editando ao rolar inputs mais extensos de RH, Fábrica ou Commercial.
-- **Sincronismo com o Design System:** Comportamento visual refinado e fluido, preservando o layout de painéis deslizantes em formato War Room.
-
-**Status:** ATIVO, amplamente homologado, compilado com sucesso e verificado via compile_applet.
-
 

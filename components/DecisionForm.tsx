@@ -123,6 +123,48 @@ const DecisionForm: React.FC<{
     }
   }, [decisions, onDecisionsChange]);
 
+  // Habilitar rolagem de teclado (Page Down, Page Up, setas de navegação) para resolver problemas de acessibilidade e usabilidade tática
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignorar com segurança se focado em elementos de entrada do formulário editáveis
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+         activeEl.tagName === 'SELECT' ||
+         activeEl.tagName === 'TEXTAREA' ||
+         activeEl.hasAttribute('contenteditable'))
+      ) {
+        return;
+      }
+
+      if (!scrollContainerRef.current) return;
+
+      const container = scrollContainerRef.current;
+      const scrollAmount = 80; // pixels para deslocamento via setas
+      const pageAmount = container.clientHeight * 0.8; // 80% do viewport local para Page Up/Down
+
+      if (e.key === 'ArrowDown') {
+        container.scrollTop += scrollAmount;
+        e.preventDefault();
+      } else if (e.key === 'ArrowUp') {
+        container.scrollTop -= scrollAmount;
+        e.preventDefault();
+      } else if (e.key === 'PageDown') {
+        container.scrollTop += pageAmount;
+        e.preventDefault();
+      } else if (e.key === 'PageUp') {
+        container.scrollTop -= pageAmount;
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [activeStep]);
+
   const currentMacro = useMemo(() => {
     if (!activeArena) return DEFAULT_MACRO;
     const rules = activeArena.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || {};
@@ -679,7 +721,7 @@ const DecisionForm: React.FC<{
                          )}
 
                          {/* CONTEÚDO DO PASSO COM SCROLL VERTICAL */}
-                         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 bg-slate-950/40 relative">
+                         <div ref={scrollContainerRef} tabIndex={0} className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 bg-slate-950/40 relative outline-none focus:ring-1 focus:ring-orange-500/10">
                             <div className="w-full mx-auto pb-40 space-y-8 px-2">
                                
                                {/* PASSO 1 - JURÍDICO */}
