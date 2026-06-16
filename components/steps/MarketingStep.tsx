@@ -1247,7 +1247,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             </div>
                             <div className="flex justify-between items-center text-slate-400 py-1 border-b border-white/5 font-extrabold bg-white/[0.02] px-1.5 rounded-lg">
                               <span className="text-[10px] uppercase font-sans text-orange-400">
-                                M. Contribuição:
+                                M. Contrib.:
                               </span>
                               <span className="text-orange-400">
                                 {currency}{" "}
