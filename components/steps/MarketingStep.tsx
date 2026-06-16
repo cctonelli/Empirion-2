@@ -1187,7 +1187,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
                               <span className="text-[10px] uppercase font-sans">
-                                Receita Líq.:
+                                Receita Líq:
                               </span>
                               <span className="text-slate-300 font-bold">
                                 {currency}{" "}
@@ -1211,7 +1211,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
                               <span className="text-[10px] uppercase font-sans">
-                                Lucro Bruto:
+                                L. Bruto:
                               </span>
                               <span className="text-amber-500 font-bold">
                                 {currency}{" "}
@@ -1223,7 +1223,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
                               <span className="text-[10px] uppercase font-sans">
-                                (-) Marketing:
+                                Mkt:
                               </span>
                               <span className="text-red-400/80">
                                 -{currency}{" "}
@@ -1235,7 +1235,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
                               <span className="text-[10px] uppercase font-sans">
-                                (-) Logística:
+                                Logística:
                               </span>
                               <span className="text-red-400/80">
                                 -{currency}{" "}
@@ -1247,7 +1247,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             </div>
                             <div className="flex justify-between items-center text-slate-400 py-1 border-b border-white/5 font-extrabold bg-white/[0.02] px-1.5 rounded-lg">
                               <span className="text-[10px] uppercase font-sans text-orange-400">
-                                M. Contrib.:
+                                MC:
                               </span>
                               <span className="text-orange-400">
                                 {currency}{" "}
@@ -1259,7 +1259,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
                               <span className="text-[10px] uppercase font-sans">
-                                (-) Desp. Operac.:
+                                Operac.:
                               </span>
                               <span className="text-red-400/70">
                                 -{currency}{" "}
@@ -1288,7 +1288,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                                     className="text-red-400"
                                   />
                                 )}
-                                Lucro Líq. (Reg.):
+                                Lucro Líq.:
                               </span>
                               <span className="font-extrabold">
                                 {currency}{" "}
@@ -1302,7 +1302,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                               className={`flex justify-between items-center text-[10px] font-bold ${profitMarginRegion >= 0 ? "text-emerald-400" : "text-red-400"}`}
                             >
                               <span className="uppercase tracking-wider text-slate-400 text-[9px] font-sans">
-                                Margem Líquida:
+                                M. Líquida:
                               </span>
                               <span className="font-extrabold">
                                 {profitMarginRegion.toFixed(1)}%
