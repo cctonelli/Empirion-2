@@ -532,6 +532,16 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
           : 0,
     };
   };
+
+  const firstRegionName = React.useMemo(() => {
+    const firstRegionConf =
+      activeArena?.config?.regions?.find((r: any) => Number(r.id) === 1) ||
+      activeArena?.config?.region_configs?.find((r: any) => Number(r.id) === 1) ||
+      activeArena?.config?.regions?.[0] ||
+      activeArena?.config?.region_configs?.[0];
+    return firstRegionConf?.name || "Região 1";
+  }, [activeArena]);
+
   return (
     <div className="space-y-12 lg:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Cabeçalho do passo */}
@@ -539,7 +549,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
         icon={<Megaphone size={32} strokeWidth={2.5} />}
         title="Estratégia Comercial"
         desc="Configure preço, prazo e marketing por região. Decisões afetam demanda, margem e fluxo de caixa."
-        help="Use o botão replicar para aplicar a Região 1 em todas as demais."
+        help={`Use o botão replicar para aplicar as configurações de ${firstRegionName} em todas as demais.`}
       />
 
       {/* Bloco único de explicações */}
@@ -650,7 +660,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
           `}
         >
           <RefreshCw size={16} />
-          Replicar Região 1
+          Replicar {firstRegionName}
         </button>
       </div>
 
@@ -712,7 +722,8 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-base font-black text-orange-400 uppercase italic tracking-tight font-sans">
-                    {activeArena?.region_names?.[Number(id) - 1] ||
+                    {regionConf?.name ||
+                      activeArena?.region_names?.[Number(id) - 1] ||
                       `Região ${id}`}
                   </h4>
                   <Globe

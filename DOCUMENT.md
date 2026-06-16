@@ -2,9 +2,31 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.162 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.163 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Mapeamento de Regiões Comerciais do JSON de Configuração do Tutor no Painel de Decisões do Estudante - v2026.163
+
+**Data:** 16 de Junho de 2026 às 15:45 UTC  
+**Motivo:** Correção de discrepância visual e de usabilidade reportada pelas equipes. O JSON `config` armazenado nas tabelas `championships` ou `trial_championships` detém o mapeamento detalhado de cada região (como ID, NAME, CURRENCY, DEMAND_WEIGHT, etc.) configurada nominalmente pelo tutor (ex: "SUL", "SUDESTE", "CENTRO-OESTE" etc.). Contudo, as equipes de estudantes se deparavam com nomes genéricos "Região 1", "Região 2" etc. no painel de Tomada de Decisão Comercial (Aba de Marketing), impedindo que identificassem geograficamente e taticamente as praças comerciais onde atuavam. Esta atualização acopla e sincroniza o painel do aluno diretamente com as propriedades de nomes reais gravadas no JSON da arena ativa (`activeArena?.config?.regions` ou `config?.region_configs`).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Sincronização nos Títulos de Praças (`MarketingStep.tsx`)**:
+  - Ajuste na renderização de nomes para priorizar as propriedades de `regionConf?.name` e `activeArena?.region_names?.[idx]` antes de recorrer ao fallback de string estática `Região ${id}`.
+- **Sincronização do Motor Interno de Simulação em Tempo Real**:
+  - O utilitário `calculateRegionStats` foi atualizado para que os nomes dinâmicos se estendam coerentemente de ponta a ponta no painel, incluindo projeções estatísticas de volume de vendas e share histórico calculado em tempo de execução para os alunos.
+- **Micro-interações Contextuais Modificadas**:
+  - O botão de replicação de parâmetros comerciais agora exibe dinamicamente o nome correto da praça base de origem (ex: `Replicar SUL` em vez do genérico `Replicar Região 1`).
+  - O texto de ajuda contextiva foi ajustado analogamente para refletir o nome configurado em tempo real.
+
+**Impactos:**
+- **Usabilidade e Imersão Cognitiva**: As equipes sintonizam suas decisões táticas diretamente com os nomes comerciais definidos no roteiro pedagógico da simulação aplicada pelo Tutor.
+- **Sinergia do Design System**: Comportamento visual harmônico e 100% aderente ao painel de controle do Tutor.
+
+**Status atual:** v2026.163 - Em Produção / Compilado com Sucesso.
 
 ---
 
