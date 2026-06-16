@@ -1467,7 +1467,7 @@ export const calculateProjections = (
         production: operatorsAvailable
       },
       // --- CAPÍTULO DE PRODUTIVIDADE E RECURSOS HUMANOS (v19.5 SAPPHIRE) ---
-      productivity_index: Math.round(productivityIndex * 100),
+      productivity_index: operatorsAvailable > 0 ? Math.round(productivityIndex * 100) : 0,
       motivation_index: parseFloat(motivationIndex.toFixed(3)),
       motivation_level: motivationLevel,
       consecutive_ruim_rounds: consecutiveRuimRounds,

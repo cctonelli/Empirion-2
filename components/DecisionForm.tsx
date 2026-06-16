@@ -104,6 +104,7 @@ const DecisionForm: React.FC<{
     }
   }, [isRightPreviewCollapsed]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showValidationWarningModal, setShowValidationWarningModal] = useState(false);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
   const [decisions, setDecisions] = useState<DecisionData>({
@@ -159,7 +160,7 @@ const DecisionForm: React.FC<{
   useEffect(() => {
     if (!teamId || !champId || isLoadingDraft) return;
     const currentKey = `${champId}_${teamId}_${round}`;
-    if (loadedKey !== currentKey) return; // Impede gravação de estado sujo/antigo antes do carregamento fresco terminar
+    if (loadedKey !== currentKey) return; 
 
     const key = `draft_decisions_${champId}_${teamId}_${round}`;
     localStorage.setItem(key, JSON.stringify(decisions));
@@ -172,7 +173,7 @@ const DecisionForm: React.FC<{
         return;
       }
       setIsLoadingDraft(true);
-      setLoadedKey(null); // Resetar chave carregada para evitar gravação prematura
+      setLoadedKey(null); 
       try {
         const champsRes = await getChampionships();
         const historyRes = await getTeamSimulationHistory(teamId);
@@ -183,7 +184,6 @@ const DecisionForm: React.FC<{
 
         let team = found?.teams?.find((t: Team) => t.id === teamId);
         
-        // Se for modo leitura (consulta de round passado), buscar no histórico
         if (isReadOnly && historyRes) {
           const snapshot = historyRes.find((h: any) => h.round === round);
           if (snapshot) {
@@ -192,7 +192,6 @@ const DecisionForm: React.FC<{
         }
 
         if (team) {
-           // Injeção de segurança do parque P00 se estiver no Round 1 e vazio (exceto se for modo Start from Zero)
            const isZeroMode = found?.config?.starting_mode === 'start_from_zero' || found?.starting_mode === 'start_from_zero';
            if (round === 1 && (!team.kpis?.machines || team.kpis.machines.length === 0) && !isZeroMode) {
               team.kpis = { ...team.kpis, machines: INITIAL_MACHINES_P00 as MachineInstance[] };
@@ -203,7 +202,6 @@ const DecisionForm: React.FC<{
         const table = found?.is_trial ? 'trial_decisions' : 'current_decisions';
         const { data: draft } = await supabase.from(table).select('data').eq('team_id', teamId).eq('round', round).maybeSingle();
 
-        // Tentar recuperar do localStorage primeiro (rascunho local mais recente)
         const localKey = `draft_decisions_${champId}_${teamId}_${round}`;
         const localDraft = localStorage.getItem(localKey);
         let finalData = draft?.data;
@@ -216,8 +214,6 @@ const DecisionForm: React.FC<{
           }
         }
 
-        // Se o rascunho ou decisões para este round atual forem vazios, vamos carregar as decisões do round anterior (se existir)
-        // porém, ZERANDO as decisões descasadas / de única ocorrência (como CAPEX / Maquinário, RH contratações etc.)
         if (!finalData && round > 1) {
           try {
             const prevRound = round - 1;
@@ -226,27 +222,23 @@ const DecisionForm: React.FC<{
             if (prevDraft?.data) {
               const baseDecisions = JSON.parse(JSON.stringify(prevDraft.data));
               
-              // Sanitizar Maquinário (CAPEX): Zera compras e vendas pontuais, e esvazia ids marcados para venda
               baseDecisions.machinery = {
                 buy: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
                 sell: { alpha: 0, alfa: 0, beta: 0, gamma: 0, gama: 0 },
                 sell_ids: []
               };
               
-              // Sanitizar Recursos Humanos: Zera novas contratações e novas demissões
               if (baseDecisions.hr) {
                 baseDecisions.hr.hired = 0;
                 baseDecisions.hr.fired = 0;
               }
               
-              // Sanitizar Finanças: Zera solicitações pontuais de empréstimo e seus prazos correspondentes
               if (baseDecisions.finance) {
                 baseDecisions.finance.loanRequest = 0;
                 baseDecisions.finance.loanTerm = 0;
                 baseDecisions.finance.application = 0;
               }
               
-              // Sanitizar Estimativas do oráculo para recálculo fresco
               if (baseDecisions.estimates) {
                 baseDecisions.estimates.forecasted_unit_cost = 0;
                 baseDecisions.estimates.forecasted_revenue = 0;
@@ -261,7 +253,6 @@ const DecisionForm: React.FC<{
           }
         }
 
-        // Sanidade Extra: Se a compra de máquinas é bloqueada neste round, forçar buy zerado no finalData
         const currentRulesForRound = found?.round_rules?.[round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[round] || found?.market_indicators || {};
         const isAllowedToBuyMachines = currentRulesForRound.allow_machine_sale;
         const isRoundZeroAndZeroMode = (found?.config?.starting_mode === 'start_from_zero' || found?.starting_mode === 'start_from_zero') && round === 0;
@@ -287,7 +278,6 @@ const DecisionForm: React.FC<{
         if (finalData) {
           setDecisions({ ...finalData, regions: initialRegions });
         } else {
-          // Reset completo do estado para evitar contaminação cross-state em switches de rodadas/equipes
           setDecisions({
             judicial_recovery: false,
             regions: initialRegions,
@@ -331,13 +321,14 @@ const DecisionForm: React.FC<{
     updateDecision('regions', nextRegions);
   };
 
-  const handleTransmit = async () => {
+  const executeSaveDecisions = async () => {
     if (!teamId || !champId || isReadOnly) return;
     setIsSaving(true);
     try {
       const res = await saveDecisions(teamId, champId, round, decisions) as any;
       if (res.success) {
         setShowSuccessModal(true);
+        setShowValidationWarningModal(false);
       } else {
         throw new Error(res.error);
       }
@@ -345,6 +336,27 @@ const DecisionForm: React.FC<{
       alert(`FALHA NA TRANSMISSÃO: ${err.message}`);
     } 
     finally { setIsSaving(false); }
+  };
+
+  const handleTransmit = async () => {
+    if (!teamId || !champId || isReadOnly) return;
+
+    const machines = projections?.kpis?.machines || [];
+    const specs = currentMacro?.machine_specs as any;
+    const operatorsRequired = machines.reduce((acc: number, m: any) => {
+      const normModel = (m.model as string) === 'alfa' ? 'alpha' : (m.model as string) === 'gama' ? 'gamma' : m.model;
+      const sReq = specs?.[normModel]?.operators_required ?? (normModel === 'alpha' ? 94 : normModel === 'beta' ? 235 : 445);
+      return acc + sReq;
+    }, 0);
+    const operatorsAvailable = projections?.kpis?.staffing?.production || 0;
+
+    const hasCriticalDiscrepancy = operatorsRequired > 0 && operatorsAvailable <= 0;
+
+    if (hasCriticalDiscrepancy) {
+      setShowValidationWarningModal(true);
+    } else {
+      await executeSaveDecisions();
+    }
   };
 
   const handleSimulateESDS = async () => {
@@ -360,7 +372,6 @@ const DecisionForm: React.FC<{
     }
   };
 
-  // Preset de decisões rápidas (Frente 3) para automatizar táticas comuns
   const applyPreset = (presetType: 'conservadora' | 'equilibrada' | 'agressiva') => {
     if (isReadOnly) return;
     
@@ -549,7 +560,7 @@ const DecisionForm: React.FC<{
                                 }} 
                                 className="p-1 hover:bg-white/5 rounded-lg text-slate-500 hover:text-slate-300 transition-colors shrink-0 cursor-pointer"
                                 title="Recolher painel"
-                             >
+                              >
                                 <ChevronLeft size={14} />
                              </button>
                           </>
@@ -619,189 +630,270 @@ const DecisionForm: React.FC<{
 
                  {/* WRAPPER CENTRAL (FORMULÁRIO) & DIREITO (LIVE PREVIEW) */}
                  <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden h-full">
-                     {/* SUB-WRAPPER CENTRAL (NAV MOBILE + CONTEÚDO ATIVO) */}
-                     <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-                        {/* NAV BAR DE PASSOS SUPERIOR (HORIZONTAL - EXCLUSIVO EM MOBILE/TABLET) */}
-                        <nav className="flex lg:hidden p-1 gap-1 bg-slate-900/40 backdrop-blur-md border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
-                           {STEPS.map((s, idx) => (
-                             <button type="button" key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[120px] py-3 px-3 rounded-xl transition-all flex flex-col items-center gap-1.5 border group relative overflow-hidden cursor-pointer ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-2xl scale-[1.02] z-10' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
-                                {activeStep === idx && (
-                                  <motion.div layoutId="activeStep" className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-700 -z-10" />
-                                )}
-                                <s.icon size={14} strokeWidth={activeStep === idx ? 3 : 2} className={activeStep === idx ? 'drop-shadow-lg' : 'group-hover:scale-110 transition-transform'} />
-                                <span className="text-[8px] font-black uppercase tracking-[0.1em]">{s.label}</span>
-                             </button>
-                           ))}
-                        </nav>
-
-                        {/* NOVO: BARRA DE PRESETS RÁPIDOS DE DECISÃO (FRENTE 3) */}
-                        {!isReadOnly && (activeStep === 4 || activeStep === 5) && (
-                          <div className="px-6 py-4 bg-slate-950/60 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-                            <div className="flex items-center gap-2">
-                              <Sliders size={14} className="text-orange-500" />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 font-sans">Presets de Operações Rápidas</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button 
-                                type="button"
-                                onClick={() => applyPreset('conservadora')}
-                                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-[9px] font-black uppercase tracking-wider text-slate-400 rounded-xl border border-white/5 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                              >
-                                <Play size={10} className="text-blue-400" /> Conservadora (Foco Caixa)
+                      {/* SUB-WRAPPER CENTRAL (NAV MOBILE + CONTEÚDO ATIVO) */}
+                      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+                         {/* NAV BAR DE PASSOS SUPERIOR (HORIZONTAL - EXCLUSIVO EM MOBILE/TABLET) */}
+                         <nav className="flex lg:hidden p-1 gap-1 bg-slate-900/40 backdrop-blur-md border-b border-white/5 shrink-0 overflow-x-auto no-scrollbar">
+                            {STEPS.map((s, idx) => (
+                              <button type="button" key={s.id} onClick={() => setActiveStep(idx)} className={`flex-1 min-w-[120px] py-3 px-3 rounded-xl transition-all flex flex-col items-center gap-1.5 border group relative overflow-hidden cursor-pointer ${activeStep === idx ? 'bg-orange-600 border-orange-400 text-white shadow-2xl scale-[1.02] z-10' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
+                                 {activeStep === idx && (
+                                   <motion.div layoutId="activeStep" className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-700 -z-10" />
+                                 )}
+                                 <s.icon size={14} strokeWidth={activeStep === idx ? 3 : 2} className={activeStep === idx ? 'drop-shadow-lg' : 'group-hover:scale-110 transition-transform'} />
+                                 <span className="text-[8px] font-black uppercase tracking-[0.1em]">{s.label}</span>
                               </button>
-                              <button 
-                                type="button"
-                                onClick={() => applyPreset('equilibrada')}
-                                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-[9px] font-black uppercase tracking-wider text-slate-400 rounded-xl border border-white/5 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 animate-pulse-subtle"
-                              >
-                                <Play size={10} className="text-yellow-400" /> Equilibrada
-                              </button>
-                              <button 
-                                type="button"
-                                onClick={() => applyPreset('agressiva')}
-                                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-[9px] font-black uppercase tracking-wider text-slate-400 rounded-xl border border-white/5 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                              >
-                                <Play size={10} className="text-rose-400" /> Expansão Agressiva
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                            ))}
+                         </nav>
 
-                        {/* CONTEÚDO DO PASSO COM SCROLL VERTICAL */}
-                        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 bg-slate-950/40 relative">
-                           <div className="w-full mx-auto pb-40 space-y-8 px-2">
-                              
-                              {/* PASSO 1 - JURÍDICO */}
-                              {activeStep === 0 && (
-                                <LegalStep decisions={decisions} updateDecision={updateDecision} isReadOnly={isReadOnly} />
-                              )}
-
-                              {/* PASSO 2 - COMERCIAL / MARKETING */}
-                              {activeStep === 1 && (
-                                <MarketingStep decisions={decisions} updateDecision={updateDecision} replicateInCluster={replicateInCluster} activeArena={activeArena} activeTeam={activeTeam} isReadOnly={isReadOnly} />
-                              )}
-
-                              {/* PASSO 3 - GESTÃO DE ATIVOS & CAPEX */}
-                              {activeStep === 2 && (
-                                <AssetsStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} round={round} currentMacro={currentMacro} isReadOnly={isReadOnly} />
-                              )}
-
-                              {/* PASSO 4 - SUPRIMENTOS / CADEIA DE SUPRIMENTOS */}
-                              {activeStep === 3 && (
-                                <SupplyStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} round={round} currentMacro={currentMacro} isReadOnly={isReadOnly} />
-                              )}
-
-                              {/* PASSO 5 - CHÃO DE FÁBRICA & OPERAÇÕES */}
-                              {activeStep === 4 && (
-                                <FactoryStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} />
-                              )}
-
-                              {/* PASSO 6 - GESTÃO DE TALENTOS & RH */}
-                              {activeStep === 5 && (
-                                <HRStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} round={round} />
-                              )}
-
-                              {/* PASSO 7 - FINANÇAS & MERCADO DE CAPITAIS */}
-                              {activeStep === 6 && (
-                                <FinanceStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} currentMacro={currentMacro} isReadOnly={isReadOnly} />
-                              )}
-
-                              {/* PASSO 8 - ORÁCULO DE REVISÃO E TRANSMISSÃO */}
-                              {activeStep === 7 && (
-                                <ReviewStep decisions={decisions} round={round} projections={projections} currentMacro={currentMacro} />
-                              )}
-
-                           </div>
-                        </div>
-                     </div>
-                     
-                     {/* Placeholder estrutural quando colapsado para não mexer nos inputs sob hover flutuante */}
-                     {isRightPreviewCollapsed && (
-                        <div className="hidden lg:block w-12 shrink-0 transition-all duration-300 pointer-events-none" />
-                     )}
-                     
-                     {/* COCKPIT PREVIEW: PAINEL LATERAL DIREITO COM ANÁLISE DE RISCO TÁTICO */}
-                     <RightPreviewPanel 
-                        decisions={decisions}
-                        projections={projections}
-                        activeArena={activeArena}
-                        activeTeam={activeTeam}
-                        round={round}
-                        isRightPreviewCollapsed={isRightPreviewCollapsed}
-                        setIsRightPreviewCollapsed={setIsRightPreviewCollapsed}
-                        projectedESDS={projectedESDS}
-                        isCalculatingESDS={isCalculatingESDS}
-                        handleSimulateESDS={handleSimulateESDS}
-                     />
-
-                      {/* Modal de Sucesso após Transmissão */}
-                      <AnimatePresence>
-                        {showSuccessModal && (
-                           <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-                             {/* Backdrop de vidro desfocado */}
-                             <motion.div 
-                               initial={{ opacity: 0 }}
-                               animate={{ opacity: 1 }}
-                               exit={{ opacity: 0 }}
-                               onClick={() => setShowSuccessModal(false)}
-                               className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
-                               id="transmit_success_backdrop"
-                             />
-
-                             {/* Card do Modal */}
-                             <motion.div
-                               initial={{ scale: 0.9, y: 30, opacity: 0 }}
-                               animate={{ scale: 1, y: 0, opacity: 1 }}
-                               exit={{ scale: 0.9, y: 30, opacity: 0 }}
-                               transition={{ type: "spring", damping: 25, stiffness: 180 }}
-                               className="relative w-full max-w-md bg-slate-900 border-2 border-white/5 rounded-[2rem] shadow-3xl overflow-hidden z-[100000] p-8 text-center space-y-6"
-                               id="transmit_success_modal_card"
-                             >
-                               {/* Decoração superior verde esmeralda brilhante */}
-                               <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-600" />
-                               
-                               {/* Botão de fechar no canto superior direito */}
+                         {/* NOVO: BARRA DE PRESETS RÁPIDOS DE DECISÃO (FRENTE 3) */}
+                         {!isReadOnly && (activeStep === 4 || activeStep === 5) && (
+                           <div className="px-6 py-4 bg-slate-950/60 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                             <div className="flex items-center gap-2">
+                               <Sliders size={14} className="text-orange-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 font-sans">Presets de Operações Rápidas</span>
+                             </div>
+                             <div className="flex items-center gap-2">
                                <button 
-                                 type="button" 
-                                 onClick={() => setShowSuccessModal(false)}
-                                 className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors cursor-pointer p-1.5 hover:bg-white/5 rounded-xl border border-transparent"
+                                 type="button"
+                                 onClick={() => applyPreset('conservadora')}
+                                 className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-[9px] font-black uppercase tracking-wider text-slate-400 rounded-xl border border-white/5 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
                                >
-                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                                 </svg>
+                                 <Play size={10} className="text-blue-400" /> Conservadora (Foco Caixa)
                                </button>
-
-                               {/* Ícone de sucesso animado */}
-                               <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner shadow-emerald-500/10 animate-pulse">
-                                 <ShieldCheck size={36} className="text-emerald-500" />
-                               </div>
-                               
-                               <div className="space-y-3">
-                                 <h3 className="text-xl font-black text-white uppercase italic tracking-tight font-sans">
-                                   DECISÕES TRANSMITIDAS COM SUCESSO!
-                                 </h3>
-                                 <p className="text-slate-300 text-xs font-semibold leading-relaxed">
-                                   VOCÊ PODE ALTERAR QUALQUER DECISÃO ANTES QUE O PRAZO DO ROUND SEJA ENCERRADO.
-                                 </p>
-                               </div>
-
-                               <div className="pt-2">
-                                 <button 
-                                   type="button"
-                                   onClick={() => setShowSuccessModal(false)}
-                                   className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg hover:shadow-emerald-500/10 active:scale-95 cursor-pointer flex items-center justify-center gap-2 border border-emerald-500/30"
-                                 >
-                                   <ShieldCheck size={14} /> Confirmar e Continuar
-                                 </button>
-                               </div>
-                             </motion.div>
+                               <button 
+                                 type="button"
+                                 onClick={() => applyPreset('equilibrada')}
+                                 className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-[9px] font-black uppercase tracking-wider text-slate-400 rounded-xl border border-white/5 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 animate-pulse-subtle"
+                               >
+                                 <Play size={10} className="text-yellow-400" /> Equilibrada
+                               </button>
+                               <button 
+                                 type="button"
+                                 onClick={() => applyPreset('agressiva')}
+                                 className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-[9px] font-black uppercase tracking-wider text-slate-400 rounded-xl border border-white/5 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                               >
+                                 <Play size={10} className="text-rose-400" /> Expansão Agressiva
+                               </button>
+                             </div>
                            </div>
-                        )}
-                      </AnimatePresence>
+                         )}
 
-                 </div>
-              </motion.div>
-         </AnimatePresence>
+                         {/* CONTEÚDO DO PASSO COM SCROLL VERTICAL */}
+                         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 bg-slate-950/40 relative">
+                            <div className="w-full mx-auto pb-40 space-y-8 px-2">
+                               
+                               {/* PASSO 1 - JURÍDICO */}
+                               {activeStep === 0 && (
+                                 <LegalStep decisions={decisions} updateDecision={updateDecision} isReadOnly={isReadOnly} />
+                               )}
+
+                               {/* PASSO 2 - COMERCIAL / MARKETING */}
+                               {activeStep === 1 && (
+                                 <MarketingStep decisions={decisions} updateDecision={updateDecision} replicateInCluster={replicateInCluster} activeArena={activeArena} activeTeam={activeTeam} isReadOnly={isReadOnly} />
+                               )}
+
+                               {/* PASSO 3 - GESTÃO DE ATIVOS & CAPEX */}
+                               {activeStep === 2 && (
+                                 <AssetsStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} round={round} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                               )}
+
+                               {/* PASSO 4 - SUPRIMENTOS / CADEIA DE SUPRIMENTOS */}
+                               {activeStep === 3 && (
+                                 <SupplyStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} round={round} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                               )}
+
+                               {/* PASSO 5 - CHÃO DE FÁBRICA & OPERAÇÕES */}
+                               {activeStep === 4 && (
+                                 <FactoryStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                               )}
+
+                               {/* PASSO 6 - GESTÃO DE TALENTOS & RH */}
+                               {activeStep === 5 && (
+                                 <HRStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} activeTeam={activeTeam} currentMacro={currentMacro} isReadOnly={isReadOnly} round={round} />
+                               )}
+
+                               {/* PASSO 7 - FINANÇAS & MERCADO DE CAPITAIS */}
+                               {activeStep === 6 && (
+                                 <FinanceStep decisions={decisions} updateDecision={updateDecision} activeArena={activeArena} currentMacro={currentMacro} isReadOnly={isReadOnly} />
+                               )}
+
+                               {/* PASSO 8 - ORÁCULO DE REVISÃO E TRANSMISSÃO */}
+                               {activeStep === 7 && (
+                                 <ReviewStep decisions={decisions} round={round} projections={projections} currentMacro={currentMacro} activeArena={activeArena} />
+                               )}
+
+                            </div>
+                         </div>
+                      </div>
+                      
+                      {/* Placeholder estrutural quando colapsado para não mexer nos inputs sob hover flutuante */}
+                      {isRightPreviewCollapsed && (
+                         <div className="hidden lg:block w-12 shrink-0 transition-all duration-300 pointer-events-none" />
+                      )}
+                      
+                      {/* COCKPIT PREVIEW: PAINEL LATERAL DIREITO COM ANÁLISE DE RISCO TÁTICO */}
+                      <RightPreviewPanel 
+                         decisions={decisions}
+                         projections={projections}
+                         activeArena={activeArena}
+                         activeTeam={activeTeam}
+                         round={round}
+                         isRightPreviewCollapsed={isRightPreviewCollapsed}
+                         setIsRightPreviewCollapsed={setIsRightPreviewCollapsed}
+                         projectedESDS={projectedESDS}
+                         isCalculatingESDS={isCalculatingESDS}
+                         handleSimulateESDS={handleSimulateESDS}
+                      />
+
+                       {/* Modal de Sucesso após Transmissão */}
+                       <AnimatePresence>
+                         {showSuccessModal && (
+                            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+                              {/* Backdrop de vidro desfocado */}
+                              <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setShowSuccessModal(false)}
+                                className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                                id="transmit_success_backdrop"
+                              />
+
+                              {/* Card do Modal */}
+                              <motion.div
+                                initial={{ scale: 0.9, y: 30, opacity: 0 }}
+                                animate={{ scale: 1, y: 0, opacity: 1 }}
+                                exit={{ scale: 0.9, y: 30, opacity: 0 }}
+                                transition={{ type: "spring", damping: 25, stiffness: 180 }}
+                                className="relative w-full max-w-md bg-slate-900 border-2 border-white/5 rounded-[2rem] shadow-3xl overflow-hidden z-[100000] p-8 text-center space-y-6"
+                                id="transmit_success_modal_card"
+                              >
+                                {/* Decoração superior verde esmeralda brilhante */}
+                                <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-600" />
+                                
+                                {/* Botão de fechar no canto superior direito */}
+                                <button 
+                                  type="button" 
+                                  onClick={() => setShowSuccessModal(false)}
+                                  className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors cursor-pointer p-1.5 hover:bg-white/5 rounded-xl border border-transparent"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+
+                                {/* Ícone de sucesso animado */}
+                                <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner shadow-emerald-500/10 animate-pulse">
+                                  <ShieldCheck size={36} className="text-emerald-500" />
+                                </div>
+                                
+                                <div className="space-y-3">
+                                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight font-sans">
+                                    DECISÕES TRANSMITIDAS COM SUCESSO!
+                                  </h3>
+                                  <p className="text-slate-300 text-xs font-semibold leading-relaxed">
+                                    VOCÊ PODE ALTERAR QUALQUER DECISÃO ANTES QUE O PRAZO DO ROUND SEJA ENCERRADO.
+                                  </p>
+                                </div>
+
+                                <div className="pt-2">
+                                  <button 
+                                    type="button"
+                                    onClick={() => setShowSuccessModal(false)}
+                                    className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg hover:shadow-emerald-500/10 active:scale-95 cursor-pointer flex items-center justify-center gap-2 border border-emerald-500/30"
+                                  >
+                                    <ShieldCheck size={14} /> Confirmar e Continuar
+                                  </button>
+                                </div>
+                              </motion.div>
+                            </div>
+                         )}
+                       </AnimatePresence>
+
+                       {/* Modal de Alerta de Discrepância / Gargalo Físico */}
+                       <AnimatePresence>
+                         {showValidationWarningModal && (
+                            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+                              {/* Backdrop de vidro desfocado */}
+                              <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setShowValidationWarningModal(false)}
+                                className="absolute inset-0 bg-slate-950/85 backdrop-blur-md"
+                                id="validation_warning_backdrop"
+                              />
+
+                              {/* Card do Modal */}
+                              <motion.div
+                                initial={{ scale: 0.9, y: 30, opacity: 0 }}
+                                animate={{ scale: 1, y: 0, opacity: 1 }}
+                                exit={{ scale: 0.9, y: 30, opacity: 0 }}
+                                transition={{ type: "spring", damping: 25, stiffness: 180 }}
+                                className="relative w-full max-w-lg bg-slate-900 border-2 border-rose-500/30 rounded-[2rem] shadow-3xl overflow-hidden z-[100000] p-8 text-left space-y-6"
+                                id="validation_warning_modal_card"
+                              >
+                                {/* Decoração superior vermelha brilhante */}
+                                <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-rose-500 via-orange-400 to-amber-500" />
+                                
+                                {/* Botão de fechar no canto superior direito */}
+                                <button 
+                                  type="button" 
+                                  onClick={() => setShowValidationWarningModal(false)}
+                                  className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors cursor-pointer p-1.5 hover:bg-white/5 rounded-xl border border-transparent"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+
+                                {/* Ícone de alerta animado */}
+                                <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-full flex items-center justify-center shadow-inner shadow-rose-500/10 animate-pulse-subtle">
+                                  <AlertTriangle size={36} className="text-rose-500" />
+                                </div>
+                                
+                                <div className="space-y-3">
+                                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight font-sans">
+                                    ⚠️ ALERTA CRÍTICO: GARGALO FÍSICO DETECTADO!
+                                  </h3>
+                                  <div className="text-slate-300 text-xs font-semibold leading-relaxed space-y-3.5">
+                                    <p>
+                                      O Monitor Fiduciário do Oracle Shield identificou que a sua equipe possui **máquinas ativas**, mas decidiu por **ZERO operários ativos** para operar a unidade produtiva neste ciclo.
+                                    </p>
+                                    <p className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 font-bold font-sans">
+                                      Por consequência, o seu faturamento de vendas será ZERO, sua produção será ZERO e a empresa arcará com prejuízos severos decorrentes das despesas fabris e taxas operacionais de ociosidade!
+                                    </p>
+                                  </div>
+                                 </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                                  <button 
+                                    type="button"
+                                    onClick={() => {
+                                      setShowValidationWarningModal(false);
+                                      setActiveStep(5); // Redireciona para o Passo do RH (Talentos)
+                                    }}
+                                    className="py-3 bg-gradient-to-r from-teal-600 to-emerald-500 hover:from-teal-500 hover:to-emerald-400 text-white font-extrabold text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 cursor-pointer flex items-center justify-center gap-2 border border-emerald-500/20"
+                                  >
+                                    <Users2 size={13} /> Corrigir no RH (Recomendado)
+                                  </button>
+                                  
+                                  <button 
+                                    type="button"
+                                    onClick={executeSaveDecisions}
+                                    className="py-3 bg-transparent hover:bg-white/5 text-rose-400 hover:text-rose-300 font-extrabold text-[10px] uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border border-rose-500/20"
+                                  >
+                                    <Play size={10} /> Transmitir Mesmo Assim
+                                  </button>
+                                </div>
+                              </motion.div>
+                            </div>
+                         )}
+                       </AnimatePresence>
+
+                  </div>
+               </motion.div>
+          </AnimatePresence>
       </div>
     </div>
   );
