@@ -143,7 +143,7 @@ export const FinanceStep: React.FC<FinanceStepProps> = ({
               Previsão Custo Unitário (CPP)
             </h5>
             <p className="text-sm text-slate-400 mb-6 font-sans">
-              Estimativa do custo médio ponderado de produção. Tolerância Oracle: ±{currentMacro?.award_values?.cost_precision || 'R$ 5,00'}.
+              Estimativa do custo médio ponderado de produção. Tolerância Oracle: ±{currentMacro?.award_values?.cost_precision || 'BRL 5,00'}.
             </p>
             <CurrencyInput
               value={decisions.estimates.forecasted_unit_cost}
@@ -158,7 +158,7 @@ export const FinanceStep: React.FC<FinanceStepProps> = ({
               Previsão Faturamento Bruto
             </h5>
             <p className="text-sm text-slate-400 mb-6 font-sans">
-              Estimativa de receita total. Tolerância Oracle: ±{currentMacro?.award_values?.revenue_precision || 'R$ 50.000'}.
+              Estimativa de receita total. Tolerância Oracle: ±{currentMacro?.award_values?.revenue_precision || 'BRL 50.000'}.
             </p>
             <CurrencyInput
               value={decisions.estimates.forecasted_revenue}
@@ -173,7 +173,7 @@ export const FinanceStep: React.FC<FinanceStepProps> = ({
               Previsão Lucro Líquido
             </h5>
             <p className="text-sm text-slate-400 mb-6">
-              Estimativa do resultado líquido final. Tolerância Oracle: ±{currentMacro?.award_values?.profit_precision || 'R$ 20.000'}.
+              Estimativa do resultado líquido final. Tolerância Oracle: ±{currentMacro?.award_values?.profit_precision || 'BRL 20.000'}.
             </p>
             <CurrencyInput
               value={decisions.estimates.forecasted_net_profit}

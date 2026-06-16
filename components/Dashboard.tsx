@@ -794,7 +794,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </aside>
 
          {/* Conteúdo central – tabs ou seções */}
-         <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-slate-950">
+         <main className={`flex-1 flex flex-col bg-slate-950 custom-scrollbar ${activeTab === 'decisoes' || activeTab === 'financeiro' ? 'overflow-hidden h-full' : 'overflow-y-auto'}`}>
             <div className="w-full flex-1 flex flex-col p-1 lg:p-2">
                {/* Sub-header: Protocolo v18.0 • ROUND 0X + Oracle Gazette botão */}
                <header className="shrink-0 flex justify-between items-center mb-1 border-b border-white/10 pb-1" id="cockpit_header">
@@ -841,9 +841,9 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     <TabButton active={activeTab === 'historico'} onClick={() => setActiveTab('historico')} label="Histórico & Projeções" icon={<BarChart3 size={10}/>} />
                   </nav>
 
-                  <div className="flex-1">
+                  <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                     {activeTab === 'decisoes' && (
-                      <div className="h-full">
+                      <div className="h-full flex flex-col overflow-hidden min-h-0">
                         {activeArena && activeArena.current_round >= (activeArena.total_rounds || 6) && (
                           <div className="py-6 overflow-y-auto max-h-[85vh] custom-scrollbar text-slate-100">
                             <TournamentSummary championship={activeArena} teams={activeArena.teams || []} />
