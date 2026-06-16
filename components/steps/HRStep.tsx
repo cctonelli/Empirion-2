@@ -206,7 +206,7 @@ export const HRStep: React.FC<HRStepProps> = ({
         
         <h4 className="text-xl lg:text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-3">
           <HeartPulse className="text-rose-500 animate-pulse" size={28} />
-          Oráculo de Clima Organizacional & Sindicato (Período Anterior)
+          Clima Organizacional & Sindicato (Round Anterior)
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8">
@@ -372,7 +372,7 @@ export const HRStep: React.FC<HRStepProps> = ({
 
             <div className="text-right shrink-0 bg-slate-900/50 border border-white/5 rounded-2xl px-6 py-4 w-full md:w-auto flex md:flex-col justify-between items-center md:items-end gap-2">
               <span className="text-xxs text-slate-400 uppercase tracking-widest font-bold">
-                Eficiência Máxima das Máquinas
+                Eficiência Máxima
               </span>
               <span className={`text-3xl font-mono font-black ${
                 payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired
@@ -437,7 +437,7 @@ export const HRStep: React.FC<HRStepProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp size={16} className="text-zinc-400" />
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Piso Inflacionado de Referência
+                  Piso-salarial Inflacionado
                 </span>
               </div>
               <p className="text-xs text-slate-400 mb-4">
@@ -460,7 +460,7 @@ export const HRStep: React.FC<HRStepProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <Coins size={16} className="text-zinc-400" />
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Projeção de Desembolso da Folha
+                  Folha de Pagamento Projetada
                 </span>
               </div>
               <p className="text-xs text-slate-400 mb-3">
@@ -508,7 +508,7 @@ export const HRStep: React.FC<HRStepProps> = ({
           <div className="flex justify-between items-start mb-8">
             <div>
               <h5 className="text-xl font-black text-emerald-400 uppercase tracking-tight mb-2 font-sans">
-                Novas Admissões
+                Admissões
               </h5>
               <p className="text-sm text-slate-400 leading-relaxed font-sans">
                 Quantidade de novos colaboradores contratados neste round. Aumenta a capacidade produtiva (operadores por máquina), mas gera custo imediato de integração e folha.
@@ -596,7 +596,7 @@ export const HRStep: React.FC<HRStepProps> = ({
           <div className="flex justify-between items-start mb-8">
             <div>
               <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2 font-sans">
-                Piso Salarial Base
+                Piso Salarial
               </h5>
               <p className="text-sm text-slate-400 leading-relaxed font-sans">
                 Salário mensal base por colaborador. Valores baixos reduzem custos fixos, mas impactam negativamente motivação, produtividade e atratividade para novas contratações.
@@ -641,10 +641,10 @@ export const HRStep: React.FC<HRStepProps> = ({
         {/* Treinamento */}
         <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-blue-500/30 hover:shadow-blue-500/10 transition-all duration-300 group">
           <h5 className="text-xl font-black text-blue-400 uppercase tracking-tight mb-4 flex items-center gap-3 font-sans">
-            <Zap size={24} /> Treinamento (% da folha)
+            <Zap size={24} /> Treinamento Equipe
           </h5>
           <p className="text-sm text-slate-400 mb-6 font-sans">
-            Percentual investido em capacitação: Aumenta produtividade por homem-hora e reduz risco de obsolescência técnica. Novas contratações ou novos modelos de máquinas exigem treinamento de equipe. 
+            Percentual da folha de pagamento investido em capacitação: Aumenta produtividade por homem-hora e reduz risco de obsolescência técnica. Novas contratações ou novos modelos de máquinas exigem treinamento de equipe. 
           </p>
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold text-slate-300 font-sans">{decisions.hr.trainingPercent}%</span>
@@ -664,7 +664,7 @@ export const HRStep: React.FC<HRStepProps> = ({
         {/* Participação nos Lucros */}
         <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-emerald-500/30 hover:shadow-emerald-500/10 transition-all duration-300 group">
           <h5 className="text-xl font-black text-emerald-400 uppercase tracking-tight mb-4 flex items-center gap-3 font-sans">
-            <Coins size={24} /> Participação nos Lucros (PPR %)
+            <Coins size={24} /> PPR (Particip. Lucros)
           </h5>
           <p className="text-sm text-slate-400 mb-6 font-sans">
             Percentual do lucro líquido distribuído como bônus. Motiva alinhamento com resultados da empresa, mas só pago se houver lucro.
@@ -687,7 +687,7 @@ export const HRStep: React.FC<HRStepProps> = ({
         {/* Prêmio Produtividade */}
         <div className="bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl hover:border-orange-500/30 hover:shadow-orange-500/10 transition-all duration-300 group">
           <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-4 flex items-center gap-3 font-sans">
-            <TrendingUp size={24} /> Prêmio por Produtividade (%)
+            <TrendingUp size={24} /> Prêmio Produtividade
           </h5>
           <p className="text-sm text-slate-400 mb-6 font-sans">
             Bônus imediato baseado no atingimento de metas de produção. Aumenta motivação no curto prazo e produtividade efetiva.
