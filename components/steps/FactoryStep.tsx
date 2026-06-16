@@ -142,7 +142,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
                       disabled={isReadOnly || isBlocked}
                       onClick={() => {
                         updateDecision('production.shifts', num);
-                        if (num > 1) {
+                        if (num === 3) {
                           updateDecision('production.extraProductionPercent', 0);
                         }
                       }}
@@ -175,7 +175,7 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
         </div>
 
         {/* 3. Turno Extra / Horas Adicionais */}
-        <div className={`bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl transition-all duration-300 group ${selectedShifts > 1 ? 'opacity-50 hover:border-white/10' : 'hover:border-orange-500/30 hover:shadow-orange-500/10'}`}>
+        <div className={`bg-slate-900/70 backdrop-blur-sm p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl transition-all duration-300 group ${selectedShifts === 3 ? 'opacity-50 hover:border-white/10' : 'hover:border-orange-500/30 hover:shadow-orange-500/10'}`}>
           <div className="flex justify-between items-start mb-8">
             <div>
               <h5 className="text-xl font-black text-orange-400 uppercase tracking-tight mb-2 font-sans">
@@ -197,13 +197,13 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
                 <HelpCircle size={16} className="text-slate-500 group-hover:text-orange-400 transition-colors cursor-help" />
               </label>
               <span className="text-2xl lg:text-3xl font-mono font-bold text-orange-400">
-                {selectedShifts > 1 ? 0 : (decisions.production.extraProductionPercent ?? 0)}%
+                {selectedShifts === 3 ? 0 : (decisions.production.extraProductionPercent ?? 0)}%
               </span>
             </div>
 
-            {selectedShifts > 1 ? (
+            {selectedShifts === 3 ? (
               <div className="p-4 bg-slate-950 border border-white/5 rounded-xl text-xs font-medium text-slate-400 italic font-sans animate-in fade-in duration-300">
-                Indisponível: Horas extras só podem ser ativadas operando em Turno Único (1T).
+                Indisponível: Horas extras só podem ser ativadas operando em Turno Único (1T) ou Dobrado (2T).
               </div>
             ) : (
               <input
@@ -220,9 +220,9 @@ export const FactoryStep: React.FC<FactoryStepProps> = ({
 
             <div className="text-xs text-orange-300 space-y-1.5 pt-2 border-t border-white/5 font-sans">
               <div className="text-center font-medium italic">
-                {selectedShifts > 1 
-                  ? "Desativado em regime de múltiplos turnos (multiturnos)."
-                  : "Custo adicional estimado: +50% sobre custo-hora da MOD das horas extras (Máximo 25%)"
+                {selectedShifts === 3 
+                  ? "Desativado em regime de Turno Contínuo (3T)."
+                  : "Custo adicional estimado: +50% sobre custo-hora da MOD das horas extras (Máximo 25% por turno)"
                 }
               </div>
             </div>

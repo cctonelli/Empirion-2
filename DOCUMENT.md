@@ -2,9 +2,30 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.161 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.162 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Flexibilização Contábil de Horas-Extras nos Regimes de Múltiplos Turnos (1T/2T) e Restrição Estrita do Turno Contínuo (3T/CPC 16) - v2026.162
+
+**Data:** 16 de Junho de 2026 às 14:20 UTC  
+**Motivo:** Adequação aos pronunciamentos técnicos do CPC e IFRS sobre o gerenciamento de capacidade produtiva ociosa ou extraordinária. Anteriormente, o simulador restringia o uso do slider de horas-extras (`extraProductionPercent`) estritamente ao regime de Turno Único (1T), zerando-o autonomamente em qualquer cenário de múltiplos turnos. No entanto, em análises operacionais industriais mais sofisticadas do mercado, é cabível praticar horas extraordinárias em até 25% por turno tanto sob Turno Único (1T) quanto sob o regime de Turno Dobrado (2T). Já para o Turno Contínuo (3T - Regime 24h), a prática de horas extras permanece proibitiva/zerada devido ao limite físico de ocupação da infraestrutura operacional. Esta atualização reintroduz os sliders de horas extras quando operando em 1T ou 2T e os desativa no 3T, enquanto as equipes administrativo-financeira e comercial (vendas) permanecem sem impacto de hora-extra por design fiduciário.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Interface de Usuário Flexibilizada (`FactoryStep.tsx`)**:
+  - Reversão do travamento de horas extras no regime de 2 turnos. O controle e o slider de horas extras continuam ativos e funcionais para 1T e 2T.
+  - Reset e renderização de aviso restritivo limitados estritamente quando `selectedShifts === 3` for selecionado pelo estudante.
+- **Auditoria Matemática Consistente nos Motores de Cálculo (`simulation.ts` e `simulation-core.ts`)**:
+  - Ajuste na verificação interna: `selectedShifts === 3 ? 0 : Math.min(25, sanitize(decision.production?.extraProductionPercent, 0))`.
+  - Isenção explícita de sobretaxas operacionais para as equipes administrativas (`payrollAdm`) e de vendas (`payrollSales`), as quais não sofrem ou pontuam custos extraordinários de horas-extras derivados do PCP da fábrica.
+
+**Impactos:**
+- **Profundidade Operacional**: Estudantes agora possuem maior autonomia tática para equalizar deficits de fabricação acionando o amortecedor de horas extras em fábricas operando em dois turnos antes de recorrer à complexidade do terceiro turno contínuo.
+- **Precisão Fiduciária**: Simetria impecável entre as estimativas industriais exibidas no dashboard e o processador de turnovers de fim de rodada.
+
+**Status atual:** v2026.162 - Em Produção / Compilado com Sucesso.
 
 ---
 

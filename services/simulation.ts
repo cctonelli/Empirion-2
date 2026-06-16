@@ -522,7 +522,7 @@ export const calculateProjections = (
   motivationFactor = Math.max(0.60, Math.min(1.30, motivationFactor));
 
   // 3. Fatigue Factor (0.75 ~ 1.00)
-  const extraProductionPercent = selectedShifts > 1 ? 0 : Math.min(25, sanitize(decision.production?.extraProductionPercent, 0));
+  const extraProductionPercent = selectedShifts === 3 ? 0 : Math.min(25, sanitize(decision.production?.extraProductionPercent, 0));
   let fatigueFactor = 1.0;
   if (extraProductionPercent > 0) {
     fatigueFactor -= (extraProductionPercent / 100) * 0.5; // Mutação severa de hora extra prolongada
