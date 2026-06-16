@@ -794,8 +794,8 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          </aside>
 
          {/* Conteúdo central – tabs ou seções */}
-         <main className="flex-1 flex flex-col overflow-hidden bg-slate-950 min-h-0 relative">
-            <div className="w-full flex-1 flex flex-col p-1 lg:p-2 min-h-0">
+         <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-slate-950">
+            <div className="w-full flex-1 flex flex-col p-1 lg:p-2">
                {/* Sub-header: Protocolo v18.0 • ROUND 0X + Oracle Gazette botão */}
                <header className="shrink-0 flex justify-between items-center mb-1 border-b border-white/10 pb-1" id="cockpit_header">
                   <div className="space-y-0.5" id="cockpit_left_info">
@@ -834,16 +834,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                </header>
 
                {/* Tabs principais */}
-               <div className="flex-1 flex flex-col min-h-0">
+               <div className="flex-1 flex flex-col">
                   <nav className="shrink-0 flex gap-1 border-b border-white/5 mb-1.5">
                     <TabButton active={activeTab === 'decisoes'} onClick={() => setActiveTab('decisoes')} label="Decisões do Round" icon={<PenTool size={10}/>} />
                     <TabButton active={activeTab === 'financeiro'} onClick={() => setActiveTab('financeiro')} label="Matriz Financeira" icon={<TableIcon size={10}/>} />
                     <TabButton active={activeTab === 'historico'} onClick={() => setActiveTab('historico')} label="Histórico & Projeções" icon={<BarChart3 size={10}/>} />
                   </nav>
 
-                  <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
+                  <div className="flex-1">
                     {activeTab === 'decisoes' && (
-                      <div className="h-full flex flex-col min-h-0 overflow-hidden">
+                      <div className="h-full">
                         {activeArena && activeArena.current_round >= (activeArena.total_rounds || 6) && (
                           <div className="py-6 overflow-y-auto max-h-[85vh] custom-scrollbar text-slate-100">
                             <TournamentSummary championship={activeArena} teams={activeArena.teams || []} />
@@ -913,7 +913,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     )}
 
                     {activeTab === 'historico' && (
-                      <div id="historico-tab-content" className="space-y-6 pb-6 flex-1 overflow-y-auto custom-scrollbar pr-1">
+                      <div id="historico-tab-content" className="space-y-6 pb-6">
                         {currentKpis?.liquidity_current !== undefined && currentKpis.liquidity_current < 1.0 && (
                           <div id="fiduciary-liquidity-alert" className="p-5 bg-rose-950/40 border border-rose-500/30 rounded-[2.5rem] shadow-xl relative overflow-hidden backdrop-blur-3xl animate-in fade-in slide-in-from-top duration-500 flex flex-col md:flex-row items-center gap-5 justify-between">
                             <div className="flex gap-4">
