@@ -725,7 +725,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   {/* Preço */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
-                      Preço Unitário (Round {round})
+                      Preço Unitário - Round: {round}
                     </label>
                     <CurrencyInput
                       value={reg.price}
@@ -737,7 +737,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   {/* Prazo */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
-                      Prazo de Recebimento (Round {round})
+                      Prazo de Recebimento
                     </label>
                     <select
                       disabled={isReadOnly}
@@ -759,7 +759,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   {/* Marketing */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide font-sans">
-                      Marketing (0–9) (Round {round})
+                      Marketing (0–9)
                     </label>
                     <input
                       type="number"
@@ -792,7 +792,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                 </div>
 
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Preço Médio:</span>
+                  <span>Average Price:</span>
                   <span className="text-amber-400 font-bold">
                     {currency}{" "}
                     {stats.avgPriceRegion.toLocaleString("pt-BR", {
@@ -802,13 +802,13 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Size (Reg.):</span>
+                  <span>Market Size:</span>
                   <span className="text-slate-300 font-semibold">
                     {stats.totalRegionDemand.toLocaleString("pt-BR")} un
                   </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Demand (Reg):</span>
+                  <span>Market Demand:</span>
                   <span className="text-slate-300 font-semibold">
                     {demandWeight.toLocaleString("pt-BR", {
                       minimumFractionDigits: 1,
@@ -818,19 +818,19 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Sales Volume (Reg.):</span>
+                  <span>Sales Volume:</span>
                   <span className="text-slate-300 font-bold">
                     {stats.activeTeamUnitsSold.toLocaleString("pt-BR")} un
                   </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Volume (Reg.):</span>
+                  <span>Market Volume:</span>
                   <span className="text-purple-400 font-semibold">
                     {stats.totalRegionUnitsSold.toLocaleString("pt-BR")} un
                   </span>
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                  <span>Market Share (Reg.):</span>
+                  <span>Market Share:</span>
                   <span className="text-emerald-400 font-bold">
                     {stats.relativeSalesShare.toFixed(1)}%
                   </span>
@@ -841,7 +841,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                     <span>Parâmetros Esperados Round {round}:</span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                    <span>Custo Logística:</span>
+                    <span>Logística ($):</span>
                     <span className="text-slate-400 font-semibold">
                       {currency}{" "}
                       {adjustedDistCost.toLocaleString("pt-BR", {
@@ -852,7 +852,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                     </span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                    <span>Custo Camp. Mkt:</span>
+                    <span>Camp. Mkt ($):</span>
                     <span className="text-slate-400 font-semibold">
                       {currency}{" "}
                       {adjustedMktCost.toLocaleString("pt-BR", {
@@ -863,7 +863,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                     </span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wide font-mono leading-none">
-                    <span>Total Mkt Projetado:</span>
+                    <span>Mkt Proj. ($):</span>
                     <span className="text-orange-400 font-black">
                       {currency}{" "}
                       {totalMktCost.toLocaleString("pt-BR", {
