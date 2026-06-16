@@ -1106,7 +1106,7 @@ export function processRoundWithValidation(
                       (Math.max(0, currentMPBStock) * indicators.prices.storage_mp * getAdjust('storage_cost_adjust', sanitize(indicators.storage_cost_adjust, 0)));
 
   // CIF COMPLETO contendo todos os elementos de rateio e estocagem física
-  const totalCIF = totalMOD + extraProductionCost + periodDepreciation + maintenance + custoIndenizacao + pprProporcional + trainingCost + storageCost + valCif;
+  const totalCIF = totalMOD + extraProductionCost + periodDepreciation + maintenance + custoIndenizacao + trainingCost + storageCost + valCif;
   const totalCPP = totalMPConsumida + totalCIF;
   const unitCPP = unitsProduced > 0 ? (totalCPP / unitsProduced) : 0;
 

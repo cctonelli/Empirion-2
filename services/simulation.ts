@@ -874,7 +874,7 @@ export const calculateProjections = (
 
   // --- 4.1 COMPOSIÇÃO DE CUSTO MOD E CIF (SISTEMÁTICA REAL DE ABSORÇÃO) ---
   // MOD COMPLETA: Salário-Base + Encargos Sociais + Indenização (Rescisão) + Hora-Extra + Prêmio Produtividade
-  const finalMOD = totalMOD + extraProductionCost + (custoIndenizacao + pprProporcional);
+  const finalMOD = totalMOD + extraProductionCost + custoIndenizacao;
 
   // CIF COMPLETO: Despesas de Treinamento + Manutenção + Estocagem de MP/PA + Depreciação de Prédios + Depreciação de Máquinas + Rateio Aluguel
   const finalCIF = periodDepreciation + maintenance + trainingCost + storageCost + valCif;

@@ -2,9 +2,54 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.158 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.160 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Saneamento Fiduciário do Cálculo de Rescisão e Resolução do Bug Crítico de Disparidade de Equação Contábil (MOD/PPR) - v2026.160
+
+**Data:** 16 de Junho de 2026 às 13:00 UTC  
+**Motivo:** Identificação de um bug lógico estrutural grave no motor de contabilidade industrial fiduaciária (`simulation.ts` e `simulation-core.ts`) evidenciado no Round 4 da Equipe 3. Ao demitir operadores e recalcular a rescisão, o simulador calculava a fração de PPR das contas provisionadas no passivo do round anterior referente aos demitidos (`pprProporcional`). Embora o passivo anterior fosse propriamente liquidado integralmente nas saídas financeiras de caixa (`totalPprPayment`), o montante de `pprProporcional` estava sendo indevidamente reinjetado como despesa de custo industrial primário do período atual no `finalMOD` e `totalCIF`. Essa dupla contabilização reduzia o lucro ou ativava estoques do Balanço de forma irregular, culminando em uma disparidade exata entre Ativo e Passivo+PL de **26.913,04 BRL** (representando a fração exata do PPR dos 250 demitidos de um passivo de 110.881,72 BRL da rodada anterior).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Remoção de Dupla Contabilização de PPR Proporcional**:
+  - Em `services/simulation.ts`, removeu-se a somatória de `pprProporcional` na composição do custo de mão de obra direta do período (`finalMOD = totalMOD + extraProductionCost + custoIndenizacao;`). O PPR é uma obrigação provisionada no período fiduciário anterior; a sua liquidação proporcional aos demitidos é meramente um fato permutativo contábil de eliminação de passivo pelo caixa, não podendo reintegrar o custo de produção do período ou CPV.
+  - Em `services/simulation-core.ts`, normalizou-se o cálculo do custo indireto de fabricação (`totalCIF`), subtraindo a dependência imprópria de `pprProporcional` da fórmula consolidada para manter a consistência com o validador rigoroso do motor.
+- **Auditoria de Integridade Contábil**:
+  - Ambas as correções resolvem de forma limpa, elegante e 100% matemática o crash de balanceamento fiduciário do Simulador de Turnovers, blindando o sistema contra disparidades de float decorrentes de transições complexas de capacidade de força de trabalho.
+
+**Impactos:**
+- **Crash de Simulação Totalmente Eliminado**: Equipes podem comprar/vender máquinas, demitir, contratar e mudar de turnos dinamicamente sem que ocorra qualquer crash de balanceamento no motor.
+- **Sincronismo com CPC e IFRS**: Respeito intocado ao regime de competência de despesas e provisões contábeis reguladas pela equipe multidisciplinar.
+
+**Status atual:** v2026.160 - Em Produção / Compilado com Sucesso.
+
+---
+
+## Decisão Arquitetural: Implementação de Alerta e Modal de Validação de Equilíbrio de Força de Trabalho (MOD) vs. Expansão Industrial Multiturnos (P0) - v2026.159
+
+**Data:** 16 de Junho de 2026 às 12:35 UTC  
+**Motivo:** Integração de uma sentinela reativa de consistência produtiva na jornada de Recursos Humanos (`HRStep.tsx`). Quando equipes de alunos planejam a expansão de CAPEX industrial de curto prazo (adquirindo novas máquinas Alfa, Beta ou Gama) e decidem por regimes de multiturnos (2 ou 3 turnos na produção), mas não ajustam proporcionalmente a contratação de mão de obra direta (MOD), ocorre um sério gargalo operacional e ociosidade forçada. O novo modal surge ao abrir o passo do RH para alertar e educar os participantes contábil e gerencialmente, bloqueando a desatenção e desbloqueando a integridade das decisões industriais do período.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Lógica Reativa de Mismatch Operacional**:
+  - Mapeamento dinâmico de novos maquinários comprados na rodada: `(boughtAlpha + boughtBeta + boughtGamma) > 0`.
+  - Sensor de multiturnos: `selectedShifts > 1` (turnos 2 ou 3).
+  - Verificação de deficit de equipe: `payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired`.
+  - Sentinela Ativa: Condição integrada `isProblemActive = hasBoughtMachines && isMultiShift && hasModDeficit` que governa exibição dinâmica de forma imediata à digitação ou arraste dos sliders.
+- **Efeito de Resete e Persistência de Descarte**:
+  - Implementação de um efeito `useEffect` reativo que redefine o estado `dismissedMismatch` para `false` sempre que o deficit for equalizado pela equipe. Dessa forma, se a equipe voltar a desbalancear as decisões operacionais, o modal volta a reter e alertar os usuários, garantindo segurança robusta de simulação.
+- **UI/UX de Alta Precisão (Glassmorphism & Glow)**:
+  - Estruturação do modal sob `<AnimatePresence>` e `<motion.div>` importados de `framer-motion`.
+  - Design sofisticado em Dark Mode com bordas em `red-500/40`, cabeçalho decorativo com gradiente dinâmico de perigo, ícone pulsante `AlertCircle` e descrição clara e pedagógica orientando os caminhos da solução econômica.
+
+**Impactos:**
+- **Pedagogia Fortalecida (UX/DX)**: O simulador orienta de forma ativa e transparente os participantes em suas decisões de capacidade industrial, reduzindo erros catastróficos silenciosos por ociosidade física.
+- **Sincronismo Fiduciário**: Alinhamento robusto com os preceitos de governança ditados pelo PMP e Contador Sênior.
+
+**Status atual:** v2026.159 - Em Produção / Sincronizado e Compilado perfeitamente com sucesso.
 
 ---
 

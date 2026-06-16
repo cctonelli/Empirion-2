@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users2, UserPlus, UserMinus, DollarSign, Coins, TrendingUp, HeartPulse, HelpCircle, Zap, ShieldAlert, CheckCircle2, AlertTriangle, Smile, Calculator, Loader2, Users } from 'lucide-react';
+import { Users2, UserPlus, UserMinus, DollarSign, Coins, TrendingUp, HeartPulse, HelpCircle, Zap, ShieldAlert, CheckCircle2, AlertTriangle, Smile, Calculator, Loader2, Users, AlertCircle, X } from 'lucide-react';
 import { WizardStepHeader } from './shared';
 import { DecisionData, Championship, Team } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { supabase } from '../../services/supabase';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../../constants';
 import { getCumulativeAdjust } from '../../services/simulation';
+import { motion as _motion, AnimatePresence } from 'framer-motion';
+
+const motion = _motion as any;
 
 interface HRStepProps {
   decisions: DecisionData;
@@ -95,7 +98,10 @@ export const HRStep: React.FC<HRStepProps> = ({
     fetchSectorAvg();
   }, [activeArena, currentRound]);
 
-  // 4. Projeções de Folha de Pagamento em Tempo Real
+  // 4. Verificação de Mismatch Contábil de Máquina vs Operários em Multiturnos
+  const [dismissedMismatch, setDismissedMismatch] = useState(false);
+
+  // 5. Projeções de Folha de Pagamento em Tempo Real
   const payrollProjection = useMemo(() => {
     const currentSalary = parseFloat(decisions.hr?.salary) || 2500;
     const socialChargesRate = (currentMacro?.social_charges !== undefined ? currentMacro.social_charges : 35) / 100;
@@ -163,6 +169,27 @@ export const HRStep: React.FC<HRStepProps> = ({
       socialChargesRate
     };
   }, [decisions, kpis, currentMacro]);
+
+  // Cálculo de Mismatch Contábil e de Capacidade Operacional
+  const boughtAlpha = Number(decisions.machinery?.buy?.alpha ?? decisions.machinery?.buy?.alfa ?? 0);
+  const boughtBeta = Number(decisions.machinery?.buy?.beta ?? 0);
+  const boughtGamma = Number(decisions.machinery?.buy?.gamma ?? decisions.machinery?.buy?.gama ?? 0);
+  const hasBoughtMachines = (boughtAlpha + boughtBeta + boughtGamma) > 0;
+
+  const selectedShifts = parseInt(decisions.production?.shifts) || 1;
+  const isMultiShift = selectedShifts > 1;
+
+  const hasModDeficit = payrollProjection.operatorsAvailable < payrollProjection.operatorsRequired;
+
+  // Problema ativo: comprou máquina + multiturnos + falta pessoal para botar as máquinas para rodar
+  const isProblemActive = hasBoughtMachines && isMultiShift && hasModDeficit;
+
+  // Se o problema for corrigido pela equipe, o descarte do modal é reiniciado
+  useEffect(() => {
+    if (!isProblemActive) {
+      setDismissedMismatch(false);
+    }
+  }, [isProblemActive]);
 
   // Extração amigável dos novos KPIs de Clima e Greve (v19.5 Sapphire)
   const currentMotivationIndex = kpis.motivation_index !== undefined ? kpis.motivation_index : 1.00;
@@ -720,6 +747,92 @@ export const HRStep: React.FC<HRStepProps> = ({
           Folha alta + incentivos fortes = equipe motivada e produtiva, mas margem pressionada. Demissões excessivas ou salários baixos podem gerar eventos negativos (greves, baixa qualidade). O ideal é equilíbrio entre custo e motivação para sustentabilidade de longo prazo.
         </p>
       </div>
+
+      {/* MODAL DE ADVERTÊNCIA SINDICAL E OPERACIONAL (Mismatch Capacidade vs Turnos) */}
+      <AnimatePresence>
+        {isProblemActive && !dismissedMismatch && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            {/* Backdrop Blur */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDismissedMismatch(true)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
+
+            {/* Modal Box */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-xl bg-slate-900 border-2 border-red-500/40 rounded-3xl p-6 lg:p-8 shadow-2xl shadow-red-950/20 text-left overflow-hidden group"
+            >
+              {/* Decorative Warning aura */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-600 via-orange-500 to-red-600" />
+
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-2xl shrink-0 mt-1">
+                  <AlertCircle size={28} className="animate-pulse" />
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight font-sans">
+                      Divergência Crítica de Operação
+                    </h3>
+                    <button
+                      onClick={() => setDismissedMismatch(true)}
+                      className="p-1 px-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                      title="Fechar Alerta"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <p className="text-sm text-slate-300 leading-relaxed font-sans">
+                    Prezada Equipe, identificamos que a sua <span className="text-red-400 font-bold">aquisição planejada de novas máquinas</span> não possui a equipe de tripulação (MOD) correspondente contratada para suprir o aumento de capacidade produtiva.
+                  </p>
+
+                  <p className="text-sm text-slate-300 leading-relaxed font-sans">
+                    Como a empresa optou por operar em <span className="text-orange-400 font-bold">regime de multiturnos ({selectedShifts} turnos)</span>, o sindicato e a engenharia industrial sinalizaram que <span className="text-red-400 font-bold">não há operários suficientes</span> no seu quadro atual para cobrir o turno expandido de trabalho nas novas máquinas. Isso resultará em ociosidade fabril forçada e paralisia industrial imediata no próximo período.
+                  </p>
+
+                  <div className="bg-slate-950/60 border border-white/5 rounded-2xl p-4 space-y-2 font-mono text-xs text-slate-400">
+                    <div className="flex justify-between">
+                      <span>Equipe Contratada:</span>
+                      <span className="text-red-400 font-black">{payrollProjection.operatorsAvailable} un</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Mínimo Exigido pelas Máquinas:</span>
+                      <span className="text-white font-bold">{payrollProjection.operatorsRequired} un</span>
+                    </div>
+                    <div className="flex justify-between border-t border-white/5 pt-2">
+                      <span>Defasagem de Tripulação:</span>
+                      <span className="text-red-400 font-bold">-{payrollProjection.operatorsRequired - payrollProjection.operatorsAvailable} operários</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 text-xs text-amber-300 font-sans leading-relaxed flex flex-col gap-1.5">
+                    <strong className="font-semibold uppercase text-amber-400">💡 Para solucionar este impasse contábil/operacional:</strong>
+                    <span>1. Aumente o número de <strong className="font-semibold text-white">Admissões</strong> de operários de MOD neste painel do RH;</span>
+                    <span>2. Ou retorne o regime de operação para <strong className="font-semibold text-white font-sans">turno único</strong> (reduzindo turnos na tela de Produção);</span>
+                    <span>3. Ou venda ou diminua a aquisição de novas máquinas neste período.</span>
+                  </div>
+
+                  <div className="pt-4 flex justify-end">
+                    <button
+                      onClick={() => setDismissedMismatch(true)}
+                      className="px-6 py-3 bg-red-600 hover:bg-red-500 active:bg-red-750 text-white font-semibold font-sans rounded-xl text-sm transition-all shadow-md shadow-red-900/10 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      Ajustar Decisões de Trabalho
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Espaçamento final */}
       <div className="h-24 lg:h-32" />
