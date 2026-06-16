@@ -1186,7 +1186,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                           <div className="space-y-1.5 font-mono">
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
                               <span className="text-[10px] uppercase font-sans">
-                                Fat. Bruto:
+                                Receita Bruta:
                               </span>
                               <span className="text-slate-300 font-bold">
                                 {currency}{" "}
@@ -1198,7 +1198,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
                             </div>
                             <div className="flex justify-between items-center text-slate-500 py-0.5 border-b border-white/5">
                               <span className="text-[10px] uppercase font-sans">
-                                Fat. Líquido:
+                                Receita Líq:
                               </span>
                               <span className="text-slate-300 font-bold">
                                 {currency}{" "}

@@ -115,49 +115,6 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
 }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-  const tableContainerRef = React.useRef<HTMLDivElement>(null);
-
-  // Habilitar rolagem de teclado (Page Down, Page Up, setas de navegação) para resolver problemas de acessibilidade e usabilidade tática
-  React.useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Ignorar com segurança se focado em elementos de entrada do formulário editáveis
-      const activeEl = document.activeElement;
-      if (
-        activeEl &&
-        (activeEl.tagName === 'INPUT' ||
-         activeEl.tagName === 'SELECT' ||
-         activeEl.tagName === 'TEXTAREA' ||
-         activeEl.hasAttribute('contenteditable'))
-      ) {
-        return;
-      }
-
-      if (!tableContainerRef.current) return;
-
-      const container = tableContainerRef.current;
-      const scrollAmount = 80; // pixels para deslocamento via setas
-      const pageAmount = container.clientHeight * 0.8; // 80% do viewport local para Page Up/Down
-
-      if (e.key === 'ArrowDown') {
-        container.scrollTop += scrollAmount;
-        e.preventDefault();
-      } else if (e.key === 'ArrowUp') {
-        container.scrollTop -= scrollAmount;
-        e.preventDefault();
-      } else if (e.key === 'PageDown') {
-        container.scrollTop += pageAmount;
-        e.preventDefault();
-      } else if (e.key === 'PageUp') {
-        container.scrollTop -= pageAmount;
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleGlobalKeyDown);
-    };
-  }, [type]);
 
   const handleExportCSV = () => {
     const tableData = mapFinancialToTable(
@@ -360,7 +317,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
         }
       }
 
-      if (plR00 <= 0) plR00 = 12000000; // Fallback regulamentar Greenfield de BRL 12M
+      if (plR00 <= 0) plR00 = 12000000; // Fallback regulamentar Greenfield de R$ 12M
       flows.push(-plR00);
 
       // Fluxos operacionais de retorno subsequentes livres (fco_livre) até p.round
@@ -1464,7 +1421,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
         </div>
       </header>
 
-      <div ref={tableContainerRef} tabIndex={0} className="flex-1 overflow-auto custom-scrollbar relative outline-none focus:ring-1 focus:ring-orange-500/10">
+      <div className="flex-1 overflow-auto custom-scrollbar relative">
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md shadow-2xl">
             <tr className="text-[7px] font-black uppercase text-slate-500 tracking-[0.1em]">

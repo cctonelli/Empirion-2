@@ -814,111 +814,12 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
             });
         });
 
-        // --- 2.5 SIMULAÇÃO DE ESTOQUE E COBERTURA DE DEMANDA (SPILLOVER CONCORRENCIAL) ---
-        // Rodamos uma simulação rápida de primeiro passo para mapear rupturas de estoque por equipe e por região
-        const teamQtyAvailable: Record<string, number> = {};
-        const unfulfilledDemandPerRegion: Record<string, number> = {};
-        const teamRegionVendasR1: Record<string, Record<string, number>> = {};
-        const teamRegionRupturaR1: Record<string, Record<string, number>> = {};
-        
-        regionConfigs.forEach((r: any) => {
-            unfulfilledDemandPerRegion[r.id.toString()] = 0;
-        });
-
-        for (const team of (teams || [])) {
-            const finalDecision = marketDecisions[team.id];
-            teamRegionVendasR1[team.id] = {};
-            teamRegionRupturaR1[team.id] = {};
-            
-            if (finalDecision) {
-                const teamCompDemands = { ...(competitiveDemandsPerTeamReg[team.id] || {}) };
-                const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
-                const ecoWithCurrency = { ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
-                
-                const prelimRes = calculateProjections(
-                    finalDecision, 
-                    champ.branch, 
-                    ecoWithCurrency, 
-                    competitiveIndicators, 
-                    team, 
-                    [], 
-                    nextRound, 
-                    champ.round_rules,
-                    teamCompDemands
-                );
-                
-                // Mapear vendas e rupturas físicas reais de primeiro passo por região
-                regionConfigs.forEach((r: any) => {
-                    const regIdStr = r.id.toString();
-                    const demand = teamCompDemands[regIdStr] || 0;
-                    const sold = prelimRes.kpis?.regional_units_sold?.[regIdStr] ?? 0;
-                    const rupture = Math.max(0, demand - sold);
-                    
-                    teamRegionVendasR1[team.id][regIdStr] = sold;
-                    teamRegionRupturaR1[team.id][regIdStr] = rupture;
-                    
-                    // Somar a demanda não atendida pelo concorrente que ficará órfã na região
-                    unfulfilledDemandPerRegion[regIdStr] += rupture;
-                });
-                
-                // Estoque físico remanescente após suprir a demanda inicial captada de R1
-                const totalStockAndProduction = (prelimRes.kpis?.stock_quantities?.finished_goods ?? 0) + (prelimRes.kpis?.last_units_sold ?? 0);
-                const totalSoldR1 = Object.values(teamRegionVendasR1[team.id]).reduce((sum, v) => sum + v, 0);
-                teamQtyAvailable[team.id] = Math.max(0, totalStockAndProduction - totalSoldR1);
-            } else {
-                teamQtyAvailable[team.id] = 0;
-                regionConfigs.forEach((r: any) => {
-                    teamRegionVendasR1[team.id][r.id.toString()] = 0;
-                    teamRegionRupturaR1[team.id][r.id.toString()] = 0;
-                });
-            }
-        }
-
-        // --- 2.6 REDISTRIBUIÇÃO ATIVA DE DEMANDA ÓRFÃ (SPILLOVER SEGUNDA RODADA) ---
-        // Equipes que de fato investiram em fábrica, operários e estoque herdam essa disputa baseado em seus scores
-        const finalDemandsWithSpillover: Record<string, Record<string, number>> = {};
-        for (const team of (teams || [])) {
-            finalDemandsWithSpillover[team.id] = { ...(competitiveDemandsPerTeamReg[team.id] || {}) };
-        }
-
-        regionConfigs.forEach((r: any) => {
-            const regIdStr = r.id.toString();
-            const totalOrphanDemand = unfulfilledDemandPerRegion[regIdStr] || 0;
-            
-            if (totalOrphanDemand > 0) {
-                // Quais concorrentes têm estoque livre sobrando para absorver este spillover na região?
-                const eligibleTeams = (teams || []).filter(t => (teamQtyAvailable[t.id] || 0) > 0);
-                
-                if (eligibleTeams.length > 0) {
-                    const totalEligibleScore = eligibleTeams.reduce((sum, t) => sum + (teamRegionScores[t.id]?.[regIdStr] ?? 0), 0);
-                    
-                    if (totalEligibleScore > 0) {
-                        eligibleTeams.forEach((t) => {
-                            const scoreTeam = teamRegionScores[t.id]?.[regIdStr] ?? 0;
-                            const shareOfSpillover = scoreTeam / totalEligibleScore;
-                            
-                            // Demanda spillover capturada proporcional ao score concorrencial
-                            let teamSpilloverAlloc = Math.floor(totalOrphanDemand * shareOfSpillover);
-                            const avail = teamQtyAvailable[t.id] || 0;
-                            teamSpilloverAlloc = Math.min(teamSpilloverAlloc, avail);
-                            
-                            // Adicionar à demanda qualificada final da equipe
-                            finalDemandsWithSpillover[t.id][regIdStr] = (finalDemandsWithSpillover[t.id][regIdStr] || 0) + teamSpilloverAlloc;
-                            
-                            // Deduzir da gordura e estoque remanescente físico
-                            teamQtyAvailable[t.id] = Math.max(0, avail - teamSpilloverAlloc);
-                        });
-                    }
-                }
-            }
-        });
-
-        // 3. Processar cada equipe com o contexto competitivo real (Já recalculado com Spillover)
+        // 3. Processar cada equipe com o contexto competitivo real
         for (const team of (teams || [])) {
             const finalDecision = marketDecisions[team.id];
 
             if (finalDecision) {
-                const teamCompDemands = finalDemandsWithSpillover[team.id] || {};
+                const teamCompDemands = competitiveDemandsPerTeamReg[team.id] || {};
                 const competitiveIndicators = { ...indicatorsForRound, avg_selling_price: avgPrice };
                 const ecoWithCurrency = { ...(champ.config || {}), currency: champ.currency } as EcosystemConfig;
                 const res = calculateProjections(
@@ -946,22 +847,18 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
                   res.kpis.esds = esdsResult;
                 }
 
-                // O Market Share conceitual nominal inicial da captação
                 const finalTeamMS = teamOverallMarketShares[team.id] || 0;
-                res.kpis.market_share_conceptual = finalTeamMS;
+                res.kpis.market_share = finalTeamMS;
+                res.marketShare = finalTeamMS;
                 
-                // Registramos temporariamente o volume vendido como rawScore para herdar o rateio final real
-                const unitsRealSold = res.kpis?.last_units_sold || 0;
-                teamResults.push({ team, res, rawScore: unitsRealSold });
+                teamResults.push({ team, res, rawScore: finalTeamMS });
             }
         }
 
         // 4. Normalizar Market Share para somar 100% (com o teto/salvaguarda de arredondamento)
         const totalScore = teamResults.reduce((acc, r) => acc + r.rawScore, 0);
         for (const item of teamResults) {
-            const competitiveShare = totalScore > 0 
-                ? (item.rawScore / totalScore) * 100 
-                : (item.res.kpis.market_share_conceptual || (100 / teams!.length));
+            const competitiveShare = totalScore > 0 ? (item.rawScore / totalScore) * 100 : (100 / teams!.length);
             item.res.kpis.market_share = competitiveShare;
             item.res.marketShare = competitiveShare;
 

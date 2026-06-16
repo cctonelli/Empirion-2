@@ -88,7 +88,7 @@ const getKpiValue = (p: any, kpiId: string, periods?: any[]): any => {
       }
     }
     
-    if (plR00 <= 0) plR00 = 12000000; // Fallback regulamentar Greenfield de BRL 12M
+    if (plR00 <= 0) plR00 = 12000000; // Fallback regulamentar Greenfield de R$ 12M
     flows.push(-plR00);
     
     // Fluxos operacionais livres subsequentes (fco_livre) até p.round

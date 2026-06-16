@@ -468,7 +468,7 @@ export const HRStep: React.FC<HRStepProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 mb-4">
-                Salário base original (BRL 2.500,00) corrigido pela inflação acumulada do torneio (+{currentMacro?.inflation_rate || 0}% neste round).
+                Salário base original (R$ 2.500,00) corrigido pela inflação acumulada do torneio (+{currentMacro?.inflation_rate || 0}% neste round).
               </p>
             </div>
             <div className="my-2 select-none">
@@ -657,7 +657,7 @@ export const HRStep: React.FC<HRStepProps> = ({
             />
 
             <p className="text-xs text-orange-300 italic font-sans">
-              Mínimo regional sugerido: BRL {currentMacro?.min_salary || 2500}
+              Mínimo regional sugerido: R$ {currentMacro?.min_salary || 2500}
             </p>
           </div>
         </div>
