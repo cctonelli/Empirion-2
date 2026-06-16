@@ -2,9 +2,29 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.160 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.161 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Saneamento Preventivo Antiduplicação e Resolução de Acúmulo de Históricos de Turnovers Parciais Falhos - v2026.161
+
+**Data:** 16 de Junho de 2026 às 13:30 UTC  
+**Motivo:** Identificação de um comportamento colateral crítico no motor de processamento client-side de turnovers (`processRoundTurnover` em `supabase.ts`). Quando o tutor executa o Turnover de rodada e um erro de integridade (por exemplo, erros de balanceamento ou validação contábil) é disparado para uma equipe específica no fim do loop de simulação, a transação client-side é abortada antes de atualizar a rodada ativa da arena (`current_round`). Contudo, as equipes que foram processadas com sucesso nas iterações anteriores do mesmo loop já tiveram seus registros inseridos fisicamente no banco (`trial_companies` ou `companies` para o `nextRound`). Ao corrigir o problema e re-executar o Turnover, as inserções das primeiras equipes eram efetuadas novamente, resultando em dados duplicados da mesma rodada histórica. Adicionalmente, essas duplicidades poluem o histórico, levando a cálculos de séries temporais distorcidos e auto-interferência em séries temporais (como coeficientes de E-SDS que buscam os últimos 3 períodos e acabavam lendo as duplicadas do próprio `nextRound` do loop anterior).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Implementação de Pre-Clean Preventivo de Turnover**:
+  - Adicionado comando de exclusão robusto no início do método `processRoundTurnover`: `.delete().eq('championship_id', id).eq('round', nextRound)` na tabela histórica correspondente (`trial_companies` ou `companies`).
+  - Isso garante que qualquer execução parcial anterior que tenha deixado lixo ou dados no `nextRound` para esta arena seja completamente limpa antes de processar o novo loop.
+- **Saneamento e Idempotência de Decisões**:
+  - Como as decisões para o `nextRound` (geradas por bots ou por carry-forwards de inação dos jogadores) são lidas previamente, aquelas criadas na primeira execução falha são re-aproveitadas diretamente e de forma limpa pelo motor na segunda execução (idempotência perfeita do fluxo de entrada), enquanto os resultados consolidados (`companies`/`trial_companies`) são limpos e re-calculados do zero, garantindo zero duplicidades em múltiplos disparos.
+
+**Impactos:**
+- **Integridade Histórica Total**: Garantia inabalável de que cada campeonato terá exatamente um registro de histórico de empresa por rodada de torneio.
+- **Zero Intervenção de DB para Tutores**: Caso ocorra alguma interrupção ou bloqueio pedagógico e o tutor precisé re-passar o Turnover, as duplicidades anteriores de outras equipes são instantaneamente sobrepostas sem necessidade de intervenção técnica nos bastidores do banco de dados (DX excelente de produção).
+
+**Status atual:** v2026.161 - Em Produção / Compilado com Sucesso.
 
 ---
 

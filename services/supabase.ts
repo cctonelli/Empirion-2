@@ -547,6 +547,20 @@ export const processRoundTurnover = async (id: string, round: number, isTrial?: 
         }
 
         const nextRound = round + 1;
+
+        // v2026.161: Saneamento preventivo e eliminação de duplicidades decorrentes de re-tentativas de turnovers parciais falhos.
+        // Se este turnover falhou ou foi interrompido no meio do loop em execuções anteriores, limpamos todos os registros de resultado contábil
+        // do 'nextRound' para esta arena de forma a garantir que os novos cálculos usem um histórico limpo e livre de qualquer auto-interferência.
+        const { error: prepCleanupErr } = await supabase
+            .from(historyTable)
+            .delete()
+            .eq('championship_id', id)
+            .eq('round', nextRound);
+
+        if (prepCleanupErr) {
+            console.warn(`[PRE-LIMPEZA CONVENÇÃO] Falha ao executar limpeza prévia de resultados para o round ${nextRound} em ${historyTable}:`, prepCleanupErr.message);
+        }
+
         // Get indicators for the round being processed (Round 1, 2, etc.)
         const currentRules = champ.round_rules?.[nextRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[nextRound] || champ.market_indicators;
         const indicatorsForRound = { ...champ.market_indicators, ...currentRules };
