@@ -8,6 +8,31 @@
 
 ---
 
+## Decisão Arquitetural: Modo Hover no Sidebar e Layout de Rolagem Inteligente com Alturas Mínimas nos Dashboards - v2026.165
+
+**Data:** 17 de Junho de 2026 às 15:10 UTC  
+**Motivo:** Implementação da expansão automática por foco (hover) no sidebar colapsado e saneamento do bug de sobreposição/truncamento dos gráficos e tabelas nos painéis táticos ("ESTRATÉGICO", "TÁTICO" e "OPERACIONAL") decorrente do esmagamento do layout vertical em resoluções com restrição de altura.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Sidebar Dinâmico por Hover**:
+  - Implementação dos eventos `onMouseEnter` e `onMouseLeave` no `<motion.aside>` do sidebar.
+  - Armazenamento da propriedade `isSidebarHovered` em conjunto com `isSidebarCollapsed` para gerar o estado visual reativo unificado `isVisuallyExpanded`.
+  - Remoção completa do rótulo estático "Menu Compacto" da interface, mantendo unicamente a micro-interação do switch e o correspondente tooltip explicativo em `title="Menu Compacto"` para uma estética purificada de alta performance.
+- **Layout de Rolagem Flexível de Dashboard**:
+  - Substituição da propriedade restritiva `overflow-hidden` do container central de visualização do dashboard no `EmpirionDashboards.tsx` para `overflow-y-auto pr-1` com barras de rolagem finas e integradas (`scrollbar-thin scrollbar-thumb-white/10`).
+  - Flexibilização de todos os layouts raiz das quatro abas (`macroeconomics`, `financial`, `logistics`, `industrial`) com transição do limitador rígido `h-full flex flex-col` para o formato expansivo natural `flex flex-col gap-4 pb-6 min-h-min`.
+- **Mecanismo Anti-overlapping por Alturas Mínimas**:
+  - Para evitar que o mecanismo de rolagem fizesse os gráficos colapsarem a alturas microscópicas inapropriadas de renderização do SVG da biblioteca ApexCharts, estabelecemos limites inferiores (`min-h-[290px]` para gráficos de linha superior e central, e `min-h-[220px]` para as matrizes de insumos e indicadores inferiores). 
+  - Isso garante legibilidade irrepreensível e zero colisão de fontes ou textos explicativos sobrepostos.
+
+**Impactos:**
+- **Navegação Ergonômica**: Interação ultra fluida e responsiva com o sidebar lateral através do mouse hover, sem sacrifício de área utilitária ou deslocamento agressivo dos gráficos.
+- **Visualização de Dashboard de Alta Resolução**: Exibição intacta e refinada de todos os KPIs de decisão, sem qualquer risco de cortes ou sobreposição em laptops e iframes limitados.
+
+**Status atual:** v2026.165 - Em Produção / Compilado com Sucesso.
+
+---
+
 ## Decisão Arquitetural: Reestruturação e Polimento Estético de Grades Responsivas e Elementos de Decisão (UI/UX) - v2026.164
 
 **Data:** 16 de Junho de 2026 às 16:20 UTC  

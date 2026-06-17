@@ -38,6 +38,10 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
   // 1. Estados de Navegação e Sidebar
   const [activeTab, setActiveTab] = useState<'macroeconomics' | 'financial' | 'logistics' | 'industrial'>('financial');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+
+  // Indica se a barra deve ser mostrada como expandida (por toggle manual ou mouse hover)
+  const isVisuallyExpanded = !isSidebarCollapsed || isSidebarHovered;
 
   // 2. Estados de Governança e Identidade (Filtros Globais)
   const [tacticalGovernance, setTacticalGovernance] = useState<'baixo' | 'medio' | 'alto' | 'total'>('total');
@@ -201,7 +205,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
   const renderChartZoomModal = () => (
     <AnimatePresence>
       {expandedChart && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <motion.div 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -238,19 +242,21 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#060B13] text-[#E0E0E0] font-sans flex overflow-hidden animate-in fade-in duration-500">
+    <div className="fixed inset-0 z-[2000] bg-[#060B13] text-[#E0E0E0] font-sans flex overflow-hidden animate-in fade-in duration-500">
       
       {/* SIDEBAR LATERAL RETRÁTIL (SOBREPÕE O DASHBOARD SEM EMPURRAR) */}
       <motion.aside 
-        animate={{ width: isSidebarCollapsed ? '72px' : '260px' }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        animate={{ width: isVisuallyExpanded ? '260px' : '72px' }}
+        transition={{ duration: 0.25, ease: 'easeInOut' }}
+        onMouseEnter={() => { if (isSidebarCollapsed) setIsSidebarHovered(true); }}
+        onMouseLeave={() => setIsSidebarHovered(false)}
         className="fixed top-0 bottom-0 left-0 z-40 h-full bg-[#051523] border-r border-white/5 flex flex-col justify-between shrink-0 select-none shadow-2xl shadow-black/80"
       >
         <div className="flex flex-col gap-5 pt-6">
           
           {/* Logo do EMPIRION */}
           <div className="px-4 flex items-center justify-between min-h-[40px] gap-2">
-            {!isSidebarCollapsed ? (
+            {isVisuallyExpanded ? (
               <motion.div 
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
@@ -267,13 +273,8 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
             )}
           </div>
 
-          {/* Toggle Switch Lateral de Colapso */}
-          <div className="px-3 flex items-center justify-between mx-2 p-2 bg-white/5 rounded-2xl border border-white/5">
-            {!isSidebarCollapsed && (
-              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
-                Menu Compacto
-              </span>
-            )}
+          {/* Toggle Switch Lateral de Colapso (Apenas Tooltip "Menu Compacto", sem texto no layout) */}
+          <div className="px-3 flex items-center justify-center mx-2 p-2 bg-white/5 rounded-2xl border border-white/5">
             <button
               role="switch"
               aria-checked={!isSidebarCollapsed}
@@ -281,7 +282,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none mx-auto ${
                 !isSidebarCollapsed ? 'bg-indigo-600' : 'bg-slate-700'
               }`}
-              title={isSidebarCollapsed ? "Expandir Sidebar" : "Colapsar Sidebar"}
+              title="Menu Compacto"
             >
               <span
                 className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -293,7 +294,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
 
           {/* Informações da Competição / Arena */}
           <div className="px-3">
-            {!isSidebarCollapsed ? (
+            {isVisuallyExpanded ? (
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -334,9 +335,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
             <div className="flex flex-col gap-1.5">
               <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-1">
                 <Sliders size={10} className="text-amber-500" />
-                {!isSidebarCollapsed && "Governança Tática"}
+                {isVisuallyExpanded && "Governança Tática"}
               </label>
-              {!isSidebarCollapsed ? (
+              {isVisuallyExpanded ? (
                 <select 
                   value={tacticalGovernance}
                   onChange={(e) => setTacticalGovernance(e.target.value as any)}
@@ -357,9 +358,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
             <div className="flex flex-col gap-1.5">
               <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-1">
                 <ShieldCheck size={10} className="text-[#00FFFF]" />
-                {!isSidebarCollapsed && "Identidade das Marcas"}
+                {isVisuallyExpanded && "Identidade das Marcas"}
               </label>
-              {!isSidebarCollapsed ? (
+              {isVisuallyExpanded ? (
                 <select 
                   value={teamIdentity}
                   onChange={(e: any) => setTeamIdentity(e.target.value)}
@@ -402,7 +403,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   <div className={`p-1 rounded-lg ${active ? 'bg-blue-500/20 text-blue-400' : ''}`}>
                     {btn.icon}
                   </div>
-                  {!isSidebarCollapsed && (
+                  {isVisuallyExpanded && (
                     <span className="text-[10px] tracking-wider font-bold text-left">{btn.label}</span>
                   )}
                 </button>
@@ -419,7 +420,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
             title="Voltar ao Cockpit"
           >
             <ChevronLeft size={16} />
-            {!isSidebarCollapsed && "Voltar ao Cockpit"}
+            {isVisuallyExpanded && "Voltar ao Cockpit"}
           </button>
         </div>
       </motion.aside>
@@ -427,17 +428,17 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       {/* CORE CANVAS (ÁREA PRINCIPAL COMPENSANDO A LARGURA COLAPSADA FIXA DE 72PX) */}
       <main className="ml-[72px] w-[calc(100%-72px)] flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#060B13] to-[#03060a] p-4 gap-4">
         
-        {/* CONTAINER DO DASHBOARD SELECIONADO */}
-        <div className="flex-1 overflow-hidden relative">
+        {/* CONTAINER DO DASHBOARD SELECIONADO: Agora com auto rolagem para evitar qualquer esmagamento de canvas */}
+        <div className="flex-1 overflow-y-auto relative pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           
           {/* ========================================================= */}
           {/* 1. VIEW MACROECONOMICS */}
           {/* ========================================================= */}
           {activeTab === 'macroeconomics' && (
-            <div className="h-full flex flex-col gap-4">
+            <div className="flex flex-col gap-4 pb-6 min-h-min">
               
               {/* Candlestick Moedas */}
-              <div className="flex-1 bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between overflow-hidden">
+              <div className="h-[310px] min-h-[310px] bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between overflow-hidden">
                 <div className="flex justify-between items-center mb-1">
                   <h4 className="text-[10px] font-black uppercase text-white tracking-wider flex items-center gap-1.5">
                     <Coins size={14} className="text-amber-400" /> Variação Cambial de Moedas do Torneio (BRL vs USD / EUR / GBP / CNY / BTC)
@@ -496,7 +497,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Bloco Central (ICE vs Inf vs Dem, IVA Purchases vs Sales, Export Tariffs) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[180px] shrink-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[220px] h-auto">
                 
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Correlação de Mercado</span>
@@ -619,7 +620,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Bloco Inferior (Interest Rate vs Debt Level + PIB Area + Inflação vs Preço Médio) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[180px] shrink-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[220px] h-auto">
                 
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between">
                   <span className="text-[9px] font-black text-[#FF073A] uppercase tracking-widest">Estrutura de Capital</span>
@@ -734,7 +735,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
           {/* 2. VIEW FINANCIAL & ACCOUNTING */}
           {/* ========================================================= */}
           {activeTab === 'financial' && (
-            <div className="h-full flex flex-col gap-3">
+            <div className="flex flex-col gap-4 pb-6 min-h-min">
               
               {/* Fileira Superior (6 Scorecards Compactos) */}
               <div className="grid grid-cols-2 md:grid-cols-6 gap-3 shrink-0">
@@ -776,7 +777,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Segunda Linha (Balanço Comparativo & DRE Comparativo) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[290px] h-auto">
                 
                 {/* Balanço Comparativo */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between">
@@ -897,7 +898,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Terceira Linha (Evolução do PL, Estrutura Capital, Decisões Contábeis) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[150px] shrink-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[220px] h-auto">
                 
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
                   <div className="flex justify-between items-center">
@@ -974,7 +975,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Quarta Linha (Heatmap Contábil & Equity por competidores) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[170px] shrink-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[220px] h-auto">
                 
                 {/* Heatmap Contábil */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
@@ -1058,7 +1059,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
           {/* 3. VIEW LOGISTICS & MARKET */}
           {/* ========================================================= */}
           {activeTab === 'logistics' && (
-            <div className="h-full flex flex-col gap-3">
+            <div className="flex flex-col gap-4 pb-6 min-h-min">
               
               {/* Fileira Superior Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
@@ -1118,7 +1119,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Linha Central (Market Share by Team Donut & Vendas em Barras Empilhadas) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[290px] h-auto">
                 
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
                   <div className="flex justify-between items-center mb-1">
@@ -1210,7 +1211,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Linha Inferior (Scatter Venda vs Preço & Matrix Crescimento Share) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[160px] shrink-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[220px] h-auto">
                 
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
                   <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest leading-none">Elasticidade Regional</span>
@@ -1295,10 +1296,10 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
           {/* 4. VIEW INDUSTRIAL & HR */}
           {/* ========================================================= */}
           {activeTab === 'industrial' && (
-            <div className="h-full flex flex-col gap-3">
+            <div className="flex flex-col gap-4 pb-6 min-h-min">
               
               {/* Topo (Capacidade vs Produzido + Produtividade vs Motivação + Salários) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 min-h-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[280px] h-auto">
                 
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
                   <div className="flex justify-between items-center mb-1">
@@ -1384,7 +1385,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Meio (Controle de Estoque Heatmap & Painel RH & P&D Radar + Estatísticas) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[190px] shrink-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[220px] h-auto">
                 
                 {/* Heatmap de Controle de Estoque */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
