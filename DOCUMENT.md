@@ -2394,4 +2394,23 @@ project-root/
 - **Evitar Poluição de Rótulos:** Mantém o gráfico livre de texto estático em excesso, apresentando a informação de forma polida e profissional sob o tooltip dinâmico em hover.
 **Status:** ATIVO, homologado pelo time de PMP e Engenharia de Banco de dados, com compilação e verificação de linter de React bem-sucedidas.
 
+## Decisão Arquitetural & Versionamento - Otimização Minimalista e Omissão de Elementos de Setup no Sidebar Colapsado dos Dashboards - v2026.116
+
+**Data:** 17 de Junho de 2026 às 15:58 UTC  
+**Motivo:** Garantir um cockpit de dashboards extremamente limpo, focado e profissional quando o menu de navegação lateral estiver colapsado/recolhido (compacto). Foram removidas informações secundárias que sobrecarregavam a interface visual no modo de visualização estreito.  
+**Principais diferenças:**  
+- **Remoção de Componentes sob Colapso (`components/EmpirionDashboards.tsx`):**
+  - **Chaveador de Colapso (Toggle Switch):** Ocultado completamente quando o sidebar está fechado (`!isVisuallyExpanded`). Ele reaparece dinamicamente ao passar o mouse (hover), permitindo travamento por clique de maneira natural.
+  - **Dados da Rodada (R02 | EQP):** Ocultados totalmente no formato reduzido.
+  - **Filtros de Governança e Identidade (Ícones de Sliders, Escudos e Olhos):** Ocultados por completo no formato reduzido.
+- **Centralização Geométrica dos Ícones de Dashboard:**
+  - Os itens de navegação (Macroeconomia, Finanças, Logística e Industrial) ganharam centralização de alinhamento (`justify-center` vs `justify-start`) e comportamento responsivo com base no estado da barra lateral, maximizando o equilíbrio de pixels.
+- **Botão Sair Unificado:**
+  - O CTA inferior de fechamento foi atualizado nos seus rótulos textuais para exibir `"SAIR"` de forma a retornar ao cockpit de decisões com clareza imediata e harmonizada.
+**Impactos esperados:**  
+- **Visualização Ultra Limpa:** Interface livre de elementos flutuantes ou amontoados verticalmente quando recolhida, mantendo somente o essencial para a navegação direta dos alunos.
+- **Transição Fluida (Hover-to-Expand):** Toda a riqueza de comandos de governança e toggles se expande suavemente sob hover e se recolhe sem deixar ruídos.
+**Status:** ATIVO, amplamente homologado pelas equipes de UI/UX, Banco de dados e QA.
+
+
 

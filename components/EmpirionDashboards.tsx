@@ -337,27 +337,29 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
           </div>
 
           {/* Toggle Switch Lateral de Colapso (Apenas Tooltip "Menu Compacto", sem texto no layout) */}
-          <div className="px-3 flex items-center justify-center mx-2 p-2 bg-white/5 rounded-2xl border border-white/5">
-            <button
-              role="switch"
-              aria-checked={!isSidebarCollapsed}
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none mx-auto ${
-                !isSidebarCollapsed ? 'bg-indigo-600' : 'bg-slate-700'
-              }`}
-              title="Menu Compacto"
-            >
-              <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  !isSidebarCollapsed ? 'translate-x-4' : 'translate-x-0'
+          {isVisuallyExpanded && (
+            <div className="px-3 flex items-center justify-center mx-2 p-2 bg-white/5 rounded-2xl border border-white/5">
+              <button
+                role="switch"
+                aria-checked={!isSidebarCollapsed}
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none mx-auto ${
+                  !isSidebarCollapsed ? 'bg-indigo-600' : 'bg-slate-700'
                 }`}
-              />
-            </button>
-          </div>
+                title="Menu Compacto"
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    !isSidebarCollapsed ? 'translate-x-4' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          )}
 
-          {/* Informações da Competição / Arena */}
-          <div className="px-3">
-            {isVisuallyExpanded ? (
+          {/* Informações da Competição / Arena (Apenas visíveis quando expandido) */}
+          {isVisuallyExpanded && (
+            <div className="px-3">
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -382,25 +384,17 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   </span>
                 </div>
               </motion.div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 py-2 bg-[#0E1726]/40 rounded-xl border border-white/5 mx-1" title={`${activeArena?.name || "Trial Industrial"} | ${formatTeamName(activeTeam?.name, 0)}`}>
-                <span className="text-[9px] font-black text-amber-300">R0{currentRound}</span>
-                <div className="w-4 h-px bg-white/10" />
-                <span className="text-[7px] font-bold text-indigo-400 uppercase tracking-wider text-center">
-                  EQP
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Filtros de Governança Integrados no Sidebar */}
-          <div className="px-3 py-4 border-y border-white/5 space-y-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-1">
-                <Sliders size={10} className="text-amber-500" />
-                {isVisuallyExpanded && "Governança Tática"}
-              </label>
-              {isVisuallyExpanded ? (
+          {/* Filtros de Governança Integrados no Sidebar (Apenas visíveis quando expandido) */}
+          {isVisuallyExpanded && (
+            <div className="px-3 py-4 border-y border-white/5 space-y-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-1">
+                  <Sliders size={10} className="text-amber-500" />
+                  "Governança Tática"
+                </label>
                 <select 
                   value={tacticalGovernance}
                   onChange={(e) => setTacticalGovernance(e.target.value as any)}
@@ -411,19 +405,13 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   <option value="alto">Alta (Transparente)</option>
                   <option value="total">Total (Open Data)</option>
                 </select>
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-[#1E1E2F] flex items-center justify-center text-slate-400" title="Governança">
-                  <ShieldCheck size={14} />
-                </div>
-              )}
-            </div>
+              </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-1">
-                <ShieldCheck size={10} className="text-[#00FFFF]" />
-                {isVisuallyExpanded && "Identidade das Marcas"}
-              </label>
-              {isVisuallyExpanded ? (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[8px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-1">
+                  <ShieldCheck size={10} className="text-[#00FFFF]" />
+                  "Identidade das Marcas"
+                </label>
                 <select 
                   value={teamIdentity}
                   onChange={(e: any) => setTeamIdentity(e.target.value)}
@@ -432,17 +420,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   <option value="identificada">Identificada</option>
                   <option value="anonima">Anônima (Mascarada)</option>
                 </select>
-              ) : (
-                <button 
-                  onClick={() => setTeamIdentity(teamIdentity === 'identificada' ? 'anonima' : 'identificada')}
-                  className="w-8 h-8 rounded-full bg-[#1E1E2F] flex items-center justify-center text-[#00FFFF]" 
-                  title="Mudar Identidade"
-                >
-                  {teamIdentity === 'identificada' ? <Eye size={14} /> : <EyeOff size={14} />}
-                </button>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Menus Verticais (CTAs dos Dashboards) */}
           <nav className="flex flex-col gap-1 px-2">
@@ -457,7 +437,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                 <button
                   key={btn.id}
                   onClick={() => setActiveTab(btn.id as any)}
-                  className={`w-full py-3 px-3 rounded-xl flex items-center gap-3 transition-all ${
+                  className={`w-full py-3 px-3 rounded-xl flex items-center transition-all ${
+                    isVisuallyExpanded ? 'gap-3 justify-start' : 'justify-center'
+                  } ${
                     active 
                       ? 'bg-gradient-to-r from-blue-600/20 to-indigo-600/20 text-white border-l-4 border-blue-500 font-black' 
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -480,10 +462,10 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
           <button 
             onClick={onClose}
             className="w-full py-2 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-wider rounded-xl hover:opacity-90 transform hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg"
-            title="Voltar ao Cockpit"
+            title="SAIR"
           >
             <ChevronLeft size={16} />
-            {isVisuallyExpanded && "Voltar ao Cockpit"}
+            {isVisuallyExpanded && "SAIR"}
           </button>
         </div>
       </motion.aside>
