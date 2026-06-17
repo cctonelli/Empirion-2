@@ -33,7 +33,15 @@ export const EmpirionAreaChart: React.FC<EmpirionAreaChartProps> = ({
       zoom: {
         enabled: false
       },
-      background: 'transparent'
+      background: 'transparent',
+      dropShadow: {
+        enabled: true,
+        top: 4,
+        left: 0,
+        blur: 8,
+        color: [color],
+        opacity: 0.45
+      }
     },
     colors: [color],
     fill: {

@@ -8,6 +8,34 @@
 
 ---
 
+## Decisão Arquitetural: Efeito Luminoso Glow/Neon nos Gráficos de Dashboards via DropShadow - v2026.166
+
+**Data:** 17 de Junho de 2026 às 20:15 UTC  
+**Motivo:** Aplicação do estilo de design moderno 2026 com visual premium de brilho luminoso/neon (efeito "glow") nos gráficos de todas as abas de dashboards estratégicos, táteis e operacionais, conforme solicitado para potencializar o encanto e a usabilidade visual corporativa fiduciária.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Ativação Universal de Sombra Luminosa (`dropShadow`)**:
+  - Integração da propriedade `chart.dropShadow` nas configurações dos componentes do ApexCharts.
+  - Sincronização dinâmica de cor: mapeamento exato das cores de cada série para que o brilho luminoso/neon siga o espectro cromático de cada indicador (e.g. verde para liquidez corrente, laranja para geral).
+  - Parâmetros calibrados para visual de alta costura: dispersão (`blur: 5px` a `8px`), compensações nulas nos eixos para aura simétrica (`top` e `left` entre `2` e `4`), e opacidades seguras (`opacity: 0.4` a `0.5`) para evitar poluição visual.
+- **Componentes Refatorados**:
+  - `EmpirionLineChart.tsx`: Brilho neon na curva de dados individual.
+  - `EmpirionAreaChart.tsx`: Brilho neon sobre a linha de limite superior de cada área.
+  - `EmpirionBarComparison.tsx`: Glow suave no contorno e faces das colunas e barras de comparação multivariadas.
+  - `EmpirionGauge.tsx`: Halo luminoso sincronizado com o nível percentual crítico.
+  - `EmpirionLiquidityChart.tsx`: Brilho neon nas três vias de liquidez (seca, corrente e geral) com cores representativas independentes.
+  - `EmpirionRadarChart.tsx`: Aura sutil nas extremidades triangulares e eixos de múltiplos critérios.
+  - `TrendSparkline.tsx`: Glow compacto para linhas de tendência microscópicas.
+  - `LandingCharts.tsx`: Sombra de destaque luminoso nas séries de simulação da arena em tempo real da "home page".
+
+**Impactos:**
+- **Identidade Estética Neon/Glow**: Dashboards com apelo futurista e elegante alinhados com tendências estéticas de software corporativo de 2026.
+- **Destaque Cognitivo de Dados**: Aumento do contraste das séries críticas contra o fundo do canvas escuro (`bg-slate-900/40`), otimizando a leitura rápida dos indicadores pelo estudante.
+
+**Status atual:** v2026.166 - Em Produção / Compilado com Sucesso.
+
+---
+
 ## Decisão Arquitetural: Modo Hover no Sidebar e Layout de Rolagem Inteligente com Alturas Mínimas nos Dashboards - v2026.165
 
 **Data:** 17 de Junho de 2026 às 15:10 UTC  

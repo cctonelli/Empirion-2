@@ -23,6 +23,8 @@ export const EmpirionGauge: React.FC<EmpirionGaugeProps> = ({
   // Escalar para porcentagem
   const percentage = Math.min(Math.max(((value - min) / (max - min)) * 100, 0), 100);
 
+  const mainColor = percentage > 75 ? '#3b82f6' : percentage > 50 ? '#10b981' : percentage > 30 ? '#f59e0b' : '#ef4444';
+
   const chartOptions: any = {
     chart: {
       id: `gauge-${id}`,
@@ -30,7 +32,15 @@ export const EmpirionGauge: React.FC<EmpirionGaugeProps> = ({
       sparkline: {
         enabled: true
       },
-      background: 'transparent'
+      background: 'transparent',
+      dropShadow: {
+        enabled: true,
+        top: 2,
+        left: 0,
+        blur: 6,
+        color: [mainColor],
+        opacity: 0.5
+      }
     },
     plotOptions: {
       radialBar: {

@@ -86,6 +86,14 @@ export const EmpirionLiquidityChart: React.FC<EmpirionLiquidityChartProps> = ({
       background: 'transparent',
       sparkline: {
         enabled: false
+      },
+      dropShadow: {
+        enabled: true,
+        top: 4,
+        left: 0,
+        blur: 8,
+        color: ['#3b82f6', '#10b981', '#f97316'],
+        opacity: 0.45
       }
     },
     colors: ['#3b82f6', '#10b981', '#f97316'], // Azul (Seca), Verde (Corrente), Laranja (Geral)

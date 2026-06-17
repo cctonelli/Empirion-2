@@ -28,7 +28,15 @@ export const EmpirionBarComparison: React.FC<EmpirionBarComparisonProps> = ({
       toolbar: {
         show: false
       },
-      background: 'transparent'
+      background: 'transparent',
+      dropShadow: {
+        enabled: true,
+        top: 2,
+        left: 0,
+        blur: 6,
+        color: ['#f97316', '#3b82f6', '#10b981', '#a855f7'],
+        opacity: 0.4
+      }
     },
     plotOptions: {
       bar: {

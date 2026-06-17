@@ -8,7 +8,15 @@ const LandingCharts: React.FC = () => {
       id: 'realtime-arena',
       toolbar: { show: false },
       sparkline: { enabled: false },
-      background: 'transparent'
+      background: 'transparent',
+      dropShadow: {
+        enabled: true,
+        top: 3,
+        left: 0,
+        blur: 7,
+        color: ['#3b82f6', '#10b981', '#f59e0b', '#fbbf24'],
+        opacity: 0.4
+      }
     },
     colors: ['#3b82f6', '#10b981', '#f59e0b', '#fbbf24'],
     theme: { mode: 'dark' },

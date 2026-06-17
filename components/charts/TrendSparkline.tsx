@@ -35,7 +35,15 @@ export const TrendSparkline: React.FC<TrendSparklineProps> = ({
       sparkline: {
         enabled: true
       },
-      background: 'transparent'
+      background: 'transparent',
+      dropShadow: {
+        enabled: true,
+        top: 2,
+        left: 0,
+        blur: 5,
+        color: [color],
+        opacity: 0.5
+      }
     },
     stroke: {
       curve: 'smooth',
