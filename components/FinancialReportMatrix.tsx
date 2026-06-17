@@ -317,7 +317,7 @@ const FinancialReportMatrix: React.FC<MatrixProps> = ({
         }
       }
 
-      if (plR00 <= 0) plR00 = 12000000; // Fallback regulamentar Greenfield de R$ 12M
+      if (plR00 <= 0) plR00 = 12000000; // Fallback regulamentar Greenfield de BRL 12M
       flows.push(-plR00);
 
       // Fluxos operacionais de retorno subsequentes livres (fco_livre) até p.round

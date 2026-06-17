@@ -341,19 +341,25 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
         <>
           {/* Controle de Modo de Operação - Controle 1 */}
           <div className="px-4 py-2 bg-[#090d16]/50 border-b border-white/5 flex items-center justify-between gap-2 shrink-0">
-             <div className="flex items-center gap-2">
-                <input 
-                   type="checkbox" 
-                   id="retractable-mode-right"
-                   checked={isRightPreviewCollapsed} 
-                   onChange={(e) => {
-                      setIsRightPreviewCollapsed(e.target.checked);
+             <div className="flex items-center gap-2" title="Modo Retrátil">
+                <button
+                   type="button"
+                   onClick={() => {
+                      setIsRightPreviewCollapsed(!isRightPreviewCollapsed);
                    }}
-                   className="w-3.5 h-3.5 text-orange-600 bg-slate-950 border-white/10 rounded focus:ring-orange-500 focus:ring-offset-0 cursor-pointer shrink-0"
-                />
-                <label htmlFor="retractable-mode-right" className="text-[8px] font-black text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider select-none truncate">
-                   Recolher Painel Lateral
-                </label>
+                   className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      isRightPreviewCollapsed 
+                         ? 'bg-orange-500/20 border-orange-500/30' 
+                         : 'bg-slate-950 border border-white/10'
+                   }`}
+                >
+                   <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full shadow-md transition duration-200 ease-in-out ${
+                         isRightPreviewCollapsed ? 'translate-x-4 bg-orange-400' : 'translate-x-0 bg-slate-400'
+                      }`}
+                   />
+                </button>
              </div>
              <button 
                type="button"

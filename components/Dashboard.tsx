@@ -673,24 +673,31 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
 
             <div className={`flex-1 flex flex-col overflow-y-auto custom-scrollbar p-3 space-y-4 ${(!isSidebarCollapsed || isSidebarHovered) ? '' : 'items-center overflow-x-hidden'}`}>
               
-              {/* Controle 1: O Checkbox de Operação Retrátil */}
-              <div className="flex items-center gap-2 p-1.5 bg-white/5 border border-white/5 rounded-xl w-full">
-                <input 
-                  type="checkbox" 
-                  id="retractable-mode-dashboard"
-                  checked={isSidebarCollapsed} 
-                  onChange={(e) => {
-                    setIsSidebarCollapsed(e.target.checked);
-                    if (!e.target.checked) setIsSidebarHovered(false);
-                  }}
-                  className="w-3.5 h-3.5 text-orange-600 bg-slate-950 border-white/10 rounded focus:ring-orange-500 focus:ring-offset-0 cursor-pointer shrink-0"
-                />
-                {(!isSidebarCollapsed || isSidebarHovered) && (
-                  <label htmlFor="retractable-mode-dashboard" className="text-[8px] font-black text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider select-none truncate">
-                    Modo Retrátil
-                  </label>
-                )}
-              </div>
+              {/* Controle 1: O Toggle de Operação Retrátil */}
+              {(!isSidebarCollapsed || isSidebarHovered) && (
+                <div className="flex justify-center p-1.5 w-full" title="Modo Retrátil">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !isSidebarCollapsed;
+                      setIsSidebarCollapsed(nextVal);
+                      if (!nextVal) setIsSidebarHovered(false);
+                    }}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      isSidebarCollapsed 
+                        ? 'bg-orange-500/20 border-orange-500/30' 
+                        : 'bg-slate-950 border border-white/10'
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full shadow-md transition duration-200 ease-in-out ${
+                        isSidebarCollapsed ? 'translate-x-4 bg-orange-400' : 'translate-x-0 bg-slate-400'
+                      }`}
+                    />
+                  </button>
+                </div>
+              )}
 
               <header className={`flex items-center justify-between border-b border-white/5 pb-2 w-full ${(!isSidebarCollapsed || isSidebarHovered) ? '' : 'flex-col gap-2'}`}>
                 {(!isSidebarCollapsed || isSidebarHovered) && (

@@ -17,7 +17,7 @@ export const INITIAL_FINANCIAL_TREE: { balance_sheet: AccountNode[], dre: Accoun
             { id: 'assets.current.investments', label: 'Aplicação Financeira', value: 0.00, type: 'asset', isEditable: true },
             { id: 'assets.current.clients_group', label: 'CONTAS A RECEBER', value: 2073663.54, type: 'totalizer', children: [
                 { id: 'assets.current.clients', label: 'Clientes', value: 2092193.00, type: 'asset', isEditable: true },
-                { id: 'assets.current.pecld', label: '(-) PECLD (Inadimplência)', value: -18529.46, type: 'asset', isEditable: true },
+                { id: 'assets.current.pecld', label: '(-) PECLD -Inadimplência Clientes', value: -18529.46, type: 'asset', isEditable: true },
                 { id: 'assets.current.vat_recoverable', label: 'IVA a recuperar', value: 0.00, type: 'asset', isEditable: true }
             ]},
             { id: 'assets.current.stock', label: 'ESTOQUE', value: 1407000.00, type: 'totalizer', children: [

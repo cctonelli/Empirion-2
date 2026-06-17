@@ -579,24 +579,31 @@ const DecisionForm: React.FC<{
                        )}
                     </div>
 
-                    {/* Controle 1: O Checkbox de Operação Retrátil */}
-                    <div className="flex items-center gap-2 p-1.5 bg-white/5 border border-white/5 rounded-xl mb-4 w-full">
-                       <input 
-                          type="checkbox" 
-                          id="retractable-mode-leftnav"
-                          checked={isLeftNavCollapsed} 
-                          onChange={(e) => {
-                             setIsLeftNavCollapsed(e.target.checked);
-                             if (!e.target.checked) setIsLeftNavHovered(false);
-                          }}
-                          className="w-3.5 h-3.5 text-orange-600 bg-slate-950 border-white/10 rounded focus:ring-orange-500 focus:ring-offset-0 cursor-pointer shrink-0"
-                       />
-                       {(!isLeftNavCollapsed || isLeftNavHovered) && (
-                          <label htmlFor="retractable-mode-leftnav" className="text-[8px] font-black text-slate-400 hover:text-white cursor-pointer uppercase tracking-wider select-none truncate">
-                             Modo Retrátil
-                          </label>
-                       )}
-                    </div>
+                    {/* Controle 1: O Toggle de Operação Retrátil */}
+                    {(!isLeftNavCollapsed || isLeftNavHovered) && (
+                       <div className="flex justify-center p-1.5 mb-4 w-full" title="Modo Retrátil">
+                          <button
+                             type="button"
+                             onClick={() => {
+                                const nextVal = !isLeftNavCollapsed;
+                                setIsLeftNavCollapsed(nextVal);
+                                if (!nextVal) setIsLeftNavHovered(false);
+                             }}
+                             className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                isLeftNavCollapsed 
+                                   ? 'bg-orange-500/20 border-orange-500/30' 
+                                   : 'bg-slate-950 border border-white/10'
+                             }`}
+                          >
+                             <span
+                                aria-hidden="true"
+                                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full shadow-md transition duration-200 ease-in-out ${
+                                   isLeftNavCollapsed ? 'translate-x-4 bg-orange-400' : 'translate-x-0 bg-slate-400'
+                                }`}
+                             />
+                          </button>
+                       </div>
+                    )}
 
                     <div className="flex flex-col gap-1.5 flex-1 animate-in fade-in duration-300 w-full font-sans">
                        {STEPS.map((s, idx) => {

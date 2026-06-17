@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.127
+- **Versão Ativa de Regras:** v2026.128
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **16/06/2026** | `v2026.128` | *PMP & Equipe* | **Algoritmo Concorrencial de Spillover por Ruptura de Estoque e Market Share de Entrega.** Corrigida a distorção contábil-operacional onde equipes que captavam demanda regional usando scores elevados de marketing/preço baixo mas falhavam em entregar unidades por inércia operacional (gargalo de operários ou insumos) "evaporavam" faturamento do campeonato e mantinham Market Share injustificado no painel. O simulador re-rateia a demanda não atendida (Ruptura/Stockout) aos demais concorrentes com estoque livre na região e computa o Market Share estritamente com base em volumes físicos de fato faturados e consolidados. |
 | **14/06/2026** | `v2026.127` | *PMP & Equipe* | **Mapeamento Patrimonial e Delineação de CAPEX: Start from Zero vs. Start with Base.** Clarificação estrutural do comportamento do balanço e do market size sob abordagens táticas de fundação de empresas. No modo *Start from Zero*, as marcas iniciam exclusivamente com Capital Social e Caixa Física disponível — sem frota fabril inicial herdada do Round 0. Fica estabelecido o nexus de que o investimento e aprovação de CAPEX no Round 1 (adição de maquinário, custos de instalação técnica por modelo de máquina e amortizações de depreciação subsequentes) são os catalisadores soberanos e exclusivos que erguem o Ativo Imobilizado e constroem o Market Size de demanda regional na simulação. |
 | **11/06/2026** | `v2026.126` | *PMP & Equipe* | **Generalização Multimoeda Dinâmica para Moeda-Base do Torneio.** |Multimoeda Dinâmica para Moeda-Base do Torneio.** Extensão do motor sob diretrizes do CPC 02 / IAS 21 para suportar qualquer moeda-base (BRL, USD, GBP, CNY) configurada pelo Tutor. O motor calcula dinamicamente as taxas de câmbio cruzadas (cross-rates) fallbacks e apura a variação cambial fiduciária (`fin.fx_variance`) para qualquer praça cuja moeda difira da moeda-base elegida consolidada. |
 | **11/06/2026** | `v2026.125` | *PMP & Equipe* | **Tratamento Cambial CPC 02 / IAS 21 e Reconciliação Fiduciária Multimoeda.** Detalhamento técnico da conversão monetária de transações no exterior. As vendas e marketing/fretes em USD são convertidos a BRL com câmbio do round de transação. Variações cambiais subsequentes de parcelas a receber pendentes são lançadas em Resultado Financeiro no DRE (`fin.fx_variance`). Os cartões regionais no cockpit (mini-DRE) efetuam a lógica inversa (divisão) para CPV e Share Corporativo, mantendo exatidão de 100%. |
@@ -219,3 +220,25 @@ Com o objetivo de dotar a ferramenta de alta flexibilidade durante períodos de 
 - [x] Implementação integral do protocolo de Fiduciary Carry-Forward para salvação de decisões por estouro de timer (Timeout) síncrono.
 - [x] Definição de Governança de Visibilidade Dinâmica de Templates (Modo Trial Aberto vs. Controle Rígido do Tutor Logado em Produção).
 - [ ] Monitoramento constante de novas decisões de compra no Turno 2 pelas equipes para avaliar o impacto imediato na calibragem dos novos equipamentos instalados.
+- [x] Correção de distorções de Market Share concorrencial através do algoritmo multi-passo de Stockout Demand Spillover.
+
+---
+
+## 8. 📈 Modelo Concorrencial de Spillover por Ruptura de Estoque (Stockout Demand Spillover) & Market Share Físico Concreto
+
+Para blindar o Simulador Empirion contra assimetrias de concorrência e o fenômeno da "Equipe Fantasma" (empresas que captam demanda teórica vantajosa via marketing e preço baixo, mas produzem zero unidades em função de colapsos ou negligência operacional de mão de obra direta/matéria-prima), o motor de processamento do campeonato foi atualizado sob uma modelagem econômica dinâmica de mercados:
+
+### 1. Mecânica de Spillover de Ruptura de Estoque (Stockout Spillover)
+O fluxo econômico do fechamento do round opera em duas rodadas iterativas sintonizadas ao longo das praças geográficas:
+- **Rodada 1 (Demanda Comercial Teórica):** O sistema espalha as demandas de intenção de compra regionais calculadas com base nos scores comerciais de preço, prazo de crediário e investimento regional de campanha de marketing de cada competidor.
+- **Detecção de Gaps Físicos:** O motor simula um primeiro passe das projeções. Se a demanda preliminar de uma equipe $T$ em uma região $R$ exceder o seu respectivo estoque disponível consolidado para venda imediata ($EstoqueInicial_{finished\_goods} + ProduçãoReal$), os consumidores deparam-se com uma **Ruptura de Estoque (Stockout)**:
+  $$Stockout_{T, R} = DemandaPreliminar_{T, R} - VendasReaisR1_{T, R}$$
+- **Disputa da Demanda Órfã:** A soma de todas as rupturas ocorridas em uma região gera a $DemandaOrf\tilde{a}_R$. Em vez de essa fatia sumir artificialmente do PIB da indústria (gerando declínio irracional na receita agregada), ela é colocada para re-rateio imediato!
+- **Condições de Redistribuição:** Apenas as marcas concorrentes que possuem **estoque físico livre excedente** naquela região pós-vendas da Rodada 1 qualificam-se para receber parte da demanda órfã. O rateio do spillover é ponderado unicamente pelos scores competitivos relativos das marcas qualificadas e sobreviventes, limitando-se ao volume de estoque remanescente físico individual de cada uma.
+
+### 2. Transição para o Market Share Real (Physical Market Share)
+Historicamente, o `market_share` persistido correspondia à captação conceitual pura de marketing, blindando concorrentes improdutivos contra a penalização do ranking setorial. A partir desta atualização de diretrizes (Sapphire v20.0):
+- **Cálculo Baseado em Faturamento Físico:** O Market Share final e oficial de cada concorrente no encerramento da rodada é calculado estritamente sobre a entrega comercial líquida consolidada (unidades vendidas reais de fato que foram entregues aos clientes):
+  $$\text{Market Share Final \%}_T = \left( \frac{\text{Unidades Vendidas Finais Real}_T}{\sum_{All} \text{Unidades Vendidas Finais Real}} \right) \times 100$$
+- **Impacto da Capacidade e Força Operacional:** Esta alteração resolve de forma holística os pontos expostos pelo campeonato. A capacidade fabril instalada, ajustada pelas taxas de contratações de operários e horas extras táticas, eleva diretamente o Market Share real. Uma equipe estruturalmente produtiva não apenas atende seus próprios compradores, como se torna a principal herdeira de fatias generosas de mercado quando concorrentes falham no abastecimento, capturando faturamento excedente e empurrando seu EBITDA ao ápice financeiro da rodada.
+- **Salvaguarda Fiduciária de Equilíbrio Geral:** Caso a soma global de unidades vendidas do setor seja nula (por exemplo, em setups do tipo *Start from Zero* onde nenhuma fábrica produziu no Round 0), o sistema usa o Market Share conceitual nominal da captação prévia como salvaguarda tática de ranking, ou em última instância o rateio uniforme entre as companhias.
