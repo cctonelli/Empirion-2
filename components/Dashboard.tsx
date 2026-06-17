@@ -37,6 +37,7 @@ import { DashboardGrid } from './charts/DashboardGrid';
 import { TrendSparkline } from './charts/TrendSparkline';
 import FinancialReportMatrix from './FinancialReportMatrix';
 import { calculateProjections } from '../services/simulation';
+import { EmpirionDashboards } from './EmpirionDashboards';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const navigate = useNavigate();
@@ -920,73 +921,13 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                     )}
 
                     {activeTab === 'historico' && (
-                      <div id="historico-tab-content" className="space-y-6 pb-6">
-                        {currentKpis?.liquidity_current !== undefined && currentKpis.liquidity_current < 1.0 && (
-                          <div id="fiduciary-liquidity-alert" className="p-5 bg-rose-950/40 border border-rose-500/30 rounded-[2.5rem] shadow-xl relative overflow-hidden backdrop-blur-3xl animate-in fade-in slide-in-from-top duration-500 flex flex-col md:flex-row items-center gap-5 justify-between">
-                            <div className="flex gap-4">
-                              <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-500 flex shrink-0 items-center justify-center">
-                                <AlertTriangle size={24} className="stroke-[2.5]" />
-                              </div>
-                              <div className="space-y-1">
-                                <span className="block text-[9px] font-black tracking-[0.2em] uppercase text-rose-500 italic">ALERTA FIDUCIÁRIO DE INSOLVABILIDADE</span>
-                                <h4 className="text-sm font-black text-white uppercase italic tracking-tight">LIQUIDEZ CORRENTE COM ALTO RISCO OPERACIONAL</h4>
-                                <p className="text-[10px] text-slate-400 font-medium">A liquidez corrente da empresa de <strong>{currentKpis.liquidity_current.toFixed(2).replace('.', ',')}</strong> encontra-se abaixo da zona mínima prudencial de 1,00. Isso indica que os Ativos Circulantes são insuficientes para adimplir as obrigações imediatas e de Curto Prazo, exigindo readequação urgente de capital de giro ou refinanciamento fiduciário.</p>
-                              </div>
-                            </div>
-                            <div className="shrink-0">
-                              <span className="inline-block px-4 py-2 bg-rose-500/10 text-rose-500 text-[9px] font-black uppercase rounded-full border border-rose-500/20 italic">Risco Crítico</span>
-                            </div>
-                          </div>
-                        )}
-                        <DashboardGrid id="aluno-historico" columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                          <EmpirionAreaChart
-                            id="equity-evolution"
-                            title="Evolução do Patrimônio Líquido"
-                            categories={visibleHistory.map(h => `R-${h.round < 10 ? '0' : ''}${h.round}`)}
-                            series={[{ name: 'Patrimônio Líquido', data: visibleHistory.map(h => h.equity) }]}
-                            color="#3b82f6"
-                            currency={activeArena?.currency || 'BRL'}
-                          />
-                          <EmpirionLiquidityChart
-                            id="liquidity-evolution"
-                            visibleHistory={visibleHistory}
-                            height={320}
-                          />
-                          <EmpirionGauge
-                            id="esds-indicator"
-                            title="Sustentabilidade Socioambiental (E-SDS)"
-                            value={currentKpis.esds?.esds_display ?? 78}
-                            label="E-SDS Index"
-                            formatter={(val) => `${val.toFixed(0)}%`}
-                          />
-                        </DashboardGrid>
-
-                        <div id="alerts-gargalos-container" className="bg-slate-900/60 p-6 rounded-[2rem] border border-white/5 space-y-4 shadow-2xl animate-in fade-in slide-in-from-bottom duration-500">
-                           <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-2">
-                             <AlertTriangle size={14} className="text-orange-500" /> Alertas de Gargalos Estratégicos (E-SDS)
-                           </h4>
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                              {currentKpis.esds?.top_gargalos?.map((g, i) => (
-                                <div key={i} className="p-4 bg-slate-950/80 rounded-lg border border-white/5 space-y-1.5">
-                                   <div className="flex justify-between items-start">
-                                      <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest">{g.name}</span>
-                                      <span className="text-base font-black text-white italic">{g.percentage}%</span>
-                                   </div>
-                                   <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-                                      <div className="h-full bg-rose-500" style={{ width: `${g.percentage}%` }} />
-                                   </div>
-                                   <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">Impacto crítico na solvência dinâmica.</p>
-                                </div>
-                              ))}
-                              {(!currentKpis.esds?.top_gargalos || currentKpis.esds.top_gargalos.length === 0) && (
-                                <div className="col-span-3 py-6 text-center">
-                                   <CheckCircle2 size={20} className="text-emerald-500 mx-auto mb-2 opacity-20" />
-                                   <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Nenhum gargalo crítico detectado.</p>
-                                </div>
-                              )}
-                           </div>
-                        </div>
-                      </div>
+                      <EmpirionDashboards 
+                        history={visibleHistory} 
+                        currentKpis={currentKpis} 
+                        activeArena={activeArena} 
+                        activeTeam={activeTeam} 
+                        onClose={() => setActiveTab('decisoes')} 
+                      />
                     )}
                   </div>
                </div>
