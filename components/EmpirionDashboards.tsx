@@ -240,17 +240,17 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-[#060B13] text-[#E0E0E0] font-sans flex overflow-hidden animate-in fade-in duration-500">
       
-      {/* SIDEBAR LATERAL RETRÁTIL */}
+      {/* SIDEBAR LATERAL RETRÁTIL (SOBREPÕE O DASHBOARD SEM EMPURRAR) */}
       <motion.aside 
         animate={{ width: isSidebarCollapsed ? '72px' : '260px' }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="h-full bg-[#051523] border-r border-white/5 flex flex-col justify-between shrink-0 select-none relative"
+        className="fixed top-0 bottom-0 left-0 z-40 h-full bg-[#051523] border-r border-white/5 flex flex-col justify-between shrink-0 select-none shadow-2xl shadow-black/80"
       >
-        <div className="flex flex-col gap-6 pt-6">
+        <div className="flex flex-col gap-5 pt-6">
           
-          {/* Logo do EMPIRION & Toggle Botão */}
-          <div className="px-4 flex items-center justify-between min-h-[40px]">
-            {!isSidebarCollapsed && (
+          {/* Logo do EMPIRION */}
+          <div className="px-4 flex items-center justify-between min-h-[40px] gap-2">
+            {!isSidebarCollapsed ? (
               <motion.div 
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
@@ -262,15 +262,71 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   <span className="text-[7px] font-bold uppercase tracking-widest text-[#FFFFB5]">Oracle Dashboards</span>
                 </div>
               </motion.div>
+            ) : (
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-600 flex items-center justify-center font-black text-white text-lg shadow-lg mx-auto">E</div>
             )}
-            
-            <button 
+          </div>
+
+          {/* Toggle Switch Lateral de Colapso */}
+          <div className="px-3 flex items-center justify-between mx-2 p-2 bg-white/5 rounded-2xl border border-white/5">
+            {!isSidebarCollapsed && (
+              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                Menu Compacto
+              </span>
+            )}
+            <button
+              role="switch"
+              aria-checked={!isSidebarCollapsed}
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="p-1.5 hover:bg-white/5 text-slate-400 hover:text-white rounded-lg transition-all mx-auto"
-              title={isSidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none mx-auto ${
+                !isSidebarCollapsed ? 'bg-indigo-600' : 'bg-slate-700'
+              }`}
+              title={isSidebarCollapsed ? "Expandir Sidebar" : "Colapsar Sidebar"}
             >
-              {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  !isSidebarCollapsed ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
             </button>
+          </div>
+
+          {/* Informações da Competição / Arena */}
+          <div className="px-3">
+            {!isSidebarCollapsed ? (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-[#0E1726]/80 rounded-2xl border border-white/5 space-y-2.5 shadow-xl"
+              >
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest leading-none">Arena Corporativa</span>
+                  <span className="text-[10px] font-bold text-white truncate text-ellipsis" title={activeArena?.name || "Trial Industrial"}>
+                    {activeArena?.name || "Trial Industrial"}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest leading-none">Minha Equipa</span>
+                  <span className="text-[10px] font-black text-indigo-400 truncate text-ellipsis italic">
+                    {formatTeamName(activeTeam?.name, 0)}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest leading-none">Período Fiscal</span>
+                  <span className="text-[10px] font-black text-amber-300 italic">
+                    ROUND 0{currentRound}
+                  </span>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center gap-2 py-2 bg-[#0E1726]/40 rounded-xl border border-white/5 mx-1" title={`${activeArena?.name || "Trial Industrial"} | ${formatTeamName(activeTeam?.name, 0)}`}>
+                <span className="text-[9px] font-black text-amber-300">R0{currentRound}</span>
+                <div className="w-4 h-px bg-white/10" />
+                <span className="text-[7px] font-bold text-indigo-400 uppercase tracking-wider text-center">
+                  EQP
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Filtros de Governança Integrados no Sidebar */}
@@ -360,6 +416,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
           <button 
             onClick={onClose}
             className="w-full py-2 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-wider rounded-xl hover:opacity-90 transform hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg"
+            title="Voltar ao Cockpit"
           >
             <ChevronLeft size={16} />
             {!isSidebarCollapsed && "Voltar ao Cockpit"}
@@ -367,36 +424,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
         </div>
       </motion.aside>
 
-      {/* CORE CANVAS (ÁREA PRINCIPAL SEM SCROLL) */}
-      <main className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#060B13] to-[#03060a] p-4 gap-4">
+      {/* CORE CANVAS (ÁREA PRINCIPAL COMPENSANDO A LARGURA COLAPSADA FIXA DE 72PX) */}
+      <main className="ml-[72px] w-[calc(100%-72px)] flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#060B13] to-[#03060a] p-4 gap-4">
         
-        {/* TOPO: Informações do Torneio */}
-        <header className="flex justify-between items-center shrink-0 bg-[#0E1726]/40 p-4 rounded-[2rem] border border-white/5">
-          <div className="flex gap-4 items-center">
-            <span className="inline-block px-4 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] font-black uppercase rounded-full tracking-widest italic">
-              Arena: {activeArena?.name || "Trial Industrial"}
-            </span>
-            <span className="text-xs text-slate-400 font-bold">
-              Minha Equipa: <strong className="text-white italic">{formatTeamName(activeTeam?.name, 0)}</strong>
-            </span>
-          </div>
-
-          <div className="flex gap-4 items-center">
-            <div className="text-right flex flex-col">
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">PERÍODO CORRENTE</span>
-              <span className="text-xs font-black text-[#xFFFFB5] italic">ROUND 0{currentRound}</span>
-            </div>
-            <div className="w-px h-6 bg-white/5" />
-            <button 
-              onClick={onClose}
-              className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all"
-              title="Fechar Dashboards"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </header>
-
         {/* CONTAINER DO DASHBOARD SELECIONADO */}
         <div className="flex-1 overflow-hidden relative">
           
