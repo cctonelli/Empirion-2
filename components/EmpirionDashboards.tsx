@@ -219,7 +219,46 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
     },
     tooltip: {
       theme: 'dark',
-      style: { fontSize: '11px', fontFamily: 'Inter, sans-serif' }
+      style: { fontSize: '11px', fontFamily: 'Inter, sans-serif' },
+      y: {
+        formatter: (val: any, { seriesIndex, w }: any) => {
+          const seriesName = w?.config?.series?.[seriesIndex]?.name || '';
+          const chartTitle = w?.config?.title?.text || '';
+          
+          const isPercent = 
+            seriesName.includes('%') || 
+            seriesName.toLowerCase().includes('margem') || 
+            seriesName.toLowerCase().includes('share') || 
+            seriesName.toLowerCase().includes('iva') || 
+            seriesName.toLowerCase().includes('taxa') || 
+            seriesName.toLowerCase().includes('inflação') ||
+            seriesName.toLowerCase().includes('inflacao') ||
+            seriesName.toLowerCase().includes('produtividade') ||
+            seriesName.toLowerCase().includes('motivação') ||
+            seriesName.toLowerCase().includes('motivacao') ||
+            chartTitle.includes('(%)') ||
+            chartTitle.toLowerCase().includes('participação') ||
+            chartTitle.toLowerCase().includes('participacao') ||
+            chartTitle.toLowerCase().includes('clima') ||
+            chartTitle.toLowerCase().includes('retorno');
+
+          if (isPercent && typeof val === 'number') {
+            return `${val.toFixed(1).replace('.', ',')}%`;
+          }
+          
+          if (typeof val === 'number') {
+            if (yaxisFormatter) {
+              return yaxisFormatter(val);
+            }
+            if (val === 0) return '0';
+            if (Math.abs(val) >= 1e6) {
+              return `${(val / 1e6).toFixed(2).replace('.', ',')}M`;
+            }
+            return val.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+          }
+          return val;
+        }
+      }
     },
     stroke: { curve: 'smooth' as const, width: 2 },
     dataLabels: { enabled: false }

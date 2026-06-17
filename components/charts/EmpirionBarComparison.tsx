@@ -119,7 +119,23 @@ export const EmpirionBarComparison: React.FC<EmpirionBarComparisonProps> = ({
       fontFamily: 'Inter, sans-serif'
     },
     tooltip: {
-      theme: 'dark'
+      theme: 'dark',
+      y: {
+        formatter: (val: number, { seriesIndex, w }: any) => {
+          const seriesName = w?.config?.series?.[seriesIndex]?.name || '';
+          const chartTitle = w?.config?.title?.text || '';
+          const isPercent = 
+            seriesName.toLowerCase().includes('share') || 
+            seriesName.toLowerCase().includes('tsr') || 
+            seriesName.toLowerCase().includes('%') ||
+            chartTitle.includes('(%)');
+            
+          if (isPercent && typeof val === 'number') {
+            return `${val.toFixed(1).replace('.', ',')}%`;
+          }
+          return typeof val === 'number' ? val.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : val;
+        }
+      }
     }
   };
 

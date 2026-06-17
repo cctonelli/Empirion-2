@@ -2378,4 +2378,20 @@ project-root/
 - **DX Aprimorado:** Identificação imediata da liga em tela antes da submissão da estratégia comercial para o round.
 **Status:** ATIVO, amplamente homologado, compilado com sucesso e verificado via linter.
 
+## Decisão Arquitetural & Versionamento - Formatação de Relações de Indicadores de Porcentagem nos Tooltips dos Gráficos (1 Casa Decimal com Separador de Vírgula) - v2026.115
+
+**Data:** 17 de Junho de 2026 às 15:42 UTC  
+**Motivo:** Atender ao pedido estratégico das equipes de contabilidade e inteligência de mercado para formatar os tooltips dos gráficos dinâmicos de maneira clara, apresentando exatamente um dígito fracionário precedido por vírgula para os indicadores de taxas, margens e variações percentuais (ex: Margem Líquida, Market Share, Inflação, Clima Organizacional / Motivação, PIB, etc.). Isso evita interpretações ambíguas de dispersão do benchmark.  
+**Principais diferenças:**  
+- **Formatador Centralizado de Tooltips (`components/EmpirionDashboards.tsx`):**
+  - Implementado algoritmo inteligente de intercepção no retorno de dados nos tooltips de todos os gráficos baseados em `getBaseChartOptions`.
+  - Se o nome da série do gráfico ou o título principal indicar percentual (identificado através da presença de `%`, `Margem`, `Share`, `IVA`, `Taxa`, `Inflação`, `Produtividade`, `Motivação`, etc.), o valor é formatado automaticamente contendo 1 casa decimal e usando separador decimal padrão brasileiro (vírgula): `val.toFixed(1).replace('.', ',') + '%'`.
+  - Outros indicadores continuam a exibir formatações fiduciárias em milhões (M), milhares (k) ou inteiros e valores decimais monetários formatados por padrão com separações e dígitos máximos de fração no locale brasileiro `pt-BR`.
+- **Gráficos Comparativos de Competição (`components/charts/EmpirionBarComparison.tsx`):**
+  - Adicionado suporte reativo diário de tooltip dedicado aos componentes de benchmarking de Market Share e Total Shareholder Return (TSR), alinhando o feed gráfico do menu do Tutor e monitor de equipes.
+**Impactos esperados:**  
+- **Visualização de Ativos e Margens Aprimorada:** O painel dinâmico do simulador apresenta precisão estrita e leitura correta independente das variações decimais de cada round de simulação.
+- **Evitar Poluição de Rótulos:** Mantém o gráfico livre de texto estático em excesso, apresentando a informação de forma polida e profissional sob o tooltip dinâmico em hover.
+**Status:** ATIVO, homologado pelo time de PMP e Engenharia de Banco de dados, com compilação e verificação de linter de React bem-sucedidas.
+
 
