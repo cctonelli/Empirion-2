@@ -38,10 +38,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
   // 1. Estados de Navegação e Sidebar
   const [activeTab, setActiveTab] = useState<'macroeconomics' | 'financial' | 'logistics' | 'industrial'>('financial');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
 
-  // Indica se a barra deve ser mostrada como expandida (por toggle manual ou mouse hover)
-  const isVisuallyExpanded = !isSidebarCollapsed || isSidebarHovered;
+  // Indica se a barra deve ser mostrada como expandida (apenas por toggle manual)
+  const isVisuallyExpanded = !isSidebarCollapsed;
 
   // 2. Estados de Governança e Identidade (Filtros Globais)
   const [tacticalGovernance, setTacticalGovernance] = useState<'baixo' | 'medio' | 'alto' | 'total'>('total');
@@ -311,8 +310,6 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       <motion.aside 
         animate={{ width: isVisuallyExpanded ? '260px' : '72px' }}
         transition={{ duration: 0.25, ease: 'easeInOut' }}
-        onMouseEnter={() => { if (isSidebarCollapsed) setIsSidebarHovered(true); }}
-        onMouseLeave={() => setIsSidebarHovered(false)}
         className="fixed top-0 bottom-0 left-0 z-40 h-full bg-[#051523] border-r border-white/5 flex flex-col justify-between shrink-0 select-none shadow-2xl shadow-black/80"
       >
         <div className="flex flex-col gap-5 pt-6">
@@ -336,17 +333,31 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
             )}
           </div>
 
-          {/* Toggle Switch Lateral de Colapso (Apenas Tooltip "Menu Compacto", sem texto no layout) */}
-          {isVisuallyExpanded && (
-            <div className="px-3 flex items-center justify-center mx-2 p-2 bg-white/5 rounded-2xl border border-white/5">
+          {/* Container de Controle Superior (Botão SAIR + Switch Compacto) */}
+          <div className="px-3">
+            <div className={`flex ${isVisuallyExpanded ? 'flex-row justify-between items-center bg-white/5 rounded-2xl p-2 border border-white/5 gap-2' : 'flex-col items-center gap-4 bg-white/5 rounded-2xl py-3 px-1 border border-white/5'}`}>
+              
+              {/* Botão SAIR (À esquerda no expandido, ou centralizado em destaque no colapsado) */}
+              <button 
+                onClick={onClose}
+                className={`flex items-center justify-center text-white bg-gradient-to-r from-rose-500 to-orange-500 hover:opacity-90 transition-all font-black uppercase text-[10px] tracking-wider rounded-xl shadow-lg ring-1 ring-white/10 ${
+                  isVisuallyExpanded ? 'py-1.5 px-3 gap-1.5' : 'w-10 h-10 rounded-full'
+                }`}
+                title="SAIR"
+              >
+                <ChevronLeft size={16} />
+                {isVisuallyExpanded && "SAIR"}
+              </button>
+
+              {/* Toggle Switch Lateral de Colapso */}
               <button
                 role="switch"
                 aria-checked={!isSidebarCollapsed}
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none mx-auto ${
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   !isSidebarCollapsed ? 'bg-indigo-600' : 'bg-slate-700'
                 }`}
-                title="Menu Compacto"
+                title={isSidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
               >
                 <span
                   className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -355,7 +366,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                 />
               </button>
             </div>
-          )}
+          </div>
 
           {/* Informações da Competição / Arena (Apenas visíveis quando expandido) */}
           {isVisuallyExpanded && (
@@ -455,18 +466,6 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               );
             })}
           </nav>
-        </div>
-
-        {/* Rodapé do Menu Lateral - Voltar ao Cockpit */}
-        <div className="p-3 border-t border-white/5 flex flex-col gap-2">
-          <button 
-            onClick={onClose}
-            className="w-full py-2 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-wider rounded-xl hover:opacity-90 transform hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg"
-            title="SAIR"
-          >
-            <ChevronLeft size={16} />
-            {isVisuallyExpanded && "SAIR"}
-          </button>
         </div>
       </motion.aside>
 

@@ -2412,5 +2412,23 @@ project-root/
 - **Transição Fluida (Hover-to-Expand):** Toda a riqueza de comandos de governança e toggles se expande suavemente sob hover e se recolhe sem deixar ruídos.
 **Status:** ATIVO, amplamente homologado pelas equipes de UI/UX, Banco de dados e QA.
 
+## Decisão Arquitetural & Versionamento - Erradicação de Hover Automático e Unificação Superior do Botão SAIR & Switch Compacto - v2026.117
+
+**Data:** 17 de Junho de 2026 às 17:35 UTC  
+**Motivo:** Atender à solicitação refinada de usabilidade e ergonomia das equipes de simulação da copa de negócios. O hover automático para expansão de painéis foi completamente eliminado para evitar saltos ou distrações visuais involuntárias do mouse sobre o menu lateral dos dashboards. Adicionalmente, o botão de saída ("SAIR") foi promovido ao topo, integrando-se lado a lado com o Switch de menu compacto para prover maior controle e fluidez.  
+**Principais diferenças:**  
+- **Eliminação do Hover do Sidebar (`components/EmpirionDashboards.tsx`):**
+  - Removido o estado `isSidebarHovered` e as propriedades de escuta `onMouseEnter` / `onMouseLeave` da tag lateral `<motion.aside>`. A ampliação ou recolhimento é agora comandada estritamente por clique no Switch (Menu Compacto).
+- **Fusão e Reposicionamento do Controle Superior:**
+  - O botão de encerramento do dashboard (`SAIR`) foi removido do rodapé inferior e acoplado no topo dentro da mesma seção que aloja o Switch.
+  - **Layout Expandido:** O botão `SAIR` (com rótulo de texto, ícone de saída e preenchimento gradiente rose/orange) fica posicionado de forma elegante à esquerda, com o Switch lateral de colapso à sua direita bem equilibrado em uma linha flex.
+  - **Layout Colapsado/Recolhido (72px):** O botão redondo de saída (`ChevronLeft` de 40px) e o Switch de 36px se organizam verticalmente, garantindo que o aluno possa a qualquer momento retornar ao cockpit das rodadas ou re-expandir a barra com um clique limpo e natural.
+- **Limpeza do Rodapé:**
+  - O antigo CTA de rodapé que continha o botão de saída foi completamente limpo e expurgado, deixando o layout sem poluição ou elementos flutuantes repetitivos.
+**Impactos esperados:**  
+- **Visualização Equilibrada (72px):** Sidebar ocupando somente 72px e isento de ruídos desnecessários, exibindo unicamente os ícones de navegação rápidos, o botão de saída e o Switch de ampliação superior.
+- **Ergonomia e Foco Aprimorados:** Fim dos disparos mecânicos de expansão sobre o mouse-hover, dando pleno controle das transições aos cliques intencionais dos usuários do sistema.
+**Status:** ATIVO, auditado pelo arquiteto de UI/UX e PMP com linter de React bem-sucedido.
+
 
 
