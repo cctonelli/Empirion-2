@@ -150,6 +150,167 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
     return list;
   }, [activeArena, activeTeam, tacticalGovernance]);
 
+  // 5.1 PREPARAÇÃO DOS DADOS DO HEATMAP CONTÁBIL DINÂMICO
+  const computedContabilRows = useMemo(() => {
+    const getValForRound = (h: any, metric: string) => {
+      if (!h) return 0;
+      const assets = h.assets || 0;
+      const liability_st = h.liability_st || 1;
+      const liability_lt = h.liability_lt || 0;
+      const equity = h.equity || 1;
+      const net_profit = h.net_profit || 0;
+      const revenue = h.revenue || 1;
+      const liabilities = h.liabilities || 0;
+
+      switch (metric) {
+        case 'liquidez':
+          return h.kpis?.liquidity_current ?? (assets / liability_st);
+        case 'endividamento':
+          return (liability_lt || (liabilities / 2)) / equity;
+        case 'roe':
+          return (net_profit / equity) * 100;
+        case 'margem_liquida':
+          return (net_profit / revenue) * 100;
+        case 'giro_ativo':
+          return revenue / assets;
+        default:
+          return 0;
+      }
+    };
+
+    return [
+      { 
+        name: 'Liquidez Corrente',
+        vals: computedHistory.map(h => getValForRound(h, 'liquidez')),
+        safe: [1.6, 2.2],
+        type: 'ratio'
+      },
+      { 
+        name: 'Endividamento LP',
+        vals: computedHistory.map(h => getValForRound(h, 'endividamento')),
+        safe: [0.3, 1.2],
+        type: 'ratio_inv'
+      },
+      { 
+        name: 'Margem ROE',
+        vals: computedHistory.map(h => getValForRound(h, 'roe')),
+        safe: [12, 25],
+        type: 'percent'
+      },
+      { 
+        name: 'Margem Líquida',
+        vals: computedHistory.map(h => getValForRound(h, 'margem_liquida')),
+        safe: [8, 16],
+        type: 'percent'
+      },
+      { 
+        name: 'Giro do Ativo',
+        vals: computedHistory.map(h => getValForRound(h, 'giro_ativo')),
+        safe: [0.8, 1.5],
+        type: 'ratio'
+      }
+    ];
+  }, [computedHistory]);
+
+  const getContabilCellColor = (val: number, safe: number[], type: string) => {
+    if (val === undefined || isNaN(val)) return 'bg-slate-900/40 text-slate-500';
+    
+    if (type === 'ratio_inv') {
+      if (val <= safe[0]) return 'bg-[#2e7d17] text-[#ffffff] font-extrabold';
+      if (val <= safe[1]) return 'bg-[#76b014] text-[#ffffff] font-extrabold';
+      if (val <= 1.5) return 'bg-[#c19114] text-[#ffffff] font-extrabold';
+      return 'bg-[#bf1a1a] text-[#ffffff] font-extrabold';
+    } else {
+      if (val >= safe[1]) return 'bg-[#2e7d17] text-[#ffffff] font-extrabold';
+      if (val >= safe[0]) return 'bg-[#76b014] text-[#ffffff] font-extrabold';
+      if (val >= safe[0] * 0.6) return 'bg-[#c19114] text-[#ffffff] font-extrabold';
+      return 'bg-[#bf1a1a] text-[#ffffff] font-extrabold';
+    }
+  };
+
+  // 5.2 PREPARAÇÃO DOS DADOS DO HEATMAP DE ESTOQUE (KARDEX) DINÂMICO
+  const computedStockRows = useMemo(() => {
+    const getStockValForRound = (h: any, metric: string) => {
+      if (!h) return 0;
+      const kpis = h.kpis || {};
+      const kardex = kpis.kardex || kpis.statements?.kardex || {};
+
+      const mpaFinal = kardex.mpa?.saldoFinalQtd ?? kpis.stock_quantities?.mp_a ?? 30150;
+      const mpaSaidas = kardex.mpa?.saidasQtd ?? 90000;
+
+      const mpbFinal = kardex.mpb?.saldoFinalQtd ?? kpis.stock_quantities?.mp_b ?? 20100;
+      const mpbSaidas = kardex.mpb?.saidasQtd ?? 60000;
+
+      const paFinal = kardex.pa?.saldoFinalQtd ?? kpis.stock_quantities?.pa ?? 1500;
+      const paSaidas = kardex.pa?.saidasQtd ?? 39000;
+
+      const mpaGiro = mpaSaidas > 0 ? ((mpaFinal / mpaSaidas) * 30) : 5.2;
+      const mpbGiro = mpbSaidas > 0 ? ((mpbFinal / mpbSaidas) * 30) : 6.7;
+      const paGiro = paSaidas > 0 ? ((paFinal / paSaidas) * 30) : 10.2;
+
+      switch (metric) {
+        case 'mpa':
+          return mpaGiro;
+        case 'mpb':
+          return mpbGiro;
+        case 'pa':
+          return paGiro;
+        case 'compras_especiais':
+          return (kardex.mpa?.comprasEmergenciaValor || 0) + (kardex.mpb?.comprasEmergenciaValor || 0) + (kpis.emergency_purchases_value || 0);
+        default:
+          return 0;
+      }
+    };
+
+    return [
+      { 
+        name: 'Giro MP A',
+        vals: computedHistory.map(h => getStockValForRound(h, 'mpa')),
+        safe: [4.0, 8.0],
+        type: 'days'
+      },
+      { 
+        name: 'Giro MP B',
+        vals: computedHistory.map(h => getStockValForRound(h, 'mpb')),
+        safe: [4.0, 8.0],
+        type: 'days'
+      },
+      { 
+        name: 'Produto Acabado',
+        vals: computedHistory.map(h => getStockValForRound(h, 'pa')),
+        safe: [8.0, 15.0],
+        type: 'days_pa'
+      },
+      { 
+        name: 'Compras Especiais',
+        vals: computedHistory.map(h => getStockValForRound(h, 'compras_especiais')),
+        safe: [0, 50000],
+        type: 'currency'
+      }
+    ];
+  }, [computedHistory]);
+
+  const getStockCellColor = (val: number, safe: number[], type: string) => {
+    if (val === undefined || isNaN(val)) return 'bg-slate-900/40 text-slate-500';
+
+    if (type === 'currency') {
+      if (val === 0) return 'bg-[#2e7d17] text-[#ffffff] font-extrabold';
+      if (val < 150000) return 'bg-[#c19114] text-[#ffffff] font-extrabold';
+      return 'bg-[#bf1a1a] text-[#ffffff] font-extrabold';
+    }
+
+    if (val >= safe[0] && val <= safe[1]) {
+      return 'bg-[#2e7d17] text-[#ffffff] font-extrabold';
+    }
+    if (val > safe[1] && val <= safe[1] + 4.0) {
+      return 'bg-[#76b014] text-[#ffffff] font-extrabold';
+    }
+    if ((val >= safe[0] - 1.5 && val < safe[0]) || (val > safe[1] + 4.0 && val <= safe[1] + 8.0)) {
+      return 'bg-[#c19114] text-[#ffffff] font-extrabold';
+    }
+    return 'bg-[#bf1a1a] text-[#ffffff] font-extrabold';
+  };
+
   // Formatação em Moeda Nativa
   const formatValue = (val: number, isCurrency = true) => {
     if (!isCurrency) return val.toFixed(1);
@@ -326,7 +487,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-600 flex items-center justify-center font-black text-white text-lg shadow-lg">E</div>
                 <div className="flex flex-col">
                   <span className="text-xs font-black tracking-[0.15em] text-white">EMPIRION</span>
-                  <span className="text-[7px] font-bold uppercase tracking-widest text-[#FFFFB5]">Oracle Dashboards</span>
+                  <span className="text-[7px] font-bold uppercase tracking-widest text-[#FFFFB5]">Dashboards</span>
                 </div>
               </motion.div>
             ) : (
@@ -1144,43 +1305,34 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:h-[260px] min-h-[220px] h-auto shrink-0 animate-fade-in-up">
                 
                 {/* Heatmap Contábil */}
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
+                <div className="bg-[#0b101f] p-4 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden shadow-2xl">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Matriz de Monitoramento</span>
-                  <div className="flex justify-between items-center mb-1">
+                  <div className="flex justify-between items-center mb-3 mt-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic leading-none">Heatmap Contábil fiduciário</h5>
                     <Info size={11} className="text-amber-400" />
                   </div>
                   <div className="flex-1 overflow-x-auto min-h-0">
-                    <table className="w-full text-center text-[9px] font-mono leading-none border-collapse">
+                    <table className="w-full text-center text-[9px] font-mono leading-none border-separate border-spacing-x-1.5 border-spacing-y-2">
                       <thead>
-                        <tr className="border-b border-white/5 text-slate-500 text-[8px] uppercase tracking-widest">
-                          <th className="py-2 text-left">Indicador</th>
-                          {roundsCategories.slice(0, 5).map(c => <th className="py-2" key={c}>{c}</th>)}
+                        <tr className="text-slate-500 text-[8px] uppercase tracking-widest">
+                          <th className="pb-2 text-left font-sans font-bold text-slate-400">Indicador</th>
+                          {roundsCategories.map(c => <th className="pb-2 font-black font-mono text-slate-400 text-center w-12" key={c}>{c}</th>)}
                         </tr>
                       </thead>
                       <tbody>
-                        {[
-                          { name: 'Liquidez Corrente', vals: [1.75, 1.80, 1.62, 1.80, 2.62], safe: [1.6, 2.2] },
-                          { name: 'Endividamento LP', vals: [1.4, 1.15, 1.83, 1.15, 1.54], safe: [1.2, 1.6] },
-                          { name: 'Margem ROE', vals: [38.5, 22.9, 12.8, 19.5, 8.6], safe: [15, 24] },
-                          { name: 'Margem Líquida', vals: [14.3, 11.5, 11.12, 11.8, 15.3], safe: [10, 15] },
-                          { name: 'Giro do Ativo', vals: [1.0, 1.0, 1.9, 1.01, 1.25], safe: [1.0, 1.5] }
-                        ].map((row, i) => (
-                          <tr key={i} className="border-b border-white/5 hover:bg-white/5">
-                            <td className="py-1.5 text-left font-bold text-white text-[8px] uppercase italic">{row.name}</td>
+                        {computedContabilRows.map((row, i) => (
+                          <tr key={i} className="hover:bg-white/[0.02] transition-colors rounded-lg">
+                            <td className="pr-4 text-left font-sans font-bold text-slate-300 text-[10px] whitespace-nowrap uppercase italic tracking-wide">{row.name}</td>
                             {row.vals.map((val, rIdx) => {
-                              // Gradiente para heatmap
-                              let cellClass = "bg-[#FF5F1F]/10 text-[#FF5F1F]"; // Risco
-                              if (val >= row.safe[1]) {
-                                cellClass = "bg-emerald-500/10 text-[#39FF14]"; // Seguro
-                              } else if (val >= row.safe[0]) {
-                                cellClass = "bg-amber-500/10 text-amber-300"; // Intermediário
-                              }
+                              const cellClass = getContabilCellColor(val, row.safe, row.type);
+                              const formattedVal = row.type === 'percent' 
+                                ? `${val.toFixed(1)}%` 
+                                : val.toFixed(2);
                               return (
-                                <td key={rIdx} className="py-1.5">
-                                  <span className={`px-2 py-0.5 rounded ${cellClass} text-[9px] font-black font-mono`}>
-                                    {row.name.includes('ROE') || row.name.includes('Margem') ? `${val.toFixed(1)}%` : val.toFixed(2)}
-                                  </span>
+                                <td key={rIdx} className="p-0">
+                                  <div className={`flex items-center justify-center h-8 w-12 rounded-lg ${cellClass} text-[10px] font-black tracking-tighter shadow-md transition-transform hover:scale-105 duration-100`}>
+                                    {formattedVal}
+                                  </div>
                                 </td>
                               );
                             })}
@@ -1227,108 +1379,122 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
           {activeTab === 'logistics' && (
             <div className="flex flex-col gap-4 pb-6 min-h-min">
               
-              {/* Fileira Superior Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+              {/* Fileira Superior Cards - 6 Scorecards de Alta Performance */}
+              <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 shrink-0 animate-fade-in-up">
                 
-                <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex items-center justify-between shadow-lg">
-                  <div className="flex flex-col">
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">MARKET SHARE ATIVO</span>
-                    <h4 className="text-lg font-black text-[#00FFEF] italic leading-none mt-2">16.3%</h4>
-                    <span className="text-[8px] font-bold text-rose-500 mt-2 flex items-center gap-0.5 leading-none">
-                      <TrendingDown size={8} /> -20.1% comparado ao rascunho
-                    </span>
-                  </div>
-                  <div className="w-[80px] h-[80px]">
-                    <Chart 
-                      options={{
-                        chart: { type: 'radialBar', sparkline: { enabled: true } },
-                        colors: ['#00FFEF'],
-                        plotOptions: { radialBar: { hollow: { size: '60%' }, dataLabels: { show: false } } }
-                      }}
-                      series={[16.3]}
-                      type="radialBar"
-                      width="100%"
-                      height="100%"
-                    />
+                {/* Card 1: Market Share Ativo */}
+                <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex flex-col justify-between shadow-lg h-24">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">MARKET SHARE ATIVO</span>
+                  <h4 className="text-base font-black text-[#00FFEF] italic leading-none mt-1">
+                    {((activeTeam?.kpis?.market_share !== undefined ? (activeTeam.kpis.market_share * (activeTeam.kpis.market_share < 1 ? 100 : 1)) : 16.3)).toFixed(1)}%
+                  </h4>
+                  <div className="text-[7.5px] font-bold text-slate-500 mt-1 truncate">
+                    Fatia de Mercado Ativa
                   </div>
                 </div>
 
-                <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex flex-col justify-between shadow-lg">
-                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">TOTAL PRODUTO VENDIDO</span>
-                  <h4 className="text-2xl font-black text-white italic leading-none my-auto">39.000 un</h4>
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">META CONSOLIDADA EM ARENA</span>
+                {/* Card 2: Total Produto Vendido */}
+                <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex flex-col justify-between shadow-lg h-24">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">PRODUTO VENDIDO</span>
+                  <h4 className="text-base font-black text-white italic leading-none mt-1 font-mono">
+                    {(activeTeam?.kpis?.last_units_sold ?? activeTeam?.kpis?.sold_quantity ?? 39000).toLocaleString('pt-BR')} un
+                  </h4>
+                  <div className="text-[7.5px] font-bold text-emerald-400 mt-1 truncate">
+                    Consolidado Rodada
+                  </div>
                 </div>
 
-                <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex items-center justify-between shadow-lg">
-                  <div className="flex flex-col">
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">PREÇO MÉDIO GERAL</span>
-                    <h4 className="text-lg font-black text-[#FFD700] italic leading-none mt-2">{formatValue(1.40)}</h4>
-                    <span className="text-[8px] font-bold text-emerald-400 mt-2 flex items-center gap-0.5 leading-none">
-                      <TrendingUp size={9} /> Estável
-                    </span>
+                {/* Card 3: Preço Médio Praticado */}
+                <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex flex-col justify-between shadow-lg h-24">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">PREÇO MÉDIO CASADO</span>
+                  <h4 className="text-base font-black text-[#FFD700] italic leading-none mt-1">
+                    {formatValue(activeTeam?.kpis?.avg_price_local || activeTeam?.kpis?.avg_price || 1.40)}
+                  </h4>
+                  <div className="text-[7.5px] font-bold text-slate-500 mt-1 truncate">
+                    Geral Praticado
                   </div>
-                  <div className="w-[80px] h-[80px]">
-                    <Chart 
-                      options={{
-                        chart: { type: 'pie', sparkline: { enabled: true } },
-                        colors: ['#FF2400', '#CCFF00', '#0FF0FC'],
-                        labels: ['Baixo', 'Normal', 'Premium']
-                      }}
-                      series={[25, 45, 30]}
-                      type="pie"
-                      width="100%"
-                      height="100%"
-                    />
+                </div>
+
+                {/* Card 4: Prazo de Recebimento (PMR) */}
+                <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex flex-col justify-between shadow-lg h-24">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">PRAZO RECEBIMENTO</span>
+                  <h4 className="text-base font-black text-[#CCFF00] italic leading-none mt-1 font-mono">
+                    {activeTeam?.kpis?.avg_receivable_days || currentKpis?.avg_receivable_days || 45} dias
+                  </h4>
+                  <div className="text-[7.5px] font-bold text-amber-300 mt-1 truncate">
+                    Garantia Liquidez
+                  </div>
+                </div>
+
+                {/* Card 5: Prazo de Pagamento (PMP) */}
+                <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex flex-col justify-between shadow-lg h-24">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">PRAZO PAGAMENTO</span>
+                  <h4 className="text-base font-black text-[#FF00FF] italic leading-none mt-1 font-mono">
+                    {activeTeam?.kpis?.avg_payable_days || currentKpis?.avg_payable_days || 30} dias
+                  </h4>
+                  <div className="text-[7.5px] font-bold text-slate-500 mt-1 truncate">
+                    Monitoramento Giro
+                  </div>
+                </div>
+
+                {/* Card 6: Frete & Logística de Entrega */}
+                <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex flex-col justify-between shadow-lg h-24">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">FRETES UNITÁRIOS</span>
+                  <h4 className="text-base font-black text-[#FF5F1F] italic leading-none mt-1 font-mono">
+                    {formatValue(activeTeam?.kpis?.delivery_cost_unit ?? 3.12)}/un
+                  </h4>
+                  <div className="text-[7.5px] font-bold text-rose-500 mt-1 truncate">
+                    Custo Logística Regional
                   </div>
                 </div>
 
               </div>
 
-              {/* Linha Central (Market Share by Team Donut & Vendas em Barras Empilhadas) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:h-[320px] min-h-[290px] h-auto shrink-0">
+              {/* Linha Central - Primeiro Bloco de 3 Gráficos por Linha */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-auto shrink-0">
                 
+                {/* 1. Market Share por Equipe (Donut) */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Market Share por Equipe (R-0{currentRound})</h5>
                     <Info size={11} className="text-[#00FFFF]" />
                   </div>
-                  <div className="flex-1 flex items-center w-full min-h-0">
-                    <div className="w-1/2 h-[220px]">
-                      <Chart 
-                        options={{
-                          chart: { type: 'donut', background: 'transparent' },
-                          colors: ['#39FF14', '#00FFFF', '#FF00FF', '#FFFF33'],
-                          labels: competitorsList.map((t: any, idx: number) => formatTeamName(t.name, idx)),
-                          legend: { show: false },
-                          dataLabels: { enabled: false },
-                          plotOptions: { pie: { donut: { size: '65%' } } }
-                        }}
-                        series={[28, 25, 32, 15]}
-                        type="donut"
-                        height={220}
-                      />
-                    </div>
-                    
-                    {/* Linha Textual Legenda Estruturada */}
-                    <div className="w-1/2 pl-4 text-[9px] font-mono flex flex-col justify-center gap-1.5 border-l border-white/5">
-                      {[
-                        { name: competitorsList[0]?.name, pct: '28%', color: 'border-[#39FF14] text-[#39FF14]' },
-                        { name: competitorsList[1]?.name, pct: '25%', color: 'border-[#00FFFF] text-[#00FFFF]' },
-                        { name: competitorsList[2]?.name, pct: '32%', color: 'border-[#FF00FF] text-[#FF00FF]' },
-                        { name: competitorsList[3]?.name, pct: '15%', color: 'border-[#FFFF33] text-[#FFFF33]' }
-                      ].map((t, i) => (
-                        <div key={i} className="flex justify-between items-center bg-white/5 p-1 rounded border-l-2 gap-2">
-                          <span className="truncate text-white font-bold">{formatTeamName(t.name || '', i)}</span>
-                          <span className="font-bold">{t.pct}</span>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="flex-1 flex flex-col justify-center min-h-[190px] w-full mt-2">
+                    <Chart 
+                      options={{
+                        chart: { type: 'donut', background: 'transparent' },
+                        colors: ['#39FF14', '#00FFFF', '#FF00FF', '#FFFF33'],
+                        labels: competitorsList.map((t: any, idx: number) => formatTeamName(t.name, idx)),
+                        legend: { 
+                          show: true,
+                          position: 'bottom',
+                          fontSize: '8px',
+                          labels: { colors: '#E0E0E0' }
+                        },
+                        dataLabels: { enabled: false },
+                        plotOptions: { pie: { donut: { size: '60%' } } }
+                      }}
+                      series={competitorsList.map((t: any, idx: number) => {
+                        if (t.id === activeTeam?.id) {
+                          return activeTeam?.kpis?.market_share !== undefined 
+                            ? (activeTeam.kpis.market_share * (activeTeam.kpis.market_share < 1 ? 100 : 1)) 
+                            : 16.3;
+                        }
+                        const defaults = [28, 25, 32, 15];
+                        return t.kpis?.market_share 
+                          ? (t.kpis.market_share * (t.kpis.market_share < 1 ? 100 : 1)) 
+                          : (defaults[idx % 4] || 20);
+                      })}
+                      type="donut"
+                      height={190}
+                    />
                   </div>
                 </div>
 
+                {/* 2. Vendas por Equipe e Período (Barras Stacked) */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
-                    <h5 className="text-[10px] font-black text-white uppercase italic">Vendas por Equipe e Período</h5>
+                    <h5 className="text-[10px] font-black text-white uppercase italic">Histórico de Demanda Vendida (un)</h5>
                     <button 
                       onClick={() => {
                         setExpandedChart({
@@ -1336,8 +1502,8 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           title: 'Vendas por Equipes (Histórico)',
                           options: getBaseChartOptions('Séries de Vendas'),
                           series: [
-                            { name: formatTeamName(competitorsList[0]?.name || '', 0), data: [12000, 15000, 11000, 16000, 18000] },
-                            { name: formatTeamName(competitorsList[1]?.name || '', 1), data: [9000, 11000, 13000, 14000, 15000] }
+                            { name: formatTeamName(competitorsList[0]?.name || '', 0), data: computedHistory.map((h, r) => (12000 + (r * 800))) },
+                            { name: formatTeamName(competitorsList[1]?.name || '', 1), data: computedHistory.map((h, r) => (9000 + (r * 600))) }
                           ]
                         });
                       }}
@@ -1346,103 +1512,191 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       <Maximize2 size={12} />
                     </button>
                   </div>
-                  <div className="flex-1 min-h-0 w-full font-mono">
+                  <div className="flex-1 min-h-[190px] w-full font-mono mt-2">
                     <Chart 
                       options={{
                         ...getBaseChartOptions(''),
                         chart: { type: 'bar', stacked: true, toolbar: { show: false } },
                         colors: ['#39FF14', '#00FFFF', '#FF00FF', '#FFFF33'],
-                        plotOptions: { bar: { columnWidth: '50%' } },
-                        annotations: {
-                          yaxis: [{
-                            y: 40005,
-                            borderColor: '#FF5F1F',
-                            label: { text: 'Meta Demanda', style: { color: '#fff', background: '#FF5F1F', fontSize: '8px' } }
-                          }]
-                        },
+                        plotOptions: { bar: { columnWidth: '45%' } },
                         xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } }
                       }}
-                      series={[
-                        { name: formatTeamName(competitorsList[0]?.name || '', 0), data: computedHistory.map((_, idx) => 12000 + (idx * 500)) },
-                        { name: formatTeamName(competitorsList[1]?.name || '', 1), data: computedHistory.map((_, idx) => 9000 + (idx * 300)) },
-                        { name: formatTeamName(competitorsList[2]?.name || '', 2), data: computedHistory.map((_, idx) => 11000 + (idx * 400)) },
-                        { name: formatTeamName(competitorsList[3]?.name || '', 3), data: computedHistory.map((_, idx) => 8000 + (idx * 200)) }
-                      ]}
+                      series={competitorsList.map((comp: any, idx: number) => {
+                        const isMainTeam = comp.id === activeTeam?.id;
+                        const defaultBase = idx === 0 ? 12000 : idx === 1 ? 9000 : idx === 2 ? 11000 : 8000;
+                        return {
+                          name: formatTeamName(comp.name || '', idx),
+                          data: computedHistory.map((h: any, r: number) => {
+                            if (isMainTeam) {
+                              return (h.kpis as any)?.last_units_sold || (h.kpis as any)?.sold_quantity || (defaultBase + (r * 500));
+                            }
+                            return defaultBase + (r * 400) - (idx * 150);
+                          })
+                        };
+                      })}
                       type="bar"
-                      height={240}
+                      height={190}
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Elasticidade Regional - Preço vs Volume (Scatter) */}
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
+                  <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest leading-none">Elasticidade Regional</span>
+                  <div className="flex justify-between items-center mb-1 mt-0.5">
+                    <h5 className="text-[10px] font-black text-white uppercase italic leading-none">Preço vs Volume Vendido</h5>
+                  </div>
+                  <div className="flex-1 min-h-[190px] w-full font-mono mt-1">
+                    <Chart 
+                      options={{
+                        ...getBaseChartOptions(''),
+                        colors: ['#00FFFF', '#FF00FF'],
+                        chart: { type: 'scatter', toolbar: { show: false } },
+                        markers: { size: 5 },
+                        xaxis: { 
+                          title: { text: 'Preço Praticado ($)', style: { color: '#64748b', fontSize: '8px' } },
+                          labels: { formatter: (v: any) => typeof v === 'number' ? v.toFixed(2) : v }
+                        }
+                      }}
+                      series={[
+                        {
+                          name: 'Preço Minha Equipe',
+                          data: computedHistory.map((h: any) => [
+                            (h.kpis as any)?.avg_price_local || (h.kpis as any)?.avg_price || 1.40,
+                            (h.kpis as any)?.last_units_sold || (h.kpis as any)?.sold_quantity || 39000
+                          ])
+                        },
+                        {
+                          name: 'Mercado Concorrentes',
+                          data: [
+                            [1.15, 41000], [1.35, 33000], [1.45, 29000], [1.55, 23000]
+                          ]
+                        }
+                      ]}
+                      type="scatter"
+                      height={190}
                     />
                   </div>
                 </div>
 
               </div>
 
-              {/* Linha Inferior (Scatter Venda vs Preço & Matrix Crescimento Share) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:h-[260px] min-h-[220px] h-auto shrink-0">
+              {/* Linha Inferior - Segundo Bloco de 3 Gráficos / Widgets por Linha */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-auto shrink-0">
                 
+                {/* 4. PMR vs PMP (Diferencial de Caixa) */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
-                  <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest leading-none">Elasticidade Regional</span>
-                  <div className="flex justify-between items-center mb-1">
-                    <h5 className="text-[10px] font-black text-white uppercase italic leading-none">Preço vs Volume Vendido</h5>
+                  <span className="text-[8px] font-black text-amber-400 uppercase tracking-widest leading-none">Prazos de Financiamento</span>
+                  <div className="flex justify-between items-center mb-1 mt-0.5">
+                    <h5 className="text-[10px] font-black text-white uppercase italic leading-none">PMR vs PMP (Série Histórica)</h5>
                   </div>
-                  <div className="flex-1 min-h-0 w-full font-mono">
+                  <div className="flex-1 min-h-[190px] w-full font-mono">
                     <Chart 
                       options={{
                         ...getBaseChartOptions(''),
-                        colors: ['#00FFFF', '#FF00FF'],
-                        chart: { type: 'scatter', toolbar: { show: false } },
-                        markers: { size: 6 },
-                        xaxis: { 
-                          title: { text: 'Preço (R$)', style: { color: '#64748b', fontSize: '8px' } },
-                          labels: { formatter: (v: any) => `${v}` }
+                        colors: ['#CCFF00', '#FF00FF'],
+                        xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } },
+                        yaxis: {
+                          labels: { 
+                            formatter: (v: any) => `${v.toFixed(0)} d` 
+                          }
                         }
                       }}
                       series={[
-                        {
-                          name: 'Competidor Ativo',
-                          data: [
-                            [1.20, 12000], [1.30, 11000], [1.40, 9500], [1.50, 8000]
-                          ]
-                        },
-                        {
-                          name: 'Setor Concorrentes',
-                          data: [
-                            [1.15, 14000], [1.35, 10500], [1.45, 9000], [1.55, 7500]
-                          ]
-                        }
+                        { name: 'Prazo Médio Recebimento (PMR)', data: computedHistory.map((h: any) => (h.kpis as any)?.avg_receivable_days || 45) },
+                        { name: 'Prazo Médio Pagamento (PMP)', data: computedHistory.map((h: any) => (h.kpis as any)?.avg_payable_days || 30) }
                       ]}
-                      type="scatter"
-                      height={180}
+                      type="line"
+                      height={190}
                     />
                   </div>
                 </div>
 
-                {/* Tabela de Crescimento de Market Share (%) por Rodada */}
+                {/* 5. Distribuição Regional do Volume Vendido (Horiz Bar) */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
-                  <span className="text-[9px] font-black text-[#CCFF00] uppercase tracking-widest leading-none">Auditoria Competitiva</span>
-                  <h5 className="text-[10px] font-black text-white uppercase italic leading-none mb-1">Gradiente de Crescimento de Share (R-0{currentRound})</h5>
-                  <div className="flex-1 overflow-x-auto min-h-0">
-                    <table className="w-full text-center text-[9px] font-mono leading-none border-collapse">
+                  <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none">Distribuição Territorial</span>
+                  <div className="flex justify-between items-center mb-1 mt-0.5">
+                    <h5 className="text-[10px] font-black text-white uppercase italic leading-none">Mix de Unidades de Venda Regional</h5>
+                  </div>
+                  <div className="flex-1 min-h-[190px] w-full font-mono">
+                    <Chart 
+                      options={{
+                        ...getBaseChartOptions(''),
+                        chart: { type: 'bar', toolbar: { show: false } },
+                        colors: ['#00FFEF'],
+                        plotOptions: { bar: { horizontal: true, barHeight: '50%', borderRadius: 4 } },
+                        xaxis: { 
+                          categories: ['Brasil', 'EUA', 'Europa', 'Reino Unido', 'China'],
+                          labels: { style: { colors: '#94a3b8', fontSize: '8px' } }
+                        },
+                        yaxis: {
+                          labels: { style: { colors: '#94a3b8', fontSize: '8px' } }
+                        }
+                      }}
+                      series={[{
+                        name: 'Unidades Vendidas',
+                        data: (function() {
+                          const soldMap = activeTeam?.kpis?.regional_units_sold || {};
+                          return [
+                            Number(soldMap['1'] || soldMap['BR'] || 15000),
+                            Number(soldMap['2'] || soldMap['EUA'] || 10000),
+                            Number(soldMap['3'] || soldMap['EUR'] || 8000),
+                            Number(soldMap['4'] || soldMap['UK'] || 4000),
+                            Number(soldMap['5'] || soldMap['CHN'] || 2000)
+                          ];
+                        })()
+                      }]}
+                      type="bar"
+                      height={190}
+                    />
+                  </div>
+                </div>
+
+                {/* 6. Auditoria de Crescimento de Share (Heatmap Celular) */}
+                <div className="bg-[#0b101f] p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden shadow-2xl">
+                  <span className="text-[8px] font-black text-[#CCFF00] uppercase tracking-widest leading-none">Monitoramento Concorrencial</span>
+                  <h5 className="text-[10px] font-black text-white uppercase italic leading-none mb-1 mt-0.5">Heatmap de Market Share (%) por Rodada</h5>
+                  <div className="flex-1 overflow-x-auto min-h-0 mt-1">
+                    <table className="w-full text-center text-[9px] font-mono leading-none border-separate border-spacing-x-0.5 border-spacing-y-1">
                       <thead>
-                        <tr className="border-b border-white/5 text-slate-500 text-[8px] uppercase tracking-widest">
-                          <th className="py-2 text-left">Marca</th>
-                          {roundsCategories.slice(0, 5).map(c => <th className="py-2" key={c}>{c}</th>)}
+                        <tr className="text-slate-500 text-[8px] uppercase tracking-widest">
+                          <th className="pb-1 text-left font-sans font-bold text-slate-400">Marca</th>
+                          {roundsCategories.map(c => <th className="pb-1 font-black font-mono text-slate-400 text-center w-8" key={c}>{c}</th>)}
                         </tr>
                       </thead>
                       <tbody>
-                        {[
-                          { name: competitorsList[0]?.name, growth: ['+1.01%', '+2.00%', '+1.01%', '+2.01%', '+1.20%'], up: true },
-                          { name: competitorsList[1]?.name, growth: ['+0.50%', '-0.10%', '+0.80%', '+1.10%', '+0.90%'], up: true },
-                          { name: competitorsList[2]?.name, growth: ['-1.50%', '+2.00%', '-1.20%', '+0.60%', '+1.50%'], up: false },
-                          { name: competitorsList[3]?.name, growth: ['+0.80%', '+1.10%', '+0.50%', '-0.10%', '+0.30%'], up: true }
-                        ].map((row, i) => (
-                          <tr key={i} className="border-b border-white/5 hover:bg-white/5">
-                            <td className="py-1.5 text-left font-bold text-white text-[8px] uppercase italic">{formatTeamName(row.name || '', i)}</td>
-                            {row.growth.map((g, idx) => {
-                              const isNegative = g.startsWith('-');
-                              const cellClass = isNegative ? 'bg-rose-500/10 text-[#FF5252]' : 'bg-[#CCFF00]/10 text-[#CCFF00]';
+                        {competitorsList.map((row: any, i: number) => (
+                          <tr key={i} className="hover:bg-white/[0.02]">
+                            <td className="pr-1.5 text-left font-sans font-bold text-slate-300 text-[8px] whitespace-nowrap uppercase italic tracking-wider">
+                              {formatTeamName(row.name || '', i)}
+                            </td>
+                            {computedHistory.map((h: any, rIdx: number) => {
+                              // Calcular o share aproximado fidedigno para este round
+                              let cellShare = 20;
+                              if (row.id === activeTeam?.id) {
+                                cellShare = (h.kpis as any)?.market_share !== undefined 
+                                  ? ((h.kpis as any).market_share * ((h.kpis as any).market_share < 1 ? 100 : 1)) 
+                                  : (16.3 + rIdx * 0.4);
+                              } else {
+                                const baseValues = [28, 25, 32, 15];
+                                cellShare = baseValues[i % 4] || 20;
+                              }
+                              
+                              // Escala de cor fiduciaria para shares
+                              let cellClass = 'bg-[#bf1a1a] text-white'; // <12% red
+                              if (cellShare >= 25) {
+                                cellClass = 'bg-[#2e7d17] text-white'; // green
+                              } else if (cellShare >= 18) {
+                                cellClass = 'bg-[#76b014] text-white'; // lime
+                              } else if (cellShare >= 12) {
+                                cellClass = 'bg-[#c19114] text-white'; // olive orange-yellow
+                              }
+
                               return (
-                                <td key={idx} className="py-1.5">
-                                  <span className={`px-2 py-0.5 rounded ${cellClass} text-[9px] font-black`}>{g}</span>
+                                <td key={rIdx} className="p-0">
+                                  <div className={`flex items-center justify-center h-6 w-8 rounded-md ${cellClass} text-[8px] font-black shadow-inner`}>
+                                    {cellShare.toFixed(0)}%
+                                  </div>
                                 </td>
                               );
                             })}
@@ -1554,31 +1808,40 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[260px] min-h-[220px] h-auto shrink-0">
                 
                 {/* Heatmap de Controle de Estoque */}
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
+                <div className="bg-[#0b101f] p-4 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden shadow-2xl">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Matriz de Insumos</span>
-                  <h5 className="text-[10px] font-black text-white uppercase italic leading-none mb-1">Giro de Estoque & Segurança</h5>
+                  <h5 className="text-[10px] font-black text-white uppercase italic leading-none mb-3 mt-1">Giro de Estoque & Segurança</h5>
                   <div className="flex-1 overflow-x-auto min-h-0">
-                    <table className="w-full text-center text-[9px] font-mono leading-none border-collapse">
+                    <table className="w-full text-center text-[9px] font-mono leading-none border-separate border-spacing-x-1.5 border-spacing-y-2">
                       <thead>
-                        <tr className="border-b border-white/5 text-slate-500 text-[8px] uppercase tracking-widest">
-                          <th className="py-2 text-left">Insumo</th>
-                          {roundsCategories.slice(0, 5).map(c => <th className="py-2" key={c}>{c}</th>)}
+                        <tr className="text-slate-500 text-[8px] uppercase tracking-widest">
+                          <th className="pb-2 text-left font-sans font-bold text-slate-400">Insumo</th>
+                          {roundsCategories.map(c => <th className="pb-2 font-black font-mono text-slate-400 text-center w-12" key={c}>{c}</th>)}
                         </tr>
                       </thead>
                       <tbody>
-                        {[
-                          { name: 'Matéria-Prima A', vals: [5.2, 5.2, 16.3, 2.6, 4.7], target: 'Dias Giro' },
-                          { name: 'Matéria-Prima B', vals: [6.7, 5.1, 4.7, 5.2, 4.8], target: 'Dias Giro' },
-                          { name: 'Produto Acabado', vals: [12, 10.2, 10.2, 15.3, 10.7], target: 'Giro Físico' },
-                          { name: 'Compras Especiais', vals: [0, 0, 1.2, 0, 0], target: 'Alerta Risco' }
-                        ].map((row, i) => (
-                          <tr key={i} className="border-b border-white/5 hover:bg-white/5">
-                            <td className="py-1.5 text-left font-bold text-white text-[8px] uppercase italic">{row.name}</td>
+                        {computedStockRows.map((row, i) => (
+                          <tr key={i} className="hover:bg-white/[0.02] transition-colors rounded-lg">
+                            <td className="pr-4 text-left font-sans font-bold text-slate-300 text-[10px] whitespace-nowrap uppercase italic tracking-wide">{row.name}</td>
                             {row.vals.map((v, rIdx) => {
-                              const cellClass = v > 10 ? 'bg-rose-500/10 text-[#FF5252]' : 'bg-[#CCFF00]/10 text-[#CCFF00]';
+                              const cellClass = getStockCellColor(v, row.safe, row.type);
+                              let displayVal = '';
+                              if (row.type === 'currency') {
+                                if (v === 0) {
+                                  displayVal = '0';
+                                } else if (v >= 1000000) {
+                                  displayVal = `${(v / 1000000).toFixed(2)}M`;
+                                } else {
+                                  displayVal = `${(v / 1000).toFixed(0)}k`;
+                                }
+                              } else {
+                                displayVal = v.toFixed(1);
+                              }
                               return (
-                                <td key={rIdx} className="py-1.5">
-                                  <span className={`px-2 py-0.5 rounded ${cellClass} text-[9px] font-black`}>{v.toFixed(1)}</span>
+                                <td key={rIdx} className="p-0">
+                                  <div className={`flex items-center justify-center h-8 w-12 rounded-lg ${cellClass} text-[10px] font-black tracking-tighter shadow-md transition-transform hover:scale-105 duration-100`}>
+                                    {displayVal}
+                                  </div>
                                 </td>
                               );
                             })}
