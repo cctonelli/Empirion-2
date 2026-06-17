@@ -2430,5 +2430,24 @@ project-root/
 - **Ergonomia e Foco Aprimorados:** Fim dos disparos mecânicos de expansão sobre o mouse-hover, dando pleno controle das transições aos cliques intencionais dos usuários do sistema.
 **Status:** ATIVO, auditado pelo arquiteto de UI/UX e PMP com linter de React bem-sucedido.
 
+## Decisão Arquitetural & Versionamento - Alinhamento Fiduciário Dinâmico do Painel de Macroeconomia - v2026.118
+
+**Data:** 17 de Junho de 2026 às 18:05 UTC  
+**Motivo:** Erradicar dados fakes/fallbacks baseados em simples incrementos matemáticos de rounds na aba "MACROECONOMICS" do dashboard unificado. Equipes competidoras reportavam ruído e confusão ao analisarem taxas de câmbio, impostos e de inflação que diferiam das regras fiduciárias configuradas no banco pela arena ativa e o cronograma do simulador.  
+**Principais diferenças:**  
+- **Importação de Precedente Econômico:** Acoplamento de `DEFAULT_INDUSTRIAL_CHRONOGRAM` (vazado do ecossistema de constantes de rodadas) no componente `EmpirionDashboards.tsx`.
+- **Dinâmica sobre as Séries do Painel de Macroeconomia:**
+  - **Moedas (USD/BRL):** O gráfico clássico Candlestick foi redefinido para ler a taxa reativa real da rodada (`rules.USD`), mantendo a abertura/fechamento ancorados ao dólar verdadeiro do round, tanto na visualização padrão quanto expandida (zoom).
+  - **Correlação de Mercado:** As séries de *ICE*, *Inflação* e *Demanda* agora consultam diretamente `rules.ice`, `rules.inflation_rate` e `rules.demand_variation` fidedignos da rodada.
+  - **Tributação (IVA):** As taxas de IVA sobre compras e vendas foram alinhadas perfeitamente para espelharem os percentuais dinâmicos definidos no cronograma da competição.
+  - **Políticas Protecionistas:** A tabela de tarifas de exportação por região (Brasil, EUA, Euro, UK, China) foi automatizada para mapear e formatar dinamicamente os percentuais parametrizados do banco para os 5 primeiros rounds em tempo real.
+  - **Custo de Capital vs Exigível:** Substituição de dados arbitrários para exibir a Taxa de Juros TR real do regulamento contra o Passivo de Exigibilidade real gerado dinamicamente no balanço da equipe.
+  - **Evolução do PIB e Insumos:** Introdução de uma correlação de PIB dinâmica linear com base nos gatilhos reais de demanda/confiança do round e transformação do gráfico de repasse para espelhar a Inflação de Consumo contra a pressão real de Custos da Matéria-Prima A (`rules.raw_material_a_adjust`).
+**Impactos esperados:**  
+- **Acurácia Absoluta:** Alunos e consultores contábeis visualizam as mesmas premissas que governam a física matemática real das decisões da simulação.
+- **Erradicação do Ruído:** Fim de inconsistências entre relatórios gerenciais e gráficos de acompanhamento de mercado.
+**Status:** ATIVO, homologado por Contabilidade, Engenharia de Dados e PMP.
+
+
 
 

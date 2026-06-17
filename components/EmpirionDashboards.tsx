@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import Chart from 'react-apexcharts';
+import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -485,7 +486,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               <div className="h-[310px] min-h-[310px] bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between overflow-hidden">
                 <div className="flex justify-between items-center mb-1">
                   <h4 className="text-[10px] font-black uppercase text-white tracking-wider flex items-center gap-1.5">
-                    <Coins size={14} className="text-amber-400" /> Variação Cambial de Moedas do Torneio (BRL vs USD / EUR / GBP / CNY / BTC)
+                    <Coins size={14} className="text-amber-400" /> Variação Cambial Real de Moedas (BRL vs USD / EUR / GBP / CNY / BTC)
                   </h4>
                   <div className="flex gap-2">
                     <button 
@@ -497,14 +498,15 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           title: 'Currency Exchange Rates (BRL vs USD/EUR/GBP/CNY/BTC)',
                           options: opts,
                           series: [{
-                            data: [
-                              { x: 'Round 1', y: [5.20, 5.28, 5.15, 5.25] },
-                              { x: 'Round 2', y: [5.25, 5.35, 5.20, 5.31] },
-                              { x: 'Round 3', y: [5.31, 5.42, 5.28, 5.39] },
-                              { x: 'Round 4', y: [5.39, 5.49, 5.35, 5.44] },
-                              { x: 'Round 5', y: [5.44, 5.58, 5.40, 5.52] },
-                              { x: 'Round 6', y: [5.52, 5.65, 5.48, 5.60] }
-                            ]
+                            name: 'Câmbio USD',
+                            data: computedHistory.map((h) => {
+                              const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[0] || {};
+                              const v = r.USD || 5.20;
+                              return {
+                                x: `R-0${h.round}`,
+                                y: [v * 0.99, v * 1.015, v * 0.98, v]
+                              };
+                            })
                           }]
                         });
                       }}
@@ -523,16 +525,15 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '9px' } } }
                     }}
                     series={[{
-                      name: 'Câmbio USD',
-                      data: computedHistory.map((h, idx) => ({
-                        x: `R-0${h.round}`,
-                        y: [
-                          5.0 + (idx * 0.08), 
-                          5.15 + (idx * 0.08), 
-                          4.95 + (idx * 0.08), 
-                          5.10 + (idx * 0.08)
-                        ]
-                      }))
+                      name: 'Câmbio USD (Fechamento Real)',
+                      data: computedHistory.map((h) => {
+                        const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[0] || {};
+                        const v = r.USD || 5.20;
+                        return {
+                          x: `R-0${h.round}`,
+                          y: [v * 0.995, v * 1.01, v * 0.985, v]
+                        };
+                      })
                     }]}
                     type="candlestick"
                     height={245}
@@ -554,9 +555,27 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           title: 'ICE x Inflação x Variação de Demanda',
                           options: getBaseChartOptions('Correlação Macro'),
                           series: [
-                            { name: 'ICE', data: computedHistory.map(h => 100 + (h.round * 5)) },
-                            { name: 'Inflação', data: computedHistory.map(h => 4.5 + (h.round * 0.2)) },
-                            { name: 'Demanda', data: computedHistory.map(h => h.round * 3) }
+                            { 
+                              name: 'ICE', 
+                              data: computedHistory.map(h => {
+                                const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                                return r.ice !== undefined ? r.ice : 0;
+                              }) 
+                            },
+                            { 
+                              name: 'Inflação', 
+                              data: computedHistory.map(h => {
+                                const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                                return r.inflation_rate !== undefined ? r.inflation_rate : 0;
+                              }) 
+                            },
+                            { 
+                              name: 'Demanda', 
+                              data: computedHistory.map(h => {
+                                const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                                return r.demand_variation !== undefined ? r.demand_variation : 0;
+                              }) 
+                            }
                           ]
                         });
                       }}
@@ -573,9 +592,27 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } }
                       }}
                       series={[
-                        { name: 'ICE (%)', data: computedHistory.map(h => 2.5 + (h.round * 0.5)) },
-                        { name: 'Inf (%)', data: computedHistory.map(h => 4.2 + (h.round * 0.15)) },
-                        { name: 'Dem (%)', data: computedHistory.map(h => 1.5 + (h.round * 0.8)) }
+                        { 
+                          name: 'ICE (%)', 
+                          data: computedHistory.map(h => {
+                            const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                            return r.ice !== undefined ? r.ice : 0;
+                          }) 
+                        },
+                        { 
+                          name: 'Inf (%)', 
+                          data: computedHistory.map(h => {
+                            const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                            return r.inflation_rate !== undefined ? r.inflation_rate : 0;
+                          }) 
+                        },
+                        { 
+                          name: 'Dem (%)', 
+                          data: computedHistory.map(h => {
+                            const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                            return r.demand_variation !== undefined ? r.demand_variation : 0;
+                          }) 
+                        }
                       ]}
                       type="line"
                       height={180}
@@ -594,8 +631,20 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           title: 'IVA Purchases vs Sales',
                           options: getBaseChartOptions('Tributação'),
                           series: [
-                            { name: 'IVA Compras', data: [12, 12, 12, 14, 14, 14] },
-                            { name: 'IVA Vendas', data: [18, 18, 18, 18, 18, 18] }
+                            { 
+                              name: 'IVA Compras', 
+                              data: computedHistory.map(h => {
+                                const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                                return r.vat_purchases_rate !== undefined ? r.vat_purchases_rate : 0;
+                              }) 
+                            },
+                            { 
+                              name: 'IVA Vendas', 
+                              data: computedHistory.map(h => {
+                                const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                                return r.vat_sales_rate !== undefined ? r.vat_sales_rate : 0;
+                              }) 
+                            }
                           ]
                         });
                       }}
@@ -613,8 +662,20 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } }
                       }}
                       series={[
-                        { name: 'IVA Compras', data: computedHistory.map(h => 12 + (h.round * 0.2)) },
-                        { name: 'IVA Vendas', data: computedHistory.map(h => 18) }
+                        { 
+                          name: 'IVA Compras', 
+                          data: computedHistory.map(h => {
+                            const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                            return r.vat_purchases_rate !== undefined ? r.vat_purchases_rate : 0;
+                          }) 
+                        },
+                        { 
+                          name: 'IVA Vendas', 
+                          data: computedHistory.map(h => {
+                            const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                            return r.vat_sales_rate !== undefined ? r.vat_sales_rate : 0;
+                          }) 
+                        }
                       ]}
                       type="bar"
                       height={180}
@@ -640,22 +701,34 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {[
-                          { name: 'Brasil', rates: ['0%', '0%', '0%', '0%', '0%'], bg: 'bg-[#00FFEF]/10 text-[#00FFEF]' },
-                          { name: 'EUA', rates: ['12%', '12%', '14%', '15%', '15%'], bg: 'bg-[#FF5F1F]/10 text-[#FF5F1F]' },
-                          { name: 'Euro', rates: ['8%', '10%', '10%', '12%', '12%'], bg: 'bg-[#9D00FF]/10 text-[#9D00FF]' },
-                          { name: 'UK', rates: ['5%', '5%', '5%', '8%', '8%'], bg: 'bg-[#0FF0FC]/10 text-[#0FF0FC]' },
-                          { name: 'China', rates: ['15%', '15%', '18%', '20%', '20%'], bg: 'bg-red-500/10 text-red-400' }
-                        ].map((row, i) => (
-                          <tr key={i} className="border-b border-white/5 hover:bg-white/5">
-                            <td className="py-1.5 font-bold text-white text-[8px] uppercase italic">{row.name}</td>
-                            {row.rates.map((rate, rIdx) => (
-                              <td key={rIdx} className="text-center py-1.5">
-                                <span className={`px-1.5 py-0.5 rounded ${row.bg} text-[8px] font-bold`}>{rate}</span>
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
+                        {(() => {
+                          const targetRounds = computedHistory.slice(0, 5);
+                          const regions = [
+                            { name: 'Brasil', key: 'export_tariff_brazil' as const, bg: 'bg-[#00FFEF]/10 text-[#00FFEF]' },
+                            { name: 'EUA', key: 'export_tariff_usa' as const, bg: 'bg-[#FF5F1F]/10 text-[#FF5F1F]' },
+                            { name: 'Euro', key: 'export_tariff_euro' as const, bg: 'bg-[#9D00FF]/10 text-[#9D00FF]' },
+                            { name: 'UK', key: 'export_tariff_uk' as const, bg: 'bg-[#0FF0FC]/10 text-[#0FF0FC]' },
+                            { name: 'China', key: 'export_tariff_china' as const, bg: 'bg-red-500/10 text-red-400' }
+                          ];
+
+                          return regions.map((row, i) => {
+                            const rates = targetRounds.map(h => {
+                              const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                              const val = r[row.key] !== undefined ? r[row.key] : 0;
+                              return `${val}%`;
+                            });
+                            return (
+                              <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                                <td className="py-1.5 font-bold text-white text-[8px] uppercase italic">{row.name}</td>
+                                {rates.map((rate, rIdx) => (
+                                  <td key={rIdx} className="text-center py-1.5">
+                                    <span className={`px-1.5 py-0.5 rounded ${row.bg} text-[8px] font-bold`}>{rate}</span>
+                                  </td>
+                                ))}
+                              </tr>
+                            );
+                          });
+                        })()}
                       </tbody>
                     </table>
                   </div>
@@ -669,7 +742,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between overflow-hidden">
                   <span className="text-[9px] font-black text-[#FF073A] uppercase tracking-widest">Estrutura de Capital</span>
                   <div className="flex justify-between items-center">
-                    <h5 className="text-[10px] font-black text-white uppercase italic">Juros vs Endividamento</h5>
+                    <h5 className="text-[10px] font-black text-white uppercase italic">Custo de Capital vs Exigível</h5>
                     <button 
                       onClick={() => {
                         setExpandedChart({
@@ -677,8 +750,17 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           title: 'Juros x Endividamento Realizado',
                           options: getBaseChartOptions('Endividamento'),
                           series: [
-                            { name: 'Taxa Juros (%)', data: computedHistory.map(h => 12.5 - h.round * 0.5) },
-                            { name: 'Endividamento LP', data: computedHistory.map(h => 400000 + h.round * 50000) }
+                            { 
+                              name: 'Juros TR (%)', 
+                              data: computedHistory.map(h => {
+                                const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                                return r.interest_rate_tr !== undefined ? r.interest_rate_tr : 0;
+                              }) 
+                            },
+                            { 
+                              name: 'Endividamento LP', 
+                              data: computedHistory.map(h => h.liability_lt || (h.liabilities / 2)) 
+                            }
                           ]
                         });
                       }}
@@ -696,8 +778,19 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } }
                       }}
                       series={[
-                        { name: 'Juros (%)', type: 'line', data: computedHistory.map(h => 13.5 - (h.round * 0.4)) },
-                        { name: 'Endividamento', type: 'column', data: computedHistory.map(h => h.liabilities / 2) }
+                        { 
+                          name: 'Juros TR (%)', 
+                          type: 'line', 
+                          data: computedHistory.map(h => {
+                            const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                            return r.interest_rate_tr !== undefined ? r.interest_rate_tr : 0;
+                          }) 
+                        },
+                        { 
+                          name: 'Endividamento', 
+                          type: 'column', 
+                          data: computedHistory.map(h => h.liabilities / 2) 
+                        }
                       ]}
                       type="line"
                       height={180}
@@ -705,12 +798,11 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   </div>
                 </div>
 
-                {/* PIB Regional - Solução para o espaço vazio do rodapé central */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between relative overflow-hidden">
-                  <span className="text-[9px] font-black text-[#39FF14] uppercase tracking-widest italic font-bold">PIB NACIONAL (ÁREA DE EXPANSÃO)</span>
+                  <span className="text-[9px] font-black text-[#39FF14] uppercase tracking-widest italic font-bold">PIB NACIONAL (ATIVIDADE ECONÔMICA)</span>
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Evolução do PIB Econômico</h5>
-                    <div className="text-[#39FF14] cursor-pointer" title="Taxa acumulada de crescimento do PIB nominal do mercado">
+                    <div className="text-[#39FF14] cursor-pointer" title="Taxa real de crescimento do PIB agregando a atividade e demanda">
                       <Info size={12} />
                     </div>
                   </div>
@@ -724,7 +816,13 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       }}
                       series={[{
                         name: 'PIB (%)',
-                        data: computedHistory.map(h => 1.8 + (h.round * 0.3) + Math.sin(h.round) * 0.5)
+                        data: computedHistory.map(h => {
+                          const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                          const basePIB = 2.0;
+                          const demandEffect = (r.demand_variation || 0) * 0.05;
+                          const iceEffect = ((r.ice || 0) - 5) * 0.1;
+                          return Number((basePIB + demandEffect + iceEffect).toFixed(2));
+                        })
                       }]}
                       type="area"
                       height={180}
@@ -733,18 +831,30 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                 </div>
 
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between overflow-hidden">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Estratégias de Repasse</span>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Estratégias de Custos e Repasses</span>
                   <div className="flex justify-between items-center">
-                    <h5 className="text-[10px] font-black text-white uppercase italic">Inflação vs Preço Médio</h5>
+                    <h5 className="text-[10px] font-black text-white uppercase italic">Inflação vs Reajuste de MP A</h5>
                     <button 
                       onClick={() => {
                         setExpandedChart({
                           id: 'infl',
-                          title: 'Inflação vs Preço Praticado',
+                          title: 'Inflação vs Reajuste de MP A (Insumos)',
                           options: getBaseChartOptions('Ajuste de Preços'),
                           series: [
-                            { name: 'Inflação (%)', data: computedHistory.map(h => 4.5) },
-                            { name: 'Preço Médio da Equipe', data: computedHistory.map(h => 1.35 + h.round * 0.08) }
+                            { 
+                              name: 'Inflação Período (%)', 
+                              data: computedHistory.map(h => {
+                                const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                                return r.inflation_rate !== undefined ? r.inflation_rate : 0;
+                              }) 
+                            },
+                            { 
+                              name: 'Reajuste MP A (%)', 
+                              data: computedHistory.map(h => {
+                                const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                                return r.raw_material_a_adjust !== undefined ? r.raw_material_a_adjust : 0;
+                              }) 
+                            }
                           ]
                         });
                       }}
@@ -761,8 +871,20 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } }
                       }}
                       series={[
-                        { name: 'Inflação Acc', data: computedHistory.map(h => 4.2 + (h.round * 0.2)) },
-                        { name: 'Preço Médio', data: computedHistory.map(h => 1.25 + (h.round * 0.05)) }
+                        { 
+                          name: 'Inflação Período (%)', 
+                          data: computedHistory.map(h => {
+                            const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                            return r.inflation_rate !== undefined ? r.inflation_rate : 0;
+                          }) 
+                        },
+                        { 
+                          name: 'Reajuste MP A (%)', 
+                          data: computedHistory.map(h => {
+                            const r = activeArena?.round_rules?.[h.round] || DEFAULT_INDUSTRIAL_CHRONOGRAM[h.round] || {};
+                            return r.raw_material_a_adjust !== undefined ? r.raw_material_a_adjust : 0;
+                          }) 
+                        }
                       ]}
                       type="line"
                       height={180}
