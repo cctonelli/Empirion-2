@@ -23,10 +23,13 @@ const OpenTournaments: React.FC = () => {
     fetchPublicArenas();
   }, []);
 
-  const filtered = championships.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.branch.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = championships.filter(c => {
+    if (!c) return false;
+    const name = (c.name || '').toLowerCase();
+    const branch = (c.branch || '').toLowerCase();
+    const search = (searchTerm || '').toLowerCase();
+    return name.includes(search) || branch.includes(search);
+  });
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-transparent pt-40 pb-32">
@@ -109,7 +112,7 @@ const OpenTournaments: React.FC = () => {
                      <div className="space-y-1">
                         <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Capacidade</span>
                         <div className="flex items-center gap-2 text-white font-black text-lg">
-                           <Users size={16} className="text-blue-500" /> {champ.config.teamsLimit} Units
+                           <Users size={16} className="text-blue-500" /> {champ.config?.teamsLimit || champ.config?.teams_limit || '10'} Units
                         </div>
                      </div>
                   </div>

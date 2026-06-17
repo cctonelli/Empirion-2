@@ -75,37 +75,61 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
 
   // 5. Histórico e Geração Dinâmica Baseada em Filtros de Governança
   const computedHistory = useMemo(() => {
-    if (history.length === 0) {
-      // Fallback em memória realista caso não tenhamos histórico persistido
-      return Array.from({ length: currentRound + 1 }).map((_, r) => {
-        const factor = 1 + (r * 0.15);
-        return {
-          round: r,
-          equity: (activeTeam?.equity || 1200000) * factor,
-          revenue: 1500000 * factor,
-          costs: 1100000 * factor,
-          ebitda: 400000 * factor,
-          net_profit: 300000 * factor * (r === 0 ? 0.3 : 1),
-          cash: 800000 * factor,
-          capital_social: 1000000,
-          lucro_acumulado: 200000 * factor,
-          liability_st: 120000 * factor,
-          liability_lt: 560000,
-          assets: 2500000 * factor,
-          liabilities: 1300000 * factor,
-          kpis: {
-            liquidity_current: 1.5 + (r * 0.1),
-            inventory_turnover: 12.5 + r,
-            altman_z_score: 5.5 + r,
-            ccc: 30 - r,
-            scissors_effect: 200000 - (r * 15000),
-            esds: { esds_display: 70 + (r * 2) },
-          }
-        };
-      });
-    }
+    const list = history.length === 0 ? Array.from({ length: currentRound + 1 }).map((_, r) => {
+      const factor = 1 + (r * 0.15);
+      return {
+        round: r,
+        equity: (activeTeam?.equity || 1200000) * factor,
+        revenue: 1500000 * factor,
+        costs: 1100000 * factor,
+        ebitda: 400000 * factor,
+        net_profit: 300000 * factor * (r === 0 ? 0.3 : 1),
+        cash: 800000 * factor,
+        capital_social: 1000000,
+        lucro_acumulado: 200000 * factor,
+        liability_st: 120000 * factor,
+        liability_lt: 560000,
+        assets: 2500000 * factor,
+        liabilities: 1300000 * factor,
+        kpis: {
+          liquidity_current: 1.5 + (r * 0.1),
+          inventory_turnover: 12.5 + r,
+          altman_z_score: 5.5 + r,
+          ccc: 30 - r,
+          scissors_effect: 200000 - (r * 15000),
+          esds: { esds_display: 70 + (r * 2) },
+        }
+      };
+    }) : history;
 
-    return history.map(h => ({ ...h }));
+    return list.map((h, r) => {
+      const factor = 1 + (r * 0.15);
+      return {
+        round: typeof h.round === 'number' ? h.round : r,
+        equity: Number.isFinite(h.equity) ? h.equity : ((activeTeam?.equity || 1200000) * factor),
+        revenue: Number.isFinite(h.revenue) ? h.revenue : (1500000 * factor),
+        costs: Number.isFinite(h.costs) ? h.costs : (1100000 * factor),
+        ebitda: Number.isFinite(h.ebitda) ? h.ebitda : (400000 * factor),
+        net_profit: Number.isFinite(h.net_profit) ? h.net_profit : (300000 * factor),
+        cash: Number.isFinite(h.cash) ? h.cash : (800000 * factor),
+        capital_social: Number.isFinite(h.capital_social) ? h.capital_social : 1000000,
+        lucro_acumulado: Number.isFinite(h.lucro_acumulado) ? h.lucro_acumulado : (200000 * factor),
+        liability_st: Number.isFinite(h.liability_st) ? h.liability_st : (120000 * factor),
+        liability_lt: Number.isFinite(h.liability_lt) ? h.liability_lt : 560000,
+        assets: Number.isFinite(h.assets) ? h.assets : (2540000 * factor),
+        liabilities: Number.isFinite(h.liabilities) ? h.liabilities : (1230000 * factor),
+        kpis: {
+          liquidity_current: Number.isFinite(h.kpis?.liquidity_current) ? h.kpis.liquidity_current : (1.5 + (r * 0.1)),
+          inventory_turnover: Number.isFinite(h.kpis?.inventory_turnover) ? h.kpis.inventory_turnover : (12.5 + r),
+          altman_z_score: Number.isFinite(h.kpis?.altman_z_score) ? h.kpis.altman_z_score : (5.5 + r),
+          ccc: Number.isFinite(h.kpis?.ccc) ? h.kpis.ccc : (30 - r),
+          scissors_effect: Number.isFinite(h.kpis?.scissors_effect) ? h.kpis.scissors_effect : (200000 - (r * 15000)),
+          esds: {
+            esds_display: Number.isFinite(h.kpis?.esds?.esds_display) ? h.kpis.esds.esds_display : (70 + r * 2)
+          }
+        }
+      };
+    });
   }, [history, currentRound, activeTeam]);
 
   const roundsCategories = useMemo(() => {
@@ -491,15 +515,15 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       }))
                     }]}
                     type="candlestick"
-                    height="100%"
+                    height={245}
                   />
                 </div>
               </div>
 
               {/* Bloco Central (ICE vs Inf vs Dem, IVA Purchases vs Sales, Export Tariffs) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[220px] h-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[260px] min-h-[220px] h-auto shrink-0">
                 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between overflow-hidden">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Correlação de Mercado</span>
                   <div className="flex justify-between items-center">
                     <h5 className="text-[10px] font-black text-white uppercase italic">ICE × Inflação × Demanda</h5>
@@ -534,12 +558,12 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'Dem (%)', data: computedHistory.map(h => 1.5 + (h.round * 0.8)) }
                       ]}
                       type="line"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between overflow-hidden">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Impostos Fiduciários</span>
                   <div className="flex justify-between items-center">
                     <h5 className="text-[10px] font-black text-white uppercase italic">IVA: Compras vs Vendas</h5>
@@ -573,7 +597,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'IVA Vendas', data: computedHistory.map(h => 18) }
                       ]}
                       type="bar"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
@@ -620,9 +644,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Bloco Inferior (Interest Rate vs Debt Level + PIB Area + Inflação vs Preço Médio) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[220px] h-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[260px] min-h-[220px] h-auto shrink-0">
                 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between overflow-hidden">
                   <span className="text-[9px] font-black text-[#FF073A] uppercase tracking-widest">Estrutura de Capital</span>
                   <div className="flex justify-between items-center">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Juros vs Endividamento</h5>
@@ -656,7 +680,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'Endividamento', type: 'column', data: computedHistory.map(h => h.liabilities / 2) }
                       ]}
                       type="line"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
@@ -683,12 +707,12 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         data: computedHistory.map(h => 1.8 + (h.round * 0.3) + Math.sin(h.round) * 0.5)
                       }]}
                       type="area"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col relative justify-between overflow-hidden">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Estratégias de Repasse</span>
                   <div className="flex justify-between items-center">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Inflação vs Preço Médio</h5>
@@ -721,7 +745,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'Preço Médio', data: computedHistory.map(h => 1.25 + (h.round * 0.05)) }
                       ]}
                       type="line"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
@@ -777,10 +801,10 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Segunda Linha (Balanço Comparativo & DRE Comparativo) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[290px] h-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:h-[320px] min-h-[290px] h-auto shrink-0">
                 
                 {/* Balanço Comparativo */}
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[8px] font-black text-[#00FFFF] uppercase tracking-tight">Análise Patrimonial</span>
@@ -831,13 +855,13 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         ]
                       }
                       type="line"
-                      height="100%"
+                      height={245}
                     />
                   </div>
                 </div>
 
                 {/* DRE Comparativo */}
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[8px] font-black text-[#FFD700] uppercase tracking-tight">Demonstrativo D.R.E</span>
@@ -890,7 +914,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         ]
                       }
                       type="bar"
-                      height="100%"
+                      height={245}
                     />
                   </div>
                 </div>
@@ -898,9 +922,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Terceira Linha (Evolução do PL, Estrutura Capital, Decisões Contábeis) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[220px] h-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[260px] min-h-[220px] h-auto shrink-0">
                 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] font-black text-white uppercase italic">Evolução do PL</span>
                     <select 
@@ -925,12 +949,12 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'Margem Líquida', data: computedHistory.map(h => (h.net_profit / h.revenue) * 100) }
                       ]}
                       type="line"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <span className="text-[10px] font-black text-white uppercase italic">Estrutura de Capital vs Lucro</span>
                   <div className="flex-1 min-h-0 w-full font-mono">
                     <Chart 
@@ -944,7 +968,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'Excedente Lucro', data: computedHistory.map(h => h.net_profit * 2) }
                       ]}
                       type="line"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
@@ -975,7 +999,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Quarta Linha (Heatmap Contábil & Equity por competidores) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[220px] h-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:h-[260px] min-h-[220px] h-auto shrink-0 animate-fade-in-up">
                 
                 {/* Heatmap Contábil */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
@@ -1026,7 +1050,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                 </div>
 
                 {/* Equity Competidores */}
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between relative">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between relative overflow-hidden">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Benchmarking Concorrencial</span>
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic leading-none">Patrimônio Líquido Acumulado</h5>
@@ -1045,7 +1069,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         data: competitorsList.map((t: any) => t.equity)
                       }]}
                       type="bar"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
@@ -1119,15 +1143,15 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Linha Central (Market Share by Team Donut & Vendas em Barras Empilhadas) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[290px] h-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:h-[320px] min-h-[290px] h-auto shrink-0">
                 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Market Share por Equipe (R-0{currentRound})</h5>
                     <Info size={11} className="text-[#00FFFF]" />
                   </div>
                   <div className="flex-1 flex items-center w-full min-h-0">
-                    <div className="w-1/2 h-[150px]">
+                    <div className="w-1/2 h-[220px]">
                       <Chart 
                         options={{
                           chart: { type: 'donut', background: 'transparent' },
@@ -1139,7 +1163,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         }}
                         series={[28, 25, 32, 15]}
                         type="donut"
-                        height="100%"
+                        height={220}
                       />
                     </div>
                     
@@ -1160,7 +1184,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Vendas por Equipe e Período</h5>
                     <button 
@@ -1189,7 +1213,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         plotOptions: { bar: { columnWidth: '50%' } },
                         annotations: {
                           yaxis: [{
-                            y: 40000,
+                            y: 40005,
                             borderColor: '#FF5F1F',
                             label: { text: 'Meta Demanda', style: { color: '#fff', background: '#FF5F1F', fontSize: '8px' } }
                           }]
@@ -1203,7 +1227,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: formatTeamName(competitorsList[3]?.name || '', 3), data: computedHistory.map((_, idx) => 8000 + (idx * 200)) }
                       ]}
                       type="bar"
-                      height="100%"
+                      height={240}
                     />
                   </div>
                 </div>
@@ -1211,9 +1235,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Linha Inferior (Scatter Venda vs Preço & Matrix Crescimento Share) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[220px] h-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:h-[260px] min-h-[220px] h-auto shrink-0">
                 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest leading-none">Elasticidade Regional</span>
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic leading-none">Preço vs Volume Vendido</h5>
@@ -1245,7 +1269,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         }
                       ]}
                       type="scatter"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
@@ -1299,9 +1323,9 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
             <div className="flex flex-col gap-4 pb-6 min-h-min">
               
               {/* Topo (Capacidade vs Produzido + Produtividade vs Motivação + Salários) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[280px] h-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[280px] min-h-[280px] h-auto shrink-0 animate-fade-in-up">
                 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Capacidade Instalada vs Produção</h5>
                     <button 
@@ -1335,12 +1359,12 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'Produzido Real', data: computedHistory.map(h => 10000 + (h.round * 500)) }
                       ]}
                       type="bar"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
 
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Produtividade vs Motivação</h5>
                   </div>
@@ -1356,7 +1380,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'Motivação (%)', data: computedHistory.map(h => 75 + (h.round * 1.5)) }
                       ]}
                       type="line"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>
@@ -1385,7 +1409,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
               </div>
 
               {/* Meio (Controle de Estoque Heatmap & Painel RH & P&D Radar + Estatísticas) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[220px] h-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[260px] min-h-[220px] h-auto shrink-0">
                 
                 {/* Heatmap de Controle de Estoque */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between overflow-hidden">
@@ -1424,7 +1448,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                 </div>
 
                 {/* Radar Chart de Incentivos & P&D */}
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between relative">
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 flex flex-col justify-between relative overflow-hidden">
                   <div className="flex justify-between items-center mb-1">
                     <h5 className="text-[10px] font-black text-white uppercase italic">Incentivos & P&D (Radar fiduciário)</h5>
                   </div>
@@ -1441,7 +1465,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'Média de Setor', data: [65, 70, 50, 55, 45] }
                       ]}
                       type="radar"
-                      height="100%"
+                      height={180}
                     />
                   </div>
                 </div>

@@ -48,8 +48,9 @@ const ChampionshipsView: React.FC<{ onSelectTeam: (champId: string, teamId: stri
 
   const filteredChamps = activeFilter 
     ? championships.filter(c => {
+        if (!c) return false;
         const branch = (c.branch || '').toLowerCase();
-        const filter = activeFilter!.toLowerCase();
+        const filter = String(activeFilter || '').toLowerCase();
         return branch.includes(filter) || filter.includes(branch);
       })
     : championships;

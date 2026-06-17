@@ -48,9 +48,12 @@ const TestTerminal: React.FC = () => {
     navigate('/app/dashboard');
   };
 
-  const filtered = championships.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = championships.filter(c => {
+    if (!c) return false;
+    const name = (c.name || '').toLowerCase();
+    const search = (searchTerm || '').toLowerCase();
+    return name.includes(search);
+  });
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#020617] pt-32 pb-20">

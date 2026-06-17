@@ -109,7 +109,9 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
     const updateAndDraw = () => {
       ctx.clearRect(0, 0, width, height);
 
-      particles.forEach((p, index) => {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        if (!p) continue;
         p.x += p.speedX;
         p.y += p.speedY;
         
@@ -129,9 +131,9 @@ export const RoundSummaryModal: React.FC<RoundSummaryModalProps> = ({
 
         // Se sair da tela, remove ou para
         if (p.y > height) {
-          particles.splice(index, 1);
+          particles.splice(i, 1);
         }
-      });
+      }
 
       if (particles.length > 0) {
         animationFrameId = requestAnimationFrame(updateAndDraw);

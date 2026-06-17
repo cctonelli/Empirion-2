@@ -56,7 +56,8 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           {MENU_STRUCTURE.map((item) => {
             const isActive = location.pathname === item.path;
             const isHovered = activeMenu === item.label;
-            const translatedLabel = t(`nav.${item.label.toLowerCase()}`, item.label);
+            const labelStr = item.label || '';
+            const translatedLabel = t(`nav.${labelStr.toLowerCase()}`, labelStr);
 
             return (
               <div 
@@ -158,7 +159,8 @@ const PublicHeader: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                {MENU_STRUCTURE.map(item => {
                  const hasSub = !!item.sub;
                  const isExpanded = expandedMobileMenu === item.label;
-                 const translatedLabel = t(`nav.${item.label.toLowerCase()}`, item.label);
+                 const labelStr = item.label || '';
+                 const translatedLabel = t(`nav.${labelStr.toLowerCase()}`, labelStr);
 
                  if (hasSub) {
                    return (
