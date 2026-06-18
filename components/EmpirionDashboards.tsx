@@ -125,16 +125,21 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       };
     }) : history;
 
-    const findNodeVal = (nodes: any[] | undefined | null, targetId: string): number => {
-      if (!nodes || !Array.isArray(nodes)) return 0;
+    const findNode = (nodes: any[] | undefined | null, targetId: string): any => {
+      if (!nodes || !Array.isArray(nodes)) return undefined;
       for (const node of nodes) {
-        if (node.id === targetId) return node.value || 0;
+        if (node.id === targetId) return node;
         if (node.children) {
-          const val = findNodeVal(node.children, targetId);
-          if (val !== 0) return val;
+          const found = findNode(node.children, targetId);
+          if (found) return found;
         }
       }
-      return 0;
+      return undefined;
+    };
+
+    const findNodeVal = (nodes: any[] | undefined | null, targetId: string): number => {
+      const node = findNode(nodes, targetId);
+      return node ? (node.value ?? 0) : 0;
     };
 
     return list.map((h, r) => {
@@ -144,17 +149,17 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       const dre = h.kpis?.statements?.dre;
 
       const assetsVal = findNodeVal(bs, 'assets') || h.total_assets || h.assets || (2540000 * factor);
-      const liabilitiesVal = findNodeVal(bs, 'liabilities') || h.liabilities || (1230000 * factor);
+      const liabilitiesVal = findNodeVal(bs, 'liabilities_pl') || findNodeVal(bs, 'liabilities') || h.liabilities || (1230000 * factor);
       const equityVal = findNodeVal(bs, 'equity') || h.equity || ((activeTeam?.equity || 1200000) * factor);
       const capitalSocialVal = findNodeVal(bs, 'equity.capital') || h.capital_social || 1000000;
-      const lucroAcumuladoVal = findNodeVal(bs, 'equity.retained_earnings') || h.lucro_acumulado || (200000 * factor);
+      const lucroAcumuladoVal = findNodeVal(bs, 'equity.profit') || findNodeVal(bs, 'equity.retained_earnings') || h.lucro_acumulado || (200000 * factor);
       
       const liabilityStVal = findNodeVal(bs, 'liabilities.current') || h.liability_st || (120000 * factor);
-      const liabilityLtVal = findNodeVal(bs, 'liabilities.longterm') || h.liability_lt || 560000;
+      const liabilityLtVal = findNodeVal(bs, 'liabilities.longterm') || findNodeVal(bs, 'liabilities.longterm.loans_lt') || h.liability_lt || 560000;
       
-      const revenueVal = findNodeVal(dre, 'revenue') || findNodeVal(dre, 'revenue.gross') || h.revenue || (1500000 * factor);
-      const costsVal = Math.abs(findNodeVal(dre, 'costs') || findNodeVal(dre, 'costs.cpv') || h.costs || (1100000 * factor));
-      const netProfitVal = findNodeVal(dre, 'net_profit') || h.net_profit || (300000 * factor);
+      const revenueVal = findNodeVal(dre, 'revenue') || findNodeVal(dre, 'revenue.gross') || findNodeVal(dre, 'rev') || h.revenue || (1500000 * factor);
+      const costsVal = Math.abs(findNodeVal(dre, 'costs') || findNodeVal(dre, 'costs.cpv') || findNodeVal(dre, 'cpv') || h.costs || (1100000 * factor));
+      const netProfitVal = findNodeVal(dre, 'net_profit') || findNodeVal(dre, 'final_profit') || h.net_profit || (300000 * factor);
       
       const cashVal = findNodeVal(bs, 'assets.current.cash') || h.cash || h.kpis?.current_cash || (800000 * factor);
 
@@ -169,15 +174,8 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       const cclVal = acVal - pcVal;
 
       // NCG (Necessidade de Capital de Giro) = Ativo Circulante Operacional - Passivo Circulante Operacional
-      const acoVal = (findNodeVal(bs, 'assets.current.receivables') || 0) + 
-                     (findNodeVal(bs, 'assets.current.stock') || 
-                      (findNodeVal(bs, 'assets.current.stock.pa') + 
-                       findNodeVal(bs, 'assets.current.stock.mpa') + 
-                       findNodeVal(bs, 'assets.current.stock.mpb') + 
-                       findNodeVal(bs, 'assets.current.stock.wip')) || 
-                      (acVal * 0.4));
-      const pcoVal = (findNodeVal(bs, 'liabilities.current.suppliers') || 0) + 
-                     (findNodeVal(bs, 'liabilities.current.taxes') || 0);
+      const acoVal = (findNodeVal(bs, 'assets.current.clients_group') || findNodeVal(bs, 'assets.current.clients') || 0) || (acVal * 0.4);
+      const pcoVal = ((findNodeVal(bs, 'liabilities.current.suppliers') || 0) + (findNodeVal(bs, 'liabilities.current.taxes') || 0)) || (pcVal * 0.35);
       const ncgVal = acoVal - pcoVal;
 
       // Tesouraria: ST = CDG - NCG
@@ -582,6 +580,17 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   ...expandedChart.options,
                   chart: { ...expandedChart.options.chart, height: 420 },
                   title: { show: false },
+                  xaxis: {
+                    ...expandedChart.options?.xaxis,
+                    categories: roundsCategories,
+                    labels: {
+                      style: {
+                        colors: '#94a3b8',
+                        fontSize: '10px',
+                        fontFamily: 'JetBrains Mono, monospace'
+                      }
+                    }
+                  },
                   legend: { ...expandedChart.options.legend, fontSize: '11px' },
                 }}
                 series={expandedChart.series}
@@ -1374,7 +1383,16 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                               '#39FF14', // Green (CCL)
                               '#FFD700', // Gold (Faturamento)
                               '#1DE9B6', // Teal (Lucro)
-                            ]
+                            ],
+                            tooltip: {
+                              shared: false,
+                              intersect: true,
+                              theme: 'dark'
+                            },
+                            xaxis: {
+                              categories: roundsCategories,
+                              labels: { style: { colors: '#94a3b8', fontSize: '9px', fontFamily: 'JetBrains Mono, monospace' } }
+                            }
                           },
                           series: [
                             { name: 'NCG (Necessidade de Capital de Giro)', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
@@ -1409,6 +1427,11 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           '#FFD700', // Gold (Faturamento)
                           '#1DE9B6', // Teal (Lucro)
                         ],
+                        tooltip: {
+                          shared: false,
+                          intersect: true,
+                          theme: 'dark'
+                        },
                         stroke: { curve: 'smooth', width: 2 },
                         xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } },
                         yaxis: {

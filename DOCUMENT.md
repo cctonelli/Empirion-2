@@ -2476,6 +2476,24 @@ project-root/
 - **Erradicação do Ruído:** Fim de inconsistências entre relatórios gerenciais e gráficos de acompanhamento de mercado.
 **Status:** ATIVO, homologado por Contabilidade, Engenharia de Dados e PMP.
 
+## Decisão Arquitetural & Versionamento - Calibração Fidedigna do Efeito Tesoura e Tooltips Individualizados - v19.79 / v2026.119
+
+**Data:** 18 de Junho de 2026 às 13:00 UTC  
+**Motivo:** Corrigir as distorções visuais no gráfico de "Efeito Tesoura" da aba FINANCIAL & ACCOUNTING, garantindo que os dados expressos reflitam com rigor cientifico/contábil as rodadas tomadas pelas equipes e persistidas fisicamente no banco de dados. Adicionalmente, atende-se à solicitação de prover Tooltips individualizados e rótulos de rounds padronizados no formato "R-00, R-01, R-02..." tanto na interface padrão de cards quanto nos modais de expansão ampliada.  
+**Principais diferenças:**  
+- **Resolução de Omissão de Nós de Valor Zero (`components/EmpirionDashboards.tsx`):**
+  - Refatorada a busca recursiva lateral `findNodeVal` utilizando uma abordagem desacoplada em dois níveis (`findNode` e `findNodeVal`). Isso resolve integralmente o bug de fuga onde subcontas que existiam na árvore de contas mas possuíam valor correspondente a `0` (como passivos de longo prazo ou variação cambial nula) faziam a busca ignorar o Match contábil e disparar multiplicadores arbitrários e fictícios (`factor`).
+- **Sincronização de Chaves Fiduciárias com a Árvore Real (`constants.tsx`):**
+  - Atualizadas as buscas das colunas de Ativo Circulante Operacional para utilizarem a rubrica correta de Clientes do Supabase (`assets.current.clients_group` ou o analítico `assets.current.clients`) em conjunto com as contas de Estoques (`assets.current.stock`), e os Passivos Circulantes Operacionais mapeando Fornecedores (`liabilities.current.suppliers`) e Impostos (`liabilities.current.taxes`).
+- **Tooltips Individualizados por Linha Indutiva:**
+  - Configurado tanto no painel clássico do ERP quanto no modal de zoom ampliado (`renderChartZoomModal`) as políticas de Tooltips independentes do ApexCharts (`tooltip: { shared: false, intersect: true }`), permitindo aos alunos examinarem em hover cada componente isolado da tesoura sem poluição visual.
+- **Rounds Padronizados no Modal Zoom:**
+  - Integrado o array reativo centralizado de rounds formatados (`roundsCategories`) sob a propriedade `xaxis.categories` no Modal de Exibição de Zoom, convertendo as listagens numéricas cruas para rótulos elegantes fiduciários como `"R-00 (INICIAL)", "R-01 (REALIZADO)"` etc.
+**Impactos esperados:**  
+- **Acurácia Absoluta:** O gráfico reflete perfeitamente as formulas de equilíbrio de tesouro ($ST = CDG - NCG$) computadas centavo a centavo a partir das demonstrações de contas do Supabase.
+- **Leitura Ergonômica:** Microfoco analítico individual possibilitando auditoria detalhada via hover em cada uma das 9 curvas agregadas.
+**Status:** ATIVO, com compilação e verificação de linter de React bem-sucedidas.
+
 
 
 
