@@ -173,9 +173,16 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       // Capital Circulante Líquido: CCL = Ativo Circulante - Passivo Circulante
       const cclVal = acVal - pcVal;
 
+      // Ativo Circulante Operacional (ACO) = Clientes + Estoque
+      const clientesVal = findNodeVal(bs, 'assets.current.clients_group') || findNodeVal(bs, 'assets.current.clients') || 0;
+      const estoqueVal = findNodeVal(bs, 'assets.current.stock') || 0;
+      const acoVal = bs ? (clientesVal + estoqueVal) : (acVal * 0.7);
+
+      // Passivo Circulante Operacional (PCO) = Passivo Circulante - Empréstimos de curto prazo (Financeiro)
+      const loansStVal = findNodeVal(bs, 'liabilities.current.loans_st') || 0;
+      const pcoVal = bs ? Math.max(0, pcVal - loansStVal) : (pcVal * 0.5);
+
       // NCG (Necessidade de Capital de Giro) = Ativo Circulante Operacional - Passivo Circulante Operacional
-      const acoVal = (findNodeVal(bs, 'assets.current.clients_group') || findNodeVal(bs, 'assets.current.clients') || 0) || (acVal * 0.4);
-      const pcoVal = ((findNodeVal(bs, 'liabilities.current.suppliers') || 0) + (findNodeVal(bs, 'liabilities.current.taxes') || 0)) || (pcVal * 0.35);
       const ncgVal = acoVal - pcoVal;
 
       // Tesouraria: ST = CDG - NCG
@@ -1364,15 +1371,15 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   <div className="flex justify-between items-center mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[8px] font-black text-[#39FF14] uppercase tracking-tight">Equilíbrio fiduciário</span>
-                      <h5 className="text-[10px] font-black text-white uppercase italic">Efeito Tesoura (R-00 Inicial em diante)</h5>
+                      <h5 className="text-[10px] font-black text-white uppercase italic">Efeito Tesoura (em {currency})</h5>
                     </div>
                     <button 
                       onClick={() => {
                         setExpandedChart({
                           id: 'efeito_tesoura',
-                          title: 'Análise de Equilíbrio e Efeito Tesoura',
+                          title: `Análise de Equilíbrio e Efeito Tesoura (em ${currency})`,
                           options: {
-                            ...getBaseChartOptions('Análise do Efeito Tesoura'),
+                            ...getBaseChartOptions(`Análise do Efeito Tesoura (em ${currency})`),
                             colors: [
                               '#FF5F1F', // Orange (NCG)
                               '#00FFFF', // Cyan (CDG)
@@ -1386,12 +1393,26 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             ],
                             tooltip: {
                               shared: false,
-                              intersect: true,
-                              theme: 'dark'
+                              intersect: false,
+                              theme: 'dark',
+                              y: {
+                                formatter: (val: number) => formatValue(val)
+                              }
                             },
                             xaxis: {
                               categories: roundsCategories,
-                              labels: { style: { colors: '#94a3b8', fontSize: '9px', fontFamily: 'JetBrains Mono, monospace' } }
+                              labels: { style: { colors: '#94a3b8', fontSize: '10px', fontFamily: 'JetBrains Mono, monospace' } }
+                            },
+                            yaxis: {
+                              labels: {
+                                style: { colors: '#94a3b8', fontSize: '9px', fontFamily: 'JetBrains Mono, monospace' },
+                                formatter: (val: number) => {
+                                  if (val === undefined || isNaN(val)) return '';
+                                  if (Math.abs(val) >= 1e6) return `${(val / 1e6).toFixed(1)}M`;
+                                  if (Math.abs(val) >= 1e3) return `${(val / 1e3).toFixed(0)}k`;
+                                  return val.toString();
+                                }
+                              }
                             }
                           },
                           series: [
@@ -1401,7 +1422,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             { name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
                             { name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
                             { name: 'CCL', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
-                            { name: 'Fat. Bruto', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) }
+                            { name: 'Receita Bruta', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
                           ]
                         });
                       }}
@@ -1427,17 +1448,22 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         ],
                         tooltip: {
                           shared: false,
-                          intersect: true,
-                          theme: 'dark'
+                          intersect: false,
+                          theme: 'dark',
+                          y: {
+                            formatter: (val: number) => formatValue(val)
+                          }
                         },
                         stroke: { curve: 'smooth', width: 2 },
                         xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } },
                         yaxis: {
                           labels: {
-                            style: { colors: '#e2e8f0', fontSize: '8px', fontFamily: 'JetBrains Mono, monospace' },
+                            style: { colors: '#94a3b8', fontSize: '8px', fontFamily: 'JetBrains Mono, monospace' },
                             formatter: (val: number) => {
                               if (val === undefined || isNaN(val)) return '';
-                              return formatValue(val);
+                              if (Math.abs(val) >= 1e6) return `${(val / 1e6).toFixed(1)}M`;
+                              if (Math.abs(val) >= 1e3) return `${(val / 1e3).toFixed(0)}k`;
+                              return val.toString();
                             }
                           }
                         },
@@ -1454,12 +1480,10 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'NCG', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
                         { name: 'CDG', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
                         { name: 'TESOURARIA', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
-                        { name: 'ELP', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
                         { name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
                         { name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
                         { name: 'CCL', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
-                        { name: 'Faturamento Bruto', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
-                        { name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
+                        { name: 'Receita Bruta', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
                       ]}
                       type="line"
                       height={245}

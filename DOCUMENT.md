@@ -2476,22 +2476,25 @@ project-root/
 - **Erradicação do Ruído:** Fim de inconsistências entre relatórios gerenciais e gráficos de acompanhamento de mercado.
 **Status:** ATIVO, homologado por Contabilidade, Engenharia de Dados e PMP.
 
-## Decisão Arquitetural & Versionamento - Calibração Fidedigna do Efeito Tesoura e Tooltips Individualizados - v19.79 / v2026.119
+## Decisão Arquitetural & Versionamento - Calibração Fidedigna do Efeito Tesoura, ACO/PCO Reais e Tooltips Sensíveis - v19.79 / v2026.119
 
 **Data:** 18 de Junho de 2026 às 13:00 UTC  
-**Motivo:** Corrigir as distorções visuais no gráfico de "Efeito Tesoura" da aba FINANCIAL & ACCOUNTING, garantindo que os dados expressos reflitam com rigor cientifico/contábil as rodadas tomadas pelas equipes e persistidas fisicamente no banco de dados. Adicionalmente, atende-se à solicitação de prover Tooltips individualizados e rótulos de rounds padronizados no formato "R-00, R-01, R-02..." tanto na interface padrão de cards quanto nos modais de expansão ampliada.  
+**Motivo:** Corrigir as distorções visuais no gráfico de "Efeito Tesoura" da aba FINANCIAL & ACCOUNTING, garantindo que os dados expressos reflitam com rigor cientifico/contábil as rodadas tomadas pelas equipes e persistidas fisicamente no banco de dados. Adicionalmente, atende-se à solicitação de prover Tooltips individualizados e rótulos de rounds padronizados no formato "R-00, R-01, R-02..." tanto na interface padrão de cards quanto nos modais de expansão ampliada, de acordo com o `GRAPHICS_STYLE_GUIDE.md`.  
 **Principais diferenças:**  
+- **Rigor Científico Contábil nos Ativos e Passivos Operacionais (vistos pelo Contador Sênior):**
+  - **Ativo Circulante Operacional (ACO):** Mapeado diretamente pela consolidação real de Clientes (`assets.current.clients_group` ou `clients`) e Estoque Físico Real (`assets.current.stock` de valor representativo no BP), integrando estoques de Matéria-Prima e Produtos para espelhar a dinâmica financeira operacional legítima.
+  - **Passivo Circulante Operacional (PCO):** Redesenhado para expurgar inteiramente as dívidas bancárias de curto prazo (`liabilities.current.loans_st`) pertencentes à componente puramente financeira, restando somente as obrigações ligadas ao fluxo de operação (fornecedores, impostos recolhíveis, provisões).
 - **Resolução de Omissão de Nós de Valor Zero (`components/EmpirionDashboards.tsx`):**
   - Refatorada a busca recursiva lateral `findNodeVal` utilizando uma abordagem desacoplada em dois níveis (`findNode` e `findNodeVal`). Isso resolve integralmente o bug de fuga onde subcontas que existiam na árvore de contas mas possuíam valor correspondente a `0` (como passivos de longo prazo ou variação cambial nula) faziam a busca ignorar o Match contábil e disparar multiplicadores arbitrários e fictícios (`factor`).
-- **Sincronização de Chaves Fiduciárias com a Árvore Real (`constants.tsx`):**
-  - Atualizadas as buscas das colunas de Ativo Circulante Operacional para utilizarem a rubrica correta de Clientes do Supabase (`assets.current.clients_group` ou o analítico `assets.current.clients`) em conjunto com as contas de Estoques (`assets.current.stock`), e os Passivos Circulantes Operacionais mapeando Fornecedores (`liabilities.current.suppliers`) e Impostos (`liabilities.current.taxes`).
-- **Tooltips Individualizados por Linha Indutiva:**
-  - Configurado tanto no painel clássico do ERP quanto no modal de zoom ampliado (`renderChartZoomModal`) as políticas de Tooltips independentes do ApexCharts (`tooltip: { shared: false, intersect: true }`), permitindo aos alunos examinarem em hover cada componente isolado da tesoura sem poluição visual.
+- **Tooltips Sensíveis Individualizados (Fim de Conflitos no Hover):**
+  - Configurado tanto no painel clássico do ERP quanto no modal de zoom ampliado as propriedades `tooltip: { shared: false, intersect: false }`. O parâmetro `intersect: false` eliminou conflitos de sensibilidade onde o mouse precisava estar precisamente sobre nós microscópicos para que surgisse a informação flutuante, tornando os estudos contáceis perfeitamente fluidos sob hover.
 - **Rounds Padronizados no Modal Zoom:**
   - Integrado o array reativo centralizado de rounds formatados (`roundsCategories`) sob a propriedade `xaxis.categories` no Modal de Exibição de Zoom, convertendo as listagens numéricas cruas para rótulos elegantes fiduciários como `"R-00 (INICIAL)", "R-01 (REALIZADO)"` etc.
+- **Formatação de Moeda no Eixo Y conforme o Guia:**
+  - Em conformidade com o `GRAPHICS_STYLE_GUIDE.md`, os eixos Y omitem marcadores monetários redundantes que geravam poluição e estouro visual, exibindo apenas números limpos e sufixos compactos de escala (`M` e `k`). O cabeçalho agora traz elegantemente: `Efeito Tesoura (em [Moeda])` (e.g. `BRL`). A visualização do Tooltip em hover herda os valores completos formatados em moeda nacional (`formatValue(val)`).
 **Impactos esperados:**  
-- **Acurácia Absoluta:** O gráfico reflete perfeitamente as formulas de equilíbrio de tesouro ($ST = CDG - NCG$) computadas centavo a centavo a partir das demonstrações de contas do Supabase.
-- **Leitura Ergonômica:** Microfoco analítico individual possibilitando auditoria detalhada via hover em cada uma das 9 curvas agregadas.
+- **Acurácia Absoluta:** O gráfico reflete perfeitamente as formulas de equilíbrio de tesouraria ($ST = CDG - NCG$) computadas centavo a centavo a partir das demonstrações de contas do Supabase.
+- **Leitura Ergonômica:** Microfoco analítico individual possibilitando auditoria detalhada via hover em cada uma das curvas agregadas.
 **Status:** ATIVO, com compilação e verificação de linter de React bem-sucedidas.
 
 
