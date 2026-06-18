@@ -1517,7 +1517,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             { name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
                             { name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
                             { name: 'CCL', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
-                            { name: 'Receita Bruta', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
+                            //{ name: 'Receita Bruta', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
                           ]
                         });
                       }}
@@ -1597,7 +1597,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
                         { name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
                         { name: 'CCL', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
-                        { name: 'Receita Bruta', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
+                        //{ name: 'Receita Bruta', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
                       ]}
                       type="line"
                       height={272}
