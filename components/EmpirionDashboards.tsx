@@ -1398,12 +1398,10 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             { name: 'NCG', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
                             { name: 'CDG', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
                             { name: 'TESOURARIA', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
-                            { name: 'ELP', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
                             { name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
                             { name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
                             { name: 'CCL', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
-                            { name: 'Fat. Bruto', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
-                            { name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
+                            { name: 'Fat. Bruto', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) }
                           ]
                         });
                       }}
