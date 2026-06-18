@@ -220,6 +220,17 @@ export const getTeamSimulationHistory = async (teamId: string, isTrial?: boolean
   return (data || []).map(mapHistoryItemSynthetically);
 };
 
+export const getChampionshipSimulationHistory = async (championshipId: string, isTrial?: boolean) => {
+  const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
+  const historyTable = isTrialSession ? 'trial_companies' : 'companies';
+  const { data } = await supabase
+    .from(historyTable)
+    .select('*')
+    .eq('championship_id', championshipId)
+    .order('round', { ascending: true });
+  return (data || []).map(mapHistoryItemSynthetically);
+};
+
 export const saveDecisions = async (teamId: string, champId: string, round: number, data: any, isTrial?: boolean) => {
   const isTrialSession = isTrial !== undefined ? isTrial : (localStorage.getItem('is_trial_session') === 'true');
   const table = isTrialSession ? 'trial_decisions' : 'current_decisions';

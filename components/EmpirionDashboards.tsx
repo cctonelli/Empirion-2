@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
+import { getChampionshipSimulationHistory } from '../services/supabase';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -39,6 +40,25 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
   // 1. Estados de Navegação e Sidebar
   const [activeTab, setActiveTab] = useState<'macroeconomics' | 'financial' | 'logistics' | 'industrial'>('financial');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [allTeamsHistory, setAllTeamsHistory] = useState<any[]>([]);
+  const [isLoadingAllHistory, setIsLoadingAllHistory] = useState(false);
+
+  // Efeito para carregar o histórico de todos os times da arena para gráficos comparativos e de logística reais
+  useEffect(() => {
+    if (activeArena?.id) {
+      setIsLoadingAllHistory(true);
+      getChampionshipSimulationHistory(activeArena.id)
+        .then(data => {
+          setAllTeamsHistory(data || []);
+        })
+        .catch(err => {
+          console.error('[Oracle Dashboards] Erro ao carregar histórico da arena:', err);
+        })
+        .finally(() => {
+          setIsLoadingAllHistory(false);
+        });
+    }
+  }, [activeArena?.id]);
 
   // Indica se a barra deve ser mostrada como expandida (apenas por toggle manual)
   const isVisuallyExpanded = !isSidebarCollapsed;
@@ -1783,15 +1803,21 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         plotOptions: { pie: { donut: { size: '60%' } } }
                       }}
                       series={competitorsList.map((t: any, idx: number) => {
+                        const defaults = [28, 25, 32, 15];
+                        const defaultVal = defaults[idx % 4] || 20;
                         if (t.id === activeTeam?.id) {
                           return activeTeam?.kpis?.market_share !== undefined 
                             ? (activeTeam.kpis.market_share * (activeTeam.kpis.market_share < 1 ? 100 : 1)) 
                             : 16.3;
                         }
-                        const defaults = [28, 25, 32, 15];
+                        const curRound = activeArena?.current_round || 0;
+                        const dbVal = allTeamsHistory.find((h: any) => h.team_id === t.id && h.round === curRound)?.kpis?.market_share;
+                        if (dbVal !== undefined) {
+                          return dbVal * (dbVal < 1 ? 100 : 1);
+                        }
                         return t.kpis?.market_share 
                           ? (t.kpis.market_share * (t.kpis.market_share < 1 ? 100 : 1)) 
-                          : (defaults[idx % 4] || 20);
+                          : defaultVal;
                       })}
                       type="donut"
                       height={190}
@@ -1808,11 +1834,32 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         setExpandedChart({
                           id: 'vendas_periodo',
                           title: 'Vendas por Equipes (Histórico)',
-                          options: getBaseChartOptions('Séries de Vendas'),
-                          series: [
-                            { name: formatTeamName(competitorsList[0]?.name || '', 0), data: computedHistory.map((h, r) => (12000 + (r * 800))) },
-                            { name: formatTeamName(competitorsList[1]?.name || '', 1), data: computedHistory.map((h, r) => (9000 + (r * 600))) }
-                          ]
+                          options: {
+                            ...getBaseChartOptions('Unidades Vendidas por Turno'),
+                            xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '10px' } } }
+                          },
+                          series: competitorsList.map((comp: any, idx: number) => {
+                            const isMainTeam = comp.id === activeTeam?.id;
+                            const defaultBase = idx === 0 ? 12000 : idx === 1 ? 9000 : idx === 2 ? 11000 : 8000;
+                            return {
+                              name: formatTeamName(comp.name || '', idx),
+                              data: computedHistory.map((h: any, r: number) => {
+                                if (isMainTeam) {
+                                  return (h.kpis as any)?.last_units_sold || (h.kpis as any)?.sold_quantity || (defaultBase + (r * 500));
+                                }
+                                const row = allTeamsHistory.find((t: any) => t.team_id === comp.id && t.round === r);
+                                const realSold = row?.kpis?.last_units_sold || row?.kpis?.sold_quantity;
+                                if (realSold !== undefined && realSold !== null) {
+                                  return Number(realSold);
+                                }
+                                if (r === (activeArena?.current_round || 0)) {
+                                  const tSold = comp.kpis?.last_units_sold || comp.kpis?.sold_quantity;
+                                  if (tSold !== undefined && tSold !== null) return Number(tSold);
+                                }
+                                return defaultBase + (r * 400) - (idx * 150);
+                              })
+                            };
+                          })
                         });
                       }}
                       className="p-1 hover:bg-white/5 rounded text-slate-400 hover:text-white"
@@ -1837,6 +1884,15 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           data: computedHistory.map((h: any, r: number) => {
                             if (isMainTeam) {
                               return (h.kpis as any)?.last_units_sold || (h.kpis as any)?.sold_quantity || (defaultBase + (r * 500));
+                            }
+                            const row = allTeamsHistory.find((t: any) => t.team_id === comp.id && t.round === r);
+                            const realSold = row?.kpis?.last_units_sold || row?.kpis?.sold_quantity;
+                            if (realSold !== undefined && realSold !== null) {
+                              return Number(realSold);
+                            }
+                            if (r === (activeArena?.current_round || 0)) {
+                              const tSold = comp.kpis?.last_units_sold || comp.kpis?.sold_quantity;
+                              if (tSold !== undefined && tSold !== null) return Number(tSold);
                             }
                             return defaultBase + (r * 400) - (idx * 150);
                           })
@@ -1876,10 +1932,17 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         },
                         {
                           name: 'Mercado Concorrentes',
-                          data: competitorsList.filter((comp: any) => comp.id !== activeTeam?.id).map((comp: any, idx: number) => {
+                          data: competitorsList.filter((comp: any) => comp.id !== activeTeam?.id).flatMap((comp: any, idx: number) => {
+                            const compHistory = allTeamsHistory.filter((h: any) => h.team_id === comp.id);
+                            if (compHistory.length > 0) {
+                              return compHistory.map((ch: any) => [
+                                ch.kpis?.avg_price_local || ch.kpis?.avg_price || (1.20 + (idx * 0.10)),
+                                ch.kpis?.last_units_sold || ch.kpis?.sold_quantity || (42000 - (idx * 5000))
+                              ]);
+                            }
                             const price = comp.kpis?.avg_price_local || comp.kpis?.avg_price || (1.20 + (idx * 0.10));
                             const sold = comp.kpis?.last_units_sold || comp.kpis?.sold_quantity || (45000 - (idx * 5000));
-                            return [price, sold];
+                            return [[price, sold]];
                           })
                         }
                       ]}
@@ -1983,13 +2046,26 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             {computedHistory.map((h: any, rIdx: number) => {
                               // Calcular o share aproximado fidedigno para este round
                               let cellShare = 20;
-                              if (row.id === activeTeam?.id) {
+                              const isMainTeam = row.id === activeTeam?.id;
+                              if (isMainTeam) {
                                 cellShare = (h.kpis as any)?.market_share !== undefined 
                                   ? ((h.kpis as any).market_share * ((h.kpis as any).market_share < 1 ? 100 : 1)) 
                                   : (16.3 + rIdx * 0.4);
                               } else {
-                                const baseValues = [28, 25, 32, 15];
-                                cellShare = baseValues[i % 4] || 20;
+                                const curRowHistory = allTeamsHistory.find((ch: any) => ch.team_id === row.id && ch.round === rIdx);
+                                const dbVal = curRowHistory?.kpis?.market_share;
+                                if (dbVal !== undefined) {
+                                  cellShare = dbVal * (dbVal < 1 ? 100 : 1);
+                                } else {
+                                  const tVal = row.kpis?.market_share;
+                                  if (rIdx === (activeArena?.current_round || 0) && tVal !== undefined) {
+                                    cellShare = tVal * (tVal < 1 ? 100 : 1);
+                                  } else {
+                                    const baseValues = [28, 25, 32, 15];
+                                    const baseVal = baseValues[i % 4] || 20;
+                                    cellShare = baseVal + (rIdx * 0.2) - (i * 0.3);
+                                  }
+                                }
                               }
                               
                               // Escala de cor fiduciaria para shares
