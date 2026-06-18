@@ -220,6 +220,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
         elp: elpVal,
 
         kpis: {
+          ...(h.kpis || {}),
           liquidity_current: Number.isFinite(h.kpis?.liquidity_current) ? h.kpis.liquidity_current : (assetsVal / (liabilityStVal || 1)),
           inventory_turnover: Number.isFinite(h.kpis?.inventory_turnover) ? h.kpis.inventory_turnover : (12.5 + r),
           altman_z_score: Number.isFinite(h.kpis?.altman_z_score) ? h.kpis.altman_z_score : (5.5 + r),
@@ -1367,8 +1368,8 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                 </div>
 
                 {/* Gráfico Efeito Tesoura Contábil */}
-                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between overflow-hidden">
-                  <div className="flex justify-between items-center mb-1">
+                <div className="bg-[#0E1726]/80 pt-3 pb-1 px-2 rounded-[2rem] border border-white/5 relative flex flex-col justify-between overflow-hidden">
+                  <div className="flex justify-between items-center mb-1 px-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[8px] font-black text-[#39FF14] uppercase tracking-tight">Equilíbrio fiduciário</span>
                       <h5 className="text-[10px] font-black text-white uppercase italic">Efeito Tesoura (em {currency})</h5>
@@ -1397,6 +1398,25 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                               theme: 'dark',
                               y: {
                                 formatter: (val: number) => formatValue(val)
+                              }
+                            },
+                            markers: {
+                              size: 4,
+                              strokeColors: '#0e1726',
+                              strokeWidth: 2,
+                              hover: {
+                                size: 6
+                              }
+                            },
+                            grid: {
+                              borderColor: 'rgba(255, 255, 255, 0.03)',
+                              xaxis: { lines: { show: false } },
+                              yaxis: { lines: { show: true } },
+                              padding: {
+                                top: -10,
+                                bottom: -5,
+                                left: 15,
+                                right: 15
                               }
                             },
                             xaxis: {
@@ -1454,6 +1474,25 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             formatter: (val: number) => formatValue(val)
                           }
                         },
+                        markers: {
+                          size: 4,
+                          strokeColors: '#0e1726',
+                          strokeWidth: 2,
+                          hover: {
+                            size: 6
+                          }
+                        },
+                        grid: {
+                          borderColor: 'rgba(255, 255, 255, 0.03)',
+                          xaxis: { lines: { show: false } },
+                          yaxis: { lines: { show: true } },
+                          padding: {
+                            top: -15,
+                            bottom: -5,
+                            left: 10,
+                            right: 10
+                          }
+                        },
                         stroke: { curve: 'smooth', width: 2 },
                         xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } },
                         yaxis: {
@@ -1486,7 +1525,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         { name: 'Receita Bruta', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
                       ]}
                       type="line"
-                      height={245}
+                      height={272}
                     />
                   </div>
                 </div>
@@ -1837,9 +1876,11 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         },
                         {
                           name: 'Mercado Concorrentes',
-                          data: [
-                            [1.15, 41000], [1.35, 33000], [1.45, 29000], [1.55, 23000]
-                          ]
+                          data: competitorsList.filter((comp: any) => comp.id !== activeTeam?.id).map((comp: any, idx: number) => {
+                            const price = comp.kpis?.avg_price_local || comp.kpis?.avg_price || (1.20 + (idx * 0.10));
+                            const sold = comp.kpis?.last_units_sold || comp.kpis?.sold_quantity || (45000 - (idx * 5000));
+                            return [price, sold];
+                          })
                         }
                       ]}
                       type="scatter"
@@ -2000,8 +2041,8 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           title: 'Capacidade vs Produzido',
                           options: getBaseChartOptions('Eficiência Industrial'),
                           series: [
-                            { name: 'Capacidade Instalada', data: [12000, 12000, 16000, 16000, 16000] },
-                            { name: 'Volume Produzido', data: [11000, 10500, 14200, 15000, 15800] }
+                            { name: 'Capacidade Instalada', data: computedHistory.map(h => h.kpis?.production_capacity || 12000) },
+                            { name: 'Volume Produzido', data: computedHistory.map(h => h.kpis?.finished_goods_produced || h.kpis?.last_units_sold || 10000) }
                           ]
                         });
                       }}
@@ -2135,8 +2176,26 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         labels: ['PPR', 'Treinamento', 'Horas Extras', 'P&D', 'Bônus']
                       }}
                       series={[
-                        { name: 'Minha Equipa', data: [75, 80, 45, 60, 50] },
-                        { name: 'Média de Setor', data: [65, 70, 50, 55, 45] }
+                        { 
+                          name: 'Minha Equipa', 
+                          data: [
+                            Math.min(100, (activeTeam?.kpis?.ppr_percentage !== undefined ? Number(activeTeam.kpis.ppr_percentage) * 10 : 75)),
+                            Math.min(100, (activeTeam?.kpis?.training_score !== undefined ? Number(activeTeam.kpis.training_score) * 10 : 80)),
+                            Math.min(100, (activeTeam?.kpis?.extra_hours_ratio !== undefined ? Number(activeTeam.kpis.extra_hours_ratio) * 100 : 45)),
+                            Math.min(100, (activeTeam?.kpis?.research_index !== undefined ? Number(activeTeam.kpis.research_index) * 100 : 60)),
+                            Math.min(100, (activeTeam?.kpis?.productivity_bonus !== undefined ? Number(activeTeam.kpis.productivity_bonus) * 10 : 50))
+                          ]
+                        },
+                        { 
+                          name: 'Média de Setor', 
+                          data: [
+                            Math.min(100, (activeArena?.market_indicators?.ppr_average !== undefined ? Number(activeArena.market_indicators.ppr_average) * 10 : 65)),
+                            Math.min(100, (activeArena?.market_indicators?.training_average !== undefined ? Number(activeArena.market_indicators.training_average) * 10 : 70)),
+                            Math.min(100, (activeArena?.market_indicators?.extra_hours_average !== undefined ? Number(activeArena.market_indicators.extra_hours_average) * 100 : 50)),
+                            Math.min(100, (activeArena?.market_indicators?.research_average !== undefined ? Number(activeArena.market_indicators.research_average) * 100 : 55)),
+                            Math.min(100, (activeArena?.market_indicators?.bonus_average !== undefined ? Number(activeArena.market_indicators.bonus_average) * 10 : 45))
+                          ]
+                        }
                       ]}
                       type="radar"
                       height={180}

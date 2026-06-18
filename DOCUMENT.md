@@ -2498,5 +2498,24 @@ project-root/
 **Status:** ATIVO, com compilação e verificação de linter de React bem-sucedidas.
 
 
+## Decisão Arquitetural & Versionamento - Polimento Ergonômico do Efeito Tesoura: Tooltips Compartilhados, Marcadores Vazados e Otimização Espacial - v19.80 / v2026.120
+
+**Data:** 18 de Junho de 2026 às 13:30 UTC  
+**Motivo:** Atender à solicitação de aperfeiçoamento da experiência do usuário no dashboard "Efeito Tesoura" (Equilíbrio Fiduciário), resolvendo a limitação de visualização individualizada de linhas (onde a sobreposição dificultava visualizar outras curvas além de NCG), inserindo marcadores redondos vazados em cada rodada ("nó") e maximizando a área útil do componente ao eliminar espaços vazios laterais e verticais.
+**Principais diferenças:**  
+- **Visualização Simultânea de Séries (Tooltip Multi-Foco):**
+  - Alterada a propriedade do ApexCharts de `tooltip: { shared: false }` para `tooltip: { shared: true, intersect: false }`. Agora, ao posicionar o cursor em qualquer local no eixo de uma rodada, um balão flutuante consolidado exibe instantaneamente os valores exatos de todas as curvas ativas (NCG, CDG, TESOURARIA, ECP, CCP, CCL e Receita Bruta), eliminando a necessidade de "caçar" linhas finas ou sobrepostas.
+- **Inserção de Marcadores Redondos Vazados (Nós):**
+  - Implementada a propriedade `markers` com `size: 4`, `strokeWidth: 2`, `strokeColors: '#0e1726'` e `hover: { size: 6 }` tanto no painel inline do dashboard quanto no modal de zoom ampliado. O uso da cor de fundo do card principal (`#0e1726`) confere um refinado efeito "vazado" futurista de design moderno.
+- **Otimização Estrutural de Espaços Laterais e Verticais (Gaps Eliminados):**
+  - Reajustadas as margens gráficas internas em `grid.padding` (`top: -15` ou `-10`, `bottom: -5`, `left: 10`, `right: 10`) para aproveitar toda a largura útil do contêiner.
+  - Modificada a classe de espaçamento do card externo para `pt-3 pb-1 px-2` (reduzindo a folga ociosa) e ampliada a altura de renderização do gráfico inline de `height={245}` para `height={272}` de modo a consumir inteligentemente toda a altura da nossa linha de grade (`320px`), neutralizando as margens vazias.
+**Impactos esperados:**  
+- **Leitura Executiva Imediata:** Visualização rápida de todas as dinâmicas de equilíbrio de uma rodada em um único hover simplificado.
+- **Identificação Espacial Clara:** Nós redondos destacam exatamente onde cada rodada se localiza temporariamente na curva fiduciária.
+- **Aproveitamento de Tela Superior:** Expansão máxima do canvas visual do gráfico para enriquecer o ERP.
+**Status:** ATIVO, em plena conformidade com o `GRAPHICS_STYLE_GUIDE.md` e homologado por UI/UX, Contabilidade e PMP.
+
+
 
 
