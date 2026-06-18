@@ -1395,14 +1395,14 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             }
                           },
                           series: [
-                            { name: 'NCG (Necessidade de Capital de Giro)', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
-                            { name: 'CDG (Capital de Giro Líquido)', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
-                            { name: 'TESOURARIA (ST = CDG - NCG)', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
-                            { name: 'ELP (Empréstimos Longo Prazo)', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
-                            { name: 'ECP (Empréstimos Curto Prazo)', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
-                            { name: 'CCP (Capital Circulante Próprio)', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
-                            { name: 'CCL (Capital Circulante Líquido)', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
-                            { name: 'Faturamento Bruto', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
+                            { name: 'NCG', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
+                            { name: 'CDG', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
+                            { name: 'TESOURARIA', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
+                            { name: 'ELP', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
+                            { name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
+                            { name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
+                            { name: 'CCL', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
+                            { name: 'Fat. Bruto', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
                             { name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
                           ]
                         });
