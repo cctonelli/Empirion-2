@@ -1393,7 +1393,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                               '#1DE9B6', // Teal (Lucro)
                             ],
                             tooltip: {
-                              shared: false,
+                              shared: true,
                               intersect: false,
                               theme: 'dark',
                               y: {
@@ -1467,7 +1467,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           '#1DE9B6', // Teal (Lucro)
                         ],
                         tooltip: {
-                          shared: false,
+                          shared: true,
                           intersect: false,
                           theme: 'dark',
                           y: {
