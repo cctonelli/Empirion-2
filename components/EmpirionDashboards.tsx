@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { 
@@ -44,8 +44,31 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
   const isVisuallyExpanded = !isSidebarCollapsed;
 
   // 2. Estados de Governança e Identidade (Filtros Globais)
-  const [tacticalGovernance, setTacticalGovernance] = useState<'baixo' | 'medio' | 'alto' | 'total'>('total');
+  const [tacticalGovernance, setTacticalGovernance] = useState<'baixo' | 'medio' | 'alto' | 'total'>('medio');
   const [teamIdentity, setTeamIdentity] = useState<'anonima' | 'identificada'>('identificada');
+
+  // Efeito fiduciário para inicializar os filtros globais a partir do Torneio (Arena) ativo
+  useEffect(() => {
+    if (activeArena) {
+      const transparency = activeArena.transparency_level || activeArena.config?.transparency_level || 'medium';
+      if (transparency === 'low') {
+        setTacticalGovernance('baixo');
+      } else if (transparency === 'medium') {
+        setTacticalGovernance('medio');
+      } else if (transparency === 'high') {
+        setTacticalGovernance('alto');
+      } else if (transparency === 'total' || transparency === 'open') {
+        setTacticalGovernance('total');
+      }
+
+      const identityMode = activeArena.gazeta_mode || activeArena.config?.gazeta_mode || 'identified';
+      if (identityMode === 'anonymous') {
+        setTeamIdentity('anonima');
+      } else {
+        setTeamIdentity('identificada');
+      }
+    }
+  }, [activeArena]);
 
   // 3. Estados dos Dropdowns internos de Gráficos (Mutações de Série)
   const [financialChart1Option, setFinancialChart1Option] = useState<'completo' | 'ativo_passivo' | 'evolucao_equipe'>('completo');
@@ -102,28 +125,101 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       };
     }) : history;
 
+    const findNodeVal = (nodes: any[] | undefined | null, targetId: string): number => {
+      if (!nodes || !Array.isArray(nodes)) return 0;
+      for (const node of nodes) {
+        if (node.id === targetId) return node.value || 0;
+        if (node.children) {
+          const val = findNodeVal(node.children, targetId);
+          if (val !== 0) return val;
+        }
+      }
+      return 0;
+    };
+
     return list.map((h, r) => {
       const factor = 1 + (r * 0.15);
+      
+      const bs = h.kpis?.statements?.balance_sheet;
+      const dre = h.kpis?.statements?.dre;
+
+      const assetsVal = findNodeVal(bs, 'assets') || h.total_assets || h.assets || (2540000 * factor);
+      const liabilitiesVal = findNodeVal(bs, 'liabilities') || h.liabilities || (1230000 * factor);
+      const equityVal = findNodeVal(bs, 'equity') || h.equity || ((activeTeam?.equity || 1200000) * factor);
+      const capitalSocialVal = findNodeVal(bs, 'equity.capital') || h.capital_social || 1000000;
+      const lucroAcumuladoVal = findNodeVal(bs, 'equity.retained_earnings') || h.lucro_acumulado || (200000 * factor);
+      
+      const liabilityStVal = findNodeVal(bs, 'liabilities.current') || h.liability_st || (120000 * factor);
+      const liabilityLtVal = findNodeVal(bs, 'liabilities.longterm') || h.liability_lt || 560000;
+      
+      const revenueVal = findNodeVal(dre, 'revenue') || findNodeVal(dre, 'revenue.gross') || h.revenue || (1500000 * factor);
+      const costsVal = Math.abs(findNodeVal(dre, 'costs') || findNodeVal(dre, 'costs.cpv') || h.costs || (1100000 * factor));
+      const netProfitVal = findNodeVal(dre, 'net_profit') || h.net_profit || (300000 * factor);
+      
+      const cashVal = findNodeVal(bs, 'assets.current.cash') || h.cash || h.kpis?.current_cash || (800000 * factor);
+
+      // Elementos adicionais para o Efeito Tesoura calculados com rigor contábil (CPC/IFRS)
+      const acVal = findNodeVal(bs, 'assets.current') || (assetsVal - (assetsVal * 0.45));
+      const pcVal = findNodeVal(bs, 'liabilities.current') || liabilityStVal;
+      const ancVal = findNodeVal(bs, 'assets.noncurrent') || (assetsVal * 0.45);
+
+      // Capital de Giro Líquido: CDG = (Patrimônio Líquido + Exigível a Longo Prazo) - Ativo Não Circulante
+      const cdgVal = (equityVal + liabilityLtVal) - ancVal;
+      // Capital Circulante Líquido: CCL = Ativo Circulante - Passivo Circulante
+      const cclVal = acVal - pcVal;
+
+      // NCG (Necessidade de Capital de Giro) = Ativo Circulante Operacional - Passivo Circulante Operacional
+      const acoVal = (findNodeVal(bs, 'assets.current.receivables') || 0) + 
+                     (findNodeVal(bs, 'assets.current.stock') || 
+                      (findNodeVal(bs, 'assets.current.stock.pa') + 
+                       findNodeVal(bs, 'assets.current.stock.mpa') + 
+                       findNodeVal(bs, 'assets.current.stock.mpb') + 
+                       findNodeVal(bs, 'assets.current.stock.wip')) || 
+                      (acVal * 0.4));
+      const pcoVal = (findNodeVal(bs, 'liabilities.current.suppliers') || 0) + 
+                     (findNodeVal(bs, 'liabilities.current.taxes') || 0);
+      const ncgVal = acoVal - pcoVal;
+
+      // Tesouraria: ST = CDG - NCG
+      const tesourariaVal = cdgVal - ncgVal;
+
+      // Capital Circulante Próprio: CCP = PL - ANC
+      const ccpVal = equityVal - ancVal;
+
+      // Empréstimos ST (Curto Prazo) e LT (Longo Prazo)
+      const ecpVal = findNodeVal(bs, 'liabilities.current.loans_st') || liabilityStVal || 0;
+      const elpVal = findNodeVal(bs, 'liabilities.longterm') || liabilityLtVal || 0;
+
       return {
         round: typeof h.round === 'number' ? h.round : r,
-        equity: Number.isFinite(h.equity) ? h.equity : ((activeTeam?.equity || 1200000) * factor),
-        revenue: Number.isFinite(h.revenue) ? h.revenue : (1500000 * factor),
-        costs: Number.isFinite(h.costs) ? h.costs : (1100000 * factor),
-        ebitda: Number.isFinite(h.ebitda) ? h.ebitda : (400000 * factor),
-        net_profit: Number.isFinite(h.net_profit) ? h.net_profit : (300000 * factor),
-        cash: Number.isFinite(h.cash) ? h.cash : (800000 * factor),
-        capital_social: Number.isFinite(h.capital_social) ? h.capital_social : 1000000,
-        lucro_acumulado: Number.isFinite(h.lucro_acumulado) ? h.lucro_acumulado : (200000 * factor),
-        liability_st: Number.isFinite(h.liability_st) ? h.liability_st : (120000 * factor),
-        liability_lt: Number.isFinite(h.liability_lt) ? h.liability_lt : 560000,
-        assets: Number.isFinite(h.assets) ? h.assets : (2540000 * factor),
-        liabilities: Number.isFinite(h.liabilities) ? h.liabilities : (1230000 * factor),
+        equity: equityVal,
+        revenue: revenueVal,
+        costs: costsVal,
+        ebitda: Number.isFinite(h.ebitda) ? h.ebitda : (revenueVal - costsVal),
+        net_profit: netProfitVal,
+        cash: cashVal,
+        capital_social: capitalSocialVal,
+        lucro_acumulado: lucroAcumuladoVal,
+        liability_st: liabilityStVal,
+        liability_lt: liabilityLtVal,
+        assets: assetsVal,
+        liabilities: liabilitiesVal,
+        
+        // Atributos de Equilíbrio de Tesouraria contábil real
+        cdg: cdgVal,
+        ccl: cclVal,
+        ncg: ncgVal,
+        tesouraria: tesourariaVal,
+        ccp: ccpVal,
+        ecp: ecpVal,
+        elp: elpVal,
+
         kpis: {
-          liquidity_current: Number.isFinite(h.kpis?.liquidity_current) ? h.kpis.liquidity_current : (1.5 + (r * 0.1)),
+          liquidity_current: Number.isFinite(h.kpis?.liquidity_current) ? h.kpis.liquidity_current : (assetsVal / (liabilityStVal || 1)),
           inventory_turnover: Number.isFinite(h.kpis?.inventory_turnover) ? h.kpis.inventory_turnover : (12.5 + r),
           altman_z_score: Number.isFinite(h.kpis?.altman_z_score) ? h.kpis.altman_z_score : (5.5 + r),
           ccc: Number.isFinite(h.kpis?.ccc) ? h.kpis.ccc : (30 - r),
-          scissors_effect: Number.isFinite(h.kpis?.scissors_effect) ? h.kpis.scissors_effect : (200000 - (r * 15000)),
+          scissors_effect: Number.isFinite(h.kpis?.scissors_effect) ? h.kpis.scissors_effect : ncgVal,
           esds: {
             esds_display: Number.isFinite(h.kpis?.esds?.esds_display) ? h.kpis.esds.esds_display : (70 + r * 2)
           }
@@ -134,6 +230,40 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
 
   const roundsCategories = useMemo(() => {
     return computedHistory.map(h => `R-${h.round < 10 ? '0' : ''}${h.round}`);
+  }, [computedHistory]);
+
+  const kpiPercentageChanges = useMemo(() => {
+    const last = computedHistory[computedHistory.length - 1];
+    const prev = computedHistory[computedHistory.length - 2];
+    
+    const getChange = (lastVal: number, prevVal: number) => {
+      if (!prevVal || prevVal === 0) return { text: '0%', isPos: true };
+      const diff = ((lastVal - prevVal) / prevVal) * 100;
+      return {
+        text: `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`,
+        isPos: diff >= 0
+      };
+    };
+
+    if (!prev) {
+      return {
+        assets: { text: '0%', isPos: true },
+        liabilities: { text: '0%', isPos: true },
+        equity: { text: '0%', isPos: true },
+        capital_social: { text: '0%', isPos: true },
+        lucro_acumulado: { text: '0%', isPos: true },
+        debt: { text: '0%', isPos: true }
+      };
+    }
+
+    return {
+      assets: getChange(last?.assets || 0, prev?.assets || 0),
+      liabilities: getChange(last?.liabilities || 0, prev?.liabilities || 0),
+      equity: getChange(last?.equity || 0, prev?.equity || 0),
+      capital_social: getChange(last?.capital_social || 0, prev?.capital_social || 0),
+      lucro_acumulado: getChange(last?.lucro_acumulado || 0, prev?.lucro_acumulado || 0),
+      debt: getChange((last?.liability_st || 0) + (last?.liability_lt || 0), (prev?.liability_st || 0) + (prev?.liability_lt || 0))
+    };
   }, [computedHistory]);
 
   const competitorsList = useMemo(() => {
@@ -1059,19 +1189,17 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
           )}
 
           {/* ========================================================= */}
-          {/* 2. VIEW FINANCIAL & ACCOUNTING */}
-          {/* ========================================================= */}
           {activeTab === 'financial' && (
             <div className="flex flex-col gap-4 pb-6 min-h-min">
               
-              {/* Fileira Superior (6 Scorecards Compactos) */}
+              {/* Fileira Superior (6 Scorecards Compactos com Dados Contábeis Reais) */}
               <div className="grid grid-cols-2 md:grid-cols-6 gap-3 shrink-0">
                 {[
-                  { label: 'Ativo Total', val: computedHistory[computedHistory.length - 1]?.assets || 2540000, change: '+3.2%', isPos: true },
-                  { label: 'Passivo Total', val: computedHistory[computedHistory.length - 1]?.liabilities || 1230000, change: '+1.8%', isPos: false },
-                  { label: 'Patrimônio Líquido', val: computedHistory[computedHistory.length - 1]?.equity || 1310000, change: '+4.5%', isPos: true },
-                  { label: 'Capital Social', val: computedHistory[computedHistory.length - 1]?.capital_social || 1000000, change: '0%', isPos: true },
-                  { label: 'Lucro Acumulado', val: computedHistory[computedHistory.length - 1]?.lucro_acumulado || 310000, change: '+9.4%', isPos: true },
+                  { label: 'Ativo Total', val: computedHistory[computedHistory.length - 1]?.assets || 2540000, change: kpiPercentageChanges.assets.text, isPos: kpiPercentageChanges.assets.isPos },
+                  { label: 'Passivo Total', val: computedHistory[computedHistory.length - 1]?.liabilities || 1230000, change: kpiPercentageChanges.liabilities.text, isPos: !kpiPercentageChanges.liabilities.isPos },
+                  { label: 'Patrimônio Líquido', val: computedHistory[computedHistory.length - 1]?.equity || 1310000, change: kpiPercentageChanges.equity.text, isPos: kpiPercentageChanges.equity.isPos },
+                  { label: 'Capital Social', val: computedHistory[computedHistory.length - 1]?.capital_social || 1000000, change: kpiPercentageChanges.capital_social.text, isPos: kpiPercentageChanges.capital_social.isPos },
+                  { label: 'Lucro Acumulado', val: computedHistory[computedHistory.length - 1]?.lucro_acumulado || 310000, change: kpiPercentageChanges.lucro_acumulado.text, isPos: kpiPercentageChanges.lucro_acumulado.isPos },
                 ].map((card, idx) => (
                   <div key={idx} className="bg-[#1E1E2F] p-3 rounded-2xl border border-white/5 flex flex-col justify-between">
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{card.label}</span>
@@ -1083,28 +1211,28 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   </div>
                 ))}
                 
-                {/* Endividamento Isolado */}
+                {/* Endividamento Estruturado com Dados Reais */}
                 <div className="bg-[#1E1E2F] p-3 rounded-2xl border border-[#FF073A]/20 flex flex-col justify-between shadow-lg">
                   <span className="text-[9px] font-bold text-[#FF5F1F] uppercase tracking-wider">Endividamento Estruturado</span>
                   <div className="flex justify-between items-center gap-1">
                     <div className="flex flex-col">
                       <span className="text-[7px] text-slate-500 uppercase">Curto Prazo</span>
-                      <strong className="text-white text-[9px]">1,2M</strong>
+                      <strong className="text-white text-[9px] font-black italic">{formatValue(computedHistory[computedHistory.length - 1]?.liability_st || 0)}</strong>
                     </div>
                     <div className="w-px h-4 bg-white/5" />
                     <div className="flex flex-col">
                       <span className="text-[7px] text-slate-500 uppercase">Longo Prazo</span>
-                      <strong className="text-[#FFD700] text-[9px]">5,6M</strong>
+                      <strong className="text-[#FFD700] text-[9px] font-black italic">{formatValue(computedHistory[computedHistory.length - 1]?.liability_lt || 0)}</strong>
                     </div>
                   </div>
-                  <span className="text-[8px] font-black text-rose-500 flex items-center gap-0.5">
-                    <TrendingUp size={8} /> +2.1%
+                  <span className={`text-[8px] font-black flex items-center gap-0.5 ${!kpiPercentageChanges.debt.isPos ? 'text-emerald-400' : 'text-rose-500'}`}>
+                    {!kpiPercentageChanges.debt.isPos ? <TrendingDown size={8} /> : <TrendingUp size={8} />} {kpiPercentageChanges.debt.text}
                   </span>
                 </div>
               </div>
-
-              {/* Segunda Linha (Balanço Comparativo & DRE Comparativo) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:h-[320px] min-h-[290px] h-auto shrink-0">
+ 
+              {/* Segunda Linha (Balanço Comparativo, DRE Comparativo & Efeito Tesoura) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-[320px] min-h-[290px] h-auto shrink-0">
                 
                 {/* Balanço Comparativo */}
                 <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between overflow-hidden">
@@ -1217,6 +1345,102 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         ]
                       }
                       type="bar"
+                      height={245}
+                    />
+                  </div>
+                </div>
+
+                {/* Gráfico Efeito Tesoura Contábil */}
+                <div className="bg-[#0E1726]/80 p-3 rounded-[2rem] border border-white/5 relative flex flex-col justify-between overflow-hidden">
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[8px] font-black text-[#39FF14] uppercase tracking-tight">Equilíbrio fiduciário</span>
+                      <h5 className="text-[10px] font-black text-white uppercase italic">Efeito Tesoura (R-00 Inicial em diante)</h5>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setExpandedChart({
+                          id: 'efeito_tesoura',
+                          title: 'Análise de Equilíbrio e Efeito Tesoura',
+                          options: {
+                            ...getBaseChartOptions('Análise do Efeito Tesoura'),
+                            colors: [
+                              '#FF5F1F', // Orange (NCG)
+                              '#00FFFF', // Cyan (CDG)
+                              '#FF00FF', // Magenta (Tesouraria)
+                              '#FFFF33', // Yellow (ELP)
+                              '#FF2400', // Red (ECP)
+                              '#8F00FF', // Violet (CCP)
+                              '#39FF14', // Green (CCL)
+                              '#FFD700', // Gold (Faturamento)
+                              '#1DE9B6', // Teal (Lucro)
+                            ]
+                          },
+                          series: [
+                            { name: 'NCG (Necessidade de Capital de Giro)', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
+                            { name: 'CDG (Capital de Giro Líquido)', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
+                            { name: 'TESOURARIA (ST = CDG - NCG)', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
+                            { name: 'ELP (Empréstimos Longo Prazo)', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
+                            { name: 'ECP (Empréstimos Curto Prazo)', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
+                            { name: 'CCP (Capital Circulante Próprio)', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
+                            { name: 'CCL (Capital Circulante Líquido)', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
+                            { name: 'Faturamento Bruto', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
+                            { name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
+                          ]
+                        });
+                      }}
+                      className="p-1 hover:bg-white/5 rounded text-slate-400 hover:text-white"
+                    >
+                      <Maximize2 size={13} />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0 w-full font-mono">
+                    <Chart 
+                      options={{
+                        ...getBaseChartOptions(''),
+                        colors: [
+                          '#FF5F1F', // Orange (NCG)
+                          '#00FFFF', // Cyan (CDG)
+                          '#FF00FF', // Magenta (Tesouraria)
+                          '#FFFF33', // Yellow (ELP)
+                          '#FF2400', // Red (ECP)
+                          '#8F00FF', // Violet (CCP)
+                          '#39FF14', // Green (CCL)
+                          '#FFD700', // Gold (Faturamento)
+                          '#1DE9B6', // Teal (Lucro)
+                        ],
+                        stroke: { curve: 'smooth', width: 2 },
+                        xaxis: { categories: roundsCategories, labels: { style: { colors: '#94a3b8', fontSize: '8px' } } },
+                        yaxis: {
+                          labels: {
+                            style: { colors: '#e2e8f0', fontSize: '8px', fontFamily: 'JetBrains Mono, monospace' },
+                            formatter: (val: number) => {
+                              if (val === undefined || isNaN(val)) return '';
+                              return formatValue(val);
+                            }
+                          }
+                        },
+                        legend: {
+                          show: true,
+                          position: 'bottom',
+                          horizontalAlign: 'center',
+                          fontSize: '8px',
+                          labels: { colors: '#94a3b8' },
+                          itemMargin: { horizontal: 4, vertical: 2 }
+                        }
+                      }}
+                      series={[
+                        { name: 'NCG', data: computedHistory.map(h => parseFloat((h.ncg || 0).toFixed(0))) },
+                        { name: 'CDG', data: computedHistory.map(h => parseFloat((h.cdg || 0).toFixed(0))) },
+                        { name: 'TESOURARIA', data: computedHistory.map(h => parseFloat((h.tesouraria || 0).toFixed(0))) },
+                        { name: 'ELP', data: computedHistory.map(h => parseFloat((h.elp || 0).toFixed(0))) },
+                        { name: 'ECP', data: computedHistory.map(h => parseFloat((h.ecp || 0).toFixed(0))) },
+                        { name: 'CCP', data: computedHistory.map(h => parseFloat((h.ccp || 0).toFixed(0))) },
+                        { name: 'CCL', data: computedHistory.map(h => parseFloat((h.ccl || 0).toFixed(0))) },
+                        { name: 'Faturamento Bruto', data: computedHistory.map(h => parseFloat((h.revenue || 0).toFixed(0))) },
+                        { name: 'Lucro Líquido', data: computedHistory.map(h => parseFloat((h.net_profit || 0).toFixed(0))) },
+                      ]}
+                      type="line"
                       height={245}
                     />
                   </div>

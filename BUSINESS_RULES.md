@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **18/06/2026** | `v2026.129` | *PMP & Equipe* | **Mapeamento do Efeito Tesoura e Dinâmica de Insolvência por Crescimento Desmedido (Overtrading).** Implementada no dashboard de gestão contábil a monitoração síncrona real-time multilinear a partir do round P-00 para identificar descompassos entre o crescimento de faturamento bruto e lucros e o descasamento dos prazos de financiamentos comerciais. Introduzidas as formulações do Ativo e Passivo Operacionais para determinação exata da Necessidade de Capital de Giro (NCG), do Capital de Giro Líquido (CDG) e do Saldo de Tesouraria (ST), em estrita conformidade com as normas CPC/IFRS. |
 | **16/06/2026** | `v2026.128` | *PMP & Equipe* | **Algoritmo Concorrencial de Spillover por Ruptura de Estoque e Market Share de Entrega.** Corrigida a distorção contábil-operacional onde equipes que captavam demanda regional usando scores elevados de marketing/preço baixo mas falhavam em entregar unidades por inércia operacional (gargalo de operários ou insumos) "evaporavam" faturamento do campeonato e mantinham Market Share injustificado no painel. O simulador re-rateia a demanda não atendida (Ruptura/Stockout) aos demais concorrentes com estoque livre na região e computa o Market Share estritamente com base em volumes físicos de fato faturados e consolidados. |
 | **14/06/2026** | `v2026.127` | *PMP & Equipe* | **Mapeamento Patrimonial e Delineação de CAPEX: Start from Zero vs. Start with Base.** Clarificação estrutural do comportamento do balanço e do market size sob abordagens táticas de fundação de empresas. No modo *Start from Zero*, as marcas iniciam exclusivamente com Capital Social e Caixa Física disponível — sem frota fabril inicial herdada do Round 0. Fica estabelecido o nexus de que o investimento e aprovação de CAPEX no Round 1 (adição de maquinário, custos de instalação técnica por modelo de máquina e amortizações de depreciação subsequentes) são os catalisadores soberanos e exclusivos que erguem o Ativo Imobilizado e constroem o Market Size de demanda regional na simulação. |
 | **11/06/2026** | `v2026.126` | *PMP & Equipe* | **Generalização Multimoeda Dinâmica para Moeda-Base do Torneio.** |Multimoeda Dinâmica para Moeda-Base do Torneio.** Extensão do motor sob diretrizes do CPC 02 / IAS 21 para suportar qualquer moeda-base (BRL, USD, GBP, CNY) configurada pelo Tutor. O motor calcula dinamicamente as taxas de câmbio cruzadas (cross-rates) fallbacks e apura a variação cambial fiduciária (`fin.fx_variance`) para qualquer praça cuja moeda difira da moeda-base elegida consolidada. |
@@ -242,3 +243,25 @@ Historicamente, o `market_share` persistido correspondia à captação conceitua
   $$\text{Market Share Final \%}_T = \left( \frac{\text{Unidades Vendidas Finais Real}_T}{\sum_{All} \text{Unidades Vendidas Finais Real}} \right) \times 100$$
 - **Impacto da Capacidade e Força Operacional:** Esta alteração resolve de forma holística os pontos expostos pelo campeonato. A capacidade fabril instalada, ajustada pelas taxas de contratações de operários e horas extras táticas, eleva diretamente o Market Share real. Uma equipe estruturalmente produtiva não apenas atende seus próprios compradores, como se torna a principal herdeira de fatias generosas de mercado quando concorrentes falham no abastecimento, capturando faturamento excedente e empurrando seu EBITDA ao ápice financeiro da rodada.
 - **Salvaguarda Fiduciária de Equilíbrio Geral:** Caso a soma global de unidades vendidas do setor seja nula (por exemplo, em setups do tipo *Start from Zero* onde nenhuma fábrica produziu no Round 0), o sistema usa o Market Share conceitual nominal da captação prévia como salvaguarda tática de ranking, ou em última instância o rateio uniforme entre as companhias.
+
+---
+
+## 9. 📐 Equilíbrio de Tesouraria e Análise do Efeito Tesoura (CPC / IFRS)
+
+O **Efeito Tesoura** (ou fenômeno do *Overtrading*) surge quando o crescimento acelerado de uma empresa gera uma necessidade de capital de giro (NCG) que suplanta com folga a captação de recursos de capital de giro líquido (CDG). Na modelagem fiduciária do cockpit, este monitoramento avalia o risco de colapso de caixa por descasamento estrutural de prazos de faturamento.
+
+### 1. Fórmulas de Equilíbrio e Estrutura Contábil:
+- **Capital de Giro Líquido (CDG):** Mede a folga ou a escassez dos recursos de longo prazo aplicados no capital circulante.
+  $$\text{CDG} = (\text{Patrimônio Líquido} + \text{Passivo Não Circulante / ELP}) - \text{Ativo Não Circulante / ANC}$$
+- **Capital Circulante Líquido (CCL):** Diferença clássica de liquidez operacional.
+  $$\text{CCL} = \text{Ativo Circulante} - \text{Passivo Circulante}$$
+- **Necessidade de Capital de Giro (NCG):** Quantidade de recursos que a operação drena do caixa para financiar clientes e estoques antes de receber de fato, compensado pelas obrigações mercantis de curto prazo.
+  $$\text{NCG} = (\text{Clientes} + \text{Estoques}) - (\text{Fornecedores} + \text{Impostos a Pagar})$$
+- **Saldo de Tesouraria (ST):** O pulmão ou a folga financeira real e líquida da holding. Revela se a empresa dispõe de sobra de caixa ou se depende exclusivamente de endividamentos bancários de curto prazo.
+  $$\text{ST} = \text{CDG} - \text{NCG}$$
+- **Capital Circulante Próprio (CCP):** Recursos próprios aportados que sobram para financiar o circulante líquido.
+  $$\text{CCP} = \text{Patrimônio Líquido} - \text{Ativo Não Circulante}$$
+
+### 2. Comportamento e Diagnóstico nos Gráficos:
+1. **Tesouraria Positiva (Folga Segura):** CDG > NCG. O Saldo de Tesouraria se mantém no quadrante positivo. O crescimento operacional está totalmente sustentado pelo capital de giro próprio ou dívidas de longo prazo sadias.
+2. **Efeito Tesoura Clássico (Vulnerabilidade de Liquidez):** NCG cresce exponencialmente (devido ao faturamento em alta que expande contas a receber e requisições massivas de estocagem) enquanto o CDG se mantém estável ou é reduzido por baixa lucratividade líquida ou pagamento agressivo de dividendos. As curvas de NCG e CDG cruzam-se, empurrando o Saldo de Tesouraria (ST) para o negativo. A empresa sobrevive captando empréstimos bancários táticos de curtíssimo prazo (ECP), gerando risco de insolvência severo.
