@@ -107,6 +107,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
   // Moeda e Rodadas
   const currency = activeArena?.currency || 'BRL';
   const currentRound = activeArena?.current_round || 1;
+  const isZeroMode = activeArena?.starting_mode === 'start_from_zero' || activeArena?.config?.starting_mode === 'start_from_zero';
 
   // Lógica de Anonimização das Equipes
   const formatTeamName = (name: string, index: number) => {
@@ -201,31 +202,43 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       const bs = h.kpis?.statements?.balance_sheet;
       const dre = h.kpis?.statements?.dre;
 
-      const assetsVal = findNodeVal(bs, 'assets') || h.total_assets || h.assets || (2540000 * factor);
-      const liabilitiesVal = findNodeVal(bs, 'liabilities_pl') || findNodeVal(bs, 'liabilities') || h.liabilities || (1230000 * factor);
-      const equityVal = findNodeVal(bs, 'equity') || h.equity || ((activeTeam?.equity || 1200000) * factor);
-      const capitalSocialVal = findNodeVal(bs, 'equity.capital') || h.capital_social || 1000000;
-      const lucroAcumuladoVal = findNodeVal(bs, 'equity.profit') || findNodeVal(bs, 'equity.retained_earnings') || h.lucro_acumulado || (200000 * factor);
+      const assetsNode = findNode(bs, 'assets');
+      const assetsVal = assetsNode ? (assetsNode.value ?? 0) : (h.total_assets !== undefined && h.total_assets !== null ? h.total_assets : (h.assets !== undefined && h.assets !== null ? h.assets : (isZeroMode ? (initCapital || 100000) * factor : 2540000 * factor)));
+
+      const liabilitiesNode = findNode(bs, 'liabilities_pl') || findNode(bs, 'liabilities');
+      const liabilitiesVal = liabilitiesNode ? (liabilitiesNode.value ?? 0) : (h.liabilities !== undefined && h.liabilities !== null ? h.liabilities : (isZeroMode ? 0 : 1230000 * factor));
+
+      const equityNode = findNode(bs, 'equity');
+      const equityVal = equityNode ? (equityNode.value ?? 0) : (h.equity !== undefined && h.equity !== null ? h.equity : ((activeTeam?.equity || (isZeroMode ? initCapital : 1200000)) * factor));
+
+      const capitalSocialVal = findNodeVal(bs, 'equity.capital') || (h.capital_social !== undefined && h.capital_social !== null ? h.capital_social : (isZeroMode ? initCapital : 1000000));
+      const lucroAcumuladoVal = findNodeVal(bs, 'equity.profit') || findNodeVal(bs, 'equity.retained_earnings') || h.lucro_acumulado || (isZeroMode ? 0 : 200000 * factor);
       
-      const liabilityStVal = findNodeVal(bs, 'liabilities.current') || h.liability_st || (120000 * factor);
-      const liabilityLtVal = findNodeVal(bs, 'liabilities.longterm') || findNodeVal(bs, 'liabilities.longterm.loans_lt') || h.liability_lt || 560000;
+      const liabilityStVal = findNodeVal(bs, 'liabilities.current') || h.liability_st || (isZeroMode ? 0 : 120000 * factor);
+      const liabilityLtVal = findNodeVal(bs, 'liabilities.longterm') || findNodeVal(bs, 'liabilities.longterm.loans_lt') || h.liability_lt || (isZeroMode ? 0 : 560000);
       
+      const rNode = findNode(dre, 'revenue') || findNode(dre, 'revenue.gross') || findNode(dre, 'rev');
       const revenueVal = (isZeroMode && isCurrentRoundZero) 
         ? 0 
-        : (findNodeVal(dre, 'revenue') || findNodeVal(dre, 'revenue.gross') || findNodeVal(dre, 'rev') || h.revenue || (1500000 * factor));
+        : (rNode ? (rNode.value ?? 0) : (h.revenue !== undefined && h.revenue !== null ? h.revenue : (isZeroMode ? 0 : 1500000 * factor)));
+
+      const cNode = findNode(dre, 'costs') || findNode(dre, 'costs.cpv') || findNode(dre, 'cpv');
       const costsVal = (isZeroMode && isCurrentRoundZero)
         ? 0
-        : Math.abs(findNodeVal(dre, 'costs') || findNodeVal(dre, 'costs.cpv') || findNodeVal(dre, 'cpv') || h.costs || (1100000 * factor));
+        : Math.abs(cNode ? (cNode.value ?? 0) : (h.costs !== undefined && h.costs !== null ? h.costs : (isZeroMode ? 0 : 1100000 * factor)));
+
+      const npNode = findNode(dre, 'net_profit') || findNode(dre, 'final_profit');
       const netProfitVal = (isZeroMode && isCurrentRoundZero)
         ? 0
-        : (findNodeVal(dre, 'net_profit') || findNodeVal(dre, 'final_profit') || h.net_profit || (300000 * factor));
+        : (npNode ? (npNode.value ?? 0) : (h.net_profit !== undefined && h.net_profit !== null ? h.net_profit : (isZeroMode ? 0 : 300000 * factor)));
       
-      const cashVal = findNodeVal(bs, 'assets.current.cash') || h.cash || h.kpis?.current_cash || (800000 * factor);
+      const cashNode = findNode(bs, 'assets.current.cash');
+      const cashVal = cashNode ? (cashNode.value ?? 0) : (h.cash !== undefined && h.cash !== null ? h.cash : (h.kpis?.current_cash !== undefined && h.kpis?.current_cash !== null ? h.kpis.current_cash : (isZeroMode ? initCash : 800000) * factor));
 
       // Elementos adicionais para o Efeito Tesoura calculados com rigor contábil (CPC/IFRS)
-      const acVal = findNodeVal(bs, 'assets.current') || (assetsVal - (assetsVal * 0.45));
+      const acVal = findNodeVal(bs, 'assets.current') || (isZeroMode ? assetsVal : (assetsVal - (assetsVal * 0.45)));
       const pcVal = findNodeVal(bs, 'liabilities.current') || liabilityStVal;
-      const ancVal = findNodeVal(bs, 'assets.noncurrent') || (assetsVal * 0.45);
+      const ancVal = findNodeVal(bs, 'assets.noncurrent') || (assetsVal - acVal);
 
       // Capital de Giro Líquido: CDG = (Patrimônio Líquido + Exigível a Longo Prazo) - Ativo Não Circulante
       const cdgVal = (equityVal + liabilityLtVal) - ancVal;
@@ -1850,16 +1863,16 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                         if (t.id === activeTeam?.id) {
                           return activeTeam?.kpis?.market_share !== undefined 
                             ? (activeTeam.kpis.market_share * (activeTeam.kpis.market_share < 1 ? 100 : 1)) 
-                            : 16.3;
+                            : (isZeroMode ? 0 : 16.3);
                         }
                         const curRound = activeArena?.current_round || 0;
                         const dbVal = allTeamsHistory.find((h: any) => h.team_id === t.id && h.round === curRound)?.kpis?.market_share;
                         if (dbVal !== undefined) {
                           return dbVal * (dbVal < 1 ? 100 : 1);
                         }
-                        return t.kpis?.market_share 
+                        return t.kpis?.market_share !== undefined 
                           ? (t.kpis.market_share * (t.kpis.market_share < 1 ? 100 : 1)) 
-                          : defaultVal;
+                          : (isZeroMode ? 0 : defaultVal);
                       })}
                       type="donut"
                       height={190}
@@ -1887,18 +1900,22 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                               name: formatTeamName(comp.name || '', idx),
                               data: computedHistory.map((h: any, r: number) => {
                                 if (isMainTeam) {
-                                  return (h.kpis as any)?.last_units_sold || (h.kpis as any)?.sold_quantity || (defaultBase + (r * 500));
+                                  return (h.kpis as any)?.last_units_sold !== undefined 
+                                    ? (h.kpis as any).last_units_sold 
+                                    : ((h.kpis as any)?.sold_quantity !== undefined 
+                                      ? (h.kpis as any).sold_quantity 
+                                      : (isZeroMode ? 0 : (defaultBase + (r * 500))));
                                 }
                                 const row = allTeamsHistory.find((t: any) => t.team_id === comp.id && t.round === r);
-                                const realSold = row?.kpis?.last_units_sold || row?.kpis?.sold_quantity;
+                                const realSold = row?.kpis?.last_units_sold !== undefined ? row.kpis.last_units_sold : row?.kpis?.sold_quantity;
                                 if (realSold !== undefined && realSold !== null) {
                                   return Number(realSold);
                                 }
                                 if (r === (activeArena?.current_round || 0)) {
-                                  const tSold = comp.kpis?.last_units_sold || comp.kpis?.sold_quantity;
+                                  const tSold = comp.kpis?.last_units_sold !== undefined ? comp.kpis.last_units_sold : comp.kpis?.sold_quantity;
                                   if (tSold !== undefined && tSold !== null) return Number(tSold);
                                 }
-                                return defaultBase + (r * 400) - (idx * 150);
+                                return isZeroMode ? 0 : (defaultBase + (r * 400) - (idx * 150));
                               })
                             };
                           })
@@ -1925,18 +1942,22 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                           name: formatTeamName(comp.name || '', idx),
                           data: computedHistory.map((h: any, r: number) => {
                             if (isMainTeam) {
-                              return (h.kpis as any)?.last_units_sold || (h.kpis as any)?.sold_quantity || (defaultBase + (r * 500));
+                              return (h.kpis as any)?.last_units_sold !== undefined 
+                                ? (h.kpis as any).last_units_sold 
+                                : ((h.kpis as any)?.sold_quantity !== undefined 
+                                  ? (h.kpis as any).sold_quantity 
+                                  : (isZeroMode ? 0 : (defaultBase + (r * 500))));
                             }
                             const row = allTeamsHistory.find((t: any) => t.team_id === comp.id && t.round === r);
-                            const realSold = row?.kpis?.last_units_sold || row?.kpis?.sold_quantity;
+                            const realSold = row?.kpis?.last_units_sold !== undefined ? row.kpis.last_units_sold : row?.kpis?.sold_quantity;
                             if (realSold !== undefined && realSold !== null) {
                               return Number(realSold);
                             }
                             if (r === (activeArena?.current_round || 0)) {
-                              const tSold = comp.kpis?.last_units_sold || comp.kpis?.sold_quantity;
+                              const tSold = comp.kpis?.last_units_sold !== undefined ? comp.kpis.last_units_sold : comp.kpis?.sold_quantity;
                               if (tSold !== undefined && tSold !== null) return Number(tSold);
                             }
-                            return defaultBase + (r * 400) - (idx * 150);
+                            return isZeroMode ? 0 : (defaultBase + (r * 400) - (idx * 150));
                           })
                         };
                       })}
@@ -1967,23 +1988,25 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                       series={[
                         {
                           name: 'Preço Minha Equipe',
-                          data: computedHistory.map((h: any) => [
-                            (h.kpis as any)?.avg_price_local || (h.kpis as any)?.avg_price || 1.40,
-                            (h.kpis as any)?.last_units_sold || (h.kpis as any)?.sold_quantity || 39000
-                          ])
+                          data: computedHistory.map((h: any) => {
+                            const price = h.kpis?.avg_price_local !== undefined ? h.kpis.avg_price_local : (h.kpis?.avg_price !== undefined ? h.kpis.avg_price : (isZeroMode ? 0 : 1.40));
+                            const sold = h.kpis?.last_units_sold !== undefined ? h.kpis.last_units_sold : (h.kpis?.sold_quantity !== undefined ? h.kpis.sold_quantity : (isZeroMode ? 0 : 39000));
+                            return [price, sold];
+                          })
                         },
                         {
                           name: 'Mercado Concorrentes',
                           data: competitorsList.filter((comp: any) => comp.id !== activeTeam?.id).flatMap((comp: any, idx: number) => {
                             const compHistory = allTeamsHistory.filter((h: any) => h.team_id === comp.id);
                             if (compHistory.length > 0) {
-                              return compHistory.map((ch: any) => [
-                                ch.kpis?.avg_price_local || ch.kpis?.avg_price || (1.20 + (idx * 0.10)),
-                                ch.kpis?.last_units_sold || ch.kpis?.sold_quantity || (42000 - (idx * 5000))
-                              ]);
+                              return compHistory.map((ch: any) => {
+                                const price = ch.kpis?.avg_price_local !== undefined ? ch.kpis.avg_price_local : (ch.kpis?.avg_price !== undefined ? ch.kpis.avg_price : (isZeroMode ? 0 : (1.20 + (idx * 0.10))));
+                                const sold = ch.kpis?.last_units_sold !== undefined ? ch.kpis.last_units_sold : (ch.kpis?.sold_quantity !== undefined ? ch.kpis.sold_quantity : (isZeroMode ? 0 : (42000 - (idx * 5000))));
+                                return [price, sold];
+                              });
                             }
-                            const price = comp.kpis?.avg_price_local || comp.kpis?.avg_price || (1.20 + (idx * 0.10));
-                            const sold = comp.kpis?.last_units_sold || comp.kpis?.sold_quantity || (45000 - (idx * 5000));
+                            const price = comp.kpis?.avg_price_local !== undefined ? comp.kpis.avg_price_local : (comp.kpis?.avg_price !== undefined ? comp.kpis.avg_price : (isZeroMode ? 0 : (1.20 + (idx * 0.10))));
+                            const sold = comp.kpis?.last_units_sold !== undefined ? comp.kpis.last_units_sold : (comp.kpis?.sold_quantity !== undefined ? comp.kpis.sold_quantity : (isZeroMode ? 0 : (45000 - (idx * 5000))));
                             return [[price, sold]];
                           })
                         }

@@ -206,10 +206,10 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               buildings_depreciation_rate: (arena.config as any)?.buildings_depreciation_rate ?? 10,
               property_depreciation_rate: (arena.config as any)?.property_depreciation_rate ?? 4,
               wip_stock_value: (arena.config as any)?.wip_stock_value ?? (isZeroMode ? 0 : isBaseMode ? 50000.00 : 250000.00),
-              building_mode: (arena.config as any)?.building_mode || (isZeroMode ? 'rented' : 'owned'),
-              building_value: (arena.config as any)?.building_value ?? (isZeroMode ? 0 : isBaseMode ? 2000000.00 : 5440000.00),
-              building_age: (arena.config as any)?.building_age ?? (isZeroMode ? 0 : isBaseMode ? 2 : 10),
-              land_value: (arena.config as any)?.land_value ?? (isZeroMode ? 0 : isBaseMode ? 1000000.00 : 1200000.00),
+              building_mode: (arena.config as any)?.building_mode || (((arena.config as any)?.building_value > 0) ? 'owned' : (isZeroMode ? 'rented' : 'owned')),
+              building_value: (arena.config as any)?.building_value !== undefined && (arena.config as any)?.building_value !== null ? Number((arena.config as any).building_value) : (isZeroMode ? 0 : isBaseMode ? 2000000.00 : 5440000.00),
+              building_age: (arena.config as any)?.building_age !== undefined && (arena.config as any)?.building_age !== null ? Number((arena.config as any).building_age) : (isZeroMode ? 0 : isBaseMode ? 2 : 10),
+              land_value: (arena.config as any)?.land_value !== undefined && (arena.config as any)?.land_value !== null ? Number((arena.config as any).land_value) : (isZeroMode ? 0 : isBaseMode ? 1000000.00 : 1200000.00),
             };
 
             const p0Generated = generatePureP0(p0Config);

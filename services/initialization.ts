@@ -415,7 +415,7 @@ export function generatePureP0(config: TutorP0Config): {
   const gammaInstallCost = config.machines?.[2]?.installation_cost !== undefined ? Number(config.machines[2].installation_cost) : 1500000.00;
 
   // Imobiliário Fiduciário: Prédio Locado vs Próprio
-  const buildingMode = config.building_mode ?? (isZeroMode ? 'rented' : 'owned');
+  const buildingMode = config.building_mode ?? (config.building_value && Number(config.building_value) > 0 ? 'owned' : (isZeroMode ? 'rented' : 'owned'));
   
   // No modo Greenfield (Start from Zero), as instalações e edificações começam ZERADAS no P0, exceto se parametrizadas explicitamente pelo Tutor
   const buildingBaseValue = isZeroMode ? (config.building_value !== undefined && config.building_value !== null ? Number(config.building_value) : 0) : (buildingMode === 'owned' ? (config.building_value ?? (isBaseMode ? 2000000.00 : 5440000.00)) : 0);

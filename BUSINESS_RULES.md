@@ -7,7 +7,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 ## 📅 Controle de Governança e Versionamento
 
 - **Projeto:** EMPIRION ORACLE
-- **Versão Ativa de Regras:** v2026.128
+- **Versão Ativa de Regras:** v2026.130
 - **Responsável pela Governança:** Project Management Professional (PMP)
 - **Time Multidisciplinar Responsável:**
   - **Contador Sênior:** CPC / IFRS e validação de relatórios contábeis/financeiros.
@@ -18,6 +18,7 @@ Este documento centraliza as definições de negócios, fórmulas, restrições 
 
 | Data | Versão | Autor | Alterações / Decisões Importantes |
 | :--- | :--- | :--- | :--- |
+| **18/06/2026** | `v2026.130` | *PMP & Equipe* | **Diretriz de Integridade Contábil-Financeira e Veto a Fallbacks Silenciosos.** Adicionada política de governança de dados rígida. Fica proibida a injeção unilateral de fallbacks "ocultos" ou geração de dados fictícios para encobrir buracos na simulação ou erros de carregamento na interface. Problemas de dados e erros de simulação devem ser investigados e tratados na raiz contábil, e falhas legítimas na UI devem ser visíveis ou informadas via loaders/warnings sem inventar números. |
 | **18/06/2026** | `v2026.129` | *PMP & Equipe* | **Mapeamento do Efeito Tesoura e Dinâmica de Insolvência por Crescimento Desmedido (Overtrading).** Implementada no dashboard de gestão contábil a monitoração síncrona real-time multilinear a partir do round P-00 para identificar descompassos entre o crescimento de faturamento bruto e lucros e o descasamento dos prazos de financiamentos comerciais. Introduzidas as formulações do Ativo e Passivo Operacionais para determinação exata da Necessidade de Capital de Giro (NCG), do Capital de Giro Líquido (CDG) e do Saldo de Tesouraria (ST), em estrita conformidade com as normas CPC/IFRS. |
 | **16/06/2026** | `v2026.128` | *PMP & Equipe* | **Algoritmo Concorrencial de Spillover por Ruptura de Estoque e Market Share de Entrega.** Corrigida a distorção contábil-operacional onde equipes que captavam demanda regional usando scores elevados de marketing/preço baixo mas falhavam em entregar unidades por inércia operacional (gargalo de operários ou insumos) "evaporavam" faturamento do campeonato e mantinham Market Share injustificado no painel. O simulador re-rateia a demanda não atendida (Ruptura/Stockout) aos demais concorrentes com estoque livre na região e computa o Market Share estritamente com base em volumes físicos de fato faturados e consolidados. |
 | **14/06/2026** | `v2026.127` | *PMP & Equipe* | **Mapeamento Patrimonial e Delineação de CAPEX: Start from Zero vs. Start with Base.** Clarificação estrutural do comportamento do balanço e do market size sob abordagens táticas de fundação de empresas. No modo *Start from Zero*, as marcas iniciam exclusivamente com Capital Social e Caixa Física disponível — sem frota fabril inicial herdada do Round 0. Fica estabelecido o nexus de que o investimento e aprovação de CAPEX no Round 1 (adição de maquinário, custos de instalação técnica por modelo de máquina e amortizações de depreciação subsequentes) são os catalisadores soberanos e exclusivos que erguem o Ativo Imobilizado e constroem o Market Size de demanda regional na simulação. |
@@ -265,3 +266,24 @@ O **Efeito Tesoura** (ou fenômeno do *Overtrading*) surge quando o crescimento 
 ### 2. Comportamento e Diagnóstico nos Gráficos:
 1. **Tesouraria Positiva (Folga Segura):** CDG > NCG. O Saldo de Tesouraria se mantém no quadrante positivo. O crescimento operacional está totalmente sustentado pelo capital de giro próprio ou dívidas de longo prazo sadias.
 2. **Efeito Tesoura Clássico (Vulnerabilidade de Liquidez):** NCG cresce exponencialmente (devido ao faturamento em alta que expande contas a receber e requisições massivas de estocagem) enquanto o CDG se mantém estável ou é reduzido por baixa lucratividade líquida ou pagamento agressivo de dividendos. As curvas de NCG e CDG cruzam-se, empurrando o Saldo de Tesouraria (ST) para o negativo. A empresa sobrevive captando empréstimos bancários táticos de curtíssimo prazo (ECP), gerando risco de insolvência severo.
+
+---
+
+## 10. 🛡️ Diretriz de Integridade de Dados contra Mocks Silenciosos e Fallbacks Arbitrários (Anti-Slop / Anti-Fallback)
+
+Para garantir a absoluta **fidelidade e rastreabilidade contábil** do simulador, fica estabelecida uma política de tolerância zero contra a criação negligente de dados fictícios. Os agentes de IA de programação, contabilidade ou banco de dados, bem como profissionais humanos que atuam no projeto, devem seguir rigorosamente as regras abaixo:
+
+### 1. Proibição de Fallbacks Silenciosos com Valores "Mágicos"
+- É terminantemente **proibido** criar fallbacks estáticos de dados financeiros chaves nas telas ou gráficos do cockpit (Exemplos reais proibidos: `equity || 1200000`, `revenue || 1500000`, `market_share || 16.3`, `liability_lt || (liabilities / 2)`).
+- **Justificativa Técnico-Contábil:** A injeção silenciosa de números inventados impede o diagnóstico de falhas críticas nas estruturas de processamento de rounds e esconde a inconsistência de dados do banco. Um Balanço Patrimonial cujos valores mimetizam sucesso com aproximações arbitrárias quebra a confiança do usuário e desqualifica o rigor acadêmico do simulador.
+
+### 2. Protocolo de Governança de Dados
+- **Pergunte Antes de Criar:** Se houver dúvidas quanto à representatividade de um valor em rounds sem histórico (ex: Round 0 em Greenfield), o agente **nunca** deve estimar ou hardcodar valores estáticos que simulem faturamento, vendas ou lucros para cobrir a ausência de dados, a menos que tal fórmula de salvaguarda esteja explicitamente assinada na tabela de Auditoria ou nas fórmulas declaradas deste guia.
+- **Tratamento de Exceções Legítimas:** Em caso de dados ausentes (`null` ou `undefined`), o sistema deve adotar uma destas três abordagens de governança fiduciária, dependendo do contexto:
+  1. **Zerar Concretamente (Greenfield):** Se a empresa iniciou do zero, o faturamento, custos e market share anteriores são de fato **zero** (`0`), e o sistema deve computá-los e exibi-los como zero ao invés de buscar médias de mercado.
+  2. **Indisponibilidade Sinalizada na Interface:** Em vez de disfarçar erros com números estáticos sadios para que a tela renderize em silêncio, a interface deve exibir um loader, uma mensagem de "Dados de simulação não calculados no banco" ou renderização condicional amigável (ex: `-` ou `N/A`) que conduza o usuário a rodar o turnover de simulação.
+  3. **Identificação e Tratamento na Origem:** O Engenheiro e o Contador devem depurar a consulta SQL no Supabase, a política de RLS, ou a função geradora de turnover (`simulation.ts`) para garantir que os dados históricos reais sejam escritos no banco de dados com integridade matemática integral, eliminando a discrepância já na raiz de persistência.
+
+### 3. Sinceridade na Depuração (Rastreabilidade)
+- Quando houver quebra de testes ou compilação, o programador ou contador deve focar em **corrigir a consulta ou a lógica de carregamento do estado** e **nunca** remendar o componente visual para "passar de ano" adicionando uma cascata de operadores coalescentes (`??` ou `||`) com dados fictícios de mercado por fora.
+- Todos os campos e estados estruturados no front-end devem, preferencialmente, carregar dados tipados originados das APIs e submetidos à validação prévia. Se um fallback temporário de segurança for inserido para blindar falha crítica de compilação, ele deve ser de curtíssimo alcance (ex: `0` para números e `""` para textos), e documentado explicitamente com um comentário `// TODO: Investigar causa raiz contábil em...` e reportado imediatamente ao PMP e ao time de desenvolvimento.
