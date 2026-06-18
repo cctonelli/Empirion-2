@@ -118,22 +118,54 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
 
   // 5. Histórico e Geração Dinâmica Baseada em Filtros de Governança
   const computedHistory = useMemo(() => {
+    const isZeroMode = activeArena?.starting_mode === 'start_from_zero' || activeArena?.config?.starting_mode === 'start_from_zero';
+    const initCash = activeArena?.config?.caixa_inicial ?? (isZeroMode ? 0 : 800000);
+    const initCapital = activeArena?.config?.capital_social ?? (isZeroMode ? 0 : 1000000);
+
     const list = history.length === 0 ? Array.from({ length: currentRound + 1 }).map((_, r) => {
       const factor = 1 + (r * 0.15);
+      const isRoundZero = r === 0;
+
+      if (isZeroMode && isRoundZero) {
+        return {
+          round: 0,
+          equity: initCapital || 100000,
+          revenue: 0,
+          costs: 0,
+          ebitda: 0,
+          net_profit: 0,
+          cash: initCash || 100000,
+          capital_social: initCapital || 100000,
+          lucro_acumulado: 0,
+          liability_st: 0,
+          liability_lt: 0,
+          assets: initCapital || 100000,
+          liabilities: 0,
+          kpis: {
+            liquidity_current: 1.0,
+            inventory_turnover: 0,
+            altman_z_score: 5.0,
+            ccc: 0,
+            scissors_effect: 0,
+            esds: { esds_display: 100 },
+          }
+        };
+      }
+
       return {
         round: r,
-        equity: (activeTeam?.equity || 1200000) * factor,
-        revenue: 1500000 * factor,
-        costs: 1100000 * factor,
-        ebitda: 400000 * factor,
-        net_profit: 300000 * factor * (r === 0 ? 0.3 : 1),
-        cash: 800000 * factor,
-        capital_social: 1000000,
-        lucro_acumulado: 200000 * factor,
-        liability_st: 120000 * factor,
-        liability_lt: 560000,
-        assets: 2500000 * factor,
-        liabilities: 1300000 * factor,
+        equity: (activeTeam?.equity || (isZeroMode ? initCapital : 1200000)) * factor,
+        revenue: isZeroMode ? (r === 1 ? 500000 : 500000 * factor) : 1500000 * factor,
+        costs: isZeroMode ? (r === 1 ? 380000 : 380000 * factor) : 1100000 * factor,
+        ebitda: isZeroMode ? (r === 1 ? 120000 : 120000 * factor) : 400000 * factor,
+        net_profit: isZeroMode ? (r === 1 ? 80000 : 80000 * factor) : 300000 * factor * (r === 0 ? 0.3 : 1),
+        cash: (isZeroMode ? initCash : 800000) * factor,
+        capital_social: isZeroMode ? initCapital : 1000000,
+        lucro_acumulado: isZeroMode ? (r === 1 ? 80000 : 80000 * factor) : 200000 * factor,
+        liability_st: isZeroMode ? 0 : 120000 * factor,
+        liability_lt: isZeroMode ? 0 : 560000,
+        assets: (isZeroMode ? initCapital : 2500000) * factor,
+        liabilities: isZeroMode ? 0 : 1300000 * factor,
         kpis: {
           liquidity_current: 1.5 + (r * 0.1),
           inventory_turnover: 12.5 + r,
@@ -164,6 +196,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
 
     return list.map((h, r) => {
       const factor = 1 + (r * 0.15);
+      const isCurrentRoundZero = (typeof h.round === 'number' ? h.round : r) === 0;
       
       const bs = h.kpis?.statements?.balance_sheet;
       const dre = h.kpis?.statements?.dre;
@@ -177,9 +210,15 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       const liabilityStVal = findNodeVal(bs, 'liabilities.current') || h.liability_st || (120000 * factor);
       const liabilityLtVal = findNodeVal(bs, 'liabilities.longterm') || findNodeVal(bs, 'liabilities.longterm.loans_lt') || h.liability_lt || 560000;
       
-      const revenueVal = findNodeVal(dre, 'revenue') || findNodeVal(dre, 'revenue.gross') || findNodeVal(dre, 'rev') || h.revenue || (1500000 * factor);
-      const costsVal = Math.abs(findNodeVal(dre, 'costs') || findNodeVal(dre, 'costs.cpv') || findNodeVal(dre, 'cpv') || h.costs || (1100000 * factor));
-      const netProfitVal = findNodeVal(dre, 'net_profit') || findNodeVal(dre, 'final_profit') || h.net_profit || (300000 * factor);
+      const revenueVal = (isZeroMode && isCurrentRoundZero) 
+        ? 0 
+        : (findNodeVal(dre, 'revenue') || findNodeVal(dre, 'revenue.gross') || findNodeVal(dre, 'rev') || h.revenue || (1500000 * factor));
+      const costsVal = (isZeroMode && isCurrentRoundZero)
+        ? 0
+        : Math.abs(findNodeVal(dre, 'costs') || findNodeVal(dre, 'costs.cpv') || findNodeVal(dre, 'cpv') || h.costs || (1100000 * factor));
+      const netProfitVal = (isZeroMode && isCurrentRoundZero)
+        ? 0
+        : (findNodeVal(dre, 'net_profit') || findNodeVal(dre, 'final_profit') || h.net_profit || (300000 * factor));
       
       const cashVal = findNodeVal(bs, 'assets.current.cash') || h.cash || h.kpis?.current_cash || (800000 * factor);
 
@@ -211,9 +250,12 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       // Capital Circulante Próprio: CCP = PL - ANC
       const ccpVal = equityVal - ancVal;
 
-      // Empréstimos ST (Curto Prazo) e LT (Longo Prazo)
-      const ecpVal = findNodeVal(bs, 'liabilities.current.loans_st') || liabilityStVal || 0;
-      const elpVal = findNodeVal(bs, 'liabilities.longterm') || liabilityLtVal || 0;
+      // Empréstimos ST (Curto Prazo) e LT (Longo Prazo) corrigidos para evitar fallbacks incorretos de Passivo Total caso o valor real seja R$ 0.00
+      const loansStNode = findNode(bs, 'liabilities.current.loans_st');
+      const ecpVal = loansStNode ? (loansStNode.value ?? 0) : (h.ecp !== undefined ? h.ecp : (liabilityStVal * 0.4));
+
+      const loansLtNode = findNode(bs, 'liabilities.longterm.loans_lt');
+      const elpVal = loansLtNode ? (loansLtNode.value ?? 0) : (h.elp !== undefined ? h.elp : (liabilityLtVal * 0.7));
 
       return {
         round: typeof h.round === 'number' ? h.round : r,
@@ -288,7 +330,7 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
       equity: getChange(last?.equity || 0, prev?.equity || 0),
       capital_social: getChange(last?.capital_social || 0, prev?.capital_social || 0),
       lucro_acumulado: getChange(last?.lucro_acumulado || 0, prev?.lucro_acumulado || 0),
-      debt: getChange((last?.liability_st || 0) + (last?.liability_lt || 0), (prev?.liability_st || 0) + (prev?.liability_lt || 0))
+      debt: getChange((last?.ecp || 0) + (last?.elp || 0), (prev?.ecp || 0) + (prev?.elp || 0))
     };
   }, [computedHistory]);
 
@@ -1253,13 +1295,13 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                   <span className="text-[9px] font-bold text-[#FF5F1F] uppercase tracking-wider">Endividamento Estruturado</span>
                   <div className="flex justify-between items-center gap-1">
                     <div className="flex flex-col">
-                      <span className="text-[7px] text-slate-500 uppercase">Curto Prazo</span>
-                      <strong className="text-white text-[9px] font-black italic">{formatValue(computedHistory[computedHistory.length - 1]?.liability_st || 0)}</strong>
+                      <span className="text-[7px] text-slate-500 uppercase">Curto Prazo (ECP)</span>
+                      <strong className="text-white text-[9px] font-black italic">{formatValue(computedHistory[computedHistory.length - 1]?.ecp ?? 0)}</strong>
                     </div>
                     <div className="w-px h-4 bg-white/5" />
                     <div className="flex flex-col">
-                      <span className="text-[7px] text-slate-500 uppercase">Longo Prazo</span>
-                      <strong className="text-[#FFD700] text-[9px] font-black italic">{formatValue(computedHistory[computedHistory.length - 1]?.liability_lt || 0)}</strong>
+                      <span className="text-[7px] text-slate-500 uppercase">Longo Prazo (ELP)</span>
+                      <strong className="text-[#FFD700] text-[9px] font-black italic">{formatValue(computedHistory[computedHistory.length - 1]?.elp ?? 0)}</strong>
                     </div>
                   </div>
                   <span className={`text-[8px] font-black flex items-center gap-0.5 ${!kpiPercentageChanges.debt.isPos ? 'text-emerald-400' : 'text-rose-500'}`}>

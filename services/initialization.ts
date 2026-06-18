@@ -417,10 +417,10 @@ export function generatePureP0(config: TutorP0Config): {
   // Imobiliário Fiduciário: Prédio Locado vs Próprio
   const buildingMode = config.building_mode ?? (isZeroMode ? 'rented' : 'owned');
   
-  // No modo Greenfield (Start from Zero), as instalações e edificações começam ZERADAS no P0
-  const buildingBaseValue = isZeroMode ? 0 : (buildingMode === 'owned' ? (config.building_value ?? (isBaseMode ? 2000000.00 : 5440000.00)) : 0);
-  const buildingAge = isZeroMode ? 0 : (config.building_age ?? (isBaseMode ? 2 : 10));
-  const calculatedLand = isZeroMode ? 0 : (buildingMode === 'owned' ? (config.land_value ?? (isBaseMode ? 1000000.00 : 1200000.00)) : 0);
+  // No modo Greenfield (Start from Zero), as instalações e edificações começam ZERADAS no P0, exceto se parametrizadas explicitamente pelo Tutor
+  const buildingBaseValue = isZeroMode ? (config.building_value !== undefined && config.building_value !== null ? Number(config.building_value) : 0) : (buildingMode === 'owned' ? (config.building_value ?? (isBaseMode ? 2000000.00 : 5440000.00)) : 0);
+  const buildingAge = isZeroMode ? (config.building_age !== undefined && config.building_age !== null ? Number(config.building_age) : 0) : (config.building_age ?? (isBaseMode ? 2 : 10));
+  const calculatedLand = isZeroMode ? (config.land_value !== undefined && config.land_value !== null ? Number(config.land_value) : 0) : (buildingMode === 'owned' ? (config.land_value ?? (isBaseMode ? 1000000.00 : 1200000.00)) : 0);
 
   const initialAdminSalesInstallations = Number(config.admin_sales_installations || 0);
 
