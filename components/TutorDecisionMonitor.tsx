@@ -195,7 +195,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
       {/* Indicadores do Período Selecionado */}
       {currentIndicators && (
         <div className="px-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2">
              <QuickIndicator label="ICE" val={`${currentIndicators.ice}%`} />
              <QuickIndicator label="Demanda" val={`${currentIndicators.demand_variation}%`} />
              <QuickIndicator label="Inflação" val={`${currentIndicators.inflation_rate}%`}  highlight={currentIndicators.inflation_rate > 2} />
@@ -212,7 +212,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
              <QuickIndicator label="Imposto de Renda" val={`${currentIndicators.tax_rate_ir}%`} />
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2">
              <QuickIndicator label="Reajuste MP-A" val={`${currentIndicators.raw_material_a_adjust}%`} />
              <QuickIndicator label="Reajuste MP-B" val={`${currentIndicators.raw_material_b_adjust}%`} />
              <QuickIndicator label="Reaj. Máq. ALPHA" val={`${currentIndicators.machine_alpha_price_adjust}%`} />
