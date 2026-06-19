@@ -195,9 +195,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
       {/* Indicadores do Período Selecionado */}
       {currentIndicators && (
         <div className="px-0 space-y-1">
-        <h3 className="text-white text-lg font-bold italic mb-2">
-         INDICADORES MACROECONÔMICOS DO ROUND
-        </h3>
+        <h3 className="text-xl font-black text-white uppercase italic tracking-tight">INDICADORES MACROECONÔMICOS</h3>
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mt-1">Indicadores macroeconômicos da rodada conforme definidos pelo Tutor ao criar o Torneio.</p>
           <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-1">
              <QuickIndicator label="ICE" val={`${currentIndicators.ice}%`} />
              <QuickIndicator label="Demanda" val={`${currentIndicators.demand_variation}%`} />
@@ -221,9 +220,6 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
              <QuickIndicator label="Reaj. Camp. MKT" val={`${currentIndicators.marketing_campaign_adjust}%`} />
              <QuickIndicator label="Reaj. Logística" val={`${currentIndicators.distribution_cost_adjust}%`} />
              <QuickIndicator label="Reaj. Estocagem" val={`${currentIndicators.storage_cost_adjust}%`} />
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-1">
              <QuickIndicator label="BP Obrigatório" val={currentIndicators.require_business_plan ? 'SIM' : 'NÃO'} highlight={currentIndicators.require_business_plan} />
              <QuickIndicator label="Compra Máquinas" val={currentIndicators.allow_machine_sale ? 'LIBERADA' : 'BLOQUEADA'} highlight={currentIndicators.allow_machine_sale} />
              {currentIndicators.is_black_swan && (
