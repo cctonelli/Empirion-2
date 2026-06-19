@@ -376,7 +376,7 @@ const TeamCardDetailed = memo(({ team, index, isLive, arena }: { team: TutorTeam
                   onClick={handleRedirectToCockpit} 
                   className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                >
-                  <BrainCircuit size={14} /> Executar Auditoria / Ver Relatórios
+                  <BrainCircuit size={14} /> Executar Auditoria
                </button>
             </div>
          </div>

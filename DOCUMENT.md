@@ -2,9 +2,27 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.167 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.168 Sincronização do Cockpit & Ajuste de Layout Fluido.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Otimização de Fluidez do Layout e Blindagem de Segurança do Cockpit - v2026.168
+
+**Data:** 19 de Junho de 2026 às 13:30 UTC  
+**Motivo:** Correção de sobreposição no painel superior do Cockpit (onde o botão "RETORNAR AO COMANDO" e o temporizador `ChampionshipTimer` estavam estourando os limites em telas menores) e blindagem de segurança para limitar a visualização do botão administrativo apenas a usuários com privilégios de tutor/admin reais.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Layout Híbrido CSS Grid & Flexbox**:
+  - Mudança da `<section>` superior do Cockpit de um grid igualitário simples de 6 colunas (`grid-cols-2 md:grid-cols-6`) para uma estrutura reativa e adaptável:
+  - As 5 principais estatísticas (`CockpitStat`) foram movidas para uma sub-divisão interna flexível de 5 colunas dinâmicas (`flex-1 min-w-0 grid grid-cols-5 divide-x divide-white/5`). Isso garante que elas compartilhem o espaço restante igualmente e encolham de forma fluida dependendo da resolução disponível.
+  - A 6ª coluna (contendo o cronômetro e o botão de ação) foi refatorada como um bloco flexível estrito `flex-none shrink-0`, cuja largura se expande ou se contrai de forma orgânica e justa com base no seu conteúdo atual (Timer + Botão). Isso previne 100% que os textos e o botão administrativo fiquem sobrepostos, invisíveis ou espremidos fora da tela.
+- **Blindagem Fiduciária de Acesso ao Botão Administrativo**:
+  - Adicionada verificação rigorosa da role do perfil logado (`userRole === 'admin' || userRole === 'tutor'`) para a renderização do botão "RETORNAR AO COMANDO".
+  - Isso blinda o ecossistema impedindo que alunos comuns ('players') tentem acessar ou forçar a exibição do botão manipulando flags de sessão locais no navegador (`localStorage`).
+
+**Status atual:** v2026.168 - Em uso / Integrado e Compilado com Sucesso.
 
 ---
 

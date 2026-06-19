@@ -607,41 +607,46 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
     <div className="flex-1 flex flex-col bg-[#020617] text-slate-100 overflow-hidden font-sans">
       
       {/* 1. Header fixo superior – KPIs + Timer */}
-      <section className="h-16 shrink-0 grid grid-cols-2 md:grid-cols-6 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-20 shadow-2xl">
-         <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<ShieldCheck size={12}/>} />
-         <CockpitStat 
-            label="E-SDS" 
-            val={(currentKpis.esds?.esds_display || 0).toFixed(1)} 
-            trend={selectedRound === currentRound ? "Proj" : (currentKpis.esds?.zone || 'ALERTA')} 
-            pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
-            neg={currentKpis.esds?.zone === 'Laranja' || currentKpis.esds?.zone === 'Vermelho'}
-            icon={<Gauge size={12}/>} 
-            tooltip={
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <Sparkles size={8} className="text-orange-500" />
-                  <p className="text-[8px] font-black uppercase text-orange-500 tracking-widest">Diagnóstico E-SDS</p>
-                </div>
-                <p className="text-[7px] text-slate-300 leading-tight italic">{currentKpis.esds?.gemini_insights || 'Análise indisponível'}</p>
-                {currentKpis.esds?.top_gargalos && currentKpis.esds.top_gargalos.length > 0 && (
-                  <div className="pt-1.5 border-t border-white/10">
-                    <p className="text-[6px] font-black uppercase text-slate-500 mb-0.5 tracking-widest">Principais Detratores:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {currentKpis.esds.top_gargalos.map((g, i) => (
-                        <span key={i} className="px-1 py-0.5 bg-rose-500/10 text-rose-400 text-[5px] font-black rounded-full uppercase border border-rose-500/20" title={`${g.percentage}% de impacto`}>
-                          {g.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            }
-         />
-         <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Box size={12}/>} />
-         <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Activity size={12}/>} />
-         <CockpitStat label={t('Rating')} val={currentKpis.rating} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Shield size={12}/>} />
-         <div className="px-2 flex items-center justify-center gap-3 lg:gap-4 border-l border-white/5 bg-gradient-to-br from-orange-600/10 to-transparent">
+      <section className="h-16 shrink-0 flex items-stretch bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-20 shadow-2xl w-full divide-x divide-white/10 overflow-hidden">
+         {/* Sub-grid auto-ajustável para as 5 estatísticas ocupando o espaço restante por igual */}
+         <div className="flex-1 min-w-0 grid grid-cols-5 divide-x divide-white/5">
+            <CockpitStat label={t('Equity')} val={`$ ${(currentKpis.equity / 1000000).toFixed(2)}M`} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<ShieldCheck size={12}/>} />
+            <CockpitStat 
+               label="E-SDS" 
+               val={(currentKpis.esds?.esds_display || 0).toFixed(1)} 
+               trend={selectedRound === currentRound ? "Proj" : (currentKpis.esds?.zone || 'ALERTA')} 
+               pos={currentKpis.esds?.zone === 'Azul' || currentKpis.esds?.zone === 'Verde'}
+               neg={currentKpis.esds?.zone === 'Laranja' || currentKpis.esds?.zone === 'Vermelho'}
+               icon={<Gauge size={12}/>} 
+               tooltip={
+                 <div className="space-y-1.5">
+                   <div className="flex items-center gap-2">
+                     <Sparkles size={8} className="text-orange-500" />
+                     <p className="text-[8px] font-black uppercase text-orange-500 tracking-widest">Diagnóstico E-SDS</p>
+                   </div>
+                   <p className="text-[7px] text-slate-300 leading-tight italic">{currentKpis.esds?.gemini_insights || 'Análise indisponível'}</p>
+                   {currentKpis.esds?.top_gargalos && currentKpis.esds.top_gargalos.length > 0 && (
+                     <div className="pt-1.5 border-t border-white/10">
+                       <p className="text-[6px] font-black uppercase text-slate-500 mb-0.5 tracking-widest">Principais Detratores:</p>
+                       <div className="flex flex-wrap gap-1">
+                         {currentKpis.esds.top_gargalos.map((g, i) => (
+                           <span key={i} className="px-1 py-0.5 bg-rose-500/10 text-rose-400 text-[5px] font-black rounded-full uppercase border border-rose-500/20" title={`${g.percentage}% de impacto`}>
+                             {g.name}
+                           </span>
+                         ))}
+                       </div>
+                     </div>
+                   )}
+                 </div>
+               }
+            />
+            <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Box size={12}/>} />
+            <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Activity size={12}/>} />
+            <CockpitStat label={t('Rating')} val={currentKpis.rating} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Shield size={12}/>} />
+         </div>
+
+         {/* Seção foca-flexível do timer e botão administrativo com largura calculada dinamicamente pelo conteúdo */}
+         <div className="flex-none px-4 md:px-6 flex items-center justify-center gap-3 lg:gap-4 bg-gradient-to-br from-orange-600/10 to-transparent shrink-0">
             <ChampionshipTimer 
               variant="compact" 
               roundStartedAt={activeArena?.round_started_at} 
@@ -653,11 +658,11 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               onExpire={handleExpire}
               isTournamentFinished={!!(activeArena && activeArena.current_round >= (activeArena.total_rounds || 6))}
             />
-            {isTutorViewing && (
+            {isTutorViewing && (userRole === 'admin' || userRole === 'tutor') && (
                <button
                  type="button"
                  onClick={handleReturnToCommand}
-                 className="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 whitespace-nowrap border border-orange-400"
+                 className="px-4 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-[8px] lg:text-[9.5px] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 whitespace-nowrap border border-orange-400 hover:scale-105"
                  title="Retornar ao Comando"
                >
                  Retornar ao Comando
