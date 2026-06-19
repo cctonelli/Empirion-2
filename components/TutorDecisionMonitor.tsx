@@ -194,34 +194,36 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
 
       {/* Indicadores do Período Selecionado */}
       {currentIndicators && (
-        <div className="px-4 space-y-4">
+        <div className="px-0 space-y-1">
+        <h3 className="text-white text-lg font-bold italic mb-2">
+         INDICADORES MACROECONÔMICOS DO ROUND
+        </h3>
           <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-1">
              <QuickIndicator label="ICE" val={`${currentIndicators.ice}%`} />
              <QuickIndicator label="Demanda" val={`${currentIndicators.demand_variation}%`} />
              <QuickIndicator label="Inflação" val={`${currentIndicators.inflation_rate}%`}  highlight={currentIndicators.inflation_rate > 2} />
-             <QuickIndicator label="Inadimplência (PECLD)" val={`${currentIndicators.customer_default_rate}%`} />
-             <QuickIndicator label="Rendimento Aplicação" val={`${currentIndicators.investment_return_rate}%`} />
+             <QuickIndicator label="Inadimplência" val={`${currentIndicators.customer_default_rate}%`} />
+             <QuickIndicator label="Renda Aplicação" val={`${currentIndicators.investment_return_rate}%`} />
              <QuickIndicator label="Juros+TR (BDI)" val={`${currentIndicators.interest_rate_tr}%`} />
-             <QuickIndicator label="Cheque Especial" val={`${currentIndicators.compulsory_loan_agio}%`} highlight={currentIndicators.compulsory_loan_agio > 10} />
+             <QuickIndicator label="Limite Bancário" val={`${currentIndicators.compulsory_loan_agio}%`} highlight={currentIndicators.compulsory_loan_agio > 10} />
              <QuickIndicator label="Juros Fornecedor" val={`${currentIndicators.supplier_interest}%`} highlight={currentIndicators.supplier_interest > 2} />
-             <QuickIndicator label="Ágio Compra Especial" val={`${currentIndicators.special_purchase_premium}%`} highlight={currentIndicators.special_purchase_premium > 10} />
-             <QuickIndicator label="Deságio Venda Maquina" val={`${currentIndicators.machine_sale_discount}%`} highlight={currentIndicators.machine_sale_discount > 10} />
+             <QuickIndicator label="Compra Extra" val={`${currentIndicators.special_purchase_premium}%`} highlight={currentIndicators.special_purchase_premium > 10} />
+             <QuickIndicator label="Venda Maquina" val={`${currentIndicators.machine_sale_discount}%`} highlight={currentIndicators.machine_sale_discount > 10} />
              <QuickIndicator label="Multa Atrasos" val={`${currentIndicators.late_penalty_rate}%`} highlight={currentIndicators.late_penalty_rate > 5} />
              <QuickIndicator label="IVA s/COMPRA" val={`${currentIndicators.vat_purchases_rate}%`} />
              <QuickIndicator label="IVA s/VENDA" val={`${currentIndicators.vat_sales_rate}%`} />
-             <QuickIndicator label="Imposto de Renda" val={`${currentIndicators.tax_rate_ir}%`} />
+             <QuickIndicator label="IRPJ" val={`${currentIndicators.tax_rate_ir}%`} />
              <QuickIndicator label="Reaj. MP-A" val={`${currentIndicators.raw_material_a_adjust}%`} />          
              <QuickIndicator label="Reaj. MP-B" val={`${currentIndicators.raw_material_b_adjust}%`} />
              <QuickIndicator label="Reaj. Máq. ALPHA" val={`${currentIndicators.machine_alpha_price_adjust}%`} />
              <QuickIndicator label="Reaj. Máq. BETA" val={`${currentIndicators.machine_beta_price_adjust}%`} />
              <QuickIndicator label="Reaj. Máq. GAMMA" val={`${currentIndicators.machine_gamma_price_adjust}%`} />
              <QuickIndicator label="Reaj. Camp. MKT" val={`${currentIndicators.marketing_campaign_adjust}%`} />
-             <QuickIndicator label="Reaj. Distribuição" val={`${currentIndicators.distribution_cost_adjust}%`} />
+             <QuickIndicator label="Reaj. Logística" val={`${currentIndicators.distribution_cost_adjust}%`} />
              <QuickIndicator label="Reaj. Estocagem" val={`${currentIndicators.storage_cost_adjust}%`} />
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-1">
-
              <QuickIndicator label="BP Obrigatório" val={currentIndicators.require_business_plan ? 'SIM' : 'NÃO'} highlight={currentIndicators.require_business_plan} />
              <QuickIndicator label="Compra Máquinas" val={currentIndicators.allow_machine_sale ? 'LIBERADA' : 'BLOQUEADA'} highlight={currentIndicators.allow_machine_sale} />
              {currentIndicators.is_black_swan && (
