@@ -16,6 +16,8 @@ import { DEFAULT_INDUSTRIAL_CHRONOGRAM } from '../constants';
 import { GoogleGenAI } from '@google/genai';
 import { Branch, EcosystemConfig, CreditRating, TutorTeamView, AuditLog, Championship, MacroIndicators } from '../types';
 import ChampionshipTimer from './ChampionshipTimer';
+import * as Router from 'react-router-dom';
+const { useNavigate } = Router as any;
 
 import GazetteViewer from './GazetteViewer';
 import { Newspaper, PackagePlus, FileEdit } from 'lucide-react';
@@ -319,57 +321,14 @@ const QuickIndicator = ({ label, val, highlight }: any) => (
 );
 
 const TeamCardDetailed = memo(({ team, index, isLive, arena }: { team: TutorTeamView, index: number, isLive: boolean, arena: Championship | null }) => {
-   const [isAuditing, setIsAuditing] = useState(false);
-   const [aiVerdict, setAiVerdict] = useState<string | null>(null);
-   const [showReports, setShowReports] = useState(false);
-   const [reportType, setReportType] = useState<'dre' | 'balance' | 'cashflow' | 'commitments' | 'kardex' | 'strategic'>('dre');
-   const [teamHistory, setTeamHistory] = useState<any[]>([]);
+   const navigate = useNavigate();
 
-   useEffect(() => {
-      if (showReports && team.id) {
-         const fetchHistory = async () => {
-            try {
-               const hist = await getTeamSimulationHistory(team.id);
-               setTeamHistory(hist || []);
-            } catch (err) {
-               console.error("Error fetching team history for tutor:", err);
-            }
-         };
-         fetchHistory();
-      }
-   }, [showReports, team.id]);
-
-   const performAiAudit = async () => {
-      if (isAuditing || (!team.current_decision && !team.statements)) return;
-      setIsAuditing(true);
-      try {
-         const apiKey = await getApiKey();
-
-         if (!apiKey) {
-            throw new Error("API Key not found.");
-         }
-
-         const ai = new GoogleGenAI({ apiKey });
-         const context = {
-            decisions: team.current_decision,
-            kpis: { tsr: team.tsr, rating: team.rating, market_share: team.market_share, ebitda: team.ebitda },
-            statements: team.statements
-         };
-
-         const res = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: `Como auditor senior da Empirion, analise a saúde financeira e estratégica da equipe ${team.name}. 
-            Contexto: ${JSON.stringify(context)}. 
-            Forneça um veredito técnico de 25 palavras focado em riscos críticos ou oportunidades de mercado.`,
-            config: { thinkingConfig: { thinkingBudget: 0 } }
-         });
-         setAiVerdict(res.text || null);
-         setShowReports(true); // Abre os relatórios automaticamente ao auditar
-      } catch (err) {
-         console.error("Audit Error:", err);
-         setAiVerdict("Erro na conexão neural. Verifique a API Key.");
-      } finally {
-         setIsAuditing(false);
+   const handleRedirectToCockpit = () => {
+      if (arena) {
+         localStorage.setItem('active_team_id', team.id);
+         localStorage.setItem('active_champ_id', arena.id);
+         localStorage.setItem('tutor_viewing_student_cockpit', 'true');
+         navigate('/app/dashboard');
       }
    };
 
@@ -411,69 +370,16 @@ const TeamCardDetailed = memo(({ team, index, isLive, arena }: { team: TutorTeam
                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Oracle Rating</span>
                <div className="w-full h-32"><Chart options={ratingOptions} series={[85]} type="radialBar" height="100%" /></div>
             </div>
-            <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
-               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">AI Tactical Audit</span>
-               {aiVerdict ? (
-                  <div className="relative">
-                    <p className="text-[10px] text-indigo-300 font-bold italic leading-relaxed">"{aiVerdict}"</p>
-                    <div className="flex gap-2 mt-4">
-                       <button onClick={() => setShowReports(true)} className="flex-1 py-2 bg-white/5 border border-white/10 text-white rounded-lg font-black text-[8px] uppercase tracking-widest hover:bg-white/10 transition-all">Ver Relatórios</button>
-                       <button onClick={() => setAiVerdict(null)} className="p-2 bg-white/5 border border-white/10 text-slate-500 hover:text-white rounded-lg transition-all"><X size={10}/></button>
-                    </div>
-                  </div>
-               ) : (
-                  <button onClick={performAiAudit} disabled={isAuditing || !isLive} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-indigo-900 transition-all flex items-center justify-center gap-2">
-                     {isAuditing ? <Loader2 size={12} className="animate-spin" /> : <BrainCircuit size={14} />} Executar Auditoria
-                  </button>
-               )}
+            <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4 h-full flex flex-col justify-center">
+               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block text-center">AI Tactical Audit</span>
+               <button 
+                  onClick={handleRedirectToCockpit} 
+                  className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+               >
+                  <BrainCircuit size={14} /> Executar Auditoria / Ver Relatórios
+               </button>
             </div>
          </div>
-
-         <AnimatePresence>
-            {showReports && (
-               <div className="fixed inset-0 z-[6000] bg-slate-950/95 backdrop-blur-3xl flex items-center justify-center p-4 md:p-10">
-                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-white/10 rounded-[4rem] w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden shadow-3xl">
-                     <header className="p-8 border-b border-white/5 flex justify-between items-center bg-slate-950/50">
-                        <div className="flex items-center gap-6">
-                           <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl"><ShieldCheck size={24}/></div>
-                           <div>
-                              <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Auditoria Financeira: {team.name}</h3>
-                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Análise de Balanço, DRE e Fluxo de Caixa</p>
-                           </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                           <div className="flex p-1 bg-slate-950 rounded-xl border border-white/5 flex-wrap gap-1">
-                              <button onClick={() => setReportType('dre')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'dre' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DRE</button>
-                              <button onClick={() => setReportType('balance')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'balance' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Balanço</button>
-                              <button onClick={() => setReportType('cashflow')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'cashflow' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>DFC</button>
-                              <button onClick={() => setReportType('commitments')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'commitments' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Agenda</button>
-                              <button onClick={() => setReportType('kardex')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'kardex' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Kardex & Custos</button>
-                              <button onClick={() => setReportType('strategic')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${reportType === 'strategic' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}>Estratégico</button>
-                           </div>
-                           <button onClick={() => setShowReports(false)} className="p-3 bg-white/5 hover:bg-rose-600 text-slate-500 hover:text-white rounded-xl transition-all"><X size={20}/></button>
-                        </div>
-                     </header>
-                     <div className="flex-1 overflow-hidden p-8">
-                        <FinancialReportMatrix 
-                           type={reportType} 
-                           history={teamHistory} 
-                           projection={{ kpis: { statements: team.statements, cpv_details: team.cpv_details } } as any} 
-                           currency="BRL" 
-                           startingMode={arena?.config?.starting_mode || arena?.starting_mode} 
-                        />
-                     </div>
-                     {aiVerdict && (
-                        <footer className="p-6 bg-indigo-600/10 border-t border-indigo-500/20">
-                           <div className="flex items-center gap-4">
-                              <Sparkles size={16} className="text-indigo-400 animate-pulse"/>
-                              <p className="text-xs text-indigo-200 font-bold italic">Veredito Oracle: "{aiVerdict}"</p>
-                           </div>
-                        </footer>
-                     )}
-                  </motion.div>
-               </div>
-            )}
-         </AnimatePresence>
 
          <div className="grid grid-cols-2 gap-3 pt-6 border-t border-white/5 relative z-10">
             <MetricBox label="Altman Z''-Score" val={team.altman_z_score?.toFixed(2) || '0.00'} icon={<Thermometer size={12} className="text-emerald-400"/>} trend={team.altman_z_score && team.altman_z_score > 5.85 ? 'safe' : team.altman_z_score && team.altman_z_score < 4.15 ? 'danger' : 'warning'} />
