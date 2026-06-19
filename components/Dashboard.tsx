@@ -817,16 +817,30 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                   </div>
 
                   {/* Bloco Centralizado para melhor visibilidade do Round disputado */}
-                  <div className="flex-1 flex justify-center items-center px-4" id="cockpit_round_center">
-                    <div className="px-5 py-1 bg-gradient-to-r from-orange-600/10 via-orange-500/25 to-orange-600/10 border border-orange-500/30 rounded-2xl shadow-xl flex items-center gap-2.5 backdrop-blur-md animate-pulse">
-                      <div className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-                        DISPUTANDO:
-                      </span>
-                      <span className="text-lg lg:text-xl font-black text-orange-500 uppercase italic tracking-tight font-sans drop-shadow-[0_0_15px_rgba(249,115,22,0.4)]">
-                        {selectedRound === currentRound ? `ROUND 0${selectedRound}` : selectedRound < currentRound ? `HISTÓRICO P-${selectedRound}` : `PLANEJAMENTO P-${selectedRound}`}
-                      </span>
-                    </div>
+                  <div className="flex-1 flex flex-col md:flex-row justify-center items-center gap-2 lg:gap-3 px-4" id="cockpit_round_center">
+                     {(activeArena?.name || activeTeam?.name) && (
+                       <div className="flex items-center gap-2 px-3 py-1 bg-slate-900 border border-white/5 rounded-xl text-[10px] lg:text-xs font-black uppercase tracking-tight text-white/90">
+                         {activeArena?.name && (
+                           <span className="text-orange-500">{activeArena.name}</span>
+                         )}
+                         {activeArena?.name && activeTeam?.name && (
+                           <span className="text-slate-500">•</span>
+                         )}
+                         {activeTeam?.name && (
+                           <span className="text-slate-200">{activeTeam.name}</span>
+                         )}
+                       </div>
+                     )}
+
+                     <div className="px-5 py-1 bg-gradient-to-r from-orange-600/10 via-orange-500/25 to-orange-600/10 border border-orange-500/30 rounded-2xl shadow-xl flex items-center gap-2.5 backdrop-blur-md">
+                        <div className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                           DISPUTANDO:
+                        </span>
+                        <span className="text-lg lg:text-xl font-black text-orange-500 uppercase italic tracking-tight font-sans drop-shadow-[0_0_15px_rgba(249,115,22,0.4)]">
+                           {selectedRound === currentRound ? `ROUND 0${selectedRound}` : selectedRound < currentRound ? `HISTÓRICO P-${selectedRound}` : `PLANEJAMENTO P-${selectedRound}`}
+                        </span>
+                     </div>
                   </div>
 
                   <div className="flex gap-2 items-center" id="cockpit_right_actions">

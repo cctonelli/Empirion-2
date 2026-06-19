@@ -222,8 +222,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
         </div>
       )}
 
-      <div className="px-4">
-        <Reorder.Group axis="x" values={teams} onReorder={setTeams} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+      <div className="px-2 md:px-4">
+         <Reorder.Group axis="x" values={teams} onReorder={setTeams} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
           {teams.map((team, idx) => (
             <Reorder.Item key={team.id} value={team}>
               <TeamCardDetailed team={team} index={idx} isLive={activeTimelineNode >= round} arena={arena} />
@@ -388,7 +388,7 @@ const TeamCardDetailed = memo(({ team, index, isLive, arena }: { team: TutorTeam
    };
 
    return (
-      <div className={`bg-slate-900/90 border-2 rounded-[4rem] backdrop-blur-3xl p-10 relative overflow-hidden transition-all hover:scale-[1.02] flex flex-col justify-between min-h-[600px] shadow-2xl ${team.rating.startsWith('A') ? 'border-emerald-500/30' : 'border-rose-500/40'}`}>
+      <div className={`bg-slate-900/90 border-2 rounded-[2.5rem] backdrop-blur-3xl p-5 md:p-6 lg:p-7 relative overflow-hidden transition-all hover:scale-[1.02] flex flex-col justify-between min-h-[560px] shadow-2xl ${team.rating.startsWith('A') ? 'border-emerald-500/30' : 'border-rose-500/40'}`}>
          
          <div className="flex justify-between items-start relative z-10">
             <div className="space-y-1">

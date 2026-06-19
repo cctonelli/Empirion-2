@@ -493,7 +493,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
               )}
            </div>
         </header>
-        <main className="flex-1 overflow-y-auto custom-scrollbar p-10 max-w-[1600px] mx-auto w-full relative z-10">
+        <main className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-5 lg:p-6 w-full max-w-none relative z-10">
           <AnimatePresence>
             {showForceExpireModal && (
               <div className="fixed inset-0 z-[7000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
