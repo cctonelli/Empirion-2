@@ -49,7 +49,8 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
       const historyTable = isTrial ? 'trial_companies' : 'companies';
 
       const { data: arenaData } = await supabase.from(champTable).select('*').eq('id', championshipId).single();
-      if (arenaData) setArena(mapChampionshipSynthetically(arenaData));
+      const synthArena = arenaData ? mapChampionshipSynthetically(arenaData) : null;
+      if (synthArena) setArena(synthArena);
 
       let processedTeams: TutorTeamView[] = [];
       const isLive = targetNode >= round;
@@ -60,15 +61,25 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
 
         processedTeams = (teamsData || []).map(t => {
           const decision = decisionsData?.find(d => d.team_id === t.id);
-          const branch = (arenaData?.branch || 'industrial') as Branch;
-          const eco: EcosystemConfig = (arenaData?.ecosystemConfig || { 
-            inflation_rate: 0.01, demand_multiplier: 1.0, interest_rate: 0.03, market_volatility: 0.05, scenario_type: 'simulated', modality_type: 'standard' 
-          });
+          const branch = (synthArena?.branch || 'industrial') as Branch;
+          const eco = { 
+            ...(synthArena?.config || synthArena?.ecosystem_config || {}), 
+            currency: synthArena?.currency 
+          } as EcosystemConfig;
           
-          const currentRules = arenaData?.round_rules?.[targetNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || arenaData?.market_indicators;
-          const indicatorsForNode = { ...arenaData?.market_indicators, ...currentRules };
+          const currentRules = synthArena?.round_rules?.[targetNode] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetNode] || synthArena?.market_indicators;
+          const indicatorsForNode = { ...synthArena?.market_indicators, ...currentRules };
           
-          const proj = decision ? calculateProjections(decision.data, branch, { ...eco, currency: arenaData?.currency } as any, indicatorsForNode, t, [], targetNode, arenaData?.round_rules) : null;
+          const proj = decision ? calculateProjections(
+            decision.data, 
+            branch, 
+            eco, 
+            indicatorsForNode, 
+            t, 
+            [], 
+            targetNode, 
+            synthArena?.round_rules
+          ) : null;
 
           return {
             id: t.id,
