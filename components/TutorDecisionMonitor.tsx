@@ -210,19 +210,17 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
              <QuickIndicator label="IVA s/COMPRA" val={`${currentIndicators.vat_purchases_rate}%`} />
              <QuickIndicator label="IVA s/VENDA" val={`${currentIndicators.vat_sales_rate}%`} />
              <QuickIndicator label="Imposto de Renda" val={`${currentIndicators.tax_rate_ir}%`} />
-             <QuickIndicator label="Reaj. MP-A" val={`${currentIndicators.raw_material_a_adjust}%`} />
-             <QuickIndicator label="Reaj. MP-B" val={`${currentIndicators.raw_material_b_adjust}%`} />
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+             <QuickIndicator label="Reajuste MP-A" val={`${currentIndicators.raw_material_a_adjust}%`} />
+             <QuickIndicator label="Reajuste MP-B" val={`${currentIndicators.raw_material_b_adjust}%`} />
              <QuickIndicator label="Reaj. Máq. ALPHA" val={`${currentIndicators.machine_alpha_price_adjust}%`} />
              <QuickIndicator label="Reaj. Máq. BETA" val={`${currentIndicators.machine_beta_price_adjust}%`} />
              <QuickIndicator label="Reaj. Máq. GAMMA" val={`${currentIndicators.machine_gamma_price_adjust}%`} />
              <QuickIndicator label="Reaj. Camp. MKT" val={`${currentIndicators.marketing_campaign_adjust}%`} />
              <QuickIndicator label="Reaj. Distribuição" val={`${currentIndicators.distribution_cost_adjust}%`} />
              <QuickIndicator label="Reaj. Estocagem" val={`${currentIndicators.storage_cost_adjust}%`} />
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-             <QuickIndicator label="Reajuste MP-A" val={`${currentIndicators.raw_material_a_adjust}%`} />
-             <QuickIndicator label="Reajuste MP-B" val={`${currentIndicators.raw_material_b_adjust}%`} />
              <QuickIndicator label="BP Obrigatório" val={currentIndicators.require_business_plan ? 'SIM' : 'NÃO'} highlight={currentIndicators.require_business_plan} />
              <QuickIndicator label="Compra Máquinas" val={currentIndicators.allow_machine_sale ? 'LIBERADA' : 'BLOQUEADA'} highlight={currentIndicators.allow_machine_sale} />
              {currentIndicators.is_black_swan && (
