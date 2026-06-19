@@ -658,7 +658,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               onExpire={handleExpire}
               isTournamentFinished={!!(activeArena && activeArena.current_round >= (activeArena.total_rounds || 6))}
             />
-            {isTutorViewing && (userRole === 'admin' || userRole === 'tutor') && (
+            {isTutorViewing && (userRole === 'admin' || userRole === 'tutor' || localStorage.getItem('is_trial_session') === 'true') && (
                <button
                  type="button"
                  onClick={handleReturnToCommand}

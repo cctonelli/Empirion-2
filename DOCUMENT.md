@@ -2,9 +2,24 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.168 Sincronização do Cockpit & Ajuste de Layout Fluido.
+- **Versão Ativa:** v2026.169 Suporte para Auditoria & Retorno em Sessões Trial Industrial.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Habilitação de Controles de Auditoria & Botão Retorno no Modo Trial Industrial (Sem Credenciais) - v2026.169
+
+**Data:** 19 de Junho de 2026 às 13:36 UTC  
+**Motivo:** Assegurar que o módulo de validação "TRIAL INDUSTRIAL" (que opera de forma autônoma sem requisições mandatórias de login e senha para tutores ou alunos) herde as melhorias de navegação e auditoria, permitindo a exibição do botão "RETORNAR AO COMANDO" para tutores de validação/vendas em ambiente sandbox.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Compatibilidade Condicional Ampliada**:
+  - Ajuste na condicional reativa de renderização do botão "RETORNAR AO COMANDO" no cockpit principal (`Dashboard.tsx`).
+  - Além de validar privilégios clássicos de faturamento e roles administrativas (`userRole === 'admin' || userRole === 'tutor'`), a instrução agora avalia se o contexto de execução atual configura uma sessão de teste (`localStorage.getItem('is_trial_session') === 'true'`).
+  - Com isso, usuários experimentando ou validando o simulador industrial ("TRIAL INDUSTRIAL") conseguem inspecionar, auditar equipes e navegar livre e fluidamente de volta para a central administrativa clicando em "RETORNAR AO COMANDO" de forma transparente e livre de impedimentos de autenticação.
+
+**Status atual:** v2026.169 - Em Produção / Compilado com Sucesso.
 
 ---
 
