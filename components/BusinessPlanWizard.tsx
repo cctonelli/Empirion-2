@@ -27,6 +27,7 @@ interface IntegratedWizardProps {
   teamId?: string;
   currentRound?: number;
   onClose?: () => void;
+  isReadOnly?: boolean;
 }
 
 const BP_STEPS = [
@@ -39,7 +40,7 @@ const BP_STEPS = [
   { id: 6, label: 'ROTEIRO DE INOVAÇÃO', icon: <TrendingUp size={18}/>, desc: 'Epicentros de mudança e próximos passos.' },
 ];
 
-const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, teamId, currentRound = 1, onClose }) => {
+const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, teamId, currentRound = 1, onClose, isReadOnly = false }) => {
   const { i18n } = useTranslation();
   const [step, setStep] = useState(0);
   const [branch, setBranch] = useState<Branch>('industrial');
@@ -81,6 +82,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
   }, [teamId, championshipId, currentRound]);
 
   const handleSave = async (status: 'draft' | 'submitted' | 'approved' | 'finalized' = 'draft') => {
+    if (isReadOnly) return;
     setIsSaving(true);
     try {
         const payload: Partial<BusinessPlan> = {
@@ -180,34 +182,34 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                   {step === 0 && (
                      <div className="flex-1 grid grid-cols-5 grid-rows-3 gap-3 min-h-[600px] animate-in zoom-in-95 duration-700">
                         {/* Linha 1 */}
-                        <CanvasBlock label="Parceiros Chave" icon={<Link size={14}/>} val={canvasData.key_partnerships} onChange={(v: string)=>setCanvasData({...canvasData, key_partnerships:v})} className="row-span-2" />
+                        <CanvasBlock label="Parceiros Chave" icon={<Link size={14}/>} val={canvasData.key_partnerships} onChange={(v: string)=>setCanvasData({...canvasData, key_partnerships:v})} className="row-span-2" isReadOnly={isReadOnly} />
                         <div className="grid grid-rows-2 gap-3 row-span-2">
-                           <CanvasBlock label="Atividades Chave" icon={<Zap size={14}/>} val={canvasData.key_activities} onChange={(v: string)=>setCanvasData({...canvasData, key_activities:v})} />
-                           <CanvasBlock label="Recursos Chave" icon={<Box size={14}/>} val={canvasData.key_resources} onChange={(v: string)=>setCanvasData({...canvasData, key_resources:v})} />
+                           <CanvasBlock label="Atividades Chave" icon={<Zap size={14}/>} val={canvasData.key_activities} onChange={(v: string)=>setCanvasData({...canvasData, key_activities:v})} isReadOnly={isReadOnly} />
+                           <CanvasBlock label="Recursos Chave" icon={<Box size={14}/>} val={canvasData.key_resources} onChange={(v: string)=>setCanvasData({...canvasData, key_resources:v})} isReadOnly={isReadOnly} />
                         </div>
-                        <CanvasBlock label="Proposta de Valor" icon={<Star size={14}/>} val={canvasData.value_propositions} onChange={(v: string)=>setCanvasData({...canvasData, value_propositions:v})} className="row-span-2 bg-orange-500/10 border-orange-500/30" />
+                        <CanvasBlock label="Proposta de Valor" icon={<Star size={14}/>} val={canvasData.value_propositions} onChange={(v: string)=>setCanvasData({...canvasData, value_propositions:v})} className="row-span-2 bg-orange-500/10 border-orange-500/30" isReadOnly={isReadOnly} />
                         <div className="grid grid-rows-2 gap-3 row-span-2">
-                           <CanvasBlock label="Relacionamento" icon={<Heart size={14}/>} val={canvasData.customer_relationships} onChange={(v: string)=>setCanvasData({...canvasData, customer_relationships:v})} />
-                           <CanvasBlock label="Canais" icon={<Truck size={14}/>} val={canvasData.channels} onChange={(v: string)=>setCanvasData({...canvasData, channels:v})} />
+                           <CanvasBlock label="Relacionamento" icon={<Heart size={14}/>} val={canvasData.customer_relationships} onChange={(v: string)=>setCanvasData({...canvasData, customer_relationships:v})} isReadOnly={isReadOnly} />
+                           <CanvasBlock label="Canais" icon={<Truck size={14}/>} val={canvasData.channels} onChange={(v: string)=>setCanvasData({...canvasData, channels:v})} isReadOnly={isReadOnly} />
                         </div>
-                        <CanvasBlock label="Segmentos de Clientes" icon={<Users size={14}/>} val={canvasData.customer_segments} onChange={(v: string)=>setCanvasData({...canvasData, customer_segments:v})} className="row-span-2" />
+                        <CanvasBlock label="Segmentos de Clientes" icon={<Users size={14}/>} val={canvasData.customer_segments} onChange={(v: string)=>setCanvasData({...canvasData, customer_segments:v})} className="row-span-2" isReadOnly={isReadOnly} />
                         
                         {/* Linha 3 (Base) */}
-                        <CanvasBlock label="Estrutura de Custos" icon={<ArrowDownCircle size={14}/>} val={canvasData.cost_structure} onChange={(v: string)=>setCanvasData({...canvasData, cost_structure:v})} className="col-span-2.5 lg:col-span-2" />
+                        <CanvasBlock label="Estrutura de Custos" icon={<ArrowDownCircle size={14}/>} val={canvasData.cost_structure} onChange={(v: string)=>setCanvasData({...canvasData, cost_structure:v})} className="col-span-2.5 lg:col-span-2" isReadOnly={isReadOnly} />
                         <div className="hidden lg:block"></div>
-                        <CanvasBlock label="Fontes de Receita" icon={<DollarSign size={14}/>} val={canvasData.revenue_streams} onChange={(v: string)=>setCanvasData({...canvasData, revenue_streams:v})} className="col-span-2.5 lg:col-span-2 bg-emerald-500/10" />
+                        <CanvasBlock label="Fontes de Receita" icon={<DollarSign size={14}/>} val={canvasData.revenue_streams} onChange={(v: string)=>setCanvasData({...canvasData, revenue_streams:v})} className="col-span-2.5 lg:col-span-2 bg-emerald-500/10" isReadOnly={isReadOnly} />
                      </div>
                   )}
 
                   {/* PASSO 1: MAPA DE EMPATIA */}
                   {step === 1 && (
                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-10 duration-700">
-                        <EmpathyBox label="O que o cliente VÊ?" icon={<Eye size={18}/>} val={empathyData.see} onChange={(v: string)=>setEmpathyData({...empathyData, see:v})} desc="O ambiente, amigos, o mercado oferece." />
-                        <EmpathyBox label="O que o cliente OUVE?" icon={<Activity size={18}/>} val={empathyData.hear} onChange={(v: string)=>setEmpathyData({...empathyData, hear:v})}  desc="O que os influenciadores e chefes dizem." />
-                        <EmpathyBox label="O que o cliente PENSA e SENTE?" icon={<Brain size={18}/>} val={empathyData.think_feel} onChange={(v: string)=>setEmpathyData({...empathyData, think_feel:v})} desc="O que realmente conta, suas aspirações." />
-                        <EmpathyBox label="O que o cliente DIZ e FAZ?" icon={<MessageSquare size={18}/>} val={empathyData.say_do} onChange={(v: string)=>setEmpathyData({...empathyData, say_do:v})} desc="Atitude em público, comportamento." />
-                        <EmpathyBox label="Quais as DORES?" icon={<ShieldAlert size={18}/>} val={empathyData.pains} onChange={(v: string)=>setEmpathyData({...empathyData, pains:v})} desc="Medos, frustrações e obstáculos." color="rose" />
-                        <EmpathyBox label="Quais os GANHOS?" icon={<Trophy size={18}/>} val={empathyData.gains} onChange={(v: string)=>setEmpathyData({...empathyData, gains:v})} desc="Desejos, medidas de sucesso." color="emerald" />
+                        <EmpathyBox label="O que o cliente VÊ?" icon={<Eye size={18}/>} val={empathyData.see} onChange={(v: string)=>setEmpathyData({...empathyData, see:v})} desc="O ambiente, amigos, o mercado oferece." isReadOnly={isReadOnly} />
+                        <EmpathyBox label="O que o cliente OUVE?" icon={<Activity size={18}/>} val={empathyData.hear} onChange={(v: string)=>setEmpathyData({...empathyData, hear:v})}  desc="O que os influenciadores e chefes dizem." isReadOnly={isReadOnly} />
+                        <EmpathyBox label="O que o cliente PENSA e SENTE?" icon={<Brain size={18}/>} val={empathyData.think_feel} onChange={(v: string)=>setEmpathyData({...empathyData, think_feel:v})} desc="O que realmente conta, suas aspirações." isReadOnly={isReadOnly} />
+                        <EmpathyBox label="O que o cliente DIZ e FAZ?" icon={<MessageSquare size={18}/>} val={empathyData.say_do} onChange={(v: string)=>setEmpathyData({...empathyData, say_do:v})} desc="Atitude em público, comportamento." isReadOnly={isReadOnly} />
+                        <EmpathyBox label="Quais as DORES?" icon={<ShieldAlert size={18}/>} val={empathyData.pains} onChange={(v: string)=>setEmpathyData({...empathyData, pains:v})} desc="Medos, frustrações e obstáculos." color="rose" isReadOnly={isReadOnly} />
+                        <EmpathyBox label="Quais os GANHOS?" icon={<Trophy size={18}/>} val={empathyData.gains} onChange={(v: string)=>setEmpathyData({...empathyData, gains:v})} desc="Desejos, medidas de sucesso." color="emerald" isReadOnly={isReadOnly} />
                      </div>
                   )}
 
@@ -219,9 +221,10 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                         </label>
                         <textarea 
                            value={formData[step]?.text || ''}
-                           onChange={e => setFormData(prev => ({ ...prev, [step]: { ...prev[step], text: e.target.value } }))}
-                           className="w-full min-h-[450px] p-10 bg-white/5 border-2 border-white/10 rounded-[3rem] text-lg font-medium text-slate-100 outline-none focus:border-orange-500 transition-all custom-scrollbar resize-none shadow-inner"
-                           placeholder="Descreva aqui sua estratégia. Use os insights do Canvas e do Mapa de Empatia para enriquecer o texto..."
+                           onChange={e => !isReadOnly && setFormData(prev => ({ ...prev, [step]: { ...prev[step], text: e.target.value } }))}
+                           readOnly={isReadOnly}
+                           className="w-full min-h-[450px] p-10 bg-white/5 border-2 border-slate-800 rounded-[3rem] text-lg font-medium text-slate-100 outline-none focus:border-orange-500 transition-all custom-scrollbar resize-none shadow-inner"
+                           placeholder={isReadOnly ? "(Modo Leitura: Sem descrição de plano correspondente)" : "Descreva aqui sua estratégia. Use os insights do Canvas e do Mapa de Empatia para enriquecer o texto..."}
                         />
                      </div>
                   )}
@@ -257,9 +260,10 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
                         </div>
                         <textarea 
                            value={formData[step]?.text || ''}
-                           onChange={e => setFormData(prev => ({ ...prev, [step]: { ...prev[step], text: e.target.value } }))}
-                           className="w-full min-h-[200px] p-8 bg-white/5 border-2 border-white/10 rounded-[2.5rem] text-sm font-medium text-slate-300 outline-none focus:border-orange-500 transition-all resize-none shadow-inner"
-                           placeholder="Interprete os dados históricos acima conforme a saúde do seu modelo de negócio..."
+                           onChange={e => !isReadOnly && setFormData(prev => ({ ...prev, [step]: { ...prev[step], text: e.target.value } }))}
+                           readOnly={isReadOnly}
+                           className="w-full min-h-[200px] p-8 bg-white/5 border-2 border-2-slate-700 rounded-[2.5rem] text-sm font-medium text-slate-300 outline-none focus:border-orange-500 transition-all resize-none shadow-inner"
+                           placeholder={isReadOnly ? "(Modo Leitura: Sem descrição de plano correspondente)" : "Interprete os dados históricos acima conforme a saúde do seu modelo de negócio..."}
                         />
                      </div>
                   )}
@@ -332,7 +336,7 @@ const BusinessPlanWizard: React.FC<IntegratedWizardProps> = ({ championshipId, t
   );
 };
 
-const CanvasBlock = ({ label, icon, val, onChange, className }: any) => (
+const CanvasBlock = ({ label, icon, val, onChange, className, isReadOnly }: any) => (
   <div className={`p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col gap-2 group hover:border-orange-500/40 transition-all ${className}`}>
      <div className="flex items-center gap-2 text-slate-500 group-hover:text-orange-500 transition-colors">
         {icon}
@@ -340,14 +344,15 @@ const CanvasBlock = ({ label, icon, val, onChange, className }: any) => (
      </div>
      <textarea 
         value={val} 
-        onChange={(e)=>onChange(e.target.value)}
+        onChange={(e)=>!isReadOnly && onChange(e.target.value)}
+        readOnly={isReadOnly}
         className="flex-1 bg-transparent text-[10px] font-bold text-white outline-none resize-none custom-scrollbar placeholder:text-slate-700" 
-        placeholder="..."
+        placeholder={isReadOnly ? "(Em branco)" : "..."}
      />
   </div>
 );
 
-const EmpathyBox = ({ label, icon, val, onChange, desc, color }: any) => (
+const EmpathyBox = ({ label, icon, val, onChange, desc, color, isReadOnly }: any) => (
   <div className={`p-6 bg-slate-950 rounded-[2rem] border border-white/10 flex flex-col gap-4 group hover:bg-white/5 transition-all ${color === 'rose' ? 'border-rose-500/20' : color === 'emerald' ? 'border-emerald-500/20' : ''}`}>
      <div className="flex items-center gap-3">
         <div className={`p-3 rounded-xl bg-white/5 ${color === 'rose' ? 'text-rose-500' : color === 'emerald' ? 'text-emerald-500' : 'text-blue-400'}`}>{icon}</div>
@@ -358,9 +363,10 @@ const EmpathyBox = ({ label, icon, val, onChange, desc, color }: any) => (
      </div>
      <textarea 
         value={val} 
-        onChange={(e)=>onChange(e.target.value)}
+        onChange={(e)=>!isReadOnly && onChange(e.target.value)}
+        readOnly={isReadOnly}
         className="w-full h-32 bg-slate-900 rounded-xl p-4 text-[10px] font-bold text-white outline-none focus:border-blue-500/50 transition-all resize-none shadow-inner"
-        placeholder="Descreva aqui..."
+        placeholder={isReadOnly ? "(Em branco)" : "Descreva aqui..."}
      />
   </div>
 );

@@ -41,6 +41,13 @@ import { EmpirionDashboards } from './EmpirionDashboards';
 
 const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => {
   const navigate = useNavigate();
+  const isTutorViewing = useMemo(() => {
+    return localStorage.getItem('tutor_viewing_student_cockpit') === 'true';
+  }, []);
+  const handleReturnToCommand = useCallback(() => {
+    localStorage.removeItem('tutor_viewing_student_cockpit');
+    navigate('/app/admin');
+  }, [navigate]);
   const { t } = useTranslation('dashboard');
   const [activeArena, setActiveArena] = useState<Championship | null>(null);
   const [activeTeam, setActiveTeam] = useState<Team | null>(null);
@@ -634,7 +641,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
          <CockpitStat label={t('Inventory Turnover')} val={(currentKpis.inventory_turnover || 0).toFixed(1)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Box size={12}/>} />
          <CockpitStat label={t('Liquidity')} val={(currentKpis.liquidity_current || 1.0).toFixed(2)} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Activity size={12}/>} />
          <CockpitStat label={t('Rating')} val={currentKpis.rating} trend={selectedRound === currentRound ? "Proj" : "Real"} pos icon={<Shield size={12}/>} />
-         <div className="px-2 flex items-center justify-center border-l border-white/5 bg-gradient-to-br from-orange-600/10 to-transparent">
+         <div className="px-2 flex items-center justify-center gap-3 lg:gap-4 border-l border-white/5 bg-gradient-to-br from-orange-600/10 to-transparent">
             <ChampionshipTimer 
               variant="compact" 
               roundStartedAt={activeArena?.round_started_at} 
@@ -646,6 +653,16 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
               onExpire={handleExpire}
               isTournamentFinished={!!(activeArena && activeArena.current_round >= (activeArena.total_rounds || 6))}
             />
+            {isTutorViewing && (
+               <button
+                 type="button"
+                 onClick={handleReturnToCommand}
+                 className="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 whitespace-nowrap border border-orange-400"
+                 title="Retornar ao Comando"
+               >
+                 Retornar ao Comando
+               </button>
+            )}
          </div>
       </section>
  
@@ -900,7 +917,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
                           champId={activeArena?.id} 
                           round={selectedRound} 
                           branch={activeArena?.branch}
-                          isReadOnly={userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound || isExpiredWaiting || isRoundExpired}
+                          isReadOnly={isTutorViewing || userRole === 'observer' || (requireBP && bpStatus !== 'submitted' && selectedRound === currentRound) || isPastRound || isFutureRound || isExpiredWaiting || isRoundExpired}
                           isExpiredWaiting={isExpiredWaiting || isRoundExpired}
                           onDecisionsChange={(d) => setDecisions(d)} 
                           isTournamentFinished={!!(activeArena && activeArena.current_round >= (activeArena.total_rounds || 6))}
@@ -1005,7 +1022,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
         {showBP && (
           <div className="fixed inset-0 z-[6000] bg-slate-950/98 backdrop-blur-2xl overflow-y-auto">
              <button onClick={() => setShowBP(false)} className="fixed top-10 right-10 p-5 bg-white/5 hover:bg-rose-600 text-white rounded-full z-[7000] shadow-2xl transition-all"><X size={28}/></button>
-             <BusinessPlanWizard championshipId={activeArena?.id} teamId={activeTeam?.id} currentRound={(activeArena?.current_round || 0) + 1} onClose={() => setShowBP(false)} />
+             <BusinessPlanWizard championshipId={activeArena?.id} teamId={activeTeam?.id} currentRound={(activeArena?.current_round || 0) + 1} onClose={() => setShowBP(false)} isReadOnly={isTutorViewing} />
           </div>
         )}
         {showAudit && activeTeam && activeArena && (

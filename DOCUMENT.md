@@ -2,9 +2,34 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.164 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
+- **Versão Ativa:** v2026.167 Sandbox de Validação & Ideação de Negócios Reais para Empreendedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Modo de Leitura Completo de Auditoria do Cockpit e Planos de Negócios das Equipes pelo Tutor - v2026.167
+
+**Data:** 19 de Junho de 2026 às 12:55 UTC  
+**Motivo:** Implementação do redirecionamento instantâneo a partir da central do Tutor ("COMMAND") para o Cockpit Completo da equipe selecionada ("EXECUTAR AUDITORIA/VER RELATÓRIOS"), permitindo que o tutor verifique com exatidão as mesmas telas e históricos de rounds passados conforme o próprio aluno visualiza, mas de forma estritamente segura e unicamente para leitura ("read-only").
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Redirecionamento Inteligente da Equipe e Chaveamento**:
+  - Armazenamento temporário de estados locais e chaves em `localStorage`: `tutor_viewing_student_cockpit` setado como `'true'`, além das chaves `tutor_viewing_team_id` e `tutor_viewing_championship_id` para forçar o carregamento do cockpit do time selecionado para o Tutor.
+  - No `TutorDecisionMonitor.tsx`, o botão "Executar Auditoria/Ver Relatórios" realiza esse mapeamento e dispara o redirecionamento imediato para a tela do cockpit (`/app/dashboard`).
+- **Botão "RETORNAR AO COMANDO"**:
+  - Inserção do botão reativo "Retornar ao Comando" localizado ao lado direito do cronômetro `ChampionshipTimer`, visível unicamente quando logado como Tutor em visualização de cockpit de aluno.
+  - O clique do botão ejetora o estado temporário e reconduz o Tutor de forma segura para o painel administrativo das arenas correspondentes (`/app/admin`).
+- **Modo Somente Leitura Unificado e Completo (Read-Only)**:
+  - Propagação do sinal `isTutorViewing` para a propriedade `isReadOnly` do formulário principal de tomada de decisões (`DecisionForm.tsx`).
+  - Extensão da flag `isReadOnly` para o componente estratégico `BusinessPlanWizard.tsx`, incapacitando a edição de campos de texto de qualquer CanvasBlock, EmpathyBox, áreas argumetativas de pilar tático e ocultando ou desabilitando o gatilho de Protocolo de plano de negócio.
+  - Bloqueio preventivo na invocação do `handleSave` no salvamento de planos integrados quando no modo observador do Tutor.
+
+**Impactos:**
+- **Auditoria de Alta Resolução**: O educador avalia as abas de DRE, Balanço, Fluxo de Caixa e estratégia idênticas ao aluno.
+- **Segurança Antifraude**: Garantia absoluta de integridade contra inserção ou corrupção de variáveis de equipes em rounds vigentes ou passados.
+
+**Status atual:** v2026.167 - Em Produção / Compilado com Sucesso.
 
 ---
 
