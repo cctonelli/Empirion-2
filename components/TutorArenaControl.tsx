@@ -95,16 +95,6 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                   <h4 className="text-xl font-black text-white uppercase italic tracking-tight">
                      {hasDecisions ? 'Intervenção Tática Ativa' : 'Aguardando Inteligência'}
                   </h4>
-                  <ChampionshipTimer 
-                    variant="compact"
-                    roundStartedAt={championship.round_started_at}
-                    isPaused={championship.config?.is_paused}
-                    remainingMsAtPause={championship.config?.remaining_ms_at_pause}
-                    deadlineValue={championship.deadline_value}
-                    deadlineUnit={championship.deadline_unit}
-                    createdAt={championship.created_at}
-                    isTournamentFinished={championship.current_round >= (championship.total_rounds || 6)}
-                  />
                </div>
                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 italic flex items-center gap-2">
                   {hasDecisions ? <><CheckCircle2 size={12} className="text-emerald-500" /> Equipes já operando. Choques econômicos afetarão o fechamento P0{nextRoundIdx}.</> : <><Info size={12} /> Dados sincronizados do Wizard. Nenhuma equipe enviou decisões ainda.</>}

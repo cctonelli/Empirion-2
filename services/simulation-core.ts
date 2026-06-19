@@ -561,10 +561,14 @@ export const calculateKpisFromStatements = (params: {
   const x4_altman = totalLiabilities > 0 ? totalEquity / totalLiabilities : 1;
   const altmanZ = 3.25 + (6.56 * x1_altman) + (3.26 * x2_altman) + (6.72 * x3_altman) + (1.05 * x4_altman);
 
-  // EBITDA e Valuation DCF Simplificada
+  // EBITDA e Valuation DCF Simplificada com Floor de Valor Patrimonial Ajustado pelas Normas IFRS/CPC
   const ebitda = operatingProfit + periodDepreciation;
   const wacc = 0.12; 
-  const dcfValuation = ebitda > 0 ? (ebitda / wacc) / 1000000 : 0;
+  // Multiplicador de perpetuidade operacional tradicional (DCF) se ebitda for saudável;
+  // senão, estabelece o valor do patrimônio líquido ajustado com prêmio de 1.1x do Ativo Líquido Real como piso técnico (v19.10)
+  const dcfValuation = ebitda > 0 
+    ? (ebitda / wacc) / 1000000 
+    : Math.max(1.0, (totalEquity * 1.1) / 1000000);
 
   // Critérios rígidos para Rating de Crédito Corporativo
   let rating: CreditRating = 'D';

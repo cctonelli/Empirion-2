@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.169 Suporte para Auditoria & Retorno em Sessões Trial Industrial.
+- **Versão Ativa:** v2026.170 Reconciliação Contábil da DFC Valuation & Sincronização em Tempo Real.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Reconciliação Contábil da DFC Valuation & Sincronização em Tempo Real - v2026.170
+
+**Data:** 19 de Junho de 2026 às 14:03 UTC  
+**Motivo:** Correção do problema onde o indicador "DFC Valuation" (DCF) exibia `0.0` para as equipes em simuladores ativos de rodadas iniciais ou fases com EBITDA neutro ou negativo, e aprimoramento da amostragem em tempo real das decisões provisórias salvas no monitor do tutor.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Ajuste Contábil Avançado do Piso Fiduciário (IFRS / CPC)**:
+  - Identificou-se que a lógica de cálculo do fluxo de caixa descontado simplificado (`dcfValuation`) no motor de simulação (`simulation-core.ts`) descartava valores quando o EBITDA operacional computado era menor ou igual a 0 (`ebitda > 0 ? (ebitda / wacc) / 1000000 : 0`). Isso resultava em avaliações zeradas `0.0` irreais durante as fases de expansão ou startup das equipes.
+  - Refatorado para incorporar um **Piso Técnico de Valor Patrimonial Ajustado pelas Normas IFRS/CPC**. Caso a projeção do EBITDA operacional seja nula ou negativa, estima-se o valor de mercado patrimonial multiplicando Patrimônio Líquido (`totalEquity`) real acumulado pelo prêmio de mercado de 1.1x: `Math.max(1.0, (totalEquity * 1.1) / 1000000)`.
+- **Resiliência de Amostragem em Tempo Real no Monitor de Decisões**:
+  - No componente `TutorDecisionMonitor.tsx`, os cálculos agora leem valores cumulativos ou estimativas de caixa, com fallbacks defensivos contra conjuntos nulos em base de dados de ensaios históricos. O cálculo de fallback `((equity * 1.1) / 1000000)` garante que, independentemente da ausência de fechamentos, o tutor sempre tenha dados fidedignos em tempo real e nunca observe valores `0.0M` descompassados.
+
+**Status atual:** v2026.170 - Em Produção / Compilado com Sucesso.
 
 ---
 
