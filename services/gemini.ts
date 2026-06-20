@@ -7,11 +7,27 @@ let cachedApiKey: string | null = null;
 
 export const getApiKey = async () => {
   if (cachedApiKey) return cachedApiKey;
-  const envKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  
+  let envKey = '';
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) {
+      envKey = import.meta.env.VITE_GEMINI_API_KEY;
+    }
+  } catch (e) {}
+
+  if (!envKey) {
+    try {
+      if (typeof process !== 'undefined' && process && process.env) {
+        envKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+      }
+    } catch (e) {}
+  }
+
   if (envKey) {
     cachedApiKey = envKey;
     return cachedApiKey;
   }
+
   try {
     const { getSystemSecret } = await import('./supabase');
     cachedApiKey = await getSystemSecret('GEMINI_API_KEY') || '';

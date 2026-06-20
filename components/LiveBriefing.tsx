@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import { Mic, MicOff, Radio, Loader2, Volume2, ShieldAlert, Zap } from 'lucide-react';
+import { getApiKey } from '../services/gemini';
 // Fix: Use motion as any to bypass internal library type resolution issues in this environment
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 const motion = _motion as any;
@@ -42,7 +43,9 @@ const LiveBriefing: React.FC = () => {
     setIsConnecting(true);
     setError(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = await getApiKey();
+      if (!apiKey) throw new Error("Gemini API Key missing.");
+      const ai = new GoogleGenAI({ apiKey });
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       nextStartTimeRef.current = audioContextRef.current.currentTime;
 

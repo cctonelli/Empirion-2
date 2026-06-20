@@ -1091,7 +1091,8 @@ export const EmpirionDashboards: React.FC<EmpirionDashboardsProps> = ({
                             { name: 'EUA', key: 'export_tariff_usa' as const, bg: 'bg-[#FF5F1F]/10 text-[#FF5F1F]' },
                             { name: 'Euro', key: 'export_tariff_euro' as const, bg: 'bg-[#9D00FF]/10 text-[#9D00FF]' },
                             { name: 'UK', key: 'export_tariff_uk' as const, bg: 'bg-[#0FF0FC]/10 text-[#0FF0FC]' },
-                            { name: 'China', key: 'export_tariff_china' as const, bg: 'bg-red-500/10 text-red-400' }
+                            { name: 'China', key: 'export_tariff_china' as const, bg: 'bg-red-500/10 text-red-400' },
+                            { name: 'Bitcoin', key: 'export_tariff_btc' as const, bg: 'bg-[#9D00FF]/10 text-[#9D00FF]' }
                           ];
 
                           return regions.map((row, i) => {

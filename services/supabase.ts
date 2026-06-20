@@ -28,7 +28,12 @@ const getEnvVal = (key: string): string => {
       return import.meta.env[key];
     }
   } catch (e) {}
-  return process.env[key] || '';
+  try {
+    if (typeof process !== 'undefined' && process && process.env && process.env[key]) {
+      return process.env[key];
+    }
+  } catch (e) {}
+  return '';
 };
 
 const supabaseUrl = getEnvVal('VITE_SUPABASE_URL');

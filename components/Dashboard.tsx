@@ -1036,7 +1036,7 @@ const Dashboard: React.FC<{ branch?: Branch }> = ({ branch = 'industrial' }) => 
           </div>
         )}
         {showGazette && (
-          <div className="fixed inset-0 z-[5000] p-4 md:p-10 bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center">
+          <div className="fixed inset-0 z-[5000] overflow-hidden">
              <GazetteViewer arena={activeArena!} aiNews="" round={selectedRound} activeTeam={activeTeam} userRole={userRole} onClose={() => setShowGazette(false)} />
           </div>
         )}

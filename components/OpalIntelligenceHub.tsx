@@ -82,7 +82,7 @@ const OpalIntelligenceHub: React.FC<OpalHubProps> = ({ isPremium, onUpgrade, con
     setIsOracleLoading(true);
 
     try {
-      const apiKey = await getApiKey() || process.env.GEMINI_API_KEY;
+      const apiKey = await getApiKey();
       if (!apiKey) throw new Error("Gemini API Key missing.");
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
@@ -367,7 +367,7 @@ const OpalIntelligenceHub: React.FC<OpalHubProps> = ({ isPremium, onUpgrade, con
       let aiReport = "Iniciando processador analítico do Oráculo...";
       
       try {
-        const apiKey = await getApiKey() || process.env.GEMINI_API_KEY;
+        const apiKey = await getApiKey();
         if (apiKey) {
           const ai = new GoogleGenAI({ apiKey });
           const prompt = `

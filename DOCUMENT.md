@@ -2,9 +2,31 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.170 Reconciliação Contábil da DFC Valuation & Sincronização em Tempo Real.
+- **Versão Ativa:** v2026.171 Blindagem Ambiental Dinâmica contra ReferenceErrors no Vercel (Browser Safe Environment Variables).
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Blindagem Ambiental Dinâmica contra ReferenceErrors no Vercel (Browser Safe Environment Variables) - v2026.171
+
+**Data:** 19 de Junho de 2026 às 20:16 UTC  
+**Motivo:** Corrigir o erro crítico "Falha na transmissão da Oracle Gazette" observado unicamente no deploy estático do Vercel (enquanto funcionava perfeitamente no container local de desenvolvimento). O erro era ocasionado por referências sem blindagem de segurança a `process.env` em ambientes browser de produção (onde o objeto global `process` inexiste e arremessa um erro fatal do tipo `ReferenceError`).
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Blindagem do Método `getEnvVal` em `supabase.ts`**:
+  - Refatoração do extrator híbrido de variáveis para certificar-se de validar se o escopo `typeof process !== 'undefined'` antes de tentar acessar suas propriedades no client-side (`process.env[key]`).
+  - Isso remove qualquer instabilidade na renderização de componentes que importavam o serviço de dados em servidores estáticos do ecossistema.
+- **Robustez do Método de Chaveamento `getApiKey` do Gemini**:
+  - Adaptação do `getApiKey` em `services/gemini.ts` para capturar com máxima segurança as variáveis em cenários híbridos:
+    - 1º prioriza chaves via `import.meta.env.VITE_GEMINI_API_KEY` (padrão de exposição opcional em SPA Vite).
+    - 2º varre de forma isolada e segura o `process.env.GEMINI_API_KEY` apenas sob suporte válido de ambiente Node.
+    - 3º estabelece o fluxo de fallback automático importando de forma tardia (lazy load) `getSystemSecret` diretamente do repositório lógico do Supabase.
+- **Prevenção Geral nos Componentes (Auditorias & Briefings)**:
+  - Higienização de fallbacks em `OpalIntelligenceHub.tsx` removendo a redundância direta de `process.env.GEMINI_API_KEY` na chamada e priorizando o extrator dinâmico `getApiKey()`.
+  - Refatoração em `LiveBriefing.tsx` integrando o método assíncrono `getApiKey()` antes de iniciar o link de voz do oráculo `LiveBriefing`, permitindo inicialização contínua e funcionalidade total no Vercel.
+
+**Status atual:** v2026.171 - Em Produção / Compilado com Sucesso.
 
 ---
 
