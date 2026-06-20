@@ -215,7 +215,7 @@ const TutorDecisionMonitor: React.FC<MonitorProps> = ({ championshipId, round, i
              <QuickIndicator label="Inadimplência" val={`${currentIndicators.customer_default_rate}%`} />
              <QuickIndicator label="Renda Aplicação" val={`${currentIndicators.investment_return_rate}%`} />
              <QuickIndicator label="Juros+TR (BDI)" val={`${currentIndicators.interest_rate_tr}%`} />
-             <QuickIndicator label="Limite Bancário" val={`${currentIndicators.compulsory_loan_agio}%`} highlight={currentIndicators.compulsory_loan_agio > 10} />
+             <QuickIndicator label="Empréstimo Compulsório" val={`${currentIndicators.compulsory_loan_agio}%`} highlight={currentIndicators.compulsory_loan_agio > 10} />
              <QuickIndicator label="Juros Fornecedor" val={`${currentIndicators.supplier_interest}%`} highlight={currentIndicators.supplier_interest > 2} />
              <QuickIndicator label="Compra Extra" val={`${currentIndicators.special_purchase_premium}%`} highlight={currentIndicators.special_purchase_premium > 10} />
              <QuickIndicator label="Venda Maquina" val={`${currentIndicators.machine_sale_discount}%`} highlight={currentIndicators.machine_sale_discount > 10} />

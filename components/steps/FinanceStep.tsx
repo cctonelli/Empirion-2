@@ -26,7 +26,7 @@ export const FinanceStep: React.FC<FinanceStepProps> = ({
         icon={<Landmark size={32} strokeWidth={2.5} />} 
         title="Finanças & Mercado de Capitais" 
         desc="Gerencie liquidez, alavancagem e aplicações financeiras. Decisões aqui definem a saúde de caixa, custo de capital e capacidade de investimento nos próximos rounds. Equilíbrio entre endividamento e aplicações é chave para evitar crises ou perda de oportunidade." 
-        help="Empréstimos compulsórios ocorrem automaticamente se o caixa fechar negativo (com ágio maior). Aplicações rendem no próximo período."
+        help="Limites Bancários ocorrem automaticamente se o caixa fechar negativo (com ágio maior). Aplicações rendem no próximo período."
       />
 
       {/* Seção 1: Mercado de Capitais – Empréstimo + Aplicação */}
@@ -36,14 +36,14 @@ export const FinanceStep: React.FC<FinanceStepProps> = ({
           <div className="flex justify-between items-start mb-10">
             <div className="max-w-[75%]">
               <h5 className="text-2xl font-black text-rose-400 uppercase tracking-tight mb-3 font-sans">
-                Requisição de Empréstimo
+                Contratar Empréstimo
               </h5>
               <p className="text-base text-slate-300 leading-relaxed mb-6 font-sans">
                 Solicitação de novo capital via financiamento bancário. Taxa base: {currentMacro?.interest_rate_tr || 2}% ao período. Prazo escolhido afeta o fluxo de amortização.
               </p>
               <div className="flex items-center gap-3 text-sm text-rose-300 italic font-sans animate-pulse">
                 <AlertTriangle size={18} />
-                Caso o caixa feche negativo, o Oracle aplica empréstimo compulsório com ágio de {currentMacro?.compulsory_loan_agio || 4}% sobre a taxa base.
+                Caso o caixa feche negativo, o Oracle aplica o uso do Empréstimo Compulsório com spread de {currentMacro?.compulsory_loan_agio || 4}% sobre a taxa base.
               </div>
             </div>
             <div className="p-5 rounded-2xl bg-rose-600/10 group-hover:bg-rose-600/20 transition-colors shrink-0">

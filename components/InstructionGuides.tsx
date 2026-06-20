@@ -113,7 +113,7 @@ export const TutorGuide: React.FC = () => {
                    <h4 className="text-lg font-black uppercase tracking-tight mb-2">Liberação Automática e Limites de Crédito</h4>
                    <p className="text-sm text-slate-400 leading-relaxed">
                      No <strong>EMPIRION ORACLE</strong>, as equipes têm liberdade para solicitar empréstimos manuais no menu financeiro de acordo com a sua necessidade (sujeito ao spread do seu Rating corrente).
-                     No entanto, caso a empresa projete ou feche um round com <strong>Saldo de Caixa Negativo</strong> (insuficiência de tesouraria), o motor ativa o mecanismo de <strong>Empréstimo Compulsório com Ágio</strong> de forma automática.
+                     No entanto, caso a empresa projete ou feche um round com <strong>Saldo de Caixa Negativo</strong> (insuficiência de tesouraria), o motor ativa o mecanismo de <strong>Empréstimo Compulsório com ágio e juros</strong> de forma automática.
                    </p>
                  </div>
                </div>
@@ -162,7 +162,7 @@ export const TutorGuide: React.FC = () => {
                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
                    <h5 className="font-black text-xs text-emerald-400 uppercase tracking-wider">🛡️ Proteções e Juros em RJ</h5>
                    <ul className="text-xs text-slate-400 space-y-1.5 list-disc pl-4 font-bold">
-                     <li><strong>Escudo Contra Compulsório:</strong> Impede o bloqueio e liquidação de caixa predatória imediata via compulsórios novos.</li>
+                     <li><strong>Escudo Contra Compulsório:</strong> Impede o bloqueio e liquidação de caixa predatória imediata via uso de Empréstimo Compulsório novo.</li>
                      <li><strong>Prêmio de Sobrecusto:</strong> O spread de juros de fornecedores e carências acumuladas aumentam em <strong>1.5x (50% de ágio)</strong> devido ao perigo de crédito.</li>
                      <li><strong>Declaração de Falência:</strong> Caso o patrimônio líquido (`equity`) da empresa permaneça negativo de forma acumulada e o caixa operacional seja nulo consecutivamente, a empresa entra em liquidação insolvente (Falência).</li>
                    </ul>

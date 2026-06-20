@@ -244,7 +244,7 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
       list.push({
         type: 'critical',
         title: 'Caixa Insolvente (Caixa Final < 0)',
-        desc: `Risco de Empréstimo Compulsório com ágio agressivo no processamento do Oráculo.`,
+        desc: `Risco de Empréstimo Compulsório com spread agressivo no processamento do Oráculo.`,
         color: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
         icon: <AlertOctagon size={16} />
       });

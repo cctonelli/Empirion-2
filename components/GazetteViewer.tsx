@@ -504,7 +504,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                                 <h5 className="font-bold text-xs uppercase tracking-wider font-mono">Nota de Orientação P0</h5>
                              </div>
                              <p className="text-slate-300 text-[11.5px] leading-relaxed">
-                                Todas as corporações iniciaram com um empréstimo compulsório transitório no Ciclo P0 de modo a sustentar a governança primária e liquidez dos caixas das unidades industriais. Realize projeções financeiras rutilantes para solvência imediata.
+                                Todas as corporações iniciaram com um uso de Empréstimo Compulsório transitório no Ciclo P0 de modo a sustentar a governança primária e liquidez dos caixas das unidades industriais. Realize projeções financeiras rutilantes para solvência imediata.
                              </p>
                           </div>
                        )}
@@ -601,7 +601,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                      <MacroLedgerBox label="Inflação Setorial" val={`${currentMacro.inflation_rate}%`} icon={<Flame size={18} className="text-red-400" />} desc="Flutuação geral de preços" />
                      <MacroLedgerBox label="Juros+TR (BDI)" val={`${currentMacro.interest_rate_tr}%`} icon={<Landmark size={18} className="text-blue-400" />} desc="Financiamentos e Crédito" />
                      <MacroLedgerBox label="Taxa de Inadimplência (PECLD)" val={`${currentMacro.customer_default_rate}%`} icon={<ShieldAlert size={18} className="text-orange-400" />} desc="Risco de venda a prazo" />
-                     <MacroLedgerBox label="Juros s/ Cheque Especial" val={`${currentMacro.compulsory_loan_agio}%`} icon={<ShieldAlert size={18} className="text-red-400" />} desc="Risco de falta de Liquidez" />
+                     <MacroLedgerBox label="Juros s/ Empréstimo Compulsório" val={`${currentMacro.compulsory_loan_agio}%`} icon={<ShieldAlert size={18} className="text-red-400" />} desc="Risco de falta de Liquidez" />
                      <MacroLedgerBox label="Ágio s/ Compras Extras" val={`${currentMacro.special_purchase_premium}%`} icon={<ShieldAlert size={18} className="text-orange-400" />} desc="Risco de compra errada" />
                      <MacroLedgerBox label="Juros Fornecedor" val={`${currentMacro.supplier_interest}%`} icon={<Truck size={18} className="text-amber-400" />} desc="Acréscimos em compra prazo" />
                      <MacroLedgerBox label="Rendimento de Aplicação" val={`${currentMacro.investment_return_rate}%`} icon={<TrendingUp size={18} className="text-indigo-400" />} desc="Rendimento do caixa parado" />
@@ -720,7 +720,7 @@ const GazetteViewer: React.FC<GazetteViewerProps> = ({ arena, aiNews, round, act
                               <h4 className="text-xs font-bold uppercase font-mono tracking-wider">Anotação da Mesa de Auditoria (Strategos Fiscal Board)</h4>
                            </div>
                            <p className="text-slate-300 text-xs leading-relaxed font-serif italic">
-                              Ao iniciar a rodada R1, todas as corporações registraram o recebimento de **$ 1.372.362,00** à título de **Empréstimo Compulsório Emergencial** no fechamento do P0. Isso evitou a insolvência imediata, sendo necessário quitá-lo integralmente no encerramento do Ciclo R1. Lembre-se que incidem encargos de comissão setorial.
+                              Ao iniciar a rodada R1, todas as corporações registraram o recebimento de **$ 1.372.362,00** à título de **Uso de Empréstimo Compulsório** no fechamento do P0. Isso evitou a insolvência imediata, sendo necessário quitá-lo integralmente no encerramento do Ciclo R1. Lembre-se que incidem encargos de comissão setorial.
                            </p>
                         </div>
                      )}

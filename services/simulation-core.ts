@@ -550,7 +550,7 @@ export const calculateKpisFromStatements = (params: {
   const x4_k = totalAssets > 0 ? currentAssets / totalAssets : 0.5;
   const hasCompulsory = currentLoans ? currentLoans.some((l: any) => l.type === 'compulsory') : false;
   
-  // Se houver empréstimo compulsório (quebra de caixa recente), aplica ágio de risco de alavancagem de forma punitiva (+1.5 no multiplicador de passivos)
+  // Se houver uso de Empréstimo Compulsório (quebra de caixa recente), aplica ágio de risco de alavancagem de forma punitiva (+1.5 no multiplicador de passivos)
   const x5 = totalEquity > 0 ? (totalLiabilities + (hasCompulsory ? (findAccountValue(finalBS, 'liabilities.current.loans_st') || 500000) * 1.5 : 0)) / totalEquity : 0.5;
   const kanitz = (0.05 * x1_k) + (1.65 * x2_k) + (3.55 * x3_k) - (1.06 * x4_k) - (0.33 * x5);
 

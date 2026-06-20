@@ -1166,7 +1166,7 @@ export const calculateProjections = (
   
   // NOTA SÊNIOR: Mecanismo Inteligente de Resgate Automático de Aplicações Financeiras (v19.11)
   // Se o caixa operacional projetado for ficar negativo, resgatamos os investimentos temporários acumulados
-  // para evitar o acionamento indesejado do traumático Empréstimo Compulsório / Emergencial.
+  // para evitar o acionamento indesejado do traumático do uso de Empréstimo Compulsório / Emergencial.
   let investmentWithdrawal = 0;
   if (cashBeforeCompulsory < 0 && prevInvestments > 0) {
     investmentWithdrawal = Math.min(Math.abs(cashBeforeCompulsory), prevInvestments);

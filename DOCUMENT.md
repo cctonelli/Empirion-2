@@ -2125,14 +2125,14 @@ project-root/
 - **Data:** 25 de Maio de 2026
 - **Motivo:** Harmonização tripla profunda e refinamentos contábeis recomendados pelo conselho consultivo. Introdução do resgate de segurança automatizado de aplicações, consistência estrita de amortização de principal e juros, ativação correta do Treinamento de Novos Modelos e estocagem em CIF/Estoque de ativos em absorção.
 - **Diferenças:**
-  - *Resgate Automático de Investimentos:* Se o caixa projetado da equipe for ficar vermelho, o motor resgata de maneira preventiva do saldo de `'assets.current.investments'` para mitigar empréstimos compulsórios e resguardar o rating fiduciário da corporação.
+  - *Resgate Automático de Investimentos:* Se o caixa projetado da equipe for ficar vermelho, o motor resgata de maneira preventiva do saldo de `'assets.current.investments'` para mitigar Limites Bancários e resguardar o rating fiduciário da corporação.
   - *Custeio e Ativação de Treinamento/Armazenamento:* Treinamentos industriais (CapEx para novas máquinas) e armazenagem física (`storageCost`) são integralmente capitalizados como CIF na rubrica de estoque de produtos acabados via Kardex-WAC e baixados por competência no CPV da DRE, mantendo o caixa direto (`cf.outflow.training`, `cf.outflow.storage`) sincronizado com o Balanço.
   - *Visualização de Dívidas & Feedback no Cockpit:* Alerta sonoro/visual dinâmico e pulsante no cockpit se o Rating fiduciário for rebaixado para "D", amparado pela tabela de Spreads e Projeções do Cronograma Futuro de Amortização.
 - **Status:** Em produção.
 
 ### v2026-05.3 / v19.10 - Financiamentos, Amortização, Rating Spreads e Amortization Schedule
 - **Data:** 25 de Maio de 2026
-- **Motivo:** Implementação da diferenciação realística entre Empréstimos Normais e Compulsórios, taxas flutuantes baseadas no spread de risco da tabela de ratings fiduciários corporativos, e consolidação das penalidades e covenants de caixa da empresa, integrando o Amortization Schedule de 3 rodadas.
+- **Motivo:** Implementação da diferenciação realística entre Empréstimos Normais e Limites Bancários, taxas flutuantes baseadas no spread de risco da tabela de ratings fiduciários corporativos, e consolidação das penalidades e covenants de caixa da empresa, integrando o Amortization Schedule de 3 rodadas.
 - **Diferenças:**
   - *Empréstimo Normal (Requisitado Manualmente):* Passa a ser acrescido do Spread de Rating Fiduciário (% de ágio associada à saúde de solvência da sua própria equipe). Amortização constante (SAC).
   - *Empréstimo Compulsório (Quebra de Caixa):* O caixa negativo é socorrido automaticamente com vencimento direto na rodada seguinte (1 round). Aplica-se taxa altamente punitiva (TR + Ágio de Compulsório + Rating Risk Spread + 5.0% de sobretaxa flat de default fiduciário). O compulsório passa a ser persistido e injetado nos `currentLoans` e no fluxo de amortizações de forma fidedigna.
