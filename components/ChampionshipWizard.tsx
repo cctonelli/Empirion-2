@@ -55,13 +55,60 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
       ...Array.from({ length: formData.bots_count }, (_, i) => ({ name: `BOT Oracle 0${i+1}`, is_bot: true }))
     ];
     try {
+      const maxRounds = formData.total_rounds || 12;
+      const cleanChronogram: Record<number, any> = {};
+      Object.keys(roundRules).forEach((k) => {
+        const rIndex = Number(k);
+        if (rIndex <= maxRounds) {
+          cleanChronogram[rIndex] = roundRules[rIndex];
+        }
+      });
+
+      const customConfig = {
+        tournamentName: formData.name,
+        total_rounds: formData.total_rounds,
+        currency: formData.currency,
+        regions: regionNames.map((n, idx) => ({
+          id: idx + 1,
+          name: n,
+          currency: formData.currency,
+          demand_weight: Math.round(100 / formData.regions_count),
+          marketing_cost: 20000,
+          suggested_price: marketIndicators.avg_selling_price || 425,
+          distribution_cost: 100
+        })),
+        is_paused: true,
+        tutorName: "PROF. TUTOR",
+        workforce: {
+          baseSalary: marketIndicators.hr_base?.salary || 2500,
+          max_shifts: 3,
+          trainingLevel: 5,
+          operatorsPerAlpha: 100,
+          operatorsPerBeta: 250,
+          operatorsPerGamma: 600,
+          production_hours_period: 176
+        },
+        inventories: {
+          mpa_qty: 0,
+          mpb_qty: 0,
+          finished_qty: 0,
+          mpa_unit_val: marketIndicators.prices?.mp_a || 20,
+          mpb_unit_val: marketIndicators.prices?.mp_b || 40,
+          finished_unit_val: 0
+        },
+        starting_mode: 'start_from_zero',
+        DEFAULT_INDUSTRIAL_CHRONOGRAM: cleanChronogram,
+        round_rules: cleanChronogram,
+      };
+
       const champ = await createChampionshipWithTeams({
         ...formData,
         status: 'active',
         region_names: regionNames,
         initial_financials: financials,
         market_indicators: marketIndicators,
-        round_rules: roundRules,
+        round_rules: cleanChronogram,
+        config: customConfig,
       }, teamsToCreate, isTrial);
 
       // Auto-selecionar a nova arena e a primeira equipe humana para evitar vazamento de dados antigos

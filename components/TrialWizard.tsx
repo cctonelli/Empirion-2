@@ -1021,6 +1021,15 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       alert("Defina o nome do template!");
       return;
     }
+    const maxRounds = tutorConfig.total_rounds || 6;
+    const cleanChronogram: Record<number, any> = {};
+    Object.keys(roundRules).forEach((k) => {
+      const rIndex = Number(k);
+      if (rIndex <= maxRounds) {
+        cleanChronogram[rIndex] = roundRules[rIndex];
+      }
+    });
+
     const tplPayload = {
       name: templateName,
       description: templateDesc,
@@ -1028,8 +1037,8 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       code: `TPL_${templateName.replace(/\s+/g, "_").toUpperCase()}_${Date.now()}`,
       config: {
         ...tutorConfig,
-        DEFAULT_INDUSTRIAL_CHRONOGRAM: roundRules,
-        round_rules: roundRules,
+        DEFAULT_INDUSTRIAL_CHRONOGRAM: cleanChronogram,
+        round_rules: cleanChronogram,
       },
       is_public: templateIsPublic,
     };
@@ -1097,6 +1106,16 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         finished_goods: tutorConfig.inventories.finished_qty,
       };
 
+      // Limpar (limitar pelas rodadas reais configuradas) as regras temporais para o payload de arena
+      const maxRounds = tutorConfig.total_rounds || 6;
+      const cleanChronogram: Record<number, any> = {};
+      Object.keys(roundRules).forEach((k) => {
+        const rIndex = Number(k);
+        if (rIndex <= maxRounds) {
+          cleanChronogram[rIndex] = roundRules[rIndex];
+        }
+      });
+
       // Preparação e despacho do payload
       const champ = await createChampionshipWithTeams(
         {
@@ -1122,7 +1141,11 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           initial_machines: p0StatementsResult.machines,
           initial_stock_quantities: initialStockQty,
           is_trial: true,
-          config: tutorConfig,
+          config: {
+            ...tutorConfig,
+            DEFAULT_INDUSTRIAL_CHRONOGRAM: cleanChronogram,
+            round_rules: cleanChronogram,
+          },
           ecosystem_config: {
             starting_mode: tutorConfig.starting_mode,
             building_mode:
@@ -3238,7 +3261,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     />
                     <WizardSelect
                       label="INCORPORAR LUCRO/PREJUÍZO NO CAPITAL SOCIAL"
-                      val={tutorConfig.profit_incorporation_frequency ?? 2}
+                      val={tutorConfig.profit_incorporation_frequency ?? 1}
                       onChange={(v: any) =>
                         setTutorConfig({
                           ...tutorConfig,

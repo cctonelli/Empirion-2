@@ -2,9 +2,25 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.171 Blindagem Ambiental Dinâmica contra ReferenceErrors no Vercel (Browser Safe Environment Variables).
+- **Versão Ativa:** v2026.172 Persistência Estrita de Regras Temporais do Tutor e Higienização Contábil de Períodos Duplicados.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Persistência Estrita de Regras Temporais do Tutor e Higienização Contábil de Períodos Duplicados - v2026.172
+
+**Data:** 20 de Junho de 2026 às 16:58 UTC  
+**Motivo:** Corrigir a falta de persistência das regras temporais de rodada (`round_rules` e `DEFAULT_INDUSTRIAL_CHRONOGRAM`) modificadas manualmente pelo tutor durante a criação de torneios tanto com quanto sem o uso de templates tradicionais (como no caso do "TESTE SEM TEMPLATE"), e expurgar períodos adicionais indesejados (lixo de 12 períodos para 6 períodos) configurados no cronograma padrão para assegurar a consistência contábil completa da arena.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Persistência Estrita das Regras no Config do Torneio (`TrialWizard.tsx` e `ChampionshipWizard.tsx`)**:
+  - No lançamento do torneio por qualquer um dos assistentes do tutor, o payload que define o objeto `config` JSON do torneio foi reestruturado para embutir de forma explícita e direta as propriedades `DEFAULT_INDUSTRIAL_CHRONOGRAM` e `round_rules` usando as configurações editadas pelo Tutor na interface. Isso garante que campeonatos lançados sob medida gravem suas regras temporais na coluna `config` (tipo `jsonb`) na tabela do Supabase (`championships` e `trial_championships`), que são então resgatadas fielmente pela simulação do período, extinguindo quedas em taxas padrão indesejadas (fallbacks).
+- **Higienização Contábil do Número de Períodos**:
+  - Implementação de um filtro de truncamento dinâmico (`cleanChronogram`) baseado na variável `total_rounds` configurada no campeonato.
+  - Ao salvar um template contábil (`handleSaveTpl`) ou ao lançar uma arena completa (`handleLaunch`), o lote cronológico de 12 rodadas implícitas é devidamente reduzido para o limite exato de períodos configurados (ex: se o torneio possui 6 rodadas, as regras para períodos de 7 a 12 são desprezadas na persistência). Isso previne poluição de dados e descompasso na amostragem orçamentária do torneio.
+
+**Status atual:** v2026.172 - Em Produção / Compilado com Sucesso.
 
 ---
 
