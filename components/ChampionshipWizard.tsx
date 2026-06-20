@@ -97,7 +97,6 @@ const ChampionshipWizard: React.FC<{ onComplete: () => void, isTrial?: boolean }
           finished_unit_val: 0
         },
         starting_mode: 'start_from_zero',
-        DEFAULT_INDUSTRIAL_CHRONOGRAM: cleanChronogram,
         round_rules: cleanChronogram,
       };
 

@@ -294,7 +294,7 @@ const TutorArenaControl: React.FC<{ championship: Championship; onUpdate: (confi
                     <MacroInput label="Preço Venda Médio ($)" val={macro.avg_selling_price || 340} onChange={(v: number) => setMacro({...macro, avg_selling_price: v})} />
                     <MacroInput label="Distribuição Unit. ($)" val={macro.prices.distribution_unit || 50} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, distribution_unit: v}})} />
                     <MacroInput label="Base Campanha MKT ($)" val={macro.prices.marketing_campaign || 10000} onChange={(v: number) => setMacro({...macro, prices: {...macro.prices, marketing_campaign: v}})} />
-                    <MacroInput label="Juros Fornecedor (%)" val={macro.supplier_interest || 1.5} onChange={(v: number) => setMacro({...macro, supplier_interest: v})} />
+                    <MacroInput label="Juros Fornecedor (%)" val={macro.supplier_interest ?? 1.5} onChange={(v: number) => setMacro({...macro, supplier_interest: v})} />
                     <MacroInput label="Ágio Compulsório (%)" val={macro.compulsory_loan_agio || 3.0} onChange={(v: number) => setMacro({...macro, compulsory_loan_agio: v})} />
                     <MacroInput label="Variação Demanda (%)" val={macro.demand_variation || 0} onChange={(v: number) => setMacro({...macro, demand_variation: v})} />
                  </div>

@@ -652,7 +652,7 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
                   const mpbQty = decisions.production.purchaseMPB || 0;
                   
                   const total = (mpaQty * priceA) + (mpbQty * priceB);
-                  const interest = (currentMacro?.supplier_interest || 1.5) / 100;
+                  const interest = (currentMacro?.supplier_interest ?? 1.5) / 100;
                   const type = decisions.production.paymentType || 0;
 
                   if (total === 0) {
@@ -708,7 +708,7 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
                           </div>
                           <div className="flex justify-between items-center text-slate-400">
                             <span>Juros Totais Fornecedor</span>
-                            <span className="font-mono text-rose-400">+{formatCurrency(juros, activeArena?.currency || 'BRL')} ({currentMacro?.supplier_interest || 1.5}%)</span>
+                            <span className="font-mono text-rose-400">+{formatCurrency(juros, activeArena?.currency || 'BRL')} ({currentMacro?.supplier_interest ?? 1.5}%)</span>
                           </div>
                           <div className="pt-1.5 border-t border-white/5 flex justify-between items-center font-black text-slate-500 uppercase">
                             <span>Novo Passivo (Fornecedores T+0)</span>
@@ -752,7 +752,7 @@ export const RightPreviewPanel: React.FC<RightPreviewPanelProps> = ({
                           </div>
                           <div className="flex justify-between items-center text-slate-400">
                             <span>Juros Acumulados Remanescentes</span>
-                            <span className="font-mono text-rose-400">+{formatCurrency(jurosTot, activeArena?.currency || 'BRL')} ({currentMacro?.supplier_interest || 1.5}%)</span>
+                            <span className="font-mono text-rose-400">+{formatCurrency(jurosTot, activeArena?.currency || 'BRL')} ({currentMacro?.supplier_interest ?? 1.5}%)</span>
                           </div>
                           <div className="pt-1.5 border-t border-white/5 flex justify-between items-center font-black text-slate-500 uppercase">
                             <span>Novo Passivo (Fornecedores T+0)</span>

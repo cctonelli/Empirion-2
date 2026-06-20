@@ -1037,7 +1037,6 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
       code: `TPL_${templateName.replace(/\s+/g, "_").toUpperCase()}_${Date.now()}`,
       config: {
         ...tutorConfig,
-        DEFAULT_INDUSTRIAL_CHRONOGRAM: cleanChronogram,
         round_rules: cleanChronogram,
       },
       is_public: templateIsPublic,
@@ -1052,7 +1051,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const handleLoadTpl = (tpl: P0Template) => {
     setTutorConfig(tpl.config);
     if (tpl.config) {
-      const loadedChrono = tpl.config.DEFAULT_INDUSTRIAL_CHRONOGRAM || tpl.config.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
+      const loadedChrono = tpl.config.round_rules || tpl.config.DEFAULT_INDUSTRIAL_CHRONOGRAM || DEFAULT_INDUSTRIAL_CHRONOGRAM;
       setRoundRules(loadedChrono);
     }
     alert(`Template "${tpl.name}" carregado com sucesso!`);
@@ -1143,7 +1142,6 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           is_trial: true,
           config: {
             ...tutorConfig,
-            DEFAULT_INDUSTRIAL_CHRONOGRAM: cleanChronogram,
             round_rules: cleanChronogram,
           },
           ecosystem_config: {
@@ -2367,7 +2365,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                 );
                                 setTutorConfig(parsedConfig);
                                 if (parsedConfig) {
-                                  const loadedChrono = parsedConfig.DEFAULT_INDUSTRIAL_CHRONOGRAM || parsedConfig.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM;
+                                  const loadedChrono = parsedConfig.round_rules || parsedConfig.DEFAULT_INDUSTRIAL_CHRONOGRAM || DEFAULT_INDUSTRIAL_CHRONOGRAM;
                                   setRoundRules(loadedChrono);
                                 }
                                 setSelectedPreviewTemplate(null);

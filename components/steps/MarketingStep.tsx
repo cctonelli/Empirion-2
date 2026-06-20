@@ -27,6 +27,7 @@ interface MarketingStepProps {
   activeArena: Championship | null;
   activeTeam?: Team | null;
   isReadOnly: boolean;
+  round?: number;
 }
 
 export const MarketingStep: React.FC<MarketingStepProps> = ({
@@ -36,6 +37,7 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
   activeArena,
   activeTeam,
   isReadOnly,
+  round,
 }) => {
   const [competitorsLog, setCompetitorsLog] = React.useState<any[]>([]);
   const [loadingIntel, setLoadingIntel] = React.useState(false);
@@ -49,6 +51,13 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
   const projection = React.useMemo(() => {
     if (!activeArena || !activeTeam) return null;
     try {
+      const targetRound = round !== undefined ? round : ((activeArena.current_round || 0) + 1);
+      const currentRules = activeArena.round_rules?.[targetRound] || DEFAULT_INDUSTRIAL_CHRONOGRAM[targetRound] || activeArena.market_indicators || {};
+      const indicatorsForRound = {
+        ...(activeArena.market_indicators || {}),
+        ...currentRules
+      };
+
       return calculateProjections(
         decisions,
         activeArena.branch,
@@ -56,19 +65,17 @@ export const MarketingStep: React.FC<MarketingStepProps> = ({
           ...(activeArena.config || {}),
           currency: activeArena.currency,
         } as any,
-        activeArena.market_indicators ||
-          (activeArena as any).indicators ||
-          ({} as any),
+        indicatorsForRound,
         activeTeam,
         competitorsLog || [],
-        activeArena.current_round,
+        targetRound,
         activeArena.round_rules,
       );
     } catch (err) {
       console.error("Error calculating active team projections: ", err);
       return null;
     }
-  }, [decisions, activeArena, activeTeam, competitorsLog]);
+  }, [decisions, activeArena, activeTeam, competitorsLog, round]);
 
   const getActiveTeamUnitCPV = () => {
     // 1. Prioriza custo de produção direto da projeção em tempo real ativa

@@ -2,9 +2,26 @@
 
 ## 📋 Controle de Governança
 - **Produto:** EMPIRION ORACLE
-- **Versão Ativa:** v2026.172 Persistência Estrita de Regras Temporais do Tutor e Higienização Contábil de Períodos Duplicados.
+- **Versão Ativa:** v2026.173 Higienização de Redundâncias de Matrizes e Correção Contábil de Fallbacks de Juros de Fornecedores.
 - **Tipo de Documento:** Master Index & Diretrizes de Engenharia Contínua
 - **Status da Documentação:** Sincronizado com o PRD.md, BUSINESS_RULES.md & ROADMAP.md
+
+---
+
+## Decisão Arquitetural: Higienização de Redundâncias de Matrizes e Correção Contábil de Fallbacks de Juros de Fornecedores - v2026.173
+
+**Data:** 20 de Junho de 2026 às 18:40 UTC  
+**Motivo:** Corrigir de forma definitiva as duplicidades lúdicras no campo `config` do JSONB contábil e sanar o cálculo do indicador `supplier_interest` quando parametrizado com 0% pelo Tutor, resolvendo problemas de interpretação boolean do JavaScript no cálculo de projeções em tempo real.
+
+**Detalhamento Técnico de Planejamento e Modificações:**
+- **Remoção de Duplicidade Indesejada nos Payloads do Config (`DEFAULT_INDUSTRIAL_CHRONOGRAM`)**:
+  - Eliminou-se a redundância na persistência de cronogramas. A propriedade de customização temporária `DEFAULT_INDUSTRIAL_CHRONOGRAM` que replicava exatamente o dicionário de `round_rules` de rodada no JSONB `config` foi totalmente removida na criação e salvamento de templates contábeis em `components/ChampionshipWizard.tsx` e `components/TrialWizard.tsx`.
+  - O sistema passa a tratar de forma fiduciária a matriz `round_rules` como a única fonte de verdade orçamentária de customização cronológica. O arquivo `constants.tsx` mantém a sua representação estática como o baseline canônico padrão na ausência de regras editadas.
+- **Trava de Segurança Estrita de Juros de Fornecedores (`supplier_interest` 0% a prazo)**:
+  - Identificou-se que o simulador estático nos passos de cálculo do funil de marketing (`components/steps/MarketingStep.tsx`) não passava o round ativo correto concatenado com a tabela de regras de rodadas, forçando o cálculo a usar as variáveis gerais estáticas de mercado (`market_indicators`) que possuíam o valor padrão de `1.5%`. Realizou-se a sincronização reativa inserindo a propriedade `round` dinâmica.
+  - Corrigiu-se a clássica anomalia lógica do operador curto-circuito OR (`||`) de Javascript na amostragem financeira (`components/steps/RightPreviewPanel.tsx` e `components/steps/SupplyStep.tsx`). Anteriormente, o código ao computar parcelas de contas a pagar de fornecedores avaliava `currentMacro?.supplier_interest || 1.5%`. Em rodadas parametrizadas com juros `0%`, a propriedade `0` era avaliada como expressão falsa, retornando de forma anômala o fallback de `1.5%`. A estrutura foi blindada utilizando-se o operador de coalescência nula `??` (`currentMacro?.supplier_interest ?? 1.5`), garantindo fidelidade contábil irrefutável de `0%` no simulador de custos de compras planejadas a prazo.
+
+**Status atual:** v2026.173 - Em Produção / Compilado com Sucesso.
 
 ---
 

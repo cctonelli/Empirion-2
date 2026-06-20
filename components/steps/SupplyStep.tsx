@@ -350,7 +350,7 @@ export const SupplyStep: React.FC<SupplyStepProps> = ({
               const priceA = getAdjustedPrice(currentMacro?.prices?.mp_a || 15, 'raw_material_a_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
               const priceB = getAdjustedPrice(currentMacro?.prices?.mp_b || 25, 'raw_material_b_adjust', round, activeArena?.round_rules || DEFAULT_INDUSTRIAL_CHRONOGRAM);
               const total = ((decisions.production.purchaseMPA || 0) * priceA) + ((decisions.production.purchaseMPB || 0) * priceB);
-              const interest = (currentMacro?.supplier_interest || 1.5) / 100;
+              const interest = (currentMacro?.supplier_interest ?? 1.5) / 100;
 
               if (decisions.production.paymentType === 0) {
                 return (
