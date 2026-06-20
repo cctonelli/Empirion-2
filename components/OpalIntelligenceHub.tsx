@@ -389,7 +389,7 @@ const OpalIntelligenceHub: React.FC<OpalHubProps> = ({ isPremium, onUpgrade, con
             
             ESTRUTURA DE CAPITAL & CRÉDITO:
             - Empréstimo Captado: ${formatCurrency(loanRequested, 'BRL')}
-            - CAPEX de Expansão (Compra de ${machinesToBuy} máquina Alfa): ${formatCurrency(capexMachinery, 'BRL')}
+            - CAPEX de Expansão (Compra de ${machinesToBuy} máquina Alpha): ${formatCurrency(capexMachinery, 'BRL')}
             - Caixa de fechamento do caixa operacional líquido: ${formatCurrency(finalCash, 'BRL')}
             - Contas a Receber (Clientes a prazo de 30 dias): ${formatCurrency(clientsBalance, 'BRL')}
             
@@ -517,7 +517,7 @@ const OpalIntelligenceHub: React.FC<OpalHubProps> = ({ isPremium, onUpgrade, con
                     <input type="number" value={loanRequested} onChange={e => setLoanRequested(Number(e.target.value))} className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono" />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[7px] font-black uppercase text-slate-500 tracking-wider">Compra de CAPEX (Máquina Alfa)</span>
+                    <span className="text-[7px] font-black uppercase text-slate-500 tracking-wider">Compra de CAPEX (Máquina Alpha)</span>
                     <input type="number" value={machinesToBuy} onChange={e => setMachinesToBuy(Number(e.target.value))} className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono" />
                   </div>
                 </div>

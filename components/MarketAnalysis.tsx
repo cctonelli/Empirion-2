@@ -158,7 +158,7 @@ const MarketAnalysis: React.FC = () => {
             <div>
               <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Direct Data Advisor</h3>
               <p className="text-slate-500 text-sm leading-relaxed mt-4 font-medium italic">
-                "No modo experimental, foque em otimizar o Capex das máquinas Alfa para reduzir o custo marginal de produção em 5%."
+                "No modo experimental, foque em otimizar o Capex das máquinas Alpha para reduzir o custo marginal de produção em 5%."
               </p>
             </div>
           </div>

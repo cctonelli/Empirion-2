@@ -325,7 +325,7 @@ const OFFICIAL_PRESETS: any[] = [
     id: "preset-base-standard",
     name: "Cenário PME - Indústria de Base",
     description:
-      "Estrutura tradicional balanceada e de menor risco contendo 3 máquinas Alfa físicas, estoques ativos e Contas a Receber.",
+      "Estrutura tradicional balanceada e de menor risco contendo 3 máquinas Alpha físicas, estoques ativos e Contas a Receber.",
     config: {
       tutorName: "PROF. CLAUDIO TONELLI",
       institutionName: "UNIVERSIDADE EMPIRION",
@@ -2186,7 +2186,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span>Máquinas GAMA:</span>
+                                  <span>Máquinas GAMMA:</span>
                                   <span className="font-bold text-white">
                                     {selectedPreviewTemplate.config
                                       ?.machines?.[2]?.qty || 0}{" "}
@@ -2428,7 +2428,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left animate-in fade-in slide-in-from-bottom-5 duration-300">
-                  {/* Config Máquina Alfa */}
+                  {/* Config Máquina Alpha */}
                   <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
                     <div className="flex items-center gap-4 border-b border-white/5 pb-4">
                       <span className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">
@@ -2588,7 +2588,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                     />
                   </div>
 
-                  {/* Config Máquina Gama */}
+                  {/* Config Máquina Gamma */}
                   <div className="bg-slate-900 border border-white/5 rounded-[3.5rem] p-10 space-y-8 hover:border-orange-500/30 transition-all shadow-2xl relative overflow-hidden">
                     <div className="flex items-center gap-4 border-b border-white/5 pb-4">
                       <span className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center font-black text-lg text-white font-sans uppercase">
@@ -3945,7 +3945,7 @@ const TrialWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
                         />
                         <CompactMatrixRow
                           periods={totalPeriods}
-                          label="MÁQUINA ALFA (%)"
+                          label="MÁQUINA ALPHA (%)"
                           macroKey="machine_alpha_price_adjust"
                           rules={roundRules}
                           update={updateRoundMacro}

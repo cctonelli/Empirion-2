@@ -220,7 +220,7 @@ export const generateBotDecision = async (
       1. Defina preços e marketing para ${regionCount} regiões (ID 1 a ${regionCount}).
       2. Decida compras de matéria-prima MPA e MPB (considere que 1 PA = 1 MPA + 1 MPB).
       3. Defina nível de atividade da fábrica (0-100%) e investimento em P&D.
-      4. Decida compra de máquinas Alfa, Beta ou Gama se necessário para seu perfil.
+      4. Decida compra de máquinas Alpha, Beta ou Gamma se necessário para seu perfil.
       5. Estime seus resultados (Forecast).
       
       REGRAS RÍGIDAS:

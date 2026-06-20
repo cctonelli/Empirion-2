@@ -297,7 +297,7 @@
 ## Decisão Arquitetural: Implementação de Alerta e Modal de Validação de Equilíbrio de Força de Trabalho (MOD) vs. Expansão Industrial Multiturnos (P0) - v2026.159
 
 **Data:** 16 de Junho de 2026 às 12:35 UTC  
-**Motivo:** Integração de uma sentinela reativa de consistência produtiva na jornada de Recursos Humanos (`HRStep.tsx`). Quando equipes de alunos planejam a expansão de CAPEX industrial de curto prazo (adquirindo novas máquinas Alfa, Beta ou Gama) e decidem por regimes de multiturnos (2 ou 3 turnos na produção), mas não ajustam proporcionalmente a contratação de mão de obra direta (MOD), ocorre um sério gargalo operacional e ociosidade forçada. O novo modal surge ao abrir o passo do RH para alertar e educar os participantes contábil e gerencialmente, bloqueando a desatenção e desbloqueando a integridade das decisões industriais do período.
+**Motivo:** Integração de uma sentinela reativa de consistência produtiva na jornada de Recursos Humanos (`HRStep.tsx`). Quando equipes de alunos planejam a expansão de CAPEX industrial de curto prazo (adquirindo novas máquinas Alpha, Beta ou Gamma) e decidem por regimes de multiturnos (2 ou 3 turnos na produção), mas não ajustam proporcionalmente a contratação de mão de obra direta (MOD), ocorre um sério gargalo operacional e ociosidade forçada. O novo modal surge ao abrir o passo do RH para alertar e educar os participantes contábil e gerencialmente, bloqueando a desatenção e desbloqueando a integridade das decisões industriais do período.
 
 **Detalhamento Técnico de Planejamento e Modificações:**
 - **Lógica Reativa de Mismatch Operacional**:
@@ -1348,7 +1348,7 @@ O motor de simulação reside integralmente dentro de `services/simulation.ts` e
 ### 6.1 Capacidade Fabril e Gestão de Ativos (CapEx)
 As equipes gerenciam sua planta fabril através de três modelos padrão de maquinários:
 
-| Atributo | Máquina Alfa | Máquina Beta | Máquina Gama |
+| Atributo | Máquina Alpha | Máquina Beta | Máquina Gamma |
 | :--- | :--- | :--- | :--- |
 | **Capacidade de Produção/Ciclo** | 2.000 Unidades | 6.000 Unidades | 12.000 Unidades |
 | **Quadro Operacional Requerido** | 94 Operadores | 235 Operadores | 445 Operadores |

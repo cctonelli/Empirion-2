@@ -67,7 +67,7 @@ O motor de simulação contábil reside em `services/simulation.ts` e calcula co
 ### 3.1 Unidade Produtiva (Capacidade e Tecnologia)
 As empresas gerenciam a infraestrutura fabril adquirindo e operando três modelos padrão de maquinários:
 
-| Atributo | Máquina Alfa | Máquina Beta | Máquina Gama |
+| Atributo | Máquina Alpha | Máquina Beta | Máquina Gamma |
 | :--- | :--- | :--- | :--- |
 | **Capacidade de Produção/Ciclo** | 2.000 Unidades | 6.000 Unidades | 12.000 Unidades |
 | **Quadro Operacional Requerido** | 94 Operadores | 235 Operadores | 445 Operadores |

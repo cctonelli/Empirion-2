@@ -62,7 +62,7 @@ O simulador suporta dois comportamentos distintos de infraestrutura e contabilid
 
 2. **Modo de Fundação (Start from Zero):**
    - As empresas iniciam as suas atividades puramente com **Caixa e Ativo Circulante (Capital Social)** obtido dos acionistas ($5.000.000,00$ ou valor configurado).
-   - **Frota Inicial de Máquinas:** ZERADA. Nenhuma máquina Alfa, Beta ou Gama pré-existe no parque fabril das equipes concorrentes.
+   - **Frota Inicial de Máquinas:** ZERADA. Nenhuma máquina Alpha, Beta ou Gamma pré-existe no parque fabril das equipes concorrentes.
    - **A Força do CAPEX no Round 1:** Sob este modo, os investimentos realizados em CAPEX durante o Round 1 são os **únicos catalisadores** que criam os Ativos Imobilizados tangíveis e erguem a capacidade industrial do mercado (consequentemente determinando e criando o Market Size físico de demanda). 
    - **Custo de Instalação e Equipamentos:** Cada aquisição reverte em:
      - Ativação do valor de compra das máquinas no Ativo Não Circulante Imobilizado.

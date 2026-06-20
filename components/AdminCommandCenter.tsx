@@ -934,7 +934,7 @@ const AdminCommandCenter: React.FC<{ preTab?: string }> = ({ preTab = 'tournamen
                    <p className="text-slate-500 font-medium text-lg italic">Selecione um template de setor para inicializar os nodos da arena.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                   <TemplateCard branch="industrial" label="Mastery Industrial" icon={<Factory size={40} />} desc="CapEx massivo, máquinas Alfa/Beta/Gama e depreciação técnica." active onSelect={() => selectBranchTemplate('industrial')} />
+                   <TemplateCard branch="industrial" label="Mastery Industrial" icon={<Factory size={40} />} desc="CapEx massivo, máquinas Alpha/Beta/Gamma e depreciação técnica." active onSelect={() => selectBranchTemplate('industrial')} />
                    <TemplateCard branch="commercial" label="Varejo Elite" icon={<ShoppingCart size={40} />} desc="Giro de estoque, marketing mix e algoritmos de CSAT." onSelect={() => selectBranchTemplate('commercial')} />
                    <TemplateCard branch="services" label="Intellect Matrix" icon={<Briefcase size={40} />} desc="Capital intelectual, horas-homem e contratos de prestação." onSelect={() => selectBranchTemplate('services')} />
                 </div>
